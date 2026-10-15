@@ -108,6 +108,12 @@ test("a cast in words: the spell by its name, its rank, DC, counteract modifier,
     assert.equal(castWordsPlan(source("Elder Seed"), { spells }), null);
     assert.equal(compileActivations(source("Compass of Transpositional Awareness"), { spells }).find((entry) => entry.activation.name === "Track Teleportation").plan?.builtin ?? null, null);
     assert.equal(castOf("Whip of Compliance")?.builtin ?? null, null);
+    // "The creature is targeted with Death Knell (DC 20)", "You generate the effects of a Vitality Lash cantrip, heightened to 3rd rank",
+    // "You're the subject of the Sanctuary spell", "Cast Bless or Heal, each once per day."
+    assert.deepEqual([castOf("Plate of Yled").spell.name, castOf("Plate of Yled").dc, castOf("Plate of Yled").self], ["Death Knell", 20, false]);
+    assert.deepEqual([castOf("Shard of the Third Seal").spell.name, castOf("Shard of the Third Seal").rank], ["Vitality Lash", 3]);
+    assert.deepEqual([castOf("Beguiling Crown").spell.name, castOf("Beguiling Crown").self], ["Sanctuary", true]);
+    assert.deepEqual(castOf("Holy Prayer Beads").choices.map((entry) => entry.spell.name), ["Bless", "Heal"]);
     // A consumable: "Applying this oil to an item casts a 2nd-rank Mending spell".
     const oil = compileItem(source("Oil of Mending"), { spells });
     assert.deepEqual([oil.builtin, oil.spell.name, oil.rank], ["cast-spell", "Mending", 2]);

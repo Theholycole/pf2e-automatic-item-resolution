@@ -59,8 +59,10 @@ function spellAt(text, spells, names) {
 
 // "You cast", "you can cast", "The wayfinder can cast", "the tattoo casts", "It casts", "to cast" — not a cast of the
 // user's own ("If your next action is to Cast a Spell", "able to cast", "Supply a casting").
-const VERB = /\b(?:you (?:can |immediately |then )?cast|(?:the|this) [\w' -]{1,40}? (?:can cast|casts)|it (?:can cast|casts)|to cast|and cast|casting)\s+/gi;
-const NOT_A_CAST = /\b(?:your (?:next|last) action (?:is|was) to cast|if you cast|when you cast|when casting|after you cast|while casting|able to cast|ability to cast|can't cast|cannot cast|Supply a casting|spell slot|as if you had used it to cast|used as a catalyst|innate spells?|each once per (?:day|hour|week))\b/i;
+// (And "The creature is targeted with Death Knell (DC 24)", "You generate the effects of a Vitality Lash cantrip", "You're the
+// subject of the Sanctuary spell", "The ring replicates the effects of an 8th-rank Spell Turning", "Cast Bless or Heal".)
+const VERB = /\b(?:you (?:can |immediately |then )?cast|(?:the|this) [\w' -]{1,40}? (?:can cast|casts)|it (?:can cast|casts)|to cast|and cast|casting|(?:is|are) targeted (?:with|by)|(?:you )?(?:generate|produce|replicates?) the effects of|you're the subject of)\s+|^Cast\s+/gi;
+const NOT_A_CAST = /\b(?:your (?:next|last) action (?:is|was) to cast|if you cast|when you cast|when casting|after you cast|while casting|able to cast|ability to cast|can't cast|cannot cast|Supply a casting|spell slot|as if you had used it to cast|used as a catalyst|innate spells?|unless it succeeds)\b|\beach once per (?:day|hour|week)\b(?<!^Cast\b.*)/i;
 // A cast only under some condition ("On a failed or critically failed saving throw, the whip casts …"): not the activation's.
 const CONDITIONAL = /^(?:On a|If|When|Whenever|After|Until|Once)\b/i;
 const LEAD = new RegExp(String.raw`^(?:(?:a|an|the|either|your choice of|one of the following(?: spells)?(?: at ${ORDINAL}[- ](?:rank|level))?:?)\s+)*(?:${ORDINAL}[- ](?:rank|level) )?(?:(?:arcane|divine|occult|primal) )?(?:\(DC (\d+)\) |DC (\d+) )?`, "i");
@@ -121,7 +123,7 @@ export function readCastWords(html, { spells = null } = {}) {
         // (Its DC in the sentence or the next, or a sentence on the spells' DC: "The DC for any of these spells is 18".)
         const dc = leadDC ?? (Number(/\(DC (\d+)\)|\bwith a DC of (\d+)|\bspell DC (?:is |of )?(\d+)|\bThe DC is (\d+)|\bDC (\d+)\b/i.exec(rest + " " + (sentences[index + 1] ?? ""))?.slice(1).find(Boolean)) || Number(/\bThe (?:spell )?DC (?:for (?:any of )?(?:these|the|this) spells? )?is (\d+)/i.exec(sentences.join(" "))?.[1]) || null);
         const attack = Number(/\bcounteract modifier (?:is |of |are )?(?:1d20 ?)?\+(\d+)|\+(\d+) (?:counteract )?modifier for the roll|\bspell attack (?:modifier|roll) (?:is |of |are )?\+(\d+)/i.exec(whole)?.slice(1).find(Boolean)) || null;
-        const self = /\b(?:on (?:you|yourself)|affecting you|targeting yourself|you're affected)\b(?! request| choice)/i.test(rest);
+        const self = /\b(?:on (?:you|yourself)|affecting you|targeting yourself|you're affected)\b(?! request| choice)/i.test(rest) || /\byou're the subject of\b/i.test(sentence);
         const choices = list.map((entry) => ({ spell: { uuid: entry.spell.uuid, name: entry.spell.name }, rank: entry.rank ?? (rank ? Number(rank[1]) : null) }));
         const notes = sentences.filter((other, at) => at !== index && !/^Choose\b/.test(other) && !/\bthe chosen spell\b/i.test(other)).map((other) => other.trim());
         return {
@@ -140,6 +142,8 @@ export function readCastWords(html, { spells = null } = {}) {
 // The builtin the item's cast card plays: { builtin: "cast-spell", spell, rank, dc, attack, tradition, self, notes,
 // choices?, area, targets }.
 export function castWordsPlan(item, options = {}) {
+    // (Activated ammunition's spell is its hit's: not a cast on activating it.)
+    if (item?.type === "ammo" || (item?.system?.traits?.value ?? []).includes("ammunition")) return null;
     const read = readCastWords(item?.system?.description?.value, options);
     if (!read) return null;
     const [first] = read.choices;

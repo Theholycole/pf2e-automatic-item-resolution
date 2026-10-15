@@ -7,8 +7,8 @@
   "activations": 2593,
   "results": {
    "resolves": 657,
-   "builtin:cast-spell": 431,
-   "none": 908,
+   "builtin:cast-spell": 443,
+   "none": 896,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 18,
@@ -24,9 +24,9 @@
   },
   "live": {
    "save": 327,
-   "cast": 431,
+   "cast": 443,
    "item": 586,
-   "none": 1106,
+   "none": 1094,
    "focus": 45,
    "fortune": 28,
    "reroll": 15,
@@ -43,8 +43,8 @@
    "activations": 1690,
    "results": {
     "resolves": 397,
-    "builtin:cast-spell": 318,
-    "none": 580,
+    "builtin:cast-spell": 324,
+    "none": 574,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 13,
@@ -61,10 +61,10 @@
    "activations": 460,
    "results": {
     "resolves": 143,
-    "none": 146,
+    "none": 144,
     "partial": 22,
     "note-only": 41,
-    "builtin:cast-spell": 73,
+    "builtin:cast-spell": 75,
     "builtin:reroll": 5,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
@@ -97,11 +97,11 @@
   "armor": {
    "activations": 164,
    "results": {
-    "builtin:cast-spell": 29,
+    "builtin:cast-spell": 33,
     "note-only": 24,
     "resolves": 54,
     "builtin:no-effect": 6,
-    "none": 39,
+    "none": 35,
     "builtin:reroll": 2,
     "partial": 2,
     "builtin:ac-reaction": 2,
@@ -2035,9 +2035,9 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Beguiling Crown",
@@ -3960,9 +3960,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Electric Eelskin",
@@ -6501,9 +6501,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Sidestepping",
@@ -7513,9 +7513,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Numerian Steel Breastplate",
@@ -7898,9 +7898,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Stepping Stone Shot (Greater)",
@@ -8624,9 +8624,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Medic's Armband (Greater)",
@@ -9647,9 +9647,9 @@
    "time": "cast",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Pit's Protection",
@@ -10714,9 +10714,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Shard of the Third Seal",
@@ -10725,9 +10725,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Shard of the Third Seal",
@@ -10736,9 +10736,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Apotheosis Knife",
@@ -11242,9 +11242,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Umbral Wings",
@@ -15312,9 +15312,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Spined Shield",
