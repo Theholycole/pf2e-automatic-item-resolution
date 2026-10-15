@@ -89,11 +89,13 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
   - An item with no Activate line counts too. The ability compiler reads it as passive, but it's still used: "You can toss sneezing powder…", a fulu "Upon affixing".
   - Not when the save's own sentence names another trigger: a turn in the area, entering or stepping on a square, each time.
 - **A save the item gives for later** (55 items: breath potions, "grants you the Energy Breath action", "you can use a 2-action activity to exhale"): the same card, kept open until the action is used. "For 10 minutes after drinking" alone is only a duration: Truth Potion's save is on drinking.
-- Snares (placed in a square, set off by the first creature to enter it) and lasting areas need Regions; they wait for the live check.
+- **Snares** (`src/compiler/snares.js`, `scripts/zones.js`), 63 items. Each compiles to the ability module's zone builtin: a 5-foot square placed within reach, the snare's save plan (with its damage and conditions) on the first creature to enter it, once.
+  - After PF2e's Use, the active GM's client calls the ability module's `api.live.startZone` (ability 0581bd5: once; a used-up item). The GM places the square.
+  - The 22 lasting areas that compile to the zone builtin (Cryomister, Pheromone Flare) go the same way.
 
 **The GM fallback gives way.** The ability compiler's last fallback ("no-effect", the GM's) yields to a reading of the item's own (its linked Effect, a spell's Effect, PF2e's healing, its row), though not to a note alone. PF2e's healing field counts only when the text heals: Potion of Annulment keeps its counteract roll there.
 
-`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 977 of 1,508 consumables get a card, and it says why the rest don't (354 nothing read, 69 the GM's fallback, 63 snares, 34 triggered saves, 22 lasting areas).
+`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,063 of 1,508 consumables get a card, and it says why the rest don't (354 nothing read, 69 the GM's fallback, 21 triggered saves).
 
 **The live check is ready** (`tools/live-check.mjs`, run in pftest's browser). It has its own "PFTEST ITEM Lab" scene and "PFTEST ITEM" creatures, and cleans up only its own data. Its cases:
 - a potion fed to a dying ally;
@@ -114,7 +116,8 @@ The plans were handed over on 2026-10-15. That session checked their shapes, and
 
 - **Ability module:** done 2026-10-15:
   - ability 1cd0e31 and a54d84b: `compileAbility` kept stable; `api.live.applyChange(change, state)` exported; the readZone crash fixed (Cold Comfort, Hampering Snare);
-  - ef25d65: `api.live.postCard` and the "target-turn" duration anchor; readConditions, STAGE_CONDITIONS and readPenalties kept stable.
+  - ef25d65: `api.live.postCard` and the "target-turn" duration anchor; readConditions, STAGE_CONDITIONS and readPenalties kept stable;
+  - 0581bd5: `api.live.startZone`, `zone.once` and saves for a used-up item (snares).
 - **Core:** done 2026-10-15:
   - `api.dying` (f8e5d41), moved from the spell module;
   - `check.roll: "automatic"` accepted by saveGaps and CHECK_ROLLS (3875c84).

@@ -13,7 +13,7 @@ Spell-casting items (scrolls, wands, staves, catalysts) belong to PF2e Automatic
   - what the text plainly does to the drinker;
   - a note Effect for the rest.
 
-  745 of the 1,508 consumables it handles compile to a plan the core resolves with no gaps. 272 more get only a note, and 5 are partial.
+  695 of the 1,508 consumables it handles compile to a plan the core resolves with no gaps, plus 64 snares whose save plans it resolves inside the ability module's zones. 272 more get only a note, and 5 are partial.
 - **Cards after PF2e's own Use** (`scripts/live.js`): the item's confirmation card. It names the drinker: the user, or a creature next to them to feed it to. The item's owner or the GM applies it.
   - Healing uses PF2e's own roll, and PF2e's buttons are hidden on that message so nothing is healed twice.
   - Effects are made at the item's grade.
@@ -21,6 +21,10 @@ Spell-casting items (scrolls, wands, staves, catalysts) belong to PF2e Automatic
 - **Injury poisons** (`scripts/poisons.js`): coat a weapon. Its next hit posts the poison's save card (the ability module's); a critical miss wastes it.
 - **Bomb saves:** the bomb card also posts the ability module's save card, for whoever the bomb's text says saves.
 - **Casts** (`scripts/casts.js`): an item that casts a spell PF2e has no Effect for gets a card. Apply has the spell module cast it through PF2e.
+- **Other poisons and saves:** a card that exposes, or asks a save of, the creatures the presser targets. Breath potions get it kept open for later.
+- **Snares and lasting areas** (`scripts/zones.js`): the ability module's zones, placed by the GM. A snare goes off once, for the first creature to enter its square.
+
+In all, 1,063 of the 1,508 consumables get a card in play (the census's "Played live" table).
 - In Foundry it also registers the consumable compiler with the core (`registry.planFor(item)`).
 
 ## Requirements
