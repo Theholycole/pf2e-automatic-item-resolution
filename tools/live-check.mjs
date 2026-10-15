@@ -201,6 +201,19 @@ export const cases = {
         return { card: card.id };
     },
 
+    // A cloak of elvenkind sent to chat: its activations card; Activate posts its cast card and counts its daily use.
+    async activations(scene) {
+        const { actor: elf } = await creature(scene, "Activator", { type: "character", x: 12, y: 2 });
+        const cloak = await give(elf, "Cloak of Elvenkind");
+        const since = Date.now();
+        await cloak.toMessage();
+        const card = await messageAfter(since, itemCard("activations"), { what: "the activations card" });
+        await game.modules.get(NS).api.live.apply(card.id, { activation: 0 });
+        const cast = await messageAfter(since, itemCard("cast"), { what: "the activation's cast card" });
+        assert(cloak.getFlag(NS, "activationUses")?.[0]?.count === 1, "its use counted");
+        return { cast: cast.id };
+    },
+
     // Invisibility Potion: the spell module casts it on the drinker (its castFromItem; run after its own live check).
     async castFromPotion(scene) {
         assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");

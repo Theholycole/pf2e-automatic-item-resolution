@@ -108,6 +108,17 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 
 `api.live.apply(messageId, choices)` applies a card from code.
 
+## Later phase: permanent items' activations (compiled offline, 2026-10-15)
+
+**The compiler** (`src/compiler/permanent.js`, `tools/census-permanent.mjs` → [census-permanent.md](census-permanent.md)). PF2e keeps activations only as text, so each item's text is split into its activations: name, actions, traits, frequency as `{ max, per }`, trigger and requirements. Each one is read like a consumable, for its user. Staves and spellhearts (the spell module's) and bombs are left out.
+- 2,201 items, 2,730 activations: 636 resolve, 328 are casts, 297 are saves at targets, 304 notes. 1,273 have nothing read yet.
+- Six items the spell module claims by their casts aren't left out yet: Searing Blade, Sky Hammer, Dragon's Eye Charm and the Tridents of the Azarketis. Before they're played live, ask the spell session for `claims(item)`.
+
+**Live play: the proposed default, built** (`scripts/activations.js`, `src/live/activations-card.js`); **the user to confirm.**
+- When PF2e posts an item to chat (its "send to chat"), an activations card follows it. It lists the activations the module reads, each with an Activate button for the item's owner or the GM.
+- Pressing one posts that activation's own card through the same routes as consumables, and counts the use against its frequency. Uses are counted per period of world time, an encounter's by its combat. Going over warns rather than blocks.
+- The alternatives: buttons on the character sheet's item rows (more visible, but tied to PF2e's sheet markup), or macros. Decide when the user is back.
+
 ## The simulator (the auto-combat session's)
 
 The plans were handed over on 2026-10-15. That session checked their shapes, and is waiting for the user's policy on when PCs use consumables before building it. Once built, it reads a PC's consumables through `registry.planFor(item)`, with their quantity and uses. Its planner then decides when to drink: healing when low, buffs as the fight starts, the action it costs, and whether to feed an adjacent ally. Its snapshot's "consumable" gaps then shrink.
