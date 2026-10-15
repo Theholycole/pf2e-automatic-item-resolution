@@ -14,9 +14,11 @@ import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
 import { fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { noteRow, ownRow } from "./rows.js";
+import { snareZone } from "./snares.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
+export { isSnare, snareZone } from "./snares.js";
 export { castPlan, effectLinks, fitPlan, grantedSpells, nativeHealing, ownPlan, pf2eRoll, recipientOf, spellEffectApplications } from "./consumables.js";
 
 // The consumable categories the spell module resolves (the user's split, 2026-10-10).
@@ -36,6 +38,9 @@ export function compileItem(item, options = {}) {
     if (!handlesItem(item)) return null;
     const read = compileAbility(asAbility(item), options);
     const base = basePlan(item);
+    // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
+    const snare = snareZone(item, read);
+    if (snare) return { ...snare, item: itemInfo(item) };
     // (The ability compiler's last fallback, "no-effect" — the GM's — gives way to a reading of the item's own: its
     // linked Effect, PF2e's healing, a spell's Effect, its row; not to a note alone.)
     const own = read?.builtin === "no-effect" ? ownPlan(item, base, options) ?? rowPlan(item, base) : null;

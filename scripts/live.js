@@ -17,6 +17,7 @@ import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { applyCastCard, postCastCard } from "./casts.js";
+import { startItemZone } from "./zones.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 
@@ -84,6 +85,7 @@ async function cardForUse(message) {
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
     if (route === "cast") return postCastCard({ message, plan, used, actor, token });
+    if (route === "zone") return startItemZone({ plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message.rolls?.[0];

@@ -13,6 +13,8 @@ export function routeOf(plan, text = "") {
     if (isInjuryPoison(plan)) return "coat";
     if (isExposurePoison(plan)) return "expose";
     if (isCast(plan)) return "cast";
+    // (A lasting area or a snare: the ability module's zone.)
+    if (plan.builtin === "zone" && plan.zone) return "zone";
     if (isUseSave(plan, text)) return "save";
     if (isLaterSave(plan, text)) return "later";
     if (playedOnItemCard(plan)) return "item";

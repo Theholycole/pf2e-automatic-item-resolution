@@ -15,9 +15,9 @@
   "results": {
    "builtin:cast-spell": 26,
    "none": 354,
-   "resolves": 759,
+   "resolves": 695,
+   "builtin:zone": 86,
    "note-only": 272,
-   "builtin:zone": 22,
    "builtin:no-effect": 69,
    "partial": 5,
    "builtin:save-bonus": 1
@@ -123,8 +123,9 @@
   "poison": {
    "count": 115,
    "results": {
-    "resolves": 111,
+    "resolves": 110,
     "none": 3,
+    "builtin:zone": 1,
     "note-only": 1
    },
    "mechanisms": {
@@ -144,7 +145,7 @@
    "count": 82,
    "results": {
     "none": 14,
-    "resolves": 63,
+    "builtin:zone": 63,
     "note-only": 5
    },
    "mechanisms": {
@@ -282,19 +283,19 @@
   },
   "damage": {
    "count": 287,
-   "resolves": 188,
+   "resolves": 142,
    "gaps": 0,
    "none": 50
   },
   "linked-effect": {
    "count": 393,
-   "resolves": 384,
+   "resolves": 378,
    "gaps": 0,
    "none": 1
   },
   "fixed-dc": {
    "count": 498,
-   "resolves": 397,
+   "resolves": 333,
    "gaps": 0,
    "none": 45
   },
@@ -336,19 +337,19 @@
   },
   "area": {
    "count": 44,
-   "resolves": 19,
+   "resolves": 17,
    "gaps": 0,
    "none": 9
   },
   "condition": {
    "count": 437,
-   "resolves": 295,
+   "resolves": 260,
    "gaps": 0,
    "none": 60
   },
   "duration": {
    "count": 947,
-   "resolves": 591,
+   "resolves": 565,
    "gaps": 0,
    "none": 22
   }
@@ -356,8 +357,9 @@
  "live": {
   "totals": {
    "cast": 26,
-   "none": 531,
+   "none": 445,
    "item": 652,
+   "zone": 86,
    "expose": 89,
    "later": 55,
    "save": 110,
@@ -366,10 +368,11 @@
   "byCategory": {
    "other": {
     "cast": 7,
-    "none": 212,
+    "none": 203,
     "later": 12,
     "save": 71,
     "item": 225,
+    "zone": 9,
     "expose": 3,
     "coat": 3
    },
@@ -388,23 +391,27 @@
    },
    "elixir": {
     "item": 116,
-    "none": 32,
-    "save": 1
+    "none": 31,
+    "save": 1,
+    "zone": 1
    },
    "poison": {
     "expose": 63,
     "coat": 42,
-    "none": 4,
+    "none": 3,
+    "zone": 1,
     "later": 3,
     "save": 2,
     "item": 1
    },
    "snare": {
-    "none": 77,
+    "none": 14,
+    "zone": 63,
     "item": 5
    },
    "gadget": {
-    "none": 38,
+    "none": 26,
+    "zone": 12,
     "item": 24,
     "save": 15
    },
@@ -434,9 +441,7 @@
   },
   "noCard": {
    "no-plan": 354,
-   "snare": 63,
-   "triggered": 22,
-   "zone": 22,
+   "triggered": 21,
    "gm": 69,
    "other": 1
   }
@@ -540,10 +545,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Noxious Incense",
@@ -724,10 +728,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Crackling Bubble Gum (Lesser)",
@@ -794,10 +797,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Torrent Spellgun (Lesser)",
@@ -903,7 +905,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Diluted Hype",
@@ -943,10 +945,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Oil of Keen Edges",
@@ -1497,7 +1498,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Ice Slick Snare",
@@ -2140,10 +2141,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Ration Tonic",
@@ -2285,7 +2285,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Dragonclaw Scutcheon",
@@ -3034,7 +3034,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Spider Venom",
@@ -3197,10 +3197,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Matsuki's Medicinal Wine",
@@ -3413,10 +3412,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Potion of Fire Retaliation (Lesser)",
@@ -3855,10 +3853,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Irritating Thorn Snare",
@@ -3874,10 +3871,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Wand of Toxic Blades (6th-Rank)",
@@ -4208,7 +4204,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Hippogriff Feather",
@@ -4912,7 +4908,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Silver Tripod",
@@ -4945,10 +4941,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Bendy-Arm Mutagen (Lesser)",
@@ -5042,10 +5037,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Spiritual Warhorn (Lesser)",
@@ -5358,10 +5352,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Life-Boosting Oil (Moderate)",
@@ -5817,10 +5810,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Cheetah's Elixir (Moderate)",
@@ -6908,7 +6900,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Seeking Bracelets",
@@ -7070,10 +7062,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Iron Wine",
@@ -7198,10 +7189,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Balisse Feather",
@@ -7454,10 +7444,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Quickmelt Slick (Lesser)",
@@ -10032,10 +10021,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Oil of Animation",
@@ -10532,10 +10520,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Black Dragon's Breath Potion (Wyrm)",
@@ -10734,7 +10721,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Viperous Elixir (Lesser)",
@@ -11179,10 +11166,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Digly's Oil of Sympathy (Lesser)",
@@ -11235,7 +11221,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Tricky Liniment",
@@ -11288,10 +11274,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Incense Bundle of Annual Blessings",
@@ -11399,10 +11384,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Treat (Standard)",
@@ -11647,10 +11631,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Winterstep Elixir (Moderate)",
@@ -11747,7 +11730,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Energy Breath Potion (Fire, Moderate)",
@@ -11786,10 +11769,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Energized Cartridge",
@@ -12051,10 +12033,9 @@
     "fixed-dc",
     "area"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Portable Seal (Moderate)",
@@ -12150,7 +12131,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Tangibility Resonator (Moderate)",
@@ -13212,10 +13193,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Moonlit Ink",
@@ -13889,10 +13869,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Black Adder Venom",
@@ -14130,10 +14109,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Cooperative Waffles",
@@ -14270,10 +14248,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Potion of Electricity Retaliation (Lesser)",
@@ -14827,7 +14804,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Bloodhammer Reserve Select",
@@ -15050,7 +15027,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Powder",
@@ -15357,10 +15334,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Potion of Resistance (Lesser)",
@@ -16033,10 +16009,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Flare Beacon (Moderate)",
@@ -17093,10 +17068,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Stone Fist Elixir",
@@ -17132,10 +17106,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Hippogriff in a Jar",
@@ -17686,10 +17659,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Potion of Annulment (Lesser)",
@@ -18092,10 +18064,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Bloodstone Doll (Moderate)",
@@ -18321,10 +18292,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Toothy Knife",
@@ -18357,10 +18327,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Static Muscular Relay",
@@ -18746,10 +18715,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Wand of Dumbfounding Doom (3rd-rank)",
@@ -19326,10 +19294,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Infiltrator's Elixir",
@@ -20113,7 +20080,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Bonmuan Swapping Stone (Greater)",
@@ -20879,10 +20846,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Expulsion Snare",
@@ -21425,10 +21391,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Grasping Tree",
@@ -22036,7 +22001,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Snagging Hook Snare",
@@ -22053,10 +22018,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Matchmaker Fulu",
@@ -22649,10 +22613,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Bougainvillea Blossom (Moderate)",
@@ -22912,7 +22875,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Lover's Knot",
@@ -23583,10 +23546,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Spiritual Warhorn (Greater)",
@@ -23701,10 +23663,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Ectoplasmic Tracer",
@@ -23867,10 +23828,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Bubbling Scale",
@@ -23967,10 +23927,9 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Transmuting Ingot (Cold Iron)",
@@ -24170,10 +24129,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Magic Wand (7th-Rank Spell)",
@@ -24368,10 +24326,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Vaccine (Lesser)",
@@ -24420,7 +24377,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Chameleon Suit (Greater)",
@@ -24798,10 +24755,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Wand of Hawthorn (4th-rank)",
@@ -24832,10 +24788,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Reactive Flash",
@@ -24916,7 +24871,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Looter's Lethargy",
@@ -25143,10 +25098,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Rovagug's Mud",
@@ -26084,10 +26038,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Antifungal Salve (Major)",
@@ -26381,10 +26334,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Extended Deteriorating Dust",
@@ -26515,10 +26467,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Necrotic Cap (Lesser)",
@@ -26589,7 +26540,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Thunderbird Tuft (Greater)",
@@ -27000,7 +26951,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Hero Killer",
@@ -27105,10 +27056,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Surging Serum (Moderate)",
@@ -27495,10 +27445,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Wand of Hawthorn (6th-rank)",
@@ -27601,10 +27550,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Fraudslayer Oil",
@@ -27833,7 +27781,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Euphoric Loop (Greater)",
@@ -28468,10 +28416,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Arboreal Wand (Rank 3)",
@@ -29089,10 +29036,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Maelstromic Destabilizer (Major)",
@@ -29273,10 +29219,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Brine Dragon Scale",
@@ -29459,10 +29404,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Copper Penny",
@@ -29746,10 +29690,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Bravo's Brew (Lesser)",
@@ -29838,10 +29781,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Sea Touch Elixir (Lesser)",
@@ -29880,7 +29822,7 @@
    ],
    "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Galvanic Chew",
@@ -29991,10 +29933,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Black Ash (Major)",

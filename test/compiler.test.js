@@ -184,6 +184,19 @@ test("an item with a time and nothing else the module reads: a note of its text 
     assert.equal(compileItem(item("Ration Tonic")), null);
 });
 
+test("a snare: the ability module's zone, a 5-foot square set off once by the first creature to enter it", () => {
+    const spike = compileItem(item("Spike Snare"));
+    assert.equal(spike.builtin, "zone");
+    assert.deepEqual([spike.zone.area, spike.zone.centre, spike.zone.range, spike.zone.once], [{ type: "square", value: 5 }, "placed", 5, true]);
+    const [save] = spike.zone.saves;
+    assert.deepEqual(save.when, ["enter"]);
+    assert.deepEqual(save.plan.resolution.check, { roll: "save", statistic: "reflex", basic: true, against: { dc: "fixed", value: 17 } });
+    assert.equal(save.plan.resolution.sharedDamage.components[0].formula, "2d8[piercing]");
+    // Through the core, the creature entering takes the snare's damage on a failure.
+    const result = registry.resolveSync(save.plan, { caster: { id: "setter" }, targets: [{ id: "victim" }], statistic: () => ({ modifier: 0 }) }, { roll: () => ({ degree: "failure" }), damage: () => 9 });
+    assert.deepEqual(result.changes.map((change) => [change.op, change.target]), [["damage", "victim"]]);
+});
+
 // The census's count, as a ratchet: a later batch may only raise it.
 test("consumables whose plan the core resolves with no gaps (ratchet)", () => {
     let resolves = 0;
@@ -194,10 +207,12 @@ test("consumables whose plan the core resolves with no gaps (ratchet)", () => {
         } catch {
             continue;
         }
-        if (!plan?.resolution || plan.noteOnly || plan.partial || !registry.familyFor(plan.resolution.kind)) continue;
+        // (A snare is the ability module's zone now: its save plan is what the core resolves.)
+        const resolved = plan?.builtin === "zone" && plan.zone?.once ? plan.zone.saves?.[0]?.plan : plan;
+        if (!resolved?.resolution || plan.noteOnly || plan.partial || !registry.familyFor(resolved.resolution.kind)) continue;
         let clean = true;
         for (const degree of ["criticalFailure", "failure", "success", "criticalSuccess"]) {
-            const result = registry.resolveSync(plan, { ...context(), targets: [{ id: "target", side: "foes" }] }, { ...io(degree, 1), choose: (decision) => decision.default ?? decision.options?.[0]?.value });
+            const result = registry.resolveSync(resolved, { ...context(), targets: [{ id: "target", side: "foes" }] }, { ...io(degree, 1), choose: (decision) => decision.default ?? decision.options?.[0]?.value });
             assert.deepEqual(validateChanges(result.changes), [], doc.name);
             if (result.gaps?.length) clean = false;
         }

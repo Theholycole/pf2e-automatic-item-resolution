@@ -12,15 +12,15 @@ Results, for the items this module handles:
 - **partial**: the module applies part of what the text says and puts the rest on a note Effect with the item's text ("Effect + note", counted apart as the spell module counts its own)
 - **note-only**: nothing the module reads but a time: a note Effect with the item's text for that time (counted apart, as the spell module counts its note-only spells)
 - **gaps**: a plan the core resolves only in part (the gaps are listed below)
-- **builtin**: an ability-module builtin its live layer plays (zone: an area left on the map; cast-spell: casts a spell; no-effect: the GM's)
+- **builtin**: an ability-module builtin (zone: a lasting area or a snare, its save plans the core's, placed by the ability module's zones; cast-spell: casts a spell, the spell module's; no-effect: the GM's)
 - **none**: no plan yet
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 759 | 50% |
+| resolves | 695 | 46% |
 | partial | 5 | 0% |
 | note-only | 272 | 18% |
-| builtin:zone | 22 | 1% |
+| builtin:zone | 86 | 6% |
 | builtin:cast-spell | 26 | 2% |
 | builtin:no-effect | 69 | 5% |
 | builtin:save-bonus | 1 | 0% |
@@ -34,8 +34,8 @@ Results, for the items this module handles:
 | potion | 183 | 102 | 1 | 40 | 0 | 19 | 21 |
 | talisman | 156 | 45 | 0 | 13 | 0 | 17 | 81 |
 | elixir | 149 | 83 | 0 | 35 | 0 | 14 | 17 |
-| poison | 115 | 111 | 0 | 1 | 0 | 0 | 3 |
-| snare | 82 | 63 | 0 | 5 | 0 | 0 | 14 |
+| poison | 115 | 110 | 0 | 1 | 0 | 1 | 3 |
+| snare | 82 | 0 | 0 | 5 | 0 | 63 | 14 |
 | gadget | 77 | 26 | 0 | 14 | 0 | 25 | 12 |
 | mutagen | 68 | 60 | 4 | 4 | 0 | 0 | 0 |
 | oil | 66 | 25 | 0 | 22 | 0 | 8 | 11 |
@@ -45,23 +45,23 @@ Results, for the items this module handles:
 
 ## Played live
 
-Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **later** (the same, kept open for an action the item gives for later: a breath potion), **cast** (the spell module casts it). Bombs get theirs after PF2e's damage roll (above).
+Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **later** (the same, kept open for an action the item gives for later: a breath potion), **cast** (the spell module casts it), **zone** (a lasting area or a snare, placed by the ability module's zones). Bombs get theirs after PF2e's damage roll (above).
 
-| Category | Items | item | coat | expose | save | later | cast | no card |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 533 | 225 | 3 | 3 | 71 | 12 | 7 | 212 |
-| potion | 183 | 95 | 0 | 0 | 6 | 40 | 9 | 33 |
-| talisman | 156 | 47 | 0 | 0 | 10 | 0 | 7 | 92 |
-| elixir | 149 | 116 | 0 | 0 | 1 | 0 | 0 | 32 |
-| poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 4 |
-| snare | 82 | 5 | 0 | 0 | 0 | 0 | 0 | 77 |
-| gadget | 77 | 24 | 0 | 0 | 15 | 0 | 0 | 38 |
-| mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 |
-| oil | 66 | 46 | 0 | 0 | 1 | 0 | 1 | 18 |
-| fulu | 46 | 17 | 0 | 0 | 3 | 0 | 2 | 24 |
-| drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 |
-| toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1508** | **652** | **45** | **89** | **110** | **55** | **26** | **531** |
+| Category | Items | item | coat | expose | save | later | cast | zone | no card |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| other | 533 | 225 | 3 | 3 | 71 | 12 | 7 | 9 | 203 |
+| potion | 183 | 95 | 0 | 0 | 6 | 40 | 9 | 0 | 33 |
+| talisman | 156 | 47 | 0 | 0 | 10 | 0 | 7 | 0 | 92 |
+| elixir | 149 | 116 | 0 | 0 | 1 | 0 | 0 | 1 | 31 |
+| poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 3 |
+| snare | 82 | 5 | 0 | 0 | 0 | 0 | 0 | 63 | 14 |
+| gadget | 77 | 24 | 0 | 0 | 15 | 0 | 0 | 12 | 26 |
+| mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| oil | 66 | 46 | 0 | 0 | 1 | 0 | 1 | 0 | 18 |
+| fulu | 46 | 17 | 0 | 0 | 3 | 0 | 2 | 0 | 24 |
+| drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 |
+| toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| **all** | **1508** | **652** | **45** | **89** | **110** | **55** | **26** | **86** | **445** |
 
 Why the rest have no card yet:
 
@@ -69,9 +69,7 @@ Why the rest have no card yet:
 |---|---:|
 | nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 354 |
 | the ability compiler's GM fallback ("no-effect") | 69 |
-| a snare: placed in a square, set off by the first creature to enter it (needs Regions) | 63 |
-| a save on a trigger or a passive (an aura, a reaction) | 22 |
-| a lasting area (needs Regions) | 22 |
+| a save on a trigger or a passive (an aura, a reaction) | 21 |
 | another plan not played yet | 1 |
 
 ## What they do
@@ -80,16 +78,16 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
-| duration | 947 | 591 | 0 | 22 |
-| fixed-dc | 498 | 397 | 0 | 45 |
-| condition | 437 | 295 | 0 | 60 |
-| linked-effect | 393 | 384 | 0 | 1 |
-| damage | 287 | 188 | 0 | 50 |
+| duration | 947 | 565 | 0 | 22 |
+| fixed-dc | 498 | 333 | 0 | 45 |
+| condition | 437 | 260 | 0 | 60 |
+| linked-effect | 393 | 378 | 0 | 1 |
+| damage | 287 | 142 | 0 | 50 |
 | trigger | 156 | 54 | 0 | 76 |
 | affliction | 144 | 139 | 0 | 3 |
 | counteract | 79 | 18 | 0 | 28 |
 | on-weapon | 67 | 54 | 0 | 1 |
-| area | 44 | 19 | 0 | 9 |
+| area | 44 | 17 | 0 | 9 |
 | heal | 43 | 34 | 0 | 3 |
 | temp-hp | 41 | 25 | 0 | 6 |
 | casts-spell | 37 | 5 | 0 | 15 |
