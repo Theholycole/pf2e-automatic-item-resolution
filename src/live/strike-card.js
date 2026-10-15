@@ -96,13 +96,13 @@ const DURATIONS = {
 
 // The Effect on the user that marks the readied Strike, until the end of the turn (or as long as the text says). Its flag
 // counts the Strikes left (uses) and whether a hit's damage roll is still to come (awaiting).
-export function strikeEffectSource({ state, img = null, worldTime = 0, initiative = null, moduleId, weaponId = null }) {
+export function strikeEffectSource({ state, img = null, worldTime = 0, initiative = null, moduleId, weaponId = null, ammoId = null }) {
     const strike = state.plan.strike ?? {};
     return {
         name: `${state.item.name}: next ${strikeWord(state.plan)}`,
         type: "effect",
         img: img ?? "icons/svg/sword.svg",
-        flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, uses: strike.uses ?? 1, awaiting: Boolean(strike.hit) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, ammoId, uses: strike.uses ?? 1, awaiting: Boolean(strike.hit) } } },
         system: {
             description: { value: `<p>${escape(strikeHint(state.plan, "Its user"))} ${escape(strikeLines(state.plan).join("; "))}.</p>` },
             duration: { ...(DURATIONS[strike.until] ?? DURATIONS["turn-end"]), sustained: false },
@@ -113,12 +113,15 @@ export function strikeEffectSource({ state, img = null, worldTime = 0, initiativ
 }
 
 // Whether a Strike takes the readied rider: its range ("melee": not a ranged weapon), its weapon (the item's own, by the
-// roll's "item:id:…"; an unarmed one, "item:category:unarmed"), and what its degree does — "hit" (the riders for that
+// roll's "item:id:…"; an unarmed one, "item:category:unarmed"; activated ammunition's, "ammo:id:…"), and what its degree does — "hit" (the riders for that
 // degree), "keep" (a miss, when only a hit spends it), else "spend".
-export function riderFor(plan, { ranged = false, outcome, options = [], weaponId = null } = {}) {
+export function riderFor(plan, { ranged = false, outcome, options = [], weaponId = null, ammoId = null } = {}) {
     if (plan.strike?.range === "melee" && ranged) return null;
     if (plan.strike?.range === "ranged" && !ranged) return null;
     if (weaponId && !options.includes(`item:id:${weaponId}`)) return null;
+    // (Activated ammunition: a Strike with that ammunition, when PF2e's roll names its ammunition.)
+    // ("ammo:id:…", or PF2e's weapon options' "item:ammo:id:…".)
+    if (ammoId && options.some((option) => /(?:^|:)ammo:id:/.test(option)) && !options.some((option) => option === `ammo:id:${ammoId}` || option.endsWith(`:ammo:id:${ammoId}`))) return null;
     if (plan.strike?.unarmed && !options.includes("item:category:unarmed")) return null;
     if (outcome === "success" || outcome === "criticalSuccess") return "hit";
     return plan.strike?.missKeeps ? "keep" : "spend";

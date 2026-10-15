@@ -6,15 +6,15 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 926,
+   "none": 925,
    "builtin:cast-spell": 431,
-   "resolves": 659,
+   "resolves": 654,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "builtin:readied-bonus": 17,
-   "note-only": 284,
+   "note-only": 280,
    "builtin:reroll": 15,
-   "partial": 31,
+   "partial": 41,
    "builtin:modes": 26,
    "builtin:zone": 9,
    "builtin:roll-twice": 10,
@@ -23,14 +23,14 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1125,
+   "none": 1124,
    "cast": 431,
-   "item": 590,
-   "save": 316,
+   "item": 586,
+   "save": 310,
    "focus": 45,
    "fortune": 27,
    "reroll": 15,
-   "strike": 28,
+   "strike": 39,
    "zone": 9,
    "action": 3,
    "later": 4
@@ -78,9 +78,10 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 92,
-    "resolves": 40,
-    "note-only": 18,
+    "none": 91,
+    "partial": 10,
+    "resolves": 35,
+    "note-only": 14,
     "builtin:no-effect": 2,
     "builtin:zone": 1
    }
@@ -625,9 +626,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Acrobat's Staff",
@@ -680,9 +681,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Crown of Intellect",
@@ -2121,9 +2122,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Lucky Silver",
@@ -4299,9 +4300,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Midday Lantern (Moderate)",
@@ -9986,9 +9987,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Tooth and Claw Tattoo",
@@ -11053,9 +11054,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Boots of Free Running (Greater)",
@@ -13836,9 +13837,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Anglerfish Lantern (Submersible)",
@@ -16069,9 +16070,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Retaliation (Major)",
@@ -18280,9 +18281,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Stalk Goggles (Major)",
@@ -18885,9 +18886,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Banner of Creeping Death (Major)",
@@ -28103,9 +28104,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Nomad's Shawl",

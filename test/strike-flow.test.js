@@ -234,3 +234,28 @@ test("Kinetic Club: a Strike that already hit readies its damage roll alone", as
     assert.equal(readied().length, 0);
 });
 
+
+test("activated ammunition: its hit's save for the target, on the next ranged Strike with that ammunition", async () => {
+    // "When an activated freezing ammunition hits a target, the target must succeed at a DC 19 Fortitude save or be Slowed 1 …"
+    const [freezing] = compileActivations(source("Freezing Ammunition"));
+    assert.equal(routeOf(freezing.plan), "strike");
+    assert.deepEqual([freezing.plan.strike.range, freezing.plan.strike.ammo, freezing.plan.strike.save.resolution.check.against.value], ["ranged", true, 19]);
+    // Not the target's save (Freeze Ammunition's icy surface: "Each creature standing on the icy surface must …"), nor PF2e's own dice twice (Rhino Shot).
+    assert.equal(compileActivations(source("Freeze Ammunition"))[0].plan?.strike?.save ?? null, null);
+    assert.deepEqual(compileActivations(source("Rhino Shot"))[0].plan.strike.damage ?? [], [], "Rhino Shot's 2d6 force is PF2e's own rule");
+    const arrows = foundry.giveItem(fighter, source("Freezing Ammunition"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: arrows.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.equal(readied()[0].flags[MODULE_ID].strikeRider.ammoId, arrows.id);
+    // Another ammunition's Strike: not this one; this one's: its save card.
+    await attack("success", ["item:ranged", "item:ammo:id:other"]);
+    assert.equal(readied().length, 1);
+    const before = foundry.posted.length;
+    await attack("success", ["item:ranged", `item:ammo:id:${arrows.id}`]);
+    assert.equal(readied().length, 0);
+    assert.equal(foundry.posted.slice(before)[0]?.plan.resolution.check.against.value, 19);
+});

@@ -79,20 +79,56 @@ function untilOf(text) {
 }
 
 // The item (or an activation's block as its description) → its Strike plan, or null when no rider, save or extra is read.
+// Activated ammunition's hit, in its words (Antler Arrow's "When an activated antler arrow hits a target, …", Rattling
+// Bolt's "A target damaged by the rattling bolt must …", Fairy Bullet's "On a successful Strike, …"): the bombs' "On a hit"
+// form, so their readers take it.
+const AMMO_HITS = [
+    [/\b(?:When|Once|After) (?:an? |the )?(?:activated )?[\w' -]{1,40}? (?:hits|strikes) (?:a|the|its) (?:target|creature)(?:, which can be a square)?,\s*/gi, "On a hit, "],
+    [/\bOnce it hits the target, /gi, "On a hit, "],
+    [/\bWhen you hit a target with (?:this|an activated) [\w' -]{1,30}?, /gi, "On a hit, "],
+    [/\bOn a successful Strike, /gi, "On a hit, "],
+    [/\bA (?:creature|target) (?:hit|struck|damaged) by (?:an? |the )?(?:activated )?[\w' -]{1,40}? (?=must|is|takes|becomes)/gi, "On a hit, the target "]
+];
+const isAmmo = (item) => item?.type === "ammo" || (item?.system?.traits?.value ?? []).includes("ammunition");
+function ammoStrike(text) {
+    let after = text;
+    for (const [pattern, replacement] of AMMO_HITS) after = after.replace(pattern, replacement);
+    if (after === text || !/\bOn a hit\b/.test(after)) return null;
+    return { range: "ranged", unarmed: false, after: after.replace(/^.*?\b(?=On a hit\b)/s, ""), sentence: null, next: false, missKeeps: false, uses: 1, hit: false, ammo: true };
+}
+
+// Ammunition's save is the target's own: in its hit's sentence, or a sentence on the target or the creature hit — not one
+// for others ("Each creature standing on the icy surface must …") nor one under a condition ("If the target takes vitality
+// damage, it must …").
+function ammoSave(after) {
+    const saving = after.split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\b(?:save|saving throw)\b|@Check\[(?:fortitude|reflex|will)/i.test(sentence));
+    // (Others': no. A condition's — "If the target takes vitality damage, it must …" — only beside the target's own save,
+    // as a critical hit's change to it: "If the Strike was a critical success, the target takes a -2 penalty to its save".)
+    if (saving.some((sentence) => /^(?:Each|All|Any|Creatures?)\b/.test(sentence))) return false;
+    return saving.filter((sentence) => !/^(?:If|When|Whenever)\b/.test(sentence)).some((sentence) => /^(?:On a hit,|(?:the (?:target|struck creature|creature|foe)|it)\b)/i.test(sentence));
+}
+
+// A PF2e ammunition item's own damage rules ("{item|id}-ranged-damage"): its extra dice are PF2e's already.
+const pf2eDamage = (item) => (item?.system?.rules ?? []).some((rule) => ["DamageDice", "FlatModifier"].includes(rule?.key) && /damage/.test([].concat(rule.selector ?? []).join(" ")));
+
 export function compileStrike(item, base) {
     const html = String(item?.system?.description?.value ?? "");
     // ("This Strike deals an additional 2d6 precision damage, and on a hit, the creature is Clumsy 1": the rider its own sentence.)
-    const strike = readStrike(plainText(html).replace(/,? and on a hit, /gi, ". On a hit, "));
+    const text = plainText(html).replace(/,? and on a hit, /gi, ". On a hit, ");
+    // (Activated ammunition: its hit is the next ranged Strike's with it.)
+    const strike = isAmmo(item) ? ammoStrike(text) : readStrike(text);
     if (!strike) return null;
     const riders = hitRiders(strike.after);
-    // (A save for the creature the Strike hits: "On a hit, the target must succeed at a DC 22 Fortitude save or be Dazzled".)
-    const hitSentence = /(?:On a hit|If (?:you|it|the Strike) hits?|If you hit and deal damage|If you successfully deal damage)[^.]*\b(?:save|saving throw)\b|@Check\[(?:fortitude|reflex|will)/i.test(strike.after);
+    // (A save for the creature the Strike hits: "On a hit, the target must succeed at a DC 22 Fortitude save or be Dazzled";
+    // ammunition's, anywhere in what its hit does.)
+    const hitSentence = strike.ammo ? ammoSave(strike.after) : /(?:On a hit|If (?:you|it|the Strike) hits?|If you hit and deal damage|If you successfully deal damage)[^.]*\b(?:save|saving throw)\b|@Check\[(?:fortitude|reflex|will)/i.test(strike.after);
     const save = hitSentence ? bombSave({ ...item, system: { ...(item.system ?? {}), description: { value: html } } }, { scope: { scope: "target" } }) : null;
     const riderSentence = (sentence) => {
         const row = hitRiders(sentence);
         return hasRow(row.success) || hasRow(row.criticalSuccess) || Boolean(save && /^(?:On a hit|If (?:you|it|the Strike) hits?)\b[^.]*\b(?:save|saving throw)\b/i.test(sentence));
     };
-    const extras = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
+    const read = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
+    const extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration) } : read;
     if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read) return null;
     const anyRider = hasRow(riders.success) || hasRow(riders.criticalSuccess);
     // (A trigger's Strike that already hit — Spore Sap's "Trigger You successfully Strike a creature with the spore sap Effect
@@ -115,6 +151,7 @@ function strikePlan({ base, item, strike, riders, save, extras }) {
               alteration: extras.alteration,
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
+              ...(strike.ammo ? { ammo: true } : {}),
               unarmed: strike.unarmed,
               uses: strike.uses,
               until: strike.hit ? "turn-end" : untilOf(strike.after),
@@ -134,8 +171,8 @@ function strikePlan({ base, item, strike, riders, save, extras }) {
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
-        strike: { range: strike.range, save: save ? save.plan : null, ...extra },
-        ...(extras.read && extras.notes.length ? { partial: true } : {})
+        strike: { range: strike.range, save: save ? save.plan : null, ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : {}) },
+        ...((extras.read || strike.ammo) && extras.notes.length ? { partial: true } : {})
     };
 }
 

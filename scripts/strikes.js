@@ -26,7 +26,8 @@ export async function applyStrikeCard(message) {
     const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]);
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
     const weaponId = state.plan.strike?.own ? itemIdOf(state.item.uuid) : null;
-    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId })]);
+    const ammoId = state.plan.strike?.ammo ? itemIdOf(state.item.uuid) : null;
+    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId })]);
     const next = { ...state, status: "applied", results: [`${strikeHint(state.plan, state.user.name)}${old.length ? " (The one readied before is gone.)" : ""}`] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
@@ -50,7 +51,7 @@ export async function strikeWithRider(message) {
     if (!effect) return;
     const rider = effect.flags[MODULE_ID][MODULE_KEY];
     const options = context.options ?? [];
-    const what = riderFor(rider.plan, { ranged: options.includes("item:ranged") && !options.includes("item:melee"), outcome: context.outcome, options, weaponId: rider.weaponId ?? null });
+    const what = riderFor(rider.plan, { ranged: options.includes("item:ranged") && !options.includes("item:melee"), outcome: context.outcome, options, weaponId: rider.weaponId ?? null, ammoId: rider.ammoId ?? null });
     if (!what || what === "keep") return;
     const rolled = (rider.plan.strike?.damage ?? []).length || rider.plan.strike?.alteration;
     // (A hit whose damage roll the Effect adds to: kept for it.)
