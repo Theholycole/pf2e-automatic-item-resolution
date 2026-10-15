@@ -135,3 +135,12 @@ test("no card for an item with no plan (Ration Tonic), nor for PF2e's other mess
     await settle();
     assert.equal(foundry.messages.length, count + 2, "only the two messages themselves");
 });
+
+test("no card when a potion is only shown in chat (PF2e's send-to-chat card: getOriginData, with roll options)", async () => {
+    const potion = foundry.giveItem(valeros, source("Elixir of Life (Minor)"));
+    const count = foundry.messages.length;
+    const shown = foundry.makeMessage({ flags: { pf2e: { origin: { actor: valeros.uuid, uuid: potion.uuid, type: "consumable", rollOptions: ["origin:item:elixir-of-life-minor"] } } }, speaker: { actor: valeros.id }, actor: valeros, token: valeros.token.document });
+    await foundry.call("createChatMessage", shown);
+    await settle();
+    assert.equal(foundry.messages.length, count + 1, "only PF2e's card");
+});

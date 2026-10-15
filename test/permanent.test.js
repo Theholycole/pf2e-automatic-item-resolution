@@ -74,3 +74,17 @@ test("an activation's row: not a condition only to some, not a random table's, n
     const [bastion] = compileActivations(item("Immortal Bastion"), { spellEffects });
     assert.equal(bastion.plan.partial, true);
 });
+
+test("the spell module's claims, when given: what it acts on is left to it; without them, nothing changes", async (t) => {
+    const claims = await import("../../pf2e-automatic-resolution/src/compiler/item-claims.js").then((module) => module.claims).catch(() => null);
+    if (!claims) return t.skip("the spell module's tree isn't next to this one");
+    const { handlesItem } = await import("../src/compiler/index.js");
+    const blade = item("Searing Blade");
+    assert.equal(handlesPermanent(blade), true);
+    assert.equal(handlesPermanent(blade, { claims }), false, "its cast is the spell module's");
+    assert.deepEqual(compileActivations(blade, { spellEffects, claims }), []);
+    assert.equal(handlesItem(item("Djezet Dose"), { claims }), false);
+    assert.equal(handlesItem(item("Healing Potion (Minor)"), { claims }), true);
+    // (A claims that fails is no claim.)
+    assert.equal(handlesItem(item("Healing Potion (Minor)"), { claims: () => { throw new Error("boom"); } }), true);
+});

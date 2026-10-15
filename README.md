@@ -32,7 +32,7 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 - [PF2e Resolution Core](https://github.com/Theholycole/PF2e-Automation-Core), which resolves the plans;
 - [PF2e Automatic Ability Resolution](https://github.com/Theholycole/pf2e-automatic-ability-resolution), whose compiler reads the item text and whose save cards and zones the item cards use.
 
-[PF2e Automatic Spell Resolution](https://github.com/Theholycole/pf2e-automatic-spell-resolution) casts the spells items cast. [Pseudo Afflictions](https://foundryvtt.com/packages/pseudo-afflictions) runs a poison's stages once its save card hands them on.
+[PF2e Automatic Spell Resolution](https://github.com/Theholycole/pf2e-automatic-spell-resolution) casts the spells items cast, and the items it acts on itself (its `claims`) are left to it. [Pseudo Afflictions](https://foundryvtt.com/packages/pseudo-afflictions) runs a poison's stages once its save card hands them on.
 
 ## Development
 

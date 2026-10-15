@@ -3,8 +3,8 @@
  "system": "/home/theholycole/.local/share/FoundryVTT/Data/systems/pf2e/packs",
  "totals": {
   "consumables": 1724,
-  "spellModule": 237,
-  "ours": 1487,
+  "spellModule": 238,
+  "ours": 1486,
   "bombs": {
    "bombs": 171,
    "cards": 164,
@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 333,
+   "none": 332,
    "resolves": 691,
    "builtin:zone": 86,
    "note-only": 268,
@@ -53,11 +53,11 @@
    }
   },
   "potion": {
-   "count": 183,
+   "count": 182,
    "results": {
     "resolves": 102,
     "note-only": 39,
-    "none": 21,
+    "none": 20,
     "builtin:no-effect": 10,
     "builtin:cast-spell": 9,
     "partial": 2
@@ -360,7 +360,7 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 424,
+   "none": 423,
    "item": 653,
    "zone": 86,
    "expose": 89,
@@ -382,7 +382,7 @@
    "potion": {
     "item": 95,
     "later": 40,
-    "none": 33,
+    "none": 32,
     "cast": 9,
     "save": 6
    },
@@ -443,7 +443,7 @@
    }
   },
   "noCard": {
-   "no-plan": 333,
+   "no-plan": 332,
    "triggered": 21,
    "gm": 69,
    "other": 1
@@ -18495,7 +18495,7 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Breech Ejectors",

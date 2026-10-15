@@ -219,11 +219,12 @@ export const cases = {
     async focusPoint(scene) {
         const { actor: witch, token } = await creature(scene, "Hexer", { type: "character", x: 15, y: 2, level: 5 });
         const { token: other } = await creature(scene, "Bystander", { x: 17, y: 2 });
-        // (A focus pool: a focus spellcasting entry with one hex; PF2e counts its focus spells for the pool's maximum.)
+        // (A focus pool: a focus spellcasting entry with one hex; PF2e counts its non-cantrip focus spells for the pool's
+        // maximum, so Cackle, not the Evil Eye cantrip.)
         const [entry] = await witch.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Hexes`, type: "spellcastingEntry", system: { prepared: { value: "focus" }, tradition: { value: "occult" }, ability: { value: "int" } } }]);
         const spells = game.packs.get("pf2e.spells-srd");
-        const row = (await spells.getIndex()).find((candidate) => candidate.name === "Evil Eye");
-        assert(row, "Evil Eye isn't in PF2e's spells.");
+        const row = (await spells.getIndex()).find((candidate) => candidate.name === "Cackle");
+        assert(row, "Cackle isn't in PF2e's spells.");
         const hex = (await spells.getDocument(row._id)).toObject();
         delete hex._id;
         hex.system.location = { value: entry.id };

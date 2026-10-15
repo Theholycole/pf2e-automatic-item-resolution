@@ -9,6 +9,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { actionTypeOf } from "./activation.js";
 import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
 import { focusPlan } from "./focus.js";
+import { claimedBySpellModule } from "./index.js";
 import { noteRow, ownRow, plainText } from "./rows.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
@@ -17,12 +18,13 @@ const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", 
 // An item whose activations this module reads: a permanent item with an Activate — not a staff, a wand or a spellheart
 // (the spell module's: their spells, charges, item casts; its wand readers cover every wand that changes its spell, Wand
 // of Widening's kind included), nor a bomb (a consumable weapon: its own card, src/compiler/bombs.js).
-// (Six more the spell module claims by their casts — Searing Blade, Sky Hammer, Dragon's Eye Charm, Trident of the
-// Azarketis — need its claims() before live play; asked when activations get cards.)
+// (The spell module claims more by their casts — Searing Blade, Sky Hammer, Dragon's Eye Charm, Trident of the
+// Azarketis — and the item spellshapes, Dragon's Breath runes, grimoires: options.claims, the spell module's, leaves them
+// to it; handlesItem's.)
 const SPELL_MODULE_TRAITS = ["staff", "wand", "spellheart"];
-export function handlesPermanent(item) {
+export function handlesPermanent(item, options = {}) {
     return PERMANENT_TYPES.has(item?.type) && !SPELL_MODULE_TRAITS.some((trait) => (item.system?.traits?.value ?? []).includes(trait)) && !(item.type === "weapon" && item.system?.group === "bomb")
-        && /<strong>\s*Activat/i.test(String(item.system?.description?.value ?? ""));
+        && /<strong>\s*Activat/i.test(String(item.system?.description?.value ?? "")) && !claimedBySpellModule(item, options);
 }
 
 const field = (block, name) => {
@@ -73,7 +75,7 @@ const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), ca
 
 // Each activation → { activation, plan } (plan null when nothing is read). options: as compileItem's.
 export function compileActivations(item, options = {}) {
-    if (!handlesPermanent(item)) return [];
+    if (!handlesPermanent(item, options)) return [];
     return splitActivations(item.system?.description?.value).map((activation, index) => {
         // (The activation's own block, its user the recipient: a worn item acts for its wearer, "you".)
         const part = recipientUser({ ...item, system: { ...(item.system ?? {}), description: { value: activation.html } } });

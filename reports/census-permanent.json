@@ -2,57 +2,57 @@
  "generated": "2026-10-15",
  "totals": {
   "items": 2679,
-  "staves": 560,
-  "ours": 2119,
-  "activations": 2630,
+  "staves": 592,
+  "ours": 2087,
+  "activations": 2593,
   "results": {
-   "none": 1134,
-   "builtin:cast-spell": 328,
-   "resolves": 640,
+   "none": 1112,
+   "builtin:cast-spell": 323,
+   "resolves": 636,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
-   "note-only": 302,
-   "builtin:modes": 28,
+   "note-only": 298,
+   "builtin:modes": 26,
    "partial": 7,
    "builtin:zone": 9,
    "builtin:save-bonus": 3,
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1335,
-   "cast": 328,
-   "item": 608,
+   "none": 1311,
+   "cast": 323,
+   "item": 600,
    "save": 301,
    "focus": 45,
    "zone": 9,
    "later": 4
   },
-  "withFrequency": 1773,
-  "withTrigger": 429
+  "withFrequency": 1749,
+  "withTrigger": 428
  },
  "byType": {
   "equipment": {
-   "activations": 1720,
+   "activations": 1690,
    "results": {
-    "none": 734,
-    "builtin:cast-spell": 230,
-    "resolves": 386,
+    "none": 714,
+    "builtin:cast-spell": 229,
+    "resolves": 383,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
-    "note-only": 190,
-    "builtin:modes": 17,
+    "note-only": 186,
     "partial": 6,
     "builtin:zone": 6,
+    "builtin:modes": 15,
     "builtin:save-bonus": 2
    }
   },
   "weapon": {
-   "activations": 467,
+   "activations": 460,
    "results": {
-    "resolves": 138,
-    "none": 198,
+    "resolves": 137,
+    "none": 196,
     "note-only": 47,
-    "builtin:cast-spell": 62,
+    "builtin:cast-spell": 58,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
     "builtin:save-bonus": 1,
@@ -500,17 +500,6 @@
    "live": "item"
   },
   {
-   "name": "Communion Mat",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": "once per 10 minutes",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Chain of Command",
    "type": "weapon",
    "activation": "Mercy of the Commander",
@@ -771,17 +760,6 @@
    "frequency": null,
    "trigger": false,
    "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Shadow Signet",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "builtin:modes",
    "kind": null,
    "live": null
   },
@@ -2139,17 +2117,6 @@
    "live": "item"
   },
   {
-   "name": "Reflexive Tattoo",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Oculus of Abaddon",
    "type": "equipment",
    "activation": null,
@@ -2808,17 +2775,6 @@
    "result": "resolves",
    "kind": "effect",
    "live": "item"
-  },
-  {
-   "name": "Dragon's Breath (3rd Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Wilderness Weave",
@@ -4801,50 +4757,6 @@
    "live": null
   },
   {
-   "name": "Dragon's Eye Charm",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
-  },
-  {
-   "name": "Dragon's Eye Charm",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Dragon's Eye Charm",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
-  },
-  {
-   "name": "Dragon's Eye Charm",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
-  },
-  {
    "name": "Piston Gauntlets",
    "type": "weapon",
    "activation": null,
@@ -4944,17 +4856,6 @@
    "live": "cast"
   },
   {
-   "name": "Sky Hammer",
-   "type": "weapon",
-   "activation": "Comet Fall",
-   "time": "reaction",
-   "frequency": null,
-   "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Blade of the Rabbit Prince",
    "type": "weapon",
    "activation": null,
@@ -5028,28 +4929,6 @@
    "frequency": "once per day",
    "trigger": false,
    "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Codex of Destruction and Renewal",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Codex of Destruction and Renewal",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "builtin:modes",
    "kind": null,
    "live": null
   },
@@ -6902,17 +6781,6 @@
    "live": null
   },
   {
-   "name": "Bloodstained Treatise",
-   "type": "equipment",
-   "activation": "Sanguine Expulsion",
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
-  },
-  {
    "name": "Knight Captain's Lance",
    "type": "weapon",
    "activation": null,
@@ -7210,17 +7078,6 @@
    "live": null
   },
   {
-   "name": "Star Chart Tattoo",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Benthic Drums",
    "type": "equipment",
    "activation": "Call from the Depths",
@@ -7452,17 +7309,6 @@
    "live": null
   },
   {
-   "name": "Dragon's Breath (2nd Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Cowl of Keys",
    "type": "equipment",
    "activation": null,
@@ -7584,17 +7430,6 @@
    "live": null
   },
   {
-   "name": "Amazing Pop-up Book",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Phantom Fang",
    "type": "weapon",
    "activation": "Phantom Dodge",
@@ -7604,17 +7439,6 @@
    "result": "none",
    "kind": null,
    "live": null
-  },
-  {
-   "name": "Searing Blade",
-   "type": "weapon",
-   "activation": "Shoot Fire",
-   "time": "2",
-   "frequency": null,
-   "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
   },
   {
    "name": "Runeveil Ammunition",
@@ -7980,17 +7804,6 @@
    "live": "cast"
   },
   {
-   "name": "Dragon's Breath (4th Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Nemesis Name",
    "type": "equipment",
    "activation": null,
@@ -8352,17 +8165,6 @@
    "result": "builtin:cast-spell",
    "kind": null,
    "live": "cast"
-  },
-  {
-   "name": "Dragon's Breath (8th Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Vortex Pouch",
@@ -8754,17 +8556,6 @@
    "type": "equipment",
    "activation": null,
    "time": "1 minute",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Summoning Handscroll",
-   "type": "equipment",
-   "activation": "Bolstering Spell",
-   "time": "free",
    "frequency": "once per day",
    "trigger": false,
    "result": "none",
@@ -9925,17 +9716,6 @@
    "result": "none",
    "kind": null,
    "live": null
-  },
-  {
-   "name": "Architect's Pattern Book",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": "once per week",
-   "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
   },
   {
    "name": "Fighter's Fork",
@@ -11819,17 +11599,6 @@
    "live": "item"
   },
   {
-   "name": "Sparking Grimoire (Greater)",
-   "type": "equipment",
-   "activation": "Static Shock",
-   "time": "free",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Ring of Lies",
    "type": "equipment",
    "activation": "Sweeten Lies",
@@ -13359,17 +13128,6 @@
    "live": "item"
   },
   {
-   "name": "Hundred-Moth Caress",
-   "type": "weapon",
-   "activation": "Pallid Reaping",
-   "time": "free",
-   "frequency": "once per round",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Slumber Arrow",
    "type": "ammo",
    "activation": null,
@@ -13797,17 +13555,6 @@
    "result": "resolves",
    "kind": "save",
    "live": "save"
-  },
-  {
-   "name": "Dragon's Breath (6th Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Jaathoom's Scarf",
@@ -16780,17 +16527,6 @@
    "live": "item"
   },
   {
-   "name": "Nine Void Sleeves",
-   "type": "equipment",
-   "activation": "Shadow Fingers",
-   "time": "1",
-   "frequency": "once per 10 minutes",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Resonating Crystal Boots",
    "type": "equipment",
    "activation": "Chiming Steps",
@@ -17880,17 +17616,6 @@
    "live": "cast"
   },
   {
-   "name": "Dragon's Breath (1st Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Timpani of Panic",
    "type": "equipment",
    "activation": "Sustain Dread",
@@ -18072,17 +17797,6 @@
    "activation": null,
    "time": "1",
    "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Dragon's Breath (7th Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
    "trigger": false,
    "result": "none",
    "kind": null,
@@ -18395,17 +18109,6 @@
    "result": "resolves",
    "kind": "save",
    "live": "save"
-  },
-  {
-   "name": "Dragon's Breath (9th Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Chained Mist",
@@ -20949,17 +20652,6 @@
    "live": null
   },
   {
-   "name": "Sparking Grimoire",
-   "type": "equipment",
-   "activation": "Static Shock",
-   "time": "free",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Archaic Wayfinder",
    "type": "equipment",
    "activation": null,
@@ -21697,17 +21389,6 @@
    "live": "item"
   },
   {
-   "name": "Trident of the Azarketis (Greater)",
-   "type": "weapon",
-   "activation": "Force of the Sea",
-   "time": "2",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
-  },
-  {
    "name": "Shadewither Key",
    "type": "equipment",
    "activation": null,
@@ -21860,17 +21541,6 @@
    "result": "none",
    "kind": null,
    "live": null
-  },
-  {
-   "name": "Juubun's One Thousand Poems",
-   "type": "equipment",
-   "activation": "Poetic Spellcasting",
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
   },
   {
    "name": "Sanguine Klar",
@@ -22236,17 +21906,6 @@
    "live": null
   },
   {
-   "name": "Dragon's Breath (5th Level Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Essence Prism",
    "type": "equipment",
    "activation": null,
@@ -22531,17 +22190,6 @@
    "result": "none",
    "kind": null,
    "live": null
-  },
-  {
-   "name": "Trident of the Azarketis",
-   "type": "weapon",
-   "activation": "Force of the Sea",
-   "time": "2",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
   },
   {
    "name": "Twilight Tattoo",
@@ -24062,17 +23710,6 @@
    "live": null
   },
   {
-   "name": "Liar's Lexicon",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Silent Bell",
    "type": "equipment",
    "activation": "Ring in the Quiet",
@@ -24392,17 +24029,6 @@
    "live": null
   },
   {
-   "name": "Book of Endless Walls",
-   "type": "equipment",
-   "activation": "Bewildering Walls",
-   "time": "free",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
-  },
-  {
    "name": "Ghost Lantern",
    "type": "equipment",
    "activation": null,
@@ -24511,28 +24137,6 @@
    "result": "resolves",
    "kind": "save",
    "live": "save"
-  },
-  {
-   "name": "Searing Blade (Greater)",
-   "type": "weapon",
-   "activation": "Shoot Fire",
-   "time": "2",
-   "frequency": null,
-   "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
-  },
-  {
-   "name": "Searing Blade (Greater)",
-   "type": "weapon",
-   "activation": "Radiate Flames",
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
   },
   {
    "name": "Chiromantic Lines",
@@ -28159,17 +27763,6 @@
    "activation": null,
    "time": "1",
    "frequency": null,
-   "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
-  },
-  {
-   "name": "Radiant Tome",
-   "type": "equipment",
-   "activation": "Flare",
-   "time": "1",
-   "frequency": "once per day",
    "trigger": false,
    "result": "note-only",
    "kind": "check",

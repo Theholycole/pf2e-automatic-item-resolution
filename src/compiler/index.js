@@ -26,17 +26,30 @@ export const SPELL_MODULE_CATEGORIES = Object.freeze(["scroll", "wand", "catalys
 
 // An item this module compiles: a consumable outside the spell module's categories, and not a catalyst by its trait
 // either (20 of PF2e's 107 catalysts are filed as "other": Void Salts, Irritating Seedpod — the spell module's too).
-export function handlesItem(item) {
-    return item?.type === "consumable" && !SPELL_MODULE_CATEGORIES.includes(item.system?.category) && !(item.system?.traits?.value ?? []).includes("catalyst");
+// options.claims: the spell module's claims(item) when it's there (its api in Foundry, its src/compiler/item-claims.js in
+// Node) — an item it acts on (Djezet Dose's spellshape) is left to it. Without it, the categories and trait alone.
+export function handlesItem(item, options = {}) {
+    return item?.type === "consumable" && !SPELL_MODULE_CATEGORIES.includes(item.system?.category) && !(item.system?.traits?.value ?? []).includes("catalyst") && !claimedBySpellModule(item, options);
+}
+
+// The spell module's claims (options.claims), false when it isn't given or fails.
+export function claimedBySpellModule(item, { claims = null } = {}) {
+    if (typeof claims !== "function") return false;
+    try {
+        return claims(item) === true;
+    } catch {
+        return false;
+    }
 }
 
 export { asAbility } from "./ability-shape.js";
 
 // One item → a plan, { builtin }, or null.
 // options: the ability compiler's (basicActions, actor) and spellEffects, PF2e's spell Effects by spell name in lower case
-// ({ "haste": { uuid, name } }; spellEffectIndex() builds it from the spell-effects pack's items).
+// ({ "haste": { uuid, name } }; spellEffectIndex() builds it from the spell-effects pack's items); claims, the spell
+// module's (handlesItem).
 export function compileItem(item, options = {}) {
-    if (!handlesItem(item)) return null;
+    if (!handlesItem(item, options)) return null;
     const read = compileAbility(asAbility(item), options);
     const base = basePlan(item);
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)

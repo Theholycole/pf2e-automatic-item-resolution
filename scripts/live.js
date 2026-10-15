@@ -77,9 +77,13 @@ async function usedItem(origin, message) {
     return source ? { data: { ...source.toObject(false), uuid: origin.uuid ?? null }, actor: message.actor ?? null } : null;
 }
 
+// (PF2e's Use posts its origin as { sourceId, uuid, type }; its "send to chat" card as getOriginData(), with the actor
+// and roll options: showing a potion in chat isn't drinking it.)
+const isPostedCard = (origin) => Array.isArray(origin?.rollOptions);
+
 async function cardForUse(message) {
     const origin = message?.flags?.pf2e?.origin;
-    if (origin?.type !== "consumable" || message.flags?.pf2e?.context?.type || message.flags?.[MODULE_ID]) return;
+    if (origin?.type !== "consumable" || isPostedCard(origin) || message.flags?.pf2e?.context?.type || message.flags?.[MODULE_ID]) return;
     const used = await usedItem(origin, message);
     if (!used) return;
     const plan = compile(used.data);
