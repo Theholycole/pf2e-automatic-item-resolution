@@ -12,6 +12,7 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
 
 - **Potions, elixirs, mutagens:** the card says what drinking does: "Heals 6 Hit Points (PF2e's roll of 1d8)", "Effect: Elixir of Life", "concealed for 5 minutes".
   - Pick the **drinker**: yourself, or a creature next to you to feed it to. Apply heals them and makes the Effects at the item's grade.
+  - A tea's card has a **Tea Ceremony** tick: ticked, the tea lasts the ceremony's longer time and does what it adds (Longnight Tea removes fatigued).
   - Healing uses PF2e's own roll. PF2e's apply buttons on that roll are taken away so nothing is healed twice, and a dying creature healed to 1 HP or more stops dying.
 - **Bombs:** after PF2e's damage roll, the card lists the creatures within 5 feet of the target, all ticked; untick any the splash shouldn't reach.
   - Apply gives them PF2e's own splash and puts the riders on the target ("off-guard until the start of your next turn", "frightened 2" on a critical hit).

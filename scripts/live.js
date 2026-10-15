@@ -157,7 +157,7 @@ function choicesOf(state, root) {
     if (state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
-    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) };
+    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked) };
 }
 
 const APPLY = {
@@ -240,7 +240,7 @@ async function onRequest(data) {
         : state.kind === "poison" ? { weapon: data.weapon }
         : state.kind === "cast" ? { drinker: data.drinker, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
-        : { drinker: data.drinker };
+        : { drinker: data.drinker, ceremony: Boolean(data.ceremony) };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
@@ -251,9 +251,11 @@ async function onRequest(data) {
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
 
-async function applyCard(message, { drinker = null } = {}) {
+async function applyCard(message, { drinker = null, ceremony = false } = {}) {
     let state = stateOf(message);
     if (!state || state.status !== "open") return null;
+    // (A tea's Tea Ceremony, as ticked.)
+    if (state.ceremony !== null && state.ceremony !== undefined) state = { ...state, ceremony: Boolean(ceremony) };
     const core = game.modules.get(CORE_ID)?.api;
     if (!core) throw new Error("The resolution core isn't active.");
     if (state.drinker !== null && Number.isInteger(drinker) && state.drinkers[drinker]) state = { ...state, drinker };
@@ -299,6 +301,12 @@ async function applyCard(message, { drinker = null } = {}) {
             lines.push(`Couldn't apply ${change.op} to ${name}: ${error.message}`);
         }
     }
+    // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
+    if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {
+        if (!target.actor?.hasCondition?.(slug)) continue;
+        await target.actor.decreaseCondition(slug, { forceRemove: true });
+        lines.push(`${recipient.name} is no longer ${slug} (the Tea Ceremony)`);
+    }
     const next = { ...state, status: "applied", results: lines.length ? lines : ["Nothing to apply."] };
     return message.update({ content: cardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
@@ -325,8 +333,13 @@ async function nativeEffect(actor, name, change, state) {
     if (!actor) return null;
     const template = await fromUuid(change.effect.uuid).catch(() => null);
     if (!template) return `${name}: ${change.effect.label ?? "the effect"} wasn't found; apply it by hand.`;
+    // (A tea's Tea Ceremony: its longer time, and PF2e's ceremony choice preset either way.)
+    const ceremony = state.ceremony === null || state.ceremony === undefined ? null : Boolean(state.ceremony);
+    const application = applicationFor(state.plan, change);
+    const time = ceremony ? state.plan.item?.ceremony?.duration ?? null : null;
     const source = effectSource(template.toObject(), {
-        application: applicationFor(state.plan, change),
+        application: time ? { ...(application ?? {}), duration: time } : application,
+        ceremony,
         item: state.item,
         user: state.user,
         worldTime: game.time.worldTime,

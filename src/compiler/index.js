@@ -19,6 +19,7 @@ import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { guardText, guardValues } from "./guards.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
+import { readTeaCeremony } from "./tea.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -127,7 +128,9 @@ function itemInfo(item) {
             ?? (["poison", "drug"].includes(item.system?.category) ? /\b(injury|contact|inhaled|ingested) (?:poison|drug)\b/i.exec(String(item.system?.description?.value ?? "").replace(/<[^>]+>/g, " "))?.[1]?.toLowerCase() ?? null : null),
         // What PF2e's own Use rolls (its healing or damage), so live play doesn't roll it again.
         pf2eRoll: pf2eRoll(item),
-        activations: readActivations(item?.system?.description?.value)
+        activations: readActivations(item?.system?.description?.value),
+        // (A tea's Tea Ceremony: the card's tick, src/compiler/tea.js.)
+        ...(readTeaCeremony(item?.system?.description?.value) ? { ceremony: readTeaCeremony(item?.system?.description?.value) } : {})
     };
 }
 

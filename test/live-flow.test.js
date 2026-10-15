@@ -144,3 +144,28 @@ test("no card when a potion is only shown in chat (PF2e's send-to-chat card: get
     await settle();
     assert.equal(foundry.messages.length, count + 1, "only PF2e's card");
 });
+
+test("a tea's Tea Ceremony: ticked, its Effect lasts the ceremony's time, PF2e's ceremony choice preset, its condition removed", async () => {
+    const drinker = foundry.makeActor({ id: "tea-drinker", name: "Drinker", owners: ["player"], conditions: ["fatigued"] });
+    foundry.place(drinker, 0, 13000);
+    const longnight = foundry.giveItem(drinker, source("Longnight Tea"));
+    const card = cardAfter(await use(drinker, longnight));
+    assert.equal(stateOf(card).ceremony, false);
+    assert.match(card.content, /data-air-field="ceremony"[^>]*> Tea Ceremony \(10 minutes\): lasts 8 hours, removes fatigued/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: 0, ceremony: true, userId: "player" });
+    await settle();
+    const effect = drinker.created.find((entry) => entry.name === "Effect: Longnight Tea");
+    assert.deepEqual([effect.system.duration.value, effect.system.duration.unit], [8, "hours"]);
+    assert.equal(drinker.hasCondition("fatigued"), false);
+    // Peace in Dreams Tea: PF2e's own ChoiceSet set to the ceremony when ticked, to the plain drink when not.
+    const peace = (ceremony) => async () => {
+        const item = foundry.giveItem(drinker, source("Peace in Dreams Tea"));
+        const before = drinker.created.length;
+        const message = cardAfter(await use(drinker, item));
+        await foundry.socket(SOCKET)({ action: "apply", messageId: message.id, drinker: 0, ceremony, userId: "player" });
+        await settle();
+        return drinker.created.slice(before).find((entry) => entry.name === "Effect: Peace in Dreams Tea").system.rules.find((rule) => rule.key === "ChoiceSet").selection;
+    };
+    assert.equal(await peace(true)(), "tea-ceremony");
+    assert.equal(await peace(false)(), "one-action");
+});

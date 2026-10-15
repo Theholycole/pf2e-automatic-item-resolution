@@ -23,6 +23,8 @@ export function createItemCard({ plan, item, user, drinkers = [], rolled = null 
         user,
         drinkers: choices,
         drinker: drinker ? 0 : null,
+        // (A tea's Tea Ceremony: ticked on the card, false until then; null for any other item.)
+        ceremony: plan?.item?.ceremony ? false : null,
         rolled,
         results: []
     };
@@ -99,12 +101,20 @@ export function previewLines(state) {
 // equipment Effects share one item across grades, with a ChoiceSet on the used item's
 // slug, which can't be read once the last dose is deleted), the spell's rank, the time
 // the item gives, and where it came from. Returns a new source.
-export function effectSource(template, { application = null, item = {}, user = {}, worldTime = 0, initiative = null, flags = {} } = {}) {
+// ceremony: a tea's Tea Ceremony, true or false (null for any other item) — PF2e's own ceremony choice on the tea's Effect
+// is preset to it (Peace in Dreams Tea's "tea-ceremony", Resurrection Tea's "TeaCeremony" label), so PF2e needn't ask.
+const isCeremonyChoice = (entry) => entry?.value === "tea-ceremony" || /TeaCeremony/i.test(String(entry?.label ?? ""));
+export function effectSource(template, { application = null, item = {}, user = {}, worldTime = 0, initiative = null, flags = {}, ceremony = null } = {}) {
     const source = structuredClone(template);
     delete source._id;
     const slug = item.slug ?? null;
     for (const rule of source.system?.rules ?? []) {
         if (rule?.key !== "ChoiceSet" || rule.selection !== undefined || !Array.isArray(rule.choices)) continue;
+        if (ceremony !== null && rule.choices.some(isCeremonyChoice)) {
+            const chosen = rule.choices.find((entry) => (ceremony ? isCeremonyChoice(entry) : !isCeremonyChoice(entry)));
+            if (chosen) rule.selection = chosen.value;
+            continue;
+        }
         const choice = rule.choices.find((entry) => (item.sourceId && entry?.value === item.sourceId) || (slug && JSON.stringify(entry?.predicate ?? []).includes(`parent:origin:item:slug:${slug}"`)));
         if (choice) rule.selection = choice.value;
     }
@@ -126,8 +136,15 @@ export function cardHTML(state, { canApply = false } = {}) {
             ? `<p class="aar-actions">Drinker: <select data-air-field="drinker">${state.drinkers.map((entry, index) => `<option value="${index}"${index === state.drinker ? " selected" : ""}>${escape(entry.name)}${index === 0 ? " (self)" : ""}</option>`).join("")}</select></p>`
             : `<p class="aar-actions">Drinker: ${escape(recipient.name)}</p>`;
     const preview = open ? previewLines(state) : [];
+    // (A tea's Tea Ceremony: a tick, or what was chosen.)
+    const ceremonyInfo = state.plan?.item?.ceremony;
+    const changes = ceremonyInfo ? [ceremonyInfo.duration ? `lasts ${timeText(ceremonyInfo.duration)}` : null, ...(ceremonyInfo.removes ?? []).map((slug) => `removes ${slug}`)].filter(Boolean) : [];
+    const ceremonyWords = `Tea Ceremony (10 minutes)${changes.length ? `: ${changes.join(", ")}` : ""}`;
+    const ceremony = state.ceremony === null || state.ceremony === undefined ? ""
+        : open && canApply ? `<p class="aar-actions"><label><input type="checkbox" data-air-field="ceremony"${state.ceremony ? " checked" : ""}> ${escape(ceremonyWords)}</label></p>`
+            : state.ceremony ? `<p class="aar-actions">${escape(ceremonyWords)}</p>` : "";
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${previewList}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${previewList}${results}${controls}</section>`;
 }

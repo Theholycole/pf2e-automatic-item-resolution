@@ -34,7 +34,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - Next readings for batch 1, by size:
   1. Counteracting potions (Surging Serum, Bottled Catharsis, Potion of Stable Form): the core's affliction-care family (counteract), with the item's counteract modifier and rank. This needs live code of its own (pick the Effect to counteract, roll the check), so it waits until it can be checked in Foundry.
   2. Resistance to a chosen type with no Effect (Potion of Resistance, Mutagenic Renovator): an Effect made with PF2e's Resistance rule, the type picked on the card.
-  3. Items with two activations (the teas' Tea Ceremony): one option each.
+  3. Items with two activations: the teas' Tea Ceremony is **built** (`src/compiler/tea.js`, the user's answer of 2026-10-15). `plan.item.ceremony` holds `{ duration, removes, text }`, and the card shows a "Tea Ceremony" tick. Ticked, the tea's Effect lasts the ceremony's time (Longnight Tea's 8 hours) and the conditions it names go (its fatigued). PF2e's own ceremony ChoiceSet on the Effect is preset to the ceremony when ticked and to the plain drink when not (Peace in Dreams Tea, Resurrection Tea), so PF2e needn't ask.
   4. Out of combat (Disguise, Gender Transformation, Ration Tonic, Bookthief Brew): the GM's, as the ability module's "no-effect" with a reason.
 
 ## Live play (built; the user's answers of 2026-10-15)
