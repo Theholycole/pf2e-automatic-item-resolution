@@ -16,6 +16,7 @@ import { fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { noteRow, ownRow } from "./rows.js";
 import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
+import { rerollOver, rerollPlan } from "./rerolls.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -62,6 +63,8 @@ export function compileItem(item, options = {}) {
     let plan = own && !own.noteOnly ? own : (read ? fitPlan(item, read, base, options) : ownPlan(item, base, options)) ?? rowPlan(item, base);
     // (A Strike with riders, src/compiler/strikes.js: Fear Gem.)
     plan = strikeOver(plan, compileStrike(item, base));
+    // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Lucky Rabbit's Foot.)
+    plan = rerollOver(plan, rerollPlan(item?.system?.description?.value, base));
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const info = itemInfo(item);

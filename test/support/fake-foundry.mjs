@@ -27,6 +27,7 @@ export function createFakeFoundry() {
     const emitted = [];
     const applied = [];
     const notifications = [];
+    const rerolls = [];
 
     const register = (document) => {
         documents.set(document.uuid, document);
@@ -206,7 +207,13 @@ export function createFakeFoundry() {
             users: { get activeGM() {
                 return { isSelf: current.isGM };
             }, get: (id) => users.get(id), filter: (test) => [...users.values()].filter(test) },
-            messages: { get: (id) => messages.find((message) => message.id === id) },
+            messages: { get: (id) => messages.find((message) => message.id === id), get contents() {
+                return messages;
+            } },
+            // PF2e's reroll (game.pf2e.Check.rerollFromMessage): recorded.
+            pf2e: { Check: { rerollFromMessage: async (message, options) => {
+                rerolls.push({ message, options });
+            } } },
             modules,
             socket: { on: (name, handler) => sockets.set(name, handler), emit: (name, data) => emitted.push({ name, data }) },
             time: { worldTime: 1000 },
@@ -250,6 +257,7 @@ export function createFakeFoundry() {
         emitted,
         applied,
         notifications,
+        rerolls,
         documents,
         makeActor,
         giveItem,

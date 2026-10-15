@@ -6,12 +6,13 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 1112,
+   "none": 1101,
    "builtin:cast-spell": 323,
    "resolves": 637,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "note-only": 297,
+   "builtin:reroll": 11,
    "builtin:modes": 26,
    "partial": 7,
    "builtin:zone": 9,
@@ -19,11 +20,12 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1311,
+   "none": 1300,
    "cast": 323,
    "item": 599,
    "save": 297,
    "focus": 45,
+   "reroll": 11,
    "zone": 9,
    "strike": 5,
    "later": 4
@@ -35,12 +37,13 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 714,
+    "none": 709,
     "builtin:cast-spell": 229,
     "resolves": 383,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
     "note-only": 186,
+    "builtin:reroll": 5,
     "partial": 6,
     "builtin:zone": 6,
     "builtin:modes": 15,
@@ -51,9 +54,10 @@
    "activations": 460,
    "results": {
     "resolves": 137,
-    "none": 196,
+    "none": 191,
     "note-only": 47,
     "builtin:cast-spell": 58,
+    "builtin:reroll": 5,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
     "builtin:save-bonus": 1,
@@ -84,7 +88,8 @@
     "note-only": 24,
     "resolves": 50,
     "builtin:no-effect": 6,
-    "none": 49,
+    "none": 48,
+    "builtin:reroll": 1,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
     "builtin:focus-point": 2,
@@ -331,9 +336,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Horned Hand Rests",
@@ -617,9 +622,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Helmsman's Recourse (Greater)",
@@ -5028,9 +5033,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Bloodthirsty",
@@ -5655,9 +5660,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Symbol of Conflict (Major)",
@@ -13707,9 +13712,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Spectral Opera Glasses",
@@ -14939,9 +14944,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Sacred Valkyrie Helm",
@@ -20527,9 +20532,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Clandestine Cloak",
@@ -22100,9 +22105,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Eye of Fortune",
@@ -23519,9 +23524,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Starfaring Cloak",
@@ -23904,9 +23909,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Soaring Wings (Major)",
@@ -26676,9 +26681,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Crown of the Fire Eater (Major)",

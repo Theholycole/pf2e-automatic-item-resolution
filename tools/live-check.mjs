@@ -215,6 +215,23 @@ export const cases = {
         return { outcome, frightened: value };
     },
 
+    // Lucky Rabbit's Foot: after a Reflex save, its card has PF2e reroll that save (keeping the new result).
+    async rerollSave(scene) {
+        const { actor: hero } = await creature(scene, "Lucky One", { x: 6, y: 15 });
+        const foot = await give(hero, "Lucky Rabbit's Foot");
+        let since = Date.now();
+        await hero.saves.reflex.roll({ skipDialog: true, dc: { value: 40 } });
+        const save = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "saving-throw" && message.speaker?.actor === hero.id, { what: "the Reflex save" });
+        since = Date.now();
+        await foot.consume();
+        const card = await messageAfter(since, itemCard("reroll"), { what: "the reroll card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const end = Date.now() + 8000;
+        while (Date.now() < end && !game.messages.get(save.id)?.flags?.pf2e?.context?.isReroll) await wait(250);
+        assert(game.messages.get(save.id)?.flags?.pf2e?.context?.isReroll, "PF2e rerolled the save");
+        return { save: save.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Spark Wafer: its save goes to the creatures targeted, through the ability module's save card.
     async useSave(scene) {
         const { actor: user } = await creature(scene, "Snapper", { x: 2, y: 12 });

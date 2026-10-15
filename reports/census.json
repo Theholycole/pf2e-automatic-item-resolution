@@ -14,12 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 331,
+   "none": 329,
    "resolves": 692,
    "builtin:zone": 86,
    "note-only": 268,
    "builtin:no-effect": 69,
    "partial": 10,
+   "builtin:reroll": 2,
    "builtin:save-bonus": 1
   }
  },
@@ -78,10 +79,11 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 77,
+    "none": 76,
     "note-only": 13,
     "resolves": 46,
     "builtin:no-effect": 10,
+    "builtin:reroll": 1,
     "builtin:cast-spell": 9,
     "partial": 1
    },
@@ -223,11 +225,12 @@
   "fulu": {
    "count": 46,
    "results": {
-    "none": 21,
+    "none": 20,
     "partial": 1,
     "resolves": 12,
     "note-only": 10,
-    "builtin:cast-spell": 2
+    "builtin:cast-spell": 2,
+    "builtin:reroll": 1
    },
    "mechanisms": {
     "trigger": 15,
@@ -330,7 +333,7 @@
    "count": 156,
    "resolves": 54,
    "gaps": 0,
-   "none": 73
+   "none": 71
   },
   "counteract": {
    "count": 79,
@@ -360,12 +363,13 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 422,
+   "none": 420,
    "item": 653,
    "zone": 86,
    "expose": 89,
    "later": 54,
    "save": 107,
+   "reroll": 2,
    "coat": 45,
    "strike": 1
   },
@@ -388,8 +392,9 @@
     "save": 3
    },
    "talisman": {
-    "none": 88,
+    "none": 87,
     "item": 48,
+    "reroll": 1,
     "cast": 9,
     "save": 10,
     "strike": 1
@@ -430,10 +435,11 @@
     "cast": 1
    },
    "fulu": {
-    "none": 24,
+    "none": 23,
     "item": 17,
     "save": 3,
-    "cast": 2
+    "cast": 2,
+    "reroll": 1
    },
    "drug": {
     "expose": 23,
@@ -445,7 +451,7 @@
    }
   },
   "noCard": {
-   "no-plan": 331,
+   "no-plan": 329,
    "triggered": 21,
    "gm": 69,
    "other": 1
@@ -2029,7 +2035,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Comprehension Elixir (Lesser)",
@@ -23658,7 +23666,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Scything Blade Snare",

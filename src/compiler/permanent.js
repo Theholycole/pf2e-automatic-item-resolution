@@ -10,6 +10,7 @@ import { actionTypeOf } from "./activation.js";
 import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
+import { rerollOver, rerollPlan } from "./rerolls.js";
 import { claimedBySpellModule } from "./index.js";
 import { noteRow, ownRow, plainText } from "./rows.js";
 
@@ -103,6 +104,8 @@ export function compileActivations(item, options = {}) {
         if (!plan) plan = rowPlanFor(part, base);
         // (A Strike with riders, src/compiler/strikes.js: Duelist's Beacon.)
         plan = strikeOver(plan, compileStrike(part, base));
+        // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Starfaring Cloak.)
+        plan = rerollOver(plan, rerollPlan(activation.html, base));
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
         return {

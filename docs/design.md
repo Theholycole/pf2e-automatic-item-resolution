@@ -97,7 +97,17 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 
 **The GM fallback gives way.** The ability compiler's last fallback ("no-effect", the GM's) yields to a reading of the item's own (its linked Effect, a spell's Effect, PF2e's healing, its row), though not to a note alone. PF2e's healing field counts only when the text heals: Potion of Annulment keeps its counteract roll there.
 
-`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,064 of 1,486 consumables get a card, and it says why the rest don't.
+`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,066 of 1,486 consumables get a card, and it says why the rest don't.
+
+**Rerolls** (`src/compiler/rerolls.js`, `scripts/rerolls.js`; 13 items): "reroll the triggering Reflex save" (Lucky Rabbit's Foot), "Reroll the triggering roll and take the higher result" (Starfaring Cloak), "You force the attacker to reroll the attack roll and use the worse result" (Mail of Luck). A builtin "reroll" `{ what, keep, who, statistic?, after? }`.
+- The card finds the triggering roll in the last 40 messages: the user's latest save, check or attack roll not rerolled yet (a named save by PF2e's check domains), or for Mail of Luck the latest attack roll at the user.
+- PF2e rerolls it with `game.pf2e.Check.rerollFromMessage`, on the GM's client: no `keep` for the new result (as PF2e's own "Keep new" menu), else `keep: "higher"` or `"lower"`.
+- Not read:
+  - a bonus on the reroll (Redsand Hourglass's +4: PF2e's reroll keeps the roll's modifiers);
+  - another creature's reroll (a companion, allies);
+  - a coin flip, a Mythic Point, a choice of results;
+  - a reroll kept for later (Old Tillimaquin);
+  - a table's "Reroll two results".
 
 **Items used by Striking** (`src/compiler/strikes.js`, `scripts/strikes.js`): "make a melee Strike. If you hit and deal damage, the target is Frightened 1, or Frightened 2 on a critical hit" (Fear Gem), "Attempt a melee Strike … On a hit, the target must succeed at a DC 22 Fortitude save or be Blinded" (Duelist's Beacon), Aurochs' Might Tattoo, Gloaming Arc. The bombs' rider and save readers, shared. The plan is a bomb's shape: the save family with the Strike as its roll, plus `plan.strike` `{ range, save }`.
 - Apply readies the user's next Strike this turn, an Effect that lasts to the end of the turn.
@@ -113,6 +123,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - a bomb's splash and off-guard;
 - a coated weapon's hit and its save card;
 - Fear Gem's readied Strike frightening the creature it hits;
+- Lucky Rabbit's Foot rerolling a Reflex save;
 - Spark Wafer's save;
 - a Cloak of Elvenkind's activations card;
 - Hexing Jar's Focus Point, lost at the end of the turn in the check's own encounter (cleanup deletes only encounters flagged as its fixtures);
