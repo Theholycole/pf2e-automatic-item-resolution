@@ -4,14 +4,22 @@ A Foundry VTT module (id `pf2e-automatic-item-resolution`) that automates Pathfi
 
 Spell-casting items (scrolls, wands, staves, catalysts) belong to PF2e Automatic Spell Resolution.
 
-**Status (2026-10-15): set up; batch 1 (potions, elixirs, mutagens) designed, not live yet.** See [docs/design.md](docs/design.md) and [docs/census.md](docs/census.md). Not published on GitHub yet.
+**Status (2026-10-15): batch 1 (potions, elixirs, mutagens) and the start of batch 2 (bombs, injury poisons) are built and tested offline against a stand-in for Foundry. Not checked in Foundry yet.** See [docs/design.md](docs/design.md) and [docs/census.md](docs/census.md). Not published on GitHub yet.
 
-- The compiler (`src/compiler/`) turns a consumable into a plan for the core. It reads the text with PF2e Automatic Ability Resolution's compiler, and adds what the item's own data says:
+- **The compiler** (`src/compiler/`) turns a consumable into a plan for the core. It reads the text with PF2e Automatic Ability Resolution's compiler, and adds what the item's own data says:
   - who drinks it;
   - the healing PF2e rolls for it;
-  - its linked PF2e Effect.
-- 732 of the 1,508 consumables it handles compile to a plan the core resolves with no gaps.
-- In Foundry it registers that compiler with the core (`registry.planFor(item)`). The live confirmation cards come with batch 1.
+  - its linked PF2e Effect, or a spell's Effect at the item's rank;
+  - what the text plainly does to the drinker;
+  - a note Effect for the rest.
+
+  745 of the 1,508 consumables it handles compile to a plan the core resolves with no gaps. 272 more get only a note, and 5 are partial.
+- **Cards after PF2e's own Use** (`scripts/live.js`): the item's confirmation card. It names the drinker: the user, or a creature next to them to feed it to. The item's owner or the GM applies it.
+  - Healing uses PF2e's own roll, and PF2e's buttons are hidden on that message so nothing is healed twice.
+  - Effects are made at the item's grade.
+- **Bombs** (`scripts/bombs.js`): after PF2e's damage roll, a card for the splash on the creatures within 5 feet of the target and the riders on a hit or a critical hit.
+- **Injury poisons** (`scripts/poisons.js`): coat a weapon. Its next hit posts the poison's save card (the ability module's); a critical miss wastes it.
+- In Foundry it also registers the consumable compiler with the core (`registry.planFor(item)`).
 
 ## Requirements
 
@@ -22,7 +30,7 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 
 ## Development
 
-- Tests: `node --test --test-isolation=none test/*.test.js`
+- Tests: `node --test --test-isolation=none test/*.test.js`. The live layer runs against a stand-in for Foundry (`test/support/fake-foundry.mjs`) with PF2e's real items and Effects from its packs.
 - Census: `node tools/census.mjs`. It reads the PF2e system's packs straight from LevelDB, with no Foundry login, and rewrites `reports/census.json` and `docs/census.md`.
 - Imports reach the sibling modules by their ids (`../../pf2e-resolution-core/…`, `../../pf2e-automatic-ability-resolution/…`). In Foundry those are the module folders. On disk they are aliases next to this folder.
 

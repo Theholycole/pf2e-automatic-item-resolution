@@ -1,4 +1,4 @@
-# Design: the module's shape and batch 1 (potions, elixirs, mutagens)
+# Design: the module's shape, batch 1 (potions, elixirs, mutagens) and batch 2 (bombs, poisons)
 
 Status, 2026-10-15: the user answered the design's questions the same day (the recommendations). Everything marked *built* is built and tested offline. The live cards are written but **not yet checked in Foundry**: pftest was busy (a user was logged in, with no Holder).
 
@@ -7,7 +7,7 @@ Status, 2026-10-15: the user answered the design's questions the same day (the r
 From [census.md](census.md) (PF2e 8.6.1 packs):
 
 - **1,724** consumables. **216** are the spell module's (scrolls, wands, catalysts, spell gems), so this module handles **1,508**.
-- **741** (49%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added the rest. **5** more are partial and **278** (18%) get only a note Effect; both are counted apart.
+- **745** (49%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added the rest. **5** more are partial and **272** (18%) get only a note Effect; both are counted apart. **25** are casts, for the spell module.
 - **171** bombs are `weapon` items (group `bomb`). PF2e already Strikes with them (batch 2).
 - Batch 1 covers **400** items: potion 183, elixir 149, mutagen 68. When the design was proposed, 236 of them resolved, 35 were builtins and 129 had no plan. [census.md](census.md) has today's counts.
 
@@ -53,15 +53,36 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
    - a Spell Effect gets its `system.level` and the item's time.
    Every other change (temporary HP, timed conditions, modifiers, note Effects, the affliction hand-off) goes through the ability module's `api.live.applyChange`.
 
+## Batch 2: bombs and poisons (built offline, 2026-10-15)
+
+**Bombs** (`src/compiler/bombs.js`, `src/live/bomb-card.js`, `scripts/bombs.js`). PF2e Strikes with a bomb and rolls its damage, persistent damage and splash. Since 8.6.1 it adds one splash-only roll per damage type to the damage message. After that message, the module's card:
+- **Splash:** lists the creatures within 5 feet of the target, all ticked; the user or the GM can untick any. The amount is PF2e's own splash roll, so the thrower's splash feats are in it.
+  - On a hit, PF2e's main roll already includes the target's splash, so only the others are listed.
+  - On a miss, the target is listed too. A critical miss posts nothing.
+  - The splash-only rolls' apply buttons come off PF2e's message (the healing rule), but its main damage stays PF2e's.
+- **Riders** for the Strike's degree, read strictly: "On a hit, the target becomes off-guard until the start of your next turn", "Frightened 1, or Frightened 2 on a critical hit", Speed and other penalties, "On a critical hit … prone". That's 38 of 171 bombs.
+  - "its next turn" is the target's turn: anchor "target-turn", which the ability module's applyChange counts on the target's turns.
+  - Saves (Skunk Bomb, Blasting Stone), weaknesses and lingering clouds are left for later.
+
+**Injury poisons** (`src/live/poison-card.js`, `scripts/poisons.js`), 45 items. PF2e leaves these to the table.
+1. Using one posts a card: which piercing or slashing weapon to coat, held ones first.
+2. Apply puts an Effect on the user that marks the weapon, one poison per weapon.
+3. That weapon's next Strike that hits posts the poison's save card on the target, through the ability module's `api.live.postCard`; its affliction goes to Pseudo Afflictions as monster venom does. A miss keeps the poison. A critical miss wastes it ("expend it as normal for an injury poison by either hitting a target or critically failing an attack roll").
+- Contact, inhaled and ingested poisons are later. The ability compiler reads them as Strike riders too, which fits only injury.
+
+**Casts:** an item that grants a spell PF2e has no Effect for (Fade Band's Invisibility, Truesight Potion with its counteract +25) compiles to the ability compiler's cast-spell builtin. Live play waits for a cast-from-item export, asked of the spell session: casting through PF2e without leaving an entry on a PC's sheet.
+
 ## The simulator (the auto-combat session's)
 
-Once batch 1 is live, its session is handed the plans. It reads a PC's consumables through `registry.planFor(item)`, with their quantity and uses. Its planner then decides when to drink: healing when low, buffs as the fight starts, the action it costs, and whether to feed an adjacent ally. Its snapshot's "consumable" gaps then shrink.
+The plans were handed over on 2026-10-15. That session checked their shapes, and is waiting for the user's policy on when PCs use consumables before building it. Once built, it reads a PC's consumables through `registry.planFor(item)`, with their quantity and uses. Its planner then decides when to drink: healing when low, buffs as the fight starts, the action it costs, and whether to feed an adjacent ally. Its snapshot's "consumable" gaps then shrink.
 
 ## Asks of the other sessions
 
-- **Ability module:** done 2026-10-15 (ability 1cd0e31, a54d84b): `compileAbility` kept stable; `api.live.applyChange(change, state)` exported; the readZone crash fixed (Cold Comfort, Hampering Snare). Later, for batch 2: `postCard` / `postEffectCard`.
+- **Ability module:** done 2026-10-15:
+  - ability 1cd0e31 and a54d84b: `compileAbility` kept stable; `api.live.applyChange(change, state)` exported; the readZone crash fixed (Cold Comfort, Hampering Snare);
+  - ef25d65: `api.live.postCard` and the "target-turn" duration anchor; readConditions, STAGE_CONDITIONS and readPenalties kept stable.
 - **Core:** done 2026-10-15:
   - `api.dying` (f8e5d41), moved from the spell module;
   - `check.roll: "automatic"` accepted by saveGaps and CHECK_ROLLS (3875c84).
-- **Spell module:** nothing for PF2e's own items. Later, `claims(item)` for the third-party ones, and the casting export for items that cast a spell (the user's answer 4).
+- **Spell module:** asked 2026-10-15 for `castFromItem` (the casts above). Later, `claims(item)` for the third-party ones.
 - **Simulator:** the hand-off above, once the cards are live-checked.

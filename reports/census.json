@@ -5,7 +5,12 @@
   "consumables": 1724,
   "spellModule": 216,
   "ours": 1508,
-  "bombs": 171,
+  "bombs": {
+   "bombs": 171,
+   "cards": 159,
+   "splash": 155,
+   "riders": 38
+  },
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 25,
