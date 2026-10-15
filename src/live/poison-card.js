@@ -88,15 +88,24 @@ const deliveryOf = (plan) => (plan?.item?.delivery === "injury" && plan.item.cat
 
 export const isExposurePoison = (plan) => Boolean(EXPOSED_BY[deliveryOf(plan)]) && plan?.resolution?.kind === "save" && plan.resolution.check?.against?.dc === "fixed" && Boolean(plan.resolution.afflictionHandoff);
 
+// Any other item whose save comes on its Use, at creatures other than its user ("Spark Wafer … 5-foot burst", Pyronite,
+// a flare beacon): the same card, for the creatures the presser targets. Not one that gives an action or a time to use
+// later ("grants you the Energy Breath action for 1 hour", "For 1 hour after you drink …"), nor an aura or a snare.
+const LATER = /\b(?:grants? you (?:the|a|an) [\w' -]+? (?:action|activity|reaction)|for (?:\d+|one|an?) (?:rounds?|minutes?|hours?) after you (?:drink|imbibe|consume|eat|inhale|chew)|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel) |gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|aura\b)/i;
+export const isUseSave = (plan, text = "") => plan?.resolution?.kind === "save" && plan.trigger?.event === "use" && plan.resolution.check?.against?.dc === "fixed" && !plan.item?.delivery && !LATER.test(text);
+
+export const AREA_WORDS = (area) => (area?.value ? `the creatures in its ${area.value}-foot ${area.type}` : "the creature it targets");
+
 export function createExposureCard({ plan, item, user }) {
-    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan), results: [] };
+    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, results: [] };
 }
 
 export function exposureCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
-    const hint = open ? `<p class="aar-hint">Exposes ${escape(EXPOSED_BY[state.delivery] ?? "the targeted creatures")} (${escape(saveText(state.plan))}). Target them, then press Expose.</p>` : "";
+    const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
+    const hint = open ? `<p class="aar-hint">${state.delivery ? "Exposes" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Expose my targets</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${escape(state.delivery)} poison</span></header>${hint}${results}${controls}</section>`;
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.delivery ? "Expose my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : escape(saveText(state.plan))}</span></header>${hint}${results}${controls}</section>`;
 }
 

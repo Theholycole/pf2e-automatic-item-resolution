@@ -16,7 +16,8 @@ import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, eff
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
-import { isExposurePoison, isInjuryPoison } from "../src/live/poison-card.js";
+import { isExposurePoison, isInjuryPoison, isUseSave } from "../src/live/poison-card.js";
+import { plainText } from "../src/compiler/rows.js";
 import { applyCastCard, postCastCard } from "./casts.js";
 import { isCast } from "../src/live/cast-card.js";
 
@@ -85,6 +86,8 @@ async function cardForUse(message) {
     if (isInjuryPoison(plan)) return postPoisonCard({ message, plan, used, actor, token });
     // A contact, inhaled or ingested poison: exposure of the creatures targeted.
     if (isExposurePoison(plan)) return postExposureCard({ message, plan, used, actor, token });
+    // Another item's save on its Use, at others (Spark Wafer, Pyronite): the same card, for the targets.
+    if (isUseSave(plan, plainText(used.data.system?.description?.value))) return postExposureCard({ message, plan, used, actor, token });
     // A spell PF2e has no Effect for: the spell module casts it (scripts/casts.js).
     if (isCast(plan)) return postCastCard({ message, plan, used, actor, token });
     if (!played(plan)) return;

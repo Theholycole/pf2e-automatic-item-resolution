@@ -126,3 +126,17 @@ test("a contact, inhaled or ingested poison: exposure of the creatures its press
     assert.deepEqual([zerk.kind, zerk.delivery], ["expose", "injected"]);
 });
 
+test("another item's save on its Use goes to the creatures its presser targets; one for later doesn't", async () => {
+    const card = await use(foundry.giveItem(rogue, source("Spark Wafer")));
+    const state = card.flags[MODULE_ID].card;
+    assert.deepEqual([state.kind, state.delivery], ["expose", null]);
+    assert.match(card.content, /A save for the creatures in its 5-foot burst \(DC 14 Reflex save\)/);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
+    await settle();
+    assert.equal(foundry.posted.slice(before)[0]?.plan.resolution.check.against.value, 14);
+    // An energy breath potion gives an action for an hour: no save card on drinking it.
+    const breath = await use(foundry.giveItem(rogue, source("Energy Breath Potion (Acid, Greater)")));
+    assert.notEqual(breath?.flags?.[MODULE_ID]?.card?.kind, "expose");
+});
+
