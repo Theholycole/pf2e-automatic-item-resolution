@@ -57,6 +57,12 @@ test("a healing potion heals its drinker with PF2e's own healing", () => {
     assert.deepEqual(registry.resolveSync(plan, context({ id: "ally", side: "party" }), io("success", 3)).changes, [{ op: "heal", target: "ally", amount: 3 }]);
 });
 
+test("PF2e's healing field heals only when the text does (a potion of annulment keeps its counteract roll there)", () => {
+    const annulment = compileItem(item("Potion of Annulment (Lesser)"));
+    assert.notEqual(annulment?.resolution?.kind, "healing");
+    assert.equal(annulment?.resolution?.native?.healing, undefined);
+});
+
 test("an elixir of life heals and gives its PF2e Effect to the drinker", () => {
     const plan = compileItem(item("Elixir of Life (Minor)"));
     assert.equal(plan.resolution.kind, "effect");

@@ -34,9 +34,11 @@ export function effectLinks(item) {
 
 // The healing PF2e's own Use rolls (system.damage of kind "healing"), as the core's native healing.
 // Undead (void healing) aren't healed: recipients "living".
+// (Only when the text heals: Potion of Annulment keeps its counteract roll, 1d20+17, in that field so PF2e rolls it on Use.)
+const HEALS = /\b(?:regain|restore|recover|heal)\w*\b[^.]{0,80}\bHit Points\b/i;
 export function nativeHealing(item) {
     const damage = item?.system?.damage;
-    if (damage?.kind !== "healing" || !damage.formula) return null;
+    if (damage?.kind !== "healing" || !damage.formula || !HEALS.test(plain(item.system?.description?.value))) return null;
     return { components: [{ id: "healing", formula: String(damage.formula), kinds: ["healing"] }], recipients: "living" };
 }
 

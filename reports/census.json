@@ -13,12 +13,12 @@
   },
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 25,
+   "builtin:cast-spell": 26,
    "none": 354,
-   "resolves": 745,
+   "resolves": 759,
    "note-only": 272,
    "builtin:zone": 22,
-   "builtin:no-effect": 84,
+   "builtin:no-effect": 69,
    "partial": 5,
    "builtin:save-bonus": 1
   }
@@ -29,10 +29,10 @@
    "results": {
     "builtin:cast-spell": 7,
     "none": 174,
-    "resolves": 202,
+    "resolves": 205,
     "note-only": 122,
     "builtin:zone": 9,
-    "builtin:no-effect": 18,
+    "builtin:no-effect": 15,
     "builtin:save-bonus": 1
    },
    "mechanisms": {
@@ -55,11 +55,11 @@
   "potion": {
    "count": 183,
    "results": {
-    "resolves": 100,
+    "resolves": 102,
     "note-only": 40,
     "none": 21,
-    "builtin:no-effect": 13,
-    "builtin:cast-spell": 8,
+    "builtin:no-effect": 10,
+    "builtin:cast-spell": 9,
     "partial": 1
    },
    "mechanisms": {
@@ -80,8 +80,8 @@
    "results": {
     "none": 81,
     "note-only": 13,
-    "resolves": 44,
-    "builtin:no-effect": 11,
+    "resolves": 45,
+    "builtin:no-effect": 10,
     "builtin:cast-spell": 7
    },
    "mechanisms": {
@@ -102,10 +102,10 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 81,
+    "resolves": 83,
     "none": 17,
     "note-only": 35,
-    "builtin:no-effect": 15,
+    "builtin:no-effect": 13,
     "builtin:zone": 1
    },
    "mechanisms": {
@@ -161,9 +161,9 @@
    "results": {
     "none": 12,
     "builtin:zone": 12,
-    "resolves": 21,
+    "resolves": 26,
     "note-only": 14,
-    "builtin:no-effect": 18
+    "builtin:no-effect": 13
    },
    "mechanisms": {
     "damage": 10,
@@ -198,9 +198,9 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 24,
+    "resolves": 25,
     "note-only": 22,
-    "builtin:no-effect": 8,
+    "builtin:no-effect": 7,
     "none": 11,
     "builtin:cast-spell": 1
    },
@@ -276,7 +276,7 @@
   },
   "temp-hp": {
    "count": 41,
-   "resolves": 20,
+   "resolves": 25,
    "gaps": 0,
    "none": 6
   },
@@ -288,7 +288,7 @@
   },
   "linked-effect": {
    "count": 393,
-   "resolves": 370,
+   "resolves": 384,
    "gaps": 0,
    "none": 1
   },
@@ -324,7 +324,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 53,
+   "resolves": 54,
    "gaps": 0,
    "none": 76
   },
@@ -348,16 +348,16 @@
   },
   "duration": {
    "count": 947,
-   "resolves": 579,
+   "resolves": 591,
    "gaps": 0,
    "none": 22
   }
  },
  "live": {
   "totals": {
-   "cast": 25,
-   "none": 607,
-   "item": 638,
+   "cast": 26,
+   "none": 592,
+   "item": 652,
    "expose": 89,
    "save": 105,
    "coat": 44
@@ -365,27 +365,27 @@
   "byCategory": {
    "other": {
     "cast": 7,
-    "none": 228,
+    "none": 225,
     "save": 70,
-    "item": 222,
+    "item": 225,
     "expose": 3,
     "coat": 3
    },
    "potion": {
-    "item": 93,
-    "none": 76,
-    "cast": 8,
+    "item": 95,
+    "none": 73,
+    "cast": 9,
     "save": 6
    },
    "talisman": {
-    "none": 93,
-    "item": 46,
+    "none": 92,
+    "item": 47,
     "cast": 7,
     "save": 10
    },
    "elixir": {
-    "item": 114,
-    "none": 34,
+    "item": 116,
+    "none": 32,
     "save": 1
    },
    "poison": {
@@ -400,16 +400,16 @@
     "item": 5
    },
    "gadget": {
-    "none": 43,
-    "item": 19,
+    "none": 38,
+    "item": 24,
     "save": 15
    },
    "mutagen": {
     "item": 68
    },
    "oil": {
-    "item": 45,
-    "none": 19,
+    "item": 46,
+    "none": 18,
     "save": 1,
     "cast": 1
    },
@@ -7288,9 +7288,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Numbing Tonic (Major)",
@@ -8052,9 +8053,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Spiced Demonade",
@@ -8701,9 +8703,10 @@
     "linked-effect",
     "trigger"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Ablative Shield Plating (True)",
@@ -10173,9 +10176,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Emergency Eye",
@@ -12313,9 +12317,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Sun Orchid Elixir",
@@ -13113,9 +13118,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Rolling Flames (3rd-Rank)",
@@ -13471,9 +13477,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Oil of Unlife (Greater)",
@@ -14854,9 +14861,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Dumbfounding Doom (8th-rank)",
@@ -16167,9 +16175,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Cold Iron Blanch (Greater)",
@@ -16893,9 +16901,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Mental Purification (9th-rank)",
@@ -18826,9 +18835,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Elixir of Life (Moderate)",
@@ -21138,9 +21148,10 @@
    "mechanisms": [
     "linked-effect"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Oozepick",
@@ -27116,9 +27127,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Beetle Gel (Greater)",
@@ -28799,9 +28811,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Mental Purification (5th-rank)",
@@ -28871,9 +28884,10 @@
     "linked-effect",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Drakeheart Mutagen (Moderate)",

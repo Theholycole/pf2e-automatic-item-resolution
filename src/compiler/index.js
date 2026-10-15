@@ -36,7 +36,10 @@ export function compileItem(item, options = {}) {
     if (!handlesItem(item)) return null;
     const read = compileAbility(asAbility(item), options);
     const base = basePlan(item);
-    const plan = (read ? fitPlan(item, read, base, options) : ownPlan(item, base, options)) ?? rowPlan(item, base);
+    // (The ability compiler's last fallback, "no-effect" — the GM's — gives way to a reading of the item's own: its
+    // linked Effect, PF2e's healing, a spell's Effect, its row; not to a note alone.)
+    const own = read?.builtin === "no-effect" ? ownPlan(item, base, options) ?? rowPlan(item, base) : null;
+    const plan = own && !own.noteOnly ? own : (read ? fitPlan(item, read, base, options) : ownPlan(item, base, options)) ?? rowPlan(item, base);
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     return { ...plan, ...(source ? { source } : {}), item: itemInfo(item) };

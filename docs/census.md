@@ -17,12 +17,12 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 745 | 49% |
+| resolves | 759 | 50% |
 | partial | 5 | 0% |
 | note-only | 272 | 18% |
 | builtin:zone | 22 | 1% |
-| builtin:cast-spell | 25 | 2% |
-| builtin:no-effect | 84 | 6% |
+| builtin:cast-spell | 26 | 2% |
+| builtin:no-effect | 69 | 5% |
 | builtin:save-bonus | 1 | 0% |
 | none | 354 | 23% |
 
@@ -30,15 +30,15 @@ Results, for the items this module handles:
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| other | 533 | 202 | 0 | 122 | 0 | 35 | 174 |
-| potion | 183 | 100 | 1 | 40 | 0 | 21 | 21 |
-| talisman | 156 | 44 | 0 | 13 | 0 | 18 | 81 |
-| elixir | 149 | 81 | 0 | 35 | 0 | 16 | 17 |
+| other | 533 | 205 | 0 | 122 | 0 | 32 | 174 |
+| potion | 183 | 102 | 1 | 40 | 0 | 19 | 21 |
+| talisman | 156 | 45 | 0 | 13 | 0 | 17 | 81 |
+| elixir | 149 | 83 | 0 | 35 | 0 | 14 | 17 |
 | poison | 115 | 111 | 0 | 1 | 0 | 0 | 3 |
 | snare | 82 | 63 | 0 | 5 | 0 | 0 | 14 |
-| gadget | 77 | 21 | 0 | 14 | 0 | 30 | 12 |
+| gadget | 77 | 26 | 0 | 14 | 0 | 25 | 12 |
 | mutagen | 68 | 60 | 4 | 4 | 0 | 0 | 0 |
-| oil | 66 | 24 | 0 | 22 | 0 | 9 | 11 |
+| oil | 66 | 25 | 0 | 22 | 0 | 8 | 11 |
 | fulu | 46 | 12 | 0 | 11 | 0 | 2 | 21 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |
@@ -49,19 +49,19 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 
 | Category | Items | item | coat | expose | save | cast | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| other | 533 | 222 | 3 | 3 | 70 | 7 | 228 |
-| potion | 183 | 93 | 0 | 0 | 6 | 8 | 76 |
-| talisman | 156 | 46 | 0 | 0 | 10 | 7 | 93 |
-| elixir | 149 | 114 | 0 | 0 | 1 | 0 | 34 |
+| other | 533 | 225 | 3 | 3 | 70 | 7 | 225 |
+| potion | 183 | 95 | 0 | 0 | 6 | 9 | 73 |
+| talisman | 156 | 47 | 0 | 0 | 10 | 7 | 92 |
+| elixir | 149 | 116 | 0 | 0 | 1 | 0 | 32 |
 | poison | 115 | 1 | 41 | 63 | 1 | 0 | 9 |
 | snare | 82 | 5 | 0 | 0 | 0 | 0 | 77 |
-| gadget | 77 | 19 | 0 | 0 | 15 | 0 | 43 |
+| gadget | 77 | 24 | 0 | 0 | 15 | 0 | 38 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 |
-| oil | 66 | 45 | 0 | 0 | 1 | 1 | 19 |
+| oil | 66 | 46 | 0 | 0 | 1 | 1 | 18 |
 | fulu | 46 | 17 | 0 | 0 | 1 | 2 | 26 |
 | drug | 24 | 0 | 0 | 23 | 0 | 0 | 1 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1508** | **638** | **44** | **89** | **105** | **25** | **607** |
+| **all** | **1508** | **652** | **44** | **89** | **105** | **26** | **592** |
 
 ## What they do
 
@@ -69,18 +69,18 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
-| duration | 947 | 579 | 0 | 22 |
+| duration | 947 | 591 | 0 | 22 |
 | fixed-dc | 498 | 397 | 0 | 45 |
 | condition | 437 | 295 | 0 | 60 |
-| linked-effect | 393 | 370 | 0 | 1 |
+| linked-effect | 393 | 384 | 0 | 1 |
 | damage | 287 | 188 | 0 | 50 |
-| trigger | 156 | 53 | 0 | 76 |
+| trigger | 156 | 54 | 0 | 76 |
 | affliction | 144 | 139 | 0 | 3 |
 | counteract | 79 | 18 | 0 | 28 |
 | on-weapon | 67 | 54 | 0 | 1 |
 | area | 44 | 19 | 0 | 9 |
 | heal | 43 | 34 | 0 | 3 |
-| temp-hp | 41 | 20 | 0 | 6 |
+| temp-hp | 41 | 25 | 0 | 6 |
 | casts-spell | 37 | 5 | 0 | 15 |
 | strike | 31 | 7 | 0 | 11 |
 
