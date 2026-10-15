@@ -29,7 +29,7 @@ const FORMS = [
     // "attempt to Administer First Aid using Medicine with a +1 item bonus to the check"
     new RegExp(String.raw`\battempt to (${NAMES}) using \w+ ${BONUS}`, "i"),
     // "When you activate the bracelet, attempt to Escape", "When you activate it, make a Leap"
-    new RegExp(String.raw`\bWhen you activate [^,.]+, (?:use|attempt|make) (?:an? |to )?(${NAMES})\b`, "i")
+    new RegExp(String.raw`\bWhen you activate [^,.]+, (?:you (?:can )?(?:immediately )?)?(?:use|attempt|make) (?:an? |to )?(${NAMES})\b`, "i")
 ];
 // "Activate Administer First Aid", "Activate Treat Wounds": the action is the activation.
 const ACTIVATE_LINE = new RegExp(String.raw`^\s*Activate\s+(${NAMES})\b`, "i");
@@ -47,6 +47,9 @@ export function readItemAction(html) {
     let index = -1;
     for (const form of FORMS) {
         match = form.exec(text);
+        // (An action that's also an everyday word is the action only capitalized: "you make a request for a bespoke set of
+        // clothing" isn't Request; "attempt to grapple the creature" is Grapple.)
+        if (match && /^(?:request|perform|seek|track|lie|hide|balance|steal|squeeze|swim|climb|sneak)$/.test(match[1])) match = null;
         if (match) {
             index = match.index;
             break;

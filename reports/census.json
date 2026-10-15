@@ -14,11 +14,11 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 298,
+   "none": 296,
    "resolves": 694,
    "builtin:zone": 86,
    "note-only": 267,
-   "builtin:item-action": 6,
+   "builtin:item-action": 8,
    "builtin:readied-bonus": 6,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
@@ -88,9 +88,9 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 64,
+    "none": 62,
     "note-only": 13,
-    "builtin:item-action": 5,
+    "builtin:item-action": 7,
     "resolves": 47,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
@@ -347,7 +347,7 @@
    "count": 156,
    "resolves": 55,
    "gaps": 0,
-   "none": 60
+   "none": 58
   },
   "counteract": {
    "count": 79,
@@ -365,7 +365,7 @@
    "count": 433,
    "resolves": 259,
    "gaps": 0,
-   "none": 39
+   "none": 38
   },
   "duration": {
    "count": 943,
@@ -377,12 +377,12 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 383,
+   "none": 381,
    "item": 655,
    "zone": 86,
    "expose": 89,
    "later": 54,
-   "action": 6,
+   "action": 8,
    "save": 108,
    "fortune": 8,
    "counteract": 20,
@@ -413,9 +413,9 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 75,
+    "none": 73,
     "item": 49,
-    "action": 5,
+    "action": 7,
     "reroll": 1,
     "cast": 9,
     "save": 11,
@@ -476,7 +476,7 @@
    }
   },
   "noCard": {
-   "no-plan": 298,
+   "no-plan": 296,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -16359,7 +16359,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Drakeheart Mutagen (Greater)",
@@ -27835,7 +27837,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Energy Breath Potion (Acid, Lesser)",
