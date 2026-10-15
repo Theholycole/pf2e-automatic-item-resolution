@@ -364,8 +364,8 @@
    "item": 653,
    "zone": 86,
    "expose": 89,
-   "later": 51,
-   "save": 110,
+   "later": 54,
+   "save": 107,
    "coat": 45
   },
   "byCategory": {
@@ -381,10 +381,10 @@
    },
    "potion": {
     "item": 95,
-    "later": 40,
+    "later": 43,
     "none": 32,
     "cast": 9,
-    "save": 6
+    "save": 3
    },
    "talisman": {
     "none": 89,
@@ -15807,7 +15807,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": "later"
   },
   {
    "name": "Firestarter Pellets",
@@ -23313,7 +23313,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": "later"
   },
   {
    "name": "Wand of Toxic Blades (7th-Rank)",
@@ -24575,7 +24575,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": "later"
   },
   {
    "name": "Mender's Soup",

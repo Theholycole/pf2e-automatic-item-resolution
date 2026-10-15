@@ -91,7 +91,7 @@ export const isExposurePoison = (plan) => Boolean(EXPOSED_BY[deliveryOf(plan)]) 
 // Any other item whose save comes on its Use, at creatures other than its user ("Spark Wafer … 5-foot burst", Pyronite,
 // a flare beacon): the same card, for the creatures the presser targets. Not one that gives an action or a time to use
 // later ("grants you the Energy Breath action for 1 hour", "you can use a 2-action activity to exhale"), nor an aura or a snare.
-const LATER = /\b(?:(?:grants? you|you gain) (?:the|a|an) [\w' -]+? (?:action|activity|reaction)|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel|unleash) |gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|aura\b)/i;
+const LATER = /\b(?:(?:grants? you|you gain) (?:the|a|an) [\w' -]+? (?:action|activity|reaction)|gives? you access to (?:[\w-]+ ){0,3}activations?|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel|unleash) |gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|aura\b)/i;
 // (An item with no Activate line — "You can toss sneezing powder at an adjacent creature", a fulu "Upon affixing" — reads as
 // passive; it's still used. Not a save something else sets off: a turn in the area, entering a square, passing a door,
 // reading the words, each Stride.)
@@ -109,15 +109,29 @@ export const isLaterSave = (plan, text = "") => useSave(plan, text) && LATER.tes
 
 export const AREA_WORDS = (area) => (area?.value ? `the creatures in its ${area.value}-foot ${area.type}` : "the creature it targets");
 
-export function createExposureCard({ plan, item, user, later = false }) {
-    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, results: [] };
+// One used again for the item's time ("After you use Energy Breath, you can't do so again for 1d4 rounds", Roaring
+// Potion's "Frequency once every 1d4 rounds"): its later card stays open until then (Frost Breath's one exhale doesn't).
+const AGAIN = /\bcan't (?:do so|use (?:it|this|that)(?: [\w' -]+?)?) again for\b|\bFrequency once (?:per|every)\b/i;
+export const repeatsLater = (text = "") => AGAIN.test(text);
+
+// later: kept for an action the item gives; repeat and until (world time in seconds): used again until then.
+export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null }) {
+    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), results: [] };
+}
+
+// After a use: still open for a repeatable later card within its time, else done.
+export function afterExposure(state, lines, worldTime) {
+    const uses = (state.uses ?? 0) + 1;
+    const keep = Boolean(state.later && state.repeat) && (state.until === null || state.until === undefined || worldTime < state.until);
+    return { ...state, status: keep ? "open" : "applied", ...(state.repeat ? { uses } : {}), results: [...(state.results ?? []), ...lines].slice(-6) };
 }
 
 export function exposureCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
+    const again = state.repeat ? ` It can be used again${state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : ""} until its time is up, after each recharge.` : "";
     const hint = !open ? "" : state.later
-        ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.</p>`
+        ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : `<p class="aar-hint">${state.delivery ? "Exposes" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";

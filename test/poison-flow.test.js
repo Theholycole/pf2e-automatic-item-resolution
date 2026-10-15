@@ -142,6 +142,35 @@ test("another item's save on its Use goes to the creatures its presser targets; 
     assert.match(breath.content, /Use it: my targets/);
 });
 
+test("a breath used again after its recharge: its card stays open for the hour, then closes; a one-off closes at once", async () => {
+    const breath = await use(foundry.giveItem(rogue, source("Energy Breath Potion (Fire, Lesser)")));
+    const state = breath.flags[MODULE_ID].card;
+    assert.deepEqual([state.later, state.repeat, state.until], [true, true, globalThis.game.time.worldTime + 3600]);
+    for (const time of [1, 2]) {
+        await foundry.socket(SOCKET)({ action: "apply", messageId: breath.id, targets: [ogre.token.uuid], userId: "player" });
+        await settle();
+        assert.equal(breath.flags[MODULE_ID].card.status, "open", `still open after use ${time}`);
+    }
+    assert.match(breath.content, /used 2 times/);
+    const saved = globalThis.game.time.worldTime;
+    globalThis.game.time.worldTime = state.until + 1;
+    try {
+        const before = foundry.posted.length;
+        await foundry.socket(SOCKET)({ action: "apply", messageId: breath.id, targets: [ogre.token.uuid], userId: "player" });
+        await settle();
+        assert.equal(breath.flags[MODULE_ID].card.status, "applied", "the hour is up");
+        assert.equal(foundry.posted.length, before, "no save card after it");
+    } finally {
+        globalThis.game.time.worldTime = saved;
+    }
+    // Frost Breath's one exhale: done after it.
+    const frost = await use(foundry.giveItem(rogue, source("Frost Breath")));
+    assert.equal(frost.flags[MODULE_ID].card.repeat, undefined);
+    // Roaring Potion gives its scream for later, once every 1d4 rounds for an hour; drinking it screams at no one.
+    const roar = (await use(foundry.giveItem(rogue, source("Roaring Potion (Lesser)")))).flags[MODULE_ID].card;
+    assert.deepEqual([roar.later, roar.repeat], [true, true]);
+});
+
 test("an item with no Activate line is still used: a save for its target (Sneezing Powder); one set off by something else isn't", async () => {
     const powder = await use(foundry.giveItem(rogue, source("Sneezing Powder")));
     assert.equal(powder.flags[MODULE_ID].card.kind, "expose");

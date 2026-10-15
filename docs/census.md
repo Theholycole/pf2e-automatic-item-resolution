@@ -50,7 +50,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | Category | Items | item | coat | expose | save | later | cast | zone | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | other | 512 | 225 | 3 | 3 | 71 | 8 | 8 | 9 | 185 |
-| potion | 182 | 95 | 0 | 0 | 6 | 40 | 9 | 0 | 32 |
+| potion | 182 | 95 | 0 | 0 | 3 | 43 | 9 | 0 | 32 |
 | talisman | 156 | 48 | 0 | 0 | 10 | 0 | 9 | 0 | 89 |
 | elixir | 149 | 116 | 0 | 0 | 1 | 0 | 0 | 1 | 31 |
 | poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 3 |
@@ -61,7 +61,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | fulu | 46 | 17 | 0 | 0 | 3 | 0 | 2 | 0 | 24 |
 | drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **653** | **45** | **89** | **110** | **51** | **29** | **86** | **423** |
+| **all** | **1486** | **653** | **45** | **89** | **107** | **54** | **29** | **86** | **423** |
 
 Why the rest have no card yet:
 

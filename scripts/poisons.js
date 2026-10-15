@@ -3,7 +3,8 @@
 // card on the target (the ability module's api.live.postCard, the affliction
 // handed to Pseudo Afflictions as for monster venom); a critical miss wastes it.
 
-import { MODULE_KEY, createExposureCard, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, saveText } from "../src/live/poison-card.js";
+import { MODULE_KEY, afterExposure, createExposureCard, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, repeatsLater, saveText } from "../src/live/poison-card.js";
+import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { ABILITY_ID, FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
@@ -71,8 +72,15 @@ export async function strikeWithPoison(message) {
 }
 
 // Contact, inhaled and ingested poisons: a card to expose the creatures its presser targets.
+const SECONDS = { rounds: 6, minutes: 60, hours: 3600, days: 86_400 };
+
 export async function postExposureCard({ message, plan, used, actor, token, later = false }) {
-    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later });
+    // (A later action used again: open until the item's time is up, "for 1 hour after you imbibe".)
+    const text = plainText(used.data.system?.description?.value);
+    const repeat = later && repeatsLater(text);
+    const time = repeat ? itemDuration(text) : null;
+    const until = time ? game.time.worldTime + time.value * (SECONDS[time.unit] ?? 3600) : null;
+    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until });
     return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
@@ -80,6 +88,12 @@ export async function postExposureCard({ message, plan, used, actor, token, late
 export async function applyExposureCard(message, { targets = [] } = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "expose" || state.status !== "open") return null;
+    // (Its time is up: the card closes.)
+    if (state.repeat && Number.isFinite(state.until) && game.time.worldTime >= state.until) {
+        const over = { ...state, status: "applied", results: [...state.results, `${state.item.name}'s time is up.`] };
+        await message.update({ content: exposureCardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
+        throw new Error(`${state.item.name}'s time is up.`);
+    }
     const tokens = (await Promise.all((Array.isArray(targets) ? targets : []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
     if (!tokens.length) throw new Error("Target the creatures first.");
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
@@ -91,7 +105,7 @@ export async function applyExposureCard(message, { targets = [] } = {}) {
         await postCard({ plan: state.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s save card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
-    const next = { ...state, status: "applied", results: lines };
+    const next = afterExposure(state, lines, game.time.worldTime);
     return message.update({ content: exposureCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 
