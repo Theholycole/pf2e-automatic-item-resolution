@@ -62,7 +62,13 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
   - The splash-only rolls' apply buttons come off PF2e's message (the healing rule), but its main damage stays PF2e's.
 - **Riders** for the Strike's degree, read strictly: "On a hit, the target becomes off-guard until the start of your next turn", "Frightened 1, or Frightened 2 on a critical hit", Speed and other penalties, "On a critical hit … prone". That's 38 of 171 bombs.
   - "its next turn" is the target's turn: anchor "target-turn", which the ability module's applyChange counts on the target's turns.
-  - Saves (Skunk Bomb, Blasting Stone), weaknesses and lingering clouds are left for later.
+  - Weaknesses and lingering clouds (Silver Orb) are left for later.
+- **Saves** (15 bombs), read for who attempts them. On Apply, the card posts the ability module's save card (`api.live.postCard`) for them:
+  - "Any creature hit by the bomb or in its splash area": the target and the creatures splashed, as ticked (Skunk Bomb, Durian Bomb);
+  - "each creature within 10 feet of where it exploded": the target and everyone within the radius (Blasting Stone, Bioluminescence Bomb);
+  - "A creature struck by …": the target, on a hit (Dwarven Daisy).
+
+  The rows are the ability compiler's save plan, or the plain "save or become Dazzled for 1 round" form.
 
 **Injury poisons** (`src/live/poison-card.js`, `scripts/poisons.js`), 45 items. PF2e leaves these to the table.
 1. Using one posts a card: which piercing or slashing weapon to coat, held ones first.
@@ -70,7 +76,12 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 3. That weapon's next Strike that hits posts the poison's save card on the target, through the ability module's `api.live.postCard`; its affliction goes to Pseudo Afflictions as monster venom does. A miss keeps the poison. A critical miss wastes it ("expend it as normal for an injury poison by either hitting a target or critically failing an attack roll").
 - Contact, inhaled and ingested poisons are later. The ability compiler reads them as Strike riders too, which fits only injury.
 
-**Casts:** an item that grants a spell PF2e has no Effect for (Fade Band's Invisibility, Truesight Potion with its counteract +25) compiles to the ability compiler's cast-spell builtin. Live play waits for a cast-from-item export, asked of the spell session: casting through PF2e without leaving an entry on a PC's sheet.
+**Casts** (`src/live/cast-card.js`, `scripts/casts.js`). An item that grants a spell PF2e has no Effect for compiles to the ability compiler's cast-spell builtin; 25 in the census. Examples: Fade Band's Invisibility, Truesight Potion with its counteract +25.
+- Its card names the spell, its rank and any counteract modifier, and for a potion the drinker.
+- Apply calls the spell module's `api.castFromItem` (its session built it on 2026-10-15, c3a6b8d, not live-tested yet). The spell module casts it through PF2e, with a temporary entry it cleans up afterwards:
+  - on the drinker for a potion;
+  - on the user for "casts … on you";
+  - at the presser's own targets for a spell aimed at others.
 
 ## The simulator (the auto-combat session's)
 
@@ -84,5 +95,5 @@ The plans were handed over on 2026-10-15. That session checked their shapes, and
 - **Core:** done 2026-10-15:
   - `api.dying` (f8e5d41), moved from the spell module;
   - `check.roll: "automatic"` accepted by saveGaps and CHECK_ROLLS (3875c84).
-- **Spell module:** asked 2026-10-15 for `castFromItem` (the casts above). Later, `claims(item)` for the third-party ones.
+- **Spell module:** `castFromItem`, done 2026-10-15 (spell c3a6b8d, local, not live-tested). Later, `claims(item)` for the third-party ones.
 - **Simulator:** the hand-off above, once the cards are live-checked.

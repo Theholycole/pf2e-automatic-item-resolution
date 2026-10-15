@@ -19,6 +19,8 @@ Spell-casting items (scrolls, wands, staves, catalysts) belong to PF2e Automatic
   - Effects are made at the item's grade.
 - **Bombs** (`scripts/bombs.js`): after PF2e's damage roll, a card for the splash on the creatures within 5 feet of the target and the riders on a hit or a critical hit.
 - **Injury poisons** (`scripts/poisons.js`): coat a weapon. Its next hit posts the poison's save card (the ability module's); a critical miss wastes it.
+- **Bomb saves:** the bomb card also posts the ability module's save card, for whoever the bomb's text says saves.
+- **Casts** (`scripts/casts.js`): an item that casts a spell PF2e has no Effect for gets a card. Apply has the spell module cast it through PF2e.
 - In Foundry it also registers the consumable compiler with the core (`registry.planFor(item)`).
 
 ## Requirements
