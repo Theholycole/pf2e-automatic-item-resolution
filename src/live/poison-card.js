@@ -71,3 +71,28 @@ export function poisonStrike(outcome) {
     if (outcome === "criticalFailure") return "spend";
     return "keep";
 }
+
+// Contact, inhaled and ingested poisons: exposure to the creatures the presser targets (PF2e's trait rules: contact,
+// "the creature must attempt a saving throw immediately when the poison touches its skin" or the first to touch the
+// coated item; inhaled, a 10-foot cube cloud for 1 minute, "every creature entering this cloud is exposed"; ingested,
+// the creature that eats or drinks it). The save card is the ability module's, as for injury poisons.
+export const EXPOSED_BY = Object.freeze({
+    contact: "the creature it touches (applied to its skin), or later the first creature to touch the coated item",
+    inhaled: "the creatures in the 10-foot cube cloud; for 1 minute, each creature entering it is exposed too (the GM's to call)",
+    ingested: "the creature that eats or drinks it"
+});
+
+export const isExposurePoison = (plan) => Boolean(EXPOSED_BY[plan?.item?.delivery]) && plan?.resolution?.kind === "save" && plan.resolution.check?.against?.dc === "fixed" && Boolean(plan.resolution.afflictionHandoff);
+
+export function createExposureCard({ plan, item, user }) {
+    return { kind: "expose", status: "open", plan, item, user, delivery: plan.item.delivery, results: [] };
+}
+
+export function exposureCardHTML(state, { canApply = false } = {}) {
+    const open = state.status === "open";
+    const hint = open ? `<p class="aar-hint">Exposes ${escape(EXPOSED_BY[state.delivery] ?? "the targeted creatures")} (${escape(saveText(state.plan))}). Target them, then press Expose.</p>` : "";
+    const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Expose my targets</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${escape(state.delivery)} poison</span></header>${hint}${results}${controls}</section>`;
+}
+

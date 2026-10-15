@@ -101,3 +101,25 @@ test("without the ability module's save card, the GM is told to roll it", async 
         foundry.ability.live.postCard = postCard;
     }
 });
+
+test("a contact, inhaled or ingested poison: exposure of the creatures its presser targets, through the save card", async () => {
+    for (const name of ["Dragon Bile", "Terror Spores", "Knockout Dram"]) {
+        const card = await use(foundry.giveItem(rogue, source(name)));
+        const state = card.flags[MODULE_ID].card;
+        assert.equal(state.kind, "expose", name);
+        assert.match(card.content, /DC \d+ \w+ save/, name);
+        // No target: refused, the card stays open.
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [], userId: "player" });
+        await settle();
+        assert.equal(card.flags[MODULE_ID].card.status, "open", name);
+        const before = foundry.posted.length;
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
+        await settle();
+        const [posted] = foundry.posted.slice(before);
+        assert.equal(posted?.plan.resolution.afflictionHandoff.name, name, name);
+        assert.deepEqual(posted.tokens.map((token) => token.name), ["Ogre"], name);
+        assert.equal(card.flags[MODULE_ID].card.status, "applied", name);
+    }
+    assert.match((await use(foundry.giveItem(rogue, source("Terror Spores")))).content, /10-foot cube cloud/);
+});
+

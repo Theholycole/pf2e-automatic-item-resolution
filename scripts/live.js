@@ -15,8 +15,8 @@
 import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, rolledHealing, rollFormula, USER_ID } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
-import { applyPoisonCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
-import { isInjuryPoison } from "../src/live/poison-card.js";
+import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
+import { isExposurePoison, isInjuryPoison } from "../src/live/poison-card.js";
 import { applyCastCard, postCastCard } from "./casts.js";
 import { isCast } from "../src/live/cast-card.js";
 
@@ -83,6 +83,8 @@ async function cardForUse(message) {
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
     // An injury poison: which weapon to coat (scripts/poisons.js).
     if (isInjuryPoison(plan)) return postPoisonCard({ message, plan, used, actor, token });
+    // A contact, inhaled or ingested poison: exposure of the creatures targeted.
+    if (isExposurePoison(plan)) return postExposureCard({ message, plan, used, actor, token });
     // A spell PF2e has no Effect for: the spell module casts it (scripts/casts.js).
     if (isCast(plan)) return postCastCard({ message, plan, used, actor, token });
     if (!played(plan)) return;
@@ -126,6 +128,7 @@ function hideCovered(message, html) {
 function choicesOf(state, root) {
     if (state.kind === "bomb") return { included: [...root.querySelectorAll("[data-air-splash]")].filter((box) => box.checked).map((box) => Number(box.dataset.airSplash)) };
     if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
+    if (state.kind === "expose") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) };
@@ -135,6 +138,7 @@ const APPLY = {
     bomb: (message, choices) => applyBombCard(message, choices),
     poison: (message, choices) => applyPoisonCard(message, choices),
     cast: (message, choices) => applyCastCard(message, choices),
+    expose: (message, choices) => applyExposureCard(message, choices),
     item: (message, choices) => applyCard(message, choices)
 };
 const applyByKind = (message, state, choices) => APPLY[state.kind](message, choices);
@@ -163,6 +167,8 @@ function wireCard(message, html) {
         button.disabled = true;
         const choices = choicesOf(state, root);
         try {
+            // (On the presser's own client: a card that acts on targets needs some.)
+            if ((state.kind === "expose" || (state.kind === "cast" && !state.plan?.self)) && !choices.targets?.length) throw new Error("Target the creatures first.");
             if (isActiveGM()) await applyByKind(message, state, choices);
             else if (!game.users.activeGM) throw new Error("No GM is connected to apply it.");
             else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });
@@ -186,6 +192,7 @@ async function onRequest(data) {
     const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null }
         : state.kind === "poison" ? { weapon: data.weapon }
         : state.kind === "cast" ? { drinker: data.drinker, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "expose" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : { drinker: data.drinker };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);

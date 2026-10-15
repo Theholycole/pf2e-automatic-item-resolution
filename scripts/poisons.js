@@ -3,7 +3,7 @@
 // card on the target (the ability module's api.live.postCard, the affliction
 // handed to Pseudo Afflictions as for monster venom); a critical miss wastes it.
 
-import { MODULE_KEY, createPoisonCard, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, saveText } from "../src/live/poison-card.js";
+import { MODULE_KEY, createExposureCard, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, saveText } from "../src/live/poison-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
@@ -69,3 +69,29 @@ export async function strikeWithPoison(message) {
         content: `<p><strong>${poison.item.name}</strong>: ${targetToken?.name ?? targetToken?.actor?.name ?? "the target"} is exposed (${saveText(poison.plan)}). Roll its save and apply the stage by hand.</p>`
     });
 }
+
+// Contact, inhaled and ingested poisons: a card to expose the creatures its presser targets.
+export async function postExposureCard({ message, plan, used, actor, token }) {
+    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor) });
+    return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
+}
+
+// targets: the token uuids the presser had targeted.
+export async function applyExposureCard(message, { targets = [] } = {}) {
+    const state = stateOf(message);
+    if (!state || state.kind !== "expose" || state.status !== "open") return null;
+    const tokens = (await Promise.all((Array.isArray(targets) ? targets : []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
+    if (!tokens.length) throw new Error("Target the creatures to expose first.");
+    const actor = await fromUuid(state.user.actorUuid).catch(() => null);
+    const sourceToken = state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null;
+    const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+    const names = tokens.map((token) => token.name ?? token.actor?.name).join(", ");
+    const lines = [];
+    if (postCard && actor) {
+        await postCard({ plan: state.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: `${state.delivery} poison` });
+        lines.push(`${names}: exposed to ${state.item.name} (its save card follows).`);
+    } else lines.push(`${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).`);
+    const next = { ...state, status: "applied", results: lines };
+    return message.update({ content: exposureCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
