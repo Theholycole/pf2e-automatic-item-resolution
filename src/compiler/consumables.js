@@ -24,10 +24,18 @@ export function recipientOf(item) {
 }
 
 // The distinct PF2e effect items the text links: [{ uuid, label }].
+// (A third-party module's own Effect, "@UUID[Compendium.<module>.<pack>.<id>]{Effect: …}" — often without the document
+// type: its uuid in full, marked to be checked against the item's text before it's applied, src/compiler/verify-effect.js.)
+const MODULE_EFFECT_LINK = /@UUID\[Compendium\.((?!pf2e\.)[\w-]+)\.([\w-]+)\.(?:Item\.)?([A-Za-z0-9]{16})\]\{(Effect:[^}]*)\}/g;
 export function effectLinks(item) {
+    const html = String(item?.system?.description?.value ?? "");
     const links = new Map();
-    for (const match of String(item?.system?.description?.value ?? "").matchAll(EFFECT_LINK)) {
+    for (const match of html.matchAll(EFFECT_LINK)) {
         if (!links.has(match[1])) links.set(match[1], { uuid: match[1], label: match[2]?.trim() || null });
+    }
+    for (const match of html.matchAll(MODULE_EFFECT_LINK)) {
+        const uuid = `Compendium.${match[1]}.${match[2]}.Item.${match[3]}`;
+        if (!links.has(uuid)) links.set(uuid, { uuid, label: match[4]?.trim() || null, verify: html });
     }
     return [...links.values()];
 }
@@ -125,7 +133,8 @@ export function castPlan(item) {
 // An application's recipients for the item: the drinker is the plan's target (the user, by default).
 const recipientsFor = (recipient) => (recipient === "drinker" ? "target" : "self");
 
-const application = (link, recipient) => ({ kind: "native-spell-effect", uuid: link.uuid, label: link.label, recipients: recipientsFor(recipient) });
+// (verify: a third-party Effect's item text, to check it against before it's applied.)
+const application = (link, recipient) => ({ kind: "native-spell-effect", uuid: link.uuid, label: link.label, recipients: recipientsFor(recipient), ...(link.verify ? { verify: link.verify } : {}) });
 
 // A plan of the item's own, when the ability compiler read nothing: its one linked
 // Effect (or the PF2e spell Effects of the spells it grants) and the healing PF2e

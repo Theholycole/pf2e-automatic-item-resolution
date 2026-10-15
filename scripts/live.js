@@ -26,6 +26,7 @@ import { applyCounteractCard, postCounteractCard } from "./counteract.js";
 import { activate, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
+import { verifyEffectRules } from "../src/compiler/verify-effect.js";
 
 let compile = null;
 // The last dose's item, kept as PF2e deletes it (its Use message can arrive after): uuid → { data, actor }.
@@ -343,6 +344,29 @@ async function nativeEffect(actor, name, change, state) {
     if (!actor) return null;
     const template = await fromUuid(change.effect.uuid).catch(() => null);
     if (!template) return `${name}: ${change.effect.label ?? "the effect"} wasn't found; apply it by hand.`;
+    // (A third-party module's own Effect: applied only when its rules are what the item's text says, src/compiler/verify-effect.js;
+    // else a note of the text, for the Effect's time.)
+    const linked = applicationFor(state.plan, change);
+    if (linked?.verify) {
+        const data = template.toObject?.() ?? template;
+        const conditionNames = Object.fromEntries((data.system?.rules ?? []).filter((rule) => rule.key === "GrantItem" && rule.uuid).map((rule) => {
+            let granted = null;
+            try {
+                granted = fromUuidSync(rule.uuid);
+            } catch {
+                granted = null;
+            }
+            return [String(rule.uuid).split(".").at(-1), granted?.name ?? null];
+        }).filter(([, value]) => value));
+        const verdict = verifyEffectRules(data.system?.rules ?? [], linked.verify, { conditionNames });
+        if (!verdict.ok) {
+            const ability = game.modules.get(ABILITY_ID)?.api?.live;
+            const time = data.system?.duration;
+            const duration = time?.unit && time.unit !== "unlimited" ? { mode: "fixed", value: Number(time.value) || 1, unit: time.unit, expiry: time.expiry ?? "turn-start", anchor: "effect-start" } : null;
+            if (ability?.applyChange) await ability.applyChange({ op: "effect", target: DRINKER_ID, effect: { kind: "note", note: { label: state.item.name, text: plainText(linked.verify), duration } } }, abilityState(state));
+            return `${name}: ${template.name} wasn't applied, since its rules don't match the item's text (${verdict.failures.map((failure) => failure.why).join("; ")}). A note of the text instead.`;
+        }
+    }
     // (A tea's Tea Ceremony: its longer time, and PF2e's ceremony choice preset either way.)
     const ceremony = state.ceremony === null || state.ceremony === undefined ? null : Boolean(state.ceremony);
     const application = applicationFor(state.plan, change);

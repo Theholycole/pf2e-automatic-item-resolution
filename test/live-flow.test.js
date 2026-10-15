@@ -169,3 +169,30 @@ test("a tea's Tea Ceremony: ticked, its Effect lasts the ceremony's time, PF2e's
     assert.equal(await peace(true)(), "tea-ceremony");
     assert.equal(await peace(false)(), "one-action");
 });
+
+test("a third-party Effect is applied when its rules match the item's text, else a note of the text instead", async () => {
+    const eater = foundry.makeActor({ id: "tp-eater", name: "Eater", owners: ["player"] });
+    foundry.place(eater, 0, 15000);
+    const effectRules = (type) => [{ key: "FlatModifier", selector: "athletics", value: 2, type }];
+    const snack = (id, type) => {
+        const uuid = `Compendium.some-module.some-pack.Item.${id}`;
+        foundry.documents.set(uuid, { uuid, name: `Effect: Snack ${id}`, toObject: () => ({ name: `Effect: Snack ${id}`, type: "effect", system: { rules: effectRules(type), duration: { value: 1, unit: "minutes", expiry: "turn-start" } } }) });
+        return foundry.giveItem(eater, { _id: `snack${id}`.slice(0, 16), type: "consumable", name: `Snack ${id}`, system: { category: "food", traits: { value: [] }, level: { value: 1 }, description: { value: `<p>Activate (manipulate) After eating it, you gain a +2 item bonus to Athletics checks for 1 minute. @UUID[Compendium.some-module.some-pack.${id}]{Effect: Snack ${id}}</p>` } } });
+    };
+    const eat = async (item) => {
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, type: "consumable" } } }, speaker: { actor: eater.id }, actor: eater, token: eater.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = cardAfter(message);
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: 0, userId: "player" });
+        await settle();
+        return card;
+    };
+    await eat(snack("AAAAAAAAAAAAAAAA", "item"));
+    assert.ok(eater.created.some((entry) => entry.name === "Effect: Snack AAAAAAAAAAAAAAAA"), "the matching Effect applied");
+    const before = foundry.applied.length;
+    const card = await eat(snack("BBBBBBBBBBBBBBBB", "status"));
+    assert.ok(!eater.created.some((entry) => entry.name === "Effect: Snack BBBBBBBBBBBBBBBB"), "not the mismatching one");
+    assert.ok(foundry.applied.slice(before).some((entry) => entry.change.effect?.kind === "note"), "a note instead");
+    assert.match(card.content, /wasn&#39;t applied, since its rules don&#39;t match the item&#39;s text \(\+2 status not stated\)/);
+});

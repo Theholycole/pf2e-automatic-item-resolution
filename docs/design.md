@@ -160,6 +160,17 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - Over the frequency, the GM gets a whispered warning; it still activates (the GM's call).
 - `api.live.activate(itemUuid, index)` does the same from code.
 
+## Third-party items (the user's answers of 2026-10-15: start now; check each module Effect against its text)
+
+The same readers run over the installed modules' items (`tools/census-third-party.mjs`, counts in [census-third-party.md](census-third-party.md); names and text stay in `.cache/`).
+- **A module's own linked Effect.** These are written in the short form `@UUID[Compendium.<module>.<pack>.<id>]{Effect: …}`, and `effectLinks` gives them their full uuid, marked `verify`. Live play applies one only when `src/compiler/verify-effect.js` finds each of its rules in the item's text:
+  - a FlatModifier's value and type;
+  - a Resistance or Weakness, in any of its word orders ("8 resistance to primal", "4 fire resistance");
+  - TempHP, FastHealing, a Sense, DamageDice, or a GrantItem's condition by name;
+  - RollOption, ChoiceSet and Note pass, since they only label or ask.
+
+  Otherwise the creature gets a note of the text for the Effect's time, and the card says why. The census checks offline the same way: 44 of the 59 Alchemists+ and Tian Xia+ links match. The 15 that don't are listed for the user in `~/Documents/ChatGPT/item-decisions-for-user.md`, most of them errors in the module's data (wrong grade linked, status for item, 10 for 35).
+
 ## The simulator (the auto-combat session's)
 
 The plans were handed over on 2026-10-15. That session checked their shapes, and is waiting for the user's policy on when PCs use consumables before building it. Once built, it reads a PC's consumables through `registry.planFor(item)`, with their quantity and uses. Its planner then decides when to drink: healing when low, buffs as the fight starts, the action it costs, and whether to feed an adjacent ally. Its snapshot's "consumable" gaps then shrink.

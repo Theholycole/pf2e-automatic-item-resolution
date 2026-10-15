@@ -272,3 +272,16 @@ test("consumables whose plan the core resolves with no gaps (ratchet)", () => {
     }
     assert.ok(resolves >= 732, `${resolves} resolve with no gaps`);
 });
+
+test("a third-party module's own Effect: linked in its short form, checked against the item's text rule by rule", async () => {
+    const { verifyEffectRules } = await import("../src/compiler/verify-effect.js");
+    const { effectLinks } = await import("../src/compiler/consumables.js");
+    const html = "<p>After eating it, you gain a +2 item bonus to Athletics checks and 4 fire resistance for 1 minute. @UUID[Compendium.some-module.some-pack.ABCDEFGHIJKLMNOP]{Effect: Test Snack}</p>";
+    assert.deepEqual(effectLinks({ system: { description: { value: html } } }).map((link) => [link.uuid, Boolean(link.verify)]), [["Compendium.some-module.some-pack.Item.ABCDEFGHIJKLMNOP", true]]);
+    assert.equal(verifyEffectRules([{ key: "FlatModifier", selector: "athletics", value: 2, type: "item" }, { key: "Resistance", type: "fire", value: 4 }, { key: "RollOption", option: "x" }], html).ok, true);
+    // A status bonus the text calls item, a value from a formula, a rule it can't read: not applied.
+    assert.deepEqual(verifyEffectRules([{ key: "FlatModifier", selector: "athletics", value: 2, type: "status" }], html).failures.map((failure) => failure.why), ["+2 status not stated"]);
+    assert.equal(verifyEffectRules([{ key: "Weakness", type: "fire", value: "@actor.level" }], html).ok, false);
+    assert.equal(verifyEffectRules([{ key: "AdjustModifier", selector: "athletics" }], html).ok, false);
+    assert.equal(verifyEffectRules([], html).ok, false, "nothing to apply");
+});
