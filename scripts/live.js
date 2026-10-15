@@ -13,7 +13,7 @@
 //   other change goes through the ability module's api.live.applyChange.
 
 import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, rolledHealing, rollFormula, USER_ID } from "../src/live/card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, stateOf } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, startInitiative, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { applyCastCard, postCastCard } from "./casts.js";
@@ -377,7 +377,7 @@ async function nativeEffect(actor, name, change, state) {
         item: state.item,
         user: state.user,
         worldTime: game.time.worldTime,
-        initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null,
+        initiative: startInitiative(actor),
         flags: { [MODULE_ID]: { card: true } }
     });
     source._stats = { ...(source._stats ?? {}), compendiumSource: change.effect.uuid };

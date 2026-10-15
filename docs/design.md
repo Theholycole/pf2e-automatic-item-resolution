@@ -1,6 +1,13 @@
 # Design: the module's shape, batch 1 (potions, elixirs, mutagens) and batch 2 (bombs, poisons)
 
-Status, 2026-10-15: the user answered the design's questions the same day (the recommendations). Everything marked *built* is built and tested offline. The live cards are written but **not yet checked in Foundry**: pftest was busy (a user was logged in, with no Holder).
+Status, 2026-10-15: the user answered the design's questions the same day (the recommendations). Everything marked *built* is built and tested offline, and the live check passed in pftest the same evening (all 13 cases).
+
+The first live run found three things the stand-in hadn't:
+- PF2e's reroll replaces the message rather than updating it (a harness fix).
+- Giving an item with a ChoiceSet stops for PF2e's prompt (the harness presets it).
+- `game.combat` is the encounter the GM views, which may not be the creature's. The module now finds the started encounter the creature is in (`encounterOf` in `scripts/foundry.js`), for Focus Points, encounter-period uses and Effect start times.
+
+The sheet's Activate button now sits right after the item's name.
 
 ## Where things stand
 

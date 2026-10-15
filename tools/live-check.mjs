@@ -64,6 +64,8 @@ async function give(actor, name) {
     assert(entry, `${name} isn't in PF2e's equipment.`);
     const source = (await pack.getDocument(entry._id)).toObject();
     delete source._id;
+    // (Its own ChoiceSets answered, so PF2e doesn't stop the check to ask: Hexing Jar's patron, the first choice.)
+    for (const rule of source.system?.rules ?? []) if (rule.key === "ChoiceSet" && rule.selection === undefined && Array.isArray(rule.choices) && rule.choices.length) rule.selection = rule.choices[0].value;
     const [item] = await actor.createEmbeddedDocuments("Item", [source]);
     return item;
 }
@@ -226,10 +228,9 @@ export const cases = {
         await foot.consume();
         const card = await messageAfter(since, itemCard("reroll"), { what: "the reroll card" });
         await game.modules.get(NS).api.live.apply(card.id);
-        const end = Date.now() + 8000;
-        while (Date.now() < end && !game.messages.get(save.id)?.flags?.pf2e?.context?.isReroll) await wait(250);
-        assert(game.messages.get(save.id)?.flags?.pf2e?.context?.isReroll, "PF2e rerolled the save");
-        return { save: save.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
+        // (PF2e's reroll replaces the message: the old one goes, a new one marked isReroll takes its place.)
+        const rerolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "saving-throw" && message.flags.pf2e.context.isReroll && message.speaker?.actor === hero.id, { what: "PF2e's rerolled save" });
+        return { save: save.id, rerolled: rerolled.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
     // Onyx Panther: its card rolls PF2e's own Sneak for the user, with the panther's +1 item bonus among the roll's modifiers.

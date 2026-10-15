@@ -6,7 +6,7 @@
 
 import { MODULE_KEY, createStrikeCard, riderFor, strikeCardHTML, strikeEffectSource, strikeWord } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, startInitiative, stateOf } from "./foundry.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -23,7 +23,7 @@ export async function applyStrikeCard(message) {
     // (One readied Strike at a time: a new one replaces the old.)
     const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]);
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
-    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID })]);
     const next = { ...state, status: "applied", results: [`${state.user.name}'s next ${strikeWord(state.plan)} this turn carries ${state.item.name}${old.length ? " (the one readied before is gone)" : ""}.`] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

@@ -75,3 +75,22 @@ export async function applyRiders({ plan, degree, user, target, item }) {
     }
     return lines;
 }
+
+// The started encounter the creature is in, and its combatant there: the GM may be viewing another encounter, or an unlinked
+// one (game.combat is the viewed one). → { combat, combatant } or null.
+export function encounterOf(actor) {
+    if (!actor) return null;
+    const isIt = (combatant) => combatant.actor?.uuid === actor.uuid || combatant.actorId === actor.id;
+    const combats = [game.combat, ...(game.combats?.contents ?? [])].filter((combat, index, list) => combat?.started && list.indexOf(combat) === index);
+    for (const combat of combats) {
+        const combatant = combat.combatants.find(isIt);
+        if (combatant) return { combat, combatant };
+    }
+    return null;
+}
+
+// The initiative a new Effect starts at: the current turn's in the creature's encounter, else none.
+export const startInitiative = (actor) => {
+    const found = encounterOf(actor);
+    return found ? found.combat.combatant?.initiative ?? null : null;
+};

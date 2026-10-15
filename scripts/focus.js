@@ -6,7 +6,7 @@
 //   points still above the pool's old value are taken back. Out of an encounter there's no turn to end: the note says it.
 
 import { createFocusCard, focusCardHTML, focusText, poolAfter, unspent } from "../src/live/focus-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, creatureOf, entryOf, isActiveGM, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, creatureOf, encounterOf, entryOf, isActiveGM, stateOf } from "./foundry.js";
 
 const GRANT = "focusGrant";
 const USER_ID = "source";
@@ -15,8 +15,6 @@ export async function postFocusCard({ message, plan, used, actor, token }) {
     const state = createFocusCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: entryOf(token, actor) });
     return ChatMessage.create({ content: focusCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
-
-const combatantOf = (actor) => (game.combat?.started ? game.combat.combatants.find((combatant) => combatant.actor?.uuid === actor.uuid || combatant.actorId === actor.id) ?? null : null);
 
 export async function applyFocusCard(message) {
     const state = stateOf(message);
@@ -33,9 +31,10 @@ export async function applyFocusCard(message) {
         const before = Number(pool.value) || 0;
         await actor.update({ "system.resources.focus.value": after.value });
         lines.push(`${state.user.name} gains ${after.gained} Focus Point${after.gained === 1 ? "" : "s"} (${after.value} of ${after.max})${focus.only ? `, only to ${focus.only}` : ""}.`);
-        const combatant = focus.lost === "turn-end" ? combatantOf(actor) : null;
-        if (combatant) {
-            await actor.setFlag(MODULE_ID, GRANT, { before, gained: after.gained, combatId: game.combat.id, combatantId: combatant.id, item: state.item.name });
+        // (The started encounter the creature is in, whichever one the GM is viewing.)
+        const found = focus.lost === "turn-end" ? encounterOf(actor) : null;
+        if (found) {
+            await actor.setFlag(MODULE_ID, GRANT, { before, gained: after.gained, combatId: found.combat.id, combatantId: found.combatant.id, item: state.item.name });
             lines.push("Unspent at the end of the turn, it's taken back.");
         } else if (focus.lost === "turn-end") lines.push("Not in an encounter: take it back by hand if it isn't spent this turn.");
         // (Its reminder, until the end of the turn when it's lost then, else for the round.)

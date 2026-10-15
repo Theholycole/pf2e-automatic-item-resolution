@@ -8,7 +8,7 @@ import { activationButtonsHTML, frequencyText, overLimit, perWord, usesNow, with
 import { handlesPermanent } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
-import { MODULE_ID, SOCKET, isActiveGM } from "./foundry.js";
+import { MODULE_ID, SOCKET, encounterOf, isActiveGM } from "./foundry.js";
 
 const USES = "activationUses";
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -27,7 +27,8 @@ export function setUpActivations(options) {
     });
 }
 
-const now = () => ({ worldTime: game.time.worldTime, combatId: game.combat?.started ? game.combat.id : null });
+// (An encounter's uses count in the started encounter the item's user is in.)
+const now = (actor = null) => ({ worldTime: game.time.worldTime, combatId: encounterOf(actor)?.combat.id ?? null });
 
 // The activations with a card, of the item as it is now (compiled once per version of its text).
 const compiled = new Map();
@@ -49,11 +50,12 @@ function addButtons(sheet, html) {
         if (!item || !handlesPermanent(item) || row.querySelector(".air-activate")) continue;
         const list = playable(item);
         if (!list.length) continue;
-        const anchor = row.querySelector(".item-name h4") ?? row.querySelector(".item-name");
+        // (Right after the item's name, inside PF2e's name heading, which fills the row.)
+        const anchor = row.querySelector('.item-name h4 [data-action="toggle-summary"]') ?? row.querySelector(".item-name h4") ?? row.querySelector(".item-name");
         if (!anchor) continue;
         const holder = document.createElement("span");
         holder.className = "air-activations";
-        holder.innerHTML = activationButtonsHTML(list.map(({ activation, plan, index }) => ({ index, name: activation.name, time: activation.time, frequency: plan.trigger?.frequency ?? null })), { itemName: item.name, record: item.getFlag(MODULE_ID, USES) ?? {}, now: now() });
+        holder.innerHTML = activationButtonsHTML(list.map(({ activation, plan, index }) => ({ index, name: activation.name, time: activation.time, frequency: plan.trigger?.frequency ?? null })), { itemName: item.name, record: item.getFlag(MODULE_ID, USES) ?? {}, now: now(actor) });
         anchor.after(holder);
         for (const button of holder.querySelectorAll("[data-air-activate]")) button.addEventListener("click", (event) => {
             event.preventDefault();
@@ -86,17 +88,18 @@ export async function activate(itemUuid, index, userId = game.user.id) {
     const frequency = entry.plan.trigger?.frequency ?? null;
     const record = item.getFlag(MODULE_ID, USES) ?? {};
     const name = entry.activation.name ? `${item.name}: ${entry.activation.name}` : item.name;
-    if (overLimit(record, entry.index, frequency, now())) {
+    const at = now(item.actor);
+    if (overLimit(record, entry.index, frequency, at)) {
         await ChatMessage.create({
             speaker: ChatMessage.getSpeaker({ actor: item.actor }),
             whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id),
-            content: `<p><strong>${escape(name)}</strong>: activated again, though it's ${frequencyText(frequency)} (used ${usesNow(record, entry.index, frequency, now())} this ${perWord(frequency)}). The GM's call.</p>`
+            content: `<p><strong>${escape(name)}</strong>: activated again, though it's ${frequencyText(frequency)} (used ${usesNow(record, entry.index, frequency, at)} this ${perWord(frequency)}). The GM's call.</p>`
         });
     }
     const token = item.actor.getActiveTokens?.(true)?.[0] ?? null;
     // (The activation's card, named for it; its text the activation's own block.)
     const used = { data: { ...entry.data, name, system: { ...entry.data.system, description: { value: entry.activation.html } } }, actor: item.actor };
     const card = await postCardFor({ message: null, plan: entry.plan, used, actor: item.actor, token });
-    if (frequency?.max) await item.setFlag(MODULE_ID, USES, withUse(record, entry.index, frequency, now()));
+    if (frequency?.max) await item.setFlag(MODULE_ID, USES, withUse(record, entry.index, frequency, at));
     return card;
 }

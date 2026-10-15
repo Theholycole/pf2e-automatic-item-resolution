@@ -37,7 +37,9 @@ export function counteractCandidates(creature, counteract) {
     // (A condition no listed Effect grants: itself, the GM's numbers.)
     for (const condition of creature.conditions ?? []) {
         if (!(counteract.conditions ?? []).includes(condition.slug) || (condition.grantedBy && rows.some((row) => row.id === condition.grantedBy))) continue;
-        rows.push({ id: condition.id, name: `${condition.name ?? condition.slug}${Number.isFinite(condition.value) ? ` ${condition.value}` : ""}`, kind: "condition", slug: condition.slug, rank: null, dc: null });
+        // (PF2e's condition names carry their value already: "Clumsy 1".)
+        const name = condition.name ?? condition.slug;
+        rows.push({ id: condition.id, name: Number.isFinite(condition.value) && !new RegExp(String.raw`\b${condition.value}$`).test(name) ? `${name} ${condition.value}` : name, kind: "condition", slug: condition.slug, rank: null, dc: null });
     }
     for (const affliction of creature.afflictions ?? []) {
         if (!fits(affliction.traits ?? [])) continue;
