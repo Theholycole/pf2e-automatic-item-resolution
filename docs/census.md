@@ -22,9 +22,10 @@ Results, for the items this module handles:
 | note-only | 267 | 18% |
 | builtin:zone | 86 | 6% |
 | builtin:cast-spell | 29 | 2% |
+| builtin:roll-twice | 2 | 0% |
 | builtin:no-effect | 63 | 4% |
 | builtin:save-bonus | 1 | 0% |
-| none | 310 | 21% |
+| none | 308 | 21% |
 
 ## By category
 
@@ -32,7 +33,7 @@ Results, for the items this module handles:
 |---|---:|---:|---:|---:|---:|---:|---:|
 | other | 512 | 201 | 0 | 120 | 0 | 38 | 153 |
 | potion | 182 | 102 | 2 | 39 | 0 | 20 | 19 |
-| talisman | 156 | 46 | 1 | 13 | 0 | 25 | 71 |
+| talisman | 156 | 46 | 1 | 13 | 0 | 27 | 69 |
 | elixir | 149 | 83 | 0 | 35 | 0 | 22 | 9 |
 | poison | 115 | 110 | 0 | 1 | 0 | 1 | 3 |
 | snare | 82 | 0 | 0 | 5 | 0 | 63 | 14 |
@@ -45,29 +46,29 @@ Results, for the items this module handles:
 
 ## Played live
 
-Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **later** (the same, kept open for an action the item gives for later: a breath potion), **cast** (the spell module casts it), **zone** (a lasting area or a snare, placed by the ability module's zones), **strike** (the user's next Strike carries its riders: Fear Gem), **reroll** (PF2e rerolls the roll that triggered it: Lucky Rabbit's Foot), **action** (PF2e's own skill action with the item's bonus: Onyx Panther's Sneak), **counteract** (what it counteracts on its drinker: Surging Serum). Bombs get theirs after PF2e's damage roll (above).
+Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **later** (the same, kept open for an action the item gives for later: a breath potion), **cast** (the spell module casts it), **zone** (a lasting area or a snare, placed by the ability module's zones), **strike** (the user's next Strike carries its riders: Fear Gem), **reroll** (PF2e rerolls the roll that triggered it: Lucky Rabbit's Foot), **fortune** (its user's next roll of a kind rolled twice: Gorum's Tear), **action** (PF2e's own skill action with the item's bonus: Onyx Panther's Sneak), **counteract** (what it counteracts on its drinker: Surging Serum). Bombs get theirs after PF2e's damage roll (above).
 
-| Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | action | counteract | no card |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 223 | 3 | 3 | 71 | 8 | 8 | 9 | 0 | 0 | 1 | 5 | 181 |
-| potion | 182 | 95 | 0 | 0 | 3 | 43 | 9 | 0 | 0 | 0 | 0 | 2 | 30 |
-| talisman | 156 | 48 | 0 | 0 | 10 | 0 | 9 | 0 | 1 | 1 | 5 | 0 | 82 |
-| elixir | 149 | 116 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 11 | 20 |
-| poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 3 |
-| snare | 82 | 5 | 0 | 0 | 0 | 0 | 0 | 63 | 0 | 0 | 0 | 0 | 14 |
-| gadget | 77 | 24 | 0 | 0 | 15 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 26 |
-| mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| oil | 66 | 46 | 0 | 0 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 15 |
-| fulu | 46 | 18 | 0 | 0 | 3 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 23 |
-| drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **652** | **45** | **89** | **107** | **54** | **29** | **86** | **1** | **2** | **6** | **20** | **395** |
+| Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | fortune | action | counteract | no card |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| other | 512 | 223 | 3 | 3 | 71 | 8 | 8 | 9 | 0 | 0 | 0 | 1 | 5 | 181 |
+| potion | 182 | 95 | 0 | 0 | 3 | 43 | 9 | 0 | 0 | 0 | 0 | 0 | 2 | 30 |
+| talisman | 156 | 48 | 0 | 0 | 10 | 0 | 9 | 0 | 1 | 1 | 2 | 5 | 0 | 80 |
+| elixir | 149 | 116 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 11 | 20 |
+| poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 |
+| snare | 82 | 5 | 0 | 0 | 0 | 0 | 0 | 63 | 0 | 0 | 0 | 0 | 0 | 14 |
+| gadget | 77 | 24 | 0 | 0 | 15 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 26 |
+| mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| oil | 66 | 46 | 0 | 0 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 15 |
+| fulu | 46 | 18 | 0 | 0 | 3 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 23 |
+| drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| **all** | **1486** | **652** | **45** | **89** | **107** | **54** | **29** | **86** | **1** | **2** | **2** | **6** | **20** | **393** |
 
 Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
-| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 310 |
+| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 308 |
 | the ability compiler's GM fallback ("no-effect") | 63 |
 | a save on a trigger or a passive (an aura, a reaction) | 21 |
 | another plan not played yet | 1 |
@@ -80,10 +81,10 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 |---|---:|---:|---:|---:|
 | duration | 943 | 561 | 0 | 22 |
 | fixed-dc | 491 | 329 | 0 | 41 |
-| condition | 433 | 257 | 0 | 46 |
+| condition | 433 | 257 | 0 | 45 |
 | linked-effect | 393 | 378 | 0 | 1 |
 | damage | 277 | 142 | 0 | 39 |
-| trigger | 156 | 54 | 0 | 69 |
+| trigger | 156 | 54 | 0 | 67 |
 | affliction | 144 | 139 | 0 | 3 |
 | counteract | 79 | 18 | 0 | 14 |
 | on-weapon | 67 | 54 | 0 | 1 |

@@ -108,7 +108,7 @@ for (const item of consumables) {
 }
 
 const tally = (list, key) => list.reduce((counts, row) => ({ ...counts, [key(row)]: (counts[key(row)] ?? 0) + 1 }), {});
-const RESULTS = ["resolves", "partial", "note-only", "gaps", "builtin:zone", "builtin:cast-spell", "builtin:no-effect", "builtin:save-bonus", "none", "error", "unregistered"];
+const RESULTS = ["resolves", "partial", "note-only", "gaps", "builtin:zone", "builtin:cast-spell", "builtin:roll-twice", "builtin:no-effect", "builtin:save-bonus", "none", "error", "unregistered"];
 const ours = rows.filter((row) => row.result !== "spell-module");
 const categories = Object.entries(tally(rows, (row) => row.category)).sort((a, b) => b[1] - a[1]).map(([category]) => category);
 
@@ -124,7 +124,7 @@ for (const name of Object.keys(MECHANISMS)) {
     mechanismCoverage[name] = { count: list.length, resolves: list.filter((row) => row.result === "resolves").length, gaps: list.filter((row) => row.result === "gaps").length, none: list.filter((row) => row.result === "none").length };
 }
 // What each item gets in live play (src/live/route.js), by category.
-const LIVE = ["item", "coat", "expose", "save", "later", "cast", "zone", "strike", "reroll", "action", "counteract"];
+const LIVE = ["item", "coat", "expose", "save", "later", "cast", "zone", "strike", "reroll", "fortune", "action", "counteract"];
 const liveByCategory = Object.fromEntries(Object.keys(byCategory).map((category) => [category, tally(ours.filter((row) => row.category === category), (row) => row.live ?? "none")]));
 const liveTotals = tally(ours, (row) => row.live ?? "none");
 // Why an item has no card yet.
@@ -200,7 +200,7 @@ for (const [category, entry] of Object.entries(byCategory)) {
 lines.push("");
 lines.push("## Played live");
 lines.push("");
-lines.push("Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **later** (the same, kept open for an action the item gives for later: a breath potion), **cast** (the spell module casts it), **zone** (a lasting area or a snare, placed by the ability module's zones), **strike** (the user's next Strike carries its riders: Fear Gem), **reroll** (PF2e rerolls the roll that triggered it: Lucky Rabbit's Foot), **action** (PF2e's own skill action with the item's bonus: Onyx Panther's Sneak), **counteract** (what it counteracts on its drinker: Surging Serum). Bombs get theirs after PF2e's damage roll (above).");
+lines.push("Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **later** (the same, kept open for an action the item gives for later: a breath potion), **cast** (the spell module casts it), **zone** (a lasting area or a snare, placed by the ability module's zones), **strike** (the user's next Strike carries its riders: Fear Gem), **reroll** (PF2e rerolls the roll that triggered it: Lucky Rabbit's Foot), **fortune** (its user's next roll of a kind rolled twice: Gorum's Tear), **action** (PF2e's own skill action with the item's bonus: Onyx Panther's Sneak), **counteract** (what it counteracts on its drinker: Surging Serum). Bombs get theirs after PF2e's damage roll (above).");
 lines.push("");
 lines.push(`| Category | Items | ${LIVE.join(" | ")} | no card |`);
 lines.push(`|---|---:|${LIVE.map(() => "---:").join("|")}|---:|`);

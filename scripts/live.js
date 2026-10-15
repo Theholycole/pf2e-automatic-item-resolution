@@ -17,8 +17,10 @@ import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { applyCastCard, postCastCard } from "./casts.js";
+import { needsTargets } from "../src/live/cast-card.js";
 import { startItemZone } from "./zones.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
+import { applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
@@ -47,6 +49,7 @@ export function setUpLivePlay({ compileItem, compileActivations = null }) {
         cardForBomb(message).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
         strikeWithPoison(message).catch((error) => console.error(`${MODULE_ID} | poisoned Strike`, error));
         strikeWithRider(message).catch((error) => console.error(`${MODULE_ID} | readied Strike`, error));
+        fortuneRolled(message).catch((error) => console.error(`${MODULE_ID} | roll twice`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
         hideCovered(message, html);
@@ -101,7 +104,7 @@ async function cardForUse(message) {
 // The card for a plan (src/live/route.js): an injury poison's weapon to coat (scripts/poisons.js); a contact, inhaled or
 // ingested poison's exposure, or another item's save on its Use (Spark Wafer, Pyronite), for the creatures targeted; a spell
 // PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone (scripts/zones.js); a Focus Point
-// (scripts/focus.js); a readied Strike (scripts/strikes.js); a reroll (scripts/rerolls.js); a skill action
+// (scripts/focus.js); a readied Strike (scripts/strikes.js); a reroll (scripts/rerolls.js); a roll twice (scripts/fortune.js); a skill action
 // (scripts/item-actions.js); else the item card below.
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
@@ -116,6 +119,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "focus") return postFocusCard({ message, plan, used, actor, token });
     if (route === "strike") return postStrikeCard({ message, plan, used, actor, token });
     if (route === "reroll") return postRerollCard({ message, plan, used, actor, token });
+    if (route === "fortune") return postFortuneCard({ message, plan, used, actor, token });
     if (route === "action") return postActionCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
@@ -175,6 +179,7 @@ const APPLY = {
     cast: (message, choices) => applyCastCard(message, choices),
     expose: (message, choices) => applyExposureCard(message, choices),
     focus: (message) => applyFocusCard(message),
+    fortune: (message) => applyFortuneCard(message),
     strike: (message) => applyStrikeCard(message),
     reroll: (message, choices) => applyRerollCard(message, choices),
     "item-action": (message, choices) => applyActionCard(message, choices),
@@ -208,7 +213,7 @@ function wireCard(message, html) {
         const choices = choicesOf(state, root);
         try {
             // (On the presser's own client: a card that acts on targets needs some.)
-            if ((state.kind === "expose" || (state.kind === "cast" && !state.plan?.self) || (state.kind === "item-action" && state.plan?.action?.targeted) || (state.kind === "reroll" && state.plan?.reroll?.who === "companion")) && !choices.targets?.length) throw new Error("Target the creatures first.");
+            if ((state.kind === "expose" || (state.kind === "cast" && needsTargets(state.plan)) || (state.kind === "item-action" && state.plan?.action?.targeted) || (state.kind === "reroll" && state.plan?.reroll?.who === "companion")) && !choices.targets?.length) throw new Error("Target the creatures first.");
             if (isActiveGM()) await applyByKind(message, state, choices);
             else if (!game.users.activeGM) throw new Error("No GM is connected to apply it.");
             else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });

@@ -6,7 +6,7 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 969,
+   "none": 959,
    "builtin:cast-spell": 431,
    "resolves": 649,
    "builtin:focus-point": 45,
@@ -16,12 +16,13 @@
    "partial": 25,
    "builtin:modes": 26,
    "builtin:zone": 9,
+   "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
    "builtin:item-action": 3,
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1168,
+   "none": 1158,
    "cast": 431,
    "item": 593,
    "save": 297,
@@ -29,6 +30,7 @@
    "reroll": 15,
    "strike": 28,
    "zone": 9,
+   "fortune": 10,
    "action": 3,
    "later": 4
   },
@@ -39,7 +41,7 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 616,
+    "none": 609,
     "builtin:cast-spell": 318,
     "resolves": 386,
     "builtin:focus-point": 43,
@@ -49,6 +51,7 @@
     "partial": 11,
     "builtin:zone": 6,
     "builtin:modes": 15,
+    "builtin:roll-twice": 7,
     "builtin:save-bonus": 2
    }
   },
@@ -56,7 +59,7 @@
    "activations": 460,
    "results": {
     "resolves": 142,
-    "none": 162,
+    "none": 161,
     "partial": 12,
     "note-only": 41,
     "builtin:cast-spell": 73,
@@ -64,6 +67,7 @@
     "builtin:modes": 7,
     "builtin:no-effect": 12,
     "builtin:item-action": 3,
+    "builtin:roll-twice": 1,
     "builtin:save-bonus": 1,
     "builtin:ac-reaction": 2
    }
@@ -93,12 +97,13 @@
     "note-only": 24,
     "resolves": 54,
     "builtin:no-effect": 6,
-    "none": 41,
+    "none": 39,
     "builtin:reroll": 2,
     "partial": 2,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
-    "builtin:focus-point": 2
+    "builtin:focus-point": 2,
+    "builtin:roll-twice": 2
    }
   },
   "shield": {
@@ -3905,9 +3910,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "The Tangled Briar",
@@ -9460,9 +9465,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Handkerchief of Disagreeable Disguise (Greater)",
@@ -12067,9 +12072,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Bloodstained Waistcoat",
@@ -17402,9 +17407,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Sonic Tuning Mace (Greater)",
@@ -18139,9 +18144,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Phoenix Fulu Holder",
@@ -18667,9 +18672,9 @@
    "time": "2",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Stalwart's Banner",
@@ -20438,9 +20443,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Guardian Shield",
@@ -22308,9 +22313,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Clarity Goggles (Moderate)",
@@ -23826,9 +23831,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Flickering",
@@ -28061,9 +28066,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Sorshen's Sinuous Guisarme",

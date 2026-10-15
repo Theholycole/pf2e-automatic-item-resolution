@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 310,
+   "none": 308,
    "resolves": 692,
    "builtin:zone": 86,
    "note-only": 267,
@@ -23,6 +23,7 @@
    "builtin:no-effect": 63,
    "partial": 10,
    "builtin:reroll": 2,
+   "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
   }
  },
@@ -84,14 +85,15 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 71,
+    "none": 69,
     "note-only": 13,
     "builtin:item-action": 5,
     "resolves": 46,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
-    "partial": 1
+    "partial": 1,
+    "builtin:roll-twice": 2
    },
    "mechanisms": {
     "trigger": 106,
@@ -341,7 +343,7 @@
    "count": 156,
    "resolves": 54,
    "gaps": 0,
-   "none": 69
+   "none": 67
   },
   "counteract": {
    "count": 79,
@@ -359,7 +361,7 @@
    "count": 433,
    "resolves": 257,
    "gaps": 0,
-   "none": 46
+   "none": 45
   },
   "duration": {
    "count": 943,
@@ -371,7 +373,7 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 395,
+   "none": 393,
    "item": 652,
    "zone": 86,
    "expose": 89,
@@ -381,7 +383,8 @@
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
-   "strike": 1
+   "strike": 1,
+   "fortune": 2
   },
   "byCategory": {
    "other": {
@@ -405,13 +408,14 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 82,
+    "none": 80,
     "item": 48,
     "action": 5,
     "reroll": 1,
     "cast": 9,
     "save": 10,
-    "strike": 1
+    "strike": 1,
+    "fortune": 2
    },
    "elixir": {
     "item": 116,
@@ -467,7 +471,7 @@
    }
   },
   "noCard": {
-   "no-plan": 310,
+   "no-plan": 308,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -19420,7 +19424,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:roll-twice",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Red Dragon's Breath Potion (Wyrm)",
@@ -20569,7 +20575,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:roll-twice",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Demon-Hunting Bands",

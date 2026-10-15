@@ -1,11 +1,12 @@
 // Which card a used consumable gets (scripts/live.js), as a pure decision the census shares: "coat" (an injury
 // poison), "expose" (a contact, inhaled or ingested poison, or a drug), "cast" (a spell PF2e has no Effect for, the
 // spell module's), "save" (another item's save on its Use, at the presser's targets), "focus" (a Focus Point for its
-// user), "strike" (its user's next Strike carries its riders), "reroll" (PF2e rerolls the roll that triggered it), "action" (PF2e's own skill action, with its bonus), "counteract" (what it counteracts on its drinker), "item" (healing, PF2e Effects, the item's own row), or null (none yet).
+// user), "strike" (its user's next Strike carries its riders), "reroll" (PF2e rerolls the roll that triggered it), "fortune" (its user's next roll of a kind rolled twice), "action" (PF2e's own skill action, with its bonus), "counteract" (what it counteracts on its drinker), "item" (healing, PF2e Effects, the item's own row), or null (none yet).
 
 import { isExposurePoison, isInjuryPoison, isLaterSave, isUseSave } from "./poison-card.js";
 import { isCast } from "./cast-card.js";
 import { isStrikeItem } from "./strike-card.js";
+import { isFortune } from "./fortune-card.js";
 
 // An automatic row aimed at a creature other than the user (the ability compiler's "The target is grabbed until the end of
 // your next turn", "The target is Quickened for 1 round"): for the creatures the presser targets, through the save card —
@@ -27,6 +28,8 @@ export function routeOf(plan, text = "") {
     if (plan.builtin === "item-action" && plan.action) return "action";
     // (A reroll of the roll that triggered it: PF2e's own reroll, scripts/rerolls.js.)
     if (plan.builtin === "reroll" && plan.reroll) return "reroll";
+    // (Its user's next roll of a kind rolled twice: PF2e's RollTwice, scripts/fortune.js.)
+    if (isFortune(plan)) return "fortune";
     // (Used by Striking: the user's next Strike carries its riders, scripts/strikes.js.)
     if (isStrikeItem(plan)) return "strike";
     // (A Focus Point for its user: the item module's own card, scripts/focus.js.)
