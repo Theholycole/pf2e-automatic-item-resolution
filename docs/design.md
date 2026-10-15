@@ -95,7 +95,13 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - Apply calls the spell module's `api.castFromItem` (its session built it on 2026-10-15, c3a6b8d, not live-tested yet). The spell module casts it through PF2e, with a temporary entry it cleans up afterwards:
   - on the drinker for a potion;
   - on the user for "casts … on you";
-  - at the presser's own targets for a spell aimed at others.
+  - at the presser's own targets for a spell aimed at others;
+  - with no targets for an area spell or one without targets (Earthquake, Translocate): the spell module places it.
+- **Casts in words** (`src/compiler/cast-words.js`): the spell by its name in PF2e's spells (`options.spells`, from `spellIndex`), linked or not. "You cast a 4th-rank Dream Message spell", "The armor casts mislead, affecting you", "The wayfinder can cast 4th-rank Fireball", "The crystal ball casts a DC 33 Scrying spell", "a counteract modifier of [[/r 1d20+23]]", "You cast dimension door" (a few pre-remaster names mapped). 110 activations and Oil of Mending.
+  - Several spells ("cast either 5th-rank Darkvision or See the Unseen on yourself", "Choose Summon Lesser Servitor or Command. You Cast the chosen Spell at 1st rank (DC 19)") are `plan.choices` `[{ spell, rank }]`, and the card has a picker. A rank holds for the spells after it.
+  - The plan also says `area` and `targets` (from the spell), so the card asks for targets only when the spell targets creatures.
+  - The rest of the activation's text goes on the card as notes. A choice not read ("or the 1st-rank spell from your deity's cleric spells") is a note too.
+  - Not read: a random table (Pistol of Wonder), innate spells for a while (Elder Seed), a spell in parentheses ("such as the space where a creature just cast Translocate"), a cast after a failed save (Whip of Compliance), "If your next action is to Cast a Spell", rituals.
 
 **Other poisons and saves** (`src/live/poison-card.js`, `scripts/poisons.js`):
 - **Contact, inhaled and ingested poisons, and drugs** (89 items) get an exposure card. It says who the poison exposes, from PF2e's trait rules, and posts the poison's save card for the creatures the presser targets. For an inhaled poison, those entering the cloud for a minute are the GM's to call. An injury drug (Zerk) is injected.

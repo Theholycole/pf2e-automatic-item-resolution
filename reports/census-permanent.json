@@ -6,12 +6,12 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 1072,
-   "builtin:cast-spell": 321,
+   "none": 969,
+   "builtin:cast-spell": 431,
    "resolves": 649,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
-   "note-only": 291,
+   "note-only": 284,
    "builtin:reroll": 15,
    "partial": 25,
    "builtin:modes": 26,
@@ -21,9 +21,9 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1271,
-   "cast": 321,
-   "item": 600,
+   "none": 1168,
+   "cast": 431,
+   "item": 593,
    "save": 297,
    "focus": 45,
    "reroll": 15,
@@ -39,12 +39,12 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 700,
-    "builtin:cast-spell": 227,
+    "none": 616,
+    "builtin:cast-spell": 318,
     "resolves": 386,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
-    "note-only": 186,
+    "note-only": 179,
     "builtin:reroll": 8,
     "partial": 11,
     "builtin:zone": 6,
@@ -56,10 +56,10 @@
    "activations": 460,
    "results": {
     "resolves": 142,
-    "none": 177,
+    "none": 162,
     "partial": 12,
     "note-only": 41,
-    "builtin:cast-spell": 58,
+    "builtin:cast-spell": 73,
     "builtin:reroll": 5,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
@@ -81,18 +81,19 @@
   "backpack": {
    "activations": 26,
    "results": {
-    "none": 21,
-    "note-only": 5
+    "none": 20,
+    "note-only": 5,
+    "builtin:cast-spell": 1
    }
   },
   "armor": {
    "activations": 164,
    "results": {
-    "builtin:cast-spell": 28,
+    "builtin:cast-spell": 29,
     "note-only": 24,
     "resolves": 54,
     "builtin:no-effect": 6,
-    "none": 42,
+    "none": 41,
     "builtin:reroll": 2,
     "partial": 2,
     "builtin:ac-reaction": 2,
@@ -103,10 +104,10 @@
   "shield": {
    "activations": 100,
    "results": {
-    "builtin:cast-spell": 8,
+    "builtin:cast-spell": 10,
     "note-only": 17,
     "resolves": 27,
-    "none": 40,
+    "none": 38,
     "builtin:modes": 4,
     "builtin:no-effect": 4
    }
@@ -549,9 +550,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Deck of illusions",
@@ -824,9 +825,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Scizore of the Crab",
@@ -1011,9 +1012,9 @@
    "time": "cast",
    "frequency": "once per day for each spell",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Rending Gauntlets (Lesser)",
@@ -1374,9 +1375,9 @@
    "time": null,
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Aeon Stone (Rainbow Prism)",
@@ -1473,9 +1474,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Hauling",
@@ -2353,9 +2354,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mocker's Swazzle",
@@ -2672,9 +2673,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mythic Resilient",
@@ -2837,9 +2838,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Malefic Mirror",
@@ -3024,9 +3025,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Serpent's Lash",
@@ -3585,9 +3586,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mordant Mask",
@@ -3618,9 +3619,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mask of the Mantis (Major)",
@@ -3640,9 +3641,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Jar of Shifting Sands",
@@ -3937,9 +3938,9 @@
    "time": "1 minute",
    "frequency": "once per week",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Plate of Yled (Greater)",
@@ -4674,9 +4675,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Assassin's Bracers (Type III)",
@@ -4751,9 +4752,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Gliding",
@@ -5246,9 +5247,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Invisible Chain Shirt",
@@ -5609,9 +5610,9 @@
    "time": "1 minute",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Crystal Ball (Peridot)",
@@ -5620,9 +5621,9 @@
    "time": "10 minutes",
    "frequency": "twice per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Dragon Handwraps",
@@ -5631,9 +5632,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Dragon Handwraps",
@@ -5675,9 +5676,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Cauthooj Bagpipes",
@@ -6555,9 +6556,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Unholy Water",
@@ -6918,9 +6919,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Spider Lily Tattoo",
@@ -6973,9 +6974,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Eternal Eruption of Pale Mountain",
@@ -7952,9 +7953,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Armorskin Robes of Air",
@@ -8106,9 +8107,9 @@
    "time": "2",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Primeval Mistletoe (Greater)",
@@ -8568,9 +8569,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mountebank's Passage",
@@ -8689,9 +8690,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Awakened Adamantine Shot",
@@ -8744,9 +8745,9 @@
    "time": "2",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Primeval Mistletoe",
@@ -9041,9 +9042,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Unifying Emblem (Shriikirri-Quah)",
@@ -9294,9 +9295,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Duchy Defender",
@@ -9349,9 +9350,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Elder Sign",
@@ -9360,9 +9361,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Elder Sign",
@@ -9646,9 +9647,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Dawnlight (Major)",
@@ -9657,9 +9658,9 @@
    "time": "cast",
    "frequency": "once per day for each spell",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Mask of the Mantis",
@@ -9668,9 +9669,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mask of the Mantis",
@@ -9833,9 +9834,9 @@
    "time": "3",
    "frequency": "once per round",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Orb of Dragonkind",
@@ -10031,9 +10032,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Voyager's Pack",
@@ -10042,9 +10043,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Dread Helm",
@@ -10163,9 +10164,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Boozy Bottle",
@@ -10515,9 +10516,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Singing Stone",
@@ -11285,9 +11286,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Tome of Restorative Cleansing (Moderate)",
@@ -11494,9 +11495,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Chalice of Justice",
@@ -11901,9 +11902,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Passage Charm",
@@ -12022,9 +12023,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Bravery Baldric (Fleet)",
@@ -12682,9 +12683,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Genius Diadem",
@@ -12704,9 +12705,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Instinct Crown (Animal)",
@@ -12913,9 +12914,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Life Shot (Major)",
@@ -13045,9 +13046,9 @@
    "time": "1 minute",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Crystal Ball (Clear Quartz)",
@@ -13056,9 +13057,9 @@
    "time": "10 minutes",
    "frequency": "twice per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Reef Heart (Greater)",
@@ -13408,9 +13409,9 @@
    "time": "1 minute",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Crystal Ball (Moonstone)",
@@ -13419,9 +13420,9 @@
    "time": "10 minutes",
    "frequency": "twice per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Eye of the Unseen",
@@ -13540,9 +13541,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Highhelm Stronghold Plate",
@@ -13738,9 +13739,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Shield of Snakes",
@@ -14057,9 +14058,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Buoyant Buckle",
@@ -14233,9 +14234,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Medusa's Scream (Greater)",
@@ -14409,9 +14410,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Blessed Reformer",
@@ -14904,9 +14905,9 @@
    "time": "1 minute",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Crystal Ball (Selenite)",
@@ -14915,9 +14916,9 @@
    "time": "10 minutes",
    "frequency": "twice per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Invisibility",
@@ -14959,9 +14960,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Sacred Valkyrie Helm",
@@ -14970,9 +14971,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Sapling Shield (True)",
@@ -15366,9 +15367,9 @@
    "time": "1 minute",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Crystal Ball (Obsidian)",
@@ -15377,9 +15378,9 @@
    "time": "10 minutes",
    "frequency": "twice per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Marvelous Calliope",
@@ -15696,9 +15697,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Aeon Stone (Eastern Star)",
@@ -15861,9 +15862,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Erraticannon",
@@ -16631,9 +16632,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Warding Tablets",
@@ -16686,9 +16687,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Palette of Masterstrokes",
@@ -16708,9 +16709,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Shadow Manse",
@@ -17588,9 +17589,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Messenger's Ring (Greater)",
@@ -17720,9 +17721,9 @@
    "time": "cast",
    "frequency": "once per day for each spell",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Sandalwood Fan",
@@ -17731,9 +17732,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Sandalwood Fan",
@@ -17907,9 +17908,9 @@
    "time": null,
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Invisibility (Greater)",
@@ -18204,9 +18205,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Trustworthy Round",
@@ -18402,9 +18403,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Fanged (Greater)",
@@ -18545,9 +18546,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Golden Blade of Mzali",
@@ -18809,9 +18810,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Unmemorable Mantle (Greater)",
@@ -19293,9 +19294,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Safeguarding",
@@ -19755,9 +19756,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Specialist's Ring (Enchantment)",
@@ -19975,9 +19976,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Hell's Judgment",
@@ -20063,9 +20064,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Instinct Crown (Superstition)",
@@ -20151,9 +20152,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Cane of the Maelstrom",
@@ -20162,9 +20163,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Planar Ribbon",
@@ -20228,9 +20229,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Branch of the Great Sugi",
@@ -20404,9 +20405,9 @@
    "time": "cast",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Verdant Leaves (Greater)",
@@ -20481,9 +20482,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Satchel of Numberless Seeds",
@@ -20646,9 +20647,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Quick Runner's Shirt (Greater)",
@@ -20679,9 +20680,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mycoweave Shield (Greater)",
@@ -20855,9 +20856,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Siege Shield",
@@ -21141,9 +21142,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Bloody Fang",
@@ -21262,9 +21263,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Anima Robe (Heroic)",
@@ -21273,9 +21274,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Anima Robe (Heroic)",
@@ -21482,9 +21483,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Curious Teardrop",
@@ -22065,9 +22066,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mask of the Mantis (Greater)",
@@ -22175,9 +22176,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Disruption Ammunition",
@@ -22384,9 +22385,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Animate Dreamer",
@@ -22637,9 +22638,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Doom Switch",
@@ -22714,9 +22715,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Polarizing Mace",
@@ -23022,9 +23023,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Wyrm's Wingspan (Major)",
@@ -23550,9 +23551,9 @@
    "time": "3",
    "frequency": "once per week",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Fossil Fragment (Tyrannosaur Tooth)",
@@ -24133,9 +24134,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Starfall Shield",
@@ -24485,9 +24486,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Hero's Plate",
@@ -24628,9 +24629,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Elysian Clairglass",
@@ -24727,9 +24728,9 @@
    "time": "cast",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Aurochs' Might Tattoo (Lesser)",
@@ -25189,9 +25190,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Demon Mask (Greater)",
@@ -26465,9 +26466,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Screech Shooter (Major)",
@@ -26531,9 +26532,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Zarothrask's Contract",
@@ -26861,9 +26862,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Underbrush Cloak",
@@ -27719,9 +27720,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Skyrider Sword (Greater)",
@@ -27840,9 +27841,9 @@
    "time": "3",
    "frequency": "once per week",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Limitless Power",
@@ -28203,9 +28204,9 @@
    "time": "cast",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Ganjay Book (Light bulk book)",
@@ -28236,9 +28237,9 @@
    "time": "cast",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Ring of Sigils",

@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { CORE_FAMILIES, createRegistry } from "../../pf2e-resolution-core/src/index.js";
-import { spellEffectIndex } from "../src/compiler/index.js";
+import { spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { compileActivations, handlesPermanent } from "../src/compiler/permanent.js";
 import { plainText } from "../src/compiler/rows.js";
 import { routeOf } from "../src/live/route.js";
@@ -22,6 +22,7 @@ const packsDirectory = path.resolve(process.argv[2] ?? `${process.env.HOME}/.loc
 const registry = createRegistry();
 for (const family of CORE_FAMILIES) registry.registerFamily(family);
 const spellEffects = spellEffectIndex(readDocuments(path.join(packsDirectory, "spell-effects")).filter((doc) => doc.collection === "items"));
+const spells = spellIndex(readDocuments(path.join(packsDirectory, "spells")).filter((doc) => doc.collection === "items"));
 const basicActions = compileBasicActions(readDocuments(path.join(packsDirectory, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
 // The spell module's claims (its src/compiler/item-claims.js, by its id next to this folder), when it's there.
 const claims = await import("../../pf2e-automatic-resolution/src/compiler/item-claims.js").then((module) => module.claims).catch(() => null);
@@ -56,7 +57,7 @@ const rows = [];
 for (const item of withActivate.filter((doc) => handlesPermanent(doc, { claims }))) {
     let compiled = [];
     try {
-        compiled = compileActivations(item, { basicActions, spellEffects, claims });
+        compiled = compileActivations(item, { basicActions, spellEffects, spells, claims });
     } catch (error) {
         rows.push({ name: item.name, type: item.type, activation: null, result: "error", error: error.message.slice(0, 120) });
         continue;

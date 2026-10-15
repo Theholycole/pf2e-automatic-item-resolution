@@ -3,7 +3,7 @@
 // plan for a consumable from registry.planFor(item), and plays the items'
 // confirmation cards after PF2e's own Use (scripts/live.js, docs/design.md).
 
-import { compileItem, handlesItem, spellEffectIndex } from "../src/compiler/index.js";
+import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
@@ -16,13 +16,15 @@ const SPELL_ID = "pf2e-automatic-resolution";
 const basicActions = () => game.modules.get(ABILITY_ID)?.api?.basicActions ?? {};
 // PF2e's spell Effects by spell name ("the effects of Haste" → Spell Effect: Haste), from its spell-effects pack's index.
 let spellEffects = {};
+// PF2e's spells by name (a cast in words: "The armor casts mislead"), from its spells pack's index.
+let spells = {};
 
 // A Foundry item as plain data, keeping its uuid (the compiler is pure).
 const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObject(false), uuid: item.uuid } : item);
 
 // The spell module's claims (its api, when it's active): an item it acts on is left to it.
 const claims = (item) => game.modules.get(SPELL_ID)?.active ? game.modules.get(SPELL_ID)?.api?.claims?.(item) === true : false;
-const options = () => ({ basicActions: basicActions(), spellEffects, claims });
+const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims });
 
 const compile = (item) => compileItem(dataOf(item), options());
 const handles = (item) => handlesItem(dataOf(item), { claims });
@@ -38,6 +40,12 @@ Hooks.once("ready", async () => {
         spellEffects = pack ? spellEffectIndex([...(await pack.getIndex())]) : {};
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spell Effects couldn't be indexed.`, error);
+    }
+    try {
+        const pack = game.packs.get("pf2e.spells-srd");
+        spells = pack ? spellIndex([...(await pack.getIndex({ fields: ["system.area", "system.target", "system.ritual", "system.level.value"] }))]) : {};
+    } catch (error) {
+        console.warn(`${MODULE_ID} | PF2e's spells couldn't be indexed.`, error);
     }
     setUpLivePlay({ compileItem: compile, compileActivations: (item) => compileActivations(dataOf(item), options()) });
     const module = game.modules.get(MODULE_ID);

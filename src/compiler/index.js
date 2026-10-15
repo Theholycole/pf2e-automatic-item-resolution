@@ -18,6 +18,7 @@ import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
+import { castWordsPlan } from "./cast-words.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
@@ -26,6 +27,7 @@ import { withItemData } from "./item-data.js";
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
 export { isSnare, snareZone } from "./snares.js";
+export { spellIndex } from "./cast-words.js";
 export { castPlan, effectLinks, fitPlan, grantedSpells, nativeHealing, ownPlan, pf2eRoll, recipientOf, spellEffectApplications } from "./consumables.js";
 
 // The consumable categories the spell module resolves (the user's split, 2026-10-10).
@@ -71,6 +73,8 @@ export function compileItem(given, options = {}) {
     // linked Effect, PF2e's healing, a spell's Effect, its row; not to a note alone.)
     const own = read?.builtin === "no-effect" ? ownPlan(item, base, options) ?? rowPlan(item, base) : null;
     let plan = own && !own.noteOnly ? own : (read ? fitPlan(item, read, base, options) : ownPlan(item, base, options)) ?? rowPlan(item, base);
+    // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
+    if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(item, options) ?? plan;
     // (A Strike with riders, src/compiler/strikes.js: Fear Gem.)
     plan = strikeOver(plan, compileStrike(item, base));
     // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Lucky Rabbit's Foot.)

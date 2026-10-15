@@ -8,6 +8,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf } from "./activation.js";
 import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
+import { castWordsPlan } from "./cast-words.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
@@ -108,6 +109,8 @@ export function compileActivations(item, options = {}) {
             plan = own ?? (read ? fitPlan(part, read, base, options) : ownPlan(part, base, options));
         }
         if (!plan && options.spellEffects) plan = castPlan(part);
+        // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
+        if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(part, options) ?? plan;
         if (!plan) plan = rowPlanFor(part, base);
         // (A Strike with riders, src/compiler/strikes.js: Duelist's Beacon.)
         plan = strikeOver(plan, compileStrike(part, base));

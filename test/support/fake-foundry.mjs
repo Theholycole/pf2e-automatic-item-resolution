@@ -319,12 +319,14 @@ let shared = null;
 export async function fakeFoundry() {
     if (shared) return shared;
     shared = createFakeFoundry();
-    const [{ setUpLivePlay }, { compileItem, spellEffectIndex }, { compileActivations }] = await Promise.all([import("../../scripts/live.js"), import("../../src/compiler/index.js"), import("../../src/compiler/permanent.js")]);
+    const [{ setUpLivePlay }, { compileItem, spellEffectIndex, spellIndex }, { compileActivations }] = await Promise.all([import("../../scripts/live.js"), import("../../src/compiler/index.js"), import("../../src/compiler/permanent.js")]);
     const spellEffects = spellEffectIndex(readDocuments(path.join(PACKS, "spell-effects")).filter((doc) => doc.collection === "items"));
+    // (PF2e's spells by name, as main.js indexes its spells pack: a cast in words.)
+    const spells = spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items"));
     // (The ability module's compiled basic actions, as main.js passes them: the rows an item's action applies.)
     const { compileBasicActions, BASIC_ACTIONS } = await import("../../../pf2e-automatic-ability-resolution/src/compiler/index.js");
     const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
-    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects, basicActions }), compileActivations: (data) => compileActivations(data, { spellEffects, basicActions }) });
+    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects, spells, basicActions }), compileActivations: (data) => compileActivations(data, { spellEffects, spells, basicActions }) });
     return shared;
 }
 

@@ -13,8 +13,8 @@
   },
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 28,
-   "none": 311,
+   "builtin:cast-spell": 29,
+   "none": 310,
    "resolves": 692,
    "builtin:zone": 86,
    "note-only": 267,
@@ -212,9 +212,9 @@
     "resolves": 25,
     "note-only": 20,
     "builtin:no-effect": 6,
-    "none": 10,
+    "none": 9,
+    "builtin:cast-spell": 2,
     "builtin:counteract": 2,
-    "builtin:cast-spell": 1,
     "partial": 2
    },
    "mechanisms": {
@@ -323,7 +323,7 @@
    "count": 33,
    "resolves": 5,
    "gaps": 0,
-   "none": 10
+   "none": 9
   },
   "strike": {
    "count": 31,
@@ -370,8 +370,8 @@
  },
  "live": {
   "totals": {
-   "cast": 28,
-   "none": 396,
+   "cast": 29,
+   "none": 395,
    "item": 652,
    "zone": 86,
    "expose": 89,
@@ -445,10 +445,10 @@
    },
    "oil": {
     "item": 46,
-    "none": 16,
+    "none": 15,
     "save": 1,
-    "counteract": 2,
-    "cast": 1
+    "cast": 2,
+    "counteract": 2
    },
    "fulu": {
     "none": 23,
@@ -467,7 +467,7 @@
    }
   },
   "noCard": {
-   "no-plan": 311,
+   "no-plan": 310,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -12955,7 +12955,9 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Potion of Disguise (Lesser)",

@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { CORE_FAMILIES, createRegistry } from "../../pf2e-resolution-core/src/index.js";
-import { compileItem, handlesItem, spellEffectIndex } from "../src/compiler/index.js";
+import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { compileActivations, handlesPermanent } from "../src/compiler/permanent.js";
 import { plainText } from "../src/compiler/rows.js";
@@ -27,9 +27,10 @@ const pf2ePacks = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e
 const registry = createRegistry();
 for (const family of CORE_FAMILIES) registry.registerFamily(family);
 const spellEffects = spellEffectIndex(readDocuments(path.join(pf2ePacks, "spell-effects")).filter((doc) => doc.collection === "items"));
+const spells = spellIndex(readDocuments(path.join(pf2ePacks, "spells")).filter((doc) => doc.collection === "items"));
 const basicActions = compileBasicActions(readDocuments(path.join(pf2ePacks, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
 const claims = await import("../../pf2e-automatic-resolution/src/compiler/item-claims.js").then((module) => module.claims).catch(() => null);
-const options = { basicActions, spellEffects, claims };
+const options = { basicActions, spellEffects, spells, claims };
 
 const GEAR = new Set(["consumable", "equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const STARFINDER = /^(?:sf|sf2e)[-_]/i;
