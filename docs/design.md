@@ -7,7 +7,7 @@ Status, 2026-10-15: the user answered the design's questions the same day (the r
 From [census.md](census.md) (PF2e 8.6.1 packs):
 
 - **1,724** consumables. **216** are the spell module's (scrolls, wands, catalysts, spell gems), so this module handles **1,508**.
-- **742** (49%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added 210. Another **255** (17%) get only a note Effect, counted apart.
+- **741** (49%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added the rest. **5** more are partial and **278** (18%) get only a note Effect; both are counted apart.
 - **171** bombs are `weapon` items (group `bomb`). PF2e already Strikes with them (batch 2).
 - Batch 1 covers **400** items: potion 183, elixir 149, mutagen 68. When the design was proposed, 236 of them resolved, 35 were builtins and 129 had no plan. [census.md](census.md) has today's counts.
 
@@ -27,9 +27,10 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
   - **built:** *the one linked Effect* the ability compiler didn't read → an `effect` plan. Items linking an Effect per stage or degree (Crackling Bubble Gum, Grit) are left to readings that know which one applies.
   - **built:** "gains the effects of a 2nd-rank *Oaken Resilience* for 10 minutes": PF2e's own Spell Effect at that rank and for that time, when the spell-effects pack has one. Otherwise it stays the ability compiler's cast, which is the spell module's to cast.
   - **built:** *the item's own row* (`rows.js`, the core's check family with `roll: "automatic"`): a condition the text puts on the drinker with its own time ("making you concealed for 5 minutes"). The reader is deliberately strict: not from a trigger, a later event, a failed check, stages, an item with a choice of uses, or one that links PF2e Effects. Bonuses and penalties are read only with plain selectors, so "to Balance" or "against diseases" are left out. Temporary Hit Points and healing are read only when stated plainly.
-  - **built:** *note only*: an item with a time and nothing else the module reads gets a note Effect with its text for that time. That's the user's note-Effect rule for spells, and the census counts these apart.
+  - **built:** *note only*: an item with a time and nothing else the module reads gets a note Effect with its text for that time. That's the user's note-Effect rule for spells, and the census counts these apart. The time can be written "Duration 1 minute", "The duration is 1 hour", "with a duration of 10 minutes" or rolled ("for 2d4 rounds").
+  - **built:** *partial*: a row that reads only part of the text also carries the note and is counted apart ("Effect + note"). Immovable Potion's "DC to move you is 40" and Megaphone Mutagen's auditory benefit are like this. A sentence restating PF2e's usual rule ("As usual …") doesn't count.
 - Next readings for batch 1, by size:
-  1. Counteracting potions (Surging Serum, Bottled Catharsis, Potion of Stable Form): the core's affliction-care family (counteract), with the item's counteract modifier and rank.
+  1. Counteracting potions (Surging Serum, Bottled Catharsis, Potion of Stable Form): the core's affliction-care family (counteract), with the item's counteract modifier and rank. This needs live code of its own (pick the Effect to counteract, roll the check), so it waits until it can be checked in Foundry.
   2. Resistance to a chosen type with no Effect (Potion of Resistance, Mutagenic Renovator): an Effect made with PF2e's Resistance rule, the type picked on the card.
   3. Items with two activations (the teas' Tea Ceremony): one option each.
   4. Out of combat (Disguise, Gender Transformation, Ration Tonic, Bookthief Brew): the GM's, as the ability module's "no-effect" with a reason.

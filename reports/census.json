@@ -9,11 +9,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 14,
-   "none": 390,
-   "resolves": 742,
-   "note-only": 255,
+   "none": 363,
+   "resolves": 741,
+   "note-only": 278,
    "builtin:zone": 22,
    "builtin:no-effect": 84,
+   "partial": 5,
    "builtin:save-bonus": 1
   }
  },
@@ -22,9 +23,9 @@
    "count": 533,
    "results": {
     "builtin:cast-spell": 7,
-    "none": 178,
+    "none": 174,
     "resolves": 202,
-    "note-only": 118,
+    "note-only": 122,
     "builtin:zone": 9,
     "builtin:no-effect": 18,
     "builtin:save-bonus": 1
@@ -49,10 +50,11 @@
   "potion": {
    "count": 183,
    "results": {
-    "resolves": 101,
-    "none": 27,
-    "note-only": 37,
+    "resolves": 100,
+    "note-only": 42,
+    "none": 22,
     "builtin:no-effect": 13,
+    "partial": 1,
     "builtin:cast-spell": 5
    },
    "mechanisms": {
@@ -71,8 +73,8 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 90,
-    "note-only": 15,
+    "none": 89,
+    "note-only": 16,
     "resolves": 40,
     "builtin:no-effect": 11
    },
@@ -95,8 +97,8 @@
    "count": 149,
    "results": {
     "resolves": 81,
-    "none": 25,
-    "note-only": 27,
+    "none": 17,
+    "note-only": 35,
     "builtin:no-effect": 15,
     "builtin:zone": 1
    },
@@ -135,9 +137,9 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 15,
+    "none": 14,
     "resolves": 63,
-    "note-only": 4
+    "note-only": 5
    },
    "mechanisms": {
     "damage": 49,
@@ -173,7 +175,8 @@
    "count": 68,
    "results": {
     "resolves": 60,
-    "none": 8
+    "note-only": 4,
+    "partial": 4
    },
    "mechanisms": {
     "linked-effect": 60,
@@ -299,7 +302,7 @@
    "count": 37,
    "resolves": 1,
    "gaps": 0,
-   "none": 24
+   "none": 23
   },
   "strike": {
    "count": 31,
@@ -323,7 +326,7 @@
    "count": 79,
    "resolves": 18,
    "gaps": 0,
-   "none": 30
+   "none": 29
   },
   "area": {
    "count": 44,
@@ -333,15 +336,15 @@
   },
   "condition": {
    "count": 437,
-   "resolves": 293,
+   "resolves": 292,
    "gaps": 0,
-   "none": 70
+   "none": 65
   },
   "duration": {
    "count": 947,
-   "resolves": 579,
+   "resolves": 578,
    "gaps": 0,
-   "none": 46
+   "none": 22
   }
  },
  "gapCounts": {},
@@ -1038,7 +1041,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Camp Shroud (Lesser)",
@@ -1066,7 +1070,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wasul Reed Mask",
@@ -1256,7 +1261,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Mental Purification (3rd-rank)",
@@ -1395,7 +1401,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Energy Breath Potion (Acid, Greater)",
@@ -2354,7 +2361,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Teeming Ghosts (6th-Rank)",
@@ -3487,7 +3495,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sixfingers Elixir (Greater)",
@@ -3885,7 +3894,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Explosive Mine (Lesser)",
@@ -4364,7 +4374,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Forensic Dye",
@@ -4842,7 +4853,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Dust of Disappearance",
@@ -5404,7 +5416,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Firefoot Popcorn",
@@ -6972,7 +6985,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Alloy Orb (Exquisite High-Grade)",
@@ -7279,7 +7293,8 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Blisterwort",
@@ -9717,7 +9732,8 @@
     "trap"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Dragon Breath Scale",
@@ -10310,7 +10326,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Alchemical Fuse",
@@ -10967,7 +10984,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Stormbreaker Fulu",
@@ -11096,7 +11114,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Cloud Buns",
@@ -11297,7 +11316,8 @@
     "casts-spell",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Special Ingredient",
@@ -11951,7 +11971,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wind Ocarina",
@@ -12286,7 +12307,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "Benefit You gain a +3 item bonus to skill checks you make as part of auditory actions, except Deception and Diplomacy checks.",
+    "The range of your actions and spells with the auditory trait increases by 20 feet."
+   ]
   },
   {
    "name": "Oil of Mending",
@@ -12315,7 +12341,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Antifungal Salve (Moderate)",
@@ -12633,7 +12660,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Azure Worm Repellent",
@@ -13542,7 +13570,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "Benefit You gain a +2 item bonus to skill checks you make as part of auditory actions, except Deception and Diplomacy checks.",
+    "The range of your actions and spells with the auditory trait increases by 15 feet."
+   ]
   },
   {
    "name": "Antifungal Salve (Lesser)",
@@ -13839,7 +13872,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "Benefit You gain a +1 item bonus to skill checks you make as part of auditory actions, except Deception and Diplomacy checks.",
+    "The range of your actions and spells with the auditory trait increases by 10 feet."
+   ]
   },
   {
    "name": "Clown Monarch",
@@ -13886,7 +13924,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Candle",
@@ -14414,9 +14453,11 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
-   "gaps": []
+   "unread": [
+    "While you are immobilized this way, the DC to move you from your place, including knocking you Prone, is 40."
+   ]
   },
   {
    "name": "Mummified Bat",
@@ -21997,7 +22038,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Chilled Fire Noodles",
@@ -22646,7 +22688,8 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Missive Mint",
@@ -25704,7 +25747,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "Benefit You gain a +4 item bonus to skill checks you make as part of auditory actions, except Deception and Diplomacy checks.",
+    "The range of your actions and spells with the auditory trait increases by 40 feet."
+   ]
   },
   {
    "name": "Tangibility Resonator (Major)",

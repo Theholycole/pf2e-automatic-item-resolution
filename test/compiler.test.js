@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { CORE_FAMILIES, createRegistry, validateChanges } from "../../pf2e-resolution-core/src/index.js";
-import { actionTypeOf, compileItem as compileWith, handlesItem, readActivations, recipientOf, spellEffectIndex } from "../src/compiler/index.js";
+import { actionTypeOf, compileItem as compileWith, handlesItem, itemDuration, readActivations, recipientOf, spellEffectIndex } from "../src/compiler/index.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -126,7 +126,24 @@ test("a condition the text puts on the drinker, for its own time, as an automati
     assert.deepEqual(mist.resolution.outcomes.success.effects, [{ kind: "condition", slug: "concealed", value: null, duration: { mode: "fixed", value: 5, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
     const result = registry.resolveSync(mist, context({ id: "ally", side: "party" }), io());
     assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.slug]), [["condition", "ally", "concealed"]]);
-    assert.equal(compileItem(item("Immovable Potion")).resolution.outcomes.success.effects[0].slug, "immobilized");
+    assert.equal(mist.partial, undefined, "its other sentence only restates the usual rule");
+    // What it can't apply ("the DC to move you … is 40") goes on a note with its text, and the plan is partial.
+    const immovable = compileItem(item("Immovable Potion"));
+    assert.equal(immovable.resolution.outcomes.success.effects[0].slug, "immobilized");
+    assert.equal(immovable.partial, true);
+    assert.match(immovable.unread[0], /DC to move you/);
+    assert.equal(immovable.resolution.outcomes.success.noteEffects.length, 1);
+    // Megaphone Mutagen: its drawback read (a −2 to Fortitude, Deception, Diplomacy and Stealth), its auditory benefit on the note.
+    const megaphone = compileItem(item("Megaphone Mutagen (Lesser)"));
+    assert.deepEqual(megaphone.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value]), [["fortitude", -2], ["deception", -2], ["diplomacy", -2], ["stealth", -2]]);
+    assert.equal(megaphone.partial, true);
+});
+
+test("an item's time in other words: \"The duration is\", \"with a duration of\", rolled", () => {
+    assert.deepEqual(itemDuration("Benefit … The duration is 1 hour. Drawback …"), { mode: "fixed", value: 1, unit: "hours", expiry: "turn-start", anchor: "effect-start" });
+    assert.equal(itemDuration("You gain blood sight as a precise sense with a duration of 1 hour.").value, 1);
+    assert.deepEqual(itemDuration("you are frozen in time for 2d4 rounds."), { mode: "fixed", value: 5, valueRoll: "2d4", unit: "rounds", expiry: "turn-start", anchor: "effect-start" });
+    assert.equal(itemDuration("It does nothing for long."), null);
 });
 
 test("no condition from a trigger, a later event, a failed check, stages or a time that isn't its own", () => {
@@ -160,7 +177,7 @@ test("consumables whose plan the core resolves with no gaps (ratchet)", () => {
         } catch {
             continue;
         }
-        if (!plan?.resolution || plan.noteOnly || !registry.familyFor(plan.resolution.kind)) continue;
+        if (!plan?.resolution || plan.noteOnly || plan.partial || !registry.familyFor(plan.resolution.kind)) continue;
         let clean = true;
         for (const degree of ["criticalFailure", "failure", "success", "criticalSuccess"]) {
             const result = registry.resolveSync(plan, { ...context(), targets: [{ id: "target", side: "foes" }] }, { ...io(degree, 1), choose: (decision) => decision.default ?? decision.options?.[0]?.value });

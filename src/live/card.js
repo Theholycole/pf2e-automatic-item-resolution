@@ -90,7 +90,7 @@ export function previewLines(state) {
         else if (effect.kind === "heal") lines.push(`Heals ${amount} Hit Points`);
     }
     for (const modifier of row.modifiers ?? []) lines.push(`${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${modifier.duration?.mode === "fixed" ? ` for ${timeText(modifier.duration)}` : ""}`);
-    for (const note of row.noteEffects ?? []) lines.push(`A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""} (nothing else to apply)`);
+    for (const note of row.noteEffects ?? []) lines.push(plan.partial ? `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""}: the rest is the GM's to apply` : `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""} (nothing else to apply)`);
     for (const note of plan?.notes ?? []) lines.push(note);
     return lines;
 }

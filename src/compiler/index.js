@@ -53,18 +53,22 @@ export function compileItem(item, options = {}) {
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success
 // row): its conditions, temporary Hit Points, healing and modifiers; else a note of its text for its time
 // (plan.item.noteOnly, counted apart in the census as the spell module counts its note-only spells).
+// A row that reads only part of the text (Megaphone Mutagen's drawback, not its benefit for auditory actions) also
+// carries the note, and counts as partial (plan.partial): "Effect + note", as the spell module counts its own.
 function rowPlan(item, base) {
     const row = ownRow(item);
-    const note = row ? null : noteRow(item);
+    const partial = Boolean(row?.unread?.length);
+    const note = !row || partial ? noteRow(item) : null;
     if (!row && !note) return null;
     const success = { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: row?.effects ?? [], modifiers: row?.modifiers ?? [], noteEffects: note?.noteEffects ?? [] };
     return {
         ...base,
-        automation: { level: note ? "guided" : "automatic" },
+        automation: { level: row && !partial ? "automatic" : "guided" },
         targeting: { target: recipientOf(item) === "drinker" ? "the drinker" : null, range: null, area: null },
         trigger: { event: "use" },
         resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success } },
-        ...(note ? { noteOnly: true } : {})
+        ...(!row ? { noteOnly: true } : {}),
+        ...(partial ? { partial: true, unread: row.unread } : {})
     };
 }
 

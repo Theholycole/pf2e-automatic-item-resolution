@@ -30,12 +30,20 @@ export function plainText(html) {
         .trim();
 }
 
-// The item's own time: its "Duration" line, else the first "for N minutes" (null when it has none).
+// The item's own time: "Duration 1 minute", "The duration is 1 hour", "with a duration of 10 minutes", else the first
+// "for N minutes" or "for 2d4 rounds" (rolled: its average, rounded down, with valueRoll); null when it has none.
+const UNIT_WORD = String.raw`(rounds?|minutes?|hours?|days?)`;
 export function itemDuration(text) {
-    const line = /\bDuration (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.exec(text);
-    const stated = line ?? /\bfor (?:the next )?(\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.exec(text) ?? /\bfor the next (round|minute|hour|day)\b/i.exec(text);
-    if (!stated) return null;
-    const [count, unit] = stated[2] ? [stated[1], stated[2]] : ["1", stated[1]];
+    const stated = new RegExp(String.raw`\b(?:Duration|The duration is|with a duration of|lasts? for) (\d+|one|an?) ${UNIT_WORD}\b`, "i").exec(text)
+        ?? new RegExp(String.raw`\bfor (?:the next )?(\d+|one|an?) ${UNIT_WORD}\b`, "i").exec(text);
+    const rolled = new RegExp(String.raw`\b(?:for|Duration|The duration is) (\d+)d(\d+) ${UNIT_WORD}\b`, "i").exec(text);
+    if (rolled && (!stated || rolled.index < stated.index)) {
+        const [, count, sides, unit] = rolled;
+        return { mode: "fixed", value: Math.floor((Number(count) * (Number(sides) + 1)) / 2), valueRoll: `${count}d${sides}`, unit: UNITS[unit.toLowerCase()], expiry: "turn-start", anchor: "effect-start" };
+    }
+    const next = !stated ? /\bfor the next (round|minute|hour|day)\b/i.exec(text) : null;
+    if (!stated && !next) return null;
+    const [count, unit] = stated ? [stated[1], stated[2]] : ["1", next[1]];
     return { mode: "fixed", value: WORD_NUMBERS[count.toLowerCase()] ?? Number(count), unit: UNITS[unit.toLowerCase()], expiry: "turn-start", anchor: "effect-start" };
 }
 
@@ -55,11 +63,11 @@ const sentencesOf = (text) => text.replace(ACTIVATE_LINE, "").split(/(?<=[.!?])\
 // critically fail …, you become stupefied"), nor one with no time of its own ("Throughout this time, you are
 // clumsy 2"): those are the GM's to apply.
 const UNTIL_NEXT_TURN = /\buntil the (?:end|start|beginning) of your next turn\b/i;
-function selfConditions(sentences) {
+function selfConditions(sentences, used = new Set()) {
     const effects = [];
     const names = CONDITIONS.join("|");
     const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b`, "gi");
-    for (const sentence of sentences) {
+    for (const [index, sentence] of sentences.entries()) {
         if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow)\w*\b[^,]*,/i, ""))) continue;
         const timed = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence);
         if (!timed) continue;
@@ -69,6 +77,7 @@ function selfConditions(sentences) {
             const slug = (match[1] ?? match[3]).toLowerCase();
             const value = match[2] ?? match[4];
             if (effects.some((effect) => effect.slug === slug)) continue;
+            used.add(index);
             effects.push({ kind: "condition", slug, value: value ? Number(value) : null, duration: slug === "prone" ? null : duration });
         }
     }
@@ -77,10 +86,11 @@ function selfConditions(sentences) {
 
 const AMOUNT = String.raw`(\d+d\d+(?:\s*[+-]\s*\d+)?|\d+)`;
 
-function tempHitPoints(sentences, duration) {
-    for (const sentence of sentences) {
+function tempHitPoints(sentences, duration, used = new Set()) {
+    for (const [index, sentence] of sentences.entries()) {
         const match = new RegExp(String.raw`\byou gain ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence);
         if (match && !/\b(?:if|when|whenever|each time)\b/i.test(sentence.slice(0, match.index))) {
+            used.add(index);
             const amount = match[1].replace(/\s+/g, "");
             return { kind: "temp-hp", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), duration: durationIn(sentence, duration) };
         }
@@ -88,10 +98,11 @@ function tempHitPoints(sentences, duration) {
     return null;
 }
 
-function textHealing(sentences) {
-    for (const sentence of sentences) {
+function textHealing(sentences, used = new Set()) {
+    for (const [index, sentence] of sentences.entries()) {
         const match = new RegExp(String.raw`\byou (?:immediately )?regain ${AMOUNT} Hit Points\b`, "i").exec(sentence);
         if (match && !/\b(?:if|when|whenever|each time|at the (?:start|end))\b/i.test(sentence.slice(0, match.index))) {
+            used.add(index);
             const amount = match[1].replace(/\s+/g, "");
             return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }) };
         }
@@ -110,7 +121,7 @@ const SELECTORS = [
 
 function selectorsOf(list) {
     // "Arcana, Crafting, and Society checks": the last word belongs to each.
-    const names = list.replace(/,? and /g, ", ").split(/,\s*/).map((name) => name.trim()).filter(Boolean);
+    const names = list.replace(/,? (?:as well as|and) /g, ", ").split(/,\s*/).map((name) => name.trim()).filter(Boolean);
     const tail = /\b(checks|saves|saving throws|rolls)$/i.exec(names.at(-1) ?? "")?.[1] ?? "";
     const selectors = [];
     for (const name of names) {
@@ -123,10 +134,10 @@ function selectorsOf(list) {
 }
 
 // "+1 item bonus to Fortitude saves" / "–2 penalty to Will saves, Perception checks and initiative rolls".
-function modifiersOf(sentences, duration) {
+function modifiersOf(sentences, duration, used = new Set()) {
     const modifiers = [];
     const pattern = /\byou (?:gain|get|have|receive|take|suffer)(?: an?)? ([+-])(\d+) (?:(item|status|circumstance) )?(bonus|penalty) (?:to|on) ([^.;]+?)(?=(?: for (?:\d+|one|an?) \w+| until\b| while\b|,? but\b|,? and (?:you|your)\b| as long as\b|;|\.|$))/gi;
-    for (const sentence of sentences) {
+    for (const [index, sentence] of sentences.entries()) {
         if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(sentence)) continue;
         for (const match of sentence.matchAll(pattern)) {
             const [, sign, number, type, kind, list] = match;
@@ -136,6 +147,7 @@ function modifiersOf(sentences, duration) {
             const selectors = selectorsOf(list);
             if (!selectors) continue;
             const value = (sign === "+" ? 1 : -1) * Number(number);
+            used.add(index);
             for (const selector of selectors) modifiers.push({ selector, value, type: type?.toLowerCase() ?? "untyped", duration: durationIn(sentence, duration) });
         }
     }
@@ -148,20 +160,28 @@ function modifiersOf(sentences, duration) {
 const NOT_ONE_RESULT = /\bTrigger\b|\bStage 1\b|\bSecondary Effect\b|\b(?:may|can) be (?:applied|used|mixed|poured)\b[^.]*\bor\b|\bin (?:either|one) of the following ways\b|\bchoose one\b/i;
 const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.[\w-]*effects\.Item\./;
 
-// The row for the item's drinker or user: { effects, modifiers } with something in it, or null.
+// A sentence that says something a creature or its rolls get or lose (not flavor, not how long it lasts).
+const MECHANICAL = /\b(?:bonus|penalty|resistance|weakness|immun\w*|Speeds?|damage|Hit Points|DC \d+|checks?|saves?|saving throws?|attack|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|(?:clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b)/i;
+
+// The row for the item's drinker or user: { effects, modifiers, unread } with something in it, or null. unread: the
+// sentences that say something mechanical it didn't read (they go on a note, and the plan counts as partial).
 export function ownRow(item, { healing = true } = {}) {
     const html = String(item?.system?.description?.value ?? "");
     const text = plainText(html);
     if (NOT_ONE_RESULT.test(text) || EFFECT_LINK.test(html)) return null;
     const duration = itemDuration(text);
     const sentences = sentencesOf(text);
-    const effects = [...selfConditions(sentences)];
-    const temp = tempHitPoints(sentences, duration);
+    const used = new Set();
+    const effects = [...selfConditions(sentences, used)];
+    const temp = tempHitPoints(sentences, duration, used);
     if (temp) effects.push(temp);
-    const heal = healing ? textHealing(sentences) : null;
+    const heal = healing ? textHealing(sentences, used) : null;
     if (heal) effects.unshift(heal);
-    const modifiers = modifiersOf(sentences, duration);
-    return effects.length || modifiers.length ? { effects, modifiers } : null;
+    const modifiers = modifiersOf(sentences, duration, used);
+    if (!effects.length && !modifiers.length) return null;
+    // (Not its time, nor a sentence restating PF2e's usual rule: "As usual being concealed when your position is still obvious, you can't …".)
+    const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence));
+    return { effects, modifiers, unread, duration };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,
