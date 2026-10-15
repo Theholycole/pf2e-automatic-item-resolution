@@ -218,6 +218,39 @@ export const cases = {
         return { outcome, frightened: value };
     },
 
+    // Mantle of the Tikbalang: its activation readies a melee Strike whose Effect gives PF2e's damage roll 4d6 mental; the
+    // hit (AC 1) keeps it for that roll, and the roll spends it.
+    async strikeExtraDice(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Mantle Striker", { type: "character", x: 2, y: 17 });
+        const { token: foeToken } = await creature(scene, "Mantle Target", { x: 3, y: 17, ac: 1, alliance: "opposition" });
+        const sword = await give(fighter, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const mantle = await give(fighter, "Mantle of the Tikbalang");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(mantle.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const readied = () => fighter.itemTypes.effect.find((entry) => entry.getFlag(NS, "strikeRider"));
+        assert(readied()?.system.rules.some((rule) => rule.key === "DamageDice" && rule.diceNumber === 4 && rule.damageType === "mental"), "the readied Strike's DamageDice");
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(fighter, sword);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        await wait(800);
+        assert(readied()?.getFlag(NS, "strikeRider").awaiting === true, "kept for the damage roll");
+        since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
+        assert(/4d6/.test(formula) && /mental/.test(formula), `PF2e's damage roll carries 4d6 mental (${formula})`);
+        const end = Date.now() + 6000;
+        while (Date.now() < end && readied()) await wait(250);
+        assert(!readied(), "spent by the damage roll");
+        return { outcome, formula };
+    },
+
     // Lucky Rabbit's Foot: after a Reflex save, its card has PF2e reroll that save (keeping the new result).
     async rerollSave(scene) {
         const { actor: hero } = await creature(scene, "Lucky One", { x: 6, y: 15 });
