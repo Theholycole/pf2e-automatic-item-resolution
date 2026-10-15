@@ -7,8 +7,8 @@
   "activations": 2593,
   "results": {
    "resolves": 657,
-   "builtin:cast-spell": 443,
-   "none": 895,
+   "builtin:cast-spell": 454,
+   "none": 884,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 18,
@@ -24,9 +24,9 @@
   },
   "live": {
    "save": 327,
-   "cast": 443,
+   "cast": 454,
    "item": 587,
-   "none": 1093,
+   "none": 1082,
    "focus": 45,
    "fortune": 28,
    "reroll": 15,
@@ -43,8 +43,8 @@
    "activations": 1690,
    "results": {
     "resolves": 397,
-    "builtin:cast-spell": 324,
-    "none": 574,
+    "builtin:cast-spell": 333,
+    "none": 565,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 13,
@@ -61,10 +61,10 @@
    "activations": 460,
    "results": {
     "resolves": 143,
-    "none": 143,
+    "none": 142,
     "partial": 23,
     "note-only": 41,
-    "builtin:cast-spell": 75,
+    "builtin:cast-spell": 76,
     "builtin:reroll": 5,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
@@ -97,11 +97,11 @@
   "armor": {
    "activations": 164,
    "results": {
-    "builtin:cast-spell": 33,
+    "builtin:cast-spell": 34,
     "note-only": 24,
     "resolves": 54,
     "builtin:no-effect": 6,
-    "none": 35,
+    "none": 34,
     "builtin:reroll": 2,
     "partial": 2,
     "builtin:ac-reaction": 2,
@@ -308,9 +308,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Trackless (Greater)",
@@ -1100,9 +1100,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Guiding Cajon Drum",
@@ -9383,9 +9383,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mirror Goggles (Moderate)",
@@ -10318,9 +10318,9 @@
    "time": "cast",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Viridian Crown",
@@ -11495,9 +11495,9 @@
    "time": "cast",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Fiendish Teleportation",
@@ -16478,9 +16478,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Void Mirror",
@@ -22407,9 +22407,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Amulet of the Third Eye",
@@ -22847,9 +22847,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Ring of Maniacal Devices",
@@ -24904,9 +24904,9 @@
    "time": "cast",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Dawnflower Beads",
@@ -24915,9 +24915,9 @@
    "time": "cast",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Rustbringer",
@@ -25091,9 +25091,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Ouroboros Flail (Greater)",

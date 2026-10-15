@@ -114,6 +114,13 @@ test("a cast in words: the spell by its name, its rank, DC, counteract modifier,
     assert.deepEqual([castOf("Shard of the Third Seal").spell.name, castOf("Shard of the Third Seal").rank], ["Vitality Lash", 3]);
     assert.deepEqual([castOf("Beguiling Crown").spell.name, castOf("Beguiling Crown").self], ["Sanctuary", true]);
     assert.deepEqual(castOf("Holy Prayer Beads").choices.map((entry) => entry.spell.name), ["Bless", "Heal"]);
+    // "cast one of the following spells at 9th rank (DC 41): Hallucination, Sleep, or Weird" — and the fatigue before it, a note;
+    // "a first level Command spell (DC 18)"; "the three-action version of a 6th-rank Heal spell".
+    const locket = castOf("Locket of Sealed Nightmares");
+    assert.deepEqual([locket.choices.map((entry) => `${entry.spell.name}@${entry.rank}`), locket.dc], [["Hallucination@9", "Sleep@9", "Weird@9"], 41]);
+    assert.match(locket.notes.join(" "), /become fatigued/);
+    assert.deepEqual([castOf("Bullhook").spell.name, castOf("Bullhook").rank, castOf("Bullhook").dc], ["Command", 1, 18]);
+    assert.match(castOf("Armor of the Holy Warrior").notes.join(" "), /three-action/);
     // A consumable: "Applying this oil to an item casts a 2nd-rank Mending spell".
     const oil = compileItem(source("Oil of Mending"), { spells });
     assert.deepEqual([oil.builtin, oil.spell.name, oil.rank], ["cast-spell", "Mending", 2]);

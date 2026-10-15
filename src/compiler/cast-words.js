@@ -7,7 +7,7 @@
 
 const ORDINAL = String.raw`(\d+)(?:st|nd|rd|th)`;
 // Names from before PF2e's remaster that item texts still use.
-const LEGACY = { "dimension door": "translocate", "planar binding": "binding circle", "remove disease": "cleanse affliction", "remove poison": "cleanse affliction", "magic missile": "force barrage", "true seeing": "truesight", "see invisibility": "see the unseen", "comprehend language": "translate", "shield other": "share life", "plane shift": "interplanar teleport", "feather fall": "gentle landing", "faerie fire": "revealing light", "magic weapon": "runic weapon", "magic fang": "runic body", "burning hands": "breathe fire", "color spray": "dizzying colors", "sound burst": "noise blast", "chill touch": "void warp", "disrupt undead": "vitality lash", "ray of frost": "frostbite", "produce flame": "ignition", "tanglefoot": "tangle vine", "acid splash": "caustic blast" };
+const LEGACY = { "dimensional lock": "planar seal", "dimension door": "translocate", "planar binding": "binding circle", "remove disease": "cleanse affliction", "remove poison": "cleanse affliction", "magic missile": "force barrage", "true seeing": "truesight", "see invisibility": "see the unseen", "comprehend language": "translate", "shield other": "share life", "plane shift": "interplanar teleport", "feather fall": "gentle landing", "faerie fire": "revealing light", "magic weapon": "runic weapon", "magic fang": "runic body", "burning hands": "breathe fire", "color spray": "dizzying colors", "sound burst": "noise blast", "chill touch": "void warp", "disrupt undead": "vitality lash", "ray of frost": "frostbite", "produce flame": "ignition", "tanglefoot": "tangle vine", "acid splash": "caustic blast" };
 
 // PF2e's spells by name in lower case: { uuid, name, area, targets, ritual, rank } — from the spells pack's documents
 // or index entries ({ _id | uuid, name, system: { area, target, ritual, level } }).
@@ -40,7 +40,7 @@ function sentencesOf(html, { whole = false } = {}) {
         .replace(/&nbsp;/g, " ")
         .replace(/\s+/g, " ")
         .trim();
-    const body = text.replace(/\s*\b(?:Craft Requirements|Destruction)\b.*$/s, "");
+    const body = numberRanks(text.replace(/\s*\b(?:Craft Requirements|Destruction)\b.*$/s, ""));
     return body.split(/(?<=[.!?])\s+(?=[A-Z])/).filter(Boolean);
 }
 
@@ -61,11 +61,18 @@ function spellAt(text, spells, names) {
 // user's own ("If your next action is to Cast a Spell", "able to cast", "Supply a casting").
 // (And "The creature is targeted with Death Knell (DC 24)", "You generate the effects of a Vitality Lash cantrip", "You're the
 // subject of the Sanctuary spell", "The ring replicates the effects of an 8th-rank Spell Turning", "Cast Bless or Heal".)
-const VERB = /\b(?:you (?:can |immediately |then )?cast|(?:the|this) [\w' -]{1,40}? (?:can cast|casts)|it (?:can cast|casts)|to cast|and cast|casting|(?:is|are) targeted (?:with|by)|(?:you )?(?:generate|produce|replicates?) the effects of|you're the subject of)\s+|^Cast\s+/gi;
+const VERB = /\b(?:you (?:can |immediately |then )?cast|(?:the|this) [\w' -]{1,40}? (?:can cast|casts)|(?:the|these) [\w' -]{1,20}?s cast|it (?:can cast|casts)|to cast|and casts?|casting|(?:is|are) targeted (?:with|by)|(?:you )?(?:generate|produce|replicates?) the effects of|(?:creating|creates?) the effects? of|you're the subject of)\s+|^Cast\s+/gi;
 const NOT_A_CAST = /\b(?:your (?:next|last) action (?:is|was) to cast|if you cast|when you cast|when casting|after you cast|while casting|able to cast|ability to cast|can't cast|cannot cast|Supply a casting|spell slot|as if you had used it to cast|used as a catalyst|innate spells?|unless it succeeds)\b|\beach once per (?:day|hour|week)\b(?<!^Cast\b.*)/i;
 // A cast only under some condition ("On a failed or critically failed saving throw, the whip casts …"): not the activation's.
 const CONDITIONAL = /^(?:On a|If|When|Whenever|After|Until|Once)\b/i;
-const LEAD = new RegExp(String.raw`^(?:(?:a|an|the|either|your choice of|one of the following(?: spells)?(?: at ${ORDINAL}[- ](?:rank|level))?:?)\s+)*(?:${ORDINAL}[- ](?:rank|level) )?(?:(?:arcane|divine|occult|primal) )?(?:\(DC (\d+)\) |DC (\d+) )?`, "i");
+// What comes before the spells: "a", "either", "the three-action version of a", "one of the following spells from the crown
+// at 10th-rank:", "one of the following as a 3rd-rank spell (DC 24 save as appropriate):", "4th-rank versions of", "a DC
+// 33", "good". Groups: the list's rank, its DC, a rank, a DC.
+const LEAD = new RegExp(String.raw`^(?:(?:a|an|the|either|your choice of|good|evil|holy|unholy)\s+)*(?:(?:the )?(?:one|two|three|\d)-action versions? of (?:a|an)\s+)?(?:one of the following(?: spells)?(?: from (?:the|your) [\w' -]+?)?(?: (?:at|as an?) ${ORDINAL}[- ](?:rank|level)(?: spell)?)?(?: \(DC (\d+)[^)]*\))?:?\s+)?(?:${ORDINAL}[- ](?:rank|level) (?:versions of )?)?(?:(?:arcane|divine|occult|primal) )?(?:\(DC (\d+)\) |DC (\d+) )?`, "i");
+// Ranks in words: "a first level Command spell".
+const WORD_RANKS = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7, eighth: 8, ninth: 9, tenth: 10 };
+const SUFFIX = (n) => (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th");
+const numberRanks = (text) => text.replace(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)[- ](rank|level)\b/gi, (_, word, kind) => `${WORD_RANKS[word.toLowerCase()]}${SUFFIX(WORD_RANKS[word.toLowerCase()])}-${kind.toLowerCase()}`);
 
 // Whether a place in the sentence is inside parentheses ("(such as the space where a creature just cast Translocate)").
 const inParentheses = (sentence, at) => (sentence.slice(0, at).match(/\(/g)?.length ?? 0) > (sentence.slice(0, at).match(/\)/g)?.length ?? 0);
@@ -74,13 +81,23 @@ const inParentheses = (sentence, at) => (sentence.slice(0, at).match(/\(/g)?.len
 function spellList(rest, spells, names) {
     const lead = LEAD.exec(rest);
     let at = lead ? lead[0].length : 0;
-    const leadRank = lead?.[1] ?? lead?.[2] ?? null;
-    const leadDC = lead?.[3] ?? lead?.[4] ?? null;
+    const leadRank = lead?.[1] ?? lead?.[3] ?? null;
+    const leadDC = lead?.[2] ?? lead?.[4] ?? lead?.[5] ?? null;
     const list = [];
     let dangling = false;
     // (A rank holds for the spells after it: "4th-rank Holy Light or Vital Beacon".)
     let current = leadRank ? Number(leadRank) : null;
     for (;;) {
+        // ("2nd-rank or 4th-rank Enlarge": the spell at each rank, a choice.)
+        const ranks = new RegExp(String.raw`^${ORDINAL}[- ]rank or ${ORDINAL}[- ]rank `, "i").exec(rest.slice(at));
+        if (ranks) {
+            const spell = spellAt(rest.slice(at + ranks[0].length), spells, names);
+            if (spell) {
+                list.push({ spell: spell.spell, rank: Number(ranks[1]) }, { spell: spell.spell, rank: Number(ranks[2]) });
+                at += ranks[0].length + spell.length;
+                break;
+            }
+        }
         const own = new RegExp(String.raw`^(?:(?:a|an|the) )?(?:${ORDINAL}[- ](?:rank|level) )?`, "i").exec(rest.slice(at));
         const found = spellAt(rest.slice(at + own[0].length), spells, names);
         // ("Harm, Heal, or the 1st-rank spell from your deity's cleric spells": a choice not read.)
@@ -114,6 +131,7 @@ export function readCastWords(html, { spells = null } = {}) {
         const choose = /^Choose (.+)$/i.exec(sentence);
         const chosen = choose && /\bthe chosen spell\b/i.test(sentences[index + 1] ?? "") ? spellList(choose[1], spells, names) : null;
         // (Every cast in the sentence, as choices: "to cast a 6th-rank Runic Weapon on it, or onto a creature to cast a 6th-rank Runic Body on it".)
+        const firstVerb = [...sentence.matchAll(VERB)][0]?.index ?? 0;
         const lists = chosen?.list.length ? [{ ...chosen, rest: sentences[index + 1].replace(/^.*?\bthe chosen spell\b/i, "") }] : [...sentence.matchAll(VERB)].filter((verb) => !inParentheses(sentence, verb.index)).map((verb) => spellList(sentence.slice(verb.index + verb[0].length), spells, names)).filter((entry) => entry.list.length);
         if (!lists.length || lists.some((entry) => entry.list.some((one) => one.spell.ritual))) continue;
         const list = lists.flatMap((entry) => entry.list).filter((entry, at, all) => all.findIndex((other) => other.spell.uuid === entry.spell.uuid) === at);
@@ -123,7 +141,7 @@ export function readCastWords(html, { spells = null } = {}) {
         // (Its DC in the sentence or the next, or a sentence on the spells' DC: "The DC for any of these spells is 18".)
         const dc = leadDC ?? (Number(/\(DC (\d+)\)|\bwith a DC of (\d+)|\bspell DC (?:is |of )?(\d+)|\bThe DC is (\d+)|\bDC (\d+)\b/i.exec(rest + " " + (sentences[index + 1] ?? ""))?.slice(1).find(Boolean)) || Number(/\bThe (?:spell )?DC (?:for (?:any of )?(?:these|the|this) spells? )?is (\d+)/i.exec(sentences.join(" "))?.[1]) || null);
         const attack = Number(/\bcounteract modifier (?:is |of |are )?(?:1d20 ?)?\+(\d+)|\+(\d+) (?:counteract )?modifier for the roll|\bspell attack (?:modifier|roll) (?:is |of |are )?\+(\d+)/i.exec(whole)?.slice(1).find(Boolean)) || null;
-        const self = /\b(?:on (?:you|yourself)|affecting you|targeting yourself|you're affected)\b(?! request| choice)/i.test(rest) || /\byou're the subject of\b/i.test(sentence);
+        const self = /\b(?:on (?:you|yourself)|upon yourself|affecting you|targeting yourself|you're affected)\b(?! request| choice)/i.test(rest) || /\byou're the subject of\b/i.test(sentence);
         const choices = list.map((entry) => ({ spell: { uuid: entry.spell.uuid, name: entry.spell.name }, rank: entry.rank ?? (rank ? Number(rank[1]) : null) }));
         const notes = sentences.filter((other, at) => at !== index && !/^Choose\b/.test(other) && !/\bthe chosen spell\b/i.test(other)).map((other) => other.trim());
         return {
@@ -133,7 +151,9 @@ export function readCastWords(html, { spells = null } = {}) {
             self,
             area: list.every((entry) => entry.spell.area),
             targets: list.some((entry) => entry.spell.targets),
-            notes: [...(lists.some((entry) => entry.dangling) || (rest.replace(/^[\s,.;]+|[\s.]+$/g, "").length > 3 && /\b(?:except|but|though|instead|only|loses|can target|with|and)\b/i.test(rest)) ? [sentence.trim()] : []), ...notes]
+            // (The cast's own sentence too when it says more: a choice not read, what the item changes, a cost before the cast — "You
+            // become fatigued and cast …" — or the actions it's cast with, "the three-action version of".)
+            notes: [...(lists.some((entry) => entry.dangling) || (rest.replace(/^[\s,.;]+|[\s.]+$/g, "").length > 3 && /\b(?:except|but|though|instead|only|loses|can target|with|and)\b/i.test(rest)) || /\b(?:become|becomes|take|takes|gain|gains|lose|loses|expend|spend|spends)\b/i.test(sentence.slice(0, firstVerb)) || /-action\b/i.test(sentence) ? [sentence.trim()] : []), ...notes]
         };
     }
     return null;
