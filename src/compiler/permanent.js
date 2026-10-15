@@ -10,6 +10,7 @@ import { actionTypeOf } from "./activation.js";
 import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
 import { castWordsPlan } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
+import { directDamageOver, directDamagePlan } from "./direct-damage.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
@@ -120,7 +121,9 @@ export function compileActivations(item, options = {}) {
         // (Its user's next roll of a kind rolled twice, src/compiler/fortune.js: Sunweave.)
         plan = rollTwiceOver(plan, rollTwicePlan(plainText(activation.html), base, { trigger: activation.trigger }));
         // (A skill action taken with it, src/compiler/item-actions.js: Bronze Bull Pendant's Shove.)
-        plan = guardText(guardValues(itemActionOver(plan, itemActionPlan(activation.html, base, options))), plainText(activation.html));
+        plan = itemActionOver(plan, itemActionPlan(activation.html, base, options));
+        // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)
+        plan = guardText(guardValues(directDamageOver(plan, directDamagePlan(plainText(activation.html), base, { item }))), plainText(activation.html));
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
         return {

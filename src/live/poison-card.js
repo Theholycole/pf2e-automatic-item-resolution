@@ -33,8 +33,23 @@ export function createPoisonCard({ plan, item, user, weapons }) {
 // "DC 18 Fortitude save", from the poison's plan.
 export function saveText(plan) {
     const check = plan?.resolution?.check ?? {};
+    // (No roll: what it does, "2d6 fire damage", "grabbed", outright.)
+    if (check.roll === "automatic") return `no save: ${outrightText(plan)}`;
     const statistic = String(check.statistic ?? "fortitude");
     return `DC ${check.against?.value ?? "?"} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)} save`;
+}
+
+// An automatic row in words: its damage ("2d6 fire damage", "1d6 persistent bleed damage") and conditions.
+export function outrightText(plan) {
+    const row = plan?.resolution?.outcomes?.success ?? {};
+    const components = plan?.resolution?.sharedDamage?.components ?? [];
+    const ids = new Set(row.damage?.sourceComponentIds ?? []);
+    const damage = components.filter((component) => ids.has(component.id)).map((component) => {
+        const typed = /^(.+?)\[(?:(persistent),)?(\w+)\]$/.exec(component.formula ?? "");
+        return typed ? `${typed[1]} ${typed[2] ? "persistent " : ""}${typed[3]} damage` : `${component.formula}${component.category ? ` ${component.category}` : ""}${component.type ? ` ${component.type}` : ""} damage`;
+    });
+    const conditions = (row.effects ?? []).filter((effect) => effect.kind === "condition").map((effect) => `${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}`);
+    return [...damage, ...conditions].join(", ") || "its effect";
 }
 
 export function poisonCardHTML(state, { canApply = false } = {}) {
@@ -128,13 +143,15 @@ export function afterExposure(state, lines, worldTime) {
 
 export function exposureCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
+    const automatic = state.plan?.resolution?.check?.roll === "automatic";
     const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
     const again = state.repeat ? ` It can be used again${state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : ""} until its time is up, after each recharge.` : "";
     const hint = !open ? "" : state.later
         ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
-        : `<p class="aar-hint">${state.delivery ? "Exposes" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
+        : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : escape(saveText(state.plan))}</span></header>${hint}${results}${controls}</section>`;
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    const notes = open && (state.plan?.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : escape(saveText(state.plan))}</span></header>${hint}${notes}${results}${controls}</section>`;
 }
 

@@ -14,14 +14,14 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 308,
+   "none": 307,
    "resolves": 692,
    "builtin:zone": 86,
    "note-only": 267,
    "builtin:item-action": 6,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
-   "partial": 10,
+   "partial": 11,
    "builtin:reroll": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
@@ -85,14 +85,14 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 69,
+    "none": 68,
     "note-only": 13,
     "builtin:item-action": 5,
     "resolves": 46,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
-    "partial": 1,
+    "partial": 2,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -301,7 +301,7 @@
    "count": 277,
    "resolves": 142,
    "gaps": 0,
-   "none": 39
+   "none": 38
   },
   "linked-effect": {
    "count": 393,
@@ -343,7 +343,7 @@
    "count": 156,
    "resolves": 54,
    "gaps": 0,
-   "none": 67
+   "none": 66
   },
   "counteract": {
    "count": 79,
@@ -361,7 +361,7 @@
    "count": 433,
    "resolves": 257,
    "gaps": 0,
-   "none": 45
+   "none": 44
   },
   "duration": {
    "count": 943,
@@ -373,13 +373,13 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 393,
+   "none": 392,
    "item": 652,
    "zone": 86,
    "expose": 89,
    "later": 54,
    "action": 6,
-   "save": 107,
+   "save": 108,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -408,12 +408,12 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 80,
+    "none": 79,
     "item": 48,
     "action": 5,
     "reroll": 1,
     "cast": 9,
-    "save": 10,
+    "save": 11,
     "strike": 1,
     "fortune": 2
    },
@@ -471,7 +471,7 @@
    }
   },
   "noCard": {
-   "no-plan": 308,
+   "no-plan": 307,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -16980,7 +16980,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Oil of Unlife (Moderate)",

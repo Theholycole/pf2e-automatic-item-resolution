@@ -9,11 +9,12 @@ import { isStrikeItem } from "./strike-card.js";
 import { isFortune } from "./fortune-card.js";
 
 // An automatic row aimed at a creature other than the user (the ability compiler's "The target is grabbed until the end of
-// your next turn", "The target is Quickened for 1 round"): for the creatures the presser targets, through the save card —
-// not the item card, which acts on its user or drinker.
+// your next turn", "The target is Quickened for 1 round"; damage outright, "The attacking creature takes 2d6 fire
+// damage"): for the creatures the presser targets, through the save card — not the item card, which acts on its user or
+// drinker.
 const targetedRow = (plan) => plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic" && Boolean(plan.targeting?.target)
     && !/^(?:the drinker|you|yourself|self|itself)$/i.test(String(plan.targeting.target).trim())
-    && (plan.resolution.outcomes?.success?.effects ?? []).some((effect) => effect.recipient !== "self");
+    && ((plan.resolution.outcomes?.success?.effects ?? []).some((effect) => effect.recipient !== "self") || (plan.resolution.outcomes?.success?.damage?.mode ?? "none") !== "none");
 
 const playedOnItemCard = (plan) => ["healing", "effect"].includes(plan?.resolution?.kind) || (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic");
 

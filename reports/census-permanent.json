@@ -6,14 +6,14 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 959,
+   "none": 951,
    "builtin:cast-spell": 431,
-   "resolves": 649,
+   "resolves": 651,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "note-only": 284,
    "builtin:reroll": 15,
-   "partial": 25,
+   "partial": 31,
    "builtin:modes": 26,
    "builtin:zone": 9,
    "builtin:roll-twice": 10,
@@ -22,10 +22,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1158,
+   "none": 1150,
    "cast": 431,
-   "item": 593,
-   "save": 297,
+   "item": 582,
+   "save": 316,
    "focus": 45,
    "reroll": 15,
    "strike": 28,
@@ -41,14 +41,14 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 609,
+    "none": 606,
     "builtin:cast-spell": 318,
     "resolves": 386,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
     "note-only": 179,
     "builtin:reroll": 8,
-    "partial": 11,
+    "partial": 14,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
@@ -58,9 +58,9 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 142,
-    "none": 161,
-    "partial": 12,
+    "resolves": 143,
+    "none": 157,
+    "partial": 15,
     "note-only": 41,
     "builtin:cast-spell": 73,
     "builtin:reroll": 5,
@@ -111,8 +111,8 @@
    "results": {
     "builtin:cast-spell": 10,
     "note-only": 17,
-    "resolves": 27,
-    "none": 38,
+    "resolves": 28,
+    "none": 37,
     "builtin:modes": 4,
     "builtin:no-effect": 4
    }
@@ -1030,7 +1030,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Rime Jar",
@@ -2526,7 +2526,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Temperbrand",
@@ -4363,7 +4363,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Corrosive Ammunition",
@@ -7740,7 +7740,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Tome of Scintillating Sleet",
@@ -11269,9 +11269,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Stormshard (Major)",
@@ -12303,9 +12303,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Clear Cutter's Axe",
@@ -13513,9 +13513,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Horns of Naraga",
@@ -15218,9 +15218,9 @@
    "time": "free",
    "frequency": "once per round",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Kortos Diamond",
@@ -15847,7 +15847,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Fashionable Wayfinder",
@@ -16628,7 +16628,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Size-Changing",
@@ -17497,7 +17497,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Mantle of the Grogrisant",
@@ -18518,9 +18518,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Mercurial Mantle",
@@ -18608,7 +18608,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "The Kardosian Fragments",
@@ -22150,7 +22150,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Dreamstone",
@@ -24799,9 +24799,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Meloth's Lifedrinker (Level 7)",
@@ -26845,9 +26845,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Warding Tattoo",
@@ -27023,7 +27023,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Twisting Twine (Lesser)",
@@ -27538,9 +27538,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Magnetite Scope",
@@ -27826,7 +27826,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Bloodgorger Scythe",

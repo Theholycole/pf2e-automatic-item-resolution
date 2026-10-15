@@ -103,7 +103,7 @@ export async function applyExposureCard(message, { targets = [] } = {}) {
     const lines = [];
     if (postCard && actor) {
         await postCard({ plan: state.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
-        lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s save card follows.`);
+        lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${state.plan?.resolution?.check?.roll === "automatic" ? "" : "save "}card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
     const next = afterExposure(state, lines, game.time.worldTime);
     return message.update({ content: exposureCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
