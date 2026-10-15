@@ -188,6 +188,33 @@ export const cases = {
         return { saveCard: save.id };
     },
 
+    // Fear Gem: its card readies the next melee Strike; PF2e's hit (AC 1) leaves the target frightened.
+    async strikeRider(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Gem Striker", { type: "character", x: 2, y: 15 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Gem Target", { x: 3, y: 15, ac: 1, alliance: "opposition" });
+        const sword = await give(fighter, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const gem = await give(fighter, "Fear Gem");
+        let since = Date.now();
+        await gem.consume();
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        assert(fighter.itemTypes.effect.some((entry) => entry.getFlag(NS, "strikeRider")), "the readied-Strike Effect");
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(fighter, sword);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        const end = Date.now() + 8000;
+        while (Date.now() < end && !foe.hasCondition?.("frightened")) await wait(250);
+        const value = foe.getCondition?.("frightened")?.value ?? null;
+        assert(value === (outcome === "criticalSuccess" ? 2 : 1), `frightened ${outcome === "criticalSuccess" ? 2 : 1} on the target (${value})`);
+        assert(!fighter.itemTypes.effect.some((entry) => entry.getFlag(NS, "strikeRider")), "the readied Strike spent");
+        return { outcome, frightened: value };
+    },
+
     // Spark Wafer: its save goes to the creatures targeted, through the ability module's save card.
     async useSave(scene) {
         const { actor: user } = await creature(scene, "Snapper", { x: 2, y: 12 });

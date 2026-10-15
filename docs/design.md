@@ -112,6 +112,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - Mistform Elixir;
 - a bomb's splash and off-guard;
 - a coated weapon's hit and its save card;
+- Fear Gem's readied Strike frightening the creature it hits;
 - Spark Wafer's save;
 - a Cloak of Elvenkind's activations card;
 - Hexing Jar's Focus Point, lost at the end of the turn in the check's own encounter (cleanup deletes only encounters flagged as its fixtures);
