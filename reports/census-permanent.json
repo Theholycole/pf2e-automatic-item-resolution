@@ -6,11 +6,12 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 951,
+   "none": 934,
    "builtin:cast-spell": 431,
    "resolves": 651,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
+   "builtin:readied-bonus": 17,
    "note-only": 284,
    "builtin:reroll": 15,
    "partial": 31,
@@ -22,15 +23,15 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1150,
+   "none": 1133,
    "cast": 431,
    "item": 582,
    "save": 316,
    "focus": 45,
+   "fortune": 27,
    "reroll": 15,
    "strike": 28,
    "zone": 9,
-   "fortune": 10,
    "action": 3,
    "later": 4
   },
@@ -41,11 +42,12 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 606,
+    "none": 594,
     "builtin:cast-spell": 318,
     "resolves": 386,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
+    "builtin:readied-bonus": 12,
     "note-only": 179,
     "builtin:reroll": 8,
     "partial": 14,
@@ -59,13 +61,14 @@
    "activations": 460,
    "results": {
     "resolves": 143,
-    "none": 157,
+    "none": 153,
     "partial": 15,
     "note-only": 41,
     "builtin:cast-spell": 73,
     "builtin:reroll": 5,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
+    "builtin:readied-bonus": 4,
     "builtin:item-action": 3,
     "builtin:roll-twice": 1,
     "builtin:save-bonus": 1,
@@ -112,9 +115,10 @@
     "builtin:cast-spell": 10,
     "note-only": 17,
     "resolves": 28,
-    "none": 37,
+    "none": 36,
     "builtin:modes": 4,
-    "builtin:no-effect": 4
+    "builtin:no-effect": 4,
+    "builtin:readied-bonus": 1
    }
   }
  },
@@ -247,9 +251,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Healer's Gloves (Greater)",
@@ -4614,9 +4618,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Breath Blaster",
@@ -5241,9 +5245,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Symbol of Conflict",
@@ -5648,9 +5652,9 @@
    "time": "free",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Cloak of Swiftness",
@@ -6308,9 +6312,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Reaper's Grasp",
@@ -7012,9 +7016,9 @@
    "time": "reaction",
    "frequency": "three times per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Motivating Treat Bag",
@@ -9927,9 +9931,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Spellcutter",
@@ -11324,9 +11328,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Highhelm Drill Mark I",
@@ -11742,9 +11746,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Squid Ink Sac",
@@ -14745,9 +14749,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Retrieval Belt (Major)",
@@ -15790,9 +15794,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Void Shackles",
@@ -16021,9 +16025,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Scale of Igroon",
@@ -17957,9 +17961,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Thoughtwhip Claw",
@@ -18078,9 +18082,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Ring of Counterspells",
@@ -20762,9 +20766,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Stalk Goggles",
@@ -21697,9 +21701,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Weapon Shot (Lesser)",
@@ -26856,9 +26860,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Arcane Scroll Case of Simplicity",

@@ -78,7 +78,7 @@ const report = {
 mkdirSync(path.join(root, "reports"), { recursive: true });
 writeFileSync(path.join(root, "reports/census-permanent.json"), `${JSON.stringify(report, null, 1)}\n`);
 
-const RESULTS = ["resolves", "partial", "note-only", "gaps", "builtin:cast-spell", "builtin:focus-point", "builtin:reroll", "builtin:roll-twice", "builtin:item-action", "builtin:zone", "builtin:no-effect", "none", "error"];
+const RESULTS = ["resolves", "partial", "note-only", "gaps", "builtin:cast-spell", "builtin:focus-point", "builtin:reroll", "builtin:roll-twice", "builtin:readied-bonus", "builtin:item-action", "builtin:zone", "builtin:no-effect", "none", "error"];
 const lines = [
     "# Permanent items' activations: census",
     "",

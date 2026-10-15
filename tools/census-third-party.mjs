@@ -155,7 +155,7 @@ const report = {
 mkdirSync(path.join(root, ".cache"), { recursive: true });
 writeFileSync(path.join(root, ".cache/census-third-party.json"), `${JSON.stringify(report, null, 1)}\n`);
 
-const RESULTS = ["resolves", "unverified-effect", "partial", "note-only", "gaps", "builtin:cast-spell", "builtin:focus-point", "builtin:reroll", "builtin:roll-twice", "builtin:item-action", "builtin:zone", "builtin:no-effect", "bomb-card", "spell-module", "none", "error"];
+const RESULTS = ["resolves", "unverified-effect", "partial", "note-only", "gaps", "builtin:cast-spell", "builtin:focus-point", "builtin:reroll", "builtin:roll-twice", "builtin:readied-bonus", "builtin:item-action", "builtin:zone", "builtin:no-effect", "bomb-card", "spell-module", "none", "error"];
 const lines = [
     "# Third-party items: census",
     "",

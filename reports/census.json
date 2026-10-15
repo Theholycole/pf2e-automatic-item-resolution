@@ -14,11 +14,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 307,
+   "none": 303,
    "resolves": 692,
    "builtin:zone": 86,
    "note-only": 267,
    "builtin:item-action": 6,
+   "builtin:readied-bonus": 4,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "partial": 11,
@@ -32,10 +33,11 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 8,
-    "none": 153,
+    "none": 150,
     "resolves": 201,
     "note-only": 120,
     "builtin:zone": 9,
+    "builtin:readied-bonus": 3,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -85,13 +87,14 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 68,
+    "none": 67,
     "note-only": 13,
     "builtin:item-action": 5,
     "resolves": 46,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
+    "builtin:readied-bonus": 1,
     "partial": 2,
     "builtin:roll-twice": 2
    },
@@ -343,7 +346,7 @@
    "count": 156,
    "resolves": 54,
    "gaps": 0,
-   "none": 66
+   "none": 62
   },
   "counteract": {
    "count": 79,
@@ -361,7 +364,7 @@
    "count": 433,
    "resolves": 257,
    "gaps": 0,
-   "none": 44
+   "none": 41
   },
   "duration": {
    "count": 943,
@@ -373,27 +376,28 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 392,
+   "none": 388,
    "item": 652,
    "zone": 86,
    "expose": 89,
    "later": 54,
    "action": 6,
    "save": 108,
+   "fortune": 6,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
-   "strike": 1,
-   "fortune": 2
+   "strike": 1
   },
   "byCategory": {
    "other": {
     "cast": 8,
-    "none": 181,
+    "none": 178,
     "later": 8,
     "save": 71,
     "item": 223,
     "zone": 9,
+    "fortune": 3,
     "expose": 3,
     "action": 1,
     "counteract": 5,
@@ -408,14 +412,14 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 79,
+    "none": 78,
     "item": 48,
     "action": 5,
     "reroll": 1,
     "cast": 9,
     "save": 11,
-    "strike": 1,
-    "fortune": 2
+    "fortune": 3,
+    "strike": 1
    },
    "elixir": {
     "item": 116,
@@ -471,7 +475,7 @@
    }
   },
   "noCard": {
-   "no-plan": 307,
+   "no-plan": 303,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -1030,7 +1034,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Three Day's Breath",
@@ -8057,7 +8063,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Swirling Sand",
@@ -9621,7 +9629,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Oil of Corpse Restoration",
@@ -13278,7 +13288,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Olfactory Obfuscator (Lesser)",

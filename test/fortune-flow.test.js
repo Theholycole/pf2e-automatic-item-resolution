@@ -9,8 +9,9 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { readRollTwice } from "../src/compiler/fortune.js";
+import { readReadiedBonus } from "../src/compiler/readied-bonus.js";
 import { plainText } from "../src/compiler/rows.js";
-import { rollWords } from "../src/live/fortune-card.js";
+import { readiedWords, rollWords } from "../src/live/fortune-card.js";
 import { routeOf } from "../src/live/route.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -69,3 +70,51 @@ test("Gorum's Tear: Apply gives PF2e's RollTwice for the next attack roll; that 
     await settle();
     assert.equal(fortunes().length, 0);
 });
+
+test("the reading: a bonus for a moment — the roll that triggered it, or the turn — and what isn't one", () => {
+    // "You absorb light, gaining a +2 status bonus to the Stealth check" (Trigger: you attempt a Stealth check to Hide or Sneak).
+    const eclipse = compileActivations(source("Eclipse")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.equal(routeOf(eclipse), "fortune");
+    assert.deepEqual(eclipse.bonus.modifiers, [{ selector: "stealth", type: "status", value: 2 }]);
+    assert.deepEqual(eclipse.bonus.spend, ["stealth"], "that one roll");
+    // "Until the end of the current turn, against the triggering effect, … +1 status bonus to AC and saving throws and gain resistance 2 to damage."
+    const spark = compileActivations(source("Sparkwarden"))[0].plan;
+    assert.deepEqual(spark.bonus.modifiers.map((modifier) => modifier.selector), ["ac", "saving-throw"]);
+    assert.deepEqual(spark.bonus.resistance, { type: "all-damage", value: 2 });
+    assert.deepEqual([spark.bonus.duration.value, spark.bonus.duration.expiry, spark.bonus.spend], [0, "turn-end", []]);
+    assert.match(spark.notes.join(" "), /Only against what triggered it/);
+    // "+2 circumstance bonus to your Fortitude DC against the triggering Grapple".
+    assert.equal(compileActivations(source("Shacklebreaker"))[0].plan.bonus.modifiers[0].selector, "fortitude-dc");
+    // "Until the start of your next turn, you gain a +4 item bonus to Stealth checks to Hide and Sneak".
+    const scale = compileActivations(source("Scale of Igroon"))[0].plan.bonus;
+    assert.deepEqual([scale.modifiers[0].predicate, scale.duration.expiry], [[{ or: ["action:hide", "action:sneak"] }], "turn-start"]);
+    assert.equal(readiedWords(compileActivations(source("Scale of Igroon"))[0].plan), "+4 item bonus to Stealth check (hide, sneak), until the start of the next turn");
+    // Not one: after the roll ("You would miss …", "If this causes the Strike to miss"), a lasting one, an ally's.
+    assert.equal(readReadiedBonus("Trigger You would miss with an attack made with a bow Effect You gain a +2 circumstance bonus to your attack roll, possibly turning a miss into a hit."), null);
+    assert.equal(compileItem(source("Animal-Turning Fulu"))?.builtin === "readied-bonus", false);
+    assert.equal(readReadiedBonus("Effect You gain a +1 item bonus to Perception checks. The duration is 1 hour."), null);
+    assert.equal(readReadiedBonus("Trigger An ally fails Effect Your allies gain a +1 status bonus to saving throws until the end of the turn."), null);
+});
+
+test("Eclipse: Apply gives PF2e's FlatModifier for the Stealth check; that check removes it, a save doesn't", async () => {
+    const blade = foundry.giveItem(hero, source("Eclipse"));
+    const index = compileActivations(source("Eclipse")).findIndex((entry) => entry.plan?.builtin === "readied-bonus");
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: blade.uuid, activation: index, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "fortune");
+    assert.match(card.content, /\+2 status bonus to Stealth check, for the next such roll/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const [effect] = fortunes();
+    assert.deepEqual(effect.system.rules, [{ key: "FlatModifier", selector: "stealth", type: "status", value: 2, label: "Eclipse" }]);
+    const save = foundry.makeMessage({ flags: { pf2e: { context: { type: "saving-throw", domains: ["will", "saving-throw", "all"] } } }, speaker: { actor: hero.id }, actor: hero, token: hero.token.document });
+    await foundry.call("createChatMessage", save);
+    await settle();
+    assert.equal(fortunes().length, 1);
+    const hide = foundry.makeMessage({ flags: { pf2e: { context: { type: "skill-check", domains: ["stealth", "dex-based", "skill-check", "all"] } } }, speaker: { actor: hero.id }, actor: hero, token: hero.token.document });
+    await foundry.call("createChatMessage", hide);
+    await settle();
+    assert.equal(fortunes().length, 0);
+});
+

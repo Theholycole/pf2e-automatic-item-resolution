@@ -108,7 +108,7 @@ for (const item of consumables) {
 }
 
 const tally = (list, key) => list.reduce((counts, row) => ({ ...counts, [key(row)]: (counts[key(row)] ?? 0) + 1 }), {});
-const RESULTS = ["resolves", "partial", "note-only", "gaps", "builtin:zone", "builtin:cast-spell", "builtin:roll-twice", "builtin:no-effect", "builtin:save-bonus", "none", "error", "unregistered"];
+const RESULTS = ["resolves", "partial", "note-only", "gaps", "builtin:zone", "builtin:cast-spell", "builtin:roll-twice", "builtin:readied-bonus", "builtin:no-effect", "builtin:save-bonus", "none", "error", "unregistered"];
 const ours = rows.filter((row) => row.result !== "spell-module");
 const categories = Object.entries(tally(rows, (row) => row.category)).sort((a, b) => b[1] - a[1]).map(([category]) => category);
 

@@ -10,6 +10,7 @@ import { actionTypeOf } from "./activation.js";
 import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
 import { castWordsPlan } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
+import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { directDamageOver, directDamagePlan } from "./direct-damage.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -120,6 +121,8 @@ export function compileActivations(item, options = {}) {
         plan = rerollOver(plan, rerollPlan(activation.html, base));
         // (Its user's next roll of a kind rolled twice, src/compiler/fortune.js: Sunweave.)
         plan = rollTwiceOver(plan, rollTwicePlan(plainText(activation.html), base, { trigger: activation.trigger }));
+        // (A bonus for a moment, src/compiler/readied-bonus.js: Sparkwarden.)
+        plan = readiedBonusOver(plan, readiedBonusPlan(plainText(activation.html), base, { trigger: activation.trigger }));
         // (A skill action taken with it, src/compiler/item-actions.js: Bronze Bull Pendant's Shove.)
         plan = itemActionOver(plan, itemActionPlan(activation.html, base, options));
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)
