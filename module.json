@@ -53,5 +53,8 @@
   "esmodules": [
     "scripts/main.js"
   ],
+  "styles": [
+    "styles/item.css"
+  ],
   "socket": true
 }

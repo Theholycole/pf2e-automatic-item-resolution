@@ -1,0 +1,17 @@
+/* PF2e Automatic Item Resolution: the Activate buttons on a sheet's inventory rows (scripts/activations.js). The cards
+   use the ability module's classes (pf2e-aar-card). */
+.air-activations {
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 0.25em;
+    margin-left: 0.35em;
+    align-items: center;
+}
+.air-activations .air-activate {
+    cursor: pointer;
+    opacity: 0.75;
+}
+.air-activations .air-activate:hover {
+    opacity: 1;
+    text-shadow: 0 0 6px var(--color-shadow-primary, #ff6400);
+}
