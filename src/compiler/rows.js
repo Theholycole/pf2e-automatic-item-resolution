@@ -11,20 +11,31 @@
 // Balance" or "saving throws against diseases" is narrower than any selector, so it's left out rather than given
 // too widely (the user's rule: never apply a rule wrongly; a note says it instead).
 
+import { inlineTags, readableText } from "../../../pf2e-automatic-ability-resolution/src/compiler/inline.js";
+
 const CONDITIONS = ["blinded", "clumsy", "concealed", "confused", "controlled", "dazzled", "deafened", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "grabbed", "hidden", "immobilized", "invisible", "off-guard", "paralyzed", "petrified", "prone", "quickened", "restrained", "sickened", "slowed", "stunned", "stupefied", "unconscious", "undetected"];
 const WORD_NUMBERS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, ten: 10, an: 1, a: 1 };
 const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours", day: "days", days: "days" };
 
 // The text with links as their labels and inline rolls as their formulas, in plain words.
+// "@Damage[1d4[persistent,fire]]" → "1d4 persistent fire", "@Damage[(3[splash])[cold]]{3 cold splash damage}" → its label:
+// the ability module's words for it (its nested brackets too). Healing is its amount alone ("you regain 3d10 Hit
+// Points"), and an unlabelled splash "3 cold splash".
+function damageWords(html) {
+    let text = String(html ?? "");
+    for (const raw of inlineTags(text, "Damage")) {
+        const words = (tag) => (/^\(?[^[]*\)?\[[^\]]*\bhealing\b/.test(raw) && !/\{/.test(tag) ? readableText(tag).replace(/\s+(?:healing|vitality|void)\b/g, "") : readableText(tag).replace(/(\S+)\[splash\] (\w+)/g, "$1 $2 splash"));
+        text = text.replace(new RegExp(String.raw`@Damage\[${raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\](?:\{[^}]*\})?`), words);
+    }
+    return text;
+}
+
 export function plainText(html) {
-    return String(html ?? "")
+    return damageWords(html)
         .replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1")
         // (An area as its words: "@Template[burst|distance:10]{10 feet}" → "10 feet", unlabelled → "10-foot burst".)
         .replace(/@Template\[[^\]]*\]\{([^}]*)\}/g, "$1")
         .replace(/@Template\[(?:type:)?(\w+)\|distance:(\d+)[^\]]*\]/g, "$2-foot $1")
-        // ("@Damage[3d10[healing,vitality]|shortLabel]": options after the type too.)
-        .replace(/@Damage\[\(?([^\[\]()]+?)\)?\[[^\]]*\](?:\|[^\]]*)?\]/g, "$1")
-        .replace(/@Damage\[([^\]]*)\]/g, "$1")
         .replace(/\[\[\/\w+ ([^\]#]+?)(?:\s*#[^\]]*)?\]\](?:\{([^}]*)\})?/g, (whole, formula, label) => label ?? formula)
         .replace(/<span class="action-glyph">[^<]*<\/span>/g, " ")
         .replace(/<[^>]+>/g, " ")
@@ -38,7 +49,9 @@ export function plainText(html) {
 // "for N minutes" or "for 2d4 rounds" (rolled: its average, rounded down, with valueRoll); null when it has none.
 const UNIT_WORD = String.raw`(rounds?|minutes?|hours?|days?)`;
 export function itemDuration(text) {
-    const stated = new RegExp(String.raw`\b(?:Duration|The duration is|with a duration of|lasts? for) (\d+|one|an?) ${UNIT_WORD}\b`, "i").exec(text)
+    // ("The next time you would die from damage within 8 hours after you drink the ambrosia": its time, before the
+    // "immune … for 24 hours" that follows.)
+    const stated = new RegExp(String.raw`\b(?:Duration|The duration is|with a duration of|lasts? for) (\d+|one|an?) ${UNIT_WORD}\b|\bwithin (\d+|one|an?) ${UNIT_WORD} after (?:you )?(?:drink|consum|eat|imbib|apply|applied|activat)`, "i").exec(text)
         ?? new RegExp(String.raw`\bfor (?:the next )?(\d+|one|an?) ${UNIT_WORD}\b`, "i").exec(text);
     const rolled = new RegExp(String.raw`\b(?:for|Duration|The duration is) (\d+)d(\d+) ${UNIT_WORD}\b`, "i").exec(text);
     if (rolled && (!stated || rolled.index < stated.index)) {
@@ -47,7 +60,7 @@ export function itemDuration(text) {
     }
     const next = !stated ? /\bfor the next (round|minute|hour|day)\b/i.exec(text) : null;
     if (!stated && !next) return null;
-    const [count, unit] = stated ? [stated[1], stated[2]] : ["1", next[1]];
+    const [count, unit] = stated ? [stated[1] ?? stated[3], stated[2] ?? stated[4]] : ["1", next[1]];
     return { mode: "fixed", value: WORD_NUMBERS[count.toLowerCase()] ?? Number(count), unit: UNITS[unit.toLowerCase()], expiry: "turn-start", anchor: "effect-start" };
 }
 
@@ -72,7 +85,7 @@ function selfConditions(sentences, used = new Set()) {
     const names = CONDITIONS.join("|");
     const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b`, "gi");
     for (const [index, sentence] of sentences.entries()) {
-        if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow)\w*\b[^,]*,/i, ""))) continue;
+        if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against|next time)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow)\w*\b[^,]*,/i, ""))) continue;
         const timed = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence);
         if (!timed) continue;
         const until = UNTIL_NEXT_TURN.exec(sentence);
@@ -95,7 +108,7 @@ const AMOUNT = String.raw`(\d+d\d+(?:\s*[+-]\s*\d+)?|\d+)`;
 function tempHitPoints(sentences, duration, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
         const match = new RegExp(String.raw`\byou gain ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence);
-        if (match && !/\b(?:if|when|whenever|each time)\b/i.test(sentence.slice(0, match.index))) {
+        if (match && !/\b(?:if|when|whenever|each time|the next time)\b/i.test(sentence.slice(0, match.index))) {
             // (Its other half stays unread, for the note: "You drop to 1 Hit Point instead of being reduced to 0 HP or dying,
             // and you gain 100 temporary Hit Points" — the 1 HP the GM sets.)
             if (!/\binstead\b/i.test(sentence)) used.add(index);
@@ -114,7 +127,7 @@ function textHealing(sentences, used = new Set()) {
         const self = new RegExp(String.raw`\byou (?:immediately )?regain ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
         const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b`, "i").exec(sentence);
         const match = self ?? other;
-        if (match && !/\b(?:if|when|whenever|each time|at the (?:start|end))\b/i.test(sentence.slice(0, match.index))) {
+        if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(sentence.slice(0, match.index))) {
             used.add(index);
             const amount = match[1].replace(/\s+/g, "");
             return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), ...(other && !self ? { other: true } : {}) };

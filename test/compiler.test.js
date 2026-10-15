@@ -170,6 +170,21 @@ test("an item's time in other words: \"The duration is\", \"with a duration of\"
     assert.equal(itemDuration("You gain blood sight as a precise sense with a duration of 1 hour.").value, 1);
     assert.deepEqual(itemDuration("you are frozen in time for 2d4 rounds."), { mode: "fixed", value: 5, valueRoll: "2d4", unit: "rounds", expiry: "turn-start", anchor: "effect-start" });
     assert.equal(itemDuration("It does nothing for long."), null);
+    assert.equal(itemDuration("The next time you would die from damage within 8 hours after you drink the ambrosia, … immune to the ambrosia for 24 hours.").value, 8);
+});
+
+test("inline damage as words, with its types: a note says what PF2e's text says", async () => {
+    const { plainText } = await import("../src/compiler/rows.js");
+    assert.equal(plainText("takes @Damage[1d6[persistent,bleed]] damage"), "takes 1d6 persistent bleed damage");
+    assert.equal(plainText("@Damage[(3[splash])[cold]] damage"), "3 cold splash damage");
+    assert.equal(plainText("@Damage[(2[splash])[slashing]]{2 slashing splash damage}"), "2 slashing splash damage");
+    assert.equal(plainText("you regain @Damage[3d10[healing,vitality]|shortLabel] Hit Points"), "you regain 3d10 Hit Points");
+});
+
+test("healing that comes later isn't given on drinking (\"The next time you would die …, you regain 20 Hit Points\")", () => {
+    const plan = compileItem(item("Ambrosia of Undying Hope"));
+    assert.equal(plan.noteOnly, true);
+    assert.equal(plan.resolution.outcomes.success.noteEffects[0].duration.value, 8);
 });
 
 test("no condition from a trigger, a later event, a failed check, stages or a time that isn't its own", () => {
