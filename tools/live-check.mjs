@@ -67,6 +67,8 @@ async function give(actor, name, packId = "pf2e.equipment-srd") {
     delete source._id;
     // (Its own ChoiceSets answered, so PF2e doesn't stop the check to ask: Hexing Jar's patron, the first choice.)
     for (const rule of source.system?.rules ?? []) if (rule.key === "ChoiceSet" && rule.selection === undefined && Array.isArray(rule.choices) && rule.choices.length) rule.selection = rule.choices[0].value;
+    // ("Ammunition any": its type preset, so PF2e doesn't ask — arrows, for a bow.)
+    if (source.type === "ammo" && !source.system?.baseItem) source.system.baseItem = "arrows";
     const [item] = await actor.createEmbeddedDocuments("Item", [source]);
     return item;
 }
