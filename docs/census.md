@@ -63,6 +63,17 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 1 |
 | **all** | **1508** | **652** | **44** | **89** | **105** | **30** | **26** | **562** |
 
+Why the rest have no card yet:
+
+| Reason | Items |
+|---|---:|
+| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 354 |
+| the ability compiler's GM fallback ("no-effect") | 69 |
+| a snare: placed in a square, set off by the first creature to enter it (needs Regions) | 63 |
+| a save on a trigger or a passive (an aura, a reaction) | 53 |
+| a lasting area (needs Regions) | 22 |
+| another plan not played yet | 1 |
+
 ## What they do
 
 An item can do several of these. *resolves* counts the items doing it whose plan resolves with no gaps (not necessarily that part of it).

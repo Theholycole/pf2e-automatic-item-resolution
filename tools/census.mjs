@@ -124,6 +124,17 @@ for (const name of Object.keys(MECHANISMS)) {
 const LIVE = ["item", "coat", "expose", "save", "later", "cast"];
 const liveByCategory = Object.fromEntries(Object.keys(byCategory).map((category) => [category, tally(ours.filter((row) => row.category === category), (row) => row.live ?? "none")]));
 const liveTotals = tally(ours, (row) => row.live ?? "none");
+// Why an item has no card yet.
+const NO_CARD = {
+    "no-plan": "nothing read yet (one-offs: a talisman's trigger, an out-of-combat use)",
+    gm: "the ability compiler's GM fallback (\"no-effect\")",
+    snare: "a snare: placed in a square, set off by the first creature to enter it (needs Regions)",
+    zone: "a lasting area (needs Regions)",
+    triggered: "a save on a trigger or a passive (an aura, a reaction)",
+    other: "another plan not played yet"
+};
+const noCardReason = (row) => (row.result === "none" || row.result === "error" ? "no-plan" : row.result === "builtin:no-effect" ? "gm" : row.category === "snare" ? "snare" : row.result === "builtin:zone" ? "zone" : row.kind === "save" ? "triggered" : "other");
+const noCard = tally(ours.filter((row) => !row.live), noCardReason);
 const gapCounts = tally(ours.flatMap((row) => (row.gaps ?? []).map((what) => ({ what }))), (entry) => entry.what);
 
 const report = {
@@ -139,7 +150,7 @@ const report = {
     },
     byCategory,
     mechanismCoverage,
-    live: { totals: liveTotals, byCategory: liveByCategory },
+    live: { totals: liveTotals, byCategory: liveByCategory, noCard },
     gapCounts,
     rows
 };
@@ -192,6 +203,12 @@ lines.push(`| Category | Items | ${LIVE.join(" | ")} | no card |`);
 lines.push(`|---|---:|${LIVE.map(() => "---:").join("|")}|---:|`);
 for (const [category, counts] of Object.entries(liveByCategory)) lines.push(`| ${category} | ${byCategory[category].count} | ${LIVE.map((route) => counts[route] ?? 0).join(" | ")} | ${counts.none ?? 0} |`);
 lines.push(`| **all** | **${ours.length}** | ${LIVE.map((route) => `**${liveTotals[route] ?? 0}**`).join(" | ")} | **${liveTotals.none ?? 0}** |`);
+lines.push("");
+lines.push("Why the rest have no card yet:");
+lines.push("");
+lines.push("| Reason | Items |");
+lines.push("|---|---:|");
+for (const [reason, count] of Object.entries(noCard).sort((a, b) => b[1] - a[1])) lines.push(`| ${NO_CARD[reason]} | ${count} |`);
 lines.push("");
 lines.push("## What they do");
 lines.push("");

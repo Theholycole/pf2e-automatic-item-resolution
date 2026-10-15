@@ -430,6 +430,14 @@
     "item": 8,
     "none": 1
    }
+  },
+  "noCard": {
+   "no-plan": 354,
+   "snare": 63,
+   "triggered": 53,
+   "zone": 22,
+   "gm": 69,
+   "other": 1
   }
  },
  "gapCounts": {},
