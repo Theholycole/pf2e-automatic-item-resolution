@@ -21,6 +21,7 @@ import { guardText, guardValues } from "./guards.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
+import { withItemData } from "./item-data.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -54,8 +55,11 @@ export { asAbility } from "./ability-shape.js";
 // options: the ability compiler's (basicActions, actor) and spellEffects, PF2e's spell Effects by spell name in lower case
 // ({ "haste": { uuid, name } }; spellEffectIndex() builds it from the spell-effects pack's items); claims, the spell
 // module's (handlesItem).
-export function compileItem(item, options = {}) {
-    if (!handlesItem(item, options)) return null;
+export function compileItem(given, options = {}) {
+    if (!handlesItem(given, options)) return null;
+    // (Its own data in its text first — "@item.level", a rune — and a damage-with-a-save as basic, src/compiler/item-data.js.)
+    const html = withItemData(given?.system?.description?.value, given);
+    const item = html === given?.system?.description?.value ? given : { ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: html } } };
     const read = compileAbility(asAbility(item), options);
     const base = basePlan(item);
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)

@@ -88,3 +88,16 @@ test("the spell module's claims, when given: what it acts on is left to it; with
     // (A claims that fails is no claim.)
     assert.equal(handlesItem(item("Healing Potion (Minor)"), { claims: () => { throw new Error("boom"); } }), true);
 });
+
+test("an item's own data filled in before it's read: runes in a dice count and a DC, a damage-with-a-save as basic", async () => {
+    const { withItemData } = await import("../src/compiler/item-data.js");
+    const html = "<p><strong>Activate—Burst</strong> <span class=\"action-glyph\">2</span></p><p>Deals @Damage[((@item.system.runes.striking + 1) * 2)d6[force]] damage with a @Check[reflex|dc:23] save.</p><hr /><p><strong>Special</strong> The save DC increases to 27 if the weapon has a +2 potency rune, or to 35 with a +3 potency rune.</p>";
+    const filled = withItemData(html, { system: { runes: { striking: 3, potency: 3 } } });
+    assert.match(filled, /@Damage\[8d6\[force\]\] damage with a @Check\[reflex\|dc:35\|basic\] save/);
+    assert.match(withItemData(html, { system: { runes: { striking: 1, potency: 1 } } }), /@Damage\[4d6\[force\]\][^@]*@Check\[reflex\|dc:23\|basic\]/);
+    // With degree rows of its own, the save stays as written.
+    const rows = "<p>Deals @Damage[2d6[fire]] damage with a @Check[reflex|dc:20] save.</p><p><strong>Critical Success</strong> unaffected.</p>";
+    assert.equal(withItemData(rows, {}), rows);
+    // PF2e's own text is untouched.
+    assert.equal(withItemData(item("Cloak of Elvenkind").system.description.value, item("Cloak of Elvenkind")), item("Cloak of Elvenkind").system.description.value);
+});

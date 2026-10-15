@@ -12,6 +12,7 @@ import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { guardText, guardValues } from "./guards.js";
+import { withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
 import { noteRow, ownRow, plainText } from "./rows.js";
@@ -80,7 +81,9 @@ const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), ca
 // Each activation → { activation, plan } (plan null when nothing is read). options: as compileItem's.
 export function compileActivations(item, options = {}) {
     if (!handlesPermanent(item, options)) return [];
-    return splitActivations(item.system?.description?.value).map((activation, index) => {
+    // (Its own data in its text first — a weapon's striking and potency runes, src/compiler/item-data.js.)
+    const html = withItemData(item.system?.description?.value, item);
+    return splitActivations(html).map((activation, index) => {
         // (The activation's own block, its user the recipient: a worn item acts for its wearer, "you".)
         const part = recipientUser({ ...item, system: { ...(item.system ?? {}), description: { value: activation.html } } });
         const base = {

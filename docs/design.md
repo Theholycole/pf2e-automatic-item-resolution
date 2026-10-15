@@ -171,6 +171,8 @@ The same readers run over the installed modules' items (`tools/census-third-part
 
   Otherwise the creature gets a note of the text for the Effect's time, and the card says why. The census checks offline the same way: 44 of the 59 Alchemists+ and Tian Xia+ links match. The 15 that don't are listed for the user in `~/Documents/ChatGPT/item-decisions-for-user.md`, most of them errors in the module's data (wrong grade linked, status for item, 10 for 35).
 
+- **An item's own data in its text** (`src/compiler/item-data.js`, before any reading). `@item.system.runes.striking`, `@item.system.runes.potency` and `@item.level` become the item's numbers, and arithmetic in a dice count is worked out. Magic+'s 48 dragonbreath weapons, for one, do `((striking + 1) * 2)d6`, with "The save DC increases to 27 … +2 potency rune, or to 35 with a +3" giving the DC for the item's rune. A "damage with a @Check[…] save" with no degree rows of its own reads as basic, which is the only way it reads. PF2e's own text is untouched (its censuses don't change). Third-party readings that resolve: 191.
+
 ## The simulator (the auto-combat session's)
 
 The plans were handed over on 2026-10-15. That session checked their shapes, and is waiting for the user's policy on when PCs use consumables before building it. Once built, it reads a PC's consumables through `registry.planFor(item)`, with their quantity and uses. Its planner then decides when to drink: healing when low, buffs as the fight starts, the action it costs, and whether to feed an adjacent ally. Its snapshot's "consumable" gaps then shrink.
