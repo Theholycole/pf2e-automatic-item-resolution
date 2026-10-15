@@ -57,7 +57,12 @@ export function readReroll(html) {
 const CHANGES = [
     [/\bIf you (?:failed|fail) (?:the|your) [\w ]*?(?:saving throw|save|check|roll), it becomes a success\b/i, ["failure", "success"]],
     [/\bIf you (?:critically failed|critically fail)\b[^.]*?, it becomes a failure\b/i, ["criticalFailure", "failure"]],
-    [/(?:^|\.\s+|\bEffect\s+)You critically succeed instead\b/i, ["success", "criticalSuccess"]]
+    [/(?:^|\.\s+|\bEffect\s+)You critically succeed instead\b/i, ["success", "criticalSuccess"]],
+    // (Essence Charm's "A failed check becomes a success, and a critical failure becomes a failure"; Red Thread Knot's "Treat
+    // your saving throw as if you failed the check rather than critically failed the check".)
+    [/\bA failed (?:check|save|saving throw|roll) becomes a success\b/i, ["failure", "success"]],
+    [/\ba critical failure becomes a failure\b/i, ["criticalFailure", "failure"]],
+    [/\bTreat your [\w ]*?(?:saving throw|save|check|roll) as if you failed (?:the check )?rather than critically failed\b/i, ["criticalFailure", "failure"]]
 ];
 const RAISE_BONUS = /\b(?:You gain an? \+(\d+) (circumstance|status|item) bonus to (?:your|the) [\w ]*?(?:attack roll|check|save|saving throw)|Roll (\d+d\d+) and add the result to your [\w ]*?(?:check|save|attack roll|roll) as an? (circumstance|status|item) bonus)\b[^.]*\b(?:possibly turning|which might|might improve|could turn)\b/i;
 const SKILL_NAMES = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery", "perception"];

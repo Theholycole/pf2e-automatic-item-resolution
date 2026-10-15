@@ -8,31 +8,31 @@
   "results": {
    "resolves": 657,
    "builtin:cast-spell": 454,
-   "none": 878,
+   "none": 872,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 19,
    "note-only": 280,
-   "builtin:reroll": 20,
+   "builtin:reroll": 22,
    "partial": 56,
    "builtin:modes": 26,
    "builtin:zone": 9,
    "builtin:roll-twice": 10,
+   "builtin:item-action": 7,
    "builtin:save-bonus": 3,
-   "builtin:item-action": 3,
    "builtin:ac-reaction": 4
   },
   "live": {
    "save": 327,
    "cast": 454,
    "item": 587,
-   "none": 1076,
+   "none": 1070,
    "focus": 45,
    "fortune": 29,
-   "reroll": 20,
+   "reroll": 22,
    "strike": 39,
    "zone": 9,
-   "action": 3,
+   "action": 7,
    "later": 4
   },
   "withFrequency": 1749,
@@ -44,32 +44,33 @@
    "results": {
     "resolves": 397,
     "builtin:cast-spell": 333,
-    "none": 561,
+    "none": 557,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 13,
     "note-only": 179,
-    "builtin:reroll": 12,
+    "builtin:reroll": 14,
     "partial": 17,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
-    "builtin:save-bonus": 2
+    "builtin:save-bonus": 2,
+    "builtin:item-action": 2
    }
   },
   "weapon": {
    "activations": 460,
    "results": {
     "resolves": 143,
-    "none": 142,
+    "none": 140,
     "partial": 23,
     "note-only": 41,
     "builtin:cast-spell": 76,
     "builtin:reroll": 5,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
+    "builtin:item-action": 5,
     "builtin:readied-bonus": 4,
-    "builtin:item-action": 3,
     "builtin:roll-twice": 1,
     "builtin:save-bonus": 1,
     "builtin:ac-reaction": 2
@@ -3059,9 +3060,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Miniaturization Module",
@@ -4995,9 +4996,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Aboutface Figurehead",
@@ -9175,9 +9176,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Apocalypse Seed",
@@ -25191,9 +25192,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Sunken Pistol",
@@ -25477,9 +25478,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Aurochs' Might Tattoo (Moderate)",
@@ -26500,9 +26501,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Clockwork Cloak",
