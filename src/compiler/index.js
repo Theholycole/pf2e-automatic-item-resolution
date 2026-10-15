@@ -24,9 +24,10 @@ export { castPlan, effectLinks, fitPlan, grantedSpells, nativeHealing, ownPlan, 
 // The consumable categories the spell module resolves (the user's split, 2026-10-10).
 export const SPELL_MODULE_CATEGORIES = Object.freeze(["scroll", "wand", "catalyst", "spell-gem"]);
 
-// An item this module compiles: a consumable outside the spell module's categories.
+// An item this module compiles: a consumable outside the spell module's categories, and not a catalyst by its trait
+// either (20 of PF2e's 107 catalysts are filed as "other": Void Salts, Irritating Seedpod — the spell module's too).
 export function handlesItem(item) {
-    return item?.type === "consumable" && !SPELL_MODULE_CATEGORIES.includes(item.system?.category);
+    return item?.type === "consumable" && !SPELL_MODULE_CATEGORIES.includes(item.system?.category) && !(item.system?.traits?.value ?? []).includes("catalyst");
 }
 
 export { asAbility } from "./ability-shape.js";

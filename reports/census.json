@@ -3,8 +3,8 @@
  "system": "/home/theholycole/.local/share/FoundryVTT/Data/systems/pf2e/packs",
  "totals": {
   "consumables": 1724,
-  "spellModule": 216,
-  "ours": 1508,
+  "spellModule": 237,
+  "ours": 1487,
   "bombs": {
    "bombs": 171,
    "cards": 164,
@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 26,
-   "none": 354,
-   "resolves": 695,
+   "none": 337,
+   "resolves": 691,
    "builtin:zone": 86,
    "note-only": 272,
    "builtin:no-effect": 69,
@@ -25,27 +25,27 @@
  },
  "byCategory": {
   "other": {
-   "count": 533,
+   "count": 512,
    "results": {
     "builtin:cast-spell": 7,
-    "none": 174,
-    "resolves": 205,
+    "none": 157,
+    "resolves": 201,
     "note-only": 122,
     "builtin:zone": 9,
     "builtin:no-effect": 15,
     "builtin:save-bonus": 1
    },
    "mechanisms": {
-    "casts-spell": 21,
-    "condition": 153,
-    "fixed-dc": 156,
-    "damage": 105,
+    "casts-spell": 17,
+    "condition": 149,
+    "fixed-dc": 149,
+    "damage": 95,
     "linked-effect": 120,
-    "duration": 287,
+    "duration": 283,
     "strike": 23,
     "area": 30,
     "trigger": 26,
-    "temp-hp": 10,
+    "temp-hp": 6,
     "counteract": 24,
     "on-weapon": 12,
     "heal": 9,
@@ -276,16 +276,16 @@
    "none": 3
   },
   "temp-hp": {
-   "count": 41,
+   "count": 37,
    "resolves": 25,
    "gaps": 0,
-   "none": 6
+   "none": 2
   },
   "damage": {
-   "count": 287,
+   "count": 277,
    "resolves": 142,
    "gaps": 0,
-   "none": 50
+   "none": 40
   },
   "linked-effect": {
    "count": 393,
@@ -294,10 +294,10 @@
    "none": 1
   },
   "fixed-dc": {
-   "count": 498,
-   "resolves": 333,
+   "count": 491,
+   "resolves": 329,
    "gaps": 0,
-   "none": 45
+   "none": 42
   },
   "affliction": {
    "count": 144,
@@ -306,10 +306,10 @@
    "none": 3
   },
   "casts-spell": {
-   "count": 37,
+   "count": 33,
    "resolves": 5,
    "gaps": 0,
-   "none": 15
+   "none": 11
   },
   "strike": {
    "count": 31,
@@ -342,14 +342,14 @@
    "none": 9
   },
   "condition": {
-   "count": 437,
-   "resolves": 260,
+   "count": 433,
+   "resolves": 256,
    "gaps": 0,
    "none": 60
   },
   "duration": {
-   "count": 947,
-   "resolves": 565,
+   "count": 943,
+   "resolves": 561,
    "gaps": 0,
    "none": 22
   }
@@ -357,19 +357,19 @@
  "live": {
   "totals": {
    "cast": 26,
-   "none": 445,
+   "none": 428,
    "item": 652,
    "zone": 86,
    "expose": 89,
-   "later": 55,
+   "later": 51,
    "save": 110,
    "coat": 45
   },
   "byCategory": {
    "other": {
     "cast": 7,
-    "none": 203,
-    "later": 12,
+    "none": 186,
+    "later": 8,
     "save": 71,
     "item": 225,
     "zone": 9,
@@ -440,7 +440,7 @@
    }
   },
   "noCard": {
-   "no-plan": 354,
+   "no-plan": 337,
    "triggered": 21,
    "gm": 69,
    "other": 1
@@ -1231,7 +1231,7 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Elemental Fragment (Greater)",
@@ -2188,7 +2188,7 @@
    "mechanisms": [
     "temp-hp"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Black Powder (Keg)",
@@ -3288,7 +3288,7 @@
    "mechanisms": [
     "temp-hp"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Prey Mutagen (Lesser)",
@@ -3374,7 +3374,7 @@
    "mechanisms": [
     "temp-hp"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Devil's Breath Incense",
@@ -4301,7 +4301,7 @@
     "fixed-dc",
     "casts-spell"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Wand of Dumbfounding Doom (4th-rank)",
@@ -5257,10 +5257,7 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "spell-module"
   },
   {
    "name": "Vaccine (Greater)",
@@ -6149,7 +6146,7 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Elemental Fragment",
@@ -7033,7 +7030,7 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Tentacle Potion (Moderate)",
@@ -7817,7 +7814,7 @@
    "mechanisms": [
     "temp-hp"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Kaiju Fulu",
@@ -8290,7 +8287,7 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Wand of Choking Mist (4th-Rank)",
@@ -10791,10 +10788,7 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "spell-module"
   },
   {
    "name": "Blast-Off Bottle (Moderate)",
@@ -14191,7 +14185,7 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Megaphone Mutagen (Moderate)",
@@ -14279,7 +14273,7 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Malleable Mixture (Greater)",
@@ -17694,10 +17688,7 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "spell-module"
   },
   {
    "name": "Instant Spy",
@@ -21677,10 +21668,7 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "spell-module"
   },
   {
    "name": "Black Ash (Greater)",
@@ -21694,7 +21682,7 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Moonlit Spellgun (Major)",
@@ -22345,7 +22333,7 @@
     "fixed-dc",
     "casts-spell"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Toothwort Extract",
@@ -22822,7 +22810,7 @@
     "fixed-dc",
     "casts-spell"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Whisper Briolette",
@@ -23770,7 +23758,7 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Juggernaut Mutagen (Moderate)",
@@ -24493,7 +24481,7 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Spider Root",
@@ -29949,7 +29937,7 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "spell-module"
   },
   {
    "name": "Tiger Menuki",

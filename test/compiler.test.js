@@ -28,6 +28,9 @@ test("the spell module's consumables and other item types are left out", () => {
     assert.equal(handlesItem({ type: "consumable", system: { category: "catalyst" } }), false);
     assert.equal(handlesItem(item("Alchemist's Fire (Lesser)")), false, "bombs are weapons (batch 2)");
     assert.equal(compileItem(item("Scroll of 6th-rank Spell")), null);
+    // A catalyst filed as "other" is still the spell module's.
+    assert.equal(handlesItem(item("Irritating Seedpod")), false);
+    assert.equal(handlesItem(item("Void Salts")), false);
 });
 
 test("activations: actions, traits, names and times", () => {
