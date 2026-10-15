@@ -16,14 +16,9 @@ import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, eff
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
-import { isExposurePoison, isInjuryPoison, isUseSave } from "../src/live/poison-card.js";
-import { plainText } from "../src/compiler/rows.js";
 import { applyCastCard, postCastCard } from "./casts.js";
-import { isCast } from "../src/live/cast-card.js";
-
-// The plans batch 1 plays on its card (potions, elixirs, mutagens): healing, PF2e Effects, and the
-// item's own automatic row on its drinker or user (conditions, temporary Hit Points, a note).
-const played = (plan) => ["healing", "effect"].includes(plan?.resolution?.kind) || (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic");
+import { routeOf } from "../src/live/route.js";
+import { plainText } from "../src/compiler/rows.js";
 
 let compile = null;
 // The last dose's item, kept as PF2e deletes it (its Use message can arrive after): uuid → { data, actor }.
@@ -82,15 +77,14 @@ async function cardForUse(message) {
     const actor = used.actor ?? message.actor;
     if (!actor) return;
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
-    // An injury poison: which weapon to coat (scripts/poisons.js).
-    if (isInjuryPoison(plan)) return postPoisonCard({ message, plan, used, actor, token });
-    // A contact, inhaled or ingested poison: exposure of the creatures targeted.
-    if (isExposurePoison(plan)) return postExposureCard({ message, plan, used, actor, token });
-    // Another item's save on its Use, at others (Spark Wafer, Pyronite): the same card, for the targets.
-    if (isUseSave(plan, plainText(used.data.system?.description?.value))) return postExposureCard({ message, plan, used, actor, token });
-    // A spell PF2e has no Effect for: the spell module casts it (scripts/casts.js).
-    if (isCast(plan)) return postCastCard({ message, plan, used, actor, token });
-    if (!played(plan)) return;
+    // Its card (src/live/route.js): an injury poison's weapon to coat (scripts/poisons.js); a contact, inhaled or ingested
+    // poison's exposure, or another item's save on its Use (Spark Wafer, Pyronite), for the creatures targeted; a spell PF2e
+    // has no Effect for, cast by the spell module (scripts/casts.js); else the item card below.
+    const route = routeOf(plan, plainText(used.data.system?.description?.value));
+    if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
+    if (route === "expose" || route === "save") return postExposureCard({ message, plan, used, actor, token });
+    if (route === "cast") return postCastCard({ message, plan, used, actor, token });
+    if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message.rolls?.[0];
     const rolled = plan.item?.pf2eRoll && Number.isFinite(roll?.total) ? { total: roll.total, formula: plan.item.pf2eRoll.formula, kind: plan.item.pf2eRoll.kind, messageId: message.id } : null;

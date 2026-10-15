@@ -43,6 +43,26 @@ Results, for the items this module handles:
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |
 
+## Played live
+
+Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **cast** (the spell module casts it). Bombs get theirs after PF2e's damage roll (above).
+
+| Category | Items | item | coat | expose | save | cast | no card |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| other | 533 | 222 | 3 | 3 | 70 | 7 | 228 |
+| potion | 183 | 93 | 0 | 0 | 6 | 8 | 76 |
+| talisman | 156 | 46 | 0 | 0 | 10 | 7 | 93 |
+| elixir | 149 | 114 | 0 | 0 | 1 | 0 | 34 |
+| poison | 115 | 1 | 41 | 63 | 1 | 0 | 9 |
+| snare | 82 | 5 | 0 | 0 | 0 | 0 | 77 |
+| gadget | 77 | 19 | 0 | 0 | 15 | 0 | 43 |
+| mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 |
+| oil | 66 | 45 | 0 | 0 | 1 | 1 | 19 |
+| fulu | 46 | 17 | 0 | 0 | 1 | 2 | 26 |
+| drug | 24 | 0 | 0 | 23 | 0 | 0 | 1 |
+| toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 1 |
+| **all** | **1508** | **638** | **44** | **89** | **105** | **25** | **607** |
+
 ## What they do
 
 An item can do several of these. *resolves* counts the items doing it whose plan resolves with no gaps (not necessarily that part of it).

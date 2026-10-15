@@ -16,6 +16,7 @@ import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability
 import { CORE_FAMILIES, createRegistry } from "../../pf2e-resolution-core/src/index.js";
 import { SPELL_MODULE_CATEGORIES, compileItem, handlesItem, spellEffectIndex } from "../src/compiler/index.js";
 import { compileBomb } from "../src/compiler/bombs.js";
+import { routeOf } from "../src/live/route.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packsDirectory = path.resolve(process.argv[2] ?? `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`);
@@ -64,7 +65,7 @@ function resolveGaps(plan) {
     return { registered: true, gaps: [...gaps.values()] };
 }
 
-function classify(item) {
+function classify(item, text) {
     let plan = null;
     try {
         plan = compileItem(item, { basicActions, spellEffects });
@@ -72,6 +73,11 @@ function classify(item) {
         return { result: "error", error: error.message.slice(0, 160) };
     }
     if (!plan) return { result: "none" };
+    const live = routeOf(plan, text);
+    return { ...classifyPlan(plan), live };
+}
+
+function classifyPlan(plan) {
     if (plan.builtin) return { result: `builtin:${plan.builtin}`, kind: null };
     const { registered, gaps } = resolveGaps(plan);
     if (plan.noteOnly && registered && !gaps.length) return { result: "note-only", kind: plan.resolution?.kind ?? null };
@@ -95,7 +101,7 @@ for (const item of consumables) {
     const mechanisms = Object.entries(MECHANISMS).filter(([, test]) => test(item, text)).map(([name]) => name);
     const row = { name: item.name, category: item.system?.category ?? "other", level: Number(item.system?.level?.value) || 0, traits: item.system?.traits?.value ?? [], mechanisms };
     if (!handlesItem(item)) rows.push({ ...row, result: "spell-module" });
-    else rows.push({ ...row, ...classify(item) });
+    else rows.push({ ...row, ...classify(item, text) });
 }
 
 const tally = (list, key) => list.reduce((counts, row) => ({ ...counts, [key(row)]: (counts[key(row)] ?? 0) + 1 }), {});
@@ -114,6 +120,10 @@ for (const name of Object.keys(MECHANISMS)) {
     const list = ours.filter((row) => row.mechanisms.includes(name));
     mechanismCoverage[name] = { count: list.length, resolves: list.filter((row) => row.result === "resolves").length, gaps: list.filter((row) => row.result === "gaps").length, none: list.filter((row) => row.result === "none").length };
 }
+// What each item gets in live play (src/live/route.js), by category.
+const LIVE = ["item", "coat", "expose", "save", "cast"];
+const liveByCategory = Object.fromEntries(Object.keys(byCategory).map((category) => [category, tally(ours.filter((row) => row.category === category), (row) => row.live ?? "none")]));
+const liveTotals = tally(ours, (row) => row.live ?? "none");
 const gapCounts = tally(ours.flatMap((row) => (row.gaps ?? []).map((what) => ({ what }))), (entry) => entry.what);
 
 const report = {
@@ -129,6 +139,7 @@ const report = {
     },
     byCategory,
     mechanismCoverage,
+    live: { totals: liveTotals, byCategory: liveByCategory },
     gapCounts,
     rows
 };
@@ -172,6 +183,15 @@ for (const [category, entry] of Object.entries(byCategory)) {
     const builtin = Object.entries(entry.results).filter(([result]) => result.startsWith("builtin:")).reduce((sum, [, count]) => sum + count, 0);
     lines.push(`| ${category} | ${entry.count} | ${entry.results.resolves ?? 0} | ${entry.results.partial ?? 0} | ${entry.results["note-only"] ?? 0} | ${entry.results.gaps ?? 0} | ${builtin} | ${(entry.results.none ?? 0) + (entry.results.error ?? 0)} |`);
 }
+lines.push("");
+lines.push("## Played live");
+lines.push("");
+lines.push("Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **cast** (the spell module casts it). Bombs get theirs after PF2e's damage roll (above).");
+lines.push("");
+lines.push(`| Category | Items | ${LIVE.join(" | ")} | no card |`);
+lines.push(`|---|---:|${LIVE.map(() => "---:").join("|")}|---:|`);
+for (const [category, counts] of Object.entries(liveByCategory)) lines.push(`| ${category} | ${byCategory[category].count} | ${LIVE.map((route) => counts[route] ?? 0).join(" | ")} | ${counts.none ?? 0} |`);
+lines.push(`| **all** | **${ours.length}** | ${LIVE.map((route) => `**${liveTotals[route] ?? 0}**`).join(" | ")} | **${liveTotals.none ?? 0}** |`);
 lines.push("");
 lines.push("## What they do");
 lines.push("");
