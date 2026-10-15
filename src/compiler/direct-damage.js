@@ -13,7 +13,7 @@ const DICE = String.raw`(\d+d\d+(?:\s*\+\s*\d+)?)`;
 const KIND = String.raw`(?:(persistent) )?(?:(${TYPES}) )?damage`;
 // The one creature: "The attacking creature", "the struck creature", "The creature", "the triggering enemy", "the plant",
 // "the undead that caused the condition", "The required creature", "the target".
-const ONE = String.raw`(?:the|that) (?:(?:attacking|triggering|struck|damaged|required|living|affected|grabbed) )?(?:creature|enemy|foe|attacker|target|plant|undead|construct|aberration)(?: (?:that|who|you) [\w ]{1,40}?)?`;
+const ONE = String.raw`(?:the|that|your) (?:(?:attacking|triggering|struck|damaged|required|living|affected|grabbed) )?(?:creature|enemy|foe|attacker|target|plant|undead|construct|aberration)(?: (?:that|who|you) [\w ]{1,40}?)?`;
 const TAKES = new RegExp(String.raw`\b${ONE} takes (?:an additional |an extra )?${DICE} ${KIND}\b`, "i");
 const DEALS_TO = new RegExp(String.raw`\b(?:you deal|deals?|inflicts?) (?:an additional |an extra )?${DICE} (?:additional )?${KIND} to ${ONE}\b`, "i");
 // Not one creature, or not outright: an area, a save, a condition on it, a number not rolled.
@@ -31,10 +31,16 @@ const ROW_START = /^(?:On a|Even on|Success|Failure|Critical)\b/;
 const STATS = /^Hardness\b.*\bHP\b/;
 
 // The text (plain, from the activation's Effect on) → { formula, type, category, effects, modifiers, notes } or null.
+// A save only for others ("All the target's allies within 20 feet take 1d8 electricity damage with a basic Reflex save",
+// Shei Long's Blade): not this card's, a note beside the target's outright damage.
+const OTHERS_SAVE = /^(?:(?:All|Each|Every|Any) (?:of )?(?:the target['’]s |its |other )?(?:allies|creatures|enemies|foes)\b|Creatures (?:who|that) (?:critically )?(?:fail|succeed))/i;
+const savedForTarget = (body) => body.split(/(?<=[.!?])\s+(?=[A-Z])/).some((sentence) => SAVED.test(sentence) && !OTHERS_SAVE.test(sentence.trim()));
+
 export function readDirectDamage(text) {
     const plain = String(text ?? "");
-    if (DEGREES.test(plain) || SAVED.test(plain)) return null;
+    if (DEGREES.test(plain)) return null;
     const body = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
+    if (savedForTarget(body) || (SAVED.test(plain) && !SAVED.test(body))) return null;
     if (STRUCK.test(body)) return null;
     const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
     for (const [index, sentence] of sentences.entries()) {

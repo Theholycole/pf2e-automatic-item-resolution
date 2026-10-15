@@ -93,7 +93,8 @@ export function compileItem(given, options = {}) {
     // (A skill action taken with it, src/compiler/item-actions.js: Onyx Panther's Sneak.)
     plan = itemActionOver(plan, itemActionPlan(item?.system?.description?.value, base, options));
     // (Damage outright to the creature it names, src/compiler/direct-damage.js: Murderer's Knot.)
-    plan = directDamageOver(plan, directDamagePlan(plainText(item?.system?.description?.value), base, { item }));
+    // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
+    plan = directDamageOver(guardText(plan, plainText(item?.system?.description?.value)), directDamagePlan(plainText(item?.system?.description?.value), base, { item }));
     // (A counteract on the drinker, src/compiler/counteract.js: its own card; with another reading, beside its card.)
     if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value })) {
         plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };

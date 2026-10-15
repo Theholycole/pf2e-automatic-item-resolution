@@ -130,7 +130,8 @@ export function compileActivations(item, options = {}) {
         // (A skill action taken with it, src/compiler/item-actions.js: Bronze Bull Pendant's Shove.)
         plan = itemActionOver(plan, itemActionPlan(activation.html, base, options));
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)
-        plan = guardText(guardValues(directDamageOver(plan, directDamagePlan(plainText(activation.html), base, { item }))), plainText(activation.html));
+        // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
+        plan = guardValues(directDamageOver(guardText(plan, plainText(activation.html)), directDamagePlan(plainText(activation.html), base, { item })));
         // (A condition it lowers on its user, src/compiler/reduce.js: Coin of Comfort; a plan of its own when it's all.)
         const reduce = readReductions(plainText(activation.html));
         if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(activation.html)));

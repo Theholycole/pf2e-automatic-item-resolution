@@ -80,3 +80,12 @@ test("conditions outright on the creature an item names: Imposing Shield's frigh
     assert.equal(readOutrightConditions("Effect The target is Off-Guard against the next melee attack you attempt against it."), null);
 });
 
+test("outright damage to the target beside a save only for others: the target's part, the others' save a note", () => {
+    // (The module's own wording, not a third-party item's.)
+    const read = readDirectDamage("Effect Your target takes 3d6 cold damage and is Slowed 1. All the target's allies within 10 feet take 1d6 cold damage with a basic Reflex save. Creatures who critically fail their save are slowed 1.");
+    assert.deepEqual([read.formula, read.type, read.effects.map((effect) => effect.slug)], ["3d6", "cold", ["slowed"]]);
+    assert.match(read.notes.join(" "), /allies within 10 feet/);
+    // A save for the target itself: not outright.
+    assert.equal(readDirectDamage("Effect Your target takes 3d6 cold damage. It must succeed at a DC 20 Fortitude save or be Slowed 1."), null);
+});
+
