@@ -81,6 +81,8 @@ function selfConditions(sentences, used = new Set()) {
             const slug = (match[1] ?? match[3]).toLowerCase();
             const value = match[2] ?? match[4];
             if (effects.some((effect) => effect.slug === slug)) continue;
+            // (Only to some: "invisible to scrying magic", "Invisible to creatures with the fiend … trait" — not the condition.)
+            if (/^\s*(?:to|from|against)\b/i.test(sentence.slice(match.index + match[0].length))) continue;
             used.add(index);
             effects.push({ kind: "condition", slug, value: value ? Number(value) : null, duration: slug === "prone" ? null : duration });
         }
@@ -94,7 +96,9 @@ function tempHitPoints(sentences, duration, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
         const match = new RegExp(String.raw`\byou gain ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence);
         if (match && !/\b(?:if|when|whenever|each time)\b/i.test(sentence.slice(0, match.index))) {
-            used.add(index);
+            // (Its other half stays unread, for the note: "You drop to 1 Hit Point instead of being reduced to 0 HP or dying,
+            // and you gain 100 temporary Hit Points" — the 1 HP the GM sets.)
+            if (!/\binstead\b/i.test(sentence)) used.add(index);
             const amount = match[1].replace(/\s+/g, "");
             return { kind: "temp-hp", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), duration: durationIn(sentence, duration) };
         }
@@ -142,22 +146,59 @@ function selectorsOf(list) {
     return selectors.length ? [...new Set(selectors)] : null;
 }
 
-// "+1 item bonus to Fortitude saves" / "–2 penalty to Will saves, Perception checks and initiative rolls".
+// A scope PF2e has a roll option for, as the modifier's predicate: "saves against diseases and poisons" → item:trait:disease
+// or item:trait:poison; "Athletics checks to Climb" → action:climb. Anything else narrower than a selector stays out.
+const TRAITS = { poisons: "poison", poison: "poison", diseases: "disease", disease: "disease", fear: "fear", mental: "mental", emotion: "emotion", auditory: "auditory", visual: "visual", olfactory: "olfactory", inhaled: "inhaled", curses: "curse", curse: "curse", illusions: "illusion", illusion: "illusion", sleep: "sleep", death: "death", possession: "possession", polymorph: "polymorph" };
+const ACTIONS = { climb: "climb", swim: "swim", "high jump": "high-jump", "long jump": "long-jump", leap: "leap", balance: "balance", "tumble through": "tumble-through", escape: "escape", hide: "hide", sneak: "sneak", seek: "seek", "sense motive": "sense-motive", "sense direction": "sense-direction", track: "track", demoralize: "demoralize", feint: "feint", grapple: "grapple", trip: "trip", shove: "shove", disarm: "disarm", "recall knowledge": "recall-knowledge", "treat wounds": "treat-wounds", "administer first aid": "administer-first-aid", "pick a lock": "pick-a-lock", "disable a device": "disable-a-device", squeeze: "squeeze", impersonate: "impersonate", lie: "lie", "make an impression": "make-an-impression", request: "request", coerce: "coerce", perform: "perform", "gather information": "gather-information" };
+function scopeOf(scope) {
+    const against = /^against ((?:[\w-]+(?:,? (?:and|or) |, )?)+?)(?: effects| spells| abilities| threats)?$/i.exec(scope);
+    if (against) {
+        const traits = against[1].split(/,? (?:and|or) |, /).map((word) => TRAITS[word.toLowerCase()]);
+        if (!traits.length || traits.some((trait) => !trait)) return null;
+        return [traits.length === 1 ? `item:trait:${traits[0]}` : { or: traits.map((trait) => `item:trait:${trait}`) }];
+    }
+    const to = /^to ((?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?)(?:,? (?:and|or) (?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?))*)$/.exec(scope);
+    if (to) {
+        const actions = to[1].split(/,? (?:and|or) |, /).map((words) => ACTIONS[words.toLowerCase()]);
+        if (!actions.length || actions.some((action) => !action)) return null;
+        return [actions.length === 1 ? `action:${actions[0]}` : { or: actions.map((action) => `action:${action}`) }];
+    }
+    return null;
+}
+
+// "+1 item bonus to Fortitude saves" / "–2 penalty to Will saves, Perception checks and initiative rolls" / "+1 item bonus to
+// saving throws against diseases and poisons" / "+2 status bonus to Athletics checks to Climb" / "+10-foot status bonus to
+// your Speed".
 function modifiersOf(sentences, duration, used = new Set()) {
     const modifiers = [];
-    const pattern = /\byou (?:gain|get|have|receive|take|suffer)(?: an?)? ([+-])(\d+) (?:(item|status|circumstance) )?(bonus|penalty) (?:to|on) ([^.;]+?)(?=(?: for (?:\d+|one|an?) \w+| until\b| while\b|,? but\b|,? and (?:you|your)\b| as long as\b|;|\.|$))/gi;
-    for (const [index, sentence] of sentences.entries()) {
+    const pattern = /\byou (?:gain|get|have|receive|take|suffer)(?: an?)? ([+-])(\d+)(-foot)? (?:(item|status|circumstance) )?(bonus|penalty) (?:to|on) ([^.;]+?)(?=(?: for (?:\d+|one|an?) \w+| until\b| while\b|,? (?:but|which|though|unless|if)\b|,? and (?:you|your)\b| as long as\b|;|\.|$))/gi;
+    for (const [index, whole] of sentences.entries()) {
+        // ("When you Activate this fulu, you gain …", "Upon drinking …,": the use itself, not a condition.)
+        const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "");
         if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(sentence)) continue;
         for (const match of sentence.matchAll(pattern)) {
-            const [, sign, number, type, kind, list] = match;
+            const [, sign, number, feet, type, kind, list] = match;
             if ((kind.toLowerCase() === "bonus") !== (sign === "+")) continue;
-            // Narrower than the selector ("checks to Balance", "saves against diseases"): left out.
-            if (/\b(?:against|to|made|when|if|that|for|as part of|while|with|using|from|of|in)\b/i.test(list)) continue;
-            const selectors = selectorsOf(list);
-            if (!selectors) continue;
             const value = (sign === "+" ? 1 : -1) * Number(number);
+            const timed = { type: type?.toLowerCase() ?? "untyped", duration: durationIn(sentence, duration) };
+            // ("+10-foot status bonus to your Speed": the land Speed; "to your Speeds": all of them.)
+            if (feet) {
+                const speeds = /^(?:your |its )?(?:land )?(Speeds?)$/i.exec(list.trim());
+                if (!speeds) continue;
+                used.add(index);
+                modifiers.push({ selector: /s$/i.test(speeds[1]) ? "all-speeds" : "land-speed", value, ...timed });
+                continue;
+            }
+            // A scope after the list ("… against diseases", "… to Climb"): a predicate when PF2e has one, else left out.
+            const scoped = /^(.+?) ((?:against|to) .+)$/.exec(list);
+            const predicate = scoped ? scopeOf(scoped[2]) : null;
+            const names = predicate ? scoped[1] : list;
+            if (scoped && !predicate) continue;
+            if (/\b(?:against|to|made|when|if|that|for|as part of|while|with|using|from|of|in)\b/i.test(names)) continue;
+            const selectors = selectorsOf(names.replace(/^all /i, ""));
+            if (!selectors) continue;
             used.add(index);
-            for (const selector of selectors) modifiers.push({ selector, value, type: type?.toLowerCase() ?? "untyped", duration: durationIn(sentence, duration) });
+            for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate ? { predicate } : {}) });
         }
     }
     return modifiers;
@@ -166,7 +207,10 @@ function modifiersOf(sentences, duration, used = new Set()) {
 // Items whose text isn't one use with one result: activated on a trigger, an affliction's stages, a second
 // effect, a choice of ways to use it ("may be applied to armor, a weapon, or mixed into an elixir"), or one
 // that links PF2e Effects (those Effects hold its rules).
-const NOT_ONE_RESULT = /\bTrigger\b|\bStage 1\b|\bSecondary Effect\b|\b(?:may|can) be (?:applied|used|mixed|poured)\b[^.]*\bor\b|\bin (?:either|one) of the following ways\b|\bchoose one\b/i;
+const NOT_ONE_RESULT = /\bStage 1\b|\bSecondary Effect\b|\broll (?:a |an )?(?:d\d+|\d+d\d+)\b[^.]*\btable\b|\bon the (?:following )?table\b|\b(?:may|can) be (?:applied|used|mixed|poured)\b[^.]*\bor\b|\bin (?:either|one) of the following ways\b|\bchoose one\b/i;
+// A talisman's or an activation's Trigger, Requirements and Frequency say when it's used, not what it does: taken out before
+// reading ("Trigger You become Blinded …" isn't a condition it gives). Each runs to its sentence's end or to "Effect".
+const WHEN_CLAUSES = /\b(?:Trigger|Requirements?|Frequency)\b[^.]*?(?=\bEffect\b|\.(?:\s|$)|$)\.?/g;
 const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.[\w-]*effects\.Item\./;
 
 // A sentence that says something a creature or its rolls get or lose (not flavor, not how long it lasts).
@@ -176,7 +220,7 @@ const MECHANICAL = /\b(?:bonus|penalty|resistance|weakness|immun\w*|Speeds?|dama
 // sentences that say something mechanical it didn't read (they go on a note, and the plan counts as partial).
 export function ownRow(item, { healing = true } = {}) {
     const html = String(item?.system?.description?.value ?? "");
-    const text = plainText(html);
+    const text = plainText(html).replace(WHEN_CLAUSES, " ").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
     if (NOT_ONE_RESULT.test(text) || EFFECT_LINK.test(html)) return null;
     const duration = itemDuration(text);
     const sentences = sentencesOf(text);

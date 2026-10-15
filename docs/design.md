@@ -26,7 +26,9 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
   - **built:** *PF2e's healing*: `system.damage` of kind healing → `resolution.native.healing` (the core's healing family; with an Effect, the effect family heals too, as Soothe does). `item.pf2eRoll` tells live play that PF2e has rolled it already.
   - **built:** *the one linked Effect* the ability compiler didn't read → an `effect` plan. Items linking an Effect per stage or degree (Crackling Bubble Gum, Grit) are left to readings that know which one applies.
   - **built:** "gains the effects of a 2nd-rank *Oaken Resilience* for 10 minutes": PF2e's own Spell Effect at that rank and for that time, when the spell-effects pack has one. Otherwise it stays the ability compiler's cast, which is the spell module's to cast.
-  - **built:** *the item's own row* (`rows.js`, the core's check family with `roll: "automatic"`): a condition the text puts on the drinker with its own time ("making you concealed for 5 minutes"). The reader is deliberately strict: not from a trigger, a later event, a failed check, stages, an item with a choice of uses, or one that links PF2e Effects. Bonuses and penalties are read only with plain selectors, so "to Balance" or "against diseases" are left out. Temporary Hit Points and healing are read only when stated plainly.
+  - **built:** *the item's own row* (`rows.js`, the core's check family with `roll: "automatic"`): a condition the text puts on the drinker with its own time ("making you concealed for 5 minutes"). The reader is deliberately strict: not from a later event, a failed check, stages, a roll on a table, an item with a choice of uses, or one that links PF2e Effects. A talisman's or an activation's Trigger, Requirements and Frequency only say when it's used, so they're stripped and what follows is read (Guardian Rose's enfeebled 1). A condition "to" someone ("invisible to scrying magic", "Invisible to creatures with the fiend … trait") isn't the condition, so it isn't read.
+    - Bonuses and penalties: plain selectors, plus scopes PF2e has a roll option for, as predicates: against a trait ("against fear effects"), checks to an action ("Athletics checks to High Jump or Long Jump"), and Speeds ("a +10-foot status bonus to your Speed"). Scopes with no roll option ("saves against afflictions") and a choice of settings (Magnetic Suit) are left out. The list stops at ", which", "but", "unless", "if".
+    - Temporary Hit Points and healing are read only when stated plainly. A sentence that also says "instead" (Immortal Bastion's "You drop to 1 Hit Point instead of being reduced to 0 HP …, and you gain 100 temporary Hit Points") gives the temporary Hit Points and stays on the note for the rest. Six items keep their user at 1 Hit Point like this (Immortal Bastion, The Survivor, False Death Vials, Locket of Love Left Behind, Final Stand); a "stay at 1 HP" effect would need the core.
   - **built:** *note only*: an item with a time and nothing else the module reads gets a note Effect with its text for that time. That's the user's note-Effect rule for spells, and the census counts these apart. The time can be written "Duration 1 minute", "The duration is 1 hour", "with a duration of 10 minutes" or rolled ("for 2d4 rounds").
   - **built:** *partial*: a row that reads only part of the text also carries the note and is counted apart ("Effect + note"). Immovable Potion's "DC to move you is 40" and Megaphone Mutagen's auditory benefit are like this. A sentence restating PF2e's usual rule ("As usual …") doesn't count.
 - Next readings for batch 1, by size:
@@ -95,7 +97,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 
 **The GM fallback gives way.** The ability compiler's last fallback ("no-effect", the GM's) yields to a reading of the item's own (its linked Effect, a spell's Effect, PF2e's healing, its row), though not to a note alone. PF2e's healing field counts only when the text heals: Potion of Annulment keeps its counteract roll there.
 
-`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,062 of 1,487 consumables get a card, and it says why the rest don't.
+`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,063 of 1,487 consumables get a card, and it says why the rest don't.
 
 **The live check is ready** (`tools/live-check.mjs`, run in pftest's browser). It has its own "PFTEST ITEM Lab" scene and "PFTEST ITEM" creatures, and cleans up only its own data. Its cases:
 - a potion fed to a dying ally;
@@ -111,7 +113,8 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 ## Later phase: permanent items' activations (compiled offline, 2026-10-15)
 
 **The compiler** (`src/compiler/permanent.js`, `tools/census-permanent.mjs` → [census-permanent.md](census-permanent.md)). PF2e keeps activations only as text, so each item's text is split into its activations: name, actions, traits, frequency as `{ max, per }`, trigger and requirements. Each one is read like a consumable, for its user. Staves and spellhearts (the spell module's) and bombs are left out.
-- 2,201 items, 2,730 activations: 636 resolve, 328 are casts, 297 are saves at targets, 304 notes. 1,273 have nothing read yet.
+- 2,201 items, 2,730 activations: 642 resolve, 328 are casts, 301 are saves at targets, 302 notes. 1,267 have nothing read yet.
+- An automatic row aimed at another creature ("The target is Quickened for 1 round", Scizore of the Crab's "The target is grabbed") goes to the save card, for the creatures the presser targets, not to the item card on its user.
 - Six items the spell module claims by their casts aren't left out yet: Searing Blade, Sky Hammer, Dragon's Eye Charm and the Tridents of the Azarketis. Before they're played live, ask the spell session for `claims(item)`.
 
 **Live play: the proposed default, built** (`scripts/activations.js`, `src/live/activations-card.js`); **the user to confirm.**

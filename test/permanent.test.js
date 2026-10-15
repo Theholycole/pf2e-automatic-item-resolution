@@ -57,3 +57,20 @@ test("an activation that heals: its user (Bolka's Blessing), or a creature next 
     assert.equal(gloves.plan.item.recipient, "drinker", "the user picks the creature next to them");
 });
 
+
+test("an activation's row: not a condition only to some, not a random table's, not the target's on its user", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { plainText } = await import("../src/compiler/rows.js");
+    const conditions = (name) => compileActivations(item(name), { spellEffects }).flatMap(({ plan }) => plan?.resolution?.check?.roll === "automatic" ? plan.resolution.outcomes.success.effects.filter((effect) => effect.kind === "condition").map((effect) => effect.slug) : []);
+    // "invisible to scrying magic", "Invisible to creatures with the fiend, fey, or undead trait": not invisible.
+    assert.ok(!conditions("Mirrorblade").includes("invisible"));
+    assert.ok(!conditions("Token of Salt and Earth").includes("invisible"));
+    // A roll on a table: no one result.
+    assert.deepEqual(conditions("Madcap Top"), []);
+    // "The target is Quickened for 1 round": the save card, for the creature targeted — not the item card on its user.
+    const watch = compileActivations(item("Pocket Watch of Stethelos"), { spellEffects }).find(({ activation }) => activation.name === "Steal a Second");
+    assert.equal(routeOf(watch.plan, plainText(watch.activation.html)), "save");
+    // "You drop to 1 Hit Point instead …, and you gain 100 temporary Hit Points": the temporary Hit Points, the rest on a note.
+    const [bastion] = compileActivations(item("Immortal Bastion"), { spellEffects });
+    assert.equal(bastion.plan.partial, true);
+});

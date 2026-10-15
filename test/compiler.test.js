@@ -173,11 +173,26 @@ test("an item's time in other words: \"The duration is\", \"with a duration of\"
 });
 
 test("no condition from a trigger, a later event, a failed check, stages or a time that isn't its own", () => {
-    for (const name of ["Emergency Eye", "Breath of Freedom", "Frenzied Quintessence", "Enigma-Sight Potion", "Rebirth Potion", "Elder Seed", "Scholar's Drop", "Guardian Rose"]) {
+    for (const name of ["Emergency Eye", "Breath of Freedom", "Frenzied Quintessence", "Enigma-Sight Potion", "Rebirth Potion", "Elder Seed", "Scholar's Drop"]) {
         const plan = compileItem(item(name));
         const conditions = plan?.resolution?.check?.roll === "automatic" ? plan.resolution.outcomes.success.effects.filter((effect) => effect.kind === "condition") : [];
         assert.deepEqual(conditions, [], name);
     }
+});
+
+test("a talisman's Trigger says when it's used: what follows is read (Guardian Rose's enfeebled 1, its time its own)", () => {
+    const rose = compileItem(item("Guardian Rose"));
+    assert.deepEqual(rose.resolution.outcomes.success.effects, [{ kind: "condition", slug: "enfeebled", value: 1, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } }]);
+    assert.equal(rose.partial, true, "its \"regain 2d8+5 Hit Points\" isn't read: on the note");
+});
+
+test("bonuses scoped as PF2e can: against traits, checks to an action, a Speed", () => {
+    const mods = (name) => compileItem(item(name))?.resolution?.outcomes?.success?.modifiers ?? [];
+    assert.deepEqual(mods("Dragonfly Fulu").map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate]), [["athletics", 2, "status", [{ or: ["action:high-jump", "action:long-jump"] }]]]);
+    // A choice of settings (Magnetic Suit's attract or repel), or a scope with no roll option ("saves against afflictions"): not read.
+    assert.deepEqual(mods("Magnetic Suit"), []);
+    assert.deepEqual(mods("Affliction Suppressant (Lesser)"), []);
+    assert.deepEqual(mods("Oil of Skating").map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["land-speed", 10, "status"]]);
 });
 
 test("an item with a time and nothing else the module reads: a note of its text on the drinker, counted apart", () => {

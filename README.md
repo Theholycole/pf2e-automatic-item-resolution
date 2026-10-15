@@ -23,7 +23,7 @@ Use an item as PF2e always does: its **Use** button, a bomb's **Strike**, or pos
 - **Permanent items:** post the item to chat and a card lists its activations, each with an Activate button. A "once per day" activation is counted, with a warning if it's used again; the GM decides. This trigger is a proposal still to confirm.
 - **Anything else with a duration:** a note Effect on the creature with the item's text, for that time.
 
-The census counts what's played: 1,062 of the 1,487 consumables this module handles get a card.
+The census counts what's played: 1,063 of the 1,487 consumables this module handles get a card.
 
 ## Requirements
 

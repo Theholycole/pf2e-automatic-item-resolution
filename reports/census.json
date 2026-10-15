@@ -14,12 +14,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 334,
+   "none": 333,
    "resolves": 691,
    "builtin:zone": 86,
-   "note-only": 271,
+   "note-only": 268,
    "builtin:no-effect": 69,
-   "partial": 6,
+   "partial": 10,
    "builtin:save-bonus": 1
   }
  },
@@ -56,11 +56,11 @@
    "count": 183,
    "results": {
     "resolves": 102,
-    "note-only": 40,
+    "note-only": 39,
     "none": 21,
     "builtin:no-effect": 10,
     "builtin:cast-spell": 9,
-    "partial": 1
+    "partial": 2
    },
    "mechanisms": {
     "linked-effect": 55,
@@ -78,11 +78,12 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 79,
+    "none": 78,
     "note-only": 13,
     "resolves": 45,
     "builtin:no-effect": 10,
-    "builtin:cast-spell": 9
+    "builtin:cast-spell": 9,
+    "partial": 1
    },
    "mechanisms": {
     "trigger": 106,
@@ -200,11 +201,11 @@
    "count": 66,
    "results": {
     "resolves": 25,
-    "note-only": 21,
+    "note-only": 20,
     "builtin:no-effect": 7,
     "none": 11,
     "builtin:cast-spell": 1,
-    "partial": 1
+    "partial": 2
    },
    "mechanisms": {
     "linked-effect": 17,
@@ -223,8 +224,9 @@
    "count": 46,
    "results": {
     "none": 21,
-    "note-only": 11,
+    "partial": 1,
     "resolves": 12,
+    "note-only": 10,
     "builtin:cast-spell": 2
    },
    "mechanisms": {
@@ -274,7 +276,7 @@
    "count": 43,
    "resolves": 34,
    "gaps": 0,
-   "none": 3
+   "none": 2
   },
   "temp-hp": {
    "count": 37,
@@ -286,7 +288,7 @@
    "count": 277,
    "resolves": 142,
    "gaps": 0,
-   "none": 40
+   "none": 39
   },
   "linked-effect": {
    "count": 393,
@@ -328,7 +330,7 @@
    "count": 156,
    "resolves": 54,
    "gaps": 0,
-   "none": 74
+   "none": 73
   },
   "counteract": {
    "count": 79,
@@ -346,7 +348,7 @@
    "count": 433,
    "resolves": 256,
    "gaps": 0,
-   "none": 60
+   "none": 59
   },
   "duration": {
    "count": 943,
@@ -358,8 +360,8 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 425,
-   "item": 652,
+   "none": 424,
+   "item": 653,
    "zone": 86,
    "expose": 89,
    "later": 51,
@@ -385,8 +387,8 @@
     "save": 6
    },
    "talisman": {
-    "none": 90,
-    "item": 47,
+    "none": 89,
+    "item": 48,
     "cast": 9,
     "save": 10
    },
@@ -441,7 +443,7 @@
    }
   },
   "noCard": {
-   "no-plan": 334,
+   "no-plan": 333,
    "triggered": 21,
    "gm": 69,
    "other": 1
@@ -1624,8 +1626,11 @@
     "trigger",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "During this time, you can attempt an Athletics check to High Jump or Long Jump as a single action without the Stride requirement."
+   ],
    "live": "item"
   },
   {
@@ -10939,7 +10944,13 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "These talismans have saved the lives of many a soldier on the field of battle.",
+    "When you activate a guardian rose , you avoid being knocked out and regain 2d8+5 Hit Points."
+   ],
+   "live": "item"
   },
   {
    "name": "Olfactory Obfuscator (Greater)",
@@ -25238,8 +25249,11 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "In addition, you can Step into difficult terrain, and you aren't Off-Guard on uneven ground."
+   ],
    "live": "item"
   },
   {
@@ -29195,8 +29209,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "You lose this bonus if moving on difficult terrain, greater difficult terrain, or uneven ground.",
+    "Also, you treat any uphill movement as moving on difficult terrain while your feet are oiled and treat the results of any Acrobatics checks made to Balance as one degree worse."
+   ],
    "live": "item"
   },
   {

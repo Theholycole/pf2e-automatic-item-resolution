@@ -6,22 +6,22 @@
   "ours": 2201,
   "activations": 2730,
   "results": {
-   "none": 1269,
+   "none": 1267,
    "builtin:cast-spell": 328,
-   "resolves": 640,
+   "resolves": 642,
    "builtin:no-effect": 138,
-   "note-only": 304,
+   "note-only": 302,
    "builtin:modes": 30,
-   "partial": 5,
+   "partial": 7,
    "builtin:zone": 9,
    "builtin:save-bonus": 3,
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1480,
+   "none": 1478,
    "cast": 328,
-   "item": 612,
-   "save": 297,
+   "item": 610,
+   "save": 301,
    "zone": 9,
    "later": 4
   },
@@ -34,11 +34,11 @@
    "results": {
     "none": 864,
     "builtin:cast-spell": 230,
-    "resolves": 387,
+    "resolves": 388,
     "builtin:no-effect": 114,
-    "note-only": 192,
+    "note-only": 190,
     "builtin:modes": 19,
-    "partial": 5,
+    "partial": 6,
     "builtin:zone": 6,
     "builtin:save-bonus": 2
    }
@@ -80,9 +80,10 @@
     "note-only": 24,
     "resolves": 50,
     "builtin:no-effect": 6,
-    "none": 52,
+    "none": 51,
     "builtin:ac-reaction": 2,
-    "builtin:zone": 2
+    "builtin:zone": 2,
+    "partial": 1
    }
   },
   "shield": {
@@ -90,8 +91,8 @@
    "results": {
     "builtin:cast-spell": 8,
     "note-only": 18,
-    "resolves": 25,
-    "none": 41,
+    "resolves": 26,
+    "none": 40,
     "builtin:modes": 4,
     "builtin:no-effect": 4
    }
@@ -844,7 +845,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Scizore of the Crab",
@@ -5022,7 +5023,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -6080,7 +6081,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Halcyon Heart",
@@ -6309,9 +6310,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Mask of Uncanny Breath",
@@ -6333,7 +6334,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Buzzsaw Axe (Major)",
@@ -14583,7 +14584,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Pocket Watch of Stethelos",
@@ -18541,7 +18542,7 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "note-only",
    "kind": "check",
    "live": "item"
   },
@@ -25647,9 +25648,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Immortal Bastion",
@@ -27110,7 +27111,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
@@ -27627,7 +27628,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
