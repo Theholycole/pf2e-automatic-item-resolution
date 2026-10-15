@@ -12,6 +12,7 @@ import { castWordsPlan } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { directDamageOver, directDamagePlan } from "./direct-damage.js";
+import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
@@ -127,6 +128,9 @@ export function compileActivations(item, options = {}) {
         plan = itemActionOver(plan, itemActionPlan(activation.html, base, options));
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)
         plan = guardText(guardValues(directDamageOver(plan, directDamagePlan(plainText(activation.html), base, { item }))), plainText(activation.html));
+        // (A condition it lowers on its user, src/compiler/reduce.js: Coin of Comfort; a plan of its own when it's all.)
+        const reduce = readReductions(plainText(activation.html));
+        if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(activation.html)));
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
         return {
@@ -136,7 +140,7 @@ export function compileActivations(item, options = {}) {
                 ...plan,
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}) }
             }
         };
     });

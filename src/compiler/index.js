@@ -22,6 +22,7 @@ import { castWordsPlan } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { directDamageOver, directDamagePlan } from "./direct-damage.js";
+import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
@@ -94,6 +95,9 @@ export function compileItem(given, options = {}) {
     if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value })) {
         plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
     }
+    // (A condition it lowers on its user or drinker, src/compiler/reduce.js: Lion Badge; a plan of its own when it's all.)
+    const reduce = readReductions(plainText(item?.system?.description?.value));
+    if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(item?.system?.description?.value)));
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const info = itemInfo(item);
@@ -156,7 +160,9 @@ function itemInfo(item) {
         // (What it counteracts on its drinker: the counteract card, src/compiler/counteract.js.)
         ...(readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value }) ? { counteract: readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value }) } : {}),
         // (A tea's Tea Ceremony: the card's tick, src/compiler/tea.js.)
-        ...(readTeaCeremony(item?.system?.description?.value) ? { ceremony: readTeaCeremony(item?.system?.description?.value) } : {})
+        ...(readTeaCeremony(item?.system?.description?.value) ? { ceremony: readTeaCeremony(item?.system?.description?.value) } : {}),
+        // (The conditions it lowers: the item card's, after its row, src/compiler/reduce.js.)
+        ...(readReductions(plainText(item?.system?.description?.value)).length ? { reduce: readReductions(plainText(item?.system?.description?.value)) } : {})
     };
 }
 

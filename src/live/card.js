@@ -73,6 +73,10 @@ const timeText = (duration) => `${duration.value} ${duration.value === 1 ? UNIT[
 export function previewLines(state) {
     const plan = state.plan;
     const lines = [];
+    // (The conditions it lowers, src/compiler/reduce.js.)
+    for (const { slug, by } of plan?.item?.reduce ?? []) lines.push(`Lowers ${slug} by ${by}`);
+    // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
+    if (plan?.reduce) for (const note of plan.notes ?? []) lines.push(`Also: ${note}`);
     const healing = plan?.resolution?.native?.healing;
     if (healing?.components?.length) {
         const formula = healing.components.map((component) => component.formula).join(" + ");

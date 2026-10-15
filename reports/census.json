@@ -14,15 +14,15 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 303,
-   "resolves": 692,
+   "none": 300,
+   "resolves": 694,
    "builtin:zone": 86,
    "note-only": 267,
    "builtin:item-action": 6,
    "builtin:readied-bonus": 4,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
-   "partial": 11,
+   "partial": 12,
    "builtin:reroll": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
@@ -33,14 +33,15 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 8,
-    "none": 150,
-    "resolves": 201,
+    "none": 148,
+    "resolves": 202,
     "note-only": 120,
     "builtin:zone": 9,
     "builtin:readied-bonus": 3,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
+    "partial": 1,
     "builtin:save-bonus": 1
    },
    "mechanisms": {
@@ -87,10 +88,10 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 67,
+    "none": 66,
     "note-only": 13,
     "builtin:item-action": 5,
-    "resolves": 46,
+    "resolves": 47,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
@@ -344,9 +345,9 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 54,
+   "resolves": 55,
    "gaps": 0,
-   "none": 62
+   "none": 61
   },
   "counteract": {
    "count": 79,
@@ -362,9 +363,9 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 257,
+   "resolves": 259,
    "gaps": 0,
-   "none": 41
+   "none": 39
   },
   "duration": {
    "count": 943,
@@ -376,8 +377,8 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 388,
-   "item": 652,
+   "none": 385,
+   "item": 655,
    "zone": 86,
    "expose": 89,
    "later": 54,
@@ -392,10 +393,10 @@
   "byCategory": {
    "other": {
     "cast": 8,
-    "none": 178,
+    "none": 176,
     "later": 8,
     "save": 71,
-    "item": 223,
+    "item": 225,
     "zone": 9,
     "fortune": 3,
     "expose": 3,
@@ -412,8 +413,8 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 78,
-    "item": 48,
+    "none": 77,
+    "item": 49,
     "action": 5,
     "reroll": 1,
     "cast": 9,
@@ -475,7 +476,7 @@
    }
   },
   "noCard": {
-   "no-plan": 303,
+   "no-plan": 300,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -1837,7 +1838,10 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Potion of Passing Fancy",
@@ -10216,7 +10220,10 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Potion of Flying (Standard)",
@@ -19312,7 +19319,9 @@
     "processed"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Exuviae Powder",

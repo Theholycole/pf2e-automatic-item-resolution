@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 934,
+   "none": 932,
    "builtin:cast-spell": 431,
-   "resolves": 651,
+   "resolves": 653,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "builtin:readied-bonus": 17,
@@ -23,9 +23,9 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1133,
+   "none": 1131,
    "cast": 431,
-   "item": 582,
+   "item": 584,
    "save": 316,
    "focus": 45,
    "fortune": 27,
@@ -42,9 +42,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 594,
+    "none": 592,
     "builtin:cast-spell": 318,
-    "resolves": 386,
+    "resolves": 388,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
     "builtin:readied-bonus": 12,
@@ -7665,9 +7665,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Admirer's Bouquet",
@@ -12604,9 +12604,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Empty Hand Marking",

@@ -317,6 +317,17 @@ async function applyCard(message, { drinker = null, ceremony = false } = {}) {
             lines.push(`Couldn't apply ${change.op} to ${name}: ${error.message}`);
         }
     }
+    // (The conditions it lowers: Lion Badge's frightened, by 1 — PF2e's decreaseCondition, once for each.)
+    for (const { slug, by } of state.plan.item?.reduce ?? []) {
+        const before = Number(target.actor?.getCondition?.(slug)?.value) || 0;
+        if (!before) {
+            lines.push(`${recipient.name} isn't ${slug}: nothing to lower.`);
+            continue;
+        }
+        for (let step = 0; step < by; step++) await target.actor.decreaseCondition(slug);
+        const after = Number(target.actor.getCondition?.(slug)?.value) || 0;
+        lines.push(after ? `${recipient.name}'s ${slug} lowered to ${after}` : `${recipient.name} is no longer ${slug}`);
+    }
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
     if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {
         if (!target.actor?.hasCondition?.(slug)) continue;

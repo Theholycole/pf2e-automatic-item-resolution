@@ -164,6 +164,9 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - Not read: several Strikes at once, an item's own attack modifier, a follow-up check (Iron Cube's Trip), a spell cast on a hit (Devil's Trident).
 - A spell the text only names as an example ("such as the Talking Corpse spell", Mantis Embrace) isn't a cast, whatever the ability compiler reads (`castMentionOnly` in `src/compiler/guards.js`).
 
+**Lowering a condition** (`src/compiler/reduce.js`; 5 items): "reduce the value of your frightened condition by 1" (Lion Badge), "reduce your Sickened value by 1" (Pepper Poultice), "You reduce your Frightened condition by 1" (Coin of Comfort). `plan.item.reduce` `[{ slug, by }]`: the item card lowers it on its user or drinker after its own row, with PF2e's `decreaseCondition`, and says so when there's none to lower. An item with nothing else read gets a plan of its own for it, with its other rule sentences as notes (Cinnamon Nostalgia Bun's flat check).
+- Not read: a later "Secondary Effect" (Ginger Chew), "if successful" (Moon Radish Soup's counteract card does that one), an ally's or an area's (Fearless Sash), a passive one ("Whenever you become Frightened").
+
 **The live check is ready** (`tools/live-check.mjs`, run in pftest's browser). It has its own "PFTEST ITEM Lab" scene and "PFTEST ITEM" creatures, and cleans up only its own data. Its cases:
 - a potion fed to a dying ally;
 - an elixir's grade;
