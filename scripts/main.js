@@ -6,6 +6,7 @@
 import { compileItem, handlesItem, spellEffectIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
+import { activate } from "./activations.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -42,5 +43,6 @@ Hooks.once("ready", async () => {
     const module = game.modules.get(MODULE_ID);
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, live: Object.freeze({ apply: applyMessage }) });
+    // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id) }) });
 });

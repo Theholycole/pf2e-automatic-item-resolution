@@ -1,69 +1,102 @@
-// Live play for permanent items' activations (src/compiler/permanent.js): after PF2e posts an item to chat (its
-// "send to chat"), the activations card lists the activations the module reads, each with an Activate button for the
-// item's owner or the GM; pressing one posts that activation's own card (scripts/live.js postCardFor: the item card,
-// a save at the targets, a cast, a zone…) and counts its use against its frequency, shown on the card (over it, a
-// warning, not a refusal). (The user's call how activations are triggered is still to come: this is the default
-// proposed in docs/design.md.)
+// Live play for permanent items' activations (src/compiler/permanent.js), from the character and NPC sheets (the user's
+// choice, 2026-10-15): on each inventory row whose item has activations the module reads, an Activate button per
+// activation, for the item's owner or the GM. Pressing one has the active GM's client post that activation's own card
+// (scripts/live.js postCardFor: the item card, a save at the targets, a cast, a zone, a Focus Point…) and count its use
+// against its frequency on the item (flag activationUses); over it, the GM gets a whispered warning, not a refusal.
 
-import { activationsCardHTML, createActivationsCard, usesNow, withUse } from "../src/live/activations-card.js";
+import { activationButtonsHTML, frequencyText, overLimit, perWord, usesNow, withUse } from "../src/live/activations-card.js";
 import { handlesPermanent } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
-import { FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
+import { MODULE_ID, SOCKET, isActiveGM } from "./foundry.js";
 
-const PERMANENT = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const USES = "activationUses";
+const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 let compileActivations = null;
 let postCardFor = null;
 export function setUpActivations(options) {
     compileActivations = options.compileActivations;
     postCardFor = options.postCardFor;
+    Hooks.on("renderCreatureSheetPF2e", (sheet, html) => {
+        try {
+            addButtons(sheet, html);
+        } catch (error) {
+            console.error(`${MODULE_ID} | activation buttons`, error);
+        }
+    });
 }
 
 const now = () => ({ worldTime: game.time.worldTime, combatId: game.combat?.started ? game.combat.id : null });
 
-// The activations with a card, of the item as it is now.
+// The activations with a card, of the item as it is now (compiled once per version of its text).
+const compiled = new Map();
 function playable(item) {
     const data = { ...item.toObject(false), uuid: item.uuid };
-    return (compileActivations?.(data) ?? []).filter((entry) => entry.plan && routeOf(entry.plan, plainText(entry.activation.html))).map((entry) => ({ ...entry, data }));
+    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}`;
+    if (!compiled.has(key)) compiled.set(key, (compileActivations?.(data) ?? []).filter((entry) => entry.plan && routeOf(entry.plan, plainText(entry.activation.html))));
+    return compiled.get(key).map((entry) => ({ ...entry, data }));
 }
 
-export async function cardForItemPost(message) {
-    const origin = message?.flags?.pf2e?.origin;
-    if (!compileActivations || !PERMANENT.has(origin?.type) || message.flags?.pf2e?.context?.type || message.flags?.[MODULE_ID]) return;
-    const item = origin.uuid ? await fromUuid(origin.uuid).catch(() => null) : null;
-    if (!item?.actor || !handlesPermanent(item)) return;
-    const list = playable(item);
-    if (!list.length) return;
-    const token = message.token?.object ?? item.actor.getActiveTokens?.(true)?.[0] ?? null;
-    const state = createActivationsCard({
-        item: { name: item.name, uuid: item.uuid, img: item.img ?? null },
-        user: entryOf(token, item.actor),
-        activations: list.map(({ activation, plan, index }) => ({ index, name: activation.name, time: activation.time, frequency: plan.trigger?.frequency ?? null }))
-    });
-    return ChatMessage.create({ content: activationsCardHTML(state, { canApply: true, record: item.getFlag(MODULE_ID, USES) ?? {}, now: now() }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
+// The sheet's inventory rows: an Activate button per activation, after the item's name.
+function addButtons(sheet, html) {
+    const actor = sheet.actor;
+    if (!compileActivations || !actor || !(game.user.isGM || actor.isOwner)) return;
+    const root = html instanceof HTMLElement ? html : html?.[0];
+    if (!root) return;
+    for (const row of root.querySelectorAll("li[data-item-id]")) {
+        const item = actor.items.get(row.dataset.itemId);
+        if (!item || !handlesPermanent(item) || row.querySelector(".air-activate")) continue;
+        const list = playable(item);
+        if (!list.length) continue;
+        const anchor = row.querySelector(".item-name h4") ?? row.querySelector(".item-name");
+        if (!anchor) continue;
+        const holder = document.createElement("span");
+        holder.className = "air-activations";
+        holder.innerHTML = activationButtonsHTML(list.map(({ activation, plan, index }) => ({ index, name: activation.name, time: activation.time, frequency: plan.trigger?.frequency ?? null })), { itemName: item.name, record: item.getFlag(MODULE_ID, USES) ?? {}, now: now() });
+        anchor.after(holder);
+        for (const button of holder.querySelectorAll("[data-air-activate]")) button.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            activateFromSheet(item, Number(button.dataset.airActivate)).catch((error) => {
+                ui.notifications.error(`${item.name}: ${error.message}`);
+                console.error(`${MODULE_ID} |`, error);
+            });
+        });
+    }
 }
 
-// One activation pressed (on the active GM's client): its card, and its use counted on the item.
-export async function applyActivationsCard(message, { activation = null } = {}) {
-    const state = stateOf(message);
-    if (!state || state.kind !== "activations") return null;
-    const item = await fromUuid(state.item.uuid).catch(() => null);
+// A button pressed: on the active GM's client, else sent there.
+async function activateFromSheet(item, index) {
+    if (isActiveGM()) return activate(item.uuid, index, game.user.id);
+    if (!game.users.activeGM) throw new Error("No GM is connected to activate it.");
+    game.socket.emit(SOCKET, { action: "activate", itemUuid: item.uuid, activation: index, userId: game.user.id });
+    return null;
+}
+
+// One activation (on the active GM's client): its card, and its use counted on the item. userId: who pressed it (the GM
+// or an owner of the item's actor, checked by the socket's handler).
+export async function activate(itemUuid, index, userId = game.user.id) {
+    const item = await fromUuid(itemUuid).catch(() => null);
     if (!item?.actor) throw new Error("The item isn't there any more.");
-    const entry = playable(item).find((candidate) => candidate.index === Number(activation));
+    const sender = game.users.get(userId);
+    if (!sender || !(sender.isGM || item.actor.testUserPermission?.(sender, "OWNER"))) return null;
+    const entry = playable(item).find((candidate) => candidate.index === Number(index));
     if (!entry) throw new Error("That activation isn't there any more.");
     const frequency = entry.plan.trigger?.frequency ?? null;
     const record = item.getFlag(MODULE_ID, USES) ?? {};
-    const lines = [];
-    if (frequency?.max && usesNow(record, entry.index, frequency, now()) >= frequency.max) lines.push(`${entry.activation.name ?? item.name}: already used ${frequency.max} time${frequency.max === 1 ? "" : "s"} this ${frequency.per.replace("-", " ")} (the GM's call).`);
-    const token = state.user.tokenUuid ? (await fromUuid(state.user.tokenUuid).catch(() => null))?.object ?? null : null;
+    const name = entry.activation.name ? `${item.name}: ${entry.activation.name}` : item.name;
+    if (overLimit(record, entry.index, frequency, now())) {
+        await ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: item.actor }),
+            whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id),
+            content: `<p><strong>${escape(name)}</strong>: activated again, though it's ${frequencyText(frequency)} (used ${usesNow(record, entry.index, frequency, now())} this ${perWord(frequency)}). The GM's call.</p>`
+        });
+    }
+    const token = item.actor.getActiveTokens?.(true)?.[0] ?? null;
     // (The activation's card, named for it; its text the activation's own block.)
-    const used = { data: { ...entry.data, name: entry.activation.name ? `${item.name}: ${entry.activation.name}` : item.name, system: { ...entry.data.system, description: { value: entry.activation.html } } }, actor: item.actor };
-    await postCardFor({ message: null, plan: entry.plan, used, actor: item.actor, token });
-    const next = withUse(record, entry.index, frequency, now());
-    if (frequency?.max) await item.setFlag(MODULE_ID, USES, next);
-    lines.push(`${entry.activation.name ?? item.name} activated.`);
-    const updated = { ...state, results: [...state.results, ...lines] };
-    return message.update({ content: activationsCardHTML(updated, { canApply: true, record: next, now: now() }), [`flags.${MODULE_ID}.${FLAG}`]: updated });
+    const used = { data: { ...entry.data, name, system: { ...entry.data.system, description: { value: entry.activation.html } } }, actor: item.actor };
+    const card = await postCardFor({ message: null, plan: entry.plan, used, actor: item.actor, token });
+    if (frequency?.max) await item.setFlag(MODULE_ID, USES, withUse(record, entry.index, frequency, now()));
+    return card;
 }

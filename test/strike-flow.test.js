@@ -87,12 +87,8 @@ test("Fear Gem: readied, then a hit frightens the target; a later miss spends th
 
 test("Duelist's Beacon: its activation readies the Strike; a hit posts the target's save card", async () => {
     const beacon = foundry.giveItem(fighter, source("Duelist's Beacon"));
-    const post = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: beacon.uuid, type: beacon.type } } }, speaker: { actor: fighter.id }, actor: fighter, token: fighter.token.document });
-    await foundry.call("createChatMessage", post);
-    await settle();
-    const activations = foundry.messages[foundry.messages.indexOf(post) + 1];
     const count = foundry.messages.length;
-    await foundry.socket(SOCKET)({ action: "apply", messageId: activations.id, activation: 0, userId: "player" });
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: beacon.uuid, activation: 0, userId: "player" });
     await settle();
     const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
     assert.ok(card, "the Strike card");

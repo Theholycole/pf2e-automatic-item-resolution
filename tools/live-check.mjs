@@ -259,17 +259,30 @@ export const cases = {
         return { card: card.id };
     },
 
-    // A cloak of elvenkind sent to chat: its activations card; Activate posts its cast card and counts its daily use.
+    // A cloak of elvenkind on the character sheet: its Activate button on the inventory row posts its cast card and counts
+    // its daily use.
     async activations(scene) {
         const { actor: elf } = await creature(scene, "Activator", { type: "character", x: 12, y: 2 });
         const cloak = await give(elf, "Cloak of Elvenkind");
-        const since = Date.now();
-        await cloak.toMessage();
-        const card = await messageAfter(since, itemCard("activations"), { what: "the activations card" });
-        await game.modules.get(NS).api.live.apply(card.id, { activation: 0 });
-        const cast = await messageAfter(since, itemCard("cast"), { what: "the activation's cast card" });
-        assert(cloak.getFlag(NS, "activationUses")?.[0]?.count === 1, "its use counted");
-        return { cast: cast.id };
+        await elf.sheet.render(true);
+        let button = null;
+        const end = Date.now() + 8000;
+        while (Date.now() < end && !button) {
+            await wait(250);
+            const root = elf.sheet.element?.[0] ?? elf.sheet.element;
+            button = root?.querySelector?.(`li[data-item-id="${cloak.id}"] .air-activate[data-air-activate="0"]`) ?? null;
+        }
+        try {
+            assert(button, "the Activate button on the cloak's inventory row");
+            assert(/once per day/.test(button.dataset.tooltip ?? ""), `its tooltip (${button.dataset.tooltip})`);
+            const since = Date.now();
+            button.click();
+            const cast = await messageAfter(since, itemCard("cast"), { what: "the activation's cast card" });
+            assert(cloak.getFlag(NS, "activationUses")?.[0]?.count === 1, "its use counted");
+            return { cast: cast.id, tooltip: button.dataset.tooltip };
+        } finally {
+            await elf.sheet.close();
+        }
     },
 
     // Hexing Jar: its Focus Point card adds a point to a witch's pool; in its own fixture encounter, the point is taken
@@ -297,9 +310,7 @@ export const cases = {
             assert(combat.combatant?.actorId === witch.id, "the witch's turn first");
             const jar = await give(witch, "Hexing Jar");
             const since = Date.now();
-            await jar.toMessage();
-            const card = await messageAfter(since, itemCard("activations"), { what: "the activations card" });
-            await game.modules.get(NS).api.live.apply(card.id, { activation: 0 });
+            await game.modules.get(NS).api.live.activate(jar.uuid, 0);
             const focus = await messageAfter(since, itemCard("focus"), { what: "the Focus Point card" });
             await game.modules.get(NS).api.live.apply(focus.id);
             await wait(500);

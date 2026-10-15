@@ -1,12 +1,12 @@
-// Permanent items' activations against the stand-in for Foundry: PF2e posts the item to chat; the activations card
-// lists what the module reads; Activate posts that activation's card and counts its use against its frequency.
+// Permanent items' activations against the stand-in for Foundry: the sheet's Activate button (its request to the GM's
+// client) posts that activation's card and counts its use against its frequency.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
-import { periodOf, usesNow, withUse } from "../src/live/activations-card.js";
+import { activationButtonsHTML, periodOf, usesNow, withUse } from "../src/live/activations-card.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const SOCKET = `module.${MODULE_ID}`;
@@ -19,12 +19,12 @@ const foundry = await fakeFoundry();
 const elf = foundry.makeActor({ id: "activate-elf", name: "Elf", owners: ["player"] });
 foundry.place(elf, 0, 8000);
 
-async function post(item) {
-    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, type: item.type } } }, speaker: { actor: elf.id }, actor: elf, token: elf.token.document });
-    await foundry.call("createChatMessage", message);
+// A sheet's Activate button pressed by the player (sent to the GM's client by socket).
+async function activate(item, index = 0, userId = "player") {
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: item.uuid, activation: index, userId });
     await settle();
-    const next = foundry.messages[foundry.messages.indexOf(message) + 1];
-    return next?.flags?.[MODULE_ID]?.card ? next : undefined;
+    return foundry.messages.slice(count);
 }
 
 test("uses counted per period of world time", () => {
@@ -38,28 +38,35 @@ test("uses counted per period of world time", () => {
     assert.equal(periodOf({ max: 1, per: "encounter" }, { combatId: "c1" }), "combat:c1");
 });
 
-test("a cloak of elvenkind posted to chat: its activation's card (a cast of Invisibility), its daily use counted", async () => {
+test("the sheet's buttons: one per activation, its time, frequency and uses in the tooltip", () => {
+    const html = activationButtonsHTML([{ index: 0, name: null, time: "2", frequency: { max: 1, per: "day" } }], { itemName: "Cloak of Elvenkind", record: { 0: { period: "day:0", count: 1 } }, now: { worldTime: 100 } });
+    assert.match(html, /data-air-activate="0"/);
+    assert.match(html, /Activate: Cloak of Elvenkind \(2 actions, once per day; used 1 of 1 this day\)/);
+});
+
+test("a cloak of elvenkind's Activate button: its activation's card (a cast of Invisibility), its daily use counted, a warning over it", async () => {
     const cloak = foundry.giveItem(elf, source("Cloak of Elvenkind"));
-    const card = await post(cloak);
-    const state = card.flags[MODULE_ID].card;
-    assert.equal(state.kind, "activations");
-    assert.deepEqual(state.activations.map((entry) => [entry.time, entry.frequency?.per]), [["2", "day"]]);
-    assert.match(card.content, /2 actions, once per day/);
-    const count = foundry.messages.length;
-    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, activation: 0, userId: "player" });
-    await settle();
-    const cast = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "cast");
+    const posted = await activate(cloak, 0);
+    const cast = posted.find((message) => message.flags?.[MODULE_ID]?.card?.kind === "cast");
     assert.ok(cast, "the activation's own card: a cast");
     assert.equal(cast.flags[MODULE_ID].card.plan.spell.name, "Invisibility");
     assert.equal(cast.flags[MODULE_ID].card.item.name, "Cloak of Elvenkind");
-    assert.match(card.content, /used 1 of 1 this day/);
-    // Again the same day: a warning, still activated (the GM's call).
-    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, activation: 0, userId: "player" });
-    await settle();
-    assert.ok(card.flags[MODULE_ID].card.results.some((line) => /already used 1 time this day/.test(line)));
+    assert.equal(cloak.getFlag(MODULE_ID, "activationUses")[0].count, 1);
+    // Again the same day: a warning to the GM, still activated (the GM's call).
+    const again = await activate(cloak, 0);
+    const warning = again.find((message) => /activated again, though it&#39;s once per day/.test(message.content) || /activated again, though it's once per day/.test(message.content));
+    assert.ok(warning, "the GM's warning");
+    assert.deepEqual(warning.whisper, ["gm"]);
+    assert.ok(again.some((message) => message.flags?.[MODULE_ID]?.card?.kind === "cast"));
 });
 
-test("an item with nothing the module reads posts no activations card; nor one that isn't permanent", async () => {
+test("only the item's owner or the GM activates it; an item with nothing read has nothing to activate", async () => {
+    const stranger = foundry.makeActor({ id: "activate-stranger", name: "Stranger" });
+    const cloak = foundry.giveItem(stranger, source("Cloak of Elvenkind"));
+    assert.deepEqual(await activate(cloak, 0, "player"), [], "not the player's");
+    assert.ok((await activate(cloak, 0, "gm")).some((message) => message.flags?.[MODULE_ID]?.card?.kind === "cast"), "the GM's");
     const plain = foundry.giveItem(elf, { ...source("Cloak of Elvenkind"), _id: "plainCloak1234567", system: { ...source("Cloak of Elvenkind").system, description: { value: "<p>No activation.</p>" } } });
-    assert.equal(await post(plain), undefined);
+    const errors = foundry.notifications.length;
+    assert.deepEqual(await activate(plain, 0), []);
+    assert.ok(foundry.notifications.slice(errors).some((text) => /isn't there any more/.test(text)));
 });

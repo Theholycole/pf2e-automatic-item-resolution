@@ -134,7 +134,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - Lucky Rabbit's Foot rerolling a Reflex save;
 - Onyx Panther's Sneak rolled by PF2e with its +1 item bonus;
 - Spark Wafer's save;
-- a Cloak of Elvenkind's activations card;
+- a Cloak of Elvenkind's Activate button on the character sheet;
 - Hexing Jar's Focus Point, lost at the end of the turn in the check's own encounter (cleanup deletes only encounters flagged as its fixtures);
 - an Invisibility Potion cast by the spell module.
 
@@ -148,10 +148,11 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - An automatic row aimed at another creature ("The target is Quickened for 1 round", Scizore of the Crab's "The target is grabbed") goes to the save card, for the creatures the presser targets, not to the item card on its user.
 - The spell module's `claims(item)` (spell b8e2503) leaves it what it acts on: its six casts (Searing Blade, Sky Hammer, Dragon's Eye Charm, the Tridents of the Azarketis), its item spellshapes (Dragon's Breath runes, grimoires) and Djezet Dose, 33 PF2e items. `handlesItem`, `handlesPermanent`, `compileItem` and `compileActivations` take it as an optional `options.claims`. In Foundry, `scripts/main.js` passes the spell module's `api.claims` when it's active; the censuses import its `src/compiler/item-claims.js`. Without it, nothing changes (the simulator's Node calls).
 
-**Live play: the proposed default, built** (`scripts/activations.js`, `src/live/activations-card.js`); **the user to confirm.**
-- When PF2e posts an item to chat (its "send to chat"), an activations card follows it. It lists the activations the module reads, each with an Activate button for the item's owner or the GM.
-- Pressing one posts that activation's own card through the same routes as consumables, and counts the use against its frequency. Uses are counted per period of world time, an encounter's by its combat. Going over warns rather than blocks.
-- The alternatives: buttons on the character sheet's item rows (more visible, but tied to PF2e's sheet markup), or macros. Decide when the user is back.
+**Live play: buttons on the sheet** (`scripts/activations.js`, `src/live/activations-card.js`; the user's choice, 2026-10-15, over a card after "send to chat").
+- On the character and NPC sheets (PF2e's `renderCreatureSheetPF2e`, AppV1), each inventory row whose item has activations the module reads gets an Activate button (a bolt) per activation, after the item's name, for the item's owner or the GM. Its tooltip gives the activation's name, actions, frequency and uses this period.
+- Pressing one has the active GM's client (by socket for a player, checked against the item's owner) post that activation's own card through the same routes as consumables, and count the use against its frequency on the item (flag `activationUses`, per period of world time, an encounter's by its combat).
+- Over the frequency, the GM gets a whispered warning; it still activates (the GM's call).
+- `api.live.activate(itemUuid, index)` does the same from code.
 
 ## The simulator (the auto-combat session's)
 

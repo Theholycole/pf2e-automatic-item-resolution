@@ -72,12 +72,8 @@ test("Lucky Rabbit's Foot rerolls the user's latest save; with none, the card sa
 test("Mail of Luck makes the attacker reroll the latest attack at its wearer, keeping the lower", async () => {
     const attack = roll(brute, "attack-roll", { target: { actor: hero.uuid, token: hero.token.uuid } });
     const mail = foundry.giveItem(hero, source("Mail of Luck"));
-    const post = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: mail.uuid, type: mail.type } } }, speaker: { actor: hero.id }, actor: hero, token: hero.token.document });
-    await foundry.call("createChatMessage", post);
-    await settle();
-    const activations = foundry.messages[foundry.messages.indexOf(post) + 1];
     const count = foundry.messages.length;
-    await foundry.socket(SOCKET)({ action: "apply", messageId: activations.id, activation: 0, userId: "player" });
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: mail.uuid, activation: 0, userId: "player" });
     await settle();
     const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "reroll");
     const before = foundry.rerolls.length;

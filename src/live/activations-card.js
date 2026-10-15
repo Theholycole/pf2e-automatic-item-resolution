@@ -1,7 +1,7 @@
-// The activations card (permanent items): after PF2e posts an item to chat, its activations the module reads, each
-// with an Activate button (the item's owner or the GM); pressing one posts that activation's own card (the routes
-// consumables use) and counts it against its frequency ("once per day"), which the card shows — over it, a warning,
-// not a refusal (the GM's to judge). Pure; the ability module's classes.
+// Permanent items' activations on the character sheet (the user's choice, 2026-10-15: buttons on the sheet's item rows,
+// not a card after "send to chat"): each activation the module reads gets an Activate button by the item's name, for its
+// owner or the GM; pressing it posts that activation's own card (the routes consumables use) and counts it against its
+// frequency ("once per day"), which the button's tooltip shows — over it, a warning to the GM, not a refusal. Pure.
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -29,25 +29,24 @@ export function withUse(record, index, frequency, now) {
     return { ...(record ?? {}), [index]: { period, count: usesNow(record, index, frequency, now) + 1 } };
 }
 
+// Whether one more use goes over the frequency.
+export const overLimit = (record, index, frequency, now) => Boolean(frequency?.max) && usesNow(record, index, frequency, now) >= frequency.max;
+
 const PER_WORDS = { round: "round", turn: "turn", minute: "minute", "10-minutes": "10 minutes", hour: "hour", day: "day", encounter: "encounter" };
 export const frequencyText = (frequency) => (frequency?.max ? `${frequency.max === 1 ? "once" : frequency.max === 2 ? "twice" : `${frequency.max} times`} per ${PER_WORDS[frequency.per] ?? frequency.per}` : null);
-
-// activations: [{ index, name, time, frequency, route }] — only those with a card.
-export function createActivationsCard({ item, user, activations }) {
-    return { kind: "activations", status: "open", item, user, activations, results: [] };
-}
+export const perWord = (frequency) => PER_WORDS[frequency?.per] ?? "period";
 
 const TIME_WORDS = { 1: "1 action", 2: "2 actions", 3: "3 actions", reaction: "reaction", free: "free action", cast: "Cast a Spell" };
 
-export function activationsCardHTML(state, { canApply = false, record = {}, now = {} } = {}) {
-    const rows = state.activations.map((activation) => {
-        const frequency = frequencyText(activation.frequency);
-        const used = activation.frequency?.max ? usesNow(record, activation.index, activation.frequency, now) : 0;
-        const left = activation.frequency?.max ? ` · used ${used} of ${activation.frequency.max} this ${PER_WORDS[activation.frequency.per] ?? "period"}` : "";
-        const button = canApply ? `<button type="button" data-air-activation="${activation.index}">Activate</button>` : "";
-        return `<li class="aar-target"><span class="aar-name">${escape(activation.name ?? state.item.name)} <span class="aar-check">${escape([TIME_WORDS[activation.time] ?? activation.time, frequency].filter(Boolean).join(", "))}${escape(left)}</span></span>${button}</li>`;
-    }).join("");
-    const results = state.results.length ? `<ul class="aar-applied">${state.results.slice(-5).map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const hint = canApply ? "" : `<p class="aar-hint">${escape(state.user.name)}'s player or the GM can activate it.</p>`;
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">activations</span></header><ul class="aar-targets">${rows}</ul>${results}${hint}</section>`;
+// An activation's button tooltip: "Activate: Shadow Slip (reaction, once per day; used 0 of 1 this day)".
+export function activationTooltip(activation, { itemName, record = {}, now = {} } = {}) {
+    const frequency = frequencyText(activation.frequency);
+    const used = activation.frequency?.max ? `used ${usesNow(record, activation.index, activation.frequency, now)} of ${activation.frequency.max} this ${perWord(activation.frequency)}` : null;
+    const details = [[TIME_WORDS[activation.time] ?? activation.time, frequency].filter(Boolean).join(", "), used].filter(Boolean).join("; ");
+    return `Activate: ${activation.name ?? itemName}${details ? ` (${details})` : ""}`;
+}
+
+// The buttons for an item row: activations [{ index, name, time, frequency }].
+export function activationButtonsHTML(activations, options = {}) {
+    return activations.map((activation) => `<a class="air-activate" data-air-activate="${activation.index}" data-tooltip="${escape(activationTooltip(activation, options))}" aria-label="${escape(activationTooltip(activation, options))}"><i class="fa-solid fa-bolt"></i></a>`).join("");
 }

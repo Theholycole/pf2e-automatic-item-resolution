@@ -22,7 +22,7 @@ import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
-import { applyActivationsCard, cardForItemPost, setUpActivations } from "./activations.js";
+import { activate, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 
@@ -45,7 +45,6 @@ export function setUpLivePlay({ compileItem, compileActivations = null }) {
         cardForBomb(message).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
         strikeWithPoison(message).catch((error) => console.error(`${MODULE_ID} | poisoned Strike`, error));
         strikeWithRider(message).catch((error) => console.error(`${MODULE_ID} | readied Strike`, error));
-        cardForItemPost(message).catch((error) => console.error(`${MODULE_ID} | activations card`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
         hideCovered(message, html);
@@ -102,7 +101,7 @@ async function cardForUse(message) {
 // PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone (scripts/zones.js); a Focus Point
 // (scripts/focus.js); a readied Strike (scripts/strikes.js); a reroll (scripts/rerolls.js); a skill action
 // (scripts/item-actions.js); else the item card below.
-// (A consumable's after PF2e's Use; a permanent item's activation from its activations card, scripts/activations.js.)
+// (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
@@ -162,7 +161,6 @@ function choicesOf(state, root) {
 }
 
 const APPLY = {
-    activations: (message, choices) => applyActivationsCard(message, choices),
     bomb: (message, choices) => applyBombCard(message, choices),
     poison: (message, choices) => applyPoisonCard(message, choices),
     cast: (message, choices) => applyCastCard(message, choices),
@@ -187,29 +185,12 @@ function wireCard(message, html) {
         // The drinker as text, not a choice; the splash ticks read-only.
         for (const select of root.querySelectorAll("select[data-air-field]")) select.replaceWith(document.createTextNode(select.selectedOptions?.[0]?.textContent ?? ""));
         for (const box of root.querySelectorAll("[data-air-splash]")) box.disabled = true;
-        for (const each of root.querySelectorAll("[data-air-activation]")) each.remove();
         const hint = document.createElement("p");
         hint.className = "aar-hint";
         hint.textContent = `Waiting for ${state.user.name}'s player or the GM to apply it.`;
         root.append(hint);
         return;
     }
-    // (The activations card: a button for each activation, its index the choice.)
-    for (const each of root.querySelectorAll("[data-air-activation]")) each.addEventListener("click", async (event) => {
-        event.preventDefault();
-        each.disabled = true;
-        const choices = { activation: Number(each.dataset.airActivation) };
-        try {
-            if (isActiveGM()) await applyByKind(message, state, choices);
-            else if (!game.users.activeGM) throw new Error("No GM is connected to activate it.");
-            else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });
-        } catch (error) {
-            ui.notifications.error(`${state.item.name}: ${error.message}`);
-            console.error(`${MODULE_ID} |`, error);
-        } finally {
-            each.disabled = false;
-        }
-    });
     const button = root.querySelector("[data-air-action='apply']");
     button?.addEventListener("click", async (event) => {
         event.preventDefault();
@@ -240,6 +221,14 @@ export async function applyMessage(messageId, choices = {}) {
 
 // A player's Apply, on the active GM's client: only the GM or the item user's owner may.
 async function onRequest(data) {
+    // (A permanent item's Activate button on a player's sheet: scripts/activations.js checks the sender owns the item.)
+    if (data?.action === "activate") {
+        await activate(String(data.itemUuid ?? ""), Number(data.activation), data.userId).catch((error) => {
+            ui.notifications.error(`Activate: ${error.message}`);
+            throw error;
+        });
+        return;
+    }
     if (data?.action !== "apply") return;
     const message = game.messages.get(data.messageId);
     const state = stateOf(message);
@@ -251,7 +240,6 @@ async function onRequest(data) {
         : state.kind === "poison" ? { weapon: data.weapon }
         : state.kind === "cast" ? { drinker: data.drinker, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "expose" || state.kind === "item-action" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
-        : state.kind === "activations" ? { activation: Number(data.activation) }
         : { drinker: data.drinker };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);

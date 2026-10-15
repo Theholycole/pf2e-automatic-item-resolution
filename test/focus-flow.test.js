@@ -1,4 +1,4 @@
-// An activation that gives a Focus Point, against the stand-in for Foundry: the activations card, its Focus Point card,
+// An activation that gives a Focus Point, against the stand-in for Foundry: its sheet button, its Focus Point card,
 // Apply (up to the pool's maximum, a note of what it's only for), and the point lost at the end of the turn if unspent.
 
 import { test } from "node:test";
@@ -22,13 +22,9 @@ foundry.place(witch, 0, 9000);
 
 async function focusCard(actor, name) {
     const item = foundry.giveItem(actor, source(name));
-    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, type: item.type } } }, speaker: { actor: actor.id }, actor, token: actor.token.document });
-    await foundry.call("createChatMessage", message);
-    await settle();
-    const activations = foundry.messages[foundry.messages.indexOf(message) + 1];
-    const index = activations.flags[MODULE_ID].card.activations.find((entry) => compileActivations(source(name))[entry.index].plan?.builtin === "focus-point").index;
+    const index = compileActivations(source(name)).find((entry) => entry.plan?.builtin === "focus-point").index;
     const count = foundry.messages.length;
-    await foundry.socket(SOCKET)({ action: "apply", messageId: activations.id, activation: index, userId: "player" });
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: item.uuid, activation: index, userId: "player" });
     await settle();
     return foundry.messages.slice(count).find((entry) => entry.flags?.[MODULE_ID]?.card?.kind === "focus");
 }

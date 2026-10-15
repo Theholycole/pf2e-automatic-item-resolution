@@ -8,7 +8,7 @@ Spell-casting items (scrolls, wands, staves, catalysts, spellhearts) belong to P
 
 ## In play
 
-Use an item as PF2e always does: its **Use** button, a bomb's **Strike**, or posting an item to chat. A confirmation card follows in the chat, and nothing changes until someone presses its button. The item's owner can press it, or the GM; a player's press is carried out by the GM's client.
+Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a permanent item's Activate button on the sheet. A confirmation card follows in the chat, and nothing changes until someone presses its button. The item's owner can press it, or the GM; a player's press is carried out by the GM's client.
 
 - **Potions, elixirs, mutagens:** the card says what drinking does: "Heals 6 Hit Points (PF2e's roll of 1d8)", "Effect: Elixir of Life", "concealed for 5 minutes".
   - Pick the **drinker**: yourself, or a creature next to you to feed it to. Apply heals them and makes the Effects at the item's grade.
@@ -23,7 +23,7 @@ Use an item as PF2e always does: its **Use** button, a bomb's **Strike**, or pos
 - **Rerolls** (Lucky Rabbit's Foot, Starfaring Cloak, Mail of Luck): after the roll that triggers it, Apply has PF2e reroll it, keeping the new, the higher or the lower result as the item says.
 - **Skill actions with an item** (Onyx Panther's Sneak, Crying Angel Pendant's First Aid, Coldstar Pistols' Feint): target the creature when the action is aimed at one, then Apply rolls PF2e's own action with the item's bonus. Trip, Grapple, Demoralize, Feint and the other basic actions then put their result on the target.
 - **Snares and lasting areas** (Cryomister, Pheromone Flare): the GM places the area. A snare goes off once, for the first creature to enter its square.
-- **Permanent items:** post the item to chat and a card lists its activations, each with an Activate button. One that gives a Focus Point (a Specialist's Ring, a Bloodline Robe) adds it up to the pool's maximum, and in an encounter an unspent point is taken back at the end of the turn. A "once per day" activation is counted, with a warning if it's used again; the GM decides. This trigger is a proposal still to confirm.
+- **Permanent items:** on the character sheet's inventory, an item with activations gets an Activate button (a bolt) for each, after its name; its tooltip says the actions, how often and how many uses are left. Pressing it posts that activation's card. One that gives a Focus Point (a Specialist's Ring, a Bloodline Robe) adds it up to the pool's maximum, and in an encounter an unspent point is taken back at the end of the turn. A "once per day" activation is counted; used again, the GM gets a warning and decides.
 - **Anything else with a duration:** a note Effect on the creature with the item's text, for that time.
 
 The census counts what's played: 1,066 of the 1,486 consumables this module handles get a card. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module.
@@ -50,6 +50,7 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 - Imports reach the sibling modules by their ids (`../../pf2e-resolution-core/…`, `../../pf2e-automatic-ability-resolution/…`). In Foundry those are the module folders; on disk they are aliases next to this folder.
 - `api` (`game.modules.get("pf2e-automatic-item-resolution").api`):
   - `compileItem(item)` and `handlesItem(item)`;
-  - `live.apply(messageId, choices)` applies a card from code.
+  - `live.apply(messageId, choices)` applies a card from code;
+  - `live.activate(itemUuid, index)` activates a permanent item's activation, as its sheet button does.
 
 MIT licensed (see [LICENSE](LICENSE)). The Pathfinder rules text it reads comes from the PF2e system under Paizo's ORC license.
