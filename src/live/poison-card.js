@@ -91,7 +91,7 @@ export const isExposurePoison = (plan) => Boolean(EXPOSED_BY[deliveryOf(plan)]) 
 // Any other item whose save comes on its Use, at creatures other than its user ("Spark Wafer … 5-foot burst", Pyronite,
 // a flare beacon): the same card, for the creatures the presser targets. Not one that gives an action or a time to use
 // later ("grants you the Energy Breath action for 1 hour", "you can use a 2-action activity to exhale"), nor an aura or a snare.
-const LATER = /\b(?:(?:grants? you|you gain) (?:the|a|an) [\w' -]+? (?:action|activity|reaction)|gives? you access to (?:[\w-]+ ){0,3}activations?|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel|unleash) |gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|aura\b)/i;
+const LATER = /\b(?:(?:grants? you|you (?:also )?gain) (?:the|a|an) [\w' -]+? (?:action|activity|reaction|ability)|gives? you access to (?:[\w-]+ ){0,3}activations?|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel|unleash) |gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|aura\b)/i;
 // (An item with no Activate line — "You can toss sneezing powder at an adjacent creature", a fulu "Upon affixing" — reads as
 // passive; it's still used. Not a save something else sets off: a turn in the area, entering a square, passing a door,
 // reading the words, each Stride.)
