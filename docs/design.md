@@ -106,14 +106,17 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - a bomb's splash and off-guard;
 - a coated weapon's hit and its save card;
 - Spark Wafer's save;
+- a Cloak of Elvenkind's activations card;
+- Hexing Jar's Focus Point, lost at the end of the turn in the check's own encounter (cleanup deletes only encounters flagged as its fixtures);
 - an Invisibility Potion cast by the spell module.
 
 `api.live.apply(messageId, choices)` applies a card from code.
 
 ## Later phase: permanent items' activations (compiled offline, 2026-10-15)
 
-**The compiler** (`src/compiler/permanent.js`, `tools/census-permanent.mjs` → [census-permanent.md](census-permanent.md)). PF2e keeps activations only as text, so each item's text is split into its activations: name, actions, traits, frequency as `{ max, per }`, trigger and requirements. Each one is read like a consumable, for its user. Staves and spellhearts (the spell module's) and bombs are left out.
-- 2,201 items, 2,730 activations: 642 resolve, 328 are casts, 301 are saves at targets, 302 notes. 1,267 have nothing read yet.
+**The compiler** (`src/compiler/permanent.js`, `tools/census-permanent.mjs` → [census-permanent.md](census-permanent.md)). PF2e keeps activations only as text, so each item's text is split into its activations: name, actions, traits, frequency as `{ max, per }`, trigger and requirements. Each one is read like a consumable, for its user. Staves, wands and spellhearts (the spell module's: its wand readers cover every wand that changes its spell, Wand of Widening's kind too) and bombs are left out.
+- 2,119 items, 2,630 activations: 640 resolve, 328 are casts, 301 are saves at targets, 302 notes, 45 Focus Points. 1,134 have nothing read yet.
+- **Focus Points** (`src/compiler/focus.js`, `scripts/focus.js`): "You gain 1 Focus Point, which you can use only to cast a witch hex spell. If not used by the end of your turn, this Focus Point is lost" (45 activations: Specialist's Rings, Bloodline Robe, Crown of Witchcraft…). The core has no Focus Point change, so it's the item module's builtin. Its card adds the point up to the pool's maximum, as the spell module does for its "+" features. A note Effect says what it's only for. In an encounter, the GM's client takes the point back at the end of that creature's turn (PF2e's `pf2e.endTurn`) if the pool is still above its old value. Out of an encounter, the card says to take it back by hand. Harmonic Hauberk, which spends the point at once on a spell, isn't read this way.
 - An automatic row aimed at another creature ("The target is Quickened for 1 round", Scizore of the Crab's "The target is grabbed") goes to the save card, for the creatures the presser targets, not to the item card on its user.
 - Six items the spell module claims by their casts aren't left out yet: Searing Blade, Sky Hammer, Dragon's Eye Charm and the Tridents of the Azarketis. Before they're played live, ask the spell session for `claims(item)`.
 

@@ -67,7 +67,7 @@ export function createFakeFoundry() {
         return message;
     }
 
-    function makeActor({ id, name, hp = 20, max = 30, conditions = [], undead = false, owners = [] }) {
+    function makeActor({ id, name, hp = 20, max = 30, conditions = [], undead = false, owners = [], focus = null }) {
         const actor = register({
             uuid: `Actor.${id}`,
             id,
@@ -76,8 +76,26 @@ export function createFakeFoundry() {
             conditions: new Map(conditions.map((slug) => [slug, 1])),
             created: [],
             healed: [],
-            system: { attributes: { hp: { value: hp, max, temp: 0, negativeHealing: undead } } },
+            system: { attributes: { hp: { value: hp, max, temp: 0, negativeHealing: undead } }, resources: focus ? { focus: { ...focus } } : {} },
             attributes: { hp: { negativeHealing: undead } },
+            flags: {},
+            updates: [],
+            getFlag(scope, key) {
+                return this.flags?.[scope]?.[key];
+            },
+            async setFlag(scope, key, value) {
+                this.flags[scope] = { ...(this.flags[scope] ?? {}), [key]: structuredClone(value) };
+                return this;
+            },
+            async unsetFlag(scope, key) {
+                if (this.flags[scope]) delete this.flags[scope][key];
+                return this;
+            },
+            async update(changes) {
+                this.updates.push(changes);
+                for (const [key, value] of Object.entries(changes)) setProperty(this, key, structuredClone(value));
+                return this;
+            },
             get hitPoints() {
                 return this.system.attributes.hp;
             },

@@ -2,52 +2,55 @@
  "generated": "2026-10-15",
  "totals": {
   "items": 2679,
-  "staves": 478,
-  "ours": 2201,
-  "activations": 2730,
+  "staves": 560,
+  "ours": 2119,
+  "activations": 2630,
   "results": {
-   "none": 1267,
+   "none": 1134,
    "builtin:cast-spell": 328,
-   "resolves": 642,
-   "builtin:no-effect": 138,
+   "resolves": 640,
+   "builtin:focus-point": 45,
+   "builtin:no-effect": 130,
    "note-only": 302,
-   "builtin:modes": 30,
+   "builtin:modes": 28,
    "partial": 7,
    "builtin:zone": 9,
    "builtin:save-bonus": 3,
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1478,
+   "none": 1335,
    "cast": 328,
-   "item": 610,
+   "item": 608,
    "save": 301,
+   "focus": 45,
    "zone": 9,
    "later": 4
   },
-  "withFrequency": 1864,
-  "withTrigger": 438
+  "withFrequency": 1773,
+  "withTrigger": 429
  },
  "byType": {
   "equipment": {
-   "activations": 1819,
+   "activations": 1720,
    "results": {
-    "none": 864,
+    "none": 734,
     "builtin:cast-spell": 230,
-    "resolves": 388,
-    "builtin:no-effect": 114,
+    "resolves": 386,
+    "builtin:focus-point": 43,
+    "builtin:no-effect": 106,
     "note-only": 190,
-    "builtin:modes": 19,
+    "builtin:modes": 17,
     "partial": 6,
     "builtin:zone": 6,
     "builtin:save-bonus": 2
    }
   },
   "weapon": {
-   "activations": 468,
+   "activations": 467,
    "results": {
     "resolves": 138,
-    "none": 199,
+    "none": 198,
     "note-only": 47,
     "builtin:cast-spell": 62,
     "builtin:modes": 7,
@@ -80,9 +83,10 @@
     "note-only": 24,
     "resolves": 50,
     "builtin:no-effect": 6,
-    "none": 51,
+    "none": 49,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
+    "builtin:focus-point": 2,
     "partial": 1
    }
   },
@@ -183,9 +187,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Robe of the Erinys (Major)",
@@ -436,9 +440,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Hexing Jar",
@@ -1024,17 +1028,6 @@
    "live": null
   },
   {
-   "name": "Wand of Widening (8th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Rending Gauntlets (Lesser)",
    "type": "equipment",
    "activation": "Shredding Finisher",
@@ -1129,9 +1122,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Prognostic Veil (Greater)",
@@ -1574,39 +1567,6 @@
    "live": null
   },
   {
-   "name": "Wand of Legerdemain (8th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (8th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Continuation (6th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Incendiary Plate",
    "type": "armor",
    "activation": "Living Flame",
@@ -1667,17 +1627,6 @@
    "activation": null,
    "time": "2",
    "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Mercy (8th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
    "trigger": false,
    "result": "none",
    "kind": null,
@@ -1836,17 +1785,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Pistol Wand",
-   "type": "weapon",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Ooze Skin",
@@ -2023,17 +1961,6 @@
    "result": "builtin:cast-spell",
    "kind": null,
    "live": "cast"
-  },
-  {
-   "name": "Wand of Hybrid Form (7th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Dragonplate",
@@ -2333,17 +2260,6 @@
    "live": "save"
   },
   {
-   "name": "Wand of Purification (7th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Aeon Stone (Flickering)",
    "type": "equipment",
    "activation": "Flicker",
@@ -2465,28 +2381,6 @@
    "live": null
   },
   {
-   "name": "Wand of Legerdemain (4th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (4th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Mocker's Swazzle",
    "type": "equipment",
    "activation": "Heckle the Heckler",
@@ -2592,9 +2486,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Crown of Witchcraft",
@@ -2603,9 +2497,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Undead Compendium",
@@ -2845,9 +2739,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Runic Skullcap",
@@ -2914,17 +2808,6 @@
    "result": "resolves",
    "kind": "effect",
    "live": "item"
-  },
-  {
-   "name": "Wand of Continuation (2nd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Dragon's Breath (3rd Level Spell)",
@@ -3098,9 +2981,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Prismatic Plate",
@@ -3263,9 +3146,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Cape of Grand Entrances",
@@ -3461,9 +3344,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Atlas Arcane",
@@ -3473,17 +3356,6 @@
    "frequency": "once per day",
    "trigger": false,
    "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Mercy (2nd-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
    "kind": null,
    "live": null
   },
@@ -4033,9 +3905,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Prognostic Veil",
@@ -4087,17 +3959,6 @@
    "activation": null,
    "time": "2",
    "frequency": null,
-   "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Hybrid Form (5th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
    "trigger": false,
    "result": "builtin:no-effect",
    "kind": null,
@@ -4385,9 +4246,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Master Magus Ring",
@@ -4685,17 +4546,6 @@
    "result": "resolves",
    "kind": "save",
    "live": "save"
-  },
-  {
-   "name": "Wand of Purification (5th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Dreamcrusher",
@@ -5248,28 +5098,6 @@
    "live": null
   },
   {
-   "name": "Wand of Legerdemain (7th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (7th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Aboutface Figurehead",
    "type": "equipment",
    "activation": "About Face!",
@@ -5385,17 +5213,6 @@
    "activation": "Papers Please",
    "time": "1",
    "frequency": "once per hour",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Reaching (3rd-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
    "trigger": false,
    "result": "none",
    "kind": null,
@@ -5738,9 +5555,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Feather Token (Swan Boat) (Ammunition)",
@@ -6321,9 +6138,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Mask of Uncanny Breath",
@@ -6398,9 +6215,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Protector's Final Gift",
@@ -6508,28 +6325,6 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (7th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (7th-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
    "result": "none",
    "kind": null,
    "live": null
@@ -6706,9 +6501,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:modes",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Entertainer's Cincture (Greater)",
@@ -6887,28 +6682,6 @@
    "live": null
   },
   {
-   "name": "Cyrusian Wand (5th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (5th-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Hairpin of Blooming Flowers",
    "type": "equipment",
    "activation": "Scatter Petals",
@@ -6959,9 +6732,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Accompaniment Cloak",
@@ -7421,9 +7194,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Helm Of Zeal (Greater)",
@@ -7520,9 +7293,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Drake Rifle (Acid)",
@@ -7542,9 +7315,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Accoutrements of Bone",
@@ -8251,17 +8024,6 @@
    "live": "save"
   },
   {
-   "name": "Wand of Continuation (7th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Belimarius's Invidious Halberd",
    "type": "weapon",
    "activation": "Absorb Arcana",
@@ -8323,9 +8085,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Gaze of the Mantis",
@@ -8636,17 +8398,6 @@
    "live": null
   },
   {
-   "name": "Wand of Spiritual Warfare (2nd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Admiral's Bicorne",
    "type": "equipment",
    "activation": "Fight On",
@@ -8796,9 +8547,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:modes",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Entertainer's Cincture",
@@ -8900,26 +8651,15 @@
    "live": null
   },
   {
-   "name": "Wand of Purification (4th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Living Mantle (Greater)",
    "type": "equipment",
    "activation": "Druidic Secrets",
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Gray Prince",
@@ -9258,17 +8998,6 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Widening (6th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
    "result": "none",
    "kind": null,
    "live": null
@@ -9654,9 +9383,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Tornado Trompo",
@@ -9802,17 +9531,6 @@
    "live": "item"
   },
   {
-   "name": "Wand of Mercy (7th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Verdant Branch",
    "type": "equipment",
    "activation": null,
@@ -9917,17 +9635,6 @@
    "activation": null,
    "time": "2",
    "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Continuation (8th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
    "trigger": false,
    "result": "none",
    "kind": null,
@@ -10363,17 +10070,6 @@
    "live": null
   },
   {
-   "name": "Wand of Purification (8th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Bewitching Bloom (Magnolia)",
    "type": "equipment",
    "activation": null,
@@ -10391,9 +10087,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Crimson Tome",
@@ -10570,17 +10266,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Wand of Mercy (9th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Zetogeki Hide Armor",
@@ -11248,17 +10933,6 @@
    "activation": null,
    "time": "2",
    "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Mercy (6th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
    "trigger": false,
    "result": "none",
    "kind": null,
@@ -12409,17 +12083,6 @@
    "live": null
   },
   {
-   "name": "Wand of Purification (3rd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Bloodhound Olfactory Stimulators",
    "type": "equipment",
    "activation": null,
@@ -12679,9 +12342,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Three-Pillared Yang Na",
@@ -13322,17 +12985,6 @@
    "live": null
   },
   {
-   "name": "Wand of Fey Flames",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
-  },
-  {
    "name": "The Theater",
    "type": "equipment",
    "activation": null,
@@ -13496,17 +13148,6 @@
    "result": "resolves",
    "kind": "effect",
    "live": "item"
-  },
-  {
-   "name": "Wand of Continuation (3rd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Pacifying",
@@ -13872,17 +13513,6 @@
    "live": "item"
   },
   {
-   "name": "Wand of Shattering Images",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Drumish Pearl Token",
    "type": "equipment",
    "activation": "Subversive Friendship",
@@ -13933,9 +13563,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Collar of Inconspicuousness",
@@ -13955,9 +13585,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Magnet Coin",
@@ -14046,17 +13676,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Wand of Hybrid Form (8th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Sihedron Medallion (Major)",
@@ -14488,17 +14107,6 @@
    "live": null
   },
   {
-   "name": "Wand of Purification (9th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Crimson Bluff",
    "type": "weapon",
    "activation": "Shimmer Step",
@@ -14565,17 +14173,6 @@
    "live": null
   },
   {
-   "name": "Wand of Widening (5th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Pocket Watch of Stethelos",
    "type": "equipment",
    "activation": "Steal a Second",
@@ -14598,17 +14195,6 @@
    "live": null
   },
   {
-   "name": "Wand of Purification (2nd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Alghollthu Whip",
    "type": "weapon",
    "activation": null,
@@ -14618,17 +14204,6 @@
    "result": "resolves",
    "kind": "save",
    "live": "save"
-  },
-  {
-   "name": "Wand of Widening (3rd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Fungal Armor",
@@ -15044,17 +14619,6 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Thundering Echoes (6th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
    "result": "none",
    "kind": null,
    "live": null
@@ -15544,17 +15108,6 @@
    "live": "item"
   },
   {
-   "name": "Wand of Mercy (3rd-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Dream Hunter's Lodge",
    "type": "equipment",
    "activation": "Expand Lodge",
@@ -15769,17 +15322,6 @@
    "activation": "One of You",
    "time": "1",
    "frequency": "once per hour",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Thundering Echoes (7th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
    "trigger": false,
    "result": "none",
    "kind": null,
@@ -16584,9 +16126,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Armorskin Robes of Water",
@@ -16620,28 +16162,6 @@
    "result": "resolves",
    "kind": "save",
    "live": "save"
-  },
-  {
-   "name": "Wand of Legerdemain (3rd-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (3rd-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Garrote Shot",
@@ -16708,17 +16228,6 @@
    "result": "resolves",
    "kind": "effect",
    "live": "item"
-  },
-  {
-   "name": "Wand of Reaching (4th-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Whip-Tongue Sling",
@@ -16881,9 +16390,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Sighting Shot",
@@ -17080,17 +16589,6 @@
    "frequency": null,
    "trigger": false,
    "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Mercy (4th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
    "kind": null,
    "live": null
   },
@@ -17425,17 +16923,6 @@
    "live": null
   },
   {
-   "name": "Wand of Thundering Echoes (8th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Grudge Journal",
    "type": "equipment",
    "activation": "Air Grievance",
@@ -17489,17 +16976,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Wand of Purification (6th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Predictable Silver Piece",
@@ -17585,9 +17061,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Robe of Beneficence",
@@ -17598,28 +17074,6 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (2nd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (2nd-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
-   "result": "none",
-   "kind": null,
    "live": null
   },
   {
@@ -17689,28 +17143,6 @@
    "live": null
   },
   {
-   "name": "Cyrusian Wand (8th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (8th-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "The Paladin",
    "type": "equipment",
    "activation": null,
@@ -17739,9 +17171,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Sunflower Censer",
@@ -17851,17 +17283,6 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
-  },
-  {
-   "name": "Wand of Widening (1st-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
    "live": null
   },
   {
@@ -17980,17 +17401,6 @@
    "activation": null,
    "time": "2",
    "frequency": "once per day",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Continuation (1st-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
    "trigger": false,
    "result": "none",
    "kind": null,
@@ -18283,17 +17693,6 @@
    "live": null
   },
   {
-   "name": "Wand of Spiritual Warfare (4th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Bane Ammunition (Lesser)",
    "type": "ammo",
    "activation": null,
@@ -18311,9 +17710,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Awakened Silver Shot",
@@ -18479,17 +17878,6 @@
    "result": "builtin:cast-spell",
    "kind": null,
    "live": "cast"
-  },
-  {
-   "name": "Wand of Continuation (4th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Dragon's Breath (1st Level Spell)",
@@ -18745,26 +18133,15 @@
    "live": "item"
   },
   {
-   "name": "Wand of Spiritual Warfare (6th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Oracular Crown",
    "type": "equipment",
    "activation": null,
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Oracular Crown",
@@ -19251,17 +18628,6 @@
    "live": null
   },
   {
-   "name": "Wand of Mercy (5th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Nexian Sealing Blade (Greater)",
    "type": "weapon",
    "activation": null,
@@ -19359,17 +18725,6 @@
    "result": "resolves",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Wand of Reaching (1st-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Boots of the Secret Blade",
@@ -19559,28 +18914,6 @@
    "live": null
   },
   {
-   "name": "Wand of Reaching (5th-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Spiritual Warfare (8th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Stole of Civility",
    "type": "equipment",
    "activation": null,
@@ -19678,28 +19011,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Wand of Legerdemain (6th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (6th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Ventriloquist's Ring (Greater)",
@@ -19854,17 +19165,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Wand of Reaching (8th-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Banner of Creeping Death (Major)",
@@ -20489,9 +19789,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Clarity Goggles (Greater)",
@@ -20753,9 +20053,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Calamity's Bane Tattoo",
@@ -21022,28 +20322,6 @@
    "live": null
   },
   {
-   "name": "Cyrusian Wand (4th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (4th-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Scouting Arrow",
    "type": "ammo",
    "activation": null,
@@ -21204,9 +20482,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Helm Of Zeal",
@@ -21633,9 +20911,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Guiding Star Orb",
@@ -22364,28 +21642,6 @@
    "live": null
   },
   {
-   "name": "Cyrusian Wand (9th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (9th-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Kizidhar's Shield",
    "type": "shield",
    "activation": "Repair",
@@ -22406,28 +21662,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Cyrusian Wand (6th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (6th-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Forgefather's Seal",
@@ -22549,17 +21783,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Wand of Hybrid Form (4th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Curious Teardrop",
@@ -22714,17 +21937,6 @@
    "result": "builtin:cast-spell",
    "kind": null,
    "live": "cast"
-  },
-  {
-   "name": "Wand of Widening (7th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Deathless",
@@ -23154,17 +22366,6 @@
    "result": "resolves",
    "kind": "effect",
    "live": "item"
-  },
-  {
-   "name": "Wand of Thundering Echoes (4th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Fossil Fragment (Triceratops Frill)",
@@ -23701,9 +22902,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Stone of Encouragement",
@@ -23954,9 +23155,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "The Keep",
@@ -24295,9 +23496,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Specialist's Ring (Divination)",
@@ -24306,9 +23507,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Ankhrav Duster",
@@ -24839,17 +24040,6 @@
    "live": null
   },
   {
-   "name": "Wand of Thundering Echoes (3rd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Umbraex Eye",
    "type": "equipment",
    "activation": null,
@@ -25011,17 +24201,6 @@
    "frequency": "once per day",
    "trigger": false,
    "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Reaching (6th-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
    "kind": null,
    "live": null
   },
@@ -25235,28 +24414,6 @@
    "live": "item"
   },
   {
-   "name": "Cyrusian Wand (3rd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (3rd-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Spell Reservoir",
    "type": "equipment",
    "activation": "Channeled Release",
@@ -25280,28 +24437,6 @@
   },
   {
    "name": "Fanged",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (5th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (5th-rank)",
    "type": "equipment",
    "activation": null,
    "time": "1",
@@ -25508,28 +24643,6 @@
    "result": "builtin:cast-spell",
    "kind": null,
    "live": "cast"
-  },
-  {
-   "name": "Cyrusian Wand (1st-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Cyrusian Wand (1st-Rank Spell)",
-   "type": "equipment",
-   "activation": "Presume Success",
-   "time": "reaction",
-   "frequency": "once per day",
-   "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Reducer Round",
@@ -25752,17 +24865,6 @@
    "live": null
   },
   {
-   "name": "Wand of Reaching (7th-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Songbird's Brush",
    "type": "weapon",
    "activation": null,
@@ -25796,17 +24898,6 @@
    "live": "item"
   },
   {
-   "name": "Wand of Widening (2nd-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Cube of Recall",
    "type": "equipment",
    "activation": null,
@@ -25822,28 +24913,6 @@
    "type": "equipment",
    "activation": null,
    "time": "3",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (9th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (9th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
    "frequency": null,
    "trigger": false,
    "result": "none",
@@ -26203,17 +25272,6 @@
    "live": "cast"
   },
   {
-   "name": "Wand of Reaching (2nd-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Dawnflower Beads",
    "type": "equipment",
    "activation": null,
@@ -26243,17 +25301,6 @@
    "frequency": null,
    "trigger": true,
    "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Hybrid Form (3rd-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "builtin:no-effect",
    "kind": null,
    "live": null
   },
@@ -26390,17 +25437,6 @@
    "live": null
   },
   {
-   "name": "Wand of Thundering Echoes (5th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Righteous Fury",
    "type": "weapon",
    "activation": "Great Vengeance",
@@ -26516,17 +25552,6 @@
    "activation": null,
    "time": "1",
    "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Reaching (9th-Rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
    "trigger": false,
    "result": "none",
    "kind": null,
@@ -26709,17 +25734,6 @@
    "live": null
   },
   {
-   "name": "Wand of Widening (9th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Librarian's Baton",
    "type": "equipment",
    "activation": null,
@@ -26786,17 +25800,6 @@
    "live": "cast"
   },
   {
-   "name": "Wand of Continuation (5th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Spore Sap",
    "type": "weapon",
    "activation": null,
@@ -26815,17 +25818,6 @@
    "frequency": null,
    "trigger": false,
    "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Hybrid Form (6th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "builtin:no-effect",
    "kind": null,
    "live": null
   },
@@ -27694,9 +26686,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Singing Shortbow (Greater)",
@@ -27842,17 +26834,6 @@
    "live": "save"
   },
   {
-   "name": "Wand of Hybrid Form (9th-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Sack of Hydra's Teeth",
    "type": "equipment",
    "activation": "Sow a Tooth",
@@ -27994,17 +26975,6 @@
    "result": "resolves",
    "kind": "effect",
    "live": "item"
-  },
-  {
-   "name": "Wand of Mercy (1st-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Bestiary of Metamorphosis",
@@ -28816,9 +27786,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Mala Beads of Foresight",
@@ -29069,9 +28039,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Cloak of Repute (Greater)",
@@ -29712,28 +28682,6 @@
    "live": "item"
   },
   {
-   "name": "Wand of Legerdemain (1st-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (1st-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "The Cricket",
    "type": "equipment",
    "activation": null,
@@ -29877,17 +28825,6 @@
    "live": "item"
   },
   {
-   "name": "Wand of Hybrid Form (2nd-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Eternal Eruption of Blackpeak",
    "type": "equipment",
    "activation": "Lava Bomb",
@@ -29905,9 +28842,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
+   "result": "builtin:focus-point",
+   "kind": null,
+   "live": "focus"
   },
   {
    "name": "Unifying Emblem (Tamiir-Quah)",
@@ -29976,17 +28913,6 @@
    "live": null
   },
   {
-   "name": "Wand of Widening (4th-Rank Spell)",
-   "type": "equipment",
-   "activation": null,
-   "time": "2",
-   "frequency": "Once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
    "name": "Paradigm Cube",
    "type": "equipment",
    "activation": "Change Paradigm",
@@ -29996,28 +28922,6 @@
    "result": "note-only",
    "kind": "check",
    "live": "item"
-  },
-  {
-   "name": "Wand of Legerdemain (2nd-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "cast",
-   "frequency": "once per day, plus overcharge",
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
-  },
-  {
-   "name": "Wand of Legerdemain (2nd-rank)",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
   },
   {
    "name": "Habu's Cudgel",

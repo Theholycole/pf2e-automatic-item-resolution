@@ -214,6 +214,48 @@ export const cases = {
         return { cast: cast.id };
     },
 
+    // Hexing Jar: its Focus Point card adds a point to a witch's pool; in its own fixture encounter, the point is taken
+    // back at the end of the witch's turn when unspent (PF2e's pf2e.endTurn).
+    async focusPoint(scene) {
+        const { actor: witch, token } = await creature(scene, "Hexer", { type: "character", x: 15, y: 2, level: 5 });
+        const { token: other } = await creature(scene, "Bystander", { x: 17, y: 2 });
+        // (A focus pool: a focus spellcasting entry with one hex; PF2e counts its focus spells for the pool's maximum.)
+        const [entry] = await witch.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Hexes`, type: "spellcastingEntry", system: { prepared: { value: "focus" }, tradition: { value: "occult" }, ability: { value: "int" } } }]);
+        const spells = game.packs.get("pf2e.spells-srd");
+        const row = (await spells.getIndex()).find((candidate) => candidate.name === "Evil Eye");
+        assert(row, "Evil Eye isn't in PF2e's spells.");
+        const hex = (await spells.getDocument(row._id)).toObject();
+        delete hex._id;
+        hex.system.location = { value: entry.id };
+        await witch.createEmbeddedDocuments("Item", [hex]);
+        await witch.update({ "system.resources.focus.value": 0 });
+        assert(Number(witch.system.resources?.focus?.max) >= 1, `a focus pool (max ${witch.system.resources?.focus?.max})`);
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: token.id, sceneId: scene.id, actorId: witch.id, initiative: 20 }, { tokenId: other.id, sceneId: scene.id, actorId: other.actorId, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            assert(combat.combatant?.actorId === witch.id, "the witch's turn first");
+            const jar = await give(witch, "Hexing Jar");
+            const since = Date.now();
+            await jar.toMessage();
+            const card = await messageAfter(since, itemCard("activations"), { what: "the activations card" });
+            await game.modules.get(NS).api.live.apply(card.id, { activation: 0 });
+            const focus = await messageAfter(since, itemCard("focus"), { what: "the Focus Point card" });
+            await game.modules.get(NS).api.live.apply(focus.id);
+            await wait(500);
+            assert(witch.system.resources.focus.value === 1, `a Focus Point gained (${witch.system.resources.focus.value})`);
+            assert(witch.getFlag(NS, "focusGrant")?.combatId === combat.id, "the gain kept for the turn's end");
+            await combat.nextTurn();
+            const end = Date.now() + 8000;
+            while (Date.now() < end && witch.system.resources.focus.value !== 0) await wait(250);
+            assert(witch.system.resources.focus.value === 0, `the unspent point lost at the end of the turn (${witch.system.resources.focus.value})`);
+            return { card: focus.id, results: game.messages.get(focus.id).getFlag(NS, "card").results };
+        } finally {
+            await combat.delete();
+        }
+    },
+
     // Invisibility Potion: the spell module casts it on the drinker (its castFromItem; run after its own live check).
     async castFromPotion(scene) {
         assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
@@ -276,7 +318,10 @@ export async function cleanup() {
     const messages = game.messages.filter((message) => ids.has(message.speaker?.actor)).map((message) => message.id);
     for (let index = 0; index < messages.length; index += 200) await ChatMessage.deleteDocuments(messages.slice(index, index + 200)).catch(() => null);
     if (actors.length) await Actor.deleteDocuments(actors.map((actor) => actor.id));
+    // (Its own encounters only, flagged as its fixtures: never another.)
+    const combats = game.combats.filter((combat) => combat.getFlag(NS, FIXTURE));
+    for (const combat of combats) await combat.delete();
     const scene = game.scenes.find((entry) => entry.name === `${PREFIX} Lab` && entry.getFlag(NS, FIXTURE));
     if (scene) await scene.delete();
-    return { actors: actors.length, messages: messages.length, scene: Boolean(scene) };
+    return { actors: actors.length, messages: messages.length, combats: combats.length, scene: Boolean(scene) };
 }

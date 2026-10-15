@@ -8,16 +8,18 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf } from "./activation.js";
 import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
+import { focusPlan } from "./focus.js";
 import { noteRow, ownRow, plainText } from "./rows.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
 
-// An item whose activations this module reads: a permanent item with an Activate — not a staff or a spellheart (the
-// spell module's: their spells, charges, item casts), nor a bomb (a consumable weapon: its own card, src/compiler/bombs.js).
+// An item whose activations this module reads: a permanent item with an Activate — not a staff, a wand or a spellheart
+// (the spell module's: their spells, charges, item casts; its wand readers cover every wand that changes its spell, Wand
+// of Widening's kind included), nor a bomb (a consumable weapon: its own card, src/compiler/bombs.js).
 // (Six more the spell module claims by their casts — Searing Blade, Sky Hammer, Dragon's Eye Charm, Trident of the
 // Azarketis — need its claims() before live play; asked when activations get cards.)
-const SPELL_MODULE_TRAITS = ["staff", "spellheart"];
+const SPELL_MODULE_TRAITS = ["staff", "wand", "spellheart"];
 export function handlesPermanent(item) {
     return PERMANENT_TYPES.has(item?.type) && !SPELL_MODULE_TRAITS.some((trait) => (item.system?.traits?.value ?? []).includes(trait)) && !(item.type === "weapon" && item.system?.group === "bomb")
         && /<strong>\s*Activat/i.test(String(item.system?.description?.value ?? ""));
@@ -82,14 +84,18 @@ export function compileActivations(item, options = {}) {
             traits: [...(item.system?.traits?.value ?? [])],
             activation: { time: activation.time, traits: activation.traits }
         };
+        // (A Focus Point for its user, src/compiler/focus.js: the item module's own builtin.)
+        let plan = focusPlan(activation.html, base);
         let read = null;
-        try {
-            read = compileAbility(asActivationAbility(item, activation), options);
-        } catch {
-            read = null;
+        if (!plan) {
+            try {
+                read = compileAbility(asActivationAbility(item, activation), options);
+            } catch {
+                read = null;
+            }
+            const own = read?.builtin === "no-effect" ? ownPlan(part, base, options) : null;
+            plan = own ?? (read ? fitPlan(part, read, base, options) : ownPlan(part, base, options));
         }
-        const own = read?.builtin === "no-effect" ? ownPlan(part, base, options) : null;
-        let plan = own ?? (read ? fitPlan(part, read, base, options) : ownPlan(part, base, options));
         if (!plan && options.spellEffects) plan = castPlan(part);
         if (!plan) plan = rowPlanFor(part, base);
         if (!plan) return { activation, plan: null, index };

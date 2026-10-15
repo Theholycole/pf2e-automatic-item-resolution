@@ -18,6 +18,7 @@ import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } fr
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { applyCastCard, postCastCard } from "./casts.js";
 import { startItemZone } from "./zones.js";
+import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { applyActivationsCard, cardForItemPost, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
@@ -45,6 +46,10 @@ export function setUpLivePlay({ compileItem, compileActivations = null }) {
     Hooks.on("renderChatMessageHTML", (message, html) => {
         hideCovered(message, html);
         wireCard(message, html);
+    });
+    // (A Focus Point an activation gave, lost at the end of the turn if unspent: scripts/focus.js.)
+    Hooks.on("pf2e.endTurn", (combatant, encounter) => {
+        loseUnspentFocus(combatant, encounter).catch((error) => console.error(`${MODULE_ID} | unspent Focus Point`, error));
     });
     game.socket.on(SOCKET, (data) => {
         if (isActiveGM()) onRequest(data).catch((error) => console.error(`${MODULE_ID} | ${data?.action}`, error));
@@ -86,7 +91,8 @@ async function cardForUse(message) {
 
 // The card for a plan (src/live/route.js): an injury poison's weapon to coat (scripts/poisons.js); a contact, inhaled or
 // ingested poison's exposure, or another item's save on its Use (Spark Wafer, Pyronite), for the creatures targeted; a spell
-// PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone (scripts/zones.js); else the item card below.
+// PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone (scripts/zones.js); a Focus Point
+// (scripts/focus.js); else the item card below.
 // (A consumable's after PF2e's Use; a permanent item's activation from its activations card, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
@@ -94,6 +100,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
     if (route === "cast") return postCastCard({ message, plan, used, actor, token });
     if (route === "zone") return startItemZone({ plan, used, actor, token });
+    if (route === "focus") return postFocusCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message?.rolls?.[0];
@@ -148,6 +155,7 @@ const APPLY = {
     poison: (message, choices) => applyPoisonCard(message, choices),
     cast: (message, choices) => applyCastCard(message, choices),
     expose: (message, choices) => applyExposureCard(message, choices),
+    focus: (message) => applyFocusCard(message),
     item: (message, choices) => applyCard(message, choices)
 };
 const applyByKind = (message, state, choices) => APPLY[state.kind](message, choices);
