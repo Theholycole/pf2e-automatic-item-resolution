@@ -127,9 +127,9 @@ test("the item's own row goes through the ability module's applyChange, on the d
     assert.ok(stateOf(card).results.includes("ability applied condition"));
 });
 
-test("no card for what batch 1 doesn't play (a poison for the next Strike), nor for PF2e's other messages", async () => {
+test("no card for an item with no plan (Ration Tonic), nor for PF2e's other messages", async () => {
     const count = foundry.messages.length;
-    await use(valeros, foundry.giveItem(valeros, source("Black Adder Venom")));
+    await use(valeros, foundry.giveItem(valeros, source("Ration Tonic")));
     const check = foundry.makeMessage({ flags: { pf2e: { context: { type: "skill-check" }, origin: { type: "consumable", uuid: "x" } } } });
     await foundry.call("createChatMessage", check);
     await settle();

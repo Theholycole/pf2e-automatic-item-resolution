@@ -15,6 +15,8 @@
 import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, rolledHealing, rollFormula, USER_ID } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
+import { applyPoisonCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
+import { isInjuryPoison } from "../src/live/poison-card.js";
 
 // The plans batch 1 plays on its card (potions, elixirs, mutagens): healing, PF2e Effects, and the
 // item's own automatic row on its drinker or user (conditions, temporary Hit Points, a note).
@@ -36,6 +38,7 @@ export function setUpLivePlay({ compileItem }) {
         if (!isActiveGM()) return;
         cardForUse(message).catch((error) => console.error(`${MODULE_ID} | item card`, error));
         cardForBomb(message).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
+        strikeWithPoison(message).catch((error) => console.error(`${MODULE_ID} | poisoned Strike`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
         hideCovered(message, html);
@@ -73,10 +76,12 @@ async function cardForUse(message) {
     const used = await usedItem(origin, message);
     if (!used) return;
     const plan = compile(used.data);
-    if (!played(plan)) return;
     const actor = used.actor ?? message.actor;
     if (!actor) return;
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
+    // An injury poison: which weapon to coat (scripts/poisons.js).
+    if (isInjuryPoison(plan)) return postPoisonCard({ message, plan, used, actor, token });
+    if (!played(plan)) return;
     const user = entryOf(token, actor);
     const roll = message.rolls?.[0];
     const rolled = plan.item?.pf2eRoll && Number.isFinite(roll?.total) ? { total: roll.total, formula: plan.item.pf2eRoll.formula, kind: plan.item.pf2eRoll.kind, messageId: message.id } : null;
@@ -116,14 +121,16 @@ function hideCovered(message, html) {
 // What a card's controls say on Apply: the item card's drinker, the bomb card's ticked splash.
 function choicesOf(state, root) {
     if (state.kind === "bomb") return { included: [...root.querySelectorAll("[data-air-splash]")].filter((box) => box.checked).map((box) => Number(box.dataset.airSplash)) };
+    if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
     return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) };
 }
 
-const applyByKind = (message, state, choices) => (state.kind === "bomb" ? applyBombCard(message, choices) : applyCard(message, choices));
+const APPLY = { bomb: (message, choices) => applyBombCard(message, choices), poison: (message, choices) => applyPoisonCard(message, choices), item: (message, choices) => applyCard(message, choices) };
+const applyByKind = (message, state, choices) => APPLY[state.kind](message, choices);
 
 function wireCard(message, html) {
     const state = stateOf(message);
-    if (!state || !["item", "bomb"].includes(state.kind)) return;
+    if (!state || !APPLY[state.kind]) return;
     const root = html.querySelector(".pf2e-air-card");
     if (!root || root.dataset.airWired) return;
     root.dataset.airWired = "true";
@@ -165,7 +172,7 @@ async function onRequest(data) {
     if (!state || !sender) return;
     const owner = sender.isGM || !!(await fromUuid(state.user.actorUuid).catch(() => null))?.testUserPermission?.(sender, "OWNER");
     if (!owner) return;
-    const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null } : { drinker: data.drinker };
+    const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null } : state.kind === "poison" ? { weapon: data.weapon } : { drinker: data.drinker };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;

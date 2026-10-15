@@ -19,6 +19,7 @@ const setProperty = (object, key, value) => {
 };
 
 export function createFakeFoundry() {
+    let madeCount = 0;
     const hooks = new Map();
     const documents = new Map();
     const messages = [];
@@ -44,6 +45,7 @@ export function createFakeFoundry() {
             id: `msg${messages.length + 1}`,
             content: data.content ?? "",
             speaker: data.speaker ?? {},
+            whisper: data.whisper ?? [],
             flags: structuredClone(data.flags ?? {}),
             rolls: data.rolls ?? [],
             actor: data.actor ?? null,
@@ -100,9 +102,19 @@ export function createFakeFoundry() {
                 hp.value = Math.max(0, Math.min(hp.max, hp.value - amount));
                 return this;
             },
+            weapons: [],
             async createEmbeddedDocuments(type, data) {
-                this.created.push(...data.map((entry) => ({ type, ...entry })));
-                return data;
+                const made = data.map((entry) => ({ type, ...entry, id: entry.id ?? `made${++madeCount}` }));
+                this.created.push(...made);
+                return made;
+            },
+            async deleteEmbeddedDocuments(type, ids) {
+                this.deleted = [...(this.deleted ?? []), ...ids];
+                this.created = this.created.filter((entry) => !ids.includes(entry.id));
+                return ids;
+            },
+            get itemTypes() {
+                return { weapon: this.weapons, effect: this.created.filter((entry) => entry.type === "effect") };
             },
             testUserPermission: (user) => user.isGM || owners.includes(user.id),
             getActiveTokens() {
@@ -110,7 +122,7 @@ export function createFakeFoundry() {
             }
         });
         const token = { uuid: `Scene.s.Token.${id}`, id: `t-${id}`, name, actor, document: null };
-        token.document = { uuid: token.uuid, x: 0, y: 0, width: 1, height: 1, elevation: 0, hidden: false, parent: { id: "s" } };
+        token.document = { uuid: token.uuid, name, x: 0, y: 0, width: 1, height: 1, elevation: 0, hidden: false, parent: { id: "s" } };
         token.document.object = token;
         register({ ...token.document, uuid: token.uuid, actor, object: token });
         actor.token = token;
@@ -134,10 +146,18 @@ export function createFakeFoundry() {
     let current = users.get("gm");
     const core = { registry: createRegistry(), dying };
     for (const family of CORE_FAMILIES) core.registry.registerFamily(family);
-    const ability = { live: { applyChange: async (change, state) => {
-        applied.push({ change, state });
-        return `ability applied ${change.op}`;
-    } } };
+    const posted = [];
+    const ability = { live: {
+        applyChange: async (change, state) => {
+            applied.push({ change, state });
+            return `ability applied ${change.op}`;
+        },
+        // The ability module's save card (asked for batch 2): recorded.
+        postCard: async (options) => {
+            posted.push(options);
+            return makeMessage({ content: "ability save card", flags: { "pf2e-automatic-ability-resolution": { card: { plan: options.plan } } } });
+        }
+    } };
     const modules = new Map([["pf2e-resolution-core", { api: core }], ["pf2e-automatic-ability-resolution", { api: ability }]]);
 
     const globals = {
@@ -151,14 +171,14 @@ export function createFakeFoundry() {
             },
             users: { get activeGM() {
                 return { isSelf: current.isGM };
-            }, get: (id) => users.get(id) },
+            }, get: (id) => users.get(id), filter: (test) => [...users.values()].filter(test) },
             messages: { get: (id) => messages.find((message) => message.id === id) },
             modules,
             socket: { on: (name, handler) => sockets.set(name, handler), emit: (name, data) => emitted.push({ name, data }) },
             time: { worldTime: 1000 },
             combat: null
         },
-        ChatMessage: { create: async (data) => makeMessage(data) },
+        ChatMessage: { create: async (data) => makeMessage(data), getSpeaker: ({ actor } = {}) => ({ actor: actor?.id ?? null }) },
         fromUuid: async (uuid) => documents.get(uuid) ?? null,
         fromUuidSync: (uuid) => documents.get(uuid) ?? null,
         canvas: { ready: true, scene: { id: "s" }, grid: { size: 100 }, dimensions: { distance: 5 }, tokens: { placeables: [] } },
@@ -189,6 +209,8 @@ export function createFakeFoundry() {
     return {
         hooks,
         messages,
+        posted,
+        ability,
         emitted,
         applied,
         notifications,

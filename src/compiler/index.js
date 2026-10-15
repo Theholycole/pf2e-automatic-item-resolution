@@ -94,6 +94,8 @@ function itemInfo(item) {
         uses: item.system?.uses ? { max: Number(item.system.uses.max) || 1, autoDestroy: Boolean(item.system.uses.autoDestroy) } : null,
         // "drinker": the creature who drinks or eats it (the user or an adjacent creature they feed it to); "user": its user.
         recipient: recipientOf(item),
+        // How a poison (or another affliction item) reaches a creature: "injury" (on a weapon), "contact", "inhaled", "ingested".
+        delivery: ["injury", "contact", "inhaled", "ingested"].find((trait) => (item.system?.traits?.value ?? []).includes(trait)) ?? null,
         // What PF2e's own Use rolls (its healing or damage), so live play doesn't roll it again.
         pf2eRoll: pf2eRoll(item),
         activations: readActivations(item?.system?.description?.value)
