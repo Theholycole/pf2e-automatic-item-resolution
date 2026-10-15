@@ -121,5 +121,8 @@ test("a contact, inhaled or ingested poison: exposure of the creatures its press
         assert.equal(card.flags[MODULE_ID].card.status, "applied", name);
     }
     assert.match((await use(foundry.giveItem(rogue, source("Terror Spores")))).content, /10-foot cube cloud/);
+    // A drug with the injury trait is injected, not put on a weapon.
+    const zerk = (await use(foundry.giveItem(rogue, source("Zerk")))).flags[MODULE_ID].card;
+    assert.deepEqual([zerk.kind, zerk.delivery], ["expose", "injected"]);
 });
 

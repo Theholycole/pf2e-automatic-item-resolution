@@ -10,7 +10,8 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 export const MODULE_KEY = "poison";
 
 // An injury poison's plan: a save against a fixed DC on the creature a Strike hits (the ability compiler's reading).
-export const isInjuryPoison = (plan) => plan?.item?.delivery === "injury" && plan?.resolution?.kind === "save" && plan.trigger?.event === "strike" && plan.resolution.check?.against?.dc === "fixed";
+// (Not a drug with the injury trait, Zerk: that one is injected into a creature, an exposure.)
+export const isInjuryPoison = (plan) => plan?.item?.delivery === "injury" && plan.item.category !== "drug" && plan?.resolution?.kind === "save" && plan.trigger?.event === "strike" && plan.resolution.check?.against?.dc === "fixed";
 
 // The weapons a poison can coat: piercing or slashing (or versatile P or S), held ones first.
 export function poisonableWeapons(weapons) {
@@ -79,13 +80,16 @@ export function poisonStrike(outcome) {
 export const EXPOSED_BY = Object.freeze({
     contact: "the creature it touches (applied to its skin), or later the first creature to touch the coated item",
     inhaled: "the creatures in the 10-foot cube cloud; for 1 minute, each creature entering it is exposed too (the GM's to call)",
-    ingested: "the creature that eats or drinks it"
+    ingested: "the creature that eats or drinks it",
+    injected: "the creature it's injected into"
 });
 
-export const isExposurePoison = (plan) => Boolean(EXPOSED_BY[plan?.item?.delivery]) && plan?.resolution?.kind === "save" && plan.resolution.check?.against?.dc === "fixed" && Boolean(plan.resolution.afflictionHandoff);
+const deliveryOf = (plan) => (plan?.item?.delivery === "injury" && plan.item.category === "drug" ? "injected" : plan?.item?.delivery);
+
+export const isExposurePoison = (plan) => Boolean(EXPOSED_BY[deliveryOf(plan)]) && plan?.resolution?.kind === "save" && plan.resolution.check?.against?.dc === "fixed" && Boolean(plan.resolution.afflictionHandoff);
 
 export function createExposureCard({ plan, item, user }) {
-    return { kind: "expose", status: "open", plan, item, user, delivery: plan.item.delivery, results: [] };
+    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan), results: [] };
 }
 
 export function exposureCardHTML(state, { canApply = false } = {}) {
