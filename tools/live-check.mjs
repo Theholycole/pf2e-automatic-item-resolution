@@ -490,6 +490,27 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
         const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
         return { cast: cast.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Mask of the Mantis (Major)'s Enhance Vision, a cast in words with two spells: the card's picker, the second picked,
+    // and the spell module casts See the Unseen at rank 5 on the wearer.
+    async castChoice(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: user } = await creature(scene, "Mantis Seer", { type: "character", x: 9, y: 14, level: 12 });
+        const mask = await give(user, "Mask of the Mantis (Major)");
+        const since = Date.now();
+        // (Its activations by name: Enhance Vision is the first.)
+        await game.modules.get(NS).api.live.activate(mask.uuid, 0);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        const state = card.getFlag(NS, "card");
+        assert(state.plan.choices?.map((entry) => entry.spell.name).join(",") === "Darkvision,See the Unseen", `its choices (${state.plan.choices?.map((entry) => entry.spell.name)})`);
+        assert(/data-air-field="choice"/.test(card.content), "the picker");
+        await game.modules.get(NS).api.live.apply(card.id, { choice: 1 });
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        const flag = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        assert(flag.rank === 5, `rank 5 (${flag.rank})`);
+        assert(/See the Unseen/.test(cast.flavor ?? "") || /See the Unseen/.test(cast.content ?? "") || cast.item?.name === "See the Unseen", "See the Unseen cast");
+        return { cast: cast.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
