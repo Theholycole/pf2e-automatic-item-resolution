@@ -13,6 +13,24 @@ export async function postActionCard({ message, plan, used, actor, token }) {
     return ChatMessage.create({ content: actionCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
+// The variant of a PF2e action that has several (Administer First Aid's "stabilize" and "stop-bleeding"): by the target's
+// state — dying, stabilize; taking persistent bleed damage, stop it — else the first.
+function variantFor(pf2eAction, target) {
+    const variants = [...(pf2eAction.variants?.keys?.() ?? [])];
+    if (variants.length < 2) return null;
+    const bleeding = (target?.itemTypes?.condition ?? []).some((condition) => condition.slug === "persistent-damage" && condition.system?.persistent?.damageType === "bleed");
+    if (variants.includes("stabilize") && target?.hasCondition?.("dying")) return "stabilize";
+    if (variants.includes("stop-bleeding") && bleeding) return "stop-bleeding";
+    return variants[0];
+}
+
+// Stabilize's DC (Administer First Aid): 5 + the dying creature's recovery DC + its dying value, as PF2e's own macro has it.
+function stabilizeDC(target) {
+    const dying = target?.system?.attributes?.dying;
+    if (!Number(dying?.value)) return null;
+    return { value: 5 + (Number(dying.recoveryDC) || 10) + Number(dying.value) };
+}
+
 // targets: the token uuids the presser had targeted.
 export async function applyActionCard(message, { targets = [] } = {}) {
     const state = stateOf(message);
@@ -28,7 +46,10 @@ export async function applyActionCard(message, { targets = [] } = {}) {
     const modifiers = action.bonus && Modifier ? [new Modifier({ label: state.item.name, slug: sluggify(state.item.name), modifier: action.bonus.value, type: action.bonus.type })] : [];
     // (No roll dialog on the GM's client: the GM is rolling the user's check.)
     const event = typeof KeyboardEvent === "function" ? new KeyboardEvent("keydown", { shiftKey: game.user.settings?.showCheckDialogs !== false }) : undefined;
-    const results = await pf2eAction.use({ actors: [actor], ...(targetToken ? { target: targetToken.object ?? targetToken.actor } : {}), modifiers, ...(event ? { event } : {}) });
+    const variant = variantFor(pf2eAction, targetToken?.actor ?? null);
+    // (PF2e's action-system First Aid has no stabilize DC of its own: the rule's, 5 + the target's recovery DC + its dying value.)
+    const difficultyClass = action.slug === "administer-first-aid" && variant === "stabilize" ? stabilizeDC(targetToken?.actor) : null;
+    const results = await pf2eAction.use({ actors: [actor], ...(targetToken ? { target: targetToken.object ?? targetToken.actor } : {}), modifiers, ...(variant ? { variant } : {}), ...(difficultyClass ? { difficultyClass } : {}), ...(event ? { event } : {}) });
     const outcome = results?.[0]?.outcome ?? null;
     const lines = [];
     if (!outcome) lines.push(`${actionText(action)}: no result (cancelled).`);

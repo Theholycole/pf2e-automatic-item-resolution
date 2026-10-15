@@ -264,7 +264,8 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id);
         await wait(600);
         const effect = () => fighter.itemTypes.effect.find((entry) => entry.getFlag(NS, "rollTwice"));
-        assert(effect()?.system.rules.some((rule) => rule.key === "RollTwice" && rule.selector === "attack-roll"), "the RollTwice Effect");
+        // (PF2e keeps a rule's selector as a list.)
+        assert(effect()?.system.rules.some((rule) => rule.key === "RollTwice" && [].concat(rule.selector).includes("attack-roll")), "the RollTwice Effect");
         await fighterToken.object?.control?.();
         await target(foeToken);
         const { attack } = await strike(fighter, sword);
@@ -410,7 +411,8 @@ export const cases = {
     // Crying Angel Pendant: PF2e's Administer First Aid at the targeted dying ally, with the pendant's +1 item bonus.
     async firstAid(scene) {
         const { actor: healer } = await creature(scene, "Angel Healer", { type: "character", x: 10, y: 3 });
-        const { actor: ally, token: allyToken } = await creature(scene, "First Aid Ally", { x: 11, y: 3, hp: 0 });
+        // (A character: PF2e's stabilize DC is a character's recovery DC.)
+        const { actor: ally, token: allyToken } = await creature(scene, "First Aid Ally", { type: "character", x: 11, y: 3, hp: 0 });
         await ally.increaseCondition("dying");
         const pendant = await give(healer, "Crying Angel Pendant");
         const since = Date.now();
@@ -420,6 +422,8 @@ export const cases = {
         const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check" && message.speaker?.actor === healer.id, { what: "PF2e's First Aid roll", timeout: 12000 });
         const bonus = (roll.flags.pf2e.modifiers ?? []).find((modifier) => modifier.label === "Crying Angel Pendant");
         assert(bonus?.modifier === 1, `the +1 item bonus (${JSON.stringify(bonus ?? null)})`);
+        // (Stabilize's DC, 5 + recovery DC + dying value: PF2e grades it.)
+        assert(roll.flags.pf2e.context.outcome, `a degree against the stabilize DC (${JSON.stringify(roll.flags.pf2e.context.dc ?? null)})`);
         await wait(800);
         return { outcome: roll.flags.pf2e.context.outcome, results: game.messages.get(card.id).getFlag(NS, "card").results, dying: ally.hasCondition("dying") };
     },
