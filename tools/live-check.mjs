@@ -58,10 +58,11 @@ async function creature(scene, name, { type = "npc", x = 0, y = 0, hp = 50, ac =
     return { actor, token };
 }
 
-async function give(actor, name) {
-    const pack = game.packs.get("pf2e.equipment-srd");
+async function give(actor, name, packId = "pf2e.equipment-srd") {
+    const pack = game.packs.get(packId);
+    assert(pack, `No pack ${packId}.`);
     const entry = (await pack.getIndex()).find((row) => row.name === name);
-    assert(entry, `${name} isn't in PF2e's equipment.`);
+    assert(entry, `${name} isn't in ${packId}.`);
     const source = (await pack.getDocument(entry._id)).toObject();
     delete source._id;
     // (Its own ChoiceSets answered, so PF2e doesn't stop the check to ask: Hexing Jar's patron, the first choice.)
@@ -264,6 +265,105 @@ export const cases = {
         while (Date.now() < end && drinker.hasCondition("clumsy")) await wait(250);
         assert(!drinker.hasCondition("clumsy"), "clumsy counteracted");
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Longnight Tea with the Tea Ceremony ticked: its Effect lasts 8 hours and the drinker's fatigued goes.
+    async teaCeremony(scene) {
+        const { actor: drinker } = await creature(scene, "Tea Drinker", { type: "character", x: 2, y: 3 });
+        await drinker.increaseCondition("fatigued");
+        const tea = await give(drinker, "Longnight Tea");
+        const since = Date.now();
+        await tea.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the tea's card" });
+        assert(card.getFlag(NS, "card").ceremony === false, "the Tea Ceremony tick");
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, ceremony: true });
+        const end = Date.now() + 8000;
+        let effect = null;
+        while (Date.now() < end && !(effect = drinker.itemTypes.effect.find((entry) => entry.name === "Effect: Longnight Tea"))) await wait(250);
+        assert(effect, "the tea's Effect");
+        assert(effect.system.duration.value === 8 && effect.system.duration.unit === "hours", `8 hours (${effect.system.duration.value} ${effect.system.duration.unit})`);
+        assert(!drinker.hasCondition("fatigued"), "fatigued removed");
+        return { duration: effect.system.duration, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Redsand Hourglass after a Reflex save: the card's own reroll with +4 circumstance, its degree against the same DC.
+    async bonusReroll(scene) {
+        const { actor: hero } = await creature(scene, "Sand Saver", { type: "character", x: 4, y: 3 });
+        let since = Date.now();
+        await hero.saves.reflex.roll({ skipDialog: true, dc: { value: 30 } });
+        await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "saving-throw" && message.speaker?.actor === hero.id, { what: "the Reflex save" });
+        const glass = await give(hero, "Redsand Hourglass");
+        const { compileActivations } = await import(`/modules/${NS}/src/compiler/permanent.js`);
+        const index = compileActivations({ ...glass.toObject(false), uuid: glass.uuid }).find((entry) => entry.plan?.builtin === "reroll")?.index;
+        assert(Number.isInteger(index), "the hourglass's reroll activation");
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(glass.uuid, index);
+        const card = await messageAfter(since, itemCard("reroll"), { what: "the reroll card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        await wait(800);
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(results.some((line) => /\+ 4 circumstance\) against DC 30/.test(line)), `the card's own roll (${JSON.stringify(results)})`);
+        return { results };
+    },
+
+    // Alchemists+: Olobigonde Fugu's own Effect matches its text and is applied; Concealing Puffball's doesn't (status for
+    // item) and gives a note instead.
+    async thirdPartyEffects(scene) {
+        assert(game.modules.get("pf2e-team-plus-alchemists")?.active, "Alchemists+ isn't active in pftest.");
+        const { actor: eater } = await creature(scene, "Fugu Eater", { type: "character", x: 6, y: 3 });
+        const PACK = "pf2e-team-plus-alchemists.pf2e-items";
+        const fugu = await give(eater, "Olobigonde Fugu", PACK);
+        let since = Date.now();
+        await fugu.consume();
+        let card = await messageAfter(since, itemCard("item"), { what: "the fugu's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        let end = Date.now() + 8000;
+        while (Date.now() < end && !eater.itemTypes.effect.some((entry) => entry.name === "Effect: Olobigonde Fugu")) await wait(250);
+        assert(eater.itemTypes.effect.some((entry) => entry.name === "Effect: Olobigonde Fugu"), "the matching Effect applied");
+        const puffball = await give(eater, "Concealing Puffball (Lesser)", PACK);
+        since = Date.now();
+        await puffball.consume();
+        card = await messageAfter(since, itemCard("item"), { what: "the puffball's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        end = Date.now() + 6000;
+        let results = [];
+        while (Date.now() < end && !(results = game.messages.get(card.id).getFlag(NS, "card").results ?? []).length) await wait(250);
+        assert(!eater.itemTypes.effect.some((entry) => entry.name === "Effect: Concealing Puffball (Lesser)"), "not the mismatching Effect");
+        assert(results.some((line) => /wasn't applied/.test(line)), `a note instead (${JSON.stringify(results)})`);
+        return { results };
+    },
+
+    // Magic+: a Fortune Dragonbreath Rapier's Unleash Dragonbreath — its runes' damage and DC, a basic save card at the target.
+    async dragonbreath(scene) {
+        assert(game.modules.get("pf2e-team-plus-magic")?.active, "Magic+ isn't active in pftest.");
+        const { actor: wielder } = await creature(scene, "Dragon Wielder", { type: "character", x: 8, y: 3 });
+        const { token: foe } = await creature(scene, "Breath Target", { x: 9, y: 3, alliance: "opposition" });
+        const rapier = await give(wielder, "Fortune Dragonbreath Rapier", "pf2e-team-plus-magic.items");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(rapier.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the breath's save card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.against?.value === 23 && check.basic === true, `basic DC 23 (${JSON.stringify(check)})`);
+        return { save: save.id, check };
+    },
+
+    // Crying Angel Pendant: PF2e's Administer First Aid at the targeted dying ally, with the pendant's +1 item bonus.
+    async firstAid(scene) {
+        const { actor: healer } = await creature(scene, "Angel Healer", { type: "character", x: 10, y: 3 });
+        const { actor: ally, token: allyToken } = await creature(scene, "First Aid Ally", { x: 11, y: 3, hp: 0 });
+        await ally.increaseCondition("dying");
+        const pendant = await give(healer, "Crying Angel Pendant");
+        const since = Date.now();
+        await pendant.consume();
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the action card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check" && message.speaker?.actor === healer.id, { what: "PF2e's First Aid roll", timeout: 12000 });
+        const bonus = (roll.flags.pf2e.modifiers ?? []).find((modifier) => modifier.label === "Crying Angel Pendant");
+        assert(bonus?.modifier === 1, `the +1 item bonus (${JSON.stringify(bonus ?? null)})`);
+        await wait(800);
+        return { outcome: roll.flags.pf2e.context.outcome, results: game.messages.get(card.id).getFlag(NS, "card").results, dying: ally.hasCondition("dying") };
     },
 
     // Spark Wafer: its save goes to the creatures targeted, through the ability module's save card.
