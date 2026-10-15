@@ -251,6 +251,31 @@ export const cases = {
         return { outcome, formula };
     },
 
+    // Gorum's Tear: its card gives PF2e's RollTwice for the next attack roll; the Strike is rolled 2d20kh, and the Effect goes.
+    async rollTwice(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Tear Striker", { type: "character", x: 2, y: 19 });
+        const { token: foeToken } = await creature(scene, "Tear Target", { x: 3, y: 19, alliance: "opposition" });
+        const sword = await give(fighter, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const tear = await give(fighter, "Gorum's Tear");
+        const since = Date.now();
+        await tear.consume();
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const effect = () => fighter.itemTypes.effect.find((entry) => entry.getFlag(NS, "rollTwice"));
+        assert(effect()?.system.rules.some((rule) => rule.key === "RollTwice" && rule.selector === "attack-roll"), "the RollTwice Effect");
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await strike(fighter, sword);
+        const formula = attack.rolls[0]?.formula ?? "";
+        assert(/2d20kh/.test(formula), `rolled twice, the higher kept (${formula})`);
+        const end = Date.now() + 6000;
+        while (Date.now() < end && effect()) await wait(250);
+        assert(!effect(), "the Effect gone after the roll");
+        return { formula };
+    },
+
     // Lucky Rabbit's Foot: after a Reflex save, its card has PF2e reroll that save (keeping the new result).
     async rerollSave(scene) {
         const { actor: hero } = await creature(scene, "Lucky One", { x: 6, y: 15 });
