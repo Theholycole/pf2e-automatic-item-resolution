@@ -15,7 +15,9 @@
 import { STAGE_CONDITIONS, readConditions, readDuration } from "../../../pf2e-automatic-ability-resolution/src/compiler/inline.js";
 import { readPenalties } from "../../../pf2e-automatic-ability-resolution/src/compiler/checks.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
+import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { plainText } from "./rows.js";
+import { asAbility } from "./ability-shape.js";
 
 export const isBomb = (item) => item?.type === "weapon" && item.system?.group === "bomb";
 
@@ -71,6 +73,69 @@ export function bombRiders(item) {
 
 const hasRow = (row) => Boolean(row.effects.length || row.modifiers.length);
 
+// Who a bomb's save is for: "Any creature hit by the bomb or in its splash area" (scope "splash": the target and the
+// creatures splashed), "each creature within 10 feet of where the bomb exploded" ("burst", radius), "A creature struck
+// by a dwarven daisy", "the target must" ("target", on a hit).
+function saveScope(text) {
+    if (/\b(?:hit by the bomb|the target) or in (?:its|the) splash area\b/i.test(text)) return { scope: "splash" };
+    const burst = /\beach creature within (\d+) feet of (?:where|the space in which|the (?:spot|square|point) where) the (?:bomb|stone|vial|grenade|\w+) (?:exploded|explodes|landed|hits?)\b/i.exec(text);
+    if (burst) return { scope: "burst", radius: Number(burst[1]) };
+    if (/\b(?:a creature (?:struck|hit) (?:by|with)|the (?:primary )?target must)\b/i.test(text)) return { scope: "target" };
+    return null;
+}
+
+// "… must succeed at a DC 18 Fortitude save or become Dazzled for 1 round", "… or be Deafened until the end of its next
+// turn": a save whose failure (and critical failure) gives the condition, when the ability compiler read none.
+function plainSave(html, text) {
+    const check = /@Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\]/i.exec(html);
+    const worded = text.replace(/@Check\[(\w+)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?/gi, "DC $2 $1");
+    const or = /\bmust succeed at a (?:DC \d+ )?(?:Fortitude|Reflex|Will)? ?(?:save|saving throw)?(?: with the listed DC)? or (?:be|become) ([^.]+)\./i.exec(worded);
+    if (!check || !or) return null;
+    const row = riderRow(or[1]);
+    if (!row.effects.length && !row.modifiers.length) return null;
+    return {
+        check: { roll: "save", statistic: check[1].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(check[2]) } },
+        outcomes: { criticalSuccess: none(), success: none(), failure: row, criticalFailure: { ...row, effects: row.effects.map((effect) => ({ ...effect })), modifiers: [...row.modifiers] } }
+    };
+}
+
+// A bomb's save: { plan, scope, radius? } — the ability compiler's save plan when it reads one (a fixed DC and rows
+// that do something), else the plain "save or become X" form; null when its save is for a narrower set of creatures
+// or does something the module doesn't read (Silver Orb's lingering cloud, Blightburn's sickness).
+export function bombSave(item) {
+    const html = String(item?.system?.description?.value ?? "");
+    if (!/@Check\[(?:fortitude|reflex|will)\|/i.test(html)) return null;
+    const text = plainText(html);
+    const scope = saveScope(text);
+    if (!scope) return null;
+    let read = null;
+    try {
+        read = compileAbility(asAbility(item), {});
+    } catch {
+        read = null;
+    }
+    // (An area the ability compiler read is fine for a burst: the card finds the creatures in it.)
+    const resolution = read?.resolution?.kind === "save" && read.resolution.check?.against?.dc === "fixed" && (!read.targeting?.area || scope.scope === "burst")
+        && Object.values(read.resolution.outcomes ?? {}).some((row) => (row?.effects ?? []).length || (row?.modifiers ?? []).length)
+        ? { check: read.resolution.check, outcomes: read.resolution.outcomes, ...(read.resolution.afflictionHandoff ? { afflictionHandoff: read.resolution.afflictionHandoff } : {}) }
+        : plainSave(html, text);
+    if (!resolution) return null;
+    return {
+        ...scope,
+        plan: {
+            modelVersion: MODEL_VERSION,
+            source: { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type },
+            rank: 1,
+            traits: [...(item.system?.traits?.value ?? [])],
+            activation: { time: "free", traits: [] },
+            automation: { level: "automatic" },
+            targeting: { target: scope.scope === "target" ? "the creature the bomb hits" : "the creatures the bomb affects", range: null, area: null },
+            trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
+            resolution: { kind: "save", ...resolution }
+        }
+    };
+}
+
 // A bomb → { plan for its riders, splash } or null when PF2e does it all (no splash, no rider read). The plan is the
 // core's save family with the Strike as its roll (degrees from the thrower's side); live play takes the degree PF2e
 // rolled. It has no damage: PF2e's own Strike deals that.
@@ -78,7 +143,8 @@ export function compileBomb(item) {
     if (!isBomb(item)) return null;
     const riders = bombRiders(item);
     const splash = Number(item.system?.splashDamage?.value) || 0;
-    if (!splash && !hasRow(riders.success) && !hasRow(riders.criticalSuccess)) return null;
+    const save = bombSave(item);
+    if (!splash && !save && !hasRow(riders.success) && !hasRow(riders.criticalSuccess)) return null;
     return {
         modelVersion: MODEL_VERSION,
         source: { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type },
@@ -93,6 +159,6 @@ export function compileBomb(item) {
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
-        item: { type: item.type, group: "bomb", level: Number(item.system?.level?.value) || 0, splash: splash ? { value: splash, type: item.system?.damage?.damageType ?? "untyped" } : null }
+        item: { type: item.type, group: "bomb", level: Number(item.system?.level?.value) || 0, splash: splash ? { value: splash, type: item.system?.damage?.damageType ?? "untyped" } : null, save }
     };
 }

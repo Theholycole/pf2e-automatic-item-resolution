@@ -101,3 +101,27 @@ test("no card when nothing is left to do: a hit with no rider and nobody within 
     await damage(bomb, { outcome: "success", target: far, type: "fire" });
     assert.equal(foundry.messages.length, count + 1);
 });
+
+test("a bomb's save: the ability module's save card for whoever attempts it", async () => {
+    // Skunk Bomb: "Any creature hit by the bomb or in its splash area must attempt a DC 15 Fortitude save".
+    const skunk = foundry.giveItem(alchemist, source("Skunk Bomb (Lesser)"));
+    const card = cardAfter(await damage(skunk, { outcome: "success", type: "poison" }));
+    assert.match(card.content, /DC 15 Fortitude save: Goblin, Kyra, Goblin Boss \(as ticked for the splash\)/);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, included: [1], userId: "gm" });
+    await settle();
+    const [posted] = foundry.posted.slice(before);
+    assert.equal(posted.plan.resolution.kind, "save");
+    assert.equal(posted.plan.resolution.check.against.value, 15);
+    assert.deepEqual(posted.tokens.map((token) => token.name), ["Goblin", "Goblin Boss"], "the target and the one left ticked");
+    // Dwarven Daisy: "A creature struck by a dwarven daisy …": the target, on a hit only.
+    const daisy = foundry.giveItem(alchemist, source("Dwarven Daisy (Lesser)"));
+    const missed = cardAfter(await damage(daisy, { outcome: "failure", type: "fire" }));
+    assert.doesNotMatch(missed.content, /Fortitude save/);
+    const struck = cardAfter(await damage(daisy, { outcome: "success", type: "fire" }));
+    assert.match(struck.content, /DC \d+ Fortitude save: Goblin</);
+    // Blasting Stone: each creature within 10 feet of where it exploded (the far goblin, 15 feet away, isn't).
+    const stone = foundry.giveItem(alchemist, source("Blasting Stone (Lesser)"));
+    const blast = cardAfter(await damage(stone, { outcome: "success", type: "sonic" }));
+    assert.match(blast.content, /Fortitude save: Goblin, Kyra, Goblin Boss</);
+});

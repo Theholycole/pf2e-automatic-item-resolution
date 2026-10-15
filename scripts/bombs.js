@@ -6,7 +6,7 @@
 // stays PF2e's: on a hit it already includes the target's splash.
 
 import { compileBomb, isBomb } from "../src/compiler/bombs.js";
-import { bombCardHTML, createBombCard, riderRow, splashText, withChoices } from "../src/live/bomb-card.js";
+import { bombCardHTML, createBombCard, riderRow, saveFor, splashText, withChoices } from "../src/live/bomb-card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
 
 const DEGREES = new Set(["criticalSuccess", "success", "failure"]);
@@ -50,7 +50,10 @@ export async function cardForBomb(message) {
     const near = target ? creaturesNear(targetToken, 5) : [];
     const row = riderRow({ plan, outcome: context.outcome });
     const riders = target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length);
-    if (!riders && !(splash.length && (near.length || (context.outcome === "failure" && target)))) return;
+    const save = plan.item?.save ?? null;
+    const burst = target && save?.scope === "burst" ? creaturesNear(targetToken, save.radius ?? 5) : [];
+    const saves = target && save && (save.scope !== "target" || ["success", "criticalSuccess"].includes(context.outcome));
+    if (!riders && !saves && !(splash.length && (near.length || (context.outcome === "failure" && target)))) return;
     const actor = message.actor;
     if (!actor) return;
     const userToken = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
@@ -61,7 +64,8 @@ export async function cardForBomb(message) {
         target,
         outcome: context.outcome,
         splash,
-        near
+        near,
+        burst
     });
     const card = await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
     // PF2e's splash-only rolls are the card's: their apply buttons come off the message.
@@ -115,6 +119,22 @@ export async function applyBombCard(message, { included = null } = {}) {
             } catch (error) {
                 lines.push(`Couldn't apply ${change.op} to ${state.target.name}: ${error.message}`);
             }
+        }
+    }
+    // The bomb's save: the ability module's save card for those who attempt it (the GM's note without it).
+    const save = state.plan?.item?.save;
+    const savers = saveFor(state);
+    if (save && savers.length) {
+        const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+        const sourceActor = await fromUuid(state.user.actorUuid).catch(() => null);
+        const sourceToken = state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null;
+        const tokens = (await Promise.all(savers.map((entry) => (entry.tokenUuid ? fromUuid(entry.tokenUuid).catch(() => null) : null)))).filter(Boolean).map((token) => token.object ?? token);
+        const check = save.plan.resolution.check;
+        if (postCard && sourceActor && tokens.length) {
+            await postCard({ plan: save.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor, sourceToken, tokens, cause: "bomb" });
+            lines.push(`${state.item.name}'s save card: ${savers.map((entry) => entry.name).join(", ")}`);
+        } else {
+            lines.push(`${savers.map((entry) => entry.name).join(", ")}: DC ${check.against.value} ${check.statistic} save against ${state.item.name} (roll it by hand).`);
         }
     }
     const next = { ...state, status: "applied", results: lines.length ? lines : ["Nothing to apply."] };

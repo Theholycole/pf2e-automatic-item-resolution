@@ -10,7 +10,8 @@
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
-import { actionTypeOf, readActivations } from "./activation.js";
+import { readActivations } from "./activation.js";
+import { asAbility } from "./ability-shape.js";
 import { fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { noteRow, ownRow } from "./rows.js";
 
@@ -26,16 +27,7 @@ export function handlesItem(item) {
     return item?.type === "consumable" && !SPELL_MODULE_CATEGORIES.includes(item.system?.category);
 }
 
-// The item as the ability compiler reads an action: its first activation's actions.
-export function asAbility(item) {
-    const activation = readActivations(item?.system?.description?.value)[0] ?? null;
-    const { actionType, actions } = actionTypeOf(activation?.time ?? null);
-    return {
-        ...item,
-        type: "action",
-        system: { ...(item?.system ?? {}), actionType: { value: actionType }, actions: { value: actions } }
-    };
-}
+export { asAbility } from "./ability-shape.js";
 
 // One item → a plan, { builtin }, or null.
 // options: the ability compiler's (basicActions, actor) and spellEffects, PF2e's spell Effects by spell name in lower case

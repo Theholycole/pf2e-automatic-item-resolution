@@ -55,14 +55,15 @@ test("the poison's card offers the piercing and slashing weapons, held first, an
 });
 
 test("a miss keeps it; a hit posts its save card on the target and spends it", async () => {
+    const before = foundry.posted.length;
     await strike("sword", "failure");
     assert.ok(poisonOn("sword"), "kept after a miss");
-    assert.equal(foundry.posted.length, 0);
+    assert.equal(foundry.posted.length, before);
     await strike("dagger", "success");
     assert.ok(poisonOn("sword"), "a Strike with another weapon doesn't spend it");
     await strike("sword", "success");
     assert.equal(poisonOn("sword"), undefined, "spent");
-    const [posted] = foundry.posted;
+    const [posted] = foundry.posted.slice(before);
     assert.equal(posted.plan.resolution.kind, "save");
     assert.equal(posted.plan.resolution.afflictionHandoff.name, "Black Adder Venom");
     assert.equal(posted.item.name, "Black Adder Venom");

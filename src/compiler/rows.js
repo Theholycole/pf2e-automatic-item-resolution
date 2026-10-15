@@ -19,6 +19,9 @@ const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "
 export function plainText(html) {
     return String(html ?? "")
         .replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1")
+        // (An area as its words: "@Template[burst|distance:10]{10 feet}" → "10 feet", unlabelled → "10-foot burst".)
+        .replace(/@Template\[[^\]]*\]\{([^}]*)\}/g, "$1")
+        .replace(/@Template\[(?:type:)?(\w+)\|distance:(\d+)[^\]]*\]/g, "$2-foot $1")
         .replace(/@Damage\[\(?([^\[\]()]+?)\)?\[[^\]]*\]\]/g, "$1")
         .replace(/@Damage\[([^\]]*)\]/g, "$1")
         .replace(/\[\[\/\w+ ([^\]#]+?)(?:\s*#[^\]]*)?\]\](?:\{([^}]*)\})?/g, (whole, formula, label) => label ?? formula)
