@@ -130,6 +130,12 @@ test("an item granting a spell's effects gets PF2e's Spell Effect at its rank an
     assert.deepEqual([fade.builtin, fade.spell.name, fade.rank, fade.self], ["cast-spell", "Invisibility", 2, true]);
     const truesight = compileItem(item("Truesight Potion"));
     assert.deepEqual([truesight.builtin, truesight.spell.name, truesight.rank, truesight.attack], ["cast-spell", "Truesight", 7, 25]);
+    // At someone else: a cast at the presser's targets, with its DC or counteract modifier.
+    const charm = compileItem(item("Amnemonic Charm"));
+    assert.deepEqual([charm.builtin, charm.spell.name, charm.self, charm.dc], ["cast-spell", "Rewrite Memory", false, 26]);
+    const sliver = compileItem(item("Dispelling Sliver"));
+    assert.deepEqual([sliver.spell.name, sliver.rank, sliver.self, sliver.attack], ["Dispel Magic", 8, false, 29]);
+    assert.deepEqual([compileItem(item("Elemental Gem")).spell.name, compileItem(item("Elemental Gem")).rank], ["Summon Elemental", 5]);
     const enigma = compileItem(item("Enigma-Sight Potion"));
     assert.equal(enigma.builtin, "cast-spell");
     assert.match(enigma.notes[0], /except that you use your Perception modifier/);

@@ -59,13 +59,27 @@ const UNIT = (unit) => (/^round/i.test(unit) ? "rounds" : /^minute/i.test(unit) 
 // same, on the item's user.)
 const CASTS_ON_YOU = new RegExp(String.raw`\b(?:it|the [\w' -]+?|this [\w' -]+?) casts (?:an? )?(?:${ORDINAL_RANK} )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]*)\}(?: spell)? on you\b(?:,? though the duration is (\d+|one|an?) (rounds?|minutes?|hours?|days?))?`, "gi");
 
+// (At someone else: "the charm casts a Rewrite Memory spell (DC 26 Will) against a single target", the dispelling sliver's
+// "with the effects of an 8th-rank Dispel Magic" on the target; and "casting a 5th-rank Summon Elemental spell".)
+const CASTS_AT = new RegExp(String.raw`\b(?:it|the [\w' -]+?|this [\w' -]+?) casts (?:an? )?(?:${ORDINAL_RANK} )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]*)\}(?: spell)?(?: \(@Check\[(?:fortitude|reflex|will)\|dc:(\d+)[^\]]*\]\))? (?:against|on|at|targeting) (?:a single target|the target|the triggering creature|a creature|one creature|an? (?:enemy|foe|ally))\b`, "gi");
+const WITH_EFFECTS_AT = new RegExp(String.raw`\b(?:on|at|against) the target\b[^.]*?\bwith the effects of (?:an? |the )?(?:${ORDINAL_RANK} )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]*)\}`, "gi");
+const CASTING_SUMMON = new RegExp(String.raw`\bcasting (?:an? )?(?:${ORDINAL_RANK} )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{(Summon [^}]*)\}`, "gi");
+
 export function grantedSpells(item) {
     const html = String(item?.system?.description?.value ?? "");
-    return [...html.matchAll(GRANTS_SPELL), ...html.matchAll(CASTS_ON_YOU)].map((match) => ({
+    const entry = (match, { self, dc = null } = {}) => ({
         spell: { uuid: match[2], name: match[3].trim() },
         rank: match[1] ? Number(match[1]) : null,
-        duration: match[4] ? { value: COUNT[match[4].toLowerCase()] ?? Number(match[4]), unit: UNIT(match[5]) } : null
-    }));
+        duration: self && match[4] && match[5] ? { value: COUNT[match[4].toLowerCase()] ?? Number(match[4]), unit: UNIT(match[5]) } : null,
+        self,
+        dc
+    });
+    return [
+        ...[...html.matchAll(GRANTS_SPELL), ...html.matchAll(CASTS_ON_YOU)].map((match) => entry(match, { self: true })),
+        ...[...html.matchAll(CASTS_AT)].map((match) => entry(match, { self: false, dc: match[4] ? Number(match[4]) : null })),
+        ...[...html.matchAll(WITH_EFFECTS_AT)].map((match) => entry(match, { self: false })),
+        ...[...html.matchAll(CASTING_SUMMON)].map((match) => entry(match, { self: true }))
+    ];
 }
 
 // The PF2e spell Effect for each spell the item grants, when PF2e has one (options.spellEffects: { "haste": { uuid, name } }, by the
@@ -73,6 +87,8 @@ export function grantedSpells(item) {
 export function spellEffectApplications(item, spellEffects, recipient) {
     const applications = [];
     for (const granted of grantedSpells(item)) {
+        // (A spell at someone else isn't an Effect on the drinker.)
+        if (!granted.self) return null;
         const effect = spellEffects?.[granted.spell.name.toLowerCase()];
         if (!effect?.uuid) return null;
         applications.push({ kind: "native-spell-effect", uuid: effect.uuid, label: effect.name ?? null, recipients: recipientsFor(recipient), level: granted.rank, ...(granted.duration ? { duration: granted.duration } : {}), spell: granted.spell });
@@ -97,10 +113,10 @@ export function castPlan(item) {
         source: { name: item.name, uuid: item.uuid ?? null, slug: item.system?.slug ?? null },
         spell: spell.spell,
         rank: spell.rank,
-        dc: null,
+        dc: spell.dc ?? null,
         attack: counteract ? Number(counteract[1] ?? counteract[2]) : null,
         tradition: null,
-        self: true,
+        self: spell.self !== false,
         notes,
         ...(spell.duration ? { duration: spell.duration } : {})
     };

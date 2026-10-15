@@ -13,8 +13,8 @@
   },
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 26,
-   "none": 337,
+   "builtin:cast-spell": 29,
+   "none": 334,
    "resolves": 691,
    "builtin:zone": 86,
    "note-only": 272,
@@ -27,8 +27,8 @@
   "other": {
    "count": 512,
    "results": {
-    "builtin:cast-spell": 7,
-    "none": 157,
+    "builtin:cast-spell": 8,
+    "none": 156,
     "resolves": 201,
     "note-only": 122,
     "builtin:zone": 9,
@@ -78,11 +78,11 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 81,
+    "none": 79,
     "note-only": 13,
     "resolves": 45,
     "builtin:no-effect": 10,
-    "builtin:cast-spell": 7
+    "builtin:cast-spell": 9
    },
    "mechanisms": {
     "trigger": 106,
@@ -297,7 +297,7 @@
    "count": 491,
    "resolves": 329,
    "gaps": 0,
-   "none": 42
+   "none": 41
   },
   "affliction": {
    "count": 144,
@@ -309,7 +309,7 @@
    "count": 33,
    "resolves": 5,
    "gaps": 0,
-   "none": 11
+   "none": 10
   },
   "strike": {
    "count": 31,
@@ -327,13 +327,13 @@
    "count": 156,
    "resolves": 54,
    "gaps": 0,
-   "none": 76
+   "none": 74
   },
   "counteract": {
    "count": 79,
    "resolves": 18,
    "gaps": 0,
-   "none": 28
+   "none": 27
   },
   "area": {
    "count": 44,
@@ -356,8 +356,8 @@
  },
  "live": {
   "totals": {
-   "cast": 26,
-   "none": 428,
+   "cast": 29,
+   "none": 425,
    "item": 652,
    "zone": 86,
    "expose": 89,
@@ -367,8 +367,8 @@
   },
   "byCategory": {
    "other": {
-    "cast": 7,
-    "none": 186,
+    "cast": 8,
+    "none": 185,
     "later": 8,
     "save": 71,
     "item": 225,
@@ -384,9 +384,9 @@
     "save": 6
    },
    "talisman": {
-    "none": 92,
+    "none": 90,
     "item": 47,
-    "cast": 7,
+    "cast": 9,
     "save": 10
    },
    "elixir": {
@@ -440,7 +440,7 @@
    }
   },
   "noCard": {
-   "no-plan": 337,
+   "no-plan": 334,
    "triggered": 21,
    "gm": 69,
    "other": 1
@@ -3178,7 +3178,9 @@
     "casts-spell",
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Rending Snare",
@@ -14554,7 +14556,9 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Potion of Disguise (Greater)",
@@ -23449,7 +23453,9 @@
     "trigger",
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Flask of Elemental Air",
