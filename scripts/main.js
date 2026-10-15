@@ -4,6 +4,7 @@
 // confirmation cards after PF2e's own Use (scripts/live.js, docs/design.md).
 
 import { compileItem, handlesItem, spellEffectIndex } from "../src/compiler/index.js";
+import { compileActivations } from "../src/compiler/permanent.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -31,7 +32,7 @@ Hooks.once("ready", async () => {
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spell Effects couldn't be indexed.`, error);
     }
-    setUpLivePlay({ compileItem: compile });
+    setUpLivePlay({ compileItem: compile, compileActivations: (item) => compileActivations(dataOf(item), { basicActions: basicActions(), spellEffects }) });
     const module = game.modules.get(MODULE_ID);
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)

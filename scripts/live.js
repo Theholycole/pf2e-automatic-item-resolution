@@ -18,6 +18,7 @@ import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } fr
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { applyCastCard, postCastCard } from "./casts.js";
 import { startItemZone } from "./zones.js";
+import { applyActivationsCard, cardForItemPost, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 
@@ -25,8 +26,9 @@ let compile = null;
 // The last dose's item, kept as PF2e deletes it (its Use message can arrive after): uuid → { data, actor }.
 const deleted = new Map();
 
-export function setUpLivePlay({ compileItem }) {
+export function setUpLivePlay({ compileItem, compileActivations = null }) {
     compile = compileItem;
+    setUpActivations({ compileActivations, postCardFor });
     Hooks.on("deleteItem", (item) => {
         rememberDeletedBomb(item);
         if (item?.type !== "consumable") return;
@@ -38,6 +40,7 @@ export function setUpLivePlay({ compileItem }) {
         cardForUse(message).catch((error) => console.error(`${MODULE_ID} | item card`, error));
         cardForBomb(message).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
         strikeWithPoison(message).catch((error) => console.error(`${MODULE_ID} | poisoned Strike`, error));
+        cardForItemPost(message).catch((error) => console.error(`${MODULE_ID} | activations card`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
         hideCovered(message, html);
@@ -78,9 +81,14 @@ async function cardForUse(message) {
     const actor = used.actor ?? message.actor;
     if (!actor) return;
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
-    // Its card (src/live/route.js): an injury poison's weapon to coat (scripts/poisons.js); a contact, inhaled or ingested
-    // poison's exposure, or another item's save on its Use (Spark Wafer, Pyronite), for the creatures targeted; a spell PF2e
-    // has no Effect for, cast by the spell module (scripts/casts.js); else the item card below.
+    return postCardFor({ message, plan, used, actor, token, origin });
+}
+
+// The card for a plan (src/live/route.js): an injury poison's weapon to coat (scripts/poisons.js); a contact, inhaled or
+// ingested poison's exposure, or another item's save on its Use (Spark Wafer, Pyronite), for the creatures targeted; a spell
+// PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone (scripts/zones.js); else the item card below.
+// (A consumable's after PF2e's Use; a permanent item's activation from its activations card, scripts/activations.js.)
+export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
@@ -88,7 +96,7 @@ async function cardForUse(message) {
     if (route === "zone") return startItemZone({ plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
-    const roll = message.rolls?.[0];
+    const roll = message?.rolls?.[0];
     const rolled = plan.item?.pf2eRoll && Number.isFinite(roll?.total) ? { total: roll.total, formula: plan.item.pf2eRoll.formula, kind: plan.item.pf2eRoll.kind, messageId: message.id } : null;
     const sourceId = used.data._stats?.compendiumSource ?? used.data.flags?.core?.sourceId ?? origin.sourceId ?? null;
     const state = createItemCard({
@@ -100,11 +108,12 @@ async function cardForUse(message) {
     });
     const card = await ChatMessage.create({
         content: cardHTML(state, { canApply: true }),
-        speaker: message.speaker,
+        speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }),
         flags: { [MODULE_ID]: { [FLAG]: state } }
     });
     // PF2e's roll is the card's: its own apply buttons come off that message.
     if (rolled && card) await message.update({ "flags.pf2e.suppressDamageButtons": true, [`flags.${MODULE_ID}.covered`]: card.id });
+    return card;
 }
 
 // PF2e's message whose roll an item card applies: no apply buttons, a pointer to the card instead.
@@ -134,6 +143,7 @@ function choicesOf(state, root) {
 }
 
 const APPLY = {
+    activations: (message, choices) => applyActivationsCard(message, choices),
     bomb: (message, choices) => applyBombCard(message, choices),
     poison: (message, choices) => applyPoisonCard(message, choices),
     cast: (message, choices) => applyCastCard(message, choices),
@@ -154,12 +164,29 @@ function wireCard(message, html) {
         // The drinker as text, not a choice; the splash ticks read-only.
         for (const select of root.querySelectorAll("select[data-air-field]")) select.replaceWith(document.createTextNode(select.selectedOptions?.[0]?.textContent ?? ""));
         for (const box of root.querySelectorAll("[data-air-splash]")) box.disabled = true;
+        for (const each of root.querySelectorAll("[data-air-activation]")) each.remove();
         const hint = document.createElement("p");
         hint.className = "aar-hint";
         hint.textContent = `Waiting for ${state.user.name}'s player or the GM to apply it.`;
         root.append(hint);
         return;
     }
+    // (The activations card: a button for each activation, its index the choice.)
+    for (const each of root.querySelectorAll("[data-air-activation]")) each.addEventListener("click", async (event) => {
+        event.preventDefault();
+        each.disabled = true;
+        const choices = { activation: Number(each.dataset.airActivation) };
+        try {
+            if (isActiveGM()) await applyByKind(message, state, choices);
+            else if (!game.users.activeGM) throw new Error("No GM is connected to activate it.");
+            else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });
+        } catch (error) {
+            ui.notifications.error(`${state.item.name}: ${error.message}`);
+            console.error(`${MODULE_ID} |`, error);
+        } finally {
+            each.disabled = false;
+        }
+    });
     const button = root.querySelector("[data-air-action='apply']");
     button?.addEventListener("click", async (event) => {
         event.preventDefault();
@@ -201,6 +228,7 @@ async function onRequest(data) {
         : state.kind === "poison" ? { weapon: data.weapon }
         : state.kind === "cast" ? { drinker: data.drinker, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "expose" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "activations" ? { activation: Number(data.activation) }
         : { drinker: data.drinker };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);

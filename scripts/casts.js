@@ -13,7 +13,7 @@ export async function postCastCard({ message, plan, used, actor, token }) {
         user: entryOf(token, actor),
         drinkers: plan.self && plan.item?.recipient === "drinker" ? creaturesNear(token, 5) : []
     });
-    return ChatMessage.create({ content: castCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
+    return ChatMessage.create({ content: castCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
 // targets: the token uuids of whoever pressed Apply, for a spell aimed at others.

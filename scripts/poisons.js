@@ -15,7 +15,7 @@ export async function postPoisonCard({ message, plan, used, actor, token }) {
         user: entryOf(token, actor),
         weapons
     });
-    return ChatMessage.create({ content: poisonCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
+    return ChatMessage.create({ content: poisonCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
 export async function applyPoisonCard(message, { weapon = null } = {}) {
@@ -73,7 +73,7 @@ export async function strikeWithPoison(message) {
 // Contact, inhaled and ingested poisons: a card to expose the creatures its presser targets.
 export async function postExposureCard({ message, plan, used, actor, token, later = false }) {
     const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later });
-    return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
+    return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
 // targets: the token uuids the presser had targeted.

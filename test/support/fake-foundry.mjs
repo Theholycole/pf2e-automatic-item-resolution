@@ -136,7 +136,17 @@ export function createFakeFoundry() {
             id: source._id,
             type: source.type,
             name: source.name,
+            img: source.img ?? null,
+            system: source.system,
             actor,
+            flags: {},
+            getFlag(scope, key) {
+                return this.flags?.[scope]?.[key];
+            },
+            async setFlag(scope, key, value) {
+                this.flags[scope] = { ...(this.flags[scope] ?? {}), [key]: structuredClone(value) };
+                return this;
+            },
             toObject: () => ({ ...structuredClone(source), _stats: { compendiumSource: `Compendium.pf2e.equipment-srd.Item.${source._id}` } })
         });
         return item;
@@ -248,9 +258,9 @@ let shared = null;
 export async function fakeFoundry() {
     if (shared) return shared;
     shared = createFakeFoundry();
-    const [{ setUpLivePlay }, { compileItem, spellEffectIndex }] = await Promise.all([import("../../scripts/live.js"), import("../../src/compiler/index.js")]);
+    const [{ setUpLivePlay }, { compileItem, spellEffectIndex }, { compileActivations }] = await Promise.all([import("../../scripts/live.js"), import("../../src/compiler/index.js"), import("../../src/compiler/permanent.js")]);
     const spellEffects = spellEffectIndex(readDocuments(path.join(PACKS, "spell-effects")).filter((doc) => doc.collection === "items"));
-    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects }) });
+    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects }), compileActivations: (data) => compileActivations(data, { spellEffects }) });
     return shared;
 }
 
