@@ -116,6 +116,9 @@ test("an item granting a spell's effects gets PF2e's Spell Effect at its rank an
     assert.deepEqual(registry.resolveSync(quickness, context(), io()).changes.map((change) => [change.op, change.target, change.effect.label]), [["effect", "drinker", "Spell Effect: Haste"]]);
     // No PF2e Effect for Invisibility: still a cast, the spell module's.
     assert.equal(compileItem(item("Invisibility Potion")).builtin, "cast-spell");
+    // A talisman that casts a spell on its user: the same, at its rank (Snarling Badger's Heroism) or for its time (Stormfeather's Fly).
+    assert.deepEqual(compileItem(item("Snarling Badger (Moderate)")).resolution.applications.map((entry) => [entry.label, entry.level, entry.recipients]), [["Spell Effect: Heroism", 6, "self"]]);
+    assert.deepEqual(compileItem(item("Stormfeather")).resolution.applications.map((entry) => [entry.label, entry.duration]), [["Spell Effect: Fly", { value: 1, unit: "minutes" }]]);
     // Without the index (no spell-effects pack): the ability compiler's reading.
     assert.equal(compileWith(item("Oak Potion")).builtin, "cast-spell");
 });

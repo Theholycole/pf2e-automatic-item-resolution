@@ -9,9 +9,9 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 14,
-   "none": 363,
-   "resolves": 741,
-   "note-only": 278,
+   "none": 360,
+   "resolves": 745,
+   "note-only": 277,
    "builtin:zone": 22,
    "builtin:no-effect": 84,
    "partial": 5,
@@ -73,9 +73,9 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 89,
-    "note-only": 16,
-    "resolves": 40,
+    "none": 86,
+    "note-only": 15,
+    "resolves": 44,
     "builtin:no-effect": 11
    },
    "mechanisms": {
@@ -300,9 +300,9 @@
   },
   "casts-spell": {
    "count": 37,
-   "resolves": 1,
+   "resolves": 5,
    "gaps": 0,
-   "none": 23
+   "none": 20
   },
   "strike": {
    "count": 31,
@@ -318,9 +318,9 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 50,
+   "resolves": 53,
    "gaps": 0,
-   "none": 83
+   "none": 80
   },
   "counteract": {
    "count": 79,
@@ -336,13 +336,13 @@
   },
   "condition": {
    "count": 437,
-   "resolves": 292,
+   "resolves": 295,
    "gaps": 0,
-   "none": 65
+   "none": 62
   },
   "duration": {
    "count": 947,
-   "resolves": 578,
+   "resolves": 579,
    "gaps": 0,
    "none": 22
   }
@@ -726,7 +726,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": []
   },
   {
    "name": "Wand Of Splintered Sorrows (Rank 6)",
@@ -11316,8 +11318,9 @@
     "casts-spell",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check"
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": []
   },
   {
    "name": "Special Ingredient",
@@ -24169,7 +24172,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": []
   },
   {
    "name": "Aroma Concealer",
@@ -24614,7 +24619,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": []
   },
   {
    "name": "Ghost Ink",

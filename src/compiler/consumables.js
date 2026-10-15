@@ -53,8 +53,13 @@ const GRANTS_SPELL = new RegExp(String.raw`\b(?:gains?|grants? you|gives? you|ha
 const COUNT = { one: 1, a: 1, an: 1 };
 const UNIT = (unit) => (/^round/i.test(unit) ? "rounds" : /^minute/i.test(unit) ? "minutes" : /^hour/i.test(unit) ? "hours" : "days");
 
+// (A talisman's "it casts a 6th-rank Heroism on you", "the talisman casts Fly on you, though the duration is 1 minute": the
+// same, on the item's user.)
+const CASTS_ON_YOU = new RegExp(String.raw`\b(?:it|the [\w' -]+?|this [\w' -]+?) casts (?:an? )?(?:${ORDINAL_RANK} )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]*)\}(?: spell)? on you\b(?:,? though the duration is (\d+|one|an?) (rounds?|minutes?|hours?|days?))?`, "gi");
+
 export function grantedSpells(item) {
-    return [...String(item?.system?.description?.value ?? "").matchAll(GRANTS_SPELL)].map((match) => ({
+    const html = String(item?.system?.description?.value ?? "");
+    return [...html.matchAll(GRANTS_SPELL), ...html.matchAll(CASTS_ON_YOU)].map((match) => ({
         spell: { uuid: match[2], name: match[3].trim() },
         rank: match[1] ? Number(match[1]) : null,
         duration: match[4] ? { value: COUNT[match[4].toLowerCase()] ?? Number(match[4]), unit: UNIT(match[5]) } : null
