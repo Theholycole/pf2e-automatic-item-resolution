@@ -61,6 +61,6 @@ Once batch 1 is live, its session is handed the plans. It reads a PC's consumabl
 - **Ability module:** done 2026-10-15 (ability 1cd0e31, a54d84b): `compileAbility` kept stable; `api.live.applyChange(change, state)` exported; the readZone crash fixed (Cold Comfort, Hampering Snare). Later, for batch 2: `postCard` / `postEffectCard`.
 - **Core:** done 2026-10-15:
   - `api.dying` (f8e5d41), moved from the spell module;
-  - `check.roll: "automatic"` accepted by saveGaps and CHECK_ROLLS, in progress in its tree when this was written.
+  - `check.roll: "automatic"` accepted by saveGaps and CHECK_ROLLS (3875c84).
 - **Spell module:** nothing for PF2e's own items. Later, `claims(item)` for the third-party ones, and the casting export for items that cast a spell (the user's answer 4).
 - **Simulator:** the hand-off above, once the cards are live-checked.
