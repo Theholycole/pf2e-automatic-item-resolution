@@ -5,8 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
-import { createFakeFoundry, settle } from "./support/fake-foundry.mjs";
-import { compileItem } from "../src/compiler/index.js";
+import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const SOCKET = `module.${MODULE_ID}`;
@@ -14,20 +13,18 @@ const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/pac
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
 const source = (name) => equipment.find((doc) => doc.name === name);
 
-const foundry = createFakeFoundry();
-const { setUpLivePlay } = await import("../scripts/live.js");
-setUpLivePlay({ compileItem: (data) => compileItem(data) });
-
-const alchemist = foundry.makeActor({ id: "alchemist", name: "Alchemist", owners: ["player"] });
-const goblin = foundry.makeActor({ id: "goblin", name: "Goblin" });
-const kyra = foundry.makeActor({ id: "kyra", name: "Kyra" });
-const boss = foundry.makeActor({ id: "boss", name: "Goblin Boss" });
-const far = foundry.makeActor({ id: "far", name: "Far Goblin" });
-foundry.place(alchemist, 0, 0);
-foundry.place(goblin, 300, 0);
-foundry.place(kyra, 400, 0);
-foundry.place(boss, 300, 100);
-foundry.place(far, 600, 0);
+// (The stand-in is shared with the other flow tests: these creatures stand apart from theirs, 20 squares down.)
+const foundry = await fakeFoundry();
+const alchemist = foundry.makeActor({ id: "bomb-alchemist", name: "Alchemist", owners: ["player"] });
+const goblin = foundry.makeActor({ id: "bomb-goblin", name: "Goblin" });
+const kyra = foundry.makeActor({ id: "bomb-kyra", name: "Kyra" });
+const boss = foundry.makeActor({ id: "bomb-boss", name: "Goblin Boss" });
+const far = foundry.makeActor({ id: "bomb-far", name: "Far Goblin" });
+foundry.place(alchemist, 0, 2000);
+foundry.place(goblin, 300, 2000);
+foundry.place(kyra, 400, 2000);
+foundry.place(boss, 300, 2100);
+foundry.place(far, 600, 2000);
 
 // PF2e's damage message for a bomb Strike: its main roll, then a splash-only roll per damage type (8.6.1).
 async function damage(bomb, { outcome, target = goblin, splash = 1, type = "electricity" }) {

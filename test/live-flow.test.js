@@ -5,19 +5,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
-import { createFakeFoundry, settle } from "./support/fake-foundry.mjs";
-import { compileItem, spellEffectIndex } from "../src/compiler/index.js";
+import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const SOCKET = `module.${MODULE_ID}`;
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
-const spellEffects = spellEffectIndex(readDocuments(path.join(PACKS, "spell-effects")).filter((doc) => doc.collection === "items"));
 const source = (name) => equipment.find((doc) => doc.name === name);
 
-const foundry = createFakeFoundry();
-const { setUpLivePlay } = await import("../scripts/live.js");
-setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects }) });
+const foundry = await fakeFoundry();
 
 const valeros = foundry.makeActor({ id: "valeros", name: "Valeros", owners: ["player"] });
 const kyra = foundry.makeActor({ id: "kyra", name: "Kyra", hp: 0, conditions: ["dying", "unconscious"] });

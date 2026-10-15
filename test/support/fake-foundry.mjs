@@ -212,6 +212,18 @@ export function createFakeFoundry() {
     };
 }
 
+// One stand-in per test process (the suites run with --test-isolation=none, and Foundry's globals are global), with
+// the live layer set up on it once.
+let shared = null;
+export async function fakeFoundry() {
+    if (shared) return shared;
+    shared = createFakeFoundry();
+    const [{ setUpLivePlay }, { compileItem, spellEffectIndex }] = await Promise.all([import("../../scripts/live.js"), import("../../src/compiler/index.js")]);
+    const spellEffects = spellEffectIndex(readDocuments(path.join(PACKS, "spell-effects")).filter((doc) => doc.collection === "items"));
+    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects }) });
+    return shared;
+}
+
 // Waits until the hooks' unawaited work settles (the live layer's handlers return nothing).
 export const settle = async (times = 30) => {
     for (let index = 0; index < times; index++) await new Promise((resolve) => setImmediate(resolve));
