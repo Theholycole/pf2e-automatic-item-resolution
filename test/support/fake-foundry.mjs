@@ -158,7 +158,13 @@ export function createFakeFoundry() {
             return makeMessage({ content: "ability save card", flags: { "pf2e-automatic-ability-resolution": { card: { plan: options.plan } } } });
         }
     } };
-    const modules = new Map([["pf2e-resolution-core", { api: core }], ["pf2e-automatic-ability-resolution", { api: ability }]]);
+    // The spell module's castFromItem (asked for casts): recorded.
+    const casts = [];
+    const spell = { castFromItem: async (options) => {
+        casts.push(options);
+        return { message: makeMessage({ content: "cast" }), rank: options.rank ?? 1 };
+    } };
+    const modules = new Map([["pf2e-resolution-core", { api: core }], ["pf2e-automatic-ability-resolution", { api: ability }], ["pf2e-automatic-resolution", { api: spell }]]);
 
     const globals = {
         Hooks: {
@@ -211,6 +217,8 @@ export function createFakeFoundry() {
         messages,
         posted,
         ability,
+        casts,
+        spell,
         emitted,
         applied,
         notifications,

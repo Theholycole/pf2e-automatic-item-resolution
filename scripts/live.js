@@ -17,6 +17,8 @@ import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyPoisonCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { isInjuryPoison } from "../src/live/poison-card.js";
+import { applyCastCard, postCastCard } from "./casts.js";
+import { isCast } from "../src/live/cast-card.js";
 
 // The plans batch 1 plays on its card (potions, elixirs, mutagens): healing, PF2e Effects, and the
 // item's own automatic row on its drinker or user (conditions, temporary Hit Points, a note).
@@ -81,6 +83,8 @@ async function cardForUse(message) {
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
     // An injury poison: which weapon to coat (scripts/poisons.js).
     if (isInjuryPoison(plan)) return postPoisonCard({ message, plan, used, actor, token });
+    // A spell PF2e has no Effect for: the spell module casts it (scripts/casts.js).
+    if (isCast(plan)) return postCastCard({ message, plan, used, actor, token });
     if (!played(plan)) return;
     const user = entryOf(token, actor);
     const roll = message.rolls?.[0];
@@ -122,10 +126,17 @@ function hideCovered(message, html) {
 function choicesOf(state, root) {
     if (state.kind === "bomb") return { included: [...root.querySelectorAll("[data-air-splash]")].filter((box) => box.checked).map((box) => Number(box.dataset.airSplash)) };
     if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
+    // (A spell at others: the presser's own targets.)
+    if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) };
 }
 
-const APPLY = { bomb: (message, choices) => applyBombCard(message, choices), poison: (message, choices) => applyPoisonCard(message, choices), item: (message, choices) => applyCard(message, choices) };
+const APPLY = {
+    bomb: (message, choices) => applyBombCard(message, choices),
+    poison: (message, choices) => applyPoisonCard(message, choices),
+    cast: (message, choices) => applyCastCard(message, choices),
+    item: (message, choices) => applyCard(message, choices)
+};
 const applyByKind = (message, state, choices) => APPLY[state.kind](message, choices);
 
 function wireCard(message, html) {
@@ -172,7 +183,10 @@ async function onRequest(data) {
     if (!state || !sender) return;
     const owner = sender.isGM || !!(await fromUuid(state.user.actorUuid).catch(() => null))?.testUserPermission?.(sender, "OWNER");
     if (!owner) return;
-    const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null } : state.kind === "poison" ? { weapon: data.weapon } : { drinker: data.drinker };
+    const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null }
+        : state.kind === "poison" ? { weapon: data.weapon }
+        : state.kind === "cast" ? { drinker: data.drinker, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : { drinker: data.drinker };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
