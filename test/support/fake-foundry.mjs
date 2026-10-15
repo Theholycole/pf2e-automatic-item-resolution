@@ -94,9 +94,10 @@ export function createFakeFoundry() {
                 this.conditions.set(slug, (this.conditions.get(slug) ?? 0) + 1);
             },
             async applyDamage({ damage, token }) {
-                this.healed.push({ damage, token: token?.uuid ?? null });
+                this.healed.push({ damage: typeof damage === "number" ? damage : damage.formula, token: token?.uuid ?? null });
                 const hp = this.system.attributes.hp;
-                hp.value = Math.max(0, Math.min(hp.max, hp.value - damage));
+                const amount = typeof damage === "number" ? damage : Number(damage.total) || 0;
+                hp.value = Math.max(0, Math.min(hp.max, hp.value - amount));
                 return this;
             },
             async createEmbeddedDocuments(type, data) {
@@ -170,6 +171,16 @@ export function createFakeFoundry() {
                 return this;
             }
         },
+        // PF2e's DamageRoll, as CONFIG.Dice.rolls lists it: its formula kept, its total the formula's leading number.
+        CONFIG: { Dice: { rolls: [class DamageRoll {
+            constructor(formula) {
+                this.formula = formula;
+            }
+            async evaluate() {
+                this.total = Number(/\d+/.exec(this.formula)?.[0] ?? 0);
+                return this;
+            }
+        }] } },
         ui: { notifications: { error: (text) => notifications.push(text), warn: (text) => notifications.push(text) } },
         document: { querySelectorAll: () => [] }
     };

@@ -1,5 +1,6 @@
 // Live play: a confirmation card after PF2e's own Use of a consumable
-// (docs/design.md, the user's answers of 2026-10-15).
+// (docs/design.md, the user's answers of 2026-10-15), and after a bomb's damage
+// roll (scripts/bombs.js).
 //
 // - PF2e's Use posts its message (and rolls the item's healing): on the active
 //   GM's client, the item's card follows it. Nothing changes until Apply.
@@ -12,19 +13,12 @@
 //   other change goes through the ability module's api.live.applyChange.
 
 import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, rolledHealing, rollFormula, USER_ID } from "../src/live/card.js";
-import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, stateOf } from "./foundry.js";
+import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 
-const MODULE_ID = "pf2e-automatic-item-resolution";
-const CORE_ID = "pf2e-resolution-core";
-const ABILITY_ID = "pf2e-automatic-ability-resolution";
-const FLAG = "card";
-const SOCKET = `module.${MODULE_ID}`;
 // The plans batch 1 plays on its card (potions, elixirs, mutagens): healing, PF2e Effects, and the
 // item's own automatic row on its drinker or user (conditions, temporary Hit Points, a note).
 const played = (plan) => ["healing", "effect"].includes(plan?.resolution?.kind) || (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic");
-
-const isActiveGM = () => game.users.activeGM?.isSelf ?? game.user.isGM;
-const stateOf = (message) => message?.getFlag?.(MODULE_ID, FLAG) ?? null;
 
 let compile = null;
 // The last dose's item, kept as PF2e deletes it (its Use message can arrive after): uuid → { data, actor }.
@@ -33,12 +27,15 @@ const deleted = new Map();
 export function setUpLivePlay({ compileItem }) {
     compile = compileItem;
     Hooks.on("deleteItem", (item) => {
+        rememberDeletedBomb(item);
         if (item?.type !== "consumable") return;
         deleted.set(item.uuid, { data: { ...item.toObject(false), uuid: item.uuid }, actor: item.actor ?? null });
         setTimeout(() => deleted.delete(item.uuid), 30_000);
     });
     Hooks.on("createChatMessage", (message) => {
-        if (isActiveGM()) cardForUse(message).catch((error) => console.error(`${MODULE_ID} | item card`, error));
+        if (!isActiveGM()) return;
+        cardForUse(message).catch((error) => console.error(`${MODULE_ID} | item card`, error));
+        cardForBomb(message).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
         hideCovered(message, html);
@@ -70,25 +67,6 @@ async function usedItem(origin, message) {
     return source ? { data: { ...source.toObject(false), uuid: origin.uuid ?? null }, actor: message.actor ?? null } : null;
 }
 
-const entryOf = (token, actor) => ({ actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null, name: token?.name ?? actor.name });
-
-// A token's space for the core's distance (as the ability module measures auras).
-function spaceOf(token) {
-    const size = canvas.grid.size;
-    const document = token.document ?? token;
-    return { x: Number(document.x), y: Number(document.y), w: Math.max(1, Number(document.width ?? 1)) * size, h: Math.max(1, Number(document.height ?? 1)) * size, elevation: Number(document.elevation ?? 0) };
-}
-
-// The creatures next to the user it can be fed to: adjacent (5 feet), on the same scene, visible.
-function adjacentCreatures(userToken) {
-    if (!userToken || !canvas?.ready || userToken.document?.parent?.id !== canvas.scene?.id) return [];
-    const from = spaceOf(userToken);
-    const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };
-    return canvas.tokens.placeables
-        .filter((token) => token !== userToken && token.actor?.isOfType?.("creature") && !token.document.hidden && distanceFeet(from, spaceOf(token), grid) <= 5)
-        .map((token) => entryOf(token, token.actor));
-}
-
 async function cardForUse(message) {
     const origin = message?.flags?.pf2e?.origin;
     if (origin?.type !== "consumable" || message.flags?.pf2e?.context?.type || message.flags?.[MODULE_ID]) return;
@@ -107,7 +85,7 @@ async function cardForUse(message) {
         plan,
         item: { name: used.data.name, uuid: used.data.uuid ?? origin.uuid ?? null, sourceId, slug: used.data.system?.slug ?? null, img: used.data.img ?? null },
         user,
-        drinkers: plan.item?.recipient === "drinker" ? adjacentCreatures(token) : [],
+        drinkers: plan.item?.recipient === "drinker" ? creaturesNear(token, 5) : [],
         rolled
     });
     const card = await ChatMessage.create({
@@ -122,7 +100,8 @@ async function cardForUse(message) {
 // PF2e's message whose roll an item card applies: no apply buttons, a pointer to the card instead.
 function hideCovered(message, html) {
     if (!message?.getFlag?.(MODULE_ID, "covered")) return;
-    for (const section of html.querySelectorAll(".damage-application")) section.remove();
+    // (A bomb's: only its splash-only rolls' buttons; PF2e's main damage stays PF2e's.)
+    if (!hideCoveredSplash(message, html)) for (const section of html.querySelectorAll(".damage-application")) section.remove();
     if (!html.querySelector(".pf2e-air-covered")) {
         const note = document.createElement("p");
         note.className = "pf2e-air-covered";
@@ -134,26 +113,26 @@ function hideCovered(message, html) {
 
 // --- Buttons ----------------------------------------------------------------------
 
-function mayApply(state) {
-    if (game.user.isGM) return true;
-    try {
-        return !!fromUuidSync(state.user.actorUuid)?.testUserPermission?.(game.user, "OWNER");
-    } catch {
-        return false;
-    }
+// What a card's controls say on Apply: the item card's drinker, the bomb card's ticked splash.
+function choicesOf(state, root) {
+    if (state.kind === "bomb") return { included: [...root.querySelectorAll("[data-air-splash]")].filter((box) => box.checked).map((box) => Number(box.dataset.airSplash)) };
+    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) };
 }
+
+const applyByKind = (message, state, choices) => (state.kind === "bomb" ? applyBombCard(message, choices) : applyCard(message, choices));
 
 function wireCard(message, html) {
     const state = stateOf(message);
-    if (!state || state.kind !== "item") return;
+    if (!state || !["item", "bomb"].includes(state.kind)) return;
     const root = html.querySelector(".pf2e-air-card");
     if (!root || root.dataset.airWired) return;
     root.dataset.airWired = "true";
     if (state.status !== "open") return;
     if (!mayApply(state)) {
         root.querySelector("footer.aar-controls")?.remove();
-        // The drinker as text, not a choice.
+        // The drinker as text, not a choice; the splash ticks read-only.
         for (const select of root.querySelectorAll("select[data-air-field]")) select.replaceWith(document.createTextNode(select.selectedOptions?.[0]?.textContent ?? ""));
+        for (const box of root.querySelectorAll("[data-air-splash]")) box.disabled = true;
         const hint = document.createElement("p");
         hint.className = "aar-hint";
         hint.textContent = `Waiting for ${state.user.name}'s player or the GM to apply it.`;
@@ -164,11 +143,11 @@ function wireCard(message, html) {
     button?.addEventListener("click", async (event) => {
         event.preventDefault();
         button.disabled = true;
-        const drinker = Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0);
+        const choices = choicesOf(state, root);
         try {
-            if (isActiveGM()) await applyCard(message, { drinker });
+            if (isActiveGM()) await applyByKind(message, state, choices);
             else if (!game.users.activeGM) throw new Error("No GM is connected to apply it.");
-            else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, drinker, userId: game.user.id });
+            else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });
         } catch (error) {
             ui.notifications.error(`${state.item.name}: ${error.message}`);
             console.error(`${MODULE_ID} |`, error);
@@ -186,18 +165,14 @@ async function onRequest(data) {
     if (!state || !sender) return;
     const owner = sender.isGM || !!(await fromUuid(state.user.actorUuid).catch(() => null))?.testUserPermission?.(sender, "OWNER");
     if (!owner) return;
-    await applyCard(message, { drinker: data.drinker }).catch((error) => {
+    const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null } : { drinker: data.drinker };
+    await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
     });
 }
 
 // --- Apply ------------------------------------------------------------------------
-
-async function creatureOf(entry) {
-    const token = entry?.tokenUuid ? await fromUuid(entry.tokenUuid).catch(() => null) : null;
-    return { token, actor: token?.actor ?? (entry?.actorUuid ? await fromUuid(entry.actorUuid).catch(() => null) : null) };
-}
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
 
