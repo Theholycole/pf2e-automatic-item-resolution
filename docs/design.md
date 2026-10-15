@@ -6,7 +6,7 @@ Status, 2026-10-15: the user answered the design's questions the same day (the r
 
 From [census.md](census.md) (PF2e 8.6.1 packs):
 
-- **1,724** consumables. **216** are the spell module's (scrolls, wands, catalysts, spell gems), so this module handles **1,508**.
+- **1,724** consumables. **237** are the spell module's (scrolls, wands, catalysts, spell gems, and the 20 catalysts filed as "other"), so this module handles **1,487**.
 - **759** (50%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added the rest. **5** more are partial and **272** (18%) get only a note Effect; both are counted apart. **25** are casts, for the spell module.
 - **171** bombs are `weapon` items (group `bomb`). PF2e already Strikes with them (batch 2).
 - Batch 1 covers **400** items: potion 183, elixir 149, mutagen 68. When the design was proposed, 236 of them resolved, 35 were builtins and 129 had no plan. [census.md](census.md) has today's counts.
@@ -76,7 +76,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 3. That weapon's next Strike that hits posts the poison's save card on the target, through the ability module's `api.live.postCard`; its affliction goes to Pseudo Afflictions as monster venom does. A miss keeps the poison. A critical miss wastes it ("expend it as normal for an injury poison by either hitting a target or critically failing an attack roll").
 - Contact, inhaled and ingested poisons are later. The ability compiler reads them as Strike riders too, which fits only injury.
 
-**Casts** (`src/live/cast-card.js`, `scripts/casts.js`). An item that grants a spell PF2e has no Effect for compiles to the ability compiler's cast-spell builtin; 25 in the census. Examples: Fade Band's Invisibility, Truesight Potion with its counteract +25.
+**Casts** (`src/live/cast-card.js`, `scripts/casts.js`). An item that grants a spell PF2e has no Effect for compiles to the ability compiler's cast-spell builtin; 29 in the census, including casts at someone else ("casts a Rewrite Memory spell (DC 26 Will) against a single target") and summons ("casting a 5th-rank Summon Elemental spell"). Examples: Fade Band's Invisibility, Truesight Potion with its counteract +25.
 - Its card names the spell, its rank and any counteract modifier, and for a potion the drinker.
 - Apply calls the spell module's `api.castFromItem` (its session built it on 2026-10-15, c3a6b8d, not live-tested yet). The spell module casts it through PF2e, with a temporary entry it cleans up afterwards:
   - on the drinker for a potion;
@@ -95,7 +95,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 
 **The GM fallback gives way.** The ability compiler's last fallback ("no-effect", the GM's) yields to a reading of the item's own (its linked Effect, a spell's Effect, PF2e's healing, its row), though not to a note alone. PF2e's healing field counts only when the text heals: Potion of Annulment keeps its counteract roll there.
 
-`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,063 of 1,508 consumables get a card, and it says why the rest don't (354 nothing read, 69 the GM's fallback, 21 triggered saves).
+`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,062 of 1,487 consumables get a card, and it says why the rest don't.
 
 **The live check is ready** (`tools/live-check.mjs`, run in pftest's browser). It has its own "PFTEST ITEM Lab" scene and "PFTEST ITEM" creatures, and cleans up only its own data. Its cases:
 - a potion fed to a dying ally;
