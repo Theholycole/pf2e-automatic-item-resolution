@@ -22,6 +22,7 @@ import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
+import { applyCounteractCard, postCounteractCard } from "./counteract.js";
 import { activate, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
@@ -104,6 +105,9 @@ async function cardForUse(message) {
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
+    // (An item that also counteracts on its drinker — Panacea Fruit heals too: its counteract card beside its own.)
+    if (route !== "counteract" && plan?.item?.counteract) await postCounteractCard({ message, plan, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | counteract card`, error));
+    if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
     if (route === "cast") return postCastCard({ message, plan, used, actor, token });
@@ -153,6 +157,10 @@ function hideCovered(message, html) {
 // What a card's controls say on Apply: the item card's drinker, the bomb card's ticked splash.
 function choicesOf(state, root) {
     if (state.kind === "bomb") return { included: [...root.querySelectorAll("[data-air-splash]")].filter((box) => box.checked).map((box) => Number(box.dataset.airSplash)) };
+    // (The counteract card: its drinker, then its rows' ticks, DCs and ranks.)
+    if (state.kind === "counteract") return state.step === "find"
+        ? { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) }
+        : { rows: state.rows.map((row, index) => ({ ticked: Boolean(root.querySelector(`[data-air-row="${index}"]`)?.checked), dc: root.querySelector(`[data-air-dc="${index}"]`)?.value ?? null, rank: root.querySelector(`[data-air-rank="${index}"]`)?.value ?? null })) };
     if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
     if (state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
@@ -169,6 +177,7 @@ const APPLY = {
     strike: (message) => applyStrikeCard(message),
     reroll: (message, choices) => applyRerollCard(message, choices),
     "item-action": (message, choices) => applyActionCard(message, choices),
+    counteract: (message, choices) => applyCounteractCard(message, choices),
     item: (message, choices) => applyCard(message, choices)
 };
 const applyByKind = (message, state, choices) => APPLY[state.kind](message, choices);
@@ -240,6 +249,7 @@ async function onRequest(data) {
         : state.kind === "poison" ? { weapon: data.weapon }
         : state.kind === "cast" ? { drinker: data.drinker, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null }
         : { drinker: data.drinker, ceremony: Boolean(data.ceremony) };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);

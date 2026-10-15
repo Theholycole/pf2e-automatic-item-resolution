@@ -32,7 +32,12 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
   - **built:** *note only*: an item with a time and nothing else the module reads gets a note Effect with its text for that time. That's the user's note-Effect rule for spells, and the census counts these apart. The time can be written "Duration 1 minute", "The duration is 1 hour", "with a duration of 10 minutes" or rolled ("for 2d4 rounds").
   - **built:** *partial*: a row that reads only part of the text also carries the note and is counted apart ("Effect + note"). Immovable Potion's "DC to move you is 40" and Megaphone Mutagen's auditory benefit are like this. A sentence restating PF2e's usual rule ("As usual …") doesn't count.
 - Next readings for batch 1, by size:
-  1. Counteracting potions (Surging Serum, Bottled Catharsis, Potion of Stable Form): the core's affliction-care family (counteract), with the item's counteract modifier and rank. This needs live code of its own (pick the Effect to counteract, roll the check), so it waits until it can be checked in Foundry.
+  1. Counteracting consumables are **built** (`src/compiler/counteract.js`, `src/live/counteract-card.js`, `scripts/counteract.js`; the user's answer of 2026-10-15). 28 PF2e consumables: Surging Serum, Bottled Catharsis, Panacea, Contagion Metabolizer, Fu Water, Salve of Antiparalysis, Dragon's Blood Pudding and others.
+     - `plan.item.counteract` holds `{ modifier, rank, conditions, traits, afflictions, pick, reduce?, notes? }`. With no rank stated, the rank is half the item's level, rounded up.
+     - The card has two steps. Step 1 picks the drinker (the user or a creature next to them) and finds what the item counteracts on them. That's each Effect with the trait or granting a listed condition, each listed condition no Effect grants, and each PF2e affliction of the kind. Each comes with the DC and rank PF2e knows: an Effect's level, its origin's class or spell DC (as the spell module reads it), an affliction's DC and half its level.
+     - Step 2 takes the ticks and the GM's numbers where PF2e had none, rolls the item's counteract check for each (`1d20 + modifier`), and applies PF2e's counteract rule (a critical success up to 3 ranks above, a success 1 above, a failure only lower). It ends the Effect, the condition or the affliction, or lowers it (Moon Radish Soup).
+     - An item with another reading (Panacea Fruit's healing) gets both cards.
+     - PF2e's counteract rule is a small table of the item module's own: the spell module's isn't exported, and the core has none.
   2. Resistance to a chosen type with no Effect (Potion of Resistance, Mutagenic Renovator): an Effect made with PF2e's Resistance rule, the type picked on the card.
   3. Items with two activations: the teas' Tea Ceremony is **built** (`src/compiler/tea.js`, the user's answer of 2026-10-15). `plan.item.ceremony` holds `{ duration, removes, text }`, and the card shows a "Tea Ceremony" tick. Ticked, the tea's Effect lasts the ceremony's time (Longnight Tea's 8 hours) and the conditions it names go (its fatigued). PF2e's own ceremony ChoiceSet on the Effect is preset to the ceremony when ticked and to the plain drink when not (Peace in Dreams Tea, Resurrection Tea), so PF2e needn't ask.
   4. Out of combat (Disguise, Gender Transformation, Ration Tonic, Bookthief Brew): the GM's, as the ability module's "no-effect" with a reason.
@@ -97,7 +102,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 
 **The GM fallback gives way.** The ability compiler's last fallback ("no-effect", the GM's) yields to a reading of the item's own (its linked Effect, a spell's Effect, PF2e's healing, its row), though not to a note alone. PF2e's healing field counts only when the text heals: Potion of Annulment keeps its counteract roll there.
 
-`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,066 of 1,486 consumables get a card, and it says why the rest don't.
+`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,090 of 1,486 consumables get a card, and it says why the rest don't.
 
 **Skill actions taken with an item** (`src/compiler/item-actions.js`, `scripts/item-actions.js`): "use a Sneak action with a +1 item bonus" (Onyx Panther), "Attempt a Deception check to Feint with a +4 circumstance bonus" (Coldstar Pistols), "attempt to Administer First Aid using Medicine with a +1 item bonus" (Crying Angel Pendant), "Activate Treat Wounds" (Curled Cure Gel). A builtin "item-action" `{ slug, name, bonus, targeted, after?, basic }`.
 - Apply rolls PF2e's own action for the user (`game.pf2e.actions.get(slug).use`, as the spell module rolls its maneuvers), with the bonus as a PF2e Modifier, at the creature the presser targeted when the action is aimed at one.
@@ -133,6 +138,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - Fear Gem's readied Strike frightening the creature it hits;
 - Lucky Rabbit's Foot rerolling a Reflex save;
 - Onyx Panther's Sneak rolled by PF2e with its +1 item bonus;
+- Surging Serum counteracting a drinker's clumsy;
 - Spark Wafer's save;
 - a Cloak of Elvenkind's Activate button on the character sheet;
 - Hexing Jar's Focus Point, lost at the end of the turn in the check's own encounter (cleanup deletes only encounters flagged as its fixtures);

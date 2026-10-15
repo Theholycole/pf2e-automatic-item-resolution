@@ -14,12 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 324,
+   "none": 311,
    "resolves": 692,
    "builtin:zone": 86,
-   "note-only": 267,
+   "note-only": 266,
    "builtin:item-action": 6,
-   "builtin:no-effect": 69,
+   "builtin:counteract": 20,
+   "builtin:no-effect": 63,
    "partial": 10,
    "builtin:reroll": 2,
    "builtin:save-bonus": 1
@@ -30,12 +31,13 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 8,
-    "none": 156,
+    "none": 153,
     "resolves": 201,
-    "note-only": 121,
+    "note-only": 120,
     "builtin:zone": 9,
-    "builtin:no-effect": 15,
+    "builtin:no-effect": 14,
     "builtin:item-action": 1,
+    "builtin:counteract": 5,
     "builtin:save-bonus": 1
    },
    "mechanisms": {
@@ -60,9 +62,10 @@
    "results": {
     "resolves": 102,
     "note-only": 39,
-    "none": 20,
-    "builtin:no-effect": 10,
+    "none": 19,
+    "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
+    "builtin:counteract": 2,
     "partial": 2
    },
    "mechanisms": {
@@ -109,9 +112,10 @@
    "count": 149,
    "results": {
     "resolves": 83,
-    "none": 17,
+    "none": 9,
+    "builtin:counteract": 11,
     "note-only": 35,
-    "builtin:no-effect": 13,
+    "builtin:no-effect": 10,
     "builtin:zone": 1
    },
    "mechanisms": {
@@ -207,8 +211,9 @@
    "results": {
     "resolves": 25,
     "note-only": 20,
-    "builtin:no-effect": 7,
-    "none": 11,
+    "builtin:no-effect": 6,
+    "none": 10,
+    "builtin:counteract": 2,
     "builtin:cast-spell": 1,
     "partial": 2
    },
@@ -342,7 +347,7 @@
    "count": 79,
    "resolves": 18,
    "gaps": 0,
-   "none": 27
+   "none": 14
   },
   "area": {
    "count": 44,
@@ -354,7 +359,7 @@
    "count": 433,
    "resolves": 257,
    "gaps": 0,
-   "none": 58
+   "none": 46
   },
   "duration": {
    "count": 943,
@@ -366,13 +371,14 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 415,
-   "item": 652,
+   "none": 396,
+   "item": 651,
    "zone": 86,
    "expose": 89,
    "later": 54,
    "action": 6,
    "save": 107,
+   "counteract": 20,
    "reroll": 2,
    "coat": 45,
    "strike": 1
@@ -380,21 +386,23 @@
   "byCategory": {
    "other": {
     "cast": 8,
-    "none": 185,
+    "none": 181,
     "later": 8,
     "save": 71,
-    "item": 224,
+    "item": 223,
     "zone": 9,
     "expose": 3,
     "action": 1,
+    "counteract": 5,
     "coat": 3
    },
    "potion": {
     "item": 95,
     "later": 43,
-    "none": 32,
+    "none": 30,
     "cast": 9,
-    "save": 3
+    "save": 3,
+    "counteract": 2
    },
    "talisman": {
     "none": 82,
@@ -407,7 +415,8 @@
    },
    "elixir": {
     "item": 116,
-    "none": 31,
+    "none": 20,
+    "counteract": 11,
     "save": 1,
     "zone": 1
    },
@@ -436,8 +445,9 @@
    },
    "oil": {
     "item": 46,
-    "none": 18,
+    "none": 16,
     "save": 1,
+    "counteract": 2,
     "cast": 1
    },
    "fulu": {
@@ -457,9 +467,9 @@
    }
   },
   "noCard": {
-   "no-plan": 324,
+   "no-plan": 311,
    "triggered": 21,
-   "gm": 69,
+   "gm": 63,
    "other": 1
   }
  },
@@ -1151,7 +1161,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Wand of Wearying Dance",
@@ -3386,7 +3398,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Unsullied Blood (Major)",
@@ -4546,7 +4560,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Wand of Dazzling Rays (8th-rank)",
@@ -7428,9 +7444,9 @@
     "counteract",
     "duration"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Spiritsight Tea",
@@ -8423,9 +8439,9 @@
     "counteract",
     "duration"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Poison Sedum",
@@ -9364,9 +9380,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Potion of Annulment (Greater)",
@@ -10582,9 +10598,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Windstep Sheath",
@@ -12454,9 +12470,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Life Salt",
@@ -12723,7 +12739,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Animal Repellent (Major)",
@@ -16783,7 +16801,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Healing Vapor (Moderate)",
@@ -16989,7 +17009,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Wand of Dazzling Rays (7th-rank)",
@@ -17393,9 +17415,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Elixir of the Peaks (Major)",
@@ -19799,7 +19821,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Explosive Mine (Greater)",
@@ -24771,9 +24795,9 @@
     "counteract",
     "duration"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Pit Illusion Snare",
@@ -27114,7 +27138,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Merciful Balm",
@@ -27756,7 +27782,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Eye of Enlightenment",
@@ -28632,7 +28660,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Juggernaut Mutagen (Lesser)",
@@ -29008,7 +29038,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Wand of Caustic Effluence",
@@ -29176,7 +29208,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Potion of Acid Resistance (Moderate)",
@@ -29357,7 +29391,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Dimensional Knot",

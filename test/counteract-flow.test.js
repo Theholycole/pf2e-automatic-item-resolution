@@ -1,0 +1,70 @@
+// An item that counteracts what afflicts its drinker, against the stand-in for Foundry: the reading, step 1 (what it
+// finds on the drinker, with PF2e's numbers where it has them), step 2 (the counteract checks, PF2e's counteract rule,
+// what's removed).
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import path from "node:path";
+import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
+import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
+import { compileItem } from "../src/compiler/index.js";
+import { counteractCandidates, counteracts } from "../src/live/counteract-card.js";
+import { routeOf } from "../src/live/route.js";
+
+const MODULE_ID = "pf2e-automatic-item-resolution";
+const SOCKET = `module.${MODULE_ID}`;
+const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
+const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
+const source = (name) => equipment.find((doc) => doc.name === name);
+
+// (Shared with the other flow tests: this creature stands 140 squares down.)
+const foundry = await fakeFoundry();
+const weak = foundry.makeActor({ id: "counter-weak", name: "Weakened", owners: ["player"], conditions: ["enfeebled", "clumsy"] });
+foundry.place(weak, 0, 14000);
+weak.created.push({ id: "effect-enfeeble", type: "effect", name: "Effect: Ray of Enfeeblement", system: { traits: { value: [] }, level: { value: 1 } } });
+weak.conditionFlags.enfeebled = { pf2e: { grantedBy: { id: "effect-enfeeble" } } };
+
+test("the reading: its modifier and rank, what it counteracts, each or one or the highest", () => {
+    assert.deepEqual(compileItem(source("Surging Serum (Lesser)")).item.counteract, { modifier: 8, rank: 2, conditions: ["clumsy", "enfeebled"], traits: [], afflictions: [], pick: "each" });
+    assert.equal(routeOf(compileItem(source("Surging Serum (Lesser)"))), "counteract");
+    assert.equal(compileItem(source("Contagion Metabolizer (Lesser)")).item.counteract.pick, "highest");
+    assert.deepEqual(compileItem(source("Fu Water")).item.counteract.conditions, ["confused", "fascinated", "frightened", "stupefied"]);
+    // Panacea Fruit heals too: that card stays, the counteract card beside it.
+    const fruit = compileItem(source("Panacea Fruit"));
+    assert.notEqual(routeOf(fruit), "counteract");
+    assert.deepEqual(fruit.item.counteract.afflictions, ["curse", "disease", "poison"]);
+    // PF2e's rule: a success counteracts up to a rank above, a failure only a lower rank.
+    assert.deepEqual([counteracts(2, 2, 3), counteracts(2, 2, 4), counteracts(1, 2, 1), counteracts(1, 2, 2), counteracts(3, 2, 5), counteracts(0, 9, 1)], [true, false, true, false, true, false]);
+    // A condition an Effect grants is that Effect's row.
+    const rows = counteractCandidates({ effects: [{ id: "e", name: "E", traits: [], level: 1 }], conditions: [{ id: "c1", slug: "enfeebled", grantedBy: "e" }, { id: "c2", slug: "clumsy" }] }, { conditions: ["clumsy", "enfeebled"], traits: [], afflictions: [], pick: "each" });
+    assert.deepEqual(rows.map((row) => [row.kind, row.id, row.ticked]), [["effect", "e", true], ["condition", "c2", true]]);
+});
+
+test("Surging Serum: finds the Effect granting enfeebled and the plain clumsy; a success ends the Effect, a failure keeps clumsy", async () => {
+    const serum = foundry.giveItem(weak, source("Surging Serum (Lesser)"));
+    const data = serum.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: serum.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: weak.id }, actor: weak, token: weak.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    assert.equal(card.flags[MODULE_ID].card.kind, "counteract");
+    assert.match(card.content, /Counteract \+8, rank 2: each effect inflicting clumsy or enfeebled/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: 0, userId: "player" });
+    await settle();
+    const state = card.flags[MODULE_ID].card;
+    assert.equal(state.step, "pick");
+    assert.deepEqual(state.rows.map((row) => [row.name, row.rank, row.ticked]), [["Effect: Ray of Enfeeblement", 1, true], ["Clumsy 1", null, true]]);
+    // Without the GM's numbers for clumsy: refused.
+    const errors = foundry.notifications.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, rows: [{ ticked: true, dc: 17 }, { ticked: true }], userId: "player" });
+    await settle();
+    assert.ok(foundry.notifications.slice(errors).some((text) => /Give the DC and rank for Clumsy 1/.test(text)));
+    // The stand-in rolls a natural 10: 18 against DC 17 is a success (rank 1 ≤ 2 + 1: counteracted); 18 against DC 25 a
+    // failure (rank 2 isn't below 2: not counteracted).
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, rows: [{ ticked: true, dc: 17 }, { ticked: true, dc: 25, rank: 2 }], userId: "player" });
+    await settle();
+    assert.equal(weak.created.some((entry) => entry.id === "effect-enfeeble"), false, "the Effect ended");
+    assert.equal(weak.hasCondition("clumsy"), true, "clumsy stays");
+    assert.match(card.content, /Effect: Ray of Enfeeblement: 18 against DC 17: a success, counteracted/);
+    assert.match(card.content, /Clumsy 1: 18 against DC 25: a failure, not counteracted/);
+});

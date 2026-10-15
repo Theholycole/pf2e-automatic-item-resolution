@@ -6,13 +6,13 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 1098,
+   "none": 1094,
    "builtin:cast-spell": 323,
    "resolves": 635,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "note-only": 297,
-   "builtin:reroll": 11,
+   "builtin:reroll": 15,
    "builtin:modes": 26,
    "partial": 9,
    "builtin:zone": 9,
@@ -21,12 +21,12 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1297,
+   "none": 1293,
    "cast": 323,
    "item": 599,
    "save": 297,
    "focus": 45,
-   "reroll": 11,
+   "reroll": 15,
    "zone": 9,
    "strike": 5,
    "action": 3,
@@ -39,13 +39,13 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 709,
+    "none": 706,
     "builtin:cast-spell": 229,
     "resolves": 381,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
     "note-only": 186,
-    "builtin:reroll": 5,
+    "builtin:reroll": 8,
     "partial": 8,
     "builtin:zone": 6,
     "builtin:modes": 15,
@@ -91,8 +91,8 @@
     "note-only": 24,
     "resolves": 50,
     "builtin:no-effect": 6,
-    "none": 48,
-    "builtin:reroll": 1,
+    "none": 47,
+    "builtin:reroll": 2,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
     "builtin:focus-point": 2,
@@ -4695,9 +4695,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Necklace of Knives",
@@ -14540,9 +14540,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Redsand Hourglass",
@@ -15442,9 +15442,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Masquerade Scarf (Greater)",
@@ -15772,9 +15772,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Warding Tattoo (Trail)",

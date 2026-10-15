@@ -134,8 +134,15 @@ export function createFakeFoundry() {
                 this.created = this.created.filter((entry) => !ids.includes(entry.id));
                 return ids;
             },
+            // (Conditions as PF2e's condition items; conditionFlags gives one its grantedBy, as PF2e's GrantItem does.)
+            conditionFlags: {},
             get itemTypes() {
-                return { weapon: this.weapons, effect: this.created.filter((entry) => entry.type === "effect") };
+                return {
+                    weapon: this.weapons,
+                    effect: this.created.filter((entry) => entry.type === "effect"),
+                    condition: [...this.conditions.entries()].map(([slug, value]) => ({ id: `condition-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1), value, flags: this.conditionFlags[slug] ?? {} })),
+                    affliction: this.created.filter((entry) => entry.type === "affliction")
+                };
             },
             testUserPermission: (user) => user.isGM || owners.includes(user.id),
             getActiveTokens() {

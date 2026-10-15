@@ -14,6 +14,7 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
   - Pick the **drinker**: yourself, or a creature next to you to feed it to. Apply heals them and makes the Effects at the item's grade.
   - A tea's card has a **Tea Ceremony** tick: ticked, the tea lasts the ceremony's longer time and does what it adds (Longnight Tea removes fatigued).
   - Healing uses PF2e's own roll. PF2e's apply buttons on that roll are taken away so nothing is healed twice, and a dying creature healed to 1 HP or more stops dying.
+- **Counteracting potions** (Surging Serum, Bottled Catharsis, Panacea, Fu Water): pick who drank it, and the card lists what it can counteract on them, with the DC and rank PF2e knows; the GM fills in any it doesn't. Apply rolls the item's counteract check for each one ticked and ends what it counteracts.
 - **Bombs:** after PF2e's damage roll, the card lists the creatures within 5 feet of the target, all ticked; untick any the splash shouldn't reach.
   - Apply gives them PF2e's own splash and puts the riders on the target ("off-guard until the start of your next turn", "frightened 2" on a critical hit).
   - When the bomb calls for a save, it posts the save card for whoever has to save.
@@ -27,7 +28,7 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
 - **Permanent items:** on the character sheet's inventory, an item with activations gets an Activate button (a bolt) for each, after its name; its tooltip says the actions, how often and how many uses are left. Pressing it posts that activation's card. One that gives a Focus Point (a Specialist's Ring, a Bloodline Robe) adds it up to the pool's maximum, and in an encounter an unspent point is taken back at the end of the turn. A "once per day" activation is counted; used again, the GM gets a warning and decides.
 - **Anything else with a duration:** a note Effect on the creature with the item's text, for that time.
 
-The census counts what's played: 1,066 of the 1,486 consumables this module handles get a card. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module.
+The census counts what's played: 1,090 of the 1,486 consumables this module handles get a card. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module.
 
 ## Requirements
 
@@ -43,8 +44,8 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 - **The compiler** (`src/compiler/`, pure) turns an item into a plan for the core. It reads the text with the ability module's compiler and adds what the item's own data says: who drinks it, the healing PF2e rolls, its linked PF2e Effect or a spell's Effect at the item's rank, its own row, or a note.
   - `bombs.js`: splash, riders and saves.
   - `snares.js`: zones.
-  - `permanent.js`: activations; `focus.js`: Focus Points; `strikes.js`: items used by Striking; `rerolls.js`: rerolls; `item-actions.js`: skill actions.
-- **Live play** (`scripts/`): `live.js` (the Use hook and the item card), `bombs.js`, `poisons.js`, `casts.js`, `zones.js`, `activations.js`, `focus.js`, `strikes.js`, `rerolls.js`, `item-actions.js`, and `foundry.js` (shared helpers). Pure card state and HTML live in `src/live/`, and `src/live/route.js` decides which card an item gets.
+  - `permanent.js`: activations; `focus.js`: Focus Points; `strikes.js`: items used by Striking; `rerolls.js`: rerolls; `item-actions.js`: skill actions; `counteract.js`: counteracts; `tea.js`: the Tea Ceremony.
+- **Live play** (`scripts/`): `live.js` (the Use hook and the item card), `bombs.js`, `poisons.js`, `casts.js`, `zones.js`, `activations.js`, `focus.js`, `strikes.js`, `rerolls.js`, `item-actions.js`, `counteract.js`, and `foundry.js` (shared helpers). Pure card state and HTML live in `src/live/`, and `src/live/route.js` decides which card an item gets.
 - **Tests:** `node --test --test-isolation=none test/*.test.js`. The live layer runs against a stand-in for Foundry (`test/support/fake-foundry.mjs`) with PF2e's real items and Effects from its packs.
 - **Live check** in the disposable world pftest: `tools/live-check.mjs`, imported in the browser. It uses its own "PFTEST ITEM" data and cleans up only that.
 - **Censuses:** `node tools/census.mjs` (consumables) and `node tools/census-permanent.mjs` (activations) read the PF2e system's packs straight from LevelDB, with no Foundry login. `node tools/census-third-party.mjs` reads the installed modules' packs the same way; it commits counts only and keeps the rows in `.cache/`, which git ignores.

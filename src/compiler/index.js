@@ -20,6 +20,7 @@ import { rerollOver, rerollPlan } from "./rerolls.js";
 import { guardText, guardValues } from "./guards.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
+import { readCounteract } from "./counteract.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -70,6 +71,10 @@ export function compileItem(item, options = {}) {
     plan = rerollOver(plan, rerollPlan(item?.system?.description?.value, base));
     // (A skill action taken with it, src/compiler/item-actions.js: Onyx Panther's Sneak.)
     plan = itemActionOver(plan, itemActionPlan(item?.system?.description?.value, base, options));
+    // (A counteract on the drinker, src/compiler/counteract.js: its own card; with another reading, beside its card.)
+    if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value })) {
+        plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
+    }
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const info = itemInfo(item);
@@ -129,6 +134,8 @@ function itemInfo(item) {
         // What PF2e's own Use rolls (its healing or damage), so live play doesn't roll it again.
         pf2eRoll: pf2eRoll(item),
         activations: readActivations(item?.system?.description?.value),
+        // (What it counteracts on its drinker: the counteract card, src/compiler/counteract.js.)
+        ...(readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value }) ? { counteract: readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value }) } : {}),
         // (A tea's Tea Ceremony: the card's tick, src/compiler/tea.js.)
         ...(readTeaCeremony(item?.system?.description?.value) ? { ceremony: readTeaCeremony(item?.system?.description?.value) } : {})
     };

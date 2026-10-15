@@ -246,6 +246,25 @@ export const cases = {
         return { roll: roll.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Surging Serum: its counteract card finds the drinker's plain clumsy, takes the GM's DC 1 and rank 1, rolls, and ends it.
+    async counteract(scene) {
+        const { actor: drinker } = await creature(scene, "Clumsy Drinker", { type: "character", x: 12, y: 15 });
+        await drinker.increaseCondition("clumsy");
+        const serum = await give(drinker, "Surging Serum (Lesser)");
+        const since = Date.now();
+        await serum.consume();
+        const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await wait(500);
+        const rows = game.messages.get(card.id).getFlag(NS, "card").rows;
+        assert(rows.some((row) => row.kind === "condition" && row.slug === "clumsy"), `clumsy found (${JSON.stringify(rows)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { rows: rows.map((row) => ({ ticked: row.slug === "clumsy", dc: 1, rank: 1 })) });
+        const end = Date.now() + 8000;
+        while (Date.now() < end && drinker.hasCondition("clumsy")) await wait(250);
+        assert(!drinker.hasCondition("clumsy"), "clumsy counteracted");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Spark Wafer: its save goes to the creatures targeted, through the ability module's save card.
     async useSave(scene) {
         const { actor: user } = await creature(scene, "Snapper", { x: 2, y: 12 });
