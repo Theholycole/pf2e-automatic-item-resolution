@@ -49,19 +49,19 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 
 | Category | Items | item | coat | expose | save | later | cast | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 533 | 225 | 3 | 3 | 70 | 6 | 7 | 219 |
-| potion | 183 | 95 | 0 | 0 | 6 | 24 | 9 | 49 |
+| other | 533 | 225 | 3 | 3 | 71 | 12 | 7 | 212 |
+| potion | 183 | 95 | 0 | 0 | 6 | 40 | 9 | 33 |
 | talisman | 156 | 47 | 0 | 0 | 10 | 0 | 7 | 92 |
 | elixir | 149 | 116 | 0 | 0 | 1 | 0 | 0 | 32 |
-| poison | 115 | 1 | 41 | 63 | 1 | 0 | 0 | 9 |
+| poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 4 |
 | snare | 82 | 5 | 0 | 0 | 0 | 0 | 0 | 77 |
 | gadget | 77 | 24 | 0 | 0 | 15 | 0 | 0 | 38 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 |
 | oil | 66 | 46 | 0 | 0 | 1 | 0 | 1 | 18 |
-| fulu | 46 | 17 | 0 | 0 | 1 | 0 | 2 | 26 |
-| drug | 24 | 0 | 0 | 23 | 0 | 0 | 0 | 1 |
+| fulu | 46 | 17 | 0 | 0 | 3 | 0 | 2 | 24 |
+| drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1508** | **652** | **44** | **89** | **105** | **30** | **26** | **562** |
+| **all** | **1508** | **652** | **45** | **89** | **110** | **55** | **26** | **531** |
 
 Why the rest have no card yet:
 
@@ -70,7 +70,7 @@ Why the rest have no card yet:
 | nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 354 |
 | the ability compiler's GM fallback ("no-effect") | 69 |
 | a snare: placed in a square, set off by the first creature to enter it (needs Regions) | 63 |
-| a save on a trigger or a passive (an aura, a reaction) | 53 |
+| a save on a trigger or a passive (an aura, a reaction) | 22 |
 | a lasting area (needs Regions) | 22 |
 | another plan not played yet | 1 |
 

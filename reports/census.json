@@ -356,27 +356,27 @@
  "live": {
   "totals": {
    "cast": 26,
-   "none": 562,
+   "none": 531,
    "item": 652,
    "expose": 89,
-   "later": 30,
-   "save": 105,
-   "coat": 44
+   "later": 55,
+   "save": 110,
+   "coat": 45
   },
   "byCategory": {
    "other": {
     "cast": 7,
-    "none": 219,
-    "later": 6,
-    "save": 70,
+    "none": 212,
+    "later": 12,
+    "save": 71,
     "item": 225,
     "expose": 3,
     "coat": 3
    },
    "potion": {
     "item": 95,
-    "later": 24,
-    "none": 49,
+    "later": 40,
+    "none": 33,
     "cast": 9,
     "save": 6
    },
@@ -393,10 +393,11 @@
    },
    "poison": {
     "expose": 63,
-    "coat": 41,
-    "none": 9,
-    "item": 1,
-    "save": 1
+    "coat": 42,
+    "none": 4,
+    "later": 3,
+    "save": 2,
+    "item": 1
    },
    "snare": {
     "none": 77,
@@ -417,14 +418,14 @@
     "cast": 1
    },
    "fulu": {
-    "none": 26,
+    "none": 24,
     "item": 17,
-    "save": 1,
+    "save": 3,
     "cast": 2
    },
    "drug": {
     "expose": 23,
-    "none": 1
+    "save": 1
    },
    "toolkit": {
     "item": 8,
@@ -434,7 +435,7 @@
   "noCard": {
    "no-plan": 354,
    "snare": 63,
-   "triggered": 53,
+   "triggered": 22,
    "zone": 22,
    "gm": 69,
    "other": 1
@@ -3220,7 +3221,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Frozen Lava",
@@ -4342,7 +4343,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Dragonfly Potion",
@@ -4987,7 +4988,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Fire and Iceberg (Major)",
@@ -5024,7 +5025,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Bleeding Spines Snare",
@@ -5265,7 +5266,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Vaccine (Greater)",
@@ -6220,7 +6221,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Serpent Oil (Greater)",
@@ -8374,7 +8375,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Drakeheart Mutagen (Lesser)",
@@ -10475,7 +10476,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Transmuting Ingot (Adamantine)",
@@ -10554,7 +10555,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Panacea",
@@ -10787,7 +10788,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Irritating Seedpod (Greater)",
@@ -10806,7 +10807,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Blast-Off Bottle (Moderate)",
@@ -11570,7 +11571,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Wolfsbane",
@@ -11944,7 +11945,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Potion of Swimming (Greater)",
@@ -12524,7 +12525,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Silver Dragon's Breath Potion (Wyrm)",
@@ -12544,7 +12545,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Blood Sight Elixir (Greater)",
@@ -14708,7 +14709,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Clubhead Poison",
@@ -14765,7 +14766,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Verdant Poultice",
@@ -15013,7 +15014,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Follypops",
@@ -15031,7 +15032,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": null
   },
   {
    "name": "Cryomister (Lesser)",
@@ -16610,7 +16611,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Warning Snare",
@@ -17724,7 +17725,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Instant Spy",
@@ -19416,7 +19417,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Etheric Essence Disruptor (Moderate)",
@@ -19995,7 +19996,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Holy Steam Ball Refill",
@@ -20286,7 +20287,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": null
   },
   {
    "name": "Potion of Shared Life",
@@ -20468,7 +20469,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Key of Unwinding",
@@ -20700,7 +20701,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Tears of Death",
@@ -21714,7 +21715,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Black Ash (Greater)",
@@ -21840,7 +21841,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Sixfingers Elixir (Moderate)",
@@ -23004,7 +23005,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Eagle Eye Elixir (Moderate)",
@@ -25546,7 +25547,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Auric Noodles",
@@ -26067,7 +26068,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Raining Knives Snare",
@@ -26813,7 +26814,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Last Word Stone",
@@ -27905,7 +27906,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Implosion Dust (Moderate)",
@@ -27995,7 +27996,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": null
   },
   {
    "name": "Sanguine Mutagen (Major)",
@@ -28087,7 +28088,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Insight Coffee (Moderate)",
@@ -28433,7 +28434,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Red-Rib Gill Mask (Lesser)",
@@ -29819,7 +29820,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "coat"
   },
   {
    "name": "Death Coil",

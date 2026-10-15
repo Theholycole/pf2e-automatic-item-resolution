@@ -90,13 +90,22 @@ export const isExposurePoison = (plan) => Boolean(EXPOSED_BY[deliveryOf(plan)]) 
 
 // Any other item whose save comes on its Use, at creatures other than its user ("Spark Wafer … 5-foot burst", Pyronite,
 // a flare beacon): the same card, for the creatures the presser targets. Not one that gives an action or a time to use
-// later ("grants you the Energy Breath action for 1 hour", "For 1 hour after you drink …"), nor an aura or a snare.
-const LATER = /\b(?:grants? you (?:the|a|an) [\w' -]+? (?:action|activity|reaction)|for (?:\d+|one|an?) (?:rounds?|minutes?|hours?) after you (?:drink|imbibe|consume|eat|inhale|chew)|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel) |gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|aura\b)/i;
-const useSave = (plan) => plan?.resolution?.kind === "save" && plan.trigger?.event === "use" && plan.resolution.check?.against?.dc === "fixed" && !plan.item?.delivery;
-export const isUseSave = (plan, text = "") => useSave(plan) && !LATER.test(text);
+// later ("grants you the Energy Breath action for 1 hour", "you can use a 2-action activity to exhale"), nor an aura or a snare.
+const LATER = /\b(?:(?:grants? you|you gain) (?:the|a|an) [\w' -]+? (?:action|activity|reaction)|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel|unleash) |gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|aura\b)/i;
+// (An item with no Activate line — "You can toss sneezing powder at an adjacent creature", a fulu "Upon affixing" — reads as
+// passive; it's still used. Not a save something else sets off: a turn in the area, entering a square, passing a door,
+// reading the words, each Stride.)
+const TRIGGERED = /\b(?:starts? (?:its|their) turn|ends? (?:its|their) turn|passes? through|enters? (?:the|its|that|a|this) (?:square|area|space)|first creature to (?:enter|step)|steps? (?:on|into)|moves? (?:adjacent|into)|is activated when|completes? a|if you are|anyone reading|whenever|each time|every round)\b/i;
+// The sentence that asks for the save ("… must attempt a DC 15 Fortitude save …"), where a trigger would be named.
+const saveSentence = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).find((sentence) => /\b(?:must (?:attempt|succeed)|saving throw|save)\b/i.test(sentence)) ?? "";
+// (Never a snare: it's placed, and set off by the first creature to enter its square — Regions, later.)
+// (A delivery trait with a plain save, no affliction — Sneezing Powder, inhaled — is one too.)
+const useSave = (plan, text) => plan?.resolution?.kind === "save" && ["use", "passive"].includes(plan.trigger?.event) && plan.resolution.check?.against?.dc === "fixed"
+    && (!plan.item?.delivery || !plan.resolution.afflictionHandoff) && plan.item?.category !== "snare" && !/\bsnare\b/i.test(plan.source?.name ?? "") && !TRIGGERED.test(saveSentence(text));
+export const isUseSave = (plan, text = "") => useSave(plan, text) && !LATER.test(text);
 // One for later (a breath potion's "grants you the Energy Breath action for 1 hour"; not an aura): the same card, kept
 // open until the drinker uses it — then the presser targets the creatures and presses it.
-export const isLaterSave = (plan, text = "") => useSave(plan) && LATER.test(text) && !/\baura\b/i.test(text);
+export const isLaterSave = (plan, text = "") => useSave(plan, text) && LATER.test(text) && !/\baura\b/i.test(text);
 
 export const AREA_WORDS = (area) => (area?.value ? `the creatures in its ${area.value}-foot ${area.type}` : "the creature it targets");
 

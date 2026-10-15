@@ -90,7 +90,9 @@ function itemInfo(item) {
         // "drinker": the creature who drinks or eats it (the user or an adjacent creature they feed it to); "user": its user.
         recipient: recipientOf(item),
         // How a poison (or another affliction item) reaches a creature: "injury" (on a weapon), "contact", "inhaled", "ingested".
-        delivery: ["injury", "contact", "inhaled", "ingested"].find((trait) => (item.system?.traits?.value ?? []).includes(trait)) ?? null,
+        // (Its trait, else the text's "an uncommon injury poison": Darkening Poison has no trait for it.)
+        delivery: ["injury", "contact", "inhaled", "ingested"].find((trait) => (item.system?.traits?.value ?? []).includes(trait))
+            ?? (["poison", "drug"].includes(item.system?.category) ? /\b(injury|contact|inhaled|ingested) (?:poison|drug)\b/i.exec(String(item.system?.description?.value ?? "").replace(/<[^>]+>/g, " "))?.[1]?.toLowerCase() ?? null : null),
         // What PF2e's own Use rolls (its healing or damage), so live play doesn't roll it again.
         pf2eRoll: pf2eRoll(item),
         activations: readActivations(item?.system?.description?.value)

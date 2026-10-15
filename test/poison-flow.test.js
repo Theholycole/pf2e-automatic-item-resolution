@@ -142,3 +142,18 @@ test("another item's save on its Use goes to the creatures its presser targets; 
     assert.match(breath.content, /Use it: my targets/);
 });
 
+test("an item with no Activate line is still used: a save for its target (Sneezing Powder); one set off by something else isn't", async () => {
+    const powder = await use(foundry.giveItem(rogue, source("Sneezing Powder")));
+    assert.equal(powder.flags[MODULE_ID].card.kind, "expose");
+    const fulu = await use(foundry.giveItem(rogue, source("Spirit-Sealing Fulu")));
+    assert.match(fulu.content, /DC 17 Will save/);
+    // A dragon's breath potion's breath is for later.
+    assert.equal((await use(foundry.giveItem(rogue, source("Red Dragon's Breath Potion (Adult)")))).flags[MODULE_ID].card.later, true);
+    // Anathema Fulu: a creature that starts its turn in the area — no card.
+    const count = foundry.messages.length;
+    await use(foundry.giveItem(rogue, source("Anathema Fulu")));
+    assert.equal(foundry.messages.length, count + 1);
+    // Darkening Poison is an injury poison by its text.
+    assert.equal((await use(foundry.giveItem(rogue, source("Darkening Poison")))).flags[MODULE_ID].card.kind, "poison");
+});
+
