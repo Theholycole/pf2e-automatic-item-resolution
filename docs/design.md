@@ -1,15 +1,15 @@
 # Design: the module's shape and batch 1 (potions, elixirs, mutagens)
 
-Status: proposal, 2026-10-15. The compiler parts marked *built* are done offline; the live parts wait for the user's OK.
+Status, 2026-10-15: the user answered the design's questions the same day (the recommendations). Everything marked *built* is built and tested offline. The live cards are written but **not yet checked in Foundry**: pftest was busy (a user was logged in, with no Holder).
 
 ## Where things stand
 
 From [census.md](census.md) (PF2e 8.6.1 packs):
 
 - **1,724** consumables. **216** are the spell module's (scrolls, wands, catalysts, spell gems), so this module handles **1,508**.
-- **732** (49%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own linked Effect and PF2e's healing data added 200.
+- **742** (49%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added 210. Another **255** (17%) get only a note Effect, counted apart.
 - **171** bombs are `weapon` items (group `bomb`). PF2e already Strikes with them (batch 2).
-- Batch 1 covers **400** items: potion 183, elixir 149, mutagen 68. **236** of them resolve now, **35** are builtins and **129** have no plan.
+- Batch 1 covers **400** items: potion 183, elixir 149, mutagen 68. When the design was proposed, 236 of them resolved, 35 were builtins and 129 had no plan. [census.md](census.md) has today's counts.
 
 ## What PF2e does itself when a consumable is used (8.6.1, `ConsumablePF2e#consume`)
 
@@ -34,15 +34,23 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
   3. Items with two activations (the teas' Tea Ceremony): one option each.
   4. Out of combat (Disguise, Gender Transformation, Ration Tonic, Bookthief Brew): the GM's, as the ability module's "no-effect" with a reason.
 
-## Live play (needs the user's OK)
+## Live play (built; the user's answers of 2026-10-15)
 
-1. PF2e's Use message → on the active GM's client, the module's **confirmation card** right after it. Like the ability module's cards, nothing changes until Apply.
-2. The card names the item and says what Apply will do: "heals 6 (PF2e's roll above)", "Effect: Elixir of Life".
-   - It has a **drinker** choice: the user by default, or a creature next to them (5 feet) to feed it to. This follows PF2e: feeding a potion to an adjacent creature is the same action.
-   - Effects go on the drinker. Healing goes to the drinker unless it has void healing.
-3. **Healing: question 1.** PF2e's roll message already has apply-healing buttons, and the card would heal too.
-4. **Who presses Apply: question 2.** The ability module's cards are GM-only (monsters are the GM's), but potions are mostly the players'.
-5. **Cards and apply code are reused, not copied**: the ability module's card state, its apply of each change (heal, temporary HP, PF2e Effects, timed conditions, affliction hand-off, follow-ups, zones) and its card styles. Its session is asked for a stable export of those (the user's answer 2, 2026-10-15). The item module adds only what is item-specific: the drinker choice, PF2e's own roll, and keeping the deleted item.
+`scripts/live.js` (Foundry) and `src/live/card.js` (pure, tested):
+
+1. PF2e's Use message → on the active GM's client, the item's **confirmation card** right after it. Nothing changes until Apply.
+   - The used item is read live if it's still there. Otherwise from the copy kept as PF2e deleted it (the last dose), else from its compendium source.
+   - Plans played on the card: healing, PF2e Effects, and the item's own automatic row.
+2. The card says what Apply will do: "Heals 6 Hit Points (PF2e's roll of 1d8)", "Effect: Elixir of Life", "concealed for 5 minutes".
+   - It has a **drinker** choice: the user by default, or a creature within 5 feet to feed it to.
+3. **Healing:** the card heals with PF2e's own rolled total. PF2e's apply buttons are taken off that one Use message (`flags.pf2e.suppressDamageButtons`, with the `.damage-application` section removed as it renders), so it can't be healed twice.
+   - The heal goes through PF2e's `applyDamage`, so its healing bonuses apply and its healed message comes with undo.
+   - Dying then ends and Wounded rises, through the core's `api.dying`.
+4. **Apply:** the item's owner or the GM. A player's press goes by socket (`module.pf2e-automatic-item-resolution`) to the active GM's client, which checks that the player owns the user's actor and makes the changes. Feeding an ally the player doesn't own works too.
+5. **Apply code is reused, not copied.** PF2e Effects are made here, because their grade, rank and time are the item's:
+   - the shared equipment Effects' ChoiceSet is preset from the item's slug or compendium source, so there's no prompt once the last dose is gone;
+   - a Spell Effect gets its `system.level` and the item's time.
+   Every other change (temporary HP, timed conditions, modifiers, note Effects, the affliction hand-off) goes through the ability module's `api.live.applyChange`.
 
 ## The simulator (the auto-combat session's)
 
@@ -50,9 +58,9 @@ Once batch 1 is live, its session is handed the plans. It reads a PC's consumabl
 
 ## Asks of the other sessions
 
-- **Ability module** (its compiler and live cards):
-  - keep `compileAbility` from `src/compiler/index.js` stable for this module's import;
-  - export its card and apply code;
-  - two texts throw in its compiler: Cold Comfort (Lesser) and (Greater), "Cannot read properties of null (reading '2')".
+- **Ability module:** done 2026-10-15 (ability 1cd0e31, a54d84b): `compileAbility` kept stable; `api.live.applyChange(change, state)` exported; the readZone crash fixed (Cold Comfort, Hampering Snare). Later, for batch 2: `postCard` / `postEffectCard`.
+- **Core:** done 2026-10-15:
+  - `api.dying` (f8e5d41), moved from the spell module;
+  - `check.roll: "automatic"` accepted by saveGaps and CHECK_ROLLS, in progress in its tree when this was written.
 - **Spell module:** nothing for PF2e's own items. Later, `claims(item)` for the third-party ones, and the casting export for items that cast a spell (the user's answer 4).
-- **Core:** nothing yet. The healing, effect, save and affliction-care families cover batch 1's plans.
+- **Simulator:** the hand-off above, once the cards are live-checked.
