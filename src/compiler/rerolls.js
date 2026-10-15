@@ -47,8 +47,40 @@ export function readReroll(html) {
     return { what, keep, who: attacker ? "attacker" : companion ? "companion" : "self", ...(statistic ? { statistic } : {}), ...(bonus ? { bonus } : {}), ...(after ? { after } : {}) };
 }
 
+// A change to the roll that triggered it, after the roll and without a new one (the user's answer 3 of 2026-10-15, as for a
+// reroll with a bonus: the card works out the result, the GM uses it): Breastplate of the Mountain's "If you failed the
+// saving throw, it becomes a success. If you critically failed, it becomes a failure instead", Sash of Prowess's "You
+// critically succeed instead", Hunter's Arrowhead's "+2 circumstance bonus to your attack roll, possibly turning a miss
+// into a hit", Successor Doll's "Roll 1d4 and add the result to your Diplomacy check as a circumstance bonus". The roll is
+// the trigger's ("You fail or critically fail a Fortitude saving throw", "You would miss with an attack"). → { what,
+// keep: "new", who: "self", statistic?, raise: { change?: { failure: "success", … }, bonus?: { value | formula, type } } }.
+const CHANGES = [
+    [/\bIf you (?:failed|fail) (?:the|your) [\w ]*?(?:saving throw|save|check|roll), it becomes a success\b/i, ["failure", "success"]],
+    [/\bIf you (?:critically failed|critically fail)\b[^.]*?, it becomes a failure\b/i, ["criticalFailure", "failure"]],
+    [/(?:^|\.\s+|\bEffect\s+)You critically succeed instead\b/i, ["success", "criticalSuccess"]]
+];
+const RAISE_BONUS = /\b(?:You gain an? \+(\d+) (circumstance|status|item) bonus to (?:your|the) [\w ]*?(?:attack roll|check|save|saving throw)|Roll (\d+d\d+) and add the result to your [\w ]*?(?:check|save|attack roll|roll) as an? (circumstance|status|item) bonus)\b[^.]*\b(?:possibly turning|which might|might improve|could turn)\b/i;
+const SKILL_NAMES = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery", "perception"];
+export function readRaise(html) {
+    const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+    // (After the roll only: "You fail …", "You would miss …", "You succeed at …" — not "but you haven't rolled yet".)
+    if (!/\b(?:fail|fails|failed|critically fail|succeed|succeeds|would miss|miss|roll a)\b/i.test(trigger) || /\bhaven't rolled\b/i.test(trigger)) return null;
+    const effect = /\bEffect\b/.test(text) ? text.replace(/^[\s\S]*?\bEffect\b\s*/, "") : text;
+    const change = {};
+    for (const [pattern, [from, to]] of CHANGES) if (pattern.test(`Effect ${effect}`)) change[from] = to;
+    const bonusMatch = RAISE_BONUS.exec(effect);
+    const bonus = bonusMatch ? (bonusMatch[1] ? { value: Number(bonusMatch[1]), type: bonusMatch[2].toLowerCase() } : { formula: bonusMatch[3], type: bonusMatch[4].toLowerCase() }) : null;
+    if (!Object.keys(change).length && !bonus) return null;
+    const what = WHAT.find(([, pattern]) => pattern.test(trigger))?.[0] ?? (/\b(?:attack|miss)\b/i.test(trigger) ? "attack" : /\b(?:Request|Demoralize|Feint|Trip|Shove|Grapple)\b/.test(trigger) ? "check" : "roll");
+    const save = what === "save" ? /\b(Fortitude|Reflex|Will)\b/i.exec(trigger)?.[1]?.toLowerCase() ?? null : null;
+    const skills = what !== "save" ? SKILL_NAMES.filter((name) => new RegExp(String.raw`\b${name}\b`, "i").test(`${trigger} ${effect}`)) : [];
+    const statistic = save ?? (skills.length === 1 ? skills[0] : skills.length ? skills : null);
+    return { what: what === "roll" && skills.length ? "check" : what, keep: "new", who: "self", ...(statistic ? { statistic } : {}), raise: { ...(Object.keys(change).length ? { change } : {}), ...(bonus ? { bonus } : {}) } };
+}
+
 export function rerollPlan(html, base) {
-    const reroll = readReroll(html);
+    const reroll = readReroll(html) ?? readRaise(html);
     if (!reroll) return null;
     return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
 }

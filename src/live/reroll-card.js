@@ -20,8 +20,30 @@ export function createRerollCard({ plan, item, user }) {
 const WHAT_WORDS = { save: "saving throw", attack: "attack roll", check: "check", roll: "roll" };
 const KEEP_WORDS = { new: "the new result", higher: "the higher result", lower: "the lower result" };
 
+const DEGREE_NAMES = ["criticalFailure", "failure", "success", "criticalSuccess"];
+const DEGREE_TEXT = { criticalFailure: "a critical failure", failure: "a failure", success: "a success", criticalSuccess: "a critical success" };
+
+// A change to the roll already made (src/compiler/rerolls.js readRaise): its new degree and total. → { degree, total }.
+export function raisedResult({ oldTotal, oldNatural = null, dc = null, oldDegree = null, raise, bonusRolled = null }) {
+    const before = oldDegree ?? degreeOf({ total: oldTotal, dc, natural: oldNatural });
+    if (raise.change) {
+        const name = DEGREE_NAMES[before];
+        const to = raise.change[name];
+        return { degree: to ? DEGREE_NAMES.indexOf(to) : before, total: oldTotal, before };
+    }
+    const added = Number(raise.bonus?.value ?? bonusRolled) || 0;
+    const total = Number(oldTotal) + added;
+    return { degree: degreeOf({ total, dc, natural: oldNatural }), total, before, added };
+}
+
 export function rerollText(reroll) {
-    const what = reroll.statistic ? `${reroll.statistic.charAt(0).toUpperCase()}${reroll.statistic.slice(1)} save` : WHAT_WORDS[reroll.what] ?? "roll";
+    const named = [].concat(reroll.statistic ?? []).map((name) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`).join(" or ");
+    const what = named ? `${named} ${reroll.what === "save" ? "save" : "check"}` : WHAT_WORDS[reroll.what] ?? "roll";
+    if (reroll.raise) {
+        const changes = Object.entries(reroll.raise.change ?? {}).map(([from, to]) => `${DEGREE_TEXT[from]} becomes ${DEGREE_TEXT[to]}`);
+        const bonus = reroll.raise.bonus ? `+${reroll.raise.bonus.value ?? reroll.raise.bonus.formula} ${reroll.raise.bonus.type} bonus added, its degree again` : null;
+        return `Your latest ${what}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
+    }
     const whose = reroll.who === "attacker" ? "The latest attack roll at you" : reroll.who === "companion" ? `The targeted companion's latest ${what}` : `Your latest ${what}`;
     const bonus = reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";
     return `${whose}, rerolled${bonus}: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
@@ -61,7 +83,7 @@ export function triggeringRoll(messages, reroll, { actorUuid, actorId }) {
             continue;
         }
         // (A companion's: actorUuid is the creature targeted.)
-        if (reroll.statistic && !(message.domains ?? []).includes(reroll.statistic)) continue;
+        if (reroll.statistic && ![].concat(reroll.statistic).some((name) => (message.domains ?? []).includes(name))) continue;
         if (types.includes(message.type) && (message.actorUuid === actorUuid || (actorId && message.actorId === actorId))) return message.id;
     }
     return null;
@@ -72,6 +94,6 @@ export function rerollCardHTML(state, { canApply = false } = {}) {
     const reroll = state.plan.reroll;
     const after = open && reroll.after ? `<ul class="aar-notes"><li>${escape(reroll.after)}</li></ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Reroll</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">reroll</span></header><p class="aar-actions">${escape(rerollText(reroll))}</p>${after}${results}${controls}</section>`;
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${reroll.raise ? "Change the roll" : "Reroll"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${reroll.raise ? "changed roll" : "reroll"}</span></header><p class="aar-actions">${escape(rerollText(reroll))}</p>${after}${results}${controls}</section>`;
 }

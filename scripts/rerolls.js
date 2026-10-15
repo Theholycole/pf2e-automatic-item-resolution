@@ -2,7 +2,7 @@
 // on the active GM's client, finds that roll in the recent chat and PF2e rerolls it (game.pf2e.Check.rerollFromMessage,
 // which the GM may do for any message) — keeping the new result as PF2e's own "Keep new" does, or the higher or lower.
 
-import { DEGREE_WORDS, bonusReroll, createRerollCard, rerollCardHTML, triggeringRoll } from "../src/live/reroll-card.js";
+import { DEGREE_WORDS, bonusReroll, createRerollCard, raisedResult, rerollCardHTML, triggeringRoll } from "../src/live/reroll-card.js";
 import { FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
 
 // How far back in the chat the triggering roll can be.
@@ -33,6 +33,7 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
     const recent = (game.messages?.contents ?? []).slice(-RECENT);
     const id = triggeringRoll(recent.map(asRoll), reroll, { actorUuid: actor.uuid, actorId: actor.id });
     if (!id) throw new Error(reroll.who === "attacker" ? `No attack roll at ${state.user.name} to reroll in the recent chat.` : `No ${reroll.statistic ? `${reroll.statistic} ` : ""}${WHAT_WORDS[reroll.what] ?? "roll"} by ${actor.name} to reroll in the recent chat.`);
+    if (reroll.raise) return raiseRoll(message, state, game.messages.get(id), actor);
     if (reroll.bonus) return rerollWithBonus(message, state, game.messages.get(id), actor);
     const Check = game.pf2e?.Check;
     if (!Check?.rerollFromMessage) throw new Error("PF2e's reroll isn't there; reroll it from the message's menu.");
@@ -66,3 +67,34 @@ async function rerollWithBonus(message, state, triggering, actor) {
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
+
+// A change to the roll already made (src/compiler/rerolls.js readRaise): its degree changed, or its total raised by the
+// bonus (rolled here when it's dice) and its degree against the same DC — shown for the GM, who uses it; PF2e's message
+// stays as it was, as for a reroll with a bonus.
+const OUTCOMES = ["criticalFailure", "failure", "success", "criticalSuccess"];
+async function raiseRoll(message, state, triggering, actor) {
+    const raise = state.plan.reroll.raise;
+    const old = triggering.rolls?.[0];
+    if (!Number.isFinite(Number(old?.total))) throw new Error("That roll has no total.");
+    const context = triggering.flags?.pf2e?.context ?? {};
+    const dc = Number(context.dc?.value) || null;
+    const oldNatural = Number(old.dice?.[0]?.total ?? old.terms?.[0]?.total) || null;
+    const oldDegree = OUTCOMES.includes(context.outcome) ? OUTCOMES.indexOf(context.outcome) : null;
+    let bonusRolled = null;
+    if (raise.bonus?.formula) {
+        const roll = await new Roll(raise.bonus.formula).evaluate();
+        await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: +${raise.bonus.formula} ${raise.bonus.type} bonus` });
+        bonusRolled = roll.total;
+    }
+    const result = raisedResult({ oldTotal: Number(old.total), oldNatural, dc, oldDegree, raise, bonusRolled });
+    const degree = (value) => (value === null || value === undefined ? "no degree (no DC)" : DEGREE_WORDS[value]);
+    const lines = [
+        raise.change
+            ? `${actor.name}'s roll (${old.total}): ${degree(result.before)} becomes ${degree(result.degree)}.`
+            : `${actor.name}'s roll: ${old.total} + ${result.added} ${raise.bonus.type} = ${result.total}${dc ? ` against DC ${dc}` : ""}: ${degree(result.degree)} (was ${degree(result.before)}).`,
+        "PF2e's message isn't changed: the GM uses this result."
+    ];
+    const next = { ...state, status: "applied", results: lines };
+    return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+

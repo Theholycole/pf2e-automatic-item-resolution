@@ -94,9 +94,11 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
 // degree of success better than what you rolled"): PF2e's AdjustDegreeOfSuccess, { selector, adjustment, predicate? },
 // for the roll the text or its trigger names; spent by that roll. Not a lasting one ("during that time").
 const UPGRADES = [
-    [/\bIf (?:you roll|the (?:outcome|result) is) a success\b[^.]*?,\s*you get a critical success instead\b/i, "success"],
-    [/\bIf (?:you roll|the (?:outcome|result) is) a critical failure\b[^.]*?,\s*you get a failure instead\b/i, "criticalFailure"],
-    [/\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i, "all"]
+    [/\bIf (?:you roll|the (?:outcome|result) is) a success\b[^.]*?,\s*you get a critical success instead\b/i, { success: "one-degree-better" }],
+    [/\bIf (?:you roll|the (?:outcome|result) is) a critical failure\b[^.]*?,\s*you get a failure instead\b/i, { criticalFailure: "one-degree-better" }],
+    [/\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i, { all: "one-degree-better" }],
+    // (Robe of the Archmagi's "You automatically succeed at your save against the triggering arcane spell", before the roll.)
+    [/^(?:Effect )?You automatically succeed at your (?:save|saving throw|[\w ]+? check)\b/i, { failure: "to-success", criticalFailure: "to-success" }]
 ];
 export function readDegreeAdjust(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
@@ -104,10 +106,11 @@ export function readDegreeAdjust(text, { trigger = null } = {}) {
     if ((triggered && AFTER_ROLL.test(triggered)) || /\bduring (?:that|this) time\b/i.test(plain) || LASTING.test(plain)) return null;
     const adjustment = {};
     let named = "";
-    for (const [pattern, degree] of UPGRADES) {
-        const match = pattern.exec(plain);
+    const effect = plain.replace(/^.*?\bEffect\b\s*/s, "");
+    for (const [pattern, change] of UPGRADES) {
+        const match = pattern.exec(plain) ?? pattern.exec(effect);
         if (!match) continue;
-        adjustment[degree] = "one-degree-better";
+        Object.assign(adjustment, change);
         named += ` ${match[0]}`;
     }
     if (!Object.keys(adjustment).length) return null;

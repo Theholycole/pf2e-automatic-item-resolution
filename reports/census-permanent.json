@@ -8,12 +8,12 @@
   "results": {
    "resolves": 657,
    "builtin:cast-spell": 454,
-   "none": 884,
+   "none": 878,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
-   "builtin:readied-bonus": 18,
+   "builtin:readied-bonus": 19,
    "note-only": 280,
-   "builtin:reroll": 15,
+   "builtin:reroll": 20,
    "partial": 56,
    "builtin:modes": 26,
    "builtin:zone": 9,
@@ -26,10 +26,10 @@
    "save": 327,
    "cast": 454,
    "item": 587,
-   "none": 1082,
+   "none": 1076,
    "focus": 45,
-   "fortune": 28,
-   "reroll": 15,
+   "fortune": 29,
+   "reroll": 20,
    "strike": 39,
    "zone": 9,
    "action": 3,
@@ -44,12 +44,12 @@
    "results": {
     "resolves": 397,
     "builtin:cast-spell": 333,
-    "none": 565,
+    "none": 561,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 13,
     "note-only": 179,
-    "builtin:reroll": 8,
+    "builtin:reroll": 12,
     "partial": 17,
     "builtin:zone": 6,
     "builtin:modes": 15,
@@ -101,11 +101,12 @@
     "note-only": 24,
     "resolves": 54,
     "builtin:no-effect": 6,
-    "none": 34,
-    "builtin:reroll": 2,
+    "none": 32,
+    "builtin:reroll": 3,
     "partial": 2,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
+    "builtin:readied-bonus": 1,
     "builtin:focus-point": 2,
     "builtin:roll-twice": 2
    }
@@ -3234,9 +3235,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Successor Doll",
@@ -8811,9 +8812,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Blade Byrnie",
@@ -8976,9 +8977,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Ring of the Tiger",
@@ -13332,9 +13333,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Sash of Prowess",
@@ -15664,9 +15665,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Ring of Maniacal Devices (Greater)",
@@ -26301,9 +26302,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Sash of Prowess (Greater)",

@@ -20,7 +20,7 @@ export function rollWords(rollTwice) {
     return actions ? `${nameOf(rollTwice.selector)} (${actions})` : nameOf(rollTwice.selector);
 }
 
-const DEGREE_WORDS = { all: "one degree better", success: "a success becomes a critical success", criticalFailure: "a critical failure becomes a failure" };
+const DEGREE_WORDS = { all: "one degree better", success: "a success becomes a critical success", criticalFailure: "a critical failure becomes a failure", "to-success": "at least a success" };
 
 // A bonus in words: "+1 status bonus to AC and saving throws, resistance 2 to damage", "Performance check: a success becomes a
 // critical success".
@@ -28,7 +28,7 @@ export function bonusWords(bonus) {
     const [first] = bonus.modifiers;
     const targets = bonus.modifiers.map((modifier) => nameOf(modifier.selector)).join(" and ");
     const actions = first ? actionWords(first.predicate) : "";
-    const degree = bonus.degree ? `${nameOf(bonus.degree.selector)}${actionWords(bonus.degree.predicate) ? ` (${actionWords(bonus.degree.predicate)})` : ""}: ${Object.keys(bonus.degree.adjustment).map((key) => DEGREE_WORDS[key]).join(", ")}` : null;
+    const degree = bonus.degree ? `${nameOf(bonus.degree.selector)}${actionWords(bonus.degree.predicate) ? ` (${actionWords(bonus.degree.predicate)})` : ""}: ${[...new Set(Object.entries(bonus.degree.adjustment).map(([key, value]) => DEGREE_WORDS[value === "to-success" ? "to-success" : key]))].join(", ")}` : null;
     return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}` : null, bonus.resistance ? `resistance ${bonus.resistance.value} to damage` : null, degree].filter(Boolean).join(", ");
 }
 

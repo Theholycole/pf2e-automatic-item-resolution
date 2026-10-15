@@ -108,3 +108,31 @@ test("a reroll with a bonus: the card's own roll, the old modifier plus the bonu
     assert.match(card.content, /Hero&#39;s reroll: 23 \(10 \+ 9 \+ 4 circumstance\) against DC 22 \(a success\); the first roll was 15 \(a failure\)/);
     assert.match(card.content, /The new result stands/);
 });
+
+test("a change to the roll already made: its degree changed, or its total raised and graded again, for the GM", async () => {
+    const { raisedResult } = await import("../src/live/reroll-card.js");
+    // "If you failed the saving throw, it becomes a success. If you critically failed, it becomes a failure instead."
+    const breastplate = compileActivations(source("Breastplate of the Mountain")).find((entry) => entry.plan?.reroll?.raise).plan.reroll;
+    assert.deepEqual(breastplate, { what: "save", keep: "new", who: "self", statistic: "fortitude", raise: { change: { failure: "success", criticalFailure: "failure" } } });
+    // "You would miss with an attack … +2 circumstance bonus to your attack roll, possibly turning a miss into a hit."
+    const arrowhead = compileActivations(source("Hunter's Arrowhead"))[0].plan.reroll;
+    assert.deepEqual([arrowhead.what, arrowhead.raise.bonus], ["attack", { value: 2, type: "circumstance" }]);
+    assert.deepEqual(raisedResult({ oldTotal: 17, oldNatural: 9, dc: 18, raise: arrowhead.raise }), { degree: 2, total: 19, before: 1, added: 2 });
+    assert.deepEqual(raisedResult({ oldTotal: 8, dc: 18, oldDegree: 0, raise: breastplate.raise }).degree, 1);
+    // A before-the-roll "You automatically succeed at your save": PF2e's AdjustDegreeOfSuccess, not this card.
+    assert.deepEqual(compileActivations(source("Robe of the Archmagi"))[0].plan.bonus.degree, { selector: "saving-throw", adjustment: { failure: "to-success", criticalFailure: "to-success" } });
+    // The card: the user's latest Fortitude save, a failure → a success.
+    const save = roll(hero, "saving-throw", { domains: ["fortitude", "saving-throw"], dc: { value: 20 } });
+    save.rolls = [{ total: 15, dice: [{ total: 8 }] }];
+    const plate = foundry.giveItem(hero, source("Breastplate of the Mountain"));
+    const index = compileActivations(source("Breastplate of the Mountain")).findIndex((entry) => entry.plan?.reroll?.raise);
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: plate.uuid, activation: index, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "reroll");
+    assert.match(card.content, /a failure becomes a success/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.match(card.content, /a failure becomes a success\./);
+    assert.match(card.content, /the GM uses this result/);
+});
