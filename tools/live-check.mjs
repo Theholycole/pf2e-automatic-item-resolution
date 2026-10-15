@@ -191,6 +191,34 @@ export const cases = {
         return { saveCard: save.id };
     },
 
+    // Freezing Ammunition: activated, loaded in a shortbow; the bow's hit (AC 1) posts the target's DC 19 Fortitude save card,
+    // the roll naming that ammunition.
+    async ammoHit(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Ammo Archer", { type: "character", x: 2, y: 21 });
+        const { token: foeToken } = await creature(scene, "Ammo Target", { x: 4, y: 21, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Freezing Ammunition");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const readied = () => archer.itemTypes.effect.find((entry) => entry.getFlag(NS, "strikeRider"));
+        assert(readied()?.getFlag(NS, "strikeRider").ammoId === arrows.id, "the readied Strike for that ammunition");
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(archer, bow);
+        const options = attack.flags.pf2e.context.options ?? [];
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const named = options.filter((option) => /ammo:id:/.test(option));
+        const save = await messageAfter(since, abilitySaveCard, { what: `the ammunition's save card (ammunition options: ${named.join(", ") || "none"})` });
+        await wait(500);
+        assert(!readied(), "the readied Strike spent");
+        return { saveCard: save.id, ammoOptions: named };
+    },
+
     // Fear Gem: its card readies the next melee Strike; PF2e's hit (AC 1) leaves the target frightened.
     async strikeRider(scene) {
         const { actor: fighter, token: fighterToken } = await creature(scene, "Gem Striker", { type: "character", x: 2, y: 15 });
