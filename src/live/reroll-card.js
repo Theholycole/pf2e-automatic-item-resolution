@@ -22,8 +22,32 @@ const KEEP_WORDS = { new: "the new result", higher: "the higher result", lower: 
 
 export function rerollText(reroll) {
     const what = reroll.statistic ? `${reroll.statistic.charAt(0).toUpperCase()}${reroll.statistic.slice(1)} save` : WHAT_WORDS[reroll.what] ?? "roll";
-    const whose = reroll.who === "attacker" ? "The latest attack roll at you" : `Your latest ${what}`;
-    return `${whose}, rerolled: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
+    const whose = reroll.who === "attacker" ? "The latest attack roll at you" : reroll.who === "companion" ? `The targeted companion's latest ${what}` : `Your latest ${what}`;
+    const bonus = reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";
+    return `${whose}, rerolled${bonus}: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
+}
+
+// PF2e's degree of success: 10 over the DC a critical success, 10 under a critical failure; a natural 20 one step better,
+// a natural 1 one step worse. → 0 (critical failure) … 3 (critical success), or null without a DC.
+export function degreeOf({ total, dc, natural = null }) {
+    if (!Number.isFinite(Number(dc)) || !Number.isFinite(Number(total))) return null;
+    let degree = total >= dc + 10 ? 3 : total >= dc ? 2 : total <= dc - 10 ? 0 : 1;
+    if (natural === 20) degree = Math.min(3, degree + 1);
+    if (natural === 1) degree = Math.max(0, degree - 1);
+    return degree;
+}
+export const DEGREE_WORDS = ["a critical failure", "a failure", "a success", "a critical success"];
+
+// A reroll the card rolls itself, with a bonus (Redsand Hourglass): the old roll's modifier and the bonus on a new d20,
+// and which result stands. → { total, degree, oldDegree, kept: "new" | "old" }.
+export function bonusReroll({ oldTotal, oldNatural = null, newNatural, bonus, dc = null, keep = "new" }) {
+    const modifier = Number(oldTotal) - Number(oldNatural ?? 0);
+    const total = newNatural + modifier + bonus;
+    const degree = degreeOf({ total, dc, natural: newNatural });
+    const oldDegree = degreeOf({ total: oldTotal, dc, natural: oldNatural });
+    const better = degree !== null && oldDegree !== null ? degree > oldDegree || (degree === oldDegree && total > oldTotal) : total > oldTotal;
+    const kept = keep === "higher" ? (better ? "new" : "old") : keep === "lower" ? (better ? "old" : "new") : "new";
+    return { total, modifier, degree, oldDegree, kept };
 }
 
 // The roll to reroll, newest first: messages as [{ id, type, domains, isReroll, actorUuid, actorId, targetActorUuid }] (the
@@ -36,6 +60,7 @@ export function triggeringRoll(messages, reroll, { actorUuid, actorId }) {
             if (message.type === "attack-roll" && message.targetActorUuid === actorUuid) return message.id;
             continue;
         }
+        // (A companion's: actorUuid is the creature targeted.)
         if (reroll.statistic && !(message.domains ?? []).includes(reroll.statistic)) continue;
         if (types.includes(message.type) && (message.actorUuid === actorUuid || (actorId && message.actorId === actorId))) return message.id;
     }

@@ -154,7 +154,7 @@ function hideCovered(message, html) {
 function choicesOf(state, root) {
     if (state.kind === "bomb") return { included: [...root.querySelectorAll("[data-air-splash]")].filter((box) => box.checked).map((box) => Number(box.dataset.airSplash)) };
     if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
-    if (state.kind === "expose" || state.kind === "item-action") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    if (state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) };
@@ -167,7 +167,7 @@ const APPLY = {
     expose: (message, choices) => applyExposureCard(message, choices),
     focus: (message) => applyFocusCard(message),
     strike: (message) => applyStrikeCard(message),
-    reroll: (message) => applyRerollCard(message),
+    reroll: (message, choices) => applyRerollCard(message, choices),
     "item-action": (message, choices) => applyActionCard(message, choices),
     item: (message, choices) => applyCard(message, choices)
 };
@@ -198,7 +198,7 @@ function wireCard(message, html) {
         const choices = choicesOf(state, root);
         try {
             // (On the presser's own client: a card that acts on targets needs some.)
-            if ((state.kind === "expose" || (state.kind === "cast" && !state.plan?.self) || (state.kind === "item-action" && state.plan?.action?.targeted)) && !choices.targets?.length) throw new Error("Target the creatures first.");
+            if ((state.kind === "expose" || (state.kind === "cast" && !state.plan?.self) || (state.kind === "item-action" && state.plan?.action?.targeted) || (state.kind === "reroll" && state.plan?.reroll?.who === "companion")) && !choices.targets?.length) throw new Error("Target the creatures first.");
             if (isActiveGM()) await applyByKind(message, state, choices);
             else if (!game.users.activeGM) throw new Error("No GM is connected to apply it.");
             else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });
@@ -239,7 +239,7 @@ async function onRequest(data) {
     const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null }
         : state.kind === "poison" ? { weapon: data.weapon }
         : state.kind === "cast" ? { drinker: data.drinker, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
-        : state.kind === "expose" || state.kind === "item-action" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : { drinker: data.drinker };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);

@@ -110,9 +110,9 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 **Rerolls** (`src/compiler/rerolls.js`, `scripts/rerolls.js`; 13 items): "reroll the triggering Reflex save" (Lucky Rabbit's Foot), "Reroll the triggering roll and take the higher result" (Starfaring Cloak), "You force the attacker to reroll the attack roll and use the worse result" (Mail of Luck). A builtin "reroll" `{ what, keep, who, statistic?, after? }`.
 - The card finds the triggering roll in the last 40 messages: the user's latest save, check or attack roll not rerolled yet (a named save by PF2e's check domains), or for Mail of Luck the latest attack roll at the user.
 - PF2e rerolls it with `game.pf2e.Check.rerollFromMessage`, on the GM's client: no `keep` for the new result (as PF2e's own "Keep new" menu), else `keep: "higher"` or `"lower"`.
+- A reroll with a bonus (Redsand Hourglass +4, Devil's Bargain +2 keep higher, The Rabbit Prince +1, Navaratna of the Solar Ruby +2 for the companion the presser targets; the user's answer of 2026-10-15): PF2e's reroll keeps the roll's modifiers, so the card rolls a new d20 with the old roll's modifier plus the bonus. It shows the degree against the same DC and which result stands, and applies nothing; PF2e's message stays as it was, and the GM uses the card's result.
 - Not read:
-  - a bonus on the reroll (Redsand Hourglass's +4: PF2e's reroll keeps the roll's modifiers);
-  - another creature's reroll (a companion, allies);
+  - another creature's reroll (allies), except a companion's;
   - a coin flip, a Mythic Point, a choice of results;
   - a reroll kept for later (Old Tillimaquin);
   - a table's "Reroll two results".

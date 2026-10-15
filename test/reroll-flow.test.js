@@ -9,7 +9,7 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { readReroll } from "../src/compiler/rerolls.js";
-import { triggeringRoll } from "../src/live/reroll-card.js";
+import { bonusReroll, degreeOf, triggeringRoll } from "../src/live/reroll-card.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const SOCKET = `module.${MODULE_ID}`;
@@ -39,8 +39,11 @@ test("the reading: what's rerolled, which result is kept, and what isn't read", 
     assert.deepEqual(compileItem(source("Lucky Rabbit's Foot")).reroll, { what: "save", keep: "new", who: "self", statistic: "reflex", after: "If you fail the second roll as well, you can Stride up to your Speed." });
     assert.deepEqual(compileActivations(source("Starfaring Cloak")).find((entry) => entry.plan?.builtin === "reroll").plan.reroll, { what: "roll", keep: "higher", who: "self" });
     assert.deepEqual(compileActivations(source("Mail of Luck"))[0].plan.reroll, { what: "attack", keep: "lower", who: "attacker" });
-    // A bonus on the reroll, a later blessing, a table's reroll, a companion's, allies' after the user's own: not read.
-    for (const name of ["Redsand Hourglass", "Old Tillimaquin", "Pistol of Wonder", "Navaratna of the Solar Ruby"]) assert.equal(compileActivations(source(name)).some((entry) => entry.plan?.builtin === "reroll"), false, name);
+    // A bonus on the reroll: the card's own roll; a companion's: the creature targeted.
+    assert.deepEqual(compileActivations(source("Redsand Hourglass")).find((entry) => entry.plan?.builtin === "reroll").plan.reroll.bonus, { value: 4, type: "circumstance" });
+    assert.equal(compileActivations(source("Navaratna of the Solar Ruby")).find((entry) => entry.plan?.builtin === "reroll").plan.reroll.who, "companion");
+    // A later blessing, a table's reroll, allies' after the user's own: not read.
+    for (const name of ["Old Tillimaquin", "Pistol of Wonder"]) assert.equal(compileActivations(source(name)).some((entry) => entry.plan?.builtin === "reroll"), false, name);
     assert.equal(readReroll(source("Beckoning Cat Amulet").system.description.value), null);
     // The search: newest first, not a reroll already, the user's own (or an attack at them).
     const messages = [{ id: "a", type: "saving-throw", actorUuid: "Actor.x" }, { id: "b", type: "saving-throw", actorUuid: "Actor.x", isReroll: true }, { id: "c", type: "skill-check", actorUuid: "Actor.x" }, { id: "d", type: "attack-roll", actorUuid: "Actor.y", targetActorUuid: "Actor.x" }];
@@ -82,4 +85,26 @@ test("Mail of Luck makes the attacker reroll the latest attack at its wearer, ke
     const [done] = foundry.rerolls.slice(before);
     assert.equal(done.message.id, attack.id);
     assert.deepEqual(done.options, { keep: "lower" });
+});
+
+test("a reroll with a bonus: the card's own roll, the old modifier plus the bonus, its degree against the same DC; PF2e's message unchanged", async () => {
+    assert.equal(degreeOf({ total: 25, dc: 15 }), 3);
+    assert.equal(degreeOf({ total: 15, dc: 15, natural: 1 }), 1, "a natural 1 one step worse");
+    assert.deepEqual(bonusReroll({ oldTotal: 14, oldNatural: 5, newNatural: 3, bonus: 2, dc: 20, keep: "higher" }), { total: 14, modifier: 9, degree: 1, oldDegree: 1, kept: "old" });
+    // Redsand Hourglass, after a failed save of 15 (a natural 6, so +9) against DC 22: 10 + 9 + 4 = 23, a success.
+    const save = roll(hero, "saving-throw", { dc: { value: 22 }, domains: ["saving-throw", "will"] });
+    save.rolls = [{ total: 15, dice: [{ total: 6 }] }];
+    const hourglass = foundry.giveItem(hero, source("Redsand Hourglass"));
+    const index = compileActivations(source("Redsand Hourglass")).find((entry) => entry.plan?.builtin === "reroll").index;
+    const count = foundry.messages.length;
+    const rerolls = foundry.rerolls.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: hourglass.uuid, activation: index, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "reroll");
+    assert.match(card.content, /rerolled with a \+4 circumstance bonus/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [], userId: "player" });
+    await settle();
+    assert.equal(foundry.rerolls.length, rerolls, "not PF2e's reroll");
+    assert.match(card.content, /Hero&#39;s reroll: 23 \(10 \+ 9 \+ 4 circumstance\) against DC 22 \(a success\); the first roll was 15 \(a failure\)/);
+    assert.match(card.content, /The new result stands/);
 });

@@ -241,8 +241,11 @@ export function createFakeFoundry() {
             constructor(formula) {
                 this.formula = formula;
             }
+            // (A d20 check comes up a natural 10; anything else totals 7.)
             async evaluate() {
-                this.total = 7;
+                const check = /^1d20\s*\+\s*(-?\d+)\s*$/.exec(this.formula);
+                this.dice = check ? [{ total: 10 }] : [];
+                this.total = check ? 10 + Number(check[1]) : 7;
                 return this;
             }
         },

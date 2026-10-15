@@ -2,7 +2,7 @@
 // on the active GM's client, finds that roll in the recent chat and PF2e rerolls it (game.pf2e.Check.rerollFromMessage,
 // which the GM may do for any message) — keeping the new result as PF2e's own "Keep new" does, or the higher or lower.
 
-import { createRerollCard, rerollCardHTML, triggeringRoll } from "../src/live/reroll-card.js";
+import { DEGREE_WORDS, bonusReroll, createRerollCard, rerollCardHTML, triggeringRoll } from "../src/live/reroll-card.js";
 import { FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
 
 // How far back in the chat the triggering roll can be.
@@ -20,20 +20,49 @@ const asRoll = (message) => {
     return { id: message?.id, type: context?.type ?? null, domains: context?.domains ?? [], isReroll: Boolean(context?.isReroll), actorUuid: message?.actor?.uuid ?? null, actorId: message?.speaker?.actor ?? null, targetActorUuid: context?.target?.actor ?? null };
 };
 
-export async function applyRerollCard(message) {
+// targets: the token uuids the presser had targeted (a companion's reroll).
+export async function applyRerollCard(message, { targets = [] } = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "reroll" || state.status !== "open") return null;
-    const actor = await fromUuid(state.user.actorUuid).catch(() => null);
-    if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const reroll = state.plan.reroll;
+    // (Whose roll: the user's, or for a companion's reroll the creature targeted.)
+    const companion = reroll.who === "companion" ? await fromUuid(Array.isArray(targets) ? targets[0] ?? "" : "").catch(() => null) : null;
+    if (reroll.who === "companion" && !companion?.actor) throw new Error("Target the companion first.");
+    const actor = companion?.actor ?? (await fromUuid(state.user.actorUuid).catch(() => null));
+    if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const recent = (game.messages?.contents ?? []).slice(-RECENT);
     const id = triggeringRoll(recent.map(asRoll), reroll, { actorUuid: actor.uuid, actorId: actor.id });
-    if (!id) throw new Error(reroll.who === "attacker" ? `No attack roll at ${state.user.name} to reroll in the recent chat.` : `No ${reroll.statistic ? `${reroll.statistic} ` : ""}${WHAT_WORDS[reroll.what] ?? "roll"} by ${state.user.name} to reroll in the recent chat.`);
+    if (!id) throw new Error(reroll.who === "attacker" ? `No attack roll at ${state.user.name} to reroll in the recent chat.` : `No ${reroll.statistic ? `${reroll.statistic} ` : ""}${WHAT_WORDS[reroll.what] ?? "roll"} by ${actor.name} to reroll in the recent chat.`);
+    if (reroll.bonus) return rerollWithBonus(message, state, game.messages.get(id), actor);
     const Check = game.pf2e?.Check;
     if (!Check?.rerollFromMessage) throw new Error("PF2e's reroll isn't there; reroll it from the message's menu.");
     const triggering = game.messages.get(id);
     await Check.rerollFromMessage(triggering, reroll.keep === "new" ? {} : { keep: reroll.keep });
     const whose = reroll.who === "attacker" ? `${triggering.actor?.name ?? "the attacker"}'s attack roll` : `${state.user.name}'s ${WHAT_WORDS[triggering.flags.pf2e.context.type === "attack-roll" ? "attack" : triggering.flags.pf2e.context.type === "saving-throw" ? "save" : "check"]}`;
     const next = { ...state, status: "applied", results: [`Rerolled ${whose}${reroll.keep === "new" ? "" : `, keeping the ${reroll.keep} result`}.`] };
+    return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// A reroll with a bonus (the user's answer of 2026-10-15): PF2e's reroll can't add it, so the card rolls a new d20 with the
+// old roll's modifier plus the bonus, shows the degree against the same DC and which result stands, and applies nothing —
+// the GM uses that result. PF2e's message stays as it was.
+async function rerollWithBonus(message, state, triggering, actor) {
+    const reroll = state.plan.reroll;
+    const old = triggering.rolls?.[0];
+    if (!Number.isFinite(Number(old?.total))) throw new Error("That roll has no total to reroll.");
+    const oldNatural = Number(old.dice?.[0]?.total ?? old.terms?.[0]?.total) || null;
+    const context = triggering.flags?.pf2e?.context ?? {};
+    const dc = Number(context.dc?.value) || null;
+    const modifier = Number(old.total) - (oldNatural ?? 0);
+    const roll = await new Roll(`1d20 + ${modifier + reroll.bonus.value}`).evaluate();
+    const newNatural = Number(roll.dice?.[0]?.total ?? roll.total - modifier - reroll.bonus.value);
+    await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: reroll with a +${reroll.bonus.value} ${reroll.bonus.type} bonus` });
+    const result = bonusReroll({ oldTotal: Number(old.total), oldNatural, newNatural, bonus: reroll.bonus.value, dc, keep: reroll.keep });
+    const degree = (value) => (value === null ? "" : ` (${DEGREE_WORDS[value]})`);
+    const lines = [
+        `${actor.name}'s reroll: ${result.total} (${newNatural} + ${modifier} + ${reroll.bonus.value} ${reroll.bonus.type})${dc ? ` against DC ${dc}` : ""}${degree(result.degree)}; the first roll was ${old.total}${degree(result.oldDegree)}.`,
+        `${result.kept === "new" ? "The new result stands" : "The first result stands"}. PF2e's message isn't changed: the GM uses this one.`
+    ];
+    const next = { ...state, status: "applied", results: lines };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
