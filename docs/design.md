@@ -132,6 +132,7 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 - a coated weapon's hit and its save card;
 - Fear Gem's readied Strike frightening the creature it hits;
 - Lucky Rabbit's Foot rerolling a Reflex save;
+- Onyx Panther's Sneak rolled by PF2e with its +1 item bonus;
 - Spark Wafer's save;
 - a Cloak of Elvenkind's activations card;
 - Hexing Jar's Focus Point, lost at the end of the turn in the check's own encounter (cleanup deletes only encounters flagged as its fixtures);

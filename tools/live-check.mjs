@@ -232,6 +232,20 @@ export const cases = {
         return { save: save.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Onyx Panther: its card rolls PF2e's own Sneak for the user, with the panther's +1 item bonus among the roll's modifiers.
+    async itemAction(scene) {
+        const { actor: sneak } = await creature(scene, "Panther Sneak", { type: "character", x: 9, y: 15 });
+        const panther = await give(sneak, "Onyx Panther");
+        const since = Date.now();
+        await panther.consume();
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the action card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check" && message.speaker?.actor === sneak.id, { what: "PF2e's Sneak roll", timeout: 12000 });
+        const bonus = (roll.flags.pf2e.modifiers ?? []).find((modifier) => modifier.label === "Onyx Panther");
+        assert(bonus?.modifier === 1 && bonus.type === "item", `the +1 item bonus on the roll (${JSON.stringify(bonus ?? null)})`);
+        return { roll: roll.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Spark Wafer: its save goes to the creatures targeted, through the ability module's save card.
     async useSave(scene) {
         const { actor: user } = await creature(scene, "Snapper", { x: 2, y: 12 });
