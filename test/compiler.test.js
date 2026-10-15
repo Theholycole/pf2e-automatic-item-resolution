@@ -116,6 +116,14 @@ test("an item granting a spell's effects gets PF2e's Spell Effect at its rank an
     assert.deepEqual(registry.resolveSync(quickness, context(), io()).changes.map((change) => [change.op, change.target, change.effect.label]), [["effect", "drinker", "Spell Effect: Haste"]]);
     // No PF2e Effect for Invisibility: still a cast, the spell module's.
     assert.equal(compileItem(item("Invisibility Potion")).builtin, "cast-spell");
+    // The same for a talisman's "casts a 2nd-rank Invisibility spell on you", and a counteract modifier the text states.
+    const fade = compileItem(item("Fade Band"));
+    assert.deepEqual([fade.builtin, fade.spell.name, fade.rank, fade.self], ["cast-spell", "Invisibility", 2, true]);
+    const truesight = compileItem(item("Truesight Potion"));
+    assert.deepEqual([truesight.builtin, truesight.spell.name, truesight.rank, truesight.attack], ["cast-spell", "Truesight", 7, 25]);
+    const enigma = compileItem(item("Enigma-Sight Potion"));
+    assert.equal(enigma.builtin, "cast-spell");
+    assert.match(enigma.notes[0], /except that you use your Perception modifier/);
     // A talisman that casts a spell on its user: the same, at its rank (Snarling Badger's Heroism) or for its time (Stormfeather's Fly).
     assert.deepEqual(compileItem(item("Snarling Badger (Moderate)")).resolution.applications.map((entry) => [entry.label, entry.level, entry.recipients]), [["Spell Effect: Heroism", 6, "self"]]);
     assert.deepEqual(compileItem(item("Stormfeather")).resolution.applications.map((entry) => [entry.label, entry.duration]), [["Spell Effect: Fly", { value: 1, unit: "minutes" }]]);

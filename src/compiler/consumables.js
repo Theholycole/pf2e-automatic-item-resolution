@@ -78,6 +78,32 @@ export function spellEffectApplications(item, spellEffects, recipient) {
     return applications.length ? applications : null;
 }
 
+// A spell the item grants that has no PF2e Spell Effect (Invisibility, Truesight): cast, as the ability compiler's
+// builtin { builtin: "cast-spell", spell, rank, dc, attack, tradition, self, notes } — the spell module's to cast (the
+// user's answer 4, 2026-10-15). attack: a counteract modifier the text states ("a counteract modifier of +25");
+// notes: what the item changes ("except that you use your Perception modifier …").
+const plainSentences = (html) => String(html ?? "").replace(/\[\[\/\w+ 1d20\s*\+\s*(\d+)[^\]]*\]\](?:\{[^}]*\})?/g, "+$1").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=[A-Z])/);
+export function castPlan(item) {
+    const granted = grantedSpells(item);
+    if (granted.length !== 1) return null;
+    const [spell] = granted;
+    const sentences = plainSentences(item?.system?.description?.value);
+    const counteract = sentences.map((sentence) => /\bcounteract modifier (?:of )?\+(\d+)|\+(\d+) counteract modifier/i.exec(sentence)).find(Boolean);
+    const notes = sentences.filter((sentence) => sentence.includes(spell.spell.name) && /\b(?:except|but|though|instead)\b/i.test(sentence));
+    return {
+        builtin: "cast-spell",
+        source: { name: item.name, uuid: item.uuid ?? null, slug: item.system?.slug ?? null },
+        spell: spell.spell,
+        rank: spell.rank,
+        dc: null,
+        attack: counteract ? Number(counteract[1] ?? counteract[2]) : null,
+        tradition: null,
+        self: true,
+        notes,
+        ...(spell.duration ? { duration: spell.duration } : {})
+    };
+}
+
 // An application's recipients for the item: the drinker is the plan's target (the user, by default).
 const recipientsFor = (recipient) => (recipient === "drinker" ? "target" : "self");
 
@@ -92,7 +118,8 @@ export function ownPlan(item, base, options = {}) {
     const healing = nativeHealing(item);
     const links = effectLinks(item);
     const applications = links.length === 1 ? [application(links[0], recipient)] : !links.length ? spellEffectApplications(item, options.spellEffects, recipient) ?? [] : [];
-    if (!healing && !applications.length) return null;
+    // (A granted spell with no PF2e Effect: a cast; only once the spell-effects index is known, so it isn't one by mistake.)
+    if (!healing && !applications.length) return !links.length && options.spellEffects ? castPlan(item) : null;
     const resolution = healing && !applications.length
         ? { kind: "healing", native: { healing } }
         : { kind: "effect", applications, ...(healing ? { native: { healing } } : {}) };

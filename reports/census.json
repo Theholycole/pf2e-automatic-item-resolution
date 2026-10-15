@@ -8,10 +8,10 @@
   "bombs": 171,
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 14,
-   "none": 360,
+   "builtin:cast-spell": 25,
+   "none": 354,
    "resolves": 745,
-   "note-only": 277,
+   "note-only": 272,
    "builtin:zone": 22,
    "builtin:no-effect": 84,
    "partial": 5,
@@ -51,11 +51,11 @@
    "count": 183,
    "results": {
     "resolves": 100,
-    "note-only": 42,
-    "none": 22,
+    "note-only": 40,
+    "none": 21,
     "builtin:no-effect": 13,
-    "partial": 1,
-    "builtin:cast-spell": 5
+    "builtin:cast-spell": 8,
+    "partial": 1
    },
    "mechanisms": {
     "linked-effect": 55,
@@ -73,10 +73,11 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 86,
-    "note-only": 15,
+    "none": 81,
+    "note-only": 13,
     "resolves": 44,
-    "builtin:no-effect": 11
+    "builtin:no-effect": 11,
+    "builtin:cast-spell": 7
    },
    "mechanisms": {
     "trigger": 106,
@@ -215,9 +216,9 @@
    "count": 46,
    "results": {
     "none": 21,
-    "note-only": 12,
+    "note-only": 11,
     "resolves": 12,
-    "builtin:cast-spell": 1
+    "builtin:cast-spell": 2
    },
    "mechanisms": {
     "trigger": 15,
@@ -302,7 +303,7 @@
    "count": 37,
    "resolves": 5,
    "gaps": 0,
-   "none": 20
+   "none": 15
   },
   "strike": {
    "count": 31,
@@ -320,13 +321,13 @@
    "count": 156,
    "resolves": 53,
    "gaps": 0,
-   "none": 80
+   "none": 76
   },
   "counteract": {
    "count": 79,
    "resolves": 18,
    "gaps": 0,
-   "none": 29
+   "none": 28
   },
   "area": {
    "count": 44,
@@ -338,7 +339,7 @@
    "count": 437,
    "resolves": 295,
    "gaps": 0,
-   "none": 62
+   "none": 60
   },
   "duration": {
    "count": 947,
@@ -2793,8 +2794,8 @@
     "trigger",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Quicksilver Mutagen (Lesser)",
@@ -6463,7 +6464,8 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Insight Coffee (Greater)",
@@ -7295,8 +7297,8 @@
     "counteract",
     "condition"
    ],
-   "result": "note-only",
-   "kind": "check"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Blisterwort",
@@ -7582,7 +7584,8 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Wand of Dumbfounding Doom (9th-rank)",
@@ -7744,7 +7747,8 @@
     "casts-spell",
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Philosopher's Stone",
@@ -12996,7 +13000,8 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Oil of Weightlessness (Greater)",
@@ -14401,8 +14406,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Soothing Tonic (Major)",
@@ -18631,7 +18636,8 @@
     "casts-spell",
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Nevercold",
@@ -18775,7 +18781,8 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Pinpoint Arrowhead",
@@ -27989,8 +27996,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Dust of Corpse Animation (Greater)",
@@ -28107,8 +28114,8 @@
     "area",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check"
+   "result": "builtin:cast-spell",
+   "kind": null
   },
   {
    "name": "Salve of Antiparalysis (Greater)",

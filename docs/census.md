@@ -19,27 +19,27 @@ Results, for the items this module handles:
 |---|---:|---:|
 | resolves | 745 | 49% |
 | partial | 5 | 0% |
-| note-only | 277 | 18% |
+| note-only | 272 | 18% |
 | builtin:zone | 22 | 1% |
-| builtin:cast-spell | 14 | 1% |
+| builtin:cast-spell | 25 | 2% |
 | builtin:no-effect | 84 | 6% |
 | builtin:save-bonus | 1 | 0% |
-| none | 360 | 24% |
+| none | 354 | 23% |
 
 ## By category
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | other | 533 | 202 | 0 | 122 | 0 | 35 | 174 |
-| potion | 183 | 100 | 1 | 42 | 0 | 18 | 22 |
-| talisman | 156 | 44 | 0 | 15 | 0 | 11 | 86 |
+| potion | 183 | 100 | 1 | 40 | 0 | 21 | 21 |
+| talisman | 156 | 44 | 0 | 13 | 0 | 18 | 81 |
 | elixir | 149 | 81 | 0 | 35 | 0 | 16 | 17 |
 | poison | 115 | 111 | 0 | 1 | 0 | 0 | 3 |
 | snare | 82 | 63 | 0 | 5 | 0 | 0 | 14 |
 | gadget | 77 | 21 | 0 | 14 | 0 | 30 | 12 |
 | mutagen | 68 | 60 | 4 | 4 | 0 | 0 | 0 |
 | oil | 66 | 24 | 0 | 22 | 0 | 9 | 11 |
-| fulu | 46 | 12 | 0 | 12 | 0 | 1 | 21 |
+| fulu | 46 | 12 | 0 | 11 | 0 | 2 | 21 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |
 
@@ -51,17 +51,17 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 |---|---:|---:|---:|---:|
 | duration | 947 | 579 | 0 | 22 |
 | fixed-dc | 498 | 397 | 0 | 45 |
-| condition | 437 | 295 | 0 | 62 |
+| condition | 437 | 295 | 0 | 60 |
 | linked-effect | 393 | 370 | 0 | 1 |
 | damage | 287 | 188 | 0 | 50 |
-| trigger | 156 | 53 | 0 | 80 |
+| trigger | 156 | 53 | 0 | 76 |
 | affliction | 144 | 139 | 0 | 3 |
-| counteract | 79 | 18 | 0 | 29 |
+| counteract | 79 | 18 | 0 | 28 |
 | on-weapon | 67 | 54 | 0 | 1 |
 | area | 44 | 19 | 0 | 9 |
 | heal | 43 | 34 | 0 | 3 |
 | temp-hp | 41 | 20 | 0 | 6 |
-| casts-spell | 37 | 5 | 0 | 20 |
+| casts-spell | 37 | 5 | 0 | 15 |
 | strike | 31 | 7 | 0 | 11 |
 
 ## Gaps in the plans that resolve in part
