@@ -12,6 +12,7 @@ import { castWordsPlan } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
+import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { directDamageOver, directDamagePlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { focusPlan } from "./focus.js";
@@ -129,6 +130,8 @@ export function compileActivations(item, options = {}) {
         plan = rageOver(plan, ragePlan(plainText(activation.html), base));
         // (A skill action taken with it, src/compiler/item-actions.js: Bronze Bull Pendant's Shove.)
         plan = itemActionOver(plan, itemActionPlan(activation.html, base, options));
+        // (A check with the item's own modifier, src/compiler/own-checks.js: Tentacle Cannon's Grapple at +13.)
+        plan = ownCheckOver(plan, ownCheckPlan(plainText(activation.html), base, options));
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)
         // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
         plan = guardValues(directDamageOver(guardText(plan, plainText(activation.html)), directDamagePlan(plainText(activation.html), base, { item })));

@@ -37,7 +37,8 @@ export function routeOf(plan, text = "") {
     if (plan.builtin === "focus-point" && plan.focus) return "focus";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
-    if (isUseSave(plan, text) || targetedRow(plan)) return "save";
+    // (A check with the item's own modifier at a creature: the ability module's card, as a save at the targets.)
+    if (plan.ownCheck || isUseSave(plan, text) || targetedRow(plan)) return "save";
     if (isLaterSave(plan, text)) return "later";
     if (playedOnItemCard(plan)) return "item";
     return null;

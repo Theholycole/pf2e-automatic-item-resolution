@@ -35,6 +35,11 @@ export function saveText(plan) {
     const check = plan?.resolution?.check ?? {};
     // (No roll: what it does, "2d6 fire damage", "grabbed", outright.)
     if (check.roll === "automatic") return `no save: ${outrightText(plan)}`;
+    // (A check with the item's own modifier: "Athletics +13 against the target's Fortitude DC", "attack +14 against AC".)
+    if (check.roll === "skill") {
+        const words = (name) => (name === "ac" ? "AC" : `${String(name ?? "").charAt(0).toUpperCase()}${String(name ?? "").slice(1)}`);
+        return `${words([].concat(check.statistic)[0])}${Number.isFinite(check.modifier) ? ` +${check.modifier}` : ""} against ${check.against?.statistic === "ac" ? "AC" : `${words(check.against?.statistic)} DC`}`;
+    }
     const statistic = String(check.statistic ?? "fortitude");
     return `DC ${check.against?.value ?? "?"} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)} save`;
 }
@@ -144,14 +149,15 @@ export function afterExposure(state, lines, worldTime) {
 export function exposureCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const automatic = state.plan?.resolution?.check?.roll === "automatic";
+    const checked = state.plan?.resolution?.check?.roll === "skill";
     const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
     const again = state.repeat ? ` It can be used again${state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : ""} until its time is up, after each recharge.` : "";
     const hint = !open ? "" : state.later
         ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
-        : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
+        : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : checked ? "A check at" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     const notes = open && (state.plan?.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : escape(saveText(state.plan))}</span></header>${hint}${notes}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${notes}${results}${controls}</section>`;
 }
 

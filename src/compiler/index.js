@@ -22,6 +22,7 @@ import { castWordsPlan } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
+import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { directDamageOver, directDamagePlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
@@ -92,6 +93,8 @@ export function compileItem(given, options = {}) {
     plan = rageOver(plan, ragePlan(plainText(item?.system?.description?.value), base));
     // (A skill action taken with it, src/compiler/item-actions.js: Onyx Panther's Sneak.)
     plan = itemActionOver(plan, itemActionPlan(item?.system?.description?.value, base, options));
+    // (A check with the item's own modifier, src/compiler/own-checks.js.)
+    plan = ownCheckOver(plan, ownCheckPlan(plainText(item?.system?.description?.value), base, options));
     // (Damage outright to the creature it names, src/compiler/direct-damage.js: Murderer's Knot.)
     // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
     plan = directDamageOver(guardText(plan, plainText(item?.system?.description?.value)), directDamagePlan(plainText(item?.system?.description?.value), base, { item }));

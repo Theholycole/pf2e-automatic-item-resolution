@@ -89,3 +89,17 @@ test("outright damage to the target beside a save only for others: the target's 
     assert.equal(readDirectDamage("Effect Your target takes 3d6 cold damage. It must succeed at a DC 20 Fortitude save or be Slowed 1."), null);
 });
 
+
+test("a check with the item's own modifier: PF2e's basic Grapple rows at +13, an attack of its own at +14 against AC", async () => {
+    const { compileBasicActions, BASIC_ACTIONS } = await import("../../pf2e-automatic-ability-resolution/src/compiler/index.js");
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    const cannon = compileActivations(source("Tentacle Cannon"), { basicActions }).find((entry) => entry.plan?.ownCheck).plan;
+    assert.equal(routeOf(cannon), "save");
+    assert.deepEqual([cannon.resolution.check.statistic, cannon.resolution.check.modifier, cannon.resolution.check.against.statistic], ["athletics", 13, "fortitude"]);
+    assert.ok(cannon.resolution.outcomes.success.effects.some((effect) => effect.slug === "grabbed"), "Grapple's own row");
+    const spike = compileActivations(source("Swallow-Spike"), { basicActions })[0].plan;
+    assert.deepEqual([spike.resolution.check.statistic, spike.resolution.check.modifier, spike.resolution.check.against.statistic], ["attack", 14, "ac"]);
+    assert.deepEqual([spike.resolution.outcomes.success.damage.multiplier, spike.resolution.outcomes.criticalSuccess.damage.multiplier], [1, 2]);
+    // Without the ability module's compiled actions, no Grapple plan.
+    assert.equal(compileActivations(source("Tentacle Cannon")).find((entry) => entry.plan?.ownCheck), undefined);
+});

@@ -6,15 +6,15 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 921,
+   "resolves": 657,
    "builtin:cast-spell": 431,
-   "resolves": 654,
+   "none": 908,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 18,
    "note-only": 280,
    "builtin:reroll": 15,
-   "partial": 45,
+   "partial": 55,
    "builtin:modes": 26,
    "builtin:zone": 9,
    "builtin:roll-twice": 10,
@@ -23,10 +23,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1119,
+   "save": 327,
    "cast": 431,
    "item": 586,
-   "save": 314,
+   "none": 1106,
    "focus": 45,
    "fortune": 28,
    "reroll": 15,
@@ -42,15 +42,15 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 586,
+    "resolves": 397,
     "builtin:cast-spell": 318,
-    "resolves": 394,
+    "none": 580,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 13,
     "note-only": 179,
     "builtin:reroll": 8,
-    "partial": 14,
+    "partial": 17,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
@@ -61,8 +61,8 @@
    "activations": 460,
    "results": {
     "resolves": 143,
-    "none": 153,
-    "partial": 15,
+    "none": 146,
+    "partial": 22,
     "note-only": 41,
     "builtin:cast-spell": 73,
     "builtin:reroll": 5,
@@ -132,9 +132,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "The Cyclone",
@@ -726,9 +726,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Tentacle Cannon",
@@ -737,9 +737,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Tentacle Cannon",
@@ -4213,9 +4213,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Master Magus Ring",
@@ -5291,9 +5291,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Swallow-Spike",
@@ -13101,9 +13101,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Swallow-Spike (Major)",
@@ -14344,9 +14344,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Tentacle Cannon (Greater)",
@@ -14355,9 +14355,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Tentacle Cannon (Greater)",
@@ -18326,9 +18326,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Swallow-Spike (Greater)",
@@ -24684,9 +24684,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Tentacle Cannon (Major)",
@@ -24695,9 +24695,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Tentacle Cannon (Major)",
@@ -24959,9 +24959,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Dinosaur Boots",
@@ -27841,9 +27841,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Limitless Power",
