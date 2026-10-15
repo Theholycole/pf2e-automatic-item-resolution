@@ -356,16 +356,18 @@
  "live": {
   "totals": {
    "cast": 26,
-   "none": 592,
+   "none": 562,
    "item": 652,
    "expose": 89,
+   "later": 30,
    "save": 105,
    "coat": 44
   },
   "byCategory": {
    "other": {
     "cast": 7,
-    "none": 225,
+    "none": 219,
+    "later": 6,
     "save": 70,
     "item": 225,
     "expose": 3,
@@ -373,7 +375,8 @@
    },
    "potion": {
     "item": 95,
-    "none": 73,
+    "later": 24,
+    "none": 49,
     "cast": 9,
     "save": 6
    },
@@ -735,7 +738,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Onyx Panther",
@@ -1541,7 +1544,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Quartz-Coil Rail Transport (Moderate)",
@@ -1653,7 +1656,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Fake Blood Pack",
@@ -2242,7 +2245,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Ghost Delivery Fulu",
@@ -2635,7 +2638,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Drought Powder",
@@ -2809,7 +2812,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Bonebloom Rose",
@@ -6111,7 +6114,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Fury Cocktail (Lesser)",
@@ -6858,7 +6861,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Demortification Oil",
@@ -10072,7 +10075,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Steadfast Sentinel",
@@ -11482,7 +11485,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Nimbus Breath",
@@ -11755,7 +11758,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Glittering Snare",
@@ -12080,7 +12083,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Violet Venom",
@@ -12753,7 +12756,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Wand of Pernicious Poison (6th-Rank)",
@@ -15201,7 +15204,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Liquid Gold",
@@ -16380,7 +16383,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Deadweight Mutagen (Major)",
@@ -17884,7 +17887,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Eldritch Flare",
@@ -20256,7 +20259,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Colorful Coating (Violet)",
@@ -20626,7 +20629,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Mourner's Dawnlight Fulu",
@@ -22250,7 +22253,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Crimson Godsblood Serum (Greater)",
@@ -23171,7 +23174,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Kraken Bottle",
@@ -25154,7 +25157,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Ashes of the War God",
@@ -25428,7 +25431,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Ablative Shield Plating (Lesser)",
@@ -26218,7 +26221,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Nap Gas Dispenser",
@@ -26633,7 +26636,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Sanguine Mutagen (Greater)",
@@ -27790,7 +27793,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Feather Token (Puddle)",
@@ -28337,7 +28340,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Material Essence Disruptor (Lesser)",
@@ -28750,7 +28753,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Chalk",
@@ -29061,7 +29064,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Instant Evisceration Snare",
@@ -29629,7 +29632,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Oak Potion",
@@ -29775,7 +29778,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Wand of Smoldering Fireballs (5th-Rank Spell)",

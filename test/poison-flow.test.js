@@ -135,8 +135,10 @@ test("another item's save on its Use goes to the creatures its presser targets; 
     await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
     await settle();
     assert.equal(foundry.posted.slice(before)[0]?.plan.resolution.check.against.value, 14);
-    // An energy breath potion gives an action for an hour: no save card on drinking it.
+    // An energy breath potion gives an action for an hour: its card waits for that action.
     const breath = await use(foundry.giveItem(rogue, source("Energy Breath Potion (Acid, Greater)")));
-    assert.notEqual(breath?.flags?.[MODULE_ID]?.card?.kind, "expose");
+    assert.equal(breath.flags[MODULE_ID].card.later, true);
+    assert.match(breath.content, /Kept for later: when Rogue uses it, target the creatures in its 30-foot line/);
+    assert.match(breath.content, /Use it: my targets/);
 });
 

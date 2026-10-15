@@ -3,7 +3,7 @@
 // spell module's), "save" (another item's save on its Use, at the presser's targets), "item" (healing, PF2e Effects,
 // the item's own row), or null (none yet).
 
-import { isExposurePoison, isInjuryPoison, isUseSave } from "./poison-card.js";
+import { isExposurePoison, isInjuryPoison, isLaterSave, isUseSave } from "./poison-card.js";
 import { isCast } from "./cast-card.js";
 
 const playedOnItemCard = (plan) => ["healing", "effect"].includes(plan?.resolution?.kind) || (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic");
@@ -14,6 +14,7 @@ export function routeOf(plan, text = "") {
     if (isExposurePoison(plan)) return "expose";
     if (isCast(plan)) return "cast";
     if (isUseSave(plan, text)) return "save";
+    if (isLaterSave(plan, text)) return "later";
     if (playedOnItemCard(plan)) return "item";
     return null;
 }

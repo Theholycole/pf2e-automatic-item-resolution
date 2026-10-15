@@ -71,8 +71,8 @@ export async function strikeWithPoison(message) {
 }
 
 // Contact, inhaled and ingested poisons: a card to expose the creatures its presser targets.
-export async function postExposureCard({ message, plan, used, actor, token }) {
-    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor) });
+export async function postExposureCard({ message, plan, used, actor, token, later = false }) {
+    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later });
     return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 

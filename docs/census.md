@@ -45,23 +45,23 @@ Results, for the items this module handles:
 
 ## Played live
 
-Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **cast** (the spell module casts it). Bombs get theirs after PF2e's damage roll (above).
+Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (healing, PF2e Effects, its own row or note), **coat** (an injury poison on a weapon), **expose** (a contact, inhaled or ingested poison, or a drug), **save** (a save on its Use for the creatures targeted), **later** (the same, kept open for an action the item gives for later: a breath potion), **cast** (the spell module casts it). Bombs get theirs after PF2e's damage roll (above).
 
-| Category | Items | item | coat | expose | save | cast | no card |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| other | 533 | 225 | 3 | 3 | 70 | 7 | 225 |
-| potion | 183 | 95 | 0 | 0 | 6 | 9 | 73 |
-| talisman | 156 | 47 | 0 | 0 | 10 | 7 | 92 |
-| elixir | 149 | 116 | 0 | 0 | 1 | 0 | 32 |
-| poison | 115 | 1 | 41 | 63 | 1 | 0 | 9 |
-| snare | 82 | 5 | 0 | 0 | 0 | 0 | 77 |
-| gadget | 77 | 24 | 0 | 0 | 15 | 0 | 38 |
-| mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 |
-| oil | 66 | 46 | 0 | 0 | 1 | 1 | 18 |
-| fulu | 46 | 17 | 0 | 0 | 1 | 2 | 26 |
-| drug | 24 | 0 | 0 | 23 | 0 | 0 | 1 |
-| toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1508** | **652** | **44** | **89** | **105** | **26** | **592** |
+| Category | Items | item | coat | expose | save | later | cast | no card |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| other | 533 | 225 | 3 | 3 | 70 | 6 | 7 | 219 |
+| potion | 183 | 95 | 0 | 0 | 6 | 24 | 9 | 49 |
+| talisman | 156 | 47 | 0 | 0 | 10 | 0 | 7 | 92 |
+| elixir | 149 | 116 | 0 | 0 | 1 | 0 | 0 | 32 |
+| poison | 115 | 1 | 41 | 63 | 1 | 0 | 0 | 9 |
+| snare | 82 | 5 | 0 | 0 | 0 | 0 | 0 | 77 |
+| gadget | 77 | 24 | 0 | 0 | 15 | 0 | 0 | 38 |
+| mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 |
+| oil | 66 | 46 | 0 | 0 | 1 | 0 | 1 | 18 |
+| fulu | 46 | 17 | 0 | 0 | 1 | 0 | 2 | 26 |
+| drug | 24 | 0 | 0 | 23 | 0 | 0 | 0 | 1 |
+| toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 1 |
+| **all** | **1508** | **652** | **44** | **89** | **105** | **30** | **26** | **562** |
 
 ## What they do
 

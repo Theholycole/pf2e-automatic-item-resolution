@@ -82,7 +82,7 @@ async function cardForUse(message) {
     // has no Effect for, cast by the spell module (scripts/casts.js); else the item card below.
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
-    if (route === "expose" || route === "save") return postExposureCard({ message, plan, used, actor, token });
+    if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
     if (route === "cast") return postCastCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
