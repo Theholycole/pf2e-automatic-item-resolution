@@ -14,12 +14,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 300,
+   "none": 298,
    "resolves": 694,
    "builtin:zone": 86,
    "note-only": 267,
    "builtin:item-action": 6,
-   "builtin:readied-bonus": 4,
+   "builtin:readied-bonus": 6,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "partial": 12,
@@ -88,14 +88,14 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 66,
+    "none": 64,
     "note-only": 13,
     "builtin:item-action": 5,
     "resolves": 47,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
-    "builtin:readied-bonus": 1,
+    "builtin:readied-bonus": 3,
     "partial": 2,
     "builtin:roll-twice": 2
    },
@@ -347,7 +347,7 @@
    "count": 156,
    "resolves": 55,
    "gaps": 0,
-   "none": 61
+   "none": 60
   },
   "counteract": {
    "count": 79,
@@ -377,14 +377,14 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 385,
+   "none": 383,
    "item": 655,
    "zone": 86,
    "expose": 89,
    "later": 54,
    "action": 6,
    "save": 108,
-   "fortune": 6,
+   "fortune": 8,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -413,13 +413,13 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 77,
+    "none": 75,
     "item": 49,
     "action": 5,
     "reroll": 1,
     "cast": 9,
     "save": 11,
-    "fortune": 3,
+    "fortune": 5,
     "strike": 1
    },
    "elixir": {
@@ -476,7 +476,7 @@
    }
   },
   "noCard": {
-   "no-plan": 300,
+   "no-plan": 298,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -11759,7 +11759,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Wand of Crackling Lightning (3rd-Rank Spell)",
@@ -17893,7 +17895,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Discord Fulu",

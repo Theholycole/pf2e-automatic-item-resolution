@@ -27,6 +27,8 @@ const DEGREES = /\b(?:Critical Success|Critical Failure)\b|\b(?:Success|Failure)
 const SAVED = /@Check\[(?:type:)?(?:fortitude|reflex|will)\b|\b(?:save|saving throw)\b/i;
 const STRUCK = /\b(?:make|makes|attempt|attempts) an? (?:[\w-]+ ){0,3}?Strike\b|\bsuccessful (?:attack|hit|Strike)\b|\bon a hit\b|\bhits a target\b|\bUpon Striking\b/i;
 const ROW_START = /^(?:On a|Even on|Success|Failure|Critical)\b/;
+// (A shield's statistics line, "Hardness HP BT 6 36 18": not a note.)
+const STATS = /^Hardness\b.*\bHP\b/;
 
 // The text (plain, from the activation's Effect on) → { formula, type, category, effects, modifiers, notes } or null.
 export function readDirectDamage(text) {
@@ -48,8 +50,29 @@ export function readDirectDamage(text) {
         const riders = clause ? riderRow(`is ${clause[1]}`) : null;
         const ridden = Boolean(riders && (riders.effects.length || riders.modifiers.length));
         const left = ridden ? rest.replace(clause[0], "").replace(/^(?:When you activate (?:it|the [\w' -]+?),)?[\s,.;]*$/i, "") : rest;
-        const notes = [...(left.split(/\s+/).filter(Boolean).length > 3 ? [sentence] : []), ...sentences.filter((_, at) => at !== index)];
+        const notes = [...(left.split(/\s+/).filter(Boolean).length > 3 ? [sentence] : []), ...sentences.filter((other, at) => at !== index && !STATS.test(other))];
         return { formula: formula.replace(/\s+/g, ""), type: type && type.toLowerCase() !== "untyped" ? type.toLowerCase() : null, category, effects: ridden ? riders.effects : [], modifiers: ridden ? riders.modifiers : [], notes };
+    }
+    return null;
+}
+
+// Conditions an item puts outright on the one creature it names, no damage, no roll (Imposing Shield's "The creature that
+// made the attack that triggered your Shield Block becomes Frightened 2", Highhelm War Shield's "The creature becomes
+// Grabbed"): { effects, modifiers, notes } or null — the bombs' rider reader on the sentence. Not one scoped to you ("Off-
+// Guard against the next melee attack you attempt"), nor under a condition.
+const ONE_IS = /^(?:The|That) (?:(?:attacking|triggering|struck|damaged|affected) )?(?:creature|target|attacker|foe|enemy)(?: that [^.]{1,80}?)? (?:is|becomes)\b\s*(.+)$/i;
+export function readOutrightConditions(text) {
+    const plain = String(text ?? "");
+    if (DEGREES.test(plain) || SAVED.test(plain)) return null;
+    const body = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
+    if (STRUCK.test(body)) return null;
+    const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    for (const [index, sentence] of sentences.entries()) {
+        const match = ONE_IS.exec(sentence);
+        if (!match || NOT_OUTRIGHT.test(sentence) || /\b(?:against (?:the next|your)|to you\b|to your\b)/i.test(sentence)) continue;
+        const row = riderRow(`is ${match[1]}`);
+        if (!row.effects.length && !row.modifiers.length) continue;
+        return { effects: row.effects, modifiers: row.modifiers, notes: sentences.filter((other, at) => at !== index && !STATS.test(other)) };
     }
     return null;
 }
@@ -59,7 +82,21 @@ export function readDirectDamage(text) {
 export function directDamagePlan(text, base, { item = null } = {}) {
     if (item?.type === "ammo" || /\bammunition\b|\bbullet\b|\barrow\b|\bbolt\b/i.test(item?.name ?? "") || (item?.system?.traits?.value ?? []).includes("ammunition")) return null;
     const read = readDirectDamage(text);
-    if (!read) return null;
+    if (!read) {
+        // (Conditions alone, outright.)
+        const conditions = readOutrightConditions(text);
+        if (!conditions) return null;
+        return {
+            ...base,
+            modelVersion: MODEL_VERSION,
+            automation: { level: conditions.notes.length ? "guided" : "automatic" },
+            targeting: { target: "1 creature", range: null, area: null },
+            trigger: { event: "use" },
+            resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: { damage: none().damage, effects: conditions.effects, modifiers: conditions.modifiers, ...(conditions.notes.length ? { manualInstructions: conditions.notes.map((note) => `{target}: ${note}`) } : {}) }, failure: none(), criticalFailure: none() } },
+            notes: conditions.notes,
+            ...(conditions.notes.length ? { partial: true } : {})
+        };
+    }
     const component = { id: "0", formula: read.formula, type: read.type, category: read.category };
     const success = {
         damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] },

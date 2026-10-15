@@ -9,7 +9,7 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
-import { readDirectDamage } from "../src/compiler/direct-damage.js";
+import { readDirectDamage, readOutrightConditions } from "../src/compiler/direct-damage.js";
 import { outrightText } from "../src/live/poison-card.js";
 import { routeOf } from "../src/live/route.js";
 
@@ -68,3 +68,15 @@ test("Forge Warden: its card sends 2d6 fire to the presser's targets through the
     assert.equal(posted.plan.resolution.sharedDamage.components[0].formula, "2d6");
     assert.match(card.content, /Brute: Forge Warden: Forge Fires&#39;s card follows/);
 });
+
+test("conditions outright on the creature an item names: Imposing Shield's frightened 2, Highhelm War Shield's grabbed", () => {
+    const shield = compileActivations(source("Imposing Shield")).find((entry) => entry.plan?.resolution?.check?.roll === "automatic").plan;
+    assert.equal(routeOf(shield), "save");
+    assert.deepEqual(shield.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.value]), [["frightened", 2]]);
+    assert.match(shield.notes.join(" "), /Frightened 3/, "the stronger one when the block took it all, a note");
+    assert.ok(!shield.notes.some((note) => /^Hardness/.test(note)), "not the shield's statistics");
+    assert.deepEqual(compileActivations(source("Highhelm War Shield (Lesser)"))[0].plan.resolution.outcomes.success.effects.map((effect) => effect.slug), ["grabbed"]);
+    // Not one scoped to the user's own attack.
+    assert.equal(readOutrightConditions("Effect The target is Off-Guard against the next melee attack you attempt against it."), null);
+});
+

@@ -6,15 +6,15 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 925,
+   "none": 921,
    "builtin:cast-spell": 431,
    "resolves": 654,
    "builtin:focus-point": 45,
-   "builtin:no-effect": 130,
-   "builtin:readied-bonus": 17,
+   "builtin:no-effect": 129,
+   "builtin:readied-bonus": 18,
    "note-only": 280,
    "builtin:reroll": 15,
-   "partial": 41,
+   "partial": 45,
    "builtin:modes": 26,
    "builtin:zone": 9,
    "builtin:roll-twice": 10,
@@ -23,12 +23,12 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1124,
+   "none": 1119,
    "cast": 431,
    "item": 586,
-   "save": 310,
+   "save": 314,
    "focus": 45,
-   "fortune": 27,
+   "fortune": 28,
    "reroll": 15,
    "strike": 39,
    "zone": 9,
@@ -46,8 +46,8 @@
     "builtin:cast-spell": 318,
     "resolves": 394,
     "builtin:focus-point": 43,
-    "builtin:no-effect": 106,
-    "builtin:readied-bonus": 12,
+    "builtin:no-effect": 105,
+    "builtin:readied-bonus": 13,
     "note-only": 179,
     "builtin:reroll": 8,
     "partial": 14,
@@ -116,9 +116,10 @@
     "builtin:cast-spell": 10,
     "note-only": 17,
     "resolves": 28,
-    "none": 36,
+    "none": 32,
     "builtin:modes": 4,
     "builtin:no-effect": 4,
+    "partial": 4,
     "builtin:readied-bonus": 1
    }
   }
@@ -8216,9 +8217,9 @@
    "time": "free",
    "frequency": "once per 10 minutes",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Admiral's Bicorne",
@@ -10295,9 +10296,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Wildwood Ink (Major)",
@@ -10999,9 +11000,9 @@
    "time": "2",
    "frequency": "three times per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Locket of Love Left Behind",
@@ -11472,9 +11473,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Quick Runner's Shirt",
@@ -19458,9 +19459,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Ooze Ammunition (Lesser)",

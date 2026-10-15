@@ -8,7 +8,7 @@
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export const MODULE_KEY = "rollTwice";
-export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length));
+export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree));
 
 const ROLL_WORDS = { initiative: "initiative roll", "attack-roll": "attack roll", "saving-throw": "saving throw", "skill-check": "skill check", perception: "Perception check", fortitude: "Fortitude save", reflex: "Reflex save", will: "Will save", ac: "AC" };
 const actionWords = (predicate) => (predicate?.[0]?.or ?? []).map((option) => String(option).replace(/^action:/, "").replace(/-/g, " ")).join(", ");
@@ -20,12 +20,16 @@ export function rollWords(rollTwice) {
     return actions ? `${nameOf(rollTwice.selector)} (${actions})` : nameOf(rollTwice.selector);
 }
 
-// A bonus in words: "+1 status bonus to AC and saving throws, resistance 2 to damage".
+const DEGREE_WORDS = { all: "one degree better", success: "a success becomes a critical success", criticalFailure: "a critical failure becomes a failure" };
+
+// A bonus in words: "+1 status bonus to AC and saving throws, resistance 2 to damage", "Performance check: a success becomes a
+// critical success".
 export function bonusWords(bonus) {
     const [first] = bonus.modifiers;
     const targets = bonus.modifiers.map((modifier) => nameOf(modifier.selector)).join(" and ");
-    const actions = actionWords(first.predicate);
-    return [`+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}`, bonus.resistance ? `resistance ${bonus.resistance.value} to damage` : null].filter(Boolean).join(", ");
+    const actions = first ? actionWords(first.predicate) : "";
+    const degree = bonus.degree ? `${nameOf(bonus.degree.selector)}${actionWords(bonus.degree.predicate) ? ` (${actionWords(bonus.degree.predicate)})` : ""}: ${Object.keys(bonus.degree.adjustment).map((key) => DEGREE_WORDS[key]).join(", ")}` : null;
+    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}` : null, bonus.resistance ? `resistance ${bonus.resistance.value} to damage` : null, degree].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
@@ -49,7 +53,8 @@ export function readiedRules(plan) {
     const label = plan.source?.name ?? null;
     return [
         ...plan.bonus.modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: modifier.type, value: modifier.value, ...(label ? { label } : {}), ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })),
-        ...(plan.bonus.resistance ? [{ key: "Resistance", type: plan.bonus.resistance.type, value: plan.bonus.resistance.value }] : [])
+        ...(plan.bonus.resistance ? [{ key: "Resistance", type: plan.bonus.resistance.type, value: plan.bonus.resistance.value }] : []),
+        ...(plan.bonus.degree ? [{ key: "AdjustDegreeOfSuccess", selector: plan.bonus.degree.selector, adjustment: plan.bonus.degree.adjustment, ...(label ? { label } : {}), ...(plan.bonus.degree.predicate ? { predicate: plan.bonus.degree.predicate } : {}) }] : [])
     ];
 }
 

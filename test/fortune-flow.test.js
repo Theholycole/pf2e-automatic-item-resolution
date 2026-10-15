@@ -11,7 +11,7 @@ import { compileActivations } from "../src/compiler/permanent.js";
 import { readRollTwice } from "../src/compiler/fortune.js";
 import { readReadiedBonus } from "../src/compiler/readied-bonus.js";
 import { plainText } from "../src/compiler/rows.js";
-import { readiedWords, rollWords } from "../src/live/fortune-card.js";
+import { readiedRules, readiedWords, rollWords } from "../src/live/fortune-card.js";
 import { routeOf } from "../src/live/route.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -116,5 +116,18 @@ test("Eclipse: Apply gives PF2e's FlatModifier for the Stealth check; that check
     await foundry.call("createChatMessage", hide);
     await settle();
     assert.equal(fortunes().length, 0);
+});
+
+test("a better degree for the triggering roll: PF2e's AdjustDegreeOfSuccess, spent by that roll", () => {
+    // "Trigger You attempt a Performance check … If you roll a success on your triggering check, you get a critical success instead."
+    const muse = compileItem(source("Singing Muse"));
+    assert.equal(routeOf(muse), "fortune");
+    assert.deepEqual(muse.bonus.degree, { selector: "performance", adjustment: { success: "one-degree-better" } });
+    assert.deepEqual(muse.bonus.spend, ["performance"]);
+    assert.deepEqual(readiedRules(muse), [{ key: "AdjustDegreeOfSuccess", selector: "performance", adjustment: { success: "one-degree-better" }, label: "Singing Muse" }]);
+    // "attempt a Deception check to Feint. If the outcome is a success, … critical success instead. If … a critical failure, … a failure instead."
+    const opal = compileItem(source("Mesmerizing Opal"));
+    assert.deepEqual(opal.bonus.degree, { selector: "deception", adjustment: { success: "one-degree-better", criticalFailure: "one-degree-better" }, predicate: [{ or: ["action:feint"] }] });
+    assert.match(readiedWords(opal), /a success becomes a critical success, a critical failure becomes a failure/);
 });
 

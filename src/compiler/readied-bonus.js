@@ -89,10 +89,43 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
     return null;
 }
 
-// The builtin: { builtin: "readied-bonus", bonus: { modifiers, resistance, duration, spend }, notes }.
+// A better degree for the one roll that triggered it (Singing Muse's "If you roll a success on your triggering check, you get
+// a critical success instead"; Mesmerizing Opal's "… you get a failure instead" for a critical failure; "Your outcome is one
+// degree of success better than what you rolled"): PF2e's AdjustDegreeOfSuccess, { selector, adjustment, predicate? },
+// for the roll the text or its trigger names; spent by that roll. Not a lasting one ("during that time").
+const UPGRADES = [
+    [/\bIf (?:you roll|the (?:outcome|result) is) a success\b[^.]*?,\s*you get a critical success instead\b/i, "success"],
+    [/\bIf (?:you roll|the (?:outcome|result) is) a critical failure\b[^.]*?,\s*you get a failure instead\b/i, "criticalFailure"],
+    [/\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i, "all"]
+];
+export function readDegreeAdjust(text, { trigger = null } = {}) {
+    const plain = String(text ?? "");
+    const triggered = trigger ?? /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(plain)?.[1] ?? null;
+    if ((triggered && AFTER_ROLL.test(triggered)) || /\bduring (?:that|this) time\b/i.test(plain) || LASTING.test(plain)) return null;
+    const adjustment = {};
+    let named = "";
+    for (const [pattern, degree] of UPGRADES) {
+        const match = pattern.exec(plain);
+        if (!match) continue;
+        adjustment[degree] = "one-degree-better";
+        named += ` ${match[0]}`;
+    }
+    if (!Object.keys(adjustment).length) return null;
+    // (The roll: the sentence's own words, the trigger's, else "attempt a Deception check to Feint" in the text.)
+    const attempt = /\battempt (?:an? )?([A-Z]\w+) check(?: to ((?:[A-Z][a-z']+)(?: (?:a|an|the|or) [A-Z][a-z']+| [A-Z][a-z']+)*))?/.exec(plain);
+    const selectors = [named, triggered ?? "", attempt?.[0] ?? ""].map((words) => selectorsOf(words)).find((found) => found.length) ?? [];
+    if (selectors.length !== 1) return null;
+    const actions = /\bto ((?:[A-Z][a-z']+)(?: (?:a|an|the|or) [A-Z][a-z']+| [A-Z][a-z']+)*)\b/.exec(`${triggered ?? ""} ${attempt?.[0] ?? ""}`);
+    const predicate = actions ? [{ or: actions[1].split(/\s+or\s+|,\s*/).map((name) => `action:${slug(name)}`) }] : null;
+    return { selector: selectors[0], adjustment, ...(predicate ? { predicate } : {}) };
+}
+
+// The builtin: { builtin: "readied-bonus", bonus: { modifiers, resistance, duration, spend, degree? }, notes }.
 export function readiedBonusPlan(text, base, { trigger = null } = {}) {
-    const read = readReadiedBonus(text, { trigger });
+    const degree = readDegreeAdjust(text, { trigger });
+    const read = readReadiedBonus(text, { trigger }) ?? (degree ? { modifiers: [], resistance: null, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [degree.selector], notes: degreeNotes(text) } : null);
     if (!read) return null;
+    if (degree) read.degree = degree;
     const { notes, ...bonus } = read;
     return { ...base, builtin: "readied-bonus", automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: "the user", range: null, area: null }, trigger: { event: "use" }, bonus, notes, ...(notes.length ? { partial: true } : {}) };
 }
@@ -102,3 +135,10 @@ export function readiedBonusOver(plan, bonus) {
     if (!bonus) return plan;
     return !plan || plan.noteOnly || plan.builtin === "no-effect" ? bonus : plan;
 }
+
+// What a degree's change alone leaves to the table: the text's other rule sentences.
+function degreeNotes(text) {
+    const body = String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
+    return body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && !UPGRADES.some(([pattern]) => pattern.test(sentence)) && /\b(?:check|save|bonus|penalty|damage|condition|Strike|action)\b/i.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));
+}
+
