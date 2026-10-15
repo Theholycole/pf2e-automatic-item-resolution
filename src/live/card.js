@@ -80,6 +80,17 @@ export function previewLines(state) {
         const extra = [application.level ? `rank ${application.level}` : null, application.duration ? timeText(application.duration) : null].filter(Boolean).join(", ");
         lines.push(`${application.label ?? "Effect"}${extra ? ` (${extra})` : ""}`);
     }
+    // The item's own row (an automatic check): what the drinker gets.
+    const row = plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic" ? plan.resolution.outcomes?.success ?? {} : {};
+    for (const effect of row.effects ?? []) {
+        const time = effect.duration?.mode === "fixed" ? (effect.duration.expiry === "turn-end" && effect.duration.anchor === "source-turn" ? "until the end of the next turn" : `for ${timeText(effect.duration)}`) : null;
+        const amount = effect.amount ?? effect.formula;
+        if (effect.kind === "condition") lines.push(`${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}${time ? ` ${time}` : ""}`);
+        else if (effect.kind === "temp-hp") lines.push(`${amount} temporary Hit Points${time ? ` ${time}` : ""}`);
+        else if (effect.kind === "heal") lines.push(`Heals ${amount} Hit Points`);
+    }
+    for (const modifier of row.modifiers ?? []) lines.push(`${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${modifier.duration?.mode === "fixed" ? ` for ${timeText(modifier.duration)}` : ""}`);
+    for (const note of row.noteEffects ?? []) lines.push(`A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""} (nothing else to apply)`);
     for (const note of plan?.notes ?? []) lines.push(note);
     return lines;
 }

@@ -70,6 +70,8 @@ test("what Apply will do", () => {
     assert.deepEqual(previewLines(card("Elixir of Life (Minor)", { rolled: { total: 5, formula: "1d6", kind: "healing" } })), ["Heals 5 Hit Points (PF2e's roll of 1d6)", "Effect: Elixir of Life"]);
     assert.deepEqual(previewLines(card("Oak Potion")), ["Spell Effect: Oaken Resilience (rank 2, 10 minutes)", "You gain the effects of a 2nd-rank Oaken Resilience for 10 minutes."]);
     assert.deepEqual(previewLines(card("Potion of Quickness")), ["Spell Effect: Haste (1 minute)"]);
+    assert.deepEqual(previewLines(card("Mistform Elixir (Greater)")), ["concealed for 5 minutes"]);
+    assert.deepEqual(previewLines(card("Hovering Potion")), ["A note of its text for 5 minutes (nothing else to apply)"]);
 });
 
 test("an Effect shared by every grade is made for the grade used, with no prompt", () => {

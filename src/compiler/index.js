@@ -12,8 +12,10 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf, readActivations } from "./activation.js";
 import { fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
+import { noteRow, ownRow } from "./rows.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
+export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
 export { effectLinks, fitPlan, grantedSpells, nativeHealing, ownPlan, pf2eRoll, recipientOf, spellEffectApplications } from "./consumables.js";
 
 // The consumable categories the spell module resolves (the user's split, 2026-10-10).
@@ -42,10 +44,28 @@ export function compileItem(item, options = {}) {
     if (!handlesItem(item)) return null;
     const read = compileAbility(asAbility(item), options);
     const base = basePlan(item);
-    const plan = read ? fitPlan(item, read, base, options) : ownPlan(item, base, options);
+    const plan = (read ? fitPlan(item, read, base, options) : ownPlan(item, base, options)) ?? rowPlan(item, base);
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     return { ...plan, ...(source ? { source } : {}), item: itemInfo(item) };
+}
+
+// What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success
+// row): its conditions, temporary Hit Points, healing and modifiers; else a note of its text for its time
+// (plan.item.noteOnly, counted apart in the census as the spell module counts its note-only spells).
+function rowPlan(item, base) {
+    const row = ownRow(item);
+    const note = row ? null : noteRow(item);
+    if (!row && !note) return null;
+    const success = { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: row?.effects ?? [], modifiers: row?.modifiers ?? [], noteEffects: note?.noteEffects ?? [] };
+    return {
+        ...base,
+        automation: { level: note ? "guided" : "automatic" },
+        targeting: { target: recipientOf(item) === "drinker" ? "the drinker" : null, range: null, area: null },
+        trigger: { event: "use" },
+        resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success } },
+        ...(note ? { noteOnly: true } : {})
+    };
 }
 
 // The skeleton of a plan the item module builds itself.

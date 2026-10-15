@@ -120,6 +120,36 @@ test("an item granting a spell's effects gets PF2e's Spell Effect at its rank an
     assert.equal(compileWith(item("Oak Potion")).builtin, "cast-spell");
 });
 
+test("a condition the text puts on the drinker, for its own time, as an automatic row", () => {
+    const mist = compileItem(item("Mistform Elixir (Greater)"));
+    assert.deepEqual(mist.resolution.check, { roll: "automatic" });
+    assert.deepEqual(mist.resolution.outcomes.success.effects, [{ kind: "condition", slug: "concealed", value: null, duration: { mode: "fixed", value: 5, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
+    const result = registry.resolveSync(mist, context({ id: "ally", side: "party" }), io());
+    assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.slug]), [["condition", "ally", "concealed"]]);
+    assert.equal(compileItem(item("Immovable Potion")).resolution.outcomes.success.effects[0].slug, "immobilized");
+});
+
+test("no condition from a trigger, a later event, a failed check, stages or a time that isn't its own", () => {
+    for (const name of ["Emergency Eye", "Breath of Freedom", "Frenzied Quintessence", "Enigma-Sight Potion", "Rebirth Potion", "Elder Seed", "Scholar's Drop", "Guardian Rose"]) {
+        const plan = compileItem(item(name));
+        const conditions = plan?.resolution?.check?.roll === "automatic" ? plan.resolution.outcomes.success.effects.filter((effect) => effect.kind === "condition") : [];
+        assert.deepEqual(conditions, [], name);
+    }
+});
+
+test("an item with a time and nothing else the module reads: a note of its text on the drinker, counted apart", () => {
+    const plan = compileItem(item("Hovering Potion"));
+    assert.equal(plan.noteOnly, true);
+    const [note] = plan.resolution.outcomes.success.noteEffects;
+    assert.equal(note.label, undefined, "the ability module calls it \"Hovering Potion: note\"");
+    assert.deepEqual([note.duration.value, note.duration.unit], [5, "minutes"]);
+    assert.doesNotMatch(note.text, /^Activate/);
+    const result = registry.resolveSync(plan, context(), io());
+    assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.effect?.kind]), [["effect", "drinker", "note"]]);
+    // With no time, nothing (the GM's).
+    assert.equal(compileItem(item("Ration Tonic")), null);
+});
+
 // The census's count, as a ratchet: a later batch may only raise it.
 test("consumables whose plan the core resolves with no gaps (ratchet)", () => {
     let resolves = 0;
@@ -130,7 +160,7 @@ test("consumables whose plan the core resolves with no gaps (ratchet)", () => {
         } catch {
             continue;
         }
-        if (!plan?.resolution || !registry.familyFor(plan.resolution.kind)) continue;
+        if (!plan?.resolution || plan.noteOnly || !registry.familyFor(plan.resolution.kind)) continue;
         let clean = true;
         for (const degree of ["criticalFailure", "failure", "success", "criticalSuccess"]) {
             const result = registry.resolveSync(plan, { ...context(), targets: [{ id: "target", side: "foes" }] }, { ...io(degree, 1), choose: (decision) => decision.default ?? decision.options?.[0]?.value });

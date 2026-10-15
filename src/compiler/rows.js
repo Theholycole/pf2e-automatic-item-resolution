@@ -1,0 +1,176 @@
+// What a consumable's text does to the creature who takes it, when it links no
+// PF2e Effect: as the core's check family's automatic row (no roll; the
+// drinker gets the success row). Pure.
+//
+//   "making you {Concealed} for 5 minutes", "rendering you {Immobilized} for 1 minute" → a timed condition
+//   "you gain 10 temporary Hit Points for 1 minute"                                 → temporary Hit Points
+//   "you regain 4d8+20 Hit Points" (no PF2e healing data)                            → healing
+//   "you gain a +1 item bonus to Fortitude saves", "you take a –2 penalty to Will saves" → modifiers
+//
+// A bonus or penalty only when every one of its targets is a plain PF2e selector: "+1 to Acrobatics checks to
+// Balance" or "saving throws against diseases" is narrower than any selector, so it's left out rather than given
+// too widely (the user's rule: never apply a rule wrongly; a note says it instead).
+
+const CONDITIONS = ["blinded", "clumsy", "concealed", "confused", "controlled", "dazzled", "deafened", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "grabbed", "hidden", "immobilized", "invisible", "off-guard", "paralyzed", "petrified", "prone", "quickened", "restrained", "sickened", "slowed", "stunned", "stupefied", "unconscious", "undetected"];
+const WORD_NUMBERS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, ten: 10, an: 1, a: 1 };
+const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours", day: "days", days: "days" };
+
+// The text with links as their labels and inline rolls as their formulas, in plain words.
+export function plainText(html) {
+    return String(html ?? "")
+        .replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1")
+        .replace(/@Damage\[\(?([^\[\]()]+?)\)?\[[^\]]*\]\]/g, "$1")
+        .replace(/@Damage\[([^\]]*)\]/g, "$1")
+        .replace(/\[\[\/\w+ ([^\]#]+?)(?:\s*#[^\]]*)?\]\](?:\{([^}]*)\})?/g, (whole, formula, label) => label ?? formula)
+        .replace(/<span class="action-glyph">[^<]*<\/span>/g, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/[–—]/g, (dash) => (dash === "–" ? "-" : " - "))
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+// The item's own time: its "Duration" line, else the first "for N minutes" (null when it has none).
+export function itemDuration(text) {
+    const line = /\bDuration (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.exec(text);
+    const stated = line ?? /\bfor (?:the next )?(\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.exec(text) ?? /\bfor the next (round|minute|hour|day)\b/i.exec(text);
+    if (!stated) return null;
+    const [count, unit] = stated[2] ? [stated[1], stated[2]] : ["1", stated[1]];
+    return { mode: "fixed", value: WORD_NUMBERS[count.toLowerCase()] ?? Number(count), unit: UNITS[unit.toLowerCase()], expiry: "turn-start", anchor: "effect-start" };
+}
+
+// A sentence's own time, else the item's.
+function durationIn(sentence, fallback) {
+    const own = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.exec(sentence);
+    return own ? { mode: "fixed", value: WORD_NUMBERS[own[1].toLowerCase()] ?? Number(own[1]), unit: UNITS[own[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } : fallback;
+}
+
+// The text's sentences, without its "Activate" line ("Activate (manipulate)", "Activate Interact", "Activate 1 minute (Interact)").
+const ACTIVATE_LINE = /^Activat(?:e|ion)\b(?:\s*-\s*[^(]*?)?\s*(?:\d+ (?:rounds?|minutes?|hours?)\s*)?(?:\([^)]*\)|Interact|Strike|Cast a Spell|command|envision)?(?:\s*\([^)]*\))?\s*/i;
+const sentencesOf = (text) => text.replace(ACTIVATE_LINE, "").split(/(?<=[.!?])\s+(?=[A-Z])/);
+
+// Conditions the item puts on "you", with their own time in the same sentence: "making you concealed for 5
+// minutes", "rendering you immobilized for 1 minute", "you are enfeebled 1 until the end of your next turn".
+// Not one in a sentence that says when or if ("After a successful Strike …, you are quickened", "if you
+// critically fail …, you become stupefied"), nor one with no time of its own ("Throughout this time, you are
+// clumsy 2"): those are the GM's to apply.
+const UNTIL_NEXT_TURN = /\buntil the (?:end|start|beginning) of your next turn\b/i;
+function selfConditions(sentences) {
+    const effects = [];
+    const names = CONDITIONS.join("|");
+    const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b`, "gi");
+    for (const sentence of sentences) {
+        if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow)\w*\b[^,]*,/i, ""))) continue;
+        const timed = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence);
+        if (!timed) continue;
+        const until = UNTIL_NEXT_TURN.exec(sentence);
+        const duration = until ? { mode: "fixed", value: 1, unit: "rounds", expiry: /\bend\b/i.test(until[0]) ? "turn-end" : "turn-start", anchor: "source-turn" } : durationIn(sentence, null);
+        for (const match of sentence.matchAll(pattern)) {
+            const slug = (match[1] ?? match[3]).toLowerCase();
+            const value = match[2] ?? match[4];
+            if (effects.some((effect) => effect.slug === slug)) continue;
+            effects.push({ kind: "condition", slug, value: value ? Number(value) : null, duration: slug === "prone" ? null : duration });
+        }
+    }
+    return effects;
+}
+
+const AMOUNT = String.raw`(\d+d\d+(?:\s*[+-]\s*\d+)?|\d+)`;
+
+function tempHitPoints(sentences, duration) {
+    for (const sentence of sentences) {
+        const match = new RegExp(String.raw`\byou gain ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence);
+        if (match && !/\b(?:if|when|whenever|each time)\b/i.test(sentence.slice(0, match.index))) {
+            const amount = match[1].replace(/\s+/g, "");
+            return { kind: "temp-hp", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), duration: durationIn(sentence, duration) };
+        }
+    }
+    return null;
+}
+
+function textHealing(sentences) {
+    for (const sentence of sentences) {
+        const match = new RegExp(String.raw`\byou (?:immediately )?regain ${AMOUNT} Hit Points\b`, "i").exec(sentence);
+        if (match && !/\b(?:if|when|whenever|each time|at the (?:start|end))\b/i.test(sentence.slice(0, match.index))) {
+            const amount = match[1].replace(/\s+/g, "");
+            return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }) };
+        }
+    }
+    return null;
+}
+
+// PF2e's FlatModifier selectors for what a bonus or penalty applies to ("Fortitude saves", "Perception checks").
+const SKILLS = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery"];
+const SELECTORS = [
+    [/^(?:saves|saving throws)$/i, "saving-throw"], [/^fortitude(?: saves?| saving throws?)?$/i, "fortitude"], [/^reflex(?: saves?| saving throws?)?$/i, "reflex"],
+    [/^will(?: saves?| saving throws?)?$/i, "will"], [/^perception(?: checks?)?$/i, "perception"], [/^(?:ac|armor class)$/i, "ac"],
+    [/^attack rolls?$/i, "attack-roll"], [/^damage rolls?$/i, "damage"], [/^initiative(?: rolls?| checks?)?$/i, "initiative"], [/^skill checks$/i, "skill-check"],
+    ...SKILLS.map((skill) => [new RegExp(`^${skill}(?: checks?)?$`, "i"), skill])
+];
+
+function selectorsOf(list) {
+    // "Arcana, Crafting, and Society checks": the last word belongs to each.
+    const names = list.replace(/,? and /g, ", ").split(/,\s*/).map((name) => name.trim()).filter(Boolean);
+    const tail = /\b(checks|saves|saving throws|rolls)$/i.exec(names.at(-1) ?? "")?.[1] ?? "";
+    const selectors = [];
+    for (const name of names) {
+        const full = tail && !new RegExp(`\\b${tail}$`, "i").test(name) ? `${name} ${tail}` : name;
+        const entry = SELECTORS.find(([pattern]) => pattern.test(full)) ?? SELECTORS.find(([pattern]) => pattern.test(name));
+        if (!entry) return null;
+        selectors.push(entry[1]);
+    }
+    return selectors.length ? [...new Set(selectors)] : null;
+}
+
+// "+1 item bonus to Fortitude saves" / "–2 penalty to Will saves, Perception checks and initiative rolls".
+function modifiersOf(sentences, duration) {
+    const modifiers = [];
+    const pattern = /\byou (?:gain|get|have|receive|take|suffer)(?: an?)? ([+-])(\d+) (?:(item|status|circumstance) )?(bonus|penalty) (?:to|on) ([^.;]+?)(?=(?: for (?:\d+|one|an?) \w+| until\b| while\b|,? but\b|,? and (?:you|your)\b| as long as\b|;|\.|$))/gi;
+    for (const sentence of sentences) {
+        if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(sentence)) continue;
+        for (const match of sentence.matchAll(pattern)) {
+            const [, sign, number, type, kind, list] = match;
+            if ((kind.toLowerCase() === "bonus") !== (sign === "+")) continue;
+            // Narrower than the selector ("checks to Balance", "saves against diseases"): left out.
+            if (/\b(?:against|to|made|when|if|that|for|as part of|while|with|using|from|of|in)\b/i.test(list)) continue;
+            const selectors = selectorsOf(list);
+            if (!selectors) continue;
+            const value = (sign === "+" ? 1 : -1) * Number(number);
+            for (const selector of selectors) modifiers.push({ selector, value, type: type?.toLowerCase() ?? "untyped", duration: durationIn(sentence, duration) });
+        }
+    }
+    return modifiers;
+}
+
+// Items whose text isn't one use with one result: activated on a trigger, an affliction's stages, a second
+// effect, a choice of ways to use it ("may be applied to armor, a weapon, or mixed into an elixir"), or one
+// that links PF2e Effects (those Effects hold its rules).
+const NOT_ONE_RESULT = /\bTrigger\b|\bStage 1\b|\bSecondary Effect\b|\b(?:may|can) be (?:applied|used|mixed|poured)\b[^.]*\bor\b|\bin (?:either|one) of the following ways\b|\bchoose one\b/i;
+const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.[\w-]*effects\.Item\./;
+
+// The row for the item's drinker or user: { effects, modifiers } with something in it, or null.
+export function ownRow(item, { healing = true } = {}) {
+    const html = String(item?.system?.description?.value ?? "");
+    const text = plainText(html);
+    if (NOT_ONE_RESULT.test(text) || EFFECT_LINK.test(html)) return null;
+    const duration = itemDuration(text);
+    const sentences = sentencesOf(text);
+    const effects = [...selfConditions(sentences)];
+    const temp = tempHitPoints(sentences, duration);
+    if (temp) effects.push(temp);
+    const heal = healing ? textHealing(sentences) : null;
+    if (heal) effects.unshift(heal);
+    const modifiers = modifiersOf(sentences, duration);
+    return effects.length || modifiers.length ? { effects, modifiers } : null;
+}
+
+// A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,
+// 2026-09-26): an item that lasts a while and does nothing else the module reads. null without a time.
+export function noteRow(item) {
+    const text = plainText(item?.system?.description?.value);
+    const duration = itemDuration(text);
+    if (!duration) return null;
+    const body = text.replace(ACTIVATE_LINE, "").trim();
+    // (The ability module names a note Effect "<item>: <label>", "note" without one.)
+    return { noteEffects: [{ text: body, duration }] };
+}

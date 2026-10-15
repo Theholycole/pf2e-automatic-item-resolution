@@ -73,6 +73,7 @@ function classify(item) {
     if (!plan) return { result: "none" };
     if (plan.builtin) return { result: `builtin:${plan.builtin}`, kind: null };
     const { registered, gaps } = resolveGaps(plan);
+    if (plan.noteOnly && registered && !gaps.length) return { result: "note-only", kind: plan.resolution?.kind ?? null };
     return { result: !registered ? "unregistered" : gaps.length ? "gaps" : "resolves", kind: plan.resolution?.kind ?? null, gaps: gaps.map((gap) => gap.what) };
 }
 
@@ -91,7 +92,7 @@ for (const item of consumables) {
 }
 
 const tally = (list, key) => list.reduce((counts, row) => ({ ...counts, [key(row)]: (counts[key(row)] ?? 0) + 1 }), {});
-const RESULTS = ["resolves", "gaps", "builtin:zone", "builtin:cast-spell", "builtin:no-effect", "none", "error", "unregistered"];
+const RESULTS = ["resolves", "note-only", "gaps", "builtin:zone", "builtin:cast-spell", "builtin:no-effect", "builtin:save-bonus", "none", "error", "unregistered"];
 const ours = rows.filter((row) => row.result !== "spell-module");
 const categories = Object.entries(tally(rows, (row) => row.category)).sort((a, b) => b[1] - a[1]).map(([category]) => category);
 
@@ -143,6 +144,7 @@ lines.push("");
 lines.push("Results, for the items this module handles:");
 lines.push("");
 lines.push("- **resolves**: a plan the core's families resolve at every degree with no gaps");
+lines.push("- **note-only**: nothing the module reads but a time: a note Effect with the item's text for that time (counted apart, as the spell module counts its note-only spells)");
 lines.push("- **gaps**: a plan the core resolves only in part (the gaps are listed below)");
 lines.push("- **builtin**: an ability-module builtin its live layer plays (zone: an area left on the map; cast-spell: casts a spell; no-effect: the GM's)");
 lines.push("- **none**: no plan yet");
@@ -156,11 +158,11 @@ for (const result of RESULTS) {
 lines.push("");
 lines.push("## By category");
 lines.push("");
-lines.push(`| Category | Items | resolves | gaps | builtin | none |`);
-lines.push(`|---|---:|---:|---:|---:|---:|`);
+lines.push(`| Category | Items | resolves | note-only | gaps | builtin | none |`);
+lines.push(`|---|---:|---:|---:|---:|---:|---:|`);
 for (const [category, entry] of Object.entries(byCategory)) {
     const builtin = Object.entries(entry.results).filter(([result]) => result.startsWith("builtin:")).reduce((sum, [, count]) => sum + count, 0);
-    lines.push(`| ${category} | ${entry.count} | ${entry.results.resolves ?? 0} | ${entry.results.gaps ?? 0} | ${builtin} | ${(entry.results.none ?? 0) + (entry.results.error ?? 0)} |`);
+    lines.push(`| ${category} | ${entry.count} | ${entry.results.resolves ?? 0} | ${entry.results["note-only"] ?? 0} | ${entry.results.gaps ?? 0} | ${builtin} | ${(entry.results.none ?? 0) + (entry.results.error ?? 0)} |`);
 }
 lines.push("");
 lines.push("## What they do");

@@ -19,8 +19,9 @@ const CORE_ID = "pf2e-resolution-core";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
 const FLAG = "card";
 const SOCKET = `module.${MODULE_ID}`;
-// The kinds of plan batch 1 plays on its card (potions, elixirs, mutagens).
-const PLAYED = new Set(["healing", "effect"]);
+// The plans batch 1 plays on its card (potions, elixirs, mutagens): healing, PF2e Effects, and the
+// item's own automatic row on its drinker or user (conditions, temporary Hit Points, a note).
+const played = (plan) => ["healing", "effect"].includes(plan?.resolution?.kind) || (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic");
 
 const isActiveGM = () => game.users.activeGM?.isSelf ?? game.user.isGM;
 const stateOf = (message) => message?.getFlag?.(MODULE_ID, FLAG) ?? null;
@@ -94,7 +95,7 @@ async function cardForUse(message) {
     const used = await usedItem(origin, message);
     if (!used) return;
     const plan = compile(used.data);
-    if (!plan?.resolution || !PLAYED.has(plan.resolution.kind)) return;
+    if (!played(plan)) return;
     const actor = used.actor ?? message.actor;
     if (!actor) return;
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;

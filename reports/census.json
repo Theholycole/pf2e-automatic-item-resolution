@@ -9,8 +9,9 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 14,
-   "none": 649,
-   "resolves": 738,
+   "none": 390,
+   "resolves": 742,
+   "note-only": 255,
    "builtin:zone": 22,
    "builtin:no-effect": 84,
    "builtin:save-bonus": 1
@@ -21,8 +22,9 @@
    "count": 533,
    "results": {
     "builtin:cast-spell": 7,
-    "none": 296,
+    "none": 178,
     "resolves": 202,
+    "note-only": 118,
     "builtin:zone": 9,
     "builtin:no-effect": 18,
     "builtin:save-bonus": 1
@@ -47,8 +49,9 @@
   "potion": {
    "count": 183,
    "results": {
-    "resolves": 100,
-    "none": 65,
+    "resolves": 101,
+    "none": 27,
+    "note-only": 37,
     "builtin:no-effect": 13,
     "builtin:cast-spell": 5
    },
@@ -68,7 +71,8 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 105,
+    "none": 90,
+    "note-only": 15,
     "resolves": 40,
     "builtin:no-effect": 11
    },
@@ -90,8 +94,9 @@
   "elixir": {
    "count": 149,
    "results": {
-    "none": 55,
-    "resolves": 78,
+    "resolves": 81,
+    "none": 25,
+    "note-only": 27,
     "builtin:no-effect": 15,
     "builtin:zone": 1
    },
@@ -111,7 +116,8 @@
    "count": 115,
    "results": {
     "resolves": 111,
-    "none": 4
+    "none": 3,
+    "note-only": 1
    },
    "mechanisms": {
     "fixed-dc": 112,
@@ -129,8 +135,9 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 19,
-    "resolves": 63
+    "none": 15,
+    "resolves": 63,
+    "note-only": 4
    },
    "mechanisms": {
     "damage": 49,
@@ -144,9 +151,10 @@
   "gadget": {
    "count": 77,
    "results": {
-    "none": 26,
+    "none": 12,
     "builtin:zone": 12,
     "resolves": 21,
+    "note-only": 14,
     "builtin:no-effect": 18
    },
    "mechanisms": {
@@ -182,8 +190,9 @@
    "count": 66,
    "results": {
     "resolves": 24,
-    "none": 33,
+    "note-only": 22,
     "builtin:no-effect": 8,
+    "none": 11,
     "builtin:cast-spell": 1
    },
    "mechanisms": {
@@ -202,7 +211,8 @@
   "fulu": {
    "count": 46,
    "results": {
-    "none": 33,
+    "none": 21,
+    "note-only": 12,
     "resolves": 12,
     "builtin:cast-spell": 1
    },
@@ -237,7 +247,7 @@
   "toolkit": {
    "count": 9,
    "results": {
-    "none": 5,
+    "note-only": 5,
     "resolves": 3,
     "builtin:no-effect": 1
    },
@@ -253,85 +263,85 @@
    "count": 43,
    "resolves": 34,
    "gaps": 0,
-   "none": 5
+   "none": 3
   },
   "temp-hp": {
    "count": 41,
    "resolves": 20,
    "gaps": 0,
-   "none": 10
+   "none": 6
   },
   "damage": {
    "count": 287,
    "resolves": 188,
    "gaps": 0,
-   "none": 95
+   "none": 50
   },
   "linked-effect": {
    "count": 393,
    "resolves": 370,
    "gaps": 0,
-   "none": 7
+   "none": 1
   },
   "fixed-dc": {
    "count": 498,
    "resolves": 397,
    "gaps": 0,
-   "none": 75
+   "none": 45
   },
   "affliction": {
    "count": 144,
    "resolves": 139,
    "gaps": 0,
-   "none": 5
+   "none": 3
   },
   "casts-spell": {
    "count": 37,
    "resolves": 1,
    "gaps": 0,
-   "none": 28
+   "none": 24
   },
   "strike": {
    "count": 31,
    "resolves": 7,
    "gaps": 0,
-   "none": 20
+   "none": 11
   },
   "on-weapon": {
    "count": 67,
    "resolves": 54,
    "gaps": 0,
-   "none": 11
+   "none": 1
   },
   "trigger": {
    "count": 156,
    "resolves": 50,
    "gaps": 0,
-   "none": 97
+   "none": 83
   },
   "counteract": {
    "count": 79,
    "resolves": 18,
    "gaps": 0,
-   "none": 34
+   "none": 30
   },
   "area": {
    "count": 44,
    "resolves": 19,
    "gaps": 0,
-   "none": 24
+   "none": 9
   },
   "condition": {
    "count": 437,
-   "resolves": 289,
+   "resolves": 293,
    "gaps": 0,
-   "none": 132
+   "none": 70
   },
   "duration": {
    "count": 947,
-   "resolves": 575,
+   "resolves": 579,
    "gaps": 0,
-   "none": 293
+   "none": 46
   }
  },
  "gapCounts": {},
@@ -382,7 +392,9 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": []
   },
   {
    "name": "Venomous Cure Fulu",
@@ -553,7 +565,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Detect Anathema Fulu",
@@ -759,7 +772,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Pheromone Flare (Moderate)",
@@ -849,7 +863,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Skitter Knot (Greater)",
@@ -879,7 +894,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sun Orchid Poultice",
@@ -910,7 +926,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Fire Resistance (Greater)",
@@ -1062,7 +1079,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Light Writer Plates",
@@ -1291,7 +1309,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Memory Ribbon",
@@ -1426,7 +1445,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Healing Potion (Minor)",
@@ -1461,7 +1481,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "The Dancers' Song",
@@ -1513,7 +1534,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Affliction Suppressant (Lesser)",
@@ -1528,7 +1550,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sea Touch Elixir (Moderate)",
@@ -1585,7 +1608,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Spark Wafer",
@@ -1633,7 +1657,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Vital Earth",
@@ -1647,7 +1672,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Witchwarg Elixir (Moderate)",
@@ -1769,7 +1795,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Puppetmaster Extract",
@@ -1803,7 +1830,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Thumper Snare",
@@ -2026,7 +2054,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Marvelous Miniature (Ladder)",
@@ -2401,7 +2430,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Camouflage Dye (Greater)",
@@ -2414,7 +2444,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Blight Breath",
@@ -2448,7 +2479,8 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Soothing Powder (Greater)",
@@ -2462,7 +2494,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Smuggler's Padlock",
@@ -2704,7 +2737,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Magic Wand (5th-Rank Spell)",
@@ -2749,7 +2783,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Quicksilver Mutagen (Lesser)",
@@ -2782,7 +2817,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Pheromone Flare (Lesser)",
@@ -3012,7 +3048,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Shrinking Potion (Greater)",
@@ -3079,7 +3116,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Candle of Truth",
@@ -3094,7 +3132,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Surging Serum (Greater)",
@@ -3178,7 +3217,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Pyronite",
@@ -3211,7 +3251,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Oil of Weightlessness",
@@ -3257,7 +3298,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Striking Snare",
@@ -3303,7 +3345,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Bendy-Arm Mutagen (Moderate)",
@@ -3355,7 +3398,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Oil of Ownership (Lesser)",
@@ -3398,7 +3442,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Heartening Missive (Bull)",
@@ -3412,7 +3457,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Euphorium",
@@ -3426,7 +3472,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Winterstep Elixir (Lesser)",
@@ -3535,7 +3582,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Tangle Root Toxin",
@@ -3654,7 +3702,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Devil's Trap",
@@ -3775,7 +3824,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Demolition Fulu (Lesser)",
@@ -3821,7 +3871,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Energy Ointment (Greater)",
@@ -4122,7 +4173,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Fulu of Fire Suppression",
@@ -4243,7 +4295,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Quartz-Coil Rail Transport (Greater)",
@@ -4596,7 +4649,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Biting Snare",
@@ -5060,7 +5114,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Toothy Knife (Greater)",
@@ -5090,7 +5145,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Lover's Ink",
@@ -5330,7 +5386,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Martial Mayhem Mutagen (Major)",
@@ -5361,7 +5418,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Spirit Bulb",
@@ -5390,7 +5448,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Stolen Countenance",
@@ -5525,7 +5584,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Mistform Elixir (Moderate)",
@@ -5542,7 +5602,9 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": []
   },
   {
    "name": "Inventor's Fulu",
@@ -5662,7 +5724,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Oil of Unlife (Lesser)",
@@ -5842,7 +5905,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Spiral Labyrinth",
@@ -5872,7 +5936,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Purple Worm Repellent",
@@ -5885,7 +5950,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Covenant Tea",
@@ -5953,7 +6019,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Witch's Finger",
@@ -5999,7 +6066,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Vermin Repellent Agent (Major)",
@@ -6111,7 +6179,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Poet's Fritter (Greater)",
@@ -6246,7 +6315,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Liar's Demise",
@@ -6280,7 +6350,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Slaughter (7th-Rank Spell)",
@@ -6310,7 +6381,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Dazing Coil",
@@ -6421,7 +6493,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Fey Dragonet Liqueur",
@@ -6651,7 +6724,8 @@
     "linked-effect",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Curled Cure Gel",
@@ -6665,7 +6739,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Bortled Favorite (Moderate)",
@@ -6695,7 +6770,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Ixamè's Eye",
@@ -6709,7 +6785,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Rolling Flames (4th-Rank)",
@@ -6819,7 +6896,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Chameleon Suit (Major)",
@@ -6833,7 +6911,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Flying (Greater)",
@@ -7024,7 +7103,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Oil of Dynamism (Greater)",
@@ -7038,7 +7118,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Spiderfoot Brew (Greater)",
@@ -7125,7 +7206,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sprite Apple (Teal)",
@@ -7140,7 +7222,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Ration Tonic (Greater)",
@@ -7230,7 +7313,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Revealing Mist (Lesser)",
@@ -7244,7 +7328,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Bane Oil",
@@ -7259,7 +7344,8 @@
     "on-weapon",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Electricity Resistance (Greater)",
@@ -7291,7 +7377,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Celestial Hair",
@@ -7418,7 +7505,8 @@
     "counteract",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Blast Boots (Moderate)",
@@ -7583,7 +7671,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Captivating Bauble",
@@ -7740,7 +7829,8 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Warding Paste",
@@ -7927,7 +8017,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Animal-Turning Fulu",
@@ -7999,7 +8090,8 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Dragon Turtle Scale",
@@ -8051,7 +8143,9 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": []
   },
   {
    "name": "Wolliped Fleece",
@@ -8148,7 +8242,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Truth Potion",
@@ -8281,7 +8376,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Shockguard Coil",
@@ -8395,7 +8491,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Vaccine (Moderate)",
@@ -8453,7 +8550,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Amphisbaena Spittle",
@@ -8517,7 +8615,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Boulderhead Bock",
@@ -8568,7 +8667,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Grolna",
@@ -8619,7 +8719,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Analysis Eye",
@@ -8664,7 +8765,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Bestial Mutagen (Lesser)",
@@ -8749,7 +8851,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Purple Pepper Powder",
@@ -9060,7 +9163,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Maelstromic Destabilizer (Lesser)",
@@ -9072,7 +9176,8 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Fungal Walk Musk",
@@ -9086,7 +9191,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Soothing Toddy",
@@ -9134,7 +9240,8 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of the Pampered Pet",
@@ -9263,7 +9370,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Quartz-Coil Rail Transport (Lesser)",
@@ -9293,7 +9401,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Valorous Coin",
@@ -9377,7 +9486,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Shardstorm (1st-Rank Spell)",
@@ -9549,7 +9659,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Pepper Poultice",
@@ -9645,7 +9756,8 @@
     "elixir"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Celestial Peach (Rejuvenation)",
@@ -9677,7 +9789,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Deadlock Mint",
@@ -9723,7 +9836,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Midnight Milk (Pure)",
@@ -9965,7 +10079,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Feyfoul (Moderate)",
@@ -9996,7 +10111,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Moonlit Spellgun (Moderate)",
@@ -10016,7 +10132,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Etheric Essence Disruptor (Greater)",
@@ -10220,7 +10337,8 @@
     "on-weapon",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Drakeheart Mutagen (Major)",
@@ -10254,7 +10372,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Golden Silencer (Standard)",
@@ -10315,7 +10434,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Rolling Flames (9th-Rank)",
@@ -10390,7 +10510,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Colorful Coating (Indigo)",
@@ -10405,7 +10526,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Hemlock",
@@ -10495,7 +10617,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Nauseating Snare",
@@ -10680,7 +10803,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Brightshade",
@@ -10748,7 +10872,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Fulu of the Drunken Monkey",
@@ -10764,7 +10889,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Messenger Missive",
@@ -10937,7 +11063,8 @@
     "linked-effect",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Rusting Snare",
@@ -11134,7 +11261,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Apricot of Bestial Might",
@@ -11301,7 +11429,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Comprehension Elixir (Greater)",
@@ -11574,7 +11703,8 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Ruby Capacitor (Greater)",
@@ -11712,7 +11842,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Life Salt",
@@ -11835,7 +11966,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Thousand-Pains Fulu (Icicle)",
@@ -11851,7 +11983,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Topology Protoplasm",
@@ -11949,7 +12082,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Bottled Catharsis (Major)",
@@ -12135,7 +12269,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Megaphone Mutagen (Greater)",
@@ -12343,7 +12478,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Ablative Armor Plating (Greater)",
@@ -12418,7 +12554,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Hoof Stakes Snare",
@@ -12451,7 +12588,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Skitter Knot (Major)",
@@ -12480,7 +12618,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Winterstep Elixir (Minor)",
@@ -12507,7 +12646,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Magnetic Suit (Greater)",
@@ -12520,7 +12660,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sniper's Bead (Greater)",
@@ -12549,7 +12690,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Barricade Stone (Sphere)",
@@ -12623,7 +12765,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Soothing Tonic (Moderate)",
@@ -12805,7 +12948,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "False Death Vial",
@@ -12865,7 +13009,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Dr. Ushernacht's Astonishing Ink (Major)",
@@ -12909,7 +13054,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Grudgestone",
@@ -12989,7 +13135,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Etheric Essence Disruptor (Lesser)",
@@ -13017,7 +13164,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Ablative Shield Plating (Greater)",
@@ -13121,7 +13269,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Skeptic's Elixir (Greater)",
@@ -13173,7 +13322,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Rolling Flames (8th-Rank)",
@@ -13233,7 +13383,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Firestarter Pellets (Greater)",
@@ -13360,7 +13511,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Force Tiles",
@@ -13441,7 +13593,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Grave Token",
@@ -13604,7 +13757,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Oil of Swiftness",
@@ -13618,7 +13772,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Elixir of Life (Lesser)",
@@ -13651,7 +13806,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Fire Retaliation (Major)",
@@ -13666,7 +13822,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Megaphone Mutagen (Lesser)",
@@ -13739,7 +13896,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Cloud Buns (Greater)",
@@ -13812,7 +13970,8 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Brass Dragon's Breath Potion (Young)",
@@ -13975,7 +14134,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Ablative Armor Plating (Lesser)",
@@ -14089,7 +14249,8 @@
     "on-weapon",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Healing Vapor (Major)",
@@ -14103,7 +14264,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Necrobinding Serum",
@@ -14197,7 +14359,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Soothing Tonic (Major)",
@@ -14251,7 +14414,9 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": []
   },
   {
    "name": "Mummified Bat",
@@ -14336,7 +14501,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Antiplague (Lesser)",
@@ -14460,7 +14626,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Numbing Tonic (Minor)",
@@ -14729,7 +14896,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Demolition Fulu (Greater)",
@@ -14805,7 +14973,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Lastwall Soup",
@@ -14931,7 +15100,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Mind-Swap Potion",
@@ -15608,7 +15778,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Cooling Elixir (Greater)",
@@ -15820,7 +15991,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Hundred Stings",
@@ -15849,7 +16021,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Iron Cudgel",
@@ -16410,7 +16583,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Cognitive Mutagen (Greater)",
@@ -16474,7 +16648,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Demon Dust",
@@ -16512,7 +16687,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Waterproofing Wax",
@@ -16540,7 +16716,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Preserved Alecost",
@@ -16732,7 +16909,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Giant Wasp Venom",
@@ -16783,7 +16961,8 @@
     "fixed-dc",
     "counteract"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Thousand-Pains Fulu (Stone)",
@@ -16799,7 +16978,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Colorful Coating (Blue)",
@@ -16813,7 +16993,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Mesmerizing Opal",
@@ -17047,7 +17228,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Pummeling Snare",
@@ -17109,7 +17291,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Cytillesh Oil",
@@ -17224,7 +17407,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Viperous Elixir (Greater)",
@@ -17371,7 +17555,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Fire Resistance (Lesser)",
@@ -17403,7 +17588,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Kimanéz Luminescent Toadstool",
@@ -17420,7 +17606,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Searing Suture (Greater)",
@@ -17531,7 +17718,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Plasma Hype",
@@ -17750,7 +17938,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Material Essence Disruptor (Greater)",
@@ -17930,7 +18119,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Refracting Rays (7th-Rank)",
@@ -18074,7 +18264,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Enervating Powder",
@@ -18126,7 +18317,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Impact Foam Chassis (Greater)",
@@ -18199,7 +18391,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Stone Body Mutagen (Greater)",
@@ -18629,7 +18822,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Resistance (Moderate)",
@@ -18643,7 +18837,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Healing Potion (Lesser)",
@@ -19056,7 +19251,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Octopus Bottle",
@@ -19168,7 +19364,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Chromatic Jellyfish Oil (Moderate)",
@@ -19287,7 +19484,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Prey Mutagen (Major)",
@@ -19343,7 +19541,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Moonkeep Hyacinth",
@@ -19802,7 +20001,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Overflowing Life (7th-Rank Spell)",
@@ -19831,7 +20031,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Recovery Bladder",
@@ -19926,7 +20127,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Elixir of Life (Minor)",
@@ -20005,7 +20207,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Fire Retaliation (Greater)",
@@ -20020,7 +20223,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Impossible Cake",
@@ -20084,7 +20288,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Clinging Bubbles (Greater)",
@@ -20191,7 +20396,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Mukradi Jar",
@@ -20278,7 +20484,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sea Touch Elixir (Greater)",
@@ -20329,7 +20536,8 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Forgetful Ink",
@@ -20547,7 +20755,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wand of Shocking Haze",
@@ -20597,7 +20806,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Hand of Mercy",
@@ -20744,7 +20954,8 @@
     "linked-effect",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Persistent Lodestone",
@@ -20887,7 +21098,8 @@
     "on-weapon",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Emergency Escape",
@@ -20950,7 +21162,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Wemmuth Trinket",
@@ -21016,7 +21229,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Energy Breath Potion (Sonic, Moderate)",
@@ -21070,7 +21284,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Cold Iron Blanch (Moderate)",
@@ -21114,7 +21329,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Smoke Fan (Greater)",
@@ -21129,7 +21345,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Demon Bone Tiles (Seraptis)",
@@ -21212,7 +21429,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Caltrop Snare",
@@ -21640,7 +21858,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Vanishing Shocker (Lesser)",
@@ -21792,7 +22011,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Bomber's Eye Elixir (Greater)",
@@ -21834,7 +22054,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Vermin Repellent Agent (Lesser)",
@@ -21894,7 +22115,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Energy Breath Potion (Electricity, Greater)",
@@ -22149,7 +22371,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Binding Coil",
@@ -22245,7 +22468,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Ghost Courier Fulu",
@@ -22547,7 +22771,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Puff Dragon",
@@ -22581,7 +22806,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Chimera Thread",
@@ -22786,7 +23012,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Anathema Fulu",
@@ -22837,7 +23064,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Avalanche of Stones Snare",
@@ -22985,7 +23213,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Deathless Light",
@@ -23062,7 +23291,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Scroll of 10th-rank Spell",
@@ -23107,7 +23337,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Oil of Revelation",
@@ -23123,7 +23354,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Bravo's Brew (Moderate)",
@@ -23155,7 +23387,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Frogskin Tincture",
@@ -23288,7 +23521,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "War Blood Mutagen (Greater)",
@@ -23384,7 +23618,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Material Essence Disruptor (Major)",
@@ -23414,7 +23649,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Contagion Metabolizer (Greater)",
@@ -23618,7 +23854,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Spirit Bulb (Major)",
@@ -23661,7 +23898,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Privacy Ward Fulu (Chamber)",
@@ -23817,7 +24055,8 @@
     "on-weapon",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Chameleon Suit",
@@ -23831,7 +24070,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Starsong Nectar",
@@ -23868,7 +24108,8 @@
     "casts-spell",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Snarling Badger (Greater)",
@@ -23899,7 +24140,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sure-Step Potion",
@@ -23914,7 +24156,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Taster's Folly",
@@ -23954,7 +24197,8 @@
     "on-weapon",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Tentacle Potion (Lesser)",
@@ -24088,7 +24332,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Elixir of Life (True)",
@@ -24308,7 +24553,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Snarling Badger (Lesser)",
@@ -24620,7 +24866,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Harpy's Talon",
@@ -25050,7 +25297,8 @@
     "heal",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Insight Coffee (Lesser)",
@@ -25245,7 +25493,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Viper's Fang",
@@ -25529,7 +25778,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Aged Arbor Wine",
@@ -25695,7 +25945,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Giant Centipede Venom",
@@ -25767,7 +26018,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Energizing Pill",
@@ -25866,7 +26118,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Ginger Chew",
@@ -25897,7 +26150,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Psyche Salts (Lesser)",
@@ -25943,7 +26197,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Silvertongue Mutagen (Greater)",
@@ -26154,7 +26409,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Potion of Acid Resistance (Greater)",
@@ -26564,7 +26820,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Green Dragon's Breath Potion (Young)",
@@ -26615,7 +26872,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Spirit Bulb (Greater)",
@@ -26681,7 +26939,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sage's Bloom",
@@ -27033,7 +27292,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Snake Oil",
@@ -27046,7 +27306,8 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Torrent Spellgun (Greater)",
@@ -27558,7 +27819,8 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Sightless Tincture",
@@ -27672,7 +27934,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Dust of Corpse Animation (Greater)",
@@ -27685,7 +27948,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Oil of Skating",
@@ -27699,7 +27963,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Thunder Snare",
@@ -27770,7 +28035,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Fulu of Concealment",
@@ -27786,7 +28052,8 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Salve of Antiparalysis (Greater)",
@@ -27845,7 +28112,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Salve of Mental Pattern",
@@ -27923,7 +28191,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Hype",
@@ -27995,7 +28264,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Soothing Tonic (Lesser)",
@@ -28099,7 +28369,8 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Torrent Spellgun (Major)",
@@ -28130,7 +28401,8 @@
     "damage",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Server's Stew",
@@ -28327,7 +28599,8 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check"
   },
   {
    "name": "Lockpicker's Oil (Major)",
