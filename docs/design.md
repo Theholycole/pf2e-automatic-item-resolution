@@ -85,13 +85,26 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 
 **Other poisons and saves** (`src/live/poison-card.js`, `scripts/poisons.js`):
 - **Contact, inhaled and ingested poisons, and drugs** (89 items) get an exposure card. It says who the poison exposes, from PF2e's trait rules, and posts the poison's save card for the creatures the presser targets. For an inhaled poison, those entering the cloud for a minute are the GM's to call. An injury drug (Zerk) is injected.
-- **Another item's save on its Use, at others** (105 items: Spark Wafer, Pyronite, Flask of Elemental Earth…): the same card, "a save for the creatures in its 5-foot burst".
-- **A save the item gives for later** (30 items: breath potions, "grants you the Energy Breath action for 1 hour"): the same card, kept open until the action is used.
+- **Another item's save on its Use, at others** (110 items: Spark Wafer, Pyronite, Flask of Elemental Earth, Sneezing Powder…): the same card, "a save for the creatures in its 5-foot burst".
+  - An item with no Activate line counts too. The ability compiler reads it as passive, but it's still used: "You can toss sneezing powder…", a fulu "Upon affixing".
+  - Not when the save's own sentence names another trigger: a turn in the area, entering or stepping on a square, each time.
+- **A save the item gives for later** (55 items: breath potions, "grants you the Energy Breath action", "you can use a 2-action activity to exhale"): the same card, kept open until the action is used. "For 10 minutes after drinking" alone is only a duration: Truth Potion's save is on drinking.
 - Snares (placed in a square, set off by the first creature to enter it) and lasting areas need Regions; they wait for the live check.
 
 **The GM fallback gives way.** The ability compiler's last fallback ("no-effect", the GM's) yields to a reading of the item's own (its linked Effect, a spell's Effect, PF2e's healing, its row), though not to a note alone. PF2e's healing field counts only when the text heals: Potion of Annulment keeps its counteract roll there.
 
-`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 946 of 1,508 consumables get a card.
+`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 977 of 1,508 consumables get a card, and it says why the rest don't (354 nothing read, 69 the GM's fallback, 63 snares, 34 triggered saves, 22 lasting areas).
+
+**The live check is ready** (`tools/live-check.mjs`, run in pftest's browser). It has its own "PFTEST ITEM Lab" scene and "PFTEST ITEM" creatures, and cleans up only its own data. Its cases:
+- a potion fed to a dying ally;
+- an elixir's grade;
+- Mistform Elixir;
+- a bomb's splash and off-guard;
+- a coated weapon's hit and its save card;
+- Spark Wafer's save;
+- an Invisibility Potion cast by the spell module.
+
+`api.live.apply(messageId, choices)` applies a card from code.
 
 ## The simulator (the auto-combat session's)
 
