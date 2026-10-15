@@ -37,7 +37,7 @@ export function createFakeFoundry() {
     };
 
     // PF2e's effect items, by their compendium uuid.
-    for (const pack of ["equipment-effects", "spell-effects", "other-effects"]) {
+    for (const pack of ["equipment-effects", "spell-effects", "other-effects", "feat-effects"]) {
         for (const doc of readDocuments(path.join(PACKS, pack)).filter((entry) => entry.collection === "items")) {
             register({ uuid: `Compendium.pf2e.${pack}.Item.${doc._id}`, name: doc.name, toObject: () => structuredClone(doc) });
         }
@@ -150,7 +150,8 @@ export function createFakeFoundry() {
                     weapon: this.weapons,
                     effect: this.created.filter((entry) => entry.type === "effect"),
                     condition: [...this.conditions.entries()].map(([slug, value]) => ({ id: `condition-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1), value, flags: this.conditionFlags[slug] ?? {} })),
-                    affliction: this.created.filter((entry) => entry.type === "affliction")
+                    affliction: this.created.filter((entry) => entry.type === "affliction"),
+                    action: this.created.filter((entry) => entry.type === "action")
                 };
             },
             testUserPermission: (user) => user.isGM || owners.includes(user.id),

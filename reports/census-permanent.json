@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 932,
+   "none": 926,
    "builtin:cast-spell": 431,
-   "resolves": 653,
+   "resolves": 659,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "builtin:readied-bonus": 17,
@@ -23,9 +23,9 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1131,
+   "none": 1125,
    "cast": 431,
-   "item": 584,
+   "item": 590,
    "save": 316,
    "focus": 45,
    "fortune": 27,
@@ -42,9 +42,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 592,
+    "none": 586,
     "builtin:cast-spell": 318,
-    "resolves": 388,
+    "resolves": 394,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
     "builtin:readied-bonus": 12,
@@ -10866,9 +10866,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Instinct Crown (Spirit)",
@@ -12725,9 +12725,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Instinct Crown (Animal)",
@@ -17136,9 +17136,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Instinct Crown (Dragon)",
@@ -20084,9 +20084,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Instinct Crown (Superstition)",
@@ -20304,9 +20304,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Instinct Crown (Giant)",
@@ -20601,9 +20601,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Instinct Crown (Fury)",

@@ -21,6 +21,7 @@ import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { castWordsPlan } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
+import { rageOver, ragePlan } from "./rage.js";
 import { directDamageOver, directDamagePlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
@@ -87,6 +88,8 @@ export function compileItem(given, options = {}) {
     plan = rollTwiceOver(plan, rollTwicePlan(plainText(item?.system?.description?.value), base));
     // (A bonus for a moment, src/compiler/readied-bonus.js: Conrasu Coin.)
     plan = readiedBonusOver(plan, readiedBonusPlan(plainText(item?.system?.description?.value), base));
+    // (A Rage with more temporary Hit Points, src/compiler/rage.js.)
+    plan = rageOver(plan, ragePlan(plainText(item?.system?.description?.value), base));
     // (A skill action taken with it, src/compiler/item-actions.js: Onyx Panther's Sneak.)
     plan = itemActionOver(plan, itemActionPlan(item?.system?.description?.value, base, options));
     // (Damage outright to the creature it names, src/compiler/direct-damage.js: Murderer's Knot.)

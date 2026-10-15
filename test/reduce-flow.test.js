@@ -61,3 +61,33 @@ test("Lion Badge: Apply lowers the user's frightened by 1; with none, the card s
     await settle();
     assert.match(poultice.content, /isn&#39;t sickened: nothing to lower/);
 });
+
+test("Instinct Crown: PF2e's Effect: Rage with 10 more temporary Hit Points, for a creature that can Rage and isn't raging", async () => {
+    const [rage] = compileActivations(source("Instinct Crown (Animal)"));
+    assert.deepEqual([rage.plan.resolution.applications[0].label, rage.plan.resolution.applications[0].tempHP], ["Effect: Rage", 10]);
+    const crown = foundry.giveItem(scout, source("Instinct Crown (Animal)"));
+    const activate = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: crown.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return card;
+    };
+    const rages = () => scout.itemTypes.effect.filter((effect) => effect.name === "Effect: Rage");
+    // No Rage action: no Rage.
+    let card = await activate();
+    assert.match(card.content, /has no Rage action/);
+    assert.equal(rages().length, 0);
+    // A barbarian: the Effect, its TempHP raised.
+    scout.created.push({ type: "action", slug: "rage", id: "rage-action", name: "Rage" });
+    card = await activate();
+    const [effect] = rages();
+    assert.ok(effect, "Effect: Rage");
+    assert.deepEqual(effect.system.rules.filter((rule) => rule.key === "TempHP").map((rule) => rule.value), ["(@actor.flags.system.rageTempHP) + 10"]);
+    // Raging already: none again.
+    card = await activate();
+    assert.match(card.content, /already raging/);
+    assert.equal(rages().length, 1);
+});

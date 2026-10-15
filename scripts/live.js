@@ -383,6 +383,11 @@ async function nativeEffect(actor, name, change, state) {
             return `${name}: ${template.name} wasn't applied, since its rules don't match the item's text (${verdict.failures.map((failure) => failure.why).join("; ")}). A note of the text instead.`;
         }
     }
+    // (Rage, src/compiler/rage.js: only a creature with PF2e's Rage action, not raging already.)
+    if (linked?.rage) {
+        if (!(actor.itemTypes?.action ?? []).some((action) => action.slug === "rage")) return `${name} has no Rage action: no Rage.`;
+        if ((actor.itemTypes?.effect ?? []).some((effect) => effect.slug === "effect-rage" || effect._stats?.compendiumSource === change.effect.uuid)) return `${name} is already raging: no new Rage.`;
+    }
     // (A tea's Tea Ceremony: its longer time, and PF2e's ceremony choice preset either way.)
     const ceremony = state.ceremony === null || state.ceremony === undefined ? null : Boolean(state.ceremony);
     const application = applicationFor(state.plan, change);

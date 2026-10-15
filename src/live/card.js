@@ -83,7 +83,7 @@ export function previewLines(state) {
         lines.push(state.rolled?.kind === "healing" && Number.isFinite(state.rolled.total) ? `Heals ${state.rolled.total} Hit Points (PF2e's roll of ${formula})` : `Heals ${formula} Hit Points`);
     }
     for (const application of plan?.resolution?.applications ?? []) {
-        const extra = [application.level ? `rank ${application.level}` : null, application.duration ? timeText(application.duration) : null].filter(Boolean).join(", ");
+        const extra = [application.level ? `rank ${application.level}` : null, application.duration ? timeText(application.duration) : null, Number(application.tempHP) ? `${application.tempHP} more temporary Hit Points` : null].filter(Boolean).join(", ");
         lines.push(`${application.label ?? "Effect"}${extra ? ` (${extra})` : ""}`);
     }
     // The item's own row (an automatic check): what the drinker gets.
@@ -125,6 +125,8 @@ export function effectSource(template, { application = null, item = {}, user = {
     source.system ??= {};
     if (Number.isFinite(application?.level) && application.level > 0) source.system.level = { ...(source.system.level ?? {}), value: application.level };
     if (application?.duration) source.system.duration = { ...(source.system.duration ?? {}), value: application.duration.value, unit: application.duration.unit, expiry: source.system.duration?.expiry ?? "turn-start", sustained: false };
+    // ("gain 10 additional temporary Hit Points from your Rage": its TempHP rule raised by that much, src/compiler/rage.js.)
+    if (Number(application?.tempHP)) for (const rule of source.system.rules ?? []) if (rule?.key === "TempHP") rule.value = `(${rule.value ?? 0}) + ${Number(application.tempHP)}`;
     source.system.start = { value: worldTime, initiative };
     source.system.context = { ...(source.system.context ?? {}), origin: { ...(source.system.context?.origin ?? {}), actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } };
     source.flags = { ...(source.flags ?? {}), ...flags };

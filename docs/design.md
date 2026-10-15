@@ -167,6 +167,8 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 **Lowering a condition** (`src/compiler/reduce.js`; 5 items): "reduce the value of your frightened condition by 1" (Lion Badge), "reduce your Sickened value by 1" (Pepper Poultice), "You reduce your Frightened condition by 1" (Coin of Comfort). `plan.item.reduce` `[{ slug, by }]`: the item card lowers it on its user or drinker after its own row, with PF2e's `decreaseCondition`, and says so when there's none to lower. An item with nothing else read gets a plan of its own for it, with its other rule sentences as notes (Cinnamon Nostalgia Bun's flat check).
 - Not read: a later "Secondary Effect" (Ginger Chew), "if successful" (Moon Radish Soup's counteract card does that one), an ally's or an area's (Fearless Sash), a passive one ("Whenever you become Frightened").
 
+**Rage** (`src/compiler/rage.js`; 6 PF2e Instinct Crowns, 14 Barbarians+ activations): "You use Quick-Tempered and gain 10 additional temporary Hit Points from your Rage", "You Rage, gaining 10 additional temporary Hit Points". The plan is PF2e's own "Effect: Rage" (what its Rage action applies) on the user, with `application.tempHP`: the item card raises the Effect's TempHP rule (`@actor.flags.system.rageTempHP`) by that much. Only for a creature with PF2e's Rage action that isn't raging already; the card says so otherwise.
+
 **The live check is ready** (`tools/live-check.mjs`, run in pftest's browser). It has its own "PFTEST ITEM Lab" scene and "PFTEST ITEM" creatures, and cleans up only its own data. Its cases:
 - a potion fed to a dying ally;
 - an elixir's grade;
