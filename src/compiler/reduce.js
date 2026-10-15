@@ -9,7 +9,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 
 const VALUED = ["clumsy", "doomed", "drained", "enfeebled", "frightened", "sickened", "slowed", "stunned", "stupefied", "wounded"];
 const COUNT = { one: 1, two: 2, three: 3 };
-const REDUCE = new RegExp(String.raw`\b(?:you )?reduc(?:e|es|ing) (?:the value of )?your (${VALUED.join("|")})(?: condition| value)?(?: value)? by (\d|one|two|three)\b`, "gi");
+const REDUCE = new RegExp(String.raw`\b(?:(?:you )?reduc(?:e|es|ing) (?:the value of )?your (${VALUED.join("|")})(?: condition| value)?(?: value)?|your (${VALUED.join("|")}) (?:value|condition) decreases) by (\d|one|two|three)\b`, "gi");
 const NOT_YOURS = /\b(?:each|every|all) (?:other )?(?:all(?:y|ies)|creatures?)\b|\bemanation\b|\baura\b|\bWhenever\b|\banytime\b|\beach round\b|\bat the (?:beginning|start|end) of (?:each of )?your turns?\b|\bif (?:successful|it succeeds|you succeed)\b/i;
 // (Its use only: not a later "Secondary Effect" — Ginger Chew's "Reduce your sickened value by 1" is for when it's used again.)
 const ownUse = (text) => String(text ?? "").split(/\bSecondary Effect\b/)[0];
@@ -21,9 +21,9 @@ export function readReductions(text) {
     for (const sentence of ownUse(text).split(/(?<=[.!?])\s+(?=[A-Z])/)) {
         if (NOT_YOURS.test(sentence)) continue;
         for (const match of sentence.matchAll(REDUCE)) {
-            const slug = match[1].toLowerCase();
+            const slug = (match[1] ?? match[2]).toLowerCase();
             if (found.some((entry) => entry.slug === slug)) continue;
-            found.push({ slug, by: COUNT[match[2].toLowerCase()] ?? Number(match[2]) });
+            found.push({ slug, by: COUNT[match[3].toLowerCase()] ?? Number(match[3]) });
         }
     }
     return found;
@@ -50,6 +50,7 @@ export function reductionPlan(base, reduce, notes = []) {
 export function reductionNotes(text) {
     // (A copy without the global flag: the shared one keeps its place between calls.)
     const reduces = new RegExp(REDUCE.source, "i");
-    return ownUse(text).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && !reduces.test(sentence) && RULE_WORDS.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));
+    // (The reduction's own sentence too when it says more: "…, and you regain 1 Mythic Point".)
+    return ownUse(text).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && (reduces.test(sentence) ? /\band (?:you )?(?:regain|gain|become|are|take|can)\b/i.test(sentence) : RULE_WORDS.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));
 }
 
