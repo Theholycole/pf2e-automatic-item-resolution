@@ -1,0 +1,269 @@
+// The item module's live check in the disposable world pftest (GM only), run in the browser:
+//   const check = await import("/modules/pf2e-automatic-item-resolution/tools/live-check.mjs");
+//   await check.runAll();            // or await check.runCase("potionToDyingAlly")
+//   check.results();  await check.cleanup();
+// Its test data is "PFTEST ITEM …" (the pftest queue's rule 5), flagged as this module's fixtures, on its own scene
+// "PFTEST ITEM Lab", viewed (never activated) while it runs. Cleanup removes only that: its actors, its scene, and the
+// chat messages its creatures spoke or its cards made. Each case drives PF2e's own Use or Strike and reads the card.
+
+const NS = "pf2e-automatic-item-resolution";
+const KEY = "liveCheck";
+const FIXTURE = "liveCheckFixture";
+const PREFIX = "PFTEST ITEM";
+const shift = () => new MouseEvent("click", { shiftKey: true });
+const assert = (value, message) => {
+    if (!value) throw new Error(message);
+};
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function store() {
+    const saved = game.user.getFlag(NS, KEY) ?? { results: [] };
+    return { saved, persist: () => game.user.setFlag(NS, KEY, saved) };
+}
+
+// Waits for a chat message that passes the test, made after since (polls; the hooks' work isn't awaited).
+async function messageAfter(since, test, { timeout = 8000, what = "the card" } = {}) {
+    const end = Date.now() + timeout;
+    while (Date.now() < end) {
+        const found = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since).reverse().find(test);
+        if (found) return found;
+        await wait(150);
+    }
+    throw new Error(`No ${what} within ${timeout / 1000} seconds.`);
+}
+
+const itemCard = (kind) => (message) => message.getFlag(NS, "card")?.kind === kind;
+const abilitySaveCard = (message) => Boolean(message.flags?.["pf2e-automatic-ability-resolution"]?.card?.plan?.resolution?.check);
+
+async function lab() {
+    assert(game.world.id === "pftest" && game.user.isGM, "Disposable pftest, as GM, only.");
+    assert(game.modules.get(NS)?.active, "Enable PF2e Automatic Item Resolution first.");
+    let scene = game.scenes.find((entry) => entry.name === `${PREFIX} Lab`);
+    if (!scene) scene = await Scene.create({ name: `${PREFIX} Lab`, width: 2000, height: 2000, padding: 0, grid: { size: 100, distance: 5, units: "ft" }, flags: { [NS]: { [FIXTURE]: true } } });
+    if (canvas.scene?.id !== scene.id) {
+        await scene.view();
+        await wait(1500);
+    }
+    return scene;
+}
+
+// A creature of the lab: an NPC (HP, AC and saves as given) or a character (for Strikes with weapons and bombs).
+async function creature(scene, name, { type = "npc", x = 0, y = 0, hp = 50, ac = 18, save = 8, alliance = "party", level = 3 } = {}) {
+    const system = type === "npc"
+        ? { details: { level: { value: level }, alliance }, attributes: { hp: { value: hp, max: Math.max(hp, 50) }, ac: { value: ac } }, saves: { fortitude: { value: save }, reflex: { value: save }, will: { value: save } } }
+        : { details: { level: { value: level }, alliance } };
+    const actor = await Actor.create({ name: `${PREFIX} ${name}`, type, system, flags: { [NS]: { [FIXTURE]: true } } });
+    const [token] = await scene.createEmbeddedDocuments("Token", [{ ...actor.prototypeToken.toObject(), actorId: actor.id, actorLink: true, x: x * 100, y: y * 100 }]);
+    await wait(300);
+    return { actor, token };
+}
+
+async function give(actor, name) {
+    const pack = game.packs.get("pf2e.equipment-srd");
+    const entry = (await pack.getIndex()).find((row) => row.name === name);
+    assert(entry, `${name} isn't in PF2e's equipment.`);
+    const source = (await pack.getDocument(entry._id)).toObject();
+    delete source._id;
+    const [item] = await actor.createEmbeddedDocuments("Item", [source]);
+    return item;
+}
+
+async function target(...tokens) {
+    const ids = tokens.map((token) => token.id);
+    if (canvas.tokens?.setTargets) canvas.tokens.setTargets(ids);
+    else if (game.user.updateTokenTargets) game.user.updateTokenTargets(ids);
+    else for (const [index, token] of tokens.entries()) token.object?.setTarget(true, { releaseOthers: index === 0 });
+    await wait(200);
+}
+
+async function strike(actor, weapon) {
+    const action = (actor.system.actions ?? []).find((entry) => entry.item?.id === weapon.id);
+    assert(action, `${actor.name} has no Strike with ${weapon.name}.`);
+    const since = Date.now();
+    await action.variants[0].roll({ event: shift() });
+    const attack = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "attack-roll", { what: "attack roll" });
+    return { action, attack };
+}
+
+export const cases = {
+    // A healing potion fed to a dying ally next to the user: PF2e's own roll heals her once, Dying ends, Wounded rises.
+    async potionToDyingAlly(scene) {
+        const { actor: user } = await creature(scene, "Medic", { x: 2, y: 2 });
+        const { actor: ally } = await creature(scene, "Dying Ally", { x: 3, y: 2, hp: 0 });
+        await ally.increaseCondition("dying");
+        const potion = await give(user, "Healing Potion (Minor)");
+        const since = Date.now();
+        await potion.consume();
+        const used = await messageAfter(since, (message) => message.flags?.pf2e?.origin?.type === "consumable" && message.rolls?.length, { what: "PF2e's Use message" });
+        const card = await messageAfter(since, itemCard("item"));
+        const state = card.getFlag(NS, "card");
+        assert(state.drinkers.some((entry) => entry.actorUuid === ally.uuid), "the ally next to the user is offered");
+        assert(used.getFlag(NS, "covered") === card.id && used.flags.pf2e.suppressDamageButtons, "PF2e's apply buttons come off its message");
+        const healed = used.rolls[0].total;
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: state.drinkers.findIndex((entry) => entry.actorUuid === ally.uuid) });
+        await wait(800);
+        assert(ally.system.attributes.hp.value === Math.min(healed, ally.system.attributes.hp.max), `healed by PF2e's ${healed}: ${ally.system.attributes.hp.value}`);
+        assert(!ally.hasCondition("dying"), "no longer dying");
+        assert((ally.getCondition("wounded")?.value ?? 0) === 1, "wounded 1");
+        return { healed, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // An elixir of life: healed, and its shared Effect made at the grade used, with no prompt.
+    async elixirGrade(scene) {
+        const { actor: user } = await creature(scene, "Elixir Drinker", { x: 5, y: 2, hp: 10 });
+        const elixir = await give(user, "Elixir of Life (Lesser)");
+        const since = Date.now();
+        await elixir.consume();
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await wait(800);
+        const effect = user.itemTypes.effect.find((entry) => entry.name.startsWith("Effect: Elixir of Life"));
+        assert(effect, "the Effect is on the drinker");
+        const choice = effect.system.rules.find((rule) => rule.key === "ChoiceSet");
+        assert(choice?.selection, "its grade chosen with no prompt");
+        return { selection: choice.selection, hp: user.system.attributes.hp.value };
+    },
+
+    // Mistform Elixir: concealed for its time, through the ability module's applyChange.
+    async mistform(scene) {
+        const { actor: user } = await creature(scene, "Misty", { x: 7, y: 2 });
+        const elixir = await give(user, "Mistform Elixir (Lesser)");
+        const since = Date.now();
+        await elixir.consume();
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await wait(800);
+        assert(user.hasCondition("concealed") || user.itemTypes.effect.some((entry) => /concealed/i.test(entry.name)), "concealed");
+        return { effects: user.itemTypes.effect.map((entry) => entry.name) };
+    },
+
+    // A bottled lightning hit: the creature next to the target takes PF2e's splash; the target is off-guard.
+    async bombSplash(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Bomber", { type: "character", x: 2, y: 6 });
+        const { actor: goblin, token: goblinToken } = await creature(scene, "Bomb Target", { x: 5, y: 6, ac: 1, alliance: "opposition" });
+        const { actor: other } = await creature(scene, "Bomb Neighbour", { x: 6, y: 6, alliance: "opposition" });
+        const bomb = await give(thrower, "Bottled Lightning (Lesser)");
+        await bomb.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await throwerToken.object?.control?.();
+        await target(goblinToken);
+        const before = other.system.attributes.hp.value;
+        const { action, attack } = await strike(thrower, bomb);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const since = Date.now();
+        await action.damage({ event: shift() });
+        const damage = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "damage roll" });
+        const card = await messageAfter(since, itemCard("bomb"));
+        const state = card.getFlag(NS, "card");
+        assert(state.splashed.some((entry) => entry.actorUuid === other.uuid), "the neighbour is listed for the splash");
+        assert(Array.isArray(damage.getFlag(NS, "coveredSplash")), "the splash-only roll's buttons come off");
+        await game.modules.get(NS).api.live.apply(card.id, { included: state.splashed.map((entry, index) => index) });
+        await wait(800);
+        assert(other.system.attributes.hp.value < before, `the neighbour splashed: ${before} → ${other.system.attributes.hp.value}`);
+        assert(goblin.hasCondition("off-guard") || goblin.itemTypes.effect.some((entry) => /off-guard/i.test(entry.name)), "the target off-guard");
+        return { splash: state.splash, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
+    async poisonCoatAndHit(scene) {
+        const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });
+        const { token: ogreToken } = await creature(scene, "Poison Target", { x: 3, y: 9, ac: 1, alliance: "opposition" });
+        const sword = await give(rogue, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const venom = await give(rogue, "Black Adder Venom");
+        let since = Date.now();
+        await venom.consume();
+        const card = await messageAfter(since, itemCard("poison"));
+        const state = card.getFlag(NS, "card");
+        await game.modules.get(NS).api.live.apply(card.id, { weapon: state.weapons.findIndex((entry) => entry.id === sword.id) });
+        await wait(600);
+        assert(rogue.itemTypes.effect.some((entry) => entry.getFlag(NS, "poison")?.weaponId === sword.id), "the coated-weapon Effect");
+        await rogueToken.object?.control?.();
+        await target(ogreToken);
+        since = Date.now();
+        const { attack } = await strike(rogue, sword);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the poison's save card" });
+        await wait(500);
+        assert(!rogue.itemTypes.effect.some((entry) => entry.getFlag(NS, "poison")), "the poison spent");
+        return { saveCard: save.id };
+    },
+
+    // Spark Wafer: its save goes to the creatures targeted, through the ability module's save card.
+    async useSave(scene) {
+        const { actor: user } = await creature(scene, "Snapper", { x: 2, y: 12 });
+        const { token: foe } = await creature(scene, "Spark Target", { x: 3, y: 12, alliance: "opposition" });
+        const wafer = await give(user, "Spark Wafer");
+        const since = Date.now();
+        await wafer.consume();
+        const card = await messageAfter(since, itemCard("expose"));
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        return { card: card.id };
+    },
+
+    // Invisibility Potion: the spell module casts it on the drinker (its castFromItem; run after its own live check).
+    async castFromPotion(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: user } = await creature(scene, "Vanisher", { type: "character", x: 9, y: 12, level: 9 });
+        const potion = await give(user, "Invisibility Potion");
+        const since = Date.now();
+        await potion.consume();
+        const card = await messageAfter(since, itemCard("cast"));
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        return { cast: cast.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    }
+};
+
+// One case: its result recorded (on this GM's user flag); a dialog left open over a minute is answered and fails it.
+export async function runCase(name) {
+    assert(cases[name], `Unknown case ${name}`);
+    const scene = await lab();
+    const { saved, persist } = store();
+    const answered = [];
+    const watchdog = setInterval(() => {
+        for (const app of foundry.applications.instances.values()) {
+            if (!app.rendered || app.constructor.name !== "DialogV2") continue;
+            app.__itemCheckSeen ??= Date.now();
+            if (Date.now() - app.__itemCheckSeen < 60000) continue;
+            const button = app.element?.querySelector('button[data-action="ok"]') ?? app.element?.querySelector("button[autofocus]") ?? app.element?.querySelector("footer button, button");
+            if (button) {
+                answered.push(app.title ?? "a dialog");
+                button.click();
+            }
+        }
+    }, 5000);
+    let result;
+    try {
+        result = { name, passed: true, at: new Date().toISOString(), details: await cases[name](scene) };
+    } catch (error) {
+        result = { name, passed: false, at: new Date().toISOString(), error: error.message, stack: error.stack };
+    } finally {
+        clearInterval(watchdog);
+    }
+    if (answered.length) result = { ...result, passed: false, error: `Dialogs left open: ${answered.join("; ")}${result.error ? ` — then: ${result.error}` : ""}` };
+    saved.results.push(result);
+    await persist();
+    return result;
+}
+
+export async function runAll(names = Object.keys(cases)) {
+    const out = [];
+    for (const name of names) out.push(await runCase(name));
+    return out.map((result) => `${result.passed ? "PASS" : "FAIL"} ${result.name}${result.error ? `: ${result.error}` : ""}`);
+}
+
+export const results = () => store().saved;
+
+// Only this check's data: its fixture actors, its lab scene, and the chat messages its creatures spoke or its cards made.
+export async function cleanup() {
+    const actors = game.actors.filter((actor) => actor.getFlag(NS, FIXTURE) && actor.name.startsWith(PREFIX));
+    const ids = new Set(actors.map((actor) => actor.id));
+    // (Every message its creatures spoke: PF2e's, this module's cards, the ability module's save cards for them.)
+    const messages = game.messages.filter((message) => ids.has(message.speaker?.actor)).map((message) => message.id);
+    for (let index = 0; index < messages.length; index += 200) await ChatMessage.deleteDocuments(messages.slice(index, index + 200)).catch(() => null);
+    if (actors.length) await Actor.deleteDocuments(actors.map((actor) => actor.id));
+    const scene = game.scenes.find((entry) => entry.name === `${PREFIX} Lab` && entry.getFlag(NS, FIXTURE));
+    if (scene) await scene.delete();
+    return { actors: actors.length, messages: messages.length, scene: Boolean(scene) };
+}

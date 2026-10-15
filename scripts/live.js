@@ -177,6 +177,15 @@ function wireCard(message, html) {
     });
 }
 
+// Apply a card from code (the module api's live.apply: a harness or another module), on the active GM's client.
+export async function applyMessage(messageId, choices = {}) {
+    const message = game.messages.get(messageId);
+    const state = stateOf(message);
+    if (!state || !APPLY[state.kind]) throw new Error("Not an item card.");
+    if (!isActiveGM()) throw new Error("Only the active GM's client applies cards.");
+    return applyByKind(message, state, choices);
+}
+
 // A player's Apply, on the active GM's client: only the GM or the item user's owner may.
 async function onRequest(data) {
     if (data?.action !== "apply") return;
