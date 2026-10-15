@@ -22,7 +22,8 @@ export function plainText(html) {
         // (An area as its words: "@Template[burst|distance:10]{10 feet}" → "10 feet", unlabelled → "10-foot burst".)
         .replace(/@Template\[[^\]]*\]\{([^}]*)\}/g, "$1")
         .replace(/@Template\[(?:type:)?(\w+)\|distance:(\d+)[^\]]*\]/g, "$2-foot $1")
-        .replace(/@Damage\[\(?([^\[\]()]+?)\)?\[[^\]]*\]\]/g, "$1")
+        // ("@Damage[3d10[healing,vitality]|shortLabel]": options after the type too.)
+        .replace(/@Damage\[\(?([^\[\]()]+?)\)?\[[^\]]*\](?:\|[^\]]*)?\]/g, "$1")
         .replace(/@Damage\[([^\]]*)\]/g, "$1")
         .replace(/\[\[\/\w+ ([^\]#]+?)(?:\s*#[^\]]*)?\]\](?:\{([^}]*)\})?/g, (whole, formula, label) => label ?? formula)
         .replace(/<span class="action-glyph">[^<]*<\/span>/g, " ")
@@ -101,13 +102,18 @@ function tempHitPoints(sentences, duration, used = new Set()) {
     return null;
 }
 
+// "you regain 3d10 Hit Points"; or another creature's, "restoring 4d6+15 Hit Points to it" (a willing, adjacent creature:
+// other, so the card offers the user and the creatures next to them).
+const AMOUNT_PARENS = String.raw`\(?(\d+d\d+(?:\s*[+-]\s*\d+)?|\d+)\)?`;
 function textHealing(sentences, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
-        const match = new RegExp(String.raw`\byou (?:immediately )?regain ${AMOUNT} Hit Points\b`, "i").exec(sentence);
+        const self = new RegExp(String.raw`\byou (?:immediately )?regain ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
+        const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b`, "i").exec(sentence);
+        const match = self ?? other;
         if (match && !/\b(?:if|when|whenever|each time|at the (?:start|end))\b/i.test(sentence.slice(0, match.index))) {
             used.add(index);
             const amount = match[1].replace(/\s+/g, "");
-            return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }) };
+            return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), ...(other && !self ? { other: true } : {}) };
         }
     }
     return null;
@@ -182,9 +188,12 @@ export function ownRow(item, { healing = true } = {}) {
     if (heal) effects.unshift(heal);
     const modifiers = modifiersOf(sentences, duration, used);
     if (!effects.length && !modifiers.length) return null;
+    // (Healing another creature: the row's recipient is chosen like a drinker's.)
+    const other = Boolean(heal?.other);
+    if (heal?.other) delete heal.other;
     // (Not its time, nor a sentence restating PF2e's usual rule: "As usual being concealed when your position is still obvious, you can't …".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence));
-    return { effects, modifiers, unread, duration };
+    return { effects, modifiers, unread, duration, ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

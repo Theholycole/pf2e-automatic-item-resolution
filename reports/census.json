@@ -17,9 +17,9 @@
    "none": 334,
    "resolves": 691,
    "builtin:zone": 86,
-   "note-only": 272,
+   "note-only": 271,
    "builtin:no-effect": 69,
-   "partial": 5,
+   "partial": 6,
    "builtin:save-bonus": 1
   }
  },
@@ -200,10 +200,11 @@
    "count": 66,
    "results": {
     "resolves": 25,
-    "note-only": 22,
+    "note-only": 21,
     "builtin:no-effect": 7,
     "none": 11,
-    "builtin:cast-spell": 1
+    "builtin:cast-spell": 1,
+    "partial": 1
    },
    "mechanisms": {
     "linked-effect": 17,
@@ -29268,8 +29269,12 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "If the creature has taken fire damage within the last minute, it restores additional Hit Points equal to the amount of fire damage the creature took within the last minute (maximum +10).",
+    "Finally, the creature becomes immune to the effects of severe heat for 1 hour."
+   ],
    "live": "item"
   },
   {

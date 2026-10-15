@@ -6,9 +6,9 @@
   "ours": 2201,
   "activations": 2730,
   "results": {
-   "none": 1273,
+   "none": 1269,
    "builtin:cast-spell": 328,
-   "resolves": 636,
+   "resolves": 640,
    "builtin:no-effect": 138,
    "note-only": 304,
    "builtin:modes": 30,
@@ -18,9 +18,9 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1484,
+   "none": 1480,
    "cast": 328,
-   "item": 608,
+   "item": 612,
    "save": 297,
    "zone": 9,
    "later": 4
@@ -32,9 +32,9 @@
   "equipment": {
    "activations": 1819,
    "results": {
-    "none": 868,
+    "none": 864,
     "builtin:cast-spell": 230,
-    "resolves": 383,
+    "resolves": 387,
     "builtin:no-effect": 114,
     "note-only": 192,
     "builtin:modes": 19,
@@ -237,9 +237,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Cloak of Illusions",
@@ -20576,9 +20576,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Midday Lantern (Lesser)",
@@ -23656,9 +23656,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Waverider Barding",
@@ -24404,9 +24404,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Ouroboros Buckles",

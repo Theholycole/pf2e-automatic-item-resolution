@@ -48,7 +48,8 @@ export function compileItem(item, options = {}) {
     const plan = own && !own.noteOnly ? own : (read ? fitPlan(item, read, base, options) : ownPlan(item, base, options)) ?? rowPlan(item, base);
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    return { ...plan, ...(source ? { source } : {}), item: itemInfo(item) };
+    const info = itemInfo(item);
+    return { ...plan, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info };
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success
@@ -69,7 +70,8 @@ function rowPlan(item, base) {
         trigger: { event: "use" },
         resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success } },
         ...(!row ? { noteOnly: true } : {}),
-        ...(partial ? { partial: true, unread: row.unread } : {})
+        ...(partial ? { partial: true, unread: row.unread } : {}),
+        ...(row?.other ? { otherRecipient: true } : {})
     };
 }
 

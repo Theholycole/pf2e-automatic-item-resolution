@@ -47,3 +47,13 @@ test("each activation read as an ability: a cast, an Effect, a save at targets, 
     assert.deepEqual(ink.plan.resolution.check.against, { dc: "fixed", value: 23 });
     assert.deepEqual(registry.resolveSync(ink.plan, { caster: { id: "u" }, targets: [{ id: "t" }], statistic: () => ({ modifier: 0 }) }, { roll: () => ({ degree: "failure" }), damage: () => 3 }).gaps, []);
 });
+
+test("an activation that heals: its user (Bolka's Blessing), or a creature next to them (Healer's Gloves)", () => {
+    const [bolka] = compileActivations(item("Bolka's Blessing"), { spellEffects });
+    assert.deepEqual(bolka.plan.resolution.outcomes.success.effects, [{ kind: "heal", formula: "3d10" }]);
+    assert.equal(bolka.plan.item.recipient, "user");
+    const gloves = compileActivations(item("Healer's Gloves (Greater)"), { spellEffects }).find((entry) => entry.plan?.resolution?.outcomes?.success?.effects?.some((effect) => effect.kind === "heal"));
+    assert.equal(gloves.plan.resolution.outcomes.success.effects[0].formula, "4d6+15");
+    assert.equal(gloves.plan.item.recipient, "drinker", "the user picks the creature next to them");
+});
+
