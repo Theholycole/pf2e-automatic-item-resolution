@@ -13,7 +13,7 @@ Spell-casting items (scrolls, wands, staves, catalysts) belong to PF2e Automatic
   - what the text plainly does to the drinker;
   - a note Effect for the rest.
 
-  695 of the 1,487 consumables it handles compile to a plan the core resolves with no gaps, plus 64 snares whose save plans it resolves inside the ability module's zones. 272 more get only a note, and 5 are partial.
+  691 of the 1,487 consumables it handles compile to a plan the core resolves with no gaps, plus 64 snares whose save plans it resolves inside the ability module's zones. 272 more get only a note, and 5 are partial.
 - **Cards after PF2e's own Use** (`scripts/live.js`): the item's confirmation card. It names the drinker: the user, or a creature next to them to feed it to. The item's owner or the GM applies it.
   - Healing uses PF2e's own roll, and PF2e's buttons are hidden on that message so nothing is healed twice.
   - Effects are made at the item's grade.
