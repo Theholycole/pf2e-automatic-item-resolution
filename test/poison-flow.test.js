@@ -157,3 +157,18 @@ test("an item with no Activate line is still used: a save for its target (Sneezi
     assert.equal((await use(foundry.giveItem(rogue, source("Darkening Poison")))).flags[MODULE_ID].card.kind, "poison");
 });
 
+test("a snare goes to the ability module's zones (startZone, once); without them, the GM places it", async () => {
+    const zones = [];
+    foundry.ability.live.startZone = async (options) => zones.push(options);
+    try {
+        await use(foundry.giveItem(rogue, source("Spike Snare")));
+        assert.equal(zones.length, 1);
+        assert.deepEqual([zones[0].item.name, zones[0].item.actor, zones[0].plan.zone.once, zones[0].plan.zone.area.type], ["Spike Snare", rogue, true, "square"]);
+        assert.equal(zones[0].sourceToken.uuid, rogue.token.uuid);
+    } finally {
+        delete foundry.ability.live.startZone;
+    }
+    await use(foundry.giveItem(rogue, source("Spike Snare")));
+    assert.match(foundry.messages.at(-1).content, /Set the snare in a square within reach/);
+});
+
