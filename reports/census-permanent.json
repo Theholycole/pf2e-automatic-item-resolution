@@ -8,10 +8,10 @@
   "results": {
    "none": 1112,
    "builtin:cast-spell": 323,
-   "resolves": 636,
+   "resolves": 637,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
-   "note-only": 298,
+   "note-only": 297,
    "builtin:modes": 26,
    "partial": 7,
    "builtin:zone": 9,
@@ -21,10 +21,11 @@
   "live": {
    "none": 1311,
    "cast": 323,
-   "item": 600,
-   "save": 301,
+   "item": 599,
+   "save": 297,
    "focus": 45,
    "zone": 9,
+   "strike": 5,
    "later": 4
   },
   "withFrequency": 1749,
@@ -94,8 +95,8 @@
    "activations": 100,
    "results": {
     "builtin:cast-spell": 8,
-    "note-only": 18,
-    "resolves": 26,
+    "note-only": 17,
+    "resolves": 27,
     "none": 40,
     "builtin:modes": 4,
     "builtin:no-effect": 4
@@ -3709,7 +3710,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Tideplate",
@@ -24004,7 +24005,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Quickened Standard",
@@ -24730,7 +24731,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Cordelia's Greater Construct Key",
@@ -24849,9 +24850,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Fan of Soothing Winds",
@@ -25467,7 +25468,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "What Doors We Open",

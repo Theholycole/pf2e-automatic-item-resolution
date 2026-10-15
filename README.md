@@ -19,11 +19,12 @@ Use an item as PF2e always does: its **Use** button, a bomb's **Strike**, or pos
 - **Injury poisons:** the card asks which piercing or slashing weapon to coat. The coated weapon's next hit posts the poison's save card for the target; a miss keeps the poison, and a critical miss wastes it.
 - **Contact, inhaled and ingested poisons, drugs, and other items with a save** (Spark Wafer, Pyronite): target the creatures, then press the card's button. Each gets its save card. A breath potion's card stays open until the breath is used, and for its whole hour when it can breathe again after a recharge.
 - **Items that cast a spell** (Invisibility Potion, Fade Band, Truesight Potion): the spell module casts it, on the drinker, on you, or at the creatures you target.
+- **Items used by Striking** (Fear Gem, Duelist's Beacon, Aurochs' Might Tattoo): Apply readies your next Strike this turn. When PF2e's attack roll hits, the riders for its degree go on the target ("frightened 1, or frightened 2 on a critical hit"), and a save the Strike calls for gets its save card. A miss spends it.
 - **Snares and lasting areas** (Cryomister, Pheromone Flare): the GM places the area. A snare goes off once, for the first creature to enter its square.
 - **Permanent items:** post the item to chat and a card lists its activations, each with an Activate button. One that gives a Focus Point (a Specialist's Ring, a Bloodline Robe) adds it up to the pool's maximum, and in an encounter an unspent point is taken back at the end of the turn. A "once per day" activation is counted, with a warning if it's used again; the GM decides. This trigger is a proposal still to confirm.
 - **Anything else with a duration:** a note Effect on the creature with the item's text, for that time.
 
-The census counts what's played: 1,063 of the 1,487 consumables this module handles get a card.
+The census counts what's played: 1,064 of the 1,486 consumables this module handles get a card.
 
 ## Requirements
 
@@ -39,8 +40,8 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 - **The compiler** (`src/compiler/`, pure) turns an item into a plan for the core. It reads the text with the ability module's compiler and adds what the item's own data says: who drinks it, the healing PF2e rolls, its linked PF2e Effect or a spell's Effect at the item's rank, its own row, or a note.
   - `bombs.js`: splash, riders and saves.
   - `snares.js`: zones.
-  - `permanent.js`: activations; `focus.js`: Focus Points.
-- **Live play** (`scripts/`): `live.js` (the Use hook and the item card), `bombs.js`, `poisons.js`, `casts.js`, `zones.js`, `activations.js`, `focus.js`, and `foundry.js` (shared helpers). Pure card state and HTML live in `src/live/`, and `src/live/route.js` decides which card an item gets.
+  - `permanent.js`: activations; `focus.js`: Focus Points; `strikes.js`: items used by Striking.
+- **Live play** (`scripts/`): `live.js` (the Use hook and the item card), `bombs.js`, `poisons.js`, `casts.js`, `zones.js`, `activations.js`, `focus.js`, `strikes.js`, and `foundry.js` (shared helpers). Pure card state and HTML live in `src/live/`, and `src/live/route.js` decides which card an item gets.
 - **Tests:** `node --test --test-isolation=none test/*.test.js`. The live layer runs against a stand-in for Foundry (`test/support/fake-foundry.mjs`) with PF2e's real items and Effects from its packs.
 - **Live check** in the disposable world pftest: `tools/live-check.mjs`, imported in the browser. It uses its own "PFTEST ITEM" data and cleans up only that.
 - **Censuses:** `node tools/census.mjs` (consumables) and `node tools/census-permanent.mjs` (activations). Both read the PF2e system's packs straight from LevelDB, with no Foundry login.

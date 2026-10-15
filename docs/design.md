@@ -97,7 +97,14 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 
 **The GM fallback gives way.** The ability compiler's last fallback ("no-effect", the GM's) yields to a reading of the item's own (its linked Effect, a spell's Effect, PF2e's healing, its row), though not to a note alone. PF2e's healing field counts only when the text heals: Potion of Annulment keeps its counteract roll there.
 
-`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,063 of 1,487 consumables get a card, and it says why the rest don't.
+`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,064 of 1,486 consumables get a card, and it says why the rest don't.
+
+**Items used by Striking** (`src/compiler/strikes.js`, `scripts/strikes.js`): "make a melee Strike. If you hit and deal damage, the target is Frightened 1, or Frightened 2 on a critical hit" (Fear Gem), "Attempt a melee Strike … On a hit, the target must succeed at a DC 22 Fortitude save or be Blinded" (Duelist's Beacon), Aurochs' Might Tattoo, Gloaming Arc. The bombs' rider and save readers, shared. The plan is a bomb's shape: the save family with the Strike as its roll, plus `plan.strike` `{ range, save }`.
+- Apply readies the user's next Strike this turn, an Effect that lasts to the end of the turn.
+- PF2e's attack roll then decides. A hit puts that degree's riders on the target (`applyRiders` in `scripts/foundry.js`, shared with bombs) and posts the Strike's save card. A miss spends it. A melee one waits for a melee Strike (PF2e's `item:melee` / `item:ranged` roll options).
+- A rider behind a save ("must succeed at … or be Blinded") is the save's, not the hit's; this holds for bombs too.
+- A save the ability compiler read as a save on Use, at whoever's targeted, gives way to the Strike's own on a hit (Aurochs' Might Tattoo, Gloaming Arc).
+- Not read: several Strikes at once, an item's own attack modifier, a follow-up check (Iron Cube's Trip), extra damage (Blood-Drinker Blade), a spell cast on a hit (Devil's Trident).
 
 **The live check is ready** (`tools/live-check.mjs`, run in pftest's browser). It has its own "PFTEST ITEM Lab" scene and "PFTEST ITEM" creatures, and cleans up only its own data. Its cases:
 - a potion fed to a dying ally;

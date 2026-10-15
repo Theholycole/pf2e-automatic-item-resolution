@@ -50,3 +50,28 @@ export function mayApply(state) {
 }
 
 export const damageRollClass = () => (CONFIG.Dice?.rolls ?? []).find((roll) => roll?.name === "DamageRoll");
+
+// A Strike's riders on the creature it hit (a bomb's, an item's Strike): the plan resolved by the core at the degree PF2e
+// rolled, each change through the ability module's api.live.applyChange. → the lines for the card.
+export async function applyRiders({ plan, degree, user, target, item }) {
+    const core = game.modules.get(CORE_ID)?.api;
+    const ability = game.modules.get(ABILITY_ID)?.api?.live;
+    const context = { caster: { id: "source" }, targets: [{ id: "target" }], id: (creature) => creature.id, statistic: () => ({ modifier: 0, dc: 10 }), allied: () => false };
+    const result = core ? await core.registry.resolve(plan, context, { roll: () => ({ degree, total: null, natural: null }), damage: () => 0, choose: () => undefined }) : { changes: [] };
+    const abilityState = {
+        plan,
+        ability: { name: item.name, uuid: item.uuid ?? null },
+        source: { actorUuid: user.actorUuid, tokenUuid: user.tokenUuid ?? null, name: user.name },
+        targets: [{ id: "target", actorUuid: target.actorUuid, tokenUuid: target.tokenUuid ?? null, name: target.name }]
+    };
+    const lines = [];
+    for (const change of result.changes) {
+        try {
+            const line = ability?.applyChange ? await ability.applyChange(change, abilityState) : `${target.name}: ${change.op} to apply by hand (the ability module isn't active).`;
+            lines.push(line ?? `${target.name}: ${change.op === "condition" ? `${change.slug}${Number.isFinite(change.value) ? ` ${change.value}` : ""}` : change.effect?.kind === "modifier" ? `${change.effect.modifier.value} to ${change.effect.modifier.selector}` : change.op}`);
+        } catch (error) {
+            lines.push(`Couldn't apply ${change.op} to ${target.name}: ${error.message}`);
+        }
+    }
+    return lines;
+}

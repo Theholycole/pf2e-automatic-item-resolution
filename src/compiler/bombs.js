@@ -23,6 +23,8 @@ export const isBomb = (item) => item?.type === "weapon" && item.system?.group ==
 
 const VALUED = new Set(["clumsy", "doomed", "drained", "enfeebled", "frightened", "sickened", "slowed", "stunned", "stupefied", "wounded"]);
 const CONDITIONAL = /\b(?:if|unless|while|against (?:a|an)\b|in contact with|living creature|made of|wearing|using|that is|who is|whose)\b/i;
+// (A rider behind a save — "the target must succeed at a DC 22 Fortitude save or be Blinded" — is the save's, not the hit's.)
+const SAVED = /\b(?:must (?:succeed|attempt)|saving throw|save)\b|@Check\[/i;
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 
 // "until the end of its next turn" is the target's turn here (the ability compiler, written for monsters, reads "its"
@@ -33,7 +35,7 @@ function fitDuration(duration, text) {
 }
 
 // What a rider's words give the target: conditions (valued ones only with a value) and penalties.
-function riderRow(text) {
+export function riderRow(text) {
     const row = none();
     const sentence = `The target ${text.replace(/^(?:the target|that creature|it)\s+/i, "")}`;
     // (Every condition named in words: the text's links are plain words by now.)
@@ -49,20 +51,24 @@ function riderRow(text) {
 const merge = (...rows) => rows.reduce((all, row) => ({ ...all, effects: [...all.effects, ...row.effects], modifiers: [...all.modifiers, ...row.modifiers] }), none());
 
 // The bomb's riders: { success, criticalSuccess } rows, from its "On a hit" and "On a critical hit" sentences.
-export function bombRiders(item) {
-    const text = plainText(item?.system?.description?.value);
+export const bombRiders = (item) => hitRiders(plainText(item?.system?.description?.value));
+
+// A Strike's riders in words (a bomb's, an item's "make a melee Strike. If you hit and deal damage, the target is
+// Frightened 1, or Frightened 2 on a critical hit"): { success, criticalSuccess } rows.
+const ON_HIT = /^(?:On a hit|On a successful Strike|If (?:you|it|the Strike) hits?(?: and deals? damage)?|If you hit and deal damage|If you successfully deal damage to (?:your|the) target),\s*(.+)$/i;
+export function hitRiders(text) {
     let hit = none();
     let critical = null;
     let criticalExtra = none();
     for (const sentence of text.split(/(?<=[.!?])\s+(?=[A-Z])/)) {
-        const onHit = /^(?:On a hit|On a successful Strike),\s*(.+)$/i.exec(sentence) ?? /^When you hit a creature with an? [\w' -]+?, that creature\s+(.+)$/i.exec(sentence);
+        const onHit = ON_HIT.exec(sentence) ?? /^When you hit a creature with an? [\w' -]+?, that creature\s+(.+)$/i.exec(sentence);
         const onCritical = /^On a critical hit,\s*(.+)$/i.exec(sentence);
-        if (onHit && !CONDITIONAL.test(onHit[1])) {
+        if (onHit && !CONDITIONAL.test(onHit[1]) && !SAVED.test(onHit[1])) {
             // "…, or becomes Sickened 1 on a critical hit" / "Frightened 1, or Frightened 2 on a critical hit": the critical hit's instead.
             const [ordinary, instead] = onHit[1].split(/,\s*or\s+(?=[^,]*\bon a critical hit\b)/i);
             hit = merge(hit, riderRow(ordinary));
             if (instead) critical = riderRow(instead.replace(/\s*on a critical hit\b/i, ""));
-        } else if (onCritical && !CONDITIONAL.test(onCritical[1])) {
+        } else if (onCritical && !CONDITIONAL.test(onCritical[1]) && !SAVED.test(onCritical[1])) {
             criticalExtra = merge(criticalExtra, riderRow(onCritical[1].replace(/^(?:the target )?also\s+/i, "")));
         }
     }
@@ -71,7 +77,7 @@ export function bombRiders(item) {
     return { success: hit, criticalSuccess: criticalRow };
 }
 
-const hasRow = (row) => Boolean(row.effects.length || row.modifiers.length);
+export const hasRow = (row) => Boolean(row.effects.length || row.modifiers.length);
 
 // Who a bomb's save is for: "Any creature hit by the bomb or in its splash area" (scope "splash": the target and the
 // creatures splashed), "each creature within 10 feet of where the bomb exploded" ("burst", radius), "A creature struck
@@ -102,11 +108,12 @@ function plainSave(html, text) {
 // A bomb's save: { plan, scope, radius? } — the ability compiler's save plan when it reads one (a fixed DC and rows
 // that do something), else the plain "save or become X" form; null when its save is for a narrower set of creatures
 // or does something the module doesn't read (Silver Orb's lingering cloud, Blightburn's sickness).
-export function bombSave(item) {
+export function bombSave(item, { scope: given = null } = {}) {
     const html = String(item?.system?.description?.value ?? "");
     if (!/@Check\[(?:fortitude|reflex|will)\|/i.test(html)) return null;
     const text = plainText(html);
-    const scope = saveScope(text);
+    // (given: an item's Strike, whose save is for the creature it hits.)
+    const scope = given ?? saveScope(text);
     if (!scope) return null;
     let read = null;
     try {

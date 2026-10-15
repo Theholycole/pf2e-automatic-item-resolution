@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 332,
-   "resolves": 691,
+   "none": 331,
+   "resolves": 692,
    "builtin:zone": 86,
    "note-only": 268,
    "builtin:no-effect": 69,
@@ -78,9 +78,9 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 78,
+    "none": 77,
     "note-only": 13,
-    "resolves": 45,
+    "resolves": 46,
     "builtin:no-effect": 10,
     "builtin:cast-spell": 9,
     "partial": 1
@@ -316,9 +316,9 @@
   },
   "strike": {
    "count": 31,
-   "resolves": 7,
+   "resolves": 8,
    "gaps": 0,
-   "none": 11
+   "none": 10
   },
   "on-weapon": {
    "count": 67,
@@ -346,9 +346,9 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 256,
+   "resolves": 257,
    "gaps": 0,
-   "none": 59
+   "none": 58
   },
   "duration": {
    "count": 943,
@@ -360,13 +360,14 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 423,
+   "none": 422,
    "item": 653,
    "zone": 86,
    "expose": 89,
    "later": 54,
    "save": 107,
-   "coat": 45
+   "coat": 45,
+   "strike": 1
   },
   "byCategory": {
    "other": {
@@ -387,10 +388,11 @@
     "save": 3
    },
    "talisman": {
-    "none": 89,
+    "none": 88,
     "item": 48,
     "cast": 9,
-    "save": 10
+    "save": 10,
+    "strike": 1
    },
    "elixir": {
     "item": 116,
@@ -443,7 +445,7 @@
    }
   },
   "noCard": {
-   "no-plan": 332,
+   "no-plan": 331,
    "triggered": 21,
    "gm": 69,
    "other": 1
@@ -17337,7 +17339,10 @@
     "strike",
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "strike"
   },
   {
    "name": "Potency Crystal",

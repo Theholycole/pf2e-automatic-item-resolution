@@ -7,7 +7,7 @@
 
 import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { bombCardHTML, createBombCard, riderRow, saveFor, splashText, withChoices } from "../src/live/bomb-card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
 
 const DEGREES = new Set(["criticalSuccess", "success", "failure"]);
 // The last bomb thrown, kept as PF2e deletes it (its damage message comes after): uuid → data.
@@ -101,26 +101,7 @@ export async function applyBombCard(message, { included = null } = {}) {
         lines.push(`${entry.name} takes the splash (${splashText(state.splash)})`);
     }
     const row = riderRow(state);
-    if (state.target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length)) {
-        const core = game.modules.get(CORE_ID)?.api;
-        const ability = game.modules.get(ABILITY_ID)?.api?.live;
-        const context = { caster: { id: "source" }, targets: [{ id: "target" }], id: (creature) => creature.id, statistic: () => ({ modifier: 0, dc: 10 }), allied: () => false };
-        const result = core ? await core.registry.resolve(state.plan, context, { roll: () => ({ degree: state.outcome, total: null, natural: null }), damage: () => 0, choose: () => undefined }) : { changes: [] };
-        const abilityState = {
-            plan: state.plan,
-            ability: { name: state.item.name, uuid: state.item.uuid ?? null },
-            source: { actorUuid: state.user.actorUuid, tokenUuid: state.user.tokenUuid ?? null, name: state.user.name },
-            targets: [{ id: "target", actorUuid: state.target.actorUuid, tokenUuid: state.target.tokenUuid ?? null, name: state.target.name }]
-        };
-        for (const change of result.changes) {
-            try {
-                const line = ability?.applyChange ? await ability.applyChange(change, abilityState) : `${state.target.name}: ${change.op} to apply by hand (the ability module isn't active).`;
-                lines.push(line ?? `${state.target.name}: ${change.op === "condition" ? `${change.slug}${Number.isFinite(change.value) ? ` ${change.value}` : ""}` : change.effect?.kind === "modifier" ? `${change.effect.modifier.value} to ${change.effect.modifier.selector}` : change.op}`);
-            } catch (error) {
-                lines.push(`Couldn't apply ${change.op} to ${state.target.name}: ${error.message}`);
-            }
-        }
-    }
+    if (state.target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length)) lines.push(...(await applyRiders({ plan: state.plan, degree: state.outcome, user: state.user, target: state.target, item: state.item })));
     // The bomb's save: the ability module's save card for those who attempt it (the GM's note without it).
     const save = state.plan?.item?.save;
     const savers = saveFor(state);

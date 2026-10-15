@@ -9,6 +9,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { actionTypeOf } from "./activation.js";
 import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
 import { focusPlan } from "./focus.js";
+import { compileStrike, strikeOver } from "./strikes.js";
 import { claimedBySpellModule } from "./index.js";
 import { noteRow, ownRow, plainText } from "./rows.js";
 
@@ -100,6 +101,8 @@ export function compileActivations(item, options = {}) {
         }
         if (!plan && options.spellEffects) plan = castPlan(part);
         if (!plan) plan = rowPlanFor(part, base);
+        // (A Strike with riders, src/compiler/strikes.js: Duelist's Beacon.)
+        plan = strikeOver(plan, compileStrike(part, base));
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
         return {
