@@ -36,6 +36,7 @@ export function strikeLines(plan) {
     return [
         strike.attack ? `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll` : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
+        strike.degree ? "Its attack roll's outcome is one degree better" : null,
         ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage`),
         hit ? `On a hit: ${hit}` : null,
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
@@ -85,6 +86,7 @@ export function strikeRules(plan, { weaponId = null, label = null } = {}) {
     }));
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });
+    if (strike.degree) rules.push({ key: "AdjustDegreeOfSuccess", selector: attackSelector, adjustment: strike.degree, ...(label ? { label } : {}), ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     return rules;
 }
 

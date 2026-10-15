@@ -21,6 +21,8 @@ const WEAPON_DICE = /\b(?:an )?extra (?:(one|two|three|four|\d+) )?(?:die|dice) 
 // "+1 status bonus to this Strike", "with a +1 circumstance bonus to the attack roll".
 const ATTACK = /\+(\d+) (status|circumstance|item) bonus to (?:this Strike|the Strike|the attack roll|your attack roll|this attack|the attack)\b/i;
 const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike is (${TYPES}) damage\b`, "i");
+// "Your outcome is one degree of success better than what you rolled": PF2e's AdjustDegreeOfSuccess on the attack roll.
+const BETTER = /\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i;
 // "If the club has a greater striking rune, increase the additional damage to 2d6."
 const RUNE_STEP = /\bIf the [\w' -]+? has an? (greater|major) striking rune, increase the additional damage to (\d+)d(\d+)\./gi;
 // Damage that isn't this Strike's own, or only against some creatures ("to creatures with void healing", "per damage die",
@@ -66,6 +68,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const dice = [];
     let attack = null;
     let alteration = null;
+    let degree = null;
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
     const striking = Number(item?.system?.runes?.striking) || 0;
@@ -98,6 +101,11 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
             alteration = altered[1].toLowerCase();
             rest = rest.replace(altered[0], " ");
         }
+        const better = BETTER.exec(rest);
+        if (better) {
+            degree = { all: "one-degree-better" };
+            rest = rest.replace(better[0], " ");
+        }
         const changed = rest !== sentence;
         // (Unread: a sentence with nothing read in it, or what a read one leaves that says more.)
         if (!changed && !isStrike) notes.push(sentence.trim());
@@ -106,5 +114,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     // (The rune step in place of the first die, for the item's rune.)
     const step = steps.filter((entry) => striking >= entry.rune).sort((a, b) => b.rune - a.rune)[0];
     if (step && dice.length) dice[0] = { ...dice[0], diceNumber: step.count, dieSize: `d${step.faces}` };
-    return { dice, attack, alteration, notes, read: Boolean(dice.length || attack || alteration) };
+    return { dice, attack, alteration, degree, notes, read: Boolean(dice.length || attack || alteration || degree) };
 }
