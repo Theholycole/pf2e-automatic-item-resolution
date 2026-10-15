@@ -101,3 +101,10 @@ test("an item's own data filled in before it's read: runes in a dice count and a
     // PF2e's own text is untouched.
     assert.equal(withItemData(item("Cloak of Elvenkind").system.description.value, item("Cloak of Elvenkind")), item("Cloak of Elvenkind").system.description.value);
 });
+
+test("an activation that heals its user in other words: \"You restore\", \"healing you for\", \"regain an additional\"", () => {
+    const heal = (name) => compileActivations(item(name)).map(({ plan }) => plan?.resolution?.outcomes?.success?.effects?.find((effect) => effect.kind === "heal")).find(Boolean);
+    assert.deepEqual(heal("Mitigation Mail"), { kind: "heal", formula: "5d10+10" });
+    assert.deepEqual(heal("Trollhound Vest"), { kind: "heal", formula: "3d8" });
+    assert.deepEqual(heal("Magical Medal (Unicorn's Purity)"), { kind: "heal", formula: "4d6" });
+});

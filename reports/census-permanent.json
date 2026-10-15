@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 1094,
+   "none": 1087,
    "builtin:cast-spell": 323,
-   "resolves": 635,
+   "resolves": 642,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "note-only": 297,
@@ -21,9 +21,9 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1293,
+   "none": 1286,
    "cast": 323,
-   "item": 599,
+   "item": 606,
    "save": 297,
    "focus": 45,
    "reroll": 15,
@@ -39,9 +39,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 706,
+    "none": 704,
     "builtin:cast-spell": 229,
-    "resolves": 381,
+    "resolves": 383,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
     "note-only": 186,
@@ -55,8 +55,8 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 137,
-    "none": 188,
+    "resolves": 138,
+    "none": 187,
     "note-only": 47,
     "builtin:cast-spell": 58,
     "builtin:reroll": 5,
@@ -89,9 +89,9 @@
    "results": {
     "builtin:cast-spell": 28,
     "note-only": 24,
-    "resolves": 50,
+    "resolves": 54,
     "builtin:no-effect": 6,
-    "none": 47,
+    "none": 43,
     "builtin:reroll": 2,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
@@ -5883,9 +5883,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Petrification Cannon",
@@ -6422,9 +6422,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Tallowheart Mass",
@@ -7522,9 +7522,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Redeemer's Pistol",
@@ -11724,9 +11724,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Sparkwarden",
@@ -19325,9 +19325,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Gravebane Ammunition (Greater)",
@@ -25859,9 +25859,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Toshigami Blossom",
@@ -28543,9 +28543,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Lion's Call",

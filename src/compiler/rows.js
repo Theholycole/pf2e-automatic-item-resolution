@@ -124,12 +124,16 @@ function tempHitPoints(sentences, duration, used = new Set()) {
 const AMOUNT_PARENS = String.raw`\(?(\d+d\d+(?:\s*[+-]\s*\d+)?|\d+)\)?`;
 function textHealing(sentences, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
-        const self = new RegExp(String.raw`\byou (?:immediately )?regain ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
+        // ("you regain 3d10 Hit Points", "you regain an additional 4d6 Hit Points", "You restore 8d10+15 Hit Points", "healing you
+        // for 3d8 Hit Points", "healing the wielder for 10 Hit Points".)
+        const self = new RegExp(String.raw`\byou (?:immediately )?regain (?:an additional )?${AMOUNT_PARENS} Hit Points\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
         const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b`, "i").exec(sentence);
         const match = self ?? other;
-        if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(sentence.slice(0, match.index))) {
+        // (Tallowheart Mass's "If you consume a portion, you regain …": the eating is the activation, not a condition.)
+        const lead = sentence.slice(0, match?.index ?? 0).replace(/^\s*If you (?:consume|eat|drink) (?:a portion|it|one)[^,]*,\s*/i, "");
+        if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(lead)) {
             used.add(index);
-            const amount = match[1].replace(/\s+/g, "");
+            const amount = (match[1] ?? match[2] ?? match[3] ?? match[4]).replace(/\s+/g, "");
             return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), ...(other && !self ? { other: true } : {}) };
         }
     }
