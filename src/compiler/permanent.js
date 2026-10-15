@@ -11,7 +11,8 @@ import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
-import { guardValues } from "./guards.js";
+import { guardText, guardValues } from "./guards.js";
+import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
 import { noteRow, ownRow, plainText } from "./rows.js";
 
@@ -106,7 +107,9 @@ export function compileActivations(item, options = {}) {
         // (A Strike with riders, src/compiler/strikes.js: Duelist's Beacon.)
         plan = strikeOver(plan, compileStrike(part, base));
         // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Starfaring Cloak.)
-        plan = guardValues(rerollOver(plan, rerollPlan(activation.html, base)));
+        plan = rerollOver(plan, rerollPlan(activation.html, base));
+        // (A skill action taken with it, src/compiler/item-actions.js: Bronze Bull Pendant's Shove.)
+        plan = guardText(guardValues(itemActionOver(plan, itemActionPlan(activation.html, base, options))), plainText(activation.html));
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
         return {

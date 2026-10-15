@@ -13,11 +13,12 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
 import { fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
-import { noteRow, ownRow } from "./rows.js";
+import { noteRow, ownRow, plainText } from "./rows.js";
 import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
-import { guardValues } from "./guards.js";
+import { guardText, guardValues } from "./guards.js";
+import { itemActionOver, itemActionPlan } from "./item-actions.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -66,11 +67,13 @@ export function compileItem(item, options = {}) {
     plan = strikeOver(plan, compileStrike(item, base));
     // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Lucky Rabbit's Foot.)
     plan = rerollOver(plan, rerollPlan(item?.system?.description?.value, base));
+    // (A skill action taken with it, src/compiler/item-actions.js: Onyx Panther's Sneak.)
+    plan = itemActionOver(plan, itemActionPlan(item?.system?.description?.value, base, options));
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const info = itemInfo(item);
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
-    return guardValues({ ...plan, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info });
+    return guardText(guardValues({ ...plan, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info }), plainText(item?.system?.description?.value));
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success

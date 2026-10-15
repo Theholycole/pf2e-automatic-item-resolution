@@ -28,6 +28,8 @@ export function createFakeFoundry() {
     const applied = [];
     const notifications = [];
     const rerolls = [];
+    const actionUses = [];
+    const nextOutcome = { value: "success" };
 
     const register = (document) => {
         documents.set(document.uuid, document);
@@ -211,9 +213,21 @@ export function createFakeFoundry() {
                 return messages;
             } },
             // PF2e's reroll (game.pf2e.Check.rerollFromMessage): recorded.
-            pf2e: { Check: { rerollFromMessage: async (message, options) => {
-                rerolls.push({ message, options });
-            } } },
+            pf2e: {
+                Check: { rerollFromMessage: async (message, options) => {
+                    rerolls.push({ message, options });
+                } },
+                // PF2e's Modifier and its actions (get(slug).use): recorded, the outcome the test sets.
+                Modifier: class {
+                    constructor(data) {
+                        Object.assign(this, data);
+                    }
+                },
+                actions: { get: (slug) => ({ use: async (options) => {
+                    actionUses.push({ slug, options });
+                    return [{ outcome: nextOutcome.value }];
+                } }) }
+            },
             modules,
             socket: { on: (name, handler) => sockets.set(name, handler), emit: (name, data) => emitted.push({ name, data }) },
             time: { worldTime: 1000 },
@@ -258,6 +272,8 @@ export function createFakeFoundry() {
         applied,
         notifications,
         rerolls,
+        actionUses,
+        nextOutcome,
         documents,
         makeActor,
         giveItem,
@@ -286,7 +302,10 @@ export async function fakeFoundry() {
     shared = createFakeFoundry();
     const [{ setUpLivePlay }, { compileItem, spellEffectIndex }, { compileActivations }] = await Promise.all([import("../../scripts/live.js"), import("../../src/compiler/index.js"), import("../../src/compiler/permanent.js")]);
     const spellEffects = spellEffectIndex(readDocuments(path.join(PACKS, "spell-effects")).filter((doc) => doc.collection === "items"));
-    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects }), compileActivations: (data) => compileActivations(data, { spellEffects }) });
+    // (The ability module's compiled basic actions, as main.js passes them: the rows an item's action applies.)
+    const { compileBasicActions, BASIC_ACTIONS } = await import("../../../pf2e-automatic-ability-resolution/src/compiler/index.js");
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects, basicActions }), compileActivations: (data) => compileActivations(data, { spellEffects, basicActions }) });
     return shared;
 }
 

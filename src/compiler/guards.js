@@ -44,3 +44,13 @@ export function guardValues(plan) {
         partial: true
     };
 }
+
+// A text whose target takes something outright and whose save is for others ("Your target takes 2d8 electricity damage and
+// is Slowed 1. All the target's allies within 20 feet take 1d8 electricity damage with a basic Reflex save" — Shei Long's
+// Blade): one save plan can't hold both, so a save plan read from it isn't played (the ability module leaves it to the
+// item side, 2026-10-15).
+const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
+export function guardText(plan, text) {
+    if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
+    return plan;
+}

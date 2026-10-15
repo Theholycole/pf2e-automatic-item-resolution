@@ -99,6 +99,14 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
 
 `src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 1,066 of 1,486 consumables get a card, and it says why the rest don't.
 
+**Skill actions taken with an item** (`src/compiler/item-actions.js`, `scripts/item-actions.js`): "use a Sneak action with a +1 item bonus" (Onyx Panther), "Attempt a Deception check to Feint with a +4 circumstance bonus" (Coldstar Pistols), "attempt to Administer First Aid using Medicine with a +1 item bonus" (Crying Angel Pendant), "Activate Treat Wounds" (Curled Cure Gel). A builtin "item-action" `{ slug, name, bonus, targeted, after?, basic }`.
+- Apply rolls PF2e's own action for the user (`game.pf2e.actions.get(slug).use`, as the spell module rolls its maneuvers), with the bonus as a PF2e Modifier, at the creature the presser targeted when the action is aimed at one.
+- For the actions the ability module compiles (Trip, Grapple, Shove, Demoralize, Feint, Disarm, Administer First Aid…), `basic` holds that action's plan, and its row for the degree goes on the target (`applyRiders`).
+- Not read:
+  - an item that links its own Effect (the bonus lives there; for third-party items that's question 7);
+  - an item whose own modifier or total replaces yours (Neophyte's Fipple's "+7 regardless", the Alchemists+ plants);
+  - an item with a DC of its own (Lady's Blessing Oil).
+
 **Rerolls** (`src/compiler/rerolls.js`, `scripts/rerolls.js`; 13 items): "reroll the triggering Reflex save" (Lucky Rabbit's Foot), "Reroll the triggering roll and take the higher result" (Starfaring Cloak), "You force the attacker to reroll the attack roll and use the worse result" (Mail of Luck). A builtin "reroll" `{ what, keep, who, statistic?, after? }`.
 - The card finds the triggering roll in the last 40 messages: the user's latest save, check or attack roll not rerolled yet (a named save by PF2e's check domains), or for Mail of Luck the latest attack roll at the user.
 - PF2e rerolls it with `game.pf2e.Check.rerollFromMessage`, on the GM's client: no `keep` for the new result (as PF2e's own "Keep new" menu), else `keep: "higher"` or `"lower"`.

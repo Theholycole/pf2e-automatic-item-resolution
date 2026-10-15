@@ -6,21 +6,22 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 1101,
+   "none": 1098,
    "builtin:cast-spell": 323,
-   "resolves": 634,
+   "resolves": 635,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "note-only": 297,
    "builtin:reroll": 11,
    "builtin:modes": 26,
-   "partial": 10,
+   "partial": 9,
    "builtin:zone": 9,
    "builtin:save-bonus": 3,
+   "builtin:item-action": 3,
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1300,
+   "none": 1297,
    "cast": 323,
    "item": 599,
    "save": 297,
@@ -28,6 +29,7 @@
    "reroll": 11,
    "zone": 9,
    "strike": 5,
+   "action": 3,
    "later": 4
   },
   "withFrequency": 1749,
@@ -54,12 +56,13 @@
    "activations": 460,
    "results": {
     "resolves": 137,
-    "none": 191,
+    "none": 188,
     "note-only": 47,
     "builtin:cast-spell": 58,
     "builtin:reroll": 5,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
+    "builtin:item-action": 3,
     "builtin:save-bonus": 1,
     "builtin:ac-reaction": 2
    }
@@ -86,14 +89,14 @@
    "results": {
     "builtin:cast-spell": 28,
     "note-only": 24,
-    "resolves": 49,
+    "resolves": 50,
     "builtin:no-effect": 6,
     "none": 48,
     "builtin:reroll": 1,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
     "builtin:focus-point": 2,
-    "partial": 2
+    "partial": 1
    }
   },
   "shield": {
@@ -9004,9 +9007,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Coldstar Pistols",
@@ -21984,7 +21987,7 @@
    "time": "1",
    "frequency": "Once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -23645,9 +23648,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Shining Hackle",
@@ -25042,9 +25045,9 @@
    "time": "free",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Righteous Fury",

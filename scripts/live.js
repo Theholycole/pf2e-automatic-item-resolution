@@ -21,6 +21,7 @@ import { startItemZone } from "./zones.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
+import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyActivationsCard, cardForItemPost, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
@@ -99,7 +100,8 @@ async function cardForUse(message) {
 // The card for a plan (src/live/route.js): an injury poison's weapon to coat (scripts/poisons.js); a contact, inhaled or
 // ingested poison's exposure, or another item's save on its Use (Spark Wafer, Pyronite), for the creatures targeted; a spell
 // PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone (scripts/zones.js); a Focus Point
-// (scripts/focus.js); a readied Strike (scripts/strikes.js); a reroll (scripts/rerolls.js); else the item card below.
+// (scripts/focus.js); a readied Strike (scripts/strikes.js); a reroll (scripts/rerolls.js); a skill action
+// (scripts/item-actions.js); else the item card below.
 // (A consumable's after PF2e's Use; a permanent item's activation from its activations card, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
@@ -110,6 +112,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "focus") return postFocusCard({ message, plan, used, actor, token });
     if (route === "strike") return postStrikeCard({ message, plan, used, actor, token });
     if (route === "reroll") return postRerollCard({ message, plan, used, actor, token });
+    if (route === "action") return postActionCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message?.rolls?.[0];
@@ -152,7 +155,7 @@ function hideCovered(message, html) {
 function choicesOf(state, root) {
     if (state.kind === "bomb") return { included: [...root.querySelectorAll("[data-air-splash]")].filter((box) => box.checked).map((box) => Number(box.dataset.airSplash)) };
     if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
-    if (state.kind === "expose") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    if (state.kind === "expose" || state.kind === "item-action") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) };
@@ -167,6 +170,7 @@ const APPLY = {
     focus: (message) => applyFocusCard(message),
     strike: (message) => applyStrikeCard(message),
     reroll: (message) => applyRerollCard(message),
+    "item-action": (message, choices) => applyActionCard(message, choices),
     item: (message, choices) => applyCard(message, choices)
 };
 const applyByKind = (message, state, choices) => APPLY[state.kind](message, choices);
@@ -213,7 +217,7 @@ function wireCard(message, html) {
         const choices = choicesOf(state, root);
         try {
             // (On the presser's own client: a card that acts on targets needs some.)
-            if ((state.kind === "expose" || (state.kind === "cast" && !state.plan?.self)) && !choices.targets?.length) throw new Error("Target the creatures first.");
+            if ((state.kind === "expose" || (state.kind === "cast" && !state.plan?.self) || (state.kind === "item-action" && state.plan?.action?.targeted)) && !choices.targets?.length) throw new Error("Target the creatures first.");
             if (isActiveGM()) await applyByKind(message, state, choices);
             else if (!game.users.activeGM) throw new Error("No GM is connected to apply it.");
             else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });
@@ -246,7 +250,7 @@ async function onRequest(data) {
     const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null }
         : state.kind === "poison" ? { weapon: data.weapon }
         : state.kind === "cast" ? { drinker: data.drinker, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
-        : state.kind === "expose" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "expose" || state.kind === "item-action" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "activations" ? { activation: Number(data.activation) }
         : { drinker: data.drinker };
     await applyByKind(message, state, choices).catch((error) => {

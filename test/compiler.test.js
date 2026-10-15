@@ -175,9 +175,11 @@ test("an item's time in other words: \"The duration is\", \"with a duration of\"
 
 test("a valued condition read with no value isn't applied: a note for the GM on that degree", async () => {
     const { guardValues } = await import("../src/compiler/guards.js");
-    const oil = compileItem(item("Gearbinder Oil (Lesser)"));
+    // (As the ability compiler once read Gearbinder Oil's "increases its slowed condition".)
+    const oil = guardValues({ resolution: { kind: "save", outcomes: { failure: { effects: [{ kind: "condition", slug: "slowed", value: 1 }] }, criticalFailure: { effects: [{ kind: "condition", slug: "slowed", value: null }] } } } });
     assert.equal(oil.partial, true);
-    assert.ok(!(oil.resolution.outcomes.criticalFailure.effects ?? []).some((effect) => effect.slug === "slowed" && !Number.isFinite(effect.value)));
+    assert.deepEqual(oil.resolution.outcomes.failure.effects, [{ kind: "condition", slug: "slowed", value: 1 }]);
+    assert.deepEqual(oil.resolution.outcomes.criticalFailure.effects, []);
     assert.match(oil.resolution.outcomes.criticalFailure.noteEffects.at(-1).text, /Slowed: the item doesn't say how much/);
     // Stunned for a time has no value by right; a plan with none is the same plan.
     const timed = { resolution: { kind: "save", outcomes: { failure: { effects: [{ kind: "condition", slug: "stunned", value: null, duration: { mode: "fixed", value: 1, unit: "rounds" } }] } } } };

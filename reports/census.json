@@ -14,12 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 329,
-   "resolves": 689,
+   "none": 324,
+   "resolves": 692,
    "builtin:zone": 86,
-   "note-only": 268,
+   "note-only": 267,
+   "builtin:item-action": 6,
    "builtin:no-effect": 69,
-   "partial": 13,
+   "partial": 10,
    "builtin:reroll": 2,
    "builtin:save-bonus": 1
   }
@@ -30,11 +31,11 @@
    "results": {
     "builtin:cast-spell": 8,
     "none": 156,
-    "resolves": 198,
-    "note-only": 122,
+    "resolves": 201,
+    "note-only": 121,
     "builtin:zone": 9,
     "builtin:no-effect": 15,
-    "partial": 3,
+    "builtin:item-action": 1,
     "builtin:save-bonus": 1
    },
    "mechanisms": {
@@ -80,8 +81,9 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 76,
+    "none": 71,
     "note-only": 13,
+    "builtin:item-action": 5,
     "resolves": 46,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
@@ -302,7 +304,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 326,
+   "resolves": 329,
    "gaps": 0,
    "none": 41
   },
@@ -334,7 +336,7 @@
    "count": 156,
    "resolves": 54,
    "gaps": 0,
-   "none": 71
+   "none": 69
   },
   "counteract": {
    "count": 79,
@@ -350,7 +352,7 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 254,
+   "resolves": 257,
    "gaps": 0,
    "none": 58
   },
@@ -364,11 +366,12 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 420,
-   "item": 653,
+   "none": 415,
+   "item": 652,
    "zone": 86,
    "expose": 89,
    "later": 54,
+   "action": 6,
    "save": 107,
    "reroll": 2,
    "coat": 45,
@@ -380,9 +383,10 @@
     "none": 185,
     "later": 8,
     "save": 71,
-    "item": 225,
+    "item": 224,
     "zone": 9,
     "expose": 3,
+    "action": 1,
     "coat": 3
    },
    "potion": {
@@ -393,8 +397,9 @@
     "save": 3
    },
    "talisman": {
-    "none": 87,
+    "none": 82,
     "item": 48,
+    "action": 5,
     "reroll": 1,
     "cast": 9,
     "save": 10,
@@ -452,7 +457,7 @@
    }
   },
   "noCard": {
-   "no-plan": 329,
+   "no-plan": 324,
    "triggered": 21,
    "gm": 69,
    "other": 1
@@ -774,7 +779,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Octopus Potion (Moderate)",
@@ -5404,8 +5411,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": "save"
   },
   {
@@ -7110,9 +7118,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Bortled Favorite (Moderate)",
@@ -8750,7 +8758,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Deathstalk Mushroom",
@@ -12199,8 +12209,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": "save"
   },
   {
@@ -18188,7 +18199,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Explosive Mine (Moderate)",
@@ -22179,7 +22192,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Absolute Solvent (Greater)",
@@ -23424,7 +23439,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Bloodhound Mask (Lesser)",
@@ -28369,8 +28386,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": "save"
   },
   {
