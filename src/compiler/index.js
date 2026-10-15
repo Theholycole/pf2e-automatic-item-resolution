@@ -17,7 +17,7 @@ import { noteRow, ownRow, plainText } from "./rows.js";
 import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
-import { guardText, guardValues } from "./guards.js";
+import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
@@ -60,7 +60,9 @@ export function compileItem(given, options = {}) {
     // (Its own data in its text first — "@item.level", a rune — and a damage-with-a-save as basic, src/compiler/item-data.js.)
     const html = withItemData(given?.system?.description?.value, given);
     const item = html === given?.system?.description?.value ? given : { ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: html } } };
-    const read = compileAbility(asAbility(item), options);
+    const abilityRead = compileAbility(asAbility(item), options);
+    // (A spell only named as an example isn't cast: src/compiler/guards.js.)
+    const read = castMentionOnly(abilityRead, html) ? null : abilityRead;
     const base = basePlan(item);
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     const snare = snareZone(item, read);

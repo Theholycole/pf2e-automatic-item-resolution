@@ -98,11 +98,17 @@ function plainSave(html, text) {
     const worded = text.replace(/@Check\[(\w+)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?/gi, "DC $2 $1");
     const or = /\bmust succeed at a (?:DC \d+ )?(?:Fortitude|Reflex|Will)? ?(?:save|saving throw)?(?: with the listed DC)? or (?:be|become) ([^.]+)\./i.exec(worded);
     if (!check || !or) return null;
-    const row = riderRow(or[1]);
+    // ("… or become stupefied 1 for 1 minute (Stupefied 2 on a critical failure)": the critical failure's own, for as long.)
+    const critical = /\s*\(([^()]+?) on a critical failure\)/i.exec(or[1]);
+    const row = riderRow(critical ? or[1].replace(critical[0], "") : or[1]);
     if (!row.effects.length && !row.modifiers.length) return null;
+    const own = critical ? riderRow(critical[1]) : null;
+    const criticalEffects = own?.effects.length
+        ? [...own.effects.map((effect) => ({ ...effect, ...(effect.duration ? {} : { duration: (row.effects.find((entry) => entry.slug === effect.slug) ?? row.effects[0])?.duration ?? null }) })), ...row.effects.filter((effect) => !own.effects.some((entry) => entry.slug === effect.slug)).map((effect) => ({ ...effect }))]
+        : row.effects.map((effect) => ({ ...effect }));
     return {
         check: { roll: "save", statistic: check[1].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(check[2]) } },
-        outcomes: { criticalSuccess: none(), success: none(), failure: row, criticalFailure: { ...row, effects: row.effects.map((effect) => ({ ...effect })), modifiers: [...row.modifiers] } }
+        outcomes: { criticalSuccess: none(), success: none(), failure: row, criticalFailure: { ...row, effects: criticalEffects, modifiers: [...row.modifiers] } }
     };
 }
 

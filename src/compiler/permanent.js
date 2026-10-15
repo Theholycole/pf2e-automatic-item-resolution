@@ -11,7 +11,7 @@ import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
-import { guardText, guardValues } from "./guards.js";
+import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
@@ -102,6 +102,8 @@ export function compileActivations(item, options = {}) {
             } catch {
                 read = null;
             }
+            // (A spell only named as an example isn't cast: src/compiler/guards.js.)
+            if (castMentionOnly(read, activation.html)) read = null;
             const own = read?.builtin === "no-effect" ? ownPlan(part, base, options) : null;
             plan = own ?? (read ? fitPlan(part, read, base, options) : ownPlan(part, base, options));
         }

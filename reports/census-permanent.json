@@ -6,29 +6,29 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "none": 1087,
-   "builtin:cast-spell": 323,
-   "resolves": 642,
+   "none": 1072,
+   "builtin:cast-spell": 321,
+   "resolves": 649,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
-   "note-only": 297,
+   "note-only": 291,
    "builtin:reroll": 15,
+   "partial": 25,
    "builtin:modes": 26,
-   "partial": 9,
    "builtin:zone": 9,
    "builtin:save-bonus": 3,
    "builtin:item-action": 3,
    "builtin:ac-reaction": 4
   },
   "live": {
-   "none": 1286,
-   "cast": 323,
-   "item": 606,
+   "none": 1271,
+   "cast": 321,
+   "item": 600,
    "save": 297,
    "focus": 45,
    "reroll": 15,
+   "strike": 28,
    "zone": 9,
-   "strike": 5,
    "action": 3,
    "later": 4
   },
@@ -39,14 +39,14 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "none": 704,
-    "builtin:cast-spell": 229,
-    "resolves": 383,
+    "none": 700,
+    "builtin:cast-spell": 227,
+    "resolves": 386,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
     "note-only": 186,
     "builtin:reroll": 8,
-    "partial": 8,
+    "partial": 11,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:save-bonus": 2
@@ -55,9 +55,10 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 138,
-    "none": 187,
-    "note-only": 47,
+    "resolves": 142,
+    "none": 177,
+    "partial": 12,
+    "note-only": 41,
     "builtin:cast-spell": 58,
     "builtin:reroll": 5,
     "builtin:modes": 7,
@@ -91,12 +92,12 @@
     "note-only": 24,
     "resolves": 54,
     "builtin:no-effect": 6,
-    "none": 43,
+    "none": 42,
     "builtin:reroll": 2,
+    "partial": 2,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
-    "builtin:focus-point": 2,
-    "partial": 1
+    "builtin:focus-point": 2
    }
   },
   "shield": {
@@ -493,9 +494,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Cavalry Commander's Lance",
@@ -3177,9 +3178,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Talonstrike Blade",
@@ -4772,9 +4773,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Mantle of Far Horizons",
@@ -5080,9 +5081,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Verdant Leaves",
@@ -6158,9 +6159,9 @@
    "time": "2",
    "frequency": "Once per minute",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Boughshatter",
@@ -10580,9 +10581,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Aeon Stone (Amplifying)",
@@ -11372,9 +11373,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Piereta",
@@ -11405,9 +11406,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Hyldarf's Fang",
@@ -14133,9 +14134,9 @@
    "time": "free",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Sihedron Medallion",
@@ -17334,9 +17335,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Soaring Wings",
@@ -17785,9 +17786,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Winder's Ring",
@@ -18654,9 +18655,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Iris of the Sky",
@@ -18973,9 +18974,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Lazybones Pendant",
@@ -19424,9 +19425,9 @@
    "time": "1",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Smuggler's Sack (Type III)",
@@ -20931,9 +20932,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Staff of Sun Wukong",
@@ -22966,9 +22967,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Soulfeeding Mask",
@@ -23472,9 +23473,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Hosteling Statuette",
@@ -24607,7 +24608,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Banner of Piercing Shards",
@@ -25342,9 +25343,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Librarian's Baton",
@@ -25419,9 +25420,9 @@
    "time": "reaction",
    "frequency": "three times per day",
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Wraithweave Patch (Type III)",
@@ -27036,9 +27037,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Words of Wisdom (Greater)",
@@ -27553,9 +27554,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Blister Ammunition (Greater)",
@@ -27795,9 +27796,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Crimson Fulcrum Lens",
@@ -28048,9 +28049,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Sunweave (Major)",

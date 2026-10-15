@@ -13,11 +13,11 @@
   },
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 29,
+   "builtin:cast-spell": 28,
    "none": 311,
    "resolves": 692,
    "builtin:zone": 86,
-   "note-only": 266,
+   "note-only": 267,
    "builtin:item-action": 6,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
@@ -236,9 +236,9 @@
     "none": 20,
     "partial": 1,
     "resolves": 12,
-    "note-only": 10,
-    "builtin:cast-spell": 2,
-    "builtin:reroll": 1
+    "note-only": 11,
+    "builtin:reroll": 1,
+    "builtin:cast-spell": 1
    },
    "mechanisms": {
     "trigger": 15,
@@ -370,9 +370,9 @@
  },
  "live": {
   "totals": {
-   "cast": 29,
+   "cast": 28,
    "none": 396,
-   "item": 651,
+   "item": 652,
    "zone": 86,
    "expose": 89,
    "later": 54,
@@ -452,10 +452,10 @@
    },
    "fulu": {
     "none": 23,
-    "item": 17,
+    "item": 18,
     "save": 3,
-    "cast": 2,
-    "reroll": 1
+    "reroll": 1,
+    "cast": 1
    },
    "drug": {
     "expose": 23,
@@ -15323,9 +15323,9 @@
     "heal",
     "duration"
    ],
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
+   "result": "note-only",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Apotropaic Fulu",

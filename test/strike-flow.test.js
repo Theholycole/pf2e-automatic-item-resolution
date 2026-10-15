@@ -8,7 +8,7 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
-import { riderFor, strikeLines } from "../src/live/strike-card.js";
+import { riderFor, strikeLines, strikeRules } from "../src/live/strike-card.js";
 import { routeOf } from "../src/live/route.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -33,6 +33,14 @@ async function useCard(name) {
     await foundry.call("createChatMessage", message);
     await settle();
     return foundry.messages[foundry.messages.indexOf(message) + 1];
+}
+
+// (A damage roll of a Strike, as PF2e's message: its context's options carry the weapon's.)
+async function damage(options = ["item:melee"]) {
+    const message = foundry.makeMessage({ flags: { pf2e: { context: { type: "damage-roll", sourceType: "attack", outcome: "success", options, target: { actor: foe.uuid, token: foe.token.uuid } } } }, speaker: { actor: fighter.id }, actor: fighter, token: fighter.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    return message;
 }
 
 async function attack(outcome, options = ["item:melee"]) {
@@ -100,3 +108,129 @@ test("Duelist's Beacon: its activation readies the Strike; a hit posts the targe
     assert.equal(posted?.plan.resolution.check.against.value, 22);
     assert.deepEqual(posted.tokens.map((token) => token.name), ["Foe"]);
 });
+
+const activation = (name, which = 0) => compileActivations(source(name))[which];
+
+test("the reading: what a Strike adds — extra dice, a bonus, a damage type — and what it leaves as notes", () => {
+    const mantle = activation("Mantle of the Tikbalang").plan;
+    assert.equal(routeOf(mantle), "strike");
+    assert.deepEqual(mantle.strike.damage, [{ diceNumber: 4, dieSize: "d6", category: null, damageType: "mental" }]);
+    assert.deepEqual([mantle.strike.range, mantle.strike.own, mantle.strike.notes, mantle.partial], ["melee", false, [], undefined], "any melee Strike; nothing left over");
+    const pick = activation("Pick of Arcane Accuracy").plan;
+    assert.deepEqual(pick.strike.attack, { value: 1, type: "status" });
+    assert.deepEqual(pick.strike.damage, [{ diceNumber: 1, dieSize: "d4", category: "persistent", damageType: "force" }]);
+    assert.equal(pick.strike.own, true, "the pick's own Strike");
+    // "An extra two dice of weapon damage": the weapon's own die; "counts as two attacks" a note.
+    const piston = activation("Piston Gauntlets").plan;
+    assert.deepEqual(piston.strike.damage.map((entry) => `${entry.diceNumber}${entry.dieSize}`), [`2${source("Piston Gauntlets").system.damage.die}`]);
+    assert.match(piston.strike.notes.join(" "), /two attacks/);
+    assert.equal(piston.partial, true);
+    // "All damage from this Strike is fire damage and the target takes an additional 1d6 fire damage and 1d6 persistent fire damage."
+    const iris = activation("Iris of the Sky").plan;
+    assert.equal(iris.strike.alteration, "fire");
+    assert.deepEqual(iris.strike.damage.map((entry) => [entry.diceNumber, entry.category, entry.damageType]), [[1, null, "fire"], [1, "persistent", "fire"]]);
+    // A next Strike: its own damage, until the end of the next turn, only a hit spends it; the crit combination a note.
+    const lash = activation("Venom Lash").plan;
+    assert.deepEqual([lash.strike.until, lash.strike.missKeeps], ["next-turn-end", true]);
+    assert.deepEqual(lash.strike.damage, [{ diceNumber: 2, dieSize: "d6", category: "persistent", damageType: "poison" }]);
+    assert.match(lash.strike.notes.join(" "), /critically succeeds/);
+    // A trigger's Strike that already hit, its dice by the club's striking rune.
+    const club = source("Kinetic Club");
+    assert.deepEqual(activation("Kinetic Club").plan.strike.damage[0].diceNumber, (Number(club.system.runes?.striking) || 0) >= 2 ? 2 : 1);
+    assert.equal(activation("Kinetic Club").plan.strike.hit, true);
+    const greater = compileActivations({ ...club, system: { ...club.system, runes: { ...(club.system.runes ?? {}), striking: 2 } } })[0].plan;
+    assert.equal(greater.strike.damage[0].diceNumber, 2, "a greater striking rune: 2d6");
+    // Two unarmed Strikes, each with the dice.
+    const wraps = activation("Amphisbaena Handwraps").plan;
+    assert.deepEqual([wraps.strike.uses, wraps.strike.unarmed, wraps.strike.own], [2, true, false]);
+    // A jaws Strike's other dice: a note, not read.
+    assert.match(activation("Crimson Fulcrum Lens").plan.strike.notes.join(" "), /jaws/);
+    // Damage only under a condition ("If your last action was to Stride …, this does an additional 1d4 force damage"): not read.
+    assert.equal(compileActivations(source("Chimera Flail")).find((entry) => entry.activation.name === "Pouncing Whirl").plan, null);
+    // A trigger's hit with a save: the save at the creature struck, its critical failure its own ("(Stupefied 2 on a critical failure)").
+    const sap = activation("Spore Sap").plan;
+    assert.equal(sap.resolution.check.roll, "save");
+    assert.deepEqual(sap.resolution.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.value, effect.duration?.unit]), [["stupefied", 2, "minutes"]]);
+});
+
+test("the readied Strike's PF2e rules: dice on its weapon's damage, the bonus on its attack, a damage type", () => {
+    const pick = activation("Pick of Arcane Accuracy").plan;
+    const rules = strikeRules(pick, { weaponId: "pick1", label: "Pick of Arcane Accuracy" });
+    assert.deepEqual(rules.map((rule) => [rule.key, rule.selector]), [["DamageDice", "pick1-melee-damage"], ["FlatModifier", "pick1-attack"]]);
+    assert.deepEqual([rules[0].diceNumber, rules[0].dieSize, rules[0].damageType, rules[0].category], [1, "d4", "force", "persistent"]);
+    assert.deepEqual([rules[1].type, rules[1].value, rules[1].predicate], ["status", 1, ["item:melee"]]);
+    assert.deepEqual(strikeRules(activation("Mantle of the Tikbalang").plan).map((rule) => rule.selector), ["melee-strike-damage"]);
+    assert.deepEqual(strikeRules(activation("Amphisbaena Handwraps").plan).map((rule) => rule.selector), ["unarmed-damage"]);
+    const iris = strikeRules(activation("Iris of the Sky").plan, { weaponId: "iris" });
+    assert.deepEqual(iris.at(-1), { key: "DamageAlteration", selectors: ["iris-damage"], mode: "override", property: "damage-type", value: "fire" });
+});
+
+async function readyFrom(name) {
+    const item = foundry.giveItem(fighter, source(name));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: item.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+    assert.ok(card, `${name}'s Strike card`);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    return { item, card };
+}
+
+test("Mantle of the Tikbalang: the readied Strike's Effect gives PF2e's damage roll the dice; the hit keeps it for that roll, which spends it", async () => {
+    const { card } = await readyFrom("Mantle of the Tikbalang");
+    assert.match(card.content, /\+4d6 mental damage/);
+    const [effect] = readied();
+    assert.deepEqual(effect.system.rules.map((rule) => [rule.key, rule.selector, `${rule.diceNumber}${rule.dieSize}`, rule.damageType]), [["DamageDice", "melee-strike-damage", "4d6", "mental"]]);
+    await attack("success");
+    assert.equal(readied().length, 1, "kept for the damage roll");
+    assert.equal(readied()[0].flags[MODULE_ID].strikeRider.awaiting, true);
+    assert.match(foundry.messages.at(-1).content, /damage roll adds \+4d6 mental/);
+    await damage();
+    assert.equal(readied().length, 0, "spent by the damage roll");
+    // Again, and a miss spends it at once.
+    await readyFrom("Mantle of the Tikbalang");
+    await attack("failure");
+    assert.equal(readied().length, 0);
+});
+
+test("Pick of Arcane Accuracy: only a Strike with the pick takes it", async () => {
+    const { item } = await readyFrom("Pick of Arcane Accuracy");
+    assert.deepEqual(readied()[0].system.rules.map((rule) => rule.selector), [`${item.id}-melee-damage`, `${item.id}-attack`]);
+    await attack("success", ["item:melee", "item:id:sword"]);
+    assert.equal(readied()[0].flags[MODULE_ID].strikeRider.awaiting, false, "another weapon's Strike: not this one");
+    await attack("success", ["item:melee", `item:id:${item.id}`]);
+    assert.equal(readied()[0].flags[MODULE_ID].strikeRider.awaiting, true);
+    await damage(["item:melee", "item:id:sword"]);
+    assert.equal(readied().length, 1, "another weapon's damage roll doesn't spend it");
+    await damage(["item:melee", `item:id:${item.id}`]);
+    assert.equal(readied().length, 0);
+});
+
+test("Venom Lash and Amphisbaena Handwraps: a miss keeps a 'next successful Strike'; two Strikes use it twice", async () => {
+    const { item } = await readyFrom("Venom Lash");
+    assert.deepEqual([readied()[0].system.duration.value, readied()[0].system.duration.expiry], [1, "turn-end"], "until the end of the next turn");
+    await attack("failure", ["item:melee", `item:id:${item.id}`]);
+    assert.equal(readied().length, 1, "a miss keeps it");
+    await attack("success", ["item:melee", `item:id:${item.id}`]);
+    await damage(["item:melee", `item:id:${item.id}`]);
+    assert.equal(readied().length, 0);
+    await readyFrom("Amphisbaena Handwraps");
+    await attack("success", ["item:melee", "item:id:sword"]);
+    assert.equal(readied()[0].flags[MODULE_ID].strikeRider.awaiting, false, "not an unarmed Strike");
+    const fist = ["item:melee", "item:category:unarmed", "item:id:fist"];
+    await attack("success", fist);
+    await damage(fist);
+    assert.equal(readied()[0].flags[MODULE_ID].strikeRider.uses, 1, "one Strike left");
+    await attack("criticalSuccess", fist);
+    await damage(fist);
+    assert.equal(readied().length, 0);
+});
+
+test("Kinetic Club: a Strike that already hit readies its damage roll alone", async () => {
+    const { item } = await readyFrom("Kinetic Club");
+    assert.equal(readied()[0].flags[MODULE_ID].strikeRider.awaiting, true);
+    await damage(["item:melee", `item:id:${item.id}`]);
+    assert.equal(readied().length, 0);
+});
+

@@ -126,6 +126,15 @@ export function createFakeFoundry() {
             weapons: [],
             async createEmbeddedDocuments(type, data) {
                 const made = data.map((entry) => ({ type, ...entry, id: entry.id ?? `made${++madeCount}` }));
+                // (An embedded item's update, as Foundry's: dotted keys; not enumerable, so the item still clones.)
+                for (const entry of made) {
+                    Object.defineProperty(entry, "update", {
+                        value: async (changes) => {
+                            for (const [key, value] of Object.entries(changes)) setProperty(entry, key, structuredClone(value));
+                            return entry;
+                        }
+                    });
+                }
                 this.created.push(...made);
                 return made;
             },

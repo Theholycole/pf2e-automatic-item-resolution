@@ -19,9 +19,9 @@ Results, for the items this module handles:
 |---|---:|---:|
 | resolves | 692 | 47% |
 | partial | 10 | 1% |
-| note-only | 266 | 18% |
+| note-only | 267 | 18% |
 | builtin:zone | 86 | 6% |
-| builtin:cast-spell | 29 | 2% |
+| builtin:cast-spell | 28 | 2% |
 | builtin:no-effect | 63 | 4% |
 | builtin:save-bonus | 1 | 0% |
 | none | 311 | 21% |
@@ -39,7 +39,7 @@ Results, for the items this module handles:
 | gadget | 77 | 26 | 0 | 14 | 0 | 25 | 12 |
 | mutagen | 68 | 60 | 4 | 4 | 0 | 0 | 0 |
 | oil | 66 | 25 | 2 | 20 | 0 | 9 | 10 |
-| fulu | 46 | 12 | 1 | 10 | 0 | 3 | 20 |
+| fulu | 46 | 12 | 1 | 11 | 0 | 2 | 20 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |
 
@@ -58,10 +58,10 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | gadget | 77 | 24 | 0 | 0 | 15 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 26 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | oil | 66 | 46 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 2 | 16 |
-| fulu | 46 | 17 | 0 | 0 | 3 | 0 | 2 | 0 | 0 | 1 | 0 | 0 | 23 |
+| fulu | 46 | 18 | 0 | 0 | 3 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 23 |
 | drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **651** | **45** | **89** | **107** | **54** | **29** | **86** | **1** | **2** | **6** | **20** | **396** |
+| **all** | **1486** | **652** | **45** | **89** | **107** | **54** | **28** | **86** | **1** | **2** | **6** | **20** | **396** |
 
 Why the rest have no card yet:
 

@@ -54,3 +54,15 @@ export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
     return plan;
 }
+
+// A spell the text only names as an example ("cannot be affected by any effect that requires an intact body to function,
+// such as the Talking Corpse spell" — Mantis Embrace; "saves against mental effects … such as the Nightmare spell" —
+// Restful Sleep Fulu): the ability compiler's cast of it isn't one (2026-10-15). True when every sentence naming it does
+// so after "such as" or "like".
+export function castMentionOnly(plan, html) {
+    if (plan?.builtin !== "cast-spell" || !plan.spell?.name) return false;
+    const name = plan.spell.name;
+    const sentences = String(html ?? "").replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => sentence.includes(name));
+    return sentences.length > 0 && sentences.every((sentence) => new RegExp(String.raw`\b(?:such as|like) (?:an? |the )?(?:[\w-]+ ){0,3}?${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\b`, "i").test(sentence));
+}
+
