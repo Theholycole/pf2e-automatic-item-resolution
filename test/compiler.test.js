@@ -173,6 +173,17 @@ test("an item's time in other words: \"The duration is\", \"with a duration of\"
     assert.equal(itemDuration("The next time you would die from damage within 8 hours after you drink the ambrosia, … immune to the ambrosia for 24 hours.").value, 8);
 });
 
+test("a valued condition read with no value isn't applied: a note for the GM on that degree", async () => {
+    const { guardValues } = await import("../src/compiler/guards.js");
+    const oil = compileItem(item("Gearbinder Oil (Lesser)"));
+    assert.equal(oil.partial, true);
+    assert.ok(!(oil.resolution.outcomes.criticalFailure.effects ?? []).some((effect) => effect.slug === "slowed" && !Number.isFinite(effect.value)));
+    assert.match(oil.resolution.outcomes.criticalFailure.noteEffects.at(-1).text, /Slowed: the item doesn't say how much/);
+    // Stunned for a time has no value by right; a plan with none is the same plan.
+    const timed = { resolution: { kind: "save", outcomes: { failure: { effects: [{ kind: "condition", slug: "stunned", value: null, duration: { mode: "fixed", value: 1, unit: "rounds" } }] } } } };
+    assert.equal(guardValues(timed), timed);
+});
+
 test("inline damage as words, with its types: a note says what PF2e's text says", async () => {
     const { plainText } = await import("../src/compiler/rows.js");
     assert.equal(plainText("takes @Damage[1d6[persistent,bleed]] damage"), "takes 1d6 persistent bleed damage");

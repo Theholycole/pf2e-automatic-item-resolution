@@ -18,6 +18,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { plainText } from "./rows.js";
 import { asAbility } from "./ability-shape.js";
+import { guardValues } from "./guards.js";
 
 export const isBomb = (item) => item?.type === "weapon" && item.system?.group === "bomb";
 
@@ -152,7 +153,7 @@ export function compileBomb(item) {
     const splash = Number(item.system?.splashDamage?.value) || 0;
     const save = bombSave(item);
     if (!splash && !save && !hasRow(riders.success) && !hasRow(riders.criticalSuccess)) return null;
-    return {
+    return guardValues({
         modelVersion: MODEL_VERSION,
         source: { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type },
         rank: 1,
@@ -167,5 +168,5 @@ export function compileBomb(item) {
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
         item: { type: item.type, group: "bomb", level: Number(item.system?.level?.value) || 0, splash: splash ? { value: splash, type: item.system?.damage?.damageType ?? "untyped" } : null, save }
-    };
+    });
 }

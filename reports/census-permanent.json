@@ -8,13 +8,13 @@
   "results": {
    "none": 1101,
    "builtin:cast-spell": 323,
-   "resolves": 637,
+   "resolves": 634,
    "builtin:focus-point": 45,
    "builtin:no-effect": 130,
    "note-only": 297,
    "builtin:reroll": 11,
    "builtin:modes": 26,
-   "partial": 7,
+   "partial": 10,
    "builtin:zone": 9,
    "builtin:save-bonus": 3,
    "builtin:ac-reaction": 4
@@ -39,12 +39,12 @@
    "results": {
     "none": 709,
     "builtin:cast-spell": 229,
-    "resolves": 383,
+    "resolves": 381,
     "builtin:focus-point": 43,
     "builtin:no-effect": 106,
     "note-only": 186,
     "builtin:reroll": 5,
-    "partial": 6,
+    "partial": 8,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:save-bonus": 2
@@ -86,14 +86,14 @@
    "results": {
     "builtin:cast-spell": 28,
     "note-only": 24,
-    "resolves": 50,
+    "resolves": 49,
     "builtin:no-effect": 6,
     "none": 48,
     "builtin:reroll": 1,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
     "builtin:focus-point": 2,
-    "partial": 1
+    "partial": 2
    }
   },
   "shield": {
@@ -4505,7 +4505,7 @@
    "time": "2",
    "frequency": "Three times per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -17551,7 +17551,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -21984,7 +21984,7 @@
    "time": "1",
    "frequency": "Once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },

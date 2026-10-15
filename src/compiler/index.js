@@ -17,6 +17,7 @@ import { noteRow, ownRow } from "./rows.js";
 import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
+import { guardValues } from "./guards.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -68,7 +69,8 @@ export function compileItem(item, options = {}) {
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const info = itemInfo(item);
-    return { ...plan, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info };
+    // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
+    return guardValues({ ...plan, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info });
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success
