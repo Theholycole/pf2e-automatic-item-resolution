@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { CORE_FAMILIES, createRegistry } from "../../pf2e-resolution-core/src/index.js";
-import { SPELL_MODULE_CATEGORIES, compileItem, handlesItem } from "../src/compiler/index.js";
+import { SPELL_MODULE_CATEGORIES, compileItem, handlesItem, spellEffectIndex } from "../src/compiler/index.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packsDirectory = path.resolve(process.argv[2] ?? `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`);
@@ -22,6 +22,7 @@ const packsDirectory = path.resolve(process.argv[2] ?? `${process.env.HOME}/.loc
 const registry = createRegistry();
 for (const family of CORE_FAMILIES) registry.registerFamily(family);
 
+const spellEffects = spellEffectIndex(readDocuments(path.join(packsDirectory, "spell-effects")).filter((doc) => doc.collection === "items"));
 const basicActions = compileBasicActions(readDocuments(path.join(packsDirectory, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
 
 // What an item does, read from its data and text (several at once).
@@ -65,7 +66,7 @@ function resolveGaps(plan) {
 function classify(item) {
     let plan = null;
     try {
-        plan = compileItem(item, { basicActions });
+        plan = compileItem(item, { basicActions, spellEffects });
     } catch (error) {
         return { result: "error", error: error.message.slice(0, 160) };
     }

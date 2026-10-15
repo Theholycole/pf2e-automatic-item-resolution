@@ -15,26 +15,25 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 732 | 49% |
+| resolves | 738 | 49% |
 | builtin:zone | 22 | 1% |
-| builtin:cast-spell | 16 | 1% |
+| builtin:cast-spell | 14 | 1% |
 | builtin:no-effect | 84 | 6% |
-| none | 651 | 43% |
-| error | 2 | 0% |
+| none | 649 | 43% |
 
 ## By category
 
 | Category | Items | resolves | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|
-| other | 533 | 199 | 0 | 35 | 299 |
-| potion | 183 | 98 | 0 | 19 | 66 |
+| other | 533 | 202 | 0 | 35 | 296 |
+| potion | 183 | 100 | 0 | 18 | 65 |
 | talisman | 156 | 40 | 0 | 11 | 105 |
 | elixir | 149 | 78 | 0 | 16 | 55 |
 | poison | 115 | 111 | 0 | 0 | 4 |
 | snare | 82 | 63 | 0 | 0 | 19 |
 | gadget | 77 | 21 | 0 | 30 | 26 |
 | mutagen | 68 | 60 | 0 | 0 | 8 |
-| oil | 66 | 23 | 0 | 10 | 33 |
+| oil | 66 | 24 | 0 | 9 | 33 |
 | fulu | 46 | 12 | 0 | 1 | 33 |
 | drug | 24 | 24 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 1 | 5 |
@@ -45,14 +44,14 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
-| duration | 947 | 570 | 0 | 294 |
-| fixed-dc | 498 | 395 | 0 | 75 |
-| condition | 437 | 287 | 0 | 132 |
+| duration | 947 | 575 | 0 | 293 |
+| fixed-dc | 498 | 397 | 0 | 75 |
+| condition | 437 | 289 | 0 | 132 |
 | linked-effect | 393 | 370 | 0 | 7 |
-| damage | 287 | 186 | 0 | 95 |
+| damage | 287 | 188 | 0 | 95 |
 | trigger | 156 | 50 | 0 | 97 |
 | affliction | 144 | 139 | 0 | 5 |
-| counteract | 79 | 17 | 0 | 35 |
+| counteract | 79 | 18 | 0 | 34 |
 | on-weapon | 67 | 54 | 0 | 11 |
 | area | 44 | 19 | 0 | 24 |
 | heal | 43 | 34 | 0 | 5 |
@@ -64,8 +63,3 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Gap | Items |
 |---|---:|
-
-## Compiler errors
-
-- Cold Comfort (Greater): Cannot read properties of null (reading '2')
-- Cold Comfort (Lesser): Cannot read properties of null (reading '2')

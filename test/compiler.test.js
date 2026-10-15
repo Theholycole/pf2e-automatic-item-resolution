@@ -3,10 +3,12 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { CORE_FAMILIES, createRegistry, validateChanges } from "../../pf2e-resolution-core/src/index.js";
-import { actionTypeOf, compileItem, handlesItem, readActivations, recipientOf } from "../src/compiler/index.js";
+import { actionTypeOf, compileItem as compileWith, handlesItem, readActivations, recipientOf, spellEffectIndex } from "../src/compiler/index.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
+const spellEffects = spellEffectIndex(readDocuments(path.join(PACKS, "spell-effects")).filter((doc) => doc.collection === "items"));
+const compileItem = (data, options = {}) => compileWith(data, { spellEffects, ...options });
 const item = (name) => {
     const found = equipment.find((doc) => doc.name === name);
     assert.ok(found, `${name} is in PF2e's equipment pack`);
@@ -103,6 +105,19 @@ test("an injury poison stays a rider on the user's next Strike", () => {
     assert.equal(plan.resolution.kind, "save");
     assert.equal(plan.trigger.event, "strike");
     assert.equal(plan.resolution.afflictionHandoff.stages.length, 3);
+});
+
+test("an item granting a spell's effects gets PF2e's Spell Effect at its rank and for its time", () => {
+    const oak = compileItem(item("Oak Potion"));
+    assert.equal(oak.resolution.kind, "effect", "the ability compiler's cast becomes the spell's Effect");
+    assert.deepEqual(oak.resolution.applications.map((entry) => [entry.label, entry.level, entry.duration, entry.recipients]), [["Spell Effect: Oaken Resilience", 2, { value: 10, unit: "minutes" }, "target"]]);
+    const quickness = compileItem(item("Potion of Quickness"));
+    assert.deepEqual(quickness.resolution.applications.map((entry) => [entry.label, entry.level, entry.duration]), [["Spell Effect: Haste", null, { value: 1, unit: "minutes" }]]);
+    assert.deepEqual(registry.resolveSync(quickness, context(), io()).changes.map((change) => [change.op, change.target, change.effect.label]), [["effect", "drinker", "Spell Effect: Haste"]]);
+    // No PF2e Effect for Invisibility: still a cast, the spell module's.
+    assert.equal(compileItem(item("Invisibility Potion")).builtin, "cast-spell");
+    // Without the index (no spell-effects pack): the ability compiler's reading.
+    assert.equal(compileWith(item("Oak Potion")).builtin, "cast-spell");
 });
 
 // The census's count, as a ratchet: a later batch may only raise it.

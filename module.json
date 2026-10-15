@@ -52,5 +52,6 @@
   },
   "esmodules": [
     "scripts/main.js"
-  ]
+  ],
+  "socket": true
 }

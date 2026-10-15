@@ -14,7 +14,7 @@ import { actionTypeOf, readActivations } from "./activation.js";
 import { fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
-export { effectLinks, fitPlan, nativeHealing, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
+export { effectLinks, fitPlan, grantedSpells, nativeHealing, ownPlan, pf2eRoll, recipientOf, spellEffectApplications } from "./consumables.js";
 
 // The consumable categories the spell module resolves (the user's split, 2026-10-10).
 export const SPELL_MODULE_CATEGORIES = Object.freeze(["scroll", "wand", "catalyst", "spell-gem"]);
@@ -36,10 +36,13 @@ export function asAbility(item) {
 }
 
 // One item → a plan, { builtin }, or null.
+// options: the ability compiler's (basicActions, actor) and spellEffects, PF2e's spell Effects by spell name in lower case
+// ({ "haste": { uuid, name } }; spellEffectIndex() builds it from the spell-effects pack's items).
 export function compileItem(item, options = {}) {
     if (!handlesItem(item)) return null;
     const read = compileAbility(asAbility(item), options);
-    const plan = read ? fitPlan(item, read) : ownPlan(item, basePlan(item));
+    const base = basePlan(item);
+    const plan = read ? fitPlan(item, read, base, options) : ownPlan(item, base, options);
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     return { ...plan, ...(source ? { source } : {}), item: itemInfo(item) };
@@ -71,4 +74,16 @@ function itemInfo(item) {
         pf2eRoll: pf2eRoll(item),
         activations: readActivations(item?.system?.description?.value)
     };
+}
+
+// PF2e's spell Effects by the spell's name in lower case, from the spell-effects pack's items ("Spell Effect: Haste" → "haste").
+export function spellEffectIndex(effects) {
+    const index = {};
+    for (const effect of effects ?? []) {
+        const name = /^Spell Effect:\s*(.+)$/i.exec(effect?.name ?? "")?.[1]?.trim();
+        if (!name) continue;
+        const uuid = effect.uuid ?? (effect._id ? `Compendium.pf2e.spell-effects.Item.${effect._id}` : null);
+        if (uuid) index[name.toLowerCase()] ??= { uuid, name: effect.name };
+    }
+    return index;
 }

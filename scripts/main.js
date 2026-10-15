@@ -1,27 +1,37 @@
 // PF2e Automatic Item Resolution: registers the item compiler with the
 // resolution core, so the core's users (the Combat Simulator, live play) get a
-// plan for a consumable from registry.planFor(item). Live cards come with
-// batch 1 (docs/design.md).
+// plan for a consumable from registry.planFor(item), and plays the items'
+// confirmation cards after PF2e's own Use (scripts/live.js, docs/design.md).
 
-import { compileItem, handlesItem } from "../src/compiler/index.js";
+import { compileItem, handlesItem, spellEffectIndex } from "../src/compiler/index.js";
+import { setUpLivePlay } from "./live.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
 
 // The ability module's compiled basic actions (the riders some items' text names).
 const basicActions = () => game.modules.get(ABILITY_ID)?.api?.basicActions ?? {};
+// PF2e's spell Effects by spell name ("the effects of Haste" → Spell Effect: Haste), from its spell-effects pack's index.
+let spellEffects = {};
 
 // A Foundry item as plain data, keeping its uuid (the compiler is pure).
 const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObject(false), uuid: item.uuid } : item);
 
-const compile = (item) => compileItem(dataOf(item), { basicActions: basicActions() });
+const compile = (item) => compileItem(dataOf(item), { basicActions: basicActions(), spellEffects });
 
 // Registered when the script loads, so the order modules load in doesn't matter.
 Hooks.once("pf2eResolutionCoreReady", (core) => {
     core.registry.registerCompiler({ module: MODULE_ID, name: "items", handles: handlesItem, compile });
 });
 
-Hooks.once("ready", () => {
+Hooks.once("ready", async () => {
+    try {
+        const pack = game.packs.get("pf2e.spell-effects");
+        spellEffects = pack ? spellEffectIndex([...(await pack.getIndex())]) : {};
+    } catch (error) {
+        console.warn(`${MODULE_ID} | PF2e's spell Effects couldn't be indexed.`, error);
+    }
+    setUpLivePlay({ compileItem: compile });
     const module = game.modules.get(MODULE_ID);
     if (module) module.api = Object.freeze({ compileItem: compile, handlesItem });
 });

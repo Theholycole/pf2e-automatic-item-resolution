@@ -46,30 +46,68 @@ export function pf2eRoll(item) {
     return damage?.formula ? { formula: String(damage.formula), kind: damage.kind ?? "damage", type: damage.type ?? "untyped" } : null;
 }
 
+// "you gain the effects of a 2nd-rank Oaken Resilience for 10 minutes", "grants you the effects of Haste for 1 minute":
+// the spell, its rank and the time the item gives. [{ spell: { uuid, name }, rank, duration }]
+const ORDINAL_RANK = String.raw`(\d+)(?:st|nd|rd|th)[- ](?:rank|level)`;
+const GRANTS_SPELL = new RegExp(String.raw`\b(?:gains?|grants? you|gives? you|has|have|receives?) the (?:same )?(?:effects?|benefits?) of (?:an? |the )?(?:${ORDINAL_RANK} )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]*)\}(?: spell)?(?: for (\d+|one|an?) (rounds?|minutes?|hours?|days?))?`, "gi");
+const COUNT = { one: 1, a: 1, an: 1 };
+const UNIT = (unit) => (/^round/i.test(unit) ? "rounds" : /^minute/i.test(unit) ? "minutes" : /^hour/i.test(unit) ? "hours" : "days");
+
+export function grantedSpells(item) {
+    return [...String(item?.system?.description?.value ?? "").matchAll(GRANTS_SPELL)].map((match) => ({
+        spell: { uuid: match[2], name: match[3].trim() },
+        rank: match[1] ? Number(match[1]) : null,
+        duration: match[4] ? { value: COUNT[match[4].toLowerCase()] ?? Number(match[4]), unit: UNIT(match[5]) } : null
+    }));
+}
+
+// The PF2e spell Effect for each spell the item grants, when PF2e has one (options.spellEffects: { "haste": { uuid, name } }, by the
+// spell's name in lower case): an application at the item's rank (the Effect's rules read @item.level) and for the item's time.
+export function spellEffectApplications(item, spellEffects, recipient) {
+    const applications = [];
+    for (const granted of grantedSpells(item)) {
+        const effect = spellEffects?.[granted.spell.name.toLowerCase()];
+        if (!effect?.uuid) return null;
+        applications.push({ kind: "native-spell-effect", uuid: effect.uuid, label: effect.name ?? null, recipients: recipientsFor(recipient), level: granted.rank, ...(granted.duration ? { duration: granted.duration } : {}), spell: granted.spell });
+    }
+    return applications.length ? applications : null;
+}
+
 // An application's recipients for the item: the drinker is the plan's target (the user, by default).
 const recipientsFor = (recipient) => (recipient === "drinker" ? "target" : "self");
 
 const application = (link, recipient) => ({ kind: "native-spell-effect", uuid: link.uuid, label: link.label, recipients: recipientsFor(recipient) });
 
 // A plan of the item's own, when the ability compiler read nothing: its one linked
-// Effect and the healing PF2e rolls. Items linking several Effects (a stage or a
-// degree each) are left to the readings that know which one applies.
-export function ownPlan(item, base) {
+// Effect (or the PF2e spell Effects of the spells it grants) and the healing PF2e
+// rolls. Items linking several Effects (a stage or a degree each) are left to the
+// readings that know which one applies.
+export function ownPlan(item, base, options = {}) {
     const recipient = recipientOf(item);
     const healing = nativeHealing(item);
     const links = effectLinks(item);
-    if (!healing && links.length !== 1) return null;
-    const resolution = healing && !links.length
+    const applications = links.length === 1 ? [application(links[0], recipient)] : !links.length ? spellEffectApplications(item, options.spellEffects, recipient) ?? [] : [];
+    if (!healing && !applications.length) return null;
+    const resolution = healing && !applications.length
         ? { kind: "healing", native: { healing } }
-        : { kind: "effect", applications: links.map((link) => application(link, recipient)), ...(healing ? { native: { healing } } : {}) };
+        : { kind: "effect", applications, ...(healing ? { native: { healing } } : {}) };
     return { ...base, automation: { level: "automatic" }, targeting: { target: recipient === "drinker" ? "the drinker" : null, range: null, area: null }, trigger: { event: "use" }, resolution };
 }
 
 // The ability compiler's plan, fitted to the item: its "self" effects go to the
-// drinker, and PF2e's healing joins an effect plan that has none.
-export function fitPlan(item, plan) {
-    if (!plan?.resolution) return plan;
+// drinker, PF2e's healing joins an effect plan that has none, and "gains the
+// effects of Haste" becomes PF2e's Spell Effect: Haste when there is one (else it
+// stays a cast, the spell module's). null when it read nothing.
+export function fitPlan(item, plan, base, options = {}) {
+    if (!plan) return null;
     const recipient = recipientOf(item);
+    if (plan.builtin === "cast-spell" && plan.self) {
+        const applications = spellEffectApplications(item, options.spellEffects, recipient);
+        if (!applications) return plan;
+        const healing = nativeHealing(item);
+        return { ...base, automation: { level: "automatic" }, targeting: { target: recipient === "drinker" ? "the drinker" : null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "effect", applications, ...(healing ? { native: { healing } } : {}) }, notes: plan.notes ?? [] };
+    }
+    if (!plan.resolution) return plan;
     let resolution = plan.resolution;
     if (resolution.kind === "effect" && recipient === "drinker" && (resolution.applications ?? []).some((entry) => entry.recipients === "self")) {
         resolution = { ...resolution, applications: resolution.applications.map((entry) => (entry.recipients === "self" ? { ...entry, recipients: "target" } : entry)) };

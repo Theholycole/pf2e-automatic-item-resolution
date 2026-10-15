@@ -8,13 +8,12 @@
   "bombs": 171,
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 16,
-   "none": 651,
-   "resolves": 732,
+   "builtin:cast-spell": 14,
+   "none": 649,
+   "resolves": 738,
    "builtin:zone": 22,
    "builtin:no-effect": 84,
-   "builtin:save-bonus": 1,
-   "error": 2
+   "builtin:save-bonus": 1
   }
  },
  "byCategory": {
@@ -22,12 +21,11 @@
    "count": 533,
    "results": {
     "builtin:cast-spell": 7,
-    "none": 297,
-    "resolves": 199,
+    "none": 296,
+    "resolves": 202,
     "builtin:zone": 9,
     "builtin:no-effect": 18,
-    "builtin:save-bonus": 1,
-    "error": 2
+    "builtin:save-bonus": 1
    },
    "mechanisms": {
     "casts-spell": 21,
@@ -49,10 +47,10 @@
   "potion": {
    "count": 183,
    "results": {
-    "resolves": 98,
-    "none": 66,
+    "resolves": 100,
+    "none": 65,
     "builtin:no-effect": 13,
-    "builtin:cast-spell": 6
+    "builtin:cast-spell": 5
    },
    "mechanisms": {
     "linked-effect": 55,
@@ -183,10 +181,10 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 23,
+    "resolves": 24,
     "none": 33,
     "builtin:no-effect": 8,
-    "builtin:cast-spell": 2
+    "builtin:cast-spell": 1
    },
    "mechanisms": {
     "linked-effect": 17,
@@ -265,7 +263,7 @@
   },
   "damage": {
    "count": 287,
-   "resolves": 186,
+   "resolves": 188,
    "gaps": 0,
    "none": 95
   },
@@ -277,7 +275,7 @@
   },
   "fixed-dc": {
    "count": 498,
-   "resolves": 395,
+   "resolves": 397,
    "gaps": 0,
    "none": 75
   },
@@ -313,9 +311,9 @@
   },
   "counteract": {
    "count": 79,
-   "resolves": 17,
+   "resolves": 18,
    "gaps": 0,
-   "none": 35
+   "none": 34
   },
   "area": {
    "count": 44,
@@ -325,15 +323,15 @@
   },
   "condition": {
    "count": 437,
-   "resolves": 287,
+   "resolves": 289,
    "gaps": 0,
    "none": 132
   },
   "duration": {
    "count": 947,
-   "resolves": 570,
+   "resolves": 575,
    "gaps": 0,
-   "none": 294
+   "none": 293
   }
  },
  "gapCounts": {},
@@ -9663,7 +9661,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": []
   },
   {
    "name": "Clockwork Rejuvenator",
@@ -17594,8 +17594,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:cast-spell",
-   "kind": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": []
   },
   {
    "name": "Mortalis Coin",
@@ -21304,7 +21305,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": []
   },
   {
    "name": "Wand of Rolling Flames (5th-Rank)",
@@ -25117,8 +25120,9 @@
     "condition",
     "duration"
    ],
-   "result": "error",
-   "error": "Cannot read properties of null (reading '2')"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": []
   },
   {
    "name": "Bravo's Brew (Greater)",
@@ -25328,8 +25332,9 @@
     "condition",
     "duration"
    ],
-   "result": "error",
-   "error": "Cannot read properties of null (reading '2')"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": []
   },
   {
    "name": "Cheetah's Elixir (Greater)",
@@ -28076,8 +28081,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:cast-spell",
-   "kind": null
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": []
   },
   {
    "name": "Shadow Cloak Snare",
