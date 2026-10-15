@@ -7,7 +7,7 @@ Status, 2026-10-15: the user answered the design's questions the same day (the r
 From [census.md](census.md) (PF2e 8.6.1 packs):
 
 - **1,724** consumables. **216** are the spell module's (scrolls, wands, catalysts, spell gems), so this module handles **1,508**.
-- **745** (49%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added the rest. **5** more are partial and **272** (18%) get only a note Effect; both are counted apart. **25** are casts, for the spell module.
+- **759** (50%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added the rest. **5** more are partial and **272** (18%) get only a note Effect; both are counted apart. **25** are casts, for the spell module.
 - **171** bombs are `weapon` items (group `bomb`). PF2e already Strikes with them (batch 2).
 - Batch 1 covers **400** items: potion 183, elixir 149, mutagen 68. When the design was proposed, 236 of them resolved, 35 were builtins and 129 had no plan. [census.md](census.md) has today's counts.
 
@@ -82,6 +82,16 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
   - on the drinker for a potion;
   - on the user for "casts … on you";
   - at the presser's own targets for a spell aimed at others.
+
+**Other poisons and saves** (`src/live/poison-card.js`, `scripts/poisons.js`):
+- **Contact, inhaled and ingested poisons, and drugs** (89 items) get an exposure card. It says who the poison exposes, from PF2e's trait rules, and posts the poison's save card for the creatures the presser targets. For an inhaled poison, those entering the cloud for a minute are the GM's to call. An injury drug (Zerk) is injected.
+- **Another item's save on its Use, at others** (105 items: Spark Wafer, Pyronite, Flask of Elemental Earth…): the same card, "a save for the creatures in its 5-foot burst".
+- **A save the item gives for later** (30 items: breath potions, "grants you the Energy Breath action for 1 hour"): the same card, kept open until the action is used.
+- Snares (placed in a square, set off by the first creature to enter it) and lasting areas need Regions; they wait for the live check.
+
+**The GM fallback gives way.** The ability compiler's last fallback ("no-effect", the GM's) yields to a reading of the item's own (its linked Effect, a spell's Effect, PF2e's healing, its row), though not to a note alone. PF2e's healing field counts only when the text heals: Potion of Annulment keeps its counteract roll there.
+
+`src/live/route.js` decides which card an item gets. The census's "Played live" table counts it: 946 of 1,508 consumables get a card.
 
 ## The simulator (the auto-combat session's)
 
