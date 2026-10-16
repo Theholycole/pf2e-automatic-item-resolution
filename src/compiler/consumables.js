@@ -20,6 +20,8 @@ export function recipientOf(item) {
     if (INGESTED.has(category)) return "drinker";
     const traits = item?.system?.traits?.value ?? [];
     if (traits.includes("ingested") || INGEST_WORDS.test(plain(item?.system?.description?.value))) return "drinker";
+    // ("applied to yourself or an adjacent target", "sprinkling it on yourself or another creature within reach": either.)
+    if (/\b(?:to|on) yourself or (?:an?|another|one) (?:adjacent |willing ){0,2}(?:target|creature|ally)\b/i.test(plain(item?.system?.description?.value))) return "drinker";
     return "user";
 }
 

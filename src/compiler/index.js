@@ -25,6 +25,7 @@ import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { directDamageOver, directDamagePlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
+import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
@@ -105,6 +106,11 @@ export function compileItem(given, options = {}) {
     // (A condition it lowers on its user or drinker, src/compiler/reduce.js: Lion Badge; a plan of its own when it's all.)
     const reduce = readReductions(plainText(item?.system?.description?.value));
     if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(item?.system?.description?.value)));
+    // (A flat check to end persistent damage at once, src/compiler/recovery.js: Quenching Potion; with a note alone, the note
+    // is the rest of it.)
+    const recovery = readRecovery(plainText(item?.system?.description?.value));
+    if (recovery && !plan) plan = recoveryPlan(base, recoveryNotes(plainText(item?.system?.description?.value)));
+    else if (recovery && plan.noteOnly) plan = { ...withoutNoteOnly(plan), partial: true };
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const { resist, ...rest } = plan;
@@ -136,6 +142,12 @@ function rowPlan(item, base) {
         // (Its resistance: the item card's own Effect, beside the core's row, as plan.item.resist.)
         ...(row?.resistances ? { resist: row.resistances } : {})
     };
+}
+
+// A note-only plan that now does something too: the same, counted as partial ("Effect + note").
+function withoutNoteOnly(plan) {
+    const { noteOnly, ...rest } = plan;
+    return rest;
 }
 
 // The skeleton of a plan the item module builds itself.
@@ -172,7 +184,9 @@ function itemInfo(item) {
         // (A tea's Tea Ceremony: the card's tick, src/compiler/tea.js.)
         ...(readTeaCeremony(item?.system?.description?.value) ? { ceremony: readTeaCeremony(item?.system?.description?.value) } : {}),
         // (The conditions it lowers: the item card's, after its row, src/compiler/reduce.js.)
-        ...(readReductions(plainText(item?.system?.description?.value)).length ? { reduce: readReductions(plainText(item?.system?.description?.value)) } : {})
+        ...(readReductions(plainText(item?.system?.description?.value)).length ? { reduce: readReductions(plainText(item?.system?.description?.value)) } : {}),
+        // (Its flat check to end persistent damage: the item card's, after its row, src/compiler/recovery.js.)
+        ...(readRecovery(plainText(item?.system?.description?.value)) ? { recovery: readRecovery(plainText(item?.system?.description?.value)) } : {})
     };
 }
 

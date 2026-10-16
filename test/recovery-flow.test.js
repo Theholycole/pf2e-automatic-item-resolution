@@ -1,0 +1,89 @@
+// A flat check to end persistent damage at once, against the stand-in for Foundry: the reading (Quenching Potion's
+// "Immediately attempt a flat check to end any persistent acid, fire, poison, or void damage affecting you", at DC 10 as
+// particularly appropriate help), what isn't one, and the item card rolling PF2e's own recovery check at that DC.
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import path from "node:path";
+import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
+import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
+import { compileItem } from "../src/compiler/index.js";
+import { compileActivations } from "../src/compiler/permanent.js";
+import { readRecovery } from "../src/compiler/recovery.js";
+import { recoveryText } from "../src/live/card.js";
+import { routeOf } from "../src/live/route.js";
+
+const MODULE_ID = "pf2e-automatic-item-resolution";
+const SOCKET = `module.${MODULE_ID}`;
+const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
+const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
+const source = (name) => equipment.find((doc) => doc.name === name);
+
+// (Shared with the other flow tests: this creature stands 200 squares down.)
+const foundry = await fakeFoundry();
+const medic = foundry.makeActor({ id: "recovery-medic", name: "Medic", owners: ["player"] });
+foundry.place(medic, 0, 20000);
+
+// (A check that doesn't end it waits a moment for PF2e's deletion first: until the card says it's applied.)
+async function applied(card) {
+    for (let wait = 0; wait < 60 && !card.flags[MODULE_ID]?.card?.results?.length; wait++) await new Promise((resolve) => setTimeout(resolve, 50));
+}
+
+async function use(item) {
+    const data = item.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: medic.id }, actor: medic, token: medic.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    return foundry.messages[foundry.messages.indexOf(message) + 1];
+}
+
+test("the reading: the types and the DC, and what else it says", () => {
+    const quench = compileItem(source("Quenching Potion"));
+    assert.equal(routeOf(quench), "item");
+    assert.deepEqual(quench.item.recovery, { types: ["acid", "fire", "poison", "void"], dc: 10 });
+    assert.equal(recoveryText(quench.item.recovery), "A flat check (DC 10) to end persistent acid, fire, poison or void damage");
+    // Its new saving throw against poison isn't read: a note.
+    assert.equal(quench.partial, true);
+    assert.match(quench.notes.join(" "), /new saving throw against any poison/);
+    // "@Check[flat|dc:10] to end any persistent poison damage" (Antivenom Potion): the note-only plan, now partial.
+    const antivenom = compileItem(source("Antivenom Potion"));
+    assert.deepEqual([antivenom.item.recovery, antivenom.noteOnly, antivenom.partial], [{ types: ["poison"], dc: 10 }, undefined, true]);
+    // "an immediate flat check to end any persistent bleed effect with the lower DC for particularly effective assistance", on
+    // "yourself or an adjacent target" (Cauterizing Torch): the card's drinker choice.
+    const torch = compileItem(source("Cauterizing Torch"));
+    assert.deepEqual([torch.item.recovery, torch.item.recipient], [{ types: ["bleed"], dc: 10 }, "drinker"]);
+    // "the DC typically decreases from 15 to 10" (Ring of Torag): no note of it.
+    const [torag] = compileActivations(source("Ring of Torag"));
+    assert.deepEqual([torag.plan.item.recovery, torag.plan.notes], [{ types: ["fire"], dc: 10 }, undefined]);
+    // Searing Suture's "takes 1d6 fire damage and can immediately attempt a @Check[flat|dc:15] …": the damage is a note.
+    const suture = compileItem(source("Searing Suture (Lesser)"));
+    assert.deepEqual(suture.item.recovery, { types: ["bleed"], dc: 15 });
+    assert.match(suture.notes[0], /takes 1d6 fire damage/);
+    // Not one: the type is the item's to choose (Soothing Powder), or another's.
+    assert.equal(compileItem(source("Soothing Powder (Lesser)"))?.item?.recovery, undefined);
+    assert.equal(readRecovery("Each creature in the emanation can immediately attempt a flat check to end any persistent fire damage."), null);
+});
+
+test("Quenching Potion: Apply rolls PF2e's recovery check at DC 10 for each persistent damage of its types", async () => {
+    const fire = foundry.givePersistent(medic, { damageType: "fire", dc: 15, nextRoll: 12 });
+    const acid = foundry.givePersistent(medic, { damageType: "acid", dc: 15, nextRoll: 4 });
+    const bleed = foundry.givePersistent(medic, { damageType: "bleed", dc: 15, nextRoll: 20 });
+    const card = await use(foundry.giveItem(medic, source("Quenching Potion")));
+    assert.equal(card.flags[MODULE_ID].card.kind, "item");
+    assert.match(card.content, /A flat check \(DC 10\) to end persistent acid, fire, poison or void damage/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    await applied(card);
+    // Fire: 12 against DC 10 — ended. Acid: 4 — stays, its DC 15 again. Bleed isn't its type: not rolled.
+    assert.deepEqual([fire.rolled, acid.rolled, bleed.rolled], [[10], [10], []]);
+    assert.deepEqual(medic.persistent.map((entry) => entry.system.persistent.damageType), ["acid", "bleed"]);
+    assert.equal(acid.system.persistent.dc, 15);
+    assert.match(card.content, /Persistent Damage \(1d6 fire\) ended \(flat check, DC 10\)/);
+    assert.match(card.content, /didn&#39;t end Persistent Damage \(1d6 acid\)/);
+    medic.persistent = [];
+    // None to end: the card says so.
+    const again = await use(foundry.giveItem(medic, source("Quenching Potion")));
+    await foundry.socket(SOCKET)({ action: "apply", messageId: again.id, userId: "player" });
+    await settle();
+    assert.match(again.content, /no persistent acid, fire, poison or void damage: no flat check/);
+});

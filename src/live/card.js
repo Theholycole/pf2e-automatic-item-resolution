@@ -77,6 +77,8 @@ export function previewLines(state) {
     for (const { slug, by } of plan?.item?.reduce ?? []) lines.push(`Lowers ${slug} by ${by}`);
     // (Its resistance, src/compiler/rows.js: the card's own Effect.)
     if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
+    // (Its flat check to end persistent damage, src/compiler/recovery.js.)
+    if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
     if (plan?.reduce) for (const note of plan.notes ?? []) lines.push(`Also: ${note}`);
     const healing = plan?.resolution?.native?.healing;
@@ -143,6 +145,12 @@ export function resistanceText(resist) {
     for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), typeWords(entry.type)]);
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration;
     return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${duration ? ` for ${timeText(duration)}` : ""}`;
+}
+
+// Its flat check to end persistent damage in words: "A flat check (DC 10) to end persistent acid, fire, poison or void damage".
+export function recoveryText(recovery) {
+    const types = recovery.types.length > 1 ? `${recovery.types.slice(0, -1).join(", ")} or ${recovery.types.at(-1)}` : recovery.types[0];
+    return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent ${types} damage`;
 }
 
 // Its Effect: PF2e's Resistance rules for the item's time, named for the item. moduleId: the flag's scope. Returns a new source.

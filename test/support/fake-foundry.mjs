@@ -145,11 +145,13 @@ export function createFakeFoundry() {
             },
             // (Conditions as PF2e's condition items; conditionFlags gives one its grantedBy, as PF2e's GrantItem does.)
             conditionFlags: {},
+            // (Persistent damage as PF2e's condition items: givePersistent adds one, its rollRecovery a flat check of nextRoll.)
+            persistent: [],
             get itemTypes() {
                 return {
                     weapon: this.weapons,
                     effect: this.created.filter((entry) => entry.type === "effect"),
-                    condition: [...this.conditions.entries()].map(([slug, value]) => ({ id: `condition-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1), value, flags: this.conditionFlags[slug] ?? {} })),
+                    condition: [...[...this.conditions.entries()].map(([slug, value]) => ({ id: `condition-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1), value, flags: this.conditionFlags[slug] ?? {} })), ...this.persistent],
                     affliction: this.created.filter((entry) => entry.type === "affliction"),
                     action: this.created.filter((entry) => entry.type === "action")
                 };
@@ -281,7 +283,31 @@ export function createFakeFoundry() {
     };
     Object.assign(globalThis, globals);
 
+    // PF2e's persistent damage condition on an actor: { damageType, dc, nextRoll } — its rollRecovery rolls nextRoll against
+    // its DC and removes it on a success (PF2e's decreaseCondition of "persistent-damage-<type>").
+    function givePersistent(actor, { damageType, dc = 15, nextRoll = 10, formula = "1d6" }) {
+        const condition = {
+            id: `persistent-${damageType}-${++madeCount}`,
+            slug: "persistent-damage",
+            name: `Persistent Damage (${formula} ${damageType})`,
+            system: { persistent: { damageType, dc, formula } },
+            nextRoll,
+            rolled: [],
+            async update(changes) {
+                for (const [key, value] of Object.entries(changes)) setProperty(condition, key, structuredClone(value));
+                return condition;
+            },
+            async rollRecovery() {
+                condition.rolled.push(condition.system.persistent.dc);
+                if (condition.nextRoll >= condition.system.persistent.dc) actor.persistent = actor.persistent.filter((entry) => entry !== condition);
+            }
+        };
+        actor.persistent.push(condition);
+        return condition;
+    }
+
     return {
+        givePersistent,
         hooks,
         messages,
         posted,

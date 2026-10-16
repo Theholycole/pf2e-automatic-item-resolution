@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, resistanceEffectSource, resistanceText, rolledHealing, rollFormula, USER_ID } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, rollFormula, USER_ID } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, startInitiative, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -333,6 +333,9 @@ async function applyCard(message, { drinker = null, ceremony = false } = {}) {
         const after = Number(target.actor.getCondition?.(slug)?.value) || 0;
         lines.push(after ? `${recipient.name}'s ${slug} lowered to ${after}` : `${recipient.name} is no longer ${slug}`);
     }
+    // (Its flat check to end persistent damage: PF2e's own recovery roll for each of those types, at the text's DC when it's
+    // lower — Quenching Potion's 10 — then the condition's own DC again if it stays.)
+    if (state.plan.item?.recovery) lines.push(...await recover(target.actor, recipient.name, state.plan.item.recovery));
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
     if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {
         if (!target.actor?.hasCondition?.(slug)) continue;
@@ -361,6 +364,26 @@ async function heal({ token, actor }, name, amount, state) {
 }
 
 // The item's PF2e Effect on the creature: its grade, the spell's rank, the item's time.
+// The recovery check for each persistent damage of the item's types: PF2e's condition.rollRecovery, which deletes it on a
+// success (without waiting for that, so a moment is given for it). → lines for the card.
+async function recover(actor, name, recovery) {
+    const persistent = () => (actor?.itemTypes?.condition ?? []).filter((condition) => condition.slug === "persistent-damage" && recovery.types.includes(condition.system?.persistent?.damageType));
+    const found = persistent();
+    if (!found.length) return [`${name} has no persistent ${recoveryText(recovery).replace(/^.* persistent /, "")}: no flat check.`];
+    const lines = [];
+    for (const condition of found) {
+        const usual = Number(condition.system.persistent.dc) || 15;
+        const dc = recovery.dc && recovery.dc < usual ? recovery.dc : usual;
+        if (dc !== usual) await condition.update({ "system.persistent.dc": dc });
+        await condition.rollRecovery();
+        const stays = () => persistent().some((entry) => entry.id === condition.id);
+        for (let wait = 0; wait < 20 && stays(); wait++) await new Promise((resolve) => setTimeout(resolve, 50));
+        if (stays() && dc !== usual) await condition.update({ "system.persistent.dc": usual });
+        lines.push(stays() ? `${name}: the flat check (DC ${dc}) didn't end ${condition.name}` : `${name}: ${condition.name} ended (flat check, DC ${dc})`);
+    }
+    return lines;
+}
+
 async function nativeEffect(actor, name, change, state) {
     if (!actor) return null;
     const template = await fromUuid(change.effect.uuid).catch(() => null);
