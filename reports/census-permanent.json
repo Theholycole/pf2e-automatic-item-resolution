@@ -6,15 +6,16 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 708,
+   "resolves": 709,
    "builtin:cast-spell": 469,
    "none": 726,
-   "partial": 95,
+   "partial": 96,
    "builtin:focus-point": 45,
-   "builtin:no-effect": 129,
-   "builtin:readied-bonus": 29,
+   "builtin:no-effect": 122,
+   "builtin:readied-bonus": 31,
    "note-only": 261,
-   "builtin:reroll": 24,
+   "builtin:reroll": 25,
+   "builtin:counteract": 2,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 31,
    "builtin:zone": 9,
@@ -25,14 +26,15 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 369,
+   "save": 370,
    "cast": 469,
-   "item": 601,
-   "none": 922,
+   "item": 602,
+   "none": 915,
    "focus": 45,
-   "fortune": 39,
-   "reroll": 24,
+   "fortune": 41,
+   "reroll": 25,
    "strike": 54,
+   "counteract": 2,
    "toggle": 31,
    "zone": 9,
    "action": 17,
@@ -49,17 +51,18 @@
     "resolves": 430,
     "builtin:cast-spell": 340,
     "none": 487,
-    "partial": 41,
+    "partial": 42,
     "builtin:focus-point": 43,
-    "builtin:no-effect": 105,
-    "builtin:readied-bonus": 22,
+    "builtin:no-effect": 100,
+    "builtin:readied-bonus": 24,
     "note-only": 167,
-    "builtin:reroll": 16,
+    "builtin:reroll": 17,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:item-action": 9
+    "builtin:item-action": 9,
+    "builtin:counteract": 1
    }
   },
   "weapon": {
@@ -107,8 +110,9 @@
     "builtin:cast-spell": 34,
     "note-only": 21,
     "resolves": 57,
-    "builtin:no-effect": 6,
+    "builtin:counteract": 1,
     "none": 29,
+    "builtin:no-effect": 5,
     "builtin:reroll": 3,
     "partial": 5,
     "builtin:ac-reaction": 2,
@@ -123,10 +127,10 @@
    "results": {
     "builtin:cast-spell": 11,
     "note-only": 17,
-    "resolves": 32,
+    "resolves": 33,
     "none": 27,
     "builtin:modes": 4,
-    "builtin:no-effect": 4,
+    "builtin:no-effect": 3,
     "partial": 4,
     "builtin:readied-bonus": 1
    }
@@ -1175,9 +1179,9 @@
    "time": "2",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Slithermaw's Bane (Heroic)",
@@ -9150,9 +9154,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Morning Glow",
@@ -18852,9 +18856,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Prankster's Perpetual Pieplate",
@@ -23479,9 +23483,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Soaring Wings (Greater)",
@@ -27053,9 +27057,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Vambrace of Gorum",
@@ -27758,9 +27762,9 @@
    "time": "2",
    "frequency": "twice per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Blessed Tattoo",
@@ -28222,9 +28226,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Juggernaut Plate",

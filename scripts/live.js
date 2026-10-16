@@ -13,7 +13,7 @@
 //   other change goes through the ability module's api.live.applyChange.
 
 import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, ownerDCsOf, ownerOf, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -335,19 +335,6 @@ async function conditionUuid(slug) {
 async function targetedCreatures(uuids) {
     const tokens = await Promise.all((Array.isArray(uuids) ? uuids : []).map((uuid) => fromUuid(uuid).catch(() => null)));
     return tokens.filter((token) => token?.actor).map((token) => ({ token, actor: token.actor, name: token.name ?? token.actor.name }));
-}
-
-// A condition lowered by an amount (PF2e's decreaseCondition, once for each step), or removed ("all").
-// (A condition with no value — Cayden's Tankard's grabbed — is there or not.)
-async function lowerCondition(actor, name, slug, by) {
-    const condition = actor?.getCondition?.(slug) ?? null;
-    const present = Boolean(condition) || Boolean(actor?.hasCondition?.(slug));
-    if (!present) return `${name} isn't ${slug}: nothing to lower.`;
-    if (by === "all") await actor.decreaseCondition(slug, { forceRemove: true });
-    else for (let step = 0; step < by; step++) await actor.decreaseCondition(slug);
-    const left = actor.getCondition?.(slug) ?? null;
-    const after = Number(left?.value) || 0;
-    return after ? `${name}'s ${slug} lowered to ${after}` : left || actor.hasCondition?.(slug) ? `${name} is still ${slug}` : `${name} is no longer ${slug}`;
 }
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);

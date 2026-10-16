@@ -67,6 +67,9 @@ export function readReductions(text) {
     }
     // (Standing up at once: Copper Penny's "When you Activate it, you Stand and can't be knocked prone again on the current turn".)
     if (/\bWhen you Activate (?:it|the [\w' -]+?), you Stand\b/i.test(ownUse(text))) add({ slug: "prone", by: "all" });
+    // (Any one condition, picked on the card: Armbands of the Gorgon's "remove a single condition of your choice currently
+    // afflicting you".)
+    if (/\bremove a single condition of your choice currently afflicting you\b/i.test(ownUse(text))) add({ choose: CONDITIONS.split("|").filter((slug) => slug !== "persistent bleed"), by: "all" });
     const ending = ENDING.exec(ownUse(text));
     if (ending) for (const slug of ending[1].toLowerCase().match(new RegExp(CONDITIONS, "g"))) {
         add({ slug, by: "all" });

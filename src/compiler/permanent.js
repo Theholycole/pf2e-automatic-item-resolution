@@ -31,6 +31,7 @@ import { spellstrikePlan } from "./spellstrike.js";
 import { withoutFlavor } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { readTypeChoice, withTypeChoices } from "./type-choice.js";
+import { readCounteract } from "./counteract.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 
@@ -185,7 +186,7 @@ function compileEach(item, options = {}) {
         plan = checkGated(plan, plainText(activation.html));
         // (A condition it lowers on its user, src/compiler/reduce.js: Coin of Comfort; a plan of its own when it's all.)
         const reduce = readReductions(plainText(activation.html));
-        if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(activation.html)));
+        if ((!plan || plan.builtin === "no-effect") && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(activation.html)));
         // (A bead that detonates as a Fireball of the dice it says, src/compiler/beads.js: Necklace of Fireballs.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = beadsPlan(item?.system?.description?.value, base) ?? plan;
         // (A flat check to end persistent damage at once, src/compiler/recovery.js: Ring of Torag.)
@@ -208,6 +209,10 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = saveOrPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
         if (!plan) plan = pf2eRulesPlan(item, base, plainText(activation.html));
+        // (A counteract on its user, src/compiler/counteract.js — Heartstone's "attempts to counteract one disease affecting you": the
+        // consumables' counteract card.)
+        const counteract = readCounteract(activation.html, { level: item.system?.level?.value });
+        if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && counteract) plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
         // (One of the item's own PF2e toggles, named as the activation is, switched on for a while: src/compiler/option-on.js.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = optionPlan(item, activation, base) ?? plan;
         if (!plan) return { activation, plan: null, index };
@@ -225,7 +230,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && plan.builtin === "counteract" ? { counteract } : {}) }
             }
         };
     });

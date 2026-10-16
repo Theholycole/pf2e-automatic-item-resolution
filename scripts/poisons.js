@@ -6,7 +6,7 @@
 import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, repeatsLater, saveText, withAttackChoice, withCheckChoice } from "../src/live/poison-card.js";
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
-import { ABILITY_ID, FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, entryOf, lowerCondition, stateOf } from "./foundry.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
 export async function postPoisonCard({ message, plan, used, actor, token }) {
@@ -133,6 +133,14 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         await postCard({ plan: withAttackChoice(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
+    // (The conditions it lowers on each creature in its area: Vambrace of Gorum's Blood of Iron's clumsy, enfeebled, frightened and
+    // stupefied by 1, beside its temporary Hit Points.)
+    if (state.plan?.allyArea) for (const entry of (state.plan.item?.reduce ?? []).filter((one) => one.who === "targets" && one.slug)) {
+        for (const token of tokens) {
+            const line = await lowerCondition(token.actor, token.name ?? token.actor?.name, entry.slug, entry.by);
+            if (!/: nothing to lower\.$/.test(line)) lines.push(line);
+        }
+    }
     const next = afterExposure(state, lines, game.time.worldTime);
     return message.update({ content: exposureCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

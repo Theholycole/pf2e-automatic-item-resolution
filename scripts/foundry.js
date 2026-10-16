@@ -105,3 +105,16 @@ export function ownerDCsOf(actor) {
     const attributes = actor?.system?.attributes ?? {};
     return { class: number(attributes.classDC?.value), spell: number(attributes.spellDC?.value) };
 }
+
+// A condition lowered by an amount (PF2e's decreaseCondition, once for each step), or removed ("all").
+// (A condition with no value — Cayden's Tankard's grabbed — is there or not.)
+export async function lowerCondition(actor, name, slug, by) {
+    const condition = actor?.getCondition?.(slug) ?? null;
+    const present = Boolean(condition) || Boolean(actor?.hasCondition?.(slug));
+    if (!present) return `${name} isn't ${slug}: nothing to lower.`;
+    if (by === "all") await actor.decreaseCondition(slug, { forceRemove: true });
+    else for (let step = 0; step < by; step++) await actor.decreaseCondition(slug);
+    const left = actor.getCondition?.(slug) ?? null;
+    const after = Number(left?.value) || 0;
+    return after ? `${name}'s ${slug} lowered to ${after}` : left || actor.hasCondition?.(slug) ? `${name} is still ${slug}` : `${name} is no longer ${slug}`;
+}

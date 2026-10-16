@@ -401,7 +401,7 @@ function sensesOf(sentences, duration, used = new Set()) {
 // emanation. You and all allies in this area gain a +3 status bonus to saving throws against mental effects", Blakenshipper's
 // "… gain 15 temporary Hit Points that last for 1 round" → { row: { effects, modifiers }, radius, self, notes } or null:
 // the sentence read as its user's own ("you gain …") for each creature the presser targets. The rest of the text is notes.
-const ALLIES = /^(You and )?(?:all )?allies (?:(?:within|in) (?:a |an )?(\d+)[- ](?:foot|feet)(?: emanation| radius| of you)?|in this area)(?: (?:that|who) can (?:see|hear) you)?,? (gain|receive)\b/i;
+const ALLIES = /^(You and (?:your )?)?(?:all )?(?:your )?allies (?:(?:within|in) (?:a |an )?(\d+)[- ](?:foot|feet)(?: emanation| radius| of you)?|in this area)(?: (?:that|who) can (?:see|hear) you)?,? (gain|receive)\b/i;
 export function allyAreaRow(text, duration = null) {
     const sentences = sentencesOf(String(text ?? "").replace(/^.*?\bEffect\b\s*/s, ""));
     const index = sentences.findIndex((sentence) => ALLIES.test(sentence.trim()));

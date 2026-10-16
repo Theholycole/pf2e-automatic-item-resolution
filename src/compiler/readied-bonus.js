@@ -166,6 +166,7 @@ const UPGRADES = [
     // (Robe of the Archmagi's "You automatically succeed at your save against the triggering arcane spell", before the roll.)
     [/^(?:Effect )?You automatically succeed at your (?:save|saving throw|[\w ]+? check)\b/i, { failure: "to-success", criticalFailure: "to-success" }]
 ];
+const ACTION_SKILLS = { Request: "diplomacy", "Make an Impression": "diplomacy", "Gather Information": "diplomacy", Coerce: "intimidation", Demoralize: "intimidation", Feint: "deception", Lie: "deception", "Create a Diversion": "deception" };
 export function readDegreeAdjust(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
     const triggered = trigger ?? triggerOf(plain);
@@ -182,10 +183,12 @@ export function readDegreeAdjust(text, { trigger = null } = {}) {
     if (!Object.keys(adjustment).length) return null;
     // (The roll: the sentence's own words, the trigger's, else "attempt a Deception check to Feint" in the text.)
     const attempt = /\battempt (?:an? )?([A-Z]\w+) check(?: to ((?:[A-Z][a-z']+)(?: (?:a|an|the|or) [A-Z][a-z']+| [A-Z][a-z']+)*))?/.exec(plain);
-    const selectors = [named, triggered ?? "", attempt?.[0] ?? ""].map((words) => selectorsOf(words)).find((found) => found.length) ?? [];
+    // (Or the action it makes, by that action's skill: Cloak of Repute's "make a Request of a creature" — Diplomacy.)
+    const made = new RegExp(String.raw`\b(?:make|attempt|use) an? (${Object.keys(ACTION_SKILLS).join("|")})\b`).exec(plain);
+    const selectors = [named, triggered ?? "", attempt?.[0] ?? ""].map((words) => selectorsOf(words)).find((found) => found.length) ?? (made ? [ACTION_SKILLS[made[1]]] : []);
     if (selectors.length !== 1) return null;
     const actions = /\bto ((?:[A-Z][a-z']+)(?: (?:a|an|the|or) [A-Z][a-z']+| [A-Z][a-z']+)*)\b/.exec(`${triggered ?? ""} ${attempt?.[0] ?? ""}`);
-    const predicate = actions ? [{ or: actions[1].split(/\s+or\s+|,\s*/).map((name) => `action:${slug(name)}`) }] : null;
+    const predicate = actions ? [{ or: actions[1].split(/\s+or\s+|,\s*/).map((name) => `action:${slug(name)}`) }] : made ? [`action:${slug(made[1])}`] : null;
     return { selector: selectors[0], adjustment, ...(predicate ? { predicate } : {}) };
 }
 

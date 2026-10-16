@@ -66,6 +66,10 @@ const CHANGES = [
     // (Laurel of the Empath's "Treat the failed saving throw as a success"; The Paladin's "Adjust the result of your saving throw up
     // by one degree of success" — each degree one better.)
     [/\bTreat the failed (?:saving throw|save|check|roll) as a success\b/i, ["failure", "success"]],
+    // (Pilferer's Gloves' "If you failed the Thievery skill check, you succeed at that check instead. If you critically failed, you fail
+    // instead.")
+    [/\bIf you failed the [\w ]*?(?:check|save|saving throw|roll), you succeed at (?:that|the) (?:check|save|saving throw|roll) instead\b/i, ["failure", "success"]],
+    [/\bIf you critically failed, you fail instead\b/i, ["criticalFailure", "failure"]],
     [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["criticalFailure", "failure"]],
     [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["failure", "success"]],
     [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["success", "criticalSuccess"]]
