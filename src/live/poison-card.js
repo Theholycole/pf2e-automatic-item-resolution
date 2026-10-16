@@ -122,21 +122,31 @@ const saveSentence = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/
 // (A delivery trait with a plain save, no affliction — Sneezing Powder, inhaled — is one too.)
 const useSave = (plan, text) => plan?.resolution?.kind === "save" && ["use", "passive"].includes(plan.trigger?.event) && plan.resolution.check?.against?.dc === "fixed"
     && (!plan.item?.delivery || !plan.resolution.afflictionHandoff) && plan.item?.category !== "snare" && !/\bsnare\b/i.test(plan.source?.name ?? "") && !TRIGGERED.test(saveSentence(text));
-export const isUseSave = (plan, text = "") => useSave(plan, text) && !LATER.test(text);
+// (Set off by a creature attacking its user while it lasts — Oil of Repulsion's "For 1 minute after you apply this oil to
+// armor, any creature that hits you with a melee Strike must attempt …", Vermin Repellent Agent's "… when attempting to attack
+// you": a card kept open for the item's time, used each time.)
+export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|Strikes|damages|grapples|swallows) you\b|\bwhen attempting to attack you\b/i;
+// (The drinker's own save: Truth Potion's "Upon drinking the potion, attempt a @Check[will|dc:19] save", Matsuki's Medicinal
+// Wine's "When you drink a dose of this wine you must succeed at a @Check…", Energy Toxin Bottle's "You drink from the bottle
+// and must succeed at a @Check…".)
+const OWN_SAVE = /^(?:Upon (?:drinking|consuming|eating|imbibing)[^,]*,\s*(?:you )?attempt an? @Check|When you (?:drink|consume|eat|imbibe)[^,.]*?,? you must (?:succeed at|attempt) an? @Check)|\bYou (?:drink|consume|eat|imbibe)\b[^.]*? and must (?:succeed at|attempt) an? @Check/;
+export const isOwnSave = (plan, text = "") => useSave(plan, text) && String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).some((sentence) => OWN_SAVE.test(sentence.replace(/^(?:Activate\b[^.]*?\)\s*|Effect\s+)/, "")));
+export const isUseSave = (plan, text = "") => useSave(plan, text) && !LATER.test(text) && !ATTACKER.test(text);
 // One for later (a breath potion's "grants you the Energy Breath action for 1 hour"; not an aura): the same card, kept
 // open until the drinker uses it — then the presser targets the creatures and presses it.
-export const isLaterSave = (plan, text = "") => useSave(plan, text) && LATER.test(text) && !/\baura\b/i.test(text);
+export const isLaterSave = (plan, text = "") => useSave(plan, text) && ((LATER.test(text) && !/\baura\b/i.test(text)) || ATTACKER.test(text));
 
 export const AREA_WORDS = (area) => (area?.value ? `the creatures in its ${area.value}-foot ${area.type}` : "the creature it targets");
 
 // One used again for the item's time ("After you use Energy Breath, you can't do so again for 1d4 rounds", Roaring
 // Potion's "Frequency once every 1d4 rounds"): its later card stays open until then (Frost Breath's one exhale doesn't).
 const AGAIN = /\bcan't (?:do so|use (?:it|this|that)(?: [\w' -]+?)?) again for\b|\bFrequency once (?:per|every)\b/i;
-export const repeatsLater = (text = "") => AGAIN.test(text);
+export const repeatsLater = (text = "") => AGAIN.test(text) || ATTACKER.test(text);
 
 // later: kept for an action the item gives; repeat and until (world time in seconds): used again until then.
-export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null }) {
-    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), results: [] };
+// own: the drinker's own save (no targets: the user's own token); attacker: set off by a creature attacking the user.
+export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null, own = false, attacker = false }) {
+    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: true } : {}), results: [] };
 }
 
 // After a use: still open for a repeatable later card within its time, else done.
@@ -152,11 +162,15 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const checked = state.plan?.resolution?.check?.roll === "skill";
     const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
     const again = state.repeat ? ` It can be used again${state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : ""} until its time is up, after each recharge.` : "";
-    const hint = !open ? "" : state.later
+    const hint = !open ? "" : state.own
+        ? `<p class="aar-hint">${escape(state.user.name)}'s own save (${escape(saveText(state.plan))}).</p>`
+        : state.attacker
+        ? `<p class="aar-hint">Each time a creature attacks ${escape(state.user.name)} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
+        : state.later
         ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : checked ? "A check at" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.own ? "Roll the save" : state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     const notes = open && (state.plan?.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     // (A damage to pick — Necklace of Fireballs' bead: a picker.)
     const pick = open && canApply && (state.plan?.damageChoices?.length ?? 0) > 1

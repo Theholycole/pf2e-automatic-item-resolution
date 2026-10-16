@@ -383,9 +383,9 @@
    "fortune": 20,
    "zone": 86,
    "expose": 89,
-   "later": 54,
+   "later": 59,
    "action": 8,
-   "save": 108,
+   "save": 103,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -395,8 +395,8 @@
    "other": {
     "cast": 11,
     "none": 167,
-    "later": 8,
-    "save": 71,
+    "later": 12,
+    "save": 67,
     "item": 227,
     "zone": 9,
     "fortune": 7,
@@ -456,7 +456,7 @@
    "oil": {
     "item": 46,
     "none": 15,
-    "save": 1,
+    "later": 1,
     "cast": 2,
     "counteract": 2
    },
@@ -6528,7 +6528,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": "later"
   },
   {
    "name": "Merciful Charm",
@@ -6662,7 +6662,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": "later"
   },
   {
    "name": "Gift of the Poisoned Heart",
@@ -9380,7 +9380,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": "later"
   },
   {
    "name": "Kirin Echo Chime",
@@ -16260,7 +16260,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": "later"
   },
   {
    "name": "Leaden Weight",
@@ -23291,7 +23291,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": "save"
+   "live": "later"
   },
   {
    "name": "Wand of Noisome Acid (6th-Rank)",

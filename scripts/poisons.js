@@ -3,7 +3,7 @@
 // card on the target (the ability module's api.live.postCard, the affliction
 // handed to Pseudo Afflictions as for monster venom); a critical miss wastes it.
 
-import { MODULE_KEY, afterExposure, createExposureCard, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, repeatsLater, saveText } from "../src/live/poison-card.js";
+import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, repeatsLater, saveText } from "../src/live/poison-card.js";
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
 import { ABILITY_ID, FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
@@ -81,7 +81,7 @@ export async function postExposureCard({ message, plan, used, actor, token, late
     const repeat = later && repeatsLater(text);
     const time = repeat ? itemDuration(text) : null;
     const until = time ? game.time.worldTime + time.value * (SECONDS[time.unit] ?? 3600) : null;
-    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until });
+    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until, own: isOwnSave(plan, text), attacker: ATTACKER.test(text) });
     return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
@@ -97,8 +97,10 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         await message.update({ content: exposureCardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
         throw new Error(`${state.item.name}'s time is up.`);
     }
-    const tokens = (await Promise.all((Array.isArray(targets) ? targets : []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
-    if (!tokens.length) throw new Error("Target the creatures first.");
+    // (The drinker's own save: its user's own token.)
+    const chosen = state.own ? [state.user.tokenUuid].filter(Boolean) : Array.isArray(targets) ? targets : [];
+    const tokens = (await Promise.all(chosen.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
+    if (!tokens.length) throw new Error(state.own ? `${state.user.name} has no token here.` : "Target the creatures first.");
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
     const sourceToken = state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null;
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;

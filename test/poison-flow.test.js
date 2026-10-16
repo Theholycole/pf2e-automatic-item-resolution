@@ -201,3 +201,27 @@ test("a snare goes to the ability module's zones (startZone, once); without them
     assert.match(foundry.messages.at(-1).content, /Set the snare in a square within reach/);
 });
 
+
+test("the drinker's own save rolls for its user, no targets; a save set off by attackers stays open for the item's time", async () => {
+    const { isOwnSave, ATTACKER } = await import("../src/live/poison-card.js");
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { plainText } = await import("../src/compiler/rows.js");
+    const truth = source("Truth Potion");
+    assert.equal(isOwnSave(compileItem(truth), plainText(truth.system.description.value)), true);
+    const item = foundry.giveItem(rogue, truth);
+    const data = item.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: rogue.id }, actor: rogue, token: rogue.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    assert.match(card.content, /Rogue(?:'|&#39;)s own save/);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [], userId: "player" });
+    await settle();
+    assert.deepEqual(foundry.posted.slice(before)[0].tokens.map((token) => token.name), ["Rogue"]);
+    // Oil of Repulsion: "any creature that hits you with a melee Strike must attempt …" — the later card, kept open.
+    const oil = source("Oil of Repulsion");
+    assert.equal(ATTACKER.test(plainText(oil.system.description.value)), true);
+    const { routeOf } = await import("../src/live/route.js");
+    assert.equal(routeOf(compileItem(oil), plainText(oil.system.description.value)), "later");
+});
