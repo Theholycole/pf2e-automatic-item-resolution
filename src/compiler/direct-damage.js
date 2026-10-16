@@ -31,8 +31,8 @@ const ROW_START = /^(?:On a|Even on|Success|Failure|Critical)\b/;
 const STATS = /^Hardness\b.*\bHP\b/;
 
 // The text (plain, from the activation's Effect on) → { formula, type, category, effects, modifiers, notes } or null.
-// A save only for others ("All the target's allies within 20 feet take 1d8 electricity damage with a basic Reflex save",
-// Shei Long's Blade): not this card's, a note beside the target's outright damage.
+// A save only for others (the target's allies nearby take damage with a basic save, Shei Long's Blade): not this card's,
+// a note beside the target's outright damage.
 const OTHERS_SAVE = /^(?:(?:All|Each|Every|Any) (?:of )?(?:the target['’]s |its |other )?(?:allies|creatures|enemies|foes)\b|Creatures (?:who|that) (?:critically )?(?:fail|succeed))/i;
 const savedForTarget = (body) => body.split(/(?<=[.!?])\s+(?=[A-Z])/).some((sentence) => SAVED.test(sentence) && !OTHERS_SAVE.test(sentence.trim()));
 

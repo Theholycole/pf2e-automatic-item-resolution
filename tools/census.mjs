@@ -142,7 +142,8 @@ const gapCounts = tally(ours.flatMap((row) => (row.gaps ?? []).map((what) => ({ 
 
 const report = {
     generated: new Date().toISOString().slice(0, 10),
-    system: packsDirectory,
+    // (Home-relative: the report is committed.)
+    system: process.env.HOME && packsDirectory.startsWith(process.env.HOME) ? `~${packsDirectory.slice(process.env.HOME.length)}` : packsDirectory,
     totals: {
         consumables: consumables.length,
         spellModule: rows.length - ours.length,

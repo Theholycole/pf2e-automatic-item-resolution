@@ -42,7 +42,7 @@ test("the reading: which roll is rolled twice, from the text or its trigger, and
     assert.match(tear.notes.join(" "), /Off-Guard/);
     // Not a fortune for its user: another creature's worse roll, or a damage roll.
     assert.equal(readRollTwice("Effect The caster must roll the spell attack roll twice and take the worse result."), null);
-    assert.equal(readRollTwice("Trigger You successfully Strike a creature; Effect Roll the damage of the triggering Strike twice and take the higher result."), null);
+    assert.equal(readRollTwice("Trigger Your Strike hits; Effect Roll your damage for that Strike twice and use the higher result."), null);
     assert.equal(readRollTwice(plainText(source("Grinning Pugwampi").system.description.value)), null);
 });
 

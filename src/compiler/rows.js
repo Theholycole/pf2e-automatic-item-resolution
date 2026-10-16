@@ -283,7 +283,7 @@ function modifiersOf(sentences, duration, used = new Set()) {
 const RESIST_TYPES = new Set(["acid", "bludgeoning", "cold", "electricity", "fire", "force", "mental", "piercing", "poison", "slashing", "sonic", "spirit", "vitality", "void", "bleed", "holy", "unholy", "physical", "energy"]);
 function resistancesOf(sentences, duration, used = new Set()) {
     const found = [];
-    // ("you gain resistance 5 to fire", "that creature gains 2 resistance to acid damage", "resistance 2 to splash damage and area damage".)
+    // ("you gain resistance 5 to fire", "that creature gains 3 resistance to acid", "resistance 3 to area damage and splash damage".)
     const pattern = /\b(?:you (?:gain|get|have)|(?:that|the) creature (?:gains|has)) (?:resistance (\d+)|(\d+) resistance) to ((?:all|[a-z]+)(?: damage)?(?:(?:,|, and| and) [a-z]+(?: damage)?)*)(?: damage)?(?=[.;]|,? (?:but|and)\b| for\b| until\b|$)/gi;
     for (const [index, whole] of sentences.entries()) {
         const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "").replace(/^\s*(?:Additionally|In addition|Also),\s*/i, "");
@@ -295,7 +295,7 @@ function resistancesOf(sentences, duration, used = new Set()) {
             // (Splash and area damage: PF2e's splash-damage and area-damage.)
             const types = words.length === 1 && words[0] === "all" ? ["all-damage"] : words.map((word) => (word === "splash" || word === "area" ? `${word}-damage` : word));
             if (!types.every((type) => type === "all-damage" || type === "splash-damage" || type === "area-damage" || RESIST_TYPES.has(type))) continue;
-            // (A sentence that says more after it — "… and take no fall damage" — stays a note too, unless that's read.)
+            // (A sentence that says more after it — "… and ignore difficult terrain" — stays a note too, unless that's read.)
             const more = /^,? (?:and|but)\b/i.test(own.slice(match.index + match[0].length));
             if (!more) used.add(index);
             for (const type of types) found.push({ type, value: Number(match[1] ?? match[2]), duration: durationIn(own, duration) });

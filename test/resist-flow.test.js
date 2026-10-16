@@ -38,8 +38,8 @@ test("the reading: its user's resistance for the item's time, beside its row; wh
     // "you gain resistance 5 to all damage" → all-damage; "you have resistance 10 to electricity".
     assert.deepEqual(ownRow(text("<p>For 1 minute, you gain resistance 5 to all damage.</p>")).resistances.map((entry) => entry.type), ["all-damage"]);
     assert.deepEqual(ownRow(text("<p>For 10 minutes, you have resistance 10 to electricity.</p>")).resistances.map((entry) => [entry.type, entry.value]), [["electricity", 10]]);
-    // A sentence that says more after it stays a note: "… and take no fall damage for 24 hours".
-    const more = ownRow(text("<p>You gain resistance 8 to bludgeoning damage and take no fall damage for 24 hours.</p>"));
+    // A sentence that says more after it stays a note: "… and ignore difficult terrain for 1 hour".
+    const more = ownRow(text("<p>You gain resistance 4 to bludgeoning damage and ignore difficult terrain for 1 hour.</p>"));
     assert.deepEqual([more.resistances.length, more.unread.length], [1, 1]);
     // Not one: with exceptions, a type to choose, against one hit, or another's.
     for (const html of ["You gain resistance 20 to all damage except force damage for 1 minute.", "For 1 hour, you gain resistance 5 to the chosen damage type.", "You gain resistance 5 to physical damage against the triggering attack.", "For 1 minute, you and all allies in the area gain resistance 10 to spirit damage."]) {
@@ -147,7 +147,7 @@ test("more resistance and bonus wordings: number first on the creature it's smea
     const row = (html) => ownRow(text(`<p>${html}</p>`));
     const smeared = row("When smeared over a creature, that creature gains 3 resistance to acid damage for 1 minute.");
     assert.deepEqual(smeared.resistances.map((entry) => [entry.type, entry.value, entry.duration.value]), [["acid", 3, 1]]);
-    assert.deepEqual(row("After eating it, you gain resistance 2 to splash damage and area damage for 1 minute.").resistances.map((entry) => entry.type), ["splash-damage", "area-damage"]);
+    assert.deepEqual(row("After eating it, you gain resistance 3 to area damage and splash damage for 10 minutes.").resistances.map((entry) => entry.type), ["area-damage", "splash-damage"]);
     // (PF2e's own Effects read "a +1 status bonus against emotion and mental effects" as saves.)
     assert.deepEqual(row("For 1 hour, you gain a +1 status bonus against fear effects.").modifiers.map((modifier) => [modifier.selector, modifier.predicate]), [["saving-throw", ["item:trait:fear"]]]);
     assert.deepEqual(row("You gain a +2 item bonus to Acrobatics checks to Escape, Squeeze, or Tumble Through for 1 hour.").modifiers[0].predicate, [{ or: ["action:escape", "action:squeeze", "action:tumble-through"] }]);

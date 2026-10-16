@@ -18,7 +18,7 @@ const ROLL_TWICE = /(?:^|[.;]\s+|\bEffect\s+|,\s+)(?:(?:When you activate (?:it|
 // The roll a phrase names, or the trigger's: { selector, predicate } or null.
 function rollOf(phrase, trigger) {
     const said = `${phrase ?? ""}`.toLowerCase().trim();
-    // (A damage or healing roll — "Roll the damage of the triggering Strike twice" — isn't a check PF2e's RollTwice takes.)
+    // (A damage or healing roll rolled twice isn't a check PF2e's RollTwice takes.)
     if (/\b(?:damage|healing|hit points)\b/.test(said)) return null;
     const from = (text) => {
         const lower = String(text ?? "").toLowerCase();

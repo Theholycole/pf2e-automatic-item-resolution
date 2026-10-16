@@ -274,6 +274,6 @@ test("a push on the Strike's hit: the core's forced movement, away from its user
     assert.equal(routeOf(battering.plan), "strike");
     assert.deepEqual(battering.plan.resolution.outcomes.success.forcedMovement, { kind: "push", distance: 5 });
     const { hitRiders } = await import("../src/compiler/bombs.js");
-    assert.deepEqual(hitRiders("On a critical hit, the target is also knocked back 10 feet.").criticalSuccess.forcedMovement, { kind: "push", distance: 10 });
+    assert.deepEqual(hitRiders("On a critical hit, the creature is knocked back 10 feet.").criticalSuccess.forcedMovement, { kind: "push", distance: 10 });
     assert.equal(hitRiders("If you hit and deal damage, you also reposition the creature 5 feet.").success.forcedMovement, undefined);
 });

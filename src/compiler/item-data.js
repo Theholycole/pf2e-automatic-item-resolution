@@ -1,7 +1,7 @@
-// An item's own data in its text, filled in before it's read (Magic+'s dragonbreath weapons: "@Damage[((@item.system.runes.striking
-// + 1) * 2)d6[force]] damage with a @Check[reflex|dc:23] save", and "The save DC increases to 27 if the dragonbreath weapon
-// has a +2 potency rune, or to 35 with a +3 potency rune"): its runes and level as numbers, simple arithmetic in a dice
-// count worked out, the DC its potency rune gives. The text read is then the item's as it is. Pure.
+// An item's own data in its text, filled in before it's read (Magic+'s dragonbreath weapons: a damage formula built on
+// @item.system.runes.striking with a @Check save, and a save DC that rises with the weapon's potency rune): its runes and
+// level as numbers, simple arithmetic in a dice count worked out, the DC its potency rune gives. The text read is then the
+// item's as it is. Pure.
 
 const PATHS = {
     "@item.system.runes.striking": (item) => Number(item?.system?.runes?.striking) || 0,
@@ -31,7 +31,7 @@ export function withItemData(html, item) {
         return count === null ? whole : `${count}d${faces}`;
     });
     text = basicDamageSaves(text);
-    // ("The save DC increases to 27 if … a +2 potency rune, or to 35 with a +3 potency rune": the DC for its rune.)
+    // (A higher save DC with a +2 potency rune, another with a +3: the DC for its rune.)
     const raised = /\bThe save DC increases to (\d+) if [^.]*?\+(\d) potency rune(?:, or to (\d+) with a \+(\d) potency rune)?/i.exec(text);
     if (raised) {
         const potency = Number(item?.system?.runes?.potency) || 0;
