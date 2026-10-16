@@ -937,6 +937,27 @@ export const cases = {
         return { check: check.id };
     },
 
+    // Potion of Fire Retaliation (Lesser): its card stays open for the minute; each press sends the ability module's no-save
+    // card with 1d4 fire damage at the creature that touched the drinker.
+    async retaliation(scene) {
+        const { actor: drinker } = await creature(scene, "Retaliator", { x: 10, y: 15 });
+        const { token: foeToken } = await creature(scene, "Toucher", { x: 11, y: 15, alliance: "opposition" });
+        const potion = await give(drinker, "Potion of Fire Retaliation (Lesser)");
+        let since = Date.now();
+        await potion.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the retaliation card" });
+        for (let time = 0; time < 2; time++) {
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+            const damage = await messageAfter(since, abilitySaveCard, { what: "the ability module's no-save card" });
+            const components = damage.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage?.components ?? [];
+            assert(components.some((component) => component.formula === "1d4" && component.type === "fire"), `1d4 fire (${JSON.stringify(components)})`);
+        }
+        const state = game.messages.get(card.id).getFlag(NS, "card");
+        assert(state.status === "open" && state.uses === 2, `still open, used twice (${state.status}, ${state.uses})`);
+        return { uses: state.uses };
+    },
+
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
     // targeted.
     async alliesEffect(scene) {
