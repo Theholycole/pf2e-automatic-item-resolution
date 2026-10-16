@@ -32,6 +32,7 @@ import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { verifyEffectRules } from "../src/compiler/verify-effect.js";
 import { isUnloadedSpellgun, restoreUnloaded } from "./generic-items.js";
+import { strikeWithRunes } from "./rune-strikes.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -39,7 +40,7 @@ let compile = null;
 // The last dose's item, kept as PF2e deletes it (its Use message can arrive after): uuid → { data, actor }.
 const deleted = new Map();
 
-export function setUpLivePlay({ compileItem, compileActivations = null, claims = null }) {
+export function setUpLivePlay({ compileItem, compileActivations = null, claims = null, runeRiders = null }) {
     compile = compileItem;
     setUpActivations({ compileActivations, postCardFor });
     Hooks.on("deleteItem", (item) => {
@@ -59,6 +60,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         cardForBomb(message, { claims }).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
         strikeWithPoison(message).catch((error) => console.error(`${MODULE_ID} | poisoned Strike`, error));
         strikeWithRider(message).catch((error) => console.error(`${MODULE_ID} | readied Strike`, error));
+        // (A weapon's property runes on a critical hit: scripts/rune-strikes.js.)
+        strikeWithRunes(message, runeRiders).catch((error) => console.error(`${MODULE_ID} | rune riders`, error));
         fortuneRolled(message).catch((error) => console.error(`${MODULE_ID} | roll twice`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {

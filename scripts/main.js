@@ -6,6 +6,7 @@
 import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { etchedRuneActivations, runeIndex } from "../src/compiler/runes.js";
+import { etchedCritRiders } from "../src/compiler/rune-strikes.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
@@ -65,7 +66,8 @@ Hooks.once("ready", async () => {
         console.warn(`${MODULE_ID} | PF2e's runes couldn't be indexed.`, error);
     }
     // (An item's own activations, then those of the runes etched onto it.)
-    setUpLivePlay({ compileItem: compile, compileActivations: (item) => [...compileActivations(dataOf(item), options()), ...etchedRuneActivations(dataOf(item), runes, options())], claims: (item) => claims(dataOf(item)) });
+    // (And a weapon's property runes on a critical hit: src/compiler/rune-strikes.js.)
+    setUpLivePlay({ compileItem: compile, compileActivations: (item) => [...compileActivations(dataOf(item), options()), ...etchedRuneActivations(dataOf(item), runes, options())], claims: (item) => claims(dataOf(item)), runeRiders: (weapon) => etchedCritRiders(dataOf(weapon), runes) });
     const module = game.modules.get(MODULE_ID);
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)

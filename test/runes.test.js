@@ -73,3 +73,41 @@ test("the runes' reactions read: Vorpal's death, Hauling's push, Ouroboros Flail
     const absorb = plans("Energy-Absorbing")[0].plan;
     assert.deepEqual([routeOf(absorb), absorb.damageChoices.map((choice) => choice.formula)], ["save", ["2d6[acid]", "2d6[cold]", "2d6[electricity]", "2d6[fire]"]]);
 });
+
+test("the runes on a critical hit: their saves and conditions read, for the creatures they're for", async () => {
+    const { runeCritRiders, riderFits } = await import("../src/compiler/rune-strikes.js");
+    const ridersOf = (name) => runeCritRiders(equipment.find((doc) => doc.name === name));
+    const row = (rider, degree) => rider.plan.resolution.outcomes[degree];
+    const [thundering] = ridersOf("Thundering");
+    assert.deepEqual([thundering.plan.resolution.check.statistic, thundering.plan.resolution.check.against.value, row(thundering, "failure").effects.map((effect) => [effect.slug, effect.duration?.value, effect.duration?.unit]), row(thundering, "criticalFailure").effects[0].duration.unit], ["fortitude", 24, [["deafened", 1, "minutes"]], "hours"]);
+    assert.deepEqual(row(ridersOf("Frost")[0], "failure").effects.map((effect) => [effect.slug, effect.value]), [["slowed", 1]]);
+    assert.deepEqual(row(ridersOf("Brilliant")[0], "failure").effects.map((effect) => effect.slug), ["blinded"], "a save link without the word");
+    const [impactful] = ridersOf("Impactful");
+    assert.deepEqual([impactful.optional, row(impactful, "failure").forcedMovement.distance], [true, 5]);
+    // No save: the card with no roll.
+    const [crushing] = ridersOf("Crushing");
+    assert.deepEqual([crushing.plan.resolution.check.roll, row(crushing, "success").effects.map((effect) => [effect.slug, effect.value])], ["automatic", [["clumsy", 1], ["enfeebled", 1]]]);
+    assert.deepEqual(row(ridersOf("Flickering")[0], "success").effects.map((effect) => [effect.slug, effect.duration?.value]), [["dazzled", 1]]);
+    // Only for some creatures: the undead, a bleeding target, one already stupefied.
+    const [vitalizing] = ridersOf("Vitalizing");
+    assert.deepEqual([riderFits(vitalizing, { traits: ["undead"] }), riderFits(vitalizing, { traits: ["humanoid"] })], [true, false]);
+    assert.deepEqual([riderFits(ridersOf("Bloodthirsty")[0], { persistent: ["bleed"] }), riderFits(ridersOf("Bloodthirsty")[0], { persistent: ["fire"] })], [true, false]);
+    const nightmare = ridersOf("Nightmare");
+    assert.deepEqual(nightmare.map((rider) => [rider.only?.condition ?? null, row(rider, "success").effects.map((effect) => effect.slug).join()]), [[null, "stupefied"], ["stupefied", "frightened"]]);
+});
+
+test("live: a critical hit with a Thundering, Crushing weapon posts both cards at the creature hit; a hit posts none", async () => {
+    const foe = foundry.makeActor({ id: "rune-foe", name: "Foe" });
+    foundry.place(foe, 100, 26000);
+    const sword = foundry.giveItem(knight, { _id: "runeSword0000001", type: "weapon", name: "Thundering Crushing Club", img: null, system: { description: { value: "" }, damage: { dice: 1, die: "d6", damageType: "bludgeoning" }, runes: { potency: 2, striking: 1, property: ["thundering", "crushing"] } } });
+    const strike = async (outcome) => {
+        const before = foundry.posted.length;
+        await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome, target: { token: foe.token.uuid } }, origin: { uuid: sword.uuid, type: "weapon" } } }, speaker: { actor: knight.id }, actor: knight, token: knight.token.document }));
+        await settle();
+        return foundry.posted.slice(before);
+    };
+    assert.deepEqual(await strike("success"), []);
+    const cards = await strike("criticalSuccess");
+    assert.deepEqual(cards.map((card) => [card.item.name, card.plan.resolution.check.roll ?? card.plan.resolution.kind, card.cause]), [["Thundering Crushing Club (Thundering)", "save", "critical hit"], ["Thundering Crushing Club (Crushing)", "automatic", "critical hit"]]);
+    assert.equal(cards[0].tokens[0].name ?? cards[0].tokens[0].actor?.name, "Foe");
+});
