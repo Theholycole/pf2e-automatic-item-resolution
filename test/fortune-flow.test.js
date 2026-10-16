@@ -191,3 +191,13 @@ test("\"the triggering check\" alone: the trigger's rolls and actions (Mask of A
     const souls = compileActivations(source("Whisperer of Souls")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
     assert.deepEqual(souls.bonus.modifiers, [{ selector: "occultism", type: "item", value: 4, predicate: [{ or: ["action:decipher-writing", "action:identify-magic", "action:learn-a-spell", "action:recall-knowledge"] }] }]);
 });
+
+test("resistance to the triggering damage in other words: \"20 resistance to all damage\", \"reduce the damage taken by 10\"", () => {
+    const scapular = compileActivations(source("Scapular of Shields")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.deepEqual(scapular.bonus.resistance, { type: "all-damage", value: 20 });
+    assert.deepEqual(compileActivations(source("Mantle of Amazing Health"))[0].plan.bonus.resistance, { type: "all-damage", value: 10 });
+    // "When you activate it, …, and you reduce the damage from the triggering critical hit by 10": its limit a note.
+    const keepsake = compileItem(source("Indomitable Keepsake"));
+    assert.deepEqual(keepsake.bonus.resistance, { type: "all-damage", value: 10 });
+    assert.match(keepsake.notes.join(" "), /only reduces the additional damage from a critical hit/);
+});

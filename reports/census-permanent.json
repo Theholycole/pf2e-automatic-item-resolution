@@ -8,10 +8,10 @@
   "results": {
    "resolves": 662,
    "builtin:cast-spell": 469,
-   "none": 847,
+   "none": 845,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
-   "builtin:readied-bonus": 23,
+   "builtin:readied-bonus": 25,
    "note-only": 277,
    "builtin:reroll": 22,
    "partial": 56,
@@ -26,9 +26,9 @@
    "save": 327,
    "cast": 469,
    "item": 589,
-   "none": 1045,
+   "none": 1043,
    "focus": 45,
-   "fortune": 33,
+   "fortune": 35,
    "reroll": 22,
    "strike": 39,
    "zone": 9,
@@ -44,10 +44,10 @@
    "results": {
     "resolves": 400,
     "builtin:cast-spell": 340,
-    "none": 543,
+    "none": 541,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
-    "builtin:readied-bonus": 16,
+    "builtin:readied-bonus": 18,
     "note-only": 179,
     "builtin:reroll": 14,
     "partial": 16,
@@ -12388,9 +12388,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Sinister Knight",
@@ -17261,9 +17261,9 @@
    "time": "reaction",
    "frequency": "once per round",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Mantle of Amazing Health",

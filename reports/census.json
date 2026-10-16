@@ -14,9 +14,9 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 280,
+   "none": 277,
    "resolves": 698,
-   "builtin:readied-bonus": 15,
+   "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 256,
    "builtin:item-action": 8,
@@ -88,14 +88,14 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 59,
+    "none": 56,
     "note-only": 13,
     "builtin:item-action": 7,
     "resolves": 47,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
-    "builtin:readied-bonus": 6,
+    "builtin:readied-bonus": 9,
     "partial": 2,
     "builtin:roll-twice": 2
    },
@@ -349,7 +349,7 @@
    "count": 156,
    "resolves": 55,
    "gaps": 0,
-   "none": 49
+   "none": 46
   },
   "counteract": {
    "count": 79,
@@ -379,9 +379,9 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 365,
+   "none": 362,
    "item": 659,
-   "fortune": 17,
+   "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 54,
@@ -415,13 +415,13 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 70,
+    "none": 67,
     "item": 49,
     "action": 7,
     "reroll": 1,
     "cast": 9,
     "save": 11,
-    "fortune": 8,
+    "fortune": 11,
     "strike": 1
    },
    "elixir": {
@@ -479,7 +479,7 @@
    }
   },
   "noCard": {
-   "no-plan": 280,
+   "no-plan": 277,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -13792,7 +13792,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Deteriorating Dust",
@@ -21897,7 +21899,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Captivating Score",
@@ -24396,7 +24400,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Wand of Mental Purification (4th-rank)",

@@ -116,16 +116,25 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
 const DAMAGE_TYPES = ["acid", "bludgeoning", "cold", "electricity", "fire", "force", "mental", "piercing", "poison", "slashing", "sonic", "spirit", "vitality", "void", "holy", "unholy", "physical"];
 const TYPE_WORDS = String.raw`(?:${DAMAGE_TYPES.join("|")})`;
 const RESIST_MOMENT = new RegExp(String.raw`\b(?:you gain|granting you|gaining) resistance (\d+) (?:(?:to|against) (?:(${TYPE_WORDS}(?:(?:,|, and| and| or|, or) ${TYPE_WORDS})*) )?damage (?:against|for|from) (?:the triggering|that) (?:attack|Strike|hit|damage)(?: only)?|to the triggering damage(?: type)?|against that (${TYPE_WORDS}) damage)\b`, "i");
+// ("You gain 20 resistance to all damage against the triggering damage", Scapular of Shields; "you reduce the damage taken by
+// 10", Mantle of Amazing Health; "you reduce the damage from the triggering critical hit by 10", Indomitable Keepsake.)
+const RESIST_NUMBER_FIRST = new RegExp(String.raw`\byou (?:gain|have) (\d+) resistance to (?:all|(${TYPE_WORDS}(?:(?:,|, and| and| or|, or) ${TYPE_WORDS})*)) damage (?:against|for|from) (?:the triggering|that) (?:attack|Strike|hit|damage)\b`, "i");
+const REDUCE_DAMAGE = /\b(?:you )?reduce the damage (?:(?:you )?take|taken|(?:from|of) the triggering [\w ]+?) by (\d+)\b/i;
 function readResistMoment(sentences, triggered) {
     if (!triggered) return null;
     for (const [index, sentence] of sentences.entries()) {
-        const match = RESIST_MOMENT.exec(sentence);
-        if (!match || /^(?:If|While|When|Whenever)\b/.test(sentence) || sentences.some((other) => LASTING.test(other))) continue;
+        const found = RESIST_MOMENT.exec(sentence);
+        const first = found ? null : RESIST_NUMBER_FIRST.exec(sentence);
+        const reduced = found || first ? null : REDUCE_DAMAGE.exec(sentence);
+        const match = found ?? (first ? [first[0], first[1], first[2] ?? (/\ball damage\b/i.test(first[0]) ? "all" : null), null] : reduced ? [reduced[0], reduced[1], "all", null] : null);
+        if (!match || /^(?:If|While|When|Whenever)\b/.test(sentence.replace(/^When (?:it's |it is )?(?:you )?activat\w*(?: (?:it|the [\w' -]+?))?,\s*/i, "")) || sentences.some((other) => LASTING.test(other))) continue;
         // (Its types: the sentence's, else the trigger's "You take physical damage", "mental, poison, or spirit damage" — one of
-        // those, the one that hit — else all damage.)
+        // those, the one that hit — else all damage; "all" is all.)
+        if (match[2] === "all") match[2] = null;
+        const all = Boolean(first || reduced) && !match[2];
         const named = match[2] ?? match[3] ?? null;
         const fromTrigger = new RegExp(String.raw`\b(${TYPE_WORDS}(?:(?:,|, and| and| or|, or) ${TYPE_WORDS})*) (?:damage|attack)\b`, "i").exec(triggered)?.[1] ?? null;
-        const words = (named ?? fromTrigger ?? "").toLowerCase().split(/,? (?:and|or) |, /).map((word) => word.trim()).filter(Boolean);
+        const words = all ? [] : (named ?? fromTrigger ?? "").toLowerCase().split(/,? (?:and|or) |, /).map((word) => word.trim()).filter(Boolean);
         const type = !words.length ? "all-damage" : words.length === 1 ? words[0] : words;
         // (Its other rule sentences, not its flavor: "This spiky glob of magnetic liquid attaches …".)
         const notes = [`Only against what triggered it: ${sentence}`, ...sentences.filter((_, at) => at !== index).filter((other) => !/^(?:Activate|Trigger|Prerequisites?|Requirements?)\b/.test(other) && /\b(?:checks?|saves?|bonus|penalty|damage|conditions?|Strikes?|actions?|resistance|Speeds?|Hit Points)\b/i.test(other))];
