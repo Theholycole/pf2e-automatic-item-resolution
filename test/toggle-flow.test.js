@@ -47,3 +47,27 @@ test("Four-Ways Dogslicer's Gem Twist: Set has PF2e switch the item's toggle to 
     assert.deepEqual(wielder.toggled.at(-1), { domain: "all", option: "gem-twist", itemId: blade.id, value: true, suboption: "shock" });
     assert.match(card.content, /Wielder: Four-Ways Dogslicer set to/);
 });
+
+test("an activation named for one of the item's toggles: on until the end of the turn (Glacier Hammer), for the next damage roll (Screaming Pinion), or flipped (Fighter's Fork)", async () => {
+    const icicles = compileActivations(source("Glacier Hammer"))[0].plan;
+    assert.deepEqual([routeOf(icicles), icicles.until, icicles.modes[0].plan], ["toggle", "turn-end", { builtin: "roll-option", option: "grow-icicles", value: true }]);
+    assert.equal(compileActivations(source("Screaming Pinion")).find((entry) => entry.activation.name === "Transcendent Shot").plan.until, "damage");
+    const fork = compileActivations(source("Fighter's Fork"))[0].plan;
+    assert.deepEqual([fork.until, fork.modes[0].plan.value], [undefined, "flip"]);
+    assert.equal(toggleRequest(createToggleCard({ plan: fork, item: { name: "Fighter's Fork" }, user: { name: "Wielder" } }), { rules: source("Fighter's Fork").system.rules }).value, undefined, "PF2e flips it");
+    // Live: Set switches it on and the card says when it goes off; the end of the wielder's turn switches it off.
+    const hammer = foundry.giveItem(wielder, source("Glacier Hammer"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: hammer.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "toggle");
+    assert.match(card.content, /It goes off again at the end of Wielder&#39;s turn\.|It goes off again at the end of Wielder's turn\./);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.deepEqual(wielder.toggled.at(-1), { domain: "all", option: "grow-icicles", itemId: hammer.id, value: true, suboption: null });
+    assert.deepEqual(wielder.getFlag(MODULE_ID, `optionUntil.${hammer.id}`)?.until, "turn-end");
+    await foundry.call("pf2e.endTurn", { actor: wielder }, { id: "combat" });
+    await settle();
+    assert.deepEqual(wielder.toggled.at(-1), { domain: "all", option: "grow-icicles", itemId: hammer.id, value: false, suboption: null });
+    assert.equal(wielder.getFlag(MODULE_ID, `optionUntil.${hammer.id}`), undefined);
+});

@@ -29,6 +29,7 @@ import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { saveOrPlan } from "./save-or.js";
 import { spellstrikePlan } from "./spellstrike.js";
 import { withoutFlavor } from "./flavor.js";
+import { optionPlan } from "./option-on.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 
@@ -203,6 +204,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = saveOrPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
         if (!plan) plan = pf2eRulesPlan(item, base, plainText(activation.html));
+        // (One of the item's own PF2e toggles, named as the activation is, switched on for a while: src/compiler/option-on.js.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = optionPlan(item, activation, base) ?? plan;
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, ...kept } = plan;

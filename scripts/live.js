@@ -26,7 +26,7 @@ import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
-import { applyToggleCard, postToggleCard } from "./toggle.js";
+import { applyToggleCard, postToggleCard, togglesAfterDamage, togglesAtTurnEnd } from "./toggle.js";
 import { activate, indexOf, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
@@ -66,6 +66,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         // (A spell cast into Spellstrike Ammunition, at the creature its Strike hits: scripts/spellstrike.js.)
         strikeWithSpellstrike(message).catch((error) => console.error(`${MODULE_ID} | spellstrike`, error));
         fortuneRolled(message).catch((error) => console.error(`${MODULE_ID} | roll twice`, error));
+        // (An item's toggle on until its next damage roll: scripts/toggle.js.)
+        togglesAfterDamage(message).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
         hideCovered(message, html);
@@ -74,6 +76,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
     // (A Focus Point an activation gave, lost at the end of the turn if unspent: scripts/focus.js.)
     Hooks.on("pf2e.endTurn", (combatant, encounter) => {
         loseUnspentFocus(combatant, encounter).catch((error) => console.error(`${MODULE_ID} | unspent Focus Point`, error));
+        // (An item's toggle on until the end of the turn: scripts/toggle.js.)
+        togglesAtTurnEnd(combatant).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
     });
     game.socket.on(SOCKET, (data) => {
         if (isActiveGM()) onRequest(data).catch((error) => console.error(`${MODULE_ID} | ${data?.action}`, error));

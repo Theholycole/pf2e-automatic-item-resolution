@@ -8,15 +8,15 @@
   "results": {
    "resolves": 706,
    "builtin:cast-spell": 469,
-   "none": 736,
+   "none": 734,
    "partial": 93,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
-   "note-only": 264,
+   "note-only": 261,
    "builtin:reroll": 22,
    "builtin:pf2e-rules": 24,
-   "builtin:modes": 26,
+   "builtin:modes": 31,
    "builtin:zone": 9,
    "builtin:item-action": 16,
    "builtin:roll-twice": 10,
@@ -27,13 +27,13 @@
   "live": {
    "save": 367,
    "cast": 469,
-   "item": 603,
-   "none": 932,
+   "item": 600,
+   "none": 930,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
    "strike": 53,
-   "toggle": 26,
+   "toggle": 31,
    "zone": 9,
    "action": 16,
    "spellstrike": 9,
@@ -66,12 +66,12 @@
    "activations": 460,
    "results": {
     "resolves": 146,
-    "none": 122,
+    "none": 120,
     "partial": 28,
-    "note-only": 40,
+    "note-only": 37,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
-    "builtin:modes": 7,
+    "builtin:modes": 12,
     "builtin:item-action": 8,
     "builtin:no-effect": 12,
     "builtin:readied-bonus": 5,
@@ -6914,9 +6914,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:modes",
+   "kind": null,
+   "live": "toggle"
   },
   {
    "name": "Worldscale Shield",
@@ -9777,9 +9777,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Memory Palace",
@@ -12245,9 +12245,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Screaming Pinion",
@@ -19095,9 +19095,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:modes",
+   "kind": null,
+   "live": "toggle"
   },
   {
    "name": "Arcane Standard (Greater)",
@@ -23831,9 +23831,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:modes",
+   "kind": null,
+   "live": "toggle"
   },
   {
    "name": "Grimoire of Unknown Necessities",

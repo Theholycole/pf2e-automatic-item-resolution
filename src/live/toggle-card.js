@@ -22,15 +22,21 @@ export function createToggleCard({ plan, item, user, names = null }) {
 export function toggleRequest(state, { rules = [], itemId = null } = {}) {
     const way = state.ways[state.choice ?? 0] ?? state.ways[0];
     const rule = rules.find((entry) => entry?.key === "RollOption" && entry.option === way.option);
-    return { domain: way.domain ?? rule?.domain ?? "all", option: way.option, itemId, value: way.value ?? true, suboption: way.suboption ?? null, name: way.name };
+    // (A way that flips it — Fighter's Fork's "extend or shorten": no value, PF2e switches it.)
+    return { domain: way.domain ?? rule?.domain ?? "all", option: way.option, itemId, value: way.value === "flip" ? undefined : way.value ?? true, suboption: way.suboption ?? null, name: way.name };
 }
+
+// How long it stays on (src/compiler/option-on.js), in words for the card.
+const UNTIL_WORDS = { "turn-end": "It goes off again at the end of {user}'s turn.", damage: "It goes off again after the item's next damage roll." };
+export const untilText = (state) => (UNTIL_WORDS[state.plan?.until] ?? "").replace("{user}", state.user?.name ?? "its user");
 
 export function toggleCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const pick = open && canApply && state.ways.length > 1
         ? `<p class="aar-actions">Set to: <select data-air-field="choice">${state.ways.map((way, index) => `<option value="${index}"${index === (state.choice ?? 0) ? " selected" : ""}>${escape(way.name)}</option>`).join("")}</select></p>`
         : `<p class="aar-actions">${escape(state.ways.map((way) => way.name).join(", "))}</p>`;
-    const notes = open && (state.plan.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
+    const lasts = untilText(state);
+    const notes = open && ((state.plan.notes ?? []).length || lasts) ? `<ul class="aar-notes">${[...(state.plan.notes ?? []), ...(lasts ? [lasts] : [])].map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Set</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to set it.</p>` : "";
     return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">its toggle</span></header>${open ? pick : ""}${notes}${results}${controls}</section>`;

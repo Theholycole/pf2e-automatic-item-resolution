@@ -83,15 +83,19 @@ export function createFakeFoundry() {
             attributes: { hp: { negativeHealing: undead } },
             flags: {},
             updates: [],
+            // (Dotted keys as Foundry's: "spellstrike.<id>" nests.)
             getFlag(scope, key) {
-                return this.flags?.[scope]?.[key];
+                return key.split(".").reduce((at, part) => at?.[part], this.flags?.[scope]);
             },
             async setFlag(scope, key, value) {
-                this.flags[scope] = { ...(this.flags[scope] ?? {}), [key]: structuredClone(value) };
+                this.flags[scope] ??= {};
+                setProperty(this.flags[scope], key, structuredClone(value));
                 return this;
             },
             async unsetFlag(scope, key) {
-                if (this.flags[scope]) delete this.flags[scope][key];
+                const parts = key.split(".");
+                const parent = parts.slice(0, -1).reduce((at, part) => at?.[part], this.flags?.[scope]);
+                if (parent) delete parent[parts.at(-1)];
                 return this;
             },
             async update(changes) {
