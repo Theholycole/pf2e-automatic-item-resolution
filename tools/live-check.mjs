@@ -128,6 +128,25 @@ const optionFor = (root, input, name) => {
     return values.find((value) => value === name) ?? values.find((value) => value.startsWith(`${name} (`) && /Spells|Equipment/.test(value)) ?? null;
 };
 
+// The ability module's save or attack card: "Roll the rest", then Apply once it's ready.
+async function rollAndApply(message) {
+    let roll = null;
+    for (const stop = Date.now() + 5000; Date.now() < stop && !roll; ) {
+        roll = document.querySelector(`[data-message-id="${message.id}"] [data-aar-action="roll-all"]`);
+        if (!roll) await wait(200);
+    }
+    assert(roll, "the card's roll button");
+    roll.click();
+    let button = null;
+    for (const stop = Date.now() + 8000; Date.now() < stop && !button; ) {
+        const found = document.querySelector(`[data-message-id="${message.id}"] [data-aar-action="apply"]`);
+        if (found && !found.disabled) button = found;
+        else await wait(200);
+    }
+    assert(button, "the card's Apply button");
+    button.click();
+}
+
 export const cases = {
     // A healing potion fed to a dying ally next to the user: PF2e's own roll heals her once, Dying ends, Wounded rises.
     async potionToDyingAlly(scene) {
@@ -1783,6 +1802,105 @@ export const cases = {
         const check = card.getFlag(NS, "card").plan.resolution.check;
         assert(check.modifier === 15 && check.against.statistic === "ac", `+15 against AC (${JSON.stringify(check)})`);
         return { check };
+    },
+
+    // Stony Hag Eye: on a critical failure, a creature that's already slowed is Petrified (the core's escalate).
+    async stonyHagEye(scene) {
+        const { actor: holder } = await creature(scene, "Hag Eye Holder", { type: "character", x: 10, y: 8 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Hag Eye Target", { x: 11, y: 8, alliance: "opposition", save: -30 });
+        await foe.increaseCondition("slowed");
+        const eye = await give(holder, "Stony Hag Eye");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(eye.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the eye's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the save card" }));
+        await until(() => foe.hasCondition("petrified"), "petrified (it was already slowed)", { timeout: 10000 });
+        return { conditions: foe.itemTypes.condition.map((condition) => condition.slug) };
+    },
+
+    // Lion's Armor's Roar of the Pride: Demoralize at each enemy, Fleeing for 1 round added to the critical success.
+    async lionsArmor(scene) {
+        const { actor: wearer } = await creature(scene, "Lion Wearer", { type: "character", x: 10, y: 10 });
+        const { actor: one, token: oneToken } = await creature(scene, "Lion Foe One", { x: 11, y: 10, alliance: "opposition", save: -30 });
+        const { actor: two, token: twoToken } = await creature(scene, "Lion Foe Two", { x: 11, y: 11, alliance: "opposition", save: -30 });
+        const armor = await give(wearer, "Lion's Armor");
+        await armor.update({ "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(armor.uuid, 0);
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the armor's card" });
+        assert(/Target each enemy within 30 feet/.test(card.content), "who it's for, on the card");
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [oneToken.uuid, twoToken.uuid] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "applied", { timeout: 15000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        await until(() => one.hasCondition("fleeing") && two.hasCondition("fleeing"), `fleeing on both (${JSON.stringify(results)})`);
+        return { results, frightened: [one, two].map((foe) => foe.getCondition("frightened")?.value ?? 0) };
+    },
+
+    // Lover's Knot with Battle Medicine: its owner's feat read, 2d6+7 healing.
+    async loversKnot(scene) {
+        const { actor: medic } = await creature(scene, "Knot Medic", { type: "character", x: 12, y: 10 });
+        await give(medic, "Battle Medicine", "pf2e.feats-srd");
+        await medic.update({ "system.attributes.hp.value": 1 });
+        const knot = await give(medic, "Lover's Knot");
+        const since = Date.now();
+        await knot.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the knot's card" });
+        const formula = card.getFlag(NS, "card").plan.resolution.outcomes.success.effects[0]?.formula;
+        assert(formula === "2d6+7", `2d6+7 with Battle Medicine (${formula})`);
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        // (A lab character has no class, so no Hit Points to regain: the roll is what's checked.)
+        await until(() => (game.messages.get(card.id).getFlag(NS, "card").results ?? []).some((line) => /^Rolled 2d6 \+ 7 = \d+/.test(line)), "2d6 + 7 rolled");
+        return { formula, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Explosive Missive: the damage type its writer picks, on the save card.
+    async explosiveMissive(scene) {
+        const { actor: writer } = await creature(scene, "Missive Writer", { type: "character", x: 14, y: 10 });
+        const { token: foeToken } = await creature(scene, "Missive Target", { x: 15, y: 10, alliance: "opposition" });
+        const missive = await give(writer, "Explosive Missive");
+        let since = Date.now();
+        await missive.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the missive's card" });
+        assert(/data-air-field="damageChoice"/.test(card.content), "the type picker");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], damageChoice: 3 });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        const formula = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage.components[0].formula;
+        assert(/\[fire\]/.test(formula), `fire picked (${formula})`);
+        return { formula };
+    },
+
+    // Safeguarding's Adaptive Aegis: resistance 5 to the type its trigger names, picked on the card.
+    async safeguardingPick(scene) {
+        const { actor: wearer } = await creature(scene, "Aegis Wearer", { type: "character", x: 16, y: 10 });
+        const armor = await give(wearer, "Chain Mail");
+        await armor.update({ "system.runes.potency": 1, "system.runes.property": ["safeguarding"], "system.equipped.inSlot": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(armor.uuid, "rune:safeguarding:0");
+        const card = await messageAfter(since, itemCard("item"), { what: "the aegis card" });
+        assert(/data-air-field="resistType"/.test(card.content), "the type picker");
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, resistType: 2 });
+        await until(() => (wearer.attributes.resistances ?? []).some((entry) => entry.type === "spirit" && entry.value === 5), "spirit resistance 5");
+        return { resistances: (wearer.attributes.resistances ?? []).map((entry) => [entry.type, entry.value]) };
+    },
+
+    // Blindpepper Bomb (thrown to explode, no Strike): a critical failure's Blinded, Sickened 1 and Dazzled.
+    async blindpepperBomb(scene) {
+        const { actor: thrower } = await creature(scene, "Pepper Thrower", { type: "character", x: 18, y: 10 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Pepper Target", { x: 19, y: 10, alliance: "opposition", save: -30 });
+        const bomb = await give(thrower, "Blindpepper Bomb");
+        let since = Date.now();
+        await bomb.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the bomb's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the save card" }));
+        // (PF2e's blinded overrides dazzled, which is there but inactive: the conditions held, not the active ones.)
+        const held = (slug) => foe.itemTypes.condition.some((condition) => condition.slug === slug);
+        await until(() => held("blinded") && held("sickened") && held("dazzled"), "blinded, sickened and dazzled", { timeout: 10000 });
+        return { conditions: foe.itemTypes.condition.map((condition) => condition.slug) };
     }
 };
 
