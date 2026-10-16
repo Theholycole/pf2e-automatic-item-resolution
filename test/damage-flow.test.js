@@ -103,3 +103,21 @@ test("a check with the item's own modifier: PF2e's basic Grapple rows at +13, an
     // Without the ability module's compiled actions, no Grapple plan.
     assert.equal(compileActivations(source("Tentacle Cannon")).find((entry) => entry.plan?.ownCheck), undefined);
 });
+
+test("Necklace of Fireballs: a bead's basic Reflex save in a 20-foot burst, the bead picked on the card", async () => {
+    const [bead] = compileActivations(source("Necklace of Fireballs III"));
+    assert.equal(routeOf(bead.plan), "save");
+    assert.deepEqual([bead.plan.resolution.check.statistic, bead.plan.resolution.check.basic, bead.plan.resolution.check.against.value, bead.plan.targeting.area], ["reflex", true, 27, { type: "burst", value: 20 }]);
+    assert.deepEqual(bead.plan.damageChoices.map((choice) => choice.formula), ["10d6[fire]", "8d6[fire]", "6d6[fire]"]);
+    const necklace = foundry.giveItem(warden, source("Necklace of Fireballs III"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: necklace.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.match(card.content, /data-air-field="damageChoice"/);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [brute.token.uuid], damageChoice: 2, userId: "player" });
+    await settle();
+    const [posted] = foundry.posted.slice(before);
+    assert.equal(posted.plan.resolution.sharedDamage.components[0].formula, "6d6[fire]");
+});

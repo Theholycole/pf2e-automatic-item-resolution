@@ -16,6 +16,7 @@ import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { directDamageOver, directDamagePlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
+import { beadsPlan } from "./beads.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
@@ -145,6 +146,8 @@ export function compileActivations(item, options = {}) {
         // (A condition it lowers on its user, src/compiler/reduce.js: Coin of Comfort; a plan of its own when it's all.)
         const reduce = readReductions(plainText(activation.html));
         if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(activation.html)));
+        // (A bead that detonates as a Fireball of the dice it says, src/compiler/beads.js: Necklace of Fireballs.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = beadsPlan(item?.system?.description?.value, base) ?? plan;
         // (A flat check to end persistent damage at once, src/compiler/recovery.js: Ring of Torag.)
         const recovery = readRecovery(plainText(activation.html));
         if (recovery && !plan) plan = recoveryPlan(base, recoveryNotes(plainText(activation.html)));

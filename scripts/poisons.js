@@ -5,6 +5,7 @@
 
 import { MODULE_KEY, afterExposure, createExposureCard, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, repeatsLater, saveText } from "../src/live/poison-card.js";
 import { itemDuration, plainText } from "../src/compiler/rows.js";
+import { withDamageChoice } from "../src/compiler/beads.js";
 import { ABILITY_ID, FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
@@ -85,9 +86,11 @@ export async function postExposureCard({ message, plan, used, actor, token, late
 }
 
 // targets: the token uuids the presser had targeted.
-export async function applyExposureCard(message, { targets = [] } = {}) {
-    const state = stateOf(message);
+export async function applyExposureCard(message, { targets = [], damageChoice = null } = {}) {
+    let state = stateOf(message);
     if (!state || state.kind !== "expose" || state.status !== "open") return null;
+    // (The damage picked: Necklace of Fireballs' bead.)
+    if (Number.isInteger(damageChoice) && state.plan?.damageChoices?.[damageChoice]) state = { ...state, damageChoice };
     // (Its time is up: the card closes.)
     if (state.repeat && Number.isFinite(state.until) && game.time.worldTime >= state.until) {
         const over = { ...state, status: "applied", results: [...state.results, `${state.item.name}'s time is up.`] };
@@ -102,7 +105,7 @@ export async function applyExposureCard(message, { targets = [] } = {}) {
     const names = tokens.map((token) => token.name ?? token.actor?.name).join(", ");
     const lines = [];
     if (postCard && actor) {
-        await postCard({ plan: state.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
+        await postCard({ plan: withDamageChoice(state.plan, state.damageChoice ?? 0), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
     const next = afterExposure(state, lines, game.time.worldTime);

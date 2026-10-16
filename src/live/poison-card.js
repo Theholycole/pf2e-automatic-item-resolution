@@ -158,6 +158,10 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     const notes = open && (state.plan?.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${notes}${results}${controls}</section>`;
+    // (A damage to pick — Necklace of Fireballs' bead: a picker.)
+    const pick = open && canApply && (state.plan?.damageChoices?.length ?? 0) > 1
+        ? `<p class="aar-actions">Damage: <select data-air-field="damageChoice">${state.plan.damageChoices.map((choice, index) => `<option value="${index}"${index === (state.damageChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
+        : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${pick}${notes}${results}${controls}</section>`;
 }
 

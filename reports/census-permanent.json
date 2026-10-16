@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 668,
+   "resolves": 675,
    "builtin:cast-spell": 469,
-   "none": 828,
+   "none": 821,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -23,10 +23,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 327,
+   "save": 334,
    "cast": 469,
    "item": 599,
-   "none": 1000,
+   "none": 993,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -43,9 +43,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 405,
+    "resolves": 412,
     "builtin:cast-spell": 340,
-    "none": 530,
+    "none": 523,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 21,
@@ -3281,9 +3281,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Magnetic Bola",
@@ -6394,9 +6394,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Entertainer's Cincture (Greater)",
@@ -8616,9 +8616,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Ring of Spell Turning",
@@ -16855,9 +16855,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Storm Flash",
@@ -16998,9 +16998,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Testudo Shield",
@@ -20353,9 +20353,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Broken Tusk Pendant (Greater)",
@@ -22432,9 +22432,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Meteor Shot (Major)",
