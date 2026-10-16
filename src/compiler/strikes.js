@@ -144,9 +144,12 @@ export function compileStrike(item, base) {
     return strikePlan({ base, item, strike, riders, save, extras });
 }
 
-function strikePlan({ base, item, strike, riders, save, extras }) {
+function strikePlan({ base, item, strike, riders, save, extras: read }) {
     // (A Strike with no die size of its own, "an extra die of weapon damage", from an item that isn't the weapon: not read.)
-    if (extras.dice.some((entry) => !entry.dieSize)) return null;
+    if (read.dice.some((entry) => !entry.dieSize)) return null;
+    // (With a save on the hit, its own sentence and its degrees are the save card's, not notes: "It takes 4d10 void damage with a
+    // DC 25 Fortitude saving throw", "Critical Success The foe is unaffected.")
+    const extras = save ? { ...read, notes: read.notes.filter((note) => !/^(?:Critical Success|Success|Failure|Critical Failure)\b/.test(note) && !/@Check\[(?:fortitude|reflex|will)\b/i.test(note)) } : read;
     const extra = extras.read
         ? {
               damage: extras.dice,
