@@ -15,12 +15,12 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 277,
-   "resolves": 698,
+   "resolves": 701,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 251,
+   "note-only": 244,
    "builtin:item-action": 8,
-   "partial": 28,
+   "partial": 32,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "builtin:reroll": 2,
@@ -35,10 +35,10 @@
     "builtin:cast-spell": 11,
     "none": 139,
     "resolves": 202,
-    "note-only": 116,
+    "note-only": 113,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 7,
+    "partial": 10,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -64,13 +64,13 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 102,
-    "note-only": 38,
+    "resolves": 105,
+    "note-only": 34,
     "none": 18,
     "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
     "builtin:counteract": 2,
-    "partial": 4
+    "partial": 5
    },
    "mechanisms": {
     "linked-effect": 55,
@@ -370,7 +370,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 564,
+   "resolves": 567,
    "gaps": 0,
    "none": 22
   }
@@ -1213,8 +1213,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "This thick grease can be applied to up to 5 willing creatures to protect them from dangerous energies.",
+    "When applied, it grants resistance 10 to the attuned energy type and reduces the DC for the flat check to end persistent damage of the attuned energy type by 3."
+   ],
    "live": "item"
   },
   {
@@ -4216,8 +4220,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "This thick grease can be applied to up to 5 willing creatures to protect them from dangerous energies.",
+    "When applied, it grants resistance 15 to the attuned energy type and reduces the DC for the flat check to end persistent damage of the attuned energy type by 5."
+   ],
    "live": "item"
   },
   {
@@ -11269,8 +11277,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The potion starts by granting you resistance against this type of damage.",
+    "Each time you take damage from one of these listed energy types other than the one you currently resist, your skin mutates, causing you to lose the energy resistance previously granted by this potion and gain resistance to the type of energy by which you were most recently damaged, and the potion's duration decreases by 10 minutes.",
+    "The resistance shifts only after you take the damage, so it doesn't apply to the first instance of damage"
+   ],
    "live": "item"
   },
   {
@@ -11633,8 +11646,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "This thick grease can be applied to up to 5 willing creatures to protect them from dangerous energies.",
+    "When applied, it grants resistance 5 to the attuned energy type and reduces the DC for the flat check to end persistent damage of the attuned energy type by 2."
+   ],
    "live": "item"
   },
   {
@@ -15496,8 +15513,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -19896,8 +19914,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -29667,8 +29686,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

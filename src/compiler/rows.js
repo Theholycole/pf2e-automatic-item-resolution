@@ -295,7 +295,32 @@ function resistancesOf(sentences, duration, used = new Set()) {
             for (const type of types) found.push({ type, value: Number(match[1]), duration: durationIn(sentence, duration) });
         }
     }
-    return found;
+    return found.length ? found : chosenResistance(sentences, duration, used);
+}
+
+// Resistance to a type it makes its user choose, of those the text lists: Potion of Resistance's "grants 5 resistance against a
+// single damage type for 1 hour. Each potion … defend against acid, cold, electricity, fire, or sonic damage", Mutagenic
+// Renovator's "resistance 5 to one type of energy damage. … choose either acid, cold, electricity, fire, or sonic damage",
+// Energy Ointment's "attuned to one of four energy types (acid, cold, electricity, or fire) … resistance 5 to the attuned energy
+// type", Chromatic Robe's "Choose acid, cold, electricity, or fire. The robe grants resistance 15 to the chosen damage type" →
+// [{ type: null, choose: [types], value, duration }]: the item card's picker. Not without the list.
+const CHOSEN = /\bgrants? (?:you )?(?:(\d+) resistance against a single damage type|resistance (\d+) to (?:one type of energy damage|the attuned energy type|the chosen damage type))/i;
+const TYPE_LIST = /\b(?:defend against |choose (?:either )?|energy types \(|Choose )((?:acid|cold|electricity|fire|sonic|force|vitality|void)(?:(?:,|, or| or) (?:acid|cold|electricity|fire|sonic|force|vitality|void))+)/i;
+function chosenResistance(sentences, duration, used) {
+    const list = TYPE_LIST.exec(sentences.join(" "));
+    if (!list) return [];
+    const choose = list[1].toLowerCase().split(/,? or |, /).map((word) => word.trim()).filter(Boolean);
+    for (const [index, sentence] of sentences.entries()) {
+        const match = CHOSEN.exec(sentence);
+        if (!match || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation)\b/i.test(sentence)) continue;
+        // (Anything else in it — Energy Ointment's flat check DC — stays a note.)
+        if (!/\band (?:reduces|lowers|you)\b/i.test(sentence.slice(match.index + match[0].length))) used.add(index);
+        // (The list's own sentence, "Each potion … is created to defend against acid, cold, … damage", is read with it.)
+        const listed = sentences.findIndex((other) => TYPE_LIST.test(other));
+        if (listed >= 0 && listed !== index && !/\b(?:Each time|whenever|instead|but no)\b/i.test(sentences[listed])) used.add(listed);
+        return [{ type: null, choose, value: Number(match[1] ?? match[2]), duration: durationIn(sentence, duration) }];
+    }
+    return [];
 }
 
 // A Speed of a new kind for its user, for the item's time: "You gain a fly Speed equal to your Speed until the end of your
@@ -366,7 +391,7 @@ const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.[\w-]*effects\.Item\./;
 
 // A sentence that says something a creature or its rolls get or lose (not flavor, not how long it lasts).
 // (Whole words: "AC" isn't the start of "academic", "checks" of "checkered".)
-const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es)?|immun\w*|Speeds?|damage[ds]?|Hit Points|DC \d+|Mythic Points?|breathe|breathing|checks?|saves?|saving throws?|attack(?:s|ed|er|ers)?|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b/i;
+const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es)?|immun\w*|Speeds?|damage[ds]?|Hit Points|DC \d+|Mythic Points?|breathe|breathing|up to (?:\d+|two|three|four|five|six) willing creatures|checks?|saves?|saving throws?|attack(?:s|ed|er|ers)?|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b/i;
 
 // The row for the item's drinker or user: { effects, modifiers, unread } with something in it, or null. unread: the
 // sentences that say something mechanical it didn't read (they go on a note, and the plan counts as partial).

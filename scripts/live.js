@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, senseEffectSource, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, senseEffectSource, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, startInitiative, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -170,7 +170,7 @@ function choicesOf(state, root) {
     if (state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
-    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked) };
+    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0) };
 }
 
 const APPLY = {
@@ -256,7 +256,7 @@ async function onRequest(data) {
         : state.kind === "cast" ? { drinker: data.drinker, choice: Number.isInteger(data.choice) ? data.choice : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null }
-        : { drinker: data.drinker, ceremony: Boolean(data.ceremony) };
+        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
@@ -267,9 +267,11 @@ async function onRequest(data) {
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
 
-async function applyCard(message, { drinker = null, ceremony = false } = {}) {
+async function applyCard(message, { drinker = null, ceremony = false, resistType = null } = {}) {
     let state = stateOf(message);
     if (!state || state.status !== "open") return null;
+    // (Its resistance's type, as picked.)
+    if (Number.isInteger(resistType) && (state.plan.item?.resist ?? []).some((entry) => entry.choose?.[resistType])) state = { ...state, resistType };
     // (A tea's Tea Ceremony, as ticked.)
     if (state.ceremony !== null && state.ceremony !== undefined) state = { ...state, ceremony: Boolean(ceremony) };
     const core = game.modules.get(CORE_ID)?.api;
@@ -319,8 +321,9 @@ async function applyCard(message, { drinker = null, ceremony = false } = {}) {
     }
     // (Its resistance: Armorskin Robes' 5 to slashing and piercing — an Effect with PF2e's Resistance rules.)
     if (state.plan.item?.resist?.length && target.actor) {
-        await target.actor.createEmbeddedDocuments("Item", [resistanceEffectSource(state.plan.item.resist, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
-        lines.push(`${recipient.name}: ${resistanceText(state.plan.item.resist)}`);
+        const resist = chosenResistances(state.plan.item.resist, state.resistType ?? 0);
+        await target.actor.createEmbeddedDocuments("Item", [resistanceEffectSource(resist, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        lines.push(`${recipient.name}: ${resistanceText(resist)}`);
     }
     // (A Speed of a new kind: Umbral Wings' fly Speed — an Effect with PF2e's BaseSpeed rule.)
     for (const speed of state.plan.item?.speeds ?? []) {

@@ -145,7 +145,8 @@ export function effectSource(template, { application = null, item = {}, user = {
 const typeWords = (type) => (type === "all-damage" ? "all damage" : type.replace(/-/g, " "));
 export function resistanceText(resist) {
     const byValue = new Map();
-    for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), typeWords(entry.type)]);
+    // (A type to choose: "acid, cold or fire (one, chosen)".)
+    for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), entry.type ? typeWords(entry.type) : `${entry.choose.slice(0, -1).join(", ")} or ${entry.choose.at(-1)} (one, chosen)`]);
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration;
     return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${duration ? ` for ${timeText(duration)}` : ""}`;
 }
@@ -188,6 +189,9 @@ function ownEffectSource({ name, img, words, rules, duration, flag, item, user, 
     };
 }
 
+// Its resistances with a chosen type filled in (index into the entry's choose list, the first by default).
+export const chosenResistances = (resist, index = 0) => resist.map((entry) => (entry.choose?.length ? { ...entry, type: entry.choose[Number.isInteger(index) && entry.choose[index] ? index : 0], choose: undefined } : entry));
+
 // Its resistance's Effect: PF2e's Resistance rules. moduleId: the flag's scope.
 export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration ?? null;
@@ -222,8 +226,13 @@ export function cardHTML(state, { canApply = false } = {}) {
     const ceremony = state.ceremony === null || state.ceremony === undefined ? ""
         : open && canApply ? `<p class="aar-actions"><label><input type="checkbox" data-air-field="ceremony"${state.ceremony ? " checked" : ""}> ${escape(ceremonyWords)}</label></p>`
             : state.ceremony ? `<p class="aar-actions">${escape(ceremonyWords)}</p>` : "";
+    // (Its resistance's type, when the item makes its user choose: a picker.)
+    const choose = (state.plan?.item?.resist ?? []).find((entry) => entry.choose?.length)?.choose ?? null;
+    const resistPick = !choose ? ""
+        : open && canApply ? `<p class="aar-actions">Resistance to: <select data-air-field="resistType">${choose.map((type, index) => `<option value="${index}"${index === (state.resistType ?? 0) ? " selected" : ""}>${escape(type)}</option>`).join("")}</select></p>`
+            : Number.isInteger(state.resistType) ? `<p class="aar-actions">Resistance to: ${escape(choose[state.resistType] ?? choose[0])}</p>` : "";
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${previewList}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${previewList}${results}${controls}</section>`;
 }

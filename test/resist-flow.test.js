@@ -109,3 +109,33 @@ test("a vision: PF2e's Sense rule, its own end on the note", () => {
     assert.equal(senseText(scope.plan.item.senses[0]), "Greater darkvision until the start of the next turn");
     assert.deepEqual(senseEffectSource(goggles.plan.item.senses[0], { item: { name: "Obsidian Goggles (Greater): Darkvision" } }).system.rules, [{ key: "Sense", selector: "darkvision" }]);
 });
+
+test("resistance to a type it makes its user choose: the card's picker, the type picked on Apply", async () => {
+    // "grants 5 resistance against a single damage type for 1 hour. Each potion … defend against acid, cold, electricity, fire, or sonic damage".
+    const potion = compileItem(source("Potion of Resistance (Lesser)"));
+    assert.deepEqual(potion.item.resist.map((entry) => [entry.type, entry.choose, entry.value, entry.duration.value]), [[null, ["acid", "cold", "electricity", "fire", "sonic"], 5, 1]]);
+    assert.equal(potion.partial, undefined, "the list's own sentence is read with it");
+    // "attuned to one of four energy types (acid, cold, electricity, or fire) … resistance 5 to the attuned energy type and reduces the DC …":
+    // the DC on the note; "applied to up to 5 willing creatures", the card's drinker choice.
+    const ointment = compileItem(source("Energy Ointment (Lesser)"));
+    assert.deepEqual([ointment.item.resist[0].choose, ointment.item.recipient, ointment.partial], [["acid", "cold", "electricity", "fire"], "drinker", true]);
+    // "Choose acid, cold, electricity, or fire. The robe grants resistance 15 to the chosen damage type": until its next use.
+    const [robe] = compileActivations(source("Chromatic Robe"));
+    assert.deepEqual([robe.plan.item.resist[0].value, robe.plan.item.resist[0].duration], [15, null]);
+    // Apply: the type picked.
+    const card = await (async () => {
+        const item = foundry.giveItem(monk, source("Potion of Resistance (Lesser)"));
+        const data = item.toObject();
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: monk.id }, actor: monk, token: monk.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        return foundry.messages[foundry.messages.indexOf(message) + 1];
+    })();
+    assert.match(card.content, /data-air-field="resistType"/);
+    assert.match(card.content, /Resistance 5 to acid, cold, electricity, fire or sonic \(one, chosen\) for 1 hour/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: 0, resistType: 3, userId: "player" });
+    await settle();
+    const effect = monk.itemTypes.effect.filter((entry) => entry.flags?.[MODULE_ID]?.resist).at(-1);
+    assert.deepEqual(effect.system.rules, [{ key: "Resistance", type: "fire", value: 5 }]);
+    assert.match(card.content, /Monk: Resistance 5 to fire for 1 hour/);
+});
