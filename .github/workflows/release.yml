@@ -23,7 +23,9 @@ jobs:
           mv module.json.tmp module.json
 
       - name: Zip the module
-        run: zip -r module.zip module.json LICENSE README.md scripts src styles
+        run: |
+          zip -r module.zip module.json LICENSE README.md scripts src styles packs \
+            -x 'packs/_source/*' 'packs/**/LOCK' 'packs/**/LOG' 'packs/**/LOG.old'
 
       - name: Attach module.json and module.zip to the release
         env:

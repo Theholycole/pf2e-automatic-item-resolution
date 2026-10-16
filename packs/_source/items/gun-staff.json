@@ -1,0 +1,106 @@
+{
+  "_id": "airGunStaffGen01",
+  "name": "Gun Staff",
+  "type": "weapon",
+  "img": "systems/pf2e/icons/equipment/weapons/flintlock-musket.webp",
+  "system": {
+    "ammo": {
+      "baseType": "rounds-flintlock-musket",
+      "builtIn": false,
+      "capacity": 1
+    },
+    "baseItem": "flintlock-musket",
+    "bonus": {
+      "value": 0
+    },
+    "bonusDamage": {
+      "value": 0
+    },
+    "bulk": {
+      "value": 1
+    },
+    "category": "simple",
+    "containerId": null,
+    "damage": {
+      "damageType": "piercing",
+      "dice": 1,
+      "die": "d6"
+    },
+    "description": {
+      "value": "<p>A firearm and a staff made one, as a musket staff is. When it first goes into a creature's inventory, it asks the one who put it there for the two-handed firearm it's built on and the staff merged with it, and becomes a +1 firearm of that kind (or the staff's runes, if it has better) with a Reinforced Stock permanently attached, whose runes apply to Strikes with the stock as well. It holds the staff's spells and is prepared following the same rules as a staff. Its level is the staff's, one higher for the +1, or the firearm's if that's higher, and its price the staff's, the firearm's and the +1's.</p>\n<p>Until it's merged, it's a flintlock musket.</p>",
+      "gm": ""
+    },
+    "expend": 1,
+    "grade": null,
+    "group": "firearm",
+    "hardness": 0,
+    "hp": {
+      "max": 0,
+      "value": 0
+    },
+    "level": {
+      "value": 0
+    },
+    "material": {
+      "grade": null,
+      "type": null
+    },
+    "price": {
+      "value": {
+        "gp": 5
+      }
+    },
+    "publication": {
+      "license": "ORC",
+      "remaster": true,
+      "title": "PF2e Automatic Item Resolution"
+    },
+    "quantity": 1,
+    "range": 70,
+    "reload": {
+      "value": "1"
+    },
+    "rules": [],
+    "runes": {
+      "potency": 0,
+      "property": [],
+      "striking": 0
+    },
+    "size": "med",
+    "splashDamage": {
+      "value": 0
+    },
+    "traits": {
+      "rarity": "uncommon",
+      "value": [
+        "concussive",
+        "fatal-d10"
+      ]
+    },
+    "usage": {
+      "value": "held-in-two-hands"
+    },
+    "slug": "gun-staff",
+    "_migration": {
+      "version": 0.959,
+      "previous": null
+    },
+    "equipped": {
+      "carryType": "worn"
+    }
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "pf2e-automatic-item-resolution": {
+      "gunStaff": {
+        "firearm": null,
+        "staff": null
+      }
+    }
+  }
+}

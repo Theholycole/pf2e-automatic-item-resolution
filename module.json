@@ -67,5 +67,19 @@
   "styles": [
     "styles/item.css"
   ],
-  "socket": true
+  "socket": true,
+  "packs": [
+    {
+      "name": "items",
+      "label": "PF2e Automatic Item Resolution",
+      "path": "packs/items",
+      "type": "Item",
+      "system": "pf2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    }
+  ]
 }

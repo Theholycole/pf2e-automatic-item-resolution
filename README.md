@@ -4,7 +4,7 @@ A Foundry VTT module (id `pf2e-automatic-item-resolution`) that automates Pathfi
 
 Spell-casting items (scrolls, wands, staves, catalysts, spellhearts) belong to PF2e Automatic Spell Resolution.
 
-**Status (2026-10-16): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 43 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
+**Status (2026-10-16): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 43 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** The module's own items (the Generic Spellgun and the Gun Staff) were live-checked there on 2026-10-16. See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
 
 ## Install
 
@@ -54,6 +54,23 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
 
 The census counts what's played: 1,132 of the 1,486 consumables this module handles get a card, and 1,617 of the 2,593 activations of permanent items. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module. A module's own linked Effect is applied only when its rules match the item's text; otherwise the creature gets a note of the text.
 
+## The module's own items
+
+The module's compendium, **PF2e Automatic Item Resolution**, has two items that ask what they are when they first go into a creature's inventory. The picker opens for whoever put the item there. Close it without picking, and the item's sheet has a button to open it again.
+
+- **Generic Spellgun:** pick a spell (type its name, or drop one onto the picker) and a rank, from the spell's own rank to 10. It becomes that spell's spellgun, such as "Fireball Spellgun (Rank 5)", at a scroll's level and price for that rank. It works like PF2e's spellguns: pick your spell attack or firearm attack on the card, target one creature within its 30-foot range increment, and the ability module's card rolls the attack against its AC.
+  - A hit affects the target as if it had failed its save against the spell, and a critical hit as if it had critically failed. Fear's hit leaves it frightened 2; Fear's critical hit, frightened 3 and fleeing.
+  - For a spell that makes a spell attack (Ray of Frost), the spell's own hit and critical hit apply.
+  - A spell with damage and neither of those (Force Barrage) deals its damage on a hit and double on a critical hit; the rest of it is the GM's.
+  - The spell is heightened to the rank picked, and an area spell affects only the one target. A spell a hit can't carry, such as Banishment, isn't loaded: pick another.
+  - Used before a spell is loaded, it comes back to the inventory, and nothing happens.
+- **Gun Staff:** pick a two-handed firearm (Arquebus, Flintlock Musket, Blunderbuss…) and a staff. It becomes one item like PF2e's Musket Staff of Force, for example "Arquebus Staff of Fire":
+  - a +1 firearm of that kind (or the staff's runes, if they're better);
+  - a Reinforced Stock attached, with its own Strike and the gun staff's runes, which follow any rune etched later;
+  - the staff's spells, which PF2e Dailies prepares as for any staff.
+  - Its level is the staff's (one higher for the added +1) or the firearm's, whichever is higher. Its price is the staff's, the firearm's and the +1's, so a Staff of Fire with a Flintlock Musket is 4th level and 100 gp, as the Musket Staff is.
+  - One-handed firearms aren't offered. Until it's merged, it's a flintlock musket.
+
 ## Requirements
 
 Foundry 14 with the PF2e system 8.5 or later, plus:
@@ -68,9 +85,11 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 - **The compiler** (`src/compiler/`, pure) turns an item into a plan for the core. It reads the text with the ability module's compiler and adds what the item's own data says: who drinks it, the healing PF2e rolls, its linked PF2e Effect or a spell's Effect at the item's rank, its own row, or a note.
   - `bombs.js`: splash, riders and saves.
   - `snares.js`: zones.
+  - `generic-spellgun.js`: a spell's plan on a spellgun's hit, heightened to its rank; `gun-staff.js`: a firearm and a staff merged.
   - `permanent.js`: activations; `focus.js`: Focus Points; `strikes.js`: items used by Striking; `rerolls.js`: rerolls; `fortune.js`: rolling twice; `cast-words.js`: casts in words; `strike-damage.js`: what a Strike adds; `item-actions.js`: skill actions; `counteract.js`: counteracts; `tea.js`: the Tea Ceremony.
-- **Live play** (`scripts/`): `live.js` (the Use hook and the item card), `bombs.js`, `poisons.js`, `casts.js`, `zones.js`, `activations.js`, `focus.js`, `strikes.js`, `rerolls.js`, `fortune.js`, `item-actions.js`, `counteract.js`, `toggle.js`, and `foundry.js` (shared helpers). Pure card state and HTML live in `src/live/`, and `src/live/route.js` decides which card an item gets.
+- **Live play** (`scripts/`): `live.js` (the Use hook and the item card), `bombs.js`, `poisons.js`, `casts.js`, `zones.js`, `activations.js`, `focus.js`, `strikes.js`, `rerolls.js`, `fortune.js`, `item-actions.js`, `counteract.js`, `toggle.js`, `generic-items.js` (the module's own items' pickers), and `foundry.js` (shared helpers). Pure card state and HTML live in `src/live/`, and `src/live/route.js` decides which card an item gets.
 - **Mechanics you can give more items:** [docs/mechanics.md](docs/mechanics.md) lists the mechanics a few items needed (a rune lent to a weapon, a choice of PF2e actions, a condition until the end of a rage, all of an item's linked Effects at once…), which items use them, and the table in each where another item can be added.
+- **The compendium** is built from `packs/_source/items/*.json` with `node tools/build-packs.mjs`, using Foundry's own LevelDB library, with no world using the pack.
 - **Tests:** `node --test --test-isolation=none test/*.test.js`. The live layer runs against a stand-in for Foundry (`test/support/fake-foundry.mjs`) with PF2e's real items and Effects from its packs.
 - **Live check** in the disposable world pftest: `tools/live-check.mjs`, imported in the browser. It uses its own "PFTEST ITEM" data and cleans up only that.
 - **Censuses:** `node tools/census.mjs` (consumables) and `node tools/census-permanent.mjs` (activations) read the PF2e system's packs straight from LevelDB, with no Foundry login. `node tools/census-third-party.mjs` reads the installed modules' packs the same way; it commits counts only and keeps the rows in `.cache/`, which git ignores.

@@ -1,0 +1,82 @@
+{
+  "_id": "airSpellgunGen01",
+  "name": "Generic Spellgun",
+  "type": "consumable",
+  "img": "systems/pf2e/icons/equipment/consumables/spellguns/reapers-spellgun.webp",
+  "system": {
+    "baseItem": null,
+    "bulk": {
+      "value": 0.1
+    },
+    "category": "other",
+    "containerId": null,
+    "damage": null,
+    "description": {
+      "value": "<p><strong>Activate</strong> <span class=\"action-glyph\">2</span> Strike</p>\n<hr />\n<p>A spellgun with no spell in it yet. When it first goes into a creature's inventory, it asks the one who put it there which spell it mimics and at what rank, and becomes a spellgun of that spell: its name, level and price are a spellgun's of that rank (a scroll's price).</p>\n<p>You Activate a loaded spellgun by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's AC. It has a range increment of 30 feet. A hit affects only the target, as if it had failed its save against the spell (for a spell that makes a spell attack, as the spell's hit does), and a critical hit as if it had critically failed (the spell's critical hit); a spell with neither deals its damage on a hit and double on a critical hit. Then the spellgun crumbles.</p>",
+      "gm": ""
+    },
+    "hardness": 0,
+    "hp": {
+      "max": 0,
+      "value": 0
+    },
+    "level": {
+      "value": 1
+    },
+    "material": {
+      "grade": null,
+      "type": null
+    },
+    "price": {
+      "value": {
+        "gp": 4
+      }
+    },
+    "publication": {
+      "license": "ORC",
+      "remaster": true,
+      "title": "PF2e Automatic Item Resolution"
+    },
+    "quantity": 1,
+    "rules": [],
+    "size": "med",
+    "traits": {
+      "rarity": "common",
+      "value": [
+        "attack",
+        "consumable",
+        "magical",
+        "spellgun"
+      ]
+    },
+    "usage": {
+      "value": "held-in-one-hand"
+    },
+    "uses": {
+      "autoDestroy": true,
+      "max": 1,
+      "value": 1
+    },
+    "slug": "generic-spellgun",
+    "_migration": {
+      "version": 0.959,
+      "previous": null
+    },
+    "equipped": {
+      "carryType": "worn"
+    }
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "pf2e-automatic-item-resolution": {
+      "genericSpellgun": {
+        "spell": null
+      }
+    }
+  }
+}

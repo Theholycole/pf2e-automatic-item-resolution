@@ -32,6 +32,7 @@ import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
 import { withItemData } from "./item-data.js";
+import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -68,6 +69,11 @@ export { asAbility } from "./ability-shape.js";
 // module's (handlesItem).
 export function compileItem(given, options = {}) {
     if (!handlesItem(given, options)) return null;
+    // (The generic spellgun: the plan of the spell loaded into it, src/compiler/generic-spellgun.js; none until one is.)
+    if (given?.flags?.[MODULE_ID]?.[GENERIC_SPELLGUN]) {
+        const loaded = loadedPlan(given);
+        return loaded ? { ...loaded, source: { ...loaded.source, name: given.name, slug: given.system?.slug ?? null, uuid: given.uuid ?? null, type: given.type }, item: { ...itemInfo(given), recipient: "user" } } : null;
+    }
     // (Its own data in its text first — "@item.level", a rune — and a damage-with-a-save as basic, src/compiler/item-data.js.)
     const html = withItemData(given?.system?.description?.value, given);
     const item = html === given?.system?.description?.value ? given : { ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: html } } };

@@ -30,6 +30,7 @@ import { activate, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { verifyEffectRules } from "../src/compiler/verify-effect.js";
+import { isUnloadedSpellgun, restoreUnloaded } from "./generic-items.js";
 
 let compile = null;
 // The last dose's item, kept as PF2e deletes it (its Use message can arrive after): uuid → { data, actor }.
@@ -100,6 +101,8 @@ async function cardForUse(message) {
     if (origin?.type !== "consumable" || isPostedCard(origin) || message.flags?.pf2e?.context?.type || message.flags?.[MODULE_ID]) return;
     const used = await usedItem(origin, message);
     if (!used) return;
+    // (A generic spellgun with no spell in it: back in the inventory, as nothing happened.)
+    if (isUnloadedSpellgun(used.data)) return restoreUnloaded(used, message);
     const plan = compile(used.data);
     const actor = used.actor ?? message.actor;
     if (!actor) return;

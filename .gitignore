@@ -1,3 +1,6 @@
 *.kate-swp
 node_modules/
 .cache/
+packs/**/LOCK
+packs/**/LOG
+packs/**/LOG.old

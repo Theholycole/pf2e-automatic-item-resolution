@@ -7,6 +7,7 @@ import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/c
 import { compileActivations } from "../src/compiler/permanent.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
+import { setUpGenericItems } from "./generic-items.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -47,6 +48,8 @@ Hooks.once("ready", async () => {
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spells couldn't be indexed.`, error);
     }
+    // (The generic spellgun and the gun staff ask for what they are when they first go into an inventory: scripts/generic-items.js.)
+    setUpGenericItems();
     setUpLivePlay({ compileItem: compile, compileActivations: (item) => compileActivations(dataOf(item), options()), claims: (item) => claims(dataOf(item)) });
     const module = game.modules.get(MODULE_ID);
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },

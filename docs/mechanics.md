@@ -69,6 +69,13 @@ After adding an entry, run `node --test --test-isolation=none test/*.test.js` an
   export const EXTRA_ALL_LINKS = Object.freeze(["my-talisman"]);
   ```
 
+## The module's own items: a spell on a spellgun's hit, a firearm merged with a staff
+
+These two belong to the module's own items (`packs/_source/items`), not to PF2e's, so no wording is read: each item asks for what it is when it first goes into an inventory (`scripts/generic-items.js`).
+
+- **A spell's results on a spellgun's hit** (`spellgunFromSpell` in `src/compiler/generic-spellgun.js`): the spell module's plan for the spell, heightened to a rank, moved under an attack against AC. A save spell's failure is the hit, and its critical failure the critical hit. A spell attack spell keeps its own rows. A spell with neither deals its data's damage. The plan is kept on the item, so compileItem, live play and the Combat Simulator need neither module again. Another item that holds a picked spell could use the same function: `spellgunFromSpell(spellPlan, { spell, rank })`, then `loadedUpdate(spell, rank, plan)` for its name, level, price and description.
+- **A firearm merged with a staff** (`gunStaffUpdate` in `src/compiler/gun-staff.js`): the firearm's data, the staff's spell list, traits, rules and runes (at least +1), and a Reinforced Stock attached that keeps the runes. `isBaseFirearm` holds the limit to two-handed firearms; to allow others, widen it and `firearmProblem` together.
+
 ## Read from the wording only
 
 These mechanics have no table yet. An item gets one when its text uses the same words. To give one a table, follow the pattern above, or ask me.

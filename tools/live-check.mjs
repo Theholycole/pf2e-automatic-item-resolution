@@ -90,6 +90,40 @@ async function strike(actor, weapon) {
     return { action, attack };
 }
 
+// The module's own item, from its pack source (packs/_source/items): put into the actor's inventory, as a drop from the pack does.
+async function ownItem(actor, file) {
+    const source = await (await fetch(`/modules/${NS}/packs/_source/items/${file}`, { cache: "reload" })).json();
+    delete source._id;
+    const [item] = await actor.createEmbeddedDocuments("Item", [source]);
+    return item;
+}
+
+// A DialogV2 open with that title (polls).
+async function dialogTitled(title, { timeout = 8000 } = {}) {
+    const end = Date.now() + timeout;
+    while (Date.now() < end) {
+        const app = [...foundry.applications.instances.values()].find((entry) => entry.rendered && entry.constructor.name === "DialogV2" && entry.title === title);
+        if (app) return app;
+        await wait(150);
+    }
+    throw new Error(`No "${title}" dialog within ${timeout / 1000} seconds.`);
+}
+
+async function until(test, what, { timeout = 8000 } = {}) {
+    const end = Date.now() + timeout;
+    while (Date.now() < end) {
+        if (test()) return;
+        await wait(150);
+    }
+    throw new Error(`Not ${what} within ${timeout / 1000} seconds.`);
+}
+
+// A datalist's option for a name: that name alone, else that name from PF2e's own pack.
+const optionFor = (root, input, name) => {
+    const values = [...root.querySelectorAll(`#${input.getAttribute("list")} option`)].map((option) => option.value);
+    return values.find((value) => value === name) ?? values.find((value) => value.startsWith(`${name} (`) && /Spells|Equipment/.test(value)) ?? null;
+};
+
 export const cases = {
     // A healing potion fed to a dying ally next to the user: PF2e's own roll heals her once, Dying ends, Wounded rises.
     async potionToDyingAlly(scene) {
@@ -1138,6 +1172,97 @@ export const cases = {
         if (outcome === "success" || outcome === "criticalSuccess") assert(!still, "ended on a success");
         else assert(still && still.system.persistent.dc === 15, `stays at DC 15 on a failure (${still?.system.persistent.dc})`);
         return { outcome, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // The generic spellgun: put into an inventory, it asks for its spell; Fear at rank 2 picked in its dialog, it becomes Fear
+    // Spellgun (Rank 2). Used, its card is the firearm attack against AC; a hit (AC -10) leaves the target frightened 2, or 3 on a
+    // critical hit, as Fear's failure and critical failure.
+    async genericSpellgun(scene) {
+        const { actor: gunner } = await creature(scene, "Generic Gunner", { type: "character", x: 10, y: 15 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Generic Target", { x: 13, y: 15, alliance: "opposition", ac: -10 });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const gun = await ownItem(gunner, "generic-spellgun.json");
+        const dialog = await dialogTitled(`Load ${gun.name}`);
+        const input = dialog.element.querySelector("[name=spell]");
+        input.value = optionFor(dialog.element, input, "Fear");
+        assert(input.value, "Fear is offered");
+        input.dispatchEvent(new Event("input"));
+        dialog.element.querySelector("[name=rank]").value = "2";
+        dialog.element.querySelector('button[data-action="load"]').click();
+        await until(() => gun.name === "Fear Spellgun (Rank 2)", "loaded with Fear");
+        assert(gun.system.level.value === 3 && gun.system.price.value.gp === 12, `level 3, 12 gp (${gun.system.level.value}, ${JSON.stringify(gun.system.price.value)})`);
+        const plan = game.modules.get(NS).api.compileItem(gun);
+        assert(plan?.resolution?.outcomes?.success?.effects?.[0]?.slug === "frightened" && plan.resolution.outcomes.success.effects[0].value === 2, "a hit: frightened 2");
+        let since = Date.now();
+        await gun.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the spellgun's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const firearm = choices.find((choice) => choice.kind === "firearm");
+        assert(firearm, `the firearm attack offered (${JSON.stringify(choices)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: choices.indexOf(firearm) });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        await wait(500);
+        document.querySelector(`[data-message-id="${attack.id}"] [data-aar-action="roll"]`)?.click();
+        await until(() => game.messages.get(attack.id).flags["pf2e-automatic-ability-resolution"].card.targets.every((entry) => entry.degree), "rolled");
+        const degree = game.messages.get(attack.id).flags["pf2e-automatic-ability-resolution"].card.targets[0].degree;
+        await wait(500);
+        document.querySelector(`[data-message-id="${attack.id}"] [data-aar-action="apply"]`)?.click();
+        await until(() => (foe.getCondition("frightened")?.value ?? 0) >= 2, "frightened");
+        const frightened = foe.getCondition("frightened").value;
+        assert(frightened === (degree === "criticalSuccess" ? 3 : 2), `frightened ${frightened} on a ${degree}`);
+        return { degree, frightened, fleeing: foe.hasCondition("fleeing") };
+    },
+
+    // An unloaded generic spellgun: its sheet has the button; used with no spell, it's back in the inventory and its user is told.
+    async unloadedSpellgun(scene) {
+        const { actor: gunner } = await creature(scene, "Unloaded Gunner", { type: "character", x: 10, y: 17 });
+        const gun = await ownItem(gunner, "generic-spellgun.json");
+        let dialog = await dialogTitled(`Load ${gun.name}`);
+        dialog.element.querySelector('button[data-action="later"]').click();
+        await wait(500);
+        gun.sheet.render(true);
+        await until(() => gun.sheet.rendered && (gun.sheet.element?.[0] ?? gun.sheet.element)?.querySelector?.(".air-generic-pick"), "the sheet's button");
+        await gun.sheet.close();
+        const since = Date.now();
+        const id = gun.id;
+        await gun.consume();
+        const told = await messageAfter(since, (message) => /holds no spell yet, so nothing happened/.test(message.content), { what: "the message" });
+        await until(() => gunner.items.get(id), "back in the inventory");
+        dialog = await dialogTitled(`Load ${gunner.items.get(id).name}`);
+        dialog.element.querySelector('button[data-action="later"]').click();
+        return { told: told.id, back: Boolean(gunner.items.get(id)) };
+    },
+
+    // The gun staff: put into an inventory, it asks for its firearm and staff; an Arquebus and a Staff of Fire picked, it becomes
+    // the Arquebus Staff of Fire, a +1 arquebus with a Reinforced Stock attached (its own Strike, +1 too) and the staff's spells.
+    // A striking rune etched on it is etched on the stock too.
+    async gunStaff(scene) {
+        const { actor: witch } = await creature(scene, "Gunwitch", { type: "character", x: 10, y: 19 });
+        const staff = await ownItem(witch, "gun-staff.json");
+        const dialog = await dialogTitled(`Merge ${staff.name}`);
+        for (const [name, value] of [["firearm", "Arquebus"], ["staff", "Staff of Fire"]]) {
+            const input = dialog.element.querySelector(`[name=${name}]`);
+            input.value = optionFor(dialog.element, input, value);
+            assert(input.value, `${value} is offered`);
+        }
+        assert(!optionFor(dialog.element, dialog.element.querySelector("[name=firearm]"), "Flintlock Pistol"), "no one-handed firearm offered");
+        dialog.element.querySelector('button[data-action="merge"]').click();
+        await until(() => staff.name === "Arquebus Staff of Fire", "merged");
+        assert(staff.system.runes.potency === 1 && staff.system.baseItem === "arquebus" && staff.system.usage.value === "held-in-two-hands", "a +1 arquebus, in two hands");
+        assert(staff.traits.has("staff") && staff.traits.has("magical") && staff.isMagical, "a magical staff");
+        assert(/\{Breathe Fire\}/.test(staff.system.description.value.match(/<ul>[\s\S]*?<\/ul>/g)?.at(-1) ?? ""), "the staff's spells as its last list");
+        const stock = staff.subitems.find((sub) => sub.type === "weapon");
+        assert(stock?.name === "Reinforced Stock" && stock.system.runes.potency === 1, "the Reinforced Stock, +1");
+        await staff.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        await wait(800);
+        const strikes = (witch.system.actions ?? []).map((action) => ({ name: action.item?.name, id: action.item?.id, parent: action.item?.parentItem?.id ?? null, modifier: action.totalModifier }));
+        const stockStrike = strikes.find((entry) => entry.parent === staff.id);
+        assert(stockStrike, `the stock's own Strike (${JSON.stringify(strikes)})`);
+        await staff.update({ "system.runes.striking": 1 });
+        await until(() => staff.subitems.find((sub) => sub.type === "weapon")?.system.runes.striking === 1, "the stock etched too");
+        return { strikes, level: staff.system.level.value, price: staff.system.price.value, dailies: game.modules.get("pf2e-dailies")?.active ?? false };
     }
 };
 
