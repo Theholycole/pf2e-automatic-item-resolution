@@ -317,6 +317,28 @@ function speedsOf(sentences, duration, used = new Set()) {
     return found;
 }
 
+// A vision for its user: "you gain darkvision until you deactivate it" (Obsidian Goggles), "You gain greater darkvision until
+// the beginning of your next turn" (Darkvision Scope) → [{ selector, duration }] (PF2e's Sense rule, the item card's
+// Effect). Another way it ends ("as long as you continue to look through the scope", "or the item is no longer invested by
+// you") stays on the note.
+const SENSES = { "greater darkvision": "greater-darkvision", darkvision: "darkvision", "low-light vision": "low-light-vision" };
+function sensesOf(sentences, duration, used = new Set()) {
+    const found = [];
+    const pattern = /\b(?:you (?:gain|have|get)|grants? you)(?: the)? (greater darkvision|darkvision|low-light vision)\b/gi;
+    for (const [index, sentence] of sentences.entries()) {
+        if (/^\s*(?:If|When|Whenever|While|Each time|Unless)\b/i.test(sentence) || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation|as if you had)\b/i.test(sentence)) continue;
+        for (const match of sentence.matchAll(pattern)) {
+            const selector = SENSES[match[1].toLowerCase()];
+            if (found.some((entry) => entry.selector === selector)) continue;
+            const until = UNTIL_NEXT_TURN.exec(sentence);
+            const time = until ? { mode: "fixed", value: 1, unit: "rounds", expiry: /\bend\b/i.test(until[0]) ? "turn-end" : "turn-start", anchor: "source-turn" } : /\buntil you (?:deactivate|Dismiss)\b/i.test(sentence) ? null : durationIn(sentence, duration);
+            if (!/\bas long as\b|\bwhichever comes first\b|\bor (?:until|the item)\b/i.test(sentence)) used.add(index);
+            found.push({ selector, duration: time });
+        }
+    }
+    return found;
+}
+
 // Items whose text isn't one use with one result: activated on a trigger, an affliction's stages, a second
 // effect, a choice of ways to use it ("may be applied to armor, a weapon, or mixed into an elixir"), or one
 // that links PF2e Effects (those Effects hold its rules).
@@ -347,7 +369,8 @@ export function ownRow(item, { healing = true } = {}) {
     const modifiers = modifiersOf(sentences, duration, used);
     const resistances = resistancesOf(sentences, duration, used);
     const speeds = speedsOf(sentences, duration, used);
-    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length) return null;
+    const senses = sensesOf(sentences, duration, used);
+    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length) return null;
     // (Healing another creature: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other);
     if (heal?.other) delete heal.other;
@@ -356,7 +379,7 @@ export function ownRow(item, { healing = true } = {}) {
     // against inhaled threats" before its "+1 status bonus to saves against inhaled threats".)
     const restated = (sentence) => modifiers.length > 0 && /\ban? (?:item |status |circumstance )?bonus\b/i.test(sentence) && !/[+\-–]\d|\d+d\d+|\bDC\b/.test(sentence);
     const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence));
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

@@ -113,8 +113,8 @@ export function compileItem(given, options = {}) {
     else if (recovery && plan.noteOnly) plan = { ...withoutNoteOnly(plan), partial: true };
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    const { resist, speeds, ...rest } = plan;
-    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}) };
+    const { resist, speeds, senses, ...rest } = plan;
+    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     return guardText(guardValues({ ...rest, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info }), plainText(item?.system?.description?.value));
 }
@@ -142,7 +142,8 @@ function rowPlan(item, base) {
         // (Its resistance: the item card's own Effect, beside the core's row, as plan.item.resist.)
         ...(row?.resistances ? { resist: row.resistances } : {}),
         // (A Speed of a new kind, the same: plan.item.speeds.)
-        ...(row?.speeds ? { speeds: row.speeds } : {})
+        ...(row?.speeds ? { speeds: row.speeds } : {}),
+        ...(row?.senses ? { senses: row.senses } : {})
     };
 }
 

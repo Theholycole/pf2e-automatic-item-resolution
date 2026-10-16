@@ -10,7 +10,7 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { ownRow } from "../src/compiler/rows.js";
-import { resistanceEffectSource, resistanceText, speedText } from "../src/live/card.js";
+import { resistanceEffectSource, resistanceText, senseEffectSource, senseText, speedText } from "../src/live/card.js";
 import { routeOf } from "../src/live/route.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -97,4 +97,15 @@ test("a Speed of a new kind: PF2e's BaseSpeed on the land Speed or a number, for
     const effect = monk.itemTypes.effect.find((entry) => entry.flags?.[MODULE_ID]?.speed === "fly");
     assert.deepEqual(effect.system.rules, [{ key: "BaseSpeed", selector: "fly", value: LAND }]);
     assert.deepEqual([effect.system.duration.value, effect.system.duration.unit, effect.system.duration.expiry], [1, "rounds", "turn-end"]);
+});
+
+test("a vision: PF2e's Sense rule, its own end on the note", () => {
+    // "you gain darkvision until you deactivate it as an Interact action or the item is no longer invested by you, whichever comes first".
+    const [goggles] = compileActivations(source("Obsidian Goggles (Greater)"));
+    assert.deepEqual([goggles.plan.item.senses, goggles.plan.partial], [[{ selector: "darkvision", duration: null }], true]);
+    // "You gain greater darkvision until the beginning of your next turn, as long as you continue to look through the scope".
+    const [scope] = compileActivations(source("Darkvision Scope (Greater)"));
+    assert.deepEqual([scope.plan.item.senses[0].selector, scope.plan.item.senses[0].duration.expiry], ["greater-darkvision", "turn-start"]);
+    assert.equal(senseText(scope.plan.item.senses[0]), "Greater darkvision until the start of the next turn");
+    assert.deepEqual(senseEffectSource(goggles.plan.item.senses[0], { item: { name: "Obsidian Goggles (Greater): Darkvision" } }).system.rules, [{ key: "Sense", selector: "darkvision" }]);
 });

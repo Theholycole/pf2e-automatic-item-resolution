@@ -148,7 +148,7 @@ export function compileActivations(item, options = {}) {
         }
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
-        const { resist, speeds, ...kept } = plan;
+        const { resist, speeds, senses, ...kept } = plan;
         return {
             activation,
             index,
@@ -156,7 +156,7 @@ export function compileActivations(item, options = {}) {
                 ...kept,
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(recovery ? { recovery } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(recovery ? { recovery } : {}) }
             }
         };
     });
@@ -180,6 +180,7 @@ function rowPlanFor(item, base) {
         // (Its resistance: the item card's own Effect, as plan.item.resist.)
         ...(row?.resistances ? { resist: row.resistances } : {}),
         // (A Speed of a new kind, the same: plan.item.speeds.)
-        ...(row?.speeds ? { speeds: row.speeds } : {})
+        ...(row?.speeds ? { speeds: row.speeds } : {}),
+        ...(row?.senses ? { senses: row.senses } : {})
     };
 }

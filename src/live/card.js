@@ -79,6 +79,7 @@ export function previewLines(state) {
     if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
     for (const speed of plan?.item?.speeds ?? []) lines.push(speedText(speed));
+    for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
     if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
@@ -158,24 +159,9 @@ export function speedText(speed) {
     return `A ${speed.type} Speed ${said}${time}`;
 }
 
-// Its Effect: PF2e's BaseSpeed rule for the item's time, named for the item. Returns a new source.
+// Its Speed's Effect: PF2e's BaseSpeed rule ("until the end of the next turn": PF2e's one round, ending at a turn's end).
 export function speedEffectSource(speed, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    const duration = speed.duration?.mode === "fixed" ? speed.duration : null;
-    // (Until the end of the next turn: PF2e's one round, ending at the end of a turn.)
-    const time = duration ? { value: duration.value, unit: duration.unit, expiry: duration.expiry ?? "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false };
-    return {
-        name: `${item.name}: ${speed.type} Speed`,
-        type: "effect",
-        img: item.img ?? "icons/svg/wing.svg",
-        flags: { [moduleId]: { speed: speed.type } },
-        system: {
-            description: { value: `<p>${escape(speedText(speed))}, from <strong>${escape(item.name)}</strong>.</p>` },
-            duration: time,
-            start: { value: worldTime, initiative },
-            context: { origin: { actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } },
-            rules: [{ key: "BaseSpeed", selector: speed.type, value: speed.value }]
-        }
-    };
+    return ownEffectSource({ name: `${speed.type} Speed`, img: "icons/svg/wing.svg", words: speedText(speed), rules: [{ key: "BaseSpeed", selector: speed.type, value: speed.value }], duration: speed.duration, flag: { speed: speed.type }, item, user, worldTime, initiative, moduleId });
 }
 
 // Its flat check to end persistent damage in words: "A flat check (DC 10) to end persistent acid, fire, poison or void damage".
@@ -184,22 +170,40 @@ export function recoveryText(recovery) {
     return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent ${types} damage`;
 }
 
-// Its Effect: PF2e's Resistance rules for the item's time, named for the item. moduleId: the flag's scope. Returns a new source.
-export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration ?? null;
+// One of the card's own Effects (its resistance, Speed or vision): PF2e's rules for the item's time (unlimited with none),
+// named for the item, flagged as the module's. Returns a new source.
+function ownEffectSource({ name, img, words, rules, duration, flag, item, user, worldTime, initiative, moduleId }) {
     return {
-        name: `${item.name}: resistance`,
+        name: `${item.name}: ${name}`,
         type: "effect",
-        img: item.img ?? "icons/svg/shield.svg",
-        flags: { [moduleId]: { resist: true } },
+        img: item.img ?? img,
+        flags: { [moduleId]: flag },
         system: {
-            description: { value: `<p>${escape(resistanceText(resist))}, from <strong>${escape(item.name)}</strong>.</p>` },
-            duration: duration ? { value: duration.value, unit: duration.unit, expiry: duration.expiry ?? "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false },
+            description: { value: `<p>${escape(words)}, from <strong>${escape(item.name)}</strong>.</p>` },
+            duration: duration?.mode === "fixed" ? { value: duration.value, unit: duration.unit, expiry: duration.expiry ?? "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false },
             start: { value: worldTime, initiative },
             context: { origin: { actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } },
-            rules: resist.map(({ type, value }) => ({ key: "Resistance", type, value }))
+            rules
         }
     };
+}
+
+// Its resistance's Effect: PF2e's Resistance rules. moduleId: the flag's scope.
+export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration ?? null;
+    return ownEffectSource({ name: "resistance", img: "icons/svg/shield.svg", words: resistanceText(resist), rules: resist.map(({ type, value }) => ({ key: "Resistance", type, value })), duration, flag: { resist: true }, item, user, worldTime, initiative, moduleId });
+}
+
+// A vision in words: "Darkvision until the start of the next turn", "Greater darkvision".
+const SENSE_WORDS = { darkvision: "Darkvision", "greater-darkvision": "Greater darkvision", "low-light-vision": "Low-light vision" };
+export function senseText(sense) {
+    const time = sense.duration?.mode === "fixed" ? (sense.duration.anchor === "source-turn" ? ` until the ${sense.duration.expiry === "turn-end" ? "end" : "start"} of the next turn` : ` for ${timeText(sense.duration)}`) : "";
+    return `${SENSE_WORDS[sense.selector] ?? sense.selector}${time}`;
+}
+
+// Its vision's Effect: PF2e's Sense rule.
+export function senseEffectSource(sense, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: SENSE_WORDS[sense.selector] ?? sense.selector, img: "icons/svg/eye.svg", words: senseText(sense), rules: [{ key: "Sense", selector: sense.selector }], duration: sense.duration, flag: { sense: sense.selector }, item, user, worldTime, initiative, moduleId });
 }
 
 // The card's HTML. canApply: whether this user may press Apply (the item's owner or the GM).
