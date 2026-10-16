@@ -283,3 +283,34 @@ test("a row's damage by its type, drained without the time beside it, a degree's
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => gum.resolution.outcomes[degree].nativeEffects?.[0]?.label), ["Effect: Crackling Bubble Gum (Failure)", "Effect: Crackling Bubble Gum (Failure)"]);
     assert.equal(compileItem(item("Crackling Bubble Gum (Lesser)"), { spellEffects }).resolution.outcomes.failure.nativeEffects, undefined, "no durations known: only an Effect whose row has no time");
 });
+
+test("temporary Hit Points, a penalty, a resistance and later words: Razmiri Wayfinder, Bangles of Crowns, Aeon Stone (Olivine Pendeloque), Words of Wisdom, Safeguarding, Thunder Mail", () => {
+    const at = (name, index = 0) => compileActivations(item(name), { spellEffects })[index].plan;
+    // "You touch an adjacent creature, granting them 3d8 temporary Hit Points for 1 hour": the creature picked on the card.
+    const wayfinder = at("Razmiri Wayfinder");
+    assert.deepEqual([wayfinder.item.recipient, wayfinder.resolution.outcomes.success.effects[0].formula, wayfinder.resolution.outcomes.success.effects[0].duration.unit], ["drinker", "3d8", "hours"]);
+    // "You also gain 15 temporary Hit Points. You lose any remaining temporary Hit Points after 1 minute."
+    const bangles = at("Bangles of Crowns", 1).resolution.outcomes.success.effects[0];
+    assert.deepEqual([bangles.amount, bangles.duration.value, bangles.duration.unit], [15, 1, "minutes"]);
+    // "… for 1 minute, but the calming urges impose a -1 status penalty to your attack rolls": the penalty, the suppression a note.
+    const stone = at("Aeon Stone (Olivine Pendeloque)");
+    assert.deepEqual(stone.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.unit]), [["attack-roll", -1, "minutes"]]);
+    assert.equal(stone.partial, true);
+    // "+1 item bonus to Diplomacy checks and checks of the skill associated with your phrase": Diplomacy, the other a note.
+    const words = at("Words of Wisdom (Lesser)");
+    assert.deepEqual(words.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["diplomacy", 1, "item"]]);
+    assert.equal(words.partial, true);
+    // "Trigger You would take mental, poison, or spirit damage Effect You gain resistance 5 to the triggering damage type": picked.
+    assert.deepEqual(at("Safeguarding").item.resist, [{ type: null, choose: ["mental", "poison", "spirit"], value: 5, duration: { mode: "fixed", value: 10, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
+    // The 6d6 in its emanation; the minute of damage to whoever touches its wearer, a note.
+    const mail = at("Thunder Mail");
+    assert.deepEqual([mail.targeting.area, mail.resolution.sharedDamage.components[0].formula], [{ type: "emanation", value: 10 }, "6d6[electricity]"]);
+    assert.match(mail.notes.join(" "), /whenever a creature touches you/);
+});
+
+test("healing a feat of its owner's changes: Lover's Knot's 2d6, or 2d6+7 with Battle Medicine", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const knot = (extra) => compileItem({ ...item("Lover's Knot"), ...extra }, { spellEffects }).resolution.outcomes.success.effects[0].formula;
+    assert.deepEqual([knot({ ownerFeats: [] }), knot({ ownerFeats: ["battle-medicine"] })], ["2d6", "2d6+7"]);
+    assert.equal(compileItem(item("Lover's Knot"), { spellEffects }).partial, true, "no owner known: the feat's healing a note");
+});

@@ -120,15 +120,25 @@ function selfConditions(sentences, used = new Set()) {
 
 const AMOUNT = String.raw`(\d+d\d+(?:\s*[+-]\s*\d+)?|\d+)`;
 
+// ("You also gain 15 temporary Hit Points", Bangles of Crowns; another's, Razmiri Wayfinder's "You touch an adjacent creature,
+// granting them 3d8 temporary Hit Points for 1 hour" — chosen on the card, as healing another is.)
 function tempHitPoints(sentences, duration, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
-        const match = new RegExp(String.raw`\byou gain ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence);
-        if (match && !/\b(?:if|when|whenever|each time|the next time)\b/i.test(sentence.slice(0, match.index))) {
+        const own = new RegExp(String.raw`\byou (?:also )?gain ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence);
+        const other = own ? null : new RegExp(String.raw`^You touch an? (?:adjacent |willing |living )*(?:creature|ally), granting (?:them|it) ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence.trim());
+        const match = own ?? other;
+        if (match && (other || !/\b(?:if|when|whenever|each time|the next time)\b/i.test(sentence.slice(0, match.index)))) {
             // (Its other half stays unread, for the note: "You drop to 1 Hit Point instead of being reduced to 0 HP or dying,
             // and you gain 100 temporary Hit Points" — the 1 HP the GM sets.)
             if (!/\binstead\b/i.test(sentence)) used.add(index);
             const amount = match[1].replace(/\s+/g, "");
-            return { kind: "temp-hp", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), duration: durationIn(sentence, duration) };
+            // (Their time in a sentence of their own after: "You lose any remaining temporary Hit Points after 1 minute", "These
+            // temporary Hit Points last for 1 hour" — before the item's.)
+            const later = sentences.slice(index + 1, index + 3).findIndex((next) => /\btemporary Hit Points\b[^.]*\b(?:after|for) (?:\d+|one|an?) (?:rounds?|minutes?|hours?|days?)\b/i.test(next) && !/\b(?:if|when|whenever)\b/i.test(next));
+            const own = durationIn(sentence, null);
+            const time = own ?? (later >= 0 ? durationIn(sentences[index + 1 + later].replace(/\bafter (?=\d|one|an?\b)/i, "for "), null) : null);
+            if (!own && later >= 0) used.add(index + 1 + later);
+            return { kind: "temp-hp", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), duration: time ?? duration, ...(other ? { other: true } : {}) };
         }
     }
     return null;
@@ -147,7 +157,8 @@ function textHealing(sentences, used = new Set()) {
         const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b|\brestor(?:e|es|ing) to (?:it|the (?:target|creature)|that creature) ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
         const match = self ?? other;
         // (Tallowheart Mass's "If you consume a portion, you regain …": the eating is the activation, not a condition.)
-        const lead = sentence.slice(0, match?.index ?? 0).replace(/^\s*If you (?:consume|eat|drink) (?:a portion|it|one)[^,]*,\s*/i, "");
+        // (Nor Lover's Knot's "When you activate a lover's knot, you regain 2d6 Hit Points": the activation itself.)
+        const lead = sentence.slice(0, match?.index ?? 0).replace(/^\s*If you (?:consume|eat|drink) (?:a portion|it|one)[^,]*,\s*/i, "").replace(/^\s*When you activate (?:it|the [\w' -]+?|an? [\w' -]+?),\s*/i, "");
         if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(lead)) {
             // (What it does "instead" — "you drop to 1 Hit Point instead" — stays on the note for the GM.)
             if (!/\binstead\b/i.test(sentence)) used.add(index);
@@ -245,7 +256,16 @@ function modifiersOf(sentences, duration, used = new Set()) {
             // ("you gain resistance 5 … but take a -5-foot status penalty to all Speeds": the same "you".)
             .replace(/(\byou (?:gain|get|have)\b[^.;]*?),? (but|and) (take|suffer)\b/i, "$1, $2 you $3")
             // ("a +1 status bonus against fear effects": saves against them, as PF2e's own Effects read it.)
-            .replace(/\b(bonus|penalty) against (?=[\w -]+? effects\b)/gi, "$1 to saving throws against ");
+            .replace(/\b(bonus|penalty) against (?=[\w -]+? effects\b)/gi, "$1 to saving throws against ")
+            // (A penalty "imposed" on you: Aeon Stone (Olivine Pendeloque)'s "the calming urges impose a -1 status penalty to your
+            // attack rolls".)
+            .replace(/\b(?:imposes?|imposing) an? ([-–−]\d+ (?:item |status |circumstance )?penalty (?:to|on) your)\b/gi, "you take a $1")
+            // (A skill its user picked, after the list: Words of Wisdom's "+1 item bonus to Diplomacy checks and checks of the skill
+            // associated with your phrase" — Diplomacy read, the rest a note.)
+            .replace(/(\bbonus to [\w -]+? checks) and checks of the skill associated with [^.;]+/gi, "$1; ");
+        // (What the sentence says before or after the part read — "The stone suppresses the triggering effect for 1 minute, but …" —
+        // stays on the note.)
+        const partly = said !== sentence && (/\bchecks of the skill associated with\b/i.test(sentence) || (/\b(?:imposes?|imposing) an?\b/i.test(sentence) && /,\s*but\b[^,]*\byou take\b/i.test(said)));
         if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(said)) continue;
         for (const match of said.matchAll(pattern)) {
             const [, sign, number, feet, type, kind, list] = match;
@@ -276,7 +296,7 @@ function modifiersOf(sentences, duration, used = new Set()) {
             // (A sentence that goes on — "…, and your melee Strikes deal 1 additional precision damage to Off-Guard creatures" —
             // stays a note too.)
             const tail = said.slice(match.index + match[0].length);
-            if (!/^,? and (?:you|your)\b/i.test(tail) || !MECHANICAL.test(tail)) used.add(index);
+            if ((!/^,? and (?:you|your)\b/i.test(tail) || !MECHANICAL.test(tail)) && !partly) used.add(index);
             for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate && !lastOnly ? { predicate } : {}) });
             // (Sense Motive is a Perception check in PF2e: "skill checks to sense-motive" are Perception's.)
             const perceptionOnly = JSON.stringify(predicate ?? []) === JSON.stringify(["action:sense-motive"]);
@@ -320,8 +340,10 @@ function resistancesOf(sentences, duration, used = new Set()) {
 // Energy Ointment's "attuned to one of four energy types (acid, cold, electricity, or fire) … resistance 5 to the attuned energy
 // type", Chromatic Robe's "Choose acid, cold, electricity, or fire. The robe grants resistance 15 to the chosen damage type" →
 // [{ type: null, choose: [types], value, duration }]: the item card's picker. Not without the list.
-const CHOSEN = /\bgrants? (?:you )?(?:(\d+) resistance against a single damage type|resistance (\d+) to (?:one type of energy damage|the attuned energy type|the chosen damage type))/i;
-const TYPE_LIST = /\b(?:defend against |choose (?:either )?|energy types \(|Choose )((?:acid|cold|electricity|fire|sonic|force|vitality|void)(?:(?:,|, or| or) (?:acid|cold|electricity|fire|sonic|force|vitality|void))+)/i;
+// (And one its trigger names, Safeguarding's "Trigger You would take mental, poison, or spirit damage Effect You gain resistance 5
+// to the triggering damage type": the card's pick of those.)
+const CHOSEN = /\b(?:grants? (?:you )?|You gain )(?:(\d+) resistance against a single damage type|resistance (\d+) to (?:one type of energy damage|the attuned energy type|the chosen damage type|the triggering damage type))/i;
+const TYPE_LIST = /\b(?:defend against |choose (?:either )?|energy types \(|Choose |Trigger You would take )((?:acid|cold|electricity|fire|sonic|force|vitality|void|mental|poison|spirit)(?:(?:,|, or| or) (?:acid|cold|electricity|fire|sonic|force|vitality|void|mental|poison|spirit))+)/i;
 function chosenResistance(sentences, duration, used) {
     const list = TYPE_LIST.exec(sentences.join(" "));
     if (!list) return [];
@@ -448,7 +470,11 @@ export function ownRow(item, { healing = true } = {}) {
     const html = String(item?.system?.description?.value ?? "");
     // (Fed to another, "it" is the creature fed, the row's drinker: Energizing Treat's "When you feed your animal companion …,
     // it's Quickened for 1 minute".)
-    const text = plainText(html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ").replace(WHEN_CLAUSES, " ").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
+    // (A resistance to the type its Trigger names, before the Trigger goes: Safeguarding's "Trigger You would take mental, poison, or
+    // spirit damage Effect You gain resistance 5 to the triggering damage type" — chosen of those, on the card.)
+    const text = plainText(html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ")
+        .replace(/\bTrigger You would take ((?:\w+, )*\w+,? or \w+) damage\s+Effect (You gain resistance \d+ to the) triggering (damage type\b[^.]*\.)/i, "Effect $2 chosen $3 Choose $1.")
+        .replace(WHEN_CLAUSES, " ").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
     if (NOT_ONE_RESULT.test(text) || EFFECT_LINK.test(html)) return null;
     const duration = itemDuration(text);
     const sentences = sentencesOf(text);
@@ -463,9 +489,10 @@ export function ownRow(item, { healing = true } = {}) {
     const speeds = speedsOf(sentences, duration, used);
     const senses = sensesOf(sentences, duration, used);
     if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length) return null;
-    // (Healing another creature: the row's recipient is chosen like a drinker's.)
-    const other = Boolean(heal?.other);
+    // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)
+    const other = Boolean(heal?.other || temp?.other);
     if (heal?.other) delete heal.other;
+    if (temp?.other) delete temp.other;
     // (Not its time, nor a sentence restating PF2e's usual rule: "As usual being concealed when your position is still obvious, you can't …".)
     // (Nor an introduction's bonus with no number when the number is read: One Day's Breath's "you also gain a status bonus
     // against inhaled threats" before its "+1 status bonus to saves against inhaled threats".)

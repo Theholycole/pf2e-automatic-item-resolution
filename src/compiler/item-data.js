@@ -200,6 +200,14 @@ const ABILITY_NAMES = { str: "Strength", dex: "Dexterity", con: "Constitution", 
 export function withOwnerNumbers(html, item) {
     let text = String(html ?? "");
     const level = Number(item?.ownerLevel);
+    // (Healing that a feat of its owner's changes, when live play gives its feats: Lover's Knot's "you regain 2d6 Hit Points. If you
+    // have the Battle Medicine feat, you instead regain 2d6+7 Hit Points" — the one for its owner.)
+    if (Array.isArray(item?.ownerFeats)) {
+        // (Each amount a roll link, "@Damage[2d6[healing]]{2d6 Hit Points}", or words; the feat a link or its name.)
+        const amount = String.raw`(@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?|[^.<@]+? Hit Points)`;
+        const pattern = new RegExp(String.raw`\b(you regain) ${amount}\. If you have the (?:@UUID\[[^\]]*\]\{([^}]*)\}|([\w' -]+?)) feat, you instead regain ${amount}\.`, "gi");
+        text = text.replace(pattern, (whole, regain, usual, linked, named, better) => `${regain} ${item.ownerFeats.includes(String(linked ?? named).toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-")) ? better : usual}.`);
+    }
     // (Healing for its owner's level in words, The Rakshasa's "You regain Hit Points equal to twice your level".)
     const known = Number.isFinite(level) && item?.ownerLevel !== null && item?.ownerLevel !== undefined;
     if (known) text = text.replace(/\b(You regain) Hit Points equal to (twice |three times )?your level\b/g, (whole, regain, times) => `${regain} ${level * ({ "twice ": 2, "three times ": 3 }[times ?? ""] ?? 1)} Hit Points`);

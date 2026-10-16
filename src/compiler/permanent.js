@@ -29,7 +29,7 @@ import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { saveOrPlan } from "./save-or.js";
 import { spellstrikePlan } from "./spellstrike.js";
-import { withoutFlavor } from "./flavor.js";
+import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { readTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
@@ -155,6 +155,12 @@ function compileEach(item, options = {}) {
                     if ((read && read.builtin !== "no-effect") || bare === activation.html || bare === triggerless) continue;
                     const retry = compileAbility(asActivationAbility(item, { ...activation, html: bare }), options);
                     if (retry && !retry.builtin) read = retry;
+                }
+                // (Nothing read still: once more without what waits for something later, its words the plan's notes, src/compiler/flavor.js.)
+                const later = !read || read.builtin === "no-effect" ? withoutLater(triggerless) : null;
+                if (later) {
+                    const retry = compileAbility(asActivationAbility(item, { ...activation, html: later.html }), options);
+                    if (retry && !retry.builtin && retry.resolution) read = { ...retry, notes: [...(retry.notes ?? []), ...later.notes], partial: true };
                 }
             } catch {
                 read = null;

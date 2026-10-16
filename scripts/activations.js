@@ -41,7 +41,7 @@ const now = (actor = null) => ({ worldTime: game.time.worldTime, combatId: encou
 const compiled = new Map();
 function playable(item) {
     const data = { ...item.toObject(false), uuid: item.uuid, ...ownerOf(item.actor) };
-    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}:${etchedKeys(data).join(",")}:${data.ownerLevel ?? ""}:${Object.values(data.ownerAbilities ?? {}).join(",")}`;
+    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}:${etchedKeys(data).join(",")}:${data.ownerLevel ?? ""}:${Object.values(data.ownerAbilities ?? {}).join(",")}:${(data.ownerFeats ?? []).length}`;
     if (!compiled.has(key)) compiled.set(key, (compileActivations?.(data) ?? []).filter((entry) => entry.plan && routeOf(entry.plan, plainText(entry.activation.html))));
     return compiled.get(key).map((entry) => ({ ...entry, data }));
 }

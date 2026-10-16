@@ -13,7 +13,9 @@ export const stateOf = (message) => message?.getFlag?.(MODULE_ID, FLAG) ?? null;
 
 // A card's entry for a creature: its actor, its token (when on a scene) and the name shown.
 // An item's owner's numbers for the compiler (src/compiler/item-data.js): its level and its attribute modifiers.
-export const ownerOf = (actor) => (actor ? { ownerLevel: Number.isFinite(Number(actor.level)) ? Number(actor.level) : null, ownerAbilities: Object.fromEntries(Object.entries(actor.abilities ?? actor.system?.abilities ?? {}).map(([key, value]) => [key, Number(value?.mod)]).filter(([, mod]) => Number.isFinite(mod))) } : {});
+// (And its feats' slugs, for an item whose result depends on one: Lover's Knot's "If you have the Battle Medicine feat, you instead
+// regain 2d6+7 Hit Points".)
+export const ownerOf = (actor) => (actor ? { ownerLevel: Number.isFinite(Number(actor.level)) ? Number(actor.level) : null, ownerAbilities: Object.fromEntries(Object.entries(actor.abilities ?? actor.system?.abilities ?? {}).map(([key, value]) => [key, Number(value?.mod)]).filter(([, mod]) => Number.isFinite(mod))), ownerFeats: (actor.itemTypes?.feat ?? []).map((feat) => feat.slug).filter(Boolean) } : {});
 
 export const entryOf = (token, actor) => ({ actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null, name: token?.name ?? actor.name });
 

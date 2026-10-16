@@ -14,15 +14,15 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 251,
-   "resolves": 735,
+   "none": 250,
+   "resolves": 736,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 203,
    "builtin:item-action": 11,
-   "partial": 62,
+   "partial": 63,
    "builtin:counteract": 20,
-   "builtin:no-effect": 63,
+   "builtin:no-effect": 62,
    "builtin:reroll": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
@@ -38,8 +38,8 @@
     "note-only": 96,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 35,
-    "builtin:no-effect": 14,
+    "partial": 36,
+    "builtin:no-effect": 13,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
     "builtin:save-bonus": 1
@@ -88,10 +88,10 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 44,
+    "none": 43,
     "note-only": 12,
     "builtin:item-action": 10,
-    "resolves": 52,
+    "resolves": 53,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
@@ -292,9 +292,9 @@
  "mechanismCoverage": {
   "heal": {
    "count": 43,
-   "resolves": 34,
+   "resolves": 35,
    "gaps": 0,
-   "none": 2
+   "none": 1
   },
   "temp-hp": {
    "count": 37,
@@ -304,9 +304,9 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 168,
+   "resolves": 169,
    "gaps": 0,
-   "none": 26
+   "none": 25
   },
   "linked-effect": {
    "count": 393,
@@ -378,8 +378,8 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 336,
-   "item": 636,
+   "none": 334,
+   "item": 638,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
@@ -394,10 +394,10 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 153,
+    "none": 152,
     "later": 12,
     "save": 86,
-    "item": 219,
+    "item": 220,
     "zone": 9,
     "fortune": 7,
     "strike": 3,
@@ -415,8 +415,8 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 55,
-    "item": 54,
+    "none": 54,
+    "item": 55,
     "action": 10,
     "reroll": 1,
     "cast": 9,
@@ -479,9 +479,9 @@
    }
   },
   "noCard": {
-   "no-plan": 251,
+   "no-plan": 250,
    "triggered": 21,
-   "gm": 63,
+   "gm": 62,
    "other": 1
   }
  },
@@ -21864,9 +21864,12 @@
     "condition",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "When you Activate the token, you reduce the triggering recovery check's DC by 1, potentially improving your check's degree of success."
+   ],
+   "live": "item"
   },
   {
    "name": "False Death",
@@ -23171,7 +23174,10 @@
     "heal",
     "damage"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Shrine Inarizushi",
