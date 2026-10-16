@@ -1330,6 +1330,33 @@ export const cases = {
         assert(done === ["success", "criticalSuccess"].includes(degree), `etched only on a success (${degree}, ${done})`);
         if (!done) assert(smith.items.get(vorpal.id) && !sword.system.runes.property.includes("vorpal"), "nothing etched, the stone kept");
         return { degree, done, runes: sword.system.runes };
+    },
+
+    // A weapon's runes on a critical hit (AC -20, so PF2e's roll crits): Thundering's save card and Crushing's card with no roll
+    // at the creature hit; Crushing applied, it's clumsy 1 and enfeebled 1.
+    async runeCrit(scene) {
+        const { actor: knight } = await creature(scene, "Rune Knight", { type: "character", x: 2, y: 10 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Rune Target", { x: 3, y: 10, alliance: "opposition", ac: -20 });
+        const sword = await give(knight, "Longsword");
+        await sword.update({ "system.runes.potency": 2, "system.runes.striking": 1, "system.runes.property": ["thundering", "crushing"], "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await wait(500);
+        await target(foeToken);
+        let attack = null;
+        let since = 0;
+        for (let tries = 0; tries < 3 && attack?.flags?.pf2e?.context?.outcome !== "criticalSuccess"; tries++) {
+            since = Date.now();
+            ({ attack } = await strike(knight, sword));
+        }
+        assert(attack.flags.pf2e.context.outcome === "criticalSuccess", "a critical hit");
+        const cardFor = (rune) => messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.ability?.name?.includes(`(${rune})`), { what: `${rune}'s card` });
+        const thundering = await cardFor("Thundering");
+        const crushing = await cardFor("Crushing");
+        const save = thundering.flags["pf2e-automatic-ability-resolution"].card;
+        assert(save.plan.resolution.check.statistic === "fortitude" && save.plan.resolution.check.against.value === 24, `Thundering: Fortitude DC 24 (${JSON.stringify(save.plan.resolution.check)})`);
+        await wait(500);
+        document.querySelector(`[data-message-id="${crushing.id}"] [data-aar-action="apply"]`)?.click();
+        await until(() => foe.hasCondition("clumsy") && foe.hasCondition("enfeebled"), "clumsy and enfeebled");
+        return { thundering: thundering.id, clumsy: foe.getCondition("clumsy")?.value, enfeebled: foe.getCondition("enfeebled")?.value };
     }
 };
 

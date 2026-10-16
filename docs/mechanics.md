@@ -76,6 +76,12 @@ These two belong to the module's own items (`packs/_source/items`), not to PF2e'
 - **A spell's results on a spellgun's hit** (`spellgunFromSpell` in `src/compiler/generic-spellgun.js`): the spell module's plan for the spell, heightened to a rank, moved under an attack against AC. A save spell's failure is the hit, and its critical failure the critical hit. A spell attack spell keeps its own rows. A spell with neither deals its data's damage (not a healing spell's healing). The spell is its 2-action version (`ACTIONS`, a spellgun's Activate): PF2e's action variants through the core's `planWithActions`, and Force Barrage's shards through its `missileCount`. The plan is kept on the item, so compileItem, live play and the Combat Simulator need neither module again. Another item that holds a picked spell could use the same function: `spellgunFromSpell(spellPlan, { spell, rank })`, then `loadedUpdate(spell, rank, plan)` for its name, level, price and description.
 - **A firearm merged with a staff** (`gunStaffUpdate` in `src/compiler/gun-staff.js`): the firearm's data, the staff's spell list, traits, rules and runes (at least +1), and a Reinforced Stock attached that keeps the runes. `isBaseFirearm` holds the limit to two-handed firearms; to allow others, widen it and `firearmProblem` together.
 
+## Runes
+
+- **Etched runes' activations** (`src/compiler/runes.js`): a rune key on a weapon or armor (`system.runes.property`) is matched to PF2e's rune item by its slug ("extending-greater" → "greaterExtending"). The runes PF2e renamed keep their old keys in `RENAMED` (Quickstrike `speed`, Vitalizing `disrupting`, Spell Reservoir `spellStoring`, Animated `dancing`): add a rune there if its key doesn't match.
+- **Runes on a critical hit** (`src/compiler/rune-strikes.js`): each "On a critical hit …" sentence of a rune's text is read by the ability compiler. Who it's for is in `FOR` ("the undead", "the giant", a bleeding target): add a pattern there for another rune that names its creatures.
+- **Etching** (`src/compiler/etching.js`): the fundamental runes by slug are in `FUNDAMENTAL`; which items a rune fits, by its usage, in `fitProblem`.
+
 ## Read from the wording only
 
 These mechanics have no table yet. An item gets one when its text uses the same words. To give one a table, follow the pattern above, or ask me.

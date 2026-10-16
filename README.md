@@ -50,6 +50,11 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
 - **Skill actions with an item** (Onyx Panther's Sneak, Crying Angel Pendant's First Aid, Coldstar Pistols' Feint): target the creature when the action is aimed at one, then Apply rolls PF2e's own action with the item's bonus. Trip, Grapple, Demoralize, Feint and the other basic actions then put their result on the target.
 - **Snares and lasting areas** (Cryomister, Pheromone Flare): the GM places the area. A snare goes off once, for the first creature to enter its square.
 - **Permanent items:** on the character sheet's inventory, an item with activations gets an Activate button (a bolt) for each, after its name; its tooltip says the actions, how often and how many uses are left. Pressing it posts that activation's card. One that gives a Focus Point (a Specialist's Ring, a Bloodline Robe) adds it up to the pool's maximum, and in an encounter an unspent point is taken back at the end of the turn. A "once per day" activation is counted; used again, the GM gets a warning and decides.
+- **Runes:**
+  - **Etching from a runestone:** a rune item in an inventory (Vorpal, Striking, Reinforcing Rune…) has an Etch button (a hammer) instead of its rune's own buttons. Its dialog lists the owner's weapons, armor or shields the rune fits (by its usage: a melee weapon, a slashing one, heavy armor…), and an Energy-Resistant rune's energy. Tick the Crafting check when a character etches it themselves: the rune's level-based DC, etched only on a success; untick it for a rune etched for them. A fundamental rune upgrades the item's; a property rune takes a free slot (its potency rune's, or PF2e's own under Automatic Bonus Progression) or replaces its lesser grade. The runestone is used up.
+  - **An etched rune's activations** (Vorpal's Snicker-Snack, Hauling, Bolka's Blessing, Deathless) get Activate buttons on the weapon or armor they're etched onto, named for the rune.
+  - **On a critical hit** (PF2e only notes these): after PF2e's attack roll crits, each rune's card goes to the creature hit. Thundering, Frost and Brilliant get their save; Impactful's push is the wielder's choice. Crushing, Fearsome, Flickering, Merciful and Nightmare apply with no roll. Vitalizing is only against undead, Giant-Killing only against giants, Bloodthirsty only against a bleeding target. PF2e rolls the runes' damage itself.
+- **Saves against your own DC** (The Avalanche, Penultimate Heartbeat, Chroma Kaleidoscope, Lung Bloodstone's Admonish): the card's DC is your class DC or spell DC, as the item says. With neither, the GM is told to roll it.
 - **Anything else with a duration:** a note Effect on the creature with the item's text, for that time.
 
 The census counts what's played: 1,132 of the 1,486 consumables this module handles get a card, and 1,617 of the 2,593 activations of permanent items. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module. A module's own linked Effect is applied only when its rules match the item's text; otherwise the creature gets a note of the text.
@@ -87,8 +92,9 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
   - `bombs.js`: splash, riders and saves.
   - `snares.js`: zones.
   - `generic-spellgun.js`: a spell's plan on a spellgun's hit, heightened to its rank; `gun-staff.js`: a firearm and a staff merged.
+  - `runes.js`: etched runes' activations; `rune-strikes.js`: runes on a critical hit; `etching.js`: a runestone's rune onto an item; `save-or.js`: a save or death, a push or a pull.
   - `permanent.js`: activations; `focus.js`: Focus Points; `strikes.js`: items used by Striking; `rerolls.js`: rerolls; `fortune.js`: rolling twice; `cast-words.js`: casts in words; `strike-damage.js`: what a Strike adds; `item-actions.js`: skill actions; `counteract.js`: counteracts; `tea.js`: the Tea Ceremony.
-- **Live play** (`scripts/`): `live.js` (the Use hook and the item card), `bombs.js`, `poisons.js`, `casts.js`, `zones.js`, `activations.js`, `focus.js`, `strikes.js`, `rerolls.js`, `fortune.js`, `item-actions.js`, `counteract.js`, `toggle.js`, `generic-items.js` (the module's own items' pickers), and `foundry.js` (shared helpers). Pure card state and HTML live in `src/live/`, and `src/live/route.js` decides which card an item gets.
+- **Live play** (`scripts/`): `live.js` (the Use hook and the item card), `bombs.js`, `poisons.js`, `casts.js`, `zones.js`, `activations.js`, `focus.js`, `strikes.js`, `rerolls.js`, `fortune.js`, `item-actions.js`, `counteract.js`, `toggle.js`, `generic-items.js` (the module's own items' pickers), `etching.js` (the Etch button), `rune-strikes.js` (runes on a critical hit), and `foundry.js` (shared helpers). Pure card state and HTML live in `src/live/`, and `src/live/route.js` decides which card an item gets.
 - **Mechanics you can give more items:** [docs/mechanics.md](docs/mechanics.md) lists the mechanics a few items needed (a rune lent to a weapon, a choice of PF2e actions, a condition until the end of a rage, all of an item's linked Effects at once…), which items use them, and the table in each where another item can be added.
 - **The compendium** is built from `packs/_source/items/*.json` with `node tools/build-packs.mjs`, using Foundry's own LevelDB library, with no world using the pack.
 - **Tests:** `node --test --test-isolation=none test/*.test.js`. The live layer runs against a stand-in for Foundry (`test/support/fake-foundry.mjs`) with PF2e's real items and Effects from its packs.
@@ -98,6 +104,7 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 - `api` (`game.modules.get("pf2e-automatic-item-resolution").api`):
   - `compileItem(item)` and `handlesItem(item)`;
   - `live.apply(messageId, choices)` applies a card from code;
-  - `live.activate(itemUuid, index)` activates a permanent item's activation, as its sheet button does.
+  - `live.activate(itemUuid, index)` activates a permanent item's activation, as its sheet button does (an etched rune's: index `"rune:<key>:<n>"`);
+  - `live.etch(runeItem, targetItem, { craft, energy })` etches a runestone's rune, as its Etch dialog does.
 
 MIT licensed (see [LICENSE](LICENSE)). The Pathfinder rules text it reads comes from the PF2e system under Paizo's ORC license.
