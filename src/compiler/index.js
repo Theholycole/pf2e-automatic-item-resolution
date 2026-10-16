@@ -12,7 +12,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
-import { targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
+import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
 import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -129,7 +129,9 @@ export function compileItem(given, options = {}) {
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;
-    return guardText(guardValues({ ...rest, ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value));
+    // (Who and how far, for the simulator: "up to 5 creatures" within "30 feet".)
+    const targeting = recipient === "targets" ? { ...(rest.targeting ?? {}), ...othersTargeting(plainText(item?.system?.description?.value)) } : rest.targeting;
+    return guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value));
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success

@@ -36,6 +36,11 @@ test("the reading: granted to allies or another creature, or not", () => {
     // of Follies), "a single target you touch" (Razmiri Mask), "granting your companion" (Barding of the Zephyr), "Both you
     // and the triggering enemy" (Medic's Armband).
     for (const name of ["Commander's Signet", "Chatterer of Follies", "Razmiri Mask", "Barding of the Zephyr", "Medic's Armband"]) assert.equal(compileActivations(source(name))[0].plan.item.recipient, "targets", name);
+    // Who and how far, for the simulator.
+    assert.deepEqual(compileItem(source("Therapeutic Snap Peas")).targeting, { target: "up to 5 creatures", range: "30 feet", area: null });
+    assert.deepEqual(salute.plan.targeting, { target: "you and your allies in the area", range: null, area: { type: "emanation", value: 60 } });
+    assert.deepEqual(compileActivations(source("Commander's Signet"))[0].plan.targeting, { target: "1 creature", range: "touch", area: null });
+    assert.deepEqual(compileActivations(source("Stalwart's Banner"))[0].plan.targeting.area, { type: "emanation", value: 30 });
     // Healing for the creature the weapon last damaged (Digly's Oil of Sympathy), not its user.
     assert.equal(compileItem(source("Digly's Oil of Sympathy (Lesser)")).item.recipient, "targets");
     // Not: its attack's degree rows (Doom Switch), the user's own, an aura Effect PF2e spreads from its user (Searing Blade).

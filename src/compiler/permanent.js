@@ -7,7 +7,7 @@
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf } from "./activation.js";
-import { targetedRecipient, allyAreaPlan, castPlan, checkGated, effectLinks, fitPlan, ownPlan } from "./consumables.js";
+import { othersTargeting, targetedRecipient, allyAreaPlan, castPlan, checkGated, effectLinks, fitPlan, ownPlan } from "./consumables.js";
 import { castWordsPlan, fillCast } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
@@ -169,14 +169,17 @@ export function compileActivations(item, options = {}) {
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, ...kept } = plan;
+        // (Granted to the creatures the presser targets: who and how far, for the simulator.)
+        const others = targetedRecipient(plan, plainText(activation.html));
         return {
             activation,
             index,
             plan: {
                 ...kept,
+                ...(others ? { targeting: { ...(kept.targeting ?? {}), ...othersTargeting(plainText(activation.html)) } } : {}),
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: targetedRecipient(plan, plainText(activation.html)) ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(recovery ? { recovery } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(recovery ? { recovery } : {}) }
             }
         };
     });

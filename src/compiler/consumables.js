@@ -30,32 +30,53 @@ export function recipientOf(item) {
 // allies within 100 feet …", "Up to 5 creatures of your choice within 30 feet regain …" — or one creature — "a creature
 // you touch", "Choose an adjacent creature. Until the end of your turn, that creature takes …", "granting your companion
 // …", "you and your familiar", "Both you and the triggering enemy", "the most recent creature damaged by the weapon
-// regains …". Not an aura Effect (PF2e spreads it from its user) or
-// the wearer's own one of two.
+// regains …". Not an aura Effect (PF2e spreads it from its user) or the wearer's own one of two. Each wording also gives
+// the plan's targeting, who and how far, for the simulator ({ target: "up to 5 creatures", range: "30 feet" }, an
+// emanation for "allies within 60 feet").
+const COUNTS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+const countOf = (word) => COUNTS[String(word).toLowerCase()] ?? Number(word);
+// (A banner's aura is 30 feet.)
+const radiusOf = (phrase) => Number(/(\d+)-foot (?:emanation|aura|radius)/i.exec(phrase)?.[1] ?? /\bwithin (?:a )?(\d+) feet/i.exec(phrase)?.[1] ?? (/\bbanner's aura\b/i.test(phrase) ? 30 : null)) || null;
+const feet = (phrase) => (/\bwithin (\d+) feet/i.exec(phrase) ? `${/\bwithin (\d+) feet/i.exec(phrase)[1]} feet` : null);
+const inArea = (who) => (match) => {
+    const radius = radiusOf(match[0]);
+    return { target: radius ? `${who} in the area` : who, range: null, area: radius ? { type: "emanation", value: radius } : null };
+};
+const one = (who, range = null) => (match) => ({ target: typeof who === "function" ? who(match) : who, range: typeof range === "function" ? range(match) : range, area: null });
 const OTHERS_GRANT = [
-    /\bYou and (?:all |each )?(?:of )?(?:your )?(?:nearby )?allies\b[^.]*?\b(?:gain|gains|receive|receives|can|regain|regains)\b/i,
-    /\b(?:All|Each) (?:mounted )?(?:allies|ally|allied creatures)\b[^.]*?\b(?:gain|gains|receive|receives|regain|regains)\b/i,
-    /\bYou grant allies\b/i,
-    /\ballies within \d+ feet, granting them\b/i,
-    /(?:^|[.:]\s+)Allies within \d+ feet gain\b/i,
-    /\bChoose (?:a|one|an) (?:adjacent |willing )?(?:ally|creature|foe|enemy)\b/i,
-    /\bUp to \w+ (?:willing )?creatures of your choice within\b/i,
-    /\bCreatures of your choosing within\b/i,
-    /\b(?:An?|One) (?:Medium or smaller )?(?:ally|creature) within (?:the|your) banner's aura\b/i,
-    /\bgiving all creatures within \d+ feet\b/i,
-    /\b(?:a single target|a creature|an ally|a willing creature) you touch\b/i,
-    /\ba willing creature\b[^.]*\.\s+The creature gains\b/i,
-    /\bgranting your (?:animal )?(?:companion|familiar|mount|eidolon)\b/i,
-    /\byou and your (?:familiar|companion|mount|eidolon)\b/i,
-    /\bBoth you and the triggering (?:enemy|creature|ally)\b/i,
-    /\bthe triggering creature (?:rolls|is forced|takes|gains)\b/i,
+    [/\bYou and (?:all |each )?(?:of )?(?:your )?(?:nearby )?allies\b[^.]*?\b(?:gain|gains|receive|receives|can|regain|regains)\b/i, inArea("you and your allies")],
+    [/\b(?:All|Each) (?:mounted )?(?:allies|ally|allied creatures)\b[^.]*?\b(?:gain|gains|receive|receives|regain|regains)\b/i, inArea("your allies")],
+    [/\bYou grant allies(?: within (?:a )?\d+(?: feet|-foot emanation))?/i, inArea("your allies")],
+    [/\ballies within \d+ feet, granting them\b/i, inArea("your allies")],
+    [/(?:^|[.:]\s+)Allies within \d+ feet gain\b/i, inArea("your allies")],
+    [/\bChoose (?:a|one|an) (adjacent |willing )?(ally|creature|foe|enemy)\b([^.]*)/i, one((match) => `1 ${match[2].toLowerCase()}`, (match) => (match[1]?.trim() === "adjacent" ? "5 feet" : feet(match[3])))],
+    [/\bUp to (\w+) (?:willing )?creatures of your choice within (\d+) feet/i, one((match) => `up to ${countOf(match[1])} creatures`, (match) => `${match[2]} feet`)],
+    [/\bCreatures of your choosing within (\d+) feet/i, one("creatures of your choice", (match) => `${match[1]} feet`)],
+    [/\b(?:An?|One) (?:Medium or smaller )?(ally|creature) within (?:the|your) banner's aura\b/i, one((match) => `1 ${match[1].toLowerCase()}`, "30 feet")],
+    [/\bgiving all creatures within \d+ feet\b/i, inArea("all creatures")],
+    [/\b(a single target|a creature|an ally|a willing creature) you touch\b/i, one((match) => (/ally/i.test(match[1]) ? "1 ally" : "1 creature"), "touch")],
+    [/\ba willing creature\b[^.]*\.\s+The creature gains\b/i, one("1 willing creature", "touch")],
+    [/\bgranting your (?:animal )?(companion|familiar|mount|eidolon)\b/i, one((match) => `your ${match[1].toLowerCase()}`)],
+    [/\byou and your (familiar|companion|mount|eidolon)\b/i, one((match) => `you and your ${match[1].toLowerCase()}`)],
+    [/\bBoth you and the triggering (enemy|creature|ally)\b/i, one((match) => `you and the triggering ${match[1].toLowerCase()}`)],
+    [/\bthe triggering creature (?:rolls|is forced|takes|gains)\b/i, one("the triggering creature")],
     // (Digly's Oil of Sympathy: "the most recent creature damaged by the weapon regains 2d10+5 Hit Points".)
-    /\bthe (?:most recent )?creature (?:damaged|hit) by (?:the|this) weapon regains\b/i
+    [/\bthe (?:most recent )?creature (?:damaged|hit) by (?:the|this) weapon regains\b/i, one("the creature the weapon last damaged")]
 ];
+// (Its Effect, before any degree rows: Doom Switch's "Critical Success You and your allies gain …" is its attack's.)
+const effectPart = (text) => String(text ?? "").replace(/^.*?\bEffect\b/s, "").split(/\b(?:Critical )?(?:Success|Failure)\b/)[0];
 export function grantsOthers(text) {
-    // (Its Effect, before any degree rows: Doom Switch's "Critical Success You and your allies gain …" is its attack's.)
-    const effect = String(text ?? "").replace(/^.*?\bEffect\b/s, "").split(/\b(?:Critical )?(?:Success|Failure)\b/)[0];
-    return OTHERS_GRANT.some((pattern) => pattern.test(effect));
+    const effect = effectPart(text);
+    return OTHERS_GRANT.some(([pattern]) => pattern.test(effect));
+}
+// Who and how far, from the first wording that grants it: { target, range, area } or null.
+export function othersTargeting(text) {
+    const effect = effectPart(text);
+    for (const [pattern, build] of OTHERS_GRANT) {
+        const match = pattern.exec(effect);
+        if (match) return build(match);
+    }
+    return null;
 }
 // (A plan for the item card — healing, Effects, an automatic row — whose text grants it to allies.)
 export function targetedRecipient(plan, text) {
