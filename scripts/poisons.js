@@ -97,8 +97,9 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         await message.update({ content: exposureCardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
         throw new Error(`${state.item.name}'s time is up.`);
     }
-    // (The drinker's own save: its user's own token.)
-    const chosen = state.own ? [state.user.tokenUuid].filter(Boolean) : Array.isArray(targets) ? targets : [];
+    // (The drinker's own save: its user's own token — else its token on the scene being viewed.)
+    const ownToken = state.own ? state.user.tokenUuid ?? (await fromUuid(state.user.actorUuid).catch(() => null))?.getActiveTokens?.(false, true)?.[0]?.uuid ?? game.scenes?.viewed?.tokens?.find?.((token) => token.actor?.uuid === state.user.actorUuid || token.actorId === state.user.actorUuid?.split(".").at(-1))?.uuid ?? null : null;
+    const chosen = state.own ? [ownToken].filter(Boolean) : Array.isArray(targets) ? targets : [];
     const tokens = (await Promise.all(chosen.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
     if (!tokens.length) throw new Error(state.own ? `${state.user.name} has no token here.` : "Target the creatures first.");
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
