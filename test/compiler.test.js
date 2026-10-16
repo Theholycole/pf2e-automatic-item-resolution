@@ -343,21 +343,28 @@ test("an Effect behind the check its text opens with: only on a success, a note 
 test("an activation's Trigger kept on the plan, and what it's read as, for the plan's other readers (the simulator)", async () => {
     const { triggerOn } = await import("../src/compiler/activation.js");
     const fang = compileItem({ ...item("Wolf Fang"), ownerAbilities: { str: 3 } });
-    assert.deepEqual([fang.item.activations[0].trigger, fang.item.activations[0].triggerOn], ["You successfully Trip a foe", { event: "after-action", action: "trip", degrees: ["success", "criticalSuccess"] }]);
+    assert.deepEqual([fang.item.activations[0].trigger, fang.item.activations[0].triggerOn], ["You successfully Trip a foe", { event: "after-action", action: "trip", degrees: ["success", "criticalSuccess"], target: { foe: true } }]);
+    // (Only the Activate's own lines: Prey Mutagen's Trigger is the Timely Dodge reaction's it grants.)
+    assert.equal(readActivations(item("Prey Mutagen (Lesser)").system.description.value)[0].trigger, undefined);
+    assert.equal(readActivations(item("Memory Ribbon").system.description.value)[0].trigger, "You attempt a skill check to Recall Knowledge but haven't rolled yet");
     assert.equal(readActivations(item("Healing Potion (Minor)").system.description.value)[0].trigger, undefined, "none without a Trigger");
     const cases = [
         ["You critically hit with a Strike", { event: "after-strike", degrees: ["criticalSuccess"] }],
-        ["Your Strike with the affixed weapon damages a creature", { event: "after-strike", degrees: ["success", "criticalSuccess"] }],
+        ["Your Strike with the affixed weapon damages a creature", { event: "after-strike", degrees: ["success", "criticalSuccess"], weapon: "affixed" }],
         ["You fail or critically fail a Will save", { event: "after-save", statistic: "will", degrees: ["failure", "criticalFailure"] }],
-        ["You make an attack with the affixed weapon, but you haven't rolled yet", { event: "before-roll", what: "attack" }],
+        ["You make an attack with the affixed weapon, but you haven't rolled yet", { event: "before-roll", what: "attack", weapon: "affixed" }],
         ["You would take physical damage", { event: "damaged", types: ["physical"], before: true }],
         ["You would be reduced to 0 Hit Points but not immediately killed", { event: "reduced-to-0" }],
         ["You lose the Dying condition", { event: "condition", slug: "dying", change: "lose" }],
         ["You Stride or Step", { event: "action", actions: ["stride", "step"] }],
-        ["An enemy hits you with a melee Strike", { event: "attacked" }],
-        ["You Strike with the affixed weapon", { event: "strike" }],
+        ["An enemy hits you with a melee Strike", { event: "attacked", target: { foe: true } }],
+        ["You Strike with the affixed weapon", { event: "strike", weapon: "affixed" }],
         ["You roll for initiative", { event: "initiative" }],
-        ["Something else happens", { event: "other" }]
+        ["Something else happens", { event: "other" }],
+        // (Its qualifiers: the creature's condition or trait, a foe, the affixed weapon.)
+        ["You hit an Off-Guard creature with the affixed weapon", { event: "after-strike", degrees: ["success", "criticalSuccess"], target: { condition: "off-guard" }, weapon: "affixed" }],
+        ["You deal damage using the affixed weapon to a creature that has the unholy trait", { event: "after-strike", degrees: ["success", "criticalSuccess"], target: { trait: "unholy" }, weapon: "affixed" }],
+        ["You use the affixed shield to Shield Block a melee attack", { event: "action", actions: ["shield-block"], shield: "affixed" }]
     ];
     for (const [words, read] of cases) assert.deepEqual(triggerOn(words), read, words);
     // A permanent item's activation keeps it too.

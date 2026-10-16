@@ -30,10 +30,13 @@ export function readActivations(html) {
     return matches.map((match, index) => {
         const one = readOne(match[1], match[2]);
         const end = match.index + match[0].length;
-        const region = text.slice(end, matches[index + 1]?.index ?? text.length);
-        const effect = region.search(/<strong>\s*Effect\s*<\/strong>/i);
+        // (Its own lines: to the next Activate, its Effect, or any other heading — Prey Mutagen's "Benefit" and the Timely Dodge
+        // reaction it grants, whose Trigger is that reaction's; its Frequency, Trigger, Requirements and Cost are its own.)
+        const block = text.slice(end, matches[index + 1]?.index ?? text.length);
+        const stop = block.search(/<strong>\s*(?!Frequency\b|Trigger\b|Requirements?\b|Prerequisites?\b|Cost\b)[^<]+<\/strong>/i);
+        const region = stop < 0 ? block : block.slice(0, stop);
         const found = /<strong>\s*Trigger\s*<\/strong>([\s\S]*?)(?=<\/p>|<hr|<strong>|$)/i.exec(region);
-        const trigger = found && (effect < 0 || found.index < effect) ? plain(found[1].replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1")) : null;
+        const trigger = found ? plain(found[1].replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\[\[\/act ([\w-]+)[^\]]*\]\](?:\{([^}]*)\})?/g, (whole, slug, label) => label ?? slug.replace(/-/g, " "))).replace(/[.;,]\s*$/, "") : null;
         return trigger ? { ...one, trigger, triggerOn: triggerOn(trigger) } : one;
     });
 }
@@ -55,9 +58,34 @@ export function readActivations(html) {
 //                   affixed weapon");
 //   "initiative"    "You roll for initiative"; "turn-start" "You begin your turn …"; "falling" "You fall", "You begin to fall";
 //   "other"         anything else (its words say).
+// Each but "other" with the trigger's qualifiers too (above): target { condition, trait, foe }, weapon/shield "affixed".
+// What a trigger says about the creature and the item: target { condition?, trait?, foe? } ("an Off-Guard creature", "a
+// creature that has the unholy trait", "an incorporeal creature", "a foe") and weapon/shield "affixed" ("with the affixed
+// weapon") — the simulator's to check before it plays one.
+const CONDITION_NAMES = "off-guard|frightened|prone|grabbed|restrained|immobilized|blinded|dazzled|sickened|slowed|stunned|stupefied|clumsy|enfeebled|fascinated|fleeing|confused|paralyzed|unconscious|dying|wounded|concealed|hidden|undetected|persistent bleed";
+const TRAIT_NAMES = "unholy|holy|undead|incorporeal|fiend|demon|devil|celestial|construct|dragon|giant|fey|aberration|animal|beast|elemental|plant|fungus|ooze|spirit|living|metal";
+function qualifiers(text) {
+    const target = {};
+    const condition = new RegExp(String.raw`\b(?:an?|the|to an?) (${CONDITION_NAMES}) (?:creature|target|foe|enemy|opponent)\b|\b(?:creature|target|foe|enemy) (?:that's|that is|who is) (${CONDITION_NAMES})\b`, "i").exec(text);
+    if (condition) target.condition = (condition[1] ?? condition[2]).toLowerCase();
+    const trait = new RegExp(String.raw`\b(?:creature|target|foe|enemy) (?:that has|with) the (\w+) trait\b|\b(?:an?|the) (${TRAIT_NAMES}) (?:creature|target|foe|enemy|opponent)\b`, "i").exec(text);
+    if (trait) target.trait = (trait[1] ?? trait[2]).toLowerCase();
+    if (/\b(?:a foe|an enemy|enemies|foes|an opponent)\b/i.test(text)) target.foe = true;
+    const affixed = /\bthe affixed (weapon|shield|firearm or crossbow|firearm|crossbow|armor)\b/i.exec(text);
+    return {
+        ...(Object.keys(target).length ? { target } : {}),
+        ...(affixed ? { [/shield/i.test(affixed[1]) ? "shield" : /armor/i.test(affixed[1]) ? "armor" : "weapon"]: "affixed" } : {})
+    };
+}
+
 const ACTIONS = "Trip|Grapple|Shove|Disarm|Demoralize|Feint|Reposition|Escape|Recall Knowledge|Seek|Hide|Sneak|Treat Wounds|Administer First Aid|Create a Diversion";
 const slugOf = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 export function triggerOn(words) {
+    const read = readTrigger(words);
+    return read.event === "other" ? read : { ...read, ...qualifiers(String(words ?? "")) };
+}
+
+function readTrigger(words) {
     const text = String(words ?? "").trim();
     const action = new RegExp(String.raw`^You (successfully|critically succeed (?:at|to|on)(?: an? \w+ check to)?|succeed at (?:an? \w+ check to)?|critically succeed at an? \w+ check to) (${ACTIONS})\b`, "i").exec(text);
     if (action) return { event: "after-action", action: slugOf(action[2]), degrees: /critically/i.test(action[1]) ? ["criticalSuccess"] : ["success", "criticalSuccess"] };
