@@ -14,12 +14,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 289,
+   "none": 283,
    "resolves": 698,
+   "builtin:readied-bonus": 15,
    "builtin:zone": 86,
    "note-only": 256,
    "builtin:item-action": 8,
-   "builtin:readied-bonus": 9,
    "partial": 23,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
@@ -33,11 +33,11 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 8,
-    "none": 143,
+    "none": 142,
     "resolves": 202,
     "note-only": 117,
     "builtin:zone": 9,
-    "builtin:readied-bonus": 6,
+    "builtin:readied-bonus": 7,
     "partial": 6,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
@@ -88,14 +88,14 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 62,
+    "none": 59,
     "note-only": 13,
     "builtin:item-action": 7,
     "resolves": 47,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
-    "builtin:readied-bonus": 3,
+    "builtin:readied-bonus": 6,
     "partial": 2,
     "builtin:roll-twice": 2
    },
@@ -240,7 +240,8 @@
   "fulu": {
    "count": 46,
    "results": {
-    "none": 20,
+    "builtin:readied-bonus": 2,
+    "none": 18,
     "partial": 1,
     "resolves": 12,
     "note-only": 11,
@@ -318,7 +319,7 @@
    "count": 491,
    "resolves": 329,
    "gaps": 0,
-   "none": 39
+   "none": 38
   },
   "affliction": {
    "count": 144,
@@ -348,7 +349,7 @@
    "count": 156,
    "resolves": 55,
    "gaps": 0,
-   "none": 55
+   "none": 49
   },
   "counteract": {
    "count": 79,
@@ -378,14 +379,14 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 374,
+   "none": 368,
    "item": 659,
+   "fortune": 17,
    "zone": 86,
    "expose": 89,
    "later": 54,
    "action": 8,
    "save": 108,
-   "fortune": 11,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -394,12 +395,12 @@
   "byCategory": {
    "other": {
     "cast": 8,
-    "none": 171,
+    "none": 170,
     "later": 8,
     "save": 71,
     "item": 227,
     "zone": 9,
-    "fortune": 6,
+    "fortune": 7,
     "expose": 3,
     "action": 1,
     "counteract": 5,
@@ -414,13 +415,13 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 73,
+    "none": 70,
     "item": 49,
     "action": 7,
     "reroll": 1,
     "cast": 9,
     "save": 11,
-    "fortune": 5,
+    "fortune": 8,
     "strike": 1
    },
    "elixir": {
@@ -461,7 +462,8 @@
     "counteract": 2
    },
    "fulu": {
-    "none": 23,
+    "fortune": 2,
+    "none": 21,
     "item": 18,
     "save": 3,
     "reroll": 1,
@@ -477,7 +479,7 @@
    }
   },
   "noCard": {
-   "no-plan": 289,
+   "no-plan": 283,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -550,7 +552,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Feather Step Stone",
@@ -1505,7 +1509,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Bloodeye Coffee",
@@ -13828,7 +13834,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Energy Mutagen (Moderate)",
@@ -18333,7 +18341,9 @@
     "fixed-dc",
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Potion of Acid Retaliation (Minor)",
@@ -21027,7 +21037,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Flask of Elemental Water",
@@ -22168,7 +22180,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Fire and Iceberg (Greater)",

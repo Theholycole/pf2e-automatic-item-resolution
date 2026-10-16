@@ -7,12 +7,18 @@
 // with PF2e's own FlatModifier (and Resistance) rules for that long, and one for a single roll goes after that roll
 // (src/live/fortune-card.js). Pure.
 
+// A sentence that says a rule (a note), not flavor ("This green fulu depicts venomous creatures and vermin").
+const RULE_SENTENCE = /\b(?:checks?|saves?|saving throws?|bonus|penalty|damage|conditions?|Strikes?|actions?|resistance|Speeds?|Hit Points|critical (?:success|failure)|failure|success|instead|increases?|DC)\b/i;
+
+// The text's trigger: to its Requirements or Effect, or (a talisman's, with no "Effect" after it) to its sentence's end.
+const triggerOf = (plain) => /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|\.(?=\s|$)|$)/s.exec(plain)?.[1] ?? null;
+
 const SKILLS = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery"];
 const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 // "You gain a +2 status bonus to …", "giving you a +4 status bonus to your AC and saves against the effect", "you gain a
 // +1 circumstance bonus against the triggering save".
-const GAIN = /\b(?:you gain|giving you|you get|granting you|gaining) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
+const GAIN = /\b(?:you gain|giving you|you get|granting you|grants? you|gaining) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
 const RESIST = /\b(?:and )?(?:gain )?resistance (\d+) to (?:all )?damage\b/i;
 
 // The selectors for the words a bonus names: "AC and saving throws" → ac, saving-throw; "your Fortitude DC" → fortitude-dc;
@@ -51,14 +57,14 @@ const SHORT = /\buntil the (?:end|start|beginning) of (?:the current|your|your n
 const AFTER_ROLL = /\bwould (?:miss|fail|be hit|be critically hit)\b|\byou (?:miss|fail|critically fail|roll a (?:critical )?failure)\b|\bfailed\b|\b(?:successfully Strikes|hits|critically hits|damages) you\b/i;
 // (A bonus that might turn the roll already made: \"If this causes the Strike to miss\", \"possibly turning a miss into a hit\".)
 const TURNS_ROLL = /\bIf this causes\b[^.]*\bto (?:miss|hit|succeed|fail)\b|\bturning a miss into a hit\b|\bmight improve\b/i;
-const LASTING = /\bThe duration is\b|\bfor (?:\d+|one|a|an) (?:minutes?|hours?|days?|weeks?)\b|\blasts? (?:for|until)\b|\buntil you (?:Activate|make your next daily preparations)\b|\b24 hours\b|\bdaily preparations\b/i;
+const LASTING = /\bThe duration is\b|\bfor (?:\d+|one|a|an) (?:minutes?|hours?|days?|weeks?)\b|\bfor the next (?:\d+ )?(?:minutes?|hours?|days?)\b|\blasts? (?:for|until)\b|\buntil you (?:Activate|make your next daily preparations)\b|\b24 hours\b|\bdaily preparations\b/i;
 
 // The text (plain) → { modifiers: [{ selector, type, value, predicate? }], resistance, duration, spend, notes } or null.
 // spend: the selectors whose next roll ends it ("the Stealth check", "the triggering save", "your next skill action").
 // trigger: the activation's trigger, when it has one.
 export function readReadiedBonus(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
-    const triggered = trigger ?? /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(plain)?.[1] ?? null;
+    const triggered = trigger ?? triggerOf(plain);
     if ((triggered && AFTER_ROLL.test(triggered)) || TURNS_ROLL.test(plain)) return null;
     const body = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
     const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
@@ -66,23 +72,31 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
         const match = GAIN.exec(sentence);
         if (!match) continue;
         // (Its user's own: not an ally's, an area's, nor under a condition of its own.)
-        if (/\b(?:all(?:ies|y)|each creature|creatures? (?:in|within)|emanation|aura)\b/i.test(sentence) || /^(?:If|While|When|Whenever)\b/.test(sentence)) continue;
+        // ("When activated, …", "When you activate the coin, you gain …": the use itself, not a condition.)
+        const own = sentence.replace(/^When (?:it's |it is )?(?:you )?activat\w*(?: (?:it|the [\w' -]+?))?,\s*/i, "");
+        if (/\b(?:all(?:ies|y)|each creature|creatures? (?:in|within)|emanation|aura)\b/i.test(sentence) || /^(?:If|While|When|Whenever)\b/.test(own)) continue;
         const [, value, type, , words] = match;
         const selectors = selectorsOf(words);
         if (!selectors.length) continue;
         // ("to Hide and Sneak", "to Trip the target", "checks made to Escape your grapple": only for those actions.)
-        const actions = /\b(?:checks? )?(?:made )?to ((?:[A-Z][a-z']+)(?: (?:and|or) [A-Z][a-z']+)*)\b/.exec(words);
+        // (A name of several words too: "to Recall Knowledge", "to Make an Impression".)
+        const NAME = String.raw`[A-Z][a-z']+(?: (?:a|an|the|of) [A-Z][a-z']+| [A-Z][a-z']+)*`;
+        const actions = new RegExp(String.raw`\b(?:checks? )?(?:made )?to (${NAME}(?: (?:and|or) ${NAME})*)\b`).exec(words);
         const predicate = actions ? [{ or: actions[1].split(/\s+(?:and|or)\s+/).map((name) => `action:${slug(name)}`) }] : null;
         const modifiers = selectors.map((selector) => ({ selector, type: type.toLowerCase(), value: Number(value), ...(predicate && !selector.endsWith("-dc") ? { predicate } : {}) }));
         const resist = RESIST.exec(sentence);
         // (One roll: "the Stealth check", "the triggering save", "your next skill action" — that roll ends it.)
-        const single = /\b(?:the triggering|your next|the next|this|the) (?:[\w ]{0,20}?)(?:check|save|saving throw|roll|attack roll|skill action|action)\b/i.test(words) && !/\b(?:checks|saves|saving throws|rolls)\b/i.test(words);
+        // ("your Fortitude save against the initial exposure": that one save too.)
+        const single = /\b(?:the triggering|your next|the next|this|the|your) (?:[\w ]{0,20}?)(?:check|save|saving throw|roll|attack roll|skill action|action)\b/i.test(words) && !/\b(?:checks|saves|saving throws|rolls)\b/i.test(words);
         const spend = single ? selectors.filter((selector) => !selector.endsWith("-dc") && selector !== "ac") : [];
         // (A moment only, as above.)
         if (!(triggered || SHORT.test(sentence) || spend.length) || sentences.some((other) => LASTING.test(other))) return null;
         const notes = [
             ...(/\bagainst the (?:triggering|effect)\b|\bagainst (?:any )?(?:the )?(?:triggering )?[A-Z]\w+\b/.test(`${sentence}`) && !spend.length ? [`Only against what triggered it: ${sentence}`] : []),
-            ...sentences.filter((_, at) => at !== index).filter((other) => !/^This is a fortune effect\.?$/i.test(other) && !/^Activate\b/.test(other))
+            // (A bonus that says more: Conrasu Coin's "…, which increases to a +3 circumstance bonus to make-an-impression on a creature …".)
+            ...(spend.length && /,? (?:which|but|unless|if)\b/i.test(words) ? [sentence] : []),
+            // (Its other rule sentences, not its flavor nor its Usage, Activate or Trigger lines.)
+            ...sentences.filter((_, at) => at !== index).filter((other) => !/^This is a fortune effect\.?$/i.test(other) && !/^(?:Usage|Activate|Trigger|Prerequisites?|Requirements?)\b/.test(other) && RULE_SENTENCE.test(other))
         ];
         return { modifiers, resistance: resist ? { type: "all-damage", value: Number(resist[1]) } : null, duration: durationOf(sentence), spend, notes };
     }
@@ -129,7 +143,7 @@ const UPGRADES = [
 ];
 export function readDegreeAdjust(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
-    const triggered = trigger ?? /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(plain)?.[1] ?? null;
+    const triggered = trigger ?? triggerOf(plain);
     if ((triggered && AFTER_ROLL.test(triggered)) || /\bduring (?:that|this) time\b/i.test(plain) || LASTING.test(plain)) return null;
     const adjustment = {};
     let named = "";

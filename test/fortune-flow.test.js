@@ -163,3 +163,23 @@ test("resistance against the hit that triggered it: PF2e's Resistance for the tu
     assert.deepEqual(effect.system.rules, [{ key: "Resistance", type: "physical", value: 3 }]);
     assert.deepEqual([effect.system.duration.value, effect.system.duration.expiry], [0, "turn-end"]);
 });
+
+test("a talisman's moment bonus: its trigger its first sentence, \"When activated, …\", \"grants you\", a name of several words", () => {
+    // "Trigger You attempt a saving throw against an injected poison. … When activated, …, granting you a +2 status bonus to the
+    // triggering saving throw." — its flavor isn't a note, nor its Usage or Trigger line.
+    const venom = compileItem(source("Venomous Cure Fulu"));
+    assert.equal(routeOf(venom), "fortune");
+    assert.deepEqual([venom.bonus.modifiers, venom.bonus.spend, venom.notes], [[{ selector: "saving-throw", type: "status", value: 2 }], ["saving-throw"], []]);
+    // "The memory ribbon grants you a +2 item bonus to the triggering skill check to Recall Knowledge".
+    assert.deepEqual(compileItem(source("Memory Ribbon")).bonus.modifiers[0].predicate, [{ or: ["action:recall-knowledge"] }]);
+    // "You get a +2 status bonus to the Diplomacy check, and if you roll a critical failure on the check, you get a failure
+    // instead": the later "if you roll a critical failure" isn't its trigger.
+    const match = compileItem(source("Matchmaker Fulu"));
+    assert.deepEqual([match.bonus.modifiers[0].selector, match.bonus.degree.adjustment], ["diplomacy", { criticalFailure: "one-degree-better" }]);
+    // "+2 status bonus on your Fortitude save against the initial exposure": spent by that save.
+    assert.deepEqual(compileItem(source("Sanitizing Pin")).bonus.spend, ["fortitude"]);
+    // "…, which increases to a +3 circumstance bonus …": a note.
+    assert.match(compileItem(source("Conrasu Coin (Arbiter)")).notes.join(" "), /increases to a \+3/);
+    // Not a moment: "on all Fortitude saves against the same disease for the next minute" (Fulu of the Stoic Ox).
+    assert.notEqual(compileItem(source("Fulu of the Stoic Ox"))?.builtin, "readied-bonus");
+});
