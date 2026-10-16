@@ -631,6 +631,23 @@ export const cases = {
         return { duration: effect.system.duration };
     },
 
+    // Umbral Wings: a fly Speed equal to the land Speed until the end of the next turn (PF2e's BaseSpeed on PF2e 8.6's speeds).
+    async umbralFly(scene) {
+        const { actor: flier } = await creature(scene, "Umbral Flier", { x: 14, y: 14 });
+        const wings = await give(flier, "Umbral Wings");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(wings.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(800);
+        const effect = flier.itemTypes.effect.find((entry) => entry.getFlag(NS, "speed") === "fly");
+        assert(effect, "the Speed Effect");
+        const land = Number(flier.system.movement?.speeds?.land?.value ?? flier.system.attributes?.speed?.value);
+        const fly = Number(flier.system.movement?.speeds?.fly?.value ?? flier.system.attributes?.speed?.otherSpeeds?.find((entry) => entry.type === "fly")?.value);
+        assert(Number.isFinite(fly) && fly === land, `a fly Speed of ${land} (${fly})`);
+        return { land, fly, duration: effect.system.duration };
+    },
+
     // Quenching Potion: PF2e's own recovery check for the drinker's persistent fire damage, at DC 10; the DC back to 15 if it stays.
     async quenchRecovery(scene) {
         const { actor: burning } = await creature(scene, "Burning Drinker", { x: 16, y: 11 });
