@@ -1022,8 +1022,11 @@ export const cases = {
         const { token: foeToken } = await creature(scene, "Stone Target", { x: 16, y: 17, ac: 1, alliance: "opposition" });
         const sling = await give(slinger, "Sling");
         const bullets = await give(slinger, "Stone Bullet");
-        await bullets.update({ "system.quantity": 3 });
-        await sling.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.selectedAmmoId": bullets.id });
+        // (Sling bullets: give() presets ammunition that names none to arrows.)
+        await bullets.update({ "system.quantity": 3, "system.baseItem": "sling-bullets" });
+        // (Reload 0 for the test: a reloading weapon takes its ammunition from what's loaded in it, not the selected one — the cast on
+        // the hit is what's checked here.)
+        await sling.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.selectedAmmoId": bullets.id, "system.reload.value": "0" });
         let since = Date.now();
         await game.modules.get(NS).api.live.activate(bullets.uuid, 0);
         const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
@@ -1034,8 +1037,9 @@ export const cases = {
         since = Date.now();
         const { attack } = await strike(slinger, sling);
         assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
-        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem) || /Petrify/.test(message.flavor ?? "") || /Petrify/.test(message.content ?? ""), { what: "the spell module's Petrify", timeout: 15000 });
-        return { cast: cast.id };
+        // (PF2e's own spell message for the cast, not this module's summary line.)
+        const cast = await messageAfter(since, (message) => message.flags?.pf2e?.origin?.type === "spell" && /Petrify/.test(message.flags?.pf2e?.origin?.uuid ? fromUuidSync(message.flags.pf2e.origin.uuid)?.name ?? message.flavor ?? "" : message.flavor ?? ""), { what: "the spell module's Petrify", timeout: 15000 });
+        return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature

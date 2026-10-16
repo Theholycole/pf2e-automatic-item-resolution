@@ -213,3 +213,10 @@ test("Thorn of Milani: both its own linked Effects, one after the other", () => 
     const thorn = compileItem(source("Thorn of Milani (Lesser)"));
     assert.deepEqual(thorn.resolution.applications.map((entry) => entry.label), ["Effect: Thorn of Milani (Spirit Damage)", "Effect: Thorn of Milani (Unholy Weakness)"]);
 });
+
+test("Bewildering Spellgun: an attack against AC (not the Will save its success row names), confused for a minute", () => {
+    const gun = compileItem(source("Bewildering Spellgun"));
+    assert.deepEqual([gun.resolution.check.roll, gun.resolution.check.against.statistic, gun.ownCheck.choose], ["skill", "ac", ["spell", "firearm"]]);
+    assert.deepEqual(["criticalSuccess", "success"].map((degree) => gun.resolution.outcomes[degree].effects.map((effect) => [effect.slug, effect.duration?.value, effect.duration?.unit])), [[["confused", 1, "minutes"]], [["confused", 1, "minutes"]]]);
+    assert.match(gun.notes.join(" "), /at the end of each of its turns/);
+});

@@ -105,8 +105,9 @@ export function compileItem(given, options = {}) {
     plan = itemActionOver(plan, itemActionPlan(item?.system?.description?.value, base, { ...options, item }));
     // (A check with the item's own modifier, src/compiler/own-checks.js.)
     plan = ownCheckOver(plan, ownCheckPlan(plainText(item?.system?.description?.value), base, options));
-    // (A spellgun's attack with its user's spell or firearm attack modifier, src/compiler/spellguns.js.)
-    plan = ownCheckOver(plan, spellgunPlan(item?.system?.description?.value, base));
+    // (A spellgun's attack with its user's spell or firearm attack modifier, src/compiler/spellguns.js — over any other reading:
+    // Bewildering Spellgun's attack isn't the Will save its success row names.)
+    plan = spellgunPlan(item?.system?.description?.value, base) ?? plan;
     // (Damage outright to the creature it names, src/compiler/direct-damage.js: Murderer's Knot.)
     // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
     plan = directDamageOver(guardText(plan, plainText(item?.system?.description?.value)), directDamagePlan(plainText(item?.system?.description?.value), base, { item }));

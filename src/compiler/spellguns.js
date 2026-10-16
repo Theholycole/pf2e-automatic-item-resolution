@@ -48,7 +48,9 @@ function degreeRow(words) {
             const riders = riderRow(`The target ${clause.replace(/\s+while\b.*$/i, "")}.`);
             if ((riders.effects ?? []).length || (riders.modifiers ?? []).length || riders.forcedMovement) {
                 add(riders);
-                if (/\bwhile\b/i.test(clause)) notes.push(`The target ${clause}.`);
+                // (What its time leaves to the GM: "while the persistent damage lasts", "but can attempt a … save at the end of each of
+                // its turns to end the effect".)
+                if (/\bwhile\b|\bbut can\b|\bsave\b/i.test(clause)) notes.push(`The target ${clause}.`);
             } else if (!/^(?:full|double)?\s*(?:persistent )?(?:damage)?,?$/i.test(clause)) notes.push(`The target ${clause}.`);
         }
     }

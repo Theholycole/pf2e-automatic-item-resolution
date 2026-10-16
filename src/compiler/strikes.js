@@ -121,15 +121,25 @@ const pf2eDamage = (item) => (item?.system?.rules ?? []).some((rule) => ["Damage
 // A spell cast at the creature the Strike hits: Tiger's Claw's "If you successfully deal damage to your target, the target is
 // also affected by a 4th-rank Vision of Death with a spell DC of 28", Stone Bullet's "A creature hit by an activated stone
 // bullet is subject to the effects of a 6th-rank Petrify spell (DC 34 Fortitude)". strike.cast { uuid, name, rank, dc }: on a
-// hit, the spell module casts it (api.castFromItem) at that creature, its own save at the item's DC. Not one with a save of
-// the item's own first ("… unless it succeeds at a Will save", Silencing Shot) nor one in place of the spell's attack
-// ("requiring a … save", Disintegration Bolt): the spell module can't do those yet.
+// hit, the spell module casts it (api.castFromItem) at that creature, its own save at the item's DC. A save of the item's own
+// first — Silencing Shot's "… unless it succeeds at a @Check[will|dc:25] save" — is castFromItem's saveFirst; the hit in place
+// of the spell's attack — Disintegration Bolt's "subject to a Disintegrate spell requiring a … save" — its attackDegree, the
+// Strike's own degree.
 const CAST_ON_HIT = /\bis (?:also )?(?:subject to|affected by) (?:the effects of )?an? (?:(\d+)(?:st|nd|rd|th)-rank )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]+)\}(?: spell)?([^.]*)/i;
 export function castOnHit(html) {
     const match = CAST_ON_HIT.exec(String(html ?? ""));
-    if (!match || /\bunless\b|\brequiring\b/i.test(match[4])) return null;
+    if (!match) return null;
     const dc = /\bspell DC of (\d+)|@Check\[\w+\|dc:(\d+)/i.exec(match[4]);
-    return { uuid: match[2], name: match[3], rank: match[1] ? Number(match[1]) : null, dc: dc ? Number(dc[1] ?? dc[2]) : null };
+    const unless = /\bunless it succeeds at an? @Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(match[4]);
+    const requiring = /\brequiring an? @Check\[(?:fortitude|reflex|will)\|dc:\d+/i.test(match[4]);
+    return {
+        uuid: match[2],
+        name: match[3],
+        rank: match[1] ? Number(match[1]) : null,
+        dc: unless ? null : dc ? Number(dc[1] ?? dc[2]) : null,
+        ...(unless ? { saveFirst: { statistic: unless[1].toLowerCase(), dc: Number(unless[2]) } } : {}),
+        ...(requiring ? { attackFromHit: true } : {})
+    };
 }
 
 export function compileStrike(item, base) {
@@ -151,7 +161,7 @@ export function compileStrike(item, base) {
     const cast = castOnHit(html);
     const read = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
     // (The cast's own sentence isn't a note.)
-    if (cast) read.notes = read.notes.filter((note) => !note.includes(cast.name));
+    if (cast) read.notes = read.notes.filter((note) => !note.includes(cast.name) && !(cast.attackFromHit && /^As with the spell\b/i.test(note)));
     const extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration || read.runes) } : read;
     if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read && !cast) return null;
     const anyRider = hasRow(riders.success) || hasRow(riders.criticalSuccess);

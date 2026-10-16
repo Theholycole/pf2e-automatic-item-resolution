@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 688,
+   "resolves": 690,
    "builtin:cast-spell": 469,
-   "none": 776,
+   "none": 774,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -27,11 +27,11 @@
    "save": 344,
    "cast": 469,
    "item": 602,
-   "none": 972,
+   "none": 970,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
-   "strike": 49,
+   "strike": 51,
    "toggle": 26,
    "zone": 9,
    "action": 13,
@@ -81,9 +81,9 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 58,
+    "none": 56,
     "partial": 13,
-    "resolves": 41,
+    "resolves": 43,
     "builtin:pf2e-rules": 24,
     "note-only": 14,
     "builtin:no-effect": 2,
@@ -7716,9 +7716,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Magical Medal (Phoenix's Fire)",
@@ -12171,9 +12171,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Shield of the Unified Legion",

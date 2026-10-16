@@ -293,7 +293,9 @@ test("a spell cast at the creature hit: Stone Bullet's Petrify at rank 6 and DC 
     const [stone] = compileActivations(source("Stone Bullet"));
     assert.deepEqual(stone.plan.strike.cast, { uuid: "Compendium.pf2e.spells-srd.Item.znv4ECL7ZtuiagtA", name: "Petrify", rank: 6, dc: 34 });
     assert.match(strikeLines(stone.plan).join(" | "), /On a hit: Petrify \(rank 6, DC 34\) cast at the target/);
-    assert.equal(compileActivations(source("Silencing Shot"))[0].plan?.strike?.cast ?? null, null, "its Will save comes first");
+    // A save of the item's own first (Silencing Shot), its hit for the spell's attack (Disintegration Bolt).
+    assert.deepEqual(compileActivations(source("Silencing Shot"))[0].plan.strike.cast.saveFirst, { statistic: "will", dc: 25 });
+    assert.equal(compileActivations(source("Disintegration Bolt"))[0].plan.strike.cast.attackFromHit, true);
     assert.deepEqual(compileActivations(source("Tiger's Claw")).find((entry) => entry.plan?.strike?.cast).plan.strike.cast.name, "Vision of Death");
     const bullets = foundry.giveItem(fighter, source("Stone Bullet"));
     const count = foundry.messages.length;
@@ -307,3 +309,31 @@ test("a spell cast at the creature hit: Stone Bullet's Petrify at rank 6 and DC 
     const [cast] = foundry.casts.slice(before);
     assert.deepEqual([cast.spell, cast.rank, cast.dc, cast.targets.length], ["Compendium.pf2e.spells-srd.Item.znv4ECL7ZtuiagtA", 6, 34, 1]);
 });
+
+test("Silencing Shot: castFromItem's saveFirst when the spell module offers it; else the GM's, by hand", async () => {
+    const spell = globalThis.game.modules.get("pf2e-automatic-resolution").api;
+    const shots = foundry.giveItem(fighter, source("Silencing Shot"));
+    const ready = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: shots.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+    };
+    // Not offered: no cast, a line for the GM.
+    await ready();
+    let before = foundry.casts.length;
+    const hit = await attack("success", ["item:ranged", `item:ammo:id:${shots.id}`]);
+    assert.equal(foundry.casts.length, before);
+    assert.match(foundry.messages.slice(foundry.messages.indexOf(hit)).map((message) => message.content).join(" "), /if it fails a DC 25 will save[^<]*by hand/);
+    // Offered: the save goes with the cast.
+    spell.castFromItemOptions = ["attackDegree", "saveFirst"];
+    await ready();
+    before = foundry.casts.length;
+    await attack("success", ["item:ranged", `item:ammo:id:${shots.id}`]);
+    const [cast] = foundry.casts.slice(before);
+    assert.deepEqual([cast.rank, cast.saveFirst], [4, { statistic: "will", dc: 25 }]);
+    delete spell.castFromItemOptions;
+});
+

@@ -94,10 +94,15 @@ export async function strikeWithRider(message) {
     if (cast) {
         const castFromItem = game.modules.get(SPELL_ID)?.api?.castFromItem;
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
-        if (!castFromItem) lines.push(`${target.name}: cast ${cast.name}${cast.rank ? ` at rank ${cast.rank}` : ""}${cast.dc ? `, DC ${cast.dc}` : ""} by hand (PF2e Automatic Spell Resolution isn't active)`);
+        // (Its save of its own first, its hit for the spell's attack: castFromItem's saveFirst and attackDegree, spell module 2026-10-16.)
+        const options = game.modules.get(SPELL_ID)?.api?.castFromItemOptions ?? [];
+        const needs = [cast.saveFirst ? "saveFirst" : null, cast.attackFromHit ? "attackDegree" : null].filter(Boolean);
+        const byHand = `${target.name}: cast ${cast.name}${cast.rank ? ` at rank ${cast.rank}` : ""}${cast.dc ? `, DC ${cast.dc}` : ""}${cast.saveFirst ? ` if it fails a DC ${cast.saveFirst.dc} ${cast.saveFirst.statistic} save` : ""}${cast.attackFromHit ? ", the hit for its attack roll" : ""} by hand`;
+        if (!castFromItem) lines.push(`${byHand} (PF2e Automatic Spell Resolution isn't active)`);
+        else if (needs.some((need) => !options.includes(need))) lines.push(`${byHand} (this version of the spell module can't yet)`);
         else {
-            await castFromItem({ actor, token: sourceToken ?? undefined, spell: cast.uuid, rank: cast.rank ?? undefined, dc: cast.dc ?? undefined, targets: [targetToken.object ?? targetToken], item: { name: rider.item.name, uuid: rider.item.uuid ?? null } });
-            lines.push(`${target.name}: ${cast.name} cast at it`);
+            const result = await castFromItem({ actor, token: sourceToken ?? undefined, spell: cast.uuid, rank: cast.rank ?? undefined, dc: cast.dc ?? undefined, targets: [targetToken.object ?? targetToken], item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, ...(cast.saveFirst ? { saveFirst: cast.saveFirst } : {}), ...(cast.attackFromHit ? { attackDegree: context.outcome } : {}) });
+            lines.push(result?.resisted ? `${target.name} resists ${cast.name} (its ${cast.saveFirst?.statistic ?? ""} save)` : `${target.name}: ${cast.name} cast at it`);
         }
     }
     await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(lines.join("; ") || "the Strike hit")}.</p>` });
