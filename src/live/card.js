@@ -246,7 +246,7 @@ export function cardHTML(state, { canApply = false } = {}) {
     const reducePick = !pickFrom ? ""
         : open && canApply ? `<p class="aar-actions">Lower: <select data-air-field="reduceChoice">${pickFrom.map((slug, index) => `<option value="${index}"${index === (state.reduceChoice ?? 0) ? " selected" : ""}>${escape(slug)}</option>`).join("")}</select></p>`
             : Number.isInteger(state.reduceChoice) ? `<p class="aar-actions">Lower: ${escape(pickFrom[state.reduceChoice] ?? pickFrom[0])}</p>` : "";
-    const forAllies = state.plan?.item?.recipient === "allies" || (state.plan?.item?.reduce ?? []).some((entry) => entry.who === "targets");
+    const forAllies = state.plan?.item?.recipient === "targets" || (state.plan?.item?.reduce ?? []).some((entry) => entry.who === "targets");
     const targetHint = open && canApply && forAllies ? `<p class="aar-hint">Target the creatures it helps (your own token too, when it helps you), then press Apply.</p>` : "";
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";

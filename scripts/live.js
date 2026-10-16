@@ -305,7 +305,7 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     if (!core) throw new Error("The resolution core isn't active.");
     if (state.drinker !== null && Number.isInteger(drinker) && state.drinkers[drinker]) state = { ...state, drinker };
     // (Granted to allies: each creature the presser targets in turn, as the drinker — Warpipes' Effect on each.)
-    const allies = state.plan.item?.recipient === "allies" ? await targetedCreatures(targets) : null;
+    const allies = state.plan.item?.recipient === "targets" ? await targetedCreatures(targets) : null;
     if (allies && !allies.length) throw new Error("Target the creatures it helps first, then press Apply.");
     const lines = [];
     const each = allies ? allies.map((creature) => ({ ...state, drinkers: [entryOf(creature.token, creature.actor)], drinker: 0 })) : [state];
