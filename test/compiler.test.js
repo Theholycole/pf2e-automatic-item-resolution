@@ -305,3 +305,12 @@ test("a third-party module's own Effect: linked in its short form, checked again
     assert.equal(verifyEffectRules([{ key: "AdjustModifier", selector: "athletics" }], html).ok, false);
     assert.equal(verifyEffectRules([], html).ok, false, "nothing to apply");
 });
+
+test("action scopes in lower case, the last item's only; X-based checks; a sentence's tail a note (Martial Mayhem Mutagen)", () => {
+    const plan = compileItem(item("Martial Mayhem Mutagen (Lesser)"));
+    assert.deepEqual(plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate ?? null]), [
+        ["skill-check", 1, [{ or: ["action:disarm", "action:grapple", "action:reposition", "action:shove", "action:trip"] }]],
+        ["will", -2, null], ["int-based", -2, null], ["perception", -2, ["action:sense-motive"]]
+    ]);
+    assert.ok(plan.unread.some((sentence) => /1 additional precision damage to Off-Guard creatures/.test(sentence)), "the Strikes' extra damage on the note");
+});

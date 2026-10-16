@@ -18,9 +18,9 @@
    "resolves": 698,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 255,
+   "note-only": 251,
    "builtin:item-action": 8,
-   "partial": 24,
+   "partial": 28,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "builtin:reroll": 2,
@@ -199,8 +199,7 @@
    "count": 68,
    "results": {
     "resolves": 60,
-    "note-only": 4,
-    "partial": 4
+    "partial": 8
    },
    "mechanisms": {
     "linked-effect": 60,
@@ -1589,8 +1588,14 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Your senses sharpen and your mind floods with tactical opportunities, overwhelming your foes - though the rush of possibilities can overwhelm you instead.",
+    "Benefit You gain a +1 item bonus to skill checks to disarm, grapple, reposition, shove, and trip, and your melee Strikes deal 1 additional precision damage to Off-Guard creatures.",
+    "When you succeed at a melee attack roll, the target is off-guard to your next attack roll against it before the start of your next turn.",
+    "When you fail at a melee attack roll, you are Clumsy 1 until the end of your next turn."
+   ],
    "live": "item"
   },
   {
@@ -2603,8 +2608,14 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Your senses sharpen and your mind floods with tactical opportunities, overwhelming your foes - though the rush of possibilities can overwhelm you instead.",
+    "Benefit You gain a +3 item bonus to skill checks to disarm, grapple, reposition, shove, and trip, and your melee Strikes deal 1d6 additional precision damage to Off-Guard creatures.",
+    "When you succeed at a melee attack roll, the target is off-guard to your next attack roll against it before the start of your next turn.",
+    "When you fail at a melee attack roll, you are Clumsy 1 until the end of your next turn."
+   ],
    "live": "item"
   },
   {
@@ -5202,8 +5213,14 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Your senses sharpen and your mind floods with tactical opportunities, overwhelming your foes - though the rush of possibilities can overwhelm you instead.",
+    "Benefit You gain a +2 item bonus to skill checks to disarm, grapple, reposition, shove, and trip, and your melee Strikes deal 1d4 additional precision damage to Off-Guard creatures.",
+    "When you succeed at a melee attack roll, the target is off-guard to your next attack roll against it before the start of your next turn.",
+    "When you fail at a melee attack roll, you are Clumsy 1 until the end of your next turn."
+   ],
    "live": "item"
   },
   {
@@ -5783,8 +5800,15 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Your senses sharpen and your mind floods with tactical opportunities, overwhelming your foes - though the rush of possibilities can overwhelm you instead.",
+    "Benefit You gain a +4 item bonus to skill checks to disarm, grapple, reposition, shove, and trip, and your melee Strikes deal 1 additional precision damage to Off-Guard creatures.",
+    "When you succeed at a melee attack roll, the target is off-guard to your next attack roll against it before the start of your next turn.",
+    "When you critically succeed at a melee attack roll, the target is also Clumsy 1 until the beginning of your next turn.",
+    "When you fail at a melee attack roll, you are Clumsy 1 until the end of your next turn."
+   ],
    "live": "item"
   },
   {

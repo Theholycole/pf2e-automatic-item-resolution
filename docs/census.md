@@ -18,8 +18,8 @@ Results, for the items this module handles:
 | Result | Items | Share |
 |---|---:|---:|
 | resolves | 698 | 47% |
-| partial | 24 | 2% |
-| note-only | 255 | 17% |
+| partial | 28 | 2% |
+| note-only | 251 | 17% |
 | builtin:zone | 86 | 6% |
 | builtin:cast-spell | 32 | 2% |
 | builtin:roll-twice | 2 | 0% |
@@ -39,7 +39,7 @@ Results, for the items this module handles:
 | poison | 115 | 110 | 0 | 1 | 0 | 1 | 3 |
 | snare | 82 | 0 | 0 | 5 | 0 | 63 | 14 |
 | gadget | 77 | 27 | 0 | 14 | 0 | 25 | 11 |
-| mutagen | 68 | 60 | 4 | 4 | 0 | 0 | 0 |
+| mutagen | 68 | 60 | 8 | 0 | 0 | 0 | 0 |
 | oil | 66 | 25 | 2 | 20 | 0 | 10 | 9 |
 | fulu | 46 | 12 | 1 | 11 | 0 | 4 | 18 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |

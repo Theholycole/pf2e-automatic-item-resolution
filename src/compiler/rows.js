@@ -154,7 +154,10 @@ const SELECTORS = [
     [/^(?:saves|saving throws)$/i, "saving-throw"], [/^fortitude(?: saves?| saving throws?)?$/i, "fortitude"], [/^reflex(?: saves?| saving throws?)?$/i, "reflex"],
     [/^will(?: saves?| saving throws?)?$/i, "will"], [/^perception(?: checks?)?$/i, "perception"], [/^(?:ac|armor class)$/i, "ac"],
     [/^attack rolls?$/i, "attack-roll"], [/^damage rolls?$/i, "damage"], [/^initiative(?: rolls?| checks?)?$/i, "initiative"], [/^skill checks$/i, "skill-check"],
-    ...SKILLS.map((skill) => [new RegExp(`^${skill}(?: checks?)?$`, "i"), skill])
+    ...SKILLS.map((skill) => [new RegExp(`^${skill}(?: checks?)?$`, "i"), skill]),
+    // ("Intelligence-based skill checks": PF2e's int-based domain.)
+    [/^strength-based (?:skill )?checks?$/i, "str-based"], [/^dexterity-based (?:skill )?checks?$/i, "dex-based"], [/^constitution-based (?:skill )?checks?$/i, "con-based"],
+    [/^intelligence-based (?:skill )?checks?$/i, "int-based"], [/^wisdom-based (?:skill )?checks?$/i, "wis-based"], [/^charisma-based (?:skill )?checks?$/i, "cha-based"]
 ];
 
 function selectorsOf(list) {
@@ -174,7 +177,7 @@ function selectorsOf(list) {
 // A scope PF2e has a roll option for, as the modifier's predicate: "saves against diseases and poisons" → item:trait:disease
 // or item:trait:poison; "Athletics checks to Climb" → action:climb. Anything else narrower than a selector stays out.
 const TRAITS = { poisons: "poison", poison: "poison", diseases: "disease", disease: "disease", fear: "fear", mental: "mental", emotion: "emotion", auditory: "auditory", visual: "visual", olfactory: "olfactory", inhaled: "inhaled", curses: "curse", curse: "curse", illusions: "illusion", illusion: "illusion", sleep: "sleep", death: "death", possession: "possession", polymorph: "polymorph" };
-const ACTIONS = { climb: "climb", swim: "swim", "high jump": "high-jump", "long jump": "long-jump", leap: "leap", balance: "balance", "tumble through": "tumble-through", escape: "escape", hide: "hide", sneak: "sneak", seek: "seek", "sense motive": "sense-motive", "sense direction": "sense-direction", track: "track", demoralize: "demoralize", feint: "feint", grapple: "grapple", trip: "trip", shove: "shove", disarm: "disarm", "recall knowledge": "recall-knowledge", "treat wounds": "treat-wounds", "administer first aid": "administer-first-aid", "pick a lock": "pick-a-lock", "disable a device": "disable-a-device", squeeze: "squeeze", impersonate: "impersonate", lie: "lie", "make an impression": "make-an-impression", request: "request", coerce: "coerce", perform: "perform", "gather information": "gather-information" };
+const ACTIONS = { reposition: "reposition", climb: "climb", swim: "swim", "high jump": "high-jump", "long jump": "long-jump", leap: "leap", balance: "balance", "tumble through": "tumble-through", escape: "escape", hide: "hide", sneak: "sneak", seek: "seek", "sense motive": "sense-motive", "sense direction": "sense-direction", track: "track", demoralize: "demoralize", feint: "feint", grapple: "grapple", trip: "trip", shove: "shove", disarm: "disarm", "recall knowledge": "recall-knowledge", "treat wounds": "treat-wounds", "administer first aid": "administer-first-aid", "pick a lock": "pick-a-lock", "disable a device": "disable-a-device", squeeze: "squeeze", impersonate: "impersonate", lie: "lie", "make an impression": "make-an-impression", request: "request", coerce: "coerce", perform: "perform", "gather information": "gather-information" };
 // Creatures PF2e's origin roll options name ("against effects created by devils" → origin:trait:devil).
 const CREATURES = { aberrations: "aberration", animals: "animal", beasts: "beast", celestials: "celestial", constructs: "construct", daemons: "daemon", demons: "demon", devils: "devil", dragons: "dragon", elementals: "elemental", fey: "fey", fiends: "fiend", fungi: "fungus", giants: "giant", haunts: "haunt", oozes: "ooze", plants: "plant", spirits: "spirit", swarms: "swarm", undead: "undead" };
 const CONDITION_WORDS = { fatigue: "fatigued", fatigued: "fatigued", petrify: "petrified", petrified: "petrified", paralyze: "paralyzed", paralyzed: "paralyzed", frighten: "frightened", frightened: "frightened", sicken: "sickened", sickened: "sickened", stun: "stunned", stunned: "stunned", confuse: "confused", confused: "confused", slow: "slowed", slowed: "slowed" };
@@ -207,9 +210,11 @@ function scopeOf(scope) {
         const flat = terms.flatMap((term) => (typeof term === "string" ? [term] : term.or));
         return [flat.length === 1 ? flat[0] : { or: [...new Set(flat)] }];
     }
-    const to = /^to ((?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?)(?:,? (?:and|or) (?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?))*)$/.exec(scope);
+    const to = /^to ((?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?)(?:,? (?:and|or) (?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?))*)$/.exec(scope)
+        // (In lower case too, when every name is an action's: "to disarm, grapple, reposition, shove, and trip", "to sense-motive".)
+        ?? /^to ([a-z][a-z -]*(?:(?:,|,? and|,? or) [a-z][a-z -]*)*)$/.exec(scope);
     if (to) {
-        const actions = to[1].split(/,? (?:and|or) |, /).map((words) => ACTIONS[words.toLowerCase()]);
+        const actions = to[1].split(/,? (?:and|or) |, /).map((words) => ACTIONS[words.toLowerCase().replace(/-/g, " ")]);
         if (!actions.length || actions.some((action) => !action)) return null;
         return [actions.length === 1 ? `action:${actions[0]}` : { or: actions.map((action) => `action:${action}`) }];
     }
@@ -249,10 +254,21 @@ function modifiersOf(sentences, duration, used = new Set()) {
             const names = predicate ? scoped[1] : list;
             if (scoped && !predicate) continue;
             if (/\b(?:against|to|made|when|if|that|for|as part of|while|with|using|from|of|in)\b/i.test(names)) continue;
-            const selectors = selectorsOf(names.replace(/^(?:all|your) /i, ""));
-            if (!selectors) continue;
-            used.add(index);
-            for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate ? { predicate } : {}) });
+            // (An action's scope after a list is the last one's: "Will saves, Intelligence-based skill checks, and skill checks to
+            // sense-motive" — only the skill checks are to Sense Motive.)
+            const parts = names.split(/,? (?:as well as|and) |, /).map((part) => part.trim()).filter(Boolean);
+            const lastOnly = predicate && /^to\b/i.test(scoped[2]) && parts.length > 1;
+            const selectors = lastOnly ? selectorsOf(parts.slice(0, -1).join(", ").replace(/^(?:all|your) /i, "")) : selectorsOf(names.replace(/^(?:all|your) /i, ""));
+            const scopedSelectors = lastOnly ? selectorsOf(parts.at(-1).replace(/^(?:all|your) /i, "")) : null;
+            if (!selectors || (lastOnly && !scopedSelectors)) continue;
+            // (A sentence that goes on — "…, and your melee Strikes deal 1 additional precision damage to Off-Guard creatures" —
+            // stays a note too.)
+            const tail = said.slice(match.index + match[0].length);
+            if (!/^,? and (?:you|your)\b/i.test(tail) || !MECHANICAL.test(tail)) used.add(index);
+            for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate && !lastOnly ? { predicate } : {}) });
+            // (Sense Motive is a Perception check in PF2e: "skill checks to sense-motive" are Perception's.)
+            const perceptionOnly = JSON.stringify(predicate ?? []) === JSON.stringify(["action:sense-motive"]);
+            for (const selector of scopedSelectors ?? []) modifiers.push({ selector: perceptionOnly && selector === "skill-check" ? "perception" : selector, value, ...timed, predicate });
         }
     }
     return modifiers;
