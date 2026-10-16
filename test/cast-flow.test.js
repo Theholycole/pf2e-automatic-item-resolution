@@ -9,6 +9,7 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { compileItem } from "../src/compiler/index.js";
 import { castWordsPlan, readCastWords, spellIndex } from "../src/compiler/cast-words.js";
+import { castRequest, createCastCard, needsTargets } from "../src/live/cast-card.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const SOCKET = `module.${MODULE_ID}`;
@@ -156,3 +157,47 @@ test("a cast with choices: the card's picker; the chosen spell cast, an area one
     assert.deepEqual([quake.spell, quake.dc, quake.targets.length], [spells.earthquake.uuid, 43, 0]);
 });
 
+
+test("more casts in words: rank pairs, lists with their ranks and DCs, by rune, a named item, a need, a choice on its user", () => {
+    const pick = (plan) => (plan.choices ?? [{ spell: plan.spell, rank: plan.rank }]).map((entry) => [entry.spell.name, entry.rank, entry.dc ?? null]);
+    // "You cast 2nd-rank or 4th-rank Enlarge upon yourself": both ranks.
+    const mountain = castOf("The Mountain Man");
+    assert.deepEqual([pick(mountain), mountain.self], [[["Enlarge", 2, null], ["Enlarge", 4, null]], true]);
+    // "The shield casts good Divine Wrath with a DC of 27": "Divine" isn't a tradition here.
+    const pavise = castOf("Amaranthine Pavise");
+    assert.deepEqual([pavise.spell.name, pavise.dc], ["Divine Wrath", 27]);
+    // "a 5th-rank spell that depends on the active rune: Acid Grip for corrosive, Fireball for flaming, 2-action Howling Blizzard
+    // for frost, or Lightning Bolt for shock. The DC for these spells is 30."
+    const blade = compileActivations(source("Blade of Four Energies"), { spells }).find((entry) => entry.activation.name === "Release Energy").plan;
+    assert.deepEqual([pick(blade).map(([name, rank]) => `${name}@${rank}`), blade.dc], [["Acid Grip@5", "Fireball@5", "Howling Blizzard@5", "Lightning Bolt@5"], 30]);
+    // "Sorshen's Sinuous Guisarme casts one of the following spells, heightened to 10th rank, …: Charm (DC 45), Flicker, or
+    // Subconscious Suggestion (DC 45)": a named item; each spell's own DC.
+    const guisarme = compileActivations(source("Sorshen's Sinuous Guisarme"), { spells }).find((entry) => entry.activation.name === "Impose Will").plan;
+    assert.deepEqual(pick(guisarme), [["Charm", 10, 45], ["Flicker", 10, null], ["Subconscious Suggestion", 10, 45]]);
+    // "Monarch casts Dream Message (heightened to 4th rank)"; "Fear (3rd)" in a list (The Whispering Reeds).
+    assert.deepEqual(pick(castOf("Monarch")), [["Dream Message", 4, null]]);
+    const reeds = compileActivations(source("The Whispering Reeds"), { spells }).find((entry) => entry.plan?.builtin === "cast-spell").plan;
+    assert.deepEqual(pick(reeds).map(([name, rank]) => `${name}@${rank}`), ["Wave of Despair@null", "Fear@3", "Paranoia@null", "Phantasmal Killer@null"]);
+    assert.match(reeds.notes[0], /one target within 30 feet only/, "its own limits a note");
+    // "If your last action was to Cast a prepared Spell with the plant or wood trait, you … obtain the effect of a 2nd-rank Oaken
+    // Resilience spell": what it needs a note, on its user.
+    const leaves = castOf("Verdant Leaves");
+    assert.deepEqual([pick(leaves), leaves.self], [[["Oaken Resilience", 2, null]], true]);
+    assert.match(leaves.notes[0], /^If your last action was to Cast a prepared Spell/);
+    // "Harm … if you have 3 dark charges or … Heal … if you have 3 light charges": both, the sentence a note.
+    const jian = castOf("Jian of Life's Duality");
+    assert.deepEqual([pick(jian).map(([name]) => name), jian.dc], [["Harm", "Heal"], 30]);
+    assert.match(jian.notes[0], /dark charges/);
+    // "a 5th-rank Elemental Form spell affecting you or a 5th-rank Summon Elemental spell": the first on its user, the other not.
+    const fragment = compileItem(source("Elemental Fragment"), { spells });
+    assert.deepEqual([fragment.self, fragment.choices.map((entry) => Boolean(entry.self))], [false, [true, false]]);
+});
+
+test("a choice of its own on its user: the card casts that one on the user, the other as the spell says", () => {
+    const fragment = compileItem(source("Elemental Fragment"), { spells });
+    const user = { actorUuid: "Actor.u", tokenUuid: "Token.u", name: "User" };
+    const state = createCastCard({ plan: fragment, item: { name: "Elemental Fragment" }, user });
+    assert.deepEqual(castRequest({ ...state, choice: 0 }, { targetUuids: ["Token.foe"] }).targetUuids, ["Token.u"], "Elemental Form on its user");
+    assert.deepEqual(castRequest({ ...state, choice: 1 }, { targetUuids: [] }).targetUuids, [], "Summon Elemental placed as the spell says");
+    assert.equal(needsTargets(fragment, fragment.choices[1]), false);
+});

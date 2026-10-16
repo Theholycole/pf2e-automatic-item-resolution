@@ -21,7 +21,10 @@ export const chosenSpell = (state) => state.plan.choices?.[state.choice ?? 0] ??
 
 // Whether the card needs the presser's targets: a spell at others that targets creatures, not an area's (the spell module
 // places that) nor one with no target (Translocate, Creation).
-export const needsTargets = (plan) => !plan.self && plan.targets !== false && !plan.area;
+// choice: the chosen one of several, whose own (a spell on its user among others at targets) goes first.
+export const needsTargets = (plan, choice = null) => !(choice?.self ?? plan.self) && (choice?.targets ?? plan.targets) !== false && !(choice?.area ?? plan.area);
+// Whether the chosen spell is cast on its user.
+export const selfOf = (state) => Boolean(chosenSpell(state).self ?? state.plan.self);
 
 // Who casts it and on whom: the chosen drinker for a potion's self cast, else the user (with "targets" for a spell at others).
 export function casterOf(state) {
@@ -37,9 +40,9 @@ export function castRequest(state, { targetUuids = [] } = {}) {
         casterTokenUuid: caster.tokenUuid ?? null,
         spell: chosenSpell(state).spell.uuid,
         rank: chosenSpell(state).rank ?? null,
-        dc: state.plan.dc ?? null,
+        dc: chosenSpell(state).dc ?? state.plan.dc ?? null,
         counteract: state.plan.attack ?? null,
-        targetUuids: state.plan.self ? [caster.tokenUuid].filter(Boolean) : targetUuids,
+        targetUuids: selfOf(state) ? [caster.tokenUuid].filter(Boolean) : targetUuids,
         item: { name: state.item.name, uuid: state.item.uuid ?? null, img: state.item.img ?? null }
     };
 }
@@ -55,7 +58,7 @@ export function castCardHTML(state, { canApply = false } = {}) {
         ? `<p class="aar-actions">Spell: <select data-air-field="choice">${plan.choices.map((entry, index) => `<option value="${index}"${index === (state.choice ?? 0) ? " selected" : ""}>${escape(entry.spell.name)}${entry.rank ? ` (rank ${entry.rank})` : ""}</option>`).join("")}</select></p>`
         : "";
     const who = state.drinker === null || state.drinker === undefined
-        ? `<p class="aar-actions">${plan.self ? `On ${escape(caster.name)}` : needsTargets(plan) ? "At the targets of whoever applies it" : "Placed or aimed as the spell says"}</p>`
+        ? `<p class="aar-actions">${selfOf(state) ? `On ${escape(caster.name)}` : needsTargets(plan, chosen) ? "At the targets of whoever applies it" : "Placed or aimed as the spell says"}</p>`
         : open && canApply && state.drinkers.length > 1
             ? `<p class="aar-actions">Drinker: <select data-air-field="drinker">${state.drinkers.map((entry, index) => `<option value="${index}"${index === state.drinker ? " selected" : ""}>${escape(entry.name)}${index === 0 ? " (self)" : ""}</option>`).join("")}</select></p>`
             : `<p class="aar-actions">Drinker: ${escape(caster.name)}</p>`;

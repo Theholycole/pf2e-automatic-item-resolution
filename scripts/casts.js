@@ -1,7 +1,7 @@
 // Live play for items that cast a spell PF2e has no Effect for (src/live/cast-card.js): the spell module casts it
 // through PF2e (its api.castFromItem), so its own cast handling resolves it as any cast.
 
-import { castCardHTML, castRequest, chosenSpell, createCastCard, needsTargets } from "../src/live/cast-card.js";
+import { castCardHTML, castRequest, chosenSpell, createCastCard, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -32,9 +32,9 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (!actor) throw new Error("The caster isn't there any more.");
         const token = request.casterTokenUuid ? await fromUuid(request.casterTokenUuid).catch(() => null) : null;
         const targetTokens = (await Promise.all(request.targetUuids.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
-        if (needsTargets(state.plan) && !targetTokens.length) throw new Error("Target the creatures first.");
+        if (needsTargets(state.plan, chosenSpell(state)) && !targetTokens.length) throw new Error("Target the creatures first.");
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: targetTokens, item: request.item });
-        lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${targetTokens.length && !state.plan.self ? ` at ${targetTokens.map((target) => target.name).join(", ")}` : ""}.`);
+        lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${targetTokens.length && !selfOf(state) ? ` at ${targetTokens.map((target) => target.name).join(", ")}` : ""}.`);
     }
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: castCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

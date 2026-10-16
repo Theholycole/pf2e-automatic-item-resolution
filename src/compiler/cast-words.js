@@ -61,7 +61,7 @@ function spellAt(text, spells, names) {
 // user's own ("If your next action is to Cast a Spell", "able to cast", "Supply a casting").
 // (And "The creature is targeted with Death Knell (DC 24)", "You generate the effects of a Vitality Lash cantrip", "You're the
 // subject of the Sanctuary spell", "The ring replicates the effects of an 8th-rank Spell Turning", "Cast Bless or Heal".)
-const VERB = /\b(?:you (?:can |immediately |then )?cast|(?:the|this) [\w' -]{1,40}? (?:can cast|casts)|(?:the|these) [\w' -]{1,20}?s cast|it (?:can cast|casts)|to cast|and casts?|casting|(?:is|are) targeted (?:with|by)|(?:you )?(?:generate|produce|replicates?) the effects of|(?:creating|creates?) the effects? of|you're the subject of)\s+|^Cast\s+/gi;
+const VERB = /\b(?:you (?:can |immediately |then )?cast|(?:the|this) [\w' -]{1,40}? (?:can cast|casts)|(?:the|these) [\w' -]{1,20}?s cast|it (?:can cast|casts)|to cast|and casts?|casting|(?:is|are) targeted (?:with|by)|(?:you )?(?:generate|produce|replicates?) the effects of|(?:creating|creates?) the effects? of|you're the subject of|then casts?|have (?:it|the [\w' -]{1,30}?) cast|(?:obtain|gain)s? the effects? of)\s+|^Cast\s+|^(?:[A-Z][\w'’-]*\s+){1,4}(?:can cast|casts)\s+/gi;
 const NOT_A_CAST = /\b(?:your (?:next|last) action (?:is|was) to cast|if you cast|when you cast|when casting|after you cast|while casting|able to cast|ability to cast|can't cast|cannot cast|Supply a casting|spell slot|as if you had used it to cast|used as a catalyst|innate spells?|unless it succeeds)\b|\beach once per (?:day|hour|week)\b(?<!^Cast\b.*)/i;
 // A cast only under some condition ("On a failed or critically failed saving throw, the whip casts …"): not the activation's.
 const CONDITIONAL = /^(?:On a|If|When|Whenever|After|Until|Once)\b/i;
@@ -79,12 +79,23 @@ const inParentheses = (sentence, at) => (sentence.slice(0, at).match(/\(/g)?.len
 
 // The sentence's spells after its verb: [{ spell, rank }], with what the list leaves (the sentence's rest).
 function spellList(rest, spells, names) {
-    const lead = LEAD.exec(rest);
-    let at = lead ? lead[0].length : 0;
-    const leadRank = lead?.[1] ?? lead?.[3] ?? null;
-    const leadDC = lead?.[2] ?? lead?.[4] ?? lead?.[5] ?? null;
+    // ("2nd-rank or 4th-rank Enlarge": both ranks the loop's, not the first the lead's.)
+    const pair = new RegExp(String.raw`^(?:(?:a|an|the)\s+)?(?=${ORDINAL}[- ]rank or ${ORDINAL}[- ]rank )`, "i").exec(rest);
+    // ("one of the following spells, heightened to 10th rank, to your specifications:", "… at the lowest level possible (unless
+    // otherwise specified):", "… as a 3rd-rank spell (DC 24 save as appropriate):": its rank and DC from what's before the colon.)
+    const following = pair ? null : /^(?:(?:a|an|the|either|your choice of)\s+)*one of the following(?: spells)?([^:.]{0,100}):\s*/i.exec(rest);
+    // ("a 5th-rank spell that depends on the active rune: Acid Grip for corrosive, Fireball for flaming, …".)
+    const depends = pair || following ? null : new RegExp(String.raw`^(?:a|an) (?:${ORDINAL}[- ](?:rank|level) )?spell (?:that depends on|from|of) [^:.]{1,60}:\s*`, "i").exec(rest);
+    const lead = pair || following || depends ? null : LEAD.exec(rest);
+    let at = pair ? pair[0].length : following ? following[0].length : depends ? depends[0].length : lead ? lead[0].length : 0;
+    // (A tradition word that's a spell's first: "good Divine Wrath" isn't a divine Wrath.)
+    if (lead && /(?:arcane|divine|occult|primal) $/i.test(lead[0]) && !spellAt(rest.slice(at), spells, names)) at -= /(?:arcane|divine|occult|primal) $/i.exec(lead[0])[0].length;
+    const inner = following?.[1] ?? "";
+    const leadRank = lead?.[1] ?? lead?.[3] ?? new RegExp(String.raw`\b(?:at|as an?|heightened to) ${ORDINAL}[- ](?:rank|level)\b`, "i").exec(inner)?.[1] ?? depends?.[1] ?? null;
+    const leadDC = lead?.[2] ?? lead?.[4] ?? lead?.[5] ?? /\bDC (\d+)\b/.exec(inner)?.[1] ?? null;
     const list = [];
     let dangling = false;
+    let noted = false;
     // (A rank holds for the spells after it: "4th-rank Holy Light or Vital Beacon".)
     let current = leadRank ? Number(leadRank) : null;
     for (;;) {
@@ -98,7 +109,7 @@ function spellList(rest, spells, names) {
                 break;
             }
         }
-        const own = new RegExp(String.raw`^(?:(?:a|an|the) )?(?:${ORDINAL}[- ](?:rank|level) )?`, "i").exec(rest.slice(at));
+        const own = new RegExp(String.raw`^(?:(?:a|an|the) )?(?:\d-action )?(?:${ORDINAL}[- ](?:rank|level) )?`, "i").exec(rest.slice(at));
         const found = spellAt(rest.slice(at + own[0].length), spells, names);
         // ("Harm, Heal, or the 1st-rank spell from your deity's cleric spells": a choice not read.)
         if (!found) {
@@ -106,13 +117,27 @@ function spellList(rest, spells, names) {
             break;
         }
         if (own[1]) current = Number(own[1]);
-        list.push({ spell: found.spell, rank: current });
+        const entry = { spell: found.spell, rank: current };
         at += own[0].length + found.length;
-        const joint = /^(?: (?:spell|cantrip))?(?:, or |, | or )/i.exec(rest.slice(at));
+        // (After it: "(3rd)" or "(heightened to 4th rank)" its rank, "(DC 45)" its DC — "(heightened to 8th level, (DC 34) save)"
+        // both — another parenthetical, "for corrosive", "affecting you" or "if you have 3 dark charges" a note.)
+        const after = /^(?: (?:spell|cantrip))?(?: \(((?:[^()]|\([^)]*\))*)\))?(?: for [\w-]+(?: [\w-]+)?)?( (?:affecting|on|upon|targeting) (?:you|yourself))?( if [^,;().]*?(?= or (?:a|an|the) |,|;|\(|\.|$))?/i.exec(rest.slice(at));
+        const said = after[1] ?? "";
+        const ownRank = new RegExp(String.raw`^${ORDINAL}(?:[- ](?:rank|level))?$|\bheightened to ${ORDINAL}[- ](?:rank|level)\b`, "i").exec(said);
+        const ownDC = /\bDC (\d+)\b/i.exec(said);
+        if (ownRank) entry.rank = Number(ownRank[1] ?? ownRank[2]);
+        if (ownDC) entry.dc = Number(ownDC[1]);
+        // ("a 5th-rank Elemental Form spell affecting you or a 5th-rank Summon Elemental spell": that one on its user.)
+        if (after[2]) entry.self = true;
+        const leftover = said.replace(new RegExp(String.raw`^${ORDINAL}(?:[- ](?:rank|level))?$|\bheightened to ${ORDINAL}[- ](?:rank|level)\b|\(?\bDC \d+\)?(?: save)?|[,\s]+`, "gi"), "");
+        if (leftover || after[3]) noted = true;
+        list.push(entry);
+        at += after[0].length;
+        const joint = /^\s*(?:,\s*or |,\s*| or )/i.exec(rest.slice(at));
         if (!joint) break;
         at += joint[0].length;
     }
-    return { list, rest: rest.slice(at), dc: leadDC ? Number(leadDC) : null, dangling };
+    return { list, rest: rest.slice(at), dc: leadDC ? Number(leadDC) : list.find((entry) => entry.dc)?.dc ?? null, dangling: dangling || noted };
 }
 
 // The activation's (or consumable's) cast in words: { choices: [{ spell: { uuid, name }, rank }], dc, attack, self, area,
@@ -125,7 +150,11 @@ export function readCastWords(html, { spells = null } = {}) {
     // choice of spells.)
     const all = sentencesOf(html, { whole: true }).join(" ");
     if ((all.match(/\b\d{1,2}[–-]\d{1,3} [A-Z]/g)?.length ?? 0) >= 2 || /\broll (?:a )?\d*d(?:\d+|%)\b[^.]*\b(?:table|determine)\b/i.test(all)) return null;
-    for (const [index, sentence] of sentences.entries()) {
+    for (const [index, full] of sentences.entries()) {
+        // ("If your last action was to Cast a prepared Spell with the plant or wood trait, you … obtain the effect of a 2nd-rank
+        // Oaken Resilience spell": what it needs, its own cast after; the sentence a note.)
+        const needs = /^If your (?:last|next) action (?:was|is) to Cast [^,]{1,120},\s*(?=.*\b(?:obtain|gain)s? the effects? of\b)/i.exec(full);
+        const sentence = needs ? full.slice(needs[0].length) : full;
         if (NOT_A_CAST.test(sentence) || CONDITIONAL.test(sentence)) continue;
         // ("Choose Summon Lesser Servitor or Command. You Cast the chosen Spell at 1st rank (DC 19).")
         const choose = /^Choose (.+)$/i.exec(sentence);
@@ -134,16 +163,21 @@ export function readCastWords(html, { spells = null } = {}) {
         const firstVerb = [...sentence.matchAll(VERB)][0]?.index ?? 0;
         const lists = chosen?.list.length ? [{ ...chosen, rest: sentences[index + 1].replace(/^.*?\bthe chosen spell\b/i, "") }] : [...sentence.matchAll(VERB)].filter((verb) => !inParentheses(sentence, verb.index)).map((verb) => spellList(sentence.slice(verb.index + verb[0].length), spells, names)).filter((entry) => entry.list.length);
         if (!lists.length || lists.some((entry) => entry.list.some((one) => one.spell.ritual))) continue;
-        const list = lists.flatMap((entry) => entry.list).filter((entry, at, all) => all.findIndex((other) => other.spell.uuid === entry.spell.uuid) === at);
+        // (Each spell once at each rank: "2nd-rank or 4th-rank Enlarge" is two.)
+        const list = lists.flatMap((entry) => entry.list).filter((entry, at, all) => all.findIndex((other) => other.spell.uuid === entry.spell.uuid && other.rank === entry.rank) === at);
         const { rest, dc: leadDC } = lists[0];
         const whole = `${sentence} ${sentences[index + 1] ?? ""}`;
         const rank = new RegExp(String.raw`\b(?:heightened to|at|as an?) ${ORDINAL}[- ](?:rank|level)\b`, "i").exec(rest) ?? /\bcounteract rank of (\d+)\b/i.exec(rest);
         // (Its DC in the sentence or the next, or a sentence on the spells' DC: "The DC for any of these spells is 18".)
         const dc = leadDC ?? (Number(/\(DC (\d+)\)|\bwith a DC of (\d+)|\bspell DC (?:is |of )?(\d+)|\bThe DC is (\d+)|\bDC (\d+)\b/i.exec(rest + " " + (sentences[index + 1] ?? ""))?.slice(1).find(Boolean)) || Number(/\bThe (?:spell )?DC (?:for (?:any of )?(?:these|the|this) spells? )?is (\d+)/i.exec(sentences.join(" "))?.[1]) || null);
         const attack = Number(/\bcounteract modifier (?:is |of |are )?(?:1d20 ?)?\+(\d+)|\+(\d+) (?:counteract )?modifier for the roll|\bspell attack (?:modifier|roll) (?:is |of |are )?\+(\d+)/i.exec(whole)?.slice(1).find(Boolean)) || null;
-        const self = /\b(?:on (?:you|yourself)|upon yourself|affecting you|targeting yourself|you're affected)\b(?! request| choice)/i.test(rest) || /\byou're the subject of\b/i.test(sentence);
-        const choices = list.map((entry) => ({ spell: { uuid: entry.spell.uuid, name: entry.spell.name }, rank: entry.rank ?? (rank ? Number(rank[1]) : null) }));
-        const notes = sentences.filter((other, at) => at !== index && !/^Choose\b/.test(other) && !/\bthe chosen spell\b/i.test(other)).map((other) => other.trim());
+        // (On its user: the words after the list, or after its last spell — "Darkvision or See the Unseen on yourself" is both on
+        // you; after an earlier one only that one is, a choice's own.)
+        const lastSelf = list.length > 0 && list.at(-1).self && list.slice(0, -1).every((entry) => !entry.self);
+        const self = lastSelf || /\b(?:on (?:you|yourself)|upon yourself|affecting you|targeting yourself|you're affected)\b(?! request| choice)/i.test(rest) || /\byou're the subject of\b|\b(?:you )?(?:obtain|gain)s? the effects? of\b/i.test(sentence);
+        const choices = list.map((entry) => ({ spell: { uuid: entry.spell.uuid, name: entry.spell.name }, rank: entry.rank ?? (rank ? Number(rank[1]) : null), ...(entry.dc ? { dc: entry.dc } : {}), ...(entry.self && !self ? { self: true } : {}), area: entry.spell.area, targets: entry.spell.targets }));
+        // (Not its Activate, Usage or Frequency lines.)
+        const notes = sentences.filter((other, at) => at !== index && !/^Choose\b/.test(other) && !/\bthe chosen spell\b/i.test(other) && !/^(?:Activat(?:e|ion)|Usage|Frequency|Trigger|Requirements?)\b/.test(other)).map((other) => other.trim());
         return {
             choices,
             dc,
@@ -153,7 +187,7 @@ export function readCastWords(html, { spells = null } = {}) {
             targets: list.some((entry) => entry.spell.targets),
             // (The cast's own sentence too when it says more: a choice not read, what the item changes, a cost before the cast — "You
             // become fatigued and cast …" — or the actions it's cast with, "the three-action version of".)
-            notes: [...(lists.some((entry) => entry.dangling) || (rest.replace(/^[\s,.;]+|[\s.]+$/g, "").length > 3 && /\b(?:except|but|though|instead|only|loses|can target|with|and)\b/i.test(rest)) || /\b(?:become|becomes|take|takes|gain|gains|lose|loses|expend|spend|spends)\b/i.test(sentence.slice(0, firstVerb)) || /-action\b/i.test(sentence) ? [sentence.trim()] : []), ...notes]
+            notes: [...(needs || lists.some((entry) => entry.dangling) || (rest.replace(/^[\s,.;]+|[\s.]+$/g, "").length > 3 && /\b(?:except|but|though|instead|only|loses|can target|with|and)\b/i.test(rest)) || /\b(?:become|becomes|take|takes|gain|gains|lose|loses|expend|spend|spends)\b/i.test(sentence.slice(0, firstVerb)) || /-action\b/i.test(sentence) ? [full.trim()] : []), ...notes]
         };
     }
     return null;

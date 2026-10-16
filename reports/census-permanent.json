@@ -7,8 +7,8 @@
   "activations": 2593,
   "results": {
    "resolves": 662,
-   "builtin:cast-spell": 454,
-   "none": 866,
+   "builtin:cast-spell": 469,
+   "none": 851,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 23,
@@ -24,9 +24,9 @@
   },
   "live": {
    "save": 327,
-   "cast": 454,
+   "cast": 469,
    "item": 589,
-   "none": 1064,
+   "none": 1049,
    "focus": 45,
    "fortune": 33,
    "reroll": 22,
@@ -43,8 +43,8 @@
    "activations": 1690,
    "results": {
     "resolves": 400,
-    "builtin:cast-spell": 333,
-    "none": 552,
+    "builtin:cast-spell": 340,
+    "none": 545,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 16,
@@ -62,10 +62,10 @@
    "activations": 460,
    "results": {
     "resolves": 143,
-    "none": 139,
+    "none": 132,
     "partial": 23,
     "note-only": 41,
-    "builtin:cast-spell": 76,
+    "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 7,
     "builtin:no-effect": 12,
@@ -115,10 +115,10 @@
   "shield": {
    "activations": 100,
    "results": {
-    "builtin:cast-spell": 10,
+    "builtin:cast-spell": 11,
     "note-only": 17,
     "resolves": 28,
-    "none": 32,
+    "none": 31,
     "builtin:modes": 4,
     "builtin:no-effect": 4,
     "partial": 4,
@@ -4952,9 +4952,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Blade of Four Energies (Greater)",
@@ -4974,9 +4974,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mycoweave Shield (Lesser)",
@@ -5106,9 +5106,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Humbug Pocket (Greater)",
@@ -7944,9 +7944,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Burrowing Bolt (Greater)",
@@ -8934,9 +8934,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Taljjae's Mask (The General)",
@@ -9209,9 +9209,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Tornado Trompo",
@@ -9770,9 +9770,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Glue Bullet",
@@ -12663,9 +12663,9 @@
    "time": "cast",
    "frequency": "three times per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Shadow Shroud",
@@ -14038,9 +14038,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Mindsponge",
@@ -18020,9 +18020,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Exsanguinating Ammunition (Major)",
@@ -18515,9 +18515,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Venomed Tongue",
@@ -20429,9 +20429,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Lost Ember",
@@ -21309,9 +21309,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Cloak of Devouring Thorns",
@@ -25720,9 +25720,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Sluggish Bracelet",
@@ -28096,9 +28096,9 @@
    "time": "2",
    "frequency": "once per day per spell",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Corpsecaller Round",

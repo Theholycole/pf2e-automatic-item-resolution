@@ -213,7 +213,7 @@ function wireCard(message, html) {
         const choices = choicesOf(state, root);
         try {
             // (On the presser's own client: a card that acts on targets needs some.)
-            if ((state.kind === "expose" || (state.kind === "cast" && needsTargets(state.plan)) || (state.kind === "item-action" && state.plan?.action?.targeted) || (state.kind === "reroll" && state.plan?.reroll?.who === "companion")) && !choices.targets?.length) throw new Error("Target the creatures first.");
+            if ((state.kind === "expose" || (state.kind === "cast" && needsTargets(state.plan, state.plan.choices?.[choices.choice ?? state.choice ?? 0])) || (state.kind === "item-action" && state.plan?.action?.targeted) || (state.kind === "reroll" && state.plan?.reroll?.who === "companion")) && !choices.targets?.length) throw new Error("Target the creatures first.");
             if (isActiveGM()) await applyByKind(message, state, choices);
             else if (!game.users.activeGM) throw new Error("No GM is connected to apply it.");
             else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });

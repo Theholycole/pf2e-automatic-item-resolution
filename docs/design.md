@@ -106,9 +106,17 @@ From [census.md](census.md) (PF2e 8.6.1 packs):
   - on the user for "casts … on you";
   - at the presser's own targets for a spell aimed at others;
   - with no targets for an area spell or one without targets (Earthquake, Translocate): the spell module places it.
-- **Casts in words** (`src/compiler/cast-words.js`): the spell by its name in PF2e's spells (`options.spells`, from `spellIndex`), linked or not. "You cast a 4th-rank Dream Message spell", "The armor casts mislead, affecting you", "The wayfinder can cast 4th-rank Fireball", "The crystal ball casts a DC 33 Scrying spell", "a counteract modifier of [[/r 1d20+23]]", "You cast dimension door" (a few pre-remaster names mapped). 110 activations and Oil of Mending.
+- **Casts in words** (`src/compiler/cast-words.js`): the spell by its name in PF2e's spells (`options.spells`, from `spellIndex`), linked or not. "You cast a 4th-rank Dream Message spell", "The armor casts mislead, affecting you", "The wayfinder can cast 4th-rank Fireball", "The crystal ball casts a DC 33 Scrying spell", "a counteract modifier of [[/r 1d20+23]]", "You cast dimension door" (a few pre-remaster names mapped). 130 activations, Oil of Mending and the Elemental Fragments.
   - Several spells ("cast either 5th-rank Darkvision or See the Unseen on yourself", "Choose Summon Lesser Servitor or Command. You Cast the chosen Spell at 1st rank (DC 19)") are `plan.choices` `[{ spell, rank }]`, and the card has a picker. A rank holds for the spells after it.
-  - The plan also says `area` and `targets` (from the spell), so the card asks for targets only when the spell targets creatures.
+  - More list forms:
+    - "2nd-rank or 4th-rank Enlarge" (both ranks).
+    - "one of the following spells, heightened to 10th rank, to your specifications: Charm (DC 45), Flicker, …", with each spell's own rank or DC in parentheses: "Fear (3rd)", "Dream Message (heightened to 4th rank)", "(heightened to 8th level, DC 34 save)". Other parentheticals are notes.
+    - "a 5th-rank spell that depends on the active rune: Acid Grip for corrosive, Fireball for flaming, 2-action Howling Blizzard for frost, …".
+    - "Harm … if you have 3 dark charges or … Heal … if you have 3 light charges": both, the sentence a note.
+    - A named item's own verb ("Sorshen's Sinuous Guisarme casts"), "then casts", "have it cast", "obtain the effect of".
+    - "good Divine Wrath": a tradition word that starts a spell's name stays the spell's.
+    - "If your last action was to Cast a prepared Spell with the plant or wood trait, you … obtain the effect of a 2nd-rank Oaken Resilience spell" (Verdant Leaves): what it needs is a note, its own cast is read.
+  - The plan also says `area` and `targets` (from the spell), so the card asks for targets only when the spell targets creatures. Each choice carries its own `area` and `targets`, and `self` when only that one is on its user (Elemental Fragment's "a 5th-rank Elemental Form spell affecting you or a 5th-rank Summon Elemental spell"). "on yourself" after the last spell is for all of them, as before.
   - The rest of the activation's text goes on the card as notes. A choice not read ("or the 1st-rank spell from your deity's cleric spells") is a note too.
   - Not read: a random table (Pistol of Wonder), innate spells for a while (Elder Seed), a spell in parentheses ("such as the space where a creature just cast Translocate"), a cast after a failed save (Whip of Compliance), "If your next action is to Cast a Spell", rituals.
 

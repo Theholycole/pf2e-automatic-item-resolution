@@ -13,8 +13,8 @@
   },
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 29,
-   "none": 283,
+   "builtin:cast-spell": 32,
+   "none": 280,
    "resolves": 698,
    "builtin:readied-bonus": 15,
    "builtin:zone": 86,
@@ -32,8 +32,8 @@
   "other": {
    "count": 512,
    "results": {
-    "builtin:cast-spell": 8,
-    "none": 142,
+    "builtin:cast-spell": 11,
+    "none": 139,
     "resolves": 202,
     "note-only": 117,
     "builtin:zone": 9,
@@ -331,7 +331,7 @@
    "count": 33,
    "resolves": 5,
    "gaps": 0,
-   "none": 9
+   "none": 6
   },
   "strike": {
    "count": 31,
@@ -378,8 +378,8 @@
  },
  "live": {
   "totals": {
-   "cast": 29,
-   "none": 368,
+   "cast": 32,
+   "none": 365,
    "item": 659,
    "fortune": 17,
    "zone": 86,
@@ -394,8 +394,8 @@
   },
   "byCategory": {
    "other": {
-    "cast": 8,
-    "none": 170,
+    "cast": 11,
+    "none": 167,
     "later": 8,
     "save": 71,
     "item": 227,
@@ -479,7 +479,7 @@
    }
   },
   "noCard": {
-   "no-plan": 283,
+   "no-plan": 280,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -1295,7 +1295,9 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Moonkeep Lily",
@@ -1790,7 +1792,9 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Impact Foam Chassis (Lesser)",
@@ -6232,7 +6236,9 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Emergency Disguise",
