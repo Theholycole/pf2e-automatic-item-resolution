@@ -9,7 +9,8 @@ const EFFECT_LINK = /@UUID\[(Compendium\.pf2e\.(?:equipment-effects|other-effect
 // its benefit, which can be another creature than the one who uses it
 // (feeding an ally a potion).
 const INGESTED = new Set(["potion", "elixir", "mutagen", "drug"]);
-const INGEST_WORDS = /\b(?:drink|drinks|drinking|drunk|imbib\w+|consum(?:e|es|ed|ing)|eat|eats|eating|ingest\w*|swallow\w*|quaff\w*)\b/i;
+// (And fed to another: Energizing Treat's "When you feed your animal companion or familiar an energizing treat".)
+const INGEST_WORDS = /\b(?:drink|drinks|drinking|drunk|imbib\w+|consum(?:e|es|ed|ing)|eat|eats|eating|ingest\w*|swallow\w*|quaff\w*|feed your (?:animal companion|familiar|mount)\b)/i;
 
 const plain = (html) => String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 

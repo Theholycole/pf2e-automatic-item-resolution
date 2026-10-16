@@ -220,3 +220,14 @@ test("Bewildering Spellgun: an attack against AC (not the Will save its success 
     assert.deepEqual(["criticalSuccess", "success"].map((degree) => gun.resolution.outcomes[degree].effects.map((effect) => [effect.slug, effect.duration?.value, effect.duration?.unit])), [[["confused", 1, "minutes"]], [["confused", 1, "minutes"]]]);
     assert.match(gun.notes.join(" "), /at the end of each of its turns/);
 });
+
+test("conditions on the creatures targeted: Gallows Tooth's off-guard before its Strike, Jade Bauble's on enemies in reach; Energizing Treat on the creature fed", () => {
+    const effects = (plan) => plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration?.expiry]);
+    const gallows = compileItem(source("Gallows Tooth"));
+    assert.deepEqual([routeOf(gallows), effects(gallows)], ["save", [["off-guard", "turn-end"]]]);
+    assert.match(gallows.notes.join(" "), /make a melee Strike against it/);
+    const jade = compileItem(source("Jade Bauble"));
+    assert.deepEqual([routeOf(jade), effects(jade), jade.notes ?? []], ["save", [["off-guard", "turn-start"]], []]);
+    const treat = compileItem(source("Energizing Treat"));
+    assert.deepEqual([treat.item.recipient, treat.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration?.value, effect.duration?.unit])], ["drinker", [["quickened", 1, "minutes"]]]);
+});

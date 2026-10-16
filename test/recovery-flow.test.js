@@ -59,8 +59,9 @@ test("the reading: the types and the DC, and what else it says", () => {
     const suture = compileItem(source("Searing Suture (Lesser)"));
     assert.deepEqual(suture.item.recovery, { types: ["bleed"], dc: 15 });
     assert.match(suture.notes[0], /takes 1d6 fire damage/);
-    // Not one: the type is the item's to choose (Soothing Powder), or another's.
-    assert.equal(compileItem(source("Soothing Powder (Lesser)"))?.item?.recovery, undefined);
+    // The type the powder's own (Soothing Powder): the card's picker. Not one for others.
+    assert.deepEqual(compileItem(source("Soothing Powder (Lesser)")).item.recovery, { types: ["bleed", "poison", "fire", "acid"], dc: 10, choose: true });
+    assert.equal(recoveryText(compileItem(source("Soothing Powder (Greater)")).item.recovery), "A flat check (DC 10) to end persistent damage of its type (picked below)");
     assert.equal(readRecovery("Each creature in the emanation can immediately attempt a flat check to end any persistent fire damage."), null);
 });
 
@@ -86,4 +87,17 @@ test("Quenching Potion: Apply rolls PF2e's recovery check at DC 10 for each pers
     await foundry.socket(SOCKET)({ action: "apply", messageId: again.id, userId: "player" });
     await settle();
     assert.match(again.content, /no persistent acid, fire, poison or void damage: no flat check/);
+});
+
+test("Soothing Powder: the type picked on the card is the persistent damage its flat check ends", async () => {
+    const fire = foundry.givePersistent(medic, { damageType: "fire", dc: 15, nextRoll: 12 });
+    const bleed = foundry.givePersistent(medic, { damageType: "bleed", dc: 15, nextRoll: 20 });
+    const card = await use(foundry.giveItem(medic, source("Soothing Powder (Lesser)")));
+    assert.match(card.content, /data-air-field="recoveryType"/);
+    // Fire picked (the third): only the fire is rolled.
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", recoveryType: 2 });
+    await settle();
+    await applied(card);
+    assert.deepEqual([fire.rolled, bleed.rolled], [[10], []]);
+    medic.persistent = [];
 });

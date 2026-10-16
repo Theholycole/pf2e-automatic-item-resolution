@@ -67,18 +67,30 @@ export function readDirectDamage(text) {
 // Grabbed"): { effects, modifiers, notes } or null — the bombs' rider reader on the sentence. Not one scoped to you ("Off-
 // Guard against the next melee attack you attempt"), nor under a condition.
 const ONE_IS = /^(?:The|That) (?:(?:attacking|triggering|struck|damaged|affected) )?(?:creature|target|attacker|foe|enemy)(?: that [^.]{1,80}?)? (?:is|becomes)\b\s*(.+)$/i;
+// (Before the Strike its user then makes: Gallows Tooth's "make a melee Strike against an adjacent creature. That creature is
+// Off-Guard against the Strike and until the end of your turn" — the creature off-guard now, the Strike a note. Enemies around
+// its user: Jade Bauble's "Until the start of your next turn, enemies within the reach of the weapon … are Off-Guard" — each
+// one targeted.)
+const RULE_WORDS = /\b(?:Strike|check|save|saving throw|damage|bonus|penalty|Hit Points|condition|Speed|reach|action|resistance|immune)\b/i;
+const BEFORE_STRIKE = /\bThat creature is ([\w-]+(?: \d+)?) against the Strike and until the end of your turn\./i;
+const ENEMIES_IN_REACH = /\bUntil the (start|end) of your next turn, enemies within (?:the )?reach of [^.]+? are ([\w-]+(?: \d+)?)\./i;
 export function readOutrightConditions(text) {
     const plain = String(text ?? "");
     if (DEGREES.test(plain) || SAVED.test(plain)) return null;
-    const body = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
-    if (STRUCK.test(body)) return null;
+    let body = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
+    const before = BEFORE_STRIKE.exec(body);
+    const enemies = ENEMIES_IN_REACH.exec(body);
+    if (before) body = body.replace(BEFORE_STRIKE, `The target is ${before[1]} until the end of your turn.`).replace(/\bmake a melee Strike against an adjacent creature\b/i, "you then make a melee Strike against it");
+    else if (enemies) body = body.replace(ENEMIES_IN_REACH, `The target is ${enemies[2]} until the ${enemies[1]} of your next turn.`);
+    else if (STRUCK.test(body)) return null;
     const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
     for (const [index, sentence] of sentences.entries()) {
         const match = ONE_IS.exec(sentence);
         if (!match || NOT_OUTRIGHT.test(sentence) || /\b(?:against (?:the next|your)|to you\b|to your\b)/i.test(sentence)) continue;
         const row = riderRow(`is ${match[1]}`);
         if (!row.effects.length && !row.modifiers.length) continue;
-        return { effects: row.effects, modifiers: row.modifiers, notes: sentences.filter((other, at) => at !== index && !STATS.test(other)) };
+        // (Not its Activate line, nor a sentence with no rule in it: a talisman's has no "Effect" to start from.)
+        return { effects: row.effects, modifiers: row.modifiers, notes: sentences.filter((other, at) => at !== index && !STATS.test(other) && !/^Activate\b/.test(other) && RULE_WORDS.test(other)) };
     }
     return null;
 }

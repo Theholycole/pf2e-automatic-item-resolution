@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 267,
-   "resolves": 730,
+   "none": 264,
+   "resolves": 731,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 206,
+   "note-only": 204,
    "builtin:item-action": 8,
-   "partial": 51,
+   "partial": 55,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "builtin:reroll": 2,
@@ -33,12 +33,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 129,
+    "none": 128,
     "resolves": 208,
-    "note-only": 98,
+    "note-only": 96,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 29,
+    "partial": 32,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -88,15 +88,15 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 56,
+    "none": 54,
     "note-only": 13,
     "builtin:item-action": 7,
-    "resolves": 47,
+    "resolves": 48,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
     "builtin:readied-bonus": 9,
-    "partial": 2,
+    "partial": 3,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -336,7 +336,7 @@
    "count": 31,
    "resolves": 11,
    "gaps": 0,
-   "none": 5
+   "none": 4
   },
   "on-weapon": {
    "count": 67,
@@ -364,9 +364,9 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 260,
+   "resolves": 261,
    "gaps": 0,
-   "none": 37
+   "none": 35
   },
   "duration": {
    "count": 943,
@@ -378,14 +378,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 352,
-   "item": 630,
+   "none": 349,
+   "item": 631,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 79,
    "action": 8,
-   "save": 122,
+   "save": 124,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -394,10 +394,10 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 157,
+    "none": 156,
     "later": 12,
     "save": 86,
-    "item": 218,
+    "item": 219,
     "zone": 9,
     "fortune": 7,
     "expose": 3,
@@ -414,12 +414,12 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 67,
+    "none": 65,
     "item": 49,
     "action": 7,
     "reroll": 1,
     "cast": 9,
-    "save": 11,
+    "save": 13,
     "fortune": 11,
     "strike": 1
    },
@@ -478,7 +478,7 @@
    }
   },
   "noCard": {
-   "no-plan": 267,
+   "no-plan": 264,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -2768,7 +2768,7 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
@@ -11972,8 +11972,11 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "It can use the extra action each round only for Strike, Stride, and Support actions, and it can do so only if it normally has those actions available and you take the proper action to command it."
+   ],
    "live": "item"
   },
   {
@@ -12367,7 +12370,9 @@
     "healing"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Wand of Dazzling Rays (6th-rank)",
@@ -19237,7 +19242,10 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Wand of Refracting Rays (4th-Rank)",
@@ -27487,7 +27495,9 @@
     "strike",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Slayer's Stone",

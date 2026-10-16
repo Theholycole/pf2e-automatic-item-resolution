@@ -18,9 +18,21 @@ const LOWER = /\b(?:particularly (?:appropriate|effective)|especially effective)
 const LOWER_TO = /\bDC (?:typically )?(?:decreases|is lowered|lowers|drops) (?:from \d+ )?to (\d+)\b|\blowers the DC to (\d+)\b/i;
 const NOT_YOURS = /\b(?:each|every|all) (?:other )?(?:all(?:y|ies)|creatures?)\b|\bemanation\b|\baura\b|\bWhenever\b/i;
 
+// (One whose type is the powder's own, set when it's made: Soothing Powder's "Each damage type requires a different formula,
+// with the most popular being bleed soothing powder, poison soothing powder, … The target can immediately attempt a new flat
+// check to remove persistent damage the powder works against. This powder lowers the DC to 10" — the type the card's picker,
+// { types, dc, choose: true }.)
+const OWN_TYPE = /\battempt a new flat check to remove persistent damage the (?:powder|salve|remedy) works against\b/i;
+const POPULAR = new RegExp(String.raw`\bthe most popular being ((?:${TYPE}) [\w ]+?(?:, (?:and )?(?:${TYPE}) [\w ]+?)*)\.`, "i");
+
 // The text (plain) → { types, dc } or null. dc: null for the usual one.
 export function readRecovery(text) {
     const plain = String(text ?? "");
+    if (OWN_TYPE.test(plain)) {
+        const listed = [...(POPULAR.exec(plain)?.[1] ?? "").matchAll(new RegExp(String.raw`\b(${TYPE})\b`, "gi"))].map(([type]) => type.toLowerCase());
+        const lowered = LOWER_TO.exec(plain);
+        return { types: [...new Set(listed.length ? listed : TYPES)], dc: lowered ? Number(lowered[1] ?? lowered[2]) : 10, choose: true };
+    }
     const sentences = plain.split(/(?<=[.!?])\s+(?=[A-Z@])/);
     for (const sentence of sentences) {
         const match = CHECK.exec(sentence);

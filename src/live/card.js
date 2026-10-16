@@ -183,6 +183,7 @@ export function speedEffectSource(speed, { item = {}, user = {}, worldTime = 0, 
 
 // Its flat check to end persistent damage in words: "A flat check (DC 10) to end persistent acid, fire, poison or void damage".
 export function recoveryText(recovery) {
+    if (recovery.choose) return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent damage of its type (picked below)`;
     const types = recovery.types.length > 1 ? `${recovery.types.slice(0, -1).join(", ")} or ${recovery.types.at(-1)}` : recovery.types[0];
     return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent ${types} damage`;
 }
@@ -270,6 +271,11 @@ export function cardHTML(state, { canApply = false } = {}) {
     const resistPick = !choose ? ""
         : open && canApply ? `<p class="aar-actions">Resistance to: <select data-air-field="resistType">${choose.map((type, index) => `<option value="${index}"${index === (state.resistType ?? 0) ? " selected" : ""}>${escape(type)}</option>`).join("")}</select></p>`
             : Number.isInteger(state.resistType) ? `<p class="aar-actions">Resistance to: ${escape(choose[state.resistType] ?? choose[0])}</p>` : "";
+    // (Its flat check's type, when it's the item's own: a picker — Soothing Powder's.)
+    const recoveryTypes = state.plan?.item?.recovery?.choose ? state.plan.item.recovery.types : null;
+    const recoveryPick = !recoveryTypes ? ""
+        : open && canApply ? `<p class="aar-actions">Persistent damage it ends: <select data-air-field="recoveryType">${recoveryTypes.map((type, index) => `<option value="${index}"${index === (state.recoveryType ?? 0) ? " selected" : ""}>${escape(type)}</option>`).join("")}</select></p>`
+            : Number.isInteger(state.recoveryType) ? `<p class="aar-actions">Persistent damage it ends: ${escape(recoveryTypes[state.recoveryType] ?? recoveryTypes[0])}</p>` : "";
     // (One of several conditions it lowers: a picker. Another's: target the creatures first.)
     const pickFrom = (state.plan?.item?.reduce ?? []).find((entry) => entry.choose?.length)?.choose ?? null;
     const reducePick = !pickFrom ? ""
@@ -285,5 +291,5 @@ export function cardHTML(state, { canApply = false } = {}) {
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${reducePick}${runePick}${previewList}${targetHint}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${runePick}${previewList}${targetHint}${results}${controls}</section>`;
 }

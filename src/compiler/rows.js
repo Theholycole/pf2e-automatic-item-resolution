@@ -435,7 +435,9 @@ const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es
 // sentences that say something mechanical it didn't read (they go on a note, and the plan counts as partial).
 export function ownRow(item, { healing = true } = {}) {
     const html = String(item?.system?.description?.value ?? "");
-    const text = plainText(html).replace(WHEN_CLAUSES, " ").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
+    // (Fed to another, "it" is the creature fed, the row's drinker: Energizing Treat's "When you feed your animal companion …,
+    // it's Quickened for 1 minute".)
+    const text = plainText(html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ").replace(WHEN_CLAUSES, " ").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
     if (NOT_ONE_RESULT.test(text) || EFFECT_LINK.test(html)) return null;
     const duration = itemDuration(text);
     const sentences = sentencesOf(text);
