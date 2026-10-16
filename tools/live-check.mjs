@@ -90,9 +90,13 @@ async function strike(actor, weapon) {
     return { action, attack };
 }
 
-// The module's own item, from its pack source (packs/_source/items): put into the actor's inventory, as a drop from the pack does.
+// The module's own item, from its compendium (else, before Foundry has loaded the pack, its source in packs/_source/items): put
+// into the actor's inventory, as a drop from the pack does.
 async function ownItem(actor, file) {
-    const source = await (await fetch(`/modules/${NS}/packs/_source/items/${file}`, { cache: "reload" })).json();
+    const pack = game.packs.get(`${NS}.items`);
+    const wanted = await (await fetch(`/modules/${NS}/packs/_source/items/${file}`, { cache: "reload" })).json();
+    const document = pack ? await pack.getDocument(wanted._id) : null;
+    const source = document ? document.toObject() : wanted;
     delete source._id;
     const [item] = await actor.createEmbeddedDocuments("Item", [source]);
     return item;
