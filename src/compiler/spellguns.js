@@ -80,7 +80,12 @@ export function readSpellgun(html) {
     // "As critical success, but for the drained condition, the target is Drained 1, or …": that condition's value.)
     const swap = /^\s*As critical success, except (?:the target is )?(\w+) instead of (\w+)/i.exec(successWords);
     const revalue = /^\s*As critical success, but for the (\w+) condition, the target is \w+ (\d+)([^.]*)\./i.exec(successWords);
-    const success = swap
+    // ("As critical success, except the target takes full damage and takes a -5-foot status penalty": the critical success's row,
+    // its Speed penalty that many feet.)
+    const smaller = /^\s*As critical success, except the target takes full damage(?: and takes an? [–-](\d+)-foot (\w+) penalty)?\.?\s*$/i.exec(successWords.trim());
+    const success = smaller
+        ? { row: { ...critical.row, modifiers: critical.row.modifiers.map((modifier) => (smaller[1] && /speed/i.test(modifier.selector ?? "") ? { ...modifier, value: -Number(smaller[1]) } : modifier)) }, notes: [] }
+        : swap
         ? { row: { ...critical.row, effects: critical.row.effects.map((effect) => (effect.slug === swap[2].toLowerCase() ? { ...effect, slug: swap[1].toLowerCase() } : effect)) }, notes: [] }
         : revalue
             ? { row: { ...critical.row, effects: critical.row.effects.map((effect) => (effect.slug === revalue[1].toLowerCase() ? { ...effect, value: Number(revalue[2]) } : effect)) }, notes: revalue[3].trim() ? [`${revalue[1]} ${revalue[2]}${revalue[3]}.`] : [] }

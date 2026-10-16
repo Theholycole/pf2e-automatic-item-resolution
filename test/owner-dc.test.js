@@ -33,6 +33,8 @@ reader.system.attributes.spellDC = { value: 27 };
 
 test("the reading: the owner's DC as the core's { dc: \"owner\" }, with the item's rows read in full", () => {
     assert.match(withItemData("<p>@Check[will|against:class|basic]</p>"), /@Check\[will\|dc:9001\|basic\]/);
+    // (A save link with its DC first and its type named, as some modules write it: put in PF2e's order.)
+    assert.equal(withItemData("<p>@Check[dc:28|type:fortitude|basic] and @Check[dc:21|type:will]</p>"), "<p>@Check[fortitude|dc:28|basic] and @Check[will|dc:21]</p>");
     // The Avalanche: a Reflex save against the class or spell DC, its damage, push, prone and restrained.
     const avalanche = activation("The Avalanche").plan;
     assert.deepEqual(avalanche.resolution.check.against, { dc: "owner", statistic: "class-spell" });

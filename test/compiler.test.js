@@ -201,6 +201,13 @@ test("healing that comes later isn't given on drinking (\"The next time you woul
     assert.equal(plan.resolution.outcomes.success.noteEffects[0].duration.value, 8);
 });
 
+test("healing for an ally the user picks, in its own words (\"Your ally regains 2d8 Hit Points\")", () => {
+    const heart = { name: "Test Heart", type: "consumable", system: { slug: null, level: { value: 3 }, traits: { value: ["consumable", "magical"] }, category: "other", usage: { value: "held-in-one-hand" }, actions: {}, description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><p>You crush the heart toward an ally within 30 feet of you. Your ally regains 2d8 Hit Points.</p>" } } };
+    const plan = compileItem(heart);
+    assert.deepEqual([plan.targeting.target, plan.targeting.range, plan.automation.level], ["1 ally", "30 feet", "automatic"]);
+    assert.deepEqual(plan.resolution.outcomes.success.effects, [{ kind: "heal", formula: "2d8" }]);
+});
+
 test("no condition from a trigger, a later event, a failed check, stages or a time that isn't its own", () => {
     for (const name of ["Emergency Eye", "Breath of Freedom", "Frenzied Quintessence", "Enigma-Sight Potion", "Rebirth Potion", "Elder Seed", "Scholar's Drop"]) {
         const plan = compileItem(item(name));

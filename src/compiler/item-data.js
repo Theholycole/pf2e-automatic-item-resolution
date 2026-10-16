@@ -32,6 +32,8 @@ const OWNER_WORDS = Object.freeze({ class: "your class DC", spell: "your spell D
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
+    // (Its DC first, its type named: a third-party module's "@Check[dc:28|type:fortitude]" — PF2e's order.)
+    text = text.replace(/@Check\[dc:(\d+)\|type:(\w+)((?:\|[^\]]*)?)\]/gi, "@Check[$2|dc:$1$3]");
     // (Dice per weapon damage die — Unholy Bloodshed's: one die where no weapon says more, src/compiler/runes.js giving its weapon's.)
     text = perWeaponDie(text, item?.type === "weapon" ? weaponDice(item) : 1);
     // (A condition that "increases to" a value on a failed save, as the ability compiler reads one: Putrescent Glob's "the creature
