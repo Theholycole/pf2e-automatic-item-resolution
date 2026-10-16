@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 686,
+   "resolves": 688,
    "builtin:cast-spell": 469,
-   "none": 778,
+   "none": 776,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -27,11 +27,11 @@
    "save": 344,
    "cast": 469,
    "item": 602,
-   "none": 974,
+   "none": 972,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
-   "strike": 47,
+   "strike": 49,
    "toggle": 26,
    "zone": 9,
    "action": 13,
@@ -63,8 +63,8 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 145,
-    "none": 128,
+    "resolves": 146,
+    "none": 127,
     "partial": 23,
     "note-only": 40,
     "builtin:cast-spell": 83,
@@ -81,9 +81,9 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 59,
+    "none": 58,
     "partial": 13,
-    "resolves": 40,
+    "resolves": 41,
     "builtin:pf2e-rules": 24,
     "note-only": 14,
     "builtin:no-effect": 2,
@@ -6880,9 +6880,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Storm Hammer",
@@ -27098,9 +27098,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Genealogy Mask",

@@ -1015,6 +1015,29 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Stone Bullet: its activation readies the sling's next Strike with it; the hit has the spell module cast Petrify (rank 6,
+    // DC 34) at the creature hit.
+    async castOnHit(scene) {
+        const { actor: slinger, token: slingerToken } = await creature(scene, "Stone Slinger", { type: "character", x: 13, y: 17 });
+        const { token: foeToken } = await creature(scene, "Stone Target", { x: 16, y: 17, ac: 1, alliance: "opposition" });
+        const sling = await give(slinger, "Sling");
+        const bullets = await give(slinger, "Stone Bullet");
+        await bullets.update({ "system.quantity": 3 });
+        await sling.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.selectedAmmoId": bullets.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(bullets.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await slingerToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(slinger, sling);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem) || /Petrify/.test(message.flavor ?? "") || /Petrify/.test(message.content ?? ""), { what: "the spell module's Petrify", timeout: 15000 });
+        return { cast: cast.id };
+    },
+
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
     // targeted.
     async alliesEffect(scene) {

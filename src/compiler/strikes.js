@@ -118,6 +118,20 @@ function ammoSave(after) {
 // A PF2e ammunition item's own damage rules ("{item|id}-ranged-damage"): its extra dice are PF2e's already.
 const pf2eDamage = (item) => (item?.system?.rules ?? []).some((rule) => ["DamageDice", "FlatModifier"].includes(rule?.key) && /damage/.test([].concat(rule.selector ?? []).join(" ")));
 
+// A spell cast at the creature the Strike hits: Tiger's Claw's "If you successfully deal damage to your target, the target is
+// also affected by a 4th-rank Vision of Death with a spell DC of 28", Stone Bullet's "A creature hit by an activated stone
+// bullet is subject to the effects of a 6th-rank Petrify spell (DC 34 Fortitude)". strike.cast { uuid, name, rank, dc }: on a
+// hit, the spell module casts it (api.castFromItem) at that creature, its own save at the item's DC. Not one with a save of
+// the item's own first ("… unless it succeeds at a Will save", Silencing Shot) nor one in place of the spell's attack
+// ("requiring a … save", Disintegration Bolt): the spell module can't do those yet.
+const CAST_ON_HIT = /\bis (?:also )?(?:subject to|affected by) (?:the effects of )?an? (?:(\d+)(?:st|nd|rd|th)-rank )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]+)\}(?: spell)?([^.]*)/i;
+export function castOnHit(html) {
+    const match = CAST_ON_HIT.exec(String(html ?? ""));
+    if (!match || /\bunless\b|\brequiring\b/i.test(match[4])) return null;
+    const dc = /\bspell DC of (\d+)|@Check\[\w+\|dc:(\d+)/i.exec(match[4]);
+    return { uuid: match[2], name: match[3], rank: match[1] ? Number(match[1]) : null, dc: dc ? Number(dc[1] ?? dc[2]) : null };
+}
+
 export function compileStrike(item, base) {
     const html = String(item?.system?.description?.value ?? "");
     // ("This Strike deals an additional 2d6 precision damage, and on a hit, the creature is Clumsy 1": the rider its own sentence.)
@@ -134,9 +148,12 @@ export function compileStrike(item, base) {
         const row = hitRiders(sentence);
         return hasRow(row.success) || hasRow(row.criticalSuccess) || Boolean(save && /^(?:On a hit|If (?:you|it|the Strike) hits?)\b[^.]*\b(?:save|saving throw)\b/i.test(sentence));
     };
+    const cast = castOnHit(html);
     const read = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
+    // (The cast's own sentence isn't a note.)
+    if (cast) read.notes = read.notes.filter((note) => !note.includes(cast.name));
     const extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration || read.runes) } : read;
-    if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read) return null;
+    if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read && !cast) return null;
     const anyRider = hasRow(riders.success) || hasRow(riders.criticalSuccess);
     // (A trigger's Strike that already hit — Spore Sap's "Trigger You successfully Strike a creature with the spore sap Effect
     // The target must succeed at a DC 28 Fortitude save …": its save is the plan, at the creature struck; its extra damage
@@ -145,10 +162,10 @@ export function compileStrike(item, base) {
         if (extras.read) return anyRider || save ? null : strikePlan({ base, item, strike, riders, save, extras });
         return save && !anyRider ? { ...save.plan, source: base.source, rank: base.rank, traits: base.traits, activation: base.activation, targeting: { target: "the creature struck", range: null, area: null }, trigger: { event: "use" } } : null;
     }
-    return strikePlan({ base, item, strike, riders, save, extras });
+    return strikePlan({ base, item, strike, riders, save, extras, cast });
 }
 
-function strikePlan({ base, item, strike, riders, save, extras: read }) {
+function strikePlan({ base, item, strike, riders, save, extras: read, cast = null }) {
     // (A Strike with no die size of its own, "an extra die of weapon damage", from an item that isn't the weapon: not read.)
     if (read.dice.some((entry) => !entry.dieSize)) return null;
     // (With a save on the hit, its own sentence and its degrees are the save card's, not notes: "It takes 4d10 void damage with a
@@ -183,7 +200,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read }) {
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
-        strike: { range: strike.range, save: save ? save.plan : null, ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : {}) },
+        strike: { range: strike.range, save: save ? save.plan : null, ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : {}), ...(cast ? { cast } : {}) },
         ...((extras.read || strike.ammo) && extras.notes.length ? { partial: true } : {})
     };
 }

@@ -288,3 +288,22 @@ test("Weapon Shot: the weapon that fires it is a +2 striking weapon for that Str
     // Its ghostly weapon of force: not read (no weapon of the user's fires it).
     assert.equal(ghostly.plan, null);
 });
+
+test("a spell cast at the creature hit: Stone Bullet's Petrify at rank 6 and DC 34, the spell module's; not one with a save of its own first", async () => {
+    const [stone] = compileActivations(source("Stone Bullet"));
+    assert.deepEqual(stone.plan.strike.cast, { uuid: "Compendium.pf2e.spells-srd.Item.znv4ECL7ZtuiagtA", name: "Petrify", rank: 6, dc: 34 });
+    assert.match(strikeLines(stone.plan).join(" | "), /On a hit: Petrify \(rank 6, DC 34\) cast at the target/);
+    assert.equal(compileActivations(source("Silencing Shot"))[0].plan?.strike?.cast ?? null, null, "its Will save comes first");
+    assert.deepEqual(compileActivations(source("Tiger's Claw")).find((entry) => entry.plan?.strike?.cast).plan.strike.cast.name, "Vision of Death");
+    const bullets = foundry.giveItem(fighter, source("Stone Bullet"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: bullets.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const before = foundry.casts.length;
+    await attack("success", ["item:ranged", `item:ammo:id:${bullets.id}`]);
+    const [cast] = foundry.casts.slice(before);
+    assert.deepEqual([cast.spell, cast.rank, cast.dc, cast.targets.length], ["Compendium.pf2e.spells-srd.Item.znv4ECL7ZtuiagtA", 6, 34, 1]);
+});

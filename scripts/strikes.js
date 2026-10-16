@@ -10,6 +10,8 @@ import { MODULE_KEY, createStrikeCard, dieText, itemIdOf, riderFor, strikeCardHT
 import { saveText } from "../src/live/poison-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, startInitiative, stateOf } from "./foundry.js";
 
+const SPELL_ID = "pf2e-automatic-resolution";
+
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export async function postStrikeCard({ message, plan, used, actor, token }) {
@@ -65,7 +67,7 @@ export async function strikeWithRider(message) {
     }
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
-    if (!rider.plan.strike?.save && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement) {
+    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}.</p>` });
         return;
@@ -86,6 +88,17 @@ export async function strikeWithRider(message) {
             await postCard({ plan: save, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: [targetToken.object ?? targetToken], cause: `${rider.item.name} hit` });
             lines.push(`${target.name}: its save card follows.`);
         } else lines.push(`${target.name}: ${saveText(save)} (roll it by hand).`);
+    }
+    // (A spell cast at the creature hit: the spell module's, its own save at the item's DC — Stone Bullet's Petrify.)
+    const cast = rider.plan.strike?.cast;
+    if (cast) {
+        const castFromItem = game.modules.get(SPELL_ID)?.api?.castFromItem;
+        const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
+        if (!castFromItem) lines.push(`${target.name}: cast ${cast.name}${cast.rank ? ` at rank ${cast.rank}` : ""}${cast.dc ? `, DC ${cast.dc}` : ""} by hand (PF2e Automatic Spell Resolution isn't active)`);
+        else {
+            await castFromItem({ actor, token: sourceToken ?? undefined, spell: cast.uuid, rank: cast.rank ?? undefined, dc: cast.dc ?? undefined, targets: [targetToken.object ?? targetToken], item: { name: rider.item.name, uuid: rider.item.uuid ?? null } });
+            lines.push(`${target.name}: ${cast.name} cast at it`);
+        }
     }
     await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(lines.join("; ") || "the Strike hit")}.</p>` });
 }
