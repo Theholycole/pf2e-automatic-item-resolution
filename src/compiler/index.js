@@ -34,6 +34,7 @@ import { readCounteract } from "./counteract.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
+import { withoutFlavor } from "./flavor.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -88,7 +89,13 @@ function compileOne(given, options = {}) {
     const firstRead = compileAbility(asAbility(item), options);
     // (Only a resolution it reads that way, not a builtin: a spell its trigger names isn't cast — Shadowpiercer's darkness.)
     const retry = !firstRead || firstRead.builtin === "no-effect" ? compileAbility(asAbility(withoutTrigger(item)), options) : null;
-    const abilityRead = retry && !retry.builtin ? retry : firstRead;
+    let abilityRead = retry && !retry.builtin ? retry : firstRead;
+    // (Nothing read still: once more without its Effect's opening flavor, src/compiler/flavor.js.)
+    for (const bare of new Set([withoutFlavor(html), withoutFlavor(withoutTrigger(item).system?.description?.value)])) {
+        if ((abilityRead && abilityRead.builtin !== "no-effect") || bare === html || bare === withoutTrigger(item).system?.description?.value) continue;
+        const flavorless = compileAbility(asAbility({ ...item, system: { ...item.system, description: { ...(item.system?.description ?? {}), value: bare } } }), options);
+        if (flavorless && !flavorless.builtin) abilityRead = flavorless;
+    }
     // (A spell only named as an example isn't cast: src/compiler/guards.js.)
     const read = castMentionOnly(abilityRead, html) ? null : abilityRead;
     const base = basePlan(item);

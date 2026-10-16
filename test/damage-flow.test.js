@@ -249,3 +249,9 @@ test("talismans after a hit: Putrescent Glob's save (read without its Trigger li
     const disk = compileItem(source("Ensnaring Disk"));
     assert.deepEqual([disk.builtin, disk.action.slug, disk.action.bonus], ["item-action", "disarm", { value: 2, type: "item" }]);
 });
+
+test("Burr Shield: the bleed its burr inflicts on the Strike's target, outright and nothing left to note", () => {
+    const burr = compileActivations(source("Burr Shield"))[0].plan;
+    assert.deepEqual([burr.resolution.check.roll, component(burr).formula, component(burr).type, component(burr).category, burr.targeting.target], ["automatic", "1d10", "bleed", "persistent", "1 creature"]);
+    assert.deepEqual(burr.notes ?? [], []);
+});

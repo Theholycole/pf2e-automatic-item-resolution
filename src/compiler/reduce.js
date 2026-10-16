@@ -18,7 +18,8 @@ const VALUED = ["clumsy", "doomed", "drained", "enfeebled", "frightened", "sicke
 const NAMES = VALUED.join("|");
 const COUNT = { one: 1, two: 2, three: 3 };
 const BY = String.raw`(?:by (?:up to )?(\d|one|two|three)|to (0))\b`;
-const REDUCE = new RegExp(String.raw`\b(?:(?:you )?reduc(?:e|es|ing) (?:the values? of )?your (${NAMES})(?: conditions?| values?)?(?: values?)?|your (${NAMES}) (?:value|condition) decreases) by (?:up to )?(\d|one|two|three)\b`, "gi");
+// (And Trusty Helmet's "The value of your stupefied condition is decreased by 1".)
+const REDUCE = new RegExp(String.raw`\b(?:(?:you )?reduc(?:e|es|ing) (?:the values? of )?your (${NAMES})(?: conditions?| values?)?(?: values?)?|your (${NAMES}) (?:value|condition) decreases|the value of your (${NAMES}) condition is (?:decreased|reduced)) by (?:up to )?(\d|one|two|three)\b`, "gi");
 // (Its user's several: "your clumsy, drained, and enfeebled condition values by 2" — each; "… or stupefied condition by 1" — one.)
 const LIST = new RegExp(String.raw`\breduc(?:e|es|ing) (?:the values? of )?your ((?:${NAMES})(?:\s*,\s*(?:(?:and|or) )?(?:${NAMES}))*\s*,?\s*(and|or) (?:${NAMES})) (?:conditions?|values?)(?: values?)? ${BY}`, "gi");
 // (To 0: Unending Youth's "Reduce your doomed value to 0".)
@@ -73,7 +74,7 @@ export function readReductions(text) {
             else for (const slug of slugs) add({ slug, by, ...who });
         }
         for (const match of sentence.matchAll(copy(TO_ZERO))) add({ slug: match[1].toLowerCase(), by: "all", ...who });
-        for (const match of sentence.matchAll(copy(REDUCE))) add({ slug: (match[1] ?? match[2]).toLowerCase(), by: COUNT[match[3].toLowerCase()] ?? Number(match[3]), ...who });
+        for (const match of sentence.matchAll(copy(REDUCE))) add({ slug: (match[1] ?? match[2] ?? match[3]).toLowerCase(), by: COUNT[match[4].toLowerCase()] ?? Number(match[4]), ...who });
     }
     return found;
 }

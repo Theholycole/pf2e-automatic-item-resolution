@@ -28,6 +28,7 @@ import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { saveOrPlan } from "./save-or.js";
 import { spellstrikePlan } from "./spellstrike.js";
+import { withoutFlavor } from "./flavor.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 
@@ -121,8 +122,15 @@ function compileEach(item, options = {}) {
                 read = compileAbility(asActivationAbility(item, activation), options);
                 // (Nothing read: once more without its Trigger line, src/compiler/index.js.)
                 // (Only a resolution it reads that way, not a builtin: a spell its trigger names isn't cast.)
+                const triggerless = String(activation.html).replace(/<p>\s*<strong>\s*Trigger\s*<\/strong>[\s\S]*?<\/p>/i, "");
                 if (!read || read.builtin === "no-effect") {
-                    const retry = compileAbility(asActivationAbility(item, { ...activation, html: String(activation.html).replace(/<p>\s*<strong>\s*Trigger\s*<\/strong>[\s\S]*?<\/p>/i, "") }), options);
+                    const retry = compileAbility(asActivationAbility(item, { ...activation, html: triggerless }), options);
+                    if (retry && !retry.builtin) read = retry;
+                }
+                // (Nothing read still: once more without its Effect's opening flavor, src/compiler/flavor.js.)
+                for (const bare of new Set([withoutFlavor(activation.html), withoutFlavor(triggerless)])) {
+                    if ((read && read.builtin !== "no-effect") || bare === activation.html || bare === triggerless) continue;
+                    const retry = compileAbility(asActivationAbility(item, { ...activation, html: bare }), options);
                     if (retry && !retry.builtin) read = retry;
                 }
             } catch {

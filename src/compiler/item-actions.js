@@ -26,15 +26,17 @@ const FORMS = [
     new RegExp(String.raw`\b(?:use|make|attempt) an? (${NAMES})(?: action)?(?: check)? ${BONUS}`, "i"),
     // "attempt an Athletics check to Shove with a +1 item bonus", "Attempt a Deception check to Feint with a +4 circumstance bonus"
     new RegExp(String.raw`\battempts? (?:a|an) \w+ check to (${NAMES})\b(?: (?:the|a|an|one) [\w' -]+?)? ${BONUS}`, "i"),
+    // "You Seek with a +1 item bonus" (Motion-Seeking Lenses)
+    new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+)You (${NAMES}) ${BONUS}`, "i"),
     // "attempt to Administer First Aid using Medicine with a +1 item bonus to the check"
     new RegExp(String.raw`\battempt to (${NAMES}) using \w+ ${BONUS}`, "i"),
     // "allowing you to attempt to Disarm it from its wielder with a +2 item bonus" (Ensnaring Disk)
     new RegExp(String.raw`\battempt to (${NAMES}) (?:it|them|the (?:triggering )?(?:creature|weapon|foe|attacker)) from its wielder ${BONUS}`, "i"),
     // "When you activate the bracelet, attempt to Escape", "When you activate it, make a Leap"
     new RegExp(String.raw`\bWhen you activate [^,.]+, (?:you (?:can )?(?:immediately )?)?(?:use|attempt|make) (?:an? |to )?(${NAMES})\b`, "i"),
-    // "…, attempting an Intimidation check to Demoralize that creature", "Make an Athletics check to Disarm the attacking creature":
-    // a clause of its own, a skill named.
-    new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+|,\s+)(?:attempting|[Mm]ake|[Aa]ttempt) (?:a|an) (?:Athletics|Acrobatics|Intimidation|Deception|Diplomacy|Stealth|Thievery|Medicine|Survival|Performance) check to (${NAMES})\b(?![^.]*\+\d+)(?![^.]*\b(?:up to (?:two|three|four|\d+)|each|all)\b)`, "i"),
+    // "…, attempting an Intimidation check to Demoralize that creature", "Make an Athletics check to Disarm the attacking creature",
+    // "Roll an Intimidation check to Demoralize the target": a clause of its own, a skill named.
+    new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+|,\s+)(?:attempting|[Mm]ake|[Aa]ttempt|[Rr]oll) (?:a|an) (?:Athletics|Acrobatics|Intimidation|Deception|Diplomacy|Stealth|Thievery|Medicine|Survival|Performance) check to (${NAMES})\b(?![^.]*\+\d+)(?![^.]*\b(?:up to (?:two|three|four|\d+)|each|all)\b)`, "i"),
     // "You attempt to Demoralize the foe the Strike hit", "You can activate the tiger fork to attempt to Grapple the creature": its
     // user's own, at one creature (not "The tentacle attempts to Grapple with a +13 bonus", its own check).
     new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+)You (?:can (?:immediately )?)?(?:attempt to|activate [^,.]+? to attempt to) (${NAMES}) (?:the|that|a|an|one) (?:[\w-]+ )?(?:creature|foe|enemy|target|opponent)\b(?![^.]*\+\d+)`, "i")
@@ -111,6 +113,15 @@ export function readItemAction(html, item = null) {
         const name = several[1].replace(/\s+/g, " ");
         const slug = ACTION_SLUGS[name.toLowerCase()];
         if (slug) return { slug, name, bonus: null, targeted: true, maxTargets: { two: 2, three: 3, four: 4 }[several[2].toLowerCase()] ?? Number(several[2]) };
+    }
+    // (Or at every creature of a kind in an area: Horn of Exorcism's "Make an Intimidation check to Demoralize against all creatures
+    // with the undead or unholy trait in a 30-foot emanation" — as many as are targeted.)
+    const everyone = new RegExp(String.raw`\b[Mm]ake an? \w+ check to (${NAMES}) against all (creatures?\b[^.]*?|enemies|foes) in an? (\d+)-foot (?:emanation|burst)\b`, "i").exec(text);
+    if (everyone) {
+        const name = everyone[1].replace(/\s+/g, " ");
+        const slug = ACTION_SLUGS[name.toLowerCase()];
+        const after = text.slice(everyone.index).split(/(?<=[.!?])\s+(?=[A-Z])/).slice(1, 3).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line)).join(" ").trim();
+        if (slug) return { slug, name, bonus: null, targeted: true, maxTargets: 99, everyone: `all ${everyone[2]} within ${everyone[3]} feet`, ...(after ? { after } : {}) };
     }
     let match = null;
     let index = -1;

@@ -6,36 +6,36 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 701,
+   "resolves": 705,
    "builtin:cast-spell": 469,
-   "none": 749,
+   "none": 738,
+   "partial": 92,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
    "note-only": 264,
    "builtin:reroll": 22,
-   "partial": 88,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 26,
    "builtin:zone": 9,
-   "builtin:item-action": 13,
+   "builtin:item-action": 16,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
    "builtin:spellstrike": 9,
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 361,
+   "save": 367,
    "cast": 469,
-   "item": 599,
-   "none": 945,
+   "item": 601,
+   "none": 934,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
    "strike": 53,
    "toggle": 26,
    "zone": 9,
-   "action": 13,
+   "action": 16,
    "spellstrike": 9,
    "later": 4
   },
@@ -46,28 +46,28 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 425,
+    "resolves": 427,
     "builtin:cast-spell": 340,
-    "none": 503,
+    "none": 495,
+    "partial": 40,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 21,
     "note-only": 167,
     "builtin:reroll": 14,
-    "partial": 37,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:item-action": 5
+    "builtin:item-action": 8
    }
   },
   "weapon": {
    "activations": 460,
    "results": {
     "resolves": 146,
-    "none": 123,
-    "partial": 27,
+    "none": 122,
+    "partial": 28,
     "note-only": 40,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
@@ -106,9 +106,9 @@
    "results": {
     "builtin:cast-spell": 34,
     "note-only": 21,
-    "resolves": 56,
+    "resolves": 57,
     "builtin:no-effect": 6,
-    "none": 30,
+    "none": 29,
     "builtin:reroll": 3,
     "partial": 5,
     "builtin:ac-reaction": 2,
@@ -123,8 +123,8 @@
    "results": {
     "builtin:cast-spell": 11,
     "note-only": 17,
-    "resolves": 31,
-    "none": 28,
+    "resolves": 32,
+    "none": 27,
     "builtin:modes": 4,
     "builtin:no-effect": 4,
     "partial": 4,
@@ -206,9 +206,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Bloodline Robe",
@@ -899,9 +899,9 @@
    "time": "reaction",
    "frequency": "once per 10 minutes",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Storyteller's Opus",
@@ -1660,9 +1660,9 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Stone Circle",
@@ -10526,9 +10526,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Helm of the Tides",
@@ -13162,9 +13162,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Wondrous Figurine (Golden Lions)",
@@ -19084,9 +19084,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Glacier Hammer",
@@ -24487,9 +24487,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Lacquered Waist Drum",
@@ -24498,7 +24498,7 @@
    "time": "3",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -25335,9 +25335,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Limestone Shield",
@@ -26029,9 +26029,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Trusty Helmet",
@@ -27604,9 +27604,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Horn of Exorcism",
@@ -28442,9 +28442,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "save",
+   "live": "save",
    "rune": true
   },
   {

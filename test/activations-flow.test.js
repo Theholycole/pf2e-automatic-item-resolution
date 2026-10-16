@@ -70,3 +70,20 @@ test("only the item's owner or the GM activates it; an item with nothing read ha
     assert.deepEqual(await activate(plain, 0), []);
     assert.ok(foundry.notifications.slice(errors).some((text) => /isn't there any more/.test(text)));
 });
+
+test("Urn of Ashes: its bolt at its user's spell attack or its own +15, whichever is higher", async () => {
+    const mystic = foundry.makeActor({ id: "activate-mystic", name: "Mystic", owners: ["player"] });
+    foundry.place(mystic, 300, 8000);
+    const urn = foundry.giveItem(mystic, source("Urn of Ashes"));
+    // No spell attack, or a lower one: the urn's +15.
+    let [card] = (await activate(urn, 1)).filter((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.deepEqual(card.flags[MODULE_ID].card.attackChoices, [{ kind: "spell", label: "The item's +15", modifier: 15 }]);
+    mystic.spellcasting = { contents: [{ statistic: { check: { mod: 12 } } }] };
+    [card] = (await activate(urn, 1)).filter((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.deepEqual(card.flags[MODULE_ID].card.attackChoices.map((choice) => choice.modifier), [15]);
+    // A higher one: its own.
+    mystic.spellcasting = { contents: [{ statistic: { check: { mod: 19 } } }] };
+    [card] = (await activate(urn, 1)).filter((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.deepEqual(card.flags[MODULE_ID].card.attackChoices, [{ kind: "spell", label: "Spell attack +19", modifier: 19 }]);
+    assert.deepEqual([card.flags[MODULE_ID].card.plan.resolution.sharedDamage.components[0].formula, card.flags[MODULE_ID].card.plan.targeting.range], ["4d4", "30 feet"]);
+});

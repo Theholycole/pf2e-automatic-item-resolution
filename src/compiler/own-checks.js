@@ -21,6 +21,11 @@ const WARRIORS = /\b(two|three|four|five|six|seven|eight|\d+) warriors manifest 
 const WARRIOR_STRIKE = new RegExp(String.raw`\bmakes a Strike for (\d+d\d+(?:\s*\+\s*\d+)?) (${TYPES})(?: damage)?\b`, "i");
 const WARRIOR_RANGE = /\badjacent to an enemy within (\d+) feet\b/i;
 const COUNTS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
+// (Its modifier or its user's, the higher: Urn of Ashes' "Attempt a spell attack roll against the target's AC, using a modifier
+// of +15 or your own spell attack modifier, whichever is higher. On a success, the bolt deals 4d4 void damage (doubled on a
+// critical success)" — the card's pick of its user's spell attack, at least +15.)
+const HIGHER_ATTACK = new RegExp(String.raw`\bAttempt a spell attack roll against the target's AC, using a modifier of \+(\d+) or your own spell attack modifier, whichever is higher\.\s*On a (?:hit|success), [^.]*?\bdeals (\d+d\d+(?:\s*\+\s*\d+)?) (?:(persistent) )?(${TYPES}) damage \(doubled on a critical (?:hit|success)\)\.?`, "i");
+const WITHIN = /\bwithin (\d+) feet\b/i;
 // (One of two maneuvers at the item's modifier: Twisting Twine's "attempting to Disarm or Trip (your choice) a creature in
 // the square with a total of +9 to the Athletics check" — both plans, the card's picker.)
 const MANEUVER_CHOICE = new RegExp(String.raw`\battempt(?:s|ing)? to (${NAMES}) or (${NAMES}) \(your choice\)[^.]*?\bwith a total of \+(\d+) to the (?:Athletics|Acrobatics|Intimidation|Deception) check\b`, "i");
@@ -31,6 +36,12 @@ const sentencesOf = (text) => String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "
 // The text (plain) → { kind: "maneuver", slug, modifier, notes } | { kind: "attack", range, modifier, formula, type, category, notes } | null.
 export function readOwnCheck(text) {
     const sentences = sentencesOf(text);
+    const higher = HIGHER_ATTACK.exec(String(text ?? ""));
+    if (higher) {
+        const notes = sentencesOf(String(text ?? "").replace(higher[0], "")).filter((sentence) => !/^The [\w' -]+? (?:shoots|fires|hurls|launches) [^.]+ at an? (?:foe|creature|enemy|target) within \d+ feet\.$/i.test(sentence));
+        const range = WITHIN.exec(String(text ?? "").replace(/^.*?\bEffect\b/s, ""))?.[1];
+        return { kind: "attack", range: null, reach: range ? `${range} feet` : null, modifier: Number(higher[1]), atLeast: true, choose: ["spell"], formula: higher[2].replace(/\s+/g, ""), category: higher[3] ? "persistent" : null, type: higher[4].toLowerCase(), notes };
+    }
     for (const [index, sentence] of sentences.entries()) {
         const choice = MANEUVER_CHOICE.exec(sentence);
         if (!choice) continue;
@@ -63,7 +74,9 @@ export function readOwnCheck(text) {
 export function ownCheckPlan(text, base, options = {}) {
     const read = readOwnCheck(text);
     if (!read) return null;
-    const common = { ...base, modelVersion: MODEL_VERSION, automation: { level: read.notes.length ? "guided" : "automatic" }, trigger: { event: "use" }, ownCheck: { kind: read.kind, modifier: read.modifier }, notes: read.notes, ...(read.notes.length ? { partial: true } : {}) };
+    // (Its user's own attack, picked on the card — at least the item's modifier when it says "whichever is higher".)
+    const own = read.choose ? { choose: read.choose, ...(read.atLeast ? { atLeast: read.modifier } : {}) } : {};
+    const common = { ...base, modelVersion: MODEL_VERSION, automation: { level: read.notes.length ? "guided" : "automatic" }, trigger: { event: "use" }, ownCheck: { kind: read.kind, modifier: read.modifier, ...own }, notes: read.notes, ...(read.notes.length ? { partial: true } : {}) };
     if (read.kind === "maneuver") {
         const basic = options.basicActions?.[read.slug];
         if (!basic?.resolution?.check || basic.builtin) return null;

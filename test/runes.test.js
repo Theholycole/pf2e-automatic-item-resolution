@@ -118,3 +118,10 @@ test("live: a critical hit with a Thundering, Crushing weapon posts both cards a
     assert.deepEqual(cards.map((card) => [card.item.name, card.plan.resolution.check.roll ?? card.plan.resolution.kind, card.cause]), [["Thundering Crushing Club (Thundering)", "save", "critical hit"], ["Thundering Crushing Club (Crushing)", "automatic", "critical hit"]]);
     assert.equal(cards[0].tokens[0].name ?? cards[0].tokens[0].actor?.name, "Foe");
 });
+
+test("Swarming: double the weapon's damage dice as its damage, of the weapon's type, in a 30-foot cone with a basic Reflex save", () => {
+    const dagger = equipment.find((doc) => doc.name === "Dagger");
+    const weapon = { ...dagger, system: { ...dagger.system, runes: { potency: 2, striking: 1, property: ["swarming"] } } };
+    const [swarm] = etchedRuneActivations(weapon, runes, {});
+    assert.deepEqual([swarm.index, swarm.plan.resolution.sharedDamage.components[0].formula, swarm.plan.targeting.area, swarm.plan.resolution.check.basic, swarm.plan.resolution.check.against.value], ["rune:swarming:0", "4[piercing]", { type: "cone", value: 30 }, true, 27]);
+});

@@ -34,8 +34,13 @@ export function withItemData(html, item) {
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
     // (Its DC first, its type named: a third-party module's "@Check[dc:28|type:fortitude]" — PF2e's order.)
     text = text.replace(/@Check\[dc:(\d+)\|type:(\w+)((?:\|[^\]]*)?)\]/gi, "@Check[$2|dc:$1$3]");
+    // (A save link without the word: Life's Last Breath's "The target must succeed at a @Check[fortitude|dc:38] or take 4d6 void
+    // damage" — the target's, not a passive one's: Dawnlight's "Creatures with darkvision … must succeed at a @Check[…] or be …".)
+    text = text.replace(/(\b[Tt]he target must succeed at an? @Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) or (be|become|take)\b/gi, "$1 save or $2");
+    // (A condition for its user's next turn, Bloodline Robe's "You're Quickened on your next turn": until that turn's end.)
+    text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Dice per weapon damage die — Unholy Bloodshed's: one die where no weapon says more, src/compiler/runes.js giving its weapon's.)
-    text = perWeaponDie(text, item?.type === "weapon" ? weaponDice(item) : 1);
+    text = perWeaponDie(text, item?.type === "weapon" ? weaponDice(item) : 1, item?.type === "weapon" ? item.system?.damage?.damageType ?? null : null);
     // (A condition that "increases to" a value on a failed save, as the ability compiler reads one: Putrescent Glob's "the creature
     // you damaged must succeed at a … save or its sickened condition increases to Sickened 2" — "The target must succeed at a
     // … save or be Sickened 2".)
@@ -62,11 +67,17 @@ export function withItemData(html, item) {
 }
 
 // "… that does @Damage[4d6[force]] damage with a @Check[reflex|dc:23] save." — damage with a save and no degree rows of its
-// own reads only one way, a basic save (PF2e's own text always says so; some third-party text leaves the word out).
-const DAMAGE_SAVE = /@Damage\[(?:[^\[\]]|\[[^\]]*\])+\] damage with a @Check\[(?:type:)?(?:fortitude|reflex|will)\|(?![^\]]*\bbasic\b)[^\]]*\] save\b/i;
+// own reads only one way, a basic save (PF2e's own text always says so; some third-party text leaves the word out). And
+// Lacquered Waist Drum's "This deals @Damage[5d8[vitality]] damage (@Check[fortitude|dc:28] save) to that creature".
+const DAMAGE_SAVE = /@Damage\[(?:[^\[\]]|\[[^\]]*\])+\] damage (?:with a |\()@Check\[(?:type:)?(?:fortitude|reflex|will)\|(?![^\]]*\bbasic\b)[^\]]*\] save\b/i;
 function basicDamageSaves(text) {
-    if (/\bCritical (?:Success|Failure)\b/.test(text)) return text;
-    return text.replace(new RegExp(DAMAGE_SAVE.source, "gi"), (sentence) => sentence.replace(/(@Check\[(?:type:)?(?:fortitude|reflex|will)\|[^\]]*)\]/i, "$1|basic]"));
+    // (Not where its own activation has degree rows: up to the next one.)
+    return text.replace(new RegExp(DAMAGE_SAVE.source, "gi"), (sentence, at) => {
+        const next = text.slice(at).search(/<strong>\s*Activate\b/i);
+        const own = next < 0 ? text.slice(at) : text.slice(at, at + next);
+        if (/\bCritical (?:Success|Failure)\b/.test(own) || /\bCritical (?:Success|Failure)\b/.test(text.slice(text.lastIndexOf("Activate", at) < 0 ? 0 : text.lastIndexOf("Activate", at), at))) return sentence;
+        return sentence.replace(/(@Check\[(?:type:)?(?:fortitude|reflex|will)\|[^\]]*)\]/i, "$1|basic]");
+    });
 }
 
 // Each stand-in of the owner's DC in a plan as the core's { dc: "owner", statistic }; a cast's DC number (The Cyclone's) as
@@ -125,10 +136,12 @@ export const hasOwnerDC = (plan) => Boolean(plan) && /"dc":"owner"|"ownerDC"/.te
 export const weaponDice = (weapon) => (Number(weapon?.system?.damage?.dice) || 1) + (Number(weapon?.system?.runes?.striking) || 0);
 
 // "takes Persistent Bleed Damage equal to 1d8 per weapon damage die of the etched weapon" → "takes 3d8 persistent bleed damage"
-// (dice: the weapon's); "1d6 per weapon damage die" → "3d6".
-export function perWeaponDie(html, dice) {
+// (dice: the weapon's); "1d6 per weapon damage die" → "3d6"; Swarming's "take damage equal to double the weapon's number of
+// damage dice" → "take 6 piercing damage" (type: the weapon's damage type, untyped without one).
+export function perWeaponDie(html, dice, type = null) {
     const per = String.raw`(\d+)d(\d+) per (?:weapon )?damage die(?: of the (?:etched |affixed )?weapon)?`;
     return String(html ?? "")
+        .replace(/\btake damage equal to (double|twice|triple) the weapon's number of damage dice\b/gi, (whole, times) => `take @Damage[${({ double: 2, twice: 2, triple: 3 })[times.toLowerCase()] * dice}[${type ?? "untyped"}]] damage`)
         .replace(new RegExp(String.raw`\btakes (?:@UUID\[[^\]]*\]\{)?Persistent (\w+) Damage\}? equal to ${per}`, "gi"), (whole, type, count, faces) => `takes ${Number(count) * dice}d${faces} persistent ${type.toLowerCase()} damage`)
         .replace(new RegExp(String.raw`\b${per}`, "gi"), (whole, count, faces) => `${Number(count) * dice}d${faces}`);
 }

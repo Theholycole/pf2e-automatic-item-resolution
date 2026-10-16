@@ -81,20 +81,25 @@ export async function postExposureCard({ message, plan, used, actor, token, late
     const repeat = later && repeatsLater(text);
     const time = repeat ? itemDuration(text) : null;
     const until = time ? game.time.worldTime + time.value * (SECONDS[time.unit] ?? 3600) : null;
-    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until, own: isOwnSave(plan, text), attacker: /\bcreature (?:that|who) touches you\b/i.test(text) ? "touch" : ATTACKER.test(text), attackChoices: plan.ownCheck?.choose ? attackChoices(actor, plan.ownCheck.choose) : null });
+    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until, own: isOwnSave(plan, text), attacker: /\bcreature (?:that|who) touches you\b/i.test(text) ? "touch" : ATTACKER.test(text), attackChoices: plan.ownCheck?.choose ? attackChoices(actor, plan.ownCheck.choose, { atLeast: plan.ownCheck.atLeast ?? null }) : null });
     return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
 // A spellgun's attack modifiers its user has: its best spellcasting entry's spell attack, its best firearm Strike's.
 const sign = (value) => (value >= 0 ? `+${value}` : `${value}`);
-function attackChoices(actor, kinds) {
+// (atLeast: the item's own modifier when its text says "or your own spell attack modifier, whichever is higher" — Urn of
+// Ashes' +15: the higher of the two, the item's alone with no spell attack.)
+function attackChoices(actor, kinds, { atLeast = null } = {}) {
     const best = (values) => Math.max(...values.map(Number).filter(Number.isFinite));
     const spell = best((actor?.spellcasting?.contents ?? []).map((entry) => entry?.statistic?.check?.mod));
     const firearm = best((actor?.system?.actions ?? []).filter((action) => (action?.item?.group ?? action?.item?.system?.group) === "firearm").map((action) => action.totalModifier));
-    return [
+    const choices = [
         ...(kinds.includes("spell") && Number.isFinite(spell) ? [{ kind: "spell", label: `Spell attack ${sign(spell)}`, modifier: spell }] : []),
         ...(kinds.includes("firearm") && Number.isFinite(firearm) ? [{ kind: "firearm", label: `Firearm attack ${sign(firearm)}`, modifier: firearm }] : [])
     ];
+    if (!Number.isFinite(atLeast)) return choices;
+    const own = { kind: "spell", label: `The item's ${sign(atLeast)}`, modifier: atLeast };
+    return choices.some((choice) => choice.modifier >= atLeast) ? choices : [own];
 }
 
 // targets: the token uuids the presser had targeted.

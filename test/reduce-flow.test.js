@@ -201,3 +201,9 @@ test("quickened until the end of the rage: only while raging, an Effect granting
     assert.equal(raging.created.some((item) => item.flags?.[MODULE_ID]?.untilRage), false);
     delete globalThis.game.pf2e.ConditionManager;
 });
+
+test("Trusty Helmet's \"The value of your stupefied condition is decreased by 1\": its user's stupefied, lowered", () => {
+    const helmet = compileActivations(source("Trusty Helmet"))[0].plan;
+    assert.deepEqual(helmet.item.reduce, [{ slug: "stupefied", by: 1 }]);
+    assert.deepEqual(readReductions("The value of your clumsy condition is reduced by 2."), [{ slug: "clumsy", by: 2 }]);
+});

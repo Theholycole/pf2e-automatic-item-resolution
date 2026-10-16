@@ -45,7 +45,7 @@ export function etchedRuneActivations(item, index, options = {}) {
         const source = index.get(key);
         if (!source) continue;
         // (Its text with the weapon's own numbers: "1d8 per weapon damage die of the etched weapon".)
-        const rune = item.type === "weapon" ? { ...source, system: { ...source.system, description: { ...(source.system?.description ?? {}), value: perWeaponDie(source.system?.description?.value, weaponDice(item)) } } } : source;
+        const rune = item.type === "weapon" ? { ...source, system: { ...source.system, description: { ...(source.system?.description ?? {}), value: perWeaponDie(source.system?.description?.value, weaponDice(item), item.system?.damage?.damageType ?? null) } } } : source;
         for (const entry of compileActivations(rune, options)) found.push({ ...entry, index: `rune:${key}:${entry.index}`, rune: { key, name: source.name, uuid: source.uuid ?? null } });
     }
     return found;

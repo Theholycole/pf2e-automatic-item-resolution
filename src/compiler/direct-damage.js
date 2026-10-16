@@ -16,6 +16,8 @@ const KIND = String.raw`(?:(persistent) )?(?:(${TYPES}) )?damage`;
 const ONE = String.raw`(?:the|that|your) (?:(?:attacking|triggering|struck|damaged|required|living|affected|grabbed) )?(?:creature|enemy|foe|attacker|target|plant|undead|construct|aberration)(?: (?:that|who|you) [\w ]{1,40}?)?`;
 const TAKES = new RegExp(String.raw`\b${ONE} takes (?:an additional |an extra )?${DICE} ${KIND}\b`, "i");
 const DEALS_TO = new RegExp(String.raw`\b(?:you deal|deals?|inflicts?) (?:an additional |an extra )?${DICE} (?:additional )?${KIND} to ${ONE}\b`, "i");
+// (Burr Shield's "One of the burrs catches on the Strike's target, inflicting 1d10 persistent bleed damage".)
+const INFLICTING = new RegExp(String.raw`\bon (?:${ONE}|the Strike's target), inflicting ${DICE} ${KIND}\b`, "i");
 // Not one creature, or not outright: an area, a save, a condition on it, a number not rolled.
 const NOT_OUTRIGHT = /\b(?:each|every|all|any) (?:other )?(?:creatures?|enem(?:y|ies)|foes?)\b|\bcreatures in\b|\bwithin \d+ feet\b|\bsave\b|\bsaving throw\b|@Check|\bbasic\b|\bequal to\b|\bper\b|\bfor every\b|\bif (?!you are)/i;
 
@@ -44,7 +46,8 @@ export function readDirectDamage(text) {
     if (STRUCK.test(body)) return null;
     const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
     for (const [index, sentence] of sentences.entries()) {
-        const match = TAKES.exec(sentence) ?? DEALS_TO.exec(sentence);
+        const inflicting = INFLICTING.exec(sentence);
+        const match = TAKES.exec(sentence) ?? DEALS_TO.exec(sentence) ?? inflicting;
         if (!match || NOT_OUTRIGHT.test(sentence) || ROW_START.test(sentence)) continue;
         const [, formula, given, type] = match;
         // (Bleed is always persistent.)
@@ -55,7 +58,8 @@ export function readDirectDamage(text) {
         const clause = /\band (?:is|becomes) ([^.]+)/i.exec(rest);
         const riders = clause ? riderRow(`is ${clause[1]}`) : null;
         const ridden = Boolean(riders && (riders.effects.length || riders.modifiers.length));
-        const left = ridden ? rest.replace(clause[0], "").replace(/^(?:When you activate (?:it|the [\w' -]+?),)?[\s,.;]*$/i, "") : rest;
+        // (What carries it there, "One of the burrs catches", isn't a rule.)
+        const left = match === inflicting && !/\b(?:and|if|unless|save|condition)\b/i.test(rest) ? "" : ridden ? rest.replace(clause[0], "").replace(/^(?:When you activate (?:it|the [\w' -]+?),)?[\s,.;]*$/i, "") : rest;
         const notes = [...(left.split(/\s+/).filter(Boolean).length > 3 ? [sentence] : []), ...sentences.filter((other, at) => at !== index && !STATS.test(other))];
         return { formula: formula.replace(/\s+/g, ""), type: type && type.toLowerCase() !== "untyped" ? type.toLowerCase() : null, category, effects: ridden ? riders.effects : [], modifiers: ridden ? riders.modifiers : [], notes };
     }

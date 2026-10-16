@@ -151,3 +151,34 @@ test("a save link written without its \"dc:\" reads as the DC it means", async (
     assert.equal(withItemData("<p>Creatures in the cone must succeed at a @Check[will|21] save or be Stunned 1.</p>", {}), "<p>Creatures in the cone must succeed at a @Check[will|dc:21] save or be Stunned 1.</p>");
 });
 
+
+test("an Effect's opening flavor left out when it keeps the rest from being read; not a sentence with a rule in it", async () => {
+    const { withoutFlavor } = await import("../src/compiler/flavor.js");
+    assert.equal(withoutFlavor("<p><strong>Effect</strong> You hum a little tune. Each foe in a 10-foot emanation is Dazzled.</p>"), "<p><strong>Effect</strong> Each foe in a 10-foot emanation is Dazzled.</p>");
+    for (const kept of ["<p><strong>Effect</strong> The blade afflicts the next target struck by it. It is Dazzled.</p>", "<p><strong>Effect</strong> You gain a +1 bonus. It lasts.</p>", "<p><strong>Effect</strong> One sentence only.</p>"]) assert.equal(withoutFlavor(kept), kept);
+    // Suit of False Impression: its fear save for each foe in 15 feet, read past "You strike an intimidating pose …".
+    const bulwark = compileActivations(item("Suit of False Impression"), { spellEffects })[0].plan;
+    assert.deepEqual([bulwark.resolution.check.statistic, bulwark.resolution.check.against.value, bulwark.targeting.area], ["will", 22, { type: "emanation", value: 15 }]);
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => bulwark.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["frightened 1"], ["frightened 2"]]);
+    // Ghast Stiletto's opening says which creature it's for ("the next living target struck"): not flavor, still a note alone.
+    assert.equal(compileActivations(item("Ghast Stiletto"), { spellEffects })[0].plan.noteOnly, true);
+});
+
+test("Bloodline Robe's Quickened on its user's next turn, its limit a note; Life's Last Breath's save written without the word", () => {
+    const robe = compileActivations(item("Bloodline Robe"), { spellEffects })[0].plan;
+    assert.deepEqual(robe.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.expiry]), [["quickened", 1, "turn-end"]]);
+    assert.deepEqual(robe.unread, ["You can use the extra action only as part of casting a bloodline spell."]);
+    const breath = compileActivations(item("Life's Last Breath"), { spellEffects })[1].plan;
+    assert.deepEqual([breath.resolution.check.statistic, breath.resolution.check.basic, breath.resolution.sharedDamage.components[0].formula, breath.resolution.outcomes.success.damage.mode], ["fortitude", false, "4d6[void]", "none"]);
+    assert.match(breath.notes.join(" "), /^You gain an equal amount of temporary Hit Points that last 1 minute \(the damage dealt\): add them by hand\.$/);
+    // Not a passive sentence's save: Dawnlight's flash for "Creatures with darkvision …" stays its casts'.
+    assert.notEqual(compileActivations(item("Dawnlight (Major)"), { spellEffects })[0].plan?.resolution?.kind, "save");
+});
+
+test("Lacquered Waist Drum: a damage save in brackets as basic; its conditions only for a ghost, notes and not rows", () => {
+    const [life, joy] = compileActivations(item("Lacquered Waist Drum"), { spellEffects }).map((entry) => entry.plan);
+    assert.deepEqual([life.resolution.check.basic, life.resolution.sharedDamage.components[0].formula, life.targeting.range], [true, "5d8[vitality]", "30 feet"]);
+    assert.deepEqual(life.resolution.outcomes.failure.noteEffects.map((note) => note.text), ["Only a creature with the ghost trait: Sickened 1. Apply it by hand."]);
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => [joy.resolution.outcomes[degree].effects.length, joy.resolution.outcomes[degree].noteEffects.map((note) => note.text)]), [[0, ["Only a creature with the ghost trait: Stupefied 1. Apply it by hand."]], [0, ["Only a creature with the ghost trait: Stupefied 2. Apply it by hand."]]]);
+    assert.equal(joy.partial, true);
+});

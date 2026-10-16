@@ -160,3 +160,17 @@ test("Grim Trophy: one Demoralize at up to two creatures, PF2e's at the first an
     assert.match(card.content, /Demoralize against Second \(DC 15\): a critical success/);
     delete foundry.nextOutcome.roll;
 });
+
+test("more of the words for an action: \"You Seek with a +1 item bonus\", \"Roll an Intimidation check to Demoralize\", one check at every undead around", async () => {
+    const { actionCardHTML } = await import("../src/live/action-card.js");
+    const lenses = compileActivations(source("Motion-Seeking Lenses"))[0].plan;
+    assert.deepEqual([lenses.builtin, lenses.action.slug, lenses.action.bonus, lenses.action.targeted], ["item-action", "seek", { value: 1, type: "item" }, false]);
+    const veil = compileActivations(source("Smoke Veil"))[0].plan;
+    assert.deepEqual([veil.action.slug, veil.action.bonus, veil.action.targeted], ["demoralize", null, true]);
+    // Horn of Exorcism: Demoralize at each undead or unholy creature in 30 feet, one roll against each one's Will DC.
+    const horn = compileActivations(source("Horn of Exorcism"))[0].plan;
+    assert.deepEqual([horn.action.slug, horn.action.maxTargets, horn.action.everyone], ["demoralize", 99, "all creatures with the undead or unholy trait within 30 feet"]);
+    assert.match(horn.action.after, /mindless creature/);
+    const html = actionCardHTML({ status: "open", plan: horn, user: { name: "Thief" }, item: { name: "Horn of Exorcism" }, results: [] }, { canApply: true });
+    assert.match(html, /Target all creatures with the undead or unholy trait within 30 feet \(one roll against each one's DC\), then press the button\./);
+});
