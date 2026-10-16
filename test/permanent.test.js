@@ -234,3 +234,11 @@ test("activations the ability compiler left to the GM, read: Heartstone's counte
     assert.deepEqual([blood.allyArea, blood.targeting.area, blood.resolution.outcomes.success.effects[0].amount], [true, { type: "emanation", value: 10 }, 30]);
     assert.deepEqual(blood.item.reduce.map((entry) => [entry.slug, entry.by, entry.who]), ["clumsy", "enfeebled", "frightened", "stupefied"].map((slug) => [slug, 1, "targets"]));
 });
+
+test("a save whose time depends on the degree, in the module's own words: \"becoming Dazzled for 1 round on a failure or 3 rounds on a critical failure\"", async () => {
+    const { withItemData } = await import("../src/compiler/item-data.js");
+    const html = "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><p><strong>Effect</strong> The target must attempt a @Check[will|dc:21] save to shield its eyes, becoming @UUID[Compendium.pf2e.conditionitems.Item.TkIyaNPgTZFBCCuh]{Dazzled} for 1 round on a failure or 3 rounds on a critical failure.</p>";
+    assert.match(withItemData(html, {}), /must succeed at a @Check\[will\|dc:21\] save or be @UUID\[[^\]]+\]\{Dazzled\} for 1 round \(3 rounds on a critical failure\)/);
+    const [entry] = compileActivations({ name: "Test Lens", type: "equipment", system: { slug: null, level: { value: 4 }, traits: { value: ["magical"] }, usage: { value: "held-in-one-hand" }, description: { value: html } } }, { spellEffects });
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => entry.plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.duration.value}`)), [["dazzled 1"], ["dazzled 3"]]);
+});

@@ -49,6 +49,9 @@ export function withItemData(html, item) {
     // (Moved to a space its user picks, Roc-Shaft Arrow's "save or be moved to a space you choose within 10 feet (20 feet on a
     // critical failure)": the core's push that far, the space a note — as Hauling's.)
     text = text.replace(/\b(save) or be moved to a space you choose within (\d+) feet \((\d+) feet on a critical failure\)\./gi, "$1 or be pushed $2 feet ($3 feet on a critical failure). Its attacker picks the space within that distance; move its token there.");
+    // (A save "becoming X for 1 round on a failure or 2 rounds on a critical failure": the reader's "save or be X for 1 round (2 rounds
+    // on a critical failure)".)
+    text = text.replace(/\bmust (?:make|attempt) an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save(?: to [^,.]+)?, becoming ((?:@UUID\[[^\]]+\]\{[^}]+\})|[A-Z][a-z]+(?: \d+)?) for (\d+) (rounds?|minutes?) on a failure or (\d+) (rounds?|minutes?) on a critical failure\b/gi, (whole, check, condition, value, unit, more, moreUnit) => `must succeed at a ${check} save or be ${condition} for ${value} ${unit} (${more} ${moreUnit} on a critical failure)`);
     // (A condition for its user's next turn, Bloodline Robe's "You're Quickened on your next turn": until that turn's end.)
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)
