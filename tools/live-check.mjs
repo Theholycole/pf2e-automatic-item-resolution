@@ -1623,6 +1623,80 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
         await until(() => !user.hasCondition("grabbed") && !user.hasCondition("slowed"), "grabbed and slowed ended");
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Vambrace of Gorum's Blood of Iron: the area card's temporary Hit Points for each creature targeted, and their frightened lowered.
+    async bloodOfIron(scene) {
+        const { actor: bearer, token: bearerToken } = await creature(scene, "Iron Bearer", { type: "character", x: 14, y: 18 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Iron Ally", { x: 15, y: 18 });
+        await ally.increaseCondition("frightened");
+        await ally.increaseCondition("frightened");
+        const vambrace = await give(bearer, "Vambrace of Gorum");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(vambrace.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the vambrace's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [bearerToken.uuid, allyToken.uuid] });
+        await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
+        await until(() => (ally.getCondition("frightened")?.value ?? 0) === 1, "frightened 2 → 1");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Roc-Shaft Arrow (ammunition only in its words): its user's next ranged Strike carries its save — on a hit, the ability module's
+    // Fortitude save card at DC 19.
+    async rocShaftArrow(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Roc Archer", { type: "character", x: 2, y: 19 });
+        const { token: foeToken } = await creature(scene, "Roc Target", { x: 4, y: 19, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Arrows");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        const arrow = await give(archer, "Roc-Shaft Arrow (Lesser)");
+        let since = Date.now();
+        await arrow.consume();
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(archer, bow);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && check.against.value === 19, `Fortitude DC 19 (${JSON.stringify(check)})`);
+        return { check };
+    },
+
+    // Atrophy Bomb (Lesser): its damage sentence's rider — Enfeebled 1 on the creature hit.
+    async atrophyBomb(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Atrophy Bomber", { type: "character", x: 6, y: 19 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Atrophy Target", { x: 8, y: 19, ac: 1, alliance: "opposition" });
+        const bomb = await give(thrower, "Atrophy Bomb (Lesser)");
+        await bomb.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await throwerToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(thrower, bomb);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const since = Date.now();
+        await action.damage({ event: shift() });
+        const card = await messageAfter(since, itemCard("bomb"));
+        await game.modules.get(NS).api.live.apply(card.id, { included: [] });
+        await until(() => (foe.getCondition("enfeebled")?.value ?? 0) === 1, "enfeebled 1 on the target");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Moonlit Spellgun (Lesser): its damage treated as silver — the attack card's damage formula carries the material.
+    async moonlitSilver(scene) {
+        const { actor: gunner } = await creature(scene, "Moonlit Gunner", { type: "character", x: 10, y: 19 });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const gun = await give(gunner, "Moonlit Spellgun (Lesser)");
+        const since = Date.now();
+        await gun.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the spellgun's card" });
+        const choices = card.getFlag(NS, "card").plan.damageChoices.map((choice) => choice.formula);
+        assert(choices.every((formula) => /\[fire,silver\]$/.test(formula)), `silver in its damage (${JSON.stringify(choices)})`);
+        return { choices };
     }
 };
 
