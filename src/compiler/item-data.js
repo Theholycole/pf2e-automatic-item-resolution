@@ -40,6 +40,17 @@ export function withItemData(html, item) {
     // (A save link without the word: Life's Last Breath's "The target must succeed at a @Check[fortitude|dc:38] or take 4d6 void
     // damage" — the target's, not a passive one's: Dawnlight's "Creatures with darkvision … must succeed at a @Check[…] or be …".)
     text = text.replace(/(\b[Tt]he target must succeed at an? @Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) or (be|become|take)\b/gi, "$1 save or $2");
+    // (A save "or be" made rather than succeeded at, its worse time "(or … on critical failure)": Golden Gloves' "All enemies within a
+    // 40-feet emanation must make a @Check[fortitude|dc:41] save or be Dazzled for 1 minute (or Blinded for 1 minute on critical
+    // failure)" — as the reader takes it.)
+    text = text.replace(/\b(\d+)-feet (emanation|burst|cone|line|radius)\b/g, "$1-foot $2");
+    // (An area in words before the save its creatures attempt, as PF2e's own text links it: "All enemies within a 40-foot emanation
+    // must … save" — the reader takes the area from the link.)
+    text = text.replace(/\b(in|within) an? (\d+)-foot (emanation|burst|cone|line)\b(?= (?:must|attempts?)\b[^.]*?@Check\[(?:fortitude|reflex|will)\b)/g, (whole, word, feet, shape) => `${word} a @Template[type:${shape}|distance:${feet}]{${feet}-foot ${shape}}`);
+    text = text.replace(/\bmust make an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or (be|become)\b((?:@UUID\[[^\]]*\]\{[^}]*\}|[^.(@])*)\((?:or )?([^)]*?) on (?:a )?critical failure\)/g, (whole, check, verb, first, worse) => `must succeed at a ${check} save or ${verb}${first}(${worse} on a critical failure)`);
+    // (A degree row's damage by its type, Blast Lance's "The target takes half the fire damage", "takes the full fire damage": the
+    // reader's "half damage", "full damage".)
+    text = text.replace(/(<strong>\s*(?:Success|Failure)\s*<\/strong>\s*The (?:target|creature|foe) takes) (half|the full) (?:the )?(?:acid|cold|electricity|fire|force|sonic|bludgeoning|piercing|slashing|poison|mental|spirit|vitality|void) damage\b/gi, (whole, start, amount) => `${start} ${/half/i.test(amount) ? "half" : "full"} damage`);
     // (A frightful presence by name, Dragonscale Amulet's "an aura that terrifies all foes in a 60-foot radius, as the frightful
     // presence ability with a @Check[will|dc:34] save": that ability's rows.)
     text = text.replace(/\bYou exude an aura that terrifies all foes in a (\d+)-foot radius, as the frightful presence ability with a (@Check\[will\|[^\]]*\])(?:\{[^}]*\})? save\.\s*<\/p>/i, (whole, feet, check) => `Each foe in a @Template[type:emanation|distance:${feet}] must attempt a ${check} save. A creature that succeeds is temporarily immune for 1 minute.</p><p><strong>Critical Success</strong> The creature is unaffected.</p><p><strong>Success</strong> The creature is ${FRIGHTENED}{Frightened 1}.</p><p><strong>Failure</strong> The creature is ${FRIGHTENED}{Frightened 2}.</p><p><strong>Critical Failure</strong> The creature is ${FRIGHTENED}{Frightened 4}.</p>`);
@@ -52,6 +63,10 @@ export function withItemData(html, item) {
     // (A save "becoming X for 1 round on a failure or 2 rounds on a critical failure": the reader's "save or be X for 1 round (2 rounds
     // on a critical failure)".)
     text = text.replace(/\bmust (?:make|attempt) an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save(?: to [^,.]+)?, becoming ((?:@UUID\[[^\]]+\]\{[^}]+\})|[A-Z][a-z]+(?: \d+)?) for (\d+) (rounds?|minutes?) on a failure or (\d+) (rounds?|minutes?) on a critical failure\b/gi, (whole, check, condition, value, unit, more, moreUnit) => `must succeed at a ${check} save or be ${condition} for ${value} ${unit} (${more} ${moreUnit} on a critical failure)`);
+    // (Its failure rows in one sentence, Stony Hag Eye's "save. On a failure, it's Slowed 1 for 1 minute; on a critical failure, if
+    // the creature is already slowed, it's permanently petrified": degree rows, the critical failure's the failure's and the rest
+    // its note.)
+    text = text.replace(/(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save\.)\s*On a failure, it's (@UUID\[[^\]]+\]\{[^}]+\}) for (\d+ (?:rounds?|minutes?)); on a critical failure, (if [^,.]+), it's ([^.]+)\.\s*/g, (whole, check, link, time, condition, worse) => `${check}</p><p><strong>Failure</strong> The target is ${link} for ${time}.</p><p><strong>Critical Failure</strong> The target is ${link} for ${time}. ${condition.charAt(0).toUpperCase()}${condition.slice(1)}, it's ${worse}.</p><p>`);
     // (A condition for its user's next turn, Bloodline Robe's "You're Quickened on your next turn": until that turn's end.)
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)
@@ -72,6 +87,9 @@ export function withItemData(html, item) {
     // … save or be Sickened 2".)
     // (Its "and it can't reduce its sickened condition until …" as the reader takes it: "its sickened value can't be reduced below 2 …".)
     text = text.replace(/\b(?:When you activate [^,.<]+, )?[Tt]he (?:creature you damaged|creature you hit|target) must succeed at an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save or its (\w+) condition increases to (@UUID\[[^\]]*\]\{[^}]*?(\d+)\})(?:, and it can't reduce its \w+ condition( until [^.]+)?)?/g, (whole, check, slug, link, value, until) => `The target must succeed at a ${check} save or be ${link}${until !== undefined || /can't reduce/.test(whole) ? `, and its ${slug} value can't be reduced below ${value}${until ?? ""}` : ""}`);
+    // (A save link with no DC in an activation its user's spell triggers, Maw of Hungry Shadows' "Your last action was to cast a
+    // spell prepared from this grimoire …, who must attempt a @Check[fortitude] save": its user's spell DC.)
+    if (/\bYour last action was to cast a spell\b/i.test(text)) text = text.replace(/@Check\[(fortitude|reflex|will)\]/gi, "@Check[$1|against:spell]");
     // (A save against the owner's own DC: its stand-in.)
     text = text.replace(/@Check\[((?:type:)?(?:fortitude|reflex|will))\|([^\]]*?)\bagainst:(class-spell|class|spell)\b/gi, (whole, statistic, before, kind) => `@Check[${statistic}|${before}dc:${STAND_IN[kind.toLowerCase()]}`);
     if (!/@item\./.test(text) && !/\bpotency rune\b/i.test(text) && !DAMAGE_SAVE.test(text)) return text;
@@ -181,8 +199,11 @@ export function byOwnerLevel(html, level) {
 const ABILITY_NAMES = { str: "Strength", dex: "Dexterity", con: "Constitution", int: "Intelligence", wis: "Wisdom", cha: "Charisma" };
 export function withOwnerNumbers(html, item) {
     let text = String(html ?? "");
-    if (!/@actor\./.test(text)) return text;
     const level = Number(item?.ownerLevel);
+    // (Healing for its owner's level in words, The Rakshasa's "You regain Hit Points equal to twice your level".)
+    const known = Number.isFinite(level) && item?.ownerLevel !== null && item?.ownerLevel !== undefined;
+    if (known) text = text.replace(/\b(You regain) Hit Points equal to (twice |three times )?your level\b/g, (whole, regain, times) => `${regain} ${level * ({ "twice ": 2, "three times ": 3 }[times ?? ""] ?? 1)} Hit Points`);
+    if (!/@actor\./.test(text)) return text;
     const abilities = item?.ownerAbilities ?? null;
     let used = [];
     text = text.replace(/@actor\.level\b/g, (whole) => (Number.isFinite(level) && item?.ownerLevel !== null && item?.ownerLevel !== undefined ? String(level) : whole));

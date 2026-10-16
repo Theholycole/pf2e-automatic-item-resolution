@@ -21,6 +21,7 @@ import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
+import { withDegreeEffects } from "./degree-effects.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
@@ -141,9 +142,10 @@ function compileEach(item, options = {}) {
         if (!plan) {
             try {
                 read = compileAbility(asActivationAbility(item, activation), options);
-                // (Nothing read: once more without its Trigger line, src/compiler/index.js.)
+                // (Nothing read: once more without its Trigger and Requirements lines, src/compiler/index.js: Catoblepas Maul's "Your
+                // last action was a successful Strike".)
                 // (Only a resolution it reads that way, not a builtin: a spell its trigger names isn't cast.)
-                const triggerless = String(activation.html).replace(/<p>\s*<strong>\s*Trigger\s*<\/strong>[\s\S]*?<\/p>/i, "");
+                const triggerless = String(activation.html).replace(/<p>\s*<strong>\s*(?:Trigger|Requirements?)\s*<\/strong>[\s\S]*?<\/p>/gi, "");
                 if (!read || read.builtin === "no-effect") {
                     const retry = compileAbility(asActivationAbility(item, { ...activation, html: triggerless }), options);
                     if (retry && !retry.builtin) read = retry;
@@ -191,6 +193,8 @@ function compileEach(item, options = {}) {
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)
         // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
         plan = guardValues(directDamageOver(guardText(plan, plainText(activation.html)), directDamagePlan(plainText(activation.html), base, { item })));
+        // (A row's own linked Effect, src/compiler/degree-effects.js: Cape of Justice's Enact Justice failure.)
+        plan = withDegreeEffects(plan, activation.html, options.itemEffects);
         // (Damage a successful save negates, src/compiler/direct-damage.js: Mycoweave Shield's spores.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = negatingSavePlan(plainText(activation.html), base) ?? plan;
         // (Damage of the energy its maker chose, the card's picker: Energy-Absorbing runes.)

@@ -83,8 +83,9 @@ const UNTIL_NEXT_TURN = /\buntil the (?:end|start|beginning) of your next turn\b
 function selfConditions(sentences, used = new Set()) {
     const effects = [];
     const names = CONDITIONS.join("|");
-    // (And "You Stride and turn partially invisible, becoming Concealed …": the sentence's own "you".)
-    const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b|\bYou\b[^.]*?,\s*becoming (${names})(?: (\d+))?\b`, "gi");
+    // (And "You Stride and turn partially invisible, becoming Concealed …": the sentence's own "you"; Propulsive Boots' "You
+    // stomp three times and gain the Quickened condition for 1 minute".)
+    const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b|\bYou\b[^.]*?,\s*becoming (${names})(?: (\d+))?\b|\b(?:you|You\b[^.,]*? and) gain the (${names})(?: (\d+))? condition\b`, "gi");
     for (const [index, sentence] of sentences.entries()) {
         if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against|next time)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow|activat)\w*\b[^,]*,/i, ""))) continue;
         // ("until you Dismiss the Activation": until it's removed.)
@@ -97,8 +98,8 @@ function selfConditions(sentences, used = new Set()) {
         for (const match of sentence.matchAll(pattern)) {
             // (The "becoming" form only after a capital "You": the sentence's subject.)
             if (match[5] && !match[0].startsWith("You")) continue;
-            const slug = (match[1] ?? match[3] ?? match[5]).toLowerCase();
-            const value = match[2] ?? match[4] ?? match[6];
+            const slug = (match[1] ?? match[3] ?? match[5] ?? match[7]).toLowerCase();
+            const value = match[2] ?? match[4] ?? match[6] ?? match[8];
             if (effects.some((effect) => effect.slug === slug)) continue;
             // (Only to some: "invisible to scrying magic", "Invisible to creatures with the fiend … trait" — not the condition.)
             if (/^\s*(?:to|from|against)\b/i.test(sentence.slice(match.index + match[0].length))) continue;

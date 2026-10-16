@@ -173,6 +173,11 @@ test("more of the words for an action: \"You Seek with a +1 item bonus\", \"Roll
     assert.match(horn.action.after, /mindless creature/);
     const html = actionCardHTML({ status: "open", plan: horn, user: { name: "Thief" }, item: { name: "Horn of Exorcism" }, results: [] }, { canApply: true });
     assert.match(html, /Target all creatures with the undead or unholy trait within 30 feet \(one roll against each one's DC\), then press the button\./);
+    // Lion's Armor: Demoralize at each enemy within 30 feet, Fleeing for 1 round added to its critical success.
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    const lion = compileActivations(source("Lion's Armor"), { basicActions })[0].plan;
+    assert.deepEqual([lion.action.slug, lion.action.maxTargets, lion.action.everyone, lion.action.after], ["demoralize", 99, "each enemy within 30 feet", undefined]);
+    assert.deepEqual(["criticalSuccess", "success"].map((degree) => lion.action.basic.resolution.outcomes[degree].effects.map((effect) => effect.slug)), [["frightened", "fleeing"], ["frightened"]]);
 });
 
 test("its owner's numbers in its text: Wolf Fang's Strength damage; Bracers of Strength's Grapple, then its crush (double on a critical success)", async () => {

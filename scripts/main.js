@@ -5,6 +5,7 @@
 
 import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
+import { equipmentEffectIndex } from "../src/compiler/degree-effects.js";
 import { etchedRuneActivations, runeIndex } from "../src/compiler/runes.js";
 import { etchedCritRiders } from "../src/compiler/rune-strikes.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
@@ -23,6 +24,9 @@ const basicActions = () => game.modules.get(ABILITY_ID)?.api?.basicActions ?? {}
 let spellEffects = {};
 // PF2e's spells by name (a cast in words: "The armor casts mislead"), from its spells pack's index.
 let spells = {};
+// PF2e's equipment Effects' durations by uuid (a degree row's own Effect, src/compiler/degree-effects.js), from its
+// equipment-effects pack's index.
+let itemEffects = {};
 // PF2e's rune items by the key a weapon or armor keeps ("vorpal", "greaterExtending"), for the activations of etched runes
 // (src/compiler/runes.js).
 let runes = new Map();
@@ -33,7 +37,7 @@ const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObj
 
 // The spell module's claims (its api, when it's active): an item it acts on is left to it.
 const claims = (item) => game.modules.get(SPELL_ID)?.active ? game.modules.get(SPELL_ID)?.api?.claims?.(item) === true : false;
-const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims });
+const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims, itemEffects });
 
 const compile = (item) => compileItem(dataOf(item), options());
 const handles = (item) => handlesItem(dataOf(item), { claims });
@@ -49,6 +53,12 @@ Hooks.once("ready", async () => {
         spellEffects = pack ? spellEffectIndex([...(await pack.getIndex())]) : {};
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spell Effects couldn't be indexed.`, error);
+    }
+    try {
+        const pack = game.packs.get("pf2e.equipment-effects");
+        itemEffects = pack ? equipmentEffectIndex([...(await pack.getIndex({ fields: ["system.duration"] }))].map((entry) => ({ ...entry, uuid: entry.uuid ?? `Compendium.pf2e.equipment-effects.Item.${entry._id}` }))) : {};
+    } catch (error) {
+        console.warn(`${MODULE_ID} | PF2e's equipment Effects couldn't be indexed.`, error);
     }
     try {
         const pack = game.packs.get("pf2e.spells-srd");

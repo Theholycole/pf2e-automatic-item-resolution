@@ -118,13 +118,20 @@ export function readItemAction(html, item = null) {
         if (slug) return { slug, name, bonus: null, targeted: true, maxTargets: { two: 2, three: 3, four: 4 }[several[2].toLowerCase()] ?? Number(several[2]) };
     }
     // (Or at every creature of a kind in an area: Horn of Exorcism's "Make an Intimidation check to Demoralize against all creatures
-    // with the undead or unholy trait in a 30-foot emanation" — as many as are targeted.)
+    // with the undead or unholy trait in a 30-foot emanation" — as many as are targeted; Lion's Armor's "Attempt a check to
+    // Demoralize each enemy within 30 feet of you. On a critical success, the target is also Fleeing for 1 round", that
+    // condition added to the action's row.)
     const everyone = new RegExp(String.raw`\b[Mm]ake an? \w+ check to (${NAMES}) against all (creatures?\b[^.]*?|enemies|foes) in an? (\d+)-foot (?:emanation|burst)\b`, "i").exec(text);
-    if (everyone) {
-        const name = everyone[1].replace(/\s+/g, " ");
+    const each = everyone ? null : new RegExp(String.raw`\b[Aa]ttempt an? (?:\w+ )?check to (${NAMES}) each (enemy|foe|creature) within (\d+) feet of you\b`, "i").exec(text);
+    const area = everyone ?? each;
+    if (area) {
+        const name = area[1].replace(/\s+/g, " ");
         const slug = ACTION_SLUGS[name.toLowerCase()];
-        const after = text.slice(everyone.index).split(/(?<=[.!?])\s+(?=[A-Z])/).slice(1, 3).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line)).join(" ").trim();
-        if (slug) return { slug, name, bonus: null, targeted: true, maxTargets: 99, everyone: `all ${everyone[2]} within ${everyone[3]} feet`, ...(after ? { after } : {}) };
+        const lines = text.slice(area.index).split(/(?<=[.!?])\s+(?=[A-Z])/).slice(1, 3).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line));
+        const riders = lines.map(degreeRider).filter(Boolean);
+        const after = lines.filter((line) => !degreeRider(line)).join(" ").trim();
+        const who = everyone ? `all ${area[2]}` : `each ${area[2]}`;
+        if (slug) return { slug, name, bonus: null, targeted: true, maxTargets: 99, everyone: `${who} within ${area[3]} feet`, ...(riders.length ? { riders } : {}), ...(after ? { after } : {}) };
     }
     let match = null;
     let index = -1;
@@ -167,6 +174,29 @@ function degreeDamage(html, base) {
     return { success: plan(amount), criticalSuccess: plan(CRITICAL_DOUBLE.test(String(html)) ? amount * 2 : amount) };
 }
 
+// A condition the action's degree adds to its row: "On a critical success, the target is also Fleeing for 1 round" →
+// { degree, effect } or null.
+const RIDER_CONDITIONS = "blinded|clumsy|confused|dazzled|deafened|enfeebled|fascinated|fatigued|fleeing|frightened|immobilized|off-guard|prone|sickened|slowed|stunned|stupefied";
+const DEGREE_WORDS = { "critical success": "criticalSuccess", success: "success" };
+const UNIT_WORDS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes" };
+function degreeRider(line) {
+    const match = new RegExp(String.raw`^On an? (critical success|success), the (?:target|creature) is also (${RIDER_CONDITIONS})(?: (\d+))? for (\d+|one|an?) (rounds?|minutes?)\.$`, "i").exec(String(line ?? "").trim());
+    if (!match) return null;
+    const count = /^\d+$/.test(match[4]) ? Number(match[4]) : 1;
+    return { degree: DEGREE_WORDS[match[1].toLowerCase()], effect: { kind: "condition", slug: match[2].toLowerCase(), value: match[3] ? Number(match[3]) : null, duration: { mode: "fixed", value: count, unit: UNIT_WORDS[match[5].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } } };
+}
+
+// The action's compiled row with the item's own riders added for their degrees.
+function withRiders(basic, riders = []) {
+    if (!basic || !riders.length) return basic;
+    const outcomes = { ...basic.resolution.outcomes };
+    for (const { degree, effect } of riders) {
+        const row = outcomes[degree] ?? { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] };
+        outcomes[degree] = { ...row, effects: [...(row.effects ?? []).filter((existing) => existing.slug !== effect.slug), effect] };
+    }
+    return { ...basic, resolution: { ...basic.resolution, outcomes } };
+}
+
 // options.basicActions: the ability module's compiled actions — their rows for the degree, applied after PF2e's roll.
 export function itemActionPlan(html, base, options = {}) {
     const read = readItemAction(html, options.item ?? null);
@@ -179,7 +209,7 @@ export function itemActionPlan(html, base, options = {}) {
     };
     // (One of several: each one's rows, by slug.)
     const basics = action.slugs ? Object.fromEntries(action.slugs.map((slug) => [slug, compiled(slug)])) : null;
-    return { ...base, builtin: "item-action", automation: { level: "automatic" }, targeting: { target: action.targeted ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, action: { ...action, basic: compiled(action.slug), ...(basics ? { basics } : {}) } };
+    return { ...base, builtin: "item-action", automation: { level: "automatic" }, targeting: { target: action.targeted ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, action: { ...action, basic: withRiders(compiled(action.slug), action.riders), ...(basics ? { basics } : {}) } };
 }
 
 // The plan to keep: the action over nothing, a note alone or the GM's fallback.

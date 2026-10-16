@@ -6,29 +6,29 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 712,
+   "resolves": 714,
    "builtin:cast-spell": 469,
    "none": 714,
-   "partial": 99,
+   "partial": 103,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 37,
-   "note-only": 261,
+   "note-only": 253,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 31,
    "builtin:zone": 9,
-   "builtin:item-action": 17,
+   "builtin:item-action": 19,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
    "builtin:spellstrike": 9,
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 376,
+   "save": 380,
    "cast": 469,
-   "item": 602,
+   "item": 596,
    "none": 901,
    "focus": 45,
    "fortune": 47,
@@ -37,7 +37,7 @@
    "counteract": 4,
    "toggle": 31,
    "zone": 9,
-   "action": 17,
+   "action": 19,
    "spellstrike": 9,
    "later": 4
   },
@@ -48,14 +48,14 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 430,
+    "resolves": 431,
     "builtin:cast-spell": 340,
     "none": 478,
-    "partial": 45,
+    "partial": 49,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
     "builtin:readied-bonus": 30,
-    "note-only": 167,
+    "note-only": 162,
     "builtin:reroll": 17,
     "builtin:zone": 6,
     "builtin:modes": 15,
@@ -68,10 +68,10 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 149,
+    "resolves": 150,
     "none": 116,
     "partial": 29,
-    "note-only": 37,
+    "note-only": 36,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 12,
@@ -108,13 +108,14 @@
    "activations": 164,
    "results": {
     "builtin:cast-spell": 34,
-    "note-only": 21,
+    "note-only": 19,
     "resolves": 57,
     "builtin:counteract": 1,
     "none": 29,
     "builtin:no-effect": 5,
     "builtin:reroll": 3,
     "partial": 5,
+    "builtin:item-action": 2,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
     "builtin:readied-bonus": 1,
@@ -5968,7 +5969,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
@@ -6400,9 +6401,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Armory Bracelet (Lesser)",
@@ -6588,9 +6589,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Occult Scroll Case of Simplicity",
@@ -7413,9 +7414,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Deck of Harrowed Tales",
@@ -10882,9 +10883,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Presentable (Greater)",
@@ -15304,7 +15305,7 @@
    "time": "free",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
@@ -16438,7 +16439,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -16592,9 +16593,9 @@
    "time": "2",
    "frequency": "once per round",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Resonating Crystal Boots",
@@ -18789,9 +18790,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Ventriloquist's Ring (Greater)",

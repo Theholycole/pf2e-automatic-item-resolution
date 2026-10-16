@@ -18,6 +18,7 @@ import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
+import { withDegreeEffects } from "./degree-effects.js";
 import { castWordsPlan, fillCast } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
@@ -169,7 +170,8 @@ function compileOne(given, options = {}) {
     // (Who and how far, for the simulator: "up to 5 creatures" within "30 feet".)
     const targeting = recipient === "targets" ? { ...(rest.targeting ?? {}), ...othersTargeting(plainText(item?.system?.description?.value)) } : rest.targeting;
     // (Damage treated as silver: that material in its formulas, src/compiler/materials.js.)
-    return damageMaterial(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), plainText(item?.system?.description?.value));
+    // (A row's own linked Effect, src/compiler/degree-effects.js: Crackling Bubble Gum's failure.)
+    return withDegreeEffects(damageMaterial(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), plainText(item?.system?.description?.value)), item?.system?.description?.value, options.itemEffects);
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success

@@ -242,3 +242,44 @@ test("a save whose time depends on the degree, in the module's own words: \"beco
     const [entry] = compileActivations({ name: "Test Lens", type: "equipment", system: { slug: null, level: { value: 4 }, traits: { value: ["magical"] }, usage: { value: "held-in-one-hand" }, description: { value: html } } }, { spellEffects });
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => entry.plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.duration.value}`)), [["dazzled 1"], ["dazzled 3"]]);
 });
+
+test("activations read once their words are put as the readers take them: Catoblepas Maul, Propulsive Boots, Stony Hag Eye, Golden Gloves, The Rakshasa, Maw of Hungry Shadows", () => {
+    const at = (name, index = 0, extra = {}) => compileActivations({ ...item(name), ...extra }, { spellEffects })[index].plan;
+    // Its Requirements line set aside, as a Trigger line is: the Fortitude save, Sickened 1 (and Slowed 1 on a critical failure).
+    const maul = at("Catoblepas Maul");
+    assert.deepEqual([maul.resolution.kind, maul.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["save", ["sickened", "slowed"]]);
+    // "You stomp three times and gain the Quickened condition for 1 minute".
+    const boots = at("Propulsive Boots");
+    assert.deepEqual(boots.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.unit]), [["quickened", 1, "minutes"]]);
+    // "On a failure, it's Slowed 1 for 1 minute; on a critical failure, if the creature is already slowed, it's permanently petrified".
+    const eye = at("Stony Hag Eye");
+    assert.deepEqual(eye.resolution.outcomes.failure.effects.map((effect) => effect.slug), ["slowed"]);
+    assert.deepEqual(eye.resolution.outcomes.criticalFailure.effects[0].escalate, { if: "slowed", slug: "petrified", value: null, duration: null });
+    // "All enemies within a 40-feet emanation must make a … save or be Dazzled for 1 minute (or Blinded … on critical failure)".
+    const gloves = at("Golden Gloves");
+    assert.deepEqual([gloves.targeting.area, gloves.resolution.outcomes.failure.effects[0].slug, gloves.resolution.outcomes.criticalFailure.effects[0].slug], [{ type: "emanation", value: 40 }, "dazzled", "blinded"]);
+    assert.equal(gloves.notes.length, 2, "the unholy penalty and the counteract on its user: the GM's");
+    // "You regain Hit Points equal to twice your level": its owner's level.
+    assert.equal(compileActivations(item("The Rakshasa"), { spellEffects })[0].plan?.resolution?.outcomes?.success?.effects?.some((effect) => effect.kind === "heal") ?? false, false);
+    assert.equal(at("The Rakshasa", 0, { ownerLevel: 12 }).resolution.outcomes.success.effects.find((effect) => effect.kind === "heal").amount, 24);
+    // A save link with no DC after its user's spell: the spell DC; drained without the time of the blinded beside it.
+    const maw = at("Maw of Hungry Shadows");
+    assert.deepEqual(maw.resolution.check.against, { dc: "owner", statistic: "spell" });
+    assert.deepEqual(maw.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration?.unit ?? null]), [["blinded", "rounds"], ["drained", null]]);
+});
+
+test("a row's damage by its type, drained without the time beside it, a degree's own Effect: Blast Lance, Gloaming Arc, Cape of Justice, Crackling Bubble Gum", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { equipmentEffectIndex } = await import("../src/compiler/degree-effects.js");
+    const itemEffects = equipmentEffectIndex(readDocuments(path.join(PACKS, "equipment-effects")).filter((doc) => doc.collection === "items"));
+    const lance = compileActivations(item("Blast Lance"), { spellEffects })[0].plan;
+    assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => lance.resolution.outcomes[degree].damage.multiplier), [0.5, 1, 2]);
+    const arc = compileActivations(item("Gloaming Arc"), { spellEffects })[0].plan;
+    assert.deepEqual(arc.strike.save.resolution.outcomes.failure.effects.map((effect) => [effect.slug, effect.duration?.unit ?? null]), [["enfeebled", "minutes"], ["drained", null]]);
+    // Enact Justice's Effect lasts until it's removed, the row 1 minute: left to the GM. Bubble gum's lasts the row's 1 minute.
+    const cape = compileActivations(item("Cape of Justice"), { spellEffects, itemEffects })[1].plan;
+    assert.equal(cape.resolution.outcomes.failure.nativeEffects, undefined);
+    const gum = compileItem(item("Crackling Bubble Gum (Lesser)"), { spellEffects, itemEffects });
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => gum.resolution.outcomes[degree].nativeEffects?.[0]?.label), ["Effect: Crackling Bubble Gum (Failure)", "Effect: Crackling Bubble Gum (Failure)"]);
+    assert.equal(compileItem(item("Crackling Bubble Gum (Lesser)"), { spellEffects }).resolution.outcomes.failure.nativeEffects, undefined, "no durations known: only an Effect whose row has no time");
+});
