@@ -61,7 +61,8 @@ The module's compendium, **PF2e Automatic Item Resolution**, has two items that 
 - **Generic Spellgun:** pick a spell (type its name, or drop one onto the picker) and a rank, from the spell's own rank to 10. It becomes that spell's spellgun, such as "Fireball Spellgun (Rank 5)", at a scroll's level and price for that rank. It works like PF2e's spellguns: pick your spell attack or firearm attack on the card, target one creature within its 30-foot range increment, and the ability module's card rolls the attack against its AC.
   - A hit affects the target as if it had failed its save against the spell, and a critical hit as if it had critically failed. Fear's hit leaves it frightened 2; Fear's critical hit, frightened 3 and fleeing.
   - For a spell that makes a spell attack (Ray of Frost), the spell's own hit and critical hit apply.
-  - A spell with damage and neither of those (Force Barrage) deals its damage on a hit and double on a critical hit; the rest of it is the GM's.
+  - A spellgun's Activate is 2 actions, so the spell is cast as with 2 actions: Disorienting Flash's 2d10, Heal's 30-foot version, and Force Barrage's 2 shards (4 at rank 3), all at the target with their damage combined.
+  - A spell with damage and neither a save nor an attack deals its damage on a hit and double on a critical hit; the rest of it is the GM's. A healing spell's healing isn't damage, so those aren't offered.
   - The spell is heightened to the rank picked, and an area spell affects only the one target. A spell a hit can't carry, such as Banishment, isn't loaded: pick another.
   - Used before a spell is loaded, it comes back to the inventory, and nothing happens.
 - **Gun Staff:** pick a two-handed firearm (Arquebus, Flintlock Musket, Blunderbuss…) and a staff. It becomes one item like PF2e's Musket Staff of Force, for example "Arquebus Staff of Fire":

@@ -61,14 +61,32 @@ test("a save spell: a hit is the target's failed save, a critical hit its critic
 test("a spell attack spell keeps its own rows; a spell with damage alone deals it; one a hit can't carry isn't loaded", () => {
     const ray = gunFor("Ray of Frost", 3);
     assert.deepEqual([ray.spellgun.mapping, ray.resolution.sharedDamage.components[0].formula, ray.resolution.outcomes.criticalSuccess.modifiers.length], ["attack", "4d4", 1]);
-    // Force Barrage: its data's damage on a hit, double on a critical hit, the rest a note.
-    const barrage = gunFor("Force Barrage", 1);
-    assert.deepEqual([barrage.spellgun.mapping, barrage.resolution.sharedDamage.components[0].formula, barrage.resolution.outcomes.criticalSuccess.damage.multiplier, barrage.partial], ["damage", "1d4+1", 2, true]);
-    assert.match(barrage.notes[0], /The rest of Force Barrage/);
+    // Black Tentacles: its data's damage on a hit, double on a critical hit, the rest a note.
+    const tentacles = gunFor("Black Tentacles", 5);
+    assert.deepEqual([tentacles.spellgun.mapping, tentacles.resolution.outcomes.criticalSuccess.damage.multiplier, tentacles.partial], ["damage", 2, true]);
+    assert.match(tentacles.notes[0], /The rest of Black Tentacles/);
     // Banishment's failure sends the target away, which no row holds, and it has no damage.
     assert.equal(gunFor("Banishment", 5), null);
-    // The picker offers spells with a save, damage or the attack trait, not rituals.
-    assert.deepEqual([pickable({ type: "spell", system: spell("Fear").system }), pickable({ type: "spell", system: spell("Shield").system }), pickable({ type: "spell", system: { ...spell("Fireball").system, ritual: {} } })], [true, false, false]);
+    // The picker offers spells with a save, damage or the attack trait, not rituals or a healing spell's healing.
+    assert.deepEqual([pickable({ type: "spell", system: spell("Fear").system }), pickable({ type: "spell", system: spell("Shield").system }), pickable({ type: "spell", system: { ...spell("Fireball").system, ritual: {} } }), pickable({ type: "spell", system: spell("Healing Well").system })], [true, false, false, false]);
+    assert.equal(gunFor("Healing Well", 1), null);
+});
+
+test("the spell as cast with 2 actions, a spellgun's Activate (the simulator session's finding)", () => {
+    // Force Barrage: 2 shards, one more each per action every 2 ranks, all at the target, combined.
+    const barrage = gunFor("Force Barrage", 1);
+    assert.deepEqual([barrage.spellgun.mapping, barrage.spellgun.missiles, barrage.resolution.sharedDamage.components[0].formula, barrage.resolution.outcomes.criticalSuccess.damage.multiplier, barrage.notes], ["damage", 2, "2d4+2", 2, undefined]);
+    assert.deepEqual([gunFor("Force Barrage", 3).resolution.sharedDamage.components[0].formula, gunFor("Force Barrage", 5).resolution.sharedDamage.components[0].formula], ["4d4+4", "6d4+6"]);
+    assert.match(descriptionFor(spell("Force Barrage"), 3, gunFor("Force Barrage", 3)), /as cast with 2 actions: all 4 of its shards hit the target/);
+    // Disorienting Flash: its 2-action version's 2d10 (not the 1-action 1d10), heightened.
+    assert.deepEqual([gunFor("Disorienting Flash", 2).resolution.sharedDamage.components[0].formula, gunFor("Disorienting Flash", 4).resolution.sharedDamage.components[0].formula], ["2d10", "4d10"]);
+    // Blazing Bolt: a ray only in its action versions, a spell attack: 4d6 with 2 actions at rank 2.
+    const bolt = gunFor("Blazing Bolt", 2);
+    assert.deepEqual([bolt.spellgun.mapping, bolt.resolution.sharedDamage.components[0].formula, bolt.resolution.outcomes.criticalSuccess.damage.multiplier], ["attack", "4d6", 2]);
+    // (What the core would apply again isn't kept: the action versions, the native damage.)
+    assert.deepEqual([bolt.resolution.native?.byActions, bolt.resolution.native?.sharedDamage, bolt.resolution.native?.outcomes], [undefined, undefined, undefined]);
+    const rolled = resolveSaveSync(gunFor("Disorienting Flash", 2), { caster: { id: "c" }, targets: [{ id: "t" }], id: (creature) => creature.id, statistic: () => ({ modifier: 0, dc: 20 }) }, { roll: () => ({ degree: "success", total: 25, natural: 12 }), damage: (instance) => instance.dice.reduce((sum, term) => sum + term.count, 0), choose: () => undefined });
+    assert.equal(rolled.changes.find((change) => change.op === "damage").instances[0].amount, 2, "two d10s rolled");
 });
 
 test("the loaded item: its name, level, price, description and plan; compileItem returns the plan, none before", () => {
