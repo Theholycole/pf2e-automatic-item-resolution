@@ -30,7 +30,7 @@ export function runeCritRiders(rune) {
     const passive = String(rune?.system?.description?.value ?? "").split(/<strong>\s*Activat/i)[0];
     const sentences = plain(passive).split(/(?<=[.!?])\s+(?=[A-Z@])/);
     const riders = [];
-    sentences.forEach((sentence, at) => {
+    sentences.forEach((sentence) => {
         let only = null;
         let text = null;
         const already = ALREADY.exec(sentence);
@@ -47,8 +47,10 @@ export function runeCritRiders(rune) {
             }
         }
         if (!text) return;
-        // (Its degree rows, when it has them: "… with the following effects. Critical Success …".)
-        if (/\bwith the following effects\.?$/i.test(text)) text = [text, ...sentences.slice(at + 1)].join(" ");
+        // (Its degree rows, when it has them: "… with the following effects." and then each row's paragraph, read as the html is,
+        // the creature it names the target: Greater Giant-Killing's "The giant is Enfeebled 2 for the next minute".)
+        const rowsAt = /\bwith the following effects\.?$/i.test(text) ? passive.search(/<p>\s*<strong>\s*Critical Success\b/i) : -1;
+        const rows = rowsAt >= 0 ? passive.slice(rowsAt).replace(/\b(?:The|the) (?:giant|undead|creature)\b/g, "The target").replace(/\bfor the next minute\b/gi, "for 1 minute") : "";
         const optional = /^you can choose to force the target to\b/i.test(text);
         const words = text
             .replace(/^you can choose to force the target to succeed\b/i, "The target must succeed")
@@ -61,7 +63,7 @@ export function runeCritRiders(rune) {
             .replace(/(@Check\[[^\]]*\](?:\{[^}]*\})?) or be\b/g, "$1 save or be");
         let plan = null;
         try {
-            plan = compileAbility({ name: rune.name, type: "action", system: { slug: rune.system?.slug ?? null, description: { value: `<p>${words}</p>` }, actionType: { value: "free" }, actions: { value: null }, traits: { value: [] } } }, {});
+            plan = compileAbility({ name: rune.name, type: "action", system: { slug: rune.system?.slug ?? null, description: { value: `<p>${words}</p>${rows}` }, actionType: { value: "free" }, actions: { value: null }, traits: { value: [] } } }, {});
         } catch {
             plan = null;
         }

@@ -92,6 +92,9 @@ test("the runes on a critical hit: their saves and conditions read, for the crea
     const [vitalizing] = ridersOf("Vitalizing");
     assert.deepEqual([riderFits(vitalizing, { traits: ["undead"] }), riderFits(vitalizing, { traits: ["humanoid"] })], [true, false]);
     assert.deepEqual([riderFits(ridersOf("Bloodthirsty")[0], { persistent: ["bleed"] }), riderFits(ridersOf("Bloodthirsty")[0], { persistent: ["fire"] })], [true, false]);
+    // Greater Giant-Killing: a save with its own degree rows, against a giant.
+    const [giant] = ridersOf("Giant-Killing (Greater)");
+    assert.deepEqual([giant.only, giant.plan.resolution.check.against.value, row(giant, "criticalFailure").effects.map((effect) => [effect.slug, effect.value, effect.duration?.unit]), row(giant, "criticalFailure").damage.formulas[0].formula], [{ trait: "giant" }, 34, [["enfeebled", 4, "minutes"]], "4d10[mental]"]);
     const nightmare = ridersOf("Nightmare");
     assert.deepEqual(nightmare.map((rider) => [rider.only?.condition ?? null, row(rider, "success").effects.map((effect) => effect.slug).join()]), [[null, "stupefied"], ["stupefied", "frightened"]]);
 });
