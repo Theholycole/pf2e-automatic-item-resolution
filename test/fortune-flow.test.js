@@ -224,3 +224,15 @@ test("Ring of Torag: resistance 5 against fire and +1 to AC and saves, together,
     assert.deepEqual(ring.bonus.resistance, { type: "fire", value: 5 });
     assert.match(ring.notes[0], /^Only against what triggered it/);
 });
+
+test("moment bonuses in more words: Pyrefeather Cloak's type-first resistance, Curious Teardrop's \"You receive\", Calamity's Bane Tattoo's any check, Crown of the Fire Eater's raised resistance", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const plan = (name) => compileActivations(source(name)).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    const cloak = plan("Pyrefeather Cloak");
+    assert.deepEqual([cloak.bonus.resistance, cloak.bonus.modifiers.map((modifier) => `${modifier.selector} +${modifier.value}`), cloak.bonus.duration.expiry], [{ type: "fire", value: 5 }, ["saving-throw +1"], "turn-start"]);
+    assert.deepEqual(plan("Curious Teardrop").bonus.modifiers, [{ selector: "saving-throw", type: "status", value: 4 }]);
+    assert.deepEqual([plan("Calamity's Bane Tattoo").bonus.modifiers[0].selector, plan("Calamity's Bane Tattoo").bonus.spend], ["check", ["check"]]);
+    const crown = plan("Crown of the Fire Eater (Greater)");
+    assert.deepEqual(crown.bonus.resistance, { type: "fire", value: 25 });
+    assert.ok(crown.notes.some((note) => /regain a number of Hit Points/.test(note)));
+});

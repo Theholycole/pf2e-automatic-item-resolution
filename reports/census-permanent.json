@@ -8,11 +8,11 @@
   "results": {
    "resolves": 709,
    "builtin:cast-spell": 469,
-   "none": 726,
+   "none": 720,
    "partial": 96,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
-   "builtin:readied-bonus": 31,
+   "builtin:readied-bonus": 37,
    "note-only": 261,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
@@ -29,9 +29,9 @@
    "save": 370,
    "cast": 469,
    "item": 602,
-   "none": 913,
+   "none": 907,
    "focus": 45,
-   "fortune": 41,
+   "fortune": 47,
    "reroll": 25,
    "strike": 54,
    "counteract": 4,
@@ -50,11 +50,11 @@
    "results": {
     "resolves": 430,
     "builtin:cast-spell": 340,
-    "none": 487,
+    "none": 481,
     "partial": 42,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
-    "builtin:readied-bonus": 24,
+    "builtin:readied-bonus": 30,
     "note-only": 167,
     "builtin:reroll": 17,
     "builtin:zone": 6,
@@ -19286,9 +19286,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Titan's Grasp",
@@ -19850,9 +19850,9 @@
    "time": "free",
    "frequency": "once per 10 minutes",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Secret-Keeper's Mask (Reaper of Reputation)",
@@ -20192,9 +20192,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Drake Rifle (Electricity)",
@@ -21572,9 +21572,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Bomber's Saddle",
@@ -24380,9 +24380,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Preserving (Greater)",
@@ -26793,9 +26793,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Jaws of the Grogrisant",

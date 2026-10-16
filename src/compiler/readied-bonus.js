@@ -18,8 +18,17 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^
 
 // "You gain a +2 status bonus to …", "giving you a +4 status bonus to your AC and saves against the effect", "you gain a
 // +1 circumstance bonus against the triggering save".
-const GAIN = /\b(?:you gain|giving you|you get|granting you|grants? you|gaining) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
+const GAIN = /\b(?:you gain|you receive|giving you|you get|granting you|grants? you|gaining) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
 const RESIST_AND_BONUS = /\b(?:granting you|you gain) resistance (\d+) (?:against|to) (acid|cold|electricity|fire|sonic|force|mental|poison|spirit|vitality|void) and an? \+(\d+) (circumstance|status|item) bonus (?:on|to) (?:your )?([^;.]+?) against the [\w ]*?effect\b/i;
+// (Its type first: Pyrefeather Cloak's "You gain fire resistance 5 and a +1 circumstance bonus to saving throws against the triggering
+// effect" — the same groups.)
+const TYPE_RESIST_AND_BONUS = /\b(?:granting you|you gain) (acid|cold|electricity|fire|sonic|force|mental|poison|spirit|vitality|void) resistance (\d+) and an? \+(\d+) (circumstance|status|item) bonus (?:on|to) (?:your )?([^;.]+?) against the [\w ]*?effect\b/i;
+const resistAndBonus = (sentence) => {
+    const plain = RESIST_AND_BONUS.exec(sentence);
+    if (plain) return plain;
+    const typed = TYPE_RESIST_AND_BONUS.exec(sentence);
+    return typed ? [typed[0], typed[2], typed[1], typed[3], typed[4], typed[5]] : null;
+};
 // ("… and gain resistance 2 to damage", Sparkwarden; "… resistance 2 to the triggering damage", Warding Tattoo.)
 const RESIST = /\b(?:and )?(?:gain )?resistance (\d+) to (?:all |the triggering )?damage\b/i;
 
@@ -39,6 +48,8 @@ function selectorsOf(words) {
     else if (/\bperception\b/.test(lower) && !dc) selectors.push("perception");
     if (!dc) for (const skill of SKILLS) if (new RegExp(String.raw`\b${skill}\b`).test(lower)) selectors.push(skill);
     if (/\bskill (?:checks?|actions?)\b/.test(lower)) selectors.push("skill-check");
+    // (Any check: Calamity's Bane Tattoo's "the check associated with the triggering action".)
+    if (!selectors.length && /\bthe check associated with the triggering action\b/.test(lower)) selectors.push("check");
     return [...new Set(selectors)];
 }
 
@@ -72,7 +83,7 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
     const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
     // (A resistance and a bonus together, against the effect that triggered it: Ring of Torag's "granting you resistance 5 against
     // fire and a +1 status bonus on your AC or saving throw against the fire effect targeting you" — both, for this turn.)
-    const both = triggered ? sentences.map((sentence) => [sentence, RESIST_AND_BONUS.exec(sentence)]).find(([, match]) => match) : null;
+    const both = triggered ? sentences.map((sentence) => [sentence, resistAndBonus(sentence)]).find(([, match]) => match) : null;
     if (both) {
         const [sentence, match] = both;
         const selectors = selectorsOf(match[5]);
@@ -132,13 +143,17 @@ const RESIST_MOMENT = new RegExp(String.raw`\b(?:you gain|granting you|gaining) 
 // 10", Mantle of Amazing Health; "you reduce the damage from the triggering critical hit by 10", Indomitable Keepsake.)
 const RESIST_NUMBER_FIRST = new RegExp(String.raw`\byou (?:gain|have) (\d+) resistance to (?:all|(${TYPE_WORDS}(?:(?:,|, and| and| or|, or) ${TYPE_WORDS})*)) damage (?:against|for|from) (?:the triggering|that) (?:attack|Strike|hit|damage)\b`, "i");
 const REDUCE_DAMAGE = /\b(?:you )?reduce the damage (?:(?:you )?take|taken|(?:from|of) the triggering [\w ]+?) by (\d+)\b/i;
+const RAISED = new RegExp(String.raw`\bIncrease your (${TYPE_WORDS}) resistance from the [\w' -]+? from (\d+) to (\d+)\b`, "i");
 function readResistMoment(sentences, triggered) {
     if (!triggered) return null;
     for (const [index, sentence] of sentences.entries()) {
         const found = RESIST_MOMENT.exec(sentence);
         const first = found ? null : RESIST_NUMBER_FIRST.exec(sentence);
         const reduced = found || first ? null : REDUCE_DAMAGE.exec(sentence);
-        const match = found ?? (first ? [first[0], first[1], first[2] ?? (/\ball damage\b/i.test(first[0]) ? "all" : null), null] : reduced ? [reduced[0], reduced[1], "all", null] : null);
+        // (Crown of the Fire Eater's "Increase your fire resistance from the crown from 5 to 15": that much for the triggering damage —
+        // PF2e takes the higher of two resistances to a type.)
+        const raised = found || first || reduced ? null : RAISED.exec(sentence);
+        const match = found ?? (first ? [first[0], first[1], first[2] ?? (/\ball damage\b/i.test(first[0]) ? "all" : null), null] : reduced ? [reduced[0], reduced[1], "all", null] : raised ? [raised[0], raised[3], raised[1], null] : null);
         if (!match || /^(?:If|While|When|Whenever)\b/.test(sentence.replace(/^When (?:it's |it is )?(?:you )?activat\w*(?: (?:it|the [\w' -]+?))?,\s*/i, "")) || sentences.some((other) => LASTING.test(other))) continue;
         // (Its types: the sentence's, else the trigger's "You take physical damage", "mental, poison, or spirit damage" — one of
         // those, the one that hit — else all damage; "all" is all.)
