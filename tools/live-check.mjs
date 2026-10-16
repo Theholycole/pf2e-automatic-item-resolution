@@ -1397,6 +1397,65 @@ export const cases = {
         const flag = cast.flags["pf2e-automatic-resolution"].castFromItem;
         assert(flag.attackDegree === attack.flags.pf2e.context.outcome && flag.rank === 2, `the hit as its attack (${JSON.stringify(flag)})`);
         return { outcome: attack.flags.pf2e.context.outcome, cast: flag };
+    },
+
+    // Soothing Powder: fire picked on the card (bleed too on the creature), PF2e's flat check at DC 10 for the fire only.
+    async soothingPowder(scene) {
+        const { actor: burning } = await creature(scene, "Soothed", { x: 2, y: 14 });
+        const make = (type) => {
+            const persistent = game.pf2e.ConditionManager.getCondition("persistent-damage").toObject();
+            persistent.system.persistent = { formula: "1d6", damageType: type, dc: 15 };
+            return persistent;
+        };
+        await burning.createEmbeddedDocuments("Item", [make("fire"), make("bleed")]);
+        const powder = await give(burning, "Soothing Powder (Lesser)");
+        const since = Date.now();
+        await powder.consume();
+        const card = await messageAfter(since, itemCard("item"));
+        const state = card.getFlag(NS, "card");
+        const fire = state.plan.item.recovery.types.indexOf("fire");
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, recoveryType: fire });
+        const check = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "flat-check" && message.speaker?.actor === burning.id, { what: "PF2e's recovery check" });
+        await wait(1500);
+        const checks = game.messages.contents.filter((message) => Number(message.timestamp) >= since && message.flags?.pf2e?.context?.type === "flat-check" && message.speaker?.actor === burning.id);
+        assert(checks.length === 1 && check.flags.pf2e.context.dc?.value === 10, `one flat check at DC 10 (${checks.length}, ${check.flags.pf2e.context.dc?.value})`);
+        const bleed = burning.itemTypes.condition.find((condition) => condition.slug === "persistent-damage" && condition.system.persistent.damageType === "bleed");
+        assert(bleed, "the bleed untouched");
+        return { outcome: check.flags.pf2e.context.outcome };
+    },
+
+    // Jade Bauble: the two enemies targeted are off-guard until the start of its user's next turn.
+    async jadeBauble(scene) {
+        const { actor: duelist } = await creature(scene, "Bauble Duelist", { x: 2, y: 16 });
+        const { actor: one, token: oneToken } = await creature(scene, "Bauble Foe One", { x: 3, y: 16, alliance: "opposition" });
+        const { actor: two, token: twoToken } = await creature(scene, "Bauble Foe Two", { x: 3, y: 17, alliance: "opposition" });
+        const bauble = await give(duelist, "Jade Bauble");
+        let since = Date.now();
+        await bauble.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the bauble's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [oneToken.uuid, twoToken.uuid] });
+        const offGuard = await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
+        await wait(500);
+        document.querySelector(`[data-message-id="${offGuard.id}"] [data-aar-action="apply"]`)?.click();
+        await until(() => one.hasCondition("off-guard") && two.hasCondition("off-guard"), "both off-guard");
+        return { one: one.hasCondition("off-guard"), two: two.hasCondition("off-guard") };
+    },
+
+    // Energizing Treat: fed to the companion next to its user, the companion is quickened for 1 minute.
+    async energizingTreat(scene) {
+        const { actor: ranger, token: rangerToken } = await creature(scene, "Treat Ranger", { x: 6, y: 16 });
+        const { actor: wolf } = await creature(scene, "Treat Wolf", { x: 7, y: 16 });
+        const treat = await give(ranger, "Energizing Treat");
+        const since = Date.now();
+        await treat.consume();
+        const card = await messageAfter(since, itemCard("item"));
+        const drinkers = card.getFlag(NS, "card").drinkers;
+        const index = drinkers.findIndex((entry) => entry.actorUuid === wolf.uuid);
+        assert(index >= 0, `the companion offered (${JSON.stringify(drinkers.map((entry) => entry.name))})`);
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: index });
+        await until(() => wolf.hasCondition("quickened"), "the wolf quickened");
+        return { quickened: true, ranger: rangerToken.id };
     }
 };
 
