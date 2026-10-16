@@ -53,7 +53,17 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text);
+    return whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text);
+}
+
+// Which creatures to target, in src/compiler/item-data.js's words for an aura's damage (Banner of Piercing Shards' "Target each
+// enemy within the banner's aura that has been dealt damage since the end of your last turn"): the card's hint and a note.
+const WHO_TARGETED = /\bTarget each (enem(?:y|ies)|creature|foe) within the banner's aura that ([^.]+)\./;
+function whoTargeted(plan, text) {
+    const match = WHO_TARGETED.exec(String(text ?? ""));
+    if (!match || !plan || plan.builtin) return plan;
+    const note = `${match[0].replace(/^Target each/, "Only each")}`;
+    return { ...plan, targeting: { target: `each ${match[1]} in the aura that ${match[2]}`, range: "30 feet", area: null }, notes: [...(plan.notes ?? []).filter((other) => other !== note), note], partial: true };
 }
 
 

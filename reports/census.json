@@ -19,10 +19,10 @@
    "builtin:readied-bonus": 18,
    "builtin:zone": 87,
    "note-only": 200,
-   "builtin:item-action": 11,
+   "builtin:item-action": 12,
    "partial": 66,
    "builtin:counteract": 20,
-   "builtin:no-effect": 62,
+   "builtin:no-effect": 61,
    "builtin:reroll": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
@@ -90,9 +90,9 @@
    "results": {
     "none": 43,
     "note-only": 12,
-    "builtin:item-action": 10,
+    "builtin:item-action": 11,
     "resolves": 53,
-    "builtin:no-effect": 10,
+    "builtin:no-effect": 9,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
     "partial": 7,
@@ -378,13 +378,13 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 332,
+   "none": 331,
    "item": 636,
    "fortune": 20,
    "zone": 87,
    "expose": 89,
    "later": 79,
-   "action": 11,
+   "action": 12,
    "save": 129,
    "counteract": 20,
    "reroll": 2,
@@ -415,9 +415,9 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 54,
+    "none": 53,
     "item": 55,
-    "action": 10,
+    "action": 11,
     "reroll": 1,
     "cast": 9,
     "save": 15,
@@ -481,7 +481,7 @@
   "noCard": {
    "no-plan": 248,
    "triggered": 21,
-   "gm": 62,
+   "gm": 61,
    "other": 1
   }
  },
@@ -10858,9 +10858,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "builtin:no-effect",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Aetheric Irritant (Greater)",

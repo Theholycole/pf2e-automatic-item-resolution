@@ -37,7 +37,8 @@ const FORMS = [
     new RegExp(String.raw`\bWhen you activate [^,.]+, (?:you (?:can )?(?:immediately )?)?(?:use|attempt|make) (?:an? |to )?(${NAMES})\b`, "i"),
     // "…, attempting an Intimidation check to Demoralize that creature", "Make an Athletics check to Disarm the attacking creature",
     // "Roll an Intimidation check to Demoralize the target": a clause of its own, a skill named.
-    new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+|,\s+)(?:attempting|[Mm]ake|[Aa]ttempt|[Rr]oll) (?:a|an) (?:Athletics|Acrobatics|Intimidation|Deception|Diplomacy|Stealth|Thievery|Medicine|Survival|Performance) check to (${NAMES})\b(?![^.]*\+\d+)(?![^.]*\b(?:up to (?:two|three|four|\d+)|each|all)\b)`, "i"),
+    // (And Wrestler's Armbands' "boasting of your prowess and attempting an Intimidation check to Demoralize that creature".)
+    new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+|,\s+|\band\s+(?=attempting\b))(?:attempting|[Mm]ake|[Aa]ttempt|[Rr]oll) (?:a|an) (?:Athletics|Acrobatics|Intimidation|Deception|Diplomacy|Stealth|Thievery|Medicine|Survival|Performance) check to (${NAMES})\b(?![^.]*\+\d+)(?![^.]*\b(?:up to (?:two|three|four|\d+)|each|all)\b)`, "i"),
     // "Attempt to Grapple a creature" (Bracers of Strength): an activation that is the action.
     new RegExp(String.raw`(?:^|[.;)]\s+|\bEffect\s+)Attempt to (${NAMES}) (?:a|an|one|the) (?:creature|foe|enemy|target)\b(?![^.]*\+\d+)`, "i"),
     // "You attempt to Demoralize the foe the Strike hit", "You can activate the tiger fork to attempt to Grapple the creature": its
@@ -123,6 +124,17 @@ export function readItemAction(html, item = null) {
     // condition added to the action's row.)
     const everyone = new RegExp(String.raw`\b[Mm]ake an? \w+ check to (${NAMES}) against all (creatures?\b[^.]*?|enemies|foes) in an? (\d+)-foot (?:emanation|burst)\b`, "i").exec(text);
     const each = everyone ? null : new RegExp(String.raw`\b[Aa]ttempt an? (?:\w+ )?check to (${NAMES}) each (enemy|foe|creature) within (\d+) feet of you\b`, "i").exec(text);
+    // (Shrieking Skull's "attempt to Demoralize the target as well as each enemy within 30 feet of the target".)
+    const around = everyone || each ? null : new RegExp(String.raw`\battempt to (${NAMES}) the target as well as each (enemy|foe|creature) within (\d+) feet of the target\b`, "i").exec(text);
+    if (around) {
+        const name = around[1].replace(/\s+/g, " ");
+        const slug = ACTION_SLUGS[name.toLowerCase()];
+        const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z])/);
+        const at = sentences.findIndex((sentence) => sentence.includes(around[0]));
+        // (When it may be used, before it: "If you Strike with the weapon before the end of your turn, …".)
+        const after = sentences.slice(Math.max(0, at - 1), at).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line)).join(" ").trim();
+        if (slug) return { slug, name, bonus: null, targeted: true, maxTargets: 99, everyone: `the target and each ${around[2]} within ${around[3]} feet of it`, ...(after ? { after } : {}) };
+    }
     const area = everyone ?? each;
     if (area) {
         const name = area[1].replace(/\s+/g, " ");

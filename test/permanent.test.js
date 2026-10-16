@@ -376,3 +376,15 @@ test("a called creature's single Strike with its damage in the next sentence, a 
     const bird = consumable("Test Fire Bird", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> Interact</p><p>A burning bird bursts out. It flies up to 40 feet; creatures within its path during its flight make a @Check[reflex|dc:25] save or take @Damage[5d6[fire]] damage.</p>");
     assert.deepEqual([bird.targeting.area, bird.resolution.outcomes.failure.damage.formulas?.[0]?.formula ?? bird.resolution.sharedDamage?.components?.[0]?.formula], [{ type: "line", value: 40 }, "5d6[fire]"]);
 });
+
+test("Demoralize at the target and the enemies around it (Shrieking Skull), after 'and attempting' (Wrestler's Armbands); a banner's bleed at each hurt enemy (Banner of Piercing Shards)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const skull = compileItem(item("Shrieking Skull"), { spellEffects });
+    assert.deepEqual([skull.builtin, skull.action.slug, skull.action.maxTargets, skull.action.everyone], ["item-action", "demoralize", 99, "the target and each enemy within 30 feet of it"]);
+    assert.match(skull.action.after, /If you Strike with the weapon before the end of your turn/);
+    const armbands = compileActivations(item("Wrestler's Armbands"), { spellEffects })[0].plan;
+    assert.deepEqual([armbands.builtin, armbands.action.slug, armbands.action.targeted], ["item-action", "demoralize", true]);
+    const banner = compileActivations(item("Banner of Piercing Shards"), { spellEffects })[0].plan;
+    assert.deepEqual([banner.resolution.sharedDamage.components[0].formula, banner.targeting.range, banner.partial], ["1d4[persistent,bleed]", "30 feet", true]);
+    assert.match(banner.notes.join(" "), /dealt damage since the end of your last turn/);
+});
