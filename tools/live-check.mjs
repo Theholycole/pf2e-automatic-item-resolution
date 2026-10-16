@@ -761,6 +761,53 @@ export const cases = {
         return { outcome, moved };
     },
 
+    // Necklace of Fireballs III: the save card's bead picker — the third bead (6d6) — posts the ability module's save card with it.
+    async necklaceBead(scene) {
+        const { actor: thrower } = await creature(scene, "Bead Thrower", { type: "character", x: 2, y: 25 });
+        const { token: foeToken } = await creature(scene, "Bead Target", { x: 6, y: 25, alliance: "opposition" });
+        const necklace = await give(thrower, "Necklace of Fireballs III");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(necklace.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the save card" });
+        assert(/data-air-field="damageChoice"/.test(card.content), "the bead picker");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], damageChoice: 2 });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const formula = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage.components[0].formula;
+        assert(formula === "6d6[fire]", `the third bead's dice (${formula})`);
+        return { formula };
+    },
+
+    // Truth Potion: the drinker's own save — the card rolls it for its user, no targets.
+    async truthOwnSave(scene) {
+        const { actor: drinker, token } = await creature(scene, "Truth Drinker", { x: 8, y: 25 });
+        const potion = await give(drinker, "Truth Potion");
+        let since = Date.now();
+        await potion.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the save card" });
+        assert(/own save/.test(card.content), "its user's own save");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const targets = save.flags["pf2e-automatic-ability-resolution"].card.targets ?? [];
+        assert(targets.some((entry) => entry.tokenUuid === token.uuid || entry.actorUuid === drinker.uuid), `on its user (${JSON.stringify(targets.map((entry) => entry.name))})`);
+        return { save: save.id };
+    },
+
+    // Shadowmist Cape: "You cast Vapor Form on yourself" — cast by the spell module on its user (self filled from the words).
+    async shadowmistSelf(scene) {
+        const { actor: wearer, token } = await creature(scene, "Mist Wearer", { type: "character", x: 10, y: 25 });
+        const cape = await give(wearer, "Shadowmist Cape");
+        const index = (await import(`/modules/${NS}/src/compiler/permanent.js`)).compileActivations(cape, { spells: null }).findIndex((entry) => entry.plan?.builtin === "cast-spell");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(cape.uuid, index);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        assert(card.getFlag(NS, "card").plan.self === true, "on its user");
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        return { cast: cast.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Umbral Wings: a fly Speed equal to the land Speed until the end of the next turn (PF2e's BaseSpeed on PF2e 8.6's speeds).
     async umbralFly(scene) {
         const { actor: flier } = await creature(scene, "Umbral Flier", { x: 14, y: 14 });
