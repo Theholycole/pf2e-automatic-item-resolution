@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 269,
+   "none": 268,
    "resolves": 725,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 211,
    "builtin:item-action": 8,
-   "partial": 49,
+   "partial": 50,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "builtin:reroll": 2,
@@ -33,12 +33,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 131,
+    "none": 130,
     "resolves": 206,
     "note-only": 100,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 27,
+    "partial": 28,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -306,7 +306,7 @@
    "count": 277,
    "resolves": 166,
    "gaps": 0,
-   "none": 28
+   "none": 27
   },
   "linked-effect": {
    "count": 393,
@@ -336,7 +336,7 @@
    "count": 31,
    "resolves": 12,
    "gaps": 0,
-   "none": 6
+   "none": 5
   },
   "on-weapon": {
    "count": 67,
@@ -366,7 +366,7 @@
    "count": 433,
    "resolves": 259,
    "gaps": 0,
-   "none": 38
+   "none": 37
   },
   "duration": {
    "count": 943,
@@ -378,14 +378,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 354,
+   "none": 353,
    "item": 631,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 79,
    "action": 8,
-   "save": 119,
+   "save": 120,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -394,9 +394,9 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 159,
+    "none": 158,
     "later": 12,
-    "save": 83,
+    "save": 84,
     "item": 219,
     "zone": 9,
     "fortune": 7,
@@ -478,7 +478,7 @@
    }
   },
   "noCard": {
-   "no-plan": 269,
+   "no-plan": 268,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -28153,7 +28153,9 @@
     "strike",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Grit",

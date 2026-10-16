@@ -12,7 +12,8 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { riderRow } from "./bombs.js";
 import { plainText } from "./rows.js";
 
-const SPELLGUN = /\bmaking your choice of a spell attack roll or a firearm attack roll against the target's AC\b/i;
+// (Against AC, or a defense's DC: a third-party bola's "against the target's Reflex DC".)
+const SPELLGUN = /\bmaking your choice of a spell attack roll or a firearm attack roll against the target's (AC|Fortitude DC|Reflex DC|Will DC)\b/i;
 const DAMAGE_LINK = /@Damage\[((?:[^[\]]|\[[^[\]]*\])*)\]/g;
 const RANGE = /\brange increment of (\d+) feet\b/i;
 const NIGHT = /\bThe damage is (@Damage\[(?:[^[\]]|\[[^[\]]*\])*\](?:\{[^}]*\})?) at night, or (@Damage\[(?:[^[\]]|\[[^[\]]*\])*\](?:\{[^}]*\})?) at other times\b/i;
@@ -57,19 +58,28 @@ function degreeRow(words) {
 // The html → { components, choices, range, critical, success, notes } or null.
 export function readSpellgun(html) {
     const text = plainText(html);
-    if (!SPELLGUN.test(text)) return null;
+    const against = SPELLGUN.exec(text);
+    if (!against) return null;
     const [before] = String(html).split(/<strong>\s*Critical Success\s*<\/strong>/i);
     const night = NIGHT.exec(String(html));
     const formulas = night ? [] : formulasIn(before);
     const choices = night ? [{ label: "At night", formula: formulasIn(night[1])[0] }, { label: "At other times", formula: formulasIn(night[2])[0] }] : null;
-    if (!formulas.length && !choices?.[0]?.formula) return null;
+    const damaged = formulas.length || choices?.[0]?.formula;
     const degrees = text.replace(/^.*?(?=\bCritical Success\b)/s, "");
     const criticalWords = /\bCritical Success\b\s*(.*?)(?=\bSuccess\b|$)/s.exec(degrees)?.[1] ?? "";
     const successWords = /(?:^|[.\s])Success\b\s*(.*?)(?=\bThe damage is\b|\bFailure\b|$)/s.exec(degrees.replace(/\bCritical Success\b/, "CRITICAL"))?.[1] ?? "";
     const critical = degreeRow(criticalWords);
-    const success = degreeRow(successWords);
+    // ("As critical success, except the target is Grabbed instead of restrained": the critical success's row, that condition swapped.)
+    const swap = /^\s*As critical success, except (?:the target is )?(\w+) instead of (\w+)/i.exec(successWords);
+    const success = swap
+        ? { row: { ...critical.row, effects: critical.row.effects.map((effect) => (effect.slug === swap[2].toLowerCase() ? { ...effect, slug: swap[1].toLowerCase() } : effect)) }, notes: [] }
+        : degreeRow(successWords);
+    // (No damage and nothing read on its degrees: not one.)
+    const rides = (row) => (row.effects ?? []).length || (row.modifiers ?? []).length || row.forcedMovement;
+    if (!damaged && !rides(critical.row) && !rides(success.row)) return null;
     return {
-        components: (choices ? [choices[0].formula] : formulas).map(component),
+        against: against[1] === "AC" ? "ac" : against[1].split(" ")[0].toLowerCase(),
+        components: damaged ? (choices ? [choices[0].formula] : formulas).map(component) : [],
         choices,
         range: RANGE.exec(text)?.[1] ? `${RANGE.exec(text)[1]} feet` : null,
         critical: critical.row,
@@ -82,7 +92,7 @@ export function spellgunPlan(html, base) {
     const read = readSpellgun(html);
     if (!read) return null;
     const ids = read.components.map((entry) => entry.id);
-    const hit = (row, multiplier) => ({ ...row, damage: { mode: "shared", multiplier, sourceComponentIds: ids } });
+    const hit = (row, multiplier) => ({ ...row, damage: ids.length ? { mode: "shared", multiplier, sourceComponentIds: ids } : none().damage });
     return {
         ...base,
         modelVersion: MODEL_VERSION,
@@ -92,8 +102,8 @@ export function spellgunPlan(html, base) {
         ownCheck: { kind: "attack", modifier: null, choose: ["spell", "firearm"] },
         resolution: {
             kind: "check",
-            check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" } },
-            sharedDamage: { rollOnce: true, components: read.components },
+            check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: read.against } },
+            ...(read.components.length ? { sharedDamage: { rollOnce: true, components: read.components } } : {}),
             outcomes: { criticalSuccess: hit(read.critical, 2), success: hit(read.success, 1), failure: none(), criticalFailure: none() }
         },
         ...(read.choices ? { damageChoices: read.choices } : {}),

@@ -192,3 +192,11 @@ test("Potion of Fire Retaliation: its damage to a creature that touches the drin
     }
     assert.deepEqual([card.flags[MODULE_ID].card.status, card.flags[MODULE_ID].card.uses], ["open", 2], "open for its minute, used twice");
 });
+
+test("a spellgun against a defense's DC, with conditions and no damage (the module's own wording)", async () => {
+    const { spellgunPlan } = await import("../src/compiler/spellguns.js");
+    const html = "<p>Activate the spellgun by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's Fortitude DC. This spellgun has a range increment of 30 feet.</p><p><strong>Critical Success</strong> The target is Slowed 1 until the end of your next turn.</p><p><strong>Success</strong> As critical success, except the target is Clumsy instead of slowed.</p>";
+    const plan = spellgunPlan(html, { source: { name: "Test Gun" } });
+    assert.deepEqual([plan.resolution.check.against.statistic, plan.resolution.sharedDamage, plan.resolution.outcomes.success.damage.mode], ["fortitude", undefined, "none"]);
+    assert.deepEqual(["criticalSuccess", "success"].map((degree) => plan.resolution.outcomes[degree].effects.map((effect) => effect.slug)), [["slowed"], ["clumsy"]]);
+});
