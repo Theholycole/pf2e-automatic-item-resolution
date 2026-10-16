@@ -6,7 +6,7 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 717,
+   "resolves": 714,
    "builtin:cast-spell": 469,
    "none": 709,
    "partial": 121,
@@ -18,7 +18,7 @@
    "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 31,
-   "builtin:zone": 9,
+   "builtin:zone": 12,
    "builtin:item-action": 21,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
@@ -26,17 +26,17 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 388,
+   "save": 387,
    "cast": 469,
    "item": 589,
-   "none": 896,
+   "none": 894,
    "focus": 45,
    "fortune": 48,
    "reroll": 25,
    "strike": 55,
    "counteract": 4,
    "toggle": 31,
-   "zone": 9,
+   "zone": 12,
    "action": 21,
    "spellstrike": 9,
    "later": 4
@@ -48,7 +48,7 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 433,
+    "resolves": 431,
     "builtin:cast-spell": 340,
     "none": 474,
     "partial": 63,
@@ -57,7 +57,7 @@
     "builtin:readied-bonus": 31,
     "note-only": 148,
     "builtin:reroll": 17,
-    "builtin:zone": 6,
+    "builtin:zone": 8,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
@@ -128,11 +128,12 @@
    "results": {
     "builtin:cast-spell": 11,
     "note-only": 16,
-    "resolves": 33,
+    "resolves": 32,
     "none": 27,
     "builtin:modes": 4,
     "builtin:no-effect": 3,
     "partial": 5,
+    "builtin:zone": 1,
     "builtin:readied-bonus": 1
    }
   }
@@ -2470,9 +2471,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Warpipes",
@@ -5107,9 +5108,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Energizing Lattice",
@@ -12305,9 +12306,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Banner of Common Cause",

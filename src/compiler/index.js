@@ -15,6 +15,7 @@ import { asAbility } from "./ability-shape.js";
 import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
 import { snareZone } from "./snares.js";
+import { auraZonePlan } from "./aura-zones.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
@@ -108,6 +109,9 @@ function compileOne(given, options = {}) {
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     const snare = snareZone(item, read);
     if (snare) return { ...snare, item: itemInfo(item) };
+    // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Noisome Garum's stench.)
+    const aura = auraZonePlan(html, base, item.name);
+    if (aura) return { ...aura, item: itemInfo(item) };
     // (The ability compiler's last fallback, "no-effect" — the GM's — gives way to a reading of the item's own: its
     // linked Effect, PF2e's healing, a spell's Effect, its row; not to a note alone.)
     const own = read?.builtin === "no-effect" ? ownPlan(item, base, options) ?? rowPlan(item, base) : null;

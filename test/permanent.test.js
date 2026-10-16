@@ -477,3 +477,17 @@ test("a bonus to the triggering save and to the rest against the same affliction
     const monkey = compileItem(item("Fulu of the Drunken Monkey"), { spellEffects });
     assert.deepEqual([monkey.resolution.outcomes.success.modifiers[0].predicate, monkey.partial], [["item:trait:poison"], true]);
 });
+
+test("auras that act at a turn's start or end in them, as the ability module's zone: Arctic Worm Chitin Shield, Alluring Lantern, Sandstorm Top, and an item in the module's own words", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const arctic = compileActivations(item("Arctic Worm Chitin Shield"), { spellEffects })[0].plan;
+    assert.deepEqual([arctic.builtin, arctic.zone.area, arctic.zone.centre, arctic.zone.saves[0].when, arctic.zone.saves[0].plan.resolution.check.basic], ["zone", { type: "emanation", value: 5 }, "self", ["end"], true]);
+    assert.match(arctic.zone.notes.join(" "), /resistance 5 to cold/);
+    const lantern = compileActivations(item("Alluring Lantern"), { spellEffects })[0].plan;
+    const fascinated = lantern.zone.saves[0].plan.resolution.outcomes.failure.effects.find((effect) => effect.slug === "fascinated");
+    assert.deepEqual([lantern.zone.area.value, lantern.zone.saves[0].when, fascinated.duration.anchor, fascinated.duration.expiry], [20, ["start"], "target-turn", "turn-end"]);
+    const top = compileActivations(item("Sandstorm Top"), { spellEffects })[0].plan;
+    assert.deepEqual([top.zone.centre, top.zone.range, top.zone.area, top.zone.saves[0].when, top.zone.lasts.unit], ["placed", 10, { type: "burst", value: 5 }, ["start", "enter"], "minutes"]);
+    const stink = compileItem({ name: "Test Stink Paste", type: "consumable", system: { slug: null, level: { value: 8 }, category: "other", traits: { value: ["alchemical", "consumable"] }, usage: { value: "held-in-one-hand" }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><p>You daub the paste behind your ears. Creatures that end their turn adjacent to you must attempt a @Check[fortitude|dc:25] save or be @UUID[Compendium.pf2e.conditionitems.Item.fesd1n5eVhpCSS18]{Sickened 1} by the smell. These effects last for 1 minute.</p>" } } }, { spellEffects });
+    assert.deepEqual([stink.builtin, stink.zone.saves[0].when, stink.zone.lasts.value, stink.zone.lasts.unit, stink.zone.saves[0].plan.resolution.outcomes.failure.effects[0].slug], ["zone", ["end"], 1, "minutes", "sickened"]);
+});

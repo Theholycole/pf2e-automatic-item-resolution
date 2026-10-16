@@ -2050,6 +2050,36 @@ export const cases = {
         assert(results.some((line) => /Trip against PFTEST ITEM Bola Target Two: a (?:critical )?success/.test(line)), `the second's own roll (${JSON.stringify(results)})`);
         await until(() => one.hasCondition("prone") && two.hasCondition("prone"), "both prone", { timeout: 8000 });
         return { results, messages: game.messages.contents.length - rolls };
+    },
+
+    // Arctic Worm Chitin Shield's Misty Chill: an aura on its user (the ability module's zone, attached to the token); a creature that
+    // ends its turn next to them gets the cold damage's save card.
+    async arcticAura(scene) {
+        const { actor: holder, token: holderToken } = await creature(scene, "Chill Holder", { type: "character", x: 4, y: 14 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Chill Neighbour", { x: 5, y: 14, alliance: "opposition", hp: 150, save: -30 });
+        const shield = await give(holder, "Arctic Worm Chitin Shield");
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: holderToken.id, sceneId: scene.id, actorId: holder.id, initiative: 20 }, { tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+            await until(() => scene.regions.some((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone), "the aura's Region", { timeout: 8000 });
+            const region = scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone);
+            assert(region.attachment?.token === holderToken.id, `attached to the holder's token (${JSON.stringify(region.attachment ?? null)})`);
+            await combat.nextTurn();
+            await wait(500);
+            since = Date.now();
+            await combat.nextTurn();
+            const save = await messageAfter(since, abilitySaveCard, { what: "the zone's save card", timeout: 10000 });
+            const before = foe.system.attributes.hp.value;
+            await rollAndApply(save);
+            await until(() => foe.system.attributes.hp.value < before, "cold damage on the neighbour", { timeout: 10000 });
+            return { lost: before - foe.system.attributes.hp.value };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
     }
 };
 

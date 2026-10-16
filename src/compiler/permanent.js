@@ -22,6 +22,7 @@ import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
+import { auraZonePlan } from "./aura-zones.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
@@ -201,6 +202,9 @@ function compileEach(item, options = {}) {
         plan = guardValues(directDamageOver(guardText(plan, plainText(activation.html)), directDamagePlan(plainText(activation.html), base, { item })));
         // (A row's own linked Effect, src/compiler/degree-effects.js: Cape of Justice's Enact Justice failure.)
         plan = withDegreeEffects(plan, activation.html, options.itemEffects);
+        // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Arctic Worm Chitin Shield, Alluring
+        // Lantern, Sandstorm Top — over a save at the creatures targeted once.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = auraZonePlan(activation.html, base, base.source?.name) ?? plan;
         // (Damage a successful save negates, src/compiler/direct-damage.js: Mycoweave Shield's spores.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = negatingSavePlan(plainText(activation.html), base) ?? plan;
         // (Damage of the energy its maker chose, the card's picker: Energy-Absorbing runes.)
