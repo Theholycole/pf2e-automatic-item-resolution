@@ -84,11 +84,15 @@ function readable(plan) {
     return resolution.kind === "check" && resolution.check?.roll === "automatic";
 }
 
-// The riders of a weapon's etched runes: [{ rune: { key, name }, ...rider }]. index: src/compiler/runes.js runeIndex's map.
+// The riders of a weapon's etched runes, and its own (Gluttonous Spear's, Tidal Crossbow's: the same wording in the weapon's
+// text): [{ rune: { key, name }, ...rider }]. index: src/compiler/runes.js runeIndex's map.
 const cache = new Map();
 export function etchedCritRiders(weapon, index) {
-    if (weapon?.type !== "weapon" || !index?.size) return [];
-    const found = [];
+    if (weapon?.type !== "weapon") return [];
+    const own = `own:${weapon.system?.slug ?? weapon.name}:${String(weapon.system?.description?.value ?? "").length}`;
+    if (!cache.has(own)) cache.set(own, runeCritRiders(weapon));
+    const found = cache.get(own).map((rider) => ({ rune: { key: null, name: weapon.name }, own: true, ...rider }));
+    if (!index?.size) return found;
     for (const key of etchedKeys(weapon)) {
         const rune = index.get(key);
         if (!rune) continue;

@@ -95,6 +95,10 @@ test("the runes on a critical hit: their saves and conditions read, for the crea
     // Greater Giant-Killing: a save with its own degree rows, against a giant.
     const [giant] = ridersOf("Giant-Killing (Greater)");
     assert.deepEqual([giant.only, giant.plan.resolution.check.against.value, row(giant, "criticalFailure").effects.map((effect) => [effect.slug, effect.value, effect.duration?.unit]), row(giant, "criticalFailure").damage.formulas[0].formula], [{ trait: "giant" }, 34, [["enfeebled", 4, "minutes"]], "4d10[mental]"]);
+    // A weapon's own (Gluttonous Spear): the same reading, named for the weapon.
+    const { etchedCritRiders } = await import("../src/compiler/rune-strikes.js");
+    const spear = etchedCritRiders(equipment.find((doc) => doc.name === "Gluttonous Spear"), runes);
+    assert.deepEqual(spear.map((rider) => [rider.own, row(rider, "success").effects.map((effect) => effect.slug).join()]), [[true, "enfeebled"]]);
     const nightmare = ridersOf("Nightmare");
     assert.deepEqual(nightmare.map((rider) => [rider.only?.condition ?? null, row(rider, "success").effects.map((effect) => effect.slug).join()]), [[null, "stupefied"], ["stupefied", "frightened"]]);
 });

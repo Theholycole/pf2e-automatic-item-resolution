@@ -36,7 +36,7 @@ export async function strikeWithRunes(message, ridersOf) {
     const sourceToken = message.token ?? actor.getActiveTokens?.(true)?.[0]?.document ?? null;
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
     for (const rider of riders.filter((entry) => riderFits(entry, creature))) {
-        const name = `${weapon.name} (${rider.rune.name})`;
+        const name = rider.own ? weapon.name : `${weapon.name} (${rider.rune.name})`;
         if (!postCard) {
             await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: game.users.filter((user) => user.isGM).map((user) => user.id), content: `<p><strong>${escape(name)}</strong>, critical hit on ${escape(target.name)}: ${escape(rider.text)} Apply it by hand.</p>` });
             continue;
