@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 268,
-   "resolves": 728,
+   "none": 267,
+   "resolves": 729,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 208,
@@ -33,8 +33,8 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 130,
-    "resolves": 206,
+    "none": 129,
+    "resolves": 207,
     "note-only": 100,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
@@ -310,9 +310,9 @@
   },
   "linked-effect": {
    "count": 393,
-   "resolves": 378,
+   "resolves": 379,
    "gaps": 0,
-   "none": 1
+   "none": 0
   },
   "fixed-dc": {
    "count": 491,
@@ -346,9 +346,9 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 55,
+   "resolves": 56,
    "gaps": 0,
-   "none": 46
+   "none": 45
   },
   "counteract": {
    "count": 79,
@@ -378,8 +378,8 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 353,
-   "item": 631,
+   "none": 352,
+   "item": 632,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
@@ -394,10 +394,10 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 158,
+    "none": 157,
     "later": 12,
     "save": 84,
-    "item": 219,
+    "item": 220,
     "zone": 9,
     "fortune": 7,
     "expose": 3,
@@ -478,7 +478,7 @@
    }
   },
   "noCard": {
-   "no-plan": 268,
+   "no-plan": 267,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -14907,7 +14907,10 @@
     "linked-effect",
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "effect",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Bronze Dragon's Breath Potion (Young)",

@@ -200,3 +200,16 @@ test("a spellgun against a defense's DC, with conditions and no damage (the modu
     assert.deepEqual([plan.resolution.check.against.statistic, plan.resolution.sharedDamage, plan.resolution.outcomes.success.damage.mode], ["fortitude", undefined, "none"]);
     assert.deepEqual(["criticalSuccess", "success"].map((degree) => plan.resolution.outcomes[degree].effects.map((effect) => effect.slug)), [["slowed"], ["clumsy"]]);
 });
+
+test("Reaper's Spellgun: its damage in the critical success's row, not doubled; the success's drained a step lower", () => {
+    const reaper = compileItem(source("Reaper's Spellgun"));
+    const outcomes = reaper.resolution.outcomes;
+    assert.deepEqual([component(reaper).formula, outcomes.criticalSuccess.damage.multiplier, outcomes.success.damage.multiplier], ["4d6[void]", 1, 1]);
+    assert.deepEqual(["criticalSuccess", "success"].map((degree) => outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["drained 2", "doomed 1"], ["drained 1", "doomed 1"]]);
+    assert.match(reaper.notes.join(" "), /fewer than half its maximum Hit Points/);
+});
+
+test("Thorn of Milani: both its own linked Effects, one after the other", () => {
+    const thorn = compileItem(source("Thorn of Milani (Lesser)"));
+    assert.deepEqual(thorn.resolution.applications.map((entry) => entry.label), ["Effect: Thorn of Milani (Spirit Damage)", "Effect: Thorn of Milani (Unholy Weakness)"]);
+});

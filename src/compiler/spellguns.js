@@ -43,7 +43,7 @@ function degreeRow(words) {
             notes.push(sentence);
             continue;
         }
-        const clauses = sentence.replace(/^The target\s+/i, "").replace(DAMAGE_WORDS, "").replace(/\.$/, "").split(/,?\s*(?:and\s+)?(?=\b(?:is|becomes)\s)/i).map((clause) => clause.trim()).filter(Boolean);
+        const clauses = sentence.replace(/^The target\s+/i, "").replace(DAMAGE_WORDS, "").replace(/\btakes \d+d\d+(?:\s*\+\s*\d+)? \w+(?: damage)?(?:\s+and\s+(?=is\b))?\s*/i, "").replace(/\.$/, "").split(/,?\s*(?:and\s+)?(?=\b(?:is|becomes)\s)/i).map((clause) => clause.trim()).filter(Boolean);
         for (const clause of clauses) {
             const riders = riderRow(`The target ${clause.replace(/\s+while\b.*$/i, "")}.`);
             if ((riders.effects ?? []).length || (riders.modifiers ?? []).length || riders.forcedMovement) {
@@ -62,23 +62,33 @@ export function readSpellgun(html) {
     if (!against) return null;
     const [before] = String(html).split(/<strong>\s*Critical Success\s*<\/strong>/i);
     const night = NIGHT.exec(String(html));
-    const formulas = night ? [] : formulasIn(before);
+    // (Its damage in its critical success's row, not before: Reaper's Spellgun's "Critical Success The target takes 4d6 void and is
+    // Drained 2 …" — the same on a success, "As critical success, but …", not doubled.)
+    let formulas = night ? [] : formulasIn(before);
+    const criticalHtml = String(html).split(/<strong>\s*Critical Success\s*<\/strong>/i)[1]?.split(/<strong>\s*Success\s*<\/strong>/i)[0] ?? "";
+    const rowDamage = !formulas.length && !night && formulasIn(criticalHtml).length > 0;
+    if (rowDamage) formulas = formulasIn(criticalHtml);
     const choices = night ? [{ label: "At night", formula: formulasIn(night[1])[0] }, { label: "At other times", formula: formulasIn(night[2])[0] }] : null;
     const damaged = formulas.length || choices?.[0]?.formula;
     const degrees = text.replace(/^.*?(?=\bCritical Success\b)/s, "");
     const criticalWords = /\bCritical Success\b\s*(.*?)(?=\bSuccess\b|$)/s.exec(degrees)?.[1] ?? "";
     const successWords = /(?:^|[.\s])Success\b\s*(.*?)(?=\bThe damage is\b|\bFailure\b|$)/s.exec(degrees.replace(/\bCritical Success\b/, "CRITICAL"))?.[1] ?? "";
     const critical = degreeRow(criticalWords);
-    // ("As critical success, except the target is Grabbed instead of restrained": the critical success's row, that condition swapped.)
+    // ("As critical success, except the target is Grabbed instead of restrained": the critical success's row, that condition swapped;
+    // "As critical success, but for the drained condition, the target is Drained 1, or …": that condition's value.)
     const swap = /^\s*As critical success, except (?:the target is )?(\w+) instead of (\w+)/i.exec(successWords);
+    const revalue = /^\s*As critical success, but for the (\w+) condition, the target is \w+ (\d+)([^.]*)\./i.exec(successWords);
     const success = swap
         ? { row: { ...critical.row, effects: critical.row.effects.map((effect) => (effect.slug === swap[2].toLowerCase() ? { ...effect, slug: swap[1].toLowerCase() } : effect)) }, notes: [] }
-        : degreeRow(successWords);
+        : revalue
+            ? { row: { ...critical.row, effects: critical.row.effects.map((effect) => (effect.slug === revalue[1].toLowerCase() ? { ...effect, value: Number(revalue[2]) } : effect)) }, notes: revalue[3].trim() ? [`${revalue[1]} ${revalue[2]}${revalue[3]}.`] : [] }
+            : degreeRow(successWords);
     // (No damage and nothing read on its degrees: not one.)
     const rides = (row) => (row.effects ?? []).length || (row.modifiers ?? []).length || row.forcedMovement;
     if (!damaged && !rides(critical.row) && !rides(success.row)) return null;
     return {
         against: against[1] === "AC" ? "ac" : against[1].split(" ")[0].toLowerCase(),
+        multipliers: { critical: rowDamage ? 1 : 2, success: 1 },
         components: damaged ? (choices ? [choices[0].formula] : formulas).map(component) : [],
         choices,
         range: RANGE.exec(text)?.[1] ? `${RANGE.exec(text)[1]} feet` : null,
@@ -104,7 +114,7 @@ export function spellgunPlan(html, base) {
             kind: "check",
             check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: read.against } },
             ...(read.components.length ? { sharedDamage: { rollOnce: true, components: read.components } } : {}),
-            outcomes: { criticalSuccess: hit(read.critical, 2), success: hit(read.success, 1), failure: none(), criticalFailure: none() }
+            outcomes: { criticalSuccess: hit(read.critical, read.multipliers.critical), success: hit(read.success, read.multipliers.success), failure: none(), criticalFailure: none() }
         },
         ...(read.choices ? { damageChoices: read.choices } : {}),
         ...(read.notes.length ? { notes: read.notes, partial: true } : {})

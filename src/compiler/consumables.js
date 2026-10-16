@@ -225,13 +225,29 @@ export function ownLink(item, links, names = []) {
     return own.length === 1 ? own[0] : null;
 }
 
+// Whether several linked Effects all apply: each one's label is the item's own name with a part in brackets ("Effect: Thorn
+// of Milani (Spirit Damage)"), none is a degree's or a choice's, and the text says one then the other ("You then gain …").
+// Items whose words differ: EXTRA_ALL_LINKS, by slug — see docs/mechanics.md.
+export const EXTRA_ALL_LINKS = Object.freeze([]);
+function bothApply(item, links) {
+    if (links.length < 2) return false;
+    if (EXTRA_ALL_LINKS.includes(item?.system?.slug)) return true;
+    const base = String(item?.name ?? "").replace(/\s*\([^)]*\)\s*$/, "").toLowerCase();
+    const labels = links.map((link) => String(link.label ?? "").replace(/^Effect:\s*/i, "").toLowerCase());
+    if (!base || !labels.every((label) => label.startsWith(`${base} (`)) || labels.some((label) => /\b(?:success|failure|or|choose)\b/.test(label))) return false;
+    return /\bYou then (?:gain|become|take|are)\b/i.test(plain(item?.system?.description?.value));
+}
+
 export function ownPlan(item, base, options = {}) {
     const recipient = recipientOf(item);
     const healing = nativeHealing(item);
     const links = effectLinks(item);
-    // (Several: the item's own, the others on the note.)
+    // (Several: the item's own, the others on the note — or all of them, when each is the item's and the text has them one after
+    // the other: Thorn of Milani's "you deal an additional 1d4 spirit damage … You then gain weakness 1 to unholy", its
+    // Spirit Damage and Unholy Weakness Effects.)
     const own = ownLink(item, links, [base?.source?.name]);
-    const applications = links.length === 1 ? [application(links[0], recipient)] : own ? [application(own, recipient)] : !links.length ? spellEffectApplications(item, options.spellEffects, recipient) ?? [] : [];
+    const all = !own && bothApply(item, links);
+    const applications = links.length === 1 ? [application(links[0], recipient)] : all ? links.map((link) => application(link, recipient)) : own ? [application(own, recipient)] : !links.length ? spellEffectApplications(item, options.spellEffects, recipient) ?? [] : [];
     const others = own ? links.filter((link) => link !== own).map((link) => `${link.label ?? "Another Effect"} is linked too: the GM's, when the text says it applies.`) : [];
     // (A granted spell with no PF2e Effect: a cast; only once the spell-effects index is known, so it isn't one by mistake.)
     if (!healing && !applications.length) return !links.length && options.spellEffects ? castPlan(item) : null;
