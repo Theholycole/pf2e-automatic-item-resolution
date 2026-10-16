@@ -1,0 +1,102 @@
+// Spellguns: "You Activate the spellgun by aiming it at one creature and making your choice of a spell attack roll or a
+// firearm attack roll against the target's AC. This spellgun has a range increment of 30 feet. The spellgun blasts a
+// powerful jet of water that deals @Damage[2d6[bludgeoning]] … Critical Success The target takes double damage and is
+// knocked back 10 feet. Success The target takes full damage and is knocked back 5 feet." (Torrent, Sparking and Moonlit
+// Spellguns.) The plan is the own-check attack's (src/compiler/own-checks.js): the core's check family against the
+// target's AC, its damage on a success and double on a critical success, with each degree's riders read as the bombs'
+// are. The modifier is its user's choice, so it isn't in the text: plan.ownCheck.choose ["spell", "firearm"], which live
+// play turns into the user's spell attack or firearm attack modifier on the card (scripts/poisons.js). Moonlit's "The
+// damage is 1d8 fire damage at night, or 1d6 fire damage at other times" is a damage picker (plan.damageChoices). Pure.
+
+import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
+import { riderRow } from "./bombs.js";
+import { plainText } from "./rows.js";
+
+const SPELLGUN = /\bmaking your choice of a spell attack roll or a firearm attack roll against the target's AC\b/i;
+const DAMAGE_LINK = /@Damage\[((?:[^[\]]|\[[^[\]]*\])*)\]/g;
+const RANGE = /\brange increment of (\d+) feet\b/i;
+const NIGHT = /\bThe damage is (@Damage\[(?:[^[\]]|\[[^[\]]*\])*\](?:\{[^}]*\})?) at night, or (@Damage\[(?:[^[\]]|\[[^[\]]*\])*\](?:\{[^}]*\})?) at other times\b/i;
+// (A degree's damage words, taken out before its riders are read: "takes double damage, takes double persistent damage,".)
+const DAMAGE_WORDS = /\b(?:takes|take) (?:double|full) damage(?:,? (?:and )?(?:takes )?(?:double|full) persistent damage)?,?\s*(?:and\s+)?/gi;
+
+// "@Damage[1d4[persistent,fire]]" → "1d4[persistent,fire]" (before any "|options").
+const formulasIn = (html) => [...String(html ?? "").matchAll(DAMAGE_LINK)].map((match) => match[1].split("|")[0].trim());
+const component = (formula, id) => {
+    const typed = /^(.+?)\[(?:(persistent),)?(\w+)\]$/.exec(formula);
+    return { id: String(id), formula, type: typed?.[3]?.toLowerCase() ?? null, category: typed?.[2] ? "persistent" : null };
+};
+const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+
+// A degree row's text (plain) → its riders and what it says that they don't: { row, notes }. Each "is …" clause on its own,
+// so one's time isn't another's: "is Blinded for 1 round, and is Dazzled while the persistent damage lasts" — blinded for
+// a round; dazzled with no time of its own, and a note of how long.
+function degreeRow(words) {
+    const notes = [];
+    let row = none();
+    const add = (riders) => {
+        row = { ...row, effects: [...row.effects, ...(riders.effects ?? []).filter((effect) => !row.effects.some((other) => other.slug === effect.slug))], modifiers: [...row.modifiers, ...(riders.modifiers ?? [])], ...(riders.forcedMovement ? { forcedMovement: riders.forcedMovement } : {}) };
+    };
+    for (const sentence of String(words ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((part) => part.trim()).filter(Boolean)) {
+        // ("If it has a weakness to silver …, it's also Enfeebled 1": the GM's.)
+        if (/^If\b/i.test(sentence)) {
+            notes.push(sentence);
+            continue;
+        }
+        const clauses = sentence.replace(/^The target\s+/i, "").replace(DAMAGE_WORDS, "").replace(/\.$/, "").split(/,?\s*(?:and\s+)?(?=\b(?:is|becomes)\s)/i).map((clause) => clause.trim()).filter(Boolean);
+        for (const clause of clauses) {
+            const riders = riderRow(`The target ${clause.replace(/\s+while\b.*$/i, "")}.`);
+            if ((riders.effects ?? []).length || (riders.modifiers ?? []).length || riders.forcedMovement) {
+                add(riders);
+                if (/\bwhile\b/i.test(clause)) notes.push(`The target ${clause}.`);
+            } else if (!/^(?:full|double)?\s*(?:persistent )?(?:damage)?,?$/i.test(clause)) notes.push(`The target ${clause}.`);
+        }
+    }
+    return { row, notes };
+}
+
+// The html → { components, choices, range, critical, success, notes } or null.
+export function readSpellgun(html) {
+    const text = plainText(html);
+    if (!SPELLGUN.test(text)) return null;
+    const [before] = String(html).split(/<strong>\s*Critical Success\s*<\/strong>/i);
+    const night = NIGHT.exec(String(html));
+    const formulas = night ? [] : formulasIn(before);
+    const choices = night ? [{ label: "At night", formula: formulasIn(night[1])[0] }, { label: "At other times", formula: formulasIn(night[2])[0] }] : null;
+    if (!formulas.length && !choices?.[0]?.formula) return null;
+    const degrees = text.replace(/^.*?(?=\bCritical Success\b)/s, "");
+    const criticalWords = /\bCritical Success\b\s*(.*?)(?=\bSuccess\b|$)/s.exec(degrees)?.[1] ?? "";
+    const successWords = /(?:^|[.\s])Success\b\s*(.*?)(?=\bThe damage is\b|\bFailure\b|$)/s.exec(degrees.replace(/\bCritical Success\b/, "CRITICAL"))?.[1] ?? "";
+    const critical = degreeRow(criticalWords);
+    const success = degreeRow(successWords);
+    return {
+        components: (choices ? [choices[0].formula] : formulas).map(component),
+        choices,
+        range: RANGE.exec(text)?.[1] ? `${RANGE.exec(text)[1]} feet` : null,
+        critical: critical.row,
+        success: success.row,
+        notes: [...new Set([...critical.notes.map((note) => `Critical success: ${note}`), ...success.notes.map((note) => `Success: ${note}`)])]
+    };
+}
+
+export function spellgunPlan(html, base) {
+    const read = readSpellgun(html);
+    if (!read) return null;
+    const ids = read.components.map((entry) => entry.id);
+    const hit = (row, multiplier) => ({ ...row, damage: { mode: "shared", multiplier, sourceComponentIds: ids } });
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: read.notes.length ? "guided" : "automatic" },
+        targeting: { target: "1 creature", range: read.range, area: null },
+        trigger: { event: "use" },
+        ownCheck: { kind: "attack", modifier: null, choose: ["spell", "firearm"] },
+        resolution: {
+            kind: "check",
+            check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" } },
+            sharedDamage: { rollOnce: true, components: read.components },
+            outcomes: { criticalSuccess: hit(read.critical, 2), success: hit(read.success, 1), failure: none(), criticalFailure: none() }
+        },
+        ...(read.choices ? { damageChoices: read.choices } : {}),
+        ...(read.notes.length ? { notes: read.notes, partial: true } : {})
+    };
+}

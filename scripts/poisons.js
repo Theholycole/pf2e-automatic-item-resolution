@@ -3,7 +3,7 @@
 // card on the target (the ability module's api.live.postCard, the affliction
 // handed to Pseudo Afflictions as for monster venom); a critical miss wastes it.
 
-import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, repeatsLater, saveText } from "../src/live/poison-card.js";
+import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, repeatsLater, saveText, withAttackChoice } from "../src/live/poison-card.js";
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
 import { ABILITY_ID, FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
@@ -81,14 +81,29 @@ export async function postExposureCard({ message, plan, used, actor, token, late
     const repeat = later && repeatsLater(text);
     const time = repeat ? itemDuration(text) : null;
     const until = time ? game.time.worldTime + time.value * (SECONDS[time.unit] ?? 3600) : null;
-    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until, own: isOwnSave(plan, text), attacker: ATTACKER.test(text) });
+    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until, own: isOwnSave(plan, text), attacker: ATTACKER.test(text), attackChoices: plan.ownCheck?.choose ? attackChoices(actor, plan.ownCheck.choose) : null });
     return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
+// A spellgun's attack modifiers its user has: its best spellcasting entry's spell attack, its best firearm Strike's.
+const sign = (value) => (value >= 0 ? `+${value}` : `${value}`);
+function attackChoices(actor, kinds) {
+    const best = (values) => Math.max(...values.map(Number).filter(Number.isFinite));
+    const spell = best((actor?.spellcasting?.contents ?? []).map((entry) => entry?.statistic?.check?.mod));
+    const firearm = best((actor?.system?.actions ?? []).filter((action) => (action?.item?.group ?? action?.item?.system?.group) === "firearm").map((action) => action.totalModifier));
+    return [
+        ...(kinds.includes("spell") && Number.isFinite(spell) ? [{ kind: "spell", label: `Spell attack ${sign(spell)}`, modifier: spell }] : []),
+        ...(kinds.includes("firearm") && Number.isFinite(firearm) ? [{ kind: "firearm", label: `Firearm attack ${sign(firearm)}`, modifier: firearm }] : [])
+    ];
+}
+
 // targets: the token uuids the presser had targeted.
-export async function applyExposureCard(message, { targets = [], damageChoice = null } = {}) {
+export async function applyExposureCard(message, { targets = [], damageChoice = null, attackChoice = null } = {}) {
     let state = stateOf(message);
     if (!state || state.kind !== "expose" || state.status !== "open") return null;
+    // (A spellgun's attack, as picked; with none its user has, the GM rolls it.)
+    if (Number.isInteger(attackChoice) && state.attackChoices?.[attackChoice]) state = { ...state, attackChoice };
+    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no spell attack or firearm Strike: roll ${state.item.name}'s attack by hand.`);
     // (The damage picked: Necklace of Fireballs' bead.)
     if (Number.isInteger(damageChoice) && state.plan?.damageChoices?.[damageChoice]) state = { ...state, damageChoice };
     // (Its time is up: the card closes.)
@@ -108,7 +123,7 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const names = tokens.map((token) => token.name ?? token.actor?.name).join(", ");
     const lines = [];
     if (postCard && actor) {
-        await postCard({ plan: withDamageChoice(state.plan, state.damageChoice ?? 0), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
+        await postCard({ plan: withAttackChoice(withDamageChoice(state.plan, state.damageChoice ?? 0), state), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
     const next = afterExposure(state, lines, game.time.worldTime);

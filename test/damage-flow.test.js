@@ -132,3 +132,35 @@ test("damage a successful save negates: a save at the creatures targeted, the da
     assert.equal(routeOf(spores.plan, plainText(spores.activation.html)), "save");
 });
 
+
+test("spellguns: an attack against AC at the user's spell or firearm attack, their damage on a success and double on a critical success", async () => {
+    const torrent = compileItem(source("Torrent Spellgun (Lesser)"));
+    assert.equal(routeOf(torrent), "save");
+    assert.deepEqual([torrent.resolution.check.roll, torrent.resolution.check.against.statistic, torrent.ownCheck.choose, torrent.targeting.range], ["skill", "ac", ["spell", "firearm"], "30 feet"]);
+    assert.deepEqual([component(torrent).formula, torrent.resolution.outcomes.criticalSuccess.damage.multiplier, torrent.resolution.outcomes.criticalSuccess.forcedMovement, torrent.resolution.outcomes.success.forcedMovement], ["2d6[bludgeoning]", 2, { kind: "push", distance: 10 }, { kind: "push", distance: 5 }]);
+    // Sparking: blinded for a round on a critical success; dazzled while the persistent damage lasts — no time, a note.
+    const sparking = compileItem(source("Sparking Spellgun (Lesser)"));
+    assert.deepEqual(sparking.resolution.sharedDamage.components.map((entry) => entry.formula), ["4d6[fire]", "1d4[persistent,fire]"]);
+    assert.deepEqual(sparking.resolution.outcomes.criticalSuccess.effects.map((effect) => [effect.slug, effect.duration?.value ?? null]), [["blinded", 1], ["dazzled", null]]);
+    assert.match(sparking.notes.join(" "), /while the persistent damage lasts/);
+    // Moonlit: its damage at night or at other times, picked on the card.
+    assert.deepEqual(compileItem(source("Moonlit Spellgun (Lesser)")).damageChoices.map((choice) => choice.formula), ["3d8[fire]", "3d6[fire]"]);
+    // Live: the card offers the user's spell attack and firearm attack; the save card's check is the one picked.
+    const gunner = foundry.makeActor({ id: "damage-gunner", name: "Gunner", owners: ["player"] });
+    foundry.place(gunner, 200, 17000);
+    gunner.spellcasting = { contents: [{ statistic: { check: { mod: 11 } } }, { statistic: { check: { mod: 14 } } }] };
+    gunner.system.actions = [{ item: { group: "firearm" }, totalModifier: 9 }, { item: { group: "sword" }, totalModifier: 13 }];
+    const gun = foundry.giveItem(gunner, source("Torrent Spellgun (Lesser)"));
+    const data = gun.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: gun.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: gunner.id }, actor: gunner, token: gunner.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    assert.deepEqual(card.flags[MODULE_ID].card.attackChoices.map((choice) => choice.label), ["Spell attack +14", "Firearm attack +9"]);
+    assert.match(card.content, /data-air-field="attackChoice"/);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [brute.token.uuid], attackChoice: 1 });
+    await settle();
+    const posted = foundry.posted.slice(before)[0];
+    assert.deepEqual([posted.plan.resolution.check.statistic, posted.plan.resolution.check.modifier], ["firearm attack", 9]);
+});

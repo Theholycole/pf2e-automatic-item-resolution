@@ -148,8 +148,16 @@ export const repeatsLater = (text = "") => AGAIN.test(text) || ATTACKER.test(tex
 
 // later: kept for an action the item gives; repeat and until (world time in seconds): used again until then.
 // own: the drinker's own save (no targets: the user's own token); attacker: set off by a creature attacking the user.
-export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null, own = false, attacker = false }) {
-    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: true } : {}), results: [] };
+// attackChoices: a spellgun's attack modifiers its user has, [{ kind, label, modifier }] (scripts/poisons.js).
+export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null, own = false, attacker = false, attackChoices = null }) {
+    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: true } : {}), ...(attackChoices ? { attackChoices, attackChoice: 0 } : {}), results: [] };
+}
+
+// The plan with the attack modifier picked: a spellgun's check at its user's spell or firearm attack modifier.
+export function withAttackChoice(plan, state) {
+    const choice = state?.attackChoices?.[state.attackChoice ?? 0];
+    if (!plan?.ownCheck?.choose || !choice) return plan;
+    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, statistic: `${choice.kind} attack`, modifier: choice.modifier } } };
 }
 
 // After a use: still open for a repeatable later card within its time, else done.
@@ -179,6 +187,12 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const pick = open && canApply && (state.plan?.damageChoices?.length ?? 0) > 1
         ? `<p class="aar-actions">Damage: <select data-air-field="damageChoice">${state.plan.damageChoices.map((choice, index) => `<option value="${index}"${index === (state.damageChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
         : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${pick}${notes}${results}${controls}</section>`;
+    // (A spellgun's attack: the user's spell or firearm attack, a picker; none, the GM's roll.)
+    const attack = !open || !state.plan?.ownCheck?.choose ? ""
+        : (state.attackChoices ?? []).length > 1 && canApply
+            ? `<p class="aar-actions">Attack: <select data-air-field="attackChoice">${state.attackChoices.map((choice, index) => `<option value="${index}"${index === (state.attackChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
+            : (state.attackChoices ?? []).length ? `<p class="aar-actions">Attack: ${escape(state.attackChoices[0].label)}</p>`
+                : `<p class="aar-hint">${escape(state.user.name)} has no spell attack or firearm Strike: the GM rolls the attack.</p>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${attack}${pick}${notes}${results}${controls}</section>`;
 }
 

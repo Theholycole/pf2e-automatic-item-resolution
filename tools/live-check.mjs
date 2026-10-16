@@ -896,6 +896,29 @@ export const cases = {
         return { save: save.id };
     },
 
+    // Torrent Spellgun (Lesser): the card offers its user's firearm attack (a held flintlock pistol), and the ability module's
+    // card is that attack against the target's AC.
+    async spellgun(scene) {
+        const { actor: gunner, token: gunnerToken } = await creature(scene, "Spellgunner", { type: "character", x: 10, y: 11 });
+        const { token: foeToken } = await creature(scene, "Spellgun Target", { x: 13, y: 11, alliance: "opposition" });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const gun = await give(gunner, "Torrent Spellgun (Lesser)");
+        await wait(500);
+        let since = Date.now();
+        await gun.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the spellgun's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const firearm = choices.find((choice) => choice.kind === "firearm");
+        assert(firearm, `the firearm attack offered (${JSON.stringify(choices)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: choices.indexOf(firearm) });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        const check = attack.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.modifier === firearm.modifier && check.against?.statistic === "ac", `the firearm attack against AC (${JSON.stringify(check)})`);
+        return { choices, check };
+    },
+
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
     // targeted.
     async alliesEffect(scene) {

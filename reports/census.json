@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 277,
-   "resolves": 701,
+   "none": 273,
+   "resolves": 705,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 239,
+   "note-only": 231,
    "builtin:item-action": 8,
-   "partial": 37,
+   "partial": 45,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "builtin:reroll": 2,
@@ -33,12 +33,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 139,
-    "resolves": 202,
-    "note-only": 108,
+    "none": 135,
+    "resolves": 206,
+    "note-only": 100,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 15,
+    "partial": 23,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -304,9 +304,9 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 142,
+   "resolves": 146,
    "gaps": 0,
-   "none": 36
+   "none": 32
   },
   "linked-effect": {
    "count": 393,
@@ -334,9 +334,9 @@
   },
   "strike": {
    "count": 31,
-   "resolves": 8,
+   "resolves": 12,
    "gaps": 0,
-   "none": 10
+   "none": 6
   },
   "on-weapon": {
    "count": 67,
@@ -378,14 +378,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 362,
-   "item": 659,
+   "none": 358,
+   "item": 651,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 59,
    "action": 8,
-   "save": 103,
+   "save": 115,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -394,10 +394,10 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 167,
+    "none": 163,
     "later": 12,
-    "save": 67,
-    "item": 227,
+    "save": 79,
+    "item": 219,
     "zone": 9,
     "fortune": 7,
     "expose": 3,
@@ -478,7 +478,7 @@
    }
   },
   "noCard": {
-   "no-plan": 277,
+   "no-plan": 273,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -857,7 +857,10 @@
     "damage",
     "strike"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Snarling Badger (Moderate)",
@@ -3655,9 +3658,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Bendy-Arm Mutagen (Moderate)",
@@ -4156,9 +4159,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Demolition Fulu (Lesser)",
@@ -6002,9 +6005,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Mistform Elixir (Moderate)",
@@ -8284,7 +8287,10 @@
     "damage",
     "strike"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Firecracker Fulu",
@@ -9052,9 +9058,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Vaccine (Moderate)",
@@ -9754,9 +9760,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Maelstromic Destabilizer (Lesser)",
@@ -10769,9 +10775,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Etheric Essence Disruptor (Greater)",
@@ -21918,9 +21924,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Wand of Shocking Haze",
@@ -28373,9 +28379,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Sage's Bloom",
@@ -28773,7 +28779,10 @@
     "damage",
     "strike"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Phasing Trine",
@@ -29890,7 +29899,10 @@
     "damage",
     "strike"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Potion of Cold Retaliation (Minor)",
