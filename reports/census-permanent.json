@@ -8,13 +8,13 @@
   "results": {
    "resolves": 701,
    "builtin:cast-spell": 469,
-   "none": 751,
+   "none": 749,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
    "note-only": 264,
    "builtin:reroll": 22,
-   "partial": 86,
+   "partial": 88,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 26,
    "builtin:zone": 9,
@@ -28,11 +28,11 @@
    "save": 361,
    "cast": 469,
    "item": 599,
-   "none": 947,
+   "none": 945,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
-   "strike": 51,
+   "strike": 53,
    "toggle": 26,
    "zone": 9,
    "action": 13,
@@ -83,8 +83,8 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 47,
-    "partial": 13,
+    "none": 45,
+    "partial": 15,
     "resolves": 43,
     "builtin:pf2e-rules": 24,
     "note-only": 14,
@@ -12806,9 +12806,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "The Theater",
@@ -21987,9 +21987,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Essence Prism",

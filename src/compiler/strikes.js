@@ -125,19 +125,23 @@ const pf2eDamage = (item) => (item?.system?.rules ?? []).some((rule) => ["Damage
 // first — Silencing Shot's "… unless it succeeds at a @Check[will|dc:25] save" — is castFromItem's saveFirst; the hit in place
 // of the spell's attack — Disintegration Bolt's "subject to a Disintegrate spell requiring a … save" — its attackDegree, the
 // Strike's own degree.
+// (Also Fairy Bullet's "On a successful Strike, a fairy bullet casts Revealing Light (DC 23)", and Silencing Ammunition's "creates
+// a 2nd-rank Silence effect on the target. The target can resist the effects of the ammunition with a successful … will save":
+// its saveFirst.)
 const CAST_ON_HIT = /\bis (?:also )?(?:subject to|affected by) (?:the effects of )?an? (?:(\d+)(?:st|nd|rd|th)-rank )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]+)\}(?: spell)?([^.]*)/i;
+const CASTS_ON_HIT = /\bOn a successful Strike, (?:an? )?[^.]*?\b(?:casts|creates) an? ?(?:(\d+)(?:st|nd|rd|th)-rank )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]+)\}(?: effect on the target| spell)?([^.]*\.(?:\s*The target can resist the effects[^.]*)?)/i;
 export function castOnHit(html) {
-    const match = CAST_ON_HIT.exec(String(html ?? ""));
+    const match = CAST_ON_HIT.exec(String(html ?? "")) ?? CASTS_ON_HIT.exec(String(html ?? "").replace(/<\/?em>/g, "").replace(/\bcasts (@UUID)/, "casts a $1"));
     if (!match) return null;
     const dc = /\bspell DC of (\d+)|@Check\[\w+\|dc:(\d+)/i.exec(match[4]);
-    const unless = /\bunless it succeeds at an? @Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(match[4]);
+    const unless = /\bunless it succeeds at an? @Check\[(fortitude|reflex|will)\|dc:(\d+)|\bThe target can resist the effects[^.]*? with a successful @Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(match[4]);
     const requiring = /\brequiring an? @Check\[(?:fortitude|reflex|will)\|dc:\d+/i.test(match[4]);
     return {
         uuid: match[2],
         name: match[3],
         rank: match[1] ? Number(match[1]) : null,
         dc: unless ? null : dc ? Number(dc[1] ?? dc[2]) : null,
-        ...(unless ? { saveFirst: { statistic: unless[1].toLowerCase(), dc: Number(unless[2]) } } : {}),
+        ...(unless ? { saveFirst: { statistic: (unless[1] ?? unless[3]).toLowerCase(), dc: Number(unless[2] ?? unless[4]) } } : {}),
         ...(requiring ? { attackFromHit: true } : {})
     };
 }

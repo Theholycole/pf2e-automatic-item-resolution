@@ -337,3 +337,9 @@ test("Silencing Shot: castFromItem's saveFirst when the spell module offers it; 
     delete spell.castFromItemOptions;
 });
 
+
+test("cast on hit in other words: Fairy Bullet's \"casts Revealing Light (DC 23)\", Silencing Ammunition's Silence the target resists with its own save", () => {
+    const cast = (name) => compileActivations(source(name))[0].plan.strike.cast;
+    assert.deepEqual([cast("Fairy Bullet").name, cast("Fairy Bullet").dc], ["Revealing Light", 23]);
+    assert.deepEqual([cast("Silencing Ammunition").name, cast("Silencing Ammunition").rank, cast("Silencing Ammunition").saveFirst], ["Silence", 2, { statistic: "will", dc: 25 }]);
+});
