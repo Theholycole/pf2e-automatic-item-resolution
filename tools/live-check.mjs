@@ -821,6 +821,79 @@ export const cases = {
         return { captain: bonuses(captain), squire: bonuses(squire) };
     },
 
+    // Elemental Ammunition: PF2e's own rules add its splash to the longbow's Strike, and the splash card lists the creature
+    // next to the target (the bomb card, for any Strike with PF2e's splash-only rolls).
+    async ammoSplash(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Splash Archer", { type: "character", x: 2, y: 31 });
+        const { token: foeToken } = await creature(scene, "Splash Target", { x: 6, y: 31, ac: 1, alliance: "opposition" });
+        const { actor: other } = await creature(scene, "Splash Neighbour", { x: 7, y: 31, alliance: "opposition" });
+        const bow = await give(archer, "Longbow");
+        const ammo = await give(archer, "Elemental Ammunition (Moderate, Acid)");
+        // (More than one, so the Strike's own use of it leaves it for the damage roll.)
+        await ammo.update({ "system.quantity": 5 });
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": ammo.id });
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const before = other.system.attributes.hp.value;
+        const { action, attack } = await strike(archer, bow);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const since = Date.now();
+        await action.damage({ event: shift() });
+        const damage = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "damage roll" });
+        const splashOnly = (damage.rolls ?? []).filter((roll) => roll?.options?.splashOnly).length;
+        const card = await messageAfter(since, itemCard("bomb"), { what: `the splash card (splash-only rolls: ${splashOnly})` });
+        const state = card.getFlag(NS, "card");
+        assert(state.splashed.some((entry) => entry.actorUuid === other.uuid), "the neighbour is listed for the splash");
+        await game.modules.get(NS).api.live.apply(card.id, { included: state.splashed.map((entry, index) => index) });
+        await wait(800);
+        assert(other.system.attributes.hp.value < before, `the neighbour splashed: ${before} → ${other.system.attributes.hp.value}`);
+        return { name: state.item.name, splash: state.splash, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
+    // targeted.
+    async alliesEffect(scene) {
+        const { actor: piper, token: piperToken } = await creature(scene, "Piper", { type: "character", x: 10, y: 31 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Piped Ally", { x: 11, y: 31 });
+        const { actor: other } = await creature(scene, "Unpiped", { x: 12, y: 31 });
+        const pipes = await give(piper, "Warpipes");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(pipes.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [piperToken.uuid, allyToken.uuid] });
+        await wait(1000);
+        const has = (actor) => actor.itemTypes.effect.some((entry) => entry.name === "Effect: Inspirational Salute");
+        assert(has(piper) && has(ally) && !has(other), `the Effect on the two targeted (${[piper, ally, other].map(has).join(", ")})`);
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Fearless Sash lowers frightened on each creature targeted; Golden-Souled Yang Na lowers the one picked.
+    async lowerOthers(scene) {
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Sash Wearer", { type: "character", x: 14, y: 31 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Sash Ally", { x: 15, y: 31 });
+        for (const actor of [wearer, ally]) await actor.increaseCondition("frightened", { value: 2 });
+        const sash = await give(wearer, "Fearless Sash");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(sash.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [wearerToken.uuid, allyToken.uuid] });
+        await wait(800);
+        const frightened = (actor) => actor.getCondition("frightened")?.value ?? 0;
+        assert(frightened(wearer) === 1 && frightened(ally) === 1, `frightened 2 → 1 on both (${frightened(wearer)}, ${frightened(ally)})`);
+        await wearer.decreaseCondition("frightened", { forceRemove: true });
+        await wearer.increaseCondition("enfeebled", { value: 2 });
+        await wearer.increaseCondition("clumsy", { value: 1 });
+        const tattoo = await give(wearer, "Golden-Souled Yang Na");
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(tattoo.uuid, 0);
+        const pick = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(pick.id, { reduceChoice: 1 });
+        await wait(800);
+        const value = (slug) => wearer.getCondition(slug)?.value ?? 0;
+        assert(value("enfeebled") === 1 && value("clumsy") === 1, `enfeebled 2 → 1, clumsy untouched (${value("enfeebled")}, ${value("clumsy")})`);
+        return { sash: game.messages.get(card.id).getFlag(NS, "card").results, tattoo: game.messages.get(pick.id).getFlag(NS, "card").results };
+    },
+
     // Shadowmist Cape: "You cast Vapor Form on yourself" — cast by the spell module on its user (self filled from the words).
     async shadowmistSelf(scene) {
         const { actor: wearer, token } = await creature(scene, "Mist Wearer", { type: "character", x: 10, y: 25 });
