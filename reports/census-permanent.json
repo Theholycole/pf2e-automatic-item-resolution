@@ -11,11 +11,11 @@
    "none": 726,
    "partial": 96,
    "builtin:focus-point": 45,
-   "builtin:no-effect": 122,
+   "builtin:no-effect": 120,
    "builtin:readied-bonus": 31,
    "note-only": 261,
    "builtin:reroll": 25,
-   "builtin:counteract": 2,
+   "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 31,
    "builtin:zone": 9,
@@ -29,12 +29,12 @@
    "save": 370,
    "cast": 469,
    "item": 602,
-   "none": 915,
+   "none": 913,
    "focus": 45,
    "fortune": 41,
    "reroll": 25,
    "strike": 54,
-   "counteract": 2,
+   "counteract": 4,
    "toggle": 31,
    "zone": 9,
    "action": 17,
@@ -53,7 +53,7 @@
     "none": 487,
     "partial": 42,
     "builtin:focus-point": 43,
-    "builtin:no-effect": 100,
+    "builtin:no-effect": 98,
     "builtin:readied-bonus": 24,
     "note-only": 167,
     "builtin:reroll": 17,
@@ -61,8 +61,8 @@
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:item-action": 9,
-    "builtin:counteract": 1
+    "builtin:counteract": 3,
+    "builtin:item-action": 9
    }
   },
   "weapon": {
@@ -6378,9 +6378,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Commandant's Scabbard",
@@ -9187,9 +9187,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Magnetic Shot (Greater)",

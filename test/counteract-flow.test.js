@@ -68,3 +68,11 @@ test("Surging Serum: finds the Effect granting enfeebled and the plain clumsy; a
     assert.match(card.content, /Effect: Ray of Enfeeblement: 18 against DC 17: a success, counteracted/);
     assert.match(card.content, /Clumsy 1: 18 against DC 25: a failure, not counteracted/);
 });
+
+test("counteracts on an activation: Bracers of Pain's \"the effect causing your condition\" (its Trigger's conditions), Skarja's Heartstone's 1d20+23", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const pain = compileActivations(source("Bracers of Pain"))[0].plan;
+    assert.deepEqual([pain.builtin, pain.item.counteract.modifier, pain.item.counteract.rank, pain.item.counteract.conditions], ["counteract", 22, 6, ["immobilized", "paralyzed", "slowed", "stupefied"]]);
+    const skarja = compileActivations(source("Skarja's Heartstone"))[0].plan;
+    assert.deepEqual([skarja.item.counteract.modifier, skarja.item.counteract.rank, skarja.item.counteract.afflictions], [23, 7, ["disease"]]);
+});

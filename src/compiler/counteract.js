@@ -7,7 +7,7 @@
 
 import { plainText } from "./rows.js";
 
-const CONDITIONS = ["blinded", "clumsy", "confused", "controlled", "dazzled", "deafened", "doomed", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "paralyzed", "petrified", "sickened", "slowed", "stunned", "stupefied"];
+const CONDITIONS = ["blinded", "clumsy", "confused", "controlled", "dazzled", "deafened", "doomed", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "grabbed", "immobilized", "paralyzed", "petrified", "restrained", "sickened", "slowed", "stunned", "stupefied"];
 const CONDITION_WORDS = { paralysis: "paralyzed", petrification: "petrified" };
 const ORDINAL = String.raw`(\d+)(?:st|nd|rd|th)?`;
 
@@ -20,11 +20,13 @@ export function readCounteract(html, { level = 0 } = {}) {
     if (at < 0) return null;
     const said = sentences.slice(at, at + 3).join(" ");
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)
-    if (!/\b(?:on you|affecting you|afflicting you|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification))\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
+    if (!/\b(?:on you|affecting you|afflicting you|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
     if (/\bcan't be counteracted\b|\bwithin \d+ feet\b|\bthe triggering spell\b/i.test(said)) return null;
     const modifier = Number(
         /\+(\d+) counteract modifier\b/i.exec(said)?.[1]
         ?? /\bcounteract (?:check )?modifier (?:of |is )?\+(\d+)/i.exec(said)?.[1]
+        // (Skarja's Heartstone's "counteract modifier 1d20+23".)
+        ?? /\bcounteract (?:check )?modifier (?:of |is )?1d20\s*\+\s*(\d+)/i.exec(said)?.[1]
         ?? /\(counteract \+(\d+)\)/i.exec(said)?.[1]
         ?? /\b(?:a|with a) \+(\d+) modifier\b/i.exec(said)?.[1]
         ?? /\b(?:a )?1d20\s*\+\s*(\d+) modifier\b/i.exec(said)?.[1]
@@ -36,7 +38,10 @@ export function readCounteract(html, { level = 0 } = {}) {
     const rank = stated ? Number(stated[1] ?? stated[2] ?? stated[3]) : Math.max(1, Math.ceil(Number(level) / 2));
     // (What it counteracts: in the sentences that say counteract — Fu Water names them in the one after "to counteract
     // ailments within yourself".)
-    const counteractSentence = sentences.slice(Math.max(0, at - 1), at + 3).filter((sentence) => /\bcounteract|\bremoving\b/i.test(sentence)).join(" ");
+    // (Bracers of Pain's "the effect causing your condition": the conditions its Trigger names, "You gain an effect that makes you
+    // Immobilized, Slowed, Stupefied, or Paralyzed".)
+    const trigger = /\bthe effect causing your condition\b/i.test(said) ? /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "" : "";
+    const counteractSentence = `${sentences.slice(Math.max(0, at - 1), at + 3).filter((sentence) => /\bcounteract|\bremoving\b/i.test(sentence)).join(" ")} ${trigger}`.trim();
     const words = counteractSentence.toLowerCase();
     const conditions = [...new Set([...CONDITIONS.filter((slug) => new RegExp(String.raw`\b${slug}\b`).test(words)), ...Object.entries(CONDITION_WORDS).filter(([word]) => words.includes(word)).map(([, slug]) => slug)])];
     const traits = [...new Set([...[...counteractSentence.matchAll(/\bthe (\w+) trait\b/gi)].map((match) => match[1].toLowerCase()), ...[...counteractSentence.matchAll(/\b(emotion|mental|transmutation|fear) effects?\b/gi)].map((match) => match[1].toLowerCase())])];
