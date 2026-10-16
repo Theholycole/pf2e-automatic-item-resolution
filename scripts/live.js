@@ -173,7 +173,7 @@ function choicesOf(state, root) {
     if (state.kind === "toggle") return { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
-    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0) };
+    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
 }
 
 const APPLY = {
@@ -261,7 +261,7 @@ async function onRequest(data) {
         : state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(state.kind === "expose" && Number.isInteger(data.damageChoice) ? { damageChoice: data.damageChoice } : {}) }
         : state.kind === "toggle" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null }
-        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null };
+        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
@@ -270,11 +270,33 @@ async function onRequest(data) {
 
 // --- Apply ------------------------------------------------------------------------
 
+// The creatures of the token uuids a presser targeted: [{ token, actor, name }].
+async function targetedCreatures(uuids) {
+    const tokens = await Promise.all((Array.isArray(uuids) ? uuids : []).map((uuid) => fromUuid(uuid).catch(() => null)));
+    return tokens.filter((token) => token?.actor).map((token) => ({ token, actor: token.actor, name: token.name ?? token.actor.name }));
+}
+
+// A condition lowered by an amount (PF2e's decreaseCondition, once for each step), or removed ("all").
+async function lowerCondition(actor, name, slug, by) {
+    const before = Number(actor?.getCondition?.(slug)?.value) || 0;
+    if (!before) return `${name} isn't ${slug}: nothing to lower.`;
+    if (by === "all") await actor.decreaseCondition(slug, { forceRemove: true });
+    else for (let step = 0; step < by; step++) await actor.decreaseCondition(slug);
+    const after = Number(actor.getCondition?.(slug)?.value) || 0;
+    return after ? `${name}'s ${slug} lowered to ${after}` : `${name} is no longer ${slug}`;
+}
+
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
 
-async function applyCard(message, { drinker = null, ceremony = false, resistType = null } = {}) {
+async function applyCard(message, { drinker = null, ceremony = false, resistType = null, reduceChoice = null, targets = [] } = {}) {
     let state = stateOf(message);
     if (!state || state.status !== "open") return null;
+    // (A condition it lowers on others: the creatures the presser targets, before anything is applied.)
+    const reduce = state.plan.item?.reduce ?? [];
+    const others = reduce.some((entry) => entry.who === "targets") ? await targetedCreatures(targets) : [];
+    if (reduce.some((entry) => entry.who === "targets") && !others.length) throw new Error("Target the creatures it helps first, then press Apply.");
+    // (One of several conditions, as picked.)
+    if (Number.isInteger(reduceChoice) && reduce.some((entry) => entry.choose?.[reduceChoice])) state = { ...state, reduceChoice };
     // (Its resistance's type, as picked.)
     if (Number.isInteger(resistType) && (state.plan.item?.resist ?? []).some((entry) => entry.choose?.[resistType])) state = { ...state, resistType };
     // (A tea's Tea Ceremony, as ticked.)
@@ -282,6 +304,24 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     const core = game.modules.get(CORE_ID)?.api;
     if (!core) throw new Error("The resolution core isn't active.");
     if (state.drinker !== null && Number.isInteger(drinker) && state.drinkers[drinker]) state = { ...state, drinker };
+    // (Granted to allies: each creature the presser targets in turn, as the drinker — Warpipes' Effect on each.)
+    const allies = state.plan.item?.recipient === "allies" ? await targetedCreatures(targets) : null;
+    if (allies && !allies.length) throw new Error("Target the creatures it helps first, then press Apply.");
+    const lines = [];
+    const each = allies ? allies.map((creature) => ({ ...state, drinkers: [entryOf(creature.token, creature.actor)], drinker: 0 })) : [state];
+    for (const one of each) lines.push(...await applyToRecipient(one, { core, others: allies ? [] : others, reduce: allies ? reduce.filter((entry) => entry.who !== "targets") : reduce }));
+    // (Another's conditions once, when the Effect went to each ally.)
+    if (allies) for (const entry of reduce.filter((candidate) => candidate.who === "targets")) {
+        const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
+        for (const creature of others) lines.push(await lowerCondition(creature.actor, creature.name, slug, entry.by));
+    }
+    const next = { ...state, status: "applied", results: lines.length ? lines : ["Nothing to apply."] };
+    return message.update({ content: cardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// What the item card does for its recipient (its user, the drinker, or one of the allies targeted): the core's changes,
+// then its resistance, Speeds, senses, the conditions it lowers, its flat check and the Tea Ceremony. → lines for the card.
+async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     const recipient = recipientOf(state);
     const user = await creatureOf(state.user);
     const target = await creatureOf(recipient);
@@ -342,16 +382,12 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
         await target.actor.createEmbeddedDocuments("Item", [senseEffectSource(sense, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${senseText(sense)}`);
     }
-    // (The conditions it lowers: Lion Badge's frightened, by 1 — PF2e's decreaseCondition, once for each.)
-    for (const { slug, by } of state.plan.item?.reduce ?? []) {
-        const before = Number(target.actor?.getCondition?.(slug)?.value) || 0;
-        if (!before) {
-            lines.push(`${recipient.name} isn't ${slug}: nothing to lower.`);
-            continue;
-        }
-        for (let step = 0; step < by; step++) await target.actor.decreaseCondition(slug);
-        const after = Number(target.actor.getCondition?.(slug)?.value) || 0;
-        lines.push(after ? `${recipient.name}'s ${slug} lowered to ${after}` : `${recipient.name} is no longer ${slug}`);
+    // (The conditions it lowers: Lion Badge's frightened, by 1 — PF2e's decreaseCondition, once for each, "to 0" removing it;
+    // one of several as picked; another's on each creature the presser targets.)
+    for (const entry of reduce) {
+        const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
+        const creatures = entry.who === "targets" ? others : [{ actor: target.actor, name: recipient.name }];
+        for (const creature of creatures) lines.push(await lowerCondition(creature.actor, creature.name, slug, entry.by));
     }
     // (Its flat check to end persistent damage: PF2e's own recovery roll for each of those types, at the text's DC when it's
     // lower — Quenching Potion's 10 — then the condition's own DC again if it stays.)
@@ -362,8 +398,7 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
         await target.actor.decreaseCondition(slug, { forceRemove: true });
         lines.push(`${recipient.name} is no longer ${slug} (the Tea Ceremony)`);
     }
-    const next = { ...state, status: "applied", results: lines.length ? lines : ["Nothing to apply."] };
-    return message.update({ content: cardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+    return lines;
 }
 
 // Healing through PF2e (its healing bonuses, its "healed" message with undo), then

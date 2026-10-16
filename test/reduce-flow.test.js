@@ -41,8 +41,74 @@ test("the reading: the user's conditions it lowers, and what isn't one", () => {
     // Not one: a later Secondary Effect (Ginger Chew), "if successful" (Moon Radish Soup's counteract), an area, a passive.
     assert.equal(compileItem(source("Ginger Chew")).item.reduce, undefined);
     assert.equal(compileItem(source("Moon Radish Soup")).item.reduce, undefined);
-    assert.deepEqual(readReductions("You and each ally in a 5-foot emanation reduce your Frightened values by 1."), []);
     assert.deepEqual(readReductions("Whenever you become Frightened, reduce your frightened value by 1."), []);
+    assert.deepEqual(readReductions("Success The target reduces its slowed condition by 1."), [], "a save's degree row");
+    assert.deepEqual(readReductions("They can't reduce the value of their sickened condition below 1."), []);
+    assert.deepEqual(readReductions("Creatures in the cone who are Frightened reduce the value of their frightened condition by 1 at the beginning of each turn they start in the area of the cone."), []);
+});
+
+test("the reading: several conditions, one of several, to 0, and another creature's", () => {
+    // "You and each ally in a 5-foot emanation" (Fearless Sash), "the ally's" (Banner of Common Cause), "that creature's"
+    // (Fearcutter): the creatures the presser targets.
+    assert.deepEqual(compileActivations(source("Fearless Sash"))[0].plan.item.reduce, [{ slug: "frightened", by: 1, who: "targets" }]);
+    assert.deepEqual(compileActivations(source("Banner of Common Cause")).find((entry) => entry.activation.name === "Stand Firm").plan.item.reduce, [{ slug: "frightened", by: 1, who: "targets" }]);
+    assert.deepEqual(readReductions("Reduce that creature's frightened value by 1."), [{ slug: "frightened", by: 1, who: "targets" }]);
+    // On yourself or another: the drinker's (Serene Smelling Salts' "that target reduces the value of its frightened condition by 1").
+    assert.deepEqual(compileItem(source("Serene Smelling Salts")).item.reduce, [{ slug: "frightened", by: 1 }]);
+    // Each of a list (Sun Orchid Poultice), one of several (Golden-Souled Yang Na), to 0 (Unending Youth), "by up to 2".
+    assert.deepEqual(compileItem(source("Sun Orchid Poultice")).item.reduce.map((entry) => [entry.slug, entry.by]), [["clumsy", 2], ["drained", 2], ["enfeebled", 2]]);
+    assert.deepEqual(compileActivations(source("Golden-Souled Yang Na"))[0].plan.item.reduce, [{ choose: ["clumsy", "enfeebled", "frightened", "stupefied"], by: 1 }]);
+    assert.deepEqual(compileActivations(source("Unending Youth"))[0].plan.item.reduce, [{ slug: "doomed", by: "all" }]);
+    assert.deepEqual(readReductions("You gain a +2 status bonus to saves against void effects for 10 minutes and reduce your wounded condition by up to 2."), [{ slug: "wounded", by: 2 }]);
+});
+
+test("Fearless Sash: Apply lowers frightened on each creature targeted; with none targeted, nothing is applied", async () => {
+    const ally = foundry.makeActor({ id: "reduce-ally", name: "Ally", owners: ["player"] });
+    foundry.place(ally, 100, 18000);
+    scout.conditions.set("frightened", 2);
+    ally.conditions.set("frightened", 1);
+    const sash = foundry.giveItem(scout, source("Fearless Sash"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: sash.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.match(card.content, /Lowers frightened by 1 on each creature you target/);
+    // (The GM's client says why: "Target the creatures it helps first, then press Apply.")
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [] });
+    await settle();
+    assert.deepEqual([card.flags[MODULE_ID].card.status, scout.conditions.get("frightened")], ["open", 2]);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [scout.token.uuid, ally.token.uuid] });
+    await settle();
+    assert.deepEqual([scout.conditions.get("frightened"), ally.conditions.has("frightened")], [1, false]);
+    assert.match(card.content, /Scout&#39;s frightened lowered to 1/);
+    assert.match(card.content, /Ally is no longer frightened/);
+    scout.conditions.delete("frightened");
+});
+
+test("Golden-Souled Yang Na: the card picks one of four conditions; Unending Youth ends doomed", async () => {
+    scout.conditions.set("enfeebled", 2);
+    scout.conditions.set("clumsy", 1);
+    const tattoo = foundry.giveItem(scout, source("Golden-Souled Yang Na"));
+    let count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: tattoo.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.match(card.content, /data-air-field="reduceChoice"/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", reduceChoice: 1 });
+    await settle();
+    assert.deepEqual([scout.conditions.get("enfeebled"), scout.conditions.get("clumsy")], [1, 1], "enfeebled lowered, clumsy untouched");
+    scout.conditions.delete("enfeebled");
+    scout.conditions.delete("clumsy");
+    scout.conditions.set("doomed", 3);
+    const youth = foundry.giveItem(scout, source("Unending Youth"));
+    count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: youth.uuid, activation: 0, userId: "player" });
+    await settle();
+    const ends = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.match(ends.content, /Ends doomed/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: ends.id, userId: "player" });
+    await settle();
+    assert.equal(scout.conditions.has("doomed"), false);
 });
 
 test("Lion Badge: Apply lowers the user's frightened by 1; with none, the card says so", async () => {

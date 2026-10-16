@@ -25,6 +25,36 @@ export function recipientOf(item) {
     return "user";
 }
 
+// Granted to allies — "You and all allies within a 60-foot emanation gain …", "All allies within 60 feet who can see the
+// crosier receive …", "You grant allies within 100 feet …", "Choose a willing ally you can see within 30 feet", "Up to 5
+// creatures of your choice within 30 feet regain …": the creatures the presser targets (plan.item.recipient "allies"), on
+// the item card. Not an aura Effect (PF2e spreads it from its user) or the wearer's own one of two.
+const ALLIES_GRANT = [
+    /\bYou and (?:all |each )?(?:of )?(?:your )?(?:nearby )?allies\b[^.]*?\b(?:gain|gains|receive|receives|can|regain|regains)\b/i,
+    /\b(?:All|Each) (?:mounted )?(?:allies|ally|allied creatures)\b[^.]*?\b(?:gain|gains|receive|receives|regain|regains)\b/i,
+    /\bYou grant allies\b/i,
+    /\ballies within \d+ feet, granting them\b/i,
+    /(?:^|[.:]\s+)Allies within \d+ feet gain\b/i,
+    /\bChoose (?:a|one|an) (?:willing )?ally\b/i,
+    /\bUp to \w+ (?:willing )?creatures of your choice within\b/i,
+    /\bCreatures of your choosing within\b/i,
+    /\bAn? (?:Medium or smaller )?ally within (?:the|your) banner's aura\b/i,
+    /\bgiving all creatures within \d+ feet\b/i
+];
+export function grantsAllies(text) {
+    // (Its Effect, before any degree rows: Doom Switch's "Critical Success You and your allies gain …" is its attack's.)
+    const effect = String(text ?? "").replace(/^.*?\bEffect\b/s, "").split(/\b(?:Critical )?(?:Success|Failure)\b/)[0];
+    return ALLIES_GRANT.some((pattern) => pattern.test(effect));
+}
+// (A plan for the item card — healing, Effects, an automatic row — whose text grants it to allies.)
+export function alliedRecipient(plan, text) {
+    if (!plan || plan.builtin || plan.allyArea || !["healing", "effect", "check"].includes(plan.resolution?.kind)) return false;
+    if (plan.resolution.kind === "check" && plan.resolution.check?.roll !== "automatic") return false;
+    const labels = (plan.resolution.applications ?? []).map((entry) => String(entry.label ?? ""));
+    if (labels.some((label) => /^Aura:|\((?:Wearer|Self|You)\)$/i.test(label.trim()))) return false;
+    return grantsAllies(text);
+}
+
 // The distinct PF2e effect items the text links: [{ uuid, label }].
 // (A third-party module's own Effect, "@UUID[Compendium.<module>.<pack>.<id>]{Effect: …}" — often without the document
 // type: its uuid in full, marked to be checked against the item's text before it's applied, src/compiler/verify-effect.js.)

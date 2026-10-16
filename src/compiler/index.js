@@ -12,7 +12,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
-import { allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
+import { alliedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
 import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -127,7 +127,9 @@ export function compileItem(given, options = {}) {
     const { resist, speeds, senses, ...rest } = plan;
     const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
-    return guardText(guardValues({ ...rest, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info }), plainText(item?.system?.description?.value));
+    // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
+    const recipient = alliedRecipient(plan, plainText(item?.system?.description?.value)) ? "allies" : plan.otherRecipient ? "drinker" : info.recipient;
+    return guardText(guardValues({ ...rest, ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value));
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success

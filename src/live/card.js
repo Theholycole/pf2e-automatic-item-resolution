@@ -69,12 +69,21 @@ export function applicationFor(plan, change) {
 const UNIT = { rounds: "round", minutes: "minute", hours: "hour", days: "day" };
 const timeText = (duration) => `${duration.value} ${duration.value === 1 ? UNIT[duration.unit] ?? duration.unit : duration.unit}`;
 
+// A condition it lowers, in words: "Lowers frightened by 1", "Ends doomed", "Lowers one of clumsy, enfeebled or
+// stupefied by 1 (picked below)", "… on each creature you target".
+const orList = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} or ${words.at(-1)}` : words[0]);
+export function reductionText({ slug, choose, by, who }) {
+    const what = choose ? `one of ${orList(choose)}` : slug;
+    const done = by === "all" ? `Ends ${what}` : `Lowers ${what} by ${by}`;
+    return `${done}${choose ? " (picked below)" : ""}${who === "targets" ? " on each creature you target" : ""}`;
+}
+
 // What Apply will do, as lines for the card.
 export function previewLines(state) {
     const plan = state.plan;
     const lines = [];
     // (The conditions it lowers, src/compiler/reduce.js.)
-    for (const { slug, by } of plan?.item?.reduce ?? []) lines.push(`Lowers ${slug} by ${by}`);
+    for (const entry of plan?.item?.reduce ?? []) lines.push(reductionText(entry));
     // (Its resistance, src/compiler/rows.js: the card's own Effect.)
     if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
@@ -232,8 +241,15 @@ export function cardHTML(state, { canApply = false } = {}) {
     const resistPick = !choose ? ""
         : open && canApply ? `<p class="aar-actions">Resistance to: <select data-air-field="resistType">${choose.map((type, index) => `<option value="${index}"${index === (state.resistType ?? 0) ? " selected" : ""}>${escape(type)}</option>`).join("")}</select></p>`
             : Number.isInteger(state.resistType) ? `<p class="aar-actions">Resistance to: ${escape(choose[state.resistType] ?? choose[0])}</p>` : "";
+    // (One of several conditions it lowers: a picker. Another's: target the creatures first.)
+    const pickFrom = (state.plan?.item?.reduce ?? []).find((entry) => entry.choose?.length)?.choose ?? null;
+    const reducePick = !pickFrom ? ""
+        : open && canApply ? `<p class="aar-actions">Lower: <select data-air-field="reduceChoice">${pickFrom.map((slug, index) => `<option value="${index}"${index === (state.reduceChoice ?? 0) ? " selected" : ""}>${escape(slug)}</option>`).join("")}</select></p>`
+            : Number.isInteger(state.reduceChoice) ? `<p class="aar-actions">Lower: ${escape(pickFrom[state.reduceChoice] ?? pickFrom[0])}</p>` : "";
+    const forAllies = state.plan?.item?.recipient === "allies" || (state.plan?.item?.reduce ?? []).some((entry) => entry.who === "targets");
+    const targetHint = open && canApply && forAllies ? `<p class="aar-hint">Target the creatures it helps (your own token too, when it helps you), then press Apply.</p>` : "";
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${previewList}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${reducePick}${previewList}${targetHint}${results}${controls}</section>`;
 }

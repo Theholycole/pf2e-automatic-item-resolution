@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 674,
+   "resolves": 679,
    "builtin:cast-spell": 469,
-   "none": 795,
+   "none": 790,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -26,8 +26,8 @@
   "live": {
    "save": 338,
    "cast": 469,
-   "item": 597,
-   "none": 991,
+   "item": 602,
+   "none": 986,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -44,9 +44,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 410,
+    "resolves": 414,
     "builtin:cast-spell": 340,
-    "none": 521,
+    "none": 517,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 21,
@@ -63,8 +63,8 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 144,
-    "none": 130,
+    "resolves": 145,
+    "none": 129,
     "partial": 23,
     "note-only": 40,
     "builtin:cast-spell": 83,
@@ -1820,9 +1820,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Crown of the Companion",
@@ -12292,9 +12292,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Shadefield Knife",
@@ -19266,9 +19266,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Shining Symbol (Major)",
@@ -20113,9 +20113,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Midday Lantern (Greater)",
@@ -26944,9 +26944,9 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Fearcutter",
