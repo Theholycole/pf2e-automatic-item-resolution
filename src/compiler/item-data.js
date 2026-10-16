@@ -22,7 +22,8 @@ function arithmetic(expression) {
 }
 
 export function withItemData(html, item) {
-    let text = String(html ?? "");
+    // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
+    let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
     if (!/@item\./.test(text) && !/\bpotency rune\b/i.test(text) && !DAMAGE_SAVE.test(text)) return text;
     for (const [path, read] of Object.entries(PATHS)) text = text.split(path).join(String(read(item)));
     // (A dice count that's now arithmetic: "((1 + 1) * 2)d6" → "4d6".)

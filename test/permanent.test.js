@@ -146,3 +146,8 @@ test("activated ammunition whose own PF2e rules do it: a builtin with what they 
     assert.equal(routeOf(acid.plan), null);
 });
 
+test("a save link written without its \"dc:\" reads as the DC it means", async () => {
+    const { withItemData } = await import("../src/compiler/item-data.js");
+    assert.equal(withItemData("<p>Creatures in the cone must succeed at a @Check[will|21] save or be Stunned 1.</p>", {}), "<p>Creatures in the cone must succeed at a @Check[will|dc:21] save or be Stunned 1.</p>");
+});
+
