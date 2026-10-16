@@ -62,7 +62,13 @@ const CHANGES = [
     // your saving throw as if you failed the check rather than critically failed the check".)
     [/\bA failed (?:check|save|saving throw|roll) becomes a success\b/i, ["failure", "success"]],
     [/\ba critical failure becomes a failure\b/i, ["criticalFailure", "failure"]],
-    [/\bTreat your [\w ]*?(?:saving throw|save|check|roll) as if you failed (?:the check )?rather than critically failed\b/i, ["criticalFailure", "failure"]]
+    [/\bTreat your [\w ]*?(?:saving throw|save|check|roll) as if you failed (?:the check )?rather than critically failed\b/i, ["criticalFailure", "failure"]],
+    // (Laurel of the Empath's "Treat the failed saving throw as a success"; The Paladin's "Adjust the result of your saving throw up
+    // by one degree of success" — each degree one better.)
+    [/\bTreat the failed (?:saving throw|save|check|roll) as a success\b/i, ["failure", "success"]],
+    [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["criticalFailure", "failure"]],
+    [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["failure", "success"]],
+    [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["success", "criticalSuccess"]]
 ];
 const RAISE_BONUS = /\b(?:You gain an? \+(\d+) (circumstance|status|item) bonus to (?:your|the) [\w ]*?(?:attack roll|check|save|saving throw)|Roll (\d+d\d+) and add the result to your [\w ]*?(?:check|save|attack roll|roll) as an? (circumstance|status|item) bonus)\b[^.]*\b(?:possibly turning|which might|might improve|could turn)\b/i;
 const SKILL_NAMES = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery", "perception"];

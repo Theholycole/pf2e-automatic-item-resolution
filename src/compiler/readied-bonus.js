@@ -19,6 +19,7 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^
 // "You gain a +2 status bonus to …", "giving you a +4 status bonus to your AC and saves against the effect", "you gain a
 // +1 circumstance bonus against the triggering save".
 const GAIN = /\b(?:you gain|giving you|you get|granting you|grants? you|gaining) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
+const RESIST_AND_BONUS = /\b(?:granting you|you gain) resistance (\d+) (?:against|to) (acid|cold|electricity|fire|sonic|force|mental|poison|spirit|vitality|void) and an? \+(\d+) (circumstance|status|item) bonus (?:on|to) (?:your )?([^;.]+?) against the [\w ]*?effect\b/i;
 // ("… and gain resistance 2 to damage", Sparkwarden; "… resistance 2 to the triggering damage", Warding Tattoo.)
 const RESIST = /\b(?:and )?(?:gain )?resistance (\d+) to (?:all |the triggering )?damage\b/i;
 
@@ -69,6 +70,14 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
     if ((triggered && AFTER_ROLL.test(triggered)) || TURNS_ROLL.test(plain)) return null;
     const body = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
     const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    // (A resistance and a bonus together, against the effect that triggered it: Ring of Torag's "granting you resistance 5 against
+    // fire and a +1 status bonus on your AC or saving throw against the fire effect targeting you" — both, for this turn.)
+    const both = triggered ? sentences.map((sentence) => [sentence, RESIST_AND_BONUS.exec(sentence)]).find(([, match]) => match) : null;
+    if (both) {
+        const [sentence, match] = both;
+        const selectors = selectorsOf(match[5]);
+        if (selectors.length) return { modifiers: selectors.map((selector) => ({ selector, type: match[4].toLowerCase(), value: Number(match[3]) })), resistance: { type: match[2].toLowerCase(), value: Number(match[1]) }, duration: durationOf(sentence), spend: [], notes: [`Only against what triggered it: ${sentence}`] };
+    }
     for (const [index, sentence] of sentences.entries()) {
         const match = GAIN.exec(sentence);
         if (!match) continue;

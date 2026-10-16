@@ -358,7 +358,8 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     // (A condition it lowers on others: the creatures the presser targets, before anything is applied.)
     const reduce = state.plan.item?.reduce ?? [];
     const others = reduce.some((entry) => entry.who === "targets") ? await targetedCreatures(targets) : [];
-    if (reduce.some((entry) => entry.who === "targets") && !others.length) throw new Error("Target the creatures it helps first, then press Apply.");
+    // ("Creatures of your choice": none targeted is its user alone.)
+    if (reduce.some((entry) => entry.who === "targets" && !entry.optional) && !others.length) throw new Error("Target the creatures it helps first, then press Apply.");
     // (One of several conditions, as picked.)
     if (Number.isInteger(reduceChoice) && reduce.some((entry) => entry.choose?.[reduceChoice])) state = { ...state, reduceChoice };
     // (Its resistance's type, as picked.)

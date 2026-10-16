@@ -74,10 +74,10 @@ const timeText = (duration) => `${duration.value} ${duration.value === 1 ? UNIT[
 // A condition it lowers, in words: "Lowers frightened by 1", "Ends doomed", "Lowers one of clumsy, enfeebled or
 // stupefied by 1 (picked below)", "… on each creature you target".
 const orList = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} or ${words.at(-1)}` : words[0]);
-export function reductionText({ slug, choose, by, who }) {
+export function reductionText({ slug, choose, by, who, optional }) {
     const what = choose ? `one of ${orList(choose)}` : slug;
     const done = by === "all" ? `Ends ${what}` : `Lowers ${what} by ${by}`;
-    return `${done}${choose ? " (picked below)" : ""}${who === "targets" ? " on each creature you target" : ""}`;
+    return `${done}${choose ? " (picked below)" : ""}${who === "targets" ? ` on each creature you target${optional ? " (if any)" : ""}` : ""}`;
 }
 
 // What Apply will do, as lines for the card.
@@ -287,7 +287,9 @@ export function cardHTML(state, { canApply = false } = {}) {
         : !state.weapons.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no weapon for it.</p>` : "")
             : open && canApply ? `<p class="aar-actions">Weapon: <select data-air-field="runeWeapon">${state.weapons.map((weapon, index) => `<option value="${index}"${index === (state.runeWeapon ?? 0) ? " selected" : ""}>${escape(weapon.name)}</option>`).join("")}</select></p>`
                 : Number.isInteger(state.runeWeapon) ? `<p class="aar-actions">Weapon: ${escape(state.weapons[state.runeWeapon]?.name ?? "")}</p>` : "";
-    const targetHint = open && canApply && forAllies ? `<p class="aar-hint">Target the creatures it helps (your own token too, when it helps you), then press Apply.</p>` : "";
+    // ("Creatures of your choice", none needed: Cayden's Tankard ends its user's own either way.)
+    const optional = (state.plan?.item?.reduce ?? []).filter((entry) => entry.who === "targets").every((entry) => entry.optional) && state.plan?.item?.recipient !== "targets";
+    const targetHint = open && canApply && forAllies ? `<p class="aar-hint">${optional ? "Target the other creatures it helps, if any" : "Target the creatures it helps (your own token too, when it helps you)"}, then press Apply.</p>` : "";
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";

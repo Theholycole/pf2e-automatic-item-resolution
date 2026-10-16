@@ -136,3 +136,11 @@ test("a change to the roll already made: its degree changed, or its total raised
     assert.match(card.content, /a failure becomes a success\./);
     assert.match(card.content, /the GM uses this result/);
 });
+
+test("degree changes in more words: The Paladin's \"up by one degree of success\", Laurel of the Empath's \"Treat the failed saving throw as a success\"", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const paladin = compileActivations(source("The Paladin")).find((entry) => entry.plan?.builtin === "reroll").plan;
+    assert.deepEqual([paladin.reroll.what, paladin.reroll.raise.change], ["save", { criticalFailure: "failure", failure: "success", success: "criticalSuccess" }]);
+    const laurel = compileActivations(source("Laurel of the Empath")).find((entry) => entry.plan?.builtin === "reroll").plan;
+    assert.deepEqual(laurel.reroll.raise.change, { failure: "success" });
+});

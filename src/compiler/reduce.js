@@ -4,7 +4,8 @@
 //   { slug, by }                     its user's or drinker's condition, lowered by that much (by "all": "to 0", Unending Youth);
 //   { choose: [slugs], by }          one of them, the card's picker (Golden-Souled Yang Na's "your clumsy, enfeebled,
 //                                    frightened, or stupefied condition by 1");
-//   { slug, by, who: "targets" }     the creatures the presser targets: an ally or a creature (Banner of Common Cause's
+//   { slug, by, who: "targets", optional? } the creatures the presser targets (optional: none is fine, "creatures of your choice"):
+//                                    an ally or a creature (Banner of Common Cause's
 //                                    "Reduce the ally's frightened condition by 1", Fearcutter's "that creature's"), or
 //                                    "You and each ally in a 5-foot emanation" (Fearless Sash).
 // A list with "and" lowers each (Sun Orchid Poultice's "your clumsy, drained, and enfeebled condition values by 2"). The
@@ -39,6 +40,10 @@ const EITHER = /\b(?:on|to) yourself or (?:an?|another|one) /i;
 // (The condition its Trigger names: Deathless's "Trigger You gain the Doomed or Wounded condition … You reduce the value of the
 // triggering condition by 1" — the one of them its user gained, the card's picker.)
 const TRIGGERING = /\breduc(?:e|es|ing) the value of the triggering condition by (\d|one|two|three)\b/i;
+// (Ended outright, on its user and the creatures it picks: Cayden's Tankard's "ending the controlled, Grabbed, Immobilized,
+// Paralyzed, Restrained, and slowed conditions on yourself and creatures of your choice within 120 feet of you" — each, "all".)
+const CONDITIONS = "blinded|clumsy|confused|controlled|dazzled|deafened|doomed|drained|enfeebled|fascinated|fatigued|fleeing|frightened|grabbed|immobilized|off-guard|paralyzed|prone|restrained|sickened|slowed|stunned|stupefied|wounded";
+const ENDING = new RegExp(String.raw`\bend(?:s|ing)? the ((?:(?:${CONDITIONS}),\s*)*(?:and )?(?:${CONDITIONS})) conditions on yourself and (?:creatures|allies) of your choice within \d+ feet\b`, "i");
 const triggerOf = (text) => /\bTrigger\b(.*?)(?:\bEffect\b|$)/s.exec(String(text ?? ""))?.[1] ?? "";
 // (Its use only: not a later "Secondary Effect" — Ginger Chew's "Reduce your sickened value by 1" is for when it's used again.)
 const ownUse = (text) => String(text ?? "").split(/\bSecondary Effect\b/)[0];
@@ -59,6 +64,11 @@ export function readReductions(text) {
         const by = amount(triggering[1]);
         if (slugs.length === 1) add({ slug: slugs[0], by });
         else if (slugs.length > 1) add({ choose: slugs, by });
+    }
+    const ending = ENDING.exec(ownUse(text));
+    if (ending) for (const slug of ending[1].toLowerCase().match(new RegExp(CONDITIONS, "g"))) {
+        add({ slug, by: "all" });
+        add({ slug, by: "all", who: "targets", optional: true });
     }
     for (const sentence of ownUse(text).split(/(?<=[.!?])\s+(?=[A-Z])/)) {
         if (TIMED.test(sentence) || DEGREE_ROW.test(sentence.trim())) continue;

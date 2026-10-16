@@ -207,3 +207,12 @@ test("Trusty Helmet's \"The value of your stupefied condition is decreased by 1\
     assert.deepEqual(helmet.item.reduce, [{ slug: "stupefied", by: 1 }]);
     assert.deepEqual(readReductions("The value of your clumsy condition is reduced by 2."), [{ slug: "clumsy", by: 2 }]);
 });
+
+test("Cayden's Tankard: the conditions it ends on its user and on any creatures targeted (none needed)", async () => {
+    const tankard = compileActivations(source("Cayden's Tankard"))[1].plan;
+    const slugs = ["controlled", "grabbed", "immobilized", "paralyzed", "restrained", "slowed"];
+    assert.deepEqual(tankard.item.reduce.filter((entry) => !entry.who).map((entry) => [entry.slug, entry.by]), slugs.map((slug) => [slug, "all"]));
+    assert.deepEqual(tankard.item.reduce.filter((entry) => entry.who === "targets").map((entry) => [entry.slug, entry.optional]), slugs.map((slug) => [slug, true]));
+    const { reductionText } = await import("../src/live/card.js");
+    assert.equal(reductionText({ slug: "grabbed", by: "all", who: "targets", optional: true }), "Ends grabbed on each creature you target (if any)");
+});

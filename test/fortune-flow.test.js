@@ -216,3 +216,11 @@ test("\"resistance 2 to the triggering damage\" beside the bonus (Warding Tattoo
     const tattoo = compileActivations(source("Warding Tattoo")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
     assert.deepEqual(tattoo.bonus.resistance, { type: "all-damage", value: 2 });
 });
+
+test("Ring of Torag: resistance 5 against fire and +1 to AC and saves, together, against the fire effect that triggered it", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const ring = compileActivations(source("Ring of Torag")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.deepEqual(ring.bonus.modifiers.map((modifier) => `${modifier.selector} +${modifier.value} ${modifier.type}`), ["ac +1 status", "saving-throw +1 status"]);
+    assert.deepEqual(ring.bonus.resistance, { type: "fire", value: 5 });
+    assert.match(ring.notes[0], /^Only against what triggered it/);
+});
