@@ -687,6 +687,23 @@ export const cases = {
         return { total: roll.rolls[0]?.total };
     },
 
+    // Four-Ways Dogslicer's Gem Twist: the toggle card's Set has PF2e switch the item's gem-twist toggle to frost.
+    async gemTwist(scene) {
+        const { actor: wielder } = await creature(scene, "Gem Twister", { type: "character", x: 18, y: 14 });
+        const blade = await give(wielder, "Four-Ways Dogslicer");
+        const index = (await import(`/modules/${NS}/src/compiler/permanent.js`)).compileActivations(blade).findIndex((entry) => entry.plan?.builtin === "modes");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, index);
+        const card = await messageAfter(since, itemCard("toggle"), { what: "the toggle card" });
+        await game.modules.get(NS).api.live.apply(card.id, { choice: 1 });
+        await wait(800);
+        const fresh = wielder.items.get(blade.id);
+        const rule = (fresh.system.rules ?? []).find((entry) => entry.key === "RollOption" && entry.option === "gem-twist");
+        const on = wielder.getRollOptions?.(["all"]) ?? [];
+        assert(rule?.selection === "frost" || on.includes("gem-twist:frost"), `frost selected (${rule?.selection}; ${on.filter((option) => option.startsWith("gem-twist")).join(", ")})`);
+        return { selection: rule?.selection ?? null, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Umbral Wings: a fly Speed equal to the land Speed until the end of the next turn (PF2e's BaseSpeed on PF2e 8.6's speeds).
     async umbralFly(scene) {
         const { actor: flier } = await creature(scene, "Umbral Flier", { x: 14, y: 14 });
