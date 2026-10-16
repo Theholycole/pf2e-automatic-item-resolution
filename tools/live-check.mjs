@@ -1456,6 +1456,54 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { drinker: index });
         await until(() => wolf.hasCondition("quickened"), "the wolf quickened");
         return { quickened: true, ranger: rangerToken.id };
+    },
+
+    // Grim Trophy: one Demoralize at two foes, PF2e's at the first and the same roll against the second's Will DC (both get frightened
+    // on a success).
+    async grimTrophy(scene) {
+        const { actor: brute } = await creature(scene, "Trophy Brute", { type: "character", x: 10, y: 14 });
+        const { actor: one, token: oneToken } = await creature(scene, "Trophy Foe One", { x: 11, y: 14, alliance: "opposition", save: -10 });
+        const { actor: two, token: twoToken } = await creature(scene, "Trophy Foe Two", { x: 11, y: 15, alliance: "opposition", save: -10 });
+        const trophy = await give(brute, "Grim Trophy");
+        const since = Date.now();
+        await trophy.consume();
+        const card = await messageAfter(since, (message) => message.getFlag(NS, "card")?.kind === "item-action", { what: "the action card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [oneToken.uuid, twoToken.uuid] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "applied", { timeout: 15000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(results.some((line) => /against PFTEST ITEM Trophy Foe Two \(DC \d+\)/.test(line)), `the second compared (${JSON.stringify(results)})`);
+        return { results, one: one.getCondition("frightened")?.value ?? 0, two: two.getCondition("frightened")?.value ?? 0 };
+    },
+
+    // Putrescent Glob: its Fortitude save card at DC 23 for the creature targeted; Taljjae Tassel lends Grievous to the weapon picked;
+    // Ensnaring Disk's card is PF2e's Disarm with +2.
+    async talismansAfterHit(scene) {
+        const { actor: user } = await creature(scene, "Talisman User", { type: "character", x: 14, y: 14 });
+        const { token: foeToken } = await creature(scene, "Talisman Foe", { x: 15, y: 14, alliance: "opposition" });
+        const sword = await give(user, "Longsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const glob = await give(user, "Putrescent Glob");
+        let since = Date.now();
+        await glob.consume();
+        const globCard = await messageAfter(since, itemCard("expose"), { what: "the glob's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(globCard.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && check.against.value === 23, `Fortitude DC 23 (${JSON.stringify(check)})`);
+        const tassel = await give(user, "Taljjae Tassel");
+        since = Date.now();
+        await tassel.consume();
+        const tasselCard = await messageAfter(since, itemCard("item"), { what: "the tassel's card" });
+        await game.modules.get(NS).api.live.apply(tasselCard.id, { runeWeapon: 0 });
+        await until(() => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "AdjustStrike" && rule.value === "grievous")), "Grievous on the sword");
+        const disk = await give(user, "Ensnaring Disk");
+        since = Date.now();
+        await disk.consume();
+        const diskCard = await messageAfter(since, (message) => message.getFlag(NS, "card")?.kind === "item-action", { what: "the disk's card" });
+        const action = diskCard.getFlag(NS, "card").plan.action;
+        assert(action.slug === "disarm" && action.bonus?.value === 2, `Disarm +2 (${JSON.stringify(action)})`);
+        return { save: check, disarm: action.bonus };
     }
 };
 
