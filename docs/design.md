@@ -14,8 +14,8 @@ The sheet's Activate button now sits right after the item's name.
 From [census.md](census.md) (PF2e 8.6.1 packs):
 
 - **1,724** consumables. **238** are the spell module's (scrolls, wands, catalysts, spell gems, the catalysts filed as "other", and what its claims() reads), so this module handles **1,486**.
-- **701** (47%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added the rest. **37** more are partial and **239** (16%) get only a note Effect; both are counted apart. **32** are casts, for the spell module. **1,124** get a live card.
-- **2,593** activations of permanent items: **1,614** get a live card (Activate buttons on the sheet), **783** have nothing read yet, and **24** are ammunition whose own PF2e rules do it.
+- **701** (47%) compile to a plan the core resolves with no gaps. It was 532 with the ability compiler alone; the item's own readings below added the rest. **37** more are partial and **239** (16%) get only a note Effect; both are counted apart. **32** are casts, for the spell module. **1,132** get a live card.
+- **2,593** activations of permanent items: **1,617** get a live card (Activate buttons on the sheet), **780** have nothing read yet, and **24** are ammunition whose own PF2e rules do it.
 - **171** bombs are `weapon` items (group `bomb`). PF2e already Strikes with them (batch 2).
 - Batch 1 covers **400** items: potion 183, elixir 149, mutagen 68. When the design was proposed, 236 of them resolved, 35 were builtins and 129 had no plan. [census.md](census.md) has today's counts.
 
