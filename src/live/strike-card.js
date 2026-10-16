@@ -39,6 +39,7 @@ export function strikeLines(plan) {
         strike.attack ? `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll` : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
+        strike.runes ? `Its weapon is a +${strike.runes.potency} ${["", "", "greater ", "major "][strike.runes.striking] ?? ""}striking weapon for it (PF2e keeps the weapon's own runes when they're better)` : null,
         ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage`),
         hit ? `On a hit: ${hit}` : null,
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
@@ -70,7 +71,7 @@ export function strikeCardHTML(state, { canApply = false } = {}) {
 
 // The readied Strike's PF2e rules: its extra dice on that Strike's damage, its bonus on that Strike's attack roll, its
 // damage type. The Strike is the item's own weapon (by its id on the actor), an unarmed one, or any melee or ranged one.
-export function strikeRules(plan, { weaponId = null, label = null } = {}) {
+export function strikeRules(plan, { weaponId = null, ammoId = null, label = null } = {}) {
     const strike = plan.strike ?? {};
     const range = strike.range ?? null;
     const damageSelector = weaponId ? (range ? `${weaponId}-${range}-damage` : `${weaponId}-damage`) : strike.unarmed ? "unarmed-damage" : range ? `${range}-strike-damage` : "strike-damage";
@@ -89,6 +90,10 @@ export function strikeRules(plan, { weaponId = null, label = null } = {}) {
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });
     if (strike.degree) rules.push({ key: "AdjustDegreeOfSuccess", selector: attackSelector, adjustment: strike.degree, ...(label ? { label } : {}), ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
+    // (Its runes for the Strike, Weapon Shot's: PF2e's rune upgrade on the weapon loaded with it — the better of the two.)
+    if (strike.runes) for (const [property, value] of [["runes-potency", strike.runes.potency], ["runes-striking", strike.runes.striking]]) {
+        if (value) rules.push({ key: "ItemAlteration", itemType: "weapon", mode: "upgrade", property, value, predicate: ammoId ? [`item:ammo:id:${ammoId}`] : range ? [`item:${range}`] : [] });
+    }
     return rules;
 }
 
@@ -111,7 +116,7 @@ export function strikeEffectSource({ state, img = null, worldTime = 0, initiativ
             description: { value: `<p>${escape(strikeHint(state.plan, "Its user"))} ${escape(strikeLines(state.plan).join("; "))}.</p>` },
             duration: { ...(DURATIONS[strike.until] ?? DURATIONS["turn-end"]), sustained: false },
             start: { value: worldTime, initiative },
-            rules: strikeRules(state.plan, { weaponId, label: state.item.name })
+            rules: strikeRules(state.plan, { weaponId, ammoId, label: state.item.name })
         }
     };
 }

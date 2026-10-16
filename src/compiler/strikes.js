@@ -94,6 +94,10 @@ const AMMO_HITS = [
 ];
 const isAmmo = (item) => item?.type === "ammo" || (item?.system?.traits?.value ?? []).includes("ammunition");
 function ammoStrike(text) {
+    // (The Strike that fires it, not only its hit: Weapon Shot's "For the Strike with which you consume the ammunition, the
+    // weapon is a +1 striking weapon …" — its runes for that Strike's attack and damage, src/compiler/strike-damage.js.)
+    const firing = /\bFor the Strike with which you consume the ammunition, /i.exec(text);
+    if (firing) return { range: "ranged", unarmed: false, after: text.slice(firing.index), sentence: null, next: false, missKeeps: false, uses: 1, hit: false, ammo: true };
     let after = text;
     for (const [pattern, replacement] of AMMO_HITS) after = after.replace(pattern, replacement);
     if (after === text || !/\bOn a hit\b/.test(after)) return null;
@@ -131,7 +135,7 @@ export function compileStrike(item, base) {
         return hasRow(row.success) || hasRow(row.criticalSuccess) || Boolean(save && /^(?:On a hit|If (?:you|it|the Strike) hits?)\b[^.]*\b(?:save|saving throw)\b/i.test(sentence));
     };
     const read = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
-    const extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration) } : read;
+    const extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration || read.runes) } : read;
     if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read) return null;
     const anyRider = hasRow(riders.success) || hasRow(riders.criticalSuccess);
     // (A trigger's Strike that already hit — Spore Sap's "Trigger You successfully Strike a creature with the spore sap Effect
@@ -156,6 +160,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read }) {
               attack: extras.attack,
               alteration: extras.alteration,
               ...(extras.degree ? { degree: extras.degree } : {}),
+              ...(extras.runes ? { runes: extras.runes } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),

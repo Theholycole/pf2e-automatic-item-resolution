@@ -277,3 +277,14 @@ test("a push on the Strike's hit: the core's forced movement, away from its user
     assert.deepEqual(hitRiders("On a critical hit, the creature is knocked back 10 feet.").criticalSuccess.forcedMovement, { kind: "push", distance: 10 });
     assert.equal(hitRiders("If you hit and deal damage, you also reposition the creature 5 feet.").success.forcedMovement, undefined);
 });
+
+test("Weapon Shot: the weapon that fires it is a +2 striking weapon for that Strike (PF2e's rune upgrade, on the weapon loaded with it)", () => {
+    const [shot, ghostly] = compileActivations(source("Weapon Shot (Moderate)"));
+    assert.deepEqual([shot.plan.strike.ammo, shot.plan.strike.runes], [true, { potency: 2, striking: 1 }]);
+    assert.match(strikeLines(shot.plan).join(" | "), /Its weapon is a \+2 striking weapon for it/);
+    const rules = strikeRules(shot.plan, { ammoId: "shot1", label: "Weapon Shot (Moderate)" });
+    assert.deepEqual(rules.map((rule) => [rule.key, rule.property, rule.value, rule.predicate]), [["ItemAlteration", "runes-potency", 2, ["item:ammo:id:shot1"]], ["ItemAlteration", "runes-striking", 1, ["item:ammo:id:shot1"]]]);
+    assert.deepEqual(compileActivations(source("Weapon Shot (Major)"))[0].plan.strike.runes, { potency: 3, striking: 2 });
+    // Its ghostly weapon of force: not read (no weapon of the user's fires it).
+    assert.equal(ghostly.plan, null);
+});

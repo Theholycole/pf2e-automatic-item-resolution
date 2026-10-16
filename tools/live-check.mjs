@@ -851,6 +851,34 @@ export const cases = {
         return { name: state.item.name, splash: state.splash, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Weapon Shot (Lesser): its activation readies the shortbow's next Strike with it, the bow a +1 striking weapon for it
+    // (PF2e's rune upgrade): +1 item to the attack roll, two damage dice.
+    async weaponShot(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Shot Archer", { type: "character", x: 10, y: 7 });
+        const { token: foeToken } = await creature(scene, "Shot Target", { x: 14, y: 7, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const shot = await give(archer, "Weapon Shot (Lesser)");
+        await shot.update({ "system.quantity": 3 });
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": shot.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(shot.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(800);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(archer, bow);
+        const potency = (attack.flags.pf2e.modifiers ?? []).find((modifier) => modifier.type === "item" && modifier.modifier === 1 && modifier.enabled !== false);
+        assert(potency, `+1 item to the attack roll (${(attack.flags.pf2e.modifiers ?? []).map((modifier) => `${modifier.label} ${modifier.modifier}`).join(", ")})`);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        since = Date.now();
+        await action.damage({ event: shift() });
+        const damage = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "damage roll" });
+        const formula = damage.rolls[0]?.formula ?? "";
+        assert(/\b2d6\b/.test(formula), `two damage dice (${formula})`);
+        return { formula, potency: potency.label };
+    },
+
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
     // targeted.
     async alliesEffect(scene) {

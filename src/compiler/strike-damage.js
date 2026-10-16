@@ -27,6 +27,9 @@ const ATTACK = /\+(\d+) (status|circumstance|item) bonus to (?:this Strike|the S
 const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike is (${TYPES}) damage\b|\b(?:It|The Strike|This Strike|The ammunition) deals (${TYPES}) damage instead of its (?:normal|usual) damage type\b`, "i");
 // "Your outcome is one degree of success better than what you rolled": PF2e's AdjustDegreeOfSuccess on the attack roll.
 const BETTER = /\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i;
+// (Its runes for the Strike: Weapon Shot's "For the Strike with which you consume the ammunition, the weapon is a +1
+// striking weapon, instead of those of the weapon firing it" — potency 1, striking 1; "+2 greater striking" — 2, 2.)
+const RUNES = /\bthe weapon is a \+(\d) (?:(greater|major) )?striking weapon\s*,? instead of (?:those|the runes) of the weapon firing it\b/i;
 // "If the club has a greater striking rune, increase the additional damage to 2d6."
 const RUNE_STEP = /\bIf the [\w' -]+? has an? (greater|major) striking rune, increase the additional damage to (\d+)d(\d+)\./gi;
 // Damage that isn't this Strike's own, or only against some creatures ("to creatures with void healing", "per damage die",
@@ -77,6 +80,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let attack = null;
     let alteration = null;
     let degree = null;
+    let runes = null;
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
     const striking = Number(item?.system?.runes?.striking) || 0;
@@ -109,6 +113,11 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
             alteration = (altered[1] ?? altered[2]).toLowerCase();
             rest = rest.replace(altered[0], " ");
         }
+        const upgraded = RUNES.exec(rest);
+        if (upgraded) {
+            runes = { potency: Number(upgraded[1]), striking: { greater: 2, major: 3 }[upgraded[2]?.toLowerCase()] ?? 1 };
+            rest = rest.replace(upgraded[0], " ");
+        }
         const better = BETTER.exec(rest);
         if (better) {
             degree = { all: "one-degree-better" };
@@ -122,5 +131,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     // (The rune step in place of the first die, for the item's rune.)
     const step = steps.filter((entry) => striking >= entry.rune).sort((a, b) => b.rune - a.rune)[0];
     if (step && dice.length) dice[0] = { ...dice[0], diceNumber: step.count, dieSize: `d${step.faces}` };
-    return { dice, attack, alteration, degree, notes, read: Boolean(dice.length || attack || alteration || degree) };
+    return { dice, attack, alteration, degree, ...(runes ? { runes } : {}), notes, read: Boolean(dice.length || attack || alteration || degree || runes) };
 }

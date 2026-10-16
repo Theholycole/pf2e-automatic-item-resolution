@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 679,
+   "resolves": 683,
    "builtin:cast-spell": 469,
-   "none": 790,
+   "none": 786,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -27,11 +27,11 @@
    "save": 338,
    "cast": 469,
    "item": 602,
-   "none": 986,
+   "none": 982,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
-   "strike": 43,
+   "strike": 47,
    "toggle": 26,
    "zone": 9,
    "action": 11,
@@ -81,9 +81,9 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 63,
+    "none": 59,
     "partial": 13,
-    "resolves": 36,
+    "resolves": 40,
     "builtin:pf2e-rules": 24,
     "note-only": 14,
     "builtin:no-effect": 2,
@@ -4427,9 +4427,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Weapon Shot (Moderate)",
@@ -12193,9 +12193,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Weapon Shot (Greater)",
@@ -21235,9 +21235,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Weapon Shot (Major)",
@@ -21719,9 +21719,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Weapon Shot (Lesser)",
