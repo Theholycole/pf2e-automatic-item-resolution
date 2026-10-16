@@ -88,8 +88,9 @@ function selfConditions(sentences, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
         if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against|next time)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow)\w*\b[^,]*,/i, ""))) continue;
         // ("until you Dismiss the Activation": until it's removed.)
-        const dismissed = /\buntil you Dismiss\b/i.test(sentence);
-        const timed = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence) || dismissed;
+        const stated = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence);
+        const dismissed = !stated && /\buntil you Dismiss\b/i.test(sentence);
+        const timed = stated || dismissed;
         if (!timed) continue;
         const until = UNTIL_NEXT_TURN.exec(sentence);
         const duration = until ? { mode: "fixed", value: 1, unit: "rounds", expiry: /\bend\b/i.test(until[0]) ? "turn-end" : "turn-start", anchor: "source-turn" } : durationIn(sentence, null);
@@ -102,7 +103,8 @@ function selfConditions(sentences, used = new Set()) {
             // (Only to some: "invisible to scrying magic", "Invisible to creatures with the fiend … trait" — not the condition.)
             if (/^\s*(?:to|from|against)\b/i.test(sentence.slice(match.index + match[0].length))) continue;
             // (Another way it ends, "or until you use a hostile action, whichever comes first", stays on the note.)
-            if (!/\bor until\b|\bwhichever comes first\b/i.test(sentence)) used.add(index);
+            // ("or until you Dismiss the activation" is removing it: not another way.)
+            if (!/\bor until (?!you Dismiss)/i.test(sentence)) used.add(index);
             effects.push({ kind: "condition", slug, value: value ? Number(value) : null, duration: slug === "prone" || dismissed ? null : duration });
         }
     }
