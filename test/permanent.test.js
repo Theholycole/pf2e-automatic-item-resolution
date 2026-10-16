@@ -182,3 +182,21 @@ test("Lacquered Waist Drum: a damage save in brackets as basic; its conditions o
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => [joy.resolution.outcomes[degree].effects.length, joy.resolution.outcomes[degree].noteEffects.map((note) => note.text)]), [[0, ["Only a creature with the ghost trait: Stupefied 1. Apply it by hand."]], [0, ["Only a creature with the ghost trait: Stupefied 2. Apply it by hand."]]]);
     assert.equal(joy.partial, true);
 });
+
+test("the Harrow Court's damage and healing for its owner's level; The Survivor's and The Midwife's healing", async () => {
+    const { byOwnerLevel } = await import("../src/compiler/item-data.js");
+    const at = (name, level) => compileActivations({ ...item(name), ownerLevel: level }, { spellEffects })[0].plan;
+    assert.deepEqual([12, 15, 18, 20].map((level) => at("The Trumpet", level).resolution.sharedDamage.components[0].formula), ["14d6[sonic]", "18d6[sonic]", "20d6[sonic]", "22d6[sonic]"]);
+    assert.equal(at("The Desert", 17).resolution.sharedDamage.components[0].formula, "9d6[piercing],9d6[fire]");
+    assert.deepEqual(at("The Midwife", 16).resolution.outcomes.success.effects, [{ kind: "heal", formula: "7d8+28" }]);
+    // With no owner (a census, the simulator's own compile): as written.
+    const html = "<p>It deals @Damage[2d6[fire]] damage. The damage increases to @Damage[3d6[fire]] if you're at least 9th level.</p>";
+    assert.equal(byOwnerLevel(html, null), html);
+    assert.equal(byOwnerLevel(html, 9), "<p>It deals @Damage[3d6[fire]] damage.</p>");
+    assert.equal(byOwnerLevel(html, 8), "<p>It deals @Damage[2d6[fire]] damage.</p>");
+    // The Midwife heals the creature it saves (the card's other recipient); The Survivor its user, the 1 HP "instead" a note.
+    assert.equal(at("The Midwife", 20).otherRecipient, true);
+    const survivor = compileActivations(item("The Survivor"), { spellEffects })[0].plan;
+    assert.deepEqual(survivor.resolution.outcomes.success.effects, [{ kind: "heal", formula: "4d8+16" }]);
+    assert.match(survivor.unread.join(" "), /you drop to 1 Hit Point instead/);
+});

@@ -134,15 +134,17 @@ function textHealing(sentences, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
         // ("you regain 3d10 Hit Points", "you regain an additional 4d6 Hit Points", "You restore 8d10+15 Hit Points", "healing you
         // for 3d8 Hit Points", "healing the wielder for 10 Hit Points".)
-        const self = new RegExp(String.raw`\byou (?:immediately )?regain (?:an additional )?${AMOUNT_PARENS} Hit Points\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
-        // (And another's own words: "Your ally regains 2d8 hit points".)
-        const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
+        // (The Survivor's "you drop to 1 Hit Point instead and immediately restore an additional 4d8+16 Hit Points".)
+        const self = new RegExp(String.raw`\byou (?:immediately )?regain (?:an additional )?${AMOUNT_PARENS} Hit Points\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b|\band (?:immediately )?restore an additional ${AMOUNT_PARENS} Hit Points\b(?! to)`, "i").exec(sentence);
+        // (And another's own words: "Your ally regains 2d8 hit points", The Midwife's "restore to the target 6d8+24 Hit Points".)
+        const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b|\brestor(?:e|es|ing) to (?:it|the (?:target|creature)|that creature) ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
         const match = self ?? other;
         // (Tallowheart Mass's "If you consume a portion, you regain …": the eating is the activation, not a condition.)
         const lead = sentence.slice(0, match?.index ?? 0).replace(/^\s*If you (?:consume|eat|drink) (?:a portion|it|one)[^,]*,\s*/i, "");
         if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(lead)) {
-            used.add(index);
-            const amount = (match[1] ?? match[2] ?? match[3] ?? match[4]).replace(/\s+/g, "");
+            // (What it does "instead" — "you drop to 1 Hit Point instead" — stays on the note for the GM.)
+            if (!/\binstead\b/i.test(sentence)) used.add(index);
+            const amount = match.slice(1).find((group) => group !== undefined).replace(/\s+/g, "");
             return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), ...(other && !self ? { other: true } : {}) };
         }
     }

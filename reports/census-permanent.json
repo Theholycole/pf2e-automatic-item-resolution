@@ -6,10 +6,10 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 705,
+   "resolves": 706,
    "builtin:cast-spell": 469,
-   "none": 738,
-   "partial": 92,
+   "none": 736,
+   "partial": 93,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -27,8 +27,8 @@
   "live": {
    "save": 367,
    "cast": 469,
-   "item": 601,
-   "none": 934,
+   "item": 603,
+   "none": 932,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -46,10 +46,10 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 427,
+    "resolves": 428,
     "builtin:cast-spell": 340,
-    "none": 495,
-    "partial": 40,
+    "none": 493,
+    "partial": 41,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 21,
@@ -1957,9 +1957,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Enveloping Light (Greater)",
@@ -16137,9 +16137,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Ring of the Weary Traveler",

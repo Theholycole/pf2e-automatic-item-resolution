@@ -40,8 +40,8 @@ const now = (actor = null) => ({ worldTime: game.time.worldTime, combatId: encou
 // The activations with a card, of the item as it is now (compiled once per version of its text).
 const compiled = new Map();
 function playable(item) {
-    const data = { ...item.toObject(false), uuid: item.uuid };
-    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}:${etchedKeys(data).join(",")}`;
+    const data = { ...item.toObject(false), uuid: item.uuid, ownerLevel: item.actor?.level ?? null };
+    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}:${etchedKeys(data).join(",")}:${data.ownerLevel ?? ""}`;
     if (!compiled.has(key)) compiled.set(key, (compileActivations?.(data) ?? []).filter((entry) => entry.plan && routeOf(entry.plan, plainText(entry.activation.html))));
     return compiled.get(key).map((entry) => ({ ...entry, data }));
 }

@@ -27,7 +27,8 @@ let spells = {};
 let runes = new Map();
 
 // A Foundry item as plain data, keeping its uuid (the compiler is pure).
-const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObject(false), uuid: item.uuid } : item);
+// (Its owner's level too, for the amounts that grow with it: src/compiler/item-data.js byOwnerLevel.)
+const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObject(false), uuid: item.uuid, ownerLevel: item.actor?.level ?? null } : item);
 
 // The spell module's claims (its api, when it's active): an item it acts on is left to it.
 const claims = (item) => game.modules.get(SPELL_ID)?.active ? game.modules.get(SPELL_ID)?.api?.claims?.(item) === true : false;

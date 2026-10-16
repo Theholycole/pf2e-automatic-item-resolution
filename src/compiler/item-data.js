@@ -39,6 +39,8 @@ export function withItemData(html, item) {
     text = text.replace(/(\b[Tt]he target must succeed at an? @Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) or (be|become|take)\b/gi, "$1 save or $2");
     // (A condition for its user's next turn, Bloodline Robe's "You're Quickened on your next turn": until that turn's end.)
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
+    // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)
+    text = byOwnerLevel(text, item?.ownerLevel);
     // (Dice per weapon damage die — Unholy Bloodshed's: one die where no weapon says more, src/compiler/runes.js giving its weapon's.)
     text = perWeaponDie(text, item?.type === "weapon" ? weaponDice(item) : 1, item?.type === "weapon" ? item.system?.damage?.damageType ?? null : null);
     // (A condition that "increases to" a value on a failed save, as the ability compiler reads one: Putrescent Glob's "the creature
@@ -131,6 +133,24 @@ export function fillOwnerDCs(plan, dcs = {}) {
 }
 
 export const hasOwnerDC = (plan) => Boolean(plan) && /"dc":"owner"|"ownerDC"/.test(JSON.stringify(plan));
+
+// "The damage increases to @Damage[8d6[…]] if you're at least 15th level, to @Damage[9d6[…]] if you're at least 17th level …"
+// (The Desert, The Trumpet; The Midwife's healing): with its owner's level known (live play passes item.ownerLevel), the
+// step for that level in place of the damage before it, and the sentence gone; unknown, as it was.
+const LINK = String.raw`@Damage\[(?:[^\[\]]|\[[^\]]*\])+\](?:\{[^}]*\})?`;
+const SCALING = new RegExp(String.raw`\s*The (?:damage|amount of healing granted|healing) increases to ${LINK}[^.]*? if you're at least \d+(?:st|nd|rd|th) level(?:,? (?:and )?(?:to )?${LINK}[^.]*? if you're at least \d+(?:st|nd|rd|th) level)*\.`, "i");
+export function byOwnerLevel(html, level) {
+    const text = String(html ?? "");
+    const scaling = SCALING.exec(text);
+    if (!scaling || !Number.isFinite(Number(level)) || level === null) return text;
+    const steps = [...scaling[0].matchAll(new RegExp(String.raw`(${LINK})[^@]*? if you're at least (\d+)(?:st|nd|rd|th) level`, "gi"))].map((match) => ({ link: match[1], level: Number(match[2]) }));
+    const step = steps.filter((entry) => entry.level <= Number(level)).sort((a, b) => b.level - a.level)[0];
+    const before = text.slice(0, scaling.index);
+    const base = [...before.matchAll(new RegExp(LINK, "gi"))].at(-1);
+    if (step && !base) return text;
+    const raised = step ? `${before.slice(0, base.index)}${step.link.replace(/\{[^}]*\}$/, "")}${before.slice(base.index + base[0].length)}` : before;
+    return `${raised}${text.slice(scaling.index + scaling[0].length)}`;
+}
 
 // A weapon's damage dice: its own (1) and its striking rune's.
 export const weaponDice = (weapon) => (Number(weapon?.system?.damage?.dice) || 1) + (Number(weapon?.system?.runes?.striking) || 0);
