@@ -49,7 +49,7 @@ export async function cardForBomb(message) {
     const { splash, indices } = splashOf(message, context.outcome);
     const near = target ? creaturesNear(targetToken, 5) : [];
     const row = riderRow({ plan, outcome: context.outcome });
-    const riders = target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length);
+    const riders = target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement);
     const save = plan.item?.save ?? null;
     const burst = target && save?.scope === "burst" ? creaturesNear(targetToken, save.radius ?? 5) : [];
     const saves = target && save && (save.scope !== "target" || ["success", "criticalSuccess"].includes(context.outcome));
@@ -101,7 +101,7 @@ export async function applyBombCard(message, { included = null } = {}) {
         lines.push(`${entry.name} takes the splash (${splashText(state.splash)})`);
     }
     const row = riderRow(state);
-    if (state.target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length)) lines.push(...(await applyRiders({ plan: state.plan, degree: state.outcome, user: state.user, target: state.target, item: state.item })));
+    if (state.target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement)) lines.push(...(await applyRiders({ plan: state.plan, degree: state.outcome, user: state.user, target: state.target, item: state.item })));
     // The bomb's save: the ability module's save card for those who attempt it (the GM's note without it).
     const save = state.plan?.item?.save;
     const savers = saveFor(state);

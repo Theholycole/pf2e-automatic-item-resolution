@@ -19,7 +19,9 @@ export function createStrikeCard({ plan, item, user }) {
 function rowText(row) {
     const conditions = (row?.effects ?? []).filter((effect) => effect.kind === "condition").map((effect) => `${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}`);
     const modifiers = (row?.modifiers ?? []).map((modifier) => `${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} to ${modifier.selector}`);
-    return [...conditions, ...modifiers].join(", ");
+    // ("pushed 5 feet away": the core's forced movement.)
+    const moved = row?.forcedMovement ? [`${row.forcedMovement.kind === "pull" ? "pulled" : "pushed"} ${row.forcedMovement.distance} feet ${row.forcedMovement.kind === "pull" ? "closer" : "away"}`] : [];
+    return [...conditions, ...modifiers, ...moved].join(", ");
 }
 
 // A die in words: "4d6 mental", "1d4 persistent force", "1d8 precision", "1d6".

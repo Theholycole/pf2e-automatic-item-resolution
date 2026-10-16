@@ -60,6 +60,7 @@ export function riderLines(state) {
     const lines = [];
     for (const effect of row.effects ?? []) if (effect.kind === "condition") lines.push(`${state.target.name}: ${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}${timeText(effect.duration)}`);
     for (const modifier of row.modifiers ?? []) lines.push(`${state.target.name}: ${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)}${/speed/.test(modifier.selector) ? "-foot" : ""} ${modifier.type} penalty to ${modifier.selector.replace(/-/g, " ")}${timeText(modifier.duration)}`);
+    if (row.forcedMovement) lines.push(`${state.target.name}: pushed ${row.forcedMovement.distance} feet away`);
     return lines;
 }
 

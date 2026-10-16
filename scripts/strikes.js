@@ -64,7 +64,7 @@ export async function strikeWithRider(message) {
     }
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
-    if (!rider.plan.strike?.save && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length) {
+    if (!rider.plan.strike?.save && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}.</p>` });
         return;
