@@ -14,6 +14,10 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 // the end of the turn.)
 const RUNE = /\b(?:benefits?|effects?|properties) of (?:a|an|the) ((?:(?:Greater|Major|True) )?[A-Z][\w']*(?: [A-Z][\w']*)?) (?:property )?rune\b/;
 const PASSIVE = /\b(?:invest|While\b|Any creature|This ammunition|has the benefits)\b/i;
+// (One of several, its user's pick: Boughshatter's "granting the weapon the effects of either a Decaying weapon rune, Grievous weapon
+// rune, or Wounding weapon rune for 1 minute" — plan.item.rune.choices, the card's picker.)
+const NAME = String.raw`((?:(?:Greater|Major|True) )?[A-Z][\w']*(?: [A-Z][\w']*)?)(?: weapon| property)? rune`;
+const EITHER = new RegExp(String.raw`\b(?:benefits?|effects?|properties) of either an? ${NAME}, (?:an? )?${NAME},? or (?:an? )?${NAME}\b`);
 const FOR_TIME = /\bfor (\d+|one|a|an) (round|rounds|minute|minutes|hour|hours)\b/i;
 const UNTIL_TURN_END = /\bUntil the end of your turn\b|\bfor the duration of the triggering (?:attack|Strike)\b/i;
 const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours" };
@@ -31,6 +35,16 @@ export function readRuneLoan(text, item = null) {
     if (extra) return { key: runeKey(extra.name), name: extra.name, duration: extra.duration ?? null, own: Boolean(extra.own) };
     if (/@UUID\[[^\]]*\]\{Effect:/i.test(String(item?.system?.description?.value ?? ""))) return null;
     for (const sentence of String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/)) {
+        const either = EITHER.exec(sentence);
+        if (either && !PASSIVE.test(sentence)) {
+            const time = FOR_TIME.exec(sentence) ?? FOR_TIME.exec(String(text));
+            const duration = UNTIL_TURN_END.test(sentence)
+                ? { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end" }
+                : time ? { mode: "fixed", value: COUNT[time[1].toLowerCase()] ?? Number(time[1]), unit: UNITS[time[2].toLowerCase()], expiry: "turn-start" } : null;
+            const choices = [either[1], either[2], either[3]].map((name) => ({ key: runeKey(name), name }));
+            const own = item?.type === "weapon" && !/\ba weapon\b/i.test(sentence);
+            return { key: choices[0].key, name: choices[0].name, choices, duration, own };
+        }
         const match = RUNE.exec(sentence);
         if (!match || PASSIVE.test(sentence)) continue;
         const time = FOR_TIME.exec(sentence) ?? FOR_TIME.exec(String(text));

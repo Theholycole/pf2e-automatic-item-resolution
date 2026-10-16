@@ -27,6 +27,8 @@ export function createItemCard({ plan, item, user, drinkers = [], rolled = null,
         // (A tea's Tea Ceremony: ticked on the card, false until then; null for any other item.)
         ceremony: plan?.item?.ceremony ? false : null,
         ...(plan?.item?.rune && !plan.item.rune.own ? { weapons, runeWeapon: 0 } : {}),
+        // (One of several runes, picked: Boughshatter's Decaying, Grievous or Wounding.)
+        ...(plan?.item?.rune?.choices?.length ? { runeChoice: 0 } : {}),
         rolled,
         results: []
     };
@@ -206,10 +208,12 @@ function ownEffectSource({ name, img, words, rules, duration, flag, item, user, 
     };
 }
 
-// A rune it lends a weapon, in words: "Gives the weapon the Vitalizing rune for 1 minute".
+// A rune it lends a weapon, in words: "Gives the weapon the Vitalizing rune for 1 minute"; one of several, "the Decaying, Grievous or
+// Wounding rune (picked)" until it's picked.
 export function runeText(rune, weaponName = null) {
     const time = rune.duration?.mode === "fixed" ? (rune.duration.value === 0 ? " until the end of the turn" : ` for ${timeText(rune.duration)}`) : "";
-    return `Gives ${weaponName ?? (rune.own ? "its weapon" : "the weapon picked")} the ${rune.name} rune${time}`;
+    const name = rune.choices?.length && !rune.picked ? `${rune.choices.slice(0, -1).map((choice) => choice.name).join(", ")} or ${rune.choices.at(-1).name} rune (picked)` : `${rune.name} rune`;
+    return `Gives ${weaponName ?? (rune.own ? "its weapon" : "the weapon picked")} the ${name}${time}`;
 }
 
 // The rune's Effect on its user: PF2e's AdjustStrike adding the property rune to that weapon (as PF2e's own Wounding Oil).
@@ -287,11 +291,16 @@ export function cardHTML(state, { canApply = false } = {}) {
         : !state.weapons.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no weapon for it.</p>` : "")
             : open && canApply ? `<p class="aar-actions">Weapon: <select data-air-field="runeWeapon">${state.weapons.map((weapon, index) => `<option value="${index}"${index === (state.runeWeapon ?? 0) ? " selected" : ""}>${escape(weapon.name)}</option>`).join("")}</select></p>`
                 : Number.isInteger(state.runeWeapon) ? `<p class="aar-actions">Weapon: ${escape(state.weapons[state.runeWeapon]?.name ?? "")}</p>` : "";
+    // (One of several runes: the one picked.)
+    const runeChoices = state.plan?.item?.rune?.choices ?? null;
+    const runeChoicePick = !runeChoices?.length ? ""
+        : open && canApply ? `<p class="aar-actions">Rune: <select data-air-field="runeChoice">${runeChoices.map((choice, index) => `<option value="${index}"${index === (state.runeChoice ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
+            : `<p class="aar-actions">Rune: ${escape(runeChoices[state.runeChoice ?? 0]?.name ?? "")}</p>`;
     // ("Creatures of your choice", none needed: Cayden's Tankard ends its user's own either way.)
     const optional = (state.plan?.item?.reduce ?? []).filter((entry) => entry.who === "targets").every((entry) => entry.optional) && state.plan?.item?.recipient !== "targets";
     const targetHint = open && canApply && forAllies ? `<p class="aar-hint">${optional ? "Target the other creatures it helps, if any" : "Target the creatures it helps (your own token too, when it helps you)"}, then press Apply.</p>` : "";
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${runePick}${previewList}${targetHint}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${runePick}${runeChoicePick}${previewList}${targetHint}${results}${controls}</section>`;
 }

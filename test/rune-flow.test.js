@@ -53,3 +53,20 @@ test("Burial Oil: the card picks the weapon; Apply gives its user an Effect with
     assert.deepEqual([effect.system.duration.value, effect.system.duration.unit], [1, "minutes"]);
     assert.match(card.content, /Fighter: Gives Battle Axe the Vitalizing rune for 1 minute/);
 });
+
+test("Boughshatter: one of three runes, picked on the card (Grievous), on the weapon itself", async () => {
+    const mace = foundry.giveItem(fighter, source("Boughshatter"));
+    fighter.weapons.push(mace);
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: mace.uuid, activation: 1, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.ok(card, "the item card");
+    assert.match(card.content, /data-air-field="runeChoice"/);
+    assert.match(card.content, /Gives its weapon the Decaying, Grievous or Wounding rune \(picked\) for 1 minute/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", runeChoice: 1 });
+    await settle();
+    const effect = fighter.created.filter((entry) => entry.flags?.[MODULE_ID]?.rune).at(-1);
+    assert.deepEqual([effect.system.rules[0].value, effect.system.rules[0].definition], ["grievous", [`item:id:${mace.id}`]]);
+    assert.match(card.content, /Gives Boughshatter the Grievous rune for 1 minute/);
+});
