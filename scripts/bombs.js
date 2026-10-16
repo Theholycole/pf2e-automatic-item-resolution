@@ -9,6 +9,17 @@ import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { bombCardHTML, createBombCard, riderRow, saveFor, splashText, withChoices } from "../src/live/bomb-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
 
+// Whether the creature hit takes a gated rider: "void-healing" (undead, or a creature with void healing), "living" (not undead nor
+// a construct).
+function riderFits(only, actor) {
+    if (!actor) return false;
+    const traits = new Set([...(actor.traits ?? actor.system?.traits?.value ?? [])]);
+    const voidHealing = Boolean(actor.attributes?.hp?.negativeHealing ?? actor.system?.attributes?.hp?.negativeHealing) || traits.has("undead");
+    if (only === "void-healing") return voidHealing;
+    if (only === "living") return !traits.has("undead") && !traits.has("construct") && !voidHealing;
+    return true;
+}
+
 const DEGREES = new Set(["criticalSuccess", "success", "failure"]);
 // The last bomb thrown, kept as PF2e deletes it (its damage message comes after): uuid → data.
 const thrown = new Map();
@@ -142,7 +153,12 @@ export async function applyBombCard(message, { included = null } = {}) {
         lines.push(`${entry.name} takes the splash (${splashText(state.splash)})`);
     }
     const row = riderRow(state);
-    if (state.target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement)) lines.push(...(await applyRiders({ plan: state.plan, degree: state.outcome, user: state.user, target: state.target, item: state.item })));
+    // (A rider only some creatures take — Ghost Charge's for undead and void healing, Tallow Bomb's for the living: checked.)
+    const only = state.plan?.item?.riderOnly ?? null;
+    const hit = only && state.target ? (await creatureOf(state.target))?.actor ?? null : null;
+    const fits = !only || riderFits(only, hit);
+    if (state.target && !fits) lines.push(`${state.target.name}: ${only === "living" ? "not a living creature" : "not undead and without void healing"}, so no rider.`);
+    if (state.target && fits && ((row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement)) lines.push(...(await applyRiders({ plan: state.plan, degree: state.outcome, user: state.user, target: state.target, item: state.item })));
     // The bomb's save: the ability module's save card for those who attempt it (the GM's note without it).
     const save = state.plan?.item?.save;
     const savers = saveFor(state);

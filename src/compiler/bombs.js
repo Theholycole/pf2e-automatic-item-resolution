@@ -59,6 +59,25 @@ const merge = (...rows) => rows.reduce((all, row) => ({ ...all, effects: [...all
 // The bomb's riders: { success, criticalSuccess } rows, from its "On a hit" and "On a critical hit" sentences.
 export const bombRiders = (item) => hitRiders(plainText(item?.system?.description?.value));
 
+// Riders only some creatures take, with who: Ghost Charge's "A primary target that takes damage from a ghost charge becomes
+// Enfeebled 1 until the start of your next turn" (its vitality "harms only undead and creatures with void healing": those), Tallow
+// Bomb's "On a critical hit, a living creature taking persistent fire damage from a tallow bomb is Sickened 1 …" (the living).
+// → { rows: { success?, criticalSuccess? }, only: "void-healing" | "living", notes } or null; live play checks the creature hit.
+export function gatedRiders(text) {
+    const plain = String(text ?? "");
+    const damaged = /\bA primary target that takes damage from an? [\w' -]+? becomes ([^.]+)\./i.exec(plain);
+    if (damaged && /\bharms only undead and creatures with void healing\b/i.test(plain)) {
+        const row = riderRow(`becomes ${damaged[1]}`);
+        if (hasRow(row)) return { rows: { success: row, criticalSuccess: row }, only: "void-healing", notes: [] };
+    }
+    const living = /\bOn a critical hit, a living creature taking persistent (\w+) damage from an? [\w' -]+? is ([A-Z]\w+ \d+)([^.]*)\./i.exec(plain);
+    if (living) {
+        const row = riderRow(`is ${living[2]}`);
+        if (hasRow(row)) return { rows: { criticalSuccess: row }, only: "living", notes: living[3].trim() ? [`${living[2]}${living[3]}.`] : [] };
+    }
+    return null;
+}
+
 // A Strike's riders in words (a bomb's, an item's "make a melee Strike. If you hit and deal damage, the target is
 // Frightened 1, or Frightened 2 on a critical hit"): { success, criticalSuccess } rows.
 const ON_HIT = /^(?:On a hit|On a successful Strike|If (?:you|it|the Strike) hits?(?: and deals? damage)?|If you hit and deal damage|If you successfully deal damage to (?:your|the) target),\s*(.+)$/i;
@@ -176,7 +195,10 @@ export function bombSave(item, { scope: given = null } = {}) {
 // rolled. It has no damage: PF2e's own Strike deals that.
 export function compileBomb(item) {
     if (!isBomb(item)) return null;
-    const riders = bombRiders(item);
+    const read = bombRiders(item);
+    // (Riders only some creatures take: the plan's own rows, checked against the creature hit — item.riderOnly.)
+    const gated = !hasRow(read.success) && !hasRow(read.criticalSuccess) ? gatedRiders(plainText(item?.system?.description?.value)) : null;
+    const riders = gated ? { success: gated.rows.success ?? none(), criticalSuccess: gated.rows.criticalSuccess ?? none() } : read;
     const splash = Number(item.system?.splashDamage?.value) || 0;
     const save = bombSave(item);
     if (!splash && !save && !hasRow(riders.success) && !hasRow(riders.criticalSuccess)) return null;
@@ -194,6 +216,7 @@ export function compileBomb(item) {
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
-        item: { type: item.type, group: "bomb", level: Number(item.system?.level?.value) || 0, splash: splash ? { value: splash, type: item.system?.damage?.damageType ?? "untyped" } : null, save }
+        item: { type: item.type, group: "bomb", level: Number(item.system?.level?.value) || 0, splash: splash ? { value: splash, type: item.system?.damage?.damageType ?? "untyped" } : null, save, ...(gated ? { riderOnly: gated.only } : {}) },
+        ...(gated?.notes.length ? { notes: gated.notes } : {})
     });
 }

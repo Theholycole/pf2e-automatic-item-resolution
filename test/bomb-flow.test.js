@@ -170,3 +170,24 @@ test("riders in a bomb's damage sentence: Atrophy Bomb's enfeebled, Peshpine Gre
     assert.deepEqual([peshpine.slug, peshpine.value, peshpine.duration.expiry, peshpine.duration.anchor], ["stupefied", 1, "turn-end", "target-turn"]);
     assert.deepEqual(rows("Goo Grenade (Greater)").success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["all-speeds", -10, "circumstance"]]);
 });
+
+test("riders only some creatures take: Ghost Charge's enfeebled on undead or void healing only, Tallow Bomb's sickened on the living only", async () => {
+    const { compileBomb } = await import("../src/compiler/bombs.js");
+    assert.equal(compileBomb(source("Ghost Charge (Lesser)")).item.riderOnly, "void-healing");
+    assert.deepEqual([compileBomb(source("Tallow Bomb (Lesser)")).item.riderOnly, compileBomb(source("Tallow Bomb (Lesser)")).resolution.outcomes.success.effects], ["living", []]);
+    // Live: the goblin (living, no void healing) takes no enfeebled from a ghost charge; with void healing, it does.
+    const charge = foundry.giveItem(alchemist, source("Ghost Charge (Lesser)"));
+    let card = cardAfter(await damage(charge, { outcome: "success", type: "vitality" }));
+    let before = foundry.applied.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, included: [], userId: "gm" });
+    await settle();
+    assert.deepEqual(foundry.applied.slice(before).map((call) => call.change.slug), []);
+    assert.ok(stateOf(card).results.some((line) => /not undead and without void healing, so no rider/.test(line)));
+    goblin.attributes.hp.negativeHealing = true;
+    card = cardAfter(await damage(charge, { outcome: "success", type: "vitality" }));
+    before = foundry.applied.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, included: [], userId: "gm" });
+    await settle();
+    assert.deepEqual(foundry.applied.slice(before).map((call) => [call.change.slug, call.change.value]), [["enfeebled", 1]]);
+    goblin.attributes.hp.negativeHealing = false;
+});
