@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 252,
-   "resolves": 734,
+   "none": 251,
+   "resolves": 735,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 203,
@@ -88,10 +88,10 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 45,
+    "none": 44,
     "note-only": 12,
     "builtin:item-action": 10,
-    "resolves": 51,
+    "resolves": 52,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
@@ -304,9 +304,9 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 167,
+   "resolves": 168,
    "gaps": 0,
-   "none": 27
+   "none": 26
   },
   "linked-effect": {
    "count": 393,
@@ -346,9 +346,9 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 58,
+   "resolves": 59,
    "gaps": 0,
-   "none": 38
+   "none": 37
   },
   "counteract": {
    "count": 79,
@@ -378,14 +378,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 337,
+   "none": 336,
    "item": 636,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 79,
    "action": 11,
-   "save": 125,
+   "save": 126,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -415,12 +415,12 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 56,
+    "none": 55,
     "item": 54,
     "action": 10,
     "reroll": 1,
     "cast": 9,
-    "save": 14,
+    "save": 15,
     "fortune": 11,
     "strike": 1
    },
@@ -479,7 +479,7 @@
    }
   },
   "noCard": {
-   "no-plan": 252,
+   "no-plan": 251,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -19455,7 +19455,10 @@
     "damage",
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Hive Mother Bottle",

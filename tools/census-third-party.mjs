@@ -21,6 +21,10 @@ import { plainText } from "../src/compiler/rows.js";
 import { routeOf } from "../src/live/route.js";
 import { verifyEffectRules } from "../src/compiler/verify-effect.js";
 
+// (A stand-in owner, as live play passes the item's actor: its level the item's, middling attribute modifiers — so items whose
+// numbers come from their owner, Wolf Fang's Strength, count as they play.)
+const withOwner = (item) => ({ ...item, ownerLevel: Number(item?.system?.level?.value) || 1, ownerAbilities: { str: 4, dex: 3, con: 2, int: 1, wis: 1, cha: 1 } });
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const modulesDirectory = path.resolve(process.argv[2] ?? `${process.env.HOME}/.local/share/FoundryVTT/Data/modules`);
 const pf2ePacks = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
@@ -129,14 +133,14 @@ for (const { module, pack, directory } of itemPacks()) {
                     rows.push({ ...base, kind: "consumable", result: "spell-module" });
                     continue;
                 }
-                const plan = compileItem(item, options);
+                const plan = compileItem(withOwner(item), options);
                 rows.push({ ...base, kind: "consumable", result: verified(plan, result(plan)), live: routeOf(plan, plainText(item.system?.description?.value)) ?? null });
             } else if (/<strong>\s*Activat/i.test(String(item.system?.description?.value ?? ""))) {
                 if (!handlesPermanent(item, options)) {
                     rows.push({ ...base, kind: "activation", activation: null, result: "spell-module" });
                     continue;
                 }
-                for (const { activation, plan } of compileActivations(item, options)) rows.push({ ...base, kind: "activation", activation: activation.name, result: result(plan), live: routeOf(plan, plainText(activation.html)) ?? null });
+                for (const { activation, plan } of compileActivations(withOwner(item), options)) rows.push({ ...base, kind: "activation", activation: activation.name, result: result(plan), live: routeOf(plan, plainText(activation.html)) ?? null });
             }
         } catch (error) {
             rows.push({ ...base, result: "error", error: error.message.slice(0, 160) });
