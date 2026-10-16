@@ -25,6 +25,7 @@ import { withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
 import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
+import { pf2eRulesPlan } from "./pf2e-rules.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
@@ -161,6 +162,8 @@ export function compileActivations(item, options = {}) {
             const { noteOnly, ...rest } = plan;
             plan = { ...rest, partial: true };
         }
+        // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
+        if (!plan) plan = pf2eRulesPlan(item, base, plainText(activation.html));
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, ...kept } = plan;

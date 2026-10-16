@@ -125,3 +125,39 @@ test("a bomb's save: the ability module's save card for whoever attempts it", as
     const blast = cardAfter(await damage(stone, { outcome: "success", type: "sonic" }));
     assert.match(blast.content, /Fortitude save: Goblin, Kyra, Goblin Boss</);
 });
+
+test("splash ammunition: a longbow's Strike with Elemental Ammunition puts its splash on the others within 5 feet", async () => {
+    const bow = foundry.giveItem(alchemist, source("Longbow"));
+    const ammo = foundry.giveItem(alchemist, source("Elemental Ammunition (Moderate, Acid)"));
+    const arrows = foundry.giveItem(alchemist, source("Arrows"));
+    // PF2e's damage message for the Strike: the ammunition's rules gave it a splash-only roll.
+    const strike = async ({ outcome, loaded = ammo, splash = 2 }) => {
+        const message = foundry.makeMessage({
+            flags: { pf2e: { context: { type: "damage-roll", outcome, options: ["item:ranged", `item:ammo:id:${loaded.id}`], target: { actor: goblin.uuid, token: goblin.token.uuid } }, origin: { uuid: bow.uuid, type: "weapon" } } },
+            rolls: [{ total: 9, instances: [{ type: "piercing" }] }, ...(splash ? [{ total: splash, options: { splashOnly: true }, instances: [{ type: "acid" }] }] : [])],
+            speaker: { actor: alchemist.id },
+            actor: alchemist,
+            token: alchemist.token.document
+        });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        return message;
+    };
+    const message = await strike({ outcome: "success" });
+    const card = cardAfter(message);
+    const state = stateOf(card);
+    assert.equal(state.item.name, "Longbow (Elemental Ammunition (Moderate, Acid))");
+    assert.deepEqual(state.splashed.map((entry) => entry.name), ["Kyra", "Goblin Boss"]);
+    assert.deepEqual(message.flags[MODULE_ID].coveredSplash, [1]);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.ok(stateOf(card).results.includes("Kyra takes the splash (2 acid)"), stateOf(card).results.join(" | "));
+    // A miss: its splash trait splashes the target too.
+    assert.deepEqual(stateOf(cardAfter(await strike({ outcome: "failure" }))).splashed.map((entry) => entry.name), ["Goblin", "Kyra", "Goblin Boss"]);
+    // No card: a Strike with no splash, or a miss with ammunition and a weapon without the splash trait.
+    for (const [label, options] of [["no splash", { outcome: "success", splash: 0 }], ["a miss with arrows", { outcome: "failure", loaded: arrows }]]) {
+        const count = foundry.messages.length;
+        await strike(options);
+        assert.equal(foundry.messages.length, count + 1, label);
+    }
+});

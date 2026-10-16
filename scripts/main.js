@@ -47,7 +47,7 @@ Hooks.once("ready", async () => {
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spells couldn't be indexed.`, error);
     }
-    setUpLivePlay({ compileItem: compile, compileActivations: (item) => compileActivations(dataOf(item), options()) });
+    setUpLivePlay({ compileItem: compile, compileActivations: (item) => compileActivations(dataOf(item), options()), claims: (item) => claims(dataOf(item)) });
     const module = game.modules.get(MODULE_ID);
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)

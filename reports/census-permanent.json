@@ -8,13 +8,14 @@
   "results": {
    "resolves": 674,
    "builtin:cast-spell": 469,
-   "none": 819,
+   "none": 795,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
    "note-only": 268,
    "builtin:reroll": 22,
    "partial": 76,
+   "builtin:pf2e-rules": 24,
    "builtin:modes": 26,
    "builtin:zone": 9,
    "builtin:item-action": 11,
@@ -80,9 +81,10 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 87,
+    "none": 63,
     "partial": 13,
     "resolves": 36,
+    "builtin:pf2e-rules": 24,
     "note-only": 14,
     "builtin:no-effect": 2,
     "builtin:zone": 1
@@ -1510,7 +1512,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -1609,7 +1611,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -2764,7 +2766,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -4403,7 +4405,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -4832,7 +4834,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -5822,7 +5824,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -6702,7 +6704,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -8517,7 +8519,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -9166,7 +9168,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -9705,7 +9707,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -12961,7 +12963,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -15689,7 +15691,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -15942,7 +15944,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -19352,7 +19354,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -22674,7 +22676,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -23631,7 +23633,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -24236,7 +24238,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -24830,7 +24832,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -25578,7 +25580,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -27437,7 +27439,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -27459,7 +27461,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -27613,7 +27615,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -28416,7 +28418,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -28427,7 +28429,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },

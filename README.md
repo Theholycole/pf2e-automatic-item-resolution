@@ -28,6 +28,7 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
 - **Bombs:** after PF2e's damage roll, the card lists the creatures within 5 feet of the target, all ticked; untick any the splash shouldn't reach.
   - Apply gives them PF2e's own splash and puts the riders on the target ("off-guard until the start of your next turn", "frightened 2" on a critical hit).
   - When the bomb calls for a save, it posts the save card for whoever has to save.
+  - Any other Strike with splash gets the same card: Elemental Ammunition, whose own PF2e rules add its damage and splash to the Strike that fires it.
 - **Injury poisons:** the card asks which piercing or slashing weapon to coat. The coated weapon's next hit posts the poison's save card for the target; a miss keeps the poison, and a critical miss wastes it.
 - **Contact, inhaled and ingested poisons, drugs, and other items with a save** (Spark Wafer, Pyronite): target the creatures, then press the card's button. Each gets its save card. A breath potion's card stays open until the breath is used, and for its whole hour when it can breathe again after a recharge.
 - **Items that cast a spell** (Invisibility Potion, Fade Band, Truesight Potion, Crystal Ball's Scrying, Mask of the Mantis): the spell module casts it, on the drinker, on you, or at the creatures you target. When the item offers several spells, the card has a picker.

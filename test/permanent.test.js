@@ -129,3 +129,20 @@ test("what it gives its user and allies in an area: an automatic row at the crea
     assert.deepEqual(speed.resolution.outcomes.success.effects.map((effect) => effect.slug), ["quickened"]);
     assert.match(speed.notes[0], /only Step and Stride/, "the extra action's limit a note");
 });
+
+test("activated ammunition whose own PF2e rules do it: a builtin with what they add, the rest of its text a note", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const [acid] = compileActivations(item("Elemental Ammunition (Moderate, Acid)"));
+    assert.equal(acid.plan.builtin, "pf2e-rules");
+    assert.deepEqual(acid.plan.notes, ["PF2e's own rules on Elemental Ammunition (Moderate, Acid) add 2d4 persistent acid damage and 2 splash acid damage to the Strike that fires it.", "After the damage roll, the splash card lists the creatures within 5 feet of the target for its splash."]);
+    assert.equal(acid.plan.partial, undefined);
+    const [magnetic] = compileActivations(item("Magnetic Shot (Lesser)"));
+    assert.match(magnetic.plan.notes[0], /the deadly-d8 trait, two more weapon damage dice and a \+1 circumstance bonus to its attack roll against metal targets/);
+    // Gravebane Ammunition's save stays the GM's: partial.
+    const [gravebane] = compileActivations(item("Gravebane Ammunition"));
+    assert.deepEqual([gravebane.plan.partial, gravebane.plan.notes.length], [true, 2]);
+    assert.match(gravebane.plan.notes[1], /Enfeebled 1/);
+    // No card of its own: PF2e applies an ammunition's rules to the Strike that uses it.
+    assert.equal(routeOf(acid.plan), null);
+});
+

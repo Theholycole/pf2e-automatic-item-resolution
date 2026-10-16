@@ -36,11 +36,52 @@ function splashOf(message, outcome) {
     return { splash, indices };
 }
 
-export async function cardForBomb(message) {
+// The ammunition a Strike fired: PF2e's "item:ammo:id:…" option, else the weapon's selected ammunition.
+function ammoOf(message, weapon) {
+    const actor = message.actor;
+    const option = (message.flags?.pf2e?.context?.options ?? []).find((entry) => /(?:^|:)ammo:id:/.test(entry));
+    const id = option ? option.split(":ammo:id:").pop().replace(/^ammo:id:/, "") : weapon?.system?.selectedAmmoId ?? null;
+    return id ? actor?.items?.get?.(id) ?? null : null;
+}
+
+// A Strike that isn't a bomb's but deals splash (Elemental Ammunition, whose PF2e rules add its splash to the Strike; a
+// weapon with splash damage): the same card, its splash on the creatures within 5 feet, no riders. PF2e's splash-only
+// rolls give the amount, so only a damage message that has them gets one; on a failure the target takes the splash too,
+// when the weapon or its ammunition has the splash trait. claims: the spell module's (an item it acts on is left to it).
+async function cardForSplash(message, context, weapon, { claims = null } = {}) {
+    const { splash, indices } = splashOf(message, null);
+    if (!indices.length || !splash.length) return;
+    const ammo = ammoOf(message, weapon);
+    if (claims && [weapon, ammo].some((item) => item && claims(item))) return;
+    const traits = new Set([...(weapon?.system?.traits?.value ?? []), ...(ammo?.system?.traits?.value ?? [])]);
+    if (context.outcome === "failure" && !traits.has("splash")) return;
+    const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;
+    const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
+    const target = targetToken?.actor ? entryOf(targetToken.object ?? targetToken, targetToken.actor) : null;
+    const near = target ? creaturesNear(targetToken, 5) : [];
+    if (!near.length && !(context.outcome === "failure" && target)) return;
+    const actor = message.actor;
+    if (!actor) return;
+    const userToken = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
+    const source = ammo ?? weapon;
+    const state = createBombCard({
+        plan: { resolution: { outcomes: {} }, item: { splashOnly: true } },
+        item: { name: ammo && weapon ? `${weapon.name} (${ammo.name})` : source?.name ?? "Splash", uuid: source?.uuid ?? null, slug: source?.system?.slug ?? null },
+        user: entryOf(userToken, actor),
+        target,
+        outcome: context.outcome,
+        splash,
+        near
+    });
+    const card = await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
+    if (card) await message.update({ [`flags.${MODULE_ID}.coveredSplash`]: indices, [`flags.${MODULE_ID}.covered`]: card.id });
+}
+
+export async function cardForBomb(message, { claims = null } = {}) {
     const context = message?.flags?.pf2e?.context;
     if (context?.type !== "damage-roll" || message.flags?.[MODULE_ID] || !DEGREES.has(context.outcome)) return;
     const data = await bombOf(message.flags.pf2e.origin);
-    if (!isBomb(data)) return;
+    if (!isBomb(data)) return cardForSplash(message, context, data, { claims });
     const plan = compileBomb(data);
     if (!plan) return;
     const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;

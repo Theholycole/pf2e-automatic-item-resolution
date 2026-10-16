@@ -35,7 +35,7 @@ let compile = null;
 // The last dose's item, kept as PF2e deletes it (its Use message can arrive after): uuid → { data, actor }.
 const deleted = new Map();
 
-export function setUpLivePlay({ compileItem, compileActivations = null }) {
+export function setUpLivePlay({ compileItem, compileActivations = null, claims = null }) {
     compile = compileItem;
     setUpActivations({ compileActivations, postCardFor });
     Hooks.on("deleteItem", (item) => {
@@ -47,7 +47,7 @@ export function setUpLivePlay({ compileItem, compileActivations = null }) {
     Hooks.on("createChatMessage", (message) => {
         if (!isActiveGM()) return;
         cardForUse(message).catch((error) => console.error(`${MODULE_ID} | item card`, error));
-        cardForBomb(message).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
+        cardForBomb(message, { claims }).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
         strikeWithPoison(message).catch((error) => console.error(`${MODULE_ID} | poisoned Strike`, error));
         strikeWithRider(message).catch((error) => console.error(`${MODULE_ID} | readied Strike`, error));
         fortuneRolled(message).catch((error) => console.error(`${MODULE_ID} | roll twice`, error));
