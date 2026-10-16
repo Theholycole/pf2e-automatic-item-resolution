@@ -147,6 +147,11 @@ export function createFakeFoundry() {
             conditionFlags: {},
             // (Persistent damage as PF2e's condition items: givePersistent adds one, its rollRecovery a flat check of nextRoll.)
             persistent: [],
+            // (PF2e's toggles set: [{ domain, option, itemId, value, suboption }].)
+            toggled: [],
+            async toggleRollOption(domain, option, itemId = null, value = true, suboption = null) {
+                this.toggled.push({ domain, option, itemId, value, suboption });
+            },
             get itemTypes() {
                 return {
                     weapon: this.weapons,

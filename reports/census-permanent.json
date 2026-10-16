@@ -26,11 +26,12 @@
    "save": 327,
    "cast": 469,
    "item": 599,
-   "none": 1026,
+   "none": 1000,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
    "strike": 43,
+   "toggle": 26,
    "zone": 9,
    "action": 11,
    "later": 4
@@ -1874,7 +1875,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Earthglide Cloak",
@@ -3271,7 +3272,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Necklace of Fireballs I",
@@ -3777,7 +3778,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Pharasmin Visor",
@@ -3788,7 +3789,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Pharasmin Visor",
@@ -3799,7 +3800,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Instrument Harness",
@@ -4899,7 +4900,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Farlight Stone",
@@ -4910,7 +4911,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Farlight Stone",
@@ -4921,7 +4922,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Nightmare's Lament",
@@ -6296,7 +6297,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Nosoi Charm",
@@ -6307,7 +6308,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Shacklebreaker",
@@ -6417,7 +6418,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Tallowheart Mass",
@@ -7429,7 +7430,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Rustbringer (Greater)",
@@ -8386,7 +8387,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Sailor's Collar (Greater)",
@@ -11686,7 +11687,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Chimera Flail",
@@ -11708,7 +11709,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Holy Steam Ball",
@@ -17560,7 +17561,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Guise of the Smirking Devil (Greater)",
@@ -18385,7 +18386,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Fortune Cord",
@@ -18605,7 +18606,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Guiding Starknife",
@@ -23214,7 +23215,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Rowan Rifle",
@@ -24435,7 +24436,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Paradise Light",
@@ -26052,7 +26053,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Stepping Stone Shot",
@@ -27218,7 +27219,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Verdant Buckler",
@@ -27295,7 +27296,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Deep Sea Plate",
@@ -27647,7 +27648,7 @@
    "trigger": true,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Ghosthand's Comet",
@@ -27658,7 +27659,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Sanguine Pendant",
@@ -27999,7 +28000,7 @@
    "trigger": false,
    "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Lucky Draw Bandolier",

@@ -7,6 +7,7 @@ import { isExposurePoison, isInjuryPoison, isLaterSave, isUseSave } from "./pois
 import { isCast } from "./cast-card.js";
 import { isStrikeItem } from "./strike-card.js";
 import { isFortune } from "./fortune-card.js";
+import { isToggle } from "./toggle-card.js";
 
 // An automatic row aimed at a creature other than the user (the ability compiler's "The target is grabbed until the end of
 // your next turn", "The target is Quickened for 1 round"; damage outright, "The attacking creature takes 2d6 fire
@@ -35,6 +36,8 @@ export function routeOf(plan, text = "") {
     if (isStrikeItem(plan)) return "strike";
     // (A Focus Point for its user: the item module's own card, scripts/focus.js.)
     if (plan.builtin === "focus-point" && plan.focus) return "focus";
+    // (One of the item's own PF2e toggles set to a way: scripts/toggle.js.)
+    if (isToggle(plan)) return "toggle";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A check with the item's own modifier at a creature: the ability module's card, as a save at the targets.)
