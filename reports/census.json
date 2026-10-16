@@ -15,12 +15,12 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 248,
-   "resolves": 738,
+   "resolves": 739,
    "builtin:readied-bonus": 21,
    "builtin:zone": 87,
    "builtin:item-action": 12,
-   "note-only": 191,
-   "partial": 71,
+   "note-only": 189,
+   "partial": 72,
    "builtin:counteract": 20,
    "builtin:no-effect": 61,
    "builtin:reroll": 2,
@@ -242,9 +242,9 @@
    "results": {
     "builtin:readied-bonus": 2,
     "none": 18,
-    "partial": 1,
-    "resolves": 12,
-    "note-only": 11,
+    "partial": 2,
+    "resolves": 13,
+    "note-only": 9,
     "builtin:reroll": 1,
     "builtin:cast-spell": 1
    },
@@ -347,7 +347,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 59,
+   "resolves": 60,
    "gaps": 0,
    "none": 37
   },
@@ -8387,8 +8387,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -11600,8 +11601,11 @@
     "trigger",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "If the triggering poison was normal Alcohol, you instead automatically succeed at the triggering save and gain a +4 status bonus on saves against alcohol for 1 minute."
+   ],
    "live": "item"
   },
   {

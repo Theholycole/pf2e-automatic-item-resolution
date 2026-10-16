@@ -469,3 +469,11 @@ test("Gecko Pads' climb Speed ('The pads give you …') and Maelstromic Destabil
     const destabilizer = compileItem(item("Maelstromic Destabilizer (Lesser)"), { spellEffects });
     assert.deepEqual([destabilizer.item.resist.map((entry) => [entry.type, entry.value, entry.duration.unit]), destabilizer.partial], [[["spirit", 2, "minutes"]], true]);
 });
+
+test("a bonus to the triggering save and to the rest against the same affliction for a minute (Fulu of the Stoic Ox, Fulu of the Drunken Monkey)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const ox = compileItem(item("Fulu of the Stoic Ox"), { spellEffects }).resolution.outcomes.success.modifiers;
+    assert.deepEqual(ox.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.unit]), [["fortitude", 2, "status", ["item:trait:disease"], "minutes"]]);
+    const monkey = compileItem(item("Fulu of the Drunken Monkey"), { spellEffects });
+    assert.deepEqual([monkey.resolution.outcomes.success.modifiers[0].predicate, monkey.partial], [["item:trait:poison"], true]);
+});

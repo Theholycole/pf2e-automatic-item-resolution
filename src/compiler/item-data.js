@@ -49,6 +49,10 @@ export function withItemData(html, item) {
     // must … save" — the reader takes the area from the link.)
     text = text.replace(/\b(in|within) an? (\d+)-foot (emanation|burst|cone|line)\b(?= (?:must|attempts?)\b[^.]*?@Check\[(?:fortitude|reflex|will)\b)/g, (whole, word, feet, shape) => `${word} a @Template[type:${shape}|distance:${feet}]{${feet}-foot ${shape}}`);
     text = text.replace(/\bmust make an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or (be|become)\b((?:@UUID\[[^\]]*\]\{[^}]*\}|[^.(@])*)\((?:or )?([^)]*?) on (?:a )?critical failure\)/g, (whole, check, verb, first, worse) => `must succeed at a ${check} save or ${verb}${first}(${worse} on a critical failure)`);
+    // (A bonus to the triggering save and the rest against the same affliction for a while, Fulu of the Stoic Ox's "you gain a +2 status
+    // bonus on the triggering Fortitude save and on all Fortitude saves against the same disease for the next minute": saves against
+    // diseases (poisons) for that minute, the triggering one among them.)
+    text = text.replace(/\bgain an? \+(\d+) (status|circumstance|item) bonus on the triggering (Fortitude|Reflex|Will) save and on (?:all )?\3 saves against the same (disease|poison) for the next minute\b/g, (whole, value, type, save, against) => `gain a +${value} ${type} bonus to ${save} saves against ${against}s for 1 minute`);
     // (Its holder's own resistance beside what it does to others, Maelstromic Destabilizer's "For the next minute, the creature holding
     // the gadget gains resistance 2 to spirit damage, while all creatures … in a 10-foot emanation gains weakness 2 to spirit damage":
     // its own sentence, the others' a note.)

@@ -17,9 +17,9 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 738 | 50% |
-| partial | 71 | 5% |
-| note-only | 191 | 13% |
+| resolves | 739 | 50% |
+| partial | 72 | 5% |
+| note-only | 189 | 13% |
 | builtin:zone | 87 | 6% |
 | builtin:cast-spell | 32 | 2% |
 | builtin:roll-twice | 2 | 0% |
@@ -41,7 +41,7 @@ Results, for the items this module handles:
 | gadget | 77 | 29 | 3 | 9 | 0 | 25 | 11 |
 | mutagen | 68 | 60 | 8 | 0 | 0 | 0 | 0 |
 | oil | 66 | 28 | 2 | 17 | 0 | 10 | 9 |
-| fulu | 46 | 12 | 1 | 11 | 0 | 4 | 18 |
+| fulu | 46 | 13 | 2 | 9 | 0 | 4 | 18 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |
 
@@ -85,7 +85,7 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 | condition | 433 | 262 | 0 | 29 |
 | linked-effect | 393 | 379 | 0 | 0 |
 | damage | 277 | 169 | 0 | 24 |
-| trigger | 156 | 59 | 0 | 37 |
+| trigger | 156 | 60 | 0 | 37 |
 | affliction | 144 | 139 | 0 | 3 |
 | counteract | 79 | 18 | 0 | 14 |
 | on-weapon | 67 | 57 | 0 | 1 |
