@@ -123,7 +123,8 @@ const TRIGGERED = /\b(?:starts? (?:its|their) turn|ends? (?:its|their) turn|pass
 const saveSentence = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).find((sentence) => /\b(?:must (?:attempt|succeed)|saving throw|save)\b/i.test(sentence)) ?? "";
 // (Never a snare: it's placed, and set off by the first creature to enter its square — Regions, later.)
 // (A delivery trait with a plain save, no affliction — Sneezing Powder, inhaled — is one too.)
-const useSave = (plan, text) => plan?.resolution?.kind === "save" && ["use", "passive"].includes(plan.trigger?.event) && plan.resolution.check?.against?.dc === "fixed"
+// (A fixed DC, or its owner's, which live play fills in before the card: src/compiler/item-data.js.)
+const useSave = (plan, text) => plan?.resolution?.kind === "save" && ["use", "passive"].includes(plan.trigger?.event) && ["fixed", "owner"].includes(plan.resolution.check?.against?.dc)
     && (!plan.item?.delivery || !plan.resolution.afflictionHandoff) && plan.item?.category !== "snare" && !/\bsnare\b/i.test(plan.source?.name ?? "") && !TRIGGERED.test(saveSentence(text));
 // (Set off by a creature attacking its user while it lasts — Oil of Repulsion's "For 1 minute after you apply this oil to
 // armor, any creature that hits you with a melee Strike must attempt …", Vermin Repellent Agent's "… when attempting to attack

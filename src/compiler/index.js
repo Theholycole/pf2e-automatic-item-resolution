@@ -31,7 +31,7 @@ import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
-import { withItemData } from "./item-data.js";
+import { ownerDCs, withItemData } from "./item-data.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
@@ -67,7 +67,12 @@ export { asAbility } from "./ability-shape.js";
 // options: the ability compiler's (basicActions, actor) and spellEffects, PF2e's spell Effects by spell name in lower case
 // ({ "haste": { uuid, name } }; spellEffectIndex() builds it from the spell-effects pack's items); claims, the spell
 // module's (handlesItem).
+// (Each save against its owner's DC as the core's { dc: "owner" }: src/compiler/item-data.js.)
 export function compileItem(given, options = {}) {
+    return ownerDCs(compileOne(given, options));
+}
+
+function compileOne(given, options = {}) {
     if (!handlesItem(given, options)) return null;
     // (The generic spellgun: the plan of the spell loaded into it, src/compiler/generic-spellgun.js; none until one is.)
     if (given?.flags?.[MODULE_ID]?.[GENERIC_SPELLGUN]) {

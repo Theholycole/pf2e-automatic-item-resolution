@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 267,
-   "resolves": 728,
+   "resolves": 730,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 208,
+   "note-only": 206,
    "builtin:item-action": 8,
    "partial": 51,
    "builtin:counteract": 20,
@@ -34,8 +34,8 @@
    "results": {
     "builtin:cast-spell": 11,
     "none": 129,
-    "resolves": 206,
-    "note-only": 100,
+    "resolves": 208,
+    "note-only": 98,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
     "partial": 29,
@@ -304,7 +304,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 166,
+   "resolves": 167,
    "gaps": 0,
    "none": 27
   },
@@ -340,7 +340,7 @@
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 56,
+   "resolves": 57,
    "gaps": 0,
    "none": 1
   },
@@ -364,13 +364,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 258,
+   "resolves": 260,
    "gaps": 0,
    "none": 37
   },
   "duration": {
    "count": 943,
-   "resolves": 589,
+   "resolves": 591,
    "gaps": 0,
    "none": 22
   }
@@ -379,13 +379,13 @@
   "totals": {
    "cast": 32,
    "none": 352,
-   "item": 632,
+   "item": 630,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 79,
    "action": 8,
-   "save": 120,
+   "save": 122,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -396,8 +396,8 @@
     "cast": 11,
     "none": 157,
     "later": 12,
-    "save": 84,
-    "item": 220,
+    "save": 86,
+    "item": 218,
     "zone": 9,
     "fortune": 7,
     "expose": 3,
@@ -22653,9 +22653,10 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Caltrop Snare",
@@ -24057,9 +24058,10 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Puff Dragon",

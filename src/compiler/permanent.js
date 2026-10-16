@@ -21,7 +21,7 @@ import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
-import { withItemData } from "./item-data.js";
+import { ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
 import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
@@ -91,7 +91,12 @@ function asActivationAbility(item, activation) {
 const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), category: "permanent" } });
 
 // Each activation → { activation, plan } (plan null when nothing is read). options: as compileItem's.
+// (Each save against its owner's DC as the core's { dc: "owner" }: src/compiler/item-data.js.)
 export function compileActivations(item, options = {}) {
+    return compileEach(item, options).map((entry) => ({ ...entry, plan: ownerDCs(entry.plan) }));
+}
+
+function compileEach(item, options = {}) {
     if (!handlesPermanent(item, options)) return [];
     // (Its own data in its text first — a weapon's striking and potency runes, src/compiler/item-data.js.)
     const html = withItemData(item.system?.description?.value, item);

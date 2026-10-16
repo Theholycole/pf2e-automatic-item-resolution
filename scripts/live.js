@@ -13,7 +13,8 @@
 //   other change goes through the ability module's api.live.applyChange.
 
 import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, ownerDCsOf, startInitiative, stateOf } from "./foundry.js";
+import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { applyCastCard, postCastCard } from "./casts.js";
@@ -31,6 +32,8 @@ import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { verifyEffectRules } from "../src/compiler/verify-effect.js";
 import { isUnloadedSpellgun, restoreUnloaded } from "./generic-items.js";
+
+const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 let compile = null;
 // The last dose's item, kept as PF2e deletes it (its Use message can arrive after): uuid → { data, actor }.
@@ -117,6 +120,15 @@ async function cardForUse(message) {
 // (scripts/item-actions.js); else the item card below.
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
+    // (A save against its user's own class or spell DC, src/compiler/item-data.js: that DC, as it is now. Without one, the GM rolls it.)
+    if (hasOwnerDC(plan)) {
+        const filled = fillOwnerDCs(plan, ownerDCsOf(actor));
+        if (filled.missing) {
+            await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: game.users.filter((user) => user.isGM).map((user) => user.id), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: its save is against ${escapeHTML(actor.name)}'s class DC or spell DC, and ${escapeHTML(actor.name)} has neither. Roll it by hand.</p>` });
+            return;
+        }
+        plan = filled.plan;
+    }
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     // (An item that also counteracts on its drinker — Panacea Fruit heals too: its counteract card beside its own.)
     if (route !== "counteract" && plan?.item?.counteract) await postCounteractCard({ message, plan, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | counteract card`, error));

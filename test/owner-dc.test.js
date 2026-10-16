@@ -1,0 +1,79 @@
+// Saves against the owner's own DC (PF2e's "@Check[reflex|against:class-spell]": the harrow cards, Penultimate Heartbeat,
+// Lung Bloodstone's Admonish): read with a stand-in, then the core's against { dc: "owner" }, and live play fills in the
+// owner's class DC or spell DC from PF2e's attributes.
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import path from "node:path";
+import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
+import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
+import { compileItem } from "../src/compiler/index.js";
+import { compileActivations } from "../src/compiler/permanent.js";
+import { fillOwnerDCs, hasOwnerDC, withItemData } from "../src/compiler/item-data.js";
+import { routeOf } from "../src/live/route.js";
+import { plainText } from "../src/compiler/rows.js";
+
+const MODULE_ID = "pf2e-automatic-item-resolution";
+const SOCKET = `module.${MODULE_ID}`;
+const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
+const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
+const source = (name) => equipment.find((doc) => doc.name === name);
+const activation = (name, which = null) => compileActivations(source(name)).find((entry) => !which || entry.activation.name === which);
+
+// (Shared with the other flow tests: these creatures stand 250 squares down.)
+const foundry = await fakeFoundry();
+const reader = foundry.makeActor({ id: "owner-reader", name: "Reader", owners: ["player"] });
+const foe = foundry.makeActor({ id: "owner-foe", name: "Foe" });
+const nobody = foundry.makeActor({ id: "owner-nobody", name: "Nobody", owners: ["player"] });
+foundry.place(reader, 0, 25000);
+foundry.place(foe, 100, 25000);
+foundry.place(nobody, 200, 25000);
+reader.system.attributes.classDC = { value: 24 };
+reader.system.attributes.spellDC = { value: 27 };
+
+test("the reading: the owner's DC as the core's { dc: \"owner\" }, with the item's rows read in full", () => {
+    assert.match(withItemData("<p>@Check[will|against:class|basic]</p>"), /@Check\[will\|dc:9001\|basic\]/);
+    // The Avalanche: a Reflex save against the class or spell DC, its damage, push, prone and restrained.
+    const avalanche = activation("The Avalanche").plan;
+    assert.deepEqual(avalanche.resolution.check.against, { dc: "owner", statistic: "class-spell" });
+    assert.deepEqual(avalanche.resolution.outcomes.failure.effects.map((effect) => effect.slug), ["prone", "restrained"]);
+    assert.equal(/900[123]/.test(JSON.stringify(avalanche)), false, "no stand-in left");
+    assert.equal(routeOf(avalanche, plainText(activation("The Avalanche").activation.html)), "save");
+    // Lung Bloodstone of Arazni's Admonish: the class DC alone.
+    assert.deepEqual(activation("Lung Bloodstone of Arazni", "Admonish").plan.resolution.check.against, { dc: "owner", statistic: "class" });
+    // A consumable too: Penultimate Heartbeat's frightened.
+    const heartbeat = compileItem(source("Penultimate Heartbeat"));
+    assert.deepEqual([heartbeat.resolution.check.against, heartbeat.resolution.outcomes.failure.effects.map((effect) => [effect.slug, effect.value])], [{ dc: "owner", statistic: "class-spell" }, [["frightened", 2]]]);
+    // A spell cast at the owner's DC (The Cyclone): the cast's DC, filled in live.
+    const cyclone = activation("The Cyclone").plan;
+    assert.deepEqual([cyclone.builtin, cyclone.dc, cyclone.ownerDC], ["cast-spell", null, "class-spell"]);
+});
+
+test("filling in: the higher of the class and spell DCs, the class DC alone, or none", () => {
+    const avalanche = activation("The Avalanche").plan;
+    assert.equal(hasOwnerDC(avalanche), true);
+    assert.deepEqual(fillOwnerDCs(avalanche, { class: 24, spell: 27 }).plan.resolution.check.against, { dc: "fixed", value: 27 });
+    assert.deepEqual(fillOwnerDCs(activation("Lung Bloodstone of Arazni", "Admonish").plan, { class: 24, spell: 27 }).plan.resolution.check.against, { dc: "fixed", value: 24 });
+    assert.equal(fillOwnerDCs(avalanche, { class: null, spell: null }).missing, true);
+    assert.deepEqual([fillOwnerDCs(activation("The Cyclone").plan, { class: 24, spell: 27 }).plan.dc, fillOwnerDCs(activation("The Cyclone").plan, {}).missing], [27, false], "a cast without one: the spell module's own DC");
+});
+
+test("live: the card's save is at the owner's DC; with no DC of theirs, the GM is told", async () => {
+    const use = async (actor, id) => {
+        const item = foundry.giveItem(actor, { ...source("Penultimate Heartbeat"), _id: id });
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: null, type: "consumable" } } }, speaker: { actor: actor.id }, actor, token: actor.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        return message;
+    };
+    const message = await use(reader, "ownerHeartbeat01");
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    assert.equal(card.flags[MODULE_ID].card.plan.resolution.check.against.value, 27);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [foe.token.uuid] });
+    await settle();
+    assert.deepEqual(foundry.posted.slice(before)[0].plan.resolution.check.against, { dc: "fixed", value: 27 });
+    const none = await use(nobody, "ownerHeartbeat02");
+    const told = foundry.messages[foundry.messages.indexOf(none) + 1];
+    assert.match(told.content, /has neither\. Roll it by hand/);
+});

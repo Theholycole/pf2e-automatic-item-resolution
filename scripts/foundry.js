@@ -94,3 +94,11 @@ export const startInitiative = (actor) => {
     const found = encounterOf(actor);
     return found ? found.combat.combatant?.initiative ?? null : null;
 };
+
+// The owner's own DCs, for a save against "your class DC or spell DC" (src/compiler/item-data.js fillOwnerDCs): PF2e's
+// attributes classDC and spellDC, which it keeps on characters and NPCs alike.
+export function ownerDCsOf(actor) {
+    const number = (value) => (Number(value) > 0 ? Number(value) : null);
+    const attributes = actor?.system?.attributes ?? {};
+    return { class: number(attributes.classDC?.value), spell: number(attributes.spellDC?.value) };
+}
