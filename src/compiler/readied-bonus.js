@@ -19,7 +19,8 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^
 // "You gain a +2 status bonus to …", "giving you a +4 status bonus to your AC and saves against the effect", "you gain a
 // +1 circumstance bonus against the triggering save".
 const GAIN = /\b(?:you gain|giving you|you get|granting you|grants? you|gaining) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
-const RESIST = /\b(?:and )?(?:gain )?resistance (\d+) to (?:all )?damage\b/i;
+// ("… and gain resistance 2 to damage", Sparkwarden; "… resistance 2 to the triggering damage", Warding Tattoo.)
+const RESIST = /\b(?:and )?(?:gain )?resistance (\d+) to (?:all |the triggering )?damage\b/i;
 
 // The selectors for the words a bonus names: "AC and saving throws" → ac, saving-throw; "your Fortitude DC" → fortitude-dc;
 // "Stealth checks to Hide and Sneak" → stealth, for those actions; "the triggering save" → saving-throw.

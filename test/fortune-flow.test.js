@@ -211,3 +211,8 @@ test("another sentence's time isn't the bonus's: a Quickened on success, an immu
     // Its own sentence's "for the next minute" still is (Fulu of the Stoic Ox).
     assert.notEqual(compileItem(source("Fulu of the Stoic Ox"))?.builtin, "readied-bonus");
 });
+
+test("\"resistance 2 to the triggering damage\" beside the bonus (Warding Tattoo)", () => {
+    const tattoo = compileActivations(source("Warding Tattoo")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.deepEqual(tattoo.bonus.resistance, { type: "all-damage", value: 2 });
+});
