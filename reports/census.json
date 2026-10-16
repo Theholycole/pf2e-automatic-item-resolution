@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 269,
-   "resolves": 705,
+   "resolves": 725,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 231,
+   "note-only": 211,
    "builtin:item-action": 8,
    "partial": 49,
    "builtin:counteract": 20,
@@ -64,8 +64,8 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 105,
-    "note-only": 34,
+    "resolves": 125,
+    "note-only": 14,
     "none": 18,
     "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
@@ -304,7 +304,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 146,
+   "resolves": 166,
    "gaps": 0,
    "none": 28
   },
@@ -370,7 +370,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 567,
+   "resolves": 587,
    "gaps": 0,
    "none": 22
   }
@@ -379,11 +379,11 @@
   "totals": {
    "cast": 32,
    "none": 354,
-   "item": 651,
+   "item": 631,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
-   "later": 59,
+   "later": 79,
    "action": 8,
    "save": 119,
    "counteract": 20,
@@ -406,8 +406,8 @@
     "coat": 3
    },
    "potion": {
-    "item": 96,
-    "later": 43,
+    "item": 76,
+    "later": 63,
     "none": 29,
     "cast": 9,
     "save": 3,
@@ -3524,9 +3524,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Pyronite",
@@ -5867,9 +5868,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Stolen Countenance",
@@ -11026,9 +11028,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Golden Silencer (Standard)",
@@ -12148,9 +12151,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Comprehension Elixir (Greater)",
@@ -13329,9 +13333,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Hoof Stakes Snare",
@@ -14431,9 +14436,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Grave Token",
@@ -14671,9 +14677,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Megaphone Mutagen (Lesser)",
@@ -15394,9 +15401,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Antiplague (Lesser)",
@@ -18429,9 +18437,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Viperous Elixir (Greater)",
@@ -18582,9 +18591,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Potion of Fire Resistance (Lesser)",
@@ -18617,9 +18627,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Kimanéz Luminescent Toadstool",
@@ -20607,9 +20618,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Prey Mutagen (Major)",
@@ -21378,9 +21390,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Impossible Cake",
@@ -22355,9 +22368,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Wemmuth Trinket",
@@ -24682,9 +24696,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Frogskin Tincture",
@@ -24921,9 +24936,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Material Essence Disruptor (Major)",
@@ -27173,9 +27189,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Aged Arbor Wine",
@@ -27613,9 +27630,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Silvertongue Mutagen (Greater)",
@@ -28318,9 +28336,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Spirit Bulb (Greater)",
@@ -29925,9 +29944,10 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "gaps": [],
+   "live": "later"
   },
   {
    "name": "Server's Stew",

@@ -171,3 +171,22 @@ test("Spiritual Warhorn: its warriors' Strikes at the item's modifier, at up to 
     assert.deepEqual([horn.resolution.check.modifier, component(horn).formula, component(horn).type, horn.targeting.target, horn.targeting.range], [17, "2d6", "force", "up to 4 enemies", "60 feet"]);
     assert.deepEqual([horn.resolution.outcomes.criticalSuccess.damage.multiplier, horn.resolution.outcomes.success.damage.multiplier, horn.resolution.outcomes.failure.damage.mode], [2, 1, "none"]);
 });
+
+test("Potion of Fire Retaliation: its damage to a creature that touches the drinker, on a card kept open for its minute", async () => {
+    const potion = compileItem(source("Potion of Fire Retaliation (Lesser)"));
+    assert.deepEqual([routeOf(potion), potion.retaliation, component(potion).formula, component(potion).type], ["later", true, "1d4", "fire"]);
+    const drinker = foundry.makeActor({ id: "damage-retaliator", name: "Retaliator", owners: ["player"] });
+    foundry.place(drinker, 300, 17000);
+    const item = foundry.giveItem(drinker, source("Potion of Fire Retaliation (Lesser)"));
+    const data = item.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: drinker.id }, actor: drinker, token: drinker.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    assert.match(card.content, /Each time a creature touches Retaliator while it lasts/);
+    for (let time = 0; time < 2; time++) {
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [brute.token.uuid] });
+        await settle();
+    }
+    assert.deepEqual([card.flags[MODULE_ID].card.status, card.flags[MODULE_ID].card.uses], ["open", 2], "open for its minute, used twice");
+});

@@ -42,6 +42,8 @@ export function routeOf(plan, text = "") {
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A check with the item's own modifier at a creature: the ability module's card, as a save at the targets.)
     // (What it gives its user and allies in an area: the same card, at the creatures the presser targets.)
+    // (Damage to a creature that touches its drinker, for the item's time: the later card, kept open.)
+    if (plan.retaliation) return "later";
     if (plan.ownCheck || plan.allyArea || isUseSave(plan, text) || targetedRow(plan)) return "save";
     if (isLaterSave(plan, text)) return "later";
     if (playedOnItemCard(plan)) return "item";

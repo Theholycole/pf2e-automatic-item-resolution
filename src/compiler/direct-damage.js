@@ -154,3 +154,25 @@ export function negatingSavePlan(text, base) {
         }
     };
 }
+
+// Damage to a creature that touches the drinker, for the item's time (Potion of Fire Retaliation's "For 1 minute after
+// drinking a potion of fire retaliation, you glow with a faint aura of fire energy, and a creature that touches you (such as
+// by making an unarmed attack …) takes fire damage. The aura deals 1d4 fire damage."): no save, at the creature the presser
+// targets, each time — plan.retaliation, a card kept open for the item's time (src/live/route.js "later").
+const TOUCHER = /\ba creature that touches you\b[^.]*?\btakes (\w+) damage\b/i;
+const AURA_DEALS = /\bThe aura deals (\d+d\d+(?:\s*\+\s*\d+)?|\d+) (\w+) damage\b/i;
+export function retaliationPlan(text, base) {
+    const touched = TOUCHER.exec(String(text ?? ""));
+    const deals = touched && AURA_DEALS.exec(String(text ?? ""));
+    if (!deals) return null;
+    const success = { damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] }, effects: [], modifiers: [] };
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: "automatic" },
+        targeting: { target: "the creature that touches you", range: null, area: null },
+        trigger: { event: "use" },
+        retaliation: true,
+        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: deals[1].replace(/\s+/g, ""), type: deals[2].toLowerCase(), category: null }] }, outcomes: { criticalSuccess: none(), success, failure: none(), criticalFailure: none() } }
+    };
+}

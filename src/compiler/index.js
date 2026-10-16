@@ -24,7 +24,7 @@ import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { spellgunPlan } from "./spellguns.js";
-import { directDamageOver, directDamagePlan } from "./direct-damage.js";
+import { directDamageOver, directDamagePlan, retaliationPlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
@@ -113,6 +113,8 @@ export function compileItem(given, options = {}) {
     if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value })) {
         plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
     }
+    // (Damage to a creature that touches its drinker, for the item's time, src/compiler/direct-damage.js: Potion of Fire Retaliation.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = retaliationPlan(plainText(item?.system?.description?.value), base) ?? plan;
     // (What it gives its user and allies in an area, src/compiler/rows.js.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = allyAreaPlan(plainText(item?.system?.description?.value), base, allyAreaRow(plainText(item?.system?.description?.value))) ?? plan;
     // (An Effect behind a check the text opens with: only on its success, a note.)

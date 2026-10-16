@@ -128,7 +128,7 @@ const useSave = (plan, text) => plan?.resolution?.kind === "save" && ["use", "pa
 // (Set off by a creature attacking its user while it lasts — Oil of Repulsion's "For 1 minute after you apply this oil to
 // armor, any creature that hits you with a melee Strike must attempt …", Vermin Repellent Agent's "… when attempting to attack
 // you": a card kept open for the item's time, used each time.)
-export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|Strikes|damages|grapples|swallows) you\b|\bwhen attempting to attack you\b/i;
+export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|Strikes|damages|grapples|swallows|touches) you\b|\bwhen attempting to attack you\b/i;
 // (The drinker's own save: Truth Potion's "Upon drinking the potion, attempt a @Check[will|dc:19] save", Matsuki's Medicinal
 // Wine's "When you drink a dose of this wine you must succeed at a @Check…", Energy Toxin Bottle's "You drink from the bottle
 // and must succeed at a @Check…".)
@@ -150,7 +150,7 @@ export const repeatsLater = (text = "") => AGAIN.test(text) || ATTACKER.test(tex
 // own: the drinker's own save (no targets: the user's own token); attacker: set off by a creature attacking the user.
 // attackChoices: a spellgun's attack modifiers its user has, [{ kind, label, modifier }] (scripts/poisons.js).
 export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null, own = false, attacker = false, attackChoices = null }) {
-    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: true } : {}), ...(attackChoices ? { attackChoices, attackChoice: 0 } : {}), results: [] };
+    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: attacker === "touch" ? "touch" : true } : {}), ...(attackChoices ? { attackChoices, attackChoice: 0 } : {}), results: [] };
 }
 
 // The plan with the check picked: Twisting Twine's Trip in place of its Disarm (plan.checkChoices [{ label, resolution }]).
@@ -178,11 +178,12 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const automatic = state.plan?.resolution?.check?.roll === "automatic";
     const checked = state.plan?.resolution?.check?.roll === "skill";
     const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
-    const again = state.repeat ? ` It can be used again${state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : ""} until its time is up, after each recharge.` : "";
+    const used = state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : "";
+    const again = !state.repeat ? "" : state.attacker ? ` It stays open until its time is up${used}.` : ` It can be used again${used} until its time is up, after each recharge.`;
     const hint = !open ? "" : state.own
         ? `<p class="aar-hint">${escape(state.user.name)}'s own save (${escape(saveText(state.plan))}).</p>`
         : state.attacker
-        ? `<p class="aar-hint">Each time a creature attacks ${escape(state.user.name)} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
+        ? `<p class="aar-hint">Each time a creature ${state.attacker === "touch" ? "touches" : "attacks"} ${escape(state.user.name)} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : state.later
         ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : checked ? "A check at" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
