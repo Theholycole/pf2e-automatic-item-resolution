@@ -71,3 +71,13 @@ test("Crying Angel Pendant: Administer First Aid at the target with +1, and a su
     assert.match(card.content, /Thief&#39;s Administer First Aid against Mark: a success/);
     foundry.nextOutcome.value = "success";
 });
+
+test("\"You attempt to Demoralize the foe the Strike hit\", \"to attempt to Grapple the creature\": its user's action at one creature", () => {
+    const action = (text) => readItemAction(`<p><strong>Effect</strong> ${text}</p>`);
+    assert.deepEqual([action("You attempt to Demoralize the foe the Strike hit.").slug, action("You attempt to Demoralize the foe the Strike hit.").targeted], ["demoralize", true]);
+    assert.equal(action("You can activate the tiger fork to attempt to Grapple the creature. This attempt uses the same multiple attack penalty as the required Strike.").slug, "grapple");
+    assert.equal(action("You attempt to Disarm the creature whose attack you blocked of the weapon they attacked you with.").slug, "disarm");
+    // Not the item's own check ("The tentacle attempts to Grapple with a +13 bonus"), nor a choice of actions (The Bear).
+    assert.equal(action("The tentacle attempts to Grapple with a +13 bonus."), null);
+    assert.equal(action("You attempt to Grapple, Shove, or Trip the creature you hit with the successful Strike."), null);
+});

@@ -8,7 +8,7 @@
   "results": {
    "resolves": 662,
    "builtin:cast-spell": 469,
-   "none": 851,
+   "none": 847,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 23,
@@ -17,8 +17,8 @@
    "partial": 56,
    "builtin:modes": 26,
    "builtin:zone": 9,
+   "builtin:item-action": 11,
    "builtin:roll-twice": 10,
-   "builtin:item-action": 7,
    "builtin:save-bonus": 3,
    "builtin:ac-reaction": 4
   },
@@ -26,13 +26,13 @@
    "save": 327,
    "cast": 469,
    "item": 589,
-   "none": 1049,
+   "none": 1045,
    "focus": 45,
    "fortune": 33,
    "reroll": 22,
    "strike": 39,
    "zone": 9,
-   "action": 7,
+   "action": 11,
    "later": 4
   },
   "withFrequency": 1749,
@@ -44,7 +44,7 @@
    "results": {
     "resolves": 400,
     "builtin:cast-spell": 340,
-    "none": 545,
+    "none": 543,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 16,
@@ -55,21 +55,21 @@
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:item-action": 2
+    "builtin:item-action": 4
    }
   },
   "weapon": {
    "activations": 460,
    "results": {
     "resolves": 143,
-    "none": 132,
+    "none": 130,
     "partial": 23,
     "note-only": 41,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 7,
+    "builtin:item-action": 7,
     "builtin:no-effect": 12,
-    "builtin:item-action": 5,
     "builtin:readied-bonus": 5,
     "builtin:roll-twice": 1,
     "builtin:save-bonus": 1,
@@ -3401,9 +3401,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Sawtooth Reaper",
@@ -11838,9 +11838,9 @@
    "time": "free",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Angelic Opera Cloak",
@@ -21012,9 +21012,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Flawless Celestial Shawl",
@@ -26017,9 +26017,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Spectacles of Piercing Sight",
