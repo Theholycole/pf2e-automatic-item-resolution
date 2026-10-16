@@ -82,8 +82,8 @@ The module's compendium, **PF2e Automatic Item Resolution**, has two items that 
 
 Foundry 14 with the PF2e system 8.5 or later, plus:
 
-- [PF2e Resolution Core](https://github.com/Theholycole/PF2e-Automation-Core) v0.6.0 or later, which resolves the plans;
-- [PF2e Automatic Ability Resolution](https://github.com/Theholycole/pf2e-automatic-ability-resolution) v0.7.0 or later, whose compiler reads the item text and whose save cards and zones the item cards use.
+- [PF2e Resolution Core](https://github.com/Theholycole/PF2e-Automation-Core) v0.7.0 or later, which resolves the plans (and keeps damage materials such as silver);
+- [PF2e Automatic Ability Resolution](https://github.com/Theholycole/pf2e-automatic-ability-resolution) v0.8.0 or later, whose compiler reads the item text and whose save cards, zones and condition floors the item cards use.
 
 [PF2e Automatic Spell Resolution](https://github.com/Theholycole/pf2e-automatic-spell-resolution) (v0.10.0 or later) casts the spells items cast, and the items it acts on itself (its `claims`) are left to it. Without it, a cast card says to cast the spell by hand. [Pseudo Afflictions](https://foundryvtt.com/packages/pseudo-afflictions) runs a poison's stages once its save card hands them on.
 

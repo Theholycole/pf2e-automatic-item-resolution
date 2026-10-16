@@ -36,7 +36,7 @@
         "reason": "Items are resolved by the core's families.",
         "manifest": "https://github.com/Theholycole/PF2e-Automation-Core/releases/latest/download/module.json",
         "compatibility": {
-          "minimum": "0.6.0"
+          "minimum": "0.7.0"
         }
       },
       {
@@ -45,7 +45,7 @@
         "reason": "An item's saves, afflictions and effects are read by the ability module's compiler.",
         "manifest": "https://github.com/Theholycole/pf2e-automatic-ability-resolution/releases/latest/download/module.json",
         "compatibility": {
-          "minimum": "0.7.0"
+          "minimum": "0.8.0"
         }
       }
     ],
