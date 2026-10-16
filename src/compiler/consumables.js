@@ -29,7 +29,8 @@ export function recipientOf(item) {
 // all allies within a 60-foot emanation gain …", "All allies within 60 feet who can see the crosier receive …", "You grant
 // allies within 100 feet …", "Up to 5 creatures of your choice within 30 feet regain …" — or one creature — "a creature
 // you touch", "Choose an adjacent creature. Until the end of your turn, that creature takes …", "granting your companion
-// …", "you and your familiar", "Both you and the triggering enemy". Not an aura Effect (PF2e spreads it from its user) or
+// …", "you and your familiar", "Both you and the triggering enemy", "the most recent creature damaged by the weapon
+// regains …". Not an aura Effect (PF2e spreads it from its user) or
 // the wearer's own one of two.
 const OTHERS_GRANT = [
     /\bYou and (?:all |each )?(?:of )?(?:your )?(?:nearby )?allies\b[^.]*?\b(?:gain|gains|receive|receives|can|regain|regains)\b/i,
@@ -47,7 +48,9 @@ const OTHERS_GRANT = [
     /\bgranting your (?:animal )?(?:companion|familiar|mount|eidolon)\b/i,
     /\byou and your (?:familiar|companion|mount|eidolon)\b/i,
     /\bBoth you and the triggering (?:enemy|creature|ally)\b/i,
-    /\bthe triggering creature (?:rolls|is forced|takes|gains)\b/i
+    /\bthe triggering creature (?:rolls|is forced|takes|gains)\b/i,
+    // (Digly's Oil of Sympathy: "the most recent creature damaged by the weapon regains 2d10+5 Hit Points".)
+    /\bthe (?:most recent )?creature (?:damaged|hit) by (?:the|this) weapon regains\b/i
 ];
 export function grantsOthers(text) {
     // (Its Effect, before any degree rows: Doom Switch's "Critical Success You and your allies gain …" is its attack's.)

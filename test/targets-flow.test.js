@@ -36,6 +36,8 @@ test("the reading: granted to allies or another creature, or not", () => {
     // of Follies), "a single target you touch" (Razmiri Mask), "granting your companion" (Barding of the Zephyr), "Both you
     // and the triggering enemy" (Medic's Armband).
     for (const name of ["Commander's Signet", "Chatterer of Follies", "Razmiri Mask", "Barding of the Zephyr", "Medic's Armband"]) assert.equal(compileActivations(source(name))[0].plan.item.recipient, "targets", name);
+    // Healing for the creature the weapon last damaged (Digly's Oil of Sympathy), not its user.
+    assert.equal(compileItem(source("Digly's Oil of Sympathy (Lesser)")).item.recipient, "targets");
     // Not: its attack's degree rows (Doom Switch), the user's own, an aura Effect PF2e spreads from its user (Searing Blade).
     assert.equal(grantsOthers("Effect You attempt to Strike a significant enemy. Critical Success You and your allies gain a +1 status bonus to attack rolls against the target for 1 minute."), false);
     assert.equal(grantsOthers("Effect You gain a +1 status bonus to AC for 1 minute."), false);
