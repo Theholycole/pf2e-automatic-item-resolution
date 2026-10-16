@@ -7,6 +7,7 @@
 import { activationButtonsHTML, frequencyText, overLimit, perWord, usesNow, withUse } from "../src/live/activations-card.js";
 import { handlesPermanent } from "../src/compiler/permanent.js";
 import { etchedKeys, isRuneItem } from "../src/compiler/runes.js";
+import { chargeSpellstrike } from "./spellstrike.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { MODULE_ID, SOCKET, encounterOf, isActiveGM } from "./foundry.js";
@@ -75,8 +76,10 @@ function addButtons(sheet, html) {
     }
 }
 
-// A button pressed: on the active GM's client, else sent there.
+// A button pressed: on the active GM's client, else sent there. (Spellstrike Ammunition's: its user's own dialog, here.)
 async function activateFromSheet(item, index) {
+    const entry = playable(item).find((candidate) => String(candidate.index) === String(index));
+    if (entry?.plan?.builtin === "spellstrike") return chargeSpellstrike(item, entry.plan.spellstrike);
     if (isActiveGM()) return activate(item.uuid, index, game.user.id);
     if (!game.users.activeGM) throw new Error("No GM is connected to activate it.");
     game.socket.emit(SOCKET, { action: "activate", itemUuid: item.uuid, activation: index, userId: game.user.id });

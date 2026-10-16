@@ -27,6 +27,7 @@ import { claimedBySpellModule } from "./index.js";
 import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { saveOrPlan } from "./save-or.js";
+import { spellstrikePlan } from "./spellstrike.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 
@@ -112,7 +113,8 @@ function compileEach(item, options = {}) {
             activation: { time: activation.time, traits: activation.traits }
         };
         // (A Focus Point for its user, src/compiler/focus.js: the item module's own builtin.)
-        let plan = focusPlan(activation.html, base);
+        // (Spellstrike Ammunition's spell cast into it, src/compiler/spellstrike.js: the module's own card.)
+        let plan = focusPlan(activation.html, base) ?? spellstrikePlan(activation.html, base);
         let read = null;
         if (!plan) {
             try {

@@ -8,7 +8,7 @@
   "results": {
    "resolves": 701,
    "builtin:cast-spell": 469,
-   "none": 760,
+   "none": 751,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -21,13 +21,14 @@
    "builtin:item-action": 13,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
+   "builtin:spellstrike": 9,
    "builtin:ac-reaction": 4
   },
   "live": {
    "save": 361,
    "cast": 469,
    "item": 599,
-   "none": 956,
+   "none": 947,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -35,6 +36,7 @@
    "toggle": 26,
    "zone": 9,
    "action": 13,
+   "spellstrike": 9,
    "later": 4
   },
   "withFrequency": 1749,
@@ -81,12 +83,13 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 56,
+    "none": 47,
     "partial": 13,
     "resolves": 43,
     "builtin:pf2e-rules": 24,
     "note-only": 14,
     "builtin:no-effect": 2,
+    "builtin:spellstrike": 9,
     "builtin:zone": 1
    }
   },
@@ -11139,9 +11142,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Mask of Mercy",
@@ -15551,9 +15554,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Phantom Shroud",
@@ -15628,9 +15631,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Cresset of Grisly Interrogation",
@@ -16167,9 +16170,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Enfilading Arrow",
@@ -17214,9 +17217,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Conduit Shot (Greater)",
@@ -22658,9 +22661,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Clockwork Songbird",
@@ -22757,9 +22760,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Bola Shot",
@@ -22779,9 +22782,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Harmonic Hauberk",
@@ -23850,9 +23853,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:spellstrike",
    "kind": null,
-   "live": null
+   "live": "spellstrike"
   },
   {
    "name": "Barding Saddle",

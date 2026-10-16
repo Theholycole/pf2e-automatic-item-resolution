@@ -33,6 +33,7 @@ import { plainText } from "../src/compiler/rows.js";
 import { verifyEffectRules } from "../src/compiler/verify-effect.js";
 import { isUnloadedSpellgun, restoreUnloaded } from "./generic-items.js";
 import { strikeWithRunes } from "./rune-strikes.js";
+import { chargeSpellstrike, strikeWithSpellstrike } from "./spellstrike.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -62,6 +63,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         strikeWithRider(message).catch((error) => console.error(`${MODULE_ID} | readied Strike`, error));
         // (A weapon's property runes on a critical hit: scripts/rune-strikes.js.)
         strikeWithRunes(message, runeRiders).catch((error) => console.error(`${MODULE_ID} | rune riders`, error));
+        // (A spell cast into Spellstrike Ammunition, at the creature its Strike hits: scripts/spellstrike.js.)
+        strikeWithSpellstrike(message).catch((error) => console.error(`${MODULE_ID} | spellstrike`, error));
         fortuneRolled(message).catch((error) => console.error(`${MODULE_ID} | roll twice`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
@@ -141,6 +144,11 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "cast") return postCastCard({ message, plan, used, actor, token });
     if (route === "zone") return startItemZone({ plan, used, actor, token });
     if (route === "focus") return postFocusCard({ message, plan, used, actor, token });
+    // (Spellstrike Ammunition: the spell cast into it, on this client: scripts/spellstrike.js.)
+    if (route === "spellstrike") {
+        const ammo = used.data.uuid ? await fromUuid(used.data.uuid).catch(() => null) : null;
+        return ammo ? chargeSpellstrike(ammo, plan.spellstrike) : null;
+    }
     if (route === "strike") return postStrikeCard({ message, plan, used, actor, token });
     if (route === "reroll") return postRerollCard({ message, plan, used, actor, token });
     if (route === "fortune") return postFortuneCard({ message, plan, used, actor, token });

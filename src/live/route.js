@@ -34,6 +34,8 @@ export function routeOf(plan, text = "") {
     if (isFortune(plan)) return "fortune";
     // (Used by Striking: the user's next Strike carries its riders, scripts/strikes.js.)
     if (isStrikeItem(plan)) return "strike";
+    // (A spell cast into Spellstrike Ammunition: its user's own dialog, scripts/spellstrike.js.)
+    if (plan.builtin === "spellstrike" && plan.spellstrike) return "spellstrike";
     // (A Focus Point for its user: the item module's own card, scripts/focus.js.)
     if (plan.builtin === "focus-point" && plan.focus) return "focus";
     // (One of the item's own PF2e toggles set to a way: scripts/toggle.js.)
