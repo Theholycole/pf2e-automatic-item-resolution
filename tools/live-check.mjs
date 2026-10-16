@@ -631,6 +631,23 @@ export const cases = {
         return { duration: effect.system.duration };
     },
 
+    // Potion of Resistance: the type picked on the card (fire, the fourth) — PF2e's Resistance 5 to fire for an hour.
+    async resistTypePick(scene) {
+        const { actor: drinker } = await creature(scene, "Resistance Drinker", { x: 16, y: 14 });
+        const potion = await give(drinker, "Potion of Resistance (Lesser)");
+        const since = Date.now();
+        await potion.consume();
+        const card = await messageAfter(since, itemCard("item"));
+        assert(/data-air-field="resistType"/.test(card.content), "the type picker");
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, resistType: 3 });
+        await wait(800);
+        const effect = drinker.itemTypes.effect.find((entry) => entry.getFlag(NS, "resist"));
+        assert(effect?.system.rules.some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes("fire") && rule.value === 5), `Resistance 5 to fire (${JSON.stringify(effect?.system.rules)})`);
+        const resistances = drinker.attributes.resistances ?? [];
+        assert(resistances.some((entry) => entry.type === "fire" && entry.value === 5), `PF2e's fire resistance 5 (${JSON.stringify(resistances.map((entry) => [entry.type, entry.value]))})`);
+        return { duration: effect.system.duration };
+    },
+
     // Umbral Wings: a fly Speed equal to the land Speed until the end of the next turn (PF2e's BaseSpeed on PF2e 8.6's speeds).
     async umbralFly(scene) {
         const { actor: flier } = await creature(scene, "Umbral Flier", { x: 14, y: 14 });
