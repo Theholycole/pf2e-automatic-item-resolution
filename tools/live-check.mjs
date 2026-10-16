@@ -1357,6 +1357,46 @@ export const cases = {
         document.querySelector(`[data-message-id="${crushing.id}"] [data-aar-action="apply"]`)?.click();
         await until(() => foe.hasCondition("clumsy") && foe.hasCondition("enfeebled"), "clumsy and enfeebled");
         return { thundering: thundering.id, clumsy: foe.getCondition("clumsy")?.value, enfeebled: foe.getCondition("enfeebled")?.value };
+    },
+
+    // Spellstrike Ammunition (Type II): its Activate's dialog casts an innate Ray of Frost (rank 2) into it; the shortbow's Strike
+    // that fires it and hits (AC -20) casts Ray of Frost at the target through the spell module, the hit as its attack's degree.
+    async spellstrike(scene) {
+        const { actor: archer } = await creature(scene, "Spellstriker", { type: "character", x: 2, y: 12 });
+        const { token: foeToken } = await creature(scene, "Spellstrike Target", { x: 5, y: 12, alliance: "opposition", ac: -20 });
+        const [entry] = await archer.createEmbeddedDocuments("Item", [{ name: "PFTEST Innate", type: "spellcastingEntry", system: { tradition: { value: "arcane" }, prepared: { value: "innate" }, ability: { value: "cha" } } }]);
+        const spells = game.packs.get("pf2e.spells-srd");
+        const ray = (await spells.getDocument((await spells.getIndex()).find((row) => row.name === "Ray of Frost")._id)).toObject();
+        delete ray._id;
+        await archer.createEmbeddedDocuments("Item", [{ ...ray, system: { ...ray.system, location: { value: entry.id } } }]);
+        const bow = await give(archer, "Shortbow");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        const ammo = await give(archer, "Spellstrike Ammunition (Type II)");
+        // (Its dialog opens here, and the activation waits for it: answered before it's awaited.)
+        const activating = game.modules.get(NS).api.live.activate(ammo.uuid, 0);
+        const dialog = await dialogTitled(`Cast a spell into ${ammo.name}`);
+        const option = [...dialog.element.querySelectorAll("[name=choice] option")].find((entry) => /Ray of Frost \(rank 2\)/.test(entry.textContent));
+        assert(option, "Ray of Frost at rank 2 offered");
+        dialog.element.querySelector("[name=choice]").value = option.value;
+        dialog.element.querySelector('button[data-action="cast"]').click();
+        await activating;
+        await until(() => archer.flags?.[NS]?.spellstrike?.[ammo.id], "the ammunition holding it");
+        assert(/Ray of Frost, rank 2/.test(archer.items.get(ammo.id)?.name ?? ""), `named for it (${archer.items.get(ammo.id)?.name})`);
+        await bow.update({ "system.selectedAmmoId": ammo.id });
+        await wait(500);
+        await target(foeToken);
+        let attack = null;
+        let since = 0;
+        for (let tries = 0; tries < 3 && !["success", "criticalSuccess"].includes(attack?.flags?.pf2e?.context?.outcome); tries++) {
+            since = Date.now();
+            ({ attack } = await strike(archer, bow));
+        }
+        const said = await messageAfter(since, (message) => /Ray of Frost is cast at it|by hand/.test(message.content), { what: "the cast", timeout: 12000 });
+        assert(/Ray of Frost is cast at it/.test(said.content), `cast (${said.content})`);
+        const cast = await messageAfter(since, (message) => message.flags?.["pf2e-automatic-resolution"]?.castFromItem, { what: "the spell module's cast", timeout: 12000 });
+        const flag = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        assert(flag.attackDegree === attack.flags.pf2e.context.outcome && flag.rank === 2, `the hit as its attack (${JSON.stringify(flag)})`);
+        return { outcome: attack.flags.pf2e.context.outcome, cast: flag };
     }
 };
 
