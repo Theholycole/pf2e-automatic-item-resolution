@@ -1983,6 +1983,73 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id);
         await until(() => (holder.attributes.resistances ?? []).some((entry) => entry.type === "fire" && entry.value === 20), "fire resistance 20");
         return { resistances: (holder.attributes.resistances ?? []).map((entry) => [entry.type, entry.value]) };
+    },
+
+    // Timpani of Panic: a critical failure's Frightened 1 and its floor (can't go below 1 for 1 minute), the ability module's floor Effect.
+    async timpaniFloor(scene) {
+        const { actor: drummer } = await creature(scene, "Timpani Drummer", { type: "character", x: 14, y: 12 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Timpani Target", { x: 15, y: 12, alliance: "opposition", save: -30 });
+        const drum = await give(drummer, "Timpani of Panic");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(drum.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the drum's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the save card" }));
+        await until(() => foe.itemTypes.effect.some((effect) => /floor/i.test(effect.name)), "the floor Effect", { timeout: 10000 });
+        const floor = foe.itemTypes.effect.find((effect) => /floor/i.test(effect.name));
+        await until(() => foe.hasCondition("frightened"), "frightened");
+        return { floor: floor.name, duration: floor.system.duration, frightened: foe.getCondition("frightened")?.value ?? 0 };
+    },
+
+    // Tallow Bomb (Lesser): a critical hit's Sickened 1 can't go below 1 while the persistent fire lasts; the floor goes with the fire.
+    async tallowFloor(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Tallow Bomber", { type: "character", x: 16, y: 16 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Tallow Target", { x: 18, y: 16, ac: -20, hp: 200, alliance: "opposition" });
+        let action = null;
+        let attack = null;
+        for (let tries = 0; tries < 3 && attack?.flags?.pf2e?.context?.outcome !== "criticalSuccess"; tries++) {
+            const bomb = await give(thrower, "Tallow Bomb (Lesser)");
+            await bomb.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+            await throwerToken.object?.control?.();
+            await target(foeToken);
+            ({ action, attack } = await strike(thrower, bomb));
+        }
+        assert(attack.flags.pf2e.context.outcome === "criticalSuccess", `a critical hit (AC -20): ${attack.flags.pf2e.context.outcome}`);
+        const since = Date.now();
+        await action.critical({ event: shift() });
+        const card = await messageAfter(since, itemCard("bomb"));
+        // (PF2e's own damage, its persistent fire with it, as the GM applies it from the damage roll.)
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        await foe.applyDamage({ damage: rolled.rolls[0], token: foeToken });
+        await game.modules.get(NS).api.live.apply(card.id, { included: [] });
+        const floorEffect = () => foe.itemTypes.effect.find((effect) => /floor/i.test(effect.name));
+        await until(() => foe.hasCondition("sickened") && floorEffect(), "sickened with its floor", { timeout: 10000 });
+        const fire = foe.itemTypes.condition.find((condition) => condition.slug === "persistent-damage");
+        assert(fire, "the persistent fire damage");
+        await fire.delete();
+        await until(() => !floorEffect(), "the floor gone with the fire", { timeout: 10000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Windlass Bola: a Trip at each creature targeted, PF2e's action rolled for each; both knocked prone.
+    async bolaTrips(scene) {
+        const { actor: thrower } = await creature(scene, "Bola Thrower", { type: "character", x: 2, y: 4 });
+        const { actor: one, token: oneToken } = await creature(scene, "Bola Target One", { x: 5, y: 4, alliance: "opposition", save: -30 });
+        const { actor: two, token: twoToken } = await creature(scene, "Bola Target Two", { x: 5, y: 5, alliance: "opposition", save: -30 });
+        const bola = await give(thrower, "Windlass Bola");
+        await bola.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(bola.uuid, 0);
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the bola's card" });
+        assert(/a roll for each one/.test(card.content), "a roll for each, on the card");
+        const rolls = game.messages.contents.length;
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [oneToken.uuid, twoToken.uuid] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "applied", { timeout: 15000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(results.some((line) => /Trip against PFTEST ITEM Bola Target Two: a (?:critical )?success/.test(line)), `the second's own roll (${JSON.stringify(results)})`);
+        await until(() => one.hasCondition("prone") && two.hasCondition("prone"), "both prone", { timeout: 8000 });
+        return { results, messages: game.messages.contents.length - rolls };
     }
 };
 

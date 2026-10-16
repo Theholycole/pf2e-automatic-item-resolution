@@ -73,7 +73,12 @@ export async function applyRiders({ plan, degree, user, target, item }) {
     for (const change of result.changes) {
         try {
             const line = ability?.applyChange ? await ability.applyChange(change, abilityState) : `${target.name}: ${change.op} to apply by hand (the ability module isn't active).`;
-            lines.push(line ?? `${target.name}: ${change.op === "condition" ? `${change.slug}${Number.isFinite(change.value) ? ` ${change.value}` : ""}` : change.effect?.kind === "modifier" ? `${change.effect.modifier.value} to ${change.effect.modifier.selector}` : change.op}`);
+            // (A floor: "can't reduce sickened below 1", as the ability module's own card says it.)
+            const said = change.op === "condition" ? `${change.slug}${Number.isFinite(change.value) ? ` ${change.value}` : ""}`
+                : change.effect?.kind === "modifier" ? `${change.effect.modifier.value} to ${change.effect.modifier.selector}`
+                    : change.effect?.kind === "floor" ? `can't reduce ${change.effect.floor?.slug} below ${change.effect.floor?.value}`
+                        : change.op;
+            lines.push(line ?? `${target.name}: ${said}`);
         } catch (error) {
             lines.push(`Couldn't apply ${change.op} to ${target.name}: ${error.message}`);
         }
