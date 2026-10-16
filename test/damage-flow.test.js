@@ -121,3 +121,14 @@ test("Necklace of Fireballs: a bead's basic Reflex save in a 20-foot burst, the 
     const [posted] = foundry.posted.slice(before);
     assert.equal(posted.plan.resolution.sharedDamage.components[0].formula, "6d6[fire]");
 });
+
+test("damage a successful save negates: a save at the creatures targeted, the damage on a failure (Mycoweave Shield)", async () => {
+    const { plainText } = await import("../src/compiler/rows.js");
+    const [spores] = compileActivations(source("Mycoweave Shield (Lesser)"));
+    const check = spores.plan.resolution.check;
+    assert.deepEqual([spores.plan.resolution.kind, check.statistic, check.against.value, check.basic], ["save", "fortitude", 16, false]);
+    assert.deepEqual(spores.plan.resolution.sharedDamage.components.map((component) => [component.formula, component.category]), [["1d6[persistent,poison]", "persistent"]]);
+    assert.deepEqual(["success", "failure"].map((degree) => spores.plan.resolution.outcomes[degree].damage.multiplier), [0, 1]);
+    assert.equal(routeOf(spores.plan, plainText(spores.activation.html)), "save");
+});
+

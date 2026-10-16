@@ -13,7 +13,7 @@ import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
-import { directDamageOver, directDamagePlan } from "./direct-damage.js";
+import { directDamageOver, directDamagePlan, negatingSavePlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { beadsPlan } from "./beads.js";
@@ -146,6 +146,8 @@ export function compileActivations(item, options = {}) {
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)
         // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
         plan = guardValues(directDamageOver(guardText(plan, plainText(activation.html)), directDamagePlan(plainText(activation.html), base, { item })));
+        // (Damage a successful save negates, src/compiler/direct-damage.js: Mycoweave Shield's spores.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = negatingSavePlan(plainText(activation.html), base) ?? plan;
         // (What it gives its user and allies in an area, src/compiler/rows.js: Knight Captain's Lance.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = allyAreaPlan(plainText(activation.html), base, allyAreaRow(plainText(activation.html))) ?? plan;
         // (An Effect behind a check the text opens with: only on its success, a note.)

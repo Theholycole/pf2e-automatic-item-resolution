@@ -879,6 +879,23 @@ export const cases = {
         return { formula, potency: potency.label };
     },
 
+    // Mycoweave Shield (Lesser): "a successful … save negates the damage" — its save card for the creature targeted, with the
+    // spores' persistent poison damage on a failure.
+    async negatingSave(scene) {
+        const { actor: bearer } = await creature(scene, "Spore Bearer", { type: "character", x: 10, y: 9 });
+        const { token: foeToken } = await creature(scene, "Spore Target", { x: 11, y: 9, alliance: "opposition" });
+        const shield = await give(bearer, "Mycoweave Shield (Lesser)");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the item's save card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const components = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage?.components ?? [];
+        assert(components.some((component) => /persistent,poison/.test(component.formula)), `the persistent poison damage (${JSON.stringify(components)})`);
+        return { save: save.id };
+    },
+
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
     // targeted.
     async alliesEffect(scene) {

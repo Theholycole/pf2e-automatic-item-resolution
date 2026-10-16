@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 683,
+   "resolves": 686,
    "builtin:cast-spell": 469,
-   "none": 786,
+   "none": 783,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -24,10 +24,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 338,
+   "save": 341,
    "cast": 469,
    "item": 602,
-   "none": 982,
+   "none": 979,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -120,8 +120,8 @@
    "results": {
     "builtin:cast-spell": 11,
     "note-only": 17,
-    "resolves": 28,
-    "none": 31,
+    "resolves": 31,
+    "none": 28,
     "builtin:modes": 4,
     "builtin:no-effect": 4,
     "partial": 4,
@@ -4988,9 +4988,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Ulfen Shieldbreaker",
@@ -13392,9 +13392,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Sun Slayer",
@@ -20707,9 +20707,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Tumbler's Belt",

@@ -128,3 +128,29 @@ export function directDamageOver(plan, damage) {
     if (!damage) return plan;
     return !plan || plan.noteOnly || plan.builtin === "no-effect" ? damage : plan;
 }
+
+// Damage a successful save negates (Mycoweave Shield's "dealing 1d6 persistent poison damage to all creatures in within it;
+// a successful @Check[fortitude|dc:16] save negates the damage"): a save at the creatures the presser targets, its damage on
+// a failure and none on a success — the ability module's save card, as an item's other saves.
+const NEGATED = /\bdealing (\d+d\d+(?:\s*[+-]\s*\d+)?) (?:(persistent) )?(\w+) damage to (?:all )?(?:the )?creatures?\b[^;.]*[;,] a successful @Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\] save negates the damage\b/i;
+const negatedRow = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: multiplier ? ["0"] : [] }, effects: [] });
+
+export function negatingSavePlan(text, base) {
+    const match = NEGATED.exec(String(text ?? ""));
+    if (!match) return null;
+    const [, dice, category, type, statistic, dc] = match;
+    const kind = type.toLowerCase();
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: "automatic" },
+        targeting: { target: "the creatures it reaches", range: null, area: null },
+        trigger: { event: "use" },
+        resolution: {
+            kind: "save",
+            check: { roll: "save", statistic: statistic.toLowerCase(), basic: false, against: { dc: "fixed", value: Number(dc) } },
+            sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `${dice.replace(/\s+/g, "")}[${category ? "persistent," : ""}${kind}]`, type: kind, category: category ? "persistent" : null }] },
+            outcomes: { criticalSuccess: negatedRow(0), success: negatedRow(0), failure: negatedRow(1), criticalFailure: negatedRow(1) }
+        }
+    };
+}
