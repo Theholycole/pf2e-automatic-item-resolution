@@ -198,3 +198,10 @@ test("its owner's numbers in its text: Wolf Fang's Strength damage; Bracers of S
     foundry.nextOutcome.value = "success";
     delete thief.abilities;
 });
+
+test("Buzzsaw Axe: its line's basic Reflex save at the weapon's own Strike damage, its owner's Strength with it", () => {
+    const axe = source("Buzzsaw Axe");
+    assert.equal(compileActivations(axe)[0].plan, null, "no owner known: nothing to read");
+    const plan = compileActivations({ ...axe, ownerAbilities: { str: 4 } })[0].plan;
+    assert.deepEqual([plan.resolution.check.basic, plan.resolution.check.against.value, plan.resolution.sharedDamage.components[0].formula, plan.targeting.area], [true, 28, "(2d8+4)[slashing]", { type: "line", value: 120 }]);
+});

@@ -56,6 +56,12 @@ export function withItemData(html, item) {
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)
     text = byOwnerLevel(text, item?.ownerLevel);
+    // (A weapon's own Strike damage, its owner's Strength with it: Buzzsaw Axe's "take damage equal to the weapon's melee damage,
+    // including your Strength modifier" — its dice, die and type, and the owner's modifier when live play gives it.)
+    if (item?.type === "weapon" && Number.isFinite(Number(item?.ownerAbilities?.str))) {
+        const str = Number(item.ownerAbilities.str);
+        text = text.replace(/\btake damage equal to the weapon's melee damage, including your Strength modifier\b/gi, `take @Damage[(${weaponDice(item)}${item.system?.damage?.die ?? "d6"}${str >= 0 ? "+" : ""}${str})[${item.system?.damage?.damageType ?? "untyped"}]] damage`);
+    }
     // (Its owner's own numbers, when live play gives them: Wolf Fang's "@Damage[(@actor.abilities.str.mod)[bludgeoning]] damage equal
     // to your Strength modifier", Pact of the Herald and Host's "(@actor.level)d6".)
     text = withOwnerNumbers(text, item);
