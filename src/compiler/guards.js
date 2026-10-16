@@ -212,7 +212,9 @@ const SAVE_EXTRAS = [
     /\battempts? to counteract\b[^.]*\byou(?:'re| are) (?:currently )?suffering\b[^.]*\.$/i,
     // (Stage Fright Missive's "During this time, if the creature attempts to speak or perform in front of an audience, they become
     // Sickened 1": only if it does.)
-    /^During this time, if the (?:creature|target)\b[^.]*\b(?:become|becomes|is|are)\b[^.]*\.$/i
+    /^During this time, if the (?:creature|target)\b[^.]*\b(?:become|becomes|is|are)\b[^.]*\.$/i,
+    // (Another damage instead for some creatures, the GM's to pick: a third-party item's alternative for a kind of creature.)
+    /\bcreature takes \d+d\d+ \w+ damage instead of \w+ damage\b[^.]*\.$/i
 ];
 function saveExtras(plan, text) {
     if (!plan?.resolution?.outcomes || plan.builtin || plan.resolution.kind !== "save") return plan;

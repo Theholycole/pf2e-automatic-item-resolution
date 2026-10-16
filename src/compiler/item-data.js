@@ -49,6 +49,12 @@ export function withItemData(html, item) {
     // must … save" — the reader takes the area from the link.)
     text = text.replace(/\b(in|within) an? (\d+)-foot (emanation|burst|cone|line)\b(?= (?:must|attempts?)\b[^.]*?@Check\[(?:fortitude|reflex|will)\b)/g, (whole, word, feet, shape) => `${word} a @Template[type:${shape}|distance:${feet}]{${feet}-foot ${shape}}`);
     text = text.replace(/\bmust make an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or (be|become)\b((?:@UUID\[[^\]]*\]\{[^}]*\}|[^.(@])*)\((?:or )?([^)]*?) on (?:a )?critical failure\)/g, (whole, check, verb, first, worse) => `must succeed at a ${check} save or ${verb}${first}(${worse} on a critical failure)`);
+    // (A save "or become" a condition for a time, its worse value for a critical failure at the end of the sentence — some
+    // third-party alchemical items: read as the reader's "save or become X for 1 round (Y on a critical failure)".)
+    text = text.replace(/\bmust (?:make|attempt) an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save, or become (@UUID\[[^\]]+\]\{[^}]+\}|[A-Z][a-z]+ \d+) for (\d+ (?:rounds?|minutes?))\b[^,.]*, or (@UUID\[[^\]]+\]\{[^}]+\}|[A-Z][a-z]+ \d+) if they critically fail (?:their|the) save\./g, (whole, check, first, time, worse) => `must succeed at a ${check} save or become ${first} for ${time} (${worse} for ${time} on a critical failure).`);
+    // (Creatures along a released creature's flight that save or take damage — a third-party alchemical item: a line as long as its
+    // flight.)
+    text = text.replace(/\b(?:flies|charges) up to (\d+) feet; creatures within its path during its flight make an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or take\b/g, (whole, feet, check) => `flies along its path. Each creature in a @Template[type:line|distance:${feet}]{${feet}-foot line} must succeed at a ${check} save or take`);
     // (Moved a square, Expulsion Snare's "save or be moved into an adjacent square (chosen by you when you craft the snare)": a 5-foot
     // push, the square its crafter's.)
     text = text.replace(/\b(save|saving throw) or be moved into an adjacent square\b/g, "$1 or be pushed 5 feet into an adjacent square");

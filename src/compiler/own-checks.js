@@ -40,7 +40,9 @@ const sentencesOf = (text) => String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "
 // The text (plain) → { kind: "maneuver", slug, modifier, notes } | { kind: "attack", range, modifier, formula, type, category, notes } | null.
 export function readOwnCheck(given) {
     // ("3d12 plus 19": 3d12+19; "… attack modifier. The Strike deals …": one sentence.)
-    const text = String(given ?? "").replace(/(\d+d\d+) plus (\d+)\b/g, "$1+$2").replace(/(\+\d+ (?:attack )?modifier)\. The Strike deals\b/g, "$1, dealing");
+    // (A released creature's attack modifier with its damage in the next sentence, "On a successful Strike it deals …" — third-party
+    // alchemical items: one sentence too.)
+    const text = String(given ?? "").replace(/(\d+d\d+) plus (\d+)\b/g, "$1+$2").replace(/(\+\d+ (?:attack )?modifier)\. The Strike deals\b/g, "$1, dealing").replace(/(\+\d+ (?:attack )?modifier\b[^.]*)\. On a successful Strike,? it deals\b/g, "$1, dealing");
     const sentences = sentencesOf(text);
     const higher = HIGHER_ATTACK.exec(String(text ?? ""));
     if (higher) {
