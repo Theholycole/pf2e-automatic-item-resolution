@@ -115,6 +115,12 @@ export function compileActivations(item, options = {}) {
             const own = read?.builtin === "no-effect" ? ownPlan(part, base, options) : null;
             plan = own ?? (read ? fitPlan(part, read, base, options) : ownPlan(part, base, options));
         }
+        // (A note alone from the ability compiler gives way to the item's own row when that reads something: Silkspinner's Shield's
+        // climb Speed.)
+        if (plan?.noteOnly) {
+            const row = rowPlanFor(part, base);
+            if (row && !row.noteOnly) plan = row;
+        }
         if (!plan && options.spellEffects) plan = castPlan(part);
         // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
         if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(part, options) ?? plan;

@@ -201,3 +201,13 @@ test("resistance to the triggering damage in other words: \"20 resistance to all
     assert.deepEqual(keepsake.bonus.resistance, { type: "all-damage", value: 10 });
     assert.match(keepsake.notes.join(" "), /only reduces the additional damage from a critical hit/);
 });
+
+test("another sentence's time isn't the bonus's: a Quickened on success, an immunity (Boots of the Blight, Stone of Encouragement)", () => {
+    const boots = compileActivations(source("Boots of the Blight")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.deepEqual([boots.bonus.modifiers[0].selector, boots.bonus.spend], ["saving-throw", ["saving-throw"]]);
+    assert.match(boots.notes.join(" "), /Quickened for 1 minute/);
+    // "+1 item bonus to the first skill check you attempt within 1 minute. You become temporarily immune …".
+    assert.deepEqual(compileActivations(source("Stone of Encouragement"))[0].plan.bonus.spend, ["skill-check"]);
+    // Its own sentence's "for the next minute" still is (Fulu of the Stoic Ox).
+    assert.notEqual(compileItem(source("Fulu of the Stoic Ox"))?.builtin, "readied-bonus");
+});

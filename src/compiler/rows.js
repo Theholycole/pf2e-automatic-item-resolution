@@ -337,7 +337,7 @@ function chosenResistance(sentences, duration, used) {
 const LAND = "@actor.system.movement.speeds.land.value";
 function speedsOf(sentences, duration, used = new Set()) {
     const found = [];
-    const pattern = /\b(?:you (?:gain|have|get)|grants? you|that grant you) an? (?:(\d+)-foot )?(fly|climb|swim|burrow) Speed(?: (?:equal to (?:either )?(half )?your (?:land )?Speed(?: or (\d+) feet, whichever is (greater|higher|lower|slower|less))?|of (\d+) feet(?: or your (?:land )?Speed, whichever is (greater|higher|lower|slower|less))?))?/gi;
+    const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you|that grant you) an? (?:(\d+)-foot )?(fly|climb|swim|burrow) Speed(?: (?:equal to (?:either )?(half )?your (?:land )?Speed(?: or (\d+) feet, whichever is (greater|higher|lower|slower|less))?|of (\d+) feet(?: or your (?:land )?Speed, whichever is (greater|higher|lower|slower|less))?))?/gi;
     for (const [index, whole] of sentences.entries()) {
         const sentence = whole.replace(/^\s*(?:During this time|While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|For the duration),\s*/i, "");
         if (/^\s*(?:If|When(?!ever you consume| you (?:consume|drink|eat))|Whenever|While|Each time|Unless)\b/i.test(sentence) || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation|as if you had)\b/i.test(sentence)) continue;
@@ -371,7 +371,7 @@ function speedsOf(sentences, duration, used = new Set()) {
 const SENSES = { "greater darkvision": "greater-darkvision", darkvision: "darkvision", "low-light vision": "low-light-vision" };
 function sensesOf(sentences, duration, used = new Set()) {
     const found = [];
-    const pattern = /\b(?:you (?:gain|have|get)|grants? you)(?: the)? (greater darkvision|darkvision|low-light vision)\b/gi;
+    const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you)(?: the)? (greater darkvision|darkvision|low-light vision)\b/gi;
     for (const [index, sentence] of sentences.entries()) {
         if (/^\s*(?:If|When|Whenever|While|Each time|Unless)\b/i.test(sentence) || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation|as if you had)\b/i.test(sentence)) continue;
         for (const match of sentence.matchAll(pattern)) {

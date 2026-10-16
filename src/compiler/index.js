@@ -80,6 +80,11 @@ export function compileItem(given, options = {}) {
     // linked Effect, PF2e's healing, a spell's Effect, its row; not to a note alone.)
     const own = read?.builtin === "no-effect" ? ownPlan(item, base, options) ?? rowPlan(item, base) : null;
     let plan = own && !own.noteOnly ? own : (read ? fitPlan(item, read, base, options) : ownPlan(item, base, options)) ?? rowPlan(item, base);
+    // (A note alone from the ability compiler gives way to the item's own row when that reads something.)
+    if (plan?.noteOnly) {
+        const row = rowPlan(item, base);
+        if (row && !row.noteOnly) plan = row;
+    }
     // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
     if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(item, options) ?? plan;
     // (A Strike with riders, src/compiler/strikes.js: Fear Gem.)

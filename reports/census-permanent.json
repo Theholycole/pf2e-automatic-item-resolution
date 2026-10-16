@@ -6,13 +6,13 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 665,
+   "resolves": 667,
    "builtin:cast-spell": 469,
-   "none": 830,
+   "none": 829,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
-   "builtin:readied-bonus": 25,
-   "note-only": 275,
+   "builtin:readied-bonus": 28,
+   "note-only": 271,
    "builtin:reroll": 22,
    "partial": 70,
    "builtin:modes": 26,
@@ -25,10 +25,10 @@
   "live": {
    "save": 327,
    "cast": 469,
-   "item": 601,
-   "none": 1028,
+   "item": 599,
+   "none": 1027,
    "focus": 45,
-   "fortune": 35,
+   "fortune": 38,
    "reroll": 22,
    "strike": 42,
    "zone": 9,
@@ -42,13 +42,13 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 403,
+    "resolves": 405,
     "builtin:cast-spell": 340,
-    "none": 531,
+    "none": 530,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
-    "builtin:readied-bonus": 18,
-    "note-only": 177,
+    "builtin:readied-bonus": 21,
+    "note-only": 173,
     "builtin:reroll": 14,
     "partial": 25,
     "builtin:zone": 6,
@@ -8923,9 +8923,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Crafter's Eyepiece (Greater)",
@@ -9418,9 +9418,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Boots of the Blight",
@@ -16986,9 +16986,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Necklace of Fireballs II",
@@ -18757,7 +18757,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -22585,9 +22585,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Spellstrike Ammunition (Type II)",

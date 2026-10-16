@@ -94,7 +94,9 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
         const single = /\b(?:the triggering|your next|the next|this|the|your) (?:[\w ]{0,20}?)(?:check|save|saving throw|roll|attack roll|skill action|action)\b/i.test(words) && !/\b(?:checks|saves|saving throws|rolls)\b/i.test(words);
         const spend = single ? selectors.filter((selector) => !selector.endsWith("-dc") && selector !== "ac") : [];
         // (A moment only, as above.)
-        if (!(triggered || SHORT.test(sentence) || spend.length) || sentences.some((other) => LASTING.test(other))) return null;
+        // (Another sentence's time — "If you succeed at the saving throw, you become Quickened for 1 minute", "you become temporarily
+        // immune … for 1 hour" — isn't the bonus's.)
+        if (!(triggered || SHORT.test(sentence) || spend.length) || sentences.some((other, at) => LASTING.test(other) && (at === index || !(/^(?:If|Whenever)\b|^When (?!(?:it's |you )?activat)/i.test(other) || /\bimmune\b/i.test(other))))) return null;
         const notes = [
             ...(/\bagainst the (?:triggering|effect)\b|\bagainst (?:any )?(?:the )?(?:triggering )?[A-Z]\w+\b/.test(`${sentence}`) && !spend.length ? [`Only against what triggered it: ${sentence}`] : []),
             // (A bonus that says more: Conrasu Coin's "…, which increases to a +3 circumstance bonus to make-an-impression on a creature …".)
