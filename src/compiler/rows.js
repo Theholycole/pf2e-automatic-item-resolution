@@ -373,7 +373,8 @@ function chosenResistance(sentences, duration, used) {
 const LAND = "@actor.system.movement.speeds.land.value";
 function speedsOf(sentences, duration, used = new Set()) {
     const found = [];
-    const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you|that grant you) an? (?:(\d+)-foot )?(fly|climb|swim|burrow) Speed(?: (?:equal to (?:either )?(half )?your (?:land )?Speed(?: or (\d+) feet, whichever is (greater|higher|lower|slower|less))?|of (\d+) feet(?: or your (?:land )?Speed, whichever is (greater|higher|lower|slower|less))?))?/gi;
+    // (And a companion's, the creature the presser targets: Waverider Barding's "granting your companion a swim Speed of 30 feet".)
+    const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you|that grant you|granting your (?:animal )?(?:companion|familiar|mount|eidolon)) an? (?:(\d+)-foot )?(fly|climb|swim|burrow) Speed(?: (?:equal to (?:either )?(half )?your (?:land )?Speed(?: or (\d+) feet, whichever is (greater|higher|lower|slower|less))?|of (\d+) feet(?: or your (?:land )?Speed, whichever is (greater|higher|lower|slower|less))?))?/gi;
     for (const [index, whole] of sentences.entries()) {
         const sentence = whole.replace(/^\s*(?:During this time|While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|For the duration),\s*/i, "");
         // ("When you Activate the pin, … granting you a fly Speed of 50 feet": the use itself, Dragonscale Cameo's.)

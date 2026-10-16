@@ -80,7 +80,9 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
     const triggered = trigger ?? triggerOf(plain);
     if ((triggered && AFTER_ROLL.test(triggered)) || TURNS_ROLL.test(plain)) return null;
     const body = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
-    const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    // (A parenthesis its own sentence: Sparkshade Parasol's "… effect. (This applies only to any damage the effect deals.) For the next
+    // 1 minute, …".)
+    const sentences = body.split(/(?<=[.!?]\)?)\s+(?=[A-Z(])/).map((sentence) => sentence.trim()).filter(Boolean);
     // (A resistance and a bonus together, against the effect that triggered it: Ring of Torag's "granting you resistance 5 against
     // fire and a +1 status bonus on your AC or saving throw against the fire effect targeting you" — both, for this turn.)
     const both = triggered ? sentences.map((sentence) => [sentence, resistAndBonus(sentence)]).find(([, match]) => match) : null;
@@ -144,6 +146,8 @@ const RESIST_MOMENT = new RegExp(String.raw`\b(?:you gain|granting you|gaining) 
 const RESIST_NUMBER_FIRST = new RegExp(String.raw`\byou (?:gain|have) (\d+) resistance to (?:all|(${TYPE_WORDS}(?:(?:,|, and| and| or|, or) ${TYPE_WORDS})*)) damage (?:against|for|from) (?:the triggering|that) (?:attack|Strike|hit|damage)\b`, "i");
 const REDUCE_DAMAGE = /\b(?:you )?reduce the damage (?:(?:you )?take|taken|(?:from|of) the triggering [\w ]+?) by (\d+)\b/i;
 const RAISED = new RegExp(String.raw`\bIncrease your (${TYPE_WORDS}) resistance from the [\w' -]+? from (\d+) to (\d+)\b`, "i");
+// (Its type first: Sparkshade Parasol's "gaining fire resistance 20 against the triggering effect".)
+const TYPE_FIRST = new RegExp(String.raw`\b(?:you gain|granting you|gaining) (${TYPE_WORDS}) resistance (\d+) against the triggering (?:effect|attack|Strike|hit|damage)\b`, "i");
 function readResistMoment(sentences, triggered) {
     if (!triggered) return null;
     for (const [index, sentence] of sentences.entries()) {
@@ -153,8 +157,12 @@ function readResistMoment(sentences, triggered) {
         // (Crown of the Fire Eater's "Increase your fire resistance from the crown from 5 to 15": that much for the triggering damage —
         // PF2e takes the higher of two resistances to a type.)
         const raised = found || first || reduced ? null : RAISED.exec(sentence);
-        const match = found ?? (first ? [first[0], first[1], first[2] ?? (/\ball damage\b/i.test(first[0]) ? "all" : null), null] : reduced ? [reduced[0], reduced[1], "all", null] : raised ? [raised[0], raised[3], raised[1], null] : null);
-        if (!match || /^(?:If|While|When|Whenever)\b/.test(sentence.replace(/^When (?:it's |it is )?(?:you )?activat\w*(?: (?:it|the [\w' -]+?))?,\s*/i, "")) || sentences.some((other) => LASTING.test(other))) continue;
+        const typed = found || first || reduced || raised ? null : TYPE_FIRST.exec(sentence);
+        const match = found ?? (first ? [first[0], first[1], first[2] ?? (/\ball damage\b/i.test(first[0]) ? "all" : null), null] : reduced ? [reduced[0], reduced[1], "all", null] : raised ? [raised[0], raised[3], raised[1], null] : typed ? [typed[0], typed[2], typed[1], null] : null);
+        // (A lasting one isn't a moment's — the time in its own sentence, or a sentence about the resistance; not one about something
+        // else the item lets its user do for a minute, Sparkshade Parasol's "For the next 1 minute, flames dance …, letting you use …".)
+        const lasting = (other, at) => LASTING.test(other) && (at === index || /\bresistance\b/i.test(other) || !/\bletting you use\b/i.test(other));
+        if (!match || /^(?:If|While|When|Whenever)\b/.test(sentence.replace(/^When (?:it's |it is )?(?:you )?activat\w*(?: (?:it|the [\w' -]+?))?,\s*/i, "")) || sentences.some(lasting)) continue;
         // (Its types: the sentence's, else the trigger's "You take physical damage", "mental, poison, or spirit damage" — one of
         // those, the one that hit — else all damage; "all" is all.)
         if (match[2] === "all") match[2] = null;

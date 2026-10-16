@@ -388,3 +388,11 @@ test("Demoralize at the target and the enemies around it (Shrieking Skull), afte
     assert.deepEqual([banner.resolution.sharedDamage.components[0].formula, banner.targeting.range, banner.partial], ["1d4[persistent,bleed]", "30 feet", true]);
     assert.match(banner.notes.join(" "), /dealt damage since the end of your last turn/);
 });
+
+test("a moment's resistance with its type first (Sparkshade Parasol) and a companion's swim Speed (Waverider Barding)", () => {
+    const parasol = compileActivations(item("Sparkshade Parasol"), { spellEffects })[0].plan;
+    assert.deepEqual([parasol.builtin, parasol.bonus.resistance], ["readied-bonus", { type: "fire", value: 20 }]);
+    const barding = compileActivations(item("Waverider Barding"), { spellEffects })[0].plan;
+    assert.deepEqual([barding.item.recipient, barding.item.speeds.map((speed) => [speed.type, speed.value])], ["targets", [["swim", 30]]]);
+    assert.equal(barding.partial, true, "the bonus to a swim Speed it already had: a note");
+});
