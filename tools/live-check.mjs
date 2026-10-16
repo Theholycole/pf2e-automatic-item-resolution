@@ -1738,6 +1738,51 @@ export const cases = {
         const lost = before - foe.system.attributes.hp.value;
         assert(lost > 48, `silver weakness 50 applied (lost ${lost})`);
         return { lost, choices: choices.map((choice) => choice.label) };
+    },
+
+    // Ghost Charge's enfeebled only on undead or void healing: a living target gets none, an undead one gets it.
+    async ghostChargeGate(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Ghost Bomber", { type: "character", x: 2, y: 8 });
+        const { actor: living, token: livingToken } = await creature(scene, "Ghost Living Target", { x: 4, y: 8, ac: 1, alliance: "opposition" });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Ghost Undead Target", { x: 4, y: 10, ac: 1, alliance: "opposition" });
+        await undead.update({ "system.traits.value": ["undead"], "system.attributes.hp.negativeHealing": true });
+        const results = [];
+        for (const [foe, foeToken] of [[living, livingToken], [undead, undeadToken]]) {
+            // (A natural 1 misses even AC 1: a few throws.)
+            let action = null;
+            let attack = null;
+            for (let tries = 0; tries < 3 && !["success", "criticalSuccess"].includes(attack?.flags?.pf2e?.context?.outcome); tries++) {
+                const bomb = await give(thrower, "Ghost Charge (Lesser)");
+                await bomb.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+                await throwerToken.object?.control?.();
+                await target(foeToken);
+                ({ action, attack } = await strike(thrower, bomb));
+            }
+            assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+            const since = Date.now();
+            await action.damage({ event: shift() });
+            const card = await messageAfter(since, itemCard("bomb"));
+            await game.modules.get(NS).api.live.apply(card.id, { included: [] });
+            await wait(1200);
+            results.push(...game.messages.get(card.id).getFlag(NS, "card").results);
+        }
+        assert(!living.hasCondition("enfeebled"), "no enfeebled on the living target");
+        await until(() => undead.hasCondition("enfeebled"), "enfeebled on the undead target");
+        return { results };
+    },
+
+    // Swallow-Spike etched on +1 armor: its second activation (the 1-action one) is the first's attack, at the armor's bonus (+15).
+    async swallowSpike(scene) {
+        const { actor: wearer } = await creature(scene, "Spike Wearer", { type: "character", x: 6, y: 8 });
+        await creature(scene, "Spike Grabber", { x: 7, y: 8, alliance: "opposition" });
+        const armor = await give(wearer, "Chain Mail");
+        await armor.update({ "system.runes.potency": 1, "system.runes.property": ["swallowSpike"], "system.equipped.inSlot": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(armor.uuid, "rune:swallowSpike:1");
+        const card = await messageAfter(since, itemCard("expose"), { what: "the spikes' card" });
+        const check = card.getFlag(NS, "card").plan.resolution.check;
+        assert(check.modifier === 15 && check.against.statistic === "ac", `+15 against AC (${JSON.stringify(check)})`);
+        return { check };
     }
 };
 
