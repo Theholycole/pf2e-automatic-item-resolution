@@ -440,3 +440,16 @@ test("a condition's time in its own sentence (Liar's Bangle's 'For the next minu
     const clumsy = doll.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "clumsy");
     assert.deepEqual([clumsy.value, clumsy.duration?.unit], [2, "rounds"]);
 });
+
+test("condition floors as the core's conditionFloor: a fixed time (Timpani of Panic, Gleaming Cuirass, Putrescent Glob), until a concentrate action (Terrifying Ammunition), while the persistent fire lasts (Tallow Bomb)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { compileBomb } = await import("../src/compiler/bombs.js");
+    const timpani = compileActivations(item("Timpani of Panic"), { spellEffects })[0].plan.resolution.outcomes;
+    assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => `${timpani[degree].conditionFloor.slug} ${timpani[degree].conditionFloor.value} ${timpani[degree].conditionFloor.duration.value} ${timpani[degree].conditionFloor.duration.unit}`), ["frightened 1 1 rounds", "frightened 1 1 minutes", "frightened 1 1 minutes"]);
+    assert.deepEqual(timpani.success.manualInstructions, [], "the floor's by-hand line gone");
+    assert.deepEqual(compileActivations(item("Gleaming Cuirass"), { spellEffects }).find((entry) => entry.plan?.resolution?.kind === "save").plan.resolution.outcomes.criticalFailure.conditionFloor.duration, { value: 1, unit: "minutes" });
+    const glob = compileItem(item("Putrescent Glob"), { spellEffects }).resolution.outcomes.failure.conditionFloor;
+    assert.deepEqual(glob, { slug: "sickened", value: 2, lifetime: "fixed", duration: { value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } });
+    assert.deepEqual(compileActivations(item("Terrifying Ammunition"), { spellEffects })[0].plan.resolution.outcomes.failure.conditionFloor, { slug: "frightened", value: 1, lifetime: "until-lifted", liftedBy: "it spends a concentrate action" });
+    assert.deepEqual(compileBomb(item("Tallow Bomb (Lesser)")).resolution.outcomes.criticalSuccess.conditionFloor, { slug: "sickened", value: 1, lifetime: "while-persistent", persistentDamage: "fire" });
+});

@@ -53,7 +53,66 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text);
+    return conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text);
+}
+
+// A condition its creature can't lower below a value for a while — the core's conditionFloor, played by the ability module (its floor
+// Effect): Timpani of Panic's "can't reduce its frightened value below 1 for 1 round" (and "As failure" rows), Terrifying
+// Ammunition's "… until it spends an action, which has the concentrate trait, to calm itself down", Gleaming Cuirass's "for the
+// duration of the penalty" (the row's "the penalty lasts for 1 minute"), Putrescent Glob's "its sickened value can't be reduced
+// below 2 until the end of its next turn" (src/compiler/item-data.js's words), "while the persistent fire damage lasts". The row's
+// "by hand" line for it goes.
+const FLOOR_SLUGS = ["clumsy", "drained", "enfeebled", "frightened", "sickened", "stupefied"];
+function floorIn(words) {
+    const said = String(words ?? "");
+    const match = /\bcan't reduce its (\w+) value below (\d+) (for (\d+|one|an?) (rounds?|minutes?|hours?)|while the persistent (\w+) damage lasts|until it spends an action, which has the concentrate trait|for the duration of the penalty)/i.exec(said)
+        ?? /\bits (\w+) value can't be reduced below (\d+) (until the end of its next turn)/i.exec(said);
+    if (!match || !FLOOR_SLUGS.includes(match[1].toLowerCase())) return null;
+    const floor = { slug: match[1].toLowerCase(), value: Number(match[2]) };
+    const how = match[3].toLowerCase();
+    if (match[4]) return { ...floor, lifetime: "fixed", duration: { value: /^\d+$/.test(match[4]) ? Number(match[4]) : 1, unit: { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours" }[match[5].toLowerCase()] } };
+    if (match[6]) return { ...floor, lifetime: "while-persistent", persistentDamage: match[6].toLowerCase() };
+    if (/concentrate/.test(how)) return { ...floor, lifetime: "until-lifted", liftedBy: "it spends a concentrate action" };
+    if (/until the end of its next turn/.test(how)) return { ...floor, lifetime: "fixed", duration: { value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } };
+    const penalty = /\bthe penalty lasts for (\d+|one|an?) (rounds?|minutes?)\b/i.exec(said);
+    return penalty ? { ...floor, lifetime: "fixed", duration: { value: /^\d+$/.test(penalty[1]) ? Number(penalty[1]) : 1, unit: /^round/i.test(penalty[2]) ? "rounds" : "minutes" } } : null;
+}
+function floorRows(plan, words, saveOr) {
+    if (plan?.resolution?.kind !== "save" || plan.builtin || !plan.resolution.outcomes) return plan;
+    const floors = {};
+    for (const degree of ["success", "failure", "criticalFailure"]) {
+        const own = words[degree] ?? "";
+        const as = /^As (success|failure), (?:but|and|except)\b/i.exec(own);
+        floors[degree] = floorIn(own) ?? (as ? floors[as[1].toLowerCase()] ?? null : null);
+    }
+    // (No rows: a "save or" sentence, the failure's and the critical failure's.)
+    if (!Object.values(words).length && saveOr) floors.failure = floors.criticalFailure = saveOr;
+    let changed = false;
+    const outcomes = { ...plan.resolution.outcomes };
+    for (const [degree, floor] of Object.entries(floors)) {
+        const row = outcomes[degree];
+        if (!floor || !row || row.conditionFloor) continue;
+        // (Only a line that's the floor alone: one that says more — Gleaming Cuirass's penalty — stays.)
+        const manual = (row.manualInstructions ?? []).filter((line) => !/^\{target\} \([^)]*\): The (?:target|creature) can't reduce its \w+ value below \d+[^.]*\.$/i.test(String(typeof line === "string" ? line : line?.text)));
+        outcomes[degree] = { ...row, conditionFloor: floor, ...(row.manualInstructions ? { manualInstructions: manual } : {}) };
+        changed = true;
+    }
+    return changed ? { ...plan, resolution: { ...plan.resolution, outcomes } } : plan;
+}
+function conditionFloors(plan, text) {
+    if (!plan || plan.builtin) return plan;
+    const words = degreeWords(text);
+    const saveOr = Object.keys(words).length ? null : floorIn(text);
+    let next = floorRows(plan, words, saveOr);
+    if (next?.strike?.save) {
+        const save = floorRows(next.strike.save, words, saveOr);
+        if (save !== next.strike.save) next = { ...next, strike: { ...next.strike, save } };
+    }
+    if (next?.item?.save?.plan) {
+        const save = floorRows(next.item.save.plan, words, saveOr);
+        if (save !== next.item.save.plan) next = { ...next, item: { ...next.item, save: { ...next.item.save, plan: save } } };
+    }
+    return next;
 }
 
 // A row's condition with its time in its own sentence that the ability compiler left without one — Liar's Bangle's failure, "For the

@@ -76,7 +76,12 @@ export function gatedRiders(text) {
     const living = /\bOn a critical hit, a living creature taking persistent (\w+) damage from an? [\w' -]+? is ([A-Z]\w+ \d+)([^.]*)\./i.exec(plain);
     if (living) {
         const row = riderRow(`is ${living[2]}`);
-        if (hasRow(row)) return { rows: { criticalSuccess: row }, only: "living", notes: living[3].trim() ? [`${living[2]}${living[3]}.`] : [] };
+        // (Its "and can't reduce its sickened value below 1 while the persistent fire damage lasts": the core's floor, the ability
+        // module's floor Effect, gone with the fire.)
+        const floor = /\bcan't reduce its (\w+) value below (\d+) while the persistent (\w+) damage lasts\b/i.exec(living[3]);
+        const ruled = floor ? { ...row, conditionFloor: { slug: floor[1].toLowerCase(), value: Number(floor[2]), lifetime: "while-persistent", persistentDamage: floor[3].toLowerCase() } } : row;
+        const rest = floor ? living[3].replace(floor[0], "").replace(/^\s*(?:from the stench of burning fat\s*)?(?:and\s*)?$/i, "").trim() : living[3].trim();
+        if (hasRow(ruled)) return { rows: { criticalSuccess: ruled }, only: "living", notes: rest ? [`${living[2]}${living[3]}.`] : [] };
     }
     return null;
 }
