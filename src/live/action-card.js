@@ -33,7 +33,7 @@ export function actionCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const action = state.plan.action;
     const after = open && action.after ? `<ul class="aar-notes"><li>${escape(action.after)}</li></ul>` : "";
-    const hint = open && action.targeted ? `<p class="aar-hint">Target the creature, then press the button.</p>` : "";
+    const hint = open && action.targeted ? `<p class="aar-hint">${action.maxTargets > 1 ? `Target up to ${action.maxTargets} creatures (one roll against each one's DC)` : "Target the creature"}, then press the button.</p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     // (One of several actions: a picker.)
     const pick = open && canApply && action.names ? `<p class="aar-actions">Action: <select data-air-field="choice">${action.names.map((name, index) => `<option value="${index}"${index === (state.choice ?? 0) ? " selected" : ""}>${escape(name)}</option>`).join("")}</select></p>` : "";

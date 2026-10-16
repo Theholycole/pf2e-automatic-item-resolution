@@ -102,6 +102,14 @@ export function readItemAction(html, item = null) {
     // "your attribute modifier, proficiency bonus, and item bonus … total +7", "the DC of the check … is reduced to the
     // creature's recovery roll DC".)
     if (/\buse an? \+\d+ \w+ modifier\b|\binstead of your (?:own|\w+ modifier)\b|\bregardless of what they would normally be\b|\bproficiency bonus\b[^.]*\btotal\b|\bthe DC (?:of|for) the\b[^.]*\bcheck\b[^.]*\b(?:is|equal)\b/i.test(text)) return null;
+    // (One check at several creatures: Grim Trophy's "make an Intimidation check to Demoralize up to two targets, comparing your
+    // Intimidation check result to both of their DCs" — PF2e's action at the first, its result against each other's DC.)
+    const several = new RegExp(String.raw`\bmake an? \w+ check to (${NAMES}) up to (two|three|four|\d+) targets, comparing your [\w ]*?check result to (?:both|all|each)(?: (?:two|three|four))? of their DCs\b`, "i").exec(text);
+    if (several) {
+        const name = several[1].replace(/\s+/g, " ");
+        const slug = ACTION_SLUGS[name.toLowerCase()];
+        if (slug) return { slug, name, bonus: null, targeted: true, maxTargets: { two: 2, three: 3, four: 4 }[several[2].toLowerCase()] ?? Number(several[2]) };
+    }
     let match = null;
     let index = -1;
     for (const form of FORMS) {

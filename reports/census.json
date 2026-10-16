@@ -14,12 +14,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 264,
+   "none": 262,
    "resolves": 731,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 204,
-   "builtin:item-action": 8,
+   "builtin:item-action": 10,
    "partial": 55,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
@@ -88,9 +88,9 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 54,
+    "none": 52,
     "note-only": 13,
-    "builtin:item-action": 7,
+    "builtin:item-action": 9,
     "resolves": 48,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
@@ -378,13 +378,13 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 349,
+   "none": 347,
    "item": 631,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 79,
-   "action": 8,
+   "action": 10,
    "save": 124,
    "counteract": 20,
    "reroll": 2,
@@ -414,9 +414,9 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 65,
+    "none": 63,
     "item": 49,
-    "action": 7,
+    "action": 9,
     "reroll": 1,
     "cast": 9,
     "save": 13,
@@ -478,7 +478,7 @@
    }
   },
   "noCard": {
-   "no-plan": 264,
+   "no-plan": 262,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -20069,7 +20069,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Skeptic's Elixir (Lesser)",
@@ -23296,7 +23298,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Soldier's Syrup (Major)",

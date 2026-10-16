@@ -143,3 +143,20 @@ test("The Bear and Blade of the Rabbit Prince: one of several actions, picked on
     const [use] = foundry.actionUses.slice(before);
     assert.deepEqual([use.slug, use.options.modifiers[0].modifier, use.options.modifiers[0].type], ["trip", 2, "status"]);
 });
+
+test("Grim Trophy: one Demoralize at up to two creatures, PF2e's at the first and the same roll against the second's Will DC", async () => {
+    assert.deepEqual([readItemAction(source("Grim Trophy").system.description.value).maxTargets, readItemAction(source("Grim Trophy (Greater)").system.description.value).maxTargets], [2, 3]);
+    const second = foundry.makeActor({ id: "action-second", name: "Second" });
+    foundry.place(second, 200, 12000);
+    second.getStatistic = (slug) => (slug === "will" ? { dc: { value: 15 } } : null);
+    const card = await useCard("Grim Trophy");
+    foundry.nextOutcome.value = "success";
+    foundry.nextOutcome.roll = { total: 25, dice: [{ total: 12 }] };
+    const uses = foundry.actionUses.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [mark.token.uuid, second.token.uuid], userId: "player" });
+    await settle();
+    assert.equal(foundry.actionUses.length - uses, 1, "PF2e's action rolled once");
+    // 25 against DC 15: a critical success for the second.
+    assert.match(card.content, /Demoralize against Second \(DC 15\): a critical success/);
+    delete foundry.nextOutcome.roll;
+});

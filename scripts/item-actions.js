@@ -31,6 +31,15 @@ function stabilizeDC(target) {
     return { value: 5 + (Number(dying.recoveryDC) || 10) + Number(dying.value) };
 }
 
+// A check's degree against a DC: by 10 either way a critical, a natural 20 one better and a natural 1 one worse.
+const DEGREES = ["criticalFailure", "failure", "success", "criticalSuccess"];
+function degreeAgainst(total, dc, natural = null) {
+    let degree = total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0;
+    if (natural === 20) degree = Math.min(3, degree + 1);
+    if (natural === 1) degree = Math.max(0, degree - 1);
+    return DEGREES[degree];
+}
+
 // targets: the token uuids the presser had targeted.
 export async function applyActionCard(message, { targets = [], choice = null } = {}) {
     let state = stateOf(message);
@@ -42,6 +51,8 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const targetToken = action.targeted && Array.isArray(targets) && targets[0] ? await fromUuid(targets[0]).catch(() => null) : null;
     if (action.targeted && !targetToken?.actor) throw new Error("Target the creature first.");
+    // (One check at several: the others, up to its number, compared with the same roll.)
+    const others = action.maxTargets > 1 ? (await Promise.all(targets.slice(1, action.maxTargets).map((uuid) => fromUuid(uuid).catch(() => null)))).filter((token) => token?.actor) : [];
     const pf2eAction = game.pf2e?.actions?.get?.(action.slug);
     if (!pf2eAction?.use) throw new Error(`PF2e has no ${action.name} action here; roll it by hand.`);
     const Modifier = game.pf2e?.Modifier;
@@ -63,6 +74,20 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     else {
         lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}.`);
         if (action.basic && targetToken) lines.push(...(await applyRiders({ plan: action.basic, degree: outcome, user: state.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), item: state.item })));
+        // (Each other creature: the same total and die against its own DC — the action's defense, Demoralize's Will DC.)
+        const roll = results?.[0]?.roll ?? null;
+        const statistic = action.basic?.resolution?.check?.against?.statistic ?? null;
+        for (const other of others) {
+            const dc = Number(other.actor.getStatistic?.(statistic)?.dc?.value);
+            const degree = Number.isFinite(dc) && Number.isFinite(roll?.total) ? degreeAgainst(roll.total, dc, roll.dice?.[0]?.total ?? null) : null;
+            const name = other.name ?? other.actor.name;
+            if (!degree) {
+                lines.push(`${name}: compare ${state.user.name}'s ${action.name} result with its DC by hand.`);
+                continue;
+            }
+            lines.push(`${state.user.name}'s ${action.name} against ${name} (DC ${dc}): ${outcomeText(degree)}.`);
+            if (action.basic) lines.push(...(await applyRiders({ plan: action.basic, degree, user: state.user, target: entryOf(other.object ?? other, other.actor), item: state.item })));
+        }
     }
     const next = { ...state, status: outcome ? "applied" : "open", results: [...state.results, ...lines].slice(-6) };
     return message.update({ content: actionCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

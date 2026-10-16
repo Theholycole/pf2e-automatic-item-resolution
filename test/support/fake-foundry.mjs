@@ -255,7 +255,7 @@ export function createFakeFoundry() {
                 },
                 actions: { get: (slug) => ({ use: async (options) => {
                     actionUses.push({ slug, options });
-                    return [{ outcome: nextOutcome.value }];
+                    return [{ outcome: nextOutcome.value, roll: nextOutcome.roll ?? null }];
                 } }) }
             },
             modules,
