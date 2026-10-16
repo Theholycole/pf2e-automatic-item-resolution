@@ -107,9 +107,10 @@ export function compileItem(given, options = {}) {
     if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(item?.system?.description?.value)));
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    const info = itemInfo(item);
+    const { resist, ...rest } = plan;
+    const info = { ...itemInfo(item), ...(resist ? { resist } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
-    return guardText(guardValues({ ...plan, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info }), plainText(item?.system?.description?.value));
+    return guardText(guardValues({ ...rest, ...(source ? { source } : {}), item: plan.otherRecipient ? { ...info, recipient: "drinker" } : info }), plainText(item?.system?.description?.value));
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success
@@ -131,7 +132,9 @@ function rowPlan(item, base) {
         resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success } },
         ...(!row ? { noteOnly: true } : {}),
         ...(partial ? { partial: true, unread: row.unread } : {}),
-        ...(row?.other ? { otherRecipient: true } : {})
+        ...(row?.other ? { otherRecipient: true } : {}),
+        // (Its resistance: the item card's own Effect, beside the core's row, as plan.item.resist.)
+        ...(row?.resistances ? { resist: row.resistances } : {})
     };
 }
 

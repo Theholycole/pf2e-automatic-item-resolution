@@ -140,14 +140,15 @@ export function compileActivations(item, options = {}) {
         if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(activation.html)));
         if (!plan) return { activation, plan: null, index };
         const frequency = activation.frequency?.max ? activation.frequency : null;
+        const { resist, ...kept } = plan;
         return {
             activation,
             index,
             plan: {
-                ...plan,
+                ...kept,
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}) }
             }
         };
     });
@@ -167,6 +168,8 @@ function rowPlanFor(item, base) {
         resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: row?.effects ?? [], modifiers: row?.modifiers ?? [], noteEffects: note?.noteEffects ?? [] } } },
         ...(!row ? { noteOnly: true } : {}),
         ...(partial ? { partial: true, unread: row.unread } : {}),
-        ...(row?.other ? { otherRecipient: true } : {})
+        ...(row?.other ? { otherRecipient: true } : {}),
+        // (Its resistance: the item card's own Effect, as plan.item.resist.)
+        ...(row?.resistances ? { resist: row.resistances } : {})
     };
 }

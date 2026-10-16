@@ -131,3 +131,35 @@ test("a better degree for the triggering roll: PF2e's AdjustDegreeOfSuccess, spe
     assert.match(readiedWords(opal), /a success becomes a critical success, a critical failure becomes a failure/);
 });
 
+
+test("resistance against the hit that triggered it: PF2e's Resistance for the turn, its type the text's or the trigger's", async () => {
+    // "You gain resistance 5 to physical damage against the triggering Strike" (Deflecting Parry).
+    const parry = compileActivations(source("Deflecting"))[0].plan;
+    assert.equal(routeOf(parry), "fortune");
+    assert.deepEqual([parry.bonus.modifiers, parry.bonus.resistance, parry.bonus.duration.value, parry.bonus.duration.expiry], [[], { type: "physical", value: 5 }, 0, "turn-end"]);
+    assert.equal(readiedWords(parry), "resistance 5 to physical damage, until the end of this turn");
+    assert.match(parry.notes[0], /^Only against what triggered it/);
+    // "You gain resistance 3 against that spirit damage" (Third Blessing).
+    assert.deepEqual(compileActivations(source("Three-Pillared Yang Na")).find((entry) => entry.plan?.builtin === "readied-bonus").plan.bonus.resistance, { type: "spirit", value: 3 });
+    // Not one: an item used two ways (Toadskin Salve's two reactions, Thrice-Fried Mudwings' meal), a lasting one (Adaptive Aegis's
+    // "that lasts for 10 minutes"), another creature's (Hallajin Key's "grants the target resistance 10").
+    assert.notEqual(compileItem(source("Toadskin Salve"))?.builtin, "readied-bonus");
+    assert.notEqual(compileItem(source("Thrice-Fried Mudwings"))?.builtin, "readied-bonus");
+    assert.equal(readReadiedBonus("Trigger You would take mental, poison, or spirit damage Effect You gain resistance 5 to the triggering damage type that lasts for 10 minutes."), null);
+    assert.equal(readReadiedBonus("Trigger A creature within 60 feet of the key takes electricity or mental damage Effect Lumna grants the target resistance 10 to the triggering damage."), null);
+    // Ferrofluid Urchin: "Trigger You take physical damage … You gain resistance 3 to the triggering damage" — Apply gives the Effect.
+    const item = foundry.giveItem(hero, source("Ferrofluid Urchin (Lesser)"));
+    const data = item.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: hero.id }, actor: hero, token: hero.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    assert.equal(card.flags[MODULE_ID].card.kind, "fortune");
+    assert.match(card.content, /resistance 3 to physical damage, until the end of this turn/);
+    assert.doesNotMatch(card.content, /spiky glob/, "its flavor isn't a note");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const effect = fortunes().find((entry) => entry.name === "Ferrofluid Urchin (Lesser): bonus");
+    assert.deepEqual(effect.system.rules, [{ key: "Resistance", type: "physical", value: 3 }]);
+    assert.deepEqual([effect.system.duration.value, effect.system.duration.expiry], [0, "turn-end"]);
+});

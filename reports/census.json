@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-15",
+ "generated": "2026-10-16",
  "system": "/home/theholycole/.local/share/FoundryVTT/Data/systems/pf2e/packs",
  "totals": {
   "consumables": 1724,
@@ -14,15 +14,15 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 29,
-   "none": 296,
-   "resolves": 694,
+   "none": 293,
+   "resolves": 697,
    "builtin:zone": 86,
-   "note-only": 267,
+   "note-only": 257,
    "builtin:item-action": 8,
-   "builtin:readied-bonus": 6,
+   "builtin:readied-bonus": 9,
+   "partial": 19,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
-   "partial": 12,
    "builtin:reroll": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
@@ -33,15 +33,15 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 8,
-    "none": 148,
+    "none": 145,
     "resolves": 202,
-    "note-only": 120,
+    "note-only": 117,
     "builtin:zone": 9,
-    "builtin:readied-bonus": 3,
+    "builtin:readied-bonus": 6,
+    "partial": 4,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
-    "partial": 1,
     "builtin:save-bonus": 1
    },
    "mechanisms": {
@@ -117,11 +117,12 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 83,
+    "resolves": 86,
     "none": 9,
     "builtin:counteract": 11,
-    "note-only": 35,
+    "partial": 4,
     "builtin:no-effect": 10,
+    "note-only": 28,
     "builtin:zone": 1
    },
    "mechanisms": {
@@ -347,7 +348,7 @@
    "count": 156,
    "resolves": 55,
    "gaps": 0,
-   "none": 58
+   "none": 55
   },
   "counteract": {
    "count": 79,
@@ -369,7 +370,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 561,
+   "resolves": 564,
    "gaps": 0,
    "none": 22
   }
@@ -377,14 +378,14 @@
  "live": {
   "totals": {
    "cast": 29,
-   "none": 381,
+   "none": 378,
    "item": 655,
    "zone": 86,
    "expose": 89,
    "later": 54,
    "action": 8,
    "save": 108,
-   "fortune": 8,
+   "fortune": 11,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -393,12 +394,12 @@
   "byCategory": {
    "other": {
     "cast": 8,
-    "none": 176,
+    "none": 173,
     "later": 8,
     "save": 71,
     "item": 225,
     "zone": 9,
-    "fortune": 3,
+    "fortune": 6,
     "expose": 3,
     "action": 1,
     "counteract": 5,
@@ -476,7 +477,7 @@
    }
   },
   "noCard": {
-   "no-plan": 296,
+   "no-plan": 293,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -1052,8 +1053,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "If you spend 1 Mythic Point when you activate the day's breath, you inhale so deeply that you increase the effect's duration.",
+    "If you spend 1 Mythic Point, you don't need to breathe for 30 days."
+   ],
    "live": "item"
   },
   {
@@ -1741,8 +1746,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Unlike with an antiplague, this suppressant isn't long-lasting enough to apply to a daily save against the progression of a disease, curse, or other long-lasting affliction.",
+    "It can still help protect you from catching such an affliction when you're initially exposed to it, as well as on saves that occur after stages that last 10 minutes or less."
+   ],
    "live": "item"
   },
   {
@@ -2543,7 +2552,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Quicksilver Mutagen (Major)",
@@ -6312,8 +6323,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -6893,8 +6905,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Unlike with an antiplague, this suppressant isn't long-lasting enough to apply to a daily save against the progression of a disease, curse, or other long-lasting affliction.",
+    "It can still help protect you from catching such an affliction when you're initially exposed to it, as well as on saves that occur after stages that last 10 minutes or less."
+   ],
    "live": "item"
   },
   {
@@ -7818,8 +7834,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Unlike with an antiplague, this suppressant isn't long-lasting enough to apply to a daily save against the progression of a disease, curse, or other long-lasting affliction.",
+    "It can still help protect you from catching such an affliction when you're initially exposed to it, as well as on saves that occur after stages that last 10 minutes or less."
+   ],
    "live": "item"
   },
   {
@@ -11004,7 +11024,6 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "These talismans have saved the lives of many a soldier on the field of battle.",
     "When you activate a guardian rose , you avoid being knocked out and regain 2d8+5 Hit Points."
    ],
    "live": "item"
@@ -14054,8 +14073,13 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Secondary Ignore the effects of the fatigued condition for 10 minutes.",
+    "The drop's other effects end for you, and when the 10 minutes are up, you're temporarily immune to scholar's drops for 1 hour.",
+    "If you use this effect three times in a single day, you become temporarily immune to scholar's drops entirely until you get a full night's rest."
+   ],
    "live": "item"
   },
   {
@@ -15787,8 +15811,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "If you spend 1 Mythic Point when you activate the day's breath, you inhale so deeply that you increase the effect's duration.",
+    "If you spend 1 Mythic Point, you don't need to breathe for 7 days."
+   ],
    "live": "item"
   },
   {
@@ -19667,7 +19695,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Toadskin Salve (Major)",
@@ -21052,8 +21082,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -23591,8 +23622,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -24211,8 +24243,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Unlike with an antiplague, this suppressant isn't long-lasting enough to apply to a daily save against the progression of a disease, curse, or other long-lasting affliction.",
+    "It can still help protect you from catching such an affliction when you're initially exposed to it, as well as on saves that occur after stages that last 10 minutes or less.",
+    "When you drink the affliction suppressant, you can attempt a save against one affliction of 14th level or lower affecting you."
+   ],
    "live": "item"
   },
   {
@@ -28107,7 +28144,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Thousand-Pains Fulu (Burl)",

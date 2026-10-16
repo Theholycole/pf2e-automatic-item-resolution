@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, rolledHealing, rollFormula, USER_ID } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, createItemCard, DRINKER_ID, effectSource, recipientOf, resistanceEffectSource, resistanceText, rolledHealing, rollFormula, USER_ID } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, startInitiative, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -316,6 +316,11 @@ async function applyCard(message, { drinker = null, ceremony = false } = {}) {
         } catch (error) {
             lines.push(`Couldn't apply ${change.op} to ${name}: ${error.message}`);
         }
+    }
+    // (Its resistance: Armorskin Robes' 5 to slashing and piercing — an Effect with PF2e's Resistance rules.)
+    if (state.plan.item?.resist?.length && target.actor) {
+        await target.actor.createEmbeddedDocuments("Item", [resistanceEffectSource(state.plan.item.resist, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        lines.push(`${recipient.name}: ${resistanceText(state.plan.item.resist)}`);
     }
     // (The conditions it lowers: Lion Badge's frightened, by 1 — PF2e's decreaseCondition, once for each.)
     for (const { slug, by } of state.plan.item?.reduce ?? []) {

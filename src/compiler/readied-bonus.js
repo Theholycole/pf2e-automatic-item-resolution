@@ -86,6 +86,33 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
         ];
         return { modifiers, resistance: resist ? { type: "all-damage", value: Number(resist[1]) } : null, duration: durationOf(sentence), spend, notes };
     }
+    // (Only an item used one way: Toadskin Salve's two reactions, Thrice-Fried Mudwings' meal and its reaction aren't one card.)
+    return (plain.match(/\bActivate\b/g) ?? []).length <= 1 ? readResistMoment(sentences, triggered) : null;
+}
+
+// Resistance against the hit that triggered it, and nothing else: Deflecting Parry's "You gain resistance 5 to physical
+// damage against the triggering Strike", Ferrofluid Urchin's "You gain resistance 3 to the triggering damage" (the
+// trigger's type: "You take physical damage"), Third Blessing's "You gain resistance 3 against that spirit damage",
+// Thrice-Fried Mudwings' "resistance 15 against physical damage for the triggering attack only". For the rest of the turn,
+// with a note that it's only that hit's. Not a lasting one ("that lasts for 10 minutes"), nor another's ("grants the target").
+const DAMAGE_TYPES = ["acid", "bludgeoning", "cold", "electricity", "fire", "force", "mental", "piercing", "poison", "slashing", "sonic", "spirit", "vitality", "void", "holy", "unholy", "physical"];
+const TYPE_WORDS = String.raw`(?:${DAMAGE_TYPES.join("|")})`;
+const RESIST_MOMENT = new RegExp(String.raw`\b(?:you gain|granting you|gaining) resistance (\d+) (?:(?:to|against) (?:(${TYPE_WORDS}(?:(?:,|, and| and| or|, or) ${TYPE_WORDS})*) )?damage (?:against|for|from) (?:the triggering|that) (?:attack|Strike|hit|damage)(?: only)?|to the triggering damage(?: type)?|against that (${TYPE_WORDS}) damage)\b`, "i");
+function readResistMoment(sentences, triggered) {
+    if (!triggered) return null;
+    for (const [index, sentence] of sentences.entries()) {
+        const match = RESIST_MOMENT.exec(sentence);
+        if (!match || /^(?:If|While|When|Whenever)\b/.test(sentence) || sentences.some((other) => LASTING.test(other))) continue;
+        // (Its types: the sentence's, else the trigger's "You take physical damage", "mental, poison, or spirit damage" — one of
+        // those, the one that hit — else all damage.)
+        const named = match[2] ?? match[3] ?? null;
+        const fromTrigger = new RegExp(String.raw`\b(${TYPE_WORDS}(?:(?:,|, and| and| or|, or) ${TYPE_WORDS})*) (?:damage|attack)\b`, "i").exec(triggered)?.[1] ?? null;
+        const words = (named ?? fromTrigger ?? "").toLowerCase().split(/,? (?:and|or) |, /).map((word) => word.trim()).filter(Boolean);
+        const type = !words.length ? "all-damage" : words.length === 1 ? words[0] : words;
+        // (Its other rule sentences, not its flavor: "This spiky glob of magnetic liquid attaches …".)
+        const notes = [`Only against what triggered it: ${sentence}`, ...sentences.filter((_, at) => at !== index).filter((other) => !/^(?:Activate|Trigger|Prerequisites?|Requirements?)\b/.test(other) && /\b(?:checks?|saves?|bonus|penalty|damage|conditions?|Strikes?|actions?|resistance|Speeds?|Hit Points)\b/i.test(other))];
+        return { modifiers: [], resistance: { type, value: Number(match[1]) }, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], notes };
+    }
     return null;
 }
 

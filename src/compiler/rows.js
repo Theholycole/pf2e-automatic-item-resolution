@@ -167,12 +167,37 @@ function selectorsOf(list) {
 // or item:trait:poison; "Athletics checks to Climb" → action:climb. Anything else narrower than a selector stays out.
 const TRAITS = { poisons: "poison", poison: "poison", diseases: "disease", disease: "disease", fear: "fear", mental: "mental", emotion: "emotion", auditory: "auditory", visual: "visual", olfactory: "olfactory", inhaled: "inhaled", curses: "curse", curse: "curse", illusions: "illusion", illusion: "illusion", sleep: "sleep", death: "death", possession: "possession", polymorph: "polymorph" };
 const ACTIONS = { climb: "climb", swim: "swim", "high jump": "high-jump", "long jump": "long-jump", leap: "leap", balance: "balance", "tumble through": "tumble-through", escape: "escape", hide: "hide", sneak: "sneak", seek: "seek", "sense motive": "sense-motive", "sense direction": "sense-direction", track: "track", demoralize: "demoralize", feint: "feint", grapple: "grapple", trip: "trip", shove: "shove", disarm: "disarm", "recall knowledge": "recall-knowledge", "treat wounds": "treat-wounds", "administer first aid": "administer-first-aid", "pick a lock": "pick-a-lock", "disable a device": "disable-a-device", squeeze: "squeeze", impersonate: "impersonate", lie: "lie", "make an impression": "make-an-impression", request: "request", coerce: "coerce", perform: "perform", "gather information": "gather-information" };
+// Creatures PF2e's origin roll options name ("against effects created by devils" → origin:trait:devil).
+const CREATURES = { aberrations: "aberration", animals: "animal", beasts: "beast", celestials: "celestial", constructs: "construct", daemons: "daemon", demons: "demon", devils: "devil", dragons: "dragon", elementals: "elemental", fey: "fey", fiends: "fiend", fungi: "fungus", giants: "giant", haunts: "haunt", oozes: "ooze", plants: "plant", spirits: "spirit", swarms: "swarm", undead: "undead" };
+const CONDITION_WORDS = { fatigue: "fatigued", fatigued: "fatigued", petrify: "petrified", petrified: "petrified", paralyze: "paralyzed", paralyzed: "paralyzed", frighten: "frightened", frightened: "frightened", sicken: "sickened", sickened: "sickened", stun: "stunned", stunned: "stunned", confuse: "confused", confused: "confused", slow: "slowed", slowed: "slowed" };
+// One thing a save is against, as a roll option: a trait ("poisons"), "afflictions", "being petrified", "forced movement".
+function againstTerm(word) {
+    const lower = word.toLowerCase().trim();
+    if (TRAITS[lower]) return `item:trait:${TRAITS[lower]}`;
+    if (/^afflictions?$/.test(lower)) return { or: ["item:trait:curse", "item:trait:disease", "item:trait:poison"] };
+    if (/^forced movement$/.test(lower)) return "forced-movement";
+    const being = /^being (\w+)$/.exec(lower);
+    if (being && CONDITION_WORDS[being[1]]) return `inflicts:${CONDITION_WORDS[being[1]]}`;
+    return null;
+}
 function scopeOf(scope) {
-    const against = /^against ((?:[\w-]+(?:,? (?:and|or) |, )?)+?)(?: effects| spells| abilities| threats)?$/i.exec(scope);
+    // ("against effects created by devils and divine spells cast by devils", "against undead", "against creatures with the
+    // fey trait": what the creature makes, by its origin's trait.)
+    const origin = /^against (?:(?:the )?(?:effects|attacks|abilities|spells)(?: and (?:effects|abilities|spells))? (?:created by|from|of) )?(?:creatures with the (\w+) trait|(\w+)(?: creatures)?)(?: and (?:[\w ]+ )?(?:cast|created) by (?:\w+))?$/i.exec(scope);
+    const creature = origin ? (origin[1] ? Object.values(CREATURES).find((trait) => trait === origin[1].toLowerCase()) : CREATURES[origin[2].toLowerCase()]) : null;
+    if (creature) return [`origin:trait:${creature}`];
+    // ("against effects that could render you Fatigued", "against effects that would fatigue you": what the effect gives.)
+    const inflicts = /^against effects that (?:could|would|might) (?:render you|make you|leave you|cause you to (?:be|become))? ?(\w+)(?: you)?$/i.exec(scope);
+    if (inflicts && CONDITION_WORDS[inflicts[1].toLowerCase()]) return [`inflicts:${CONDITION_WORDS[inflicts[1].toLowerCase()]}`];
+    // ("AC against ranged attacks", "against physical ranged attacks": the attack's own options.)
+    const attacks = /^against (physical )?(ranged|melee) attacks$/i.exec(scope);
+    if (attacks) return [...(attacks[1] ? ["item:damage:category:physical"] : []), `item:${attacks[2].toLowerCase()}`];
+    const against = /^against ((?:[\w-]+(?: movement)?(?:,? (?:and|or) |, )?)+?)(?: effects| spells| abilities| threats)?$/i.exec(scope);
     if (against) {
-        const traits = against[1].split(/,? (?:and|or) |, /).map((word) => TRAITS[word.toLowerCase()]);
-        if (!traits.length || traits.some((trait) => !trait)) return null;
-        return [traits.length === 1 ? `item:trait:${traits[0]}` : { or: traits.map((trait) => `item:trait:${trait}`) }];
+        const terms = against[1].split(/,? (?:and|or) |, /).map(againstTerm);
+        if (!terms.length || terms.some((term) => !term)) return null;
+        const flat = terms.flatMap((term) => (typeof term === "string" ? [term] : term.or));
+        return [flat.length === 1 ? flat[0] : { or: [...new Set(flat)] }];
     }
     const to = /^to ((?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?)(?:,? (?:and|or) (?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?))*)$/.exec(scope);
     if (to) {
@@ -192,15 +217,19 @@ function modifiersOf(sentences, duration, used = new Set()) {
     for (const [index, whole] of sentences.entries()) {
         // ("When you Activate this fulu, you gain …", "Upon drinking …,": the use itself, not a condition.)
         const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "");
-        if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(sentence)) continue;
-        for (const match of sentence.matchAll(pattern)) {
+        // ("While the effect lasts, you gain …", "During this time, …": its time, not a condition.)
+        const said = sentence.replace(/^\s*(?:While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|While (?:it's |it is )?activated|During this time|For the duration),\s*/i, "")
+            // ("you gain resistance 5 … but take a -5-foot status penalty to all Speeds": the same "you".)
+            .replace(/(\byou (?:gain|get|have)\b[^.;]*?),? (but|and) (take|suffer)\b/i, "$1, $2 you $3");
+        if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(said)) continue;
+        for (const match of said.matchAll(pattern)) {
             const [, sign, number, feet, type, kind, list] = match;
             if ((kind.toLowerCase() === "bonus") !== (sign === "+")) continue;
             const value = (sign === "+" ? 1 : -1) * Number(number);
             const timed = { type: type?.toLowerCase() ?? "untyped", duration: durationIn(sentence, duration) };
             // ("+10-foot status bonus to your Speed": the land Speed; "to your Speeds": all of them.)
             if (feet) {
-                const speeds = /^(?:your |its )?(?:land )?(Speeds?)$/i.exec(list.trim());
+                const speeds = /^(?:your |its |all (?:of )?(?:your )?)?(?:land )?(Speeds?)$/i.exec(list.trim());
                 if (!speeds) continue;
                 used.add(index);
                 modifiers.push({ selector: /s$/i.test(speeds[1]) ? "all-speeds" : "land-speed", value, ...timed });
@@ -212,13 +241,37 @@ function modifiersOf(sentences, duration, used = new Set()) {
             const names = predicate ? scoped[1] : list;
             if (scoped && !predicate) continue;
             if (/\b(?:against|to|made|when|if|that|for|as part of|while|with|using|from|of|in)\b/i.test(names)) continue;
-            const selectors = selectorsOf(names.replace(/^all /i, ""));
+            const selectors = selectorsOf(names.replace(/^(?:all|your) /i, ""));
             if (!selectors) continue;
             used.add(index);
             for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate ? { predicate } : {}) });
         }
     }
     return modifiers;
+}
+
+// Its user's own resistance for the item's time: "you gain resistance 5 to slashing and piercing damage", "you have
+// resistance 10 to electricity", "you gain resistance 5 to all damage" → [{ type, value, duration }] (PF2e's Resistance
+// rule, the item card's Effect). Not against one hit ("against the triggering attack", src/compiler/readied-bonus.js), nor
+// one with exceptions, a type to choose, or another's.
+const RESIST_TYPES = new Set(["acid", "bludgeoning", "cold", "electricity", "fire", "force", "mental", "piercing", "poison", "slashing", "sonic", "spirit", "vitality", "void", "bleed", "holy", "unholy", "physical", "energy"]);
+function resistancesOf(sentences, duration, used = new Set()) {
+    const found = [];
+    const pattern = /\byou (?:gain|get|have) resistance (\d+) to ((?:all|[a-z]+)(?:(?:,|, and| and) [a-z]+)*)(?: damage)?(?=[.;]|,? (?:but|and)\b| for\b| until\b|$)/gi;
+    for (const [index, whole] of sentences.entries()) {
+        const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "").replace(/^\s*(?:Additionally|In addition|Also),\s*/i, "");
+        if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(sentence) || /\b(?:triggering|except|double|instead|chosen|choose|attuned|one type|all(?:y|ies)|creatures?|emanation|aura|against (?:the|that|one))\b/i.test(sentence)) continue;
+        for (const match of sentence.matchAll(pattern)) {
+            const words = match[2].toLowerCase().split(/,? and |, /).map((word) => word.trim());
+            const types = words.length === 1 && words[0] === "all" ? ["all-damage"] : words;
+            if (!types.every((type) => type === "all-damage" || RESIST_TYPES.has(type))) continue;
+            // (A sentence that says more after it — "… and take no fall damage" — stays a note too, unless that's read.)
+            const more = /^,? (?:and|but)\b/i.test(sentence.slice(match.index + match[0].length));
+            if (!more) used.add(index);
+            for (const type of types) found.push({ type, value: Number(match[1]), duration: durationIn(sentence, duration) });
+        }
+    }
+    return found;
 }
 
 // Items whose text isn't one use with one result: activated on a trigger, an affliction's stages, a second
@@ -231,7 +284,8 @@ const WHEN_CLAUSES = /\b(?:Trigger|Requirements?|Frequency)\b[^.]*?(?=\bEffect\b
 const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.[\w-]*effects\.Item\./;
 
 // A sentence that says something a creature or its rolls get or lose (not flavor, not how long it lasts).
-const MECHANICAL = /\b(?:bonus|penalty|resistance|weakness|immun\w*|Speeds?|damage|Hit Points|DC \d+|checks?|saves?|saving throws?|attack|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|(?:clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b)/i;
+// (Whole words: "AC" isn't the start of "academic", "checks" of "checkered".)
+const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es)?|immun\w*|Speeds?|damage[ds]?|Hit Points|DC \d+|Mythic Points?|checks?|saves?|saving throws?|attack(?:s|ed|er|ers)?|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b/i;
 
 // The row for the item's drinker or user: { effects, modifiers, unread } with something in it, or null. unread: the
 // sentences that say something mechanical it didn't read (they go on a note, and the plan counts as partial).
@@ -248,13 +302,17 @@ export function ownRow(item, { healing = true } = {}) {
     const heal = healing ? textHealing(sentences, used) : null;
     if (heal) effects.unshift(heal);
     const modifiers = modifiersOf(sentences, duration, used);
-    if (!effects.length && !modifiers.length) return null;
+    const resistances = resistancesOf(sentences, duration, used);
+    if (!effects.length && !modifiers.length && !resistances.length) return null;
     // (Healing another creature: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other);
     if (heal?.other) delete heal.other;
     // (Not its time, nor a sentence restating PF2e's usual rule: "As usual being concealed when your position is still obvious, you can't …".)
-    const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence));
-    return { effects, modifiers, unread, duration, ...(other ? { other } : {}) };
+    // (Nor an introduction's bonus with no number when the number is read: One Day's Breath's "you also gain a status bonus
+    // against inhaled threats" before its "+1 status bonus to saves against inhaled threats".)
+    const restated = (sentence) => modifiers.length > 0 && /\ban? (?:item |status |circumstance )?bonus\b/i.test(sentence) && !/[+\-–]\d|\d+d\d+|\bDC\b/.test(sentence);
+    const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence));
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

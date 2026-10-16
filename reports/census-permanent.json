@@ -1,18 +1,18 @@
 {
- "generated": "2026-10-15",
+ "generated": "2026-10-16",
  "totals": {
   "items": 2679,
   "staves": 592,
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 657,
+   "resolves": 661,
    "builtin:cast-spell": 454,
-   "none": 872,
+   "none": 869,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
-   "builtin:readied-bonus": 19,
-   "note-only": 280,
+   "builtin:readied-bonus": 21,
+   "note-only": 277,
    "builtin:reroll": 22,
    "partial": 56,
    "builtin:modes": 26,
@@ -25,10 +25,10 @@
   "live": {
    "save": 327,
    "cast": 454,
-   "item": 587,
-   "none": 1070,
+   "item": 588,
+   "none": 1067,
    "focus": 45,
-   "fortune": 29,
+   "fortune": 31,
    "reroll": 22,
    "strike": 39,
    "zone": 9,
@@ -42,15 +42,15 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 397,
+    "resolves": 399,
     "builtin:cast-spell": 333,
-    "none": 557,
+    "none": 554,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
-    "builtin:readied-bonus": 13,
+    "builtin:readied-bonus": 15,
     "note-only": 179,
     "builtin:reroll": 14,
-    "partial": 17,
+    "partial": 16,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
@@ -99,12 +99,12 @@
    "activations": 164,
    "results": {
     "builtin:cast-spell": 34,
-    "note-only": 24,
-    "resolves": 54,
+    "note-only": 21,
+    "resolves": 56,
     "builtin:no-effect": 6,
     "none": 32,
     "builtin:reroll": 3,
-    "partial": 2,
+    "partial": 3,
     "builtin:ac-reaction": 2,
     "builtin:zone": 2,
     "builtin:readied-bonus": 1,
@@ -7977,7 +7977,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -12157,9 +12157,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Silencing Shot",
@@ -15908,7 +15908,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -17888,7 +17888,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -18724,9 +18724,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Lion's Armor (Greater)",
@@ -25962,9 +25962,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Armory Bracelet (Minor)",
@@ -27282,7 +27282,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },

@@ -75,6 +75,8 @@ export function previewLines(state) {
     const lines = [];
     // (The conditions it lowers, src/compiler/reduce.js.)
     for (const { slug, by } of plan?.item?.reduce ?? []) lines.push(`Lowers ${slug} by ${by}`);
+    // (Its resistance, src/compiler/rows.js: the card's own Effect.)
+    if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
     if (plan?.reduce) for (const note of plan.notes ?? []) lines.push(`Also: ${note}`);
     const healing = plan?.resolution?.native?.healing;
@@ -131,6 +133,34 @@ export function effectSource(template, { application = null, item = {}, user = {
     source.system.context = { ...(source.system.context ?? {}), origin: { ...(source.system.context?.origin ?? {}), actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } };
     source.flags = { ...(source.flags ?? {}), ...flags };
     return source;
+}
+
+// The resistance an item gives its user (plan.item.resist, src/compiler/rows.js) in words: "Resistance 5 to slashing and
+// piercing for 10 minutes".
+const typeWords = (type) => (type === "all-damage" ? "all damage" : type.replace(/-/g, " "));
+export function resistanceText(resist) {
+    const byValue = new Map();
+    for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), typeWords(entry.type)]);
+    const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration;
+    return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${duration ? ` for ${timeText(duration)}` : ""}`;
+}
+
+// Its Effect: PF2e's Resistance rules for the item's time, named for the item. moduleId: the flag's scope. Returns a new source.
+export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration ?? null;
+    return {
+        name: `${item.name}: resistance`,
+        type: "effect",
+        img: item.img ?? "icons/svg/shield.svg",
+        flags: { [moduleId]: { resist: true } },
+        system: {
+            description: { value: `<p>${escape(resistanceText(resist))}, from <strong>${escape(item.name)}</strong>.</p>` },
+            duration: duration ? { value: duration.value, unit: duration.unit, expiry: duration.expiry ?? "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false },
+            start: { value: worldTime, initiative },
+            context: { origin: { actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } },
+            rules: resist.map(({ type, value }) => ({ key: "Resistance", type, value }))
+        }
+    };
 }
 
 // The card's HTML. canApply: whether this user may press Apply (the item's owner or the GM).

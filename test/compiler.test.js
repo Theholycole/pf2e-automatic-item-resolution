@@ -4,6 +4,7 @@ import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { CORE_FAMILIES, createRegistry, validateChanges } from "../../pf2e-resolution-core/src/index.js";
 import { actionTypeOf, compileItem as compileWith, handlesItem, itemDuration, readActivations, recipientOf, spellEffectIndex } from "../src/compiler/index.js";
+import { compileActivations } from "../src/compiler/permanent.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -217,10 +218,29 @@ test("a talisman's Trigger says when it's used: what follows is read (Guardian R
 test("bonuses scoped as PF2e can: against traits, checks to an action, a Speed", () => {
     const mods = (name) => compileItem(item(name))?.resolution?.outcomes?.success?.modifiers ?? [];
     assert.deepEqual(mods("Dragonfly Fulu").map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate]), [["athletics", 2, "status", [{ or: ["action:high-jump", "action:long-jump"] }]]]);
-    // A choice of settings (Magnetic Suit's attract or repel), or a scope with no roll option ("saves against afflictions"): not read.
+    // A choice of settings (Magnetic Suit's attract or repel): not read.
     assert.deepEqual(mods("Magnetic Suit"), []);
-    assert.deepEqual(mods("Affliction Suppressant (Lesser)"), []);
+    // "saves against afflictions": a curse, a disease or a poison.
+    assert.deepEqual(mods("Affliction Suppressant (Lesser)").map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["saving-throw", 1, [{ or: ["item:trait:curse", "item:trait:disease", "item:trait:poison"] }]]]);
     assert.deepEqual(mods("Oil of Skating").map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["land-speed", 10, "status"]]);
+});
+
+test("bonuses against what a creature makes, what an effect gives, or ranged attacks: PF2e's origin, inflicts and attack options", () => {
+    const mods = (name) => compileItem(item(name))?.resolution?.outcomes?.success?.modifiers ?? [];
+    // Night Sky Elixir's "against effects created by devils and divine spells cast by devils".
+    const night = compileItem(item("Night Sky Elixir (Lesser)"));
+    assert.deepEqual(night.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.value]), [["saving-throw", 1, "item", ["origin:trait:devil"], 10]]);
+    assert.equal(night.partial, undefined, "nothing else to read");
+    // Scholar's Drop's "against effects that could render you Fatigued".
+    assert.deepEqual(mods("Scholar's Drop").map((modifier) => modifier.predicate), [["inflicts:fatigued"]]);
+    // One Day's Breath's "While the effect lasts, you gain a +1 status bonus to saves against inhaled threats" (its time is the
+    // effect's), the introduction's bonus without a number not a note; its Mythic Point is.
+    const breath = compileItem(item("One Day's Breath"));
+    assert.deepEqual(breath.resolution.outcomes.success.modifiers.map((modifier) => [modifier.value, modifier.predicate, modifier.duration.value, modifier.duration.unit]), [[1, ["item:trait:inhaled"], 24, "hours"]]);
+    assert.deepEqual(breath.unread, ["If you spend 1 Mythic Point when you activate the day's breath, you inhale so deeply that you increase the effect's duration.", "If you spend 1 Mythic Point, you don't need to breathe for 7 days."]);
+    // Trusty Helmet's Hunker Down: "+1 circumstance bonus to your AC against ranged attacks".
+    const [, hunker] = compileActivations(item("Trusty Helmet"));
+    assert.deepEqual(hunker.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate]), [["ac", 1, "circumstance", ["item:ranged"]]]);
 });
 
 test("an item with a time and nothing else the module reads: a note of its text on the drinker, counted apart", () => {
