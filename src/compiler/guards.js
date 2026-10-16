@@ -53,7 +53,30 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text);
+    return sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text);
+}
+
+// A row's condition with its time in its own sentence that the ability compiler left without one — Liar's Bangle's failure, "For the
+// next minute, it is Stupefied 1 and …", Oneiric Crystals' "Stupefied 4 for 1 day" — that time, not forever.
+const SENTENCE_TIME = /\b(?:for|For the next) (\d+ |one |an? )?(rounds?|minutes?|hours?|days?|weeks?)\b/;
+const TIME_UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours", day: "days", days: "days", week: "weeks", weeks: "weeks" };
+function sentenceTimes(plan, text) {
+    if (plan?.resolution?.kind !== "save" || plan.builtin || !plan.resolution.outcomes) return plan;
+    const words = degreeWords(text);
+    return eachRow(plan, (row, degree) => {
+        const sentences = String(words[degree] ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/);
+        let changed = false;
+        const effects = (row?.effects ?? []).map((effect) => {
+            if (effect?.kind !== "condition" || effect.duration || ["drained", "doomed", "wounded", "prone", "dying", "unconscious"].includes(effect.slug)) return effect;
+            const sentence = sentences.find((other) => new RegExp(String.raw`\b${effect.slug}\b`, "i").test(other) && !/\buntil\b/i.test(other));
+            const time = sentence ? SENTENCE_TIME.exec(sentence) : null;
+            if (!time) return effect;
+            changed = true;
+            const count = /^\d+/.test(time[1] ?? "") ? Number.parseInt(time[1], 10) : 1;
+            return { ...effect, duration: { mode: "fixed", value: count, unit: TIME_UNITS[time[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } };
+        });
+        return changed ? { ...row, effects } : row;
+    });
 }
 
 // A row "As success, but …" keeps the success row's conditions — The Waxworks' failure, "As success, but 4d6 persistent fire plus
@@ -84,6 +107,13 @@ function asRowCopies(plan, text) {
         const as = AS_ROW.exec(own);
         const base = as ? outcomes[as[1].toLowerCase()] : null;
         if (!row || !base) continue;
+        // (A condition it names again with a new value and no time of its own keeps the base row's time: Floppy Rag Doll's "As failure,
+        // but Clumsy 2", its failure's clumsy until your next turn.)
+        if (!ROW_TIME.test(own) && !/\buntil\b/i.test(own) && (row.effects ?? []).some((effect) => effect?.kind === "condition" && !effect.duration && (base.effects ?? []).some((other) => other?.slug === effect.slug && other.duration))) {
+            row = { ...row, effects: row.effects.map((effect) => (effect?.kind === "condition" && !effect.duration ? { ...effect, duration: (base.effects ?? []).find((other) => other?.slug === effect.slug && other.duration)?.duration ?? null } : effect)) };
+            outcomes[degree] = row;
+            changed = true;
+        }
         const missing = (base.effects ?? []).filter((effect) => effect?.kind === "condition"
             && !(row.effects ?? []).some((other) => other?.slug === effect.slug)
             && !new RegExp(String.raw`\b${effect.slug}\b`, "i").test(own)

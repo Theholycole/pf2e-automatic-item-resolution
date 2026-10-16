@@ -431,3 +431,12 @@ test("conditions only under if/when come off their rows (Heart of Sarnax, Hex Bl
     const blinded = lament.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "blinded");
     assert.deepEqual([blinded.duration.value, blinded.duration.unit, slugs(lament, "criticalFailure").includes("slowed")], [1, "minutes", true]);
 });
+
+test("a condition's time in its own sentence (Liar's Bangle's 'For the next minute'), and kept when an 'As failure, but' row names it again (Floppy Rag Doll)", () => {
+    const bangle = compileActivations(item("Liar's Bangle"), { spellEffects }).find((entry) => entry.activation.name === "Cloud Judgment").plan;
+    const stupefied = bangle.resolution.outcomes.failure.effects.find((effect) => effect.slug === "stupefied");
+    assert.deepEqual([stupefied.duration.value, stupefied.duration.unit], [1, "minutes"]);
+    const doll = compileActivations(item("Floppy Rag Doll"), { spellEffects })[0].plan;
+    const clumsy = doll.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "clumsy");
+    assert.deepEqual([clumsy.value, clumsy.duration?.unit], [2, "rounds"]);
+});
