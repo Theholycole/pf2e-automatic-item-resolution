@@ -10,7 +10,7 @@ import { etchedKeys, isRuneItem } from "../src/compiler/runes.js";
 import { chargeSpellstrike } from "./spellstrike.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
-import { MODULE_ID, SOCKET, encounterOf, isActiveGM } from "./foundry.js";
+import { MODULE_ID, SOCKET, encounterOf, isActiveGM, ownerOf } from "./foundry.js";
 
 const USES = "activationUses";
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -40,8 +40,8 @@ const now = (actor = null) => ({ worldTime: game.time.worldTime, combatId: encou
 // The activations with a card, of the item as it is now (compiled once per version of its text).
 const compiled = new Map();
 function playable(item) {
-    const data = { ...item.toObject(false), uuid: item.uuid, ownerLevel: item.actor?.level ?? null };
-    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}:${etchedKeys(data).join(",")}:${data.ownerLevel ?? ""}`;
+    const data = { ...item.toObject(false), uuid: item.uuid, ...ownerOf(item.actor) };
+    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}:${etchedKeys(data).join(",")}:${data.ownerLevel ?? ""}:${Object.values(data.ownerAbilities ?? {}).join(",")}`;
     if (!compiled.has(key)) compiled.set(key, (compileActivations?.(data) ?? []).filter((entry) => entry.plan && routeOf(entry.plan, plainText(entry.activation.html))));
     return compiled.get(key).map((entry) => ({ ...entry, data }));
 }

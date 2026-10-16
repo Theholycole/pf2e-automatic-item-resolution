@@ -6,6 +6,7 @@
 // there), nor one whose own modifier replaces yours (third-party plants; asked of the user). Pure.
 
 import { plainText } from "./rows.js";
+import { directDamagePlan } from "./direct-damage.js";
 
 // PF2e's actions by the names items use.
 export const ACTION_SLUGS = Object.freeze({
@@ -37,6 +38,8 @@ const FORMS = [
     // "…, attempting an Intimidation check to Demoralize that creature", "Make an Athletics check to Disarm the attacking creature",
     // "Roll an Intimidation check to Demoralize the target": a clause of its own, a skill named.
     new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+|,\s+)(?:attempting|[Mm]ake|[Aa]ttempt|[Rr]oll) (?:a|an) (?:Athletics|Acrobatics|Intimidation|Deception|Diplomacy|Stealth|Thievery|Medicine|Survival|Performance) check to (${NAMES})\b(?![^.]*\+\d+)(?![^.]*\b(?:up to (?:two|three|four|\d+)|each|all)\b)`, "i"),
+    // "Attempt to Grapple a creature" (Bracers of Strength): an activation that is the action.
+    new RegExp(String.raw`(?:^|[.;)]\s+|\bEffect\s+)Attempt to (${NAMES}) (?:a|an|one|the) (?:creature|foe|enemy|target)\b(?![^.]*\+\d+)`, "i"),
     // "You attempt to Demoralize the foe the Strike hit", "You can activate the tiger fork to attempt to Grapple the creature": its
     // user's own, at one creature (not "The tentacle attempts to Grapple with a +13 bonus", its own check).
     new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+)You (?:can (?:immediately )?)?(?:attempt to|activate [^,.]+? to attempt to) (${NAMES}) (?:the|that|a|an|one) (?:[\w-]+ )?(?:creature|foe|enemy|target|opponent)\b(?![^.]*\+\d+)`, "i")
@@ -150,10 +153,26 @@ export function readItemAction(html, item = null) {
     return { slug, name, bonus, targeted: TARGETED.has(slug), ...(after ? { after } : {}) };
 }
 
+// Damage the action's success deals, a number its owner's gave (src/compiler/item-data.js withOwnerNumbers): Bracers of
+// Strength's "If you succeed, you crush the creature in your grasp, dealing 4 bludgeoning damage to it. If you critically
+// succeeded, the damage is equal to double your Strength modifier" → { success: 4, criticalSuccess: 8 } plans of outright
+// damage at the creature, posted after PF2e's roll (scripts/item-actions.js).
+const SUCCESS_DAMAGE = /\bIf you succeed, [^.]*?\bdealing @Damage\[(\d+)\[(\w+)\]\](?:\{[^}]*\})? damage\b/i;
+const CRITICAL_DOUBLE = /\bIf you critically succeed(?:ed)?, the damage is equal to double\b/i;
+function degreeDamage(html, base) {
+    const success = SUCCESS_DAMAGE.exec(String(html ?? ""));
+    if (!success) return null;
+    const plan = (amount) => directDamagePlan(`The target takes ${amount} ${success[2]} damage.`, { ...base, activation: base.activation ?? null });
+    const amount = Number(success[1]);
+    return { success: plan(amount), criticalSuccess: plan(CRITICAL_DOUBLE.test(String(html)) ? amount * 2 : amount) };
+}
+
 // options.basicActions: the ability module's compiled actions — their rows for the degree, applied after PF2e's roll.
 export function itemActionPlan(html, base, options = {}) {
-    const action = readItemAction(html, options.item ?? null);
-    if (!action) return null;
+    const read = readItemAction(html, options.item ?? null);
+    if (!read) return null;
+    const damage = degreeDamage(html, base);
+    const action = damage ? { ...read, damage } : read;
     const compiled = (slug) => {
         const basic = options.basicActions?.[slug] ?? null;
         return basic && !basic.builtin ? basic : null;

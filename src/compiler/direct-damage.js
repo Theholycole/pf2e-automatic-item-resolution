@@ -9,7 +9,8 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { riderRow } from "./bombs.js";
 
 const TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void|bleed|untyped";
-const DICE = String.raw`(\d+d\d+(?:\s*\+\s*\d+)?)`;
+// (Or a number: Wolf Fang's damage of its user's Strength modifier, src/compiler/item-data.js withOwnerNumbers.)
+const DICE = String.raw`(\d+d\d+(?:\s*\+\s*\d+)?|\d+)`;
 const KIND = String.raw`(?:(persistent) )?(?:(${TYPES}) )?damage`;
 // The one creature: "The attacking creature", "the struck creature", "The creature", "the triggering enemy", "the plant",
 // "the undead that caused the condition", "The required creature", "the target".

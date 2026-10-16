@@ -4,7 +4,7 @@
 // the ability module's row for that action and degree goes on the target (scripts/foundry.js applyRiders).
 
 import { actionCardHTML, actionText, chosenAction, createActionCard, outcomeText } from "../src/live/action-card.js";
-import { FLAG, MODULE_ID, applyRiders, entryOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, stateOf } from "./foundry.js";
 
 const sluggify = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -74,6 +74,14 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     else {
         lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}.`);
         if (action.basic && targetToken) lines.push(...(await applyRiders({ plan: action.basic, degree: outcome, user: state.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), item: state.item })));
+        // (Its own damage for that degree — Bracers of Strength's crush on a success, double on a critical one: the ability module's
+        // card at the creature, which rolls and applies it.)
+        const damage = action.damage?.[outcome] ?? null;
+        const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+        if (damage && targetToken && postCard) {
+            await postCard({ plan: damage, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken: actor.getActiveTokens?.(true, true)?.[0] ?? null, tokens: [targetToken.object ?? targetToken], cause: outcomeText(outcome) });
+            lines.push(`${state.item.name}'s damage for ${outcomeText(outcome)}: its card.`);
+        } else if (damage && targetToken) lines.push(`${state.item.name}: ${targetToken.name ?? targetToken.actor.name} takes ${damage.resolution.sharedDamage.components[0].formula} ${damage.resolution.sharedDamage.components[0].type ?? ""} damage; apply it by hand.`.replace(/\s+damage;/, " damage;"));
         // (Each other creature: the same total and die against its own DC — the action's defense, Demoralize's Will DC.)
         const roll = results?.[0]?.roll ?? null;
         const statistic = action.basic?.resolution?.check?.against?.statistic ?? null;

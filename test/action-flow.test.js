@@ -174,3 +174,27 @@ test("more of the words for an action: \"You Seek with a +1 item bonus\", \"Roll
     const html = actionCardHTML({ status: "open", plan: horn, user: { name: "Thief" }, item: { name: "Horn of Exorcism" }, results: [] }, { canApply: true });
     assert.match(html, /Target all creatures with the undead or unholy trait within 30 feet \(one roll against each one's DC\), then press the button\./);
 });
+
+test("its owner's numbers in its text: Wolf Fang's Strength damage; Bracers of Strength's Grapple, then its crush (double on a critical success)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    // Unknown owner (a census, the simulator): nothing read from "@actor"; known: the number.
+    assert.equal(compileItem(source("Wolf Fang")), null);
+    const fang = compileItem({ ...source("Wolf Fang"), ownerAbilities: { str: 4 } });
+    assert.deepEqual([fang.resolution.check.roll, fang.resolution.sharedDamage.components[0].formula, fang.targeting.target], ["automatic", "4[bludgeoning]", "1 creature"]);
+    // Live: PF2e's Grapple from the activation, and on a critical success the ability module's card for 10 bludgeoning at the target.
+    thief.abilities = { str: { mod: 5 } };
+    const bracers = foundry.giveItem(thief, source("Bracers of Strength"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: bracers.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item-action");
+    assert.deepEqual([card.flags[MODULE_ID].card.plan.action.slug, Object.keys(card.flags[MODULE_ID].card.plan.action.damage)], ["grapple", ["success", "criticalSuccess"]]);
+    foundry.nextOutcome.value = "criticalSuccess";
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [mark.token.uuid], userId: "player" });
+    await settle();
+    const [crush] = foundry.posted.slice(before);
+    assert.deepEqual([crush.plan.resolution.sharedDamage.components[0].formula, crush.plan.resolution.sharedDamage.components[0].type, crush.cause], ["10", "bludgeoning", "a critical success"]);
+    foundry.nextOutcome.value = "success";
+    delete thief.abilities;
+});

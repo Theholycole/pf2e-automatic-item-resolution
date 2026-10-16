@@ -13,7 +13,7 @@
 //   other change goes through the ability module's api.live.applyChange.
 
 import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, ownerDCsOf, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, ownerDCsOf, ownerOf, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -116,7 +116,8 @@ async function cardForUse(message) {
     if (!used) return;
     // (A generic spellgun with no spell in it: back in the inventory, as nothing happened.)
     if (isUnloadedSpellgun(used.data)) return restoreUnloaded(used, message);
-    const plan = compile(used.data);
+    // (With its owner's numbers: Wolf Fang's damage of its user's Strength modifier.)
+    const plan = compile({ ...used.data, ...ownerOf(used.actor ?? message.actor) });
     const actor = used.actor ?? message.actor;
     if (!actor) return;
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;

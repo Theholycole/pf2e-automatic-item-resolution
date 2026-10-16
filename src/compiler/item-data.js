@@ -46,6 +46,9 @@ export function withItemData(html, item) {
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)
     text = byOwnerLevel(text, item?.ownerLevel);
+    // (Its owner's own numbers, when live play gives them: Wolf Fang's "@Damage[(@actor.abilities.str.mod)[bludgeoning]] damage equal
+    // to your Strength modifier", Pact of the Herald and Host's "(@actor.level)d6".)
+    text = withOwnerNumbers(text, item);
     // (Dice per weapon damage die — Unholy Bloodshed's: one die where no weapon says more, src/compiler/runes.js giving its weapon's.)
     text = perWeaponDie(text, item?.type === "weapon" ? weaponDice(item) : 1, item?.type === "weapon" ? item.system?.damage?.damageType ?? null : null);
     // (A condition that "increases to" a value on a failed save, as the ability compiler reads one: Putrescent Glob's "the creature
@@ -155,6 +158,27 @@ export function byOwnerLevel(html, level) {
     if (step && !base) return text;
     const raised = step ? `${before.slice(0, base.index)}${step.link.replace(/\{[^}]*\}$/, "")}${before.slice(base.index + base[0].length)}` : before;
     return `${raised}${text.slice(scaling.index + scaling[0].length)}`;
+}
+
+// "@actor.level" and "@actor.abilities.str.mod" as the owner's (item.ownerLevel, item.ownerAbilities { str: 4, … }), and the
+// words saying so ("equal to your Strength modifier") gone with them; unknown, as written.
+const ABILITY_NAMES = { str: "Strength", dex: "Dexterity", con: "Constitution", int: "Intelligence", wis: "Wisdom", cha: "Charisma" };
+export function withOwnerNumbers(html, item) {
+    let text = String(html ?? "");
+    if (!/@actor\./.test(text)) return text;
+    const level = Number(item?.ownerLevel);
+    const abilities = item?.ownerAbilities ?? null;
+    let used = [];
+    text = text.replace(/@actor\.level\b/g, (whole) => (Number.isFinite(level) && item?.ownerLevel !== null && item?.ownerLevel !== undefined ? String(level) : whole));
+    text = text.replace(/@actor\.abilities\.(str|dex|con|int|wis|cha)\.mod\b/g, (whole, key) => {
+        if (!Number.isFinite(Number(abilities?.[key]))) return whole;
+        used.push(ABILITY_NAMES[key]);
+        return String(Number(abilities[key]));
+    });
+    // (A number in brackets: "(4)[bludgeoning]" → "4[bludgeoning]", "(15)d6" → "15d6".)
+    text = text.replace(/\((-?\d+)\)(?=\[|d\d)/g, "$1");
+    for (const name of new Set(used)) text = text.replace(new RegExp(String.raw`\s+equal to your ${name} modifier\b`, "g"), "");
+    return text;
 }
 
 // A weapon's damage dice: its own (1) and its striking rune's.

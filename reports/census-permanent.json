@@ -8,7 +8,7 @@
   "results": {
    "resolves": 708,
    "builtin:cast-spell": 469,
-   "none": 732,
+   "none": 731,
    "partial": 93,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
@@ -18,7 +18,7 @@
    "builtin:pf2e-rules": 24,
    "builtin:modes": 31,
    "builtin:zone": 9,
-   "builtin:item-action": 16,
+   "builtin:item-action": 17,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
    "builtin:spellstrike": 9,
@@ -28,14 +28,14 @@
    "save": 369,
    "cast": 469,
    "item": 600,
-   "none": 928,
+   "none": 927,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
    "strike": 53,
    "toggle": 31,
    "zone": 9,
-   "action": 16,
+   "action": 17,
    "spellstrike": 9,
    "later": 4
   },
@@ -48,7 +48,7 @@
    "results": {
     "resolves": 430,
     "builtin:cast-spell": 340,
-    "none": 491,
+    "none": 490,
     "partial": 41,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
@@ -59,7 +59,7 @@
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:item-action": 8
+    "builtin:item-action": 9
    }
   },
   "weapon": {
@@ -15488,9 +15488,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Devil's Bargain",

@@ -11,6 +11,7 @@ import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
 import { etchRune, setUpEtching } from "./etching.js";
+import { ownerOf } from "./foundry.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -28,7 +29,7 @@ let runes = new Map();
 
 // A Foundry item as plain data, keeping its uuid (the compiler is pure).
 // (Its owner's level too, for the amounts that grow with it: src/compiler/item-data.js byOwnerLevel.)
-const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObject(false), uuid: item.uuid, ownerLevel: item.actor?.level ?? null } : item);
+const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObject(false), uuid: item.uuid, ...ownerOf(item.actor) } : item);
 
 // The spell module's claims (its api, when it's active): an item it acts on is left to it.
 const claims = (item) => game.modules.get(SPELL_ID)?.active ? game.modules.get(SPELL_ID)?.api?.claims?.(item) === true : false;
