@@ -212,3 +212,20 @@ export function checkGated(plan, text) {
     if (!check || !success) return plan;
     return { ...plan, automation: { level: "guided" }, notes: [...(plan.notes ?? []), `Only on a success: ${check[0].trim()} ${success[0].trim()}`], partial: true };
 }
+
+// The plan for what it gives its user and allies in an area (rows.js allyAreaRow): the core's check family with no roll, its
+// row for each creature the presser targets (the ability module's card, as a save at targets would be). null without one.
+export function allyAreaPlan(text, base, allyArea) {
+    if (!allyArea) return null;
+    const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+    return {
+        ...base,
+        automation: { level: allyArea.notes.length ? "guided" : "automatic" },
+        targeting: { target: allyArea.self ? "you and your allies in the area" : "your allies in the area", range: null, area: { type: "emanation", value: allyArea.radius } },
+        trigger: { event: "use" },
+        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: { damage: none().damage, effects: allyArea.row.effects, modifiers: allyArea.row.modifiers }, failure: none(), criticalFailure: none() } },
+        allyArea: true,
+        notes: allyArea.notes,
+        ...(allyArea.notes.length ? { partial: true } : {})
+    };
+}

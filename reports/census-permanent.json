@@ -6,15 +6,15 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 673,
+   "resolves": 674,
    "builtin:cast-spell": 469,
-   "none": 821,
+   "none": 819,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
-   "note-only": 270,
+   "note-only": 268,
    "builtin:reroll": 22,
-   "partial": 73,
+   "partial": 76,
    "builtin:modes": 26,
    "builtin:zone": 9,
    "builtin:item-action": 11,
@@ -23,10 +23,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 334,
+   "save": 338,
    "cast": 469,
-   "item": 599,
-   "none": 993,
+   "item": 597,
+   "none": 991,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -45,13 +45,13 @@
    "results": {
     "resolves": 410,
     "builtin:cast-spell": 340,
-    "none": 523,
+    "none": 521,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 21,
-    "note-only": 172,
+    "note-only": 171,
     "builtin:reroll": 14,
-    "partial": 28,
+    "partial": 31,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
@@ -62,10 +62,10 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 143,
+    "resolves": 144,
     "none": 130,
     "partial": 23,
-    "note-only": 41,
+    "note-only": 40,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 7,
@@ -6812,9 +6812,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Hodag Leather",
@@ -10343,9 +10343,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Viridian Crown",
@@ -22146,9 +22146,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Rusting Ammunition (Moderate)",
@@ -28020,9 +28020,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Snare of Speed",

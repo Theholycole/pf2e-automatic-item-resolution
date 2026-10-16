@@ -54,7 +54,10 @@ export function outrightText(plan) {
         return typed ? `${typed[1]} ${typed[2] ? "persistent " : ""}${typed[3]} damage` : `${component.formula}${component.category ? ` ${component.category}` : ""}${component.type ? ` ${component.type}` : ""} damage`;
     });
     const conditions = (row.effects ?? []).filter((effect) => effect.kind === "condition").map((effect) => `${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}`);
-    return [...damage, ...conditions].join(", ") || "its effect";
+    // (And what an ally buff gives: "15 temporary Hit Points", "+1 status to attack-roll".)
+    const temp = (row.effects ?? []).filter((effect) => effect.kind === "temp-hp").map((effect) => `${effect.amount ?? effect.formula} temporary Hit Points`);
+    const modifiers = (row.modifiers ?? []).map((modifier) => `${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${String(modifier.selector).replace(/-/g, " ")}`);
+    return [...damage, ...conditions, ...temp, ...modifiers].join(", ") || "its effect";
 }
 
 export function poisonCardHTML(state, { canApply = false } = {}) {

@@ -41,7 +41,8 @@ export function routeOf(plan, text = "") {
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A check with the item's own modifier at a creature: the ability module's card, as a save at the targets.)
-    if (plan.ownCheck || isUseSave(plan, text) || targetedRow(plan)) return "save";
+    // (What it gives its user and allies in an area: the same card, at the creatures the presser targets.)
+    if (plan.ownCheck || plan.allyArea || isUseSave(plan, text) || targetedRow(plan)) return "save";
     if (isLaterSave(plan, text)) return "later";
     if (playedOnItemCard(plan)) return "item";
     return null;

@@ -117,3 +117,15 @@ test("self conditions: \"You Stride and …, becoming Concealed until the end of
     const [anchor] = compileActivations(item("Immovable"));
     assert.deepEqual(anchor.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration]), [["immobilized", null]]);
 });
+
+test("what it gives its user and allies in an area: an automatic row at the creatures the presser targets (Knight Captain's Lance, Snare of Speed)", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { outrightText } = await import("../src/live/poison-card.js");
+    const [lance] = compileActivations(item("Knight Captain's Lance"));
+    assert.equal(routeOf(lance.plan), "save");
+    assert.deepEqual([lance.plan.targeting.area, lance.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value])], [{ type: "emanation", value: 30 }, [["attack-roll", 1], ["damage", 1]]]);
+    assert.equal(outrightText(lance.plan), "+1 status to attack roll, +1 status to damage");
+    const speed = compileActivations(item("Snare of Speed")).find((entry) => entry.activation.name === "Prestissimo").plan;
+    assert.deepEqual(speed.resolution.outcomes.success.effects.map((effect) => effect.slug), ["quickened"]);
+    assert.match(speed.notes[0], /only Step and Stride/, "the extra action's limit a note");
+});

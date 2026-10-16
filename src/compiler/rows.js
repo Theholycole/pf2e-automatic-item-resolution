@@ -386,6 +386,38 @@ function sensesOf(sentences, duration, used = new Set()) {
     return found;
 }
 
+// What it gives its user and allies in an area, or allies alone: Knight Captain's Lance's "Allies within 30 feet that can see
+// you receive a +1 status bonus to their attack rolls and damage rolls for 1 round", Snare of Speed's "You and all allies
+// within a 30-foot emanation gain the Quickened condition until the end of your next turn", Viridian Crown's "… in a 60-foot
+// emanation. You and all allies in this area gain a +3 status bonus to saving throws against mental effects", Blakenshipper's
+// "… gain 15 temporary Hit Points that last for 1 round" → { row: { effects, modifiers }, radius, self, notes } or null:
+// the sentence read as its user's own ("you gain …") for each creature the presser targets. The rest of the text is notes.
+const ALLIES = /^(You and )?(?:all )?allies (?:(?:within|in) (?:a |an )?(\d+)[- ](?:foot|feet)(?: emanation| radius| of you)?|in this area)(?: (?:that|who) can (?:see|hear) you)?,? (gain|receive)\b/i;
+export function allyAreaRow(text, duration = null) {
+    const sentences = sentencesOf(String(text ?? "").replace(/^.*?\bEffect\b\s*/s, ""));
+    const index = sentences.findIndex((sentence) => ALLIES.test(sentence.trim()));
+    if (index < 0) return null;
+    const sentence = sentences[index].trim();
+    const match = ALLIES.exec(sentence);
+    const radius = Number(match[2] ?? /(\d+)-foot (?:emanation|radius|aura)/i.exec(sentences.slice(0, index).join(" "))?.[1]);
+    if (!radius) return null;
+    // ("their attack rolls", "the Quickened condition": as its user's own words.)
+    const own = sentence.replace(match[0], "You gain").replace(/\btheir\b/gi, "your").replace(/\bgain the (\w+) condition\b/i, "become $1");
+    // (Sustained "for up to 1 minute": that long at most, the Sustain on the note.)
+    const sustained = /\bSustain [^.]*?\bfor up to (\d+|one|a) (rounds?|minutes?)\b/i.exec(text);
+    const time = durationIn(own, duration ?? itemDuration(text) ?? (sustained ? { mode: "fixed", value: WORD_NUMBERS[sustained[1].toLowerCase()] ?? Number(sustained[1]), unit: UNITS[sustained[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } : null));
+    const used = new Set();
+    const effects = [...selfConditions([own], used)];
+    const temp = tempHitPoints([own.replace(/\bthat last for\b/i, "for")], time, used);
+    if (temp) effects.push(temp);
+    const modifiers = modifiersOf([own], time, used);
+    if (!effects.length && !modifiers.length) return null;
+    const notes = sentences.filter((other, at) => at !== index && (MECHANICAL.test(other) || /\bSustain\b/.test(other))).map((other) => other.trim());
+    // (What its sentence says more: "… and can use the extra action each round for only Step and Stride actions".)
+    const more = /\band can\b|\bonly\b|\bexcept\b/i.test(sentence);
+    return { row: { effects, modifiers }, radius, self: Boolean(match[1]), notes: used.size && !more ? notes : [sentence, ...notes] };
+}
+
 // Items whose text isn't one use with one result: activated on a trigger, an affliction's stages, a second
 // effect, a choice of ways to use it ("may be applied to armor, a weapon, or mixed into an elixir"), or one
 // that links PF2e Effects (those Effects hold its rules).
