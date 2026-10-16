@@ -76,7 +76,7 @@ export function readSpellgun(html) {
     const criticalWords = /\bCritical Success\b\s*(.*?)(?=\bSuccess\b|$)/s.exec(degrees)?.[1] ?? "";
     const successWords = /(?:^|[.\s])Success\b\s*(.*?)(?=\bThe damage is\b|\bFailure\b|$)/s.exec(degrees.replace(/\bCritical Success\b/, "CRITICAL"))?.[1] ?? "";
     const critical = degreeRow(criticalWords);
-    // ("As critical success, except the target is Grabbed instead of restrained": the critical success's row, that condition swapped;
+    // ("As critical success, except the target is Clumsy instead of slowed": the critical success's row, that condition swapped;
     // "As critical success, but for the drained condition, the target is Drained 1, or …": that condition's value.)
     const swap = /^\s*As critical success, except (?:the target is )?(\w+) instead of (\w+)/i.exec(successWords);
     const revalue = /^\s*As critical success, but for the (\w+) condition, the target is \w+ (\d+)([^.]*)\./i.exec(successWords);

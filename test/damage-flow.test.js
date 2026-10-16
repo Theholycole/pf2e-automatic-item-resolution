@@ -203,10 +203,10 @@ test("a spellgun against a defense's DC, with conditions and no damage (the modu
 
 test("a spellgun whose success is its critical success at full damage and a smaller Speed penalty (the module's own wording)", async () => {
     const { spellgunPlan } = await import("../src/compiler/spellguns.js");
-    const html = "<p>Activate the spellgun by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's AC. This spellgun has a range increment of 30 feet.</p><p><strong>Critical Success</strong> The target takes @Damage[3d6[cold]] damage and takes a -10-foot status penalty to its Speeds for 1 round.</p><p><strong>Success</strong> As critical success, except the target takes full damage and takes a -5-foot status penalty.</p>";
+    const html = "<p>Activate the spellgun by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's AC. This spellgun has a range increment of 30 feet.</p><p><strong>Critical Success</strong> The target takes @Damage[3d6[cold]] damage and takes a -15-foot status penalty to its Speeds for 1 round.</p><p><strong>Success</strong> As critical success, except the target takes full damage and takes a -10-foot status penalty.</p>";
     const plan = spellgunPlan(html, { source: { name: "Test Gun" } });
     const outcomes = plan.resolution.outcomes;
-    assert.deepEqual(["criticalSuccess", "success"].map((degree) => [outcomes[degree].damage.multiplier, outcomes[degree].modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`)]), [[1, ["all-speeds -10"]], [1, ["all-speeds -5"]]]);
+    assert.deepEqual(["criticalSuccess", "success"].map((degree) => [outcomes[degree].damage.multiplier, outcomes[degree].modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`)]), [[1, ["all-speeds -15"]], [1, ["all-speeds -10"]]]);
     assert.equal(plan.notes, undefined, "nothing left to the GM");
 });
 

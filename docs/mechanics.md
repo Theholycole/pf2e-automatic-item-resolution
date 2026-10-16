@@ -36,7 +36,7 @@ After adding an entry, run `node --test --test-isolation=none test/*.test.js` an
 
 - **What it does:** PF2e's own action, plus an untyped modifier of the difference when the user's skill is lower than the item's.
 - **Items now:** the third-party Splitting Tree Splatters and the Lesser Ravenous Flytrap.
-- **Wording read:** "You can use a +5 Athletics modifier for your Shove instead of your Athletics modifier if it is higher than your own".
+- **Wording read:** "use a +N Athletics modifier for your <action> instead of your Athletics modifier if it is higher than your own" (the item's modifier for that action, in place of the user's when higher).
 - **Add an item:** the same `EXTRA` in `src/compiler/item-actions.js`:
 
   ```js

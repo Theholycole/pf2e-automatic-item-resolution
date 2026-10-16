@@ -65,8 +65,8 @@ function extraAction(entry) {
     return { slug: slugs[0], name: names[0], ...(slugs.length > 1 ? { slugs, names } : {}), bonus: entry.bonus ?? null, ...(entry.statistic ? { statistic: entry.statistic } : {}), ...(entry.minimum ? { minimum: entry.minimum } : {}), targeted: slugs.some((slug) => TARGETED.has(slug)) };
 }
 
-// (The item's modifier when it's higher than its user's: Alchemists+ plants' "You can use a +5 Athletics modifier for your
-// Shove instead of your Athletics modifier if it is higher than your own" — the action, at that modifier at least.)
+// (The item's modifier when it's higher than its user's — some Alchemists+ plants give one for an action, used in place of the
+// user's own when higher: the action, at that modifier at least.)
 const AT_LEAST = new RegExp(String.raw`\buse an? \+(\d+) (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy) modifier for your (${NAMES}) instead of your \w+ modifier if it is higher than your own\b`, "i");
 
 // The text → { slug, name, bonus: { value, type } | null, targeted, after } or null.

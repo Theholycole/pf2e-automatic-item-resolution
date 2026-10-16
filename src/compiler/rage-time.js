@@ -1,5 +1,5 @@
-// A condition its user has until the end of their rage: an Instinct Crown's "You become quickened until the end of your
-// rage. You can use your extra action to …" (Barbarians+ crowns). plan.item.untilRage { conditions: [{ slug, value }] }: the
+// A condition its user has until the end of their rage: a third-party Instinct Crown's quickened until its user's rage
+// ends, its extra action limited to some actions (Barbarians+ crowns). plan.item.untilRage { conditions: [{ slug, value }] }: the
 // item card gives a raging user an Effect that grants each condition (PF2e's GrantItem), lasting at most a minute (a
 // Rage's own), and removed when the user's Rage ends (scripts/live.js, on the Rage Effect's deletion). What the extra
 // action may be used for stays a note. Not a creature's other than its user's ("Your animal companion … until the end of
