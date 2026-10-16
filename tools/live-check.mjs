@@ -570,6 +570,88 @@ export const cases = {
         assert(flag.rank === 5, `rank 5 (${flag.rank})`);
         assert(/See the Unseen/.test(cast.flavor ?? "") || /See the Unseen/.test(cast.content ?? "") || cast.item?.name === "See the Unseen", "See the Unseen cast");
         return { cast: cast.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Night Sky Elixir: a +1 item bonus to saves only against what devils make (PF2e's origin:trait:devil).
+    async nightSkyBonus(scene) {
+        const { actor: drinker } = await creature(scene, "Night Sky Drinker", { x: 14, y: 8 });
+        const elixir = await give(drinker, "Night Sky Elixir (Lesser)");
+        const since = Date.now();
+        await elixir.consume();
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await wait(800);
+        const rule = drinker.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((entry) => entry.key === "FlatModifier" && JSON.stringify(entry.predicate ?? []).includes("origin:trait:devil"));
+        assert(rule && rule.value === 1 && rule.type === "item", `the predicated +1 item bonus (${JSON.stringify(rule)})`);
+        const bonusIn = async (options) => {
+            const at = Date.now();
+            await drinker.saves.will.roll({ skipDialog: true, extraRollOptions: options });
+            const save = await messageAfter(at, (message) => message.flags?.pf2e?.context?.type === "saving-throw" && message.speaker?.actor === drinker.id, { what: "the Will save" });
+            return (save.flags.pf2e.modifiers ?? []).some((modifier) => modifier.modifier === 1 && modifier.type === "item" && modifier.enabled !== false);
+        };
+        assert(await bonusIn(["origin:trait:devil", "origin:trait:fiend"]), "the bonus against a devil's effect");
+        assert(!(await bonusIn([])), "no bonus against anything else");
+        return { rule, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Armorskin Robes of Air's Elemental Sheath: resistance 5 to slashing and piercing (the item card's Effect), -5 feet to
+    // all Speeds and +1 AC against physical ranged attacks (the ability module's).
+    async armorskinResist(scene) {
+        const { actor: monk } = await creature(scene, "Sheathed Monk", { x: 16, y: 8 });
+        const robes = await give(monk, "Armorskin Robes of Air");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(robes.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(1000);
+        const resist = monk.itemTypes.effect.find((effect) => effect.getFlag(NS, "resist"));
+        assert(resist, "the resistance Effect");
+        assert(resist.system.duration.value === 10 && resist.system.duration.unit === "minutes", `10 minutes (${JSON.stringify(resist.system.duration)})`);
+        const resistances = monk.attributes.resistances ?? monk.system.attributes.resistances ?? [];
+        for (const type of ["slashing", "piercing"]) assert(resistances.some((entry) => entry.type === type && entry.value === 5), `resistance 5 to ${type} (${JSON.stringify(resistances.map((entry) => [entry.type, entry.value]))})`);
+        const rules = monk.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).filter((rule) => rule.key === "FlatModifier");
+        assert(rules.some((rule) => rule.selector === "all-speeds" && rule.value === -5), "-5 feet to all Speeds");
+        assert(rules.some((rule) => rule.selector === "ac" && rule.value === 1 && JSON.stringify(rule.predicate).includes("item:ranged")), "+1 AC against ranged attacks");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Ferrofluid Urchin: resistance 3 to physical damage for the turn (the fortune card's Effect).
+    async ferrofluidResist(scene) {
+        const { actor: wearer } = await creature(scene, "Urchin Wearer", { x: 14, y: 11 });
+        const urchin = await give(wearer, "Ferrofluid Urchin (Lesser)");
+        const since = Date.now();
+        await urchin.consume();
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(800);
+        const effect = wearer.itemTypes.effect.find((entry) => entry.getFlag(NS, "rollTwice"));
+        assert(effect?.system.rules.some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes("physical") && rule.value === 3), `the Resistance rule (${JSON.stringify(effect?.system.rules)})`);
+        const resistances = wearer.attributes.resistances ?? [];
+        assert(resistances.some((entry) => entry.type === "physical" && entry.value === 3), `resistance 3 to physical (${JSON.stringify(resistances.map((entry) => [entry.type, entry.value]))})`);
+        return { duration: effect.system.duration };
+    },
+
+    // Quenching Potion: PF2e's own recovery check for the drinker's persistent fire damage, at DC 10; the DC back to 15 if it stays.
+    async quenchRecovery(scene) {
+        const { actor: burning } = await creature(scene, "Burning Drinker", { x: 16, y: 11 });
+        const persistent = game.pf2e.ConditionManager.getCondition("persistent-damage").toObject();
+        persistent.system.persistent = { formula: "1d6", damageType: "fire", dc: 15 };
+        const [condition] = await burning.createEmbeddedDocuments("Item", [persistent]);
+        const potion = await give(burning, "Quenching Potion");
+        const since = Date.now();
+        await potion.consume();
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const check = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "flat-check" && message.speaker?.actor === burning.id, { what: "PF2e's recovery check" });
+        const dc = check.flags.pf2e.context.dc?.value;
+        assert(dc === 10, `at DC 10 (${dc})`);
+        const outcome = check.flags.pf2e.context.outcome;
+        const end = Date.now() + 4000;
+        while (Date.now() < end && !game.messages.get(card.id).getFlag(NS, "card").results?.length) await wait(200);
+        const still = burning.items.get(condition.id);
+        if (outcome === "success" || outcome === "criticalSuccess") assert(!still, "ended on a success");
+        else assert(still && still.system.persistent.dc === 15, `stays at DC 15 on a failure (${still?.system.persistent.dc})`);
+        return { outcome, results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
