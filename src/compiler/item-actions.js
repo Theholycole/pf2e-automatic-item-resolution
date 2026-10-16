@@ -48,6 +48,16 @@ const CHOICE_BONUS = /\bYou gain an? \+(\d+) (status|circumstance|item) bonus to
 const ITEM_BONUS = /\badd the [\w' -]+? item bonus to the check\b/i;
 const USING = /\busing (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy|Performance) instead of (?:Athletics|Acrobatics|Thievery|Deception|Intimidation)\b/i;
 
+// Items whose words the readers don't take, by slug — see docs/mechanics.md:
+//   { slugs: ["trip", "disarm"], bonus?: { value, type }, statistic?: "thievery" }   one of several actions, picked on the card;
+//   { slug: "shove", minimum: { value: 5, skill: "athletics" } }                     an action at the item's modifier when higher.
+export const EXTRA = Object.freeze({});
+function extraAction(entry) {
+    const slugs = entry.slugs ?? [entry.slug];
+    const names = slugs.map((slug) => Object.entries(ACTION_SLUGS).find(([, value]) => value === slug)?.[0] ?? slug).map((name) => name.replace(/\b\w/g, (letter) => letter.toUpperCase()));
+    return { slug: slugs[0], name: names[0], ...(slugs.length > 1 ? { slugs, names } : {}), bonus: entry.bonus ?? null, ...(entry.statistic ? { statistic: entry.statistic } : {}), ...(entry.minimum ? { minimum: entry.minimum } : {}), targeted: slugs.some((slug) => TARGETED.has(slug)) };
+}
+
 // (The item's modifier when it's higher than its user's: Alchemists+ plants' "You can use a +5 Athletics modifier for your
 // Shove instead of your Athletics modifier if it is higher than your own" — the action, at that modifier at least.)
 const AT_LEAST = new RegExp(String.raw`\buse an? \+(\d+) (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy) modifier for your (${NAMES}) instead of your \w+ modifier if it is higher than your own\b`, "i");
@@ -55,6 +65,7 @@ const AT_LEAST = new RegExp(String.raw`\buse an? \+(\d+) (Athletics|Acrobatics|T
 // The text → { slug, name, bonus: { value, type } | null, targeted, after } or null.
 // item: the item, for its own runes (Blade of the Rabbit Prince's potency as its item bonus).
 export function readItemAction(html, item = null) {
+    if (EXTRA[item?.system?.slug ?? ""]) return extraAction(EXTRA[item.system.slug]);
     const raw = String(html ?? "");
     if (/@UUID\[[^\]]*\]\{Effect:/i.test(raw)) return null;
     const text = plainText(raw).replace(/\bCraft Requirements\b.*$/i, "");
