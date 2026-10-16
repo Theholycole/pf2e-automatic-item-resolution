@@ -147,6 +147,21 @@ async function rollAndApply(message) {
     button.click();
 }
 
+// The ability module's card: "Roll the rest" when it has a roll, then Apply.
+async function applyAbilityCard(message) {
+    await wait(600);
+    const roll = document.querySelector(`[data-message-id="${message.id}"] [data-aar-action="roll-all"]`);
+    if (roll) return rollAndApply(message);
+    let button = null;
+    for (const stop = Date.now() + 8000; Date.now() < stop && !button; ) {
+        const found = document.querySelector(`[data-message-id="${message.id}"] [data-aar-action="apply"]`);
+        if (found && !found.disabled) button = found;
+        else await wait(200);
+    }
+    assert(button, "the card's Apply button");
+    button.click();
+}
+
 export const cases = {
     // A healing potion fed to a dying ally next to the user: PF2e's own roll heals her once, Dying ends, Wounded rises.
     async potionToDyingAlly(scene) {
@@ -1669,16 +1684,21 @@ export const cases = {
         const bow = await give(archer, "Shortbow");
         const arrows = await give(archer, "Arrows");
         await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
-        const arrow = await give(archer, "Roc-Shaft Arrow (Lesser)");
-        let since = Date.now();
-        await arrow.consume();
-        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
-        await game.modules.get(NS).api.live.apply(card.id);
-        await wait(600);
-        await archerToken.object?.control?.();
-        await target(foeToken);
-        since = Date.now();
-        const { attack } = await strike(archer, bow);
+        // (A natural 1 misses even AC 1: a few arrows.)
+        let since = 0;
+        let attack = null;
+        for (let tries = 0; tries < 3 && !["success", "criticalSuccess"].includes(attack?.flags?.pf2e?.context?.outcome); tries++) {
+            const arrow = await give(archer, "Roc-Shaft Arrow (Lesser)");
+            since = Date.now();
+            await arrow.consume();
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            await archerToken.object?.control?.();
+            await target(foeToken);
+            since = Date.now();
+            ({ attack } = await strike(archer, bow));
+        }
         assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
         const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
         const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
@@ -1901,6 +1921,68 @@ export const cases = {
         const held = (slug) => foe.itemTypes.condition.some((condition) => condition.slug === slug);
         await until(() => held("blinded") && held("sickened") && held("dazzled"), "blinded, sickened and dazzled", { timeout: 10000 });
         return { conditions: foe.itemTypes.condition.map((condition) => condition.slug) };
+    },
+
+    // Zealous Banner: the ally targeted Quickened for 1 round.
+    async zealousBanner(scene) {
+        const { actor: bearer } = await creature(scene, "Banner Bearer", { type: "character", x: 2, y: 12 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Banner Ally", { x: 3, y: 12 });
+        const banner = await give(bearer, "Zealous Banner");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(banner.uuid, 0);
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the banner's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        const ability = await messageAfter(since, abilitySaveCard, { what: "the ability module's card", timeout: 6000 }).catch(() => null);
+        if (ability) await applyAbilityCard(ability);
+        await until(() => ally.itemTypes.condition.some((condition) => condition.slug === "quickened") || ally.itemTypes.effect.some((effect) => /quickened/i.test(JSON.stringify(effect.system.rules ?? []))), "quickened on the ally", { timeout: 10000 });
+        return { kind: card.getFlag(NS, "card").kind };
+    },
+
+    // Heedless Spurs: the mount targeted takes 2d6 persistent bleed and is Quickened.
+    async heedlessSpurs(scene) {
+        const { actor: rider } = await creature(scene, "Spur Rider", { type: "character", x: 5, y: 12 });
+        const { actor: mount, token: mountToken } = await creature(scene, "Spur Mount", { x: 6, y: 12, hp: 80 });
+        const spurs = await give(rider, "Heedless Spurs");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(spurs.uuid, 0);
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the spurs' card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [mountToken.uuid] });
+        await applyAbilityCard(await messageAfter(since, abilitySaveCard, { what: "the ability module's card" }));
+        const held = (slug) => mount.itemTypes.condition.some((condition) => condition.slug === slug);
+        await until(() => held("persistent-damage") && (held("quickened") || mount.itemTypes.effect.some((effect) => /quickened/i.test(JSON.stringify(effect.system.rules ?? [])))), "bleed and quickened on the mount", { timeout: 10000 });
+        return { conditions: mount.itemTypes.condition.map((condition) => condition.slug) };
+    },
+
+    // Nap Gas Dispenser: a critical failure is slowed now; prone and unconscious only at the end of its next turn (a note), not at once.
+    async napGasLater(scene) {
+        const { actor: user } = await creature(scene, "Gas User", { type: "character", x: 8, y: 12 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Gas Target", { x: 10, y: 12, alliance: "opposition", save: -30 });
+        const gas = await give(user, "Nap Gas Dispenser");
+        let since = Date.now();
+        await gas.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the gas card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the save card" }));
+        await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "slowed"), "slowed", { timeout: 10000 });
+        await wait(800);
+        const slugs = foe.itemTypes.condition.map((condition) => condition.slug);
+        assert(!slugs.includes("prone") && !slugs.includes("unconscious"), `not prone or unconscious yet (${JSON.stringify(slugs)})`);
+        return { conditions: slugs, notes: foe.itemTypes.effect.map((effect) => effect.name) };
+    },
+
+    // Sparkshade Parasol: fire resistance 20 for the effect that triggered it (the fortune card's Effect).
+    async sparkshadeParasol(scene) {
+        const { actor: holder } = await creature(scene, "Parasol Holder", { type: "character", x: 12, y: 12 });
+        const parasol = await give(holder, "Sparkshade Parasol");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(parasol.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the parasol's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => (holder.attributes.resistances ?? []).some((entry) => entry.type === "fire" && entry.value === 20), "fire resistance 20");
+        return { resistances: (holder.attributes.resistances ?? []).map((entry) => [entry.type, entry.value]) };
     }
 };
 
