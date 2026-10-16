@@ -161,3 +161,12 @@ test("splash ammunition: a longbow's Strike with Elemental Ammunition puts its s
         assert.equal(foundry.messages.length, count + 1, label);
     }
 });
+
+test("riders in a bomb's damage sentence: Atrophy Bomb's enfeebled, Peshpine Grenade's stupefied (its time from the other sentence), Goo Grenade's Speed penalty", async () => {
+    const { compileBomb } = await import("../src/compiler/bombs.js");
+    const rows = (name) => compileBomb(source(name)).resolution.outcomes;
+    assert.deepEqual(rows("Atrophy Bomb (Major)").success.effects.map((effect) => `${effect.slug} ${effect.value}`), ["enfeebled 2"]);
+    const peshpine = rows("Peshpine Grenade (Lesser)").success.effects[0];
+    assert.deepEqual([peshpine.slug, peshpine.value, peshpine.duration.expiry, peshpine.duration.anchor], ["stupefied", 1, "turn-end", "target-turn"]);
+    assert.deepEqual(rows("Goo Grenade (Greater)").success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["all-speeds", -10, "circumstance"]]);
+});

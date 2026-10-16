@@ -38,7 +38,8 @@ function fitDuration(duration, text) {
 // What a rider's words give the target: conditions (valued ones only with a value) and penalties.
 export function riderRow(text) {
     const row = none();
-    const sentence = `The target ${text.replace(/^(?:the target|that creature|it)\s+/i, "")}`;
+    // (Goo Grenade's "…, and a -10 circumstance penalty to its Speeds": a Speed penalty in feet, as the penalty reader takes it.)
+    const sentence = `The target ${text.replace(/^(?:the target|that creature|it)\s+/i, "")}`.replace(/,? and an? [-–](\d+) (circumstance|status|item) penalty to its Speeds\b/i, " and takes a -$1-foot $2 penalty to its Speeds");
     // (Every condition named in words: the text's links are plain words by now.)
     for (const effect of readConditions(sentence, { plain: STAGE_CONDITIONS })) {
         if (effect.recipient === "self") continue;
@@ -66,7 +67,10 @@ export function hitRiders(text) {
     let critical = null;
     let criticalExtra = none();
     for (const sentence of text.split(/(?<=[.!?])\s+(?=[A-Z])/)) {
-        const onHit = ON_HIT.exec(sentence) ?? /^When you hit a creature with an? [\w' -]+?, that creature\s+(.+)$/i.exec(sentence);
+        // (And a bomb's damage sentence with its rider: Atrophy Bomb's "The bomb deals 1d4 persistent void damage and 1 void splash
+        // damage, and the target is Enfeebled 1 until the start of your next turn"; Goo Grenade's "…, and a -10 circumstance penalty
+        // to its Speeds".)
+        const onHit = ON_HIT.exec(sentence) ?? /^When you hit a creature with an? [\w' -]+?, that creature\s+(.+)$/i.exec(sentence) ?? /^The bomb deals [^.]*?damage, and (the target is .+)$/i.exec(sentence);
         const onCritical = /^On a critical hit,\s*(.+)$/i.exec(sentence);
         if (onHit && !CONDITIONAL.test(onHit[1]) && !SAVED.test(onHit[1])) {
             // "…, or becomes Sickened 1 on a critical hit" / "Frightened 1, or Frightened 2 on a critical hit": the critical hit's instead.
@@ -77,8 +81,12 @@ export function hitRiders(text) {
             criticalExtra = merge(criticalExtra, riderRow(onCritical[1].replace(/^(?:the target )?also\s+/i, "")));
         }
     }
+    // (A condition's time in another sentence: Peshpine Grenade's "the target gains the stupefied condition until the end of its next
+    // turn" beside its "… and the target is Stupefied 1".)
+    const timed = (row) => ({ ...row, effects: row.effects.map((effect) => (effect.duration || effect.slug === "prone" ? effect : new RegExp(String.raw`\bthe ${effect.slug} condition until the end of its next turn\b`, "i").test(text) ? { ...effect, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } } : effect)) });
+    hit = timed(hit);
     // A critical hit: its own row in place of the hit's, else the hit's; and what a critical hit adds.
-    const criticalRow = merge(critical ?? hit, criticalExtra);
+    const criticalRow = timed(merge(critical ?? hit, criticalExtra));
     return { success: hit, criticalSuccess: criticalRow };
 }
 
