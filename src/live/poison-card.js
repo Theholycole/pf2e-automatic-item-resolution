@@ -153,6 +153,12 @@ export function createExposureCard({ plan, item, user, later = false, repeat = f
     return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: true } : {}), ...(attackChoices ? { attackChoices, attackChoice: 0 } : {}), results: [] };
 }
 
+// The plan with the check picked: Twisting Twine's Trip in place of its Disarm (plan.checkChoices [{ label, resolution }]).
+export function withCheckChoice(plan, index = 0) {
+    const choice = plan?.checkChoices?.[index];
+    return choice ? { ...plan, resolution: choice.resolution } : plan;
+}
+
 // The plan with the attack modifier picked: a spellgun's check at its user's spell or firearm attack modifier.
 export function withAttackChoice(plan, state) {
     const choice = state?.attackChoices?.[state.attackChoice ?? 0];
@@ -183,6 +189,10 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.own ? "Roll the save" : state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     const notes = open && (state.plan?.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
+    // (A check to pick — Twisting Twine's Disarm or Trip: a picker.)
+    const checkPick = open && canApply && (state.plan?.checkChoices?.length ?? 0) > 1
+        ? `<p class="aar-actions">Check: <select data-air-field="checkChoice">${state.plan.checkChoices.map((choice, index) => `<option value="${index}"${index === (state.checkChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
+        : "";
     // (A damage to pick — Necklace of Fireballs' bead: a picker.)
     const pick = open && canApply && (state.plan?.damageChoices?.length ?? 0) > 1
         ? `<p class="aar-actions">Damage: <select data-air-field="damageChoice">${state.plan.damageChoices.map((choice, index) => `<option value="${index}"${index === (state.damageChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
@@ -193,6 +203,6 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
             ? `<p class="aar-actions">Attack: <select data-air-field="attackChoice">${state.attackChoices.map((choice, index) => `<option value="${index}"${index === (state.attackChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
             : (state.attackChoices ?? []).length ? `<p class="aar-actions">Attack: ${escape(state.attackChoices[0].label)}</p>`
                 : `<p class="aar-hint">${escape(state.user.name)} has no spell attack or firearm Strike: the GM rolls the attack.</p>`;
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${attack}${pick}${notes}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${attack}${checkPick}${pick}${notes}${results}${controls}</section>`;
 }
 

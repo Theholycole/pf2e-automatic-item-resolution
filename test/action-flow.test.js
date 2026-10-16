@@ -7,6 +7,8 @@ import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { readItemAction } from "../src/compiler/item-actions.js";
+import { compileActivations } from "../src/compiler/permanent.js";
+import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const SOCKET = `module.${MODULE_ID}`;
@@ -80,4 +82,25 @@ test("\"You attempt to Demoralize the foe the Strike hit\", \"to attempt to Grap
     // Not the item's own check ("The tentacle attempts to Grapple with a +13 bonus"), nor a choice of actions (The Bear).
     assert.equal(action("The tentacle attempts to Grapple with a +13 bonus."), null);
     assert.equal(action("You attempt to Grapple, Shove, or Trip the creature you hit with the successful Strike."), null);
+});
+
+test("Twisting Twine: Disarm or Trip at its own +9, picked on the card; the save card is the one picked", async () => {
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    const twine = compileActivations(source("Twisting Twine (Lesser)"), { basicActions }).find((entry) => entry.activation.name === "Unravel Twine");
+    assert.deepEqual(twine.plan.checkChoices.map((choice) => [choice.label, choice.resolution.check.modifier]), [["Disarm", 9], ["Trip", 9]]);
+    const user = foundry.makeActor({ id: "action-twiner", name: "Twiner", owners: ["player"] });
+    const foe = foundry.makeActor({ id: "action-twined", name: "Twined" });
+    foundry.place(user, 0, 23000);
+    foundry.place(foe, 100, 23000);
+    const ball = foundry.giveItem(user, source("Twisting Twine (Lesser)"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: ball.uuid, activation: twine.index, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.match(card.content, /data-air-field="checkChoice"/);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [foe.token.uuid], checkChoice: 1 });
+    await settle();
+    const posted = foundry.posted.slice(before)[0];
+    assert.deepEqual([posted.plan.resolution.check.modifier, posted.plan.resolution.outcomes.success.effects.map((effect) => effect.slug)], [9, twine.plan.checkChoices[1].resolution.outcomes.success.effects.map((effect) => effect.slug)]);
 });

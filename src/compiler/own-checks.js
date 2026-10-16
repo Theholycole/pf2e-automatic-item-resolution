@@ -21,6 +21,9 @@ const WARRIORS = /\b(two|three|four|five|six|seven|eight|\d+) warriors manifest 
 const WARRIOR_STRIKE = new RegExp(String.raw`\bmakes a Strike for (\d+d\d+(?:\s*\+\s*\d+)?) (${TYPES})(?: damage)?\b`, "i");
 const WARRIOR_RANGE = /\badjacent to an enemy within (\d+) feet\b/i;
 const COUNTS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
+// (One of two maneuvers at the item's modifier: Twisting Twine's "attempting to Disarm or Trip (your choice) a creature in
+// the square with a total of +9 to the Athletics check" — both plans, the card's picker.)
+const MANEUVER_CHOICE = new RegExp(String.raw`\battempt(?:s|ing)? to (${NAMES}) or (${NAMES}) \(your choice\)[^.]*?\bwith a total of \+(\d+) to the (?:Athletics|Acrobatics|Intimidation|Deception) check\b`, "i");
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const sentencesOf = (text) => String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
@@ -28,6 +31,12 @@ const sentencesOf = (text) => String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "
 // The text (plain) → { kind: "maneuver", slug, modifier, notes } | { kind: "attack", range, modifier, formula, type, category, notes } | null.
 export function readOwnCheck(text) {
     const sentences = sentencesOf(text);
+    for (const [index, sentence] of sentences.entries()) {
+        const choice = MANEUVER_CHOICE.exec(sentence);
+        if (!choice) continue;
+        const slugs = [choice[1], choice[2]].map((name) => ACTION_SLUGS[name.toLowerCase()] ?? name.toLowerCase());
+        return { kind: "maneuver", slug: slugs[0], slugs, modifier: Number(choice[3]), notes: sentences.filter((_, at) => at !== index) };
+    }
     const warriors = WARRIORS.exec(String(text ?? ""));
     const warriorStrike = warriors && WARRIOR_STRIKE.exec(String(text ?? ""));
     if (warriorStrike) {
@@ -58,7 +67,10 @@ export function ownCheckPlan(text, base, options = {}) {
     if (read.kind === "maneuver") {
         const basic = options.basicActions?.[read.slug];
         if (!basic?.resolution?.check || basic.builtin) return null;
-        return { ...common, targeting: { ...(basic.targeting ?? {}), target: "1 creature" }, resolution: { ...basic.resolution, check: { ...basic.resolution.check, modifier: read.modifier } } };
+        const at = (action) => ({ ...action.resolution, check: { ...action.resolution.check, modifier: read.modifier } });
+        // (One of several: each one's resolution, picked on the card — plan.checkChoices [{ label, resolution }].)
+        const choices = (read.slugs ?? []).map((slug) => options.basicActions?.[slug]).filter((action) => action?.resolution?.check && !action.builtin);
+        return { ...common, targeting: { ...(basic.targeting ?? {}), target: "1 creature" }, resolution: at(basic), ...(choices.length > 1 ? { checkChoices: choices.map((action, index) => ({ label: read.slugs[index].charAt(0).toUpperCase() + read.slugs[index].slice(1), resolution: at(action) })) } : {}) };
     }
     const component = { id: "0", formula: read.formula, type: read.type, category: read.category };
     const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [], modifiers: [] });

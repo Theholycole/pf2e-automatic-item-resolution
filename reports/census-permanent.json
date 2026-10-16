@@ -8,13 +8,13 @@
   "results": {
    "resolves": 686,
    "builtin:cast-spell": 469,
-   "none": 783,
+   "none": 780,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
    "note-only": 268,
    "builtin:reroll": 22,
-   "partial": 76,
+   "partial": 79,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 26,
    "builtin:zone": 9,
@@ -24,10 +24,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 341,
+   "save": 344,
    "cast": 469,
    "item": 602,
-   "none": 979,
+   "none": 976,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -46,13 +46,13 @@
    "results": {
     "resolves": 414,
     "builtin:cast-spell": 340,
-    "none": 517,
+    "none": 514,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 21,
     "note-only": 171,
     "builtin:reroll": 14,
-    "partial": 31,
+    "partial": 34,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
@@ -2755,9 +2755,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Magnetic Shot (Moderate)",
@@ -14448,9 +14448,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Kotodama Bells",
@@ -27043,9 +27043,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Mantis Embrace",
