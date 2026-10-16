@@ -14,10 +14,10 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 249,
+   "none": 248,
    "resolves": 737,
    "builtin:readied-bonus": 18,
-   "builtin:zone": 86,
+   "builtin:zone": 87,
    "note-only": 200,
    "builtin:item-action": 11,
    "partial": 66,
@@ -161,8 +161,8 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 14,
-    "builtin:zone": 63,
+    "none": 13,
+    "builtin:zone": 64,
     "note-only": 5
    },
    "mechanisms": {
@@ -318,7 +318,7 @@
    "count": 491,
    "resolves": 331,
    "gaps": 0,
-   "none": 33
+   "none": 32
   },
   "affliction": {
    "count": 144,
@@ -366,7 +366,7 @@
    "count": 433,
    "resolves": 263,
    "gaps": 0,
-   "none": 30
+   "none": 29
   },
   "duration": {
    "count": 943,
@@ -378,10 +378,10 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 333,
+   "none": 332,
    "item": 636,
    "fortune": 20,
-   "zone": 86,
+   "zone": 87,
    "expose": 89,
    "later": 79,
    "action": 11,
@@ -441,8 +441,8 @@
     "item": 1
    },
    "snare": {
-    "none": 14,
-    "zone": 63,
+    "none": 13,
+    "zone": 64,
     "item": 5
    },
    "gadget": {
@@ -479,7 +479,7 @@
    }
   },
   "noCard": {
-   "no-plan": 249,
+   "no-plan": 248,
    "triggered": 21,
    "gm": 62,
    "other": 1
@@ -21136,7 +21136,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Chain of Stars",

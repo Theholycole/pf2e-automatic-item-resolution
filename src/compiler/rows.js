@@ -87,7 +87,10 @@ function selfConditions(sentences, used = new Set()) {
     // stomp three times and gain the Quickened condition for 1 minute".)
     const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b|\bYou\b[^.]*?,\s*becoming (${names})(?: (\d+))?\b|\b(?:you|You\b[^.,]*? and) gain the (${names})(?: (\d+))? condition\b`, "gi");
     for (const [index, sentence] of sentences.entries()) {
-        if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against|next time)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow|activat)\w*\b[^,]*,/i, ""))) continue;
+        // (Not what a quickened condition's extra action is for, after it: Mariner's Mien's "…, and can use the extra action to Take
+        // Control of the vehicle or, if you're already piloting it, Drive" — the note's.)
+        const judged = sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow|activat)\w*\b[^,]*,/i, "").replace(/,? and (?:you )?can use the (?:extra|additional) action\b.*$/i, "");
+        if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against|next time)\b/i.test(judged)) continue;
         // ("until you Dismiss the Activation": until it's removed.)
         const stated = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence);
         const dismissed = !stated && /\buntil you Dismiss\b/i.test(sentence);
@@ -105,7 +108,8 @@ function selfConditions(sentences, used = new Set()) {
             if (/^\s*(?:to|from|against)\b/i.test(sentence.slice(match.index + match[0].length))) continue;
             // (Another way it ends, "or until you use a hostile action, whichever comes first", stays on the note.)
             // ("or until you Dismiss the activation" is removing it: not another way.)
-            if (!/\bor until (?!you Dismiss)/i.test(sentence)) used.add(index);
+            // (Nor what its extra action is for: the note keeps it.)
+            if (!/\bor until (?!you Dismiss)/i.test(sentence) && !/\bcan use the (?:extra|additional) action\b/i.test(sentence)) used.add(index);
             effects.push({ kind: "condition", slug, value: value ? Number(value) : null, duration: slug === "prone" || dismissed ? null : duration });
         }
     }
@@ -472,7 +476,10 @@ export function ownRow(item, { healing = true } = {}) {
     // it's Quickened for 1 minute".)
     // (A resistance to the type its Trigger names, before the Trigger goes: Safeguarding's "Trigger You would take mental, poison, or
     // spirit damage Effect You gain resistance 5 to the triggering damage type" — chosen of those, on the card.)
+    // (A banner's ally, the creature the presser targets — src/compiler/consumables.js grantsOthers: Zealous Banner's "An ally within
+    // the banner's aura becomes Quickened for 1 round".)
     const text = plainText(html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ")
+        .replace(/\bAn? (?:ally|creature) within (?:the|your) banner's aura becomes\b/gi, "You become")
         .replace(/\bTrigger You would take ((?:\w+, )*\w+,? or \w+) damage\s+Effect (You gain resistance \d+ to the) triggering (damage type\b[^.]*\.)/i, "Effect $2 chosen $3 Choose $1.")
         .replace(WHEN_CLAUSES, " ").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
     if (NOT_ONE_RESULT.test(text) || EFFECT_LINK.test(html)) return null;

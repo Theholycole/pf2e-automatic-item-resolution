@@ -6,14 +6,14 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 716,
+   "resolves": 718,
    "builtin:cast-spell": 469,
    "none": 714,
-   "partial": 109,
+   "partial": 114,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 37,
-   "note-only": 245,
+   "note-only": 238,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
@@ -26,14 +26,14 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 380,
+   "save": 384,
    "cast": 469,
-   "item": 596,
+   "item": 591,
    "none": 901,
    "focus": 45,
    "fortune": 47,
    "reroll": 25,
-   "strike": 54,
+   "strike": 55,
    "counteract": 4,
    "toggle": 31,
    "zone": 9,
@@ -48,14 +48,14 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 433,
+    "resolves": 434,
     "builtin:cast-spell": 340,
     "none": 478,
-    "partial": 54,
+    "partial": 58,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
     "builtin:readied-bonus": 30,
-    "note-only": 155,
+    "note-only": 150,
     "builtin:reroll": 17,
     "builtin:zone": 6,
     "builtin:modes": 15,
@@ -68,10 +68,10 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 150,
+    "resolves": 151,
     "none": 116,
     "partial": 29,
-    "note-only": 36,
+    "note-only": 35,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 12,
@@ -127,12 +127,12 @@
    "activations": 100,
    "results": {
     "builtin:cast-spell": 11,
-    "note-only": 17,
+    "note-only": 16,
     "resolves": 33,
     "none": 27,
     "builtin:modes": 4,
     "builtin:no-effect": 3,
-    "partial": 4,
+    "partial": 5,
     "builtin:readied-bonus": 1
    }
   }
@@ -8693,9 +8693,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Desiccating Scepter",
@@ -9661,7 +9661,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
@@ -16825,9 +16825,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Rhyton of the Radiant Ifrit",
@@ -21860,7 +21860,7 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
@@ -22565,9 +22565,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Raven Band",
@@ -24113,9 +24113,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Violet Ray",
@@ -25417,9 +25417,9 @@
    "time": "2",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Martyr's Shield (Hellbreakers)",

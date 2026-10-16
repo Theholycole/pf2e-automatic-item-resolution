@@ -30,7 +30,8 @@ export function snareZone(item, read) {
             damage: [],
             effect: null,
             modifiers: [],
-            notes: ["The first creature to enter the square sets it off; then it's spent."],
+            // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
+            notes: ["The first creature to enter the square sets it off; then it's spent.", ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : [])],
             once: true
         }
     };

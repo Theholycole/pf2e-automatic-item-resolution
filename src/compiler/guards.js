@@ -56,6 +56,7 @@ export function guardText(plan, text) {
     return manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text);
 }
 
+
 // A save's row the ability compiler left to the GM that is one penalty its reader doesn't know the checks of — Stage Fright
 // Missive's "The target takes a –1 status penalty to Deception, Diplomacy, Intimidation, and Performance checks for 1 hour",
 // Captivating Rosebud's "-1 status penalty to Perception checks for 10 minutes" and "As success, but a –2 penalty" — that

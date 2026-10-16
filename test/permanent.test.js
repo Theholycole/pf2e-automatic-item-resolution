@@ -340,3 +340,28 @@ test("consumables read: Serene Smelling Salts, Explosive Missive's written type,
     assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => rose.resolution.outcomes[degree].modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`)), [["perception -1"], ["perception -2"], ["perception -2"]]);
     assert.deepEqual(rose.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug), ["fascinated"]);
 });
+
+test("quickened with its action's use a note, a banner's ally, a successful Feint's target, a hit after flavor, an area that forces a save, a snare's push", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const at = (name, index = 0) => compileActivations(item(name), { spellEffects })[index].plan;
+    // "You become Quickened for 1 minute or until you leave the vehicle, …, and can use the extra action to … or, if …": Quickened.
+    const mien = at("Mariner’s Mien (Lesser)");
+    assert.deepEqual([mien.resolution.outcomes.success.effects.map((effect) => effect.slug), mien.partial], [["quickened"], true]);
+    // "An ally within the banner's aura becomes Quickened for 1 round": the targeted ally, its action's use a note.
+    const banner = at("Zealous Banner");
+    assert.deepEqual([banner.item.recipient, banner.resolution.outcomes.success.effects[0].slug, banner.partial], ["targets", "quickened", true]);
+    // "On a successful Feint, the target is Dazzled for 1 round": the target's, only after the Feint succeeds (a note).
+    const buckler = at("Glamorous Buckler");
+    assert.deepEqual([buckler.resolution.outcomes.success.effects[0].slug, buckler.notes], ["dazzled", ["This applies only after a successful Feint check."]]);
+    // "On a hit, the creature becomes covered in a mass of flesh …. The creature becomes Slowed 1 for 1 round": the Strike's rider.
+    const gun = at("Growth Gun");
+    assert.deepEqual(gun.resolution.outcomes.success.effects.map((effect) => `${effect.slug} ${effect.value}`), ["slowed 1"]);
+    // "… in a 30-foot emanation, forcing hostile creatures in the area to make a … save or be Blinded for 1 round".
+    const eye = at("Eye of the Moonwarden");
+    assert.deepEqual([eye.targeting.area, eye.resolution.outcomes.failure.effects[0].slug], [{ type: "emanation", value: 30 }, "blinded"]);
+    // Expulsion Snare: "save or be moved into an adjacent square (chosen by you …)" — a 5-foot push, Prone on a critical failure.
+    const snare = compileItem(item("Expulsion Snare"), { spellEffects });
+    const rows = snare.zone.saves[0].plan.resolution.outcomes;
+    assert.deepEqual([rows.failure.forcedMovement.distance, rows.criticalFailure.effects.map((effect) => effect.slug)], [5, ["prone"]]);
+    assert.match(snare.zone.notes.join(" "), /crafter chose the square/);
+});

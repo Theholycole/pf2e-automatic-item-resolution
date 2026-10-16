@@ -49,6 +49,23 @@ export function withItemData(html, item) {
     // must … save" — the reader takes the area from the link.)
     text = text.replace(/\b(in|within) an? (\d+)-foot (emanation|burst|cone|line)\b(?= (?:must|attempts?)\b[^.]*?@Check\[(?:fortitude|reflex|will)\b)/g, (whole, word, feet, shape) => `${word} a @Template[type:${shape}|distance:${feet}]{${feet}-foot ${shape}}`);
     text = text.replace(/\bmust make an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or (be|become)\b((?:@UUID\[[^\]]*\]\{[^}]*\}|[^.(@])*)\((?:or )?([^)]*?) on (?:a )?critical failure\)/g, (whole, check, verb, first, worse) => `must succeed at a ${check} save or ${verb}${first}(${worse} on a critical failure)`);
+    // (Moved a square, Expulsion Snare's "save or be moved into an adjacent square (chosen by you when you craft the snare)": a 5-foot
+    // push, the square its crafter's.)
+    text = text.replace(/\b(save|saving throw) or be moved into an adjacent square\b/g, "$1 or be pushed 5 feet into an adjacent square");
+    // (An area that forces a save, Eye of the Moonwarden's "Bright moonlight shines out of the gem in a 30-foot emanation, forcing
+    // hostile creatures in the area to make a @Check[fortitude|dc:26] save or be Blinded for 1 round": its creatures in that area
+    // must succeed at it.)
+    text = text.replace(/\bin an? (@Template\[[^\]]*\](?:\{[^}]*\})?|\d+-foot (?:emanation|burst|cone|line)), forcing ([\w ]+?) in the area to (?:make|attempt) an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or (be|become)\b/g, (whole, area, who, check, verb) => {
+        const words = /^(\d+)-foot (\w+)$/.exec(area);
+        const template = words ? `@Template[type:${words[2]}|distance:${words[1]}]{${area}}` : area;
+        return `in the area. ${who.charAt(0).toUpperCase()}${who.slice(1)} in a ${template} must succeed at a ${check} save or ${verb}`;
+    });
+    // (After its user's own action succeeds, Glamorous Buckler's "Trigger You Feint … Effect On a successful Feint, the target is
+    // Dazzled for 1 round": the target's, the success a note — its user presses Apply only then.)
+    text = text.replace(/\bOn a successful (Feint|Demoralize|Trip|Shove|Grapple|Disarm|Reposition|Create a Diversion), the target is\b((?:@UUID\[[^\]]*\]\{[^}]*\}|[^.<@])+)\./g, (whole, action, rest) => `The target is${rest}. This applies only after a successful ${action} check.`);
+    // (A hit's condition after a flavor sentence, Growth Gun's "On a hit, the creature becomes covered in a mass of flesh that …. The
+    // creature becomes Slowed 1 for 1 round, …": one sentence, as the Strike's rider reader takes it.)
+    text = text.replace(/\bOn a hit, the (creature|target) becomes [^.@<]+\.\s*The (?:creature|target) becomes (@UUID\[[^\]]+\]\{[^}]+\})/g, (whole, who, link) => `On a hit, the ${who} becomes ${link}`);
     // (A save "or be overcome" with a penalty for a time, Stage Fright Missive's "The activating creature must succeed at a
     // @Check[will|dc:20] save or be overcome with embarrassment for 1 hour, taking a –1 status penalty to Deception, Diplomacy,
     // Intimidation, and Performance checks": its failure row, the rest after it.)
