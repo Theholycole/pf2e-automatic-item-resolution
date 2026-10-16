@@ -2067,7 +2067,8 @@ export const cases = {
             await game.modules.get(NS).api.live.activate(shield.uuid, 0);
             await until(() => scene.regions.some((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone), "the aura's Region", { timeout: 8000 });
             const region = scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone);
-            assert(region.attachment?.token === holderToken.id, `attached to the holder's token (${JSON.stringify(region.attachment ?? null)})`);
+            const attached = region.attachment?.token?.id ?? region.attachment?.token ?? null;
+            assert(attached === holderToken.id, `attached to the holder's token (${attached})`);
             await combat.nextTurn();
             await wait(500);
             since = Date.now();
@@ -2077,6 +2078,32 @@ export const cases = {
             await rollAndApply(save);
             await until(() => foe.system.attributes.hp.value < before, "cold damage on the neighbour", { timeout: 10000 });
             return { lost: before - foe.system.attributes.hp.value };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
+    },
+
+    // Alluring Lantern's Raise Lure: a creature that begins its turn within 20 feet saves or is Fascinated until the end of its own turn.
+    async lanternAura(scene) {
+        const { actor: holder, token: holderToken } = await creature(scene, "Lure Holder", { type: "character", x: 8, y: 14 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Lured Foe", { x: 11, y: 14, alliance: "opposition", save: -30 });
+        const lantern = await give(holder, "Alluring Lantern");
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: holderToken.id, sceneId: scene.id, actorId: holder.id, initiative: 20 }, { tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            await game.modules.get(NS).api.live.activate(lantern.uuid, 0);
+            await until(() => scene.regions.some((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone), "the lure's Region", { timeout: 8000 });
+            const since = Date.now();
+            await combat.nextTurn();
+            const save = await messageAfter(since, abilitySaveCard, { what: "the zone's save card", timeout: 10000 });
+            await rollAndApply(save);
+            const fascinated = () => foe.itemTypes.condition.some((condition) => condition.slug === "fascinated");
+            await until(fascinated, "fascinated", { timeout: 10000 });
+            await combat.nextTurn();
+            await until(() => !fascinated(), "fascination gone at the end of its turn", { timeout: 10000 });
+            return { round: combat.round };
         } finally {
             await combat.delete().catch(() => null);
         }
