@@ -46,6 +46,9 @@ export function riderRow(text) {
         if (VALUED.has(effect.slug) && !Number.isFinite(effect.value)) continue;
         row.effects.push({ kind: "condition", slug: effect.slug, value: effect.value ?? null, duration: fitDuration(effect.duration ?? null, sentence) });
     }
+    // (Quickened, which the stage reader leaves out: Heedless Spurs' mount "is quickened for 1 minute".)
+    const quickened = /\bis quickened for (\d+|one|an?) (rounds?|minutes?)\b/i.exec(sentence);
+    if (quickened && !row.effects.some((effect) => effect.slug === "quickened")) row.effects.push({ kind: "condition", slug: "quickened", value: null, duration: fitDuration(readDuration(sentence), sentence) });
     for (const modifier of readPenalties(sentence)) row.modifiers.push({ ...modifier, duration: fitDuration(modifier.duration ?? readDuration(sentence), sentence) });
     // ("pushes the target 5 feet", "the target is also knocked back 10 feet": away from the one who made the Strike. Not a
     // reposition — a direction of the user's choosing — nor a pull.)

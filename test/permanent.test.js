@@ -396,3 +396,9 @@ test("a moment's resistance with its type first (Sparkshade Parasol) and a compa
     assert.deepEqual([barding.item.recipient, barding.item.speeds.map((speed) => [speed.type, speed.value])], ["targets", [["swim", 30]]]);
     assert.equal(barding.partial, true, "the bonus to a swim Speed it already had: a note");
 });
+
+test("a mount's bleed and quickened condition (Heedless Spurs): the fuller outright reading over the ability compiler's damage alone", () => {
+    const spurs = compileActivations(item("Heedless Spurs"), { spellEffects })[0].plan;
+    assert.deepEqual([spurs.resolution.sharedDamage.components[0].formula, spurs.resolution.sharedDamage.components[0].category, spurs.resolution.outcomes.success.effects.map((effect) => effect.slug)], ["2d6", "persistent", ["quickened"]]);
+    assert.match(spurs.notes.join(" "), /Target your mount/);
+});

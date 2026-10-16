@@ -141,9 +141,14 @@ export function directDamagePlan(text, base, { item = null } = {}) {
 }
 
 // The plan to keep: the damage over nothing, a note alone or the GM's fallback.
+// (Also over the ability compiler's own outright damage when this one reads more of it: Heedless Spurs' mount's quickened beside its
+// bleed.)
 export function directDamageOver(plan, damage) {
     if (!damage) return plan;
-    return !plan || plan.noteOnly || plan.builtin === "no-effect" ? damage : plan;
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") return damage;
+    const automatic = (given) => given?.resolution?.kind === "check" && given.resolution.check?.roll === "automatic" && !given.builtin;
+    const count = (given) => (given?.resolution?.outcomes?.success?.effects ?? []).length + (given?.resolution?.outcomes?.success?.modifiers ?? []).length;
+    return automatic(plan) && automatic(damage) && count(damage) > count(plan) ? damage : plan;
 }
 
 // Damage a successful save negates (Mycoweave Shield's "dealing 1d6 persistent poison damage to all creatures in within it;
