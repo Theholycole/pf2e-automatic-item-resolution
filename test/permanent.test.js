@@ -314,3 +314,29 @@ test("healing a feat of its owner's changes: Lover's Knot's 2d6, or 2d6+7 with B
     assert.deepEqual([knot({ ownerFeats: [] }), knot({ ownerFeats: ["battle-medicine"] })], ["2d6", "2d6+7"]);
     assert.equal(compileItem(item("Lover's Knot"), { spellEffects }).partial, true, "no owner known: the feat's healing a note");
 });
+
+test("consumables read: Serene Smelling Salts, Explosive Missive's written type, Blindpepper Bomb, Stage Fright Missive, Captivating Rosebud's penalties", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const at = (name) => compileItem({ ...item(name), ownerFeats: [] }, { spellEffects });
+    // Its frightened lowered, the immunity a note: partial, not a note alone.
+    const salts = at("Serene Smelling Salts");
+    assert.deepEqual([salts.noteOnly, salts.partial, salts.item.reduce], [undefined, true, [{ slug: "frightened", by: 1 }]]);
+    // "The tenor of what you write … determines the damage type …: acid for a caustic inscription, …": the card's picker.
+    const missive = at("Explosive Missive");
+    assert.deepEqual([missive.resolution.check.basic, missive.damageChoices.map((choice) => choice.formula)], [true, ["4d6[acid]", "4d6[cold]", "4d6[electricity]", "4d6[fire]", "4d6[sonic]"]]);
+    assert.match(missive.notes.join(" "), /persistent damage of the same type/);
+    // Thrown to explode, not a Strike: Blinded 1 round and Dazzled 2 ("and then Dazzled for 1 round"); its critical failure's
+    // dazzled lasting while it's sickened.
+    const pepper = at("Blindpepper Bomb");
+    assert.deepEqual([pepper.targeting.area, pepper.resolution.outcomes.failure.effects.map((effect) => `${effect.slug} ${effect.duration?.value ?? "-"}`)], [{ type: "burst", value: 15 }, ["blinded 1", "dazzled 2"]]);
+    assert.deepEqual(pepper.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug), ["blinded", "sickened", "dazzled"]);
+    // "save or be overcome with embarrassment for 1 hour, taking a –1 status penalty to Deception, Diplomacy, Intimidation, and
+    // Performance checks": those four, on a failure and a critical failure; the sickened when it speaks, a note.
+    const fright = at("Stage Fright Missive");
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => fright.resolution.outcomes[degree].modifiers.map((modifier) => modifier.selector)), [["deception", "diplomacy", "intimidation", "performance"], ["deception", "diplomacy", "intimidation", "performance"]]);
+    assert.equal(fright.notes.length, 1);
+    // "-1 status penalty to Perception checks for 10 minutes", "As success, but a –2 penalty" (and Fascinated on a critical failure).
+    const rose = at("Captivating Rosebud");
+    assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => rose.resolution.outcomes[degree].modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`)), [["perception -1"], ["perception -2"], ["perception -2"]]);
+    assert.deepEqual(rose.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug), ["fascinated"]);
+});

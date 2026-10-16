@@ -1,4 +1,6 @@
 // Last checks on a plan before it's played (the user's rule: never apply a rule wrongly; a note says it instead). Pure.
+
+import { durationIn, selectorsOf } from "./rows.js";
 //
 // A valued condition read with no value — Gearbinder Oil's "increases its slowed condition", Mamlambo Scale's "As failure,
 // but …" whose failure value didn't carry over — isn't applied: a note on the creature for that degree says it, and the
@@ -51,7 +53,65 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text);
+    return manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text);
+}
+
+// A save's row the ability compiler left to the GM that is one penalty its reader doesn't know the checks of — Stage Fright
+// Missive's "The target takes a –1 status penalty to Deception, Diplomacy, Intimidation, and Performance checks for 1 hour",
+// Captivating Rosebud's "-1 status penalty to Perception checks for 10 minutes" and "As success, but a –2 penalty" — that
+// penalty as the row's modifiers (PF2e's selectors, src/compiler/rows.js), its "by hand" line gone.
+const PENALTY_ROW = /^\{target\} \([\w ]+\): The (?:target|creature) takes an? [-–−](\d+) (status|circumstance|item) penalty to ([\w ,]+?) for (\d+|one|an?) (rounds?|minutes?|hours?)\.$/i;
+const AS_BUT_PENALTY = /^\{target\} \([\w ]+\): As (success|failure), but an? [-–−](\d+) penalty\.(?: \([^)]*\))?$/i;
+const ROW_KEYS = { success: "success", failure: "failure" };
+function manualPenalties(plan, text) {
+    if (plan?.resolution?.kind !== "save" || plan.builtin || !plan.resolution.outcomes) return plan;
+    const words = degreeWords(text);
+    const read = {};
+    for (const [degree, row] of Object.entries(plan.resolution.outcomes)) {
+        const lines = row?.manualInstructions ?? [];
+        if (lines.length !== 1 || (row.modifiers ?? []).length) continue;
+        const line = String(typeof lines[0] === "string" ? lines[0] : lines[0]?.text ?? "");
+        const match = PENALTY_ROW.exec(line);
+        if (!match) continue;
+        const selectors = selectorsOf(match[3]);
+        if (!selectors) continue;
+        const duration = durationIn(`for ${match[4]} ${match[5]}`, null);
+        read[degree] = selectors.map((selector) => ({ selector, value: -Number(match[1]), type: match[2].toLowerCase(), duration }));
+    }
+    // ("As success, but a –2 penalty", by hand; or with more the reader took, "… and the creature is Fascinated": its own words.)
+    const also = {};
+    for (const [degree, row] of Object.entries(plan.resolution.outcomes)) {
+        const lines = row?.manualInstructions ?? [];
+        if (read[degree] || (row?.modifiers ?? []).length) continue;
+        const manual = lines.length === 1 ? AS_BUT_PENALTY.exec(String(typeof lines[0] === "string" ? lines[0] : lines[0]?.text ?? "")) : null;
+        const own = manual ? null : /^As (success|failure), but an? [-–−](\d+) penalty and\b/i.exec(words[degree] ?? "");
+        const match = manual ?? own;
+        const base = match ? read[ROW_KEYS[match[1].toLowerCase()]] : null;
+        if (!base) continue;
+        read[degree] = base.map((modifier) => ({ ...modifier, value: -Number(match[2]) }));
+        if (own) also[degree] = true;
+    }
+    // (A critical failure with no row of its own is the failure's, as the reader takes one.)
+    const critical = plan.resolution.outcomes.criticalFailure;
+    if (read.failure && !read.criticalFailure && words.criticalFailure === undefined && critical && !(critical.effects ?? []).length && !(critical.manualInstructions ?? []).length && !(critical.modifiers ?? []).length && (critical.damage?.mode ?? "none") === "none") read.criticalFailure = read.failure;
+    if (!Object.keys(read).length) return plan;
+    return eachRow(plan, (row, degree) => (read[degree] ? { ...row, modifiers: read[degree], ...(also[degree] ? {} : { manualInstructions: [] }) } : row));
+}
+
+// A condition that lasts as long as another — Blindpepper Bomb's critical failure, "dazzled until it removes the sickened condition"
+// — which the ability compiler leaves out: that condition on the row with no time of its own (it's the GM's to end with the other),
+// and a note saying when it ends.
+const UNTIL_REMOVES = /\bOn a (critical failure|failure)\b[^.]*\.\s*It's (blinded|dazzled|deafened|fatigued|off-guard) until it removes the (\w+) condition\b/i;
+function untilRemoved(plan, text) {
+    const match = UNTIL_REMOVES.exec(String(text ?? ""));
+    if (!match || plan?.builtin || plan?.resolution?.kind !== "save") return plan;
+    const degree = match[1].toLowerCase() === "failure" ? "failure" : "criticalFailure";
+    const slug = match[2].toLowerCase();
+    const changed = eachRow(plan, (row, at) => {
+        if (at !== degree || (row?.effects ?? []).some((effect) => effect?.slug === slug) || !(row?.effects ?? []).some((effect) => effect?.slug === match[3].toLowerCase())) return row;
+        return { ...row, effects: [...row.effects, { kind: "condition", slug, value: null, duration: null }], noteEffects: [...(row.noteEffects ?? []), { label: slug, text: `${match[2].charAt(0).toUpperCase()}${match[2].slice(1).toLowerCase()} until it's no longer ${match[3]}: remove it then.`, duration: null }] };
+    });
+    return changed;
 }
 
 // A degree row the ability compiler read nothing of — Captivating Rosebud's "The creature takes a -1 status penalty to Perception
@@ -148,14 +208,18 @@ function asFailureBut(plan, text) {
 // counteract rank of 9 and a counteract modifier of +31" — which the ability compiler leaves out: notes for the GM.
 const SAVE_EXTRAS = [
     /^[A-Z][\w-]* creatures take an? [-–−]\d+ (?:item|status|circumstance) penalty to their (?:roll|saves?|saving throws?)\.$/,
-    /\battempts? to counteract\b[^.]*\byou(?:'re| are) (?:currently )?suffering\b[^.]*\.$/i
+    /\battempts? to counteract\b[^.]*\byou(?:'re| are) (?:currently )?suffering\b[^.]*\.$/i,
+    // (Stage Fright Missive's "During this time, if the creature attempts to speak or perform in front of an audience, they become
+    // Sickened 1": only if it does.)
+    /^During this time, if the (?:creature|target)\b[^.]*\b(?:become|becomes|is|are)\b[^.]*\.$/i
 ];
 function saveExtras(plan, text) {
     if (!plan?.resolution?.outcomes || plan.builtin || plan.resolution.kind !== "save") return plan;
     const sentences = String(text ?? "").replace(/\[\[\/r [^\]]*\]\]\{([^}]*)\}/g, "$1").split(/(?<=[.!?])\s+(?=[A-Z])/);
-    const found = sentences.filter((sentence) => SAVE_EXTRAS.some((pattern) => pattern.test(sentence.trim())) && !(plan.notes ?? []).includes(sentence.trim()));
+    const noted = (sentence) => `${sentence.trim().replace(/\.$/, "")} (by hand).`;
+    const found = sentences.filter((sentence) => SAVE_EXTRAS.some((pattern) => pattern.test(sentence.trim())) && !(plan.notes ?? []).includes(noted(sentence)));
     if (!found.length) return plan;
-    return { ...plan, notes: [...(plan.notes ?? []), ...found.map((sentence) => `${sentence.trim().replace(/\.$/, "")} (by hand).`)], partial: true };
+    return { ...plan, notes: [...(plan.notes ?? []), ...found.map(noted)], partial: true };
 }
 
 // A worse result only for a creature already in a condition — Stony Hag Eye's "on a critical failure, if the creature is

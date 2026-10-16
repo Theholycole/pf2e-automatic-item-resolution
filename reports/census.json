@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 250,
-   "resolves": 736,
+   "none": 249,
+   "resolves": 737,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 203,
+   "note-only": 200,
    "builtin:item-action": 11,
-   "partial": 63,
+   "partial": 66,
    "builtin:counteract": 20,
    "builtin:no-effect": 62,
    "builtin:reroll": 2,
@@ -33,12 +33,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 125,
-    "resolves": 208,
-    "note-only": 96,
+    "none": 124,
+    "resolves": 209,
+    "note-only": 93,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 36,
+    "partial": 39,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -306,7 +306,7 @@
    "count": 277,
    "resolves": 169,
    "gaps": 0,
-   "none": 25
+   "none": 24
   },
   "linked-effect": {
    "count": 393,
@@ -316,9 +316,9 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 330,
+   "resolves": 331,
    "gaps": 0,
-   "none": 34
+   "none": 33
   },
   "affliction": {
    "count": 144,
@@ -334,7 +334,7 @@
   },
   "strike": {
    "count": 31,
-   "resolves": 11,
+   "resolves": 12,
    "gaps": 0,
    "none": 4
   },
@@ -358,19 +358,19 @@
   },
   "area": {
    "count": 44,
-   "resolves": 17,
+   "resolves": 18,
    "gaps": 0,
    "none": 9
   },
   "condition": {
    "count": 433,
-   "resolves": 262,
+   "resolves": 263,
    "gaps": 0,
    "none": 30
   },
   "duration": {
    "count": 943,
-   "resolves": 593,
+   "resolves": 594,
    "gaps": 0,
    "none": 21
   }
@@ -378,14 +378,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 334,
-   "item": 638,
+   "none": 333,
+   "item": 636,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 79,
    "action": 11,
-   "save": 126,
+   "save": 129,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -394,10 +394,10 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 152,
+    "none": 151,
     "later": 12,
-    "save": 86,
-    "item": 220,
+    "save": 89,
+    "item": 218,
     "zone": 9,
     "fortune": 7,
     "strike": 3,
@@ -479,7 +479,7 @@
    }
   },
   "noCard": {
-   "no-plan": 250,
+   "no-plan": 249,
    "triggered": 21,
    "gm": 62,
    "other": 1
@@ -7396,9 +7396,10 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Chameleon Suit (Major)",
@@ -13583,9 +13584,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Soothing Tonic (Moderate)",
@@ -14689,7 +14690,7 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
@@ -17827,7 +17828,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Fulu of Flood Suppression",

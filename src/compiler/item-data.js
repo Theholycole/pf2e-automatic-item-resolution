@@ -30,6 +30,7 @@ const STAND_IN = Object.freeze({ class: 9001, spell: 9002, "class-spell": 9003 }
 const OWNER_WORDS = Object.freeze({ class: "your class DC", spell: "your spell DC", "class-spell": "your class DC or spell DC" });
 
 const FRIGHTENED = "@UUID[Compendium.pf2e.conditionitems.Item.TBSHQspnbcqxsmjL]";
+const BLINDED = "@UUID[Compendium.pf2e.conditionitems.Item.XgEqL1kFApUbl5Z2]";
 const IMMOBILIZED = "@UUID[Compendium.pf2e.conditionitems.Item.eIcWbB5o3pP6OIMe]";
 
 export function withItemData(html, item) {
@@ -48,6 +49,19 @@ export function withItemData(html, item) {
     // must … save" — the reader takes the area from the link.)
     text = text.replace(/\b(in|within) an? (\d+)-foot (emanation|burst|cone|line)\b(?= (?:must|attempts?)\b[^.]*?@Check\[(?:fortitude|reflex|will)\b)/g, (whole, word, feet, shape) => `${word} a @Template[type:${shape}|distance:${feet}]{${feet}-foot ${shape}}`);
     text = text.replace(/\bmust make an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or (be|become)\b((?:@UUID\[[^\]]*\]\{[^}]*\}|[^.(@])*)\((?:or )?([^)]*?) on (?:a )?critical failure\)/g, (whole, check, verb, first, worse) => `must succeed at a ${check} save or ${verb}${first}(${worse} on a critical failure)`);
+    // (A save "or be overcome" with a penalty for a time, Stage Fright Missive's "The activating creature must succeed at a
+    // @Check[will|dc:20] save or be overcome with embarrassment for 1 hour, taking a –1 status penalty to Deception, Diplomacy,
+    // Intimidation, and Performance checks": its failure row, the rest after it.)
+    text = text.replace(/\bThe (?:activating creature|target|creature) must succeed at an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or be overcome with \w+ for (\d+ (?:rounds?|minutes?|hours?)), taking an? ([-–−]\d+ (?:status|circumstance|item) penalty to [^.<]+)\.\s*([^<]*)<\/p>/g, (whole, check, time, penalty, rest) => `The target must attempt a ${check} save.${rest.trim() ? ` ${rest.trim()}` : ""}</p><p><strong>Failure</strong> The target takes a ${penalty} for ${time}.</p>`);
+    // (Thrown to a point that explodes, not a Strike at a creature: Blindpepper Bomb's "Activate Strike … The bomb can be thrown up to
+    // 30 feet, causing it to explode, … in a 15-foot-radius burst. All creatures in the area must succeed at a … save" — read as an
+    // activation that's an area's save.)
+    if (/\bcan be thrown up to \d+ feet, causing it to explode\b/i.test(text)) text = text.replace(/(<strong>\s*Activate\s*<\/strong>\s*<span class="action-glyph">[^<]*<\/span>)\s*Strike\s*(?=<\/p>)/i, "$1 (manipulate)");
+    // (A condition and then a lesser one, Blindpepper Bomb's "Blinded for 1 round and then Dazzled for 1 round": dazzled for both
+    // rounds, as being blinded covers it; its critical failure's "blinded for 1 round, Sickened 1, and dazzled until it removes the
+    // sickened condition" as the reader takes it, the dazzled one src/compiler/guards.js's.)
+    text = text.replace(/(@UUID\[[^\]]+\]\{Blinded\}) for (\d+) rounds? and then (@UUID\[[^\]]+\]\{Dazzled\}) for (\d+) rounds?\b/g, (whole, blinded, first, dazzled, then) => `${blinded} for ${first} ${Number(first) === 1 ? "round" : "rounds"} and ${dazzled} for ${Number(first) + Number(then)} rounds`);
+    text = text.replace(/\bthe creature is blinded for (\d+) rounds?, (@UUID\[[^\]]+\]\{Sickened \d+\}), and dazzled until it removes the sickened condition\./g, (whole, rounds, sickened) => `the creature is ${BLINDED}{Blinded} for ${rounds} ${Number(rounds) === 1 ? "round" : "rounds"} and ${sickened}. It's dazzled until it removes the sickened condition.`);
     // (A degree row's damage by its type, Blast Lance's "The target takes half the fire damage", "takes the full fire damage": the
     // reader's "half damage", "full damage".)
     text = text.replace(/(<strong>\s*(?:Success|Failure)\s*<\/strong>\s*The (?:target|creature|foe) takes) (half|the full) (?:the )?(?:acid|cold|electricity|fire|force|sonic|bludgeoning|piercing|slashing|poison|mental|spirit|vitality|void) damage\b/gi, (whole, start, amount) => `${start} ${/half/i.test(amount) ? "half" : "full"} damage`);

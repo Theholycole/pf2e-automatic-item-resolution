@@ -65,7 +65,7 @@ export function itemDuration(text) {
 }
 
 // A sentence's own time, else the item's.
-function durationIn(sentence, fallback) {
+export function durationIn(sentence, fallback) {
     const own = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.exec(sentence);
     return own ? { mode: "fixed", value: WORD_NUMBERS[own[1].toLowerCase()] ?? Number(own[1]), unit: UNITS[own[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } : fallback;
 }
@@ -181,7 +181,7 @@ const SELECTORS = [
     [/^intelligence-based (?:skill )?checks?$/i, "int-based"], [/^wisdom-based (?:skill )?checks?$/i, "wis-based"], [/^charisma-based (?:skill )?checks?$/i, "cha-based"]
 ];
 
-function selectorsOf(list) {
+export function selectorsOf(list) {
     // "Arcana, Crafting, and Society checks": the last word belongs to each.
     const names = list.replace(/,? (?:as well as|and) /g, ", ").split(/,\s*/).map((name) => name.trim()).filter(Boolean);
     const tail = /\b(checks|saves|saving throws|rolls)$/i.exec(names.at(-1) ?? "")?.[1] ?? "";

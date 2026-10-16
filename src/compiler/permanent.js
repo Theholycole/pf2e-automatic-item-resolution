@@ -212,6 +212,11 @@ function compileEach(item, options = {}) {
         // (A condition it lowers on its user, src/compiler/reduce.js: Coin of Comfort; a plan of its own when it's all.)
         const reduce = readReductions(plainText(activation.html));
         if ((!plan || plan.builtin === "no-effect") && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(activation.html)));
+        // (With a note alone, the note is the rest of it.)
+        else if (reduce.length && plan.noteOnly) {
+            const { noteOnly, ...rest } = plan;
+            plan = { ...rest, partial: true };
+        }
         // (A bead that detonates as a Fireball of the dice it says, src/compiler/beads.js: Necklace of Fireballs.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = beadsPlan(item?.system?.description?.value, base) ?? plan;
         // (A flat check to end persistent damage at once, src/compiler/recovery.js: Ring of Torag.)

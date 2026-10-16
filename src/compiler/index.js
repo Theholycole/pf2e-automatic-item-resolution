@@ -19,6 +19,7 @@ import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
+import { readTypeChoice, withTypeChoices } from "./type-choice.js";
 import { castWordsPlan, fillCast } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
@@ -84,7 +85,10 @@ function compileOne(given, options = {}) {
         return loaded ? { ...loaded, source: { ...loaded.source, name: given.name, slug: given.system?.slug ?? null, uuid: given.uuid ?? null, type: given.type }, item: { ...itemInfo(given), recipient: "user" } } : null;
     }
     // (Its own data in its text first — "@item.level", a rune — and a damage-with-a-save as basic, src/compiler/item-data.js.)
-    const html = withItemData(given?.system?.description?.value, given);
+    // (A damage type its user picks, listed in the text, src/compiler/type-choice.js: compiled without the list, the card's picker.)
+    const itemHtml = withItemData(given?.system?.description?.value, given);
+    const typeChoice = readTypeChoice(itemHtml);
+    const html = typeChoice ? typeChoice.html : itemHtml;
     const item = html === given?.system?.description?.value ? given : { ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: html } } };
     // (Nothing read: once more without its Trigger line, which only says when to use it — Putrescent Glob's "You damage a creature
     // that is Sickened 1 with a Strike" keeps the ability compiler from its effect.)
@@ -152,6 +156,8 @@ function compileOne(given, options = {}) {
     // (A condition it lowers on its user or drinker, src/compiler/reduce.js: Lion Badge; a plan of its own when it's all.)
     const reduce = readReductions(plainText(item?.system?.description?.value));
     if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(item?.system?.description?.value)));
+    // (With a note alone, the note is the rest of it: Serene Smelling Salts' immunity beside its lowered frightened.)
+    else if (reduce.length && plan.noteOnly) plan = { ...withoutNoteOnly(plan), partial: true };
     // (A flat check to end persistent damage at once, src/compiler/recovery.js: Quenching Potion; with a note alone, the note
     // is the rest of it.)
     const recovery = readRecovery(plainText(item?.system?.description?.value));
@@ -171,7 +177,7 @@ function compileOne(given, options = {}) {
     const targeting = recipient === "targets" ? { ...(rest.targeting ?? {}), ...othersTargeting(plainText(item?.system?.description?.value)) } : rest.targeting;
     // (Damage treated as silver: that material in its formulas, src/compiler/materials.js.)
     // (A row's own linked Effect, src/compiler/degree-effects.js: Crackling Bubble Gum's failure.)
-    return withDegreeEffects(damageMaterial(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), plainText(item?.system?.description?.value)), item?.system?.description?.value, options.itemEffects);
+    return withDegreeEffects(damageMaterial(withTypeChoices(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), typeChoice), plainText(item?.system?.description?.value)), item?.system?.description?.value, options.itemEffects);
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success
