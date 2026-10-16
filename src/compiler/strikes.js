@@ -92,6 +92,7 @@ const AMMO_HITS = [
     // clause at the end of its sentence.)
     [/(^|[.!?]\s+)((?:It|The (?:ammunition|target|creature))\b[^.]*?) on a successful (?:hit|Strike)\./g, "$1On a hit, $2."]
 ];
+const AMMUNITION = { arrow: "arrows", arrows: "arrows", bolt: "bolts", bolts: "bolts", "sling bullet": "sling-bullets", "sling bullets": "sling-bullets", round: "rounds", rounds: "rounds", bullet: "sling-bullets" };
 const isAmmo = (item) => item?.type === "ammo" || (item?.system?.traits?.value ?? []).includes("ammunition");
 function ammoStrike(text) {
     // (The Strike that fires it, not only its hit: Weapon Shot's "For the Strike with which you consume the ammunition, the
@@ -154,7 +155,10 @@ export function compileStrike(item, base) {
     // Roc-Shaft Arrow's "Ammunition arrow" line, which PF2e can't load — is its user's next ranged Strike.)
     const wordsOnly = !isAmmo(item) && /^\s*Ammunition (?:arrows?|bolts?|bullets?|sling bullets?|rounds?|any)\b/i.test(text);
     const found = isAmmo(item) || wordsOnly ? ammoStrike(text) : readStrike(text);
-    const strike = found && wordsOnly ? { ...found, ammo: false, next: true, wordsAmmo: true } : found;
+    // (The ammunition its weapon fires, by PF2e's weapon ammo.baseType — "arrows", "bolts", "sling-bullets", "rounds…" — so a
+    // reader knows which weapons it's for; "any" names none.)
+    const kinds = wordsOnly ? (/^\s*Ammunition ([a-z ,]+?)(?= Activate\b|\.|$)/i.exec(text)?.[1] ?? "").toLowerCase().split(/,\s*|\s+or\s+/).map((kind) => AMMUNITION[kind.trim()]).filter(Boolean) : [];
+    const strike = found && wordsOnly ? { ...found, ammo: false, next: true, wordsAmmo: true, ...(kinds.length ? { ammunition: kinds } : {}) } : found;
     if (!strike) return null;
     const riders = hitRiders(strike.after);
     // (A save for the creature the Strike hits: "On a hit, the target must succeed at a DC 22 Fortitude save or be Dazzled";
@@ -217,7 +221,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
-        strike: { range: strike.range, save: save ? save.plan : null, ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes } : {}), ...(cast ? { cast } : {}) },
+        strike: { range: strike.range, save: save ? save.plan : null, ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}) },
         ...((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length ? { partial: true } : {})
     };
 }

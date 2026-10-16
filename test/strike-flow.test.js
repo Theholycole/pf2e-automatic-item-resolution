@@ -350,5 +350,7 @@ test("Roc-Shaft Arrow: ammunition only in its words — its user's next ranged S
     assert.deepEqual([arrow.strike.range, arrow.strike.ammo, arrow.strike.save.resolution.check.statistic, arrow.strike.save.resolution.check.against.value], ["ranged", undefined, "fortitude", 19]);
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => arrow.strike.save.resolution.outcomes[degree].forcedMovement?.distance), [10, 20]);
     assert.ok(arrow.strike.notes.some((note) => /picks the space/.test(note)));
+    // (The ammunition its weapon fires, as PF2e's ammo.baseType names it: a bow's.)
+    assert.deepEqual(arrow.strike.ammunition, ["arrows"]);
     assert.equal(arrow.partial, true);
 });
