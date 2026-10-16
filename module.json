@@ -54,7 +54,10 @@
         "id": "pf2e-automatic-resolution",
         "type": "module",
         "manifest": "https://github.com/Theholycole/pf2e-automatic-spell-resolution/releases/latest/download/module.json",
-        "reason": "It casts the spells items cast (its castFromItem, from v0.10.0), and the items it acts on itself are left to it."
+        "reason": "It casts the spells items cast (its castFromItem), and the items it acts on itself are left to it.",
+        "compatibility": {
+          "minimum": "0.10.0"
+        }
       }
     ]
   },
