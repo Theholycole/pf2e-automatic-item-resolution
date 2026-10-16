@@ -343,3 +343,12 @@ test("cast on hit in other words: Fairy Bullet's \"casts Revealing Light (DC 23)
     assert.deepEqual([cast("Fairy Bullet").name, cast("Fairy Bullet").dc], ["Revealing Light", 23]);
     assert.deepEqual([cast("Silencing Ammunition").name, cast("Silencing Ammunition").rank, cast("Silencing Ammunition").saveFirst], ["Silence", 2, { statistic: "will", dc: 25 }]);
 });
+
+test("Roc-Shaft Arrow: ammunition only in its words — its user's next ranged Strike, whose hit is a Fortitude save or a push its attacker aims", () => {
+    const arrow = compileItem(source("Roc-Shaft Arrow (Lesser)"));
+    assert.equal(routeOf(arrow), "strike");
+    assert.deepEqual([arrow.strike.range, arrow.strike.ammo, arrow.strike.save.resolution.check.statistic, arrow.strike.save.resolution.check.against.value], ["ranged", undefined, "fortitude", 19]);
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => arrow.strike.save.resolution.outcomes[degree].forcedMovement?.distance), [10, 20]);
+    assert.ok(arrow.strike.notes.some((note) => /picks the space/.test(note)));
+    assert.equal(arrow.partial, true);
+});

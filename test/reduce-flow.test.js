@@ -233,3 +233,11 @@ test("Cayden's Tankard live: a condition with no value (grabbed) ended on its us
     assert.deepEqual(results.filter((line) => /grabbed|slowed/.test(line)), ["Scout is no longer grabbed", "Scout is no longer slowed"]);
     assert.equal(results.some((line) => /nothing to lower/.test(line)), false);
 });
+
+test("Copper Penny stands its user up (prone ended), the rest a note; Possum's Play drops its user Prone", () => {
+    const penny = compileItem(source("Copper Penny"));
+    assert.deepEqual([penny.item.reduce, penny.notes], [[{ slug: "prone", by: "all" }], ["When you Activate it, you Stand and can't be knocked prone again on the current turn."]]);
+    const possum = compileItem(source("Possum's Play"));
+    assert.deepEqual(possum.resolution.outcomes.success.effects, [{ kind: "condition", slug: "prone", value: null, duration: null }]);
+    assert.ok(possum.unread.some((sentence) => /nonlethal trait/.test(sentence)));
+});

@@ -108,6 +108,12 @@ function selfConditions(sentences, used = new Set()) {
             effects.push({ kind: "condition", slug, value: value ? Number(value) : null, duration: slug === "prone" || dismissed ? null : duration });
         }
     }
+    // (Prone, which has no time: Possum's Play's "When you activate the talisman, the triggering attack gains the nonlethal
+    // trait, and you fall Prone, feigning death" — the sentence a note for the rest.)
+    for (const sentence of sentences) {
+        const own = sentence.replace(/^\s*When you activate (?:it|the [\w' -]+?),\s*/i, "");
+        if (!effects.some((effect) => effect.slug === "prone") && /\byou (?:fall|drop) Prone\b/i.test(own) && !/\b(?:if|when|whenever|unless|would|instead of)\b/i.test(own)) effects.push({ kind: "condition", slug: "prone", value: null, duration: null });
+    }
     return effects;
 }
 

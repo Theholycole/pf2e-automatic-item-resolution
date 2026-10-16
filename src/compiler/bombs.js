@@ -126,15 +126,24 @@ export function bombSave(item, { scope: given = null } = {}) {
     // (given: an item's Strike, whose save is for the creature it hits.)
     const scope = given ?? saveScope(text);
     if (!scope) return null;
-    let read = null;
-    try {
-        read = compileAbility(asAbility(item), {});
-    } catch {
-        read = null;
-    }
+    const compile = (source) => {
+        try {
+            return compileAbility(asAbility(source), {});
+        } catch {
+            return null;
+        }
+    };
     // (An area the ability compiler read is fine for a burst: the card finds the creatures in it.)
-    const resolution = read?.resolution?.kind === "save" && read.resolution.check?.against?.dc === "fixed" && (!read.targeting?.area || scope.scope === "burst")
-        && Object.values(read.resolution.outcomes ?? {}).some((row) => (row?.effects ?? []).length || (row?.modifiers ?? []).length)
+    const usable = (read) => read?.resolution?.kind === "save" && read.resolution.check?.against?.dc === "fixed" && (!read.targeting?.area || scope.scope === "burst")
+        && Object.values(read.resolution.outcomes ?? {}).some((row) => (row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement);
+    let read = compile(item);
+    // (Its save's own sentence alone, when the rest of its text keeps the ability compiler from it — Roc-Shaft Arrow's "The target
+    // must succeed at a DC 19 Fortitude save or be pushed 10 feet (20 feet on a critical failure)", after its flavor.)
+    if (!usable(read)) {
+        const sentence = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=[A-Z])/).find((one) => /@Check\[(?:fortitude|reflex|will)\|/i.test(one) && /\bmust (?:succeed at|attempt)\b/i.test(one));
+        if (sentence) read = compile({ ...item, system: { ...(item.system ?? {}), description: { value: `<p>${sentence.trim()}</p>` } } });
+    }
+    const resolution = usable(read)
         ? { check: read.resolution.check, outcomes: read.resolution.outcomes, ...(read.resolution.afflictionHandoff ? { afflictionHandoff: read.resolution.afflictionHandoff } : {}) }
         : plainSave(html, text);
     if (!resolution) return null;

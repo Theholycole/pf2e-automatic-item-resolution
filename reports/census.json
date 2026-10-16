@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 259,
+   "none": 252,
    "resolves": 733,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 204,
    "builtin:item-action": 11,
-   "partial": 55,
+   "partial": 62,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "builtin:reroll": 2,
@@ -33,12 +33,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 128,
+    "none": 125,
     "resolves": 208,
     "note-only": 96,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 32,
+    "partial": 35,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -88,15 +88,15 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 49,
+    "none": 45,
     "note-only": 13,
     "builtin:item-action": 10,
     "resolves": 50,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
+    "partial": 7,
     "builtin:readied-bonus": 9,
-    "partial": 3,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -318,7 +318,7 @@
    "count": 491,
    "resolves": 330,
    "gaps": 0,
-   "none": 37
+   "none": 34
   },
   "affliction": {
    "count": 144,
@@ -348,7 +348,7 @@
    "count": 156,
    "resolves": 58,
    "gaps": 0,
-   "none": 42
+   "none": 38
   },
   "counteract": {
    "count": 79,
@@ -366,7 +366,7 @@
    "count": 433,
    "resolves": 262,
    "gaps": 0,
-   "none": 34
+   "none": 30
   },
   "duration": {
    "count": 943,
@@ -378,8 +378,8 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 344,
-   "item": 632,
+   "none": 337,
+   "item": 636,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
@@ -389,17 +389,18 @@
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
-   "strike": 1
+   "strike": 4
   },
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 156,
+    "none": 153,
     "later": 12,
     "save": 86,
     "item": 219,
     "zone": 9,
     "fortune": 7,
+    "strike": 3,
     "expose": 3,
     "action": 1,
     "counteract": 5,
@@ -414,8 +415,8 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 60,
-    "item": 50,
+    "none": 56,
+    "item": 54,
     "action": 10,
     "reroll": 1,
     "cast": 9,
@@ -478,7 +479,7 @@
    }
   },
   "noCard": {
-   "no-plan": 259,
+   "no-plan": 252,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -3200,7 +3201,14 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "When you activate the talisman, the triggering attack gains the nonlethal trait, and you fall Prone, feigning death.",
+    "Any creature that touches the illusion or uses the seek action to examine you can attempt to disbelieve the illusion.",
+    "Any action requiring you to move or make noise immediately ends the illusion."
+   ],
+   "live": "item"
   },
   {
    "name": "Stone Body Mutagen (Lesser)",
@@ -4349,7 +4357,9 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Astringent Venom",
@@ -6877,7 +6887,14 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "When you activate the talisman, the triggering attack gains the nonlethal trait, and you fall Prone, feigning death.",
+    "Any creature that touches the illusion or uses the seek action to examine you can attempt to disbelieve the illusion.",
+    "Any action requiring you to move or make noise immediately ends the illusion."
+   ],
+   "live": "item"
   },
   {
    "name": "Tyrant Ampoule",
@@ -22447,7 +22464,9 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Banquet of Hungry Ghosts",
@@ -24365,7 +24384,14 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "When you activate the talisman, the triggering attack gains the nonlethal trait, and you fall Prone, feigning death.",
+    "Any creature that touches the illusion or uses the seek action to examine you can attempt to disbelieve the illusion.",
+    "Any action requiring you to move or make noise immediately ends the illusion."
+   ],
+   "live": "item"
   },
   {
    "name": "Affliction Suppressant (Major)",
@@ -28661,7 +28687,9 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Black Dragon's Breath Potion (Adult)",
@@ -29739,7 +29767,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Potion of Resistance (Greater)",

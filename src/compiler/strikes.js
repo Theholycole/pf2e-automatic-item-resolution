@@ -150,8 +150,11 @@ export function compileStrike(item, base) {
     const html = String(item?.system?.description?.value ?? "");
     // ("This Strike deals an additional 2d6 precision damage, and on a hit, the creature is Clumsy 1": the rider its own sentence.)
     const text = plainText(html).replace(/,? and on a hit, /gi, ". On a hit, ");
-    // (Activated ammunition: its hit is the next ranged Strike's with it.)
-    const strike = isAmmo(item) ? ammoStrike(text) : readStrike(text);
+    // (Activated ammunition: its hit is the next ranged Strike's with it. A consumable that's ammunition only in its words —
+    // Roc-Shaft Arrow's "Ammunition arrow" line, which PF2e can't load — is its user's next ranged Strike.)
+    const wordsOnly = !isAmmo(item) && /^\s*Ammunition (?:arrows?|bolts?|bullets?|sling bullets?|rounds?|any)\b/i.test(text);
+    const found = isAmmo(item) || wordsOnly ? ammoStrike(text) : readStrike(text);
+    const strike = found && wordsOnly ? { ...found, ammo: false, next: true, wordsAmmo: true } : found;
     if (!strike) return null;
     const riders = hitRiders(strike.after);
     // (A save for the creature the Strike hits: "On a hit, the target must succeed at a DC 22 Fortitude save or be Dazzled";
@@ -214,8 +217,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
-        strike: { range: strike.range, save: save ? save.plan : null, ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : {}), ...(cast ? { cast } : {}) },
-        ...((extras.read || strike.ammo) && extras.notes.length ? { partial: true } : {})
+        strike: { range: strike.range, save: save ? save.plan : null, ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes } : {}), ...(cast ? { cast } : {}) },
+        ...((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length ? { partial: true } : {})
     };
 }
 

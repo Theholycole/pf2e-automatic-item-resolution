@@ -46,6 +46,9 @@ export function withItemData(html, item) {
     // (A bow's critical specialization by name, Antler Arrow's "save or become stuck to the surface, taking the critical
     // specialization effects of a bow": Immobilized, until it pulls free.)
     text = text.replace(/\bor become stuck to the surface, taking the critical specialization effects of a bow\./i, `or become ${IMMOBILIZED}{Immobilized}. It's stuck to the surface until it pulls the missile free: an Interact action and a DC 10 Athletics check.`);
+    // (Moved to a space its user picks, Roc-Shaft Arrow's "save or be moved to a space you choose within 10 feet (20 feet on a
+    // critical failure)": the core's push that far, the space a note — as Hauling's.)
+    text = text.replace(/\b(save) or be moved to a space you choose within (\d+) feet \((\d+) feet on a critical failure\)\./gi, "$1 or be pushed $2 feet ($3 feet on a critical failure). Its attacker picks the space within that distance; move its token there.");
     // (A condition for its user's next turn, Bloodline Robe's "You're Quickened on your next turn": until that turn's end.)
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)

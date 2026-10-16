@@ -47,7 +47,7 @@ const ENDING = new RegExp(String.raw`\bend(?:s|ing)? the ((?:(?:${CONDITIONS}),\
 const triggerOf = (text) => /\bTrigger\b(.*?)(?:\bEffect\b|$)/s.exec(String(text ?? ""))?.[1] ?? "";
 // (Its use only: not a later "Secondary Effect" — Ginger Chew's "Reduce your sickened value by 1" is for when it's used again.)
 const ownUse = (text) => String(text ?? "").split(/\bSecondary Effect\b/)[0];
-const RULE_WORDS = /\b(?:check|save|saving throw|damage|bonus|penalty|Hit Points|condition|Speed|resistance|immune)\b/i;
+const RULE_WORDS = /\b(?:check|save|saving throw|damage|bonus|penalty|Hit Points|condition|Speed|resistance|immune|can't be)\b/i;
 const amount = (count, zero) => (zero === "0" ? "all" : COUNT[String(count).toLowerCase()] ?? Number(count));
 const copy = (pattern) => new RegExp(pattern.source, "gi");
 
@@ -65,6 +65,8 @@ export function readReductions(text) {
         if (slugs.length === 1) add({ slug: slugs[0], by });
         else if (slugs.length > 1) add({ choose: slugs, by });
     }
+    // (Standing up at once: Copper Penny's "When you Activate it, you Stand and can't be knocked prone again on the current turn".)
+    if (/\bWhen you Activate (?:it|the [\w' -]+?), you Stand\b/i.test(ownUse(text))) add({ slug: "prone", by: "all" });
     const ending = ENDING.exec(ownUse(text));
     if (ending) for (const slug of ending[1].toLowerCase().match(new RegExp(CONDITIONS, "g"))) {
         add({ slug, by: "all" });
