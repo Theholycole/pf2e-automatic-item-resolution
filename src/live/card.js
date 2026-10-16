@@ -77,6 +77,8 @@ export function previewLines(state) {
     for (const { slug, by } of plan?.item?.reduce ?? []) lines.push(`Lowers ${slug} by ${by}`);
     // (Its resistance, src/compiler/rows.js: the card's own Effect.)
     if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
+    // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
+    for (const speed of plan?.item?.speeds ?? []) lines.push(speedText(speed));
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
     if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
@@ -145,6 +147,35 @@ export function resistanceText(resist) {
     for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), typeWords(entry.type)]);
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration;
     return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${duration ? ` for ${timeText(duration)}` : ""}`;
+}
+
+// A Speed in words: "A fly Speed equal to your land Speed until the end of the next turn", "A swim Speed of 30 feet".
+const LAND_WORDS = [[/^@actor\.system\.movement\.speeds\.land\.value$/, "equal to your land Speed"], [/^floor\(@actor\.system\.movement\.speeds\.land\.value\*0\.5\)$/, "equal to half your land Speed"], [/^max\((\d+),@actor\.system\.movement\.speeds\.land\.value\)$/, "of $1 feet or your land Speed, whichever is greater"], [/^min\((\d+),@actor\.system\.movement\.speeds\.land\.value\)$/, "of $1 feet or your land Speed, whichever is lower"]];
+export function speedText(speed) {
+    const formula = String(speed.value);
+    const said = typeof speed.value === "number" ? `of ${speed.value} feet` : LAND_WORDS.reduce((words, [pattern, text]) => words ?? (pattern.test(formula) ? formula.replace(pattern, text) : null), null) ?? `of ${formula}`;
+    const time = speed.duration?.mode === "fixed" ? (speed.duration.expiry === "turn-end" && speed.duration.anchor === "source-turn" ? " until the end of the next turn" : ` for ${timeText(speed.duration)}`) : "";
+    return `A ${speed.type} Speed ${said}${time}`;
+}
+
+// Its Effect: PF2e's BaseSpeed rule for the item's time, named for the item. Returns a new source.
+export function speedEffectSource(speed, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const duration = speed.duration?.mode === "fixed" ? speed.duration : null;
+    // (Until the end of the next turn: PF2e's one round, ending at the end of a turn.)
+    const time = duration ? { value: duration.value, unit: duration.unit, expiry: duration.expiry ?? "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false };
+    return {
+        name: `${item.name}: ${speed.type} Speed`,
+        type: "effect",
+        img: item.img ?? "icons/svg/wing.svg",
+        flags: { [moduleId]: { speed: speed.type } },
+        system: {
+            description: { value: `<p>${escape(speedText(speed))}, from <strong>${escape(item.name)}</strong>.</p>` },
+            duration: time,
+            start: { value: worldTime, initiative },
+            context: { origin: { actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } },
+            rules: [{ key: "BaseSpeed", selector: speed.type, value: speed.value }]
+        }
+    };
 }
 
 // Its flat check to end persistent damage in words: "A flat check (DC 10) to end persistent acid, fire, poison or void damage".

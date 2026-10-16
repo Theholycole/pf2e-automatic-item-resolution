@@ -282,6 +282,41 @@ function resistancesOf(sentences, duration, used = new Set()) {
     return found;
 }
 
+// A Speed of a new kind for its user, for the item's time: "You gain a fly Speed equal to your Speed until the end of your
+// next turn" (Umbral Wings), "a swim Speed equal to half your land Speed" (Buoyant Buckle), "a fly Speed equal to either
+// your land Speed or 20 feet, whichever is greater" (Soaring Wings), "a fly Speed of 30 feet or your Speed, whichever is
+// lower" (Thrice-Fried Mudwings) → [{ type, value, duration }], value a number or PF2e's formula on the land Speed (PF2e's
+// BaseSpeed rule, the item card's Effect). Not under a condition ("If you don't have a fly Speed, …"), nor another's.
+const LAND = "@actor.system.movement.speeds.land.value";
+function speedsOf(sentences, duration, used = new Set()) {
+    const found = [];
+    const pattern = /\b(?:you (?:gain|have|get)|grants? you|that grant you) an? (?:(\d+)-foot )?(fly|climb|swim|burrow) Speed(?: (?:equal to (?:either )?(half )?your (?:land )?Speed(?: or (\d+) feet, whichever is (greater|higher|lower|slower|less))?|of (\d+) feet(?: or your (?:land )?Speed, whichever is (greater|higher|lower|slower|less))?))?/gi;
+    for (const [index, whole] of sentences.entries()) {
+        const sentence = whole.replace(/^\s*(?:During this time|While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|For the duration),\s*/i, "");
+        if (/^\s*(?:If|When(?!ever you consume| you (?:consume|drink|eat))|Whenever|While|Each time|Unless)\b/i.test(sentence) || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation|as if you had)\b/i.test(sentence)) continue;
+        for (const match of sentence.matchAll(pattern)) {
+            const [, feetFirst, type, half, orFeet, orWay, ofFeet, ofWay] = match;
+            const larger = (way) => /greater|higher/i.test(way);
+            let value = null;
+            if (feetFirst) value = Number(feetFirst);
+            else if (ofFeet) value = ofWay ? `${larger(ofWay) ? "max" : "min"}(${ofFeet},${LAND})` : Number(ofFeet);
+            else if (/equal to/i.test(match[0])) {
+                const land = half ? `floor(${LAND}*0.5)` : LAND;
+                value = orFeet ? `${larger(orWay) ? "max" : "min"}(${orFeet},${land})` : land;
+            }
+            if (value === null) continue;
+            // (Its own time: "until the end of your next turn", "for 10 minutes", "until you Dismiss" — removed by hand —, else the item's.)
+            const until = UNTIL_NEXT_TURN.exec(sentence);
+            const time = until ? { mode: "fixed", value: 1, unit: "rounds", expiry: /\bend\b/i.test(until[0]) ? "turn-end" : "turn-start", anchor: "source-turn" } : durationIn(sentence, duration);
+            const more = sentence.slice(match.index + match[0].length).replace(/^,? (?:for (?:\d+|one|an?) \w+|until the (?:end|start|beginning) of your next turn)/i, "");
+            if (!/^[\s.,]*$/.test(more) && !/^,? (?:as|so|and)\b/i.test(more)) continue;
+            used.add(index);
+            found.push({ type, value, duration: time });
+        }
+    }
+    return found;
+}
+
 // Items whose text isn't one use with one result: activated on a trigger, an affliction's stages, a second
 // effect, a choice of ways to use it ("may be applied to armor, a weapon, or mixed into an elixir"), or one
 // that links PF2e Effects (those Effects hold its rules).
@@ -293,7 +328,7 @@ const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.[\w-]*effects\.Item\./;
 
 // A sentence that says something a creature or its rolls get or lose (not flavor, not how long it lasts).
 // (Whole words: "AC" isn't the start of "academic", "checks" of "checkered".)
-const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es)?|immun\w*|Speeds?|damage[ds]?|Hit Points|DC \d+|Mythic Points?|checks?|saves?|saving throws?|attack(?:s|ed|er|ers)?|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b/i;
+const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es)?|immun\w*|Speeds?|damage[ds]?|Hit Points|DC \d+|Mythic Points?|breathe|breathing|checks?|saves?|saving throws?|attack(?:s|ed|er|ers)?|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b/i;
 
 // The row for the item's drinker or user: { effects, modifiers, unread } with something in it, or null. unread: the
 // sentences that say something mechanical it didn't read (they go on a note, and the plan counts as partial).
@@ -311,7 +346,8 @@ export function ownRow(item, { healing = true } = {}) {
     if (heal) effects.unshift(heal);
     const modifiers = modifiersOf(sentences, duration, used);
     const resistances = resistancesOf(sentences, duration, used);
-    if (!effects.length && !modifiers.length && !resistances.length) return null;
+    const speeds = speedsOf(sentences, duration, used);
+    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length) return null;
     // (Healing another creature: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other);
     if (heal?.other) delete heal.other;
@@ -320,7 +356,7 @@ export function ownRow(item, { healing = true } = {}) {
     // against inhaled threats" before its "+1 status bonus to saves against inhaled threats".)
     const restated = (sentence) => modifiers.length > 0 && /\ban? (?:item |status |circumstance )?bonus\b/i.test(sentence) && !/[+\-–]\d|\d+d\d+|\bDC\b/.test(sentence);
     const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence));
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

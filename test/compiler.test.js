@@ -234,10 +234,10 @@ test("bonuses against what a creature makes, what an effect gives, or ranged att
     // Scholar's Drop's "against effects that could render you Fatigued".
     assert.deepEqual(mods("Scholar's Drop").map((modifier) => modifier.predicate), [["inflicts:fatigued"]]);
     // One Day's Breath's "While the effect lasts, you gain a +1 status bonus to saves against inhaled threats" (its time is the
-    // effect's), the introduction's bonus without a number not a note; its Mythic Point is.
+    // effect's), the introduction's bonus without a number not a note; its Mythic Point is, and not needing to breathe.
     const breath = compileItem(item("One Day's Breath"));
     assert.deepEqual(breath.resolution.outcomes.success.modifiers.map((modifier) => [modifier.value, modifier.predicate, modifier.duration.value, modifier.duration.unit]), [[1, ["item:trait:inhaled"], 24, "hours"]]);
-    assert.deepEqual(breath.unread, ["If you spend 1 Mythic Point when you activate the day's breath, you inhale so deeply that you increase the effect's duration.", "If you spend 1 Mythic Point, you don't need to breathe for 7 days."]);
+    assert.deepEqual(breath.unread, ["When you inhale the bottle's contents, the air fills your lungs so completely that you no longer need to breathe, at least for a time.", "If you spend 1 Mythic Point when you activate the day's breath, you inhale so deeply that you increase the effect's duration.", "You don't need to breathe for 24 hours.", "If you spend 1 Mythic Point, you don't need to breathe for 7 days."]);
     // Trusty Helmet's Hunker Down: "+1 circumstance bonus to your AC against ranged attacks".
     const [, hunker] = compileActivations(item("Trusty Helmet"));
     assert.deepEqual(hunker.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate]), [["ac", 1, "circumstance", ["item:ranged"]]]);

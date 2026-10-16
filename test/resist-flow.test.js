@@ -10,7 +10,7 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { ownRow } from "../src/compiler/rows.js";
-import { resistanceEffectSource, resistanceText } from "../src/live/card.js";
+import { resistanceEffectSource, resistanceText, speedText } from "../src/live/card.js";
 import { routeOf } from "../src/live/route.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -68,4 +68,33 @@ test("Armorskin Robes of Air: Apply gives the Speed penalty, the AC bonus and an
     assert.deepEqual(modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate ?? null]), [["all-speeds", -5, null], ["ac", 1, ["item:damage:category:physical", "item:ranged"]]]);
     // A pure source too: no time, unlimited.
     assert.deepEqual(resistanceEffectSource([{ type: "fire", value: 5, duration: null }], { item: { name: "Wayfinder" } }).system.duration.unit, "unlimited");
+});
+
+test("a Speed of a new kind: PF2e's BaseSpeed on the land Speed or a number, for its time; Apply gives the Effect", async () => {
+    const LAND = "@actor.system.movement.speeds.land.value";
+    // "You gain a fly Speed equal to your Speed until the end of your next turn" (Umbral Wings).
+    const [wings] = compileActivations(source("Umbral Wings"));
+    assert.deepEqual(wings.plan.item.speeds.map((speed) => [speed.type, speed.value, speed.duration.expiry]), [["fly", LAND, "turn-end"]]);
+    assert.equal(speedText(wings.plan.item.speeds[0]), "A fly Speed equal to your land Speed until the end of the next turn");
+    // "a swim Speed equal to half your land Speed"; "equal to either your land Speed or 20 feet, whichever is greater"; "of 30
+    // feet or your Speed, whichever is lower".
+    assert.equal(compileActivations(source("Buoyant Buckle"))[0].plan.item.speeds[0].value, `floor(${LAND}*0.5)`);
+    assert.equal(compileActivations(source("Soaring Wings (Major)"))[0].plan.item.speeds[0].value, `max(20,${LAND})`);
+    const mudwings = compileItem(source("Thrice-Fried Mudwings"));
+    assert.deepEqual([mudwings.item.speeds[0].value, mudwings.item.speeds[0].duration.value], [`min(30,${LAND})`, 10]);
+    // Not one under a condition ("If you don't have a fly Speed, you gain a 20-foot fly Speed …"); breathing underwater a note.
+    assert.equal(compileActivations(source("Dragonaut's Wingsuit")).find((entry) => entry.activation.name === "Drake's Glide").plan?.item?.speeds, undefined);
+    assert.equal(compileActivations(source("Submersible Helmet"))[0].plan.partial, true);
+    // Apply: the Effect with PF2e's BaseSpeed rule.
+    const cloak = foundry.giveItem(monk, source("Umbral Wings"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: cloak.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.match(card.content, /A fly Speed equal to your land Speed until the end of the next turn/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const effect = monk.itemTypes.effect.find((entry) => entry.flags?.[MODULE_ID]?.speed === "fly");
+    assert.deepEqual(effect.system.rules, [{ key: "BaseSpeed", selector: "fly", value: LAND }]);
+    assert.deepEqual([effect.system.duration.value, effect.system.duration.unit, effect.system.duration.expiry], [1, "rounds", "turn-end"]);
 });
