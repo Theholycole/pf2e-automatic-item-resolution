@@ -141,7 +141,7 @@ export function compileActivations(item, options = {}) {
         // (A Rage with more temporary Hit Points, src/compiler/rage.js: Instinct Crowns.)
         plan = rageOver(plan, ragePlan(plainText(activation.html), base));
         // (A skill action taken with it, src/compiler/item-actions.js: Bronze Bull Pendant's Shove.)
-        plan = itemActionOver(plan, itemActionPlan(activation.html, base, options));
+        plan = itemActionOver(plan, itemActionPlan(activation.html, base, { ...options, item }));
         // (A check with the item's own modifier, src/compiler/own-checks.js: Tentacle Cannon's Grapple at +13.)
         plan = ownCheckOver(plan, ownCheckPlan(plainText(activation.html), base, options));
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)

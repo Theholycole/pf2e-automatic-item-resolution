@@ -6,11 +6,22 @@
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export function createActionCard({ plan, item, user }) {
-    return { kind: "item-action", status: "open", plan, item, user, results: [] };
+    return { kind: "item-action", status: "open", plan, item, user, ...(plan.action?.slugs ? { choice: 0 } : {}), results: [] };
+}
+
+// The action picked of several (The Bear's Grapple, Shove or Trip): its slug, name and rows in place of the first's.
+export function chosenAction(state) {
+    const action = state.plan.action;
+    if (!action.slugs) return action;
+    const index = Number.isInteger(state.choice) && action.slugs[state.choice] ? state.choice : 0;
+    return { ...action, slug: action.slugs[index], name: action.names[index], basic: action.basics?.[action.slugs[index]] ?? null };
 }
 
 // "Sneak with a +1 item bonus", "Escape".
 export function actionText(action) {
+    const using = action.statistic ? ` using ${action.statistic.charAt(0).toUpperCase()}${action.statistic.slice(1)}` : "";
+    const name = action.names ? action.names.join(" or ") : action.name;
+    if (action.names) return `${name}${using}${action.bonus ? ` with a +${action.bonus.value} ${action.bonus.type} bonus` : ""} (picked below)`;
     if (action.minimum) return `${action.name} at +${action.minimum.value} ${action.minimum.skill.charAt(0).toUpperCase()}${action.minimum.skill.slice(1)}, when that's higher than your own`;
     return action.bonus ? `${action.name} with a +${action.bonus.value} ${action.bonus.type} bonus` : action.name;
 }
@@ -24,6 +35,9 @@ export function actionCardHTML(state, { canApply = false } = {}) {
     const after = open && action.after ? `<ul class="aar-notes"><li>${escape(action.after)}</li></ul>` : "";
     const hint = open && action.targeted ? `<p class="aar-hint">Target the creature, then press the button.</p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Roll ${escape(action.name)}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${escape(action.name)}</span></header><p class="aar-actions">${escape(state.user.name)}: ${escape(actionText(action))}</p>${after}${hint}${results}${controls}</section>`;
+    // (One of several actions: a picker.)
+    const pick = open && canApply && action.names ? `<p class="aar-actions">Action: <select data-air-field="choice">${action.names.map((name, index) => `<option value="${index}"${index === (state.choice ?? 0) ? " selected" : ""}>${escape(name)}</option>`).join("")}</select></p>` : "";
+    const word = action.names ? "the action" : action.name;
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Roll ${escape(word)}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${escape(action.names ? action.names.join(" / ") : action.name)}</span></header><p class="aar-actions">${escape(state.user.name)}: ${escape(actionText(action))}</p>${pick}${after}${hint}${results}${controls}</section>`;
 }

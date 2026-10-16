@@ -39,15 +39,47 @@ const FORMS = [
 ];
 // "Activate Administer First Aid", "Activate Treat Wounds": the action is the activation.
 const ACTIVATE_LINE = new RegExp(String.raw`^\s*Activate\s+(${NAMES})\b`, "i");
+// (One of several actions, the card's pick: The Bear's "You attempt to Grapple, Shove, or Trip the creature you hit … You gain
+// a +2 status bonus to your check"; Blade of the Rabbit Prince's "You attempt to Trip or Disarm an opponent using Thievery
+// instead of Athletics, and you add the blade of the Rabbit Prince's item bonus to the check" — that skill, the weapon's
+// potency as an item bonus.)
+const CHOICE = new RegExp(String.raw`\bYou (?:can )?attempt to ((?:${NAMES})(?:,\s*(?:${NAMES}))*,?\s+or\s+(?:${NAMES}))\s+(?:the|an?|one|that) [\w' -]*?(?:creature|opponent|foe|enemy|target)\b([^.]*)\.`, "i");
+const CHOICE_BONUS = /\bYou gain an? \+(\d+) (status|circumstance|item) bonus to (?:your|the) check\b/i;
+const ITEM_BONUS = /\badd the [\w' -]+? item bonus to the check\b/i;
+const USING = /\busing (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy|Performance) instead of (?:Athletics|Acrobatics|Thievery|Deception|Intimidation)\b/i;
+
 // (The item's modifier when it's higher than its user's: Alchemists+ plants' "You can use a +5 Athletics modifier for your
 // Shove instead of your Athletics modifier if it is higher than your own" — the action, at that modifier at least.)
 const AT_LEAST = new RegExp(String.raw`\buse an? \+(\d+) (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy) modifier for your (${NAMES}) instead of your \w+ modifier if it is higher than your own\b`, "i");
 
 // The text → { slug, name, bonus: { value, type } | null, targeted, after } or null.
-export function readItemAction(html) {
+// item: the item, for its own runes (Blade of the Rabbit Prince's potency as its item bonus).
+export function readItemAction(html, item = null) {
     const raw = String(html ?? "");
     if (/@UUID\[[^\]]*\]\{Effect:/i.test(raw)) return null;
     const text = plainText(raw).replace(/\bCraft Requirements\b.*$/i, "");
+    const choice = CHOICE.exec(text);
+    if (choice) {
+        const names = [...choice[1].matchAll(new RegExp(NAMES, "gi"))].map(([name]) => name.replace(/\s+/g, " "));
+        const slugs = names.map((name) => ACTION_SLUGS[name.toLowerCase()]).filter(Boolean);
+        if (slugs.length > 1) {
+            const sentences = text.slice(choice.index).split(/(?<=[.!?])\s+(?=[A-Z])/);
+            const bonus = CHOICE_BONUS.exec(sentences.slice(0, 2).join(" "));
+            const potency = Number(item?.system?.runes?.potency) || 0;
+            const using = USING.exec(choice[0]);
+            const after = sentences.slice(1, 3).filter((line) => !CHOICE_BONUS.test(line) && !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line)).join(" ").trim();
+            return {
+                slug: slugs[0],
+                name: names[0],
+                slugs,
+                names,
+                bonus: bonus ? { value: Number(bonus[1]), type: bonus[2].toLowerCase() } : ITEM_BONUS.test(choice[0]) && potency ? { value: potency, type: "item" } : null,
+                ...(using ? { statistic: using[1].toLowerCase() } : {}),
+                targeted: slugs.some((slug) => TARGETED.has(slug)),
+                ...(after ? { after } : {})
+            };
+        }
+    }
     const atLeast = AT_LEAST.exec(text);
     if (atLeast) {
         const slug = ACTION_SLUGS[atLeast[3].replace(/\s+/g, " ").toLowerCase()];
@@ -88,10 +120,15 @@ export function readItemAction(html) {
 
 // options.basicActions: the ability module's compiled actions — their rows for the degree, applied after PF2e's roll.
 export function itemActionPlan(html, base, options = {}) {
-    const action = readItemAction(html);
+    const action = readItemAction(html, options.item ?? null);
     if (!action) return null;
-    const basic = options.basicActions?.[action.slug] ?? null;
-    return { ...base, builtin: "item-action", automation: { level: "automatic" }, targeting: { target: action.targeted ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, action: { ...action, basic: basic && !basic.builtin ? basic : null } };
+    const compiled = (slug) => {
+        const basic = options.basicActions?.[slug] ?? null;
+        return basic && !basic.builtin ? basic : null;
+    };
+    // (One of several: each one's rows, by slug.)
+    const basics = action.slugs ? Object.fromEntries(action.slugs.map((slug) => [slug, compiled(slug)])) : null;
+    return { ...base, builtin: "item-action", automation: { level: "automatic" }, targeting: { target: action.targeted ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, action: { ...action, basic: compiled(action.slug), ...(basics ? { basics } : {}) } };
 }
 
 // The plan to keep: the action over nothing, a note alone or the GM's fallback.

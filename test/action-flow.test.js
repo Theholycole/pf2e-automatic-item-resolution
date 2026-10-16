@@ -79,9 +79,9 @@ test("\"You attempt to Demoralize the foe the Strike hit\", \"to attempt to Grap
     assert.deepEqual([action("You attempt to Demoralize the foe the Strike hit.").slug, action("You attempt to Demoralize the foe the Strike hit.").targeted], ["demoralize", true]);
     assert.equal(action("You can activate the tiger fork to attempt to Grapple the creature. This attempt uses the same multiple attack penalty as the required Strike.").slug, "grapple");
     assert.equal(action("You attempt to Disarm the creature whose attack you blocked of the weapon they attacked you with.").slug, "disarm");
-    // Not the item's own check ("The tentacle attempts to Grapple with a +13 bonus"), nor a choice of actions (The Bear).
+    // Not the item's own check ("The tentacle attempts to Grapple with a +13 bonus"); a choice of actions is all of them (The Bear).
     assert.equal(action("The tentacle attempts to Grapple with a +13 bonus."), null);
-    assert.equal(action("You attempt to Grapple, Shove, or Trip the creature you hit with the successful Strike."), null);
+    assert.deepEqual(action("You attempt to Grapple, Shove, or Trip the creature you hit with the successful Strike.").slugs, ["grapple", "shove", "trip"]);
 });
 
 test("Twisting Twine: Disarm or Trip at its own +9, picked on the card; the save card is the one picked", async () => {
@@ -124,4 +124,22 @@ test("the item's modifier when it's higher than its user's: PF2e's action with t
     const [use] = foundry.actionUses.slice(before);
     assert.deepEqual([use.slug, use.options.modifiers.map((modifier) => [modifier.modifier, modifier.type])], ["trip", [[4, "untyped"]]]);
     delete thief.getStatistic;
+});
+
+test("The Bear and Blade of the Rabbit Prince: one of several actions, picked on the card; the Rabbit Prince's with Thievery and its potency", async () => {
+    const bear = compileActivations(source("The Bear"))[0].plan.action;
+    assert.deepEqual([bear.slugs, bear.bonus, bear.statistic], [["grapple", "shove", "trip"], { value: 2, type: "status" }, undefined]);
+    const rabbit = compileActivations(source("Blade of the Rabbit Prince")).find((entry) => entry.plan?.action?.slugs).plan.action;
+    assert.deepEqual([rabbit.slugs, rabbit.bonus, rabbit.statistic], [["trip", "disarm"], { value: 2, type: "item" }, "thievery"]);
+    const card = foundry.giveItem(thief, source("The Bear"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: card.uuid, activation: 0, userId: "player" });
+    await settle();
+    const posted = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item-action");
+    assert.match(posted.content, /data-air-field="choice"/);
+    const before = foundry.actionUses.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: posted.id, targets: [mark.token.uuid], choice: 2, userId: "player" });
+    await settle();
+    const [use] = foundry.actionUses.slice(before);
+    assert.deepEqual([use.slug, use.options.modifiers[0].modifier, use.options.modifiers[0].type], ["trip", 2, "status"]);
 });

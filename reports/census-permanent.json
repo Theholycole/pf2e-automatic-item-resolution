@@ -8,7 +8,7 @@
   "results": {
    "resolves": 686,
    "builtin:cast-spell": 469,
-   "none": 780,
+   "none": 778,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -18,7 +18,7 @@
    "builtin:pf2e-rules": 24,
    "builtin:modes": 26,
    "builtin:zone": 9,
-   "builtin:item-action": 11,
+   "builtin:item-action": 13,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
    "builtin:ac-reaction": 4
@@ -27,14 +27,14 @@
    "save": 344,
    "cast": 469,
    "item": 602,
-   "none": 976,
+   "none": 974,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
    "strike": 47,
    "toggle": 26,
    "zone": 9,
-   "action": 11,
+   "action": 13,
    "later": 4
   },
   "withFrequency": 1749,
@@ -46,7 +46,7 @@
    "results": {
     "resolves": 414,
     "builtin:cast-spell": 340,
-    "none": 514,
+    "none": 513,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 21,
@@ -57,20 +57,20 @@
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:item-action": 4
+    "builtin:item-action": 5
    }
   },
   "weapon": {
    "activations": 460,
    "results": {
     "resolves": 145,
-    "none": 129,
+    "none": 128,
     "partial": 23,
     "note-only": 40,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 7,
-    "builtin:item-action": 7,
+    "builtin:item-action": 8,
     "builtin:no-effect": 12,
     "builtin:readied-bonus": 5,
     "builtin:roll-twice": 1,
@@ -4889,9 +4889,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Farlight Stone",
@@ -8684,9 +8684,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Doomsweeper",

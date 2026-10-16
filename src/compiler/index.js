@@ -102,7 +102,7 @@ export function compileItem(given, options = {}) {
     // (A Rage with more temporary Hit Points, src/compiler/rage.js.)
     plan = rageOver(plan, ragePlan(plainText(item?.system?.description?.value), base));
     // (A skill action taken with it, src/compiler/item-actions.js: Onyx Panther's Sneak.)
-    plan = itemActionOver(plan, itemActionPlan(item?.system?.description?.value, base, options));
+    plan = itemActionOver(plan, itemActionPlan(item?.system?.description?.value, base, { ...options, item }));
     // (A check with the item's own modifier, src/compiler/own-checks.js.)
     plan = ownCheckOver(plan, ownCheckPlan(plainText(item?.system?.description?.value), base, options));
     // (A spellgun's attack with its user's spell or firearm attack modifier, src/compiler/spellguns.js.)

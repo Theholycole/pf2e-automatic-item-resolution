@@ -3,7 +3,7 @@
 // spell module rolls its maneuvers), the item's bonus a PF2e Modifier on it, at the creature the presser targeted; then
 // the ability module's row for that action and degree goes on the target (scripts/foundry.js applyRiders).
 
-import { actionCardHTML, actionText, createActionCard, outcomeText } from "../src/live/action-card.js";
+import { actionCardHTML, actionText, chosenAction, createActionCard, outcomeText } from "../src/live/action-card.js";
 import { FLAG, MODULE_ID, applyRiders, entryOf, stateOf } from "./foundry.js";
 
 const sluggify = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -32,10 +32,12 @@ function stabilizeDC(target) {
 }
 
 // targets: the token uuids the presser had targeted.
-export async function applyActionCard(message, { targets = [] } = {}) {
-    const state = stateOf(message);
+export async function applyActionCard(message, { targets = [], choice = null } = {}) {
+    let state = stateOf(message);
     if (!state || state.kind !== "item-action" || state.status !== "open") return null;
-    const action = state.plan.action;
+    // (One of several actions, as picked.)
+    if (Number.isInteger(choice) && state.plan.action?.slugs?.[choice]) state = { ...state, choice };
+    const action = chosenAction(state);
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const targetToken = action.targeted && Array.isArray(targets) && targets[0] ? await fromUuid(targets[0]).catch(() => null) : null;
@@ -54,7 +56,7 @@ export async function applyActionCard(message, { targets = [] } = {}) {
     const variant = variantFor(pf2eAction, targetToken?.actor ?? null);
     // (PF2e's action-system First Aid has no stabilize DC of its own: the rule's, 5 + the target's recovery DC + its dying value.)
     const difficultyClass = action.slug === "administer-first-aid" && variant === "stabilize" ? stabilizeDC(targetToken?.actor) : null;
-    const results = await pf2eAction.use({ actors: [actor], ...(targetToken ? { target: targetToken.object ?? targetToken.actor } : {}), modifiers, ...(variant ? { variant } : {}), ...(difficultyClass ? { difficultyClass } : {}), ...(event ? { event } : {}) });
+    const results = await pf2eAction.use({ actors: [actor], ...(targetToken ? { target: targetToken.object ?? targetToken.actor } : {}), modifiers, ...(action.statistic ? { statistic: action.statistic } : {}), ...(variant ? { variant } : {}), ...(difficultyClass ? { difficultyClass } : {}), ...(event ? { event } : {}) });
     const outcome = results?.[0]?.outcome ?? null;
     const lines = [];
     if (!outcome) lines.push(`${actionText(action)}: no result (cancelled).`);
