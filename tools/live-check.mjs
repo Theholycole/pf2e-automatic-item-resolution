@@ -822,11 +822,12 @@ export const cases = {
     },
 
     // Elemental Ammunition: PF2e's own rules add its splash to the longbow's Strike, and the splash card lists the creature
-    // next to the target (the bomb card, for any Strike with PF2e's splash-only rolls).
+    // next to the target (the bomb card, for any Strike with PF2e's splash-only rolls). (Squares inside the lab scene: the
+    // splash needs the tokens' real places.)
     async ammoSplash(scene) {
-        const { actor: archer, token: archerToken } = await creature(scene, "Splash Archer", { type: "character", x: 2, y: 31 });
-        const { token: foeToken } = await creature(scene, "Splash Target", { x: 6, y: 31, ac: 1, alliance: "opposition" });
-        const { actor: other } = await creature(scene, "Splash Neighbour", { x: 7, y: 31, alliance: "opposition" });
+        const { actor: archer, token: archerToken } = await creature(scene, "Splash Archer", { type: "character", x: 10, y: 5 });
+        const { token: foeToken } = await creature(scene, "Splash Target", { x: 14, y: 5, ac: 1, alliance: "opposition" });
+        const { actor: other } = await creature(scene, "Splash Neighbour", { x: 15, y: 5, alliance: "opposition" });
         const bow = await give(archer, "Longbow");
         const ammo = await give(archer, "Elemental Ammunition (Moderate, Acid)");
         // (More than one, so the Strike's own use of it leaves it for the damage roll.)
