@@ -369,9 +369,9 @@ test("quickened with its action's use a note, a banner's ally, a successful Fein
 test("a called creature's single Strike with its damage in the next sentence, a save or become with its worse result after, a flight's line that saves or takes damage (the module's own wording)", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const consumable = (name, html) => compileItem({ name, type: "consumable", system: { slug: null, level: { value: 6 }, category: "other", traits: { value: ["alchemical", "consumable"] }, usage: { value: "held-in-one-hand" }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: html } } }, { spellEffects });
-    const lizard = consumable("Test Lizard Jar", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> Interact</p><p>A lizard pours out. It runs up to 20 feet, then Strikes a creature with its jaws Strike which has a +12 attack modifier with the agile trait. On a successful Strike it deals 2d6 plus 4 piercing damage.</p>");
+    const lizard = consumable("Test Lizard Jar", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> Interact</p><p>A lizard pours out. It scurries 20 feet and Strikes the nearest foe using a bite Strike which has a +12 attack modifier, agile. On a successful Strike it deals 2d6 plus 4 piercing damage.</p>");
     assert.deepEqual([lizard.ownCheck, lizard.resolution.sharedDamage.components[0].formula], [{ kind: "attack", modifier: 12 }, "2d6+4"]);
-    const gaze = consumable("Test Stone Gaze", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> Interact</p><p>A stony eye opens at a creature within 20 feet. That creature must make a @Check[fortitude|dc:20] save, or become @UUID[Compendium.pf2e.conditionitems.Item.xYTAsEpcJE1Ccni3]{Slowed 1} for 1 round as its joints stiffen, or Slowed 2 if they critically fail their save.</p>");
+    const gaze = consumable("Test Stone Gaze", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> Interact</p><p>A stony eye opens at a creature within 20 feet. The gazed-at foe must make a @Check[fortitude|dc:20] save, or become @UUID[Compendium.pf2e.conditionitems.Item.xYTAsEpcJE1Ccni3]{Slowed 1} for 1 round as its joints stiffen, or Slowed 2 if they critically fail their save.</p>");
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => gaze.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["slowed 1"], ["slowed 2"]]);
     const bird = consumable("Test Fire Bird", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> Interact</p><p>A burning bird bursts out. It flies up to 40 feet; creatures within its path during its flight make a @Check[reflex|dc:25] save or take @Damage[5d6[fire]] damage.</p>");
     assert.deepEqual([bird.targeting.area, bird.resolution.outcomes.failure.damage.formulas?.[0]?.formula ?? bird.resolution.sharedDamage?.components?.[0]?.formula], [{ type: "line", value: 40 }, "5d6[fire]"]);
@@ -403,7 +403,7 @@ test("a mount's bleed and quickened condition (Heedless Spurs): the fuller outri
     assert.match(spurs.notes.join(" "), /Target your mount/);
 });
 
-test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and unconscious only at the end of the creature's next turn (a note, not now)", async () => {
+test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and unconscious only later, at the end of its next turn (a note, not now)", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const gas = compileItem(item("Nap Gas Dispenser"), { spellEffects });
     const rows = gas.resolution.outcomes;

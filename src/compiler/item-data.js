@@ -104,8 +104,8 @@ export function withItemData(html, item) {
     // (Moved to a space its user picks, Roc-Shaft Arrow's "save or be moved to a space you choose within 10 feet (20 feet on a
     // critical failure)": the core's push that far, the space a note — as Hauling's.)
     text = text.replace(/\b(save) or be moved to a space you choose within (\d+) feet \((\d+) feet on a critical failure\)\./gi, "$1 or be pushed $2 feet ($3 feet on a critical failure). Its attacker picks the space within that distance; move its token there.");
-    // (A save "becoming X for 1 round on a failure or 2 rounds on a critical failure": the reader's "save or be X for 1 round (2 rounds
-    // on a critical failure)".)
+    // (A save whose condition lasts longer on a critical failure, its two times given one after the other: as the reader takes it,
+    // "save or be X for N rounds (M rounds on a critical failure)".)
     text = text.replace(/\bmust (?:make|attempt) an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save(?: to [^,.]+)?, becoming ((?:@UUID\[[^\]]+\]\{[^}]+\})|[A-Z][a-z]+(?: \d+)?) for (\d+) (rounds?|minutes?) on a failure or (\d+) (rounds?|minutes?) on a critical failure\b/gi, (whole, check, condition, value, unit, more, moreUnit) => `must succeed at a ${check} save or be ${condition} for ${value} ${unit} (${more} ${moreUnit} on a critical failure)`);
     // (Its failure rows in one sentence, Stony Hag Eye's "save. On a failure, it's Slowed 1 for 1 minute; on a critical failure, if
     // the creature is already slowed, it's permanently petrified": degree rows, the critical failure's the failure's and the rest
