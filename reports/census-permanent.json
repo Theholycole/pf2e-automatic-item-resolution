@@ -8,8 +8,8 @@
   "results": {
    "resolves": 712,
    "builtin:cast-spell": 469,
-   "none": 717,
-   "partial": 96,
+   "none": 714,
+   "partial": 99,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 37,
@@ -26,10 +26,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 373,
+   "save": 376,
    "cast": 469,
    "item": 602,
-   "none": 904,
+   "none": 901,
    "focus": 45,
    "fortune": 47,
    "reroll": 25,
@@ -50,8 +50,8 @@
    "results": {
     "resolves": 430,
     "builtin:cast-spell": 340,
-    "none": 481,
-    "partial": 42,
+    "none": 478,
+    "partial": 45,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
     "builtin:readied-bonus": 30,
@@ -5327,9 +5327,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "partial",
+   "kind": "check",
+   "live": "save",
    "rune": true
   },
   {
@@ -13154,9 +13154,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "partial",
+   "kind": "check",
+   "live": "save",
    "rune": true
   },
   {
@@ -18390,9 +18390,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "partial",
+   "kind": "check",
+   "live": "save",
    "rune": true
   },
   {

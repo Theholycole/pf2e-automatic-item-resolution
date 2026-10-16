@@ -100,7 +100,21 @@ const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), ca
 // Each activation → { activation, plan } (plan null when nothing is read). options: as compileItem's.
 // (Each save against its owner's DC as the core's { dc: "owner" }: src/compiler/item-data.js.)
 export function compileActivations(item, options = {}) {
-    return compileEach(item, options).map((entry) => ({ ...entry, plan: ownerDCs(entry.plan) }));
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: ownerDCs(entry.plan) }));
+}
+
+// An activation that makes "an attack …, as described in the rune's other activation" (Swallow-Spike's second): that other
+// activation's own attack, at this activation's time and lines.
+const OTHER_ACTIVATION = /\bas described in the (?:rune's|item's|armor's|weapon's) other activation\.?\s*$/i;
+function sharedAttacks(entries) {
+    const attack = entries.find((entry) => entry.plan?.ownCheck?.kind === "attack");
+    if (!attack) return entries;
+    return entries.map((entry) => {
+        if (entry.plan || entry === attack || !OTHER_ACTIVATION.test(plainText(entry.activation.html)) || !/\b(?:attack|Strike)\b/i.test(plainText(entry.activation.html))) return entry;
+        const { activation } = entry;
+        const source = { ...attack.plan.source, name: attack.plan.source.name.replace(/: .*$/, "") + (activation.name ? `: ${activation.name}` : "") };
+        return { ...entry, plan: { ...attack.plan, source, activation: { time: activation.time, traits: activation.traits }, trigger: { event: "use" }, item: { ...attack.plan.item, activation: { index: entry.index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger } } } };
+    });
 }
 
 function compileEach(item, options = {}) {

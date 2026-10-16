@@ -125,3 +125,11 @@ test("Swarming: double the weapon's damage dice as its damage, of the weapon's t
     const [swarm] = etchedRuneActivations(weapon, runes, {});
     assert.deepEqual([swarm.index, swarm.plan.resolution.sharedDamage.components[0].formula, swarm.plan.targeting.area, swarm.plan.resolution.check.basic, swarm.plan.resolution.check.against.value], ["rune:swarming:0", "4[piercing]", { type: "cone", value: 30 }, true, 27]);
 });
+
+test("Swallow-Spike etched on +2 armor: its attack at the armor's bonus (+16, 2d6+4), and its second activation the same attack", () => {
+    const mail = equipment.find((doc) => doc.name === "Chain Mail");
+    const armor = { ...mail, system: { ...mail.system, runes: { potency: 2, resilient: 1, property: ["swallowSpike"] } } };
+    const [reaction, action] = etchedRuneActivations(armor, runes, {});
+    for (const entry of [reaction, action]) assert.deepEqual([entry.plan.ownCheck.modifier, entry.plan.resolution.sharedDamage.components[0].formula, entry.plan.resolution.sharedDamage.components[0].type], [16, "2d6+4", "piercing"]);
+    assert.deepEqual([reaction.plan.activation.time, action.plan.activation.time, action.plan.trigger.event], ["reaction", "1", "use"]);
+});

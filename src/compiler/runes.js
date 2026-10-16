@@ -38,6 +38,19 @@ export function etchedKeys(item) {
 
 // The activations of the runes etched onto the item: [{ activation, plan, index: "rune:<key>:<n>", rune: { key, name, uuid } }],
 // as compileActivations gives a permanent item's own. index: runeIndex's map; options: compileActivations'.
+// (An armor rune's attack with the armor's own bonus: Swallow-Spike's "This attack gets an item bonus to the attack roll equal to the
+// armor's item bonus to your AC and an item bonus to damage equal to double that amount" — its potency on the modifier, twice on
+// the damage.)
+export function withArmorPotency(html, armor) {
+    const text = String(html ?? "");
+    const potency = Number(armor?.system?.runes?.potency) || 0;
+    const said = /\bThis attack gets an item bonus to the attack roll equal to the armor's item bonus to your AC and an item bonus to damage equal to double that amount\.?/i;
+    if (!potency || !said.test(text)) return text;
+    return text
+        .replace(/\battack modifier of (?:\[\[[^\]]*\]\]\{)?\+(\d+)\}? that deals (?:@Damage\[(\d+d\d+)\[(\w+)\]\]|(\d+d\d+) (\w+)) damage\b/gi, (whole, modifier, linkedDice, linkedType, dice, type) => `attack modifier of +${Number(modifier) + potency} that deals ${linkedDice ?? dice}+${potency * 2} ${linkedType ?? type} damage`)
+        .replace(said, "");
+}
+
 export function etchedRuneActivations(item, index, options = {}) {
     if (!ETCHED_ONTO.includes(item?.type) || !index?.size) return [];
     const found = [];
@@ -45,7 +58,8 @@ export function etchedRuneActivations(item, index, options = {}) {
         const source = index.get(key);
         if (!source) continue;
         // (Its text with the weapon's own numbers: "1d8 per weapon damage die of the etched weapon".)
-        const rune = item.type === "weapon" ? { ...source, system: { ...source.system, description: { ...(source.system?.description ?? {}), value: perWeaponDie(source.system?.description?.value, weaponDice(item), item.system?.damage?.damageType ?? null) } } } : source;
+        const text = item.type === "weapon" ? perWeaponDie(source.system?.description?.value, weaponDice(item), item.system?.damage?.damageType ?? null) : item.type === "armor" ? withArmorPotency(source.system?.description?.value, item) : source.system?.description?.value;
+        const rune = text === source.system?.description?.value ? source : { ...source, system: { ...source.system, description: { ...(source.system?.description ?? {}), value: text } } };
         for (const entry of compileActivations(rune, options)) found.push({ ...entry, index: `rune:${key}:${entry.index}`, rune: { key, name: source.name, uuid: source.uuid ?? null } });
     }
     return found;
