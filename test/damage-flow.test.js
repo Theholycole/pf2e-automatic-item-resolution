@@ -164,3 +164,10 @@ test("spellguns: an attack against AC at the user's spell or firearm attack, the
     const posted = foundry.posted.slice(before)[0];
     assert.deepEqual([posted.plan.resolution.check.statistic, posted.plan.resolution.check.modifier], ["firearm attack", 9]);
 });
+
+test("Spiritual Warhorn: its warriors' Strikes at the item's modifier, at up to that many enemies targeted", () => {
+    const horn = compileItem(source("Spiritual Warhorn (Moderate)"));
+    assert.equal(routeOf(horn), "save");
+    assert.deepEqual([horn.resolution.check.modifier, component(horn).formula, component(horn).type, horn.targeting.target, horn.targeting.range], [17, "2d6", "force", "up to 4 enemies", "60 feet"]);
+    assert.deepEqual([horn.resolution.outcomes.criticalSuccess.damage.multiplier, horn.resolution.outcomes.success.damage.multiplier, horn.resolution.outcomes.failure.damage.mode], [2, 1, "none"]);
+});

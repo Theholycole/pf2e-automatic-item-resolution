@@ -14,6 +14,13 @@ const OWN_MANEUVER = new RegExp(String.raw`\b(?:attempts?|attempt another check)
 const TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void|bleed";
 const OWN_ATTACK = new RegExp(String.raw`\bmakes? an? (?:(melee|ranged) )?(?:attack|Strike)\b[^.]*?\b(?:attack modifier of \+(\d+)|with an? \+(\d+) (?:to hit|attack modifier))\b[^.]*?\bdeal(?:s|ing)? (\d+d\d+(?:\s*\+\s*\d+)?) (?:(persistent) )?(${TYPES}) damage\b`, "i");
 const MANY = /\b(?:each|every|all|up to (?:two|three|four|\d+))\b/i;
+// (Warriors that each Strike an enemy at the item's modifier: Spiritual Warhorn's "Each warrior appears in an open square
+// adjacent to an enemy within 60 feet of you, makes a Strike for 2d6 force …" and "Two warriors manifest with a +11 attack
+// modifier" — the own attack at up to that many enemies the presser targets.)
+const WARRIORS = /\b(two|three|four|five|six|seven|eight|\d+) warriors manifest with an? \+(\d+) attack modifier\b/i;
+const WARRIOR_STRIKE = new RegExp(String.raw`\bmakes a Strike for (\d+d\d+(?:\s*\+\s*\d+)?) (${TYPES})(?: damage)?\b`, "i");
+const WARRIOR_RANGE = /\badjacent to an enemy within (\d+) feet\b/i;
+const COUNTS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const sentencesOf = (text) => String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
@@ -21,6 +28,13 @@ const sentencesOf = (text) => String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "
 // The text (plain) → { kind: "maneuver", slug, modifier, notes } | { kind: "attack", range, modifier, formula, type, category, notes } | null.
 export function readOwnCheck(text) {
     const sentences = sentencesOf(text);
+    const warriors = WARRIORS.exec(String(text ?? ""));
+    const warriorStrike = warriors && WARRIOR_STRIKE.exec(String(text ?? ""));
+    if (warriorStrike) {
+        const count = COUNTS[warriors[1].toLowerCase()] ?? Number(warriors[1]);
+        const range = WARRIOR_RANGE.exec(String(text ?? ""))?.[1];
+        return { kind: "attack", range: null, count, reach: range ? `${range} feet` : null, modifier: Number(warriors[2]), formula: warriorStrike[1].replace(/\s+/g, ""), category: null, type: warriorStrike[2].toLowerCase(), notes: [`${count} warriors, each Striking one of the enemies you target; the GM rolls any more at the same enemy.`] };
+    }
     for (const [index, sentence] of sentences.entries()) {
         if (MANY.test(sentence)) continue;
         const notes = sentences.filter((_, at) => at !== index);
@@ -50,7 +64,7 @@ export function ownCheckPlan(text, base, options = {}) {
     const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [], modifiers: [] });
     return {
         ...common,
-        targeting: { target: "1 creature", range: null, area: null },
+        targeting: { target: read.count ? `up to ${read.count} enemies` : "1 creature", range: read.reach ?? null, area: null },
         resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: read.modifier }, sharedDamage: { rollOnce: true, components: [component] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } }
     };
 }

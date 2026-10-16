@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 273,
+   "none": 269,
    "resolves": 705,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 231,
    "builtin:item-action": 8,
-   "partial": 45,
+   "partial": 49,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "builtin:reroll": 2,
@@ -33,12 +33,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 135,
+    "none": 131,
     "resolves": 206,
     "note-only": 100,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 23,
+    "partial": 27,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -306,7 +306,7 @@
    "count": 277,
    "resolves": 146,
    "gaps": 0,
-   "none": 32
+   "none": 28
   },
   "linked-effect": {
    "count": 393,
@@ -378,14 +378,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 358,
+   "none": 354,
    "item": 651,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 59,
    "action": 8,
-   "save": 115,
+   "save": 119,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -394,9 +394,9 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 163,
+    "none": 159,
     "later": 12,
-    "save": 79,
+    "save": 83,
     "item": 219,
     "zone": 9,
     "fortune": 7,
@@ -478,7 +478,7 @@
    }
   },
   "noCard": {
-   "no-plan": 273,
+   "no-plan": 269,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -5154,7 +5154,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Mad Mammoth's Juke",
@@ -11825,7 +11827,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Singing Muse",
@@ -14580,7 +14584,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Thousand-Pains Fulu (Blade)",
@@ -23783,7 +23789,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Wand of Slaughter (9th-Rank Spell)",
