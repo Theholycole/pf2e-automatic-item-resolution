@@ -1697,6 +1697,47 @@ export const cases = {
         const choices = card.getFlag(NS, "card").plan.damageChoices.map((choice) => choice.formula);
         assert(choices.every((formula) => /\[fire,silver\]$/.test(formula)), `silver in its damage (${JSON.stringify(choices)})`);
         return { choices };
+    },
+
+    // Moonlit Spellgun on a creature weak to silver: the ability module's attack card applies PF2e's damage with the material, so
+    // the weakness counts (silver 50: more than the most 3d8 can deal, doubled).
+    async moonlitWeakness(scene) {
+        const { actor: gunner, token: gunnerToken } = await creature(scene, "Silver Gunner", { type: "character", x: 14, y: 19 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Silver-Weak Target", { x: 16, y: 19, ac: 1, hp: 300, alliance: "opposition" });
+        await foe.update({ "system.attributes.weaknesses": [{ type: "silver", value: 50 }] });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const gun = await give(gunner, "Moonlit Spellgun (Lesser)");
+        await wait(500);
+        let since = Date.now();
+        await gun.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the spellgun's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const before = foe.system.attributes.hp.value;
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: 0, damageChoice: 0 });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        // (Its attack first — "Roll the rest" — then Apply.)
+        let roll = null;
+        for (const stop = Date.now() + 5000; Date.now() < stop && !roll; ) {
+            roll = document.querySelector(`[data-message-id="${attack.id}"] [data-aar-action="roll-all"]`);
+            if (!roll) await wait(200);
+        }
+        assert(roll, "the attack card's roll button");
+        roll.click();
+        let button = null;
+        const end = Date.now() + 8000;
+        while (Date.now() < end && !button) {
+            const found = document.querySelector(`[data-message-id="${attack.id}"] [data-aar-action="apply"]`);
+            if (found && !found.disabled) button = found;
+            else await wait(200);
+        }
+        assert(button, "the attack card's Apply button");
+        button.click();
+        await until(() => foe.system.attributes.hp.value < before, "damage applied", { timeout: 10000 });
+        const lost = before - foe.system.attributes.hp.value;
+        assert(lost > 48, `silver weakness 50 applied (lost ${lost})`);
+        return { lost, choices: choices.map((choice) => choice.label) };
     }
 };
 
