@@ -29,6 +29,8 @@ export const OWNER_DCS = Object.freeze({ 9001: "class", 9002: "spell", 9003: "cl
 const STAND_IN = Object.freeze({ class: 9001, spell: 9002, "class-spell": 9003 });
 const OWNER_WORDS = Object.freeze({ class: "your class DC", spell: "your spell DC", "class-spell": "your class DC or spell DC" });
 
+const FRIGHTENED = "@UUID[Compendium.pf2e.conditionitems.Item.TBSHQspnbcqxsmjL]";
+
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
@@ -37,6 +39,9 @@ export function withItemData(html, item) {
     // (A save link without the word: Life's Last Breath's "The target must succeed at a @Check[fortitude|dc:38] or take 4d6 void
     // damage" — the target's, not a passive one's: Dawnlight's "Creatures with darkvision … must succeed at a @Check[…] or be …".)
     text = text.replace(/(\b[Tt]he target must succeed at an? @Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) or (be|become|take)\b/gi, "$1 save or $2");
+    // (A frightful presence by name, Dragonscale Amulet's "an aura that terrifies all foes in a 60-foot radius, as the frightful
+    // presence ability with a @Check[will|dc:34] save": that ability's rows.)
+    text = text.replace(/\bYou exude an aura that terrifies all foes in a (\d+)-foot radius, as the frightful presence ability with a (@Check\[will\|[^\]]*\])(?:\{[^}]*\})? save\.\s*<\/p>/i, (whole, feet, check) => `Each foe in a @Template[type:emanation|distance:${feet}] must attempt a ${check} save. A creature that succeeds is temporarily immune for 1 minute.</p><p><strong>Critical Success</strong> The creature is unaffected.</p><p><strong>Success</strong> The creature is ${FRIGHTENED}{Frightened 1}.</p><p><strong>Failure</strong> The creature is ${FRIGHTENED}{Frightened 2}.</p><p><strong>Critical Failure</strong> The creature is ${FRIGHTENED}{Frightened 4}.</p>`);
     // (A condition for its user's next turn, Bloodline Robe's "You're Quickened on your next turn": until that turn's end.)
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)

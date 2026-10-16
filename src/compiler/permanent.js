@@ -30,6 +30,7 @@ import { saveOrPlan } from "./save-or.js";
 import { spellstrikePlan } from "./spellstrike.js";
 import { withoutFlavor } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
+import { readTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 
@@ -104,7 +105,10 @@ function compileEach(item, options = {}) {
     if (!handlesPermanent(item, options)) return [];
     // (Its own data in its text first — a weapon's striking and potency runes, src/compiler/item-data.js.)
     const html = withItemData(item.system?.description?.value, item);
-    return splitActivations(html).map((activation, index) => {
+    return splitActivations(html).map((found, index) => {
+        // (A damage type its user's loading picks, listed after it: compiled without the list, src/compiler/type-choice.js.)
+        const typeChoice = readTypeChoice(found.html);
+        const activation = typeChoice ? { ...found, html: typeChoice.html } : found;
         // (The activation's own block, its user the recipient: a worn item acts for its wearer, "you".)
         const part = recipientUser({ ...item, system: { ...(item.system ?? {}), description: { value: activation.html } } });
         const base = {
@@ -207,6 +211,7 @@ function compileEach(item, options = {}) {
         // (One of the item's own PF2e toggles, named as the activation is, switched on for a while: src/compiler/option-on.js.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = optionPlan(item, activation, base) ?? plan;
         if (!plan) return { activation, plan: null, index };
+        plan = withTypeChoices(plan, typeChoice);
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)

@@ -200,3 +200,14 @@ test("the Harrow Court's damage and healing for its owner's level; The Survivor'
     assert.deepEqual(survivor.resolution.outcomes.success.effects, [{ kind: "heal", formula: "4d8+16" }]);
     assert.match(survivor.unread.join(" "), /you drop to 1 Hit Point instead/);
 });
+
+test("Fortune Cord's coins pick its damage type (the card's picker); Dragonscale Amulet's frightful presence by name, as that ability's rows", async () => {
+    const { readTypeChoice } = await import("../src/compiler/type-choice.js");
+    const fling = compileActivations(item("Fortune Cord"), { spellEffects })[1].plan;
+    assert.deepEqual([fling.resolution.check.statistic, fling.resolution.check.basic, fling.targeting.range], ["reflex", true, "100 feet"]);
+    assert.deepEqual(fling.damageChoices, [{ label: "Copper: acid", formula: "4d6[acid]" }, { label: "Silver: electricity", formula: "4d6[electricity]" }, { label: "Gold: fire", formula: "4d6[fire]" }, { label: "Platinum: cold", formula: "4d6[cold]" }]);
+    assert.equal(readTypeChoice("<p>It deals @Damage[2d6[untyped]] damage; the damage type depends on the type of gem set in it. A ruby deals fire damage.</p>"), null, "one type isn't a choice");
+    const amulet = compileActivations(item("Dragonscale Amulet"), { spellEffects })[0].plan;
+    assert.deepEqual([amulet.resolution.check.statistic, amulet.resolution.check.against.value, amulet.targeting.area], ["will", 34, { type: "emanation", value: 60 }]);
+    assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => amulet.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [[], ["frightened 1"], ["frightened 2"], ["frightened 4"]]);
+});

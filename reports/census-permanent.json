@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 706,
+   "resolves": 708,
    "builtin:cast-spell": 469,
-   "none": 734,
+   "none": 732,
    "partial": 93,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
@@ -25,10 +25,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 367,
+   "save": 369,
    "cast": 469,
    "item": 600,
-   "none": 930,
+   "none": 928,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -46,9 +46,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 428,
+    "resolves": 430,
     "builtin:cast-spell": 340,
-    "none": 493,
+    "none": 491,
     "partial": 41,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
@@ -17757,9 +17757,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Aluum Charm",
@@ -18442,9 +18442,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Conch of Otherworldly Seas",
