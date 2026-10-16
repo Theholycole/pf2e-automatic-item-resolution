@@ -201,3 +201,11 @@ test("a choice of its own on its user: the card casts that one on the user, the 
     assert.deepEqual(castRequest({ ...state, choice: 1 }, { targetUuids: [] }).targetUuids, [], "Summon Elemental placed as the spell says");
     assert.equal(needsTargets(fragment, fragment.choices[1]), false);
 });
+
+test("the ability compiler's cast gets what the words say and it left out: on its user, a DC, a counteract bonus", () => {
+    // "You cast Vapor Form on yourself" (Shadowmist Cape); "You cast 4th-rank Invisibility on yourself, but …" (Assassin's Bracers).
+    assert.equal(compileActivations(source("Shadowmist Cape"), { spells }).find((entry) => entry.plan?.builtin === "cast-spell").plan.self, true);
+    assert.equal(compileActivations(source("Assassin's Bracers (Type I)"), { spells }).find((entry) => entry.plan?.builtin === "cast-spell").plan.self, true);
+    // "You cast 5th-rank Dispel Magic with a counteract bonus of +21 against the object" (Scarlet Queen).
+    assert.equal(castOf("Scarlet Queen").attack, 21);
+});

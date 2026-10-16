@@ -18,7 +18,7 @@ import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
-import { castWordsPlan } from "./cast-words.js";
+import { castWordsPlan, fillCast } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
@@ -87,6 +87,8 @@ export function compileItem(given, options = {}) {
     }
     // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
     if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(item, options) ?? plan;
+    // (The ability compiler's cast, with what its words say and it left out: on its user, a DC, a modifier.)
+    plan = fillCast(plan, item?.system?.description?.value, options);
     // (A Strike with riders, src/compiler/strikes.js: Fear Gem.)
     plan = strikeOver(plan, compileStrike(item, base));
     // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Lucky Rabbit's Foot.)

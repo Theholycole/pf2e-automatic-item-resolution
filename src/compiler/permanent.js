@@ -8,7 +8,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf } from "./activation.js";
 import { castPlan, effectLinks, fitPlan, ownPlan } from "./consumables.js";
-import { castWordsPlan } from "./cast-words.js";
+import { castWordsPlan, fillCast } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
@@ -125,6 +125,8 @@ export function compileActivations(item, options = {}) {
         if (!plan && options.spellEffects) plan = castPlan(part);
         // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
         if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(part, options) ?? plan;
+        // (The ability compiler's cast, with what its words say and it left out: on its user, a DC, a modifier.)
+        plan = fillCast(plan, activation.html, options);
         if (!plan) plan = rowPlanFor(part, base);
         // (A Strike with riders, src/compiler/strikes.js: Duelist's Beacon.)
         plan = strikeOver(plan, compileStrike(part, base));

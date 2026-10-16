@@ -169,8 +169,10 @@ export function readCastWords(html, { spells = null } = {}) {
         const whole = `${sentence} ${sentences[index + 1] ?? ""}`;
         const rank = new RegExp(String.raw`\b(?:heightened to|at|as an?) ${ORDINAL}[- ](?:rank|level)\b`, "i").exec(rest) ?? /\bcounteract rank of (\d+)\b/i.exec(rest);
         // (Its DC in the sentence or the next, or a sentence on the spells' DC: "The DC for any of these spells is 18".)
-        const dc = leadDC ?? (Number(/\(DC (\d+)\)|\bwith a DC of (\d+)|\bspell DC (?:is |of )?(\d+)|\bThe DC is (\d+)|\bDC (\d+)\b/i.exec(rest + " " + (sentences[index + 1] ?? ""))?.slice(1).find(Boolean)) || Number(/\bThe (?:spell )?DC (?:for (?:any of )?(?:these|the|this) spells? )?is (\d+)/i.exec(sentences.join(" "))?.[1]) || null);
-        const attack = Number(/\bcounteract modifier (?:is |of |are )?(?:1d20 ?)?\+(\d+)|\+(\d+) (?:counteract )?modifier for the roll|\bspell attack (?:modifier|roll) (?:is |of |are )?\+(\d+)/i.exec(whole)?.slice(1).find(Boolean)) || null;
+        // (Or "any save DC is 30", Zuhra's Gloves, anywhere in the text.)
+        const dc = leadDC ?? (Number(/\(DC (\d+)\)|\bwith a DC of (\d+)|\bspell DC (?:is |of )?(\d+)|\bThe DC is (\d+)|\bDC (\d+)\b/i.exec(rest + " " + (sentences[index + 1] ?? ""))?.slice(1).find(Boolean)) || Number(/\bThe (?:spell )?DC (?:for (?:any of )?(?:these|the|this) spells? )?is (\d+)|\bany save DC is (\d+)/i.exec(sentences.join(" "))?.slice(1).find(Boolean)) || null);
+        // (And "a counteract bonus of +21", Scarlet Queen.)
+        const attack = Number(/\bcounteract (?:modifier|bonus) (?:is |of |are )?(?:1d20 ?)?\+(\d+)|\+(\d+) (?:counteract )?modifier for the roll|\bspell attack (?:modifier|roll) (?:is |of |are )?\+(\d+)/i.exec(whole)?.slice(1).find(Boolean)) || null;
         // (On its user: the words after the list, or after its last spell — "Darkvision or See the Unseen on yourself" is both on
         // you; after an earlier one only that one is, a choice's own.)
         const lastSelf = list.length > 0 && list.at(-1).self && list.slice(0, -1).every((entry) => !entry.self);
@@ -215,4 +217,21 @@ export function castWordsPlan(item, options = {}) {
         targets: read.targets,
         ...(read.choices.length > 1 ? { choices: read.choices } : {})
     };
+}
+
+// The ability compiler's cast of the same spell, with what its words say and it left out: on its user ("You cast Vapor Form
+// on yourself"), a DC ("The cauldron casts Nightmare (DC 35)"), a counteract or spell attack modifier ("with a spell attack
+// modifier of +10"), a rank. Only for the spell its reading names; otherwise the plan as it is.
+export function fillCast(plan, html, options = {}) {
+    if (plan?.builtin !== "cast-spell" || !options.spells) return plan;
+    const read = readCastWords(html, options);
+    const first = read?.choices?.[0];
+    if (!first || first.spell.uuid !== plan.spell?.uuid) return plan;
+    const filled = {
+        ...(read.self && !plan.self ? { self: true } : {}),
+        ...(read.dc && !plan.dc ? { dc: read.dc } : {}),
+        ...(read.attack && !plan.attack ? { attack: read.attack } : {}),
+        ...(first.rank && !plan.rank ? { rank: first.rank } : {})
+    };
+    return Object.keys(filled).length ? { ...plan, ...filled } : plan;
 }
