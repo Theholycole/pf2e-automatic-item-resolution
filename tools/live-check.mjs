@@ -958,6 +958,63 @@ export const cases = {
         return { uses: state.uses };
     },
 
+    // Burial Oil: the card picks the longsword; its Effect's AdjustStrike gives that Strike the Vitalizing rune (PF2e's disrupting).
+    async runeOil(scene) {
+        const { actor: fighter } = await creature(scene, "Oiled Fighter", { type: "character", x: 10, y: 17 });
+        const dagger = await give(fighter, "Dagger");
+        const sword = await give(fighter, "Longsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const oil = await give(fighter, "Burial Oil");
+        const since = Date.now();
+        await oil.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the oil's card" });
+        const weapons = card.getFlag(NS, "card").weapons ?? [];
+        assert(weapons.some((weapon) => weapon.id === sword.id) && weapons.some((weapon) => weapon.id === dagger.id), `its weapons offered (${weapons.map((weapon) => weapon.name)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { runeWeapon: weapons.findIndex((weapon) => weapon.id === sword.id) });
+        await wait(800);
+        const strike = (fighter.system.actions ?? []).find((action) => action.item?.id === sword.id);
+        const runes = strike?.item?.system?.runes?.property ?? [];
+        assert(runes.includes("disrupting"), `the longsword's Strike has the rune (${JSON.stringify(runes)})`);
+        const daggerRunes = (fighter.system.actions ?? []).find((action) => action.item?.id === dagger.id)?.item?.system?.runes?.property ?? [];
+        assert(!daggerRunes.includes("disrupting"), "not the dagger's");
+        return { runes, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // The Bear: Grapple, Shove or Trip picked on the card — Trip picked, PF2e's Trip with the +2 status bonus.
+    async actionChoice(scene) {
+        const { actor: user } = await creature(scene, "Bear User", { type: "character", x: 10, y: 19 });
+        const { token: foeToken } = await creature(scene, "Bear Target", { x: 11, y: 19, alliance: "opposition" });
+        const card = await give(user, "The Bear");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const posted = await messageAfter(since, itemCard("item-action"), { what: "the action card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(posted.id, { targets: [foeToken.uuid], choice: 2 });
+        const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check" && (message.flags.pf2e.context.options ?? []).includes("action:trip"), { what: "PF2e's Trip" });
+        const bonus = (roll.flags.pf2e.modifiers ?? []).find((modifier) => modifier.type === "status" && modifier.modifier === 2);
+        assert(bonus, `the +2 status bonus (${(roll.flags.pf2e.modifiers ?? []).map((modifier) => `${modifier.label} ${modifier.modifier}`)})`);
+        return { roll: roll.id };
+    },
+
+    // A condition until the end of the rage (the module's own wording, on an item made here): quickened while raging, gone
+    // with the Rage.
+    async untilRage(scene) {
+        const { actor: barbarian } = await creature(scene, "Raging Wearer", { type: "character", x: 13, y: 19 });
+        const [crown] = await barbarian.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Fury Circlet`, type: "equipment", system: { description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (concentrate)</p><p><strong>Effect</strong> You become quickened until the end of your rage. You can use the extra action only to Stride or Strike.</p>" } } }]);
+        const rageSource = (await fromUuid("Compendium.pf2e.feat-effects.Item.z3uyCMBddrPK5umr")).toObject();
+        const [rage] = await barbarian.createEmbeddedDocuments("Item", [rageSource]);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(crown.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the circlet's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(1000);
+        assert(barbarian.hasCondition("quickened"), "quickened while raging");
+        await rage.delete();
+        await wait(1000);
+        assert(!barbarian.hasCondition("quickened") && !barbarian.itemTypes.effect.some((effect) => effect.getFlag(NS, "untilRage")), "gone with the Rage");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
     // targeted.
     async alliesEffect(scene) {
