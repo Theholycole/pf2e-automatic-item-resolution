@@ -50,7 +50,7 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
 - **Permanent items:** on the character sheet's inventory, an item with activations gets an Activate button (a bolt) for each, after its name; its tooltip says the actions, how often and how many uses are left. Pressing it posts that activation's card. One that gives a Focus Point (a Specialist's Ring, a Bloodline Robe) adds it up to the pool's maximum, and in an encounter an unspent point is taken back at the end of the turn. A "once per day" activation is counted; used again, the GM gets a warning and decides.
 - **Anything else with a duration:** a note Effect on the creature with the item's text, for that time.
 
-The census counts what's played: 1,124 of the 1,486 consumables this module handles get a card, and 1,600 of the 2,593 activations of permanent items. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module. A module's own linked Effect is applied only when its rules match the item's text; otherwise the creature gets a note of the text.
+The census counts what's played: 1,124 of the 1,486 consumables this module handles get a card, and 1,614 of the 2,593 activations of permanent items. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module. A module's own linked Effect is applied only when its rules match the item's text; otherwise the creature gets a note of the text.
 
 ## Requirements
 
