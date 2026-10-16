@@ -453,3 +453,11 @@ test("condition floors as the core's conditionFloor: a fixed time (Timpani of Pa
     assert.deepEqual(compileActivations(item("Terrifying Ammunition"), { spellEffects })[0].plan.resolution.outcomes.failure.conditionFloor, { slug: "frightened", value: 1, lifetime: "until-lifted", liftedBy: "it spends a concentrate action" });
     assert.deepEqual(compileBomb(item("Tallow Bomb (Lesser)")).resolution.outcomes.criticalSuccess.conditionFloor, { slug: "sickened", value: 1, lifetime: "while-persistent", persistentDamage: "fire" });
 });
+
+test("a talisman's bonus after 'and gain' (Champion's Laurels) and a bonus 'While this effect is active' (Look-Me-Not)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const laurels = compileItem(item("Champion's Laurels (Amateur)"), { spellEffects });
+    assert.deepEqual([laurels.builtin, laurels.bonus.modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`), laurels.bonus.spend], ["readied-bonus", ["acrobatics 1", "athletics 1"], ["acrobatics", "athletics"]]);
+    const look = compileItem(item("Look-Me-Not"), { spellEffects });
+    assert.deepEqual(look.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["deception", 2, ["action:feint"]]]);
+});

@@ -256,7 +256,7 @@ function modifiersOf(sentences, duration, used = new Set()) {
         // ("When you Activate this fulu, you gain …", "Upon drinking …,": the use itself, not a condition.)
         const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "");
         // ("While the effect lasts, you gain …", "During this time, …": its time, not a condition.)
-        const said = sentence.replace(/^\s*(?:While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|While (?:it's |it is )?activated|During this time|For the duration),\s*/i, "")
+        const said = sentence.replace(/^\s*(?:While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|While (?:it's |it is )?activated|While this effect is active|During this time|For the duration),\s*/i, "")
             // ("you gain resistance 5 … but take a -5-foot status penalty to all Speeds": the same "you".)
             .replace(/(\byou (?:gain|get|have)\b[^.;]*?),? (but|and) (take|suffer)\b/i, "$1, $2 you $3")
             // ("a +1 status bonus against fear effects": saves against them, as PF2e's own Effects read it.)

@@ -16,11 +16,11 @@
    "builtin:cast-spell": 32,
    "none": 248,
    "resolves": 736,
-   "builtin:readied-bonus": 18,
+   "builtin:readied-bonus": 21,
    "builtin:zone": 87,
-   "note-only": 200,
    "builtin:item-action": 12,
-   "partial": 67,
+   "note-only": 196,
+   "partial": 68,
    "builtin:counteract": 20,
    "builtin:no-effect": 61,
    "builtin:reroll": 2,
@@ -89,14 +89,14 @@
    "count": 156,
    "results": {
     "none": 43,
-    "note-only": 12,
+    "builtin:readied-bonus": 12,
     "builtin:item-action": 11,
     "resolves": 53,
+    "note-only": 8,
     "builtin:no-effect": 9,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
-    "partial": 7,
-    "builtin:readied-bonus": 9,
+    "partial": 8,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -379,8 +379,8 @@
   "totals": {
    "cast": 32,
    "none": 331,
-   "item": 636,
-   "fortune": 20,
+   "item": 633,
+   "fortune": 23,
    "zone": 87,
    "expose": 89,
    "later": 79,
@@ -416,12 +416,12 @@
    },
    "talisman": {
     "none": 53,
-    "item": 55,
+    "fortune": 14,
     "action": 11,
+    "item": 52,
     "reroll": 1,
     "cast": 9,
     "save": 15,
-    "fortune": 11,
     "strike": 1
    },
    "elixir": {
@@ -712,9 +712,9 @@
     "trigger",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Detect Anathema Fulu",
@@ -3355,9 +3355,9 @@
     "trigger",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Shrinking Potion (Greater)",
@@ -8817,9 +8817,9 @@
     "trigger",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Truth Potion",
@@ -17721,8 +17721,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "If you're untrained in Deception, you can use the Feint action anyway and add your level as your proficiency bonus despite being untrained.",
+    "Additionally, your Strikes and damage from the affixed weapon can't trigger reactions (such as the Shield Block reaction)."
+   ],
    "live": "item"
   },
   {

@@ -18,7 +18,8 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^
 
 // "You gain a +2 status bonus to …", "giving you a +4 status bonus to your AC and saves against the effect", "you gain a
 // +1 circumstance bonus against the triggering save".
-const GAIN = /\b(?:you gain|you receive|giving you|you get|granting you|grants? you|gaining) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
+// (And "you draw strength from your adoring crowd and gain a +1 status bonus to the triggering check", Champion's Laurels.)
+const GAIN = /\b(?:you gain|you receive|giving you|you get|granting you|grants? you|gaining|(?<=\byou [a-z]+ [^.]*?)and gain) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
 const RESIST_AND_BONUS = /\b(?:granting you|you gain) resistance (\d+) (?:against|to) (acid|cold|electricity|fire|sonic|force|mental|poison|spirit|vitality|void) and an? \+(\d+) (circumstance|status|item) bonus (?:on|to) (?:your )?([^;.]+?) against the [\w ]*?effect\b/i;
 // (Its type first: Pyrefeather Cloak's "You gain fire resistance 5 and a +1 circumstance bonus to saving throws against the triggering
 // effect" — the same groups.)
