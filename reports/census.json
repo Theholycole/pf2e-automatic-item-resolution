@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 268,
-   "resolves": 725,
+   "resolves": 728,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 211,
+   "note-only": 208,
    "builtin:item-action": 8,
    "partial": 50,
    "builtin:counteract": 20,
@@ -215,8 +215,8 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 25,
-    "note-only": 20,
+    "resolves": 28,
+    "note-only": 17,
     "builtin:no-effect": 6,
     "none": 9,
     "builtin:cast-spell": 2,
@@ -316,7 +316,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 329,
+   "resolves": 330,
    "gaps": 0,
    "none": 38
   },
@@ -340,7 +340,7 @@
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 54,
+   "resolves": 56,
    "gaps": 0,
    "none": 1
   },
@@ -370,7 +370,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 587,
+   "resolves": 590,
    "gaps": 0,
    "none": 22
   }
@@ -10991,8 +10991,9 @@
     "on-weapon",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -14624,8 +14625,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -15135,8 +15137,9 @@
     "on-weapon",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

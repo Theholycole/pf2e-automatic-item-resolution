@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, senseEffectSource, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, startInitiative, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -133,7 +133,9 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         item: { name: used.data.name, uuid: used.data.uuid ?? origin.uuid ?? null, sourceId, slug: used.data.system?.slug ?? null, img: used.data.img ?? null },
         user,
         drinkers: plan.item?.recipient === "drinker" ? creaturesNear(token, 5) : [],
-        rolled
+        rolled,
+        // (A rune it lends a weapon: its user's weapons to pick from.)
+        weapons: plan.item?.rune && !plan.item.rune.own ? (actor.itemTypes?.weapon ?? []).filter((weapon) => !weapon.isOfType?.("bomb") && weapon.system?.group !== "bomb").map((weapon) => ({ id: weapon.id, name: weapon.name })) : []
     });
     const card = await ChatMessage.create({
         content: cardHTML(state, { canApply: true }),
@@ -173,7 +175,7 @@ function choicesOf(state, root) {
     if (state.kind === "toggle") return { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
-    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
 }
 
 const APPLY = {
@@ -261,7 +263,7 @@ async function onRequest(data) {
         : state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(state.kind === "expose" && Number.isInteger(data.damageChoice) ? { damageChoice: data.damageChoice } : {}), ...(state.kind === "expose" && Number.isInteger(data.attackChoice) ? { attackChoice: data.attackChoice } : {}), ...(state.kind === "expose" && Number.isInteger(data.checkChoice) ? { checkChoice: data.checkChoice } : {}) }
         : state.kind === "toggle" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null }
-        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
+        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, runeWeapon: Number.isInteger(data.runeWeapon) ? data.runeWeapon : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
@@ -269,6 +271,17 @@ async function onRequest(data) {
 }
 
 // --- Apply ------------------------------------------------------------------------
+
+// PF2e's key for a rune by its name ("Vitalizing" → "disrupting"), kebab-case: its English rune names first, else the
+// compiler's guess when PF2e's runes are out of reach (as in the tests); null when PF2e has no such rune.
+function runeKeyOf(rune) {
+    const names = game.i18n?._fallback?.PF2E?.WeaponPropertyRune ?? game.i18n?.translations?.PF2E?.WeaponPropertyRune ?? null;
+    if (!names) return rune.key;
+    const kebab = (key) => key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    const found = Object.entries(names).find(([, entry]) => String(entry?.Name ?? "").toLowerCase() === String(rune.name).toLowerCase());
+    if (found) return kebab(found[0]);
+    return Object.keys(names).some((key) => kebab(key) === rune.key) ? rune.key : null;
+}
 
 // The creatures of the token uuids a presser targeted: [{ token, actor, name }].
 async function targetedCreatures(uuids) {
@@ -288,9 +301,12 @@ async function lowerCondition(actor, name, slug, by) {
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
 
-async function applyCard(message, { drinker = null, ceremony = false, resistType = null, reduceChoice = null, targets = [] } = {}) {
+async function applyCard(message, { drinker = null, ceremony = false, resistType = null, reduceChoice = null, runeWeapon = null, targets = [] } = {}) {
     let state = stateOf(message);
     if (!state || state.status !== "open") return null;
+    // (The weapon picked for the rune it lends.)
+    if (Number.isInteger(runeWeapon) && state.weapons?.[runeWeapon]) state = { ...state, runeWeapon };
+    if (state.plan.item?.rune && !state.plan.item.rune.own && !state.weapons?.length) throw new Error(`${state.user.name} has no weapon for ${state.item.name}.`);
     // (A condition it lowers on others: the creatures the presser targets, before anything is applied.)
     const reduce = state.plan.item?.reduce ?? [];
     const others = reduce.some((entry) => entry.who === "targets") ? await targetedCreatures(targets) : [];
@@ -381,6 +397,17 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         if (!target.actor) break;
         await target.actor.createEmbeddedDocuments("Item", [senseEffectSource(sense, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${senseText(sense)}`);
+    }
+    // (A rune it lends a weapon: Burial Oil's Vitalizing — an Effect with PF2e's AdjustStrike on that weapon.)
+    const rune = state.plan.item?.rune;
+    if (rune && user.actor) {
+        const weapon = rune.own ? { id: state.item.uuid?.split(".Item.").at(-1) ?? null, name: state.item.name } : state.weapons[state.runeWeapon ?? 0];
+        const key = runeKeyOf(rune);
+        if (!key) lines.push(`${state.item.name}: PF2e has no ${rune.name} rune; apply it by hand.`);
+        else if (weapon?.id) {
+            await user.actor.createEmbeddedDocuments("Item", [runeEffectSource(rune, { key, weapon, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${state.user.name}: ${runeText(rune, weapon.name)}`);
+        }
     }
     // (The conditions it lowers: Lion Badge's frightened, by 1 — PF2e's decreaseCondition, once for each, "to 0" removing it;
     // one of several as picked; another's on each creature the presser targets.)

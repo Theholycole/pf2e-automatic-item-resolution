@@ -12,7 +12,8 @@ export const DRINKER_ID = "drinker";
 // A new card: the plan, the item ({ name, uuid, sourceId, slug, img }), its user
 // ({ actorUuid, tokenUuid, name }), the creatures it can be fed to (the user first),
 // and PF2e's own roll for it ({ total, formula, kind, messageId } or null).
-export function createItemCard({ plan, item, user, drinkers = [], rolled = null }) {
+// weapons: its user's, [{ id, name }], for a rune it lends a weapon (plan.item.rune), picked on the card.
+export function createItemCard({ plan, item, user, drinkers = [], rolled = null, weapons = [] }) {
     const drinker = plan?.item?.recipient === "drinker";
     const choices = drinker ? [user, ...drinkers.filter((entry) => entry.actorUuid !== user.actorUuid || entry.tokenUuid !== user.tokenUuid)] : [];
     return {
@@ -25,6 +26,7 @@ export function createItemCard({ plan, item, user, drinkers = [], rolled = null 
         drinker: drinker ? 0 : null,
         // (A tea's Tea Ceremony: ticked on the card, false until then; null for any other item.)
         ceremony: plan?.item?.ceremony ? false : null,
+        ...(plan?.item?.rune && !plan.item.rune.own ? { weapons, runeWeapon: 0 } : {}),
         rolled,
         results: []
     };
@@ -84,6 +86,8 @@ export function previewLines(state) {
     const lines = [];
     // (The conditions it lowers, src/compiler/reduce.js.)
     for (const entry of plan?.item?.reduce ?? []) lines.push(reductionText(entry));
+    // (A rune it lends a weapon, src/compiler/rune-loans.js.)
+    if (plan?.item?.rune) lines.push(runeText(plan.item.rune));
     // (Its resistance, src/compiler/rows.js: the card's own Effect.)
     if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
@@ -199,6 +203,18 @@ function ownEffectSource({ name, img, words, rules, duration, flag, item, user, 
     };
 }
 
+// A rune it lends a weapon, in words: "Gives the weapon the Vitalizing rune for 1 minute".
+export function runeText(rune, weaponName = null) {
+    const time = rune.duration?.mode === "fixed" ? (rune.duration.value === 0 ? " until the end of the turn" : ` for ${timeText(rune.duration)}`) : "";
+    return `Gives ${weaponName ?? (rune.own ? "its weapon" : "the weapon picked")} the ${rune.name} rune${time}`;
+}
+
+// The rune's Effect on its user: PF2e's AdjustStrike adding the property rune to that weapon (as PF2e's own Wounding Oil).
+// key: PF2e's rune key, kebab-case ("disrupting", "greater-disrupting").
+export function runeEffectSource(rune, { key = rune.key, weapon, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: `${rune.name} (${weapon.name})`, img: "icons/svg/sword.svg", words: runeText(rune, weapon.name), rules: [{ key: "AdjustStrike", mode: "add", property: "property-runes", value: key, definition: [`item:id:${weapon.id}`] }], duration: rune.duration, flag: { rune: key, weaponId: weapon.id }, item, user, worldTime, initiative, moduleId });
+}
+
 // Its resistances with a chosen type filled in (index into the entry's choose list, the first by default).
 export const chosenResistances = (resist, index = 0) => resist.map((entry) => (entry.choose?.length ? { ...entry, type: entry.choose[Number.isInteger(index) && entry.choose[index] ? index : 0], choose: undefined } : entry));
 
@@ -247,9 +263,14 @@ export function cardHTML(state, { canApply = false } = {}) {
         : open && canApply ? `<p class="aar-actions">Lower: <select data-air-field="reduceChoice">${pickFrom.map((slug, index) => `<option value="${index}"${index === (state.reduceChoice ?? 0) ? " selected" : ""}>${escape(slug)}</option>`).join("")}</select></p>`
             : Number.isInteger(state.reduceChoice) ? `<p class="aar-actions">Lower: ${escape(pickFrom[state.reduceChoice] ?? pickFrom[0])}</p>` : "";
     const forAllies = state.plan?.item?.recipient === "targets" || (state.plan?.item?.reduce ?? []).some((entry) => entry.who === "targets");
+    // (A rune it lends a weapon: its user's weapon, picked.)
+    const runePick = !state.weapons ? ""
+        : !state.weapons.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no weapon for it.</p>` : "")
+            : open && canApply ? `<p class="aar-actions">Weapon: <select data-air-field="runeWeapon">${state.weapons.map((weapon, index) => `<option value="${index}"${index === (state.runeWeapon ?? 0) ? " selected" : ""}>${escape(weapon.name)}</option>`).join("")}</select></p>`
+                : Number.isInteger(state.runeWeapon) ? `<p class="aar-actions">Weapon: ${escape(state.weapons[state.runeWeapon]?.name ?? "")}</p>` : "";
     const targetHint = open && canApply && forAllies ? `<p class="aar-hint">Target the creatures it helps (your own token too, when it helps you), then press Apply.</p>` : "";
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${reducePick}${previewList}${targetHint}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${reducePick}${runePick}${previewList}${targetHint}${results}${controls}</section>`;
 }

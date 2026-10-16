@@ -26,6 +26,7 @@ import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
 import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
+import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
@@ -164,6 +165,10 @@ export function compileActivations(item, options = {}) {
             const { noteOnly, ...rest } = plan;
             plan = { ...rest, partial: true };
         }
+        // (A weapon lent a property rune for a while, src/compiler/rune-loans.js.)
+        const runeItem = { ...item, system: { ...(item.system ?? {}), description: { value: activation.html } } };
+        const rune = readRuneLoan(plainText(activation.html), runeItem);
+        if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
         if (!plan) plan = pf2eRulesPlan(item, base, plainText(activation.html));
         if (!plan) return { activation, plan: null, index };
@@ -179,7 +184,7 @@ export function compileActivations(item, options = {}) {
                 ...(others ? { targeting: { ...(kept.targeting ?? {}), ...othersTargeting(plainText(activation.html)) } } : {}),
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(recovery ? { recovery } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}) }
             }
         };
     });

@@ -24,6 +24,7 @@ import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { spellgunPlan } from "./spellguns.js";
+import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { directDamageOver, directDamagePlan, retaliationPlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
@@ -127,6 +128,9 @@ export function compileItem(given, options = {}) {
     const recovery = readRecovery(plainText(item?.system?.description?.value));
     if (recovery && !plan) plan = recoveryPlan(base, recoveryNotes(plainText(item?.system?.description?.value)));
     else if (recovery && plan.noteOnly) plan = { ...withoutNoteOnly(plan), partial: true };
+    // (A weapon lent a property rune for a while, src/compiler/rune-loans.js: Burial Oil; a note alone gives way to it.)
+    const rune = readRuneLoan(plainText(item?.system?.description?.value), item);
+    if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const { resist, speeds, senses, ...rest } = plan;
@@ -209,7 +213,9 @@ function itemInfo(item) {
         // (The conditions it lowers: the item card's, after its row, src/compiler/reduce.js.)
         ...(readReductions(plainText(item?.system?.description?.value)).length ? { reduce: readReductions(plainText(item?.system?.description?.value)) } : {}),
         // (Its flat check to end persistent damage: the item card's, after its row, src/compiler/recovery.js.)
-        ...(readRecovery(plainText(item?.system?.description?.value)) ? { recovery: readRecovery(plainText(item?.system?.description?.value)) } : {})
+        ...(readRecovery(plainText(item?.system?.description?.value)) ? { recovery: readRecovery(plainText(item?.system?.description?.value)) } : {}),
+        // (A property rune it lends a weapon: the item card's, src/compiler/rune-loans.js.)
+        ...(readRuneLoan(plainText(item?.system?.description?.value), item) ? { rune: readRuneLoan(plainText(item?.system?.description?.value), item) } : {})
     };
 }
 
