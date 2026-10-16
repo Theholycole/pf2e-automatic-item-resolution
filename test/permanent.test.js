@@ -108,3 +108,12 @@ test("an activation that heals its user in other words: \"You restore\", \"heali
     assert.deepEqual(heal("Trollhound Vest"), { kind: "heal", formula: "3d8" });
     assert.deepEqual(heal("Magical Medal (Unicorn's Purity)"), { kind: "heal", formula: "4d6" });
 });
+
+test("self conditions: \"You Stride and …, becoming Concealed until the end of your next turn\", \"rendering you Immobilized until you Dismiss\"", () => {
+    const [approach] = compileActivations(item("Invisible Chain Shirt"));
+    assert.deepEqual(approach.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration?.expiry]), [["concealed", "turn-end"]]);
+    // "or until you use a hostile action, whichever comes first": another way it ends, on the note.
+    assert.equal(approach.plan.partial, true);
+    const [anchor] = compileActivations(item("Immovable"));
+    assert.deepEqual(anchor.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration]), [["immobilized", null]]);
+});

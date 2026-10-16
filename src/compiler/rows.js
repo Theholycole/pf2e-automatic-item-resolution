@@ -83,21 +83,27 @@ const UNTIL_NEXT_TURN = /\buntil the (?:end|start|beginning) of your next turn\b
 function selfConditions(sentences, used = new Set()) {
     const effects = [];
     const names = CONDITIONS.join("|");
-    const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b`, "gi");
+    // (And "You Stride and turn partially invisible, becoming Concealed …": the sentence's own "you".)
+    const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b|\bYou\b[^.]*?,\s*becoming (${names})(?: (\d+))?\b`, "gi");
     for (const [index, sentence] of sentences.entries()) {
         if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against|next time)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow)\w*\b[^,]*,/i, ""))) continue;
-        const timed = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence);
+        // ("until you Dismiss the Activation": until it's removed.)
+        const dismissed = /\buntil you Dismiss\b/i.test(sentence);
+        const timed = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence) || dismissed;
         if (!timed) continue;
         const until = UNTIL_NEXT_TURN.exec(sentence);
         const duration = until ? { mode: "fixed", value: 1, unit: "rounds", expiry: /\bend\b/i.test(until[0]) ? "turn-end" : "turn-start", anchor: "source-turn" } : durationIn(sentence, null);
         for (const match of sentence.matchAll(pattern)) {
-            const slug = (match[1] ?? match[3]).toLowerCase();
-            const value = match[2] ?? match[4];
+            // (The "becoming" form only after a capital "You": the sentence's subject.)
+            if (match[5] && !match[0].startsWith("You")) continue;
+            const slug = (match[1] ?? match[3] ?? match[5]).toLowerCase();
+            const value = match[2] ?? match[4] ?? match[6];
             if (effects.some((effect) => effect.slug === slug)) continue;
             // (Only to some: "invisible to scrying magic", "Invisible to creatures with the fiend … trait" — not the condition.)
             if (/^\s*(?:to|from|against)\b/i.test(sentence.slice(match.index + match[0].length))) continue;
-            used.add(index);
-            effects.push({ kind: "condition", slug, value: value ? Number(value) : null, duration: slug === "prone" ? null : duration });
+            // (Another way it ends, "or until you use a hostile action, whichever comes first", stays on the note.)
+            if (!/\bor until\b|\bwhichever comes first\b/i.test(sentence)) used.add(index);
+            effects.push({ kind: "condition", slug, value: value ? Number(value) : null, duration: slug === "prone" || dismissed ? null : duration });
         }
     }
     return effects;
