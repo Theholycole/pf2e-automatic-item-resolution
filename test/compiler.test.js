@@ -314,3 +314,14 @@ test("action scopes in lower case, the last item's only; X-based checks; a sente
     ]);
     assert.ok(plan.unread.some((sentence) => /1 additional precision damage to Off-Guard creatures/.test(sentence)), "the Strikes' extra damage on the note");
 });
+
+test("of several linked Effects, the item's own (its name, or the wearer's); the others a note; not per degree, for allies, or unnamed", () => {
+    const wine = compileItem(item("Iron Wine"));
+    assert.deepEqual(wine.resolution.applications.map((entry) => entry.label), ["Effect: Iron Wine"]);
+    assert.match(wine.notes[0], /^Effect: Iron Wine Weakness is linked too/);
+    const [belt] = compileActivations(item("Belt of the Five Kings"));
+    assert.deepEqual(belt.plan.resolution.applications.map((entry) => entry.label), ["Effect: Belt of the Five Kings (Wearer)"]);
+    // Per degree (Electromuscular Stimulator), an unnamed activation's (Weapon Siphon's bomb fitting): not read this way.
+    assert.equal(compileItem(item("Electromuscular Stimulator"))?.resolution?.applications?.length ?? 0, 0);
+    assert.equal(compileActivations(item("Weapon Siphon"))[0].plan?.resolution?.applications?.length ?? 0, 0);
+});

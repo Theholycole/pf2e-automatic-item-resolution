@@ -18,9 +18,9 @@
    "resolves": 701,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 244,
+   "note-only": 239,
    "builtin:item-action": 8,
-   "partial": 32,
+   "partial": 37,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
    "builtin:reroll": 2,
@@ -35,10 +35,10 @@
     "builtin:cast-spell": 11,
     "none": 139,
     "resolves": 202,
-    "note-only": 113,
+    "note-only": 108,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 10,
+    "partial": 15,
     "builtin:no-effect": 14,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -6623,8 +6623,8 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
+   "result": "partial",
+   "kind": "effect",
    "live": "item"
   },
   {
@@ -6764,8 +6764,8 @@
     "trigger",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
+   "result": "partial",
+   "kind": "effect",
    "live": "item"
   },
   {
@@ -7194,8 +7194,8 @@
     "linked-effect",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
+   "result": "partial",
+   "kind": "effect",
    "live": "item"
   },
   {
@@ -11752,8 +11752,8 @@
     "linked-effect",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
+   "result": "partial",
+   "kind": "effect",
    "live": "item"
   },
   {
@@ -22125,8 +22125,8 @@
     "linked-effect",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
+   "result": "partial",
+   "kind": "effect",
    "live": "item"
   },
   {

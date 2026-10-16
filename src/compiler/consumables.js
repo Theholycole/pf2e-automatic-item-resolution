@@ -142,17 +142,41 @@ const application = (link, recipient) => ({ kind: "native-spell-effect", uuid: l
 // Effect (or the PF2e spell Effects of the spells it grants) and the healing PF2e
 // rolls. Items linking several Effects (a stage or a degree each) are left to the
 // readings that know which one applies.
+// Of several linked Effects, the item's own: named like the item or its activation ("Effect: Rainbow Vinegar" beside "Effect:
+// Rainbow Vinegar Weakness", "Effect: Belt of the Five Kings (Wearer)" beside "(Allies)"), when the others come later or under a
+// condition (a second dose, a later activation) — not one per degree (Electromuscular Stimulator), nor one for allies in an
+// area (The Hammer of Hooves). null when there's no one such.
+const DEGREE_ROWS = /\b(?:Critical Success|Critical Failure)\b|\b(?:Success|Failure) (?:The|the|You|you|It|it)\b/;
+export function ownLink(item, links, names = []) {
+    if (links.length < 2) return null;
+    const text = plain(item?.system?.description?.value);
+    if (DEGREE_ROWS.test(text) || (/\b(?:allies|emanation|aura)\b/i.test(text) && !links.some((link) => /\(Wearer\)$/i.test(link.label ?? "")))) return null;
+    // (An activation's: its own name only — Weapon Siphon's unnamed activation fits a bomb, "Effect: Weapon Siphon Bomb Fitted", not
+    // the item's "Effect: Weapon Siphon" — or the wearer's.)
+    const activation = item?.system?.category === "permanent";
+    const named = activation ? names.filter((name) => String(name ?? "").includes(": ")).map((name) => name.split(": ").at(-1)) : [item?.name, ...names];
+    const bases = named.filter(Boolean).flatMap((name) => [name, name.replace(/\s*\([^)]*\)\s*$/, "")]).map((name) => name.toLowerCase().trim());
+    const own = links.filter((link) => {
+        const label = String(link.label ?? "").replace(/^Effect:\s*/i, "").toLowerCase().trim();
+        return bases.includes(label) || /\(wearer\)$/.test(label);
+    });
+    return own.length === 1 ? own[0] : null;
+}
+
 export function ownPlan(item, base, options = {}) {
     const recipient = recipientOf(item);
     const healing = nativeHealing(item);
     const links = effectLinks(item);
-    const applications = links.length === 1 ? [application(links[0], recipient)] : !links.length ? spellEffectApplications(item, options.spellEffects, recipient) ?? [] : [];
+    // (Several: the item's own, the others on the note.)
+    const own = ownLink(item, links, [base?.source?.name]);
+    const applications = links.length === 1 ? [application(links[0], recipient)] : own ? [application(own, recipient)] : !links.length ? spellEffectApplications(item, options.spellEffects, recipient) ?? [] : [];
+    const others = own ? links.filter((link) => link !== own).map((link) => `${link.label ?? "Another Effect"} is linked too: the GM's, when the text says it applies.`) : [];
     // (A granted spell with no PF2e Effect: a cast; only once the spell-effects index is known, so it isn't one by mistake.)
     if (!healing && !applications.length) return !links.length && options.spellEffects ? castPlan(item) : null;
     const resolution = healing && !applications.length
         ? { kind: "healing", native: { healing } }
         : { kind: "effect", applications, ...(healing ? { native: { healing } } : {}) };
-    return { ...base, automation: { level: "automatic" }, targeting: { target: recipient === "drinker" ? "the drinker" : null, range: null, area: null }, trigger: { event: "use" }, resolution };
+    return { ...base, automation: { level: others.length ? "guided" : "automatic" }, targeting: { target: recipient === "drinker" ? "the drinker" : null, range: null, area: null }, trigger: { event: "use" }, resolution, ...(others.length ? { notes: others, partial: true } : {}) };
 }
 
 // The ability compiler's plan, fitted to the item: its "self" effects go to the
