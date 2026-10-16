@@ -794,6 +794,33 @@ export const cases = {
         return { save: save.id };
     },
 
+    // Knight Captain's Lance: +1 status to attack and damage rolls for its user and allies in the area — the ability module's
+    // automatic card at the creatures targeted, its Apply giving each the bonus.
+    async allyArea(scene) {
+        const { actor: captain, token: captainToken } = await creature(scene, "Lance Captain", { type: "character", x: 2, y: 28 });
+        const { actor: squire, token: squireToken } = await creature(scene, "Lance Squire", { x: 3, y: 28 });
+        const lance = await give(captain, "Knight Captain's Lance");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(lance.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the item's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [captainToken.uuid, squireToken.uuid] });
+        const automatic = await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
+        let button = null;
+        const end = Date.now() + 5000;
+        while (Date.now() < end && !button) {
+            const found = document.querySelector(`[data-message-id="${automatic.id}"] [data-aar-action="apply"]`);
+            if (found && !found.disabled) button = found;
+            else await wait(200);
+        }
+        assert(button, "the ability card's Apply button");
+        button.click();
+        await wait(1500);
+        const bonuses = (actor) => actor.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).filter((rule) => rule.key === "FlatModifier" && rule.type === "status" && Number(rule.value) === 1).map((rule) => [].concat(rule.selector).join(","));
+        for (const actor of [captain, squire]) assert(bonuses(actor).includes("attack-roll") && bonuses(actor).includes("damage"), `${actor.name}: +1 status to attack and damage rolls (${JSON.stringify(bonuses(actor))})`);
+        return { captain: bonuses(captain), squire: bonuses(squire) };
+    },
+
     // Shadowmist Cape: "You cast Vapor Form on yourself" — cast by the spell module on its user (self filled from the words).
     async shadowmistSelf(scene) {
         const { actor: wearer, token } = await creature(scene, "Mist Wearer", { type: "character", x: 10, y: 25 });
