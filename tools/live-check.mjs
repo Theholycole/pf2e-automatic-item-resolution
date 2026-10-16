@@ -919,6 +919,24 @@ export const cases = {
         return { choices, check };
     },
 
+    // Twisting Twine (Lesser): Disarm or Trip at its own +9, picked on the card — Trip picked, the ability module's card is Trip's.
+    async twineChoice(scene) {
+        const { actor: user } = await creature(scene, "Twine User", { type: "character", x: 10, y: 13 });
+        const { token: foeToken } = await creature(scene, "Twine Target", { x: 12, y: 13, alliance: "opposition" });
+        const twine = await give(user, "Twisting Twine (Lesser)");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(twine.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the twine's card" });
+        const choices = card.getFlag(NS, "card").plan.checkChoices ?? [];
+        assert(choices.map((choice) => choice.label).join(",") === "Disarm,Trip", `Disarm or Trip (${choices.map((choice) => choice.label)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], checkChoice: 1 });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
+        const plan = check.flags["pf2e-automatic-ability-resolution"].card.plan;
+        assert(plan.resolution.check.modifier === 9 && JSON.stringify(plan.resolution.outcomes) === JSON.stringify(choices[1].resolution.outcomes), "Trip's rows at +9");
+        return { check: check.id };
+    },
+
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
     // targeted.
     async alliesEffect(scene) {
