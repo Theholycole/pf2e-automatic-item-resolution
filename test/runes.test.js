@@ -48,3 +48,28 @@ test("live: the rune's Activate on the armor posts its card, named for the armor
     assert.equal(card.flags[MODULE_ID].card.item.name, "Full Plate (Bolka's Blessing: Gift of Life)");
     assert.match(card.content, /3d10/);
 });
+
+test("the runes' reactions read: Vorpal's death, Hauling's push, Ouroboros Flail's pull and grab, Deathless, Unholy Bloodshed, Energy-Absorbing", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const plans = (name) => compileActivations(equipment.find((doc) => doc.name === name));
+    const failure = (plan) => plan.resolution.outcomes.failure;
+    // Vorpal: a Fortitude save or death; who it doesn't kill, the GM's.
+    const vorpal = plans("Vorpal")[0].plan;
+    assert.deepEqual([vorpal.resolution.check.statistic, vorpal.resolution.check.against.value, failure(vorpal).terminal, vorpal.resolution.outcomes.criticalFailure.terminal, vorpal.resolution.outcomes.success.terminal], ["fortitude", 37, { kind: "death" }, { kind: "death" }, undefined]);
+    assert.match(vorpal.resolution.reminders[0], /require a head/);
+    // Hauling: pushed 5 feet (10 for the greater), the direction its user's choice.
+    assert.deepEqual([failure(plans("Hauling")[0].plan).forcedMovement.distance, failure(plans("Hauling (Greater)")[0].plan).forcedMovement.distance], [5, 10]);
+    assert.match(failure(plans("Hauling")[0].plan).manualInstructions[0], /direction is its user's choice/);
+    // Ouroboros Flail: pulled to its user, then grabbed until the end of their next turn.
+    const grasp = plans("Ouroboros Flail").find((entry) => entry.activation.name === "Chained Grasp").plan;
+    assert.deepEqual([failure(grasp).forcedMovement.kind, failure(grasp).effects.map((effect) => [effect.slug, effect.duration?.expiry])], ["pull", [["grabbed", "turn-end"]]]);
+    // Deathless: the triggering condition, doomed or wounded, lowered by 1 (the card's picker).
+    assert.deepEqual(plans("Deathless")[0].plan.item.reduce, [{ choose: ["doomed", "wounded"], by: 1 }]);
+    // Unholy Bloodshed: 1d8 persistent bleed per die of the weapon it's etched onto.
+    const bleed = (entry) => entry.plan.resolution.sharedDamage.components[0];
+    assert.deepEqual([bleed(plans("Unholy")[0]).formula, bleed(plans("Unholy")[0]).category], ["1d8", "persistent"]);
+    assert.equal(bleed(etchedRuneActivations({ type: "weapon", system: { damage: { dice: 1, die: "d8" }, runes: { striking: 2, property: ["unholy"] } } }, runes)[0]).formula, "3d8");
+    // Energy-Absorbing: 2d6 of the energy its maker chose, at the attacker.
+    const absorb = plans("Energy-Absorbing")[0].plan;
+    assert.deepEqual([routeOf(absorb), absorb.damageChoices.map((choice) => choice.formula)], ["save", ["2d6[acid]", "2d6[cold]", "2d6[electricity]", "2d6[fire]"]]);
+});

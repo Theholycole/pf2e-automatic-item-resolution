@@ -35,6 +35,10 @@ const TIMED = /\bWhenever\b|\banytime\b|\beach round\b|\bat the (?:beginning|sta
 const DEGREE_ROW = /^(?:Critical )?(?:Success|Failure)\b/;
 // (On yourself or another: "When used on yourself or a creature within your reach, that target reduces …" — its drinker's.)
 const EITHER = /\b(?:on|to) yourself or (?:an?|another|one) /i;
+// (The condition its Trigger names: Deathless's "Trigger You gain the Doomed or Wounded condition … You reduce the value of the
+// triggering condition by 1" — the one of them its user gained, the card's picker.)
+const TRIGGERING = /\breduc(?:e|es|ing) the value of the triggering condition by (\d|one|two|three)\b/i;
+const triggerOf = (text) => /\bTrigger\b(.*?)(?:\bEffect\b|$)/s.exec(String(text ?? ""))?.[1] ?? "";
 // (Its use only: not a later "Secondary Effect" — Ginger Chew's "Reduce your sickened value by 1" is for when it's used again.)
 const ownUse = (text) => String(text ?? "").split(/\bSecondary Effect\b/)[0];
 const RULE_WORDS = /\b(?:check|save|saving throw|damage|bonus|penalty|Hit Points|condition|Speed|resistance|immune)\b/i;
@@ -48,6 +52,13 @@ export function readReductions(text) {
         if (!found.some((other) => (other.slug ?? other.choose?.join()) === (entry.slug ?? entry.choose?.join()) && other.who === entry.who)) found.push(entry);
     };
     const either = EITHER.test(ownUse(text));
+    const triggering = TRIGGERING.exec(ownUse(text));
+    if (triggering) {
+        const slugs = [...new Set([...triggerOf(text).toLowerCase().matchAll(new RegExp(String.raw`\b(${NAMES})\b`, "g"))].map((match) => match[1]))];
+        const by = amount(triggering[1]);
+        if (slugs.length === 1) add({ slug: slugs[0], by });
+        else if (slugs.length > 1) add({ choose: slugs, by });
+    }
     for (const sentence of ownUse(text).split(/(?<=[.!?])\s+(?=[A-Z])/)) {
         if (TIMED.test(sentence) || DEGREE_ROW.test(sentence.trim())) continue;
         const area = AREA.test(sentence);

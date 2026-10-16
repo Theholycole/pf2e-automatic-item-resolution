@@ -6,15 +6,15 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 696,
+   "resolves": 701,
    "builtin:cast-spell": 469,
-   "none": 771,
+   "none": 760,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
    "note-only": 264,
    "builtin:reroll": 22,
-   "partial": 80,
+   "partial": 86,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 26,
    "builtin:zone": 9,
@@ -24,10 +24,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 351,
+   "save": 361,
    "cast": 469,
-   "item": 598,
-   "none": 967,
+   "item": 599,
+   "none": 956,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
@@ -44,15 +44,15 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 420,
+    "resolves": 425,
     "builtin:cast-spell": 340,
-    "none": 510,
+    "none": 503,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
     "builtin:readied-bonus": 21,
     "note-only": 167,
     "builtin:reroll": 14,
-    "partial": 35,
+    "partial": 37,
     "builtin:zone": 6,
     "builtin:modes": 15,
     "builtin:roll-twice": 7,
@@ -64,8 +64,8 @@
    "activations": 460,
    "results": {
     "resolves": 146,
-    "none": 127,
-    "partial": 23,
+    "none": 123,
+    "partial": 27,
     "note-only": 40,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
@@ -1502,9 +1502,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "save",
+   "live": "save",
    "rune": true
   },
   {
@@ -3467,9 +3467,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "partial",
+   "kind": "save",
+   "live": "save",
    "rune": true
   },
   {
@@ -10952,9 +10952,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Ouroboros Flail",
@@ -11801,9 +11801,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "check",
+   "live": "save",
    "rune": true
   },
   {
@@ -14029,9 +14029,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Devil's Trident",
@@ -20096,9 +20096,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "check",
+   "live": "save",
    "rune": true
   },
   {
@@ -21121,9 +21121,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Ouroboros Flail (Major)",
@@ -21697,9 +21697,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "partial",
+   "kind": "check",
+   "live": "item",
    "rune": true
   },
   {
@@ -22624,9 +22624,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "check",
+   "live": "save",
    "rune": true
   },
   {
@@ -23332,9 +23332,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "save",
+   "live": "save",
    "rune": true
   },
   {
@@ -25178,9 +25178,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Ouroboros Flail (Greater)",

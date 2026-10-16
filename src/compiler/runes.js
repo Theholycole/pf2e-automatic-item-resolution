@@ -6,6 +6,7 @@
 // (scripts/activations.js). Pure.
 
 import { compileActivations } from "./permanent.js";
+import { perWeaponDie, weaponDice } from "./item-data.js";
 
 const QUALIFIERS = new Set(["minor", "lesser", "moderate", "greater", "major", "true", "supreme"]);
 // (PF2e's keys that kept the old names: Quickstrike is "speed", Vitalizing "disrupting", Spell Reservoir "spellStoring", Animated "dancing".)
@@ -41,9 +42,11 @@ export function etchedRuneActivations(item, index, options = {}) {
     if (!ETCHED_ONTO.includes(item?.type) || !index?.size) return [];
     const found = [];
     for (const key of etchedKeys(item)) {
-        const rune = index.get(key);
-        if (!rune) continue;
-        for (const entry of compileActivations(rune, options)) found.push({ ...entry, index: `rune:${key}:${entry.index}`, rune: { key, name: rune.name, uuid: rune.uuid ?? null } });
+        const source = index.get(key);
+        if (!source) continue;
+        // (Its text with the weapon's own numbers: "1d8 per weapon damage die of the etched weapon".)
+        const rune = item.type === "weapon" ? { ...source, system: { ...source.system, description: { ...(source.system?.description ?? {}), value: perWeaponDie(source.system?.description?.value, weaponDice(item)) } } } : source;
+        for (const entry of compileActivations(rune, options)) found.push({ ...entry, index: `rune:${key}:${entry.index}`, rune: { key, name: source.name, uuid: source.uuid ?? null } });
     }
     return found;
 }

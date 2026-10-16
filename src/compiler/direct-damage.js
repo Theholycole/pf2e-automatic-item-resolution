@@ -181,3 +181,17 @@ export function retaliationPlan(text, base) {
         resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: deals[1].replace(/\s+/g, ""), type: deals[2].toLowerCase(), category: null }] }, outcomes: { criticalSuccess: none(), success, failure: none(), criticalFailure: none() } }
     };
 }
+
+// "You unleash the infused energy …, inflicting 2d6 damage of that energy type to the creature who made the melee Strike"
+// (Energy-Absorbing runes): the energy is the one its maker chose, "acid, cold, electricity, or fire" in the item's own
+// text — outright damage at the creature targeted, its type the card's picker (plan.damageChoices). whole: the item's text.
+const OF_THAT_TYPE = /\binflict(?:s|ing)? (\d+d\d+) damage of that (?:energy|damage) type to (?:the creature who made the (?:melee )?Strike|the attacker|that creature)\b/i;
+const ENERGIES = "acid|cold|electricity|fire|sonic";
+const ENERGY_LIST = new RegExp(String.raw`\b((?:${ENERGIES})(?:,\s*(?:${ENERGIES}))*,?\s*or\s+(?:${ENERGIES}))\b`, "i");
+export function energyChoicePlan(text, base, whole = text) {
+    const match = OF_THAT_TYPE.exec(String(text ?? ""));
+    const types = [...(ENERGY_LIST.exec(String(whole ?? ""))?.[1] ?? "").matchAll(new RegExp(ENERGIES, "gi"))].map(([type]) => type.toLowerCase());
+    if (!match || !types.length) return null;
+    const plan = directDamagePlan(`The attacking creature takes ${match[1]} ${types[0]} damage.`, base);
+    return plan ? { ...plan, damageChoices: types.map((type) => ({ label: type.replace(/^\w/, (letter) => letter.toUpperCase()), formula: `${match[1]}[${type}]` })) } : null;
+}

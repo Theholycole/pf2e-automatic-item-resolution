@@ -13,7 +13,7 @@ import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
-import { directDamageOver, directDamagePlan, negatingSavePlan } from "./direct-damage.js";
+import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { beadsPlan } from "./beads.js";
@@ -26,6 +26,7 @@ import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
 import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
+import { saveOrPlan } from "./save-or.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 
@@ -155,6 +156,8 @@ function compileEach(item, options = {}) {
         plan = guardValues(directDamageOver(guardText(plan, plainText(activation.html)), directDamagePlan(plainText(activation.html), base, { item })));
         // (Damage a successful save negates, src/compiler/direct-damage.js: Mycoweave Shield's spores.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = negatingSavePlan(plainText(activation.html), base) ?? plan;
+        // (Damage of the energy its maker chose, the card's picker: Energy-Absorbing runes.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = energyChoicePlan(plainText(activation.html), base, plainText(html)) ?? plan;
         // (What it gives its user and allies in an area, src/compiler/rows.js: Knight Captain's Lance.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = allyAreaPlan(plainText(activation.html), base, allyAreaRow(plainText(activation.html))) ?? plan;
         // (An Effect behind a check the text opens with: only on its success, a note.)
@@ -180,6 +183,8 @@ function compileEach(item, options = {}) {
         const runeItem = { ...item, system: { ...(item.system ?? {}), description: { value: activation.html } } };
         const rune = readRuneLoan(plainText(activation.html), runeItem);
         if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
+        // (A save or a result no row holds — death, a push, a pull to its user — src/compiler/save-or.js: Vorpal, Hauling.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = saveOrPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
         if (!plan) plan = pf2eRulesPlan(item, base, plainText(activation.html));
         if (!plan) return { activation, plan: null, index };

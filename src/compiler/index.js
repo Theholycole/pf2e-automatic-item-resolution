@@ -33,6 +33,7 @@ import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
+import { saveOrPlan } from "./save-or.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -126,6 +127,8 @@ function compileOne(given, options = {}) {
     if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value })) {
         plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
     }
+    // (A save or a result no row holds — death, a push, a pull to its user — src/compiler/save-or.js.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = saveOrPlan(item?.system?.description?.value, base) ?? plan;
     // (Damage to a creature that touches its drinker, for the item's time, src/compiler/direct-damage.js: Potion of Fire Retaliation.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = retaliationPlan(plainText(item?.system?.description?.value), base) ?? plan;
     // (What it gives its user and allies in an area, src/compiler/rows.js.)

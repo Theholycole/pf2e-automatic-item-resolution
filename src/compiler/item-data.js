@@ -32,6 +32,8 @@ const OWNER_WORDS = Object.freeze({ class: "your class DC", spell: "your spell D
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
+    // (Dice per weapon damage die — Unholy Bloodshed's: one die where no weapon says more, src/compiler/runes.js giving its weapon's.)
+    text = perWeaponDie(text, item?.type === "weapon" ? weaponDice(item) : 1);
     // (A save against the owner's own DC: its stand-in.)
     text = text.replace(/@Check\[((?:type:)?(?:fortitude|reflex|will))\|([^\]]*?)\bagainst:(class-spell|class|spell)\b/gi, (whole, statistic, before, kind) => `@Check[${statistic}|${before}dc:${STAND_IN[kind.toLowerCase()]}`);
     if (!/@item\./.test(text) && !/\bpotency rune\b/i.test(text) && !DAMAGE_SAVE.test(text)) return text;
@@ -111,3 +113,15 @@ export function fillOwnerDCs(plan, dcs = {}) {
 }
 
 export const hasOwnerDC = (plan) => Boolean(plan) && /"dc":"owner"|"ownerDC"/.test(JSON.stringify(plan));
+
+// A weapon's damage dice: its own (1) and its striking rune's.
+export const weaponDice = (weapon) => (Number(weapon?.system?.damage?.dice) || 1) + (Number(weapon?.system?.runes?.striking) || 0);
+
+// "takes Persistent Bleed Damage equal to 1d8 per weapon damage die of the etched weapon" → "takes 3d8 persistent bleed damage"
+// (dice: the weapon's); "1d6 per weapon damage die" → "3d6".
+export function perWeaponDie(html, dice) {
+    const per = String.raw`(\d+)d(\d+) per (?:weapon )?damage die(?: of the (?:etched |affixed )?weapon)?`;
+    return String(html ?? "")
+        .replace(new RegExp(String.raw`\btakes (?:@UUID\[[^\]]*\]\{)?Persistent (\w+) Damage\}? equal to ${per}`, "gi"), (whole, type, count, faces) => `takes ${Number(count) * dice}d${faces} persistent ${type.toLowerCase()} damage`)
+        .replace(new RegExp(String.raw`\b${per}`, "gi"), (whole, count, faces) => `${Number(count) * dice}d${faces}`);
+}
