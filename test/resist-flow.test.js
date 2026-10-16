@@ -139,3 +139,13 @@ test("resistance to a type it makes its user choose: the card's picker, the type
     assert.deepEqual(effect.system.rules, [{ key: "Resistance", type: "fire", value: 5 }]);
     assert.match(card.content, /Monk: Resistance 5 to fire for 1 hour/);
 });
+
+test("more resistance and bonus wordings: number first on the creature it's smeared on, splash and area damage, \"bonus against fear effects\", comma lists", () => {
+    const row = (html) => ownRow(text(`<p>${html}</p>`));
+    const smeared = row("When smeared over a creature, that creature gains 3 resistance to acid damage for 1 minute.");
+    assert.deepEqual(smeared.resistances.map((entry) => [entry.type, entry.value, entry.duration.value]), [["acid", 3, 1]]);
+    assert.deepEqual(row("After eating it, you gain resistance 2 to splash damage and area damage for 1 minute.").resistances.map((entry) => entry.type), ["splash-damage", "area-damage"]);
+    // (PF2e's own Effects read "a +1 status bonus against emotion and mental effects" as saves.)
+    assert.deepEqual(row("For 1 hour, you gain a +1 status bonus against fear effects.").modifiers.map((modifier) => [modifier.selector, modifier.predicate]), [["saving-throw", ["item:trait:fear"]]]);
+    assert.deepEqual(row("You gain a +2 item bonus to Acrobatics checks to Escape, Squeeze, or Tumble Through for 1 hour.").modifiers[0].predicate, [{ or: ["action:escape", "action:squeeze", "action:tumble-through"] }]);
+});

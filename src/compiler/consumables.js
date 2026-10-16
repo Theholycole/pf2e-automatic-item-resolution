@@ -21,7 +21,7 @@ export function recipientOf(item) {
     const traits = item?.system?.traits?.value ?? [];
     if (traits.includes("ingested") || INGEST_WORDS.test(plain(item?.system?.description?.value))) return "drinker";
     // ("applied to yourself or an adjacent target", "sprinkling it on yourself or another creature within reach": either.)
-    if (/\b(?:to|on) yourself or (?:an?|another|one) (?:adjacent |willing ){0,2}(?:target|creature|ally)\b|\bapplied to up to (?:\d+|two|three|four|five|six) willing creatures\b/i.test(plain(item?.system?.description?.value))) return "drinker";
+    if (/\b(?:to|on) yourself or (?:an?|another|one) (?:adjacent |willing ){0,2}(?:target|creature|ally)\b|\bapplied to up to (?:\d+|two|three|four|five|six) willing creatures\b|\bWhen (?:smeared|applied|rubbed|spread) (?:over|on|onto|to) (?:a|an) (?:willing )?creature\b/i.test(plain(item?.system?.description?.value))) return "drinker";
     return "user";
 }
 

@@ -210,7 +210,7 @@ function scopeOf(scope) {
         const flat = terms.flatMap((term) => (typeof term === "string" ? [term] : term.or));
         return [flat.length === 1 ? flat[0] : { or: [...new Set(flat)] }];
     }
-    const to = /^to ((?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?)(?:,? (?:and|or) (?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?))*)$/.exec(scope)
+    const to = /^to ((?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?)(?:(?:,? (?:and|or) |, )(?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?))*)$/.exec(scope)
         // (In lower case too, when every name is an action's: "to disarm, grapple, reposition, shove, and trip", "to sense-motive".)
         ?? /^to ([a-z][a-z -]*(?:(?:,|,? and|,? or) [a-z][a-z -]*)*)$/.exec(scope);
     if (to) {
@@ -233,7 +233,9 @@ function modifiersOf(sentences, duration, used = new Set()) {
         // ("While the effect lasts, you gain …", "During this time, …": its time, not a condition.)
         const said = sentence.replace(/^\s*(?:While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|While (?:it's |it is )?activated|During this time|For the duration),\s*/i, "")
             // ("you gain resistance 5 … but take a -5-foot status penalty to all Speeds": the same "you".)
-            .replace(/(\byou (?:gain|get|have)\b[^.;]*?),? (but|and) (take|suffer)\b/i, "$1, $2 you $3");
+            .replace(/(\byou (?:gain|get|have)\b[^.;]*?),? (but|and) (take|suffer)\b/i, "$1, $2 you $3")
+            // ("a +1 status bonus against fear effects": saves against them, as PF2e's own Effects read it.)
+            .replace(/\b(bonus|penalty) against (?=[\w -]+? effects\b)/gi, "$1 to saving throws against ");
         if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(said)) continue;
         for (const match of said.matchAll(pattern)) {
             const [, sign, number, feet, type, kind, list] = match;
@@ -281,18 +283,22 @@ function modifiersOf(sentences, duration, used = new Set()) {
 const RESIST_TYPES = new Set(["acid", "bludgeoning", "cold", "electricity", "fire", "force", "mental", "piercing", "poison", "slashing", "sonic", "spirit", "vitality", "void", "bleed", "holy", "unholy", "physical", "energy"]);
 function resistancesOf(sentences, duration, used = new Set()) {
     const found = [];
-    const pattern = /\byou (?:gain|get|have) resistance (\d+) to ((?:all|[a-z]+)(?:(?:,|, and| and) [a-z]+)*)(?: damage)?(?=[.;]|,? (?:but|and)\b| for\b| until\b|$)/gi;
+    // ("you gain resistance 5 to fire", "that creature gains 2 resistance to acid damage", "resistance 2 to splash damage and area damage".)
+    const pattern = /\b(?:you (?:gain|get|have)|(?:that|the) creature (?:gains|has)) (?:resistance (\d+)|(\d+) resistance) to ((?:all|[a-z]+)(?: damage)?(?:(?:,|, and| and) [a-z]+(?: damage)?)*)(?: damage)?(?=[.;]|,? (?:but|and)\b| for\b| until\b|$)/gi;
     for (const [index, whole] of sentences.entries()) {
         const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "").replace(/^\s*(?:Additionally|In addition|Also),\s*/i, "");
-        if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(sentence) || /\b(?:triggering|except|double|instead|chosen|choose|attuned|one type|all(?:y|ies)|creatures?|emanation|aura|against (?:the|that|one))\b/i.test(sentence)) continue;
-        for (const match of sentence.matchAll(pattern)) {
-            const words = match[2].toLowerCase().split(/,? and |, /).map((word) => word.trim());
-            const types = words.length === 1 && words[0] === "all" ? ["all-damage"] : words;
-            if (!types.every((type) => type === "all-damage" || RESIST_TYPES.has(type))) continue;
+        // ("When smeared over a creature, that creature gains …": the one it's on, the drinker.)
+        const own = sentence.replace(/^\s*When (?:smeared|applied|rubbed|spread) (?:over|on|onto|to) (?:a|an|the) (?:willing )?creature,\s*/i, "");
+        if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(own) || /\b(?:triggering|except|double|instead|chosen|choose|attuned|one type|all(?:y|ies)|creatures|emanation|aura|against (?:the|that|one))\b/i.test(own) || /\bcreature\b(?! (?:gains|has) )/i.test(own.replace(/\b(?:that|the) creature (?:gains|has)\b/i, ""))) continue;
+        for (const match of own.matchAll(pattern)) {
+            const words = match[3].toLowerCase().split(/,? and |, /).map((word) => word.trim().replace(/ damage$/, ""));
+            // (Splash and area damage: PF2e's splash-damage and area-damage.)
+            const types = words.length === 1 && words[0] === "all" ? ["all-damage"] : words.map((word) => (word === "splash" || word === "area" ? `${word}-damage` : word));
+            if (!types.every((type) => type === "all-damage" || type === "splash-damage" || type === "area-damage" || RESIST_TYPES.has(type))) continue;
             // (A sentence that says more after it — "… and take no fall damage" — stays a note too, unless that's read.)
-            const more = /^,? (?:and|but)\b/i.test(sentence.slice(match.index + match[0].length));
+            const more = /^,? (?:and|but)\b/i.test(own.slice(match.index + match[0].length));
             if (!more) used.add(index);
-            for (const type of types) found.push({ type, value: Number(match[1]), duration: durationIn(sentence, duration) });
+            for (const type of types) found.push({ type, value: Number(match[1] ?? match[2]), duration: durationIn(own, duration) });
         }
     }
     return found.length ? found : chosenResistance(sentences, duration, used);
