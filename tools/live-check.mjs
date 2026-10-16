@@ -1571,6 +1571,58 @@ export const cases = {
         const formula = card.getFlag(NS, "card").plan.resolution.sharedDamage?.components?.[0]?.formula;
         assert(formula === "18d6[sonic]", `18d6 sonic at 15th level (${formula})`);
         return { formula, level: owner.level };
+    },
+
+    // Wolf Fang: its damage of its user's Strength modifier at the creature targeted (the user's own number, live).
+    async wolfFang(scene) {
+        const { actor: user } = await creature(scene, "Fang User", { type: "character", x: 2, y: 18 });
+        const { token: foeToken } = await creature(scene, "Fang Foe", { x: 3, y: 18, alliance: "opposition" });
+        const str = Number(user.abilities?.str?.mod);
+        const fang = await give(user, "Wolf Fang");
+        let since = Date.now();
+        await fang.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the fang's card" });
+        const formula = card.getFlag(NS, "card").plan.resolution.sharedDamage?.components?.[0]?.formula;
+        assert(formula === `${str}[bludgeoning]`, `its Strength modifier ${str} (${formula})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await messageAfter(since, abilitySaveCard, { what: "the damage card" });
+        return { formula };
+    },
+
+    // Bracers of Strength's Bear Hug: PF2e's Grapple, then on a success its crush, the ability module's damage card.
+    async bearHug(scene) {
+        const { actor: user } = await creature(scene, "Hugger", { type: "character", x: 6, y: 18 });
+        const { token: foeToken } = await creature(scene, "Hugged", { x: 7, y: 18, alliance: "opposition", save: -20, ac: 0 });
+        const bracers = await give(user, "Bracers of Strength");
+        await bracers.update({ "system.equipped.invested": true });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(bracers.uuid, 0);
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the bear hug's card" });
+        const damage = card.getFlag(NS, "card").plan.action.damage;
+        assert(damage?.success && damage?.criticalSuccess, `damage for a success and a critical one (${JSON.stringify(Object.keys(damage ?? {}))})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "applied", { timeout: 15000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        const crushed = results.some((line) => /damage for a (?:critical )?success: its card/.test(line));
+        assert(crushed || results.some((line) => /: a (?:critical )?failure\./.test(line)), `the crush card on a success (${JSON.stringify(results)})`);
+        return { results, crushed };
+    },
+
+    // Cayden's Tankard: its conditions ended on its user, no other creature targeted.
+    async caydensTankard(scene) {
+        const { actor: user } = await creature(scene, "Tankard Drinker", { type: "character", x: 10, y: 18 });
+        await user.increaseCondition("grabbed");
+        await user.increaseCondition("slowed");
+        const tankard = await give(user, "Cayden's Tankard");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(tankard.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the tankard's card" });
+        await target();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        await until(() => !user.hasCondition("grabbed") && !user.hasCondition("slowed"), "grabbed and slowed ended");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 

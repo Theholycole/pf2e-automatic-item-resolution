@@ -338,13 +338,16 @@ async function targetedCreatures(uuids) {
 }
 
 // A condition lowered by an amount (PF2e's decreaseCondition, once for each step), or removed ("all").
+// (A condition with no value — Cayden's Tankard's grabbed — is there or not.)
 async function lowerCondition(actor, name, slug, by) {
-    const before = Number(actor?.getCondition?.(slug)?.value) || 0;
-    if (!before) return `${name} isn't ${slug}: nothing to lower.`;
+    const condition = actor?.getCondition?.(slug) ?? null;
+    const present = Boolean(condition) || Boolean(actor?.hasCondition?.(slug));
+    if (!present) return `${name} isn't ${slug}: nothing to lower.`;
     if (by === "all") await actor.decreaseCondition(slug, { forceRemove: true });
     else for (let step = 0; step < by; step++) await actor.decreaseCondition(slug);
-    const after = Number(actor.getCondition?.(slug)?.value) || 0;
-    return after ? `${name}'s ${slug} lowered to ${after}` : `${name} is no longer ${slug}`;
+    const left = actor.getCondition?.(slug) ?? null;
+    const after = Number(left?.value) || 0;
+    return after ? `${name}'s ${slug} lowered to ${after}` : left || actor.hasCondition?.(slug) ? `${name} is still ${slug}` : `${name} is no longer ${slug}`;
 }
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
@@ -475,7 +478,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     for (const entry of reduce) {
         const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
         const creatures = entry.who === "targets" ? others : [{ actor: target.actor, name: recipient.name }];
-        for (const creature of creatures) lines.push(await lowerCondition(creature.actor, creature.name, slug, entry.by));
+        for (const creature of creatures) {
+            const line = await lowerCondition(creature.actor, creature.name, slug, entry.by);
+            // (Of a list it ends — Cayden's Tankard's six — only the ones there.)
+            if (reduce.length <= 2 || !/: nothing to lower\.$/.test(line)) lines.push(line);
+        }
     }
     // (Its flat check to end persistent damage: PF2e's own recovery roll for each of those types, at the text's DC when it's
     // lower — Quenching Potion's 10 — then the condition's own DC again if it stays.)

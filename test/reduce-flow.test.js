@@ -216,3 +216,20 @@ test("Cayden's Tankard: the conditions it ends on its user and on any creatures 
     const { reductionText } = await import("../src/live/card.js");
     assert.equal(reductionText({ slug: "grabbed", by: "all", who: "targets", optional: true }), "Ends grabbed on each creature you target (if any)");
 });
+
+test("Cayden's Tankard live: a condition with no value (grabbed) ended on its user with nobody targeted; the list's absent ones left off", async () => {
+    scout.conditions.set("grabbed", null);
+    scout.conditions.set("slowed", 1);
+    const tankard = foundry.giveItem(scout, source("Cayden's Tankard"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: tankard.uuid, activation: 1, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.match(card.content, /Target the other creatures it helps, if any/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [], userId: "player" });
+    await settle();
+    assert.deepEqual([scout.hasCondition("grabbed"), scout.hasCondition("slowed")], [false, false]);
+    const results = card.flags[MODULE_ID].card.results;
+    assert.deepEqual(results.filter((line) => /grabbed|slowed/.test(line)), ["Scout is no longer grabbed", "Scout is no longer slowed"]);
+    assert.equal(results.some((line) => /nothing to lower/.test(line)), false);
+});
