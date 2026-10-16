@@ -104,3 +104,24 @@ test("Twisting Twine: Disarm or Trip at its own +9, picked on the card; the save
     const posted = foundry.posted.slice(before)[0];
     assert.deepEqual([posted.plan.resolution.check.modifier, posted.plan.resolution.outcomes.success.effects.map((effect) => effect.slug)], [9, twine.plan.checkChoices[1].resolution.outcomes.success.effects.map((effect) => effect.slug)]);
 });
+
+test("the item's modifier when it's higher than its user's: PF2e's action with the difference added", async () => {
+    // (The module's own wording, after the Alchemists+ plants.)
+    const html = "<p><strong>Activate</strong> Trip</p><p>The vine can lend its grip to your Trip. You can use a +7 Athletics modifier for your Trip instead of your Athletics modifier if it is higher than your own.</p>";
+    assert.deepEqual(readItemAction(html), { slug: "trip", name: "Trip", bonus: null, minimum: { value: 7, skill: "athletics" }, targeted: true });
+    const vine = foundry.giveItem(thief, { _id: "testVineTrip0001", type: "consumable", name: "Test Vine", img: null, system: { category: "other", traits: { value: ["consumable"] }, level: { value: 1 }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: html } } });
+    const data = vine.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: vine.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: thief.id }, actor: thief, token: thief.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    assert.match(card.content, /Trip at \+7 Athletics, when that&#39;s higher than your own/);
+    // Its user's Athletics is +3: the action gets +4 more.
+    thief.getStatistic = (slug) => (slug === "athletics" ? { mod: 3 } : null);
+    const before = foundry.actionUses.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [mark.token.uuid], userId: "player" });
+    await settle();
+    const [use] = foundry.actionUses.slice(before);
+    assert.deepEqual([use.slug, use.options.modifiers.map((modifier) => [modifier.modifier, modifier.type])], ["trip", [[4, "untyped"]]]);
+    delete thief.getStatistic;
+});

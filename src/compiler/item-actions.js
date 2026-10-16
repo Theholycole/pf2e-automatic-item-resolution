@@ -39,12 +39,22 @@ const FORMS = [
 ];
 // "Activate Administer First Aid", "Activate Treat Wounds": the action is the activation.
 const ACTIVATE_LINE = new RegExp(String.raw`^\s*Activate\s+(${NAMES})\b`, "i");
+// (The item's modifier when it's higher than its user's: Alchemists+ plants' "You can use a +5 Athletics modifier for your
+// Shove instead of your Athletics modifier if it is higher than your own" — the action, at that modifier at least.)
+const AT_LEAST = new RegExp(String.raw`\buse an? \+(\d+) (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy) modifier for your (${NAMES}) instead of your \w+ modifier if it is higher than your own\b`, "i");
 
 // The text → { slug, name, bonus: { value, type } | null, targeted, after } or null.
 export function readItemAction(html) {
     const raw = String(html ?? "");
     if (/@UUID\[[^\]]*\]\{Effect:/i.test(raw)) return null;
     const text = plainText(raw).replace(/\bCraft Requirements\b.*$/i, "");
+    const atLeast = AT_LEAST.exec(text);
+    if (atLeast) {
+        const slug = ACTION_SLUGS[atLeast[3].replace(/\s+/g, " ").toLowerCase()];
+        if (!slug) return null;
+        const after = text.slice(atLeast.index).split(/(?<=[.!?])\s+(?=[A-Z])/).slice(1, 3).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line)).join(" ").trim();
+        return { slug, name: atLeast[3].replace(/\s+/g, " "), bonus: null, minimum: { value: Number(atLeast[1]), skill: atLeast[2].toLowerCase() }, targeted: TARGETED.has(slug), ...(after ? { after } : {}) };
+    }
     // (Its own modifier in place of yours, a total of its own, or a DC of its own: PF2e's plain action would roll it wrong.
     // "your attribute modifier, proficiency bonus, and item bonus … total +7", "the DC of the check … is reduced to the
     // creature's recovery roll DC".)

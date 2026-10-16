@@ -44,6 +44,11 @@ export async function applyActionCard(message, { targets = [] } = {}) {
     if (!pf2eAction?.use) throw new Error(`PF2e has no ${action.name} action here; roll it by hand.`);
     const Modifier = game.pf2e?.Modifier;
     const modifiers = action.bonus && Modifier ? [new Modifier({ label: state.item.name, slug: sluggify(state.item.name), modifier: action.bonus.value, type: action.bonus.type })] : [];
+    // (The item's modifier when it's higher than the user's: the difference, on top of the user's own.)
+    if (action.minimum && Modifier) {
+        const own = Number(actor.getStatistic?.(action.minimum.skill)?.mod ?? actor.skills?.[action.minimum.skill]?.mod);
+        if (Number.isFinite(own) && action.minimum.value > own) modifiers.push(new Modifier({ label: `${state.item.name} (+${action.minimum.value})`, slug: sluggify(state.item.name), modifier: action.minimum.value - own, type: "untyped" }));
+    }
     // (No roll dialog on the GM's client: the GM is rolling the user's check.)
     const event = typeof KeyboardEvent === "function" ? new KeyboardEvent("keydown", { shiftKey: game.user.settings?.showCheckDialogs !== false }) : undefined;
     const variant = variantFor(pf2eAction, targetToken?.actor ?? null);

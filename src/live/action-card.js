@@ -11,6 +11,7 @@ export function createActionCard({ plan, item, user }) {
 
 // "Sneak with a +1 item bonus", "Escape".
 export function actionText(action) {
+    if (action.minimum) return `${action.name} at +${action.minimum.value} ${action.minimum.skill.charAt(0).toUpperCase()}${action.minimum.skill.slice(1)}, when that's higher than your own`;
     return action.bonus ? `${action.name} with a +${action.bonus.value} ${action.bonus.type} bonus` : action.name;
 }
 
