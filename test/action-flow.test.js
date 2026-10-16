@@ -161,6 +161,26 @@ test("Grim Trophy: one Demoralize at up to two creatures, PF2e's at the first an
     delete foundry.nextOutcome.roll;
 });
 
+test("Windlass Bola: a Trip at each creature in the burst, a roll of its own for each", async () => {
+    const plan = compileActivations(source("Windlass Bola"))[0].plan;
+    assert.deepEqual([plan.action.slug, plan.action.separate, plan.action.everyone], ["trip", true, "all creatures in a 5-foot burst"]);
+    const other = foundry.makeActor({ id: "action-bola-other", name: "Bola Other" });
+    foundry.place(other, 300, 12000);
+    const bola = foundry.giveItem(thief, source("Windlass Bola"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: bola.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item-action");
+    assert.match(card.content, /a roll for each one/);
+    foundry.nextOutcome.value = "success";
+    const uses = foundry.actionUses.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [mark.token.uuid, other.token.uuid], userId: "player" });
+    await settle();
+    const rolled = foundry.actionUses.slice(uses);
+    assert.equal(rolled.length, 2, "PF2e's Trip rolled for each");
+    assert.match(card.content, /Trip against Bola Other: a success/);
+});
+
 test("more of the words for an action: \"You Seek with a +1 item bonus\", \"Roll an Intimidation check to Demoralize\", one check at every undead around", async () => {
     const { actionCardHTML } = await import("../src/live/action-card.js");
     const lenses = compileActivations(source("Motion-Seeking Lenses"))[0].plan;

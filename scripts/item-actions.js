@@ -82,10 +82,22 @@ export async function applyActionCard(message, { targets = [], choice = null } =
             await postCard({ plan: damage, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken: actor.getActiveTokens?.(true, true)?.[0] ?? null, tokens: [targetToken.object ?? targetToken], cause: outcomeText(outcome) });
             lines.push(`${state.item.name}'s damage for ${outcomeText(outcome)}: its card.`);
         } else if (damage && targetToken) lines.push(`${state.item.name}: ${targetToken.name ?? targetToken.actor.name} takes ${damage.resolution.sharedDamage.components[0].formula} ${damage.resolution.sharedDamage.components[0].type ?? ""} damage; apply it by hand.`.replace(/\s+damage;/, " damage;"));
-        // (Each other creature: the same total and die against its own DC — the action's defense, Demoralize's Will DC.)
+        // (Each other creature: the same total and die against its own DC — the action's defense, Demoralize's Will DC — or, when
+        // the item says so, a roll of its own: Windlass Bola's "Roll a separate Athletics check for each target".)
         const roll = results?.[0]?.roll ?? null;
         const statistic = action.basic?.resolution?.check?.against?.statistic ?? null;
-        for (const other of others) {
+        for (const other of action.separate ? others : []) {
+            const own = await pf2eAction.use({ actors: [actor], target: other.object ?? other.actor, modifiers, ...(action.statistic ? { statistic: action.statistic } : {}), ...(event ? { event } : {}) });
+            const degree = own?.[0]?.outcome ?? null;
+            const name = other.name ?? other.actor.name;
+            if (!degree) {
+                lines.push(`${name}: no result (cancelled).`);
+                continue;
+            }
+            lines.push(`${state.user.name}'s ${action.name} against ${name}: ${outcomeText(degree)}.`);
+            if (action.basic) lines.push(...(await applyRiders({ plan: action.basic, degree, user: state.user, target: entryOf(other.object ?? other, other.actor), item: state.item })));
+        }
+        for (const other of action.separate ? [] : others) {
             const dc = Number(other.actor.getStatistic?.(statistic)?.dc?.value);
             const degree = Number.isFinite(dc) && Number.isFinite(roll?.total) ? degreeAgainst(roll.total, dc, roll.dice?.[0]?.total ?? null) : null;
             const name = other.name ?? other.actor.name;

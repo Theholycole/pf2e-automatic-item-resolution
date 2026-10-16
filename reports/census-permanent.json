@@ -8,7 +8,7 @@
   "results": {
    "resolves": 717,
    "builtin:cast-spell": 469,
-   "none": 710,
+   "none": 709,
    "partial": 121,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
@@ -19,7 +19,7 @@
    "builtin:pf2e-rules": 24,
    "builtin:modes": 31,
    "builtin:zone": 9,
-   "builtin:item-action": 20,
+   "builtin:item-action": 21,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
    "builtin:spellstrike": 9,
@@ -29,7 +29,7 @@
    "save": 388,
    "cast": 469,
    "item": 589,
-   "none": 897,
+   "none": 896,
    "focus": 45,
    "fortune": 48,
    "reroll": 25,
@@ -37,7 +37,7 @@
    "counteract": 4,
    "toggle": 31,
    "zone": 9,
-   "action": 20,
+   "action": 21,
    "spellstrike": 9,
    "later": 4
   },
@@ -69,13 +69,13 @@
    "activations": 460,
    "results": {
     "resolves": 151,
-    "none": 116,
+    "none": 115,
     "partial": 30,
     "note-only": 34,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 12,
-    "builtin:item-action": 8,
+    "builtin:item-action": 9,
     "builtin:no-effect": 12,
     "builtin:readied-bonus": 5,
     "builtin:roll-twice": 1,
@@ -20688,9 +20688,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Living Mantle",

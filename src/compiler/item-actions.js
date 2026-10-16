@@ -124,6 +124,15 @@ export function readItemAction(html, item = null) {
     // condition added to the action's row.)
     const everyone = new RegExp(String.raw`\b[Mm]ake an? \w+ check to (${NAMES}) against all (creatures?\b[^.]*?|enemies|foes) in an? (\d+)-foot (?:emanation|burst)\b`, "i").exec(text);
     const each = everyone ? null : new RegExp(String.raw`\b[Aa]ttempt an? (?:\w+ )?check to (${NAMES}) each (enemy|foe|creature) within (\d+) feet of you\b`, "i").exec(text);
+    // (Windlass Bola's "attempt a ranged Trip against all creatures in a @Template[burst|distance:5] within the weapon's first range
+    // increment. Roll a separate Athletics check for each target": each creature targeted, a roll of its own — action.separate.)
+    const burst = everyone || each ? null : new RegExp(String.raw`\battempt an? (?:ranged |melee )?(${NAMES}) against all creatures in an? (\d+)-foot (burst|emanation)\b[^.]*\.\s*Roll a separate \w+ check for each target\b`, "i").exec(text);
+    if (burst) {
+        const name = burst[1].replace(/\s+/g, " ");
+        const slug = ACTION_SLUGS[name.toLowerCase()];
+        const after = text.slice(burst.index + burst[0].length).split(/(?<=[.!?])\s+(?=[A-Z])/).map((line) => line.trim()).filter((line) => line && !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line) && !/^\.$/.test(line)).slice(0, 2).join(" ").replace(/^\.\s*/, "").trim();
+        if (slug) return { slug, name, bonus: null, targeted: true, maxTargets: 99, separate: true, everyone: `all creatures in a ${burst[2]}-foot ${burst[3]}`, ...(after ? { after } : {}) };
+    }
     // (Shrieking Skull's "attempt to Demoralize the target as well as each enemy within 30 feet of the target".)
     const around = everyone || each ? null : new RegExp(String.raw`\battempt to (${NAMES}) the target as well as each (enemy|foe|creature) within (\d+) feet of the target\b`, "i").exec(text);
     if (around) {

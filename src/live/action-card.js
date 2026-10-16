@@ -34,7 +34,8 @@ export function actionCardHTML(state, { canApply = false } = {}) {
     const action = state.plan.action;
     const after = open && action.after ? `<ul class="aar-notes"><li>${escape(action.after)}</li></ul>` : "";
     // (Every creature of a kind in an area — Horn of Exorcism's undead within 30 feet: those, however many.)
-    const who = action.everyone ? `Target ${escape(action.everyone)} (one roll against each one's DC)` : action.maxTargets > 1 ? `Target up to ${action.maxTargets} creatures (one roll against each one's DC)` : "Target the creature";
+    const each = action.separate ? "a roll for each one" : "one roll against each one's DC";
+    const who = action.everyone ? `Target ${escape(action.everyone)} (${each})` : action.maxTargets > 1 ? `Target up to ${action.maxTargets} creatures (${each})` : "Target the creature";
     const hint = open && action.targeted ? `<p class="aar-hint">${who}, then press the button.</p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     // (One of several actions: a picker.)
