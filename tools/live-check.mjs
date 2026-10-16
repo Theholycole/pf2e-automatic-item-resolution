@@ -1504,6 +1504,73 @@ export const cases = {
         const action = diskCard.getFlag(NS, "card").plan.action;
         assert(action.slug === "disarm" && action.bonus?.value === 2, `Disarm +2 (${JSON.stringify(action)})`);
         return { save: check, disarm: action.bonus };
+    },
+
+    // Urn of Ashes' Spirit's Wrath: its +15 for a user with no spell attack (the attack card at +15 against AC).
+    async urnAttack(scene) {
+        const { actor: user } = await creature(scene, "Urn Bearer", { type: "character", x: 14, y: 16 });
+        const { token: foeToken } = await creature(scene, "Urn Target", { x: 16, y: 16, alliance: "opposition" });
+        const urn = await give(user, "Urn of Ashes");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(urn.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the urn's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        assert(choices.length === 1 && choices[0].modifier === 15, `the urn's +15 (${JSON.stringify(choices)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: 0 });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the attack card" });
+        const check = attack.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.modifier === 15 && check.against?.statistic === "ac", `+15 against AC (${JSON.stringify(check)})`);
+        return { choices, check };
+    },
+
+    // Horn of Exorcism's Rattle the Dead: one Demoralize at every undead targeted, the second compared with the same roll.
+    async hornEveryone(scene) {
+        const { actor: user } = await creature(scene, "Horn Blower", { type: "character", x: 2, y: 16 });
+        const { token: oneToken } = await creature(scene, "Horn Ghoul One", { x: 3, y: 16, alliance: "opposition", save: -10 });
+        const { token: twoToken } = await creature(scene, "Horn Ghoul Two", { x: 3, y: 17, alliance: "opposition", save: -10 });
+        const horn = await give(user, "Horn of Exorcism");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(horn.uuid, 0);
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the horn's card" });
+        assert(/Target all creatures with the undead or unholy trait within 30 feet/.test(card.content), "who it's for, on the card");
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [oneToken.uuid, twoToken.uuid] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "applied", { timeout: 15000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(results.some((line) => /against PFTEST ITEM Horn Ghoul Two \(DC \d+\)/.test(line)), `the second compared (${JSON.stringify(results)})`);
+        return { results };
+    },
+
+    // Glacier Hammer's Grow Icicles: the toggle switched on, and off again at the end of the wielder's turn.
+    async glacierToggle(scene) {
+        const { actor: wielder } = await creature(scene, "Icicle Wielder", { type: "character", x: 6, y: 16 });
+        const hammer = await give(wielder, "Glacier Hammer");
+        await hammer.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        await wait(300);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(hammer.uuid, 0);
+        const card = await messageAfter(since, itemCard("toggle"), { what: "the toggle card" });
+        assert(/goes off again at the end of/.test(card.content), "when it goes off, on the card");
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        await until(() => wielder.rollOptions?.all?.["grow-icicles"] === true, "Grow Icicles on");
+        assert(wielder.getFlag(NS, `optionUntil.${hammer.id}`)?.until === "turn-end", "kept until the turn's end");
+        await (await import(`/modules/${NS}/scripts/toggle.js`)).togglesAtTurnEnd({ actor: wielder });
+        await until(() => !wielder.rollOptions?.all?.["grow-icicles"], "Grow Icicles off");
+        return { off: !wielder.rollOptions?.all?.["grow-icicles"], flag: wielder.getFlag(NS, `optionUntil.${hammer.id}`) ?? null };
+    },
+
+    // The Trumpet for a 15th-level owner: its damage step for that level (18d6), not the 14d6 written first.
+    async trumpetLevel(scene) {
+        const { actor: owner } = await creature(scene, "Trumpet Owner", { type: "character", x: 10, y: 16, level: 15 });
+        // (A spellcasting entry, for the spell DC its save is against: a class would stop for its feature choices.)
+        await owner.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Arcane Spells`, type: "spellcastingEntry", system: { tradition: { value: "arcane" }, prepared: { value: "innate" }, ability: { value: "cha" }, proficiency: { value: 1 } } }]);
+        const trumpet = await give(owner, "The Trumpet");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(trumpet.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the trumpet's card" });
+        const formula = card.getFlag(NS, "card").plan.resolution.sharedDamage?.components?.[0]?.formula;
+        assert(formula === "18d6[sonic]", `18d6 sonic at 15th level (${formula})`);
+        return { formula, level: owner.level };
     }
 };
 
