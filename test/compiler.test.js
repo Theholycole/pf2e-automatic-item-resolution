@@ -371,3 +371,9 @@ test("an activation's Trigger kept on the plan, and what it's read as, for the p
     const [, breath] = compileActivations(item("Life's Last Breath"), { spellEffects });
     assert.deepEqual(breath.plan.item.activation.triggerOn, { event: "after-strike", degrees: ["success", "criticalSuccess"] });
 });
+
+test("a Speed granted when the item is activated: Dragonscale Cameo's fly Speed of 50 feet for 5 minutes", () => {
+    const cameo = compileItem(item("Dragonscale Cameo"));
+    assert.deepEqual(cameo.item.speeds, [{ type: "fly", value: 50, duration: { mode: "fixed", value: 5, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
+    assert.equal(cameo.noteOnly, undefined);
+});

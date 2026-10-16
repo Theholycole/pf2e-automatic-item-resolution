@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 252,
-   "resolves": 733,
+   "resolves": 734,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
-   "note-only": 204,
+   "note-only": 203,
    "builtin:item-action": 11,
    "partial": 62,
    "builtin:counteract": 20,
@@ -89,9 +89,9 @@
    "count": 156,
    "results": {
     "none": 45,
-    "note-only": 13,
+    "note-only": 12,
     "builtin:item-action": 10,
-    "resolves": 50,
+    "resolves": 51,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
@@ -370,7 +370,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 592,
+   "resolves": 593,
    "gaps": 0,
    "none": 21
   }
@@ -6849,8 +6849,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

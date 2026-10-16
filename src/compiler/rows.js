@@ -86,7 +86,7 @@ function selfConditions(sentences, used = new Set()) {
     // (And "You Stride and turn partially invisible, becoming Concealed …": the sentence's own "you".)
     const pattern = new RegExp(String.raw`\b(?:making|leaving|rendering|render|makes|leaves|renders) you (${names})(?: (\d+))?\b|\byou(?:'re| are| become| also become| are also| remain)(?: (?:both|also|now))? (${names})(?: (\d+))?\b|\bYou\b[^.]*?,\s*becoming (${names})(?: (\d+))?\b`, "gi");
     for (const [index, sentence] of sentences.entries()) {
-        if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against|next time)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow)\w*\b[^,]*,/i, ""))) continue;
+        if (/\b(?:if|when|whenever|unless|while|after|once|each time|throughout|instead of|can't|cannot|don't|aren't|isn't|no longer|could|would|against|next time)\b/i.test(sentence.replace(/^\s*(?:When|Upon|After) (?:you )?(?:drink|consum|eat|imbib|swallow|activat)\w*\b[^,]*,/i, ""))) continue;
         // ("until you Dismiss the Activation": until it's removed.)
         const stated = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.test(sentence) || UNTIL_NEXT_TURN.test(sentence);
         const dismissed = !stated && /\buntil you Dismiss\b/i.test(sentence);
@@ -349,7 +349,8 @@ function speedsOf(sentences, duration, used = new Set()) {
     const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you|that grant you) an? (?:(\d+)-foot )?(fly|climb|swim|burrow) Speed(?: (?:equal to (?:either )?(half )?your (?:land )?Speed(?: or (\d+) feet, whichever is (greater|higher|lower|slower|less))?|of (\d+) feet(?: or your (?:land )?Speed, whichever is (greater|higher|lower|slower|less))?))?/gi;
     for (const [index, whole] of sentences.entries()) {
         const sentence = whole.replace(/^\s*(?:During this time|While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|For the duration),\s*/i, "");
-        if (/^\s*(?:If|When(?!ever you consume| you (?:consume|drink|eat))|Whenever|While|Each time|Unless)\b/i.test(sentence) || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation|as if you had)\b/i.test(sentence)) continue;
+        // ("When you Activate the pin, … granting you a fly Speed of 50 feet": the use itself, Dragonscale Cameo's.)
+        if (/^\s*(?:If|When(?!ever you consume| you (?:consume|drink|eat|activate))|Whenever|While|Each time|Unless)\b/i.test(sentence) || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation|as if you had)\b/i.test(sentence)) continue;
         for (const match of sentence.matchAll(pattern)) {
             const [, feetFirst, type, half, orFeet, orWay, ofFeet, ofWay] = match;
             const larger = (way) => /greater|higher/i.test(way);
