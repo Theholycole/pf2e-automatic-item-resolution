@@ -201,3 +201,14 @@ export function fitPlan(item, plan, base, options = {}) {
     if (healing && resolution.kind === "effect" && !resolution.native?.healing) resolution = { ...resolution, native: { ...(resolution.native ?? {}), healing } };
     return resolution === plan.resolution ? plan : { ...plan, resolution };
 }
+
+// An Effect plan behind a check its text opens with — Diplomat's Badge's "Attempt a DC 20 check to Recall Knowledge … If you
+// succeed, the badge's bonus increases": the check on the card, so the Effect is applied only on its success; partial.
+export function checkGated(plan, text) {
+    if (plan?.resolution?.kind !== "effect" || !(plan.resolution.applications ?? []).length) return plan;
+    const effect = String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "");
+    const check = /^Attempt an? DC \d+ [^.]*?\bcheck\b[^.]*\./i.exec(effect);
+    const success = /\bIf you succeed\b[^.]*\./i.exec(effect);
+    if (!check || !success) return plan;
+    return { ...plan, automation: { level: "guided" }, notes: [...(plan.notes ?? []), `Only on a success: ${check[0].trim()} ${success[0].trim()}`], partial: true };
+}

@@ -12,7 +12,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
-import { fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
+import { checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { noteRow, ownRow, plainText } from "./rows.js";
 import { snareZone } from "./snares.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -110,6 +110,8 @@ export function compileItem(given, options = {}) {
     if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value })) {
         plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
     }
+    // (An Effect behind a check the text opens with: only on its success, a note.)
+    plan = checkGated(plan, plainText(item?.system?.description?.value));
     // (A condition it lowers on its user or drinker, src/compiler/reduce.js: Lion Badge; a plan of its own when it's all.)
     const reduce = readReductions(plainText(item?.system?.description?.value));
     if (!plan && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(item?.system?.description?.value)));

@@ -91,3 +91,10 @@ test("Instinct Crown: PF2e's Effect: Rage with 10 more temporary Hit Points, for
     assert.match(card.content, /already raging/);
     assert.equal(rages().length, 1);
 });
+
+test("a reduction's own notes once on the card (Preordained Spear)", async () => {
+    const { previewLines } = await import("../src/live/card.js");
+    const [delay] = compileActivations(source("Preordained Spear")).filter((entry) => entry.plan?.item?.reduce);
+    const lines = previewLines({ plan: delay.plan, rolled: null });
+    assert.equal(lines.filter((line) => /regain 1 Mythic Point/.test(line)).length, 1);
+});

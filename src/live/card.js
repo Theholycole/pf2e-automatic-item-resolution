@@ -104,7 +104,8 @@ export function previewLines(state) {
     }
     for (const modifier of row.modifiers ?? []) lines.push(`${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${modifier.duration?.mode === "fixed" ? ` for ${timeText(modifier.duration)}` : ""}`);
     for (const note of row.noteEffects ?? []) lines.push(plan.partial ? `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""}: the rest is the GM's to apply` : `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""} (nothing else to apply)`);
-    for (const note of plan?.notes ?? []) lines.push(note);
+    // (A reduction's own notes are above, as "Also: …".)
+    if (!plan?.reduce) for (const note of plan?.notes ?? []) lines.push(note);
     return lines;
 }
 
