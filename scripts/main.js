@@ -9,6 +9,7 @@ import { etchedRuneActivations, runeIndex } from "../src/compiler/runes.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
+import { etchRune, setUpEtching } from "./etching.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -54,6 +55,8 @@ Hooks.once("ready", async () => {
     }
     // (The generic spellgun and the gun staff ask for what they are when they first go into an inventory: scripts/generic-items.js.)
     setUpGenericItems();
+    // (A runestone's rune etched onto its owner's weapon, armor or shield: scripts/etching.js.)
+    setUpEtching();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];
@@ -67,5 +70,5 @@ Hooks.once("ready", async () => {
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)
     // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id) }) });
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
 });

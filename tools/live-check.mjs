@@ -1267,6 +1267,69 @@ export const cases = {
         await staff.update({ "system.runes.striking": 1 });
         await until(() => staff.subitems.find((sub) => sub.type === "weapon")?.system.runes.striking === 1, "the stock etched too");
         return { strikes, level: staff.system.level.value, price: staff.system.price.value, dailies: game.modules.get("pf2e-dailies")?.active ?? false };
+    },
+
+    // A save against its owner's own DC (The Avalanche): an NPC's class DC is the card's DC.
+    async ownerDC(scene) {
+        const { actor: reader } = await creature(scene, "Card Reader", { x: 2, y: 4, level: 9 });
+        const { token: foeToken } = await creature(scene, "Card Target", { x: 4, y: 4, alliance: "opposition" });
+        const card = await give(reader, "The Avalanche");
+        await target(foeToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const own = await messageAfter(since, itemCard("expose"), { what: "the card's own card" });
+        const dc = own.getFlag(NS, "card").plan.resolution.check.against;
+        const expected = reader.system.attributes.classOrSpellDC?.value ?? Math.max(reader.system.attributes.classDC?.value ?? 0, reader.system.attributes.spellDC?.value ?? 0);
+        assert(dc?.dc === "fixed" && dc.value === expected && expected > 0, `the owner's DC ${expected} (${JSON.stringify(dc)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(own.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        return { dc: dc.value, save: save.id };
+    },
+
+    // An etched rune's activation from its weapon (a Vorpal longsword): the button on the weapon's row, not on a runestone's;
+    // pressed, the Fortitude save card at DC 37 with death on a failure.
+    async etchedRune(scene) {
+        const { actor: knight } = await creature(scene, "Vorpal Knight", { type: "character", x: 2, y: 6 });
+        const { token: foeToken } = await creature(scene, "Vorpal Target", { x: 4, y: 6, alliance: "opposition" });
+        const sword = await give(knight, "Longsword");
+        await sword.update({ "system.runes.potency": 1, "system.runes.property": ["vorpal"] });
+        const stone = await give(knight, "Vorpal");
+        knight.sheet.render(true);
+        await until(() => knight.sheet.rendered && (knight.sheet.element?.[0] ?? knight.sheet.element)?.querySelector?.(`li[data-item-id="${sword.id}"] .air-activate`), "the sword's rune button", { timeout: 10000 });
+        const root = knight.sheet.element?.[0] ?? knight.sheet.element;
+        const button = root.querySelector(`li[data-item-id="${sword.id}"] .air-activate`);
+        assert(button.dataset.airActivate === "rune:vorpal:0", `the rune's activation (${button.dataset.airActivate})`);
+        assert(!root.querySelector(`li[data-item-id="${stone.id}"] .air-activate`) && root.querySelector(`li[data-item-id="${stone.id}"] .air-etch`), "the runestone: an Etch button, not the rune's activation");
+        await knight.sheet.close();
+        await target(foeToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(sword.uuid, "rune:vorpal:0");
+        const card = await messageAfter(since, itemCard("expose"), { what: "Snicker-Snack's card" });
+        const state = card.getFlag(NS, "card");
+        assert(state.plan.resolution.check.against.value === 37 && state.plan.resolution.outcomes.failure.terminal?.kind === "death", "Fortitude DC 37, death on a failure");
+        assert(/Vorpal: Snicker-Snack/.test(state.item.name), `named for the rune (${state.item.name})`);
+        return { item: state.item.name };
+    },
+
+    // Etching from a runestone: Striking onto a longsword with no check (the stone used up); Vorpal with a Crafting check a
+    // 3rd-level character fails (DC 36): nothing etched, the stone kept.
+    async etchRune(scene) {
+        const { actor: smith } = await creature(scene, "Rune Smith", { type: "character", x: 2, y: 8 });
+        const sword = await give(smith, "Longsword");
+        await sword.update({ "system.runes.potency": 1 });
+        const striking = await give(smith, "Striking");
+        const etch = game.modules.get(NS).api.live.etch;
+        assert(await etch(striking, sword, { craft: false }), "etched");
+        assert(sword.system.runes.striking === 1 && !smith.items.get(striking.id), "striking on the sword, the stone gone");
+        const vorpal = await give(smith, "Vorpal");
+        const since = Date.now();
+        const done = await etch(vorpal, sword, { craft: true, skipDialog: true });
+        const check = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check", { what: "the Crafting check" });
+        const degree = check.flags.pf2e.context.outcome;
+        assert(done === ["success", "criticalSuccess"].includes(degree), `etched only on a success (${degree}, ${done})`);
+        if (!done) assert(smith.items.get(vorpal.id) && !sword.system.runes.property.includes("vorpal"), "nothing etched, the stone kept");
+        return { degree, done, runes: sword.system.runes };
     }
 };
 
