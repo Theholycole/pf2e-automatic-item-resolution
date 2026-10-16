@@ -8,8 +8,8 @@
   "results": {
    "resolves": 708,
    "builtin:cast-spell": 469,
-   "none": 727,
-   "partial": 94,
+   "none": 726,
+   "partial": 95,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 29,
@@ -28,11 +28,11 @@
    "save": 369,
    "cast": 469,
    "item": 601,
-   "none": 923,
+   "none": 922,
    "focus": 45,
    "fortune": 39,
    "reroll": 24,
-   "strike": 53,
+   "strike": 54,
    "toggle": 31,
    "zone": 9,
    "action": 17,
@@ -83,8 +83,8 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 45,
-    "partial": 15,
+    "none": 44,
+    "partial": 16,
     "resolves": 43,
     "builtin:pf2e-rules": 24,
     "note-only": 14,
@@ -11131,9 +11131,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Spellstrike Ammunition (Type I)",

@@ -30,6 +30,7 @@ const STAND_IN = Object.freeze({ class: 9001, spell: 9002, "class-spell": 9003 }
 const OWNER_WORDS = Object.freeze({ class: "your class DC", spell: "your spell DC", "class-spell": "your class DC or spell DC" });
 
 const FRIGHTENED = "@UUID[Compendium.pf2e.conditionitems.Item.TBSHQspnbcqxsmjL]";
+const IMMOBILIZED = "@UUID[Compendium.pf2e.conditionitems.Item.eIcWbB5o3pP6OIMe]";
 
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
@@ -42,6 +43,9 @@ export function withItemData(html, item) {
     // (A frightful presence by name, Dragonscale Amulet's "an aura that terrifies all foes in a 60-foot radius, as the frightful
     // presence ability with a @Check[will|dc:34] save": that ability's rows.)
     text = text.replace(/\bYou exude an aura that terrifies all foes in a (\d+)-foot radius, as the frightful presence ability with a (@Check\[will\|[^\]]*\])(?:\{[^}]*\})? save\.\s*<\/p>/i, (whole, feet, check) => `Each foe in a @Template[type:emanation|distance:${feet}] must attempt a ${check} save. A creature that succeeds is temporarily immune for 1 minute.</p><p><strong>Critical Success</strong> The creature is unaffected.</p><p><strong>Success</strong> The creature is ${FRIGHTENED}{Frightened 1}.</p><p><strong>Failure</strong> The creature is ${FRIGHTENED}{Frightened 2}.</p><p><strong>Critical Failure</strong> The creature is ${FRIGHTENED}{Frightened 4}.</p>`);
+    // (A bow's critical specialization by name, Antler Arrow's "save or become stuck to the surface, taking the critical
+    // specialization effects of a bow": Immobilized, until it pulls free.)
+    text = text.replace(/\bor become stuck to the surface, taking the critical specialization effects of a bow\./i, `or become ${IMMOBILIZED}{Immobilized}. It's stuck to the surface until it pulls the missile free: an Interact action and a DC 10 Athletics check.`);
     // (A condition for its user's next turn, Bloodline Robe's "You're Quickened on your next turn": until that turn's end.)
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)
