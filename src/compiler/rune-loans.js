@@ -10,10 +10,12 @@
 
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 
-const RUNE = /\b(?:benefits?|effects?) of (?:a|an|the) ((?:(?:Greater|Major|True) )?[A-Z][\w']*(?: [A-Z][\w']*)?) (?:property )?rune\b/;
+// (And Taljjae Tassel's "your weapon gains the properties of the Grievous rune for the duration of the triggering attack": until
+// the end of the turn.)
+const RUNE = /\b(?:benefits?|effects?|properties) of (?:a|an|the) ((?:(?:Greater|Major|True) )?[A-Z][\w']*(?: [A-Z][\w']*)?) (?:property )?rune\b/;
 const PASSIVE = /\b(?:invest|While\b|Any creature|This ammunition|has the benefits)\b/i;
 const FOR_TIME = /\bfor (\d+|one|a|an) (round|rounds|minute|minutes|hour|hours)\b/i;
-const UNTIL_TURN_END = /\bUntil the end of your turn\b/i;
+const UNTIL_TURN_END = /\bUntil the end of your turn\b|\bfor the duration of the triggering (?:attack|Strike)\b/i;
 const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours" };
 const COUNT = { one: 1, a: 1, an: 1 };
 // (Its remastered names over PF2e's keys.)

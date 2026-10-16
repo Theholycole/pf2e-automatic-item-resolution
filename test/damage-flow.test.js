@@ -231,3 +231,12 @@ test("conditions on the creatures targeted: Gallows Tooth's off-guard before its
     const treat = compileItem(source("Energizing Treat"));
     assert.deepEqual([treat.item.recipient, treat.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration?.value, effect.duration?.unit])], ["drinker", [["quickened", 1, "minutes"]]]);
 });
+
+test("talismans after a hit: Putrescent Glob's save (read without its Trigger line), Taljjae Tassel's Grievous rune for the attack, Ensnaring Disk's Disarm with +2", () => {
+    const glob = compileItem(source("Putrescent Glob"));
+    assert.deepEqual([routeOf(glob, glob.source?.name ? "" : ""), glob.resolution.check.against.value, glob.resolution.outcomes.failure.effects.map((effect) => [effect.slug, effect.value]), glob.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["save", 23, [["sickened", 2]], ["sickened", "slowed"]]);
+    const tassel = compileItem(source("Taljjae Tassel"));
+    assert.deepEqual([tassel.item.rune.key, tassel.item.rune.duration.expiry], ["grievous", "turn-end"]);
+    const disk = compileItem(source("Ensnaring Disk"));
+    assert.deepEqual([disk.builtin, disk.action.slug, disk.action.bonus], ["item-action", "disarm", { value: 2, type: "item" }]);
+});

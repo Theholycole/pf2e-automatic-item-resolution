@@ -14,12 +14,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 262,
-   "resolves": 731,
+   "none": 259,
+   "resolves": 733,
    "builtin:readied-bonus": 18,
    "builtin:zone": 86,
    "note-only": 204,
-   "builtin:item-action": 10,
+   "builtin:item-action": 11,
    "partial": 55,
    "builtin:counteract": 20,
    "builtin:no-effect": 63,
@@ -88,10 +88,10 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 52,
+    "none": 49,
     "note-only": 13,
-    "builtin:item-action": 9,
-    "resolves": 48,
+    "builtin:item-action": 10,
+    "resolves": 50,
     "builtin:no-effect": 10,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
@@ -316,9 +316,9 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 329,
+   "resolves": 330,
    "gaps": 0,
-   "none": 38
+   "none": 37
   },
   "affliction": {
    "count": 144,
@@ -346,9 +346,9 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 56,
+   "resolves": 58,
    "gaps": 0,
-   "none": 45
+   "none": 42
   },
   "counteract": {
    "count": 79,
@@ -364,28 +364,28 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 261,
+   "resolves": 262,
    "gaps": 0,
-   "none": 35
+   "none": 34
   },
   "duration": {
    "count": 943,
-   "resolves": 591,
+   "resolves": 592,
    "gaps": 0,
-   "none": 22
+   "none": 21
   }
  },
  "live": {
   "totals": {
    "cast": 32,
-   "none": 347,
-   "item": 631,
+   "none": 344,
+   "item": 632,
    "fortune": 20,
    "zone": 86,
    "expose": 89,
    "later": 79,
-   "action": 10,
-   "save": 124,
+   "action": 11,
+   "save": 125,
    "counteract": 20,
    "reroll": 2,
    "coat": 45,
@@ -414,12 +414,12 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 63,
-    "item": 49,
-    "action": 9,
+    "none": 60,
+    "item": 50,
+    "action": 10,
     "reroll": 1,
     "cast": 9,
-    "save": 13,
+    "save": 14,
     "fortune": 11,
     "strike": 1
    },
@@ -478,7 +478,7 @@
    }
   },
   "noCard": {
-   "no-plan": 262,
+   "no-plan": 259,
    "triggered": 21,
    "gm": 63,
    "other": 1
@@ -12784,7 +12784,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Dragon Scute (Lesser)",
@@ -14533,7 +14535,10 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Healing Potion (Greater)",
@@ -25322,7 +25327,10 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Sanguine Mutagen (Moderate)",

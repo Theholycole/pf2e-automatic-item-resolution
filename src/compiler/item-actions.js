@@ -28,6 +28,8 @@ const FORMS = [
     new RegExp(String.raw`\battempts? (?:a|an) \w+ check to (${NAMES})\b(?: (?:the|a|an|one) [\w' -]+?)? ${BONUS}`, "i"),
     // "attempt to Administer First Aid using Medicine with a +1 item bonus to the check"
     new RegExp(String.raw`\battempt to (${NAMES}) using \w+ ${BONUS}`, "i"),
+    // "allowing you to attempt to Disarm it from its wielder with a +2 item bonus" (Ensnaring Disk)
+    new RegExp(String.raw`\battempt to (${NAMES}) (?:it|them|the (?:triggering )?(?:creature|weapon|foe|attacker)) from its wielder ${BONUS}`, "i"),
     // "When you activate the bracelet, attempt to Escape", "When you activate it, make a Leap"
     new RegExp(String.raw`\bWhen you activate [^,.]+, (?:you (?:can )?(?:immediately )?)?(?:use|attempt|make) (?:an? |to )?(${NAMES})\b`, "i"),
     // "…, attempting an Intimidation check to Demoralize that creature", "Make an Athletics check to Disarm the attacking creature":

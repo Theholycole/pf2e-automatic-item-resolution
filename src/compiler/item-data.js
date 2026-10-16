@@ -34,6 +34,11 @@ export function withItemData(html, item) {
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
     // (Dice per weapon damage die — Unholy Bloodshed's: one die where no weapon says more, src/compiler/runes.js giving its weapon's.)
     text = perWeaponDie(text, item?.type === "weapon" ? weaponDice(item) : 1);
+    // (A condition that "increases to" a value on a failed save, as the ability compiler reads one: Putrescent Glob's "the creature
+    // you damaged must succeed at a … save or its sickened condition increases to Sickened 2" — "The target must succeed at a
+    // … save or be Sickened 2".)
+    // (Its "and it can't reduce its sickened condition until …" as the reader takes it: "its sickened value can't be reduced below 2 …".)
+    text = text.replace(/\b(?:When you activate [^,.<]+, )?[Tt]he (?:creature you damaged|creature you hit|target) must succeed at an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save or its (\w+) condition increases to (@UUID\[[^\]]*\]\{[^}]*?(\d+)\})(?:, and it can't reduce its \w+ condition( until [^.]+)?)?/g, (whole, check, slug, link, value, until) => `The target must succeed at a ${check} save or be ${link}${until !== undefined || /can't reduce/.test(whole) ? `, and its ${slug} value can't be reduced below ${value}${until ?? ""}` : ""}`);
     // (A save against the owner's own DC: its stand-in.)
     text = text.replace(/@Check\[((?:type:)?(?:fortitude|reflex|will))\|([^\]]*?)\bagainst:(class-spell|class|spell)\b/gi, (whole, statistic, before, kind) => `@Check[${statistic}|${before}dc:${STAND_IN[kind.toLowerCase()]}`);
     if (!/@item\./.test(text) && !/\bpotency rune\b/i.test(text) && !DAMAGE_SAVE.test(text)) return text;

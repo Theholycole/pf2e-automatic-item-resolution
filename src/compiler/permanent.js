@@ -119,6 +119,12 @@ function compileEach(item, options = {}) {
         if (!plan) {
             try {
                 read = compileAbility(asActivationAbility(item, activation), options);
+                // (Nothing read: once more without its Trigger line, src/compiler/index.js.)
+                // (Only a resolution it reads that way, not a builtin: a spell its trigger names isn't cast.)
+                if (!read || read.builtin === "no-effect") {
+                    const retry = compileAbility(asActivationAbility(item, { ...activation, html: String(activation.html).replace(/<p>\s*<strong>\s*Trigger\s*<\/strong>[\s\S]*?<\/p>/i, "") }), options);
+                    if (retry && !retry.builtin) read = retry;
+                }
             } catch {
                 read = null;
             }

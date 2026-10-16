@@ -5457,7 +5457,7 @@
    "frequency": "once per hour",
    "trigger": true,
    "result": "resolves",
-   "kind": "effect",
+   "kind": "check",
    "live": "item"
   },
   {

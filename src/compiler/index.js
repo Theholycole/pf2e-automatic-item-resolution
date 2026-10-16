@@ -83,7 +83,12 @@ function compileOne(given, options = {}) {
     // (Its own data in its text first — "@item.level", a rune — and a damage-with-a-save as basic, src/compiler/item-data.js.)
     const html = withItemData(given?.system?.description?.value, given);
     const item = html === given?.system?.description?.value ? given : { ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: html } } };
-    const abilityRead = compileAbility(asAbility(item), options);
+    // (Nothing read: once more without its Trigger line, which only says when to use it — Putrescent Glob's "You damage a creature
+    // that is Sickened 1 with a Strike" keeps the ability compiler from its effect.)
+    const firstRead = compileAbility(asAbility(item), options);
+    // (Only a resolution it reads that way, not a builtin: a spell its trigger names isn't cast — Shadowpiercer's darkness.)
+    const retry = !firstRead || firstRead.builtin === "no-effect" ? compileAbility(asAbility(withoutTrigger(item)), options) : null;
+    const abilityRead = retry && !retry.builtin ? retry : firstRead;
     // (A spell only named as an example isn't cast: src/compiler/guards.js.)
     const read = castMentionOnly(abilityRead, html) ? null : abilityRead;
     const base = basePlan(item);
@@ -190,6 +195,13 @@ function rowPlan(item, base) {
 function withoutNoteOnly(plan) {
     const { noteOnly, ...rest } = plan;
     return rest;
+}
+
+// The item with its text's Trigger paragraph left out.
+export function withoutTrigger(item) {
+    const html = String(item?.system?.description?.value ?? "");
+    const without = html.replace(/<p>\s*<strong>\s*Trigger\s*<\/strong>[\s\S]*?<\/p>/i, "");
+    return without === html ? item : { ...item, system: { ...item.system, description: { ...(item.system?.description ?? {}), value: without } } };
 }
 
 // The skeleton of a plan the item module builds itself.
