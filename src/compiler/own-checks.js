@@ -13,7 +13,11 @@ const NAMES = MANEUVERS.join("|");
 const OWN_MANEUVER = new RegExp(String.raw`\b(?:attempts?|attempt another check) to (${NAMES})\b[^.]*?\bwith an? \+(\d+) (?:bonus|modifier)\b|\b(${NAMES})\b[^.]*?\busing [^.]*?\b(?:Athletics|Acrobatics|Intimidation|Deception) modifier of \+(\d+)`, "i");
 const TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void|bleed";
 const OWN_ATTACK = new RegExp(String.raw`\bmakes? an? (?:(melee|ranged) )?(?:attack|Strike)\b[^.]*?\b(?:attack modifier of \+(\d+)|with an? \+(\d+) (?:to hit|attack modifier))\b[^.]*?\bdeal(?:s|ing)? (\d+d\d+(?:\s*\+\s*\d+)?) (?:(persistent) )?(${TYPES}) damage\b`, "i");
-const MANY = /\b(?:each|every|all|up to (?:two|three|four|\d+))\b/i;
+// (A creature an item calls up that Strikes once at its own modifier: "Strikes with a jaw Strike with a +28 attack modifier. The
+// Strike deals 3d12 plus 19 piercing damage", "uses its spike Strike, which has a +14 modifier, and deals 1d10 plus 5 piercing
+// damage", "attempts a +11 Strike … which deals 3d6 acid damage" — its attack, once.)
+const CALLED_ATTACK = new RegExp(String.raw`\b(?:Strikes|attempts?|makes?|uses its)\b[^.]*?\b(?:with an? \+(\d+) (?:attack modifier|modifier|to hit)|which has an? \+(\d+) (?:attack )?modifier|an? \+(\d+) Strike)\b[^.]*?\bdeal(?:s|ing)? (\d+d\d+(?:\s*\+\s*\d+)?) (?:(persistent) )?(${TYPES}) damage\b`, "i");
+const MANY = /\b(?:each|every|all|up to (?:two|three|four|\d+)(?! feet))\b/i;
 // (Warriors that each Strike an enemy at the item's modifier: Spiritual Warhorn's "Each warrior appears in an open square
 // adjacent to an enemy within 60 feet of you, makes a Strike for 2d6 force …" and "Two warriors manifest with a +11 attack
 // modifier" — the own attack at up to that many enemies the presser targets.)
@@ -34,7 +38,9 @@ const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds:
 const sentencesOf = (text) => String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 
 // The text (plain) → { kind: "maneuver", slug, modifier, notes } | { kind: "attack", range, modifier, formula, type, category, notes } | null.
-export function readOwnCheck(text) {
+export function readOwnCheck(given) {
+    // ("3d12 plus 19": 3d12+19; "… attack modifier. The Strike deals …": one sentence.)
+    const text = String(given ?? "").replace(/(\d+d\d+) plus (\d+)\b/g, "$1+$2").replace(/(\+\d+ (?:attack )?modifier)\. The Strike deals\b/g, "$1, dealing");
     const sentences = sentencesOf(text);
     const higher = HIGHER_ATTACK.exec(String(text ?? ""));
     if (higher) {
@@ -65,6 +71,8 @@ export function readOwnCheck(text) {
         }
         const attack = OWN_ATTACK.exec(sentence);
         if (attack) return { kind: "attack", range: attack[1]?.toLowerCase() ?? null, modifier: Number(attack[2] ?? attack[3]), formula: attack[4].replace(/\s+/g, ""), category: attack[5] ? "persistent" : null, type: attack[6].toLowerCase(), notes };
+        const called = /\bobject\b/i.test(sentence) ? null : CALLED_ATTACK.exec(sentence);
+        if (called) return { kind: "attack", range: null, modifier: Number(called[1] ?? called[2] ?? called[3]), formula: called[4].replace(/\s+/g, ""), category: called[5] ? "persistent" : null, type: called[6].toLowerCase(), notes };
     }
     return null;
 }

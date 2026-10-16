@@ -205,3 +205,9 @@ test("Buzzsaw Axe: its line's basic Reflex save at the weapon's own Strike damag
     const plan = compileActivations({ ...axe, ownerAbilities: { str: 4 } })[0].plan;
     assert.deepEqual([plan.resolution.check.basic, plan.resolution.check.against.value, plan.resolution.sharedDamage.components[0].formula, plan.targeting.area], [true, 28, "(2d8+4)[slashing]", { type: "line", value: 120 }]);
 });
+
+test("a creature an item calls up that Strikes once at its own modifier (the module's own wording): its attack against AC, its damage", async () => {
+    const { readOwnCheck } = await import("../src/compiler/own-checks.js");
+    assert.deepEqual(readOwnCheck("Effect A spectral wolf bounds out of the jar, runs up to 40 feet and Strikes with a bite Strike with a +12 attack modifier. The Strike deals 2d8 plus 4 piercing damage."), { kind: "attack", range: null, modifier: 12, formula: "2d8+4", category: null, type: "piercing", notes: [] });
+    assert.equal(readOwnCheck("Effect The wolf makes up to two Strikes with a +12 attack modifier, each dealing 2d8 piercing damage.")?.kind, undefined, "several Strikes aren't one");
+});
