@@ -174,7 +174,9 @@ test("Spiritual Warhorn: its warriors' Strikes at the item's modifier, at up to 
 
 test("Potion of Fire Retaliation: its damage to a creature that touches the drinker, on a card kept open for its minute", async () => {
     const potion = compileItem(source("Potion of Fire Retaliation (Lesser)"));
-    assert.deepEqual([routeOf(potion), potion.retaliation, component(potion).formula, component(potion).type], ["later", true, "1d4", "fire"]);
+    assert.deepEqual([routeOf(potion), potion.retaliation, component(potion).formula, component(potion).type], ["later", { rounds: 10 }, "1d4", "fire"]);
+    // The Moderate and higher grades: a melee weapon Strike from next to the drinker sets it off too.
+    assert.deepEqual(compileItem(source("Potion of Fire Retaliation (Moderate)")).retaliation, { adjacentMelee: true, rounds: 10 });
     const drinker = foundry.makeActor({ id: "damage-retaliator", name: "Retaliator", owners: ["player"] });
     foundry.place(drinker, 300, 17000);
     const item = foundry.giveItem(drinker, source("Potion of Fire Retaliation (Lesser)"));

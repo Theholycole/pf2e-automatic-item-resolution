@@ -183,7 +183,7 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const hint = !open ? "" : state.own
         ? `<p class="aar-hint">${escape(state.user.name)}'s own save (${escape(saveText(state.plan))}).</p>`
         : state.attacker
-        ? `<p class="aar-hint">Each time a creature ${state.attacker === "touch" ? "touches" : "attacks"} ${escape(state.user.name)} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
+        ? `<p class="aar-hint">Each time a creature ${state.attacker === "touch" ? `touches ${escape(state.user.name)}${state.plan?.retaliation?.adjacentMelee ? ", or hits it with a melee weapon Strike from next to it," : ""}` : `attacks ${escape(state.user.name)}`} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : state.later
         ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : checked ? "A check at" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;

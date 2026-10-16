@@ -158,9 +158,14 @@ export function negatingSavePlan(text, base) {
 // Damage to a creature that touches the drinker, for the item's time (Potion of Fire Retaliation's "For 1 minute after
 // drinking a potion of fire retaliation, you glow with a faint aura of fire energy, and a creature that touches you (such as
 // by making an unarmed attack …) takes fire damage. The aura deals 1d4 fire damage."): no save, at the creature the presser
-// targets, each time — plan.retaliation, a card kept open for the item's time (src/live/route.js "later").
+// targets, each time — plan.retaliation, a card kept open for the item's time (src/live/route.js "later"). The Moderate and
+// higher grades' "… or is adjacent to you and hits you with a melee weapon strike takes fire damage" too: retaliation
+// { adjacentMelee: true }; rounds, the item's time (1 minute: 10).
 const TOUCHER = /\ba creature that touches you\b[^.]*?\btakes (\w+) damage\b/i;
 const AURA_DEALS = /\bThe aura deals (\d+d\d+(?:\s*\+\s*\d+)?|\d+) (\w+) damage\b/i;
+const ADJACENT_MELEE = /\bor is adjacent to you and hits you with a melee weapon strike\b/i;
+const ROUNDS = { round: 1, rounds: 1, minute: 10, minutes: 10, hour: 600, hours: 600 };
+const TIME = /\bFor (\d+) (rounds?|minutes?|hours?) after\b/i;
 export function retaliationPlan(text, base) {
     const touched = TOUCHER.exec(String(text ?? ""));
     const deals = touched && AURA_DEALS.exec(String(text ?? ""));
@@ -172,7 +177,7 @@ export function retaliationPlan(text, base) {
         automation: { level: "automatic" },
         targeting: { target: "the creature that touches you", range: null, area: null },
         trigger: { event: "use" },
-        retaliation: true,
+        retaliation: { ...(ADJACENT_MELEE.test(String(text ?? "")) ? { adjacentMelee: true } : {}), ...(TIME.exec(String(text ?? "")) ? { rounds: Number(TIME.exec(String(text ?? ""))[1]) * ROUNDS[TIME.exec(String(text ?? ""))[2].toLowerCase()] } : {}) },
         resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: deals[1].replace(/\s+/g, ""), type: deals[2].toLowerCase(), category: null }] }, outcomes: { criticalSuccess: none(), success, failure: none(), criticalFailure: none() } }
     };
 }
