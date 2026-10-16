@@ -413,3 +413,21 @@ test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and uncons
         assert.match(rows[degree].noteEffects.map((note) => note.text).join(" "), /At the end of their next turn, they fall Prone and fall Unconscious/);
     }
 });
+
+test("conditions only under if/when come off their rows (Heart of Sarnax, Hex Blaster); 'As success, but' rows keep the success's conditions, at the row's own time (Wintershot, The Waxworks, Lamentation of the Faithless)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const at = (name, index = 0) => compileActivations(item(name), { spellEffects }).filter((entry) => entry.plan?.resolution?.kind === "save")[index]?.plan ?? compileItem(item(name), { spellEffects });
+    const slugs = (plan, degree) => plan.resolution.outcomes[degree].effects.map((effect) => effect.slug);
+    const heart = compileActivations(item("Heart of Sarnax"), { spellEffects }).find((entry) => entry.activation.name === "Two Hearts as One").plan;
+    assert.deepEqual(slugs(heart, "criticalFailure"), ["stunned"], "slowed 2 only after the stun");
+    assert.match(heart.resolution.outcomes.criticalFailure.noteEffects.map((note) => note.text).join(" "), /When it recovers from being stunned/);
+    const hex = compileItem(item("Hex Blaster"), { spellEffects }) ?? at("Hex Blaster");
+    assert.ok(!slugs(hex, "criticalFailure").includes("unconscious"), "unconscious only if the damage knocks it out");
+    const winter = compileActivations(item("Wintershot"), { spellEffects })[0].plan;
+    assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => winter.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.duration.value} ${effect.duration.unit}`)), [["dazzled 2 rounds"], ["dazzled 1 minutes"], ["dazzled 10 minutes"]]);
+    const wax = compileActivations(item("The Waxworks"), { spellEffects })[0].plan;
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => slugs(wax, degree).includes("confused")), [true, true]);
+    const lament = compileActivations(item("Lamentation of the Faithless"), { spellEffects })[0].plan;
+    const blinded = lament.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "blinded");
+    assert.deepEqual([blinded.duration.value, blinded.duration.unit, slugs(lament, "criticalFailure").includes("slowed")], [1, "minutes", true]);
+});

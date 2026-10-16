@@ -53,7 +53,79 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text);
+    return asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text);
+}
+
+// A row "As success, but …" keeps the success row's conditions — The Waxworks' failure, "As success, but 4d6 persistent fire plus
+// 4d6 persistent mental damage", is Confused as its success is — which the ability compiler sometimes leaves off: each one the
+// row doesn't name again (a value or time of its own) or take away ("no longer", "instead of", "isn't").
+const AS_ROW = /^As (success|failure), (?:but|except)\b/i;
+// (The row's own time for all of it — Wintershot's "As success, but …, and the light affects the creature for 1 minute" — in a
+// sentence that names no condition; one that does, "the creature is slowed 1 for 1 minute", is that condition's.)
+const ROW_TIME = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?)\b/i;
+function asRowCopies(plan, text) {
+    if (plan?.resolution?.kind !== "save" || plan.builtin || !plan.resolution.outcomes) return plan;
+    const words = degreeWords(text);
+    const outcomes = { ...plan.resolution.outcomes };
+    let changed = false;
+    // (In order, so a critical failure "As failure" gets what the failure got.)
+    for (const degree of ["success", "failure", "criticalFailure"]) {
+        let row = outcomes[degree];
+        const own = words[degree] ?? "";
+        // (Its own time for one condition: Lamentation of the Faithless' "As failure, but the duration of the blinded condition is 1
+        // minute" — the ability compiler's blinded otherwise has none.)
+        const lasts = /\bthe duration of the (\w+) condition is (\d+|one|an?) (rounds?|minutes?|hours?)\b/i.exec(own);
+        if (row && lasts && (row.effects ?? []).some((effect) => effect?.slug === lasts[1].toLowerCase())) {
+            const duration = durationIn(`for ${lasts[2]} ${lasts[3]}`, null);
+            row = { ...row, effects: row.effects.map((effect) => (effect?.slug === lasts[1].toLowerCase() ? { ...effect, duration } : effect)) };
+            outcomes[degree] = row;
+            changed = true;
+        }
+        const as = AS_ROW.exec(own);
+        const base = as ? outcomes[as[1].toLowerCase()] : null;
+        if (!row || !base) continue;
+        const missing = (base.effects ?? []).filter((effect) => effect?.kind === "condition"
+            && !(row.effects ?? []).some((other) => other?.slug === effect.slug)
+            && !new RegExp(String.raw`\b${effect.slug}\b`, "i").test(own)
+            && !/\b(?:no longer|instead of being|isn't|is not)\b/i.test(own));
+        if (!missing.length) continue;
+        const timed = own.split(/(?<=[.!?])\s+|,\s*and\s+/).find((part) => ROW_TIME.test(part) && !NAMED.some((slug) => new RegExp(String.raw`\b${slug}\b`, "i").test(part)));
+        const time = timed ? durationIn(timed, null) : null;
+        outcomes[degree] = { ...row, effects: [...(row.effects ?? []), ...missing.map((effect) => (time && effect.duration ? { ...effect, duration: time } : effect))] };
+        changed = true;
+    }
+    return changed ? { ...plan, resolution: { ...plan.resolution, outcomes } } : plan;
+}
+
+// A condition a row names only under "if", "when" or "after" — Heart of Sarnax's critical failure, "… is Stunned 3. When it recovers
+// from being stunned, it is Slowed 2 for 1 minute"; Hex Blaster's "If the target falls Unconscious from damage dealt by this Strike
+// …, it remains unconscious for 1 day" — which the ability compiler applies with the rest: off the row, those sentences a note.
+const CONDITIONAL = /^(?:If|When|Whenever|After|Once|At the (?:end|start|beginning)|The next time|Each time)\b/;
+const NAMED = ["blinded", "clumsy", "confused", "controlled", "dazzled", "deafened", "doomed", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "grabbed", "immobilized", "off-guard", "paralyzed", "petrified", "prone", "quickened", "restrained", "sickened", "slowed", "stunned", "stupefied", "unconscious", "wounded"];
+function conditionalOnly(plan, text) {
+    if (plan?.resolution?.kind !== "save" || plan.builtin) return plan;
+    const words = degreeWords(text);
+    const found = {};
+    for (const [degree, own] of Object.entries(words)) {
+        const as = /^As (failure|success|critical failure), (?:but|except|and)\b/i.exec(own);
+        const all = `${own} ${as ? words[as[1].toLowerCase().replace(/ (\w)/, (whole, letter) => letter.toUpperCase())] ?? "" : ""}`;
+        const sentences = all.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+        const only = NAMED.filter((slug) => {
+            const naming = sentences.filter((sentence) => new RegExp(String.raw`\b${slug}\b`, "i").test(sentence));
+            return naming.length && naming.every((sentence) => CONDITIONAL.test(sentence));
+        });
+        if (only.length) found[degree] = { only, sentences: sentences.filter((sentence) => CONDITIONAL.test(sentence) && only.some((slug) => new RegExp(String.raw`\b${slug}\b`, "i").test(sentence))) };
+    }
+    if (!Object.keys(found).length) return plan;
+    const next = eachRow(plan, (row, degree) => {
+        const later = found[degree];
+        const gone = (row?.effects ?? []).filter((effect) => effect?.kind === "condition" && later?.only.includes(effect.slug));
+        if (!gone.length) return row;
+        const said = (row.noteEffects ?? []).map((note) => note.text).join(" ");
+        const notes = later.sentences.filter((sentence) => !said.includes(sentence)).map((sentence) => ({ label: gone.map((effect) => effect.slug).join(", "), text: `${sentence} (by hand)`, duration: null }));
+        return { ...row, effects: row.effects.filter((effect) => !gone.includes(effect)), noteEffects: [...(row.noteEffects ?? []), ...notes] };
+    });
+    return next === plan ? plan : { ...next, partial: true };
 }
 
 // Conditions a row gives later, not now — Nap Gas Dispenser's failure, "At the end of their next turn, they fall Prone and fall
