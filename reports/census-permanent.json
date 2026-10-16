@@ -8,10 +8,10 @@
   "results": {
    "resolves": 662,
    "builtin:cast-spell": 454,
-   "none": 868,
+   "none": 866,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
-   "builtin:readied-bonus": 21,
+   "builtin:readied-bonus": 23,
    "note-only": 277,
    "builtin:reroll": 22,
    "partial": 56,
@@ -26,9 +26,9 @@
    "save": 327,
    "cast": 454,
    "item": 589,
-   "none": 1066,
+   "none": 1064,
    "focus": 45,
-   "fortune": 31,
+   "fortune": 33,
    "reroll": 22,
    "strike": 39,
    "zone": 9,
@@ -44,10 +44,10 @@
    "results": {
     "resolves": 400,
     "builtin:cast-spell": 333,
-    "none": 553,
+    "none": 552,
     "builtin:focus-point": 43,
     "builtin:no-effect": 105,
-    "builtin:readied-bonus": 15,
+    "builtin:readied-bonus": 16,
     "note-only": 179,
     "builtin:reroll": 14,
     "partial": 16,
@@ -62,7 +62,7 @@
    "activations": 460,
    "results": {
     "resolves": 143,
-    "none": 140,
+    "none": 139,
     "partial": 23,
     "note-only": 41,
     "builtin:cast-spell": 76,
@@ -70,7 +70,7 @@
     "builtin:modes": 7,
     "builtin:no-effect": 12,
     "builtin:item-action": 5,
-    "builtin:readied-bonus": 4,
+    "builtin:readied-bonus": 5,
     "builtin:roll-twice": 1,
     "builtin:save-bonus": 1,
     "builtin:ac-reaction": 2
@@ -20407,9 +20407,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Faith Tattoo (Major)",
@@ -24851,9 +24851,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Whisperer of Souls",

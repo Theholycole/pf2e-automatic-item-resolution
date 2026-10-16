@@ -26,7 +26,8 @@ const DEGREE_WORDS = { all: "one degree better", success: "a success becomes a c
 // critical success".
 export function bonusWords(bonus) {
     const [first] = bonus.modifiers;
-    const targets = bonus.modifiers.map((modifier) => nameOf(modifier.selector)).join(" and ");
+    // (Several rolls, one spending it: "Deception check or Diplomacy check …"; else "AC and saving throw".)
+    const targets = bonus.modifiers.map((modifier) => nameOf(modifier.selector)).join((bonus.spend?.length ?? 0) > 1 ? " or " : " and ");
     const actions = first ? actionWords(first.predicate) : "";
     const degree = bonus.degree ? `${nameOf(bonus.degree.selector)}${actionWords(bonus.degree.predicate) ? ` (${actionWords(bonus.degree.predicate)})` : ""}: ${[...new Set(Object.entries(bonus.degree.adjustment).map(([key, value]) => DEGREE_WORDS[value === "to-success" ? "to-success" : key]))].join(", ")}` : null;
     // ("resistance 5 to physical damage", "resistance 5 to mental, poison or spirit damage" — the one that hit.)

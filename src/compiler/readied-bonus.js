@@ -76,13 +76,17 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
         const own = sentence.replace(/^When (?:it's |it is )?(?:you )?activat\w*(?: (?:it|the [\w' -]+?))?,\s*/i, "");
         if (/\b(?:all(?:ies|y)|each creature|creatures? (?:in|within)|emanation|aura)\b/i.test(sentence) || /^(?:If|While|When|Whenever)\b/.test(own)) continue;
         const [, value, type, , words] = match;
-        const selectors = selectorsOf(words);
+        // ("the triggering check" alone: the trigger's rolls — Mask of Allure's "You attempt a Deception, Diplomacy, Intimidation,
+        // or Performance check", Whisperer of Souls' "an Occultism check to Decipher Writing, … or Recall Knowledge".)
+        const fromTrigger = !selectorsOf(words).length && /\bthe triggering (?:check|roll|skill check)\b/i.test(words) && triggered;
+        const selectors = selectorsOf(fromTrigger ? triggered : words);
         if (!selectors.length) continue;
         // ("to Hide and Sneak", "to Trip the target", "checks made to Escape your grapple": only for those actions.)
-        // (A name of several words too: "to Recall Knowledge", "to Make an Impression".)
+        // (A name of several words too: "to Recall Knowledge", "to Make an Impression"; a list: "to Decipher Writing, Identify
+        // Magic, Learn a Spell, or Recall Knowledge".)
         const NAME = String.raw`[A-Z][a-z']+(?: (?:a|an|the|of) [A-Z][a-z']+| [A-Z][a-z']+)*`;
-        const actions = new RegExp(String.raw`\b(?:checks? )?(?:made )?to (${NAME}(?: (?:and|or) ${NAME})*)\b`).exec(words);
-        const predicate = actions ? [{ or: actions[1].split(/\s+(?:and|or)\s+/).map((name) => `action:${slug(name)}`) }] : null;
+        const actions = new RegExp(String.raw`\b(?:checks? )?(?:made )?to (${NAME}(?:(?:,|,? (?:and|or)) ${NAME})*)\b`).exec(fromTrigger ? triggered : words);
+        const predicate = actions ? [{ or: actions[1].split(/,\s*(?:(?:and|or)\s+)?|\s+(?:and|or)\s+/).map((name) => `action:${slug(name)}`) }] : null;
         const modifiers = selectors.map((selector) => ({ selector, type: type.toLowerCase(), value: Number(value), ...(predicate && !selector.endsWith("-dc") ? { predicate } : {}) }));
         const resist = RESIST.exec(sentence);
         // (One roll: "the Stealth check", "the triggering save", "your next skill action" — that roll ends it.)

@@ -183,3 +183,11 @@ test("a talisman's moment bonus: its trigger its first sentence, \"When activate
     // Not a moment: "on all Fortitude saves against the same disease for the next minute" (Fulu of the Stoic Ox).
     assert.notEqual(compileItem(source("Fulu of the Stoic Ox"))?.builtin, "readied-bonus");
 });
+
+test("\"the triggering check\" alone: the trigger's rolls and actions (Mask of Allure, Whisperer of Souls)", () => {
+    const mask = compileActivations(source("Mask of Allure")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.deepEqual(mask.bonus.spend, ["deception", "diplomacy", "intimidation", "performance"]);
+    assert.equal(readiedWords(mask), "+4 status bonus to Deception check or Diplomacy check or Intimidation check or Performance check, for the next such roll");
+    const souls = compileActivations(source("Whisperer of Souls")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.deepEqual(souls.bonus.modifiers, [{ selector: "occultism", type: "item", value: 4, predicate: [{ or: ["action:decipher-writing", "action:identify-magic", "action:learn-a-spell", "action:recall-knowledge"] }] }]);
+});
