@@ -704,6 +704,36 @@ export const cases = {
         return { selection: rule?.selection ?? null, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Iron Wine: of its two linked Effects, its own (Effect: Iron Wine), the weakness one on the note.
+    async ironWine(scene) {
+        const { actor: drinker } = await creature(scene, "Wine Drinker", { x: 12, y: 18 });
+        const wine = await give(drinker, "Iron Wine");
+        const since = Date.now();
+        await wine.consume();
+        const card = await messageAfter(since, itemCard("item"));
+        assert(/Iron Wine Weakness is linked too/.test(card.content), "the other link on the note");
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await wait(800);
+        const names = drinker.itemTypes.effect.map((effect) => effect.name);
+        assert(names.includes("Effect: Iron Wine") && !names.includes("Effect: Iron Wine Weakness"), `its own Effect only (${names.join(", ")})`);
+        return { names };
+    },
+
+    // Winged: "a fly Speed of 25 feet or your land Speed, whichever is slower" for 5 minutes.
+    async wingedFly(scene) {
+        const { actor: flier } = await creature(scene, "Winged Flier", { x: 14, y: 18 });
+        const armor = await give(flier, "Winged");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(armor.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"));
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(800);
+        const land = Number(flier.system.movement?.speeds?.land?.value ?? flier.system.attributes?.speed?.value);
+        const fly = Number(flier.system.movement?.speeds?.fly?.value ?? flier.system.attributes?.speed?.otherSpeeds?.find((entry) => entry.type === "fly")?.value);
+        assert(fly === Math.min(25, land), `fly ${Math.min(25, land)} (${fly})`);
+        return { land, fly };
+    },
+
     // Umbral Wings: a fly Speed equal to the land Speed until the end of the next turn (PF2e's BaseSpeed on PF2e 8.6's speeds).
     async umbralFly(scene) {
         const { actor: flier } = await creature(scene, "Umbral Flier", { x: 14, y: 14 });
