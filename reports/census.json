@@ -15,12 +15,12 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 248,
-   "resolves": 736,
+   "resolves": 738,
    "builtin:readied-bonus": 21,
    "builtin:zone": 87,
    "builtin:item-action": 12,
-   "note-only": 196,
-   "partial": 68,
+   "note-only": 191,
+   "partial": 71,
    "builtin:counteract": 20,
    "builtin:no-effect": 61,
    "builtin:reroll": 2,
@@ -179,9 +179,10 @@
    "results": {
     "none": 11,
     "builtin:zone": 12,
-    "resolves": 27,
-    "note-only": 14,
-    "builtin:no-effect": 13
+    "resolves": 29,
+    "note-only": 9,
+    "builtin:no-effect": 13,
+    "partial": 3
    },
    "mechanisms": {
     "damage": 10,
@@ -370,7 +371,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 593,
+   "resolves": 595,
    "gaps": 0,
    "none": 21
   }
@@ -9796,8 +9797,11 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Meanwhile all creatures not immune to spirit damage in a 10-foot emanation gains weakness 2 to spirit damage."
+   ],
    "live": "item"
   },
   {
@@ -10488,8 +10492,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -12460,8 +12465,11 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Meanwhile all creatures not immune to spirit damage in a 10-foot emanation gains weakness 5 to spirit damage."
+   ],
    "live": "item"
   },
   {
@@ -26311,8 +26319,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -29402,8 +29411,11 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Meanwhile all creatures not immune to spirit damage in a 10-foot emanation gains weakness 10 to spirit damage."
+   ],
    "live": "item"
   },
   {

@@ -49,6 +49,10 @@ export function withItemData(html, item) {
     // must … save" — the reader takes the area from the link.)
     text = text.replace(/\b(in|within) an? (\d+)-foot (emanation|burst|cone|line)\b(?= (?:must|attempts?)\b[^.]*?@Check\[(?:fortitude|reflex|will)\b)/g, (whole, word, feet, shape) => `${word} a @Template[type:${shape}|distance:${feet}]{${feet}-foot ${shape}}`);
     text = text.replace(/\bmust make an? (@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save or (be|become)\b((?:@UUID\[[^\]]*\]\{[^}]*\}|[^.(@])*)\((?:or )?([^)]*?) on (?:a )?critical failure\)/g, (whole, check, verb, first, worse) => `must succeed at a ${check} save or ${verb}${first}(${worse} on a critical failure)`);
+    // (Its holder's own resistance beside what it does to others, Maelstromic Destabilizer's "For the next minute, the creature holding
+    // the gadget gains resistance 2 to spirit damage, while all creatures … in a 10-foot emanation gains weakness 2 to spirit damage":
+    // its own sentence, the others' a note.)
+    text = text.replace(/\bFor the next minute, the creature holding the gadget gains resistance (\d+) to (\w+) damage, while all creatures\b/g, "For the next minute, you gain resistance $1 to $2 damage. Meanwhile all creatures");
     // (Its user's mount, Heedless Spurs' "Your mount takes 2d6 bleed and gains the quickened condition for 1 minute or until the
     // persistent bleed damage ends, whichever comes first": the creature targeted, the other way it ends a note.)
     text = text.replace(/\bYour mount takes (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) and gains the quickened condition for (\d+ (?:rounds?|minutes?)) or until the persistent bleed damage ends, whichever comes first\./g, (whole, damage, time) => `The target takes ${damage} damage and is quickened for ${time}. Target your mount; its quickened condition also ends when the persistent bleed damage ends.`);

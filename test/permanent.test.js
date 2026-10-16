@@ -461,3 +461,11 @@ test("a talisman's bonus after 'and gain' (Champion's Laurels) and a bonus 'Whil
     const look = compileItem(item("Look-Me-Not"), { spellEffects });
     assert.deepEqual(look.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["deception", 2, ["action:feint"]]]);
 });
+
+test("Gecko Pads' climb Speed ('The pads give you …') and Maelstromic Destabilizer's resistance for its holder", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const pads = compileItem(item("Gecko Pads"), { spellEffects });
+    assert.deepEqual([pads.item.speeds.map((speed) => [speed.type, speed.duration.value, speed.duration.unit]), pads.partial], [[["climb", 10, "minutes"]], undefined]);
+    const destabilizer = compileItem(item("Maelstromic Destabilizer (Lesser)"), { spellEffects });
+    assert.deepEqual([destabilizer.item.resist.map((entry) => [entry.type, entry.value, entry.duration.unit]), destabilizer.partial], [[["spirit", 2, "minutes"]], true]);
+});

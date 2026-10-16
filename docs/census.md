@@ -17,9 +17,9 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 736 | 50% |
-| partial | 68 | 5% |
-| note-only | 196 | 13% |
+| resolves | 738 | 50% |
+| partial | 71 | 5% |
+| note-only | 191 | 13% |
 | builtin:zone | 87 | 6% |
 | builtin:cast-spell | 32 | 2% |
 | builtin:roll-twice | 2 | 0% |
@@ -38,7 +38,7 @@ Results, for the items this module handles:
 | elixir | 149 | 86 | 4 | 28 | 0 | 22 | 9 |
 | poison | 115 | 110 | 0 | 1 | 0 | 1 | 3 |
 | snare | 82 | 0 | 0 | 5 | 0 | 64 | 13 |
-| gadget | 77 | 27 | 0 | 14 | 0 | 25 | 11 |
+| gadget | 77 | 29 | 3 | 9 | 0 | 25 | 11 |
 | mutagen | 68 | 60 | 8 | 0 | 0 | 0 | 0 |
 | oil | 66 | 28 | 2 | 17 | 0 | 10 | 9 |
 | fulu | 46 | 12 | 1 | 11 | 0 | 4 | 18 |
@@ -80,7 +80,7 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
-| duration | 943 | 593 | 0 | 21 |
+| duration | 943 | 595 | 0 | 21 |
 | fixed-dc | 491 | 330 | 0 | 32 |
 | condition | 433 | 262 | 0 | 29 |
 | linked-effect | 393 | 379 | 0 | 0 |

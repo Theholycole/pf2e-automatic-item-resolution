@@ -374,7 +374,8 @@ const LAND = "@actor.system.movement.speeds.land.value";
 function speedsOf(sentences, duration, used = new Set()) {
     const found = [];
     // (And a companion's, the creature the presser targets: Waverider Barding's "granting your companion a swim Speed of 30 feet".)
-    const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you|that grant you|granting your (?:animal )?(?:companion|familiar|mount|eidolon)) an? (?:(\d+)-foot )?(fly|climb|swim|burrow) Speed(?: (?:equal to (?:either )?(half )?your (?:land )?Speed(?: or (\d+) feet, whichever is (greater|higher|lower|slower|less))?|of (\d+) feet(?: or your (?:land )?Speed, whichever is (greater|higher|lower|slower|less))?))?/gi;
+    // (And Gecko Pads' "The pads give you a climb Speed equal to your Speed".)
+    const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you|that grant you|gives? you|granting your (?:animal )?(?:companion|familiar|mount|eidolon)) an? (?:(\d+)-foot )?(fly|climb|swim|burrow) Speed(?: (?:equal to (?:either )?(half )?your (?:land )?Speed(?: or (\d+) feet, whichever is (greater|higher|lower|slower|less))?|of (\d+) feet(?: or your (?:land )?Speed, whichever is (greater|higher|lower|slower|less))?))?/gi;
     for (const [index, whole] of sentences.entries()) {
         const sentence = whole.replace(/^\s*(?:During this time|While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|For the duration),\s*/i, "");
         // ("When you Activate the pin, … granting you a fly Speed of 50 feet": the use itself, Dragonscale Cameo's.)
@@ -505,7 +506,7 @@ export function ownRow(item, { healing = true } = {}) {
     // (Nor an introduction's bonus with no number when the number is read: One Day's Breath's "you also gain a status bonus
     // against inhaled threats" before its "+1 status bonus to saves against inhaled threats".)
     const restated = (sentence) => modifiers.length > 0 && /\ban? (?:item |status |circumstance )?bonus\b/i.test(sentence) && !/[+\-–]\d|\d+d\d+|\bDC\b/.test(sentence);
-    const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence));
+    const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(other ? { other } : {}) };
 }
 
