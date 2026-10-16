@@ -259,3 +259,12 @@ test("activated ammunition: its hit's save for the target, on the next ranged St
     assert.equal(readied().length, 0);
     assert.equal(foundry.posted.slice(before)[0]?.plan.resolution.check.against.value, 19);
 });
+
+test("ammunition's hit in other words: \"In addition, the target takes 1d8 persistent sonic damage\" (Shatterpoint Ammunition)", () => {
+    const [shatter] = compileActivations(source("Shatterpoint Ammunition"));
+    assert.equal(routeOf(shatter.plan), "strike");
+    assert.deepEqual(shatter.plan.strike.damage, [{ diceNumber: 1, dieSize: "d8", category: "persistent", damageType: "sonic" }]);
+    assert.match(shatter.plan.strike.notes.join(" "), /ignores the target's Hardness/);
+    // Garrote Bolt's 2d12 persistent slashing is PF2e's own DamageDice rule: nothing to add.
+    assert.equal(compileActivations(source("Garrote Bolt"))[0].plan?.strike?.damage?.length ?? 0, 0);
+});

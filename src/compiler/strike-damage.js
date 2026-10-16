@@ -16,6 +16,9 @@ const EXTRA = new RegExp(String.raw`\b(?:an )?(?:additional|extra) (\d+)d(\d+) (
 const AND_DIE = new RegExp(String.raw`^,? and (?:an additional )?(\d+)d(\d+) (?:(persistent|precision|splash) )?(?:(${TYPES}) )?damage\b`, "i");
 // (A next Strike's own damage, no "additional": Venom Lash's "deals 2d6 persistent poison damage to the target".)
 const OWN_DIE = new RegExp(String.raw`\bdeals? (\d+)d(\d+) (?:(persistent|precision|splash) )?(?:(${TYPES}) )?damage\b`, "i");
+// (The hit's own added damage in other words: Shatterpoint Ammunition's "In addition, the target takes 1d8 persistent sonic
+// damage from the vibrations", "the target takes 2d6 acid damage in addition to the damage normally dealt".)
+const TARGET_TAKES = new RegExp(String.raw`^In addition, (?:the target|it) (?:also )?takes (\d+)d(\d+) (?:(persistent|precision|splash) )?(?:(${TYPES}) )?damage\b|\b(?:the target|it) (?:also )?takes (\d+)d(\d+) (?:(persistent|precision|splash) )?(?:(${TYPES}) )?damage in addition to\b`, "i");
 // "an extra die of weapon damage", "an extra two dice of weapon damage".
 const WEAPON_DICE = /\b(?:an )?extra (?:(one|two|three|four|\d+) )?(?:die|dice) of weapon damage\b/i;
 // "+1 status bonus to this Strike", "with a +1 circumstance bonus to the attack roll".
@@ -50,6 +53,10 @@ function sentenceDice(sentence, { own = false } = {}) {
         found.push({ die: die(match[1] ?? match[5], match[2] ?? match[6], match[3] ?? match[7], match[4] ?? match[8]), start: match.index, end: match.index + match[0].length });
         const next = AND_DIE.exec(rest);
         if (next) found.push({ die: die(next[1], next[2], next[3], next[4]), start: match.index + match[0].length, end: match.index + match[0].length + next[0].length });
+    }
+    if (!found.length) {
+        const match = TARGET_TAKES.exec(sentence);
+        if (match && !conditional(sentence.slice(0, match.index))) found.push({ die: die(match[1] ?? match[5], match[2] ?? match[6], match[3] ?? match[7], match[4] ?? match[8]), start: match.index, end: match.index + match[0].length });
     }
     if (!found.length && own) {
         const match = OWN_DIE.exec(sentence);

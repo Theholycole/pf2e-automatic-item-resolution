@@ -8,13 +8,13 @@
   "results": {
    "resolves": 662,
    "builtin:cast-spell": 469,
-   "none": 843,
+   "none": 840,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 25,
    "note-only": 277,
    "builtin:reroll": 22,
-   "partial": 58,
+   "partial": 61,
    "builtin:modes": 26,
    "builtin:zone": 9,
    "builtin:item-action": 11,
@@ -26,11 +26,11 @@
    "save": 327,
    "cast": 469,
    "item": 591,
-   "none": 1041,
+   "none": 1038,
    "focus": 45,
    "fortune": 35,
    "reroll": 22,
-   "strike": 39,
+   "strike": 42,
    "zone": 9,
    "action": 11,
    "later": 4
@@ -79,8 +79,8 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 91,
-    "partial": 10,
+    "none": 88,
+    "partial": 13,
     "resolves": 35,
     "note-only": 14,
     "builtin:no-effect": 2,
@@ -12465,9 +12465,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Exsanguinating Ammunition",
@@ -17239,9 +17239,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Handkerchief of Disagreeable Disguise",
@@ -28206,9 +28206,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Faith Tattoo (True)",
