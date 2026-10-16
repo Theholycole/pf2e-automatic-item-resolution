@@ -691,6 +691,8 @@ export const cases = {
     async gemTwist(scene) {
         const { actor: wielder } = await creature(scene, "Gem Twister", { type: "character", x: 18, y: 14 });
         const blade = await give(wielder, "Four-Ways Dogslicer");
+        // (Wielded: PF2e's rules of a weapon only apply then.)
+        await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
         const index = (await import(`/modules/${NS}/src/compiler/permanent.js`)).compileActivations(blade).findIndex((entry) => entry.plan?.builtin === "modes");
         const since = Date.now();
         await game.modules.get(NS).api.live.activate(blade.uuid, index);

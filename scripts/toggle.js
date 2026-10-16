@@ -28,7 +28,9 @@ export async function applyToggleCard(message, { choice = null } = {}) {
     const actor = item?.actor ?? null;
     if (!actor) throw new Error(`${state.item.name} isn't on a creature any more.`);
     const request = toggleRequest(state, { rules: item.system?.rules ?? [], itemId: item.id });
-    await actor.toggleRollOption(request.domain, request.option, request.itemId, request.value, request.suboption);
+    // (PF2e finds the toggle among the actor's active rules: a weapon not wielded, an item not invested, has none — null.)
+    const done = await actor.toggleRollOption(request.domain, request.option, request.itemId, request.value, request.suboption);
+    if (done === null || done === undefined) throw new Error(`PF2e has no active toggle for ${item.name}: wield, wear or invest it first.`);
     const next = { ...state, status: "applied", results: [`${actor.name}: ${item.name} set to ${request.name}.`] };
     return message.update({ content: toggleCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

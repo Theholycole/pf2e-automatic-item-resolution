@@ -151,6 +151,7 @@ export function createFakeFoundry() {
             toggled: [],
             async toggleRollOption(domain, option, itemId = null, value = true, suboption = null) {
                 this.toggled.push({ domain, option, itemId, value, suboption });
+                return true;
             },
             get itemTypes() {
                 return {
