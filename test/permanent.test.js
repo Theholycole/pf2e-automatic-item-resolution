@@ -402,3 +402,14 @@ test("a mount's bleed and quickened condition (Heedless Spurs): the fuller outri
     assert.deepEqual([spurs.resolution.sharedDamage.components[0].formula, spurs.resolution.sharedDamage.components[0].category, spurs.resolution.outcomes.success.effects.map((effect) => effect.slug)], ["2d6", "persistent", ["quickened"]]);
     assert.match(spurs.notes.join(" "), /Target your mount/);
 });
+
+test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and unconscious only at the end of the creature's next turn (a note, not now)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const gas = compileItem(item("Nap Gas Dispenser"), { spellEffects });
+    const rows = gas.resolution.outcomes;
+    assert.deepEqual([rows.success.modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`), rows.success.effects.map((effect) => effect.slug)], [["perception -2"], ["slowed"]]);
+    for (const degree of ["failure", "criticalFailure"]) {
+        assert.deepEqual(rows[degree].effects.map((effect) => effect.slug), ["slowed"], `${degree}: slowed now`);
+        assert.match(rows[degree].noteEffects.map((note) => note.text).join(" "), /At the end of their next turn, they fall Prone and fall Unconscious/);
+    }
+});

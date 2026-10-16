@@ -15,12 +15,12 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 248,
-   "resolves": 737,
+   "resolves": 736,
    "builtin:readied-bonus": 18,
    "builtin:zone": 87,
    "note-only": 200,
    "builtin:item-action": 12,
-   "partial": 66,
+   "partial": 67,
    "builtin:counteract": 20,
    "builtin:no-effect": 61,
    "builtin:reroll": 2,
@@ -34,11 +34,11 @@
    "results": {
     "builtin:cast-spell": 11,
     "none": 124,
-    "resolves": 209,
+    "resolves": 208,
     "note-only": 93,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 39,
+    "partial": 40,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -316,7 +316,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 331,
+   "resolves": 330,
    "gaps": 0,
    "none": 32
   },
@@ -364,13 +364,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 263,
+   "resolves": 262,
    "gaps": 0,
    "none": 29
   },
   "duration": {
    "count": 943,
-   "resolves": 594,
+   "resolves": 593,
    "gaps": 0,
    "none": 21
   }
@@ -26524,9 +26524,8 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {

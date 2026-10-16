@@ -53,7 +53,34 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text);
+    return delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text);
+}
+
+// Conditions a row gives later, not now — Nap Gas Dispenser's failure, "At the end of their next turn, they fall Prone and fall
+// Unconscious for 1 minute", which the ability compiler applies at once (and copies to "As failure, but …"): off those rows, and a
+// note on the creature for when they come.
+const LATER_CONDITIONS = /\bAt the end of (?:their|its|the creature's|the target's) next turn, (?:they|it|the creature|the target) (?:falls?|becomes?|is|are) ([^.]+)\./;
+const DELAYABLE = ["prone", "unconscious", "asleep", "paralyzed", "stunned", "slowed", "petrified", "blinded", "deafened", "confused", "fascinated", "frightened", "sickened"];
+function delayedConditions(plan, text) {
+    if (plan?.resolution?.kind !== "save" || plan.builtin) return plan;
+    const words = degreeWords(text);
+    const changed = {};
+    for (const [degree, row] of Object.entries(words)) {
+        const own = LATER_CONDITIONS.exec(row);
+        const as = /^As (failure|success), but\b/i.exec(row);
+        const base = own ? null : as ? LATER_CONDITIONS.exec(words[as[1].toLowerCase()] ?? "") : null;
+        const later = own ?? base;
+        if (!later) continue;
+        const slugs = DELAYABLE.filter((slug) => new RegExp(String.raw`\b${slug}\b`, "i").test(later[1]));
+        if (slugs.length) changed[degree] = { slugs, words: later[0] };
+    }
+    if (!Object.keys(changed).length) return plan;
+    const next = eachRow(plan, (row, degree) => {
+        const later = changed[degree];
+        if (!later || !(row?.effects ?? []).some((effect) => later.slugs.includes(effect.slug))) return row;
+        return { ...row, effects: row.effects.filter((effect) => !later.slugs.includes(effect.slug)), noteEffects: [...(row.noteEffects ?? []), { label: later.slugs.join(", "), text: `${later.words} Apply that then.`, duration: null }] };
+    });
+    return next === plan ? plan : { ...next, partial: true };
 }
 
 // Which creatures to target, in src/compiler/item-data.js's words for an aura's damage (Banner of Piercing Shards' "Target each
@@ -71,8 +98,11 @@ function whoTargeted(plan, text) {
 // Missive's "The target takes a –1 status penalty to Deception, Diplomacy, Intimidation, and Performance checks for 1 hour",
 // Captivating Rosebud's "-1 status penalty to Perception checks for 10 minutes" and "As success, but a –2 penalty" — that
 // penalty as the row's modifiers (PF2e's selectors, src/compiler/rows.js), its "by hand" line gone.
-const PENALTY_ROW = /^\{target\} \([\w ]+\): The (?:target|creature) takes an? [-–−](\d+) (status|circumstance|item) penalty to ([\w ,]+?) for (\d+|one|an?) (rounds?|minutes?|hours?)\.$/i;
-const AS_BUT_PENALTY = /^\{target\} \([\w ]+\): As (success|failure), but an? [-–−](\d+) penalty\.(?: \([^)]*\))?$/i;
+const PENALTY_ROW = /^\{target\} \([^)]*\): The (?:target|creature) takes an? [-–−](\d+) (status|circumstance|item) penalty to ([\w ,]+?) for (\d+|one|an?) (rounds?|minutes?|hours?)\.$/i;
+// (With a condition the row already holds: Nap Gas Dispenser's "takes a –2 status penalty to Perception checks and is Slowed 1 for 1
+// round" — the penalty for that time.)
+const PENALTY_AND = /^\{target\} \([^)]*\): The (?:target|creature) takes an? [-–−](\d+) (status|circumstance|item) penalty to ([\w ,]+?) and is (\w+)(?: \d+)? for (\d+|one|an?) (rounds?|minutes?|hours?)\.$/i;
+const AS_BUT_PENALTY = /^\{target\} \([^)]*\): As (success|failure), but an? [-–−](\d+) penalty\.(?: \([^)]*\))?$/i;
 const ROW_KEYS = { success: "success", failure: "failure" };
 function manualPenalties(plan, text) {
     if (plan?.resolution?.kind !== "save" || plan.builtin || !plan.resolution.outcomes) return plan;
@@ -82,7 +112,9 @@ function manualPenalties(plan, text) {
         const lines = row?.manualInstructions ?? [];
         if (lines.length !== 1 || (row.modifiers ?? []).length) continue;
         const line = String(typeof lines[0] === "string" ? lines[0] : lines[0]?.text ?? "");
-        const match = PENALTY_ROW.exec(line);
+        const both = PENALTY_AND.exec(line);
+        const held = both && (row.effects ?? []).some((effect) => effect.slug === both[4].toLowerCase());
+        const match = (held ? [both[0], both[1], both[2], both[3], both[5], both[6]] : null) ?? PENALTY_ROW.exec(line);
         if (!match) continue;
         const selectors = selectorsOf(match[3]);
         if (!selectors) continue;
