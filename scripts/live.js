@@ -387,6 +387,8 @@ async function recover(actor, name, recovery) {
     if (!found.length) return [`${name} has no persistent ${recoveryText(recovery).replace(/^.* persistent /, "")}: no flat check.`];
     const lines = [];
     for (const condition of found) {
+        // (Its name before a lower DC renames it: "Persistent Damage (1d6 fire)".)
+        const label = condition.name;
         const usual = Number(condition.system.persistent.dc) || 15;
         const dc = recovery.dc && recovery.dc < usual ? recovery.dc : usual;
         if (dc !== usual) await condition.update({ "system.persistent.dc": dc });
@@ -394,7 +396,7 @@ async function recover(actor, name, recovery) {
         const stays = () => persistent().some((entry) => entry.id === condition.id);
         for (let wait = 0; wait < 20 && stays(); wait++) await new Promise((resolve) => setTimeout(resolve, 50));
         if (stays() && dc !== usual) await condition.update({ "system.persistent.dc": usual });
-        lines.push(stays() ? `${name}: the flat check (DC ${dc}) didn't end ${condition.name}` : `${name}: ${condition.name} ended (flat check, DC ${dc})`);
+        lines.push(stays() ? `${name}: the flat check (DC ${dc}) didn't end ${label}` : `${name}: ${label} ended (flat check, DC ${dc})`);
     }
     return lines;
 }

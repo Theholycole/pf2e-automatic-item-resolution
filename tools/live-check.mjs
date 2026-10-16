@@ -610,9 +610,10 @@ export const cases = {
         const resistances = monk.attributes.resistances ?? monk.system.attributes.resistances ?? [];
         for (const type of ["slashing", "piercing"]) assert(resistances.some((entry) => entry.type === type && entry.value === 5), `resistance 5 to ${type} (${JSON.stringify(resistances.map((entry) => [entry.type, entry.value]))})`);
         const rules = monk.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).filter((rule) => rule.key === "FlatModifier");
-        assert(rules.some((rule) => rule.selector === "all-speeds" && rule.value === -5), "-5 feet to all Speeds");
-        assert(rules.some((rule) => rule.selector === "ac" && rule.value === 1 && JSON.stringify(rule.predicate).includes("item:ranged")), "+1 AC against ranged attacks");
-        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+        // (PF2e keeps a rule's selector as a list.)
+        assert(rules.some((rule) => [].concat(rule.selector).includes("all-speeds") && rule.value === -5), "-5 feet to all Speeds");
+        assert(rules.some((rule) => [].concat(rule.selector).includes("ac") && rule.value === 1 && JSON.stringify(rule.predicate).includes("item:ranged")), "+1 AC against ranged attacks");
+        return { land: monk.system.movement?.speeds?.land?.value ?? null, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
     // Ferrofluid Urchin: resistance 3 to physical damage for the turn (the fortune card's Effect).
@@ -646,6 +647,44 @@ export const cases = {
         const resistances = drinker.attributes.resistances ?? [];
         assert(resistances.some((entry) => entry.type === "fire" && entry.value === 5), `PF2e's fire resistance 5 (${JSON.stringify(resistances.map((entry) => [entry.type, entry.value]))})`);
         return { duration: effect.system.duration };
+    },
+
+    // The Mountain Man: "2nd-rank or 4th-rank Enlarge upon yourself" — the second choice, cast by the spell module at rank 4 on its user.
+    async mountainManRank(scene) {
+        const { actor: giant } = await creature(scene, "Mountain Caster", { type: "character", x: 18, y: 8 });
+        const card = await give(giant, "The Mountain Man");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const castCard = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        assert(/Enlarge \(rank 4\)/.test(castCard.content), "both ranks offered");
+        await game.modules.get(NS).api.live.apply(castCard.id, { choice: 1 });
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        const flag = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        assert(flag.rank === 4, `rank 4 (${flag.rank})`);
+        return { rank: flag.rank, results: game.messages.get(castCard.id).getFlag(NS, "card").results };
+    },
+
+    // Mask of Allure's Shine of Silver: +4 to the triggering Deception, Diplomacy, Intimidation or Performance check — a Deception
+    // check spends it.
+    async allureSpent(scene) {
+        const { actor: charmer } = await creature(scene, "Allure Charmer", { x: 18, y: 11 });
+        const mask = await give(charmer, "Mask of Allure");
+        const index = (await import(`/modules/${NS}/src/compiler/permanent.js`)).compileActivations(mask).findIndex((entry) => entry.plan?.builtin === "readied-bonus");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(mask.uuid, index);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const effect = () => charmer.itemTypes.effect.find((entry) => entry.getFlag(NS, "rollTwice"));
+        assert(effect()?.system.rules.filter((rule) => rule.key === "FlatModifier").length === 4, "four FlatModifiers");
+        since = Date.now();
+        await charmer.skills.deception.roll({ skipDialog: true });
+        const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check", { what: "the Deception check" });
+        assert((roll.flags.pf2e.modifiers ?? []).some((modifier) => modifier.modifier === 4 && modifier.type === "status" && modifier.enabled !== false), "+4 on the check");
+        const end = Date.now() + 5000;
+        while (Date.now() < end && effect()) await wait(250);
+        assert(!effect(), "spent by the Deception check");
+        return { total: roll.rolls[0]?.total };
     },
 
     // Umbral Wings: a fly Speed equal to the land Speed until the end of the next turn (PF2e's BaseSpeed on PF2e 8.6's speeds).
