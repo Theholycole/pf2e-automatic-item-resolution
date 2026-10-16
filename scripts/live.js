@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, mayApply, startInitiative, stateOf } from "./foundry.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -40,6 +40,11 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
     setUpActivations({ compileActivations, postCardFor });
     Hooks.on("deleteItem", (item) => {
         rememberDeletedBomb(item);
+        // (A Rage ends: what the item gave until then goes with it — Barbarians+ crowns' quickened.)
+        if (isActiveGM() && item?.type === "effect" && (item.slug === "effect-rage" || item.name === "Effect: Rage") && item.actor) {
+            const ids = (item.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.untilRage).map((effect) => effect.id);
+            if (ids.length) item.actor.deleteEmbeddedDocuments("Item", ids).catch((error) => console.error(`${MODULE_ID} | rage end`, error));
+        }
         if (item?.type !== "consumable") return;
         deleted.set(item.uuid, { data: { ...item.toObject(false), uuid: item.uuid }, actor: item.actor ?? null });
         setTimeout(() => deleted.delete(item.uuid), 30_000);
@@ -283,6 +288,18 @@ function runeKeyOf(rune) {
     return Object.keys(names).some((key) => kebab(key) === rune.key) ? rune.key : null;
 }
 
+// Whether a creature is raging: PF2e's Effect: Rage on it.
+const isRaging = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.slug === "effect-rage" || effect.name === "Effect: Rage");
+
+// A condition's PF2e uuid by its slug: PF2e's condition manager, else its conditions pack.
+async function conditionUuid(slug) {
+    const condition = game.pf2e?.ConditionManager?.getCondition?.(slug);
+    if (condition?.uuid) return condition.uuid;
+    const index = await game.packs?.get?.("pf2e.conditionitems")?.getIndex?.().catch?.(() => null);
+    const entry = index?.find?.((row) => String(row.name).toLowerCase() === slug);
+    return entry ? `Compendium.pf2e.conditionitems.Item.${entry._id}` : null;
+}
+
 // The creatures of the token uuids a presser targeted: [{ token, actor, name }].
 async function targetedCreatures(uuids) {
     const tokens = await Promise.all((Array.isArray(uuids) ? uuids : []).map((uuid) => fromUuid(uuid).catch(() => null)));
@@ -407,6 +424,16 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         else if (weapon?.id) {
             await user.actor.createEmbeddedDocuments("Item", [runeEffectSource(rune, { key, weapon, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
             lines.push(`${state.user.name}: ${runeText(rune, weapon.name)}`);
+        }
+    }
+    // (A condition until the end of the user's rage: an Effect granting it, gone when the Rage ends — only while raging.)
+    const untilRage = state.plan.item?.untilRage;
+    if (untilRage && target.actor) {
+        if (!isRaging(target.actor)) lines.push(`${recipient.name} isn't raging: no ${untilRageText(untilRage)}.`);
+        else {
+            const uuids = await Promise.all(untilRage.conditions.map((entry) => conditionUuid(entry.slug)));
+            await target.actor.createEmbeddedDocuments("Item", [untilRageEffectSource(untilRage, uuids, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${recipient.name}: ${untilRageText(untilRage)}`);
         }
     }
     // (The conditions it lowers: Lion Badge's frightened, by 1 — PF2e's decreaseCondition, once for each, "to 0" removing it;

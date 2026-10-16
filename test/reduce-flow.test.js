@@ -164,3 +164,40 @@ test("a reduction's own notes once on the card (Preordained Spear)", async () =>
     const lines = previewLines({ plan: delay.plan, rolled: null });
     assert.equal(lines.filter((line) => /regain 1 Mythic Point/.test(line)).length, 1);
 });
+
+test("quickened until the end of the rage: only while raging, an Effect granting it, gone when the Rage ends (the module's own wording)", async () => {
+    const { readUntilRage } = await import("../src/compiler/rage-time.js");
+    const html = "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (concentrate)</p><p><strong>Effect</strong> Your fury quickens. You become quickened until the end of your rage. You can use the extra action only to Stride or Strike.</p>";
+    assert.deepEqual(readUntilRage("Effect You become quickened until the end of your rage. You can use the extra action only to Stride or Strike."), { conditions: [{ slug: "quickened", value: null }], notes: ["You can use the extra action only to Stride or Strike."] });
+    // (A creature of its own: the Instinct Crown test left the scout raging.)
+    const raging = foundry.makeActor({ id: "reduce-rager", name: "Rager", owners: ["player"] });
+    foundry.place(raging, 100, 18000);
+    const crown = foundry.giveItem(raging, { _id: "testRageCrown001", type: "equipment", name: "Test Crown", img: null, system: { category: null, traits: { value: [] }, level: { value: 4 }, description: { value: html } } });
+    const [entry] = compileActivations(crown.toObject());
+    assert.deepEqual(entry.plan.item.untilRage, { conditions: [{ slug: "quickened", value: null }] });
+    globalThis.game.pf2e.ConditionManager = { getCondition: (slug) => ({ uuid: `Compendium.pf2e.conditionitems.Item.${slug}` }) };
+    const activate = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: crown.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return card;
+    };
+    // Not raging: nothing.
+    let card = await activate();
+    assert.match(card.content, /isn&#39;t raging/);
+    // Raging: the Effect granting quickened, for at most a minute.
+    const rage = { type: "effect", slug: "effect-rage", name: "Effect: Rage", id: "rage-effect" };
+    raging.created.push(rage);
+    card = await activate();
+    const effect = raging.created.find((item) => item.flags?.[MODULE_ID]?.untilRage);
+    assert.deepEqual([effect.system.rules, effect.system.duration.value, effect.system.duration.unit], [[{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.quickened" }], 1, "minutes"]);
+    // The Rage ends: it goes too.
+    raging.created = raging.created.filter((item) => item !== rage);
+    await foundry.call("deleteItem", { ...rage, actor: raging });
+    await settle();
+    assert.equal(raging.created.some((item) => item.flags?.[MODULE_ID]?.untilRage), false);
+    delete globalThis.game.pf2e.ConditionManager;
+});

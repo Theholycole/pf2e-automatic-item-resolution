@@ -88,6 +88,8 @@ export function previewLines(state) {
     for (const entry of plan?.item?.reduce ?? []) lines.push(reductionText(entry));
     // (A rune it lends a weapon, src/compiler/rune-loans.js.)
     if (plan?.item?.rune) lines.push(runeText(plan.item.rune));
+    // (A condition until the end of the user's rage, src/compiler/rage-time.js.)
+    if (plan?.item?.untilRage) lines.push(`${untilRageText(plan.item.untilRage)}, while raging`);
     // (Its resistance, src/compiler/rows.js: the card's own Effect.)
     if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
@@ -213,6 +215,17 @@ export function runeText(rune, weaponName = null) {
 // key: PF2e's rune key, kebab-case ("disrupting", "greater-disrupting").
 export function runeEffectSource(rune, { key = rune.key, weapon, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return ownEffectSource({ name: `${rune.name} (${weapon.name})`, img: "icons/svg/sword.svg", words: runeText(rune, weapon.name), rules: [{ key: "AdjustStrike", mode: "add", property: "property-runes", value: key, definition: [`item:id:${weapon.id}`] }], duration: rune.duration, flag: { rune: key, weaponId: weapon.id }, item, user, worldTime, initiative, moduleId });
+}
+
+// Conditions until the end of the rage, in words: "Quickened until the end of the rage".
+const conditionWords = (conditions) => conditions.map((entry) => `${entry.slug.charAt(0).toUpperCase()}${entry.slug.slice(1)}${entry.value ? ` ${entry.value}` : ""}`).join(" and ");
+export const untilRageText = (untilRage) => `${conditionWords(untilRage.conditions)} until the end of the rage`;
+
+// Their Effect: PF2e's GrantItem for each condition (uuids: the conditions' own, by slug), lasting at most a minute (a Rage's),
+// flagged untilRage so the Rage's end removes it (scripts/live.js).
+export function untilRageEffectSource(untilRage, uuids, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const rules = untilRage.conditions.map((entry, index) => ({ key: "GrantItem", uuid: uuids[index], ...(entry.value ? { alterations: [{ mode: "override", property: "badge-value", value: entry.value }] } : {}) })).filter((rule) => rule.uuid);
+    return ownEffectSource({ name: untilRageText(untilRage), img: "icons/svg/aura.svg", words: untilRageText(untilRage), rules, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { untilRage: true }, item, user, worldTime, initiative, moduleId });
 }
 
 // Its resistances with a chosen type filled in (index into the entry's choose list, the first by default).
