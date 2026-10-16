@@ -736,6 +736,31 @@ export const cases = {
         return { land, fly };
     },
 
+    // Battering Ammunition: its readied ranged Strike's hit (AC 1) pushes the target 5 feet away from the archer.
+    async batteringPush(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Battering Archer", { type: "character", x: 2, y: 23 });
+        const { token: foeToken } = await creature(scene, "Battering Target", { x: 4, y: 23, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Battering Ammunition");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const before = { x: foeToken.x, y: foeToken.y };
+        const { attack } = await strike(archer, bow);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        const end = Date.now() + 8000;
+        while (Date.now() < end && foeToken.x === before.x) await wait(250);
+        const moved = (foeToken.x - before.x) / (scene.grid?.size ?? 100);
+        assert(moved === 1, `pushed one square away (${moved})`);
+        return { outcome, moved };
+    },
+
     // Umbral Wings: a fly Speed equal to the land Speed until the end of the next turn (PF2e's BaseSpeed on PF2e 8.6's speeds).
     async umbralFly(scene) {
         const { actor: flier } = await creature(scene, "Umbral Flier", { x: 14, y: 14 });
