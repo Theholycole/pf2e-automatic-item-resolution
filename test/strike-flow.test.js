@@ -268,3 +268,12 @@ test("ammunition's hit in other words: \"In addition, the target takes 1d8 persi
     // Garrote Bolt's 2d12 persistent slashing is PF2e's own DamageDice rule: nothing to add.
     assert.equal(compileActivations(source("Garrote Bolt"))[0].plan?.strike?.damage?.length ?? 0, 0);
 });
+
+test("a push on the Strike's hit: the core's forced movement, away from its user (Battering Ammunition); not a reposition", async () => {
+    const [battering] = compileActivations(source("Battering Ammunition"));
+    assert.equal(routeOf(battering.plan), "strike");
+    assert.deepEqual(battering.plan.resolution.outcomes.success.forcedMovement, { kind: "push", distance: 5 });
+    const { hitRiders } = await import("../src/compiler/bombs.js");
+    assert.deepEqual(hitRiders("On a critical hit, the target is also knocked back 10 feet.").criticalSuccess.forcedMovement, { kind: "push", distance: 10 });
+    assert.equal(hitRiders("If you hit and deal damage, you also reposition the creature 5 feet.").success.forcedMovement, undefined);
+});

@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 667,
+   "resolves": 668,
    "builtin:cast-spell": 469,
-   "none": 829,
+   "none": 828,
    "builtin:focus-point": 45,
    "builtin:no-effect": 129,
    "builtin:readied-bonus": 28,
@@ -26,11 +26,11 @@
    "save": 327,
    "cast": 469,
    "item": 599,
-   "none": 1027,
+   "none": 1026,
    "focus": 45,
    "fortune": 38,
    "reroll": 22,
-   "strike": 42,
+   "strike": 43,
    "zone": 9,
    "action": 11,
    "later": 4
@@ -79,9 +79,9 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 88,
+    "none": 87,
     "partial": 13,
-    "resolves": 35,
+    "resolves": 36,
     "note-only": 14,
     "builtin:no-effect": 2,
     "builtin:zone": 1
@@ -21595,9 +21595,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Bag of Cats",

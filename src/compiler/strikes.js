@@ -87,7 +87,10 @@ const AMMO_HITS = [
     [/\bOnce it hits the target, /gi, "On a hit, "],
     [/\bWhen you hit a target with (?:this|an activated) [\w' -]{1,30}?, /gi, "On a hit, "],
     [/\bOn a successful Strike, /gi, "On a hit, "],
-    [/\bA (?:creature|target) (?:hit|struck|damaged) by (?:an? |the )?(?:activated )?[\w' -]{1,40}? (?=must|is|takes|becomes)/gi, "On a hit, the target "]
+    [/\bA (?:creature|target) (?:hit|struck|damaged) by (?:an? |the )?(?:activated )?[\w' -]{1,40}? (?=must|is|takes|becomes)/gi, "On a hit, the target "],
+    // ("It deals bludgeoning damage instead of its normal damage type and pushes the target 5 feet on a successful hit": the hit's
+    // clause at the end of its sentence.)
+    [/(^|[.!?]\s+)((?:It|The (?:ammunition|target|creature))\b[^.]*?) on a successful (?:hit|Strike)\./g, "$1On a hit, $2."]
 ];
 const isAmmo = (item) => item?.type === "ammo" || (item?.system?.traits?.value ?? []).includes("ammunition");
 function ammoStrike(text) {

@@ -46,10 +46,14 @@ export function riderRow(text) {
         row.effects.push({ kind: "condition", slug: effect.slug, value: effect.value ?? null, duration: fitDuration(effect.duration ?? null, sentence) });
     }
     for (const modifier of readPenalties(sentence)) row.modifiers.push({ ...modifier, duration: fitDuration(modifier.duration ?? readDuration(sentence), sentence) });
+    // ("pushes the target 5 feet", "the target is also knocked back 10 feet": away from the one who made the Strike. Not a
+    // reposition — a direction of the user's choosing — nor a pull.)
+    const push = /\b(?:push(?:es)?|knocks?) (?:the target|it|the creature) (?:back )?(\d+) feet\b|\b(?:is|are) (?:also )?(?:pushed|knocked back) (\d+) feet\b/i.exec(sentence);
+    if (push && !/\b(?:up to|toward|reposition)\b/i.test(sentence)) row.forcedMovement = { kind: "push", distance: Number(push[1] ?? push[2]) };
     return row;
 }
 
-const merge = (...rows) => rows.reduce((all, row) => ({ ...all, effects: [...all.effects, ...row.effects], modifiers: [...all.modifiers, ...row.modifiers] }), none());
+const merge = (...rows) => rows.reduce((all, row) => ({ ...all, effects: [...all.effects, ...row.effects], modifiers: [...all.modifiers, ...row.modifiers], ...(row.forcedMovement ? { forcedMovement: row.forcedMovement } : all.forcedMovement ? { forcedMovement: all.forcedMovement } : {}) }), none());
 
 // The bomb's riders: { success, criticalSuccess } rows, from its "On a hit" and "On a critical hit" sentences.
 export const bombRiders = (item) => hitRiders(plainText(item?.system?.description?.value));
@@ -78,7 +82,7 @@ export function hitRiders(text) {
     return { success: hit, criticalSuccess: criticalRow };
 }
 
-export const hasRow = (row) => Boolean(row.effects.length || row.modifiers.length);
+export const hasRow = (row) => Boolean(row.effects.length || row.modifiers.length || row.forcedMovement);
 
 // Who a bomb's save is for: "Any creature hit by the bomb or in its splash area" (scope "splash": the target and the
 // creatures splashed), "each creature within 10 feet of where the bomb exploded" ("burst", radius), "A creature struck
