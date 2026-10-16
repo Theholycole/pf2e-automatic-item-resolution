@@ -144,7 +144,7 @@ test("spellguns: an attack against AC at the user's spell or firearm attack, the
     assert.deepEqual(sparking.resolution.outcomes.criticalSuccess.effects.map((effect) => [effect.slug, effect.duration?.value ?? null]), [["blinded", 1], ["dazzled", null]]);
     assert.match(sparking.notes.join(" "), /while the persistent damage lasts/);
     // Moonlit: its damage at night or at other times, picked on the card.
-    assert.deepEqual(compileItem(source("Moonlit Spellgun (Lesser)")).damageChoices.map((choice) => choice.formula), ["3d8[fire]", "3d6[fire]"]);
+    assert.deepEqual(compileItem(source("Moonlit Spellgun (Lesser)")).damageChoices.map((choice) => choice.formula), ["3d8[fire,silver]", "3d6[fire,silver]"]);
     // Live: the card offers the user's spell attack and firearm attack; the save card's check is the one picked.
     const gunner = foundry.makeActor({ id: "damage-gunner", name: "Gunner", owners: ["player"] });
     foundry.place(gunner, 200, 17000);
@@ -254,4 +254,16 @@ test("Burr Shield: the bleed its burr inflicts on the Strike's target, outright 
     const burr = compileActivations(source("Burr Shield"))[0].plan;
     assert.deepEqual([burr.resolution.check.roll, component(burr).formula, component(burr).type, component(burr).category, burr.targeting.target], ["automatic", "1d10", "bleed", "persistent", "1 creature"]);
     assert.deepEqual(burr.notes ?? [], []);
+});
+
+test("damage the text treats as silver: the material in its formulas, for PF2e's weaknesses (Moonlit Spellgun, Silver Crescent, Fiendsbane Shield)", async () => {
+    const { damageMaterial } = await import("../src/compiler/materials.js");
+    const moonlit = compileItem(source("Moonlit Spellgun (Lesser)"));
+    assert.deepEqual(moonlit.damageChoices.map((choice) => choice.formula), ["3d8[fire,silver]", "3d6[fire,silver]"]);
+    assert.equal(component(compileItem(source("Silver Crescent (Lesser)"))).formula, "4d6[vitality,silver]");
+    assert.equal(compileActivations(source("Fiendsbane Shield"))[0].plan.resolution.sharedDamage.components[0].formula, "3d6[slashing,silver]");
+    // (Not without the words; healing stays healing.)
+    const plan = { resolution: { sharedDamage: { components: [{ id: "0", formula: "2d6[fire]" }] } } };
+    assert.equal(damageMaterial(plan, "It deals fire damage."), plan);
+    assert.equal(damageMaterial({ resolution: { sharedDamage: { components: [{ id: "0", formula: "(2d6)[healing]" }] } } }, "This is treated as silver.").resolution.sharedDamage.components[0].formula, "(2d6)[healing]");
 });

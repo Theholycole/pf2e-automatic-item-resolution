@@ -35,6 +35,7 @@ import { ownerDCs, withItemData } from "./item-data.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
+import { damageMaterial } from "./materials.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -167,7 +168,8 @@ function compileOne(given, options = {}) {
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;
     // (Who and how far, for the simulator: "up to 5 creatures" within "30 feet".)
     const targeting = recipient === "targets" ? { ...(rest.targeting ?? {}), ...othersTargeting(plainText(item?.system?.description?.value)) } : rest.targeting;
-    return guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value));
+    // (Damage treated as silver: that material in its formulas, src/compiler/materials.js.)
+    return damageMaterial(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), plainText(item?.system?.description?.value));
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success

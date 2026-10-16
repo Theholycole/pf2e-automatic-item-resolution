@@ -32,6 +32,7 @@ import { withoutFlavor } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { readTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
+import { damageMaterial } from "./materials.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 
@@ -216,7 +217,7 @@ function compileEach(item, options = {}) {
         // (One of the item's own PF2e toggles, named as the activation is, switched on for a while: src/compiler/option-on.js.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = optionPlan(item, activation, base) ?? plan;
         if (!plan) return { activation, plan: null, index };
-        plan = withTypeChoices(plan, typeChoice);
+        plan = damageMaterial(withTypeChoices(plan, typeChoice), plainText(activation.html));
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)
