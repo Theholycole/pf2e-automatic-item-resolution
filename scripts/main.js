@@ -5,6 +5,7 @@
 
 import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
+import { etchedRuneActivations, runeIndex } from "../src/compiler/runes.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
@@ -19,6 +20,9 @@ const basicActions = () => game.modules.get(ABILITY_ID)?.api?.basicActions ?? {}
 let spellEffects = {};
 // PF2e's spells by name (a cast in words: "The armor casts mislead"), from its spells pack's index.
 let spells = {};
+// PF2e's rune items by the key a weapon or armor keeps ("vorpal", "greaterExtending"), for the activations of etched runes
+// (src/compiler/runes.js).
+let runes = new Map();
 
 // A Foundry item as plain data, keeping its uuid (the compiler is pure).
 const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObject(false), uuid: item.uuid } : item);
@@ -50,7 +54,15 @@ Hooks.once("ready", async () => {
     }
     // (The generic spellgun and the gun staff ask for what they are when they first go into an inventory: scripts/generic-items.js.)
     setUpGenericItems();
-    setUpLivePlay({ compileItem: compile, compileActivations: (item) => compileActivations(dataOf(item), options()), claims: (item) => claims(dataOf(item)) });
+    try {
+        const pack = game.packs.get("pf2e.equipment-srd");
+        const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];
+        runes = ids.length ? runeIndex((await pack.getDocuments({ _id__in: ids })).map((doc) => dataOf(doc))) : new Map();
+    } catch (error) {
+        console.warn(`${MODULE_ID} | PF2e's runes couldn't be indexed.`, error);
+    }
+    // (An item's own activations, then those of the runes etched onto it.)
+    setUpLivePlay({ compileItem: compile, compileActivations: (item) => [...compileActivations(dataOf(item), options()), ...etchedRuneActivations(dataOf(item), runes, options())], claims: (item) => claims(dataOf(item)) });
     const module = game.modules.get(MODULE_ID);
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)

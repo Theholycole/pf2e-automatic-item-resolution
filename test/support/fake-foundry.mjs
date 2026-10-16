@@ -364,7 +364,10 @@ export async function fakeFoundry() {
     // (The ability module's compiled basic actions, as main.js passes them: the rows an item's action applies.)
     const { compileBasicActions, BASIC_ACTIONS } = await import("../../../pf2e-automatic-ability-resolution/src/compiler/index.js");
     const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
-    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects, spells, basicActions }), compileActivations: (data) => compileActivations(data, { spellEffects, spells, basicActions }) });
+    // (An item's own activations, then its etched runes', as main.js gives them: src/compiler/runes.js.)
+    const { etchedRuneActivations, runeIndex } = await import("../../src/compiler/runes.js");
+    const runes = runeIndex(readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items").map((doc) => ({ ...doc, uuid: `Compendium.pf2e.equipment-srd.Item.${doc._id}` })));
+    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects, spells, basicActions }), compileActivations: (data) => [...compileActivations(data, { spellEffects, spells, basicActions }), ...etchedRuneActivations(data, runes, { spellEffects, spells, basicActions })] });
     return shared;
 }
 

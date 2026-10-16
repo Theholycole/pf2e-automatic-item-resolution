@@ -6,6 +6,7 @@
 
 import { activationButtonsHTML, frequencyText, overLimit, perWord, usesNow, withUse } from "../src/live/activations-card.js";
 import { handlesPermanent } from "../src/compiler/permanent.js";
+import { etchedKeys } from "../src/compiler/runes.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { MODULE_ID, SOCKET, encounterOf, isActiveGM } from "./foundry.js";
@@ -27,6 +28,11 @@ export function setUpActivations(options) {
     });
 }
 
+// An activation's name: an etched rune's with the rune's ("Vorpal: Snicker-Snack", "Hauling").
+const activationName = (activation, rune = null) => (rune ? `${rune.name}${activation.name ? `: ${activation.name}` : ""}` : activation.name);
+// A button's activation: an item's own by its number, an etched rune's by "rune:<key>:<n>".
+export const indexOf = (raw) => (/^rune:/.test(String(raw)) ? String(raw) : Number(raw));
+
 // (An encounter's uses count in the started encounter the item's user is in.)
 const now = (actor = null) => ({ worldTime: game.time.worldTime, combatId: encounterOf(actor)?.combat.id ?? null });
 
@@ -34,7 +40,7 @@ const now = (actor = null) => ({ worldTime: game.time.worldTime, combatId: encou
 const compiled = new Map();
 function playable(item) {
     const data = { ...item.toObject(false), uuid: item.uuid };
-    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}`;
+    const key = `${item.uuid}:${data._stats?.modifiedTime ?? ""}:${String(data.system?.description?.value ?? "").length}:${etchedKeys(data).join(",")}`;
     if (!compiled.has(key)) compiled.set(key, (compileActivations?.(data) ?? []).filter((entry) => entry.plan && routeOf(entry.plan, plainText(entry.activation.html))));
     return compiled.get(key).map((entry) => ({ ...entry, data }));
 }
@@ -47,7 +53,8 @@ function addButtons(sheet, html) {
     if (!root) return;
     for (const row of root.querySelectorAll("li[data-item-id]")) {
         const item = actor.items.get(row.dataset.itemId);
-        if (!item || !handlesPermanent(item) || row.querySelector(".air-activate")) continue;
+        // (Its own activations, or its etched runes': src/compiler/runes.js.)
+        if (!item || !(handlesPermanent(item) || etchedKeys(item).length) || row.querySelector(".air-activate")) continue;
         const list = playable(item);
         if (!list.length) continue;
         // (Right after the item's name, inside PF2e's name heading, which fills the row.)
@@ -55,12 +62,12 @@ function addButtons(sheet, html) {
         if (!anchor) continue;
         const holder = document.createElement("span");
         holder.className = "air-activations";
-        holder.innerHTML = activationButtonsHTML(list.map(({ activation, plan, index }) => ({ index, name: activation.name, time: activation.time, frequency: plan.trigger?.frequency ?? null })), { itemName: item.name, record: item.getFlag(MODULE_ID, USES) ?? {}, now: now(actor) });
+        holder.innerHTML = activationButtonsHTML(list.map(({ activation, plan, index, rune }) => ({ index, name: activationName(activation, rune), time: activation.time, frequency: plan.trigger?.frequency ?? null })), { itemName: item.name, record: item.getFlag(MODULE_ID, USES) ?? {}, now: now(actor) });
         anchor.after(holder);
         for (const button of holder.querySelectorAll("[data-air-activate]")) button.addEventListener("click", (event) => {
             event.preventDefault();
             event.stopPropagation();
-            activateFromSheet(item, Number(button.dataset.airActivate)).catch((error) => {
+            activateFromSheet(item, indexOf(button.dataset.airActivate)).catch((error) => {
                 ui.notifications.error(`${item.name}: ${error.message}`);
                 console.error(`${MODULE_ID} |`, error);
             });
@@ -83,11 +90,11 @@ export async function activate(itemUuid, index, userId = game.user.id) {
     if (!item?.actor) throw new Error("The item isn't there any more.");
     const sender = game.users.get(userId);
     if (!sender || !(sender.isGM || item.actor.testUserPermission?.(sender, "OWNER"))) return null;
-    const entry = playable(item).find((candidate) => candidate.index === Number(index));
+    const entry = playable(item).find((candidate) => String(candidate.index) === String(index));
     if (!entry) throw new Error("That activation isn't there any more.");
     const frequency = entry.plan.trigger?.frequency ?? null;
     const record = item.getFlag(MODULE_ID, USES) ?? {};
-    const name = entry.activation.name ? `${item.name}: ${entry.activation.name}` : item.name;
+    const name = entry.rune ? `${item.name} (${activationName(entry.activation, entry.rune)})` : entry.activation.name ? `${item.name}: ${entry.activation.name}` : item.name;
     const at = now(item.actor);
     if (overLimit(record, entry.index, frequency, at)) {
         await ChatMessage.create({

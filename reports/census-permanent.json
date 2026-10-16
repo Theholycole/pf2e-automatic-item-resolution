@@ -975,7 +975,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Wraithweave Patch (Type II)",
@@ -1503,7 +1504,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Elemental Ammunition (Moderate, Acid)",
@@ -2031,7 +2033,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Beguiling Crown",
@@ -2086,7 +2089,8 @@
    "trigger": true,
    "result": "resolves",
    "kind": "effect",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Sensei's Parasol",
@@ -2702,7 +2706,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Final Blade",
@@ -3043,7 +3048,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Serpent's Lash",
@@ -3219,7 +3225,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Called (Lastwall)",
@@ -3230,7 +3237,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Successor Doll",
@@ -3461,7 +3469,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Smuggler's Sack (Type I)",
@@ -3923,7 +3932,8 @@
    "trigger": true,
    "result": "builtin:roll-twice",
    "kind": null,
-   "live": "fortune"
+   "live": "fortune",
+   "rune": true
   },
   {
    "name": "The Tangled Briar",
@@ -4781,7 +4791,8 @@
    "trigger": false,
    "result": "builtin:no-effect",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Piston Gauntlets",
@@ -5067,7 +5078,8 @@
    "trigger": true,
    "result": "note-only",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Silvanshee Collar",
@@ -5298,7 +5310,8 @@
    "trigger": true,
    "result": "partial",
    "kind": "check",
-   "live": "save"
+   "live": "save",
+   "rune": true
   },
   {
    "name": "Swallow-Spike",
@@ -5309,7 +5322,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Pocket Stage",
@@ -5606,7 +5620,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "live": "save",
+   "rune": true
   },
   {
    "name": "Standard of the Sure-Footed",
@@ -5870,7 +5885,8 @@
    "trigger": true,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Ebon Fulcrum Lens",
@@ -6156,7 +6172,8 @@
    "trigger": true,
    "result": "resolves",
    "kind": "effect",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Animated",
@@ -6167,7 +6184,8 @@
    "trigger": false,
    "result": "note-only",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Boughshatter",
@@ -6200,7 +6218,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Everair Mask (Moderate)",
@@ -6519,7 +6538,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Draconal Mask",
@@ -7597,7 +7617,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Blast Suit",
@@ -8323,7 +8344,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "effect",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Insistent Door Knocker",
@@ -8345,7 +8367,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Bastion of the Inheritor",
@@ -10149,7 +10172,8 @@
    "trigger": false,
    "result": "builtin:no-effect",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Ring of Sigils (Greater)",
@@ -11469,7 +11493,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Highhelm War Shield (Greater)",
@@ -11535,7 +11560,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Singing Sword",
@@ -11777,7 +11803,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Suit of Armoire",
@@ -12822,7 +12849,8 @@
    "trigger": true,
    "result": "resolves",
    "kind": "effect",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Immovable Tripod",
@@ -12954,7 +12982,8 @@
    "trigger": true,
    "result": "note-only",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Garrote Bolt",
@@ -13108,7 +13137,8 @@
    "trigger": true,
    "result": "partial",
    "kind": "check",
-   "live": "save"
+   "live": "save",
+   "rune": true
   },
   {
    "name": "Swallow-Spike (Major)",
@@ -13119,7 +13149,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Motion-Seeking Lenses",
@@ -13834,7 +13865,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Black Tendril Shot (Lesser)",
@@ -14076,7 +14108,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Buoyant Buckle",
@@ -14945,7 +14978,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Gleaming Cuirass",
@@ -15088,7 +15122,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Boots of the Dead",
@@ -15363,7 +15398,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Morphing Weapon",
@@ -16650,7 +16686,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Warding Tablets",
@@ -16991,7 +17028,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Necklace of Fireballs II",
@@ -17662,7 +17700,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Golden-Cased Bullet (Major)",
@@ -17937,7 +17976,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Bravery Baldric (Restoration, Greater)",
@@ -18333,7 +18373,8 @@
    "trigger": true,
    "result": "partial",
    "kind": "check",
-   "live": "save"
+   "live": "save",
+   "rune": true
   },
   {
    "name": "Swallow-Spike (Greater)",
@@ -18344,7 +18385,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Lesser Cube of Nex",
@@ -18432,7 +18474,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "effect",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Everair Mask (Lesser)",
@@ -18729,7 +18772,8 @@
    "trigger": true,
    "result": "builtin:readied-bonus",
    "kind": null,
-   "live": "fortune"
+   "live": "fortune",
+   "rune": true
   },
   {
    "name": "Lion's Armor (Greater)",
@@ -18762,7 +18806,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Assassin's Bracers (Type II)",
@@ -18927,7 +18972,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Clockwork Sun",
@@ -19323,7 +19369,8 @@
    "trigger": true,
    "result": "note-only",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Kraken's Guard",
@@ -19422,7 +19469,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Radiant Lance",
@@ -19609,7 +19657,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Midday Lantern (Lesser)",
@@ -20049,7 +20098,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Scouting Arrow",
@@ -20830,7 +20880,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Aromatic Ammunition",
@@ -21391,7 +21442,8 @@
    "trigger": true,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Forgefather's Seal",
@@ -21402,7 +21454,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Forgefather's Seal",
@@ -21413,7 +21466,8 @@
    "trigger": true,
    "result": "resolves",
    "kind": "effect",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Shadewither Key",
@@ -21446,7 +21500,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Golden Greaves",
@@ -21644,7 +21699,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Shadowed Scale, the Jungle Secret",
@@ -22326,7 +22382,8 @@
    "trigger": true,
    "result": "builtin:roll-twice",
    "kind": null,
-   "live": "fortune"
+   "live": "fortune",
+   "rune": true
   },
   {
    "name": "Clarity Goggles (Moderate)",
@@ -22535,7 +22592,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Waverider Barding",
@@ -22568,7 +22626,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Cloister Robe (Major)",
@@ -22788,7 +22847,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Immovable",
@@ -22799,7 +22859,8 @@
    "trigger": false,
    "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Standard Astrolabe",
@@ -23261,7 +23322,8 @@
    "trigger": true,
    "result": "builtin:no-effect",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Hauling (Greater)",
@@ -23272,7 +23334,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Healer's Gloves",
@@ -23833,7 +23896,8 @@
    "trigger": true,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Energy Shield Tunic (Greater)",
@@ -23855,7 +23919,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Conundrum Spectacles",
@@ -24075,7 +24140,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Spell Reservoir",
@@ -24086,7 +24152,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Fanged",
@@ -24097,7 +24164,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Radiant Victory",
@@ -24273,7 +24341,8 @@
    "trigger": false,
    "result": "builtin:cast-spell",
    "kind": null,
-   "live": "cast"
+   "live": "cast",
+   "rune": true
   },
   {
    "name": "Reducer Round",
@@ -24339,7 +24408,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "effect",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Blast Lance",
@@ -24944,7 +25014,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Bellows Pipes",
@@ -25857,7 +25928,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "live": "save",
+   "rune": true
   },
   {
    "name": "Assassin's Skin",
@@ -26176,7 +26248,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Unifying Emblem (Lyrune-Quah)",
@@ -27276,7 +27349,8 @@
    "trigger": false,
    "result": "resolves",
    "kind": "effect",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Armorskin Robes of Fire",
@@ -27793,7 +27867,8 @@
    "trigger": false,
    "result": "note-only",
    "kind": "check",
-   "live": "item"
+   "live": "item",
+   "rune": true
   },
   {
    "name": "Corrosive Engravings",
@@ -28079,7 +28154,8 @@
    "trigger": true,
    "result": "builtin:roll-twice",
    "kind": null,
-   "live": "fortune"
+   "live": "fortune",
+   "rune": true
   },
   {
    "name": "Sorshen's Sinuous Guisarme",
@@ -28365,7 +28441,8 @@
    "trigger": false,
    "result": "none",
    "kind": null,
-   "live": null
+   "live": null,
+   "rune": true
   },
   {
    "name": "Holy Water",

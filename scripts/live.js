@@ -27,7 +27,7 @@ import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
 import { applyToggleCard, postToggleCard } from "./toggle.js";
-import { activate, setUpActivations } from "./activations.js";
+import { activate, indexOf, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { verifyEffectRules } from "../src/compiler/verify-effect.js";
@@ -264,7 +264,7 @@ export async function applyMessage(messageId, choices = {}) {
 async function onRequest(data) {
     // (A permanent item's Activate button on a player's sheet: scripts/activations.js checks the sender owns the item.)
     if (data?.action === "activate") {
-        await activate(String(data.itemUuid ?? ""), Number(data.activation), data.userId).catch((error) => {
+        await activate(String(data.itemUuid ?? ""), indexOf(data.activation), data.userId).catch((error) => {
             ui.notifications.error(`Activate: ${error.message}`);
             throw error;
         });
