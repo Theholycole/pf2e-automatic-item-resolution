@@ -339,3 +339,28 @@ test("an Effect behind the check its text opens with: only on a success, a note 
     assert.match(badge.notes.at(-1), /^Only on a success: Attempt a DC 20 check to Recall Knowledge/);
     assert.equal(compileItem(item("Antiplague (Major)")).notes?.some((note) => /^Only on a success/.test(note)) ?? false, false);
 });
+
+test("an activation's Trigger kept on the plan, and what it's read as, for the plan's other readers (the simulator)", async () => {
+    const { triggerOn } = await import("../src/compiler/activation.js");
+    const fang = compileItem({ ...item("Wolf Fang"), ownerAbilities: { str: 3 } });
+    assert.deepEqual([fang.item.activations[0].trigger, fang.item.activations[0].triggerOn], ["You successfully Trip a foe", { event: "after-action", action: "trip", degrees: ["success", "criticalSuccess"] }]);
+    assert.equal(readActivations(item("Healing Potion (Minor)").system.description.value)[0].trigger, undefined, "none without a Trigger");
+    const cases = [
+        ["You critically hit with a Strike", { event: "after-strike", degrees: ["criticalSuccess"] }],
+        ["Your Strike with the affixed weapon damages a creature", { event: "after-strike", degrees: ["success", "criticalSuccess"] }],
+        ["You fail or critically fail a Will save", { event: "after-save", statistic: "will", degrees: ["failure", "criticalFailure"] }],
+        ["You make an attack with the affixed weapon, but you haven't rolled yet", { event: "before-roll", what: "attack" }],
+        ["You would take physical damage", { event: "damaged", types: ["physical"], before: true }],
+        ["You would be reduced to 0 Hit Points but not immediately killed", { event: "reduced-to-0" }],
+        ["You lose the Dying condition", { event: "condition", slug: "dying", change: "lose" }],
+        ["You Stride or Step", { event: "action", actions: ["stride", "step"] }],
+        ["An enemy hits you with a melee Strike", { event: "attacked" }],
+        ["You Strike with the affixed weapon", { event: "strike" }],
+        ["You roll for initiative", { event: "initiative" }],
+        ["Something else happens", { event: "other" }]
+    ];
+    for (const [words, read] of cases) assert.deepEqual(triggerOn(words), read, words);
+    // A permanent item's activation keeps it too.
+    const [, breath] = compileActivations(item("Life's Last Breath"), { spellEffects });
+    assert.deepEqual(breath.plan.item.activation.triggerOn, { event: "after-strike", degrees: ["success", "criticalSuccess"] });
+});
