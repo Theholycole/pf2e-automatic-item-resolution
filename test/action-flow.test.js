@@ -236,3 +236,15 @@ test("a creature an item calls up that Strikes once at its own modifier (the mod
     assert.deepEqual(readOwnCheck("Effect A spectral wolf bounds out of the jar, runs up to 40 feet and Strikes with a bite Strike with a +12 attack modifier. The Strike deals 2d8 plus 4 piercing damage."), { kind: "attack", range: null, modifier: 12, formula: "2d8+4", category: null, type: "piercing", notes: [] });
     assert.equal(readOwnCheck("Effect The wolf makes up to two Strikes with a +12 attack modifier, each dealing 2d8 piercing damage.")?.kind, undefined, "several Strikes aren't one");
 });
+
+test("Medic's Shield's Adrenaline Boost: PF2e's Administer First Aid to stabilize, and on a success (or better) the ally regains 6d6+20 Hit Points and is Quickened for 1 round", () => {
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    const boost = compileActivations(source("Medic's Shield"), { basicActions })[0].plan;
+    assert.deepEqual([boost.builtin, boost.action.slug, boost.action.targeted], ["item-action", "administer-first-aid", true]);
+    for (const degree of ["success", "criticalSuccess"]) {
+        const effects = boost.action.basic.resolution.outcomes[degree].effects;
+        assert.ok(effects.some((effect) => effect.kind === "heal" && effect.formula === "6d6+20"), degree);
+        assert.ok(effects.some((effect) => effect.slug === "quickened" && effect.duration.value === 1), degree);
+    }
+    assert.match(boost.action.after, /Stand as a free action/);
+});

@@ -29,6 +29,8 @@ const FORMS = [
     new RegExp(String.raw`\battempts? (?:a|an) \w+ check to (${NAMES})\b(?: (?:the|a|an|one) [\w' -]+?)? ${BONUS}`, "i"),
     // "You Seek with a +1 item bonus" (Motion-Seeking Lenses)
     new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+)You (${NAMES}) ${BONUS}`, "i"),
+    // "You Administer First Aid to stabilize an adjacent ally with the dying condition" (Medic's Shield: no bonus of its own)
+    new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+)You (${NAMES}) to (?:stabilize|stop (?:the )?bleeding)\b`, "i"),
     // "attempt to Administer First Aid using Medicine with a +1 item bonus to the check"
     new RegExp(String.raw`\battempt to (${NAMES}) using \w+ ${BONUS}`, "i"),
     // "allowing you to attempt to Disarm it from its wielder with a +2 item bonus" (Ensnaring Disk)
@@ -177,8 +179,12 @@ export function readItemAction(html, item = null) {
     const bonus = match[2] ? { value: Number(match[2]), type: match[3].toLowerCase() } : null;
     // (What it adds, for the card: "You can move your full Speed (instead of half) on this Sneak action …".)
     const sentence = text.slice(index).split(/(?<=[.!?])\s+(?=[A-Z])/);
-    const after = sentence.slice(1, 3).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line)).join(" ").trim();
-    return { slug, name, bonus, targeted: TARGETED.has(slug), ...(after ? { after } : {}) };
+    const lines = sentence.slice(1, 3).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line));
+    // (What a success adds, Medic's Shield's "On a success, they gain 6d6+20 Hit Points, can immediately Stand as a free action, and
+    // become Quickened for 1 round": its healing and condition on that degree and the better one; the rest stays on the card.)
+    const gains = lines.map(successGains).find(Boolean) ?? null;
+    const after = lines.join(" ").trim();
+    return { slug, name, bonus, targeted: TARGETED.has(slug), ...(gains ? { riders: gains } : {}), ...(after ? { after } : {}) };
 }
 
 // Damage the action's success deals, a number its owner's gave (src/compiler/item-data.js withOwnerNumbers): Bracers of
@@ -207,13 +213,25 @@ function degreeRider(line) {
     return { degree: DEGREE_WORDS[match[1].toLowerCase()], effect: { kind: "condition", slug: match[2].toLowerCase(), value: match[3] ? Number(match[3]) : null, duration: { mode: "fixed", value: count, unit: UNIT_WORDS[match[5].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } } };
 }
 
+// "On a success, they gain 6d6+20 Hit Points, …, and become Quickened for 1 round" → riders for success and critical success: its
+// healing and its conditions with their time; null when the sentence isn't that.
+function successGains(line) {
+    const match = /^On an? success, (?:they|the (?:target|ally|creature)|it) (?:gains?|regains?) \(?(\d+d\d+(?:\s*\+\s*\d+)?|\d+)\)? Hit Points\b(.*)$/i.exec(String(line ?? "").trim());
+    if (!match) return null;
+    const effects = [{ kind: "heal", formula: match[1].replace(/\s+/g, "") }];
+    for (const clause of match[2].matchAll(new RegExp(String.raw`\bbecomes? (${RIDER_CONDITIONS}|quickened)(?: (\d+))? for (\d+|one|an?) (rounds?|minutes?)\b`, "gi"))) {
+        effects.push({ kind: "condition", slug: clause[1].toLowerCase(), value: clause[2] ? Number(clause[2]) : null, duration: { mode: "fixed", value: /^\d+$/.test(clause[3]) ? Number(clause[3]) : 1, unit: UNIT_WORDS[clause[4].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } });
+    }
+    return ["success", "criticalSuccess"].flatMap((degree) => effects.map((effect) => ({ degree, effect })));
+}
+
 // The action's compiled row with the item's own riders added for their degrees.
 function withRiders(basic, riders = []) {
     if (!basic || !riders.length) return basic;
     const outcomes = { ...basic.resolution.outcomes };
     for (const { degree, effect } of riders) {
         const row = outcomes[degree] ?? { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] };
-        outcomes[degree] = { ...row, effects: [...(row.effects ?? []).filter((existing) => existing.slug !== effect.slug), effect] };
+        outcomes[degree] = { ...row, effects: [...(row.effects ?? []).filter((existing) => effect.kind !== "condition" || existing.slug !== effect.slug), effect] };
     }
     return { ...basic, resolution: { ...basic.resolution, outcomes } };
 }

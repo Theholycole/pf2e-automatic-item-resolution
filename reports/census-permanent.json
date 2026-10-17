@@ -13,13 +13,13 @@
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 40,
-   "note-only": 231,
+   "note-only": 230,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 31,
    "builtin:zone": 12,
-   "builtin:item-action": 21,
+   "builtin:item-action": 22,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
    "builtin:spellstrike": 9,
@@ -28,7 +28,7 @@
   "live": {
    "save": 392,
    "cast": 469,
-   "item": 599,
+   "item": 598,
    "none": 876,
    "focus": 45,
    "fortune": 50,
@@ -37,7 +37,7 @@
    "counteract": 4,
    "toggle": 31,
    "zone": 12,
-   "action": 21,
+   "action": 22,
    "spellstrike": 9,
    "later": 4
   },
@@ -127,14 +127,15 @@
    "activations": 100,
    "results": {
     "builtin:cast-spell": 11,
-    "note-only": 16,
+    "note-only": 15,
     "resolves": 32,
     "none": 27,
     "builtin:modes": 4,
     "builtin:no-effect": 3,
     "partial": 5,
     "builtin:zone": 1,
-    "builtin:readied-bonus": 1
+    "builtin:readied-bonus": 1,
+    "builtin:item-action": 1
    }
   }
  },
@@ -27004,9 +27005,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Mantis Plate",

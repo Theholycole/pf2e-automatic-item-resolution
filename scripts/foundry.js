@@ -1,6 +1,7 @@
 // Foundry helpers the item module's cards share (scripts/live.js, scripts/bombs.js).
 
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
+import { rollFormula } from "../src/live/card.js";
 
 export const MODULE_ID = "pf2e-automatic-item-resolution";
 export const CORE_ID = "pf2e-resolution-core";
@@ -62,7 +63,9 @@ export async function applyRiders({ plan, degree, user, target, item }) {
     const core = game.modules.get(CORE_ID)?.api;
     const ability = game.modules.get(ABILITY_ID)?.api?.live;
     const context = { caster: { id: "source" }, targets: [{ id: "target" }], id: (creature) => creature.id, statistic: () => ({ modifier: 0, dc: 10 }), allied: () => false };
-    const result = core ? await core.registry.resolve(plan, context, { roll: () => ({ degree, total: null, natural: null }), damage: () => 0, choose: () => undefined }) : { changes: [] };
+    // (Its dice rolled: an action's own healing, Medic's Shield's 6d6+20 on a successful First Aid.)
+    const damage = async (instance) => (globalThis.Roll ? (await new Roll(rollFormula(instance)).evaluate()).total : 0);
+    const result = core ? await core.registry.resolve(plan, context, { roll: () => ({ degree, total: null, natural: null }), damage, choose: () => undefined }) : { changes: [] };
     const abilityState = {
         plan,
         ability: { name: item.name, uuid: item.uuid ?? null },
