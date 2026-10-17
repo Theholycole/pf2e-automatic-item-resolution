@@ -374,7 +374,42 @@ function modifiersOf(sentences, duration, used = new Set()) {
 // rule, the item card's Effect). Not against one hit ("against the triggering attack", src/compiler/readied-bonus.js), nor
 // one with exceptions, a type to choose, or another's.
 const RESIST_TYPES = new Set(["acid", "bludgeoning", "cold", "electricity", "fire", "force", "mental", "piercing", "poison", "slashing", "sonic", "spirit", "vitality", "void", "bleed", "holy", "unholy", "physical", "energy"]);
+// Resistance to damage some creatures deal, a third-party food's resistance to two damage types from unholy creatures, or
+// to all their damage beside a tradition's spells → { type: "custom", value, from: [traits], damage: [types], label, duration }:
+// PF2e's custom resistance, its definition the damage's types and its source's traits (a rule's own predicate is tested on the
+// creature itself, and never matches the source).
+const SINGULAR = { fey: "fey", undead: "undead", elementals: "elemental", animals: "animal", fiends: "fiend", dragons: "dragon", giants: "giant", beasts: "beast", plants: "plant", fungi: "fungus", constructs: "construct", aberrations: "aberration", celestials: "celestial", monitors: "monitor", spirits: "spirit", oozes: "ooze" };
+const CREATURE_TRAITS = /^(?:holy|unholy|fey|undead|elementals?|animals?|fiends?|dragons?|giants?|beasts?|plants?|fungi|constructs?|aberrations?|celestials?|monitors?|spirits?|oozes?)$/;
+const traitOf = (word) => SINGULAR[word] ?? word.replace(/s$/, "");
+const listOf = (words, joiner) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} ${joiner} ${words.at(-1)}` : words[0]);
+function sourcedResistances(sentences, duration, used) {
+    const found = [];
+    for (const [index, sentence] of sentences.entries()) {
+        if (/^\s*(?:If|Whenever|Each time)\b/i.test(sentence)) continue;
+        // ("… to fire and cold damage dealt by fiend creatures", say.)
+        const typed = /\byou gain (?:resistance (\d+)|(\d+) resistance) to ([a-z]+(?:(?:, and|,| and) [a-z]+)*) damage (?:dealt by|from) ([a-z]+(?:(?:, or|,| or) [a-z]+)*) creatures\b/i.exec(sentence);
+        // ("… to primal spells, and to damage" from animals, elementals or fey.)
+        const spells = typed ? null : /\byou gain (?:resistance (\d+)|(\d+) resistance) to (arcane|divine|occult|primal) spells,? and (?:to )?(?:all )?damage (?:from|dealt by) ([a-z]+(?:(?:, or|,| or) [a-z]+)*)/i.exec(sentence);
+        const match = typed ?? spells;
+        if (!match) continue;
+        const traits = match[4].toLowerCase().split(/,? or |, /).map((word) => word.trim()).filter(Boolean);
+        if (!traits.every((word) => CREATURE_TRAITS.test(word))) continue;
+        const damage = typed ? match[3].toLowerCase().split(/,? and |, /).map((word) => word.trim()) : [];
+        if (!damage.every((type) => RESIST_TYPES.has(type))) continue;
+        const value = Number(match[1] ?? match[2]);
+        const from = traits.map(traitOf);
+        const time = durationIn(sentence, duration);
+        if (spells) found.push({ type: match[3].toLowerCase(), value, duration: time });
+        const label = `${damage.length ? `${listOf(damage, "and")} damage` : "damage"} from ${listOf(traits, "or")}${typed ? " creatures" : ""}`;
+        found.push({ type: "custom", value, from, damage, label: label.charAt(0).toUpperCase() + label.slice(1), duration: time });
+        used.add(index);
+    }
+    return found;
+}
+
 function resistancesOf(sentences, duration, used = new Set()) {
+    const sourced = sourcedResistances(sentences, duration, used);
+    if (sourced.length) return sourced;
     const found = [];
     // ("you gain resistance 5 to fire", "that creature gains 3 resistance to acid", "resistance 3 to area damage and splash damage".)
     const pattern = /\b(?:you (?:gain|get|have)|(?:that|the) creature (?:gains|has)) (?:resistance (\d+)|(\d+) resistance) to ((?:all|[a-z]+)(?: damage)?(?:(?:,|, and| and) [a-z]+(?: damage)?)*)(?: damage)?(?=[.;]|,? (?:but|and)\b| for\b| until\b|$)/gi;
@@ -553,6 +588,24 @@ function sensesOf(sentences, duration, used = new Set()) {
     return found;
 }
 
+// A light its user sheds: Sprite Apple's "you shed bright light in a 20-foot emanation (and dim light for the next 20 feet)",
+// Silver Crescent's "you shed cool, white light like a torch" → [{ bright, dim, duration }] in feet from its user (PF2e's
+// TokenLight rule, the item card's Effect: dim the whole radius, as Foundry's light takes it). A torch's: 20 feet bright, 20 more dim.
+function lightOf(sentences, duration, used = new Set()) {
+    for (const [index, sentence] of sentences.entries()) {
+        if (/^\s*(?:If|Whenever|Each time|Unless)\b/i.test(sentence)) continue;
+        const torch = /\byou (?:also )?shed (?:[\w,]+ ){0,3}light like a torch\b/i.test(sentence);
+        const bright = /\byou (?:also )?shed bright light in an? (\d+)-foot (?:radius|burst|emanation)\b/i.exec(sentence);
+        const dimOnly = bright || torch ? null : /\byou (?:also )?shed dim light in an? (\d+)-foot (?:radius|burst|emanation)\b/i.exec(sentence);
+        if (!torch && !bright && !dimOnly) continue;
+        const more = bright ? /\bdim light (?:for|to) (?:the next )?(\d+) (?:feet|more feet)\b/i.exec(sentence.slice(bright.index)) : null;
+        const light = torch ? { bright: 20, dim: 40 } : bright ? { bright: Number(bright[1]), dim: Number(bright[1]) + (more ? Number(more[1]) : 0) } : { bright: 0, dim: Number(dimOnly[1]) };
+        if (!/\bas long as\b|\bor until\b/i.test(sentence)) used.add(index);
+        return [{ ...light, duration: durationIn(sentence, null) ?? duration }];
+    }
+    return [];
+}
+
 // What it gives its user and allies in an area, or allies alone: Knight Captain's Lance's "Allies within 30 feet that can see
 // you receive a +1 status bonus to their attack rolls and damage rolls for 1 round", Snare of Speed's "You and all allies
 // within a 30-foot emanation gain the Quickened condition until the end of your next turn", Viridian Crown's "… in a 60-foot
@@ -631,7 +684,8 @@ export function ownRow(item, { healing = true } = {}) {
     const weapon = weaponAdjustOf(sentences, duration, used);
     const strikeDamage = strikeDamageOf(sentences, duration, used);
     const suppress = suppressOf(sentences, duration, used);
-    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length) return null;
+    const light = lightOf(sentences, duration, used);
+    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length) return null;
     // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other || temp?.other);
     if (heal?.other) delete heal.other;
@@ -644,7 +698,7 @@ export function ownRow(item, { healing = true } = {}) {
     // (Nor when it may be used, "You can use this action while Unconscious".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     if (secondary) unread.push(secondary);
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

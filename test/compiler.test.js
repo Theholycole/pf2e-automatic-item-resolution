@@ -310,11 +310,11 @@ test("a third-party module's own Effect: linked in its short form, checked again
     assert.equal(verifyEffectRules([{ key: "Weakness", type: "fire", value: "@actor.level" }], html).ok, false);
     assert.equal(verifyEffectRules([{ key: "AdjustModifier", selector: "athletics" }], html).ok, false);
     assert.equal(verifyEffectRules([], html).ok, false, "nothing to apply");
-    // Resistance to all damage from creatures of some traits; a type its own ChoiceSet picks, every choice stated.
+    // Resistance to damage from some creatures by the rule's own predicate: PF2e tests it on the creature itself, so it never applies.
     const from = "<p>You gain resistance 5 to damage from fiends and undead for 1 hour.</p>";
     const all = (traits) => [{ key: "Resistance", type: "all", value: 5, predicate: [{ or: traits.map((trait) => `origin:trait:${trait}`) }] }];
-    assert.equal(verifyEffectRules(all(["fiend", "undead"]), from).ok, true);
-    assert.equal(verifyEffectRules(all(["fiend", "dragon"]), from).ok, false);
+    assert.match(verifyEffectRules(all(["fiend", "undead"]), from).failures[0].why, /never applies/);
+    // A type its own ChoiceSet picks, every choice stated.
     const brewed = "<p>You gain resistance 3 to acid or cold (picked when it's brewed).</p>";
     const picked = (values) => [{ key: "ChoiceSet", flag: "testBrew", choices: values.map((value) => ({ value })) }, { key: "Resistance", type: "{item|flags.system.rulesSelections.testBrew}", value: 3 }];
     assert.equal(verifyEffectRules(picked(["acid", "cold"]), brewed).ok, true);
@@ -336,6 +336,27 @@ test("a module's own Effect its text doesn't bear out, known when compiled: its 
     // A text that reads to a note only, or an item made in one of several kinds: the Effect stays (live play's note).
     assert.equal(compileItem(pod("A lovely smell lingers around you.", "1 minute (manipulate)"), rules("status")).resolution.applications[0].label, "Effect: Test Pod");
     assert.equal(compileItem(pod("Squeeze it while you Sneak to gain a +4 item bonus to your Sneak checks, its dust the colour chosen when the pod is made."), rules("status")).resolution.applications[0].label, "Effect: Test Pod");
+});
+
+test("resistance to damage some creatures deal: PF2e's custom resistance, its definition the damage's types and the source's traits", async () => {
+    const { resistanceEffectSource, resistanceText } = await import("../src/live/card.js");
+    const food = (text) => compileItem({ _id: "testFood00000001", type: "consumable", name: "Test Tart", system: { category: "other", traits: { value: ["consumable"] }, level: { value: 5 }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: `<p><strong>Activate</strong> 10 minutes (manipulate)</p><hr /><p>${text}</p>` } } });
+    // (In this module's words.)
+    const tart = food("Once eaten, you gain resistance 4 to fire and cold damage dealt by fiends or undead creatures for 1 hour.");
+    assert.deepEqual(tart.item.resist.map(({ type, value, from, damage }) => [type, value, from, damage]), [["custom", 4, ["fiend", "undead"], ["fire", "cold"]]]);
+    assert.equal(resistanceText(tart.item.resist), "Resistance 4 to fire and cold damage from fiends or undead creatures for 1 hour");
+    assert.deepEqual(resistanceEffectSource(tart.item.resist, { item: { name: "Test Tart" } }).system.rules, [{ key: "Resistance", type: "custom", definition: [{ or: ["damage:type:fire", "damage:type:cold"] }, { or: ["origin:trait:fiend", "origin:trait:undead"] }], label: "Fire and cold damage from fiends or undead creatures", value: 4 }]);
+    // Beside a tradition's spells: that type too, and all damage from the creatures named.
+    const stew = food("Once eaten, you gain 6 resistance to divine spells and to damage from celestials or monitors for 1 hour.");
+    assert.deepEqual(stew.item.resist.map(({ type, from = null }) => [type, from]), [["divine", null], ["custom", ["celestial", "monitor"]]]);
+});
+
+test("once within a time, a bonus to one roll its user picks: the readied bonus, for the roll the card's Apply readies", () => {
+    // (In this module's words.)
+    const bun = compileItem({ _id: "testBun000000001", type: "consumable", name: "Test Bun", system: { category: "other", traits: { value: ["consumable"] }, level: { value: 3 }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: "<p><strong>Activate</strong> 10 minutes (manipulate)</p><hr /><p>Once within the next 10 minutes, you may gain a +2 circumstance bonus to a single saving throw or Perception check of your choice. You're then immune to buns for a day.</p>" } } });
+    assert.deepEqual([bun.builtin, bun.bonus.modifiers.map((modifier) => [modifier.selector, modifier.type, modifier.value]), bun.bonus.spend], ["readied-bonus", [["saving-throw", "circumstance", 2], ["perception", "circumstance", 2]], ["saving-throw", "perception"]]);
+    assert.match(bun.notes[0], /^Press Apply just before the roll you pick/);
+    assert.match(bun.notes[1], /immune/);
 });
 
 test("temporary Hit Points an item grants you (Moss Cover's oil), for its stated time", () => {

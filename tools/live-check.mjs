@@ -2941,7 +2941,8 @@ export const cases = {
         return { traits: strikeTraits() };
     },
 
-    // Alchemists+ Wrought Sirloin: its module's own Effect, now borne out by the text (all damage from animals, elementals and fey).
+    // Alchemists+ Wrought Sirloin: its module's Effect, whose predicated resistance PF2e never applies, left for the text — resistance 8
+    // to primal and PF2e's custom resistance 8 to damage from animals, elementals or fey.
     async tpWroughtSirloin(scene) {
         const { actor: eater } = await creature(scene, "Sirloin Eater", { type: "character", x: 10, y: 4 });
         const steak = await give(eater, "Wrought Sirloin", "pf2e-team-plus-alchemists.pf2e-items");
@@ -2949,10 +2950,56 @@ export const cases = {
         await steak.consume();
         const card = await messageAfter(since, itemCard("item"), { what: "the steak's card" });
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
-        await until(() => eater.itemTypes.effect.some((effect) => effect.name === "Effect: Wrought Sirloin"), "the module's Effect", { timeout: 8000 });
-        const rules = eater.itemTypes.effect.find((effect) => effect.name === "Effect: Wrought Sirloin").system.rules;
-        assert(rules.some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes("primal")), "resistance to primal");
-        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+        const resistances = () => eater.system.attributes.resistances.map((entry) => [entry.type, entry.value]);
+        await until(() => resistances().some(([type, value]) => type === "primal" && value === 8) && resistances().some(([type, value]) => type === "custom" && value === 8), `primal 8 and custom 8 (${JSON.stringify(resistances())})`, { timeout: 8000 });
+        assert(!eater.itemTypes.effect.some((effect) => effect.name === "Effect: Wrought Sirloin"), "not its module's Effect");
+        return { resistances: resistances() };
+    },
+
+    // Alchemists+ Purifying Pie: PF2e's custom resistance 8 to spirit and void damage from unholy creatures, for 24 hours.
+    async tpPurifyingPie(scene) {
+        const { actor: eater } = await creature(scene, "Pie Eater", { type: "character", x: 8, y: 13 });
+        const pie = await give(eater, "Purifying Pie", "pf2e-team-plus-alchemists.pf2e-items");
+        const since = Date.now();
+        await pie.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the pie's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => eater.system.attributes.resistances.some((entry) => entry.type === "custom" && entry.value === 8), "custom resistance 8", { timeout: 8000 });
+        const rule = eater.itemTypes.effect.flatMap((effect) => effect.system.rules).find((entry) => entry.key === "Resistance");
+        assert(JSON.stringify(rule.definition).includes("origin:trait:unholy") && JSON.stringify(rule.definition).includes("damage:type:void"), `its definition (${JSON.stringify(rule.definition)})`);
+        return { label: eater.system.attributes.resistances.find((entry) => entry.type === "custom")?.label };
+    },
+
+    // Sprite Apple (Pink): its eater sheds bright light in 20 feet and dim to 40 — PF2e's TokenLight on the token.
+    async spriteAppleLight(scene) {
+        const { actor: eater, token } = await creature(scene, "Apple Eater", { type: "character", x: 4, y: 18 });
+        const apple = await give(eater, "Sprite Apple (Pink)");
+        const since = Date.now();
+        await apple.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the apple's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => eater.itemTypes.effect.some((effect) => effect.system.rules.some((rule) => rule.key === "TokenLight" && rule.value?.bright === 20 && rule.value?.dim === 40)), "the TokenLight Effect", { timeout: 8000 });
+        await wait(500);
+        return { light: { bright: token.light?.bright ?? null, dim: token.light?.dim ?? null } };
+    },
+
+    // Alchemists+ Halfling Sandwich (Lesser): Apply readies its +1 status bonus; the next save takes it and spends it.
+    async tpHalflingSandwich(scene) {
+        const { actor: eater } = await creature(scene, "Sandwich Eater", { x: 8, y: 18 });
+        const sandwich = await give(eater, "Halfling Sandwich (Lesser)", "pf2e-team-plus-alchemists.pf2e-items");
+        let since = Date.now();
+        await sandwich.consume();
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the readied bonus card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const effect = () => eater.itemTypes.effect.find((entry) => entry.getFlag(NS, "rollTwice"));
+        assert(effect()?.system.rules.filter((rule) => rule.key === "FlatModifier").length === 3, "three FlatModifiers");
+        since = Date.now();
+        await eater.saves.will.roll({ skipDialog: true });
+        const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "saving-throw", { what: "the Will save" });
+        assert((roll.flags.pf2e.modifiers ?? []).some((modifier) => modifier.modifier === 1 && modifier.type === "status" && modifier.enabled !== false), "+1 status on the save");
+        await until(() => !effect(), "spent by the save", { timeout: 5000 });
+        return { total: roll.rolls[0]?.total };
     },
 
     // Alchemists+ Concealing Puffball (Lesser): its Effect's status bonus isn't the text's item bonus, so the text: PF2e's Sneak with +1 item.

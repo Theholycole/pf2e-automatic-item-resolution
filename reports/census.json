@@ -19,8 +19,8 @@
    "builtin:readied-bonus": 21,
    "builtin:zone": 98,
    "builtin:item-action": 12,
-   "partial": 92,
-   "note-only": 179,
+   "partial": 96,
+   "note-only": 175,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -36,8 +36,8 @@
     "builtin:cast-spell": 11,
     "none": 118,
     "resolves": 211,
-    "partial": 44,
-    "note-only": 87,
+    "partial": 48,
+    "note-only": 83,
     "builtin:zone": 13,
     "builtin:readied-bonus": 7,
     "builtin:no-effect": 13,
@@ -2047,8 +2047,12 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected.",
+    "Creatures in the bright light feel a burst of creativity, gaining a +1 item bonus to Performance checks."
+   ],
    "live": "item"
   },
   {
@@ -7774,8 +7778,12 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected.",
+    "Creatures in the bright light feel a sense of calm, gaining a +1 item bonus to saving throws against fear effects."
+   ],
    "live": "item"
   },
   {
@@ -9409,8 +9417,12 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected.",
+    "Creatures in the bright light feel more in tune with nature, gaining a +1 item bonus to Nature checks and to Diplomacy checks attempted against animals or plants (if they have the Animal Empathy feat, Plant Empathy feat, or some other ability to make such checks)."
+   ],
    "live": "item"
   },
   {
@@ -10828,8 +10840,12 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected.",
+    "Creatures in the bright light feel kind and inviting, taking a -1 item penalty to their Will DC against Diplomacy checks."
+   ],
    "live": "item"
   },
   {

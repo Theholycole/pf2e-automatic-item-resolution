@@ -79,8 +79,25 @@ const LASTING = /\bThe duration is\b|\bfor (?:\d+|one|a|an) (?:minutes?|hours?|d
 // The text (plain) → { modifiers: [{ selector, type, value, predicate? }], resistance, duration, spend, notes } or null.
 // spend: the selectors whose next roll ends it ("the Stealth check", "the triggering save", "your next skill action").
 // trigger: the activation's trigger, when it has one.
+// (Once within a time, a bonus to one roll its user picks, a third-party sandwich's: the card's Apply readies it for the roll picked —
+// the next of those kinds this turn — the time and the immunity after it notes.)
+const ROLL_KINDS = { "saving throw": "saving-throw", "skill check": "skill-check", "attack roll": "attack-roll", "perception check": "perception" };
+const PICKED_ROLL = /\bOnce (?:during|within) the next (?:\d+ )?(?:hours?|minutes?|rounds?)\b[^.]*?\bgain an? \+(\d+) (status|circumstance|item) bonus to a single ((?:saving throw|skill check|attack roll|Perception check)(?:,? (?:or )?(?:saving throw|skill check|attack roll|Perception check))*) of your choice\b/i;
+function pickedRoll(sentences) {
+    for (const sentence of sentences) {
+        const picked = PICKED_ROLL.exec(sentence);
+        if (!picked) continue;
+        const selectors = [...picked[3].toLowerCase().matchAll(/saving throw|skill check|attack roll|perception check/g)].map(([kind]) => ROLL_KINDS[kind]);
+        const notes = [`Press Apply just before the roll you pick: ${sentence}`, ...sentences.filter((other) => other !== sentence && /\bimmune\b/i.test(other))];
+        return { modifiers: selectors.map((selector) => ({ selector, type: picked[2].toLowerCase(), value: Number(picked[1]) })), resistance: null, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: selectors, notes };
+    }
+    return null;
+}
+
 export function readReadiedBonus(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
+    const picked = trigger ? null : pickedRoll(plain.replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()));
+    if (picked) return picked;
     const triggered = trigger ?? triggerOf(plain);
     if ((triggered && AFTER_ROLL.test(triggered)) || TURNS_ROLL.test(plain)) return null;
     const body = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");

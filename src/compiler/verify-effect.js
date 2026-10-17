@@ -30,14 +30,10 @@ function checkRule(rule, text, rules = []) {
         case "Weakness": {
             if (!Number.isFinite(value)) return { ok: false, why: "a value from a formula" };
             const name = rule.key.toLowerCase();
-            // (To all damage from creatures of some traits, its predicate's origin:trait:X: "resistance 5 to … damage from fiends and
-            // undead", say.)
+            // (Its own predicate on the damage's source, origin:trait:X: tested on the creature itself, it never applies — PF2e's custom
+            // type with a definition does that.)
             const origins = originTraits(rule.predicate);
-            if ([].concat(rule.type ?? []).join() === "all" && origins.length) {
-                const sentence = said.split(/(?<=\.)\s+/).find((one) => new RegExp(String.raw`\b(?:${name} ${value}|${value} ${name})\b`).test(one) && /\bdamage (?:dealt by|from)\b/.test(one));
-                const stated = sentence && origins.every((trait) => new RegExp(String.raw`\b${trait}s?\b`).test(sentence.slice(sentence.search(/\bdamage (?:dealt by|from)\b/))));
-                return stated ? { ok: true } : { ok: false, why: `${name} ${value} to damage from ${origins.join(", ")} not stated` };
-            }
+            if (origins.length) return { ok: false, why: `${name} ${value} to damage from ${origins.join(", ")} never applies (a predicate, not a definition)` };
             // (A type its own ChoiceSet picks, "{item|flags.system.rulesSelections.<flag>}": each of the choices stated.)
             const picked = /^\{item\|flags\.system\.rulesSelections\.([\w-]+)\}$/.exec(String(rule.type ?? ""));
             const choiceSet = picked ? (rules ?? []).find((other) => other?.key === "ChoiceSet" && other.flag === picked[1] && Array.isArray(other.choices)) : null;

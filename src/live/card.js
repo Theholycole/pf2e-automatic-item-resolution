@@ -109,6 +109,7 @@ export function previewLines(state) {
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
     for (const speed of plan?.item?.speeds ?? []) lines.push(speedText(speed));
     for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
+    for (const light of plan?.item?.light ?? []) lines.push(lightText(light));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
@@ -183,7 +184,8 @@ const typeWords = (type) => (type === "all-damage" ? "all damage" : type.replace
 export function resistanceText(resist) {
     const byValue = new Map();
     // (A type to choose: "acid, cold or fire (one, chosen)".)
-    for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), entry.type ? typeWords(entry.type) : `${entry.choose.slice(0, -1).join(", ")} or ${entry.choose.at(-1)} (one, chosen)`]);
+    // (Damage from some creatures: its own words, "spirit and void damage from unholy creatures".)
+    for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), entry.type === "custom" ? entry.label.charAt(0).toLowerCase() + entry.label.slice(1) : entry.type ? typeWords(entry.type) : `${entry.choose.slice(0, -1).join(", ")} or ${entry.choose.at(-1)} (one, chosen)`]);
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration;
     return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${duration ? ` for ${timeText(duration)}` : ""}`;
 }
@@ -256,9 +258,11 @@ export function untilRageEffectSource(untilRage, uuids, { item = {}, user = {}, 
 export const chosenResistances = (resist, index = 0) => resist.map((entry) => (entry.choose?.length ? { ...entry, type: entry.choose[Number.isInteger(index) && entry.choose[index] ? index : 0], choose: undefined } : entry));
 
 // Its resistance's Effect: PF2e's Resistance rules. moduleId: the flag's scope.
+// One resistance as PF2e's rule; damage from some creatures as its custom type, the damage's types and its source's traits.
+const resistanceRule = ({ type, value, from = [], damage = [], label }) => (type === "custom" ? { key: "Resistance", type: "custom", definition: [...(damage.length ? [{ or: damage.map((kind) => `damage:type:${kind}`) }] : []), { or: from.map((trait) => `origin:trait:${trait}`) }], label, value } : { key: "Resistance", type, value });
 export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration ?? null;
-    return ownEffectSource({ name: "resistance", img: "icons/svg/shield.svg", words: resistanceText(resist), rules: resist.map(({ type, value }) => ({ key: "Resistance", type, value })), duration, flag: { resist: true }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: "resistance", img: "icons/svg/shield.svg", words: resistanceText(resist), rules: resist.map(resistanceRule), duration, flag: { resist: true }, item, user, worldTime, initiative, moduleId });
 }
 
 // A vision in words: "Darkvision until the start of the next turn", "Greater darkvision".
@@ -266,6 +270,17 @@ const SENSE_WORDS = { darkvision: "Darkvision", "greater-darkvision": "Greater d
 export function senseText(sense) {
     const time = sense.duration?.mode === "fixed" ? (sense.duration.anchor === "source-turn" ? ` until the ${sense.duration.expiry === "turn-end" ? "end" : "start"} of the next turn` : ` for ${timeText(sense.duration)}`) : "";
     return `${SENSE_WORDS[sense.selector] ?? sense.selector}${time}`;
+}
+
+// A light its user sheds in words: "Bright light in 20 feet and dim light to 40 feet for 10 minutes".
+export function lightText(light) {
+    const reach = light.bright ? `Bright light in ${light.bright} feet${light.dim > light.bright ? ` and dim light to ${light.dim} feet` : ""}` : `Dim light in ${light.dim} feet`;
+    return `${reach}${light.duration?.mode === "fixed" ? ` for ${timeText(light.duration)}` : ""}`;
+}
+
+// Its light's Effect: PF2e's TokenLight rule on its user's token.
+export function lightEffectSource(light, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: "Light", img: "icons/svg/light.svg", words: lightText(light), rules: [{ key: "TokenLight", value: { bright: light.bright, dim: light.dim } }], duration: light.duration, flag: { light: true }, item, user, worldTime, initiative, moduleId });
 }
 
 // Its vision's Effect: PF2e's Sense rule.

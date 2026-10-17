@@ -10,7 +10,7 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { ownRow } from "../src/compiler/rows.js";
-import { resistanceEffectSource, resistanceText, senseEffectSource, senseText, speedText, weaponEffectSource, weaponText } from "../src/live/card.js";
+import { lightEffectSource, lightText, resistanceEffectSource, resistanceText, senseEffectSource, senseText, speedText, weaponEffectSource, weaponText } from "../src/live/card.js";
 import { routeOf } from "../src/live/route.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -112,6 +112,18 @@ test("a vision: PF2e's Sense rule, its own end on the note", () => {
     assert.deepEqual([scope.plan.item.senses[0].selector, scope.plan.item.senses[0].duration.expiry], ["greater-darkvision", "turn-start"]);
     assert.equal(senseText(scope.plan.item.senses[0]), "Greater darkvision until the start of the next turn");
     assert.deepEqual(senseEffectSource(goggles.plan.item.senses[0], { item: { name: "Obsidian Goggles (Greater): Darkvision" } }).system.rules, [{ key: "Sense", selector: "darkvision" }]);
+});
+
+test("a light its user sheds: PF2e's TokenLight rule, its dim light the whole radius; a torch's for \"like a torch\"", () => {
+    // Sprite Apple's "you shed bright light in a 20-foot emanation (and dim light for the next 20 feet)", for 10 minutes.
+    const apple = compileItem(source("Sprite Apple (Pink)"));
+    assert.deepEqual(apple.item.light.map((light) => [light.bright, light.dim, light.duration.value, light.duration.unit]), [[20, 40, 10, "minutes"]]);
+    assert.equal(lightText(apple.item.light[0]), "Bright light in 20 feet and dim light to 40 feet for 10 minutes");
+    assert.deepEqual(lightEffectSource(apple.item.light[0], { item: { name: "Sprite Apple (Pink)" } }).system.rules, [{ key: "TokenLight", value: { bright: 20, dim: 40 } }]);
+    // (In this module's words: a stew that makes its eater glow like a torch for an hour; dim light alone.)
+    const stew = (text) => compileItem({ name: "Stand-in Stew", type: "consumable", system: { category: "other", level: { value: 2 }, traits: { value: ["alchemical", "consumable"] }, description: { value: `<p><strong>Activate</strong> 1 minute (manipulate)</p><hr /><p>${text}</p>` } } });
+    assert.deepEqual(stew("After eating it, you shed a warm light like a torch for 1 hour.").item.light.map((light) => [light.bright, light.dim]), [[20, 40]]);
+    assert.deepEqual(stew("After eating it, you shed dim light in a 10-foot radius for 1 hour.").item.light.map((light) => [light.bright, light.dim]), [[0, 10]]);
 });
 
 test("resistance to a type it makes its user choose: the card's picker, the type picked on Apply", async () => {
