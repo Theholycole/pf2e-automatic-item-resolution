@@ -3530,6 +3530,40 @@ export const cases = {
         assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
         const cast = await messageAfter(since, (message) => message.flags?.pf2e?.origin?.type === "spell" && /Paralyze/.test(message.flags?.pf2e?.origin?.uuid ? fromUuidSync(message.flags.pf2e.origin.uuid)?.name ?? message.flavor ?? "" : message.flavor ?? ""), { what: "the spell module's Paralyze", timeout: 15000 });
         return { cast: cast.id };
+    },
+
+    // The Crows: its user's own Thievery check against the target's Reflex DC, on the ability module's card at the creature targeted.
+    async crowsThievery(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Crows Thief", { type: "character", x: 18, y: 22 });
+        const { token: foe } = await creature(scene, "Crows Mark", { x: 19, y: 22, alliance: "opposition" });
+        const card = await give(user, "The Crows");
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const posted = await messageAfter(since, itemCard("expose"), { what: "the card's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(posted.id, { targets: [foe.uuid] });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the Thievery check's card" });
+        const read = check.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(read.roll === "skill" && read.statistic === "thievery" && read.against?.statistic === "reflex", `Thievery against the Reflex DC (${JSON.stringify(read)})`);
+        return { check: check.id };
+    },
+
+    // Reactive Mail's Quick Spike: pressed when a creature within 15 feet manipulates — its basic Reflex save (DC 20) at that creature.
+    async reactiveMailSpike(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Spiked Wearer", { type: "character", x: 18, y: 25 });
+        const { token: foe } = await creature(scene, "Spike Target", { x: 20, y: 25, alliance: "opposition" });
+        const mail = await give(user, "Reactive Mail");
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(mail.uuid, 0);
+        const posted = await messageAfter(since, itemCard("expose"), { what: "the mail's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(posted.id, { targets: [foe.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the spike's save card" });
+        const read = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(read.basic && read.statistic === "reflex" && read.against?.value === 20, `basic Reflex DC 20 (${JSON.stringify(read)})`);
+        return { save: save.id };
     }
 };
 

@@ -20,6 +20,11 @@ const targetedRow = (plan) => plan?.resolution?.kind === "check" && plan.resolut
     && !/^(?:the drinker|you|yourself|self|itself)$/i.test(String(plan.targeting.target).trim())
     && ((plan.resolution.outcomes?.success?.effects ?? []).some((effect) => effect.recipient !== "self") || (plan.resolution.outcomes?.success?.damage?.mode ?? "none") !== "none" || (plan.resolution.check?.statistic === "automatic" && (plan.resolution.outcomes?.success?.modifiers ?? []).length > 0));
 
+// Its user's own skill check against a creature's DC (The Crows' Thievery against the Reflex DC, Whip-Tongue Sling's Athletics against
+// the Fortitude DC): the ability module's card at the creatures the presser targets, its user's skill rolled (the core's check family).
+const targetedCheck = (plan) => plan?.resolution?.kind === "check" && ["skill", "perception"].includes(plan.resolution.check?.roll) && plan.resolution.check?.against?.dc === "target"
+    && !/^(?:the drinker|you|yourself|self|itself)$/i.test(String(plan.targeting?.target ?? "").trim());
+
 const playedOnItemCard = (plan) => ["healing", "effect"].includes(plan?.resolution?.kind) || (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic");
 
 export function routeOf(plan, text = "") {
@@ -51,7 +56,7 @@ export function routeOf(plan, text = "") {
     // (What it gives its user and allies in an area: the same card, at the creatures the presser targets.)
     // (Damage to a creature that touches its drinker, for the item's time: the later card, kept open.)
     if (plan.retaliation) return "later";
-    if (plan.ownCheck || plan.allyArea || isUseSave(plan, text) || targetedRow(plan)) return "save";
+    if (plan.ownCheck || plan.allyArea || isUseSave(plan, text) || targetedRow(plan) || targetedCheck(plan)) return "save";
     if (isLaterSave(plan, text)) return "later";
     if (playedOnItemCard(plan)) return "item";
     return null;

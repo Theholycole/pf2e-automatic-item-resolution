@@ -25,10 +25,10 @@
    "builtin:spellstrike": 9
   },
   "live": {
-   "save": 410,
+   "save": 421,
    "cast": 470,
    "item": 582,
-   "none": 830,
+   "none": 819,
    "focus": 45,
    "fortune": 54,
    "reroll": 25,
@@ -2627,7 +2627,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Giant Squid Lash",
@@ -6856,7 +6856,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Red Hand's Satchel",
@@ -6988,7 +6988,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "check",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Guiding Star Orb (Heroic)",
@@ -16068,7 +16068,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Scale of Igroon",
@@ -16255,7 +16255,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Bottomless Purse",
@@ -16552,7 +16552,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Void Mirror",
@@ -16894,7 +16894,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Necklace of Fireballs VI",
@@ -21066,7 +21066,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Standard of the Primeval Howl",
@@ -25321,7 +25321,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Retaliation (Lesser)",
@@ -27788,7 +27788,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Miogimo's Mask",
@@ -28119,7 +28119,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Hellhusk Shroud",

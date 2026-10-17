@@ -130,11 +130,15 @@ const TRIGGERED = /\b(?:starts? (?:its|their) turn|ends? (?:its|their) turn|pass
 // The sentence that asks for the save ("… must attempt a DC 15 Fortitude save …"), where a trigger would be named.
 // (Or a save given only by its link: Linnorm's Sankeit's cone, "(@Check[reflex|dc:38|basic|…])".)
 const saveSentence = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).find((sentence) => /\b(?:must (?:attempt|succeed)|saving throw|save)\b|@Check\[(?:fortitude|reflex|will)\b/i.test(sentence)) ?? "";
-// (Never a snare: it's placed, and set off by the first creature to enter its square — Regions, later.)
+// (Never a snare: it's placed, and set off by the first creature to enter its square — Regions, later. By name only for a
+// consumable: Snare of Speed is a drum.)
 // (A delivery trait with a plain save, no affliction — Sneezing Powder, inhaled — is one too.)
 // (A fixed DC, or its owner's, which live play fills in before the card: src/compiler/item-data.js.)
-const savedOnUse = (plan) => plan?.resolution?.kind === "save" && ["use", "passive"].includes(plan.trigger?.event) && ["fixed", "owner"].includes(plan.resolution.check?.against?.dc)
-    && (!plan.item?.delivery || !plan.resolution.afflictionHandoff) && plan.item?.category !== "snare" && !/\bsnare\b/i.test(plan.source?.name ?? "");
+// (A permanent item's activation is pressed by hand when its trigger comes, whatever event it reads: Reactive Mail's creature using a
+// manipulate action, "provoke"; Exploding Shield's "The exploding shield is destroyed", "death". Not a Strike's or a zone's.)
+const pressedEvent = (plan) => ["use", "passive"].includes(plan.trigger?.event) || (Boolean(plan.item?.activation) && !["strike", "zone"].includes(plan.trigger?.event ?? "use"));
+const savedOnUse = (plan) => plan?.resolution?.kind === "save" && pressedEvent(plan) && ["fixed", "owner"].includes(plan.resolution.check?.against?.dc)
+    && (!plan.item?.delivery || !plan.resolution.afflictionHandoff) && plan.item?.category !== "snare" && !(plan.item?.type === "consumable" && /\bsnare\b/i.test(plan.source?.name ?? ""));
 const useSave = (plan, text) => savedOnUse(plan) && !TRIGGERED.test(saveSentence(text));
 // (Set off by a creature attacking its user while it lasts — Oil of Repulsion's "For 1 minute after you apply this oil to
 // armor, any creature that hits you with a melee Strike must attempt …", Vermin Repellent Agent's "… when attempting to attack
