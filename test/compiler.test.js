@@ -218,8 +218,7 @@ test("no condition from a trigger, a later event, a failed check, stages or a ti
 
 test("a talisman's Trigger says when it's used: what follows is read (Guardian Rose's enfeebled 1, its time its own)", () => {
     const rose = compileItem(item("Guardian Rose"));
-    assert.deepEqual(rose.resolution.outcomes.success.effects, [{ kind: "condition", slug: "enfeebled", value: 1, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } }]);
-    assert.equal(rose.partial, true, "its \"regain 2d8+5 Hit Points\" isn't read: on the note");
+    assert.deepEqual(rose.resolution.outcomes.success.effects.filter((effect) => effect.kind === "condition"), [{ kind: "condition", slug: "enfeebled", value: 1, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } }]);
 });
 
 test("bonuses scoped as PF2e can: against traits, checks to an action, a Speed", () => {
@@ -376,4 +375,18 @@ test("a Speed granted when the item is activated: Dragonscale Cameo's fly Speed 
     const cameo = compileItem(item("Dragonscale Cameo"));
     assert.deepEqual(cameo.item.speeds, [{ type: "fly", value: 50, duration: { mode: "fixed", value: 5, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
     assert.equal(cameo.noteOnly, undefined);
+});
+
+test("Guardian Rose: \"you avoid being knocked out and regain 2d8+5 Hit Points\" — the healing and Enfeebled 1, the rest on the note", () => {
+    const rose = compileItem(item("Guardian Rose"));
+    const row = rose.resolution.outcomes.success;
+    assert.deepEqual(row.effects.map((effect) => effect.kind === "heal" ? `heal ${effect.formula}` : `${effect.slug} ${effect.value}`), ["heal 2d8+5", "enfeebled 1"]);
+    assert.equal(rose.partial, true);
+});
+
+test("Lockpicker's Oil: its user's status bonus to Thievery checks to Pick a Lock for 1 minute; anyone else's and the critical failure a note", () => {
+    const oil = compileItem(item("Lockpicker's Oil (Greater)"));
+    const [bonus] = oil.resolution.outcomes.success.modifiers;
+    assert.deepEqual([bonus.selector, bonus.value, bonus.type, bonus.predicate, bonus.duration.value, bonus.duration.unit], ["thievery", 2, "status", ["action:pick-a-lock"], 1, "minutes"]);
+    assert.equal(oil.partial, true);
 });

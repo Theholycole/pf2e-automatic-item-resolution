@@ -39,6 +39,9 @@ export function strikeLines(plan) {
         strike.attack ? `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll` : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
+        ...(strike.options ?? []).map((option) => (/^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
+        ...(strike.suppress ?? []).map((penalty) => `No ${penalty} penalty`),
+        strike.splash ? `+${strike.splash.value} ${strike.splash.damageType} splash damage` : null,
         strike.runes ? `Its weapon is a +${strike.runes.potency} ${["", "", "greater ", "major "][strike.runes.striking] ?? ""}striking weapon for it (PF2e keeps the weapon's own runes when they're better)` : null,
         ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage`),
         hit ? `On a hit: ${hit}` : null,
@@ -91,6 +94,11 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });
     if (strike.degree) rules.push({ key: "AdjustDegreeOfSuccess", selector: attackSelector, adjustment: strike.degree, ...(label ? { label } : {}), ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
+    // (Its roll options for the attack — "ignore-range-penalty:2", Sniper's Bead —, a trait's penalty suppressed — kickback, Alchemist's
+    // Damper —, flat splash damage — Jistkan War Crossbow.)
+    for (const option of strike.options ?? []) rules.push({ key: "RollOption", domain: attackSelector, option });
+    for (const penalty of strike.suppress ?? []) rules.push({ key: "AdjustModifier", selector: attackSelector, slug: penalty, suppress: true });
+    if (strike.splash) rules.push({ key: "FlatModifier", selector: damageSelector, slug: `${slug}-splash`, ...(label ? { label } : {}), value: strike.splash.value, damageType: strike.splash.damageType, damageCategory: "splash" });
     // (Its runes for the Strike, Weapon Shot's: PF2e's rune upgrade on the weapon loaded with it — the better of the two.)
     if (strike.runes) for (const [property, value] of [["runes-potency", strike.runes.potency], ["runes-striking", strike.runes.striking]]) {
         if (value) rules.push({ key: "ItemAlteration", itemType: "weapon", mode: "upgrade", property, value, predicate: ammoId ? [`item:ammo:id:${ammoId}`] : range ? [`item:${range}`] : [] });

@@ -119,6 +119,15 @@ export function withItemData(html, item) {
     // the creature is already slowed, it's permanently petrified": degree rows, the critical failure's the failure's and the rest
     // its note.)
     text = text.replace(/(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save\.)\s*On a failure, it's (@UUID\[[^\]]+\]\{[^}]+\}) for (\d+ (?:rounds?|minutes?)); on a critical failure, (if [^,.]+), it's ([^.]+)\.\s*/g, (whole, check, link, time, condition, worse) => `${check}</p><p><strong>Failure</strong> The target is ${link} for ${time}.</p><p><strong>Critical Failure</strong> The target is ${link} for ${time}. ${condition.charAt(0).toUpperCase()}${condition.slice(1)}, it's ${worse}.</p><p>`);
+    // (A lock's bonus for anyone picking it, Lockpicker's Oil's "Anyone attempting to Pick the Lock within the next minute gains a +1
+    // status bonus to the Thievery check": its user's, for that minute — anyone else's a note.)
+    text = text.replace(/\bAnyone attempting to (?:@UUID\[[^\]]*\]\{)?(Pick (?:the|a) Lock)\}? within the next minute gains an? \+(\d+) (status|circumstance|item) bonus to the (\w+) check\./g, (whole, action, value, type, skill) => `You gain a +${value} ${type} bonus to ${skill} checks to Pick a Lock for 1 minute. Anyone else attempting to Pick that Lock within the minute gains the bonus too.`);
+    // (An attack with a talisman's ranged weapon, Alchemist's Damper's "Trigger You attack with the affixed firearm": its Strike, as the
+    // Strike reader takes it.)
+    text = text.replace(/\bYou attack with the affixed (firearm|crossbow|bow)\b/g, "You attempt a ranged Strike with the affixed $1");
+    // (Deafened to everything but itself, Mordant Mask's "You become Deafened to all other noise until the end of your next turn":
+    // Deafened, as PF2e's condition is.)
+    text = text.replace(/(@UUID\[[^\]]+\]\{Deafened\}) to all other (?:noise|sounds?)\b/g, "$1");
     // (A condition for its user's next turn, Bloodline Robe's "You're Quickened on your next turn": until that turn's end.)
     text = text.replace(/\b(You're|You are) (@UUID\[[^\]]+\]\{[^}]+\}) on your next turn\b/g, "$1 $2 until the end of your next turn");
     // (Its damage or healing for its owner's level: the Harrow Court's "The damage increases to … if you're at least 15th level".)

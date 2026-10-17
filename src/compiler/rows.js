@@ -70,6 +70,19 @@ export function durationIn(sentence, fallback) {
     return own ? { mode: "fixed", value: WORD_NUMBERS[own[1].toLowerCase()] ?? Number(own[1]), unit: UNITS[own[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } : fallback;
 }
 
+// The same, with a turn's end or start in words: "until the end of your next turn", "until the start of your next turn" (that
+// next turn's), "until the end of your turn", "this turn", "the current turn" — and "during those Stride actions", "for this
+// movement", the movement the same activation makes this turn (this turn's end: 0 rounds, as PF2e's own Effects say it).
+const UNTIL_TURN = /\buntil the (end|start|beginning) of (your next|your|this|the current) turn\b/i;
+const THIS_MOVE = /\b(?:during (?:those|these|the|that|this) (?:\w+ )?(?:actions?|movement|Strides?)|for (?:this|that|the) (?:movement|move|Stride))\b/i;
+export function timeIn(sentence, fallback) {
+    const until = UNTIL_TURN.exec(sentence);
+    const next = until && /\bnext\b/i.test(until[2]);
+    if (until && (next || /^end$/i.test(until[1]))) return { mode: "fixed", value: next ? 1 : 0, unit: "rounds", expiry: /^end$/i.test(until[1]) ? "turn-end" : "turn-start", anchor: "source-turn" };
+    if (!until && THIS_MOVE.test(sentence)) return { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" };
+    return durationIn(sentence, fallback);
+}
+
 // The text's sentences, without its "Activate" line ("Activate (manipulate)", "Activate Interact", "Activate 1 minute (Interact)").
 const ACTIVATE_LINE = /^Activat(?:e|ion)\b(?:\s*-\s*[^(]*?)?\s*(?:\d+ (?:rounds?|minutes?|hours?)\s*)?(?:\([^)]*\)|Interact|Strike|Cast a Spell|command|envision)?(?:\s*\([^)]*\))?\s*/i;
 const sentencesOf = (text) => text.replace(ACTIVATE_LINE, "").split(/(?<=[.!?])\s+(?=[A-Z])/);
@@ -134,7 +147,8 @@ function tempHitPoints(sentences, duration, used = new Set()) {
         if (match && (other || !/\b(?:if|when|whenever|each time|the next time)\b/i.test(sentence.slice(0, match.index)))) {
             // (Its other half stays unread, for the note: "You drop to 1 Hit Point instead of being reduced to 0 HP or dying,
             // and you gain 100 temporary Hit Points" — the 1 HP the GM sets.)
-            if (!/\binstead\b/i.test(sentence)) used.add(index);
+            // (And "you avoid being knocked out": the GM's, on the note.)
+            if (!/\binstead\b|\bavoid being knocked out\b/i.test(sentence)) used.add(index);
             const amount = match[1].replace(/\s+/g, "");
             // (Their time in a sentence of their own after: "You lose any remaining temporary Hit Points after 1 minute", "These
             // temporary Hit Points last for 1 hour" — before the item's.)
@@ -156,7 +170,8 @@ function textHealing(sentences, used = new Set()) {
         // ("you regain 3d10 Hit Points", "you regain an additional 4d6 Hit Points", "You restore 8d10+15 Hit Points", "healing you
         // for 3d8 Hit Points", "healing the wielder for 10 Hit Points".)
         // (The Survivor's "you drop to 1 Hit Point instead and immediately restore an additional 4d8+16 Hit Points".)
-        const self = new RegExp(String.raw`\byou (?:immediately )?regain (?:an additional )?${AMOUNT_PARENS} Hit Points\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b|\band (?:immediately )?restore an additional ${AMOUNT_PARENS} Hit Points\b(?! to)`, "i").exec(sentence);
+        // (And Guardian Rose's "you avoid being knocked out and regain 2d8+5 Hit Points": the same "you".)
+        const self = new RegExp(String.raw`\b(?:you|you [a-z ]{1,40}? and) (?:immediately )?regain (?:an additional )?${AMOUNT_PARENS} Hit Points\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b|\band (?:immediately )?restore an additional ${AMOUNT_PARENS} Hit Points\b(?! to)`, "i").exec(sentence);
         // (And another's own words: "Your ally regains 2d8 hit points", The Midwife's "restore to the target 6d8+24 Hit Points".)
         const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b|\brestor(?:e|es|ing) to (?:it|the (?:target|creature)|that creature) ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
         const match = self ?? other;
@@ -165,7 +180,8 @@ function textHealing(sentences, used = new Set()) {
         const lead = sentence.slice(0, match?.index ?? 0).replace(/^\s*If you (?:consume|eat|drink) (?:a portion|it|one)[^,]*,\s*/i, "").replace(/^\s*When you activate (?:it|the [\w' -]+?|an? [\w' -]+?),\s*/i, "");
         if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(lead)) {
             // (What it does "instead" — "you drop to 1 Hit Point instead" — stays on the note for the GM.)
-            if (!/\binstead\b/i.test(sentence)) used.add(index);
+            // (And "you avoid being knocked out": the GM's, on the note.)
+            if (!/\binstead\b|\bavoid being knocked out\b/i.test(sentence)) used.add(index);
             const amount = match.slice(1).find((group) => group !== undefined).replace(/\s+/g, "");
             return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), ...(other && !self ? { other: true } : {}) };
         }
@@ -178,7 +194,7 @@ const SKILLS = ["acrobatics", "arcana", "athletics", "crafting", "deception", "d
 const SELECTORS = [
     [/^(?:saves|saving throws)$/i, "saving-throw"], [/^fortitude(?: saves?| saving throws?)?$/i, "fortitude"], [/^reflex(?: saves?| saving throws?)?$/i, "reflex"],
     [/^will(?: saves?| saving throws?)?$/i, "will"], [/^perception(?: checks?)?$/i, "perception"], [/^(?:ac|armor class)$/i, "ac"],
-    [/^attack rolls?$/i, "attack-roll"], [/^damage rolls?$/i, "damage"], [/^initiative(?: rolls?| checks?)?$/i, "initiative"], [/^skill checks$/i, "skill-check"],
+    [/^attack rolls?$/i, "attack-roll"], [/^checks$/i, "check"], [/^damage rolls?$/i, "damage"], [/^initiative(?: rolls?| checks?)?$/i, "initiative"], [/^skill checks$/i, "skill-check"],
     ...SKILLS.map((skill) => [new RegExp(`^${skill}(?: checks?)?$`, "i"), skill]),
     // ("Intelligence-based skill checks": PF2e's int-based domain.)
     [/^strength-based (?:skill )?checks?$/i, "str-based"], [/^dexterity-based (?:skill )?checks?$/i, "dex-based"], [/^constitution-based (?:skill )?checks?$/i, "con-based"],
@@ -202,7 +218,7 @@ export function selectorsOf(list) {
 // A scope PF2e has a roll option for, as the modifier's predicate: "saves against diseases and poisons" → item:trait:disease
 // or item:trait:poison; "Athletics checks to Climb" → action:climb. Anything else narrower than a selector stays out.
 const TRAITS = { poisons: "poison", poison: "poison", diseases: "disease", disease: "disease", fear: "fear", mental: "mental", emotion: "emotion", auditory: "auditory", visual: "visual", olfactory: "olfactory", inhaled: "inhaled", curses: "curse", curse: "curse", illusions: "illusion", illusion: "illusion", sleep: "sleep", death: "death", possession: "possession", polymorph: "polymorph" };
-const ACTIONS = { reposition: "reposition", climb: "climb", swim: "swim", "high jump": "high-jump", "long jump": "long-jump", leap: "leap", balance: "balance", "tumble through": "tumble-through", escape: "escape", hide: "hide", sneak: "sneak", seek: "seek", "sense motive": "sense-motive", "sense direction": "sense-direction", track: "track", demoralize: "demoralize", feint: "feint", grapple: "grapple", trip: "trip", shove: "shove", disarm: "disarm", "recall knowledge": "recall-knowledge", "treat wounds": "treat-wounds", "administer first aid": "administer-first-aid", "pick a lock": "pick-a-lock", "disable a device": "disable-a-device", squeeze: "squeeze", impersonate: "impersonate", lie: "lie", "make an impression": "make-an-impression", request: "request", coerce: "coerce", perform: "perform", "gather information": "gather-information" };
+const ACTIONS = { reposition: "reposition", climb: "climb", swim: "swim", "high jump": "high-jump", "long jump": "long-jump", leap: "leap", balance: "balance", "tumble through": "tumble-through", escape: "escape", hide: "hide", sneak: "sneak", seek: "seek", "sense motive": "sense-motive", "sense direction": "sense-direction", track: "track", demoralize: "demoralize", feint: "feint", grapple: "grapple", trip: "trip", shove: "shove", disarm: "disarm", "recall knowledge": "recall-knowledge", "treat wounds": "treat-wounds", "administer first aid": "administer-first-aid", "pick a lock": "pick-a-lock", "disable a device": "disable-a-device", squeeze: "squeeze", impersonate: "impersonate", lie: "lie", "make an impression": "make-an-impression", request: "request", coerce: "coerce", perform: "perform", "decipher writing": "decipher-writing", "identify magic": "identify-magic", "identify alchemy": "identify-alchemy", "learn a spell": "learn-a-spell", "create a diversion": "create-a-diversion", "create forgery": "create-forgery", "palm an object": "palm-an-object", steal: "steal", subsist: "subsist", "gather information": "gather-information" };
 // Creatures PF2e's origin roll options name ("against effects created by devils" → origin:trait:devil).
 const CREATURES = { aberrations: "aberration", animals: "animal", beasts: "beast", celestials: "celestial", constructs: "construct", daemons: "daemon", demons: "demon", devils: "devil", dragons: "dragon", elementals: "elemental", fey: "fey", fiends: "fiend", fungi: "fungus", giants: "giant", haunts: "haunt", oozes: "ooze", plants: "plant", spirits: "spirit", swarms: "swarm", undead: "undead" };
 const CONDITION_WORDS = { fatigue: "fatigued", fatigued: "fatigued", petrify: "petrified", petrified: "petrified", paralyze: "paralyzed", paralyzed: "paralyzed", frighten: "frightened", frightened: "frightened", sicken: "sickened", sickened: "sickened", stun: "stunned", stunned: "stunned", confuse: "confused", confused: "confused", slow: "slowed", slowed: "slowed" };
@@ -251,12 +267,14 @@ function scopeOf(scope) {
 // your Speed".
 function modifiersOf(sentences, duration, used = new Set()) {
     const modifiers = [];
-    const pattern = /\byou (?:gain|get|have|receive|take|suffer)(?: an?)? ([+-])(\d+)(-foot)? (?:(item|status|circumstance) )?(bonus|penalty) (?:to|on) ([^.;]+?)(?=(?: for (?:\d+|one|an?) \w+| until\b| while\b|,? (?:but|which|though|unless|if)\b|,? and (?:you|your)\b| as long as\b|;|\.|$))/gi;
+    const pattern = /\b(?:you (?:gain|get|have|receive|take|suffer)|grants? you|granting you)(?: an?)? ([+-])(\d+)(-foot)? (?:(item|status|circumstance) )?(bonus|penalty) (?:to|on) ([^.;]+?)(?=(?: for (?:\d+|one|an?) \w+| until\b| while\b| during (?:those|these|the|that|this)\b| for (?:this|that|the) (?:movement|move|Stride)\b|,? (?:but|which|though|unless|if)\b|,? and (?:you|your)\b| as long as\b|;|\.|$))/gi;
     for (const [index, whole] of sentences.entries()) {
         // ("When you Activate this fulu, you gain …", "Upon drinking …,": the use itself, not a condition.)
         const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "");
         // ("While the effect lasts, you gain …", "During this time, …": its time, not a condition.)
         const said = sentence.replace(/^\s*(?:While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|While (?:it's |it is )?activated|While this effect is active|During this time|For the duration),\s*/i, "")
+            // ("You Stride twice and gain a +10-foot item bonus to your Speed …", Quick Runner's Shirt: the same "you".)
+            .replace(/^(\s*You [A-Za-z]+\b[^.,;]*?) and (gain|receive) (an? [+-]\d)/, "$1, and you $2 $3")
             // ("you gain resistance 5 … but take a -5-foot status penalty to all Speeds": the same "you".)
             .replace(/(\byou (?:gain|get|have)\b[^.;]*?),? (but|and) (take|suffer)\b/i, "$1, $2 you $3")
             // ("a +1 status bonus against fear effects": saves against them, as PF2e's own Effects read it.)
@@ -264,24 +282,36 @@ function modifiersOf(sentences, duration, used = new Set()) {
             // (A penalty "imposed" on you: Aeon Stone (Olivine Pendeloque)'s "the calming urges impose a -1 status penalty to your
             // attack rolls".)
             .replace(/\b(?:imposes?|imposing) an? ([-–−]\d+ (?:item |status |circumstance )?penalty (?:to|on) your)\b/gi, "you take a $1")
+            // ("a +2 item bonus to attempts to Decipher Writing, Disable a Device, …, or Sense Motive", Eye of the Wise: checks for those
+            // actions.)
+            .replace(/\b(bonus|penalty) to attempts to (?=[A-Z])/g, "$1 to checks to ")
+            // ("a +3 item bonus on Perception checks you make to use Sense Motive against that creature", Spectacles of Inquiry: the
+            // action's checks, the one creature a note.)
+            .replace(/\b(checks) you make to use ([A-Z][\w ]+?) against (?:that|the) (?:creature|target)\b/g, "$1 to $2")
             // (A skill its user picked, after the list: Words of Wisdom's "+1 item bonus to Diplomacy checks and checks of the skill
             // associated with your phrase" — Diplomacy read, the rest a note.)
             .replace(/(\bbonus to [\w -]+? checks) and checks of the skill associated with [^.;]+/gi, "$1; ");
         // (What the sentence says before or after the part read — "The stone suppresses the triggering effect for 1 minute, but …" —
         // stays on the note.)
-        const partly = said !== sentence && (/\bchecks of the skill associated with\b/i.test(sentence) || (/\b(?:imposes?|imposing) an?\b/i.test(sentence) && /,\s*but\b[^,]*\byou take\b/i.test(said)));
+        const partly = said !== sentence && (/\bchecks of the skill associated with\b/i.test(sentence) || /\bchecks you make to use [A-Z][\w ]+? against (?:that|the) (?:creature|target)\b/.test(sentence) || (/\b(?:imposes?|imposing) an?\b/i.test(sentence) && /,\s*but\b[^,]*\byou take\b/i.test(said)));
         if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(said)) continue;
+        // (An aeon stone's resonant power is the wayfinder's, not the activation's: "The resonant power grants you a +1 circumstance bonus
+        // to initiative rolls".)
+        if (/^\s*The resonant power\b/i.test(said)) continue;
         for (const match of said.matchAll(pattern)) {
             const [, sign, number, feet, type, kind, list] = match;
             if ((kind.toLowerCase() === "bonus") !== (sign === "+")) continue;
             const value = (sign === "+" ? 1 : -1) * Number(number);
-            const timed = { type: type?.toLowerCase() ?? "untyped", duration: durationIn(sentence, duration) };
+            const timed = { type: type?.toLowerCase() ?? "untyped", duration: timeIn(sentence, duration) };
             // ("+10-foot status bonus to your Speed": the land Speed; "to your Speeds": all of them.)
             if (feet) {
+                // ("to your Speed and fly Speed", Cape of the Open Sky: each one's.)
+                const both = /^(?:your )?(?:land )?Speed and (?:your )?(fly|climb|swim|burrow) Speed$/i.exec(list.trim());
                 const speeds = /^(?:your |its |all (?:of )?(?:your )?)?(?:land )?(Speeds?)$/i.exec(list.trim());
-                if (!speeds) continue;
+                if (!speeds && !both) continue;
                 used.add(index);
-                modifiers.push({ selector: /s$/i.test(speeds[1]) ? "all-speeds" : "land-speed", value, ...timed });
+                if (both) modifiers.push({ selector: "land-speed", value, ...timed }, { selector: `${both[1].toLowerCase()}-speed`, value, ...timed });
+                else modifiers.push({ selector: /s$/i.test(speeds[1]) ? "all-speeds" : "land-speed", value, ...timed });
                 continue;
             }
             // A scope after the list ("… against diseases", "… to Climb"): a predicate when PF2e has one, else left out.
@@ -300,7 +330,8 @@ function modifiersOf(sentences, duration, used = new Set()) {
             // (A sentence that goes on — "…, and your melee Strikes deal 1 additional precision damage to Off-Guard creatures" —
             // stays a note too.)
             const tail = said.slice(match.index + match[0].length);
-            if ((!/^,? and (?:you|your)\b/i.test(tail) || !MECHANICAL.test(tail)) && !partly) used.add(index);
+            // (Nor one only while something else lasts — "… to skill checks to Recall Knowledge while Investigating": that stays on the note.)
+            if ((!/^,? and (?:you|your)\b/i.test(tail) || !MECHANICAL.test(tail)) && !partly && !/^,? while\b/i.test(tail)) used.add(index);
             for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate && !lastOnly ? { predicate } : {}) });
             // (Sense Motive is a Perception check in PF2e: "skill checks to sense-motive" are Perception's.)
             const perceptionOnly = JSON.stringify(predicate ?? []) === JSON.stringify(["action:sense-motive"]);
@@ -506,7 +537,8 @@ export function ownRow(item, { healing = true } = {}) {
     // (Nor an introduction's bonus with no number when the number is read: One Day's Breath's "you also gain a status bonus
     // against inhaled threats" before its "+1 status bonus to saves against inhaled threats".)
     const restated = (sentence) => modifiers.length > 0 && /\ban? (?:item |status |circumstance )?bonus\b/i.test(sentence) && !/[+\-–]\d|\d+d\d+|\bDC\b/.test(sentence);
-    const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
+    // ("allowing you to move with greater speed": flavor, not a Speed.)
+    const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(other ? { other } : {}) };
 }
 

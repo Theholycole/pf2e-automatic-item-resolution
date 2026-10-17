@@ -36,6 +36,18 @@ const RUNE_STEP = /\bIf the [\w' -]+? has an? (greater|major) striking rune, inc
 // "any physical ranged attacks … deal").
 const NOT_OURS = /^\s*(?:to|against) (?!(?:the|its|your) target\b|the struck creature\b|the target of your Strike\b|it\b)|^\s*per\b/i;
 const OTHERS = /\b(?:any|all other|allies|each creature|For the next)\b/i;
+// (No range penalty out to an increment: Sniper's Bead's "You take no range increment penalty on your attack, as long as the attack
+// is against a target within the affixed weapon's first two range increments", Jistkan War Crossbow's "ignoring the penalty for
+// making a Strike within your second or third range increment" — PF2e's "ignore-range-penalty:N" roll option for the Strike.)
+// (Sniper's Bead (Major)'s "even if the target is all the way out to the weapon's sixth range increment": all six.)
+const RANGE_FREE = /\b(?:You take no range increment penalty on (?:your|the|this) attack, as long as the attack is against a target within (?:the|your) [\w' ]*?first (two|three|four|five|\d+) range increments|ignoring the penalty for making a Strike within your (second(?: or third)?|third) range increments?|You take no range increment penalty on (?:your|the|this) attack, even if the target is all the way out to the [\w' ]*?(fourth|fifth|sixth) range increment)\b/i;
+const INCREMENTS = { two: 2, three: 3, four: 4, five: 5, second: 2, "second or third": 3, third: 3, fourth: 4, fifth: 5, sixth: 6 };
+// (A trait's penalty gone: Alchemist's Damper's "allowing you to ignore the circumstance penalty of the attached weapon's kickback
+// weapon trait" — PF2e's own modifier, by its slug, suppressed for the Strike.)
+const SUPPRESS = /\bignore the circumstance penalty of the [\w' ]+? (kickback) (?:weapon )?trait\b/i;
+// (Flat splash damage for the Strike: Jistkan War Crossbow's "gains the splash trait and deals 10 piercing splash damage for this
+// Strike".)
+const SPLASH = new RegExp(String.raw`\b(?:gains the splash trait and )?deals (\d+) (${TYPES}) splash damage for this Strike\b`, "i");
 // What a sentence may leave over and still say nothing more (the Strike, its weapon, its timing).
 const RULE_WORDS = /\b(?:teleport\w*|Strides?|Steps?|Fly|Leap|reach|penalty|bonus|ignores?|counts?|instead|half|area|cone|line|\d+-foot|emanation|trait|cover|range|feet|creatures?|save|DC|frequency|multiple attack|terrain|Hit Points|resistances?|weakness|immun\w*|condition|light|glow\w*|choose|choice|jaws)\b/i;
 
@@ -81,6 +93,9 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let alteration = null;
     let degree = null;
     let runes = null;
+    const options = [];
+    const suppress = [];
+    let splash = null;
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
     const striking = Number(item?.system?.runes?.striking) || 0;
@@ -118,6 +133,21 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
             runes = { potency: Number(upgraded[1]), striking: { greater: 2, major: 3 }[upgraded[2]?.toLowerCase()] ?? 1 };
             rest = rest.replace(upgraded[0], " ");
         }
+        const free = RANGE_FREE.exec(rest);
+        if (free) {
+            options.push(`ignore-range-penalty:${INCREMENTS[(free[1] ?? free[2] ?? free[3]).toLowerCase()] ?? Number(free[1])}`);
+            rest = rest.replace(free[0], " ");
+        }
+        const suppressed = SUPPRESS.exec(rest);
+        if (suppressed) {
+            suppress.push(suppressed[1].toLowerCase());
+            rest = rest.replace(suppressed[0], " ");
+        }
+        const splashed = SPLASH.exec(rest);
+        if (splashed) {
+            splash = { value: Number(splashed[1]), damageType: splashed[2].toLowerCase() };
+            rest = rest.replace(splashed[0], " ");
+        }
         const better = BETTER.exec(rest);
         if (better) {
             degree = { all: "one-degree-better" };
@@ -125,11 +155,16 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         }
         const changed = rest !== sentence;
         // (Unread: a sentence with nothing read in it, or what a read one leaves that says more.)
-        if (!changed && !isStrike) notes.push(sentence.trim());
+        // (Flavor that says no rule — a talisman's "This plain wooden bead dangles from a string attached to the stock of the affixed
+        // weapon" — isn't one.)
+        if (!changed && !isStrike) {
+            const looks = /^\s*(?:This|These)\b/.test(sentence) && !RULE_WORDS.test(sentence) && !/[@\d]|\b(?:damage|AC|DC|save|check|bonus|condition|Hit Points|hits?|miss(?:es)?|critical|target|attack|Strike|undead|creature)\b/i.test(sentence);
+            if (!looks) notes.push(sentence.trim());
+        }
         else if (RULE_WORDS.test(rest.replace(/\b(?:melee|ranged) Strike\b/gi, ""))) notes.push(sentence.trim());
     }
     // (The rune step in place of the first die, for the item's rune.)
     const step = steps.filter((entry) => striking >= entry.rune).sort((a, b) => b.rune - a.rune)[0];
     if (step && dice.length) dice[0] = { ...dice[0], diceNumber: step.count, dieSize: `d${step.faces}` };
-    return { dice, attack, alteration, degree, ...(runes ? { runes } : {}), notes, read: Boolean(dice.length || attack || alteration || degree || runes) };
+    return { dice, attack, alteration, degree, ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), notes, read: Boolean(dice.length || attack || alteration || degree || runes || options.length || suppress.length || splash) };
 }

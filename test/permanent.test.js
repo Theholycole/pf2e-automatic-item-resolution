@@ -491,3 +491,32 @@ test("auras that act at a turn's start or end in them, as the ability module's z
     const stink = compileItem({ name: "Test Stink Paste", type: "consumable", system: { slug: null, level: { value: 8 }, category: "other", traits: { value: ["alchemical", "consumable"] }, usage: { value: "held-in-one-hand" }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><p>You daub the paste behind your ears. Creatures that end their turn adjacent to you must attempt a @Check[fortitude|dc:25] save or be @UUID[Compendium.pf2e.conditionitems.Item.fesd1n5eVhpCSS18]{Sickened 1} by the smell. These effects last for 1 minute.</p>" } } }, { spellEffects });
     assert.deepEqual([stink.builtin, stink.zone.saves[0].when, stink.zone.lasts.value, stink.zone.lasts.unit, stink.zone.saves[0].plan.resolution.outcomes.failure.effects[0].slug], ["zone", ["end"], 1, "minutes", "sickened"]);
 });
+
+test("a bonus for this turn's movement: Quick Runner's Shirt's +10-foot item bonus during its Strides, Cape of the Open Sky's to its Speed and fly Speed for that movement — until the end of the turn", () => {
+    const thisTurn = { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" };
+    const shirt = compileActivations(item("Quick Runner's Shirt"), { spellEffects })[0].plan;
+    assert.deepEqual(shirt.resolution.outcomes.success.modifiers, [{ selector: "land-speed", value: 10, type: "item", duration: thisTurn }]);
+    assert.equal(shirt.partial, undefined);
+    const cape = compileActivations(item("Cape of the Open Sky"), { spellEffects })[1].plan;
+    assert.deepEqual(cape.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.value]), [["land-speed", 15, 0], ["fly-speed", 15, 0]]);
+    // (Its straight line is the note's.)
+    assert.equal(cape.partial, true);
+});
+
+test("Mordant Mask's Pounding Surf: Deafened until the end of its user's next turn", () => {
+    const mask = compileActivations(item("Mordant Mask"), { spellEffects })[0].plan;
+    const [deafened] = mask.resolution.outcomes.success.effects;
+    assert.deepEqual([deafened.slug, deafened.duration.expiry, deafened.duration.anchor], ["deafened", "turn-end", "source-turn"]);
+});
+
+test("a bonus to some actions' checks: Eye of the Wise's \"attempts to Decipher Writing, …, or Sense Motive\", Spectacles of Inquiry's Sense Motive against one creature (a note); not an aeon stone's resonant power", () => {
+    const eye = compileActivations(item("Eye of the Wise"), { spellEffects })[1].plan;
+    const [bonus] = eye.resolution.outcomes.success.modifiers;
+    assert.deepEqual([bonus.selector, bonus.value, bonus.type], ["check", 2, "item"]);
+    assert.deepEqual(bonus.predicate, [{ or: ["action:decipher-writing", "action:disable-a-device", "action:identify-magic", "action:pick-a-lock", "action:seek", "action:sense-motive"] }]);
+    const spectacles = compileActivations(item("Spectacles of Inquiry"), { spellEffects })[0].plan;
+    assert.deepEqual(spectacles.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["perception", 3, ["action:sense-motive"]]]);
+    assert.equal(spectacles.partial, true);
+    const stasis = compileActivations(item("Aeon Stone (Flickering)"), { spellEffects })[1].plan;
+    assert.deepEqual(stasis.resolution.outcomes.success.modifiers, []);
+});

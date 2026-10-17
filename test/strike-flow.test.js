@@ -354,3 +354,19 @@ test("Roc-Shaft Arrow: ammunition only in its words — its user's next ranged S
     assert.deepEqual(arrow.strike.ammunition, ["arrows"]);
     assert.equal(arrow.partial, true);
 });
+
+test("a Strike's attack without its range penalty (Sniper's Bead, Jistkan War Crossbow), without kickback's penalty (Alchemist's Damper), with flat splash damage (Jistkan): PF2e's RollOption, AdjustModifier and FlatModifier rules", () => {
+    const bead = compileItem(source("Sniper's Bead"));
+    assert.equal(routeOf(bead), "strike");
+    assert.deepEqual([bead.strike.range, bead.strike.options], ["ranged", ["ignore-range-penalty:2"]]);
+    assert.deepEqual(compileItem(source("Sniper's Bead (Major)")).strike.options, ["ignore-range-penalty:6"]);
+    assert.deepEqual(strikeRules(bead), [{ key: "RollOption", domain: "ranged-strike-attack-roll", option: "ignore-range-penalty:2" }]);
+    const damper = compileItem(source("Alchemist's Damper"));
+    assert.deepEqual(strikeRules(damper), [{ key: "AdjustModifier", selector: "ranged-strike-attack-roll", slug: "kickback", suppress: true }]);
+    const crossbow = compileActivations(source("Jistkan War Crossbow"))[0].plan;
+    assert.deepEqual(strikeRules(crossbow, { weaponId: "jistkan", label: "Jistkan War Crossbow" }), [
+        { key: "RollOption", domain: "jistkan-attack", option: "ignore-range-penalty:3" },
+        { key: "FlatModifier", selector: "jistkan-damage", slug: "jistkan-war-crossbow-splash", label: "Jistkan War Crossbow", value: 10, damageType: "piercing", damageCategory: "splash" }
+    ]);
+    assert.deepEqual(strikeLines(crossbow), ["No range penalty out to its third range increment", "+10 piercing splash damage"]);
+});
