@@ -155,6 +155,12 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     // Requirements …"): its damage roll becomes spirit.
     const ampoule = compileItem(source("Blessed Ampoule"));
     assert.deepEqual([ampoule.strike.hit, ampoule.strike.alteration], [true, "spirit"]);
+    // Golden Silencer's "A target hit by a ranged Strike from the affixed weapon must succeed at a … save or be silenced": the next
+    // ranged Strike's, its failure the silence as a note Effect for its time.
+    const silencer = compileItem(source("Golden Silencer (Standard)"));
+    const silenced = silencer.strike.save.resolution.outcomes.failure.noteEffects[0];
+    assert.deepEqual([silencer.strike.range, silencer.strike.save.resolution.check.against.value, silenced.duration.unit], ["ranged", 20, "rounds"]);
+    assert.match(silenced.text, /casting spells that include verbal components/);
 });
 
 test("the readied Strike's PF2e rules: dice on its weapon's damage, the bonus on its attack, a damage type", () => {

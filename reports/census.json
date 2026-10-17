@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 216,
-   "resolves": 750,
+   "none": 215,
+   "resolves": 752,
    "builtin:readied-bonus": 21,
    "builtin:zone": 103,
    "builtin:item-action": 15,
    "partial": 97,
-   "note-only": 162,
+   "note-only": 161,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -91,11 +91,11 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 36,
+    "none": 35,
     "builtin:readied-bonus": 12,
     "builtin:item-action": 11,
-    "resolves": 54,
-    "note-only": 8,
+    "resolves": 56,
+    "note-only": 7,
     "builtin:no-effect": 9,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
@@ -323,9 +323,9 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 334,
+   "resolves": 336,
    "gaps": 0,
-   "none": 27
+   "none": 26
   },
   "affliction": {
    "count": 144,
@@ -377,7 +377,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 606,
+   "resolves": 607,
    "gaps": 0,
    "none": 13
   }
@@ -385,8 +385,8 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 281,
-   "item": 630,
+   "none": 280,
+   "item": 629,
    "fortune": 23,
    "zone": 103,
    "expose": 89,
@@ -397,7 +397,7 @@
    "reroll": 2,
    "coat": 46,
    "ways": 5,
-   "strike": 10
+   "strike": 12
   },
   "byCategory": {
    "other": {
@@ -425,14 +425,14 @@
     "zone": 1
    },
    "talisman": {
-    "none": 45,
+    "none": 44,
     "fortune": 14,
     "action": 11,
-    "item": 53,
+    "item": 52,
     "reroll": 1,
     "cast": 9,
     "save": 15,
-    "strike": 7,
+    "strike": 9,
     "coat": 1
    },
    "elixir": {
@@ -495,7 +495,7 @@
    }
   },
   "noCard": {
-   "no-plan": 216,
+   "no-plan": 215,
    "triggered": 12,
    "gm": 52,
    "other": 1
@@ -11161,7 +11161,10 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "strike"
   },
   {
    "name": "Restful Salve",
@@ -12967,9 +12970,10 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "strike"
   },
   {
    "name": "Bottled Catharsis (Major)",

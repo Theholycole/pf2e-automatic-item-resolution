@@ -52,6 +52,9 @@ export function withItemData(html, item) {
     // @Check[fortitude|dc:21] save, it takes @Damage[(1d10+4)[piercing]] damage. If the target critically fails the save, it's also exposed
     // to tarantula venom." — its degree rows, as the ability compiler reads them: the exposure its critical failure's note.)
     text = text.replace(/\bIf the target fails an? (@Check\[(?:fortitude|reflex|will)\|[^\]]*\](?:\{[^}]*\})?) save, it takes (@Damage\[(?:[^[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage\. If the target critically fails the save, it's also exposed to ([\w' -]+?)\.(?=<\/p>|\s|$)/g, (whole, check, damage, what) => `The target must attempt a ${check} save.</p><p><strong>Critical Success</strong> The target is unaffected.</p><p><strong>Success</strong> The target is unaffected.</p><p><strong>Failure</strong> The target takes ${damage} damage.</p><p><strong>Critical Failure</strong> The target takes ${damage} damage and is exposed to ${what}.`);
+    // (A save for whoever the affixed weapon hits, Golden Silencer's "A target hit by a ranged Strike from the affixed weapon must succeed at
+    // a @Check[fortitude|dc:20] save or be silenced as well …": its next ranged Strike's, on a hit.)
+    text = text.replace(/\bA target hit by an? (ranged |melee )?Strike from the affixed weapon must succeed at\b/g, (whole, range) => `The next ${range ?? ""}Strike you make with the affixed weapon is silent. On a hit, the target must succeed at`);
     // (A heading's space inside its bold tag and a bold action glyph, a third-party module's markup: PF2e's own, as the activation
     // reader takes it.)
     text = text.replace(/<strong>(Activate|Trigger|Effect|Requirements?|Frequency) <\/strong>/g, "<strong>$1</strong> ").replace(/<span class="action-glyph"><strong>([^<]+)<\/strong><\/span>/g, '<span class="action-glyph">$1</span>');

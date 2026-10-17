@@ -3685,6 +3685,32 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await boom()?.delete().catch(() => null);
         }
+    },
+
+    // Golden Silencer (Standard): it readies the bow's next ranged Strike; the hit (AC 1) posts the target's DC 20 Fortitude save card,
+    // its failure's silence a note Effect.
+    async silencerHit(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Silent Archer", { type: "character", x: 9, y: 16 });
+        const { token: foeToken } = await creature(scene, "Silenced Target", { x: 11, y: 16, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Arrows");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        const silencer = await give(archer, "Golden Silencer (Standard)");
+        await until(() => archerToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        let since = Date.now();
+        await silencer.consume();
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(archer, bow);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the silencer's save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && check.against.value === 20, `Fortitude DC 20 (${JSON.stringify(check)})`);
+        return { save: save.id };
     }
 };
 

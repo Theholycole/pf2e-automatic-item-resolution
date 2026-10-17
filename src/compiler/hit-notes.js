@@ -11,7 +11,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [] });
 const sentencesOf = (text) => String(text ?? "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 // (A sentence that says a rule, not flavor.)
-const RULE = /\b(?:checks?|saves?|saving throws?|damage|penalty|bonus|can't|cannot|Casts? a Spell|concentrate|Hidden|Invisible|Interact|attack rolls?|flat check|loses?|actions?|counteract\w*)\b|@Check/i;
+const RULE = /\b(?:checks?|saves?|saving throws?|damage|penalty|bonus|can't|cannot|Casts? a Spell|casting spells|concentrate|Hidden|Invisible|Interact|attack rolls?|flat check|loses?|actions?|counteract\w*)\b|@Check/i;
 const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours", day: "days", days: "days", week: "days", weeks: "days" };
 // Its time: "for 3 rounds", "for up to 1 minute", "lasts for up to 1 minute", "within the next week", "until the start of its next turn".
 function timeOf(text) {
