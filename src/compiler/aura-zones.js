@@ -75,8 +75,64 @@ export function readAuraZone(html, name = "Aura") {
     };
 }
 
-// The builtin, its base the activation's or the item's.
+// An emanation around its user for a while, damage for creatures entering it or starting a turn in it: Incendiary Plate's "The armor
+// engulfs you in a vortex of living fire in a @Template[type:emanation|distance:15] for 10 minutes. Creatures that enter this aura or
+// start their turn within it take @Damage[10d6[fire]] damage (@Check[reflex|dc:40|basic] save). This area is difficult terrain for
+// other creatures.", Horn of Rust's shards that "orbit you" for 1 minute, "Creatures and objects that begin their turn in this area
+// take … damage from the shards (… save)". The zone on its user's token, the basic save at those times; the rest of its rule
+// sentences, notes.
+const AROUND_YOU = /\b(?:engulfs|orbits?|surrounds?) you\b[^.]*?@Template\[(?:type:)?emanation\|distance:(\d+)[^\]]*\](?:\{[^}]*\})? for (\d+) (minutes?|rounds?)\./i;
+const TAKE_IN_IT = /\bCreatures(?: and objects)? that ((?:enter|begin|start|end)[^.@]*?) take (@Damage\[(?:[^[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage(?: from the [\w' -]+?)? \((@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save\)\./i;
+export function readSelfAura(html, name = "Aura") {
+    const text = String(html ?? "");
+    const around = AROUND_YOU.exec(text);
+    const take = TAKE_IN_IT.exec(text);
+    if (!around || !take) return null;
+    const who = take[1].toLowerCase();
+    const when = [...(/\benters?\b/.test(who) ? ["enter"] : []), ...(/\b(?:begin|start)\b/.test(who) ? ["start"] : []), ...(/\bend\b/.test(who) ? ["end"] : [])];
+    if (!when.length) return null;
+    let plan = null;
+    try {
+        plan = compileAbility({ name, type: "action", system: { slug: null, description: { value: `<p>The target takes ${take[2]} damage (${take[3]} save).</p>` }, actionType: { value: "free" }, actions: { value: null }, traits: { value: [] } } }, {});
+    } catch {
+        plan = null;
+    }
+    if (plan?.resolution?.kind !== "save" || plan.resolution.check?.against?.dc !== "fixed") return null;
+    plan = { ...plan, trigger: { event: "zone" }, targeting: { target: "a creature in the area", range: null, area: null } };
+    const plain = text.replace(/@\w+\[(?:[^[\]]|\[[^\]]*\])*\]\{([^}]*)\}/g, "$1").replace(/@Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\]/gi, (_all, statistic, dc) => `DC ${dc} ${statistic}`).replace(/@Damage\[((?:[^[\]]|\[[^\]]*\])*)\]/g, (_all, formula) => formula.replace(/\[(\w+)\].*$/, " $1")).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const sentences = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    const others = /\bThis area is difficult terrain for other creatures\b/i.test(plain);
+    const difficult = others || /\bThis area is difficult terrain\b/i.test(plain);
+    // (Its rule sentences other than the area, the damage and the terrain: Horn of Rust's +1 item bonus to AC for its user, its tetanus.)
+    // (Its user's own bonus, with PF2e's Effect for it named after the item: that Effect on its user as the zone starts, scripts/zones.js.)
+    const bonus = /\b(?:grants?|gives?) you an? \+\d+ (?:item|status|circumstance) bonus to AC\b[^.]*\./i.exec(plain)?.[0];
+    const link = /@UUID\[(Compendium\.pf2e\.equipment-effects\.Item\.[A-Za-z0-9]+)\]\{(Effect: [^}]+)\}/.exec(text);
+    const own = bonus && link && link[2].toLowerCase().includes(String(name).replace(/:.*$/, "").trim().toLowerCase()) ? { uuid: link[1], label: link[2] } : null;
+    const notes = sentences.filter((sentence) => !/\b(?:engulfs|orbits?|surrounds?) you\b/i.test(sentence) && !/^Creatures(?: and objects)? that\b/i.test(sentence) && !/^This area is difficult terrain\b/i.test(sentence) && !(own && sentence.includes(bonus)) && /\b(?:bonus|penalty|exposed|immune|save|damage|AC)\b/i.test(sentence));
+    if (own) notes.unshift(`Its user also gets ${own.label} (${bonus.replace(/^.*?\b(?:grants?|gives?) you an? /i, "").replace(/\.$/, "")}).`);
+    return {
+        ...(own ? { own } : {}),
+        area: { type: "emanation", value: Number(around[1]) },
+        centre: "self",
+        range: null,
+        lasts: durationIn(`for ${around[2]} ${around[3]}`, null),
+        untilReused: false,
+        concealed: false,
+        terrain: difficult ? [{ movement: ["walk"], difficulty: 2 }] : [],
+        others,
+        hazard: null,
+        saves: [{ when, plan }],
+        damage: [],
+        effect: null,
+        modifiers: [],
+        notes
+    };
+}
+
+// The builtin, its base the activation's or the item's; its user's own Effect beside it, ownEffect.
 export function auraZonePlan(html, base, name) {
-    const zone = readAuraZone(html, name);
-    return zone ? { ...base, builtin: "zone", source: base.source, actions: null, zone } : null;
+    const read = readAuraZone(html, name) ?? readSelfAura(html, name);
+    if (!read) return null;
+    const { own, ...zone } = read;
+    return { ...base, builtin: "zone", source: base.source, actions: null, zone, ...(own ? { ownEffect: own } : {}) };
 }

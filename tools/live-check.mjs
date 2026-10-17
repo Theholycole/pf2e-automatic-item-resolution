@@ -3491,6 +3491,45 @@ export const cases = {
         await until(() => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("ac") && rule.value === 4 && rule.type === "circumstance")), "+4 circumstance AC", { timeout: 8000 });
         await until(() => user.system.attributes.ac.value === before + 4, `AC ${before} + 4`, { timeout: 8000 });
         return { ac: [before, user.system.attributes.ac.value] };
+    },
+
+    // Horn of Rust's shards: the 5-foot emanation on its user's token for 1 minute, and its user's own Effect: Horn of Rust (+1 item AC).
+    async hornOfRustAura(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Rust Hornist", { type: "character", x: 15, y: 22 });
+        const horn = await give(user, "Horn of Rust");
+        await userToken.object?.control?.();
+        const aura = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Horn of Rust/.test(region.name));
+        try {
+            await game.modules.get(NS).api.live.activate(horn.uuid, 1);
+            await until(() => aura(), "the shards' Region", { timeout: 8000 });
+            const zone = aura().flags["pf2e-automatic-ability-resolution"].zone.zone;
+            assert(zone.area.value === 5 && zone.saves[0].when.includes("start"), `a 5-foot emanation, its save at a turn's start (${JSON.stringify(zone.area)})`);
+            await until(() => user.itemTypes.effect.some((effect) => effect.name === "Effect: Horn of Rust"), "Effect: Horn of Rust on its user", { timeout: 8000 });
+            return { region: aura().name };
+        } finally {
+            await aura()?.delete().catch(() => null);
+        }
+    },
+
+    // Devil's Trident's Stay a Foe: its activation readies the trident's Strike; the hit has the spell module cast Paralyze (rank 3,
+    // DC 25) at the creature hit.
+    async tridentParalyze(scene) {
+        const { actor: wielder, token: wielderToken } = await creature(scene, "Trident Wielder", { type: "character", x: 15, y: 25 });
+        const { token: foeToken } = await creature(scene, "Trident Target", { x: 16, y: 25, ac: 1, alliance: "opposition" });
+        const trident = await give(wielder, "Devil's Trident");
+        await trident.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(trident.uuid, 2);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await wielderToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(wielder, trident);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const cast = await messageAfter(since, (message) => message.flags?.pf2e?.origin?.type === "spell" && /Paralyze/.test(message.flags?.pf2e?.origin?.uuid ? fromUuidSync(message.flags.pf2e.origin.uuid)?.name ?? message.flavor ?? "" : message.flavor ?? ""), { what: "the spell module's Paralyze", timeout: 15000 });
+        return { cast: cast.id };
     }
 };
 

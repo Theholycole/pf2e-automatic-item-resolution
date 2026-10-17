@@ -297,6 +297,10 @@ test("a spell cast at the creature hit: Stone Bullet's Petrify at rank 6 and DC 
     assert.deepEqual(compileActivations(source("Silencing Shot"))[0].plan.strike.cast.saveFirst, { statistic: "will", dc: 25 });
     assert.equal(compileActivations(source("Disintegration Bolt"))[0].plan.strike.cast.attackFromHit, true);
     assert.deepEqual(compileActivations(source("Tiger's Claw")).find((entry) => entry.plan?.strike?.cast).plan.strike.cast.name, "Vision of Death");
+    // Devil's Trident's "Attempt a Strike. On a hit, the trident casts 3rd-rank Paralyze on the target (DC 25)", Stunned 1 on a critical hit
+    // — over the disease's save beside it in its text.
+    const trident = compileActivations(source("Devil's Trident"))[2].plan;
+    assert.deepEqual([trident.strike.cast.name, trident.strike.cast.rank, trident.strike.cast.dc, trident.resolution.outcomes.criticalSuccess.effects.map((effect) => `${effect.slug} ${effect.value}`)], ["Paralyze", 3, 25, ["stunned 1"]]);
     const bullets = foundry.giveItem(fighter, source("Stone Bullet"));
     const count = foundry.messages.length;
     await foundry.socket(SOCKET)({ action: "activate", itemUuid: bullets.uuid, activation: 0, userId: "player" });

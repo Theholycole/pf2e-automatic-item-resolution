@@ -239,6 +239,22 @@ test("Colorful Coating: the square its user coats within reach for 1 minute — 
     assert.deepEqual([tree.builtin, tree.zone.once, tree.zone.saves[0].plan.resolution.check.against.value, tree.zone.saves[0].plan.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["zone", true, 19, ["immobilized"]]);
 });
 
+test("routes for saves read but not played: Frogskin Tincture's toxin for whoever bites its drinker (later, kept for the attacker), Stumbling Fulu's save when its creature Strides (later), Noxious Jerkin's attacker (its immunity's \"stench aura, such as\" isn't an aura trait), Linnorm's Sankeit's cone (its save given only by its link; \"you can use the higher of your class DC\" isn't an action for later); Elysian Dew's own aura Effect, the unholy drinker's save a note", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const { routeOf } = await import("../src/live/route.js");
+    const { plainText } = await import("../src/compiler/rows.js");
+    const consumable = (name) => routeOf(compileItem(source(name)), plainText(source(name).system.description.value));
+    const activation = (name, index = 0) => {
+        const entry = compileActivations(source(name))[index];
+        return routeOf(entry.plan, plainText(entry.activation.html));
+    };
+    assert.deepEqual([consumable("Frogskin Tincture"), consumable("Stumbling Fulu"), activation("Noxious Jerkin"), activation("Linnorm's Sankeit")], ["later", "later", "save", "save"]);
+    const dew = compileItem(source("Elysian Dew"));
+    assert.deepEqual([dew.resolution.kind, dew.resolution.applications.map((entry) => entry.label), consumable("Elysian Dew")], ["effect", ["Aura: Elysian Dew"], "item"]);
+    assert.match(dew.notes.join(" "), /If you're unholy and drink this potion, .* a DC 30 Fortitude save or the potion renders you Drained 2\./);
+});
+
 test("a weapon's own poison or curse for its next hit: Alghollthu Lash's coat card offers only the lash, a critical miss keeps it, its hit posts the slime's save card; Protector's Final Gift's lasts its minute; Lionfish Spear's goes to the creature it just hit; Viper's Fang's coats any weapon", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const { compileActivations } = await import("../src/compiler/permanent.js");

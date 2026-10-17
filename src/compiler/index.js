@@ -141,6 +141,11 @@ function compileOne(given, options = {}) {
     // linked Effect, PF2e's healing, a spell's Effect, its row; not to a note alone.)
     const own = read?.builtin === "no-effect" ? ownPlan(item, base, options) ?? rowPlan(item, base) : null;
     let plan = own && !own.noteOnly ? own : (read ? fitPlan(item, read, base, options) : ownPlan(item, base, options)) ?? rowPlan(item, base);
+    // (A save only for a drinker of some kind, Elysian Dew's "If you're unholy and drink this potion, it fails to work, and you must
+    // succeed at a … save": the item's own linked Effect, that sentence a note.)
+    const kinded = plan?.resolution?.kind === "save" ? KIND_GATED.exec(plainText(html))?.[0]?.replace(/@Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?/gi, (_all, statistic, dc) => `DC ${dc} ${statistic[0].toUpperCase()}${statistic.slice(1).toLowerCase()}`) : null;
+    const linked = kinded ? ownPlan(item, base, options) : null;
+    if (linked?.resolution?.kind === "effect") plan = { ...linked, automation: { level: "guided" }, notes: [...(linked.notes ?? []), kinded] };
     // (A note alone from the ability compiler gives way to the item's own row when that reads something.)
     if (plan?.noteOnly) {
         const row = rowPlan(item, base);
@@ -293,6 +298,8 @@ function basePlan(item) {
 }
 
 // What the live layer and the simulator need to know about the item itself.
+const KIND_GATED = /\bIf you(?:'re| are) (?:an? )?\w+(?: or \w+)? and (?:drink|consume|eat|imbibe) (?:this|the) [\w' -]+?, (?:it fails to work, and )?you must (?:succeed at|attempt)\b[^.]*\./i;
+
 function itemInfo(item) {
     return {
         type: item.type,

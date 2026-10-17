@@ -10,9 +10,14 @@
 const AFTER_HIT = /^You (?:successfully Strike|Strike|hit|critically hit|damage) a creature\b/i;
 const NEXT_HIT = /\b(?:The next creature you (?:successfully )?Strike with (?:this|the) [\w' -]+? is exposed to|affects the next creature (?:successfully )?struck with the [\w' -]+?|If you hit with this attack, the (?:creature|target) is exposed to)\b/i;
 
+// (Not a hit of its user's: whoever hits its drinker, Frogskin Tincture's toxin "affecting any creature that hits you with a jaws Strike or
+// other bite attack" — the card kept for the item's time, set off by that creature, src/live/poison-card.js ATTACKER.)
+const HITS_YOU = /\bany creature that hits you with\b/i;
+
 // The plan, the activation's plain text, its Trigger's words and the item's type → the plan as it's played, or as it was.
 export function withHitDelivery(plan, text, { trigger = null, itemType = null } = {}) {
     if (plan?.resolution?.kind !== "save" || plan.trigger?.event !== "strike" || !plan.resolution.afflictionHandoff || plan.resolution.check?.against?.dc !== "fixed") return plan;
+    if (HITS_YOU.test(String(text ?? ""))) return { ...plan, trigger: { event: "use", ...(plan.trigger.frequency ? { frequency: plan.trigger.frequency } : {}) }, targeting: { target: "the creature that hits you", range: null, area: null } };
     if (trigger && AFTER_HIT.test(String(trigger).trim())) return { ...plan, trigger: { event: "use", ...(plan.trigger.frequency ? { frequency: plan.trigger.frequency } : {}) }, targeting: { target: "the creature hit", range: null, area: null } };
     // (For how long, when it says: "within the next minute".)
     const within = /\bwithin the next (?:(\d+) )?(minutes?|rounds?|hours?)\b/i.exec(String(text ?? ""));

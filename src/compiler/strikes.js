@@ -133,18 +133,19 @@ const pf2eDamage = (item) => (item?.system?.rules ?? []).some((rule) => ["Damage
 // a 2nd-rank Silence effect on the target. The target can resist the effects of the ammunition with a successful … will save":
 // its saveFirst.)
 const CAST_ON_HIT = /\bis (?:also )?(?:subject to|affected by) (?:the effects of )?an? (?:(\d+)(?:st|nd|rd|th)-rank )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]+)\}(?: spell)?([^.]*)/i;
-const CASTS_ON_HIT = /\bOn a successful Strike, (?:an? )?[^.]*?\b(?:casts|creates) an? ?(?:(\d+)(?:st|nd|rd|th)-rank )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]+)\}(?: effect on the target| spell)?([^.]*\.(?:\s*The target can resist the effects[^.]*)?)/i;
+// (And Devil's Trident's "On a hit, the trident casts 3rd-rank Paralyze on the target (DC 25)".)
+const CASTS_ON_HIT = /\bOn a (?:successful Strike|hit), (?:an? |the )?[^.]*?\b(?:casts|creates) (?:an? ?)?(?:(\d+)(?:st|nd|rd|th)-rank )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]+)\}(?: effect on the target| spell)?([^.]*\.(?:\s*The target can resist the effects[^.]*)?)/i;
 export function castOnHit(html) {
     const match = CAST_ON_HIT.exec(String(html ?? "")) ?? CASTS_ON_HIT.exec(String(html ?? "").replace(/<\/?em>/g, "").replace(/\bcasts (@UUID)/, "casts a $1"));
     if (!match) return null;
-    const dc = /\bspell DC of (\d+)|@Check\[\w+\|dc:(\d+)/i.exec(match[4]);
+    const dc = /\bspell DC of (\d+)|@Check\[\w+\|dc:(\d+)|\(DC (\d+)\)/i.exec(match[4]);
     const unless = /\bunless it succeeds at an? @Check\[(fortitude|reflex|will)\|dc:(\d+)|\bThe target can resist the effects[^.]*? with a successful @Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(match[4]);
     const requiring = /\brequiring an? @Check\[(?:fortitude|reflex|will)\|dc:\d+/i.test(match[4]);
     return {
         uuid: match[2],
         name: match[3],
         rank: match[1] ? Number(match[1]) : null,
-        dc: unless ? null : dc ? Number(dc[1] ?? dc[2]) : null,
+        dc: unless ? null : dc ? Number(dc[1] ?? dc[2] ?? dc[3]) : null,
         ...(unless ? { saveFirst: { statistic: (unless[1] ?? unless[3]).toLowerCase(), dc: Number(unless[2] ?? unless[4]) } } : {}),
         ...(requiring ? { attackFromHit: true } : {})
     };
@@ -210,7 +211,9 @@ export function compileStrike(item, base, options = {}) {
         if (instead) return instead;
     }
     // ("This Strike deals an additional 2d6 precision damage, and on a hit, the creature is Clumsy 1": the rider its own sentence.)
-    const text = plainText(html).replace(/,? and on a hit, /gi, ". On a hit, ");
+    // (And Devil's Trident's "If the Strike was a critical hit, the target is Stunned 1 even if it critically succeeds at the save": the
+    // critical hit's rider, whatever the cast's save.)
+    const text = plainText(html).replace(/,? and on a hit, /gi, ". On a hit, ").replace(/\bIf the Strike was a critical hit, (the target is [^.]+?) even if it critically succeeds at the save\./g, "On a critical hit, $1.");
     // (Activated ammunition: its hit is the next ranged Strike's with it. A consumable that's ammunition only in its words —
     // Roc-Shaft Arrow's "Ammunition arrow" line, which PF2e can't load — is its user's next ranged Strike.)
     const wordsOnly = !isAmmo(item) && /^\s*Ammunition (?:arrows?|bolts?|bullets?|sling bullets?|rounds?|any)\b/i.test(text);
@@ -318,5 +321,7 @@ export function strikeOver(plan, strike) {
     // (Hit notes alone give way to any other reading but a note.)
     if (strike.strike?.fromNotes) return !plan || plan.noteOnly || plan.builtin === "no-effect" ? strike : plan;
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") return strike;
-    return plan.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && strike.strike?.save ? strike : plan;
+    // (Or a spell cast on its hit, over a save the ability compiler read in the text beside it: Devil's Trident's Paralyze, not the
+    // disease another of its activations gives.)
+    return plan.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && (strike.strike?.save || strike.strike?.cast) ? strike : plan;
 }

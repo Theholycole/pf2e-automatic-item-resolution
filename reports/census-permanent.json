@@ -6,7 +6,7 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 735,
+   "resolves": 733,
    "builtin:cast-spell": 470,
    "none": 668,
    "partial": 154,
@@ -17,25 +17,25 @@
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
+   "builtin:zone": 19,
    "builtin:modes": 32,
-   "builtin:zone": 17,
    "builtin:item-action": 22,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
    "builtin:spellstrike": 9
   },
   "live": {
-   "save": 408,
+   "save": 410,
    "cast": 470,
    "item": 582,
-   "none": 835,
+   "none": 830,
    "focus": 45,
    "fortune": 54,
    "reroll": 25,
-   "strike": 81,
+   "strike": 82,
    "counteract": 6,
+   "zone": 19,
    "toggle": 32,
-   "zone": 17,
    "action": 22,
    "coat": 3,
    "spellstrike": 9,
@@ -48,7 +48,7 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 447,
+    "resolves": 446,
     "builtin:cast-spell": 341,
     "none": 449,
     "partial": 70,
@@ -57,7 +57,7 @@
     "builtin:readied-bonus": 33,
     "note-only": 143,
     "builtin:reroll": 17,
-    "builtin:zone": 9,
+    "builtin:zone": 10,
     "builtin:modes": 16,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
@@ -109,15 +109,15 @@
    "results": {
     "builtin:cast-spell": 34,
     "note-only": 17,
-    "resolves": 58,
+    "resolves": 57,
     "builtin:counteract": 1,
     "none": 27,
+    "builtin:zone": 3,
     "builtin:no-effect": 5,
     "builtin:reroll": 3,
     "partial": 8,
     "builtin:item-action": 2,
     "builtin:readied-bonus": 3,
-    "builtin:zone": 2,
     "builtin:focus-point": 2,
     "builtin:roll-twice": 2
    }
@@ -1589,9 +1589,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Dragon Pearl (Draconic Codex)",
@@ -2372,9 +2372,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Horn of Rust",
@@ -7538,7 +7538,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Plate of Yled (True)",
@@ -14073,7 +14073,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "strike"
   },
   {
    "name": "Amaranthine Pavise",
@@ -15892,7 +15892,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Linnorm's Sankeit",

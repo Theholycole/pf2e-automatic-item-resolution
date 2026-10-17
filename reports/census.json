@@ -385,12 +385,12 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 287,
-   "item": 629,
+   "none": 284,
+   "item": 630,
    "fortune": 23,
    "zone": 102,
    "expose": 89,
-   "later": 79,
+   "later": 81,
    "action": 15,
    "save": 140,
    "counteract": 28,
@@ -416,9 +416,9 @@
     "coat": 3
    },
    "potion": {
-    "item": 76,
+    "item": 77,
     "later": 63,
-    "none": 28,
+    "none": 27,
     "cast": 9,
     "save": 3,
     "counteract": 2,
@@ -437,9 +437,10 @@
    },
    "elixir": {
     "item": 121,
-    "none": 15,
+    "none": 14,
     "counteract": 11,
     "save": 1,
+    "later": 1,
     "zone": 1
    },
    "poison": {
@@ -477,10 +478,11 @@
    },
    "fulu": {
     "fortune": 2,
-    "none": 17,
+    "none": 16,
     "item": 16,
     "save": 9,
     "reroll": 1,
+    "later": 1,
     "cast": 1
    },
    "drug": {
@@ -494,7 +496,7 @@
   },
   "noCard": {
    "no-plan": 218,
-   "triggered": 16,
+   "triggered": 13,
    "gm": 52,
    "other": 1
   }
@@ -4966,9 +4968,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": null
+   "live": "item"
   },
   {
    "name": "Golden Branding Iron",
@@ -24933,7 +24935,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Broken Ram's Thorn",
@@ -26740,7 +26742,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "later"
   },
   {
    "name": "Therapeutic Snap Peas",

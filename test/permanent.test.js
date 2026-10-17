@@ -490,7 +490,13 @@ test("auras that act at a turn's start or end in them, as the ability module's z
     const top = compileActivations(item("Sandstorm Top"), { spellEffects })[0].plan;
     assert.deepEqual([top.zone.centre, top.zone.range, top.zone.area, top.zone.saves[0].when, top.zone.lasts.unit], ["placed", 10, { type: "burst", value: 5 }, ["start", "enter"], "minutes"]);
     const stink = compileItem({ name: "Test Stink Paste", type: "consumable", system: { slug: null, level: { value: 8 }, category: "other", traits: { value: ["alchemical", "consumable"] }, usage: { value: "held-in-one-hand" }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><p>You daub the paste behind your ears. Creatures that end their turn adjacent to you must attempt a @Check[fortitude|dc:25] save or be @UUID[Compendium.pf2e.conditionitems.Item.fesd1n5eVhpCSS18]{Sickened 1} by the smell. These effects last for 1 minute.</p>" } } }, { spellEffects });
-    assert.deepEqual([stink.builtin, stink.zone.saves[0].when, stink.zone.lasts.value, stink.zone.lasts.unit, stink.zone.saves[0].plan.resolution.outcomes.failure.effects[0].slug], ["zone", ["end"], 1, "minutes", "sickened"]);
+    assert.deepEqual([stink.builtin, stink.zone.saves[0].when, stink.zone.lasts.value, stink.zone.lasts.unit, stink.zone.saves[0].plan.resolution.outcomes.failure.effects[0].slug], ["zone", ["end"], 1, "minutes", "sickened"]);    // An emanation around its user, damage on entering it or starting a turn in it: Incendiary Plate's 15 feet for 10 minutes (difficult
+    // terrain for others), Horn of Rust's 5 feet for 1 minute, its user's own Effect (+1 item AC) beside it.
+    const plate = compileActivations(item("Incendiary Plate"), { spellEffects })[0].plan;
+    assert.deepEqual([plate.builtin, plate.zone.area, plate.zone.centre, plate.zone.lasts.value, plate.zone.lasts.unit, plate.zone.saves[0].when, plate.zone.saves[0].plan.resolution.check.basic, plate.zone.saves[0].plan.resolution.check.against.value, plate.zone.terrain.length, plate.zone.others], ["zone", { type: "emanation", value: 15 }, "self", 10, "minutes", ["enter", "start"], true, 40, 1, true]);
+    const horn = compileActivations(item("Horn of Rust"), { spellEffects })[1].plan;
+    assert.deepEqual([horn.zone.area.value, horn.zone.saves[0].when, horn.ownEffect?.label], [5, ["start"], "Effect: Horn of Rust"]);
+    assert.match(horn.zone.notes.join(" "), /exposed to a potent form of tetanus/);
 });
 
 test("a bonus for this turn's movement: Quick Runner's Shirt's +10-foot item bonus during its Strides, Cape of the Open Sky's to its Speed and fly Speed for that movement — until the end of the turn", () => {
