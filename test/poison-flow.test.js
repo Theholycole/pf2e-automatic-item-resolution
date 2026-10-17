@@ -253,6 +253,11 @@ test("routes for saves and checks read but not played: Frogskin Tincture's toxin
     // An activation pressed by hand whatever its trigger reads (Reactive Mail's "provoke", Exploding Shield's "death"); a drum isn't a
     // snare (Snare of Speed's Larghissimo); its user's own skill check against a creature's DC (The Crows, Whip-Tongue Sling).
     assert.deepEqual([activation("Reactive Mail"), activation("Exploding Shield"), activation("Snare of Speed", 1), activation("The Crows"), activation("Whip-Tongue Sling", 1)], ["save", "save", "save", "save", "save"]);
+    // Tarantula Ampoule's effigy: its Fortitude save at the creature it lunges at, a failure's piercing damage, a critical failure's
+    // exposure to its venom a note.
+    const ampoule = compileItem(source("Tarantula Ampoule"));
+    assert.deepEqual([consumable("Tarantula Ampoule"), ampoule.resolution.check.against.value, ampoule.resolution.outcomes.failure.damage.mode, ampoule.resolution.outcomes.success.damage.mode], ["save", 21, "formulas", "none"]);
+    assert.match(ampoule.resolution.outcomes.criticalFailure.manualInstructions.join(" "), /exposed to .*DC 23 Fortitude/);
     const dew = compileItem(source("Elysian Dew"));
     assert.deepEqual([dew.resolution.kind, dew.resolution.applications.map((entry) => entry.label), consumable("Elysian Dew")], ["effect", ["Aura: Elysian Dew"], "item"]);
     assert.match(dew.notes.join(" "), /If you're unholy and drink this potion, .* a DC 30 Fortitude save or the potion renders you Drained 2\./);

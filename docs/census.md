@@ -51,7 +51,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 
 | Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | fortune | action | counteract | ways | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 214 | 3 | 3 | 93 | 12 | 11 | 16 | 3 | 0 | 7 | 1 | 5 | 1 | 143 |
+| other | 512 | 214 | 3 | 3 | 94 | 12 | 11 | 16 | 3 | 0 | 7 | 1 | 5 | 1 | 142 |
 | potion | 182 | 77 | 0 | 0 | 3 | 63 | 9 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 27 |
 | talisman | 156 | 53 | 1 | 0 | 15 | 0 | 9 | 0 | 6 | 1 | 14 | 11 | 0 | 0 | 46 |
 | elixir | 149 | 121 | 0 | 0 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 11 | 0 | 14 |
@@ -63,7 +63,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | fulu | 46 | 16 | 0 | 0 | 9 | 1 | 1 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 16 |
 | drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **630** | **46** | **89** | **140** | **81** | **32** | **102** | **9** | **2** | **23** | **15** | **28** | **5** | **284** |
+| **all** | **1486** | **630** | **46** | **89** | **141** | **81** | **32** | **102** | **9** | **2** | **23** | **15** | **28** | **5** | **283** |
 
 Why the rest have no card yet:
 
@@ -71,7 +71,7 @@ Why the rest have no card yet:
 |---|---:|
 | nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 218 |
 | the ability compiler's GM fallback ("no-effect") | 52 |
-| a save on a trigger or a passive (an aura, a reaction) | 13 |
+| a save on a trigger or a passive (an aura, a reaction) | 12 |
 | another plan not played yet | 1 |
 
 ## What they do

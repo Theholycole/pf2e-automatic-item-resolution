@@ -385,14 +385,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 284,
+   "none": 283,
    "item": 630,
    "fortune": 23,
    "zone": 102,
    "expose": 89,
    "later": 81,
    "action": 15,
-   "save": 140,
+   "save": 141,
    "counteract": 28,
    "reroll": 2,
    "coat": 46,
@@ -402,9 +402,9 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 143,
+    "none": 142,
     "later": 12,
-    "save": 93,
+    "save": 94,
     "item": 214,
     "zone": 16,
     "fortune": 7,
@@ -496,7 +496,7 @@
   },
   "noCard": {
    "no-plan": 218,
-   "triggered": 13,
+   "triggered": 12,
    "gm": 52,
    "other": 1
   }
@@ -18286,7 +18286,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Psyche Salts (Moderate)",

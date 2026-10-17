@@ -48,6 +48,10 @@ export function withItemData(html, item) {
     // (A swarm sent at the triggering enemy, Wasp Guard's "The swarm flies to the triggering enemy's space and swarms about them,
     // dealing @Damage[1d8[persistent,poison]] damage": that enemy takes it.)
     text = text.replace(/\bThe \w+ (?:flies|moves|rushes) to the triggering (enemy|creature)'s space and [^,.]*, dealing (@Damage\[[^\]]*\]\])(?: damage)?\./g, (whole, who, damage) => `The triggering ${who} takes ${damage} damage.`);
+    // (A save with its failure's damage and a critical failure's exposure, Tarantula Ampoule's effigy: "If the target fails a
+    // @Check[fortitude|dc:21] save, it takes @Damage[(1d10+4)[piercing]] damage. If the target critically fails the save, it's also exposed
+    // to tarantula venom." — its degree rows, as the ability compiler reads them: the exposure its critical failure's note.)
+    text = text.replace(/\bIf the target fails an? (@Check\[(?:fortitude|reflex|will)\|[^\]]*\](?:\{[^}]*\})?) save, it takes (@Damage\[(?:[^[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage\. If the target critically fails the save, it's also exposed to ([\w' -]+?)\.(?=<\/p>|\s|$)/g, (whole, check, damage, what) => `The target must attempt a ${check} save.</p><p><strong>Critical Success</strong> The target is unaffected.</p><p><strong>Success</strong> The target is unaffected.</p><p><strong>Failure</strong> The target takes ${damage} damage.</p><p><strong>Critical Failure</strong> The target takes ${damage} damage and is exposed to ${what}.`);
     // (A heading's space inside its bold tag and a bold action glyph, a third-party module's markup: PF2e's own, as the activation
     // reader takes it.)
     text = text.replace(/<strong>(Activate|Trigger|Effect|Requirements?|Frequency) <\/strong>/g, "<strong>$1</strong> ").replace(/<span class="action-glyph"><strong>([^<]+)<\/strong><\/span>/g, '<span class="action-glyph">$1</span>');
