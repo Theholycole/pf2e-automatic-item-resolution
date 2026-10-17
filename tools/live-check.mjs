@@ -44,6 +44,8 @@ async function lab() {
         await scene.view();
         await wait(1500);
     }
+    // (A lab scene just made: its canvas drawn before the first case, or the creatures next to its user weren't found.)
+    for (const stop = Date.now() + 10000; Date.now() < stop && !(canvas.ready && canvas.scene?.id === scene.id); ) await wait(100);
     return scene;
 }
 
@@ -470,8 +472,8 @@ export const cases = {
         return { results };
     },
 
-    // Alchemists+: Olobigonde Fugu's own Effect matches its text and is applied; Concealing Puffball's doesn't (status for
-    // item) and gives a note instead.
+    // Alchemists+: Olobigonde Fugu's own Effect matches its text and is applied; Spotlight Sunflower (Moderate)'s doesn't (it
+    // links the Lesser one's) and, its text a note only, gives a note instead.
     async thirdPartyEffects(scene) {
         assert(game.modules.get("pf2e-team-plus-alchemists")?.active, "Alchemists+ isn't active in pftest.");
         const { actor: eater } = await creature(scene, "Fugu Eater", { type: "character", x: 6, y: 3 });
@@ -484,15 +486,15 @@ export const cases = {
         let end = Date.now() + 8000;
         while (Date.now() < end && !eater.itemTypes.effect.some((entry) => entry.name === "Effect: Olobigonde Fugu")) await wait(250);
         assert(eater.itemTypes.effect.some((entry) => entry.name === "Effect: Olobigonde Fugu"), "the matching Effect applied");
-        const puffball = await give(eater, "Concealing Puffball (Lesser)", PACK);
+        const sunflower = await give(eater, "Spotlight Sunflower (Moderate)", PACK);
         since = Date.now();
-        await puffball.consume();
-        card = await messageAfter(since, itemCard("item"), { what: "the puffball's card" });
+        await sunflower.consume();
+        card = await messageAfter(since, itemCard("item"), { what: "the sunflower's card" });
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
         end = Date.now() + 6000;
         let results = [];
         while (Date.now() < end && !(results = game.messages.get(card.id).getFlag(NS, "card").results ?? []).length) await wait(250);
-        assert(!eater.itemTypes.effect.some((entry) => entry.name === "Effect: Concealing Puffball (Lesser)"), "not the mismatching Effect");
+        assert(!eater.itemTypes.effect.some((entry) => entry.name === "Effect: Spotlight Sunflower (Lesser)"), "not the mismatching Effect");
         assert(results.some((line) => /wasn't applied/.test(line)), `a note instead (${JSON.stringify(results)})`);
         return { results };
     },
@@ -2870,6 +2872,131 @@ export const cases = {
         await until(() => eater.system.attributes.ac.value === fresh, `AC back to ${fresh} (${eater.system.attributes.ac.value})`, { timeout: 8000 });
         assert(eater.hasCondition("fatigued"), "still Fatigued");
         return { ac: eater.system.attributes.ac.value };
+    },
+
+    // Alchemists+ Nettle Balm (Lesser): PF2e's recovery check for the burning creature touched (targeted), at DC 4.
+    async tpNettleBalm(scene) {
+        const { actor: medic, token: medicToken } = await creature(scene, "Balm Medic", { type: "character", x: 8, y: 4 });
+        const { actor: burning, token: burningToken } = await creature(scene, "Balm Patient", { x: 9, y: 4 });
+        const persistent = game.pf2e.ConditionManager.getCondition("persistent-damage").toObject();
+        persistent.system.persistent = { formula: "1d6", damageType: "fire", dc: 15 };
+        await burning.createEmbeddedDocuments("Item", [persistent]);
+        const balm = await give(medic, "Nettle Balm (Lesser)", "pf2e-team-plus-alchemists.pf2e-items");
+        await medicToken.object?.control?.();
+        const since = Date.now();
+        await balm.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the balm's card" });
+        const fire = card.getFlag(NS, "card").plan.item.recovery.types.indexOf("fire");
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, recoveryType: fire, targets: [burningToken.uuid] });
+        const check = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "flat-check" && message.speaker?.actor === burning.id, { what: "the patient's recovery check" });
+        assert(check.flags.pf2e.context.dc?.value === 4, `at DC 4 (${check.flags.pf2e.context.dc?.value})`);
+        return { outcome: check.flags.pf2e.context.outcome };
+    },
+
+    // Alchemists+ Bristle Boar Flask: the boar's Shove at +10 on the ability module's card, at the creatures targeted along its line.
+    async tpBristleBoar(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Boar Releaser", { type: "character", x: 12, y: 6 });
+        const { token: first } = await creature(scene, "Boar Victim One", { x: 13, y: 6, alliance: "opposition" });
+        const { token: second } = await creature(scene, "Boar Victim Two", { x: 14, y: 6, alliance: "opposition" });
+        const flask = await give(user, "Bristle Boar Flask", "pf2e-team-plus-alchemists.pf2e-items");
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await flask.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the flask's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [first.uuid, second.uuid] });
+        const shove = await messageAfter(since, abilitySaveCard, { what: "the Shove card" });
+        const state = shove.flags["pf2e-automatic-ability-resolution"].card;
+        const check = state.plan.resolution.check;
+        assert(check.statistic === "athletics" && check.modifier === 10 && check.against?.statistic === "fortitude", `Athletics +10 against Fortitude DC (${JSON.stringify(check)})`);
+        assert((state.targets ?? []).length === 2, `at both (${JSON.stringify(state.targets ?? null)})`);
+        return { targets: state.targets.length };
+    },
+
+    // Alchemists+ Warrior's Chew: +1 item bonus to melee weapons' Strike damage for 10 minutes.
+    async tpWarriorsChew(scene) {
+        const { actor: chewer } = await creature(scene, "Jerky Chewer", { type: "character", x: 16, y: 4 });
+        const chew = await give(chewer, "Warrior's Chew", "pf2e-team-plus-alchemists.pf2e-items");
+        const since = Date.now();
+        await chew.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the chew's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => chewer.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("strike-damage") && rule.value === 1)), "+1 to Strike damage", { timeout: 8000 });
+        return { effects: chewer.itemTypes.effect.map((effect) => effect.name) };
+    },
+
+    // Tian Xia+ Arindham's Whip's Crack of the Vine: the whip loses nonlethal and its Strikes add persistent bleed, for 1 round.
+    async tpThornWhip(scene) {
+        const { actor: wielder, token: wielderToken } = await creature(scene, "Whip Wielder", { type: "character", x: 18, y: 4 });
+        const whip = await give(wielder, "Arindham's Whip", "pf2e-team-plus-tian-xia.player-options");
+        await whip.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await wielderToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(whip.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the whip's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const strikeTraits = () => (wielder.system.actions ?? []).find((action) => action.item?.id === whip.id)?.item?.system?.traits?.value ?? [];
+        await until(() => wielder.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "DamageDice" && [].concat(rule.selector).includes(`${whip.id}-damage`))), "the whip's bleed dice", { timeout: 8000 });
+        await until(() => !strikeTraits().includes("nonlethal"), `nonlethal gone from its Strike (${strikeTraits().join(", ")})`, { timeout: 8000 });
+        return { traits: strikeTraits() };
+    },
+
+    // Alchemists+ Wrought Sirloin: its module's own Effect, now borne out by the text (all damage from animals, elementals and fey).
+    async tpWroughtSirloin(scene) {
+        const { actor: eater } = await creature(scene, "Sirloin Eater", { type: "character", x: 10, y: 4 });
+        const steak = await give(eater, "Wrought Sirloin", "pf2e-team-plus-alchemists.pf2e-items");
+        const since = Date.now();
+        await steak.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the steak's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => eater.itemTypes.effect.some((effect) => effect.name === "Effect: Wrought Sirloin"), "the module's Effect", { timeout: 8000 });
+        const rules = eater.itemTypes.effect.find((effect) => effect.name === "Effect: Wrought Sirloin").system.rules;
+        assert(rules.some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes("primal")), "resistance to primal");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Alchemists+ Concealing Puffball (Lesser): its Effect's status bonus isn't the text's item bonus, so the text: PF2e's Sneak with +1 item.
+    async tpPuffball(scene) {
+        const { actor: sneak } = await creature(scene, "Puffball Sneak", { type: "character", x: 12, y: 4 });
+        const puffball = await give(sneak, "Concealing Puffball (Lesser)", "pf2e-team-plus-alchemists.pf2e-items");
+        const since = Date.now();
+        await puffball.consume();
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the action card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check" && message.speaker?.actor === sneak.id, { what: "PF2e's Sneak roll", timeout: 12000 });
+        const bonus = (roll.flags.pf2e.modifiers ?? []).find((modifier) => modifier.label === "Concealing Puffball (Lesser)");
+        assert(bonus?.modifier === 1 && bonus.type === "item", `the +1 item bonus on the roll (${JSON.stringify(bonus ?? null)})`);
+        assert(!sneak.itemTypes.effect.some((effect) => /Concealing Puffball/.test(effect.name)), "not its module's Effect");
+        return { roll: roll.id };
+    },
+
+    // Alchemists+ Ravenous Flytrap (Greater): PF2e's Grapple; its user's own Athletics (raised) is higher than +16, so the text's +2 item bonus.
+    async tpFlytrapOwn(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Flytrap User", { type: "character", x: 7, y: 6 });
+        const { token: foe } = await creature(scene, "Flytrap Foe", { x: 8, y: 6, alliance: "opposition" });
+        await user.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Strong Arms`, type: "effect", img: "icons/svg/upgrade.svg", system: { rules: [{ key: "FlatModifier", selector: "athletics", value: 20 }] } }]);
+        const flytrap = await give(user, "Ravenous Flytrap (Greater)", "pf2e-team-plus-alchemists.pf2e-items");
+        await userToken.object?.control?.();
+        const since = Date.now();
+        await flytrap.consume();
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the action card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check" && message.speaker?.actor === user.id, { what: "PF2e's Grapple roll", timeout: 12000 });
+        const mods = (roll.flags.pf2e.modifiers ?? []).filter((modifier) => /Ravenous Flytrap/.test(modifier.label));
+        assert(mods.length === 1 && mods[0].modifier === 2 && mods[0].type === "item", `only the +2 item bonus (${JSON.stringify(mods)})`);
+        return { roll: roll.id };
+    },
+
+    // Tian Xia+ Moss Cover (Greater): its Effect's 10 isn't the text's 35, so the text: 35 temporary Hit Points.
+    async tpMossCover(scene) {
+        const { actor: user } = await creature(scene, "Moss User", { type: "character", x: 14, y: 4 });
+        const oil = await give(user, "Moss Cover (Greater)", "pf2e-team-plus-tian-xia.player-options");
+        const since = Date.now();
+        await oil.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the oil's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => user.system.attributes.hp.temp === 35, `35 temporary Hit Points (${user.system.attributes.hp.temp})`, { timeout: 8000 });
+        return { temp: user.system.attributes.hp.temp };
     }
 };
 
@@ -2925,6 +3052,12 @@ export async function cleanup() {
     const combats = game.combats.filter((combat) => combat.getFlag(NS, FIXTURE));
     for (const combat of combats) await combat.delete();
     const scene = game.scenes.find((entry) => entry.name === `${PREFIX} Lab` && entry.getFlag(NS, FIXTURE));
-    if (scene) await scene.delete();
+    if (scene) {
+        const id = scene.id;
+        await scene.delete();
+        // (Its canvas gone before a next run's lab is made: else the view leaving it landed after the new lab was drawn.)
+        for (const stop = Date.now() + 5000; Date.now() < stop && canvas.scene?.id === id; ) await wait(100);
+        await wait(1000);
+    }
     return { actors: actors.length, messages: messages.length, combats: combats.length, scene: Boolean(scene) };
 }

@@ -30,6 +30,11 @@ let itemEffects = {};
 // PF2e's rune items by the key a weapon or armor keeps ("vorpal", "greaterExtending"), for the activations of etched runes
 // (src/compiler/runes.js).
 let runes = new Map();
+// Other modules' own Effects' rules by uuid, and PF2e's condition names by id: an item's linked Effect checked against its text
+// when it's compiled, its text read instead when they don't match (src/compiler/unverified-links.js).
+let moduleEffects = new Map();
+let conditionNames = null;
+const moduleEffect = (uuid) => moduleEffects.get(uuid) ?? null;
 
 // A Foundry item as plain data, keeping its uuid (the compiler is pure).
 // (Its owner's level too, for the amounts that grow with it: src/compiler/item-data.js byOwnerLevel.)
@@ -37,7 +42,7 @@ const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObj
 
 // The spell module's claims (its api, when it's active): an item it acts on is left to it.
 const claims = (item) => game.modules.get(SPELL_ID)?.active ? game.modules.get(SPELL_ID)?.api?.claims?.(item) === true : false;
-const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims, itemEffects });
+const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims, itemEffects, moduleEffect, ...(conditionNames ? { conditionNames } : {}) });
 
 const compile = (item) => compileItem(dataOf(item), options());
 const handles = (item) => handlesItem(dataOf(item), { claims });
@@ -65,6 +70,19 @@ Hooks.once("ready", async () => {
         spells = pack ? spellIndex([...(await pack.getIndex({ fields: ["system.area", "system.target", "system.ritual", "system.level.value"] }))]) : {};
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spells couldn't be indexed.`, error);
+    }
+    try {
+        const pack = game.packs.get("pf2e.conditionitems");
+        conditionNames = pack ? Object.fromEntries([...(await pack.getIndex())].map((entry) => [entry._id, entry.name])) : null;
+        const found = new Map();
+        for (const pack of game.packs.filter((entry) => entry.documentName === "Item" && entry.metadata?.packageType === "module")) {
+            for (const entry of await pack.getIndex({ fields: ["type", "system.rules"] })) {
+                if (entry.type === "effect") found.set(entry.uuid ?? `Compendium.${pack.collection}.Item.${entry._id}`, { name: entry.name, rules: entry.system?.rules ?? [] });
+            }
+        }
+        moduleEffects = found;
+    } catch (error) {
+        console.warn(`${MODULE_ID} | Other modules' Effects couldn't be indexed.`, error);
     }
     // (The generic spellgun and the gun staff ask for what they are when they first go into an inventory: scripts/generic-items.js.)
     setUpGenericItems();

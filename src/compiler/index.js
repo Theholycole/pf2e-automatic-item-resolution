@@ -35,6 +35,7 @@ import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
 import { ownerDCs, withItemData } from "./item-data.js";
+import { overUnverified, withoutUnverifiedLinks } from "./unverified-links.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
@@ -77,8 +78,12 @@ export { asAbility } from "./ability-shape.js";
 // ({ "haste": { uuid, name } }; spellEffectIndex() builds it from the spell-effects pack's items); claims, the spell
 // module's (handlesItem).
 // (Each save against its owner's DC as the core's { dc: "owner" }: src/compiler/item-data.js.)
+// (A third-party module's own Effect its text doesn't bear out: the text read instead, when that reads to more than a note,
+// src/compiler/unverified-links.js.)
 export function compileItem(given, options = {}) {
-    return ownerDCs(compileOne(given, options));
+    const unlinked = withoutUnverifiedLinks(given, options);
+    const instead = unlinked ? overUnverified(compileOne(unlinked.item, options), unlinked.dropped, given?.system?.description?.value) : null;
+    return ownerDCs(instead ?? compileOne(given, options));
 }
 
 function compileOne(given, options = {}) {

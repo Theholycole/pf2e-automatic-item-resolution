@@ -70,6 +70,7 @@ function extraAction(entry) {
 
 // (The item's modifier when it's higher than its user's — some Alchemists+ plants give one for an action, used in place of the
 // user's own when higher: the action, at that modifier at least.)
+const OWN_BONUS = /\b(?:If you use|With) your own \w+ modifier,? you (?:gain|get) an? \+(\d+) (item|circumstance|status) bonus to (?:your|the) check\b/i;
 const AT_LEAST = new RegExp(String.raw`\buse an? \+(\d+) (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy) modifier for your (${NAMES}) instead of your \w+ modifier if it is higher than your own\b`, "i");
 
 // The text → { slug, name, bonus: { value, type } | null, targeted, after } or null.
@@ -106,7 +107,9 @@ export function readItemAction(html, item = null) {
         const slug = ACTION_SLUGS[atLeast[3].replace(/\s+/g, " ").toLowerCase()];
         if (!slug) return null;
         const after = text.slice(atLeast.index).split(/(?<=[.!?])\s+(?=[A-Z])/).slice(1, 3).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line)).join(" ").trim();
-        return { slug, name: atLeast[3].replace(/\s+/g, " "), bonus: null, minimum: { value: Number(atLeast[1]), skill: atLeast[2].toLowerCase() }, targeted: TARGETED.has(slug), ...(after ? { after } : {}) };
+        // (Its bonus to the user's own modifier, when that's the one used: a third-party flytrap's +2 item bonus.)
+        const own = OWN_BONUS.exec(after);
+        return { slug, name: atLeast[3].replace(/\s+/g, " "), bonus: null, minimum: { value: Number(atLeast[1]), skill: atLeast[2].toLowerCase(), ...(own ? { ownBonus: { value: Number(own[1]), type: own[2].toLowerCase() } } : {}) }, targeted: TARGETED.has(slug), ...(after ? { after } : {}) };
     }
     // (Its own modifier in place of yours, a total of its own, or a DC of its own: PF2e's plain action would roll it wrong.
     // "your attribute modifier, proficiency bonus, and item bonus … total +7", "the DC of the check … is reduced to the
@@ -176,10 +179,12 @@ export function readItemAction(html, item = null) {
     const name = match[1].replace(/\s+/g, " ");
     const slug = ACTION_SLUGS[name.toLowerCase()];
     if (!slug) return null;
-    const bonus = match[2] ? { value: Number(match[2]), type: match[3].toLowerCase() } : null;
     // (What it adds, for the card: "You can move your full Speed (instead of half) on this Sneak action …".)
     const sentence = text.slice(index).split(/(?<=[.!?])\s+(?=[A-Z])/);
     const lines = sentence.slice(1, 3).filter((line) => !/^(?:Craft|Activate|Usage|Frequency|Trigger|Requirements?)\b/.test(line));
+    // (Its bonus said a sentence after the activation, as a gain to the action's checks: a third-party puffball's item bonus to Sneak.)
+    const gained = match[2] ? null : new RegExp(String.raw`\bgain an? \+(\d+) (item|circumstance|status) bonus to your (?:${name} )?checks?\b`, "i").exec(lines.join(" "));
+    const bonus = match[2] ? { value: Number(match[2]), type: match[3].toLowerCase() } : gained ? { value: Number(gained[1]), type: gained[2].toLowerCase() } : null;
     // (What a success adds, Medic's Shield's "On a success, they gain 6d6+20 Hit Points, can immediately Stand as a free action, and
     // become Quickened for 1 round": its healing and condition on that degree and the better one; the rest stays on the card.)
     const gains = lines.map(successGains).find(Boolean) ?? null;

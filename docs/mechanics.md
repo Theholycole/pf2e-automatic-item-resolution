@@ -35,8 +35,9 @@ After adding an entry, run `node --test --test-isolation=none test/*.test.js` an
 ## An action at the item's modifier, when that's higher than its user's
 
 - **What it does:** PF2e's own action, plus an untyped modifier of the difference when the user's skill is lower than the item's.
-- **Items now:** the third-party Splitting Tree Splatters and the Lesser Ravenous Flytrap.
+- **Items now:** the third-party Splitting Tree Splatters and the Lesser and Greater Ravenous Flytraps.
 - **Wording read:** "use a +N Athletics modifier for your <action> instead of your Athletics modifier if it is higher than your own" (the item's modifier for that action, in place of the user's when higher).
+- **And its bonus to the user's own:** a later sentence giving an item bonus to the check when the user's own modifier is used (`minimum.ownBonus`). The user's own with the bonus when that's higher, else the item's modifier.
 - **Add an item:** the same `EXTRA` in `src/compiler/item-actions.js`:
 
   ```js
@@ -199,3 +200,7 @@ These mechanics have no table yet. An item gets one when its text uses the same 
 - **A creature's maneuver at its own modifier down a line** (`readOwnCheck`, `ownCheckPlan`): a third-party alchemical creature that Shoves each creature in its path along its line at a +N given as an inline roll. It targets each creature in the line, in order, and adds its critical success's own damage. Stopping at its first failure is a note.
 - **A candy's bonus while chewed, its second use a note** (`ownRow`, `modifiersOf`): a candy chewed for up to 10 minutes that gives an item bonus to melee weapons' damage. It's read as the Strike damage of melee weapons for that time. A "Secondary Effect" is now a note instead of making the whole item a note.
 - **A weapon's own activation shedding a trait and adding damage for a while** (`withItemData`, `weaponAdjustOf`, `strikeDamageOf`, `src/live/card.js`): a third-party whip's activation, for 1 round losing the nonlethal trait and adding bleed damage. Each is an Effect on that weapon alone, by its id: PF2e's AdjustStrike removing the trait and DamageDice of persistent bleed on its damage.
+- **A module's own Effect its text doesn't bear out** (`src/compiler/unverified-links.js`; live play loads other modules' Effects' rules when the world is ready). Live play already checks such an Effect against the text before applying it and makes a note when they differ. The item is now compiled without that Effect, and what its text reads to is used instead when it's more than a note: an Effect a grade off, a status bonus where the text says item, other numbers. Six Alchemists+ items and one Tian Xia+ item read this way (Concealing Puffballs, the Greater Ravenous Flytrap, Mandrake Gum, the Major Aromatic Lavender, the Greater Moss Cover). The Effect stays for a text that is only a note, and for an item made in one of several kinds, whose text lists them side by side.
+- **Resistance to damage from some creatures, or of a type picked when made** (`checkRule` in `src/compiler/verify-effect.js`): an Effect's resistance to all damage, its predicate the creatures' traits (`origin:trait:X`), counts as stated when the text names those creatures as the source; a type its own ChoiceSet picks counts when each choice is stated. Wrought Sirloin's and Croque Matron's own Effects now apply.
+- **An action's bonus said after it** (`readItemAction`): the item's activation is the action, and a later sentence gives the bonus to its checks (the Concealing Puffballs' item bonus to Sneak).
+- **Temporary Hit Points an item grants you** (`tempHitPoints` in `src/compiler/rows.js`): "grants you N temporary Hit Points", for the stated time (the Greater Moss Cover's oil).

@@ -107,6 +107,12 @@ function moduleEffect(uuid) {
     return packCache.get(key).find((doc) => doc._id === id) ?? null;
 }
 const conditionNames = Object.fromEntries(readDocuments(path.join(pf2ePacks, "conditions")).filter((doc) => doc.collection === "items").map((doc) => [doc._id, doc.name]));
+// (As live play compiles: the modules' own Effects known, one that fails the check left out for the text, src/compiler/unverified-links.js.)
+options.moduleEffect = (uuid) => {
+    const effect = moduleEffect(uuid);
+    return effect ? { name: effect.name, rules: effect.system?.rules ?? [] } : null;
+};
+options.conditionNames = conditionNames;
 // A plan's third-party Effects as live play would treat them: "unverified-effect" when one's rules don't match the text.
 function verified(plan, resultName) {
     const linked = (plan?.resolution?.applications ?? []).filter((entry) => entry.verify);

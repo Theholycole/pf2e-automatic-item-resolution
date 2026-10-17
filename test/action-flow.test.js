@@ -126,6 +126,32 @@ test("the item's modifier when it's higher than its user's: PF2e's action with t
     delete thief.getStatistic;
 });
 
+test("the item's modifier, else its bonus to its user's own: whichever is higher (Ravenous Flytrap); a bonus said after the action", async () => {
+    // (The module's own wording.)
+    const html = "<p><strong>Activate</strong> Trip</p><p>The vine can lend its grip to your Trip. You can use a +7 Athletics modifier for your Trip instead of your Athletics modifier if it is higher than your own. With your own Athletics modifier, you get a +1 item bonus to the check.</p>";
+    assert.deepEqual(readItemAction(html).minimum, { value: 7, skill: "athletics", ownBonus: { value: 1, type: "item" } });
+    const sneak = "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> @UUID[Compendium.pf2e.actionspf2e.VMozDqMMuK5kpoX4]{Sneak}</p><hr /><p>A pod of grey dust. Squeeze it while you Sneak to gain a +4 item bonus to your Sneak checks; the dust stays behind you.</p>";
+    assert.deepEqual(readItemAction(sneak).bonus, { value: 4, type: "item" });
+    const vine = foundry.giveItem(thief, { _id: "testVineTrip0002", type: "consumable", name: "Test Vine", img: null, system: { category: "other", traits: { value: ["consumable"] }, level: { value: 1 }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: html } } });
+    const use = async (own) => {
+        const data = vine.toObject();
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: vine.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: thief.id }, actor: thief, token: thief.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+        assert.match(card.content, /else your own with a \+1 item bonus/);
+        thief.getStatistic = (slug) => (slug === "athletics" ? { mod: own } : null);
+        const before = foundry.actionUses.length;
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [mark.token.uuid], userId: "player" });
+        await settle();
+        delete thief.getStatistic;
+        return foundry.actionUses.slice(before)[0].options.modifiers.map((modifier) => [modifier.modifier, modifier.type]);
+    };
+    // +3 of its user's: the item's +7 (+4 more); +6 of its user's, +7 with the bonus: the bonus.
+    assert.deepEqual(await use(3), [[4, "untyped"]]);
+    assert.deepEqual(await use(6), [[1, "item"]]);
+});
+
 test("The Bear and Blade of the Rabbit Prince: one of several actions, picked on the card; the Rabbit Prince's with Thievery and its potency", async () => {
     const bear = compileActivations(source("The Bear"))[0].plan.action;
     assert.deepEqual([bear.slugs, bear.bonus, bear.statistic], [["grapple", "shove", "trip"], { value: 2, type: "status" }, undefined]);

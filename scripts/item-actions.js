@@ -60,7 +60,10 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     // (The item's modifier when it's higher than the user's: the difference, on top of the user's own.)
     if (action.minimum && Modifier) {
         const own = Number(actor.getStatistic?.(action.minimum.skill)?.mod ?? actor.skills?.[action.minimum.skill]?.mod);
-        if (Number.isFinite(own) && action.minimum.value > own) modifiers.push(new Modifier({ label: `${state.item.name} (+${action.minimum.value})`, slug: sluggify(state.item.name), modifier: action.minimum.value - own, type: "untyped" }));
+        // (Else its bonus to the user's own, when it gives one: Ravenous Flytrap's +2 item bonus.)
+        const ownBonus = action.minimum.ownBonus;
+        if (Number.isFinite(own) && action.minimum.value > own + (ownBonus?.value ?? 0)) modifiers.push(new Modifier({ label: `${state.item.name} (+${action.minimum.value})`, slug: sluggify(state.item.name), modifier: action.minimum.value - own, type: "untyped" }));
+        else if (Number.isFinite(own) && ownBonus) modifiers.push(new Modifier({ label: state.item.name, slug: sluggify(state.item.name), modifier: ownBonus.value, type: ownBonus.type }));
     }
     // (No roll dialog on the GM's client: the GM is rolling the user's check.)
     const event = typeof KeyboardEvent === "function" ? new KeyboardEvent("keydown", { shiftKey: game.user.settings?.showCheckDialogs !== false }) : undefined;

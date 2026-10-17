@@ -22,7 +22,7 @@ export function actionText(action) {
     const using = action.statistic ? ` using ${action.statistic.charAt(0).toUpperCase()}${action.statistic.slice(1)}` : "";
     const name = action.names ? action.names.join(" or ") : action.name;
     if (action.names) return `${name}${using}${action.bonus ? ` with a +${action.bonus.value} ${action.bonus.type} bonus` : ""} (picked below)`;
-    if (action.minimum) return `${action.name} at +${action.minimum.value} ${action.minimum.skill.charAt(0).toUpperCase()}${action.minimum.skill.slice(1)}, when that's higher than your own`;
+    if (action.minimum) return `${action.name} at +${action.minimum.value} ${action.minimum.skill.charAt(0).toUpperCase()}${action.minimum.skill.slice(1)}, when that's higher than your own${action.minimum.ownBonus ? ` (else your own with a +${action.minimum.ownBonus.value} ${action.minimum.ownBonus.type} bonus)` : ""}`;
     return action.bonus ? `${action.name} with a +${action.bonus.value} ${action.bonus.type} bonus` : action.name;
 }
 

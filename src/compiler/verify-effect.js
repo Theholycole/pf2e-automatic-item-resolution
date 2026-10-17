@@ -9,8 +9,10 @@ import { plainText } from "./rows.js";
 
 const NEUTRAL = new Set(["RollOption", "ChoiceSet", "Note", "ItemAlteration"]);
 const words = (value) => String(value ?? "").toLowerCase().replace(/-/g, " ");
+// (The creature traits a predicate names as origin:trait:X, in "or" lists too.)
+const originTraits = (predicate) => [].concat(predicate ?? []).flatMap((term) => typeof term === "string" ? [/^origin:trait:([\w-]+)$/.exec(term)?.[1]].filter(Boolean) : originTraits(term?.or ?? term?.and ?? []));
 
-function checkRule(rule, text) {
+function checkRule(rule, text, rules = []) {
     const said = text.toLowerCase();
     if (NEUTRAL.has(rule?.key)) return { ok: true };
     const value = Number(rule?.value);
@@ -28,7 +30,18 @@ function checkRule(rule, text) {
         case "Weakness": {
             if (!Number.isFinite(value)) return { ok: false, why: "a value from a formula" };
             const name = rule.key.toLowerCase();
-            const types = [].concat(rule.type ?? []).map(words);
+            // (To all damage from creatures of some traits, its predicate's origin:trait:X: "resistance 5 to … damage from fiends and
+            // undead", say.)
+            const origins = originTraits(rule.predicate);
+            if ([].concat(rule.type ?? []).join() === "all" && origins.length) {
+                const sentence = said.split(/(?<=\.)\s+/).find((one) => new RegExp(String.raw`\b(?:${name} ${value}|${value} ${name})\b`).test(one) && /\bdamage (?:dealt by|from)\b/.test(one));
+                const stated = sentence && origins.every((trait) => new RegExp(String.raw`\b${trait}s?\b`).test(sentence.slice(sentence.search(/\bdamage (?:dealt by|from)\b/))));
+                return stated ? { ok: true } : { ok: false, why: `${name} ${value} to damage from ${origins.join(", ")} not stated` };
+            }
+            // (A type its own ChoiceSet picks, "{item|flags.system.rulesSelections.<flag>}": each of the choices stated.)
+            const picked = /^\{item\|flags\.system\.rulesSelections\.([\w-]+)\}$/.exec(String(rule.type ?? ""));
+            const choiceSet = picked ? (rules ?? []).find((other) => other?.key === "ChoiceSet" && other.flag === picked[1] && Array.isArray(other.choices)) : null;
+            const types = choiceSet ? choiceSet.choices.map((choice) => words(choice.value)) : [].concat(rule.type ?? []).map(words);
             // ("resistance 5 to fire", "fire resistance 5", "8 resistance to primal spells", "4 fire resistance".)
             const stated = types.every((type) => new RegExp(String.raw`\b${name} ${value}\b[^.]*\b${type}\b|\b${type} ${name} ${value}\b|\b${value} ${name}\b[^.]*\b${type}\b|\b${value} ${type} ${name}\b`, "i").test(said));
             return stated ? { ok: true } : { ok: false, why: `${name} ${value} to ${types.join(", ")} not stated` };
@@ -60,7 +73,7 @@ export function verifyEffectRules(rules, html, { conditionNames = {} } = {}) {
     const text = plainText(html);
     const failures = [];
     for (const rule of rules ?? []) {
-        const result = checkRule(rule, text);
+        const result = checkRule(rule, text, rules);
         if (result.ok) continue;
         if (result.condition && conditionNames[result.condition] && new RegExp(String.raw`\b${conditionNames[result.condition]}\b`, "i").test(text)) continue;
         failures.push({ key: rule?.key ?? null, why: result.why });

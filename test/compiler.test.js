@@ -310,6 +310,38 @@ test("a third-party module's own Effect: linked in its short form, checked again
     assert.equal(verifyEffectRules([{ key: "Weakness", type: "fire", value: "@actor.level" }], html).ok, false);
     assert.equal(verifyEffectRules([{ key: "AdjustModifier", selector: "athletics" }], html).ok, false);
     assert.equal(verifyEffectRules([], html).ok, false, "nothing to apply");
+    // Resistance to all damage from creatures of some traits; a type its own ChoiceSet picks, every choice stated.
+    const from = "<p>You gain resistance 5 to damage from fiends and undead for 1 hour.</p>";
+    const all = (traits) => [{ key: "Resistance", type: "all", value: 5, predicate: [{ or: traits.map((trait) => `origin:trait:${trait}`) }] }];
+    assert.equal(verifyEffectRules(all(["fiend", "undead"]), from).ok, true);
+    assert.equal(verifyEffectRules(all(["fiend", "dragon"]), from).ok, false);
+    const brewed = "<p>You gain resistance 3 to acid or cold (picked when it's brewed).</p>";
+    const picked = (values) => [{ key: "ChoiceSet", flag: "testBrew", choices: values.map((value) => ({ value })) }, { key: "Resistance", type: "{item|flags.system.rulesSelections.testBrew}", value: 3 }];
+    assert.equal(verifyEffectRules(picked(["acid", "cold"]), brewed).ok, true);
+    assert.equal(verifyEffectRules(picked(["acid", "fire"]), brewed).ok, false);
+});
+
+test("a module's own Effect its text doesn't bear out, known when compiled: its text read instead, when that's more than a note", () => {
+    const link = "@UUID[Compendium.some-module.some-pack.ABCDEFGHIJKLMNOP]{Effect: Test Pod}";
+    const pod = (text, activate = `<span class="action-glyph">1</span> @UUID[Compendium.pf2e.actionspf2e.VMozDqMMuK5kpoX4]{Sneak}`) => ({ _id: "testPod000000001", type: "consumable", name: "Test Pod", system: { category: "other", traits: { value: ["consumable"] }, level: { value: 1 }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: `<p><strong>Activate</strong> ${activate}</p><hr /><p>${text}</p><p>${link}</p>` } } });
+    const sneak = pod("A pod of grey dust. Squeeze it while you Sneak to gain a +4 item bonus to your Sneak checks; the dust stays behind you.");
+    const rules = (type) => ({ moduleEffect: (uuid) => (uuid === "Compendium.some-module.some-pack.Item.ABCDEFGHIJKLMNOP" ? { name: "Effect: Test Pod", rules: [{ key: "FlatModifier", selector: "skill-check", value: 4, type }] } : null) });
+    // Unknown (the sim, a module not loaded): the linked Effect, checked when it's applied.
+    assert.equal(compileItem(sneak).resolution.applications[0].label, "Effect: Test Pod");
+    // Its rules as stated: the Effect; a status bonus the text calls item: the action, with the text's bonus.
+    assert.equal(compileItem(sneak, rules("item")).resolution.applications[0].label, "Effect: Test Pod");
+    const instead = compileItem(sneak, rules("status"));
+    assert.deepEqual([instead.builtin, instead.action.slug, instead.action.bonus], ["item-action", "sneak", { value: 4, type: "item" }]);
+    assert.match(instead.notes.at(-1), /^Effect: Test Pod \(its module's\) isn't applied: .*\+4 status not stated/);
+    // A text that reads to a note only, or an item made in one of several kinds: the Effect stays (live play's note).
+    assert.equal(compileItem(pod("A lovely smell lingers around you.", "1 minute (manipulate)"), rules("status")).resolution.applications[0].label, "Effect: Test Pod");
+    assert.equal(compileItem(pod("Squeeze it while you Sneak to gain a +4 item bonus to your Sneak checks, its dust the colour chosen when the pod is made."), rules("status")).resolution.applications[0].label, "Effect: Test Pod");
+});
+
+test("temporary Hit Points an item grants you (Moss Cover's oil), for its stated time", () => {
+    const salve = { _id: "testSalve0000001", type: "consumable", name: "Test Salve", system: { category: "oil", traits: { value: ["consumable", "oil"] }, level: { value: 1 }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><hr /><p>Rubbing the salve on yourself grants you 12 temporary Hit Points for 1 hour.</p>" } } };
+    const [gain] = compileItem(salve).resolution.outcomes.success.effects;
+    assert.deepEqual([gain.kind, gain.amount, gain.duration.value, gain.duration.unit], ["temp-hp", 12, 1, "hours"]);
 });
 
 test("action scopes in lower case, the last item's only; X-based checks; a sentence's tail a note (Martial Mayhem Mutagen)", () => {

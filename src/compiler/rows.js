@@ -153,7 +153,8 @@ const AMOUNT = String.raw`(\d+d\d+(?:\s*[+-]\s*\d+)?|\d+)`;
 // granting them 3d8 temporary Hit Points for 1 hour" — chosen on the card, as healing another is.)
 function tempHitPoints(sentences, duration, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
-        const own = new RegExp(String.raw`\byou (?:also )?gain ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence);
+        // (And an oil that "grants you" them, for its time.)
+        const own = new RegExp(String.raw`\byou (?:also )?gain ${AMOUNT} temporary Hit Points\b|\bgrants you ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence);
         const other = own ? null : new RegExp(String.raw`^You touch an? (?:adjacent |willing |living )*(?:creature|ally), granting (?:them|it) ${AMOUNT} temporary Hit Points\b`, "i").exec(sentence.trim());
         const match = own ?? other;
         if (match && (other || !/\b(?:if|when|whenever|each time|the next time)\b/i.test(sentence.slice(0, match.index)))) {
@@ -161,7 +162,7 @@ function tempHitPoints(sentences, duration, used = new Set()) {
             // and you gain 100 temporary Hit Points" — the 1 HP the GM sets.)
             // (And "you avoid being knocked out", or "and deal the same amount of bludgeoning damage to the swarm": the GM's, on the note.)
             if (!/\binstead\b|\bavoid being knocked out\b|\band deals? (?:the same|an equal)\b/i.test(sentence)) used.add(index);
-            const amount = match[1].replace(/\s+/g, "");
+            const amount = (match[1] ?? match[2]).replace(/\s+/g, "");
             // (Their time in a sentence of their own after: "You lose any remaining temporary Hit Points after 1 minute", "These
             // temporary Hit Points last for 1 hour" — before the item's.)
             const later = sentences.slice(index + 1, index + 3).findIndex((next) => /\btemporary Hit Points\b[^.]*\b(?:after|for) (?:\d+|one|an?) (?:rounds?|minutes?|hours?|days?)\b/i.test(next) && !/\b(?:if|when|whenever)\b/i.test(next));
