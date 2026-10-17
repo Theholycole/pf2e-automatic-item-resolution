@@ -55,8 +55,8 @@ export async function strikeWithRider(message) {
     const options = context.options ?? [];
     const what = riderFor(rider.plan, { ranged: options.includes("item:ranged") && !options.includes("item:melee"), outcome: context.outcome, options, weaponId: rider.weaponId ?? null, ammoId: rider.ammoId ?? null });
     if (!what || what === "keep") return;
-    // (Weapon Shot's striking rune counts: the damage roll's dice are its.)
-    const rolled = (rider.plan.strike?.damage ?? []).length || rider.plan.strike?.alteration || rider.plan.strike?.runes?.striking;
+    // (Weapon Shot's striking rune counts: the damage roll's dice are its; so does flat splash damage, Jistkan War Crossbow's.)
+    const rolled = addsToDamage(rider.plan);
     // (A hit whose damage roll the Effect adds to: kept for it.)
     if (what === "hit" && rolled) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.awaiting`]: true });
     else await useOne(actor, effect, rider);
@@ -110,6 +110,7 @@ export async function strikeWithRider(message) {
 
 // PF2e's damage roll of a Strike by a creature whose readied Strike carries extra dice: that Strike's damage is rolled, so
 // it's spent (with its Effect's rules in the roll). The item's own weapon must be the one rolled.
+const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.runes?.striking || plan.strike?.splash);
 async function damageWithRider(message) {
     const context = message.flags.pf2e.context;
     if (context.sourceType !== "attack") return;
@@ -117,7 +118,7 @@ async function damageWithRider(message) {
     const effect = (actor?.itemTypes?.effect ?? []).find((entry) => entry.flags?.[MODULE_ID]?.[MODULE_KEY]);
     if (!effect) return;
     const rider = effect.flags[MODULE_ID][MODULE_KEY];
-    if (!(rider.plan.strike?.damage ?? []).length && !rider.plan.strike?.alteration && !rider.plan.strike?.runes?.striking) return;
+    if (!addsToDamage(rider.plan)) return;
     const options = context.options ?? [];
     if (rider.weaponId && !options.includes(`item:id:${rider.weaponId}`)) return;
     if (rider.plan.strike?.unarmed && !options.includes("item:category:unarmed")) return;

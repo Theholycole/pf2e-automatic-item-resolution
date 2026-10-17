@@ -172,8 +172,8 @@ function compileOne(given, options = {}) {
     if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    const { resist, speeds, senses, ...rest } = plan;
-    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}) };
+    const { resist, speeds, senses, weapon, ...rest } = plan;
+    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(weapon ? { weapon } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;
@@ -208,7 +208,9 @@ function rowPlan(item, base) {
         ...(row?.resistances ? { resist: row.resistances } : {}),
         // (A Speed of a new kind, the same: plan.item.speeds.)
         ...(row?.speeds ? { speeds: row.speeds } : {}),
-        ...(row?.senses ? { senses: row.senses } : {})
+        ...(row?.senses ? { senses: row.senses } : {}),
+        // (A change to its user's weapon, the same: plan.item.weapon.)
+        ...(row?.weapon ? { weapon: row.weapon } : {})
     };
 }
 

@@ -72,6 +72,14 @@ export function applicationFor(plan, change) {
 
 const UNIT = { rounds: "round", minutes: "minute", hours: "hour", days: "day" };
 const timeText = (duration) => `${duration.value} ${duration.value === 1 ? UNIT[duration.unit] ?? duration.unit : duration.unit}`;
+// A time in words, its turn's end or start when it's one: " until the end of the turn" (0 rounds), " until the start of the next
+// turn", " for 1 minute".
+const forTime = (duration) => {
+    if (duration?.mode !== "fixed") return "";
+    if (duration.unit === "rounds" && duration.value === 0) return " until the end of the turn";
+    if (duration.anchor === "source-turn" && duration.value === 1) return ` until the ${duration.expiry === "turn-end" ? "end" : "start"} of the next turn`;
+    return ` for ${timeText(duration)}`;
+};
 
 // A condition it lowers, in words: "Lowers frightened by 1", "Ends doomed", "Lowers one of clumsy, enfeebled or
 // stupefied by 1 (picked below)", "… on each creature you target".
@@ -97,6 +105,7 @@ export function previewLines(state) {
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
     for (const speed of plan?.item?.speeds ?? []) lines.push(speedText(speed));
     for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
+    for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
     if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
@@ -119,7 +128,7 @@ export function previewLines(state) {
         else if (effect.kind === "temp-hp") lines.push(`${amount} temporary Hit Points${time ? ` ${time}` : ""}`);
         else if (effect.kind === "heal") lines.push(`Heals ${amount} Hit Points`);
     }
-    for (const modifier of row.modifiers ?? []) lines.push(`${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${modifier.duration?.mode === "fixed" ? ` for ${timeText(modifier.duration)}` : ""}`);
+    for (const modifier of row.modifiers ?? []) lines.push(`${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${forTime(modifier.duration)}`);
     for (const note of row.noteEffects ?? []) lines.push(plan.partial ? `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""}: the rest is the GM's to apply` : `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""} (nothing else to apply)`);
     // (A reduction's own notes are above, as "Also: …".)
     if (!plan?.reduce) for (const note of plan?.notes ?? []) lines.push(note);
@@ -252,6 +261,21 @@ export function senseText(sense) {
 // Its vision's Effect: PF2e's Sense rule.
 export function senseEffectSource(sense, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return ownEffectSource({ name: SENSE_WORDS[sense.selector] ?? sense.selector, img: "icons/svg/eye.svg", words: senseText(sense), rules: [{ key: "Sense", selector: sense.selector }], duration: sense.duration, flag: { sense: sense.selector }, item, user, worldTime, initiative, moduleId });
+}
+
+// A change to its user's weapons in words: "+20 feet to its ranged weapons' range increment until the start of the next turn", "Its
+// melee weapons gain thrown 20 feet until the end of the turn".
+export function weaponText(adjust) {
+    const which = adjust.definition?.includes("item:ranged") ? "ranged" : adjust.definition?.includes("item:melee") ? "melee" : "";
+    if (adjust.property === "range-increment") return `+${adjust.value} feet to its ${which ? `${which} ` : ""}weapons' range increment${forTime(adjust.duration)}`;
+    const thrown = /^thrown-(\d+)$/.exec(adjust.value);
+    return `Its ${which ? `${which} ` : ""}weapons gain ${thrown ? `thrown ${thrown[1]} feet` : adjust.value}${forTime(adjust.duration)}`;
+}
+
+// That change's Effect: PF2e's AdjustStrike on those weapons.
+export function weaponEffectSource(adjust, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const rule = { key: "AdjustStrike", mode: "add", property: adjust.property, value: adjust.value, definition: adjust.definition ?? [] };
+    return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: [rule], duration: adjust.duration, flag: { weapon: adjust.property }, item, user, worldTime, initiative, moduleId });
 }
 
 // The card's HTML. canApply: whether this user may press Apply (the item's owner or the GM).

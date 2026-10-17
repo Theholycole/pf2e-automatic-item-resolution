@@ -2107,6 +2107,131 @@ export const cases = {
         } finally {
             await combat.delete().catch(() => null);
         }
+    },
+
+    // Sniper's Bead: the readied ranged Strike carries PF2e's "ignore-range-penalty:2" — a javelin thrown into its second range
+    // increment (45 feet) has no range penalty; the same throw before the bead has one.
+    async sniperBead(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Bead Thrower", { type: "character", x: 0, y: 9 });
+        const { token: foeToken } = await creature(scene, "Bead Target", { x: 9, y: 9, ac: 1, alliance: "opposition" });
+        const javelin = await give(thrower, "Javelin");
+        await javelin.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await throwerToken.object?.control?.();
+        await target(foeToken);
+        const penalty = (attack) => (attack.flags.pf2e.modifiers ?? []).find((modifier) => modifier.slug === "range-penalty" && modifier.enabled !== false && !modifier.ignored) ?? null;
+        const before = await strike(thrower, javelin);
+        assert(penalty(before.attack), `a range penalty without the bead (${JSON.stringify((before.attack.flags.pf2e.modifiers ?? []).map((modifier) => modifier.slug))})`);
+        const bead = await give(thrower, "Sniper's Bead");
+        const since = Date.now();
+        await bead.consume();
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const readied = thrower.itemTypes.effect.find((effect) => effect.getFlag(NS, "strikeRider"));
+        assert(readied?.system.rules.some((rule) => rule.key === "RollOption" && rule.option === "ignore-range-penalty:2"), "the readied Strike's roll option");
+        const after = await strike(thrower, javelin);
+        assert(!penalty(after.attack), `no range penalty with the bead (${JSON.stringify(penalty(after.attack))})`);
+        return { before: penalty(before.attack)?.modifier, after: null };
+    },
+
+    // Alchemist's Damper: an arquebus's kickback penalty (its user's Strength under +2) suppressed for the readied Strike.
+    async damperKickback(scene) {
+        const { actor: shooter, token: shooterToken } = await creature(scene, "Damper Shooter", { type: "character", x: 0, y: 7 });
+        const { token: foeToken } = await creature(scene, "Damper Target", { x: 1, y: 7, ac: 1, alliance: "opposition" });
+        const gun = await give(shooter, "Arquebus");
+        const rounds = await give(shooter, "Rounds (Arquebus)");
+        await rounds.update({ "system.quantity": 5, "system.baseItem": "rounds-arquebus" });
+        await gun.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": rounds.id, "system.reload.value": "0" });
+        await shooterToken.object?.control?.();
+        await target(foeToken);
+        const kickback = (attack) => (attack.flags.pf2e.modifiers ?? []).find((modifier) => modifier.slug === "kickback" && modifier.enabled !== false && !modifier.ignored) ?? null;
+        const before = await strike(shooter, gun);
+        assert(kickback(before.attack), `kickback's penalty without the damper (${JSON.stringify((before.attack.flags.pf2e.modifiers ?? []).map((modifier) => modifier.slug))})`);
+        const damper = await give(shooter, "Alchemist's Damper");
+        const since = Date.now();
+        await damper.consume();
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const after = await strike(shooter, gun);
+        assert(!kickback(after.attack), `no kickback penalty with the damper (${JSON.stringify(kickback(after.attack))})`);
+        return { before: kickback(before.attack)?.modifier };
+    },
+
+    // Jistkan War Crossbow's Bolt of War: its own Strike with PF2e's "ignore-range-penalty:3" and 10 piercing splash damage.
+    async jistkanSplash(scene) {
+        const { actor: shooter, token: shooterToken } = await creature(scene, "Jistkan Shooter", { type: "character", x: 3, y: 7 });
+        const { token: foeToken } = await creature(scene, "Jistkan Target", { x: 4, y: 7, ac: 1, alliance: "opposition" });
+        const crossbow = await give(shooter, "Jistkan War Crossbow");
+        const bolts = await give(shooter, "Bolts");
+        await bolts.update({ "system.quantity": 5, "system.baseItem": "bolts" });
+        await crossbow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": bolts.id, "system.reload.value": "0" });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(crossbow.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await shooterToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(shooter, crossbow);
+        const options = attack.flags.pf2e.context.options ?? [];
+        assert(options.includes("ignore-range-penalty:3"), "the attack roll's ignore-range-penalty:3");
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
+        // (The splash a term of PF2e's roll, "splash" its category; not doubled on a critical hit.)
+        assert(/\b10\b/.test(formula) && /splash/.test(JSON.stringify(rolled.rolls)), `PF2e's damage roll carries 10 piercing splash (${formula})`);
+        return { formula };
+    },
+
+    // Magnifying Scope (Major)'s Zoom In: an Effect with PF2e's AdjustStrike, +20 feet to its user's ranged weapons' range increment.
+    async scopeRange(scene) {
+        const { actor: shooter } = await creature(scene, "Scope Shooter", { type: "character", x: 6, y: 7 });
+        const bow = await give(shooter, "Shortbow");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        const scope = await give(shooter, "Magnifying Scope (Major)");
+        const increment = () => shooter.items.get(bow.id)?.range?.increment ?? null;
+        const before = increment();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(scope.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the scope's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => increment() === before + 20, `the range increment ${before} → ${before + 20} (now ${increment()})`, { timeout: 8000 });
+        const effect = shooter.itemTypes.effect.find((entry) => entry.system.rules.some((rule) => rule.key === "AdjustStrike"));
+        assert(effect?.system.duration.unit === "rounds" && effect.system.duration.value === 1 && effect.system.duration.expiry === "turn-start", `until the start of the next turn (${JSON.stringify(effect?.system.duration)})`);
+        return { before, after: increment() };
+    },
+
+    // Dragonbone Arrowhead: until the end of the turn, its user's melee weapon gains thrown 20 feet (PF2e's AdjustStrike).
+    async arrowheadThrown(scene) {
+        const { actor: fighter } = await creature(scene, "Arrowhead Fighter", { type: "character", x: 9, y: 7 });
+        const sword = await give(fighter, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const arrowhead = await give(fighter, "Dragonbone Arrowhead");
+        const since = Date.now();
+        await arrowhead.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the arrowhead's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const traits = () => fighter.items.get(sword.id)?.system.traits.value ?? [];
+        await until(() => traits().includes("thrown-20"), `thrown-20 on the shortsword (${JSON.stringify(traits())})`, { timeout: 8000 });
+        return { traits: traits() };
+    },
+
+    // Quick Runner's Shirt: +10-foot item bonus to its user's Speed until the end of the turn.
+    async runnersShirt(scene) {
+        const { actor: runner } = await creature(scene, "Shirt Runner", { type: "character", x: 12, y: 7 });
+        const shirt = await give(runner, "Quick Runner's Shirt");
+        const speed = () => runner.system.movement?.speeds?.land?.value ?? runner.system.attributes?.speed?.total ?? null;
+        const before = speed();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shirt.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the shirt's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => speed() === before + 10, `Speed ${before} → ${before + 10} (now ${speed()})`, { timeout: 8000 });
+        return { before, after: speed(), effects: runner.itemTypes.effect.map((effect) => [effect.name, effect.system.duration]) };
     }
 };
 

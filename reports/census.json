@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 241,
+   "none": 240,
    "resolves": 740,
    "builtin:readied-bonus": 21,
    "builtin:zone": 87,
    "builtin:item-action": 12,
    "note-only": 188,
-   "partial": 79,
+   "partial": 80,
    "builtin:counteract": 20,
    "builtin:no-effect": 61,
    "builtin:reroll": 2,
@@ -88,7 +88,7 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 39,
+    "none": 38,
     "builtin:readied-bonus": 12,
     "builtin:item-action": 11,
     "resolves": 53,
@@ -96,7 +96,7 @@
     "builtin:no-effect": 9,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
-    "partial": 12,
+    "partial": 13,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -379,8 +379,8 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 324,
-   "item": 636,
+   "none": 323,
+   "item": 637,
    "fortune": 23,
    "zone": 87,
    "expose": 89,
@@ -416,10 +416,10 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 49,
+    "none": 48,
     "fortune": 14,
     "action": 11,
-    "item": 52,
+    "item": 53,
     "reroll": 1,
     "cast": 9,
     "save": 15,
@@ -480,7 +480,7 @@
    }
   },
   "noCard": {
-   "no-plan": 241,
+   "no-plan": 240,
    "triggered": 21,
    "gm": 61,
    "other": 1
@@ -29509,7 +29509,12 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "When you activate this talisman, until the end of the current turn, the affixed weapon gains the thrown 20 feet weapon trait, and when you make a thrown Strike with it, it flies back to your hand after the Strike completes."
+   ],
+   "live": "item"
   },
   {
    "name": "Surging Serum (Minor)",

@@ -10,7 +10,7 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { ownRow } from "../src/compiler/rows.js";
-import { resistanceEffectSource, resistanceText, senseEffectSource, senseText, speedText } from "../src/live/card.js";
+import { resistanceEffectSource, resistanceText, senseEffectSource, senseText, speedText, weaponEffectSource, weaponText } from "../src/live/card.js";
 import { routeOf } from "../src/live/route.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -151,4 +151,18 @@ test("more resistance and bonus wordings: number first on the creature it's smea
     // (PF2e's own Effects read "a +1 status bonus against emotion and mental effects" as saves.)
     assert.deepEqual(row("For 1 hour, you gain a +1 status bonus against fear effects.").modifiers.map((modifier) => [modifier.selector, modifier.predicate]), [["saving-throw", ["item:trait:fear"]]]);
     assert.deepEqual(row("You gain a +2 item bonus to Acrobatics checks to Escape, Squeeze, or Tumble Through for 1 hour.").modifiers[0].predicate, [{ or: ["action:escape", "action:squeeze", "action:tumble-through"] }]);
+});
+
+test("a change to its user's weapons: Magnifying Scope's range increment until the start of the next turn, Dragonbone Arrowhead's thrown 20 feet this turn — PF2e's AdjustStrike", () => {
+    const [scope] = compileActivations(source("Magnifying Scope (Major)"));
+    assert.deepEqual(scope.plan.item.weapon, [{ property: "range-increment", value: 20, definition: ["item:ranged"], duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "source-turn" } }]);
+    assert.equal(routeOf(scope.plan), "item");
+    assert.equal(weaponText(scope.plan.item.weapon[0]), "+20 feet to its ranged weapons' range increment until the start of the next turn");
+    const effect = weaponEffectSource(scope.plan.item.weapon[0], { item: { name: "Magnifying Scope (Major): Zoom In" } });
+    assert.deepEqual([effect.name, effect.system.rules, effect.system.duration.value, effect.system.duration.expiry], ["Magnifying Scope (Major): Zoom In: weapon", [{ key: "AdjustStrike", mode: "add", property: "range-increment", value: 20, definition: ["item:ranged"] }], 1, "turn-start"]);
+    const arrowhead = compileItem(source("Dragonbone Arrowhead"));
+    assert.deepEqual(arrowhead.item.weapon.map((adjust) => [adjust.property, adjust.value, adjust.definition, adjust.duration.value, adjust.duration.expiry]), [["weapon-traits", "thrown-20", ["item:melee"], 0, "turn-end"]]);
+    assert.equal(weaponText(arrowhead.item.weapon[0]), "Its melee weapons gain thrown 20 feet until the end of the turn");
+    // (Its weapon flying back to its hand: the note.)
+    assert.equal(arrowhead.partial, true);
 });

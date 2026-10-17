@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 719,
+   "resolves": 722,
    "builtin:cast-spell": 469,
-   "none": 700,
+   "none": 697,
    "partial": 125,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
@@ -28,8 +28,8 @@
   "live": {
    "save": 387,
    "cast": 469,
-   "item": 597,
-   "none": 885,
+   "item": 600,
+   "none": 882,
    "focus": 45,
    "fortune": 48,
    "reroll": 25,
@@ -48,9 +48,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 435,
+    "resolves": 438,
     "builtin:cast-spell": 340,
-    "none": 466,
+    "none": 463,
     "partial": 67,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
@@ -3884,9 +3884,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Emergency Escape Shield",
@@ -5374,9 +5374,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Perfected Robes",
@@ -26233,9 +26233,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Inspiring Spotlight (Mounted)",
