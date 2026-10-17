@@ -2232,6 +2232,27 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id);
         await until(() => speed() === before + 10, `Speed ${before} → ${before + 10} (now ${speed()})`, { timeout: 8000 });
         return { before, after: speed(), effects: runner.itemTypes.effect.map((effect) => [effect.name, effect.system.duration]) };
+    },
+
+    // Etheric Essence Disruptor: a creature 15 feet away offered, its PF2e "Spell Effect: Bless" listed and counteracted.
+    async disruptorSpell(scene) {
+        const { actor: engineer, token: engineerToken } = await creature(scene, "Disruptor Engineer", { type: "character", x: 15, y: 9 });
+        const { actor: foe } = await creature(scene, "Blessed Foe", { x: 18, y: 9, alliance: "opposition" });
+        const bless = await give(foe, "Spell Effect: Bless", "pf2e.spell-effects");
+        const disruptor = await give(engineer, "Etheric Essence Disruptor (Lesser)");
+        await engineerToken.object?.control?.();
+        const since = Date.now();
+        await disruptor.consume();
+        const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        const at = card.getFlag(NS, "card").drinkers.findIndex((entry) => entry.name === foe.name);
+        assert(at > 0, `the foe 15 feet away offered (${JSON.stringify(card.getFlag(NS, "card").drinkers.map((entry) => entry.name))})`);
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: at });
+        await wait(500);
+        const rows = game.messages.get(card.id).getFlag(NS, "card").rows;
+        assert(rows.some((row) => row.id === bless.id), `Bless listed (${JSON.stringify(rows)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { rows: rows.map((row) => ({ ticked: row.id === bless.id, dc: 5, rank: 1 })) });
+        await until(() => !foe.items.get(bless.id), "Bless counteracted", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
