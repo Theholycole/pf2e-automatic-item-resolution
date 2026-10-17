@@ -33,6 +33,7 @@ import { spellstrikePlan } from "./spellstrike.js";
 import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { coveredSquarePlan } from "./covered-square.js";
+import { perceptionCheckPlan } from "./perception-check.js";
 import { readTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
 import { pickedSentence, skillPickOf } from "./skill-pick.js";
@@ -241,6 +242,8 @@ function compileEach(item, options = {}) {
         const runeItem = { ...item, system: { ...(item.system ?? {}), description: { value: activation.html } } };
         const rune = readRuneLoan(plainText(activation.html), runeItem);
         if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
+        // (A creature's Perception check against the item's DC, src/compiler/perception-check.js: Mercurial Mantle's Cunning Dodge.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = perceptionCheckPlan(activation.html, base, item, options) ?? plan;
         // (A square it covers for a while, with a save on entering, src/compiler/covered-square.js: Spider Gun's Web Shot.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = coveredSquarePlan(activation.html, base, item, options) ?? plan;
         // (A save or a result no row holds — death, a push, a pull to its user — src/compiler/save-or.js: Vorpal, Hauling.)

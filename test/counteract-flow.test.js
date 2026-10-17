@@ -121,3 +121,15 @@ test("Contagion Metabolizer (Lesser): a poison Pseudo Afflictions tracks is an a
     await settle();
     assert.deepEqual(card.flags[MODULE_ID].card.rows.map((row) => [row.name, row.kind, row.rank, row.dc]), [["Viper Venom", "affliction", 2, 16]]);
 });
+
+test("Violet Ray's Electric Love: one condition on an adjacent creature (+22, rank 6, the condition's source its DC); The Teamster: one of its user's conditions from its list (+31, rank by its level)", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [ray] = compileActivations(source("Violet Ray"));
+    assert.deepEqual([ray.plan.builtin, ray.plan.item.counteract.modifier, ray.plan.item.counteract.rank, ray.plan.item.counteract.pick, ray.plan.item.counteract.within, ray.plan.targeting.range], ["counteract", 22, 6, "one", 5, 5]);
+    assert.deepEqual(ray.plan.item.counteract.conditions, ["blinded", "clumsy", "confused", "deafened", "drained", "enfeebled", "sickened", "stupefied"]);
+    assert.ok(ray.plan.item.counteract.notes.includes("Its DC and rank are those of what caused the condition."));
+    const [teamster] = compileActivations(source("The Teamster"));
+    assert.deepEqual([teamster.plan.builtin, teamster.plan.item.counteract.modifier, teamster.plan.item.counteract.pick, teamster.plan.item.counteract.within ?? null], ["counteract", 31, "one", null]);
+    assert.ok(["paralyzed", "petrified", "grabbed", "doomed"].every((slug) => teamster.plan.item.counteract.conditions.includes(slug)));
+    assert.match(teamster.plan.item.counteract.notes[0], /more than 4 levels lower/);
+});

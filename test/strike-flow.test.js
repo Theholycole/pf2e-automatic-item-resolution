@@ -420,3 +420,13 @@ test("Drake Rifles' Drake Shot: a Strike with the rifle itself, its splash of it
     assert.deepEqual([growth.strike.own, hit(growth).effects.map((effect) => effect.slug)], [true, ["slowed"]]);
     assert.equal(riderFor(growth, { ranged: true, outcome: "success", options: ["item:ranged", "item:id:other"], weaponId: "gun" }), null, "another weapon's Strike doesn't carry it");
 });
+
+test("Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check against DC 38 (the core's save family), Off-Guard for the turn on a failure and until the end of its next turn on a critical failure; the Step and Strike a note", () => {
+    const [dodge] = compileActivations(source("Mercurial Mantle"));
+    const resolution = dodge.plan.resolution;
+    assert.deepEqual([resolution.kind, resolution.check.roll, resolution.check.statistic, resolution.check.against], ["save", "save", "perception", { dc: "fixed", value: 38 }]);
+    assert.deepEqual(resolution.outcomes.failure.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.expiry]), [["off-guard", 0, "turn-end"]]);
+    assert.deepEqual(resolution.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.duration.value]), [["off-guard", 1]]);
+    assert.equal(routeOf(dodge.plan), "save");
+    assert.match(dodge.plan.notes[0], /^You Step, .* \(by hand\)\.$/);
+});

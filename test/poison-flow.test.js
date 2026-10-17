@@ -231,6 +231,22 @@ test("clouds and gusts as the ability module's zones: Smogger's smog on its user
     assert.deepEqual(summary(compileItem(source("Wind Ocarina"))), ["zone", { type: "emanation", value: 5 }, "self", 1, "minutes", false, 1]);
 });
 
+test("snares that leave an area where they were (the ability module's zone.then): Smoke Screen Snare's smoke (its square and the adjacent ones, or a 20-foot burst), Hampering Snare's 10-foot square of difficult terrain for 1d4 rounds, Shadow Cloak Snare's darkness a note", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const then = (name) => {
+        const plan = compileItem(source(name));
+        assert.deepEqual([plan.builtin, plan.zone.once, plan.zone.saves], ["zone", true, []], name);
+        return plan.zone.then;
+    };
+    assert.deepEqual([then("Smoke Screen Snare (Lesser)").area, then("Smoke Screen Snare (Lesser)").concealed, then("Smoke Screen Snare (Lesser)").lasts.value], [{ type: "square", value: 15 }, true, 1]);
+    assert.deepEqual(then("Smoke Screen Snare (Greater)").area, { type: "burst", value: 20 });
+    const hampering = then("Hampering Snare");
+    assert.deepEqual([hampering.area, hampering.terrain, hampering.lasts.valueRoll, hampering.lasts.unit], [{ type: "square", value: 10 }, [{ movement: ["walk"], difficulty: 2 }], "1d4", "rounds"]);
+    const shadow = then("Shadow Cloak Snare");
+    assert.deepEqual([shadow.area, shadow.lasts.value, shadow.lasts.unit, shadow.concealed], [{ type: "square", value: 5 }, 1, "minutes", false]);
+    assert.match(shadow.notes[0], /^Darkness: Light can't enter the square/);
+});
+
 test("the drinker's own save rolls for its user, no targets; a save set off by attackers stays open for the item's time", async () => {
     const { isOwnSave, ATTACKER } = await import("../src/live/poison-card.js");
     const { compileItem } = await import("../src/compiler/index.js");

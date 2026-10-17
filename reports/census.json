@@ -17,10 +17,10 @@
    "none": 221,
    "resolves": 740,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 91,
+   "builtin:zone": 95,
    "builtin:item-action": 12,
    "partial": 91,
-   "note-only": 188,
+   "note-only": 184,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -164,8 +164,8 @@
    "count": 82,
    "results": {
     "none": 11,
-    "builtin:zone": 65,
-    "note-only": 5,
+    "builtin:zone": 69,
+    "note-only": 1,
     "builtin:ways": 1
    },
    "mechanisms": {
@@ -384,9 +384,9 @@
   "totals": {
    "cast": 32,
    "none": 295,
-   "item": 645,
+   "item": 641,
    "fortune": 23,
-   "zone": 91,
+   "zone": 95,
    "expose": 89,
    "later": 79,
    "action": 12,
@@ -449,8 +449,8 @@
    },
    "snare": {
     "none": 11,
-    "zone": 65,
-    "item": 5,
+    "zone": 69,
+    "item": 1,
     "ways": 1
    },
    "gadget": {
@@ -5831,9 +5831,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Martial Mayhem Mutagen (Major)",
@@ -6190,9 +6190,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Oil of Unlife (Lesser)",
@@ -10414,9 +10414,9 @@
     "trap"
    ],
    "mechanisms": [],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Dragon Breath Scale",
@@ -30099,9 +30099,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Torrent Spellgun (Major)",

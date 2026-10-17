@@ -60,3 +60,45 @@ export function snareChoices(html) {
         html: `${text.slice(0, match.index)}The creature takes ${damage} damage with a ${check} saving throw.${text.slice(match.index + match[0].length)}`
     }));
 }
+
+// A snare that leaves an area where it was once set off, doing nothing to the creature itself: the ability module's zone.then (ability
+// d6e48fb), the area made at the snare's square. Smoke Screen Snare's "releases a dense cloud of smoke when a creature enters the square
+// … All creatures within that area are Concealed … The smoke lasts for 1 minute", its area "the snare's square and all adjacent squares"
+// (Lesser) or "a 20-foot burst centered on the snare's square" (Greater); Hampering Snare's 10-foot square of difficult terrain "for 1d4
+// rounds after the snare is triggered"; Shadow Cloak Snare's darkness in its square for 1 minute (its lighting a note). → the zone
+// builtin, or null.
+const minutesOr = (count, unit) => ({ mode: "fixed", value: Number(count), unit: /^round/i.test(unit) ? "rounds" : "minutes", expiry: "turn-start", anchor: "effect-start" });
+const SMOKE = /\breleases a dense cloud of smoke when a creature enters the square\b[^.]*\.\s*All creatures within that area are (?:@UUID\[[^\]]*\]\{)?Concealed\}?, and all other creatures are concealed to them\.\s*The smoke lasts for (\d+) (minutes?|rounds?)( or until (?:dispersed|dissipated) by a strong wind)?\./i;
+const HAMPERING = /\bThe square with this snare, as well as three adjacent squares \(to form a @Template\[square\|distance:(\d+)\](?:\{[^}]*\})?\), become difficult terrain when the first creature enters the snare's square\.[\s\S]*?\blasts for (?:\[\[\/\w+ (\d+d\d+) #rounds\]\]\{[^}]*\}|(\d+) rounds?) after the snare is triggered\./i;
+const DARKNESS = /\bWhen a creature enters the snare's square, it is plunged into an unnatural darkness for (\d+) (minutes?|rounds?)\.\s*/i;
+export function snareThen(item, base) {
+    if (!isSnare(item)) return null;
+    const html = String(item.system?.description?.value ?? "");
+    const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    let then = null;
+    const smoke = SMOKE.exec(html.replace(/<\/p>\s*<p>/g, " "));
+    if (smoke) {
+        const burst = /\bThe smoke fills a @Template\[burst\|distance:(\d+)\](?:\{[^}]*\})? centered on the snare's square\b/i.exec(html);
+        const adjacent = /\bThe smoke fills the snare's square and all adjacent squares\b/i.test(html);
+        if (!burst && !adjacent) return null;
+        then = { area: burst ? { type: "burst", value: Number(burst[1]) } : { type: "square", value: 15 }, lasts: minutesOr(smoke[1], smoke[2]), concealed: true, terrain: [], notes: smoke[3] ? ["A strong wind disperses it."] : [] };
+    }
+    const hampering = !then ? HAMPERING.exec(html) : null;
+    if (hampering) {
+        const rolled = hampering[2];
+        const lasts = rolled ? { ...minutesOr(Math.floor((Number(rolled.split("d")[0]) * (Number(rolled.split("d")[1]) + 1)) / 2), "rounds"), valueRoll: rolled } : minutesOr(hampering[3], "rounds");
+        then = { area: { type: "square", value: Number(hampering[1]) }, lasts, concealed: false, terrain: [{ movement: ["walk"], difficulty: 2 }], notes: /\bInteract action to clear the difficult terrain\b/i.test(plain) ? ["An Interact action clears one square of it early."] : [] };
+    }
+    const darkness = !then ? DARKNESS.exec(plain) : null;
+    if (darkness) {
+        const rest = plain.slice(darkness.index + darkness[0].length).replace(/\s*\bCraft Requirements\b.*$/s, "").trim();
+        then = { area: { type: "square", value: 5 }, lasts: minutesOr(darkness[1], darkness[2]), concealed: false, terrain: [], notes: [`Darkness: ${rest}`.trim()] };
+    }
+    if (!then) return null;
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: { area: { type: "square", value: 5 }, centre: "placed", range: 5, lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [], damage: [], effect: null, modifiers: [], notes: ["The first creature to enter the square sets it off; then it's spent, and its area appears there."], once: true, then }
+    };
+}

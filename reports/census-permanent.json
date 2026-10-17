@@ -8,14 +8,14 @@
   "results": {
    "resolves": 729,
    "builtin:cast-spell": 469,
-   "none": 683,
-   "partial": 134,
+   "none": 680,
+   "partial": 135,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 40,
    "note-only": 224,
    "builtin:reroll": 25,
-   "builtin:counteract": 4,
+   "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 32,
    "builtin:zone": 16,
@@ -26,15 +26,15 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 393,
+   "save": 394,
    "cast": 469,
    "item": 592,
-   "none": 868,
+   "none": 865,
    "focus": 45,
    "fortune": 50,
    "reroll": 25,
    "strike": 64,
-   "counteract": 4,
+   "counteract": 6,
    "toggle": 32,
    "zone": 16,
    "action": 22,
@@ -50,8 +50,8 @@
    "results": {
     "resolves": 444,
     "builtin:cast-spell": 340,
-    "none": 455,
-    "partial": 67,
+    "none": 452,
+    "partial": 68,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
     "builtin:readied-bonus": 33,
@@ -61,7 +61,7 @@
     "builtin:modes": 16,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:counteract": 3,
+    "builtin:counteract": 5,
     "builtin:item-action": 10
    }
   },
@@ -15220,9 +15220,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Flask of Fellowship",
@@ -18594,9 +18594,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Mercurial Mantle",
@@ -24127,9 +24127,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Ghost Lantern",

@@ -16,15 +16,20 @@ export function readCounteract(html, { level = 0 } = {}) {
     const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
     // (The sentence that counteracts, and the next one, where the rank or modifier is often given.)
     const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z(])/);
-    const at = sentences.findIndex((sentence) => /\b(?:attempts? (?:a counteract check|to counteract)|to counteract ailments|the salve attempts to counteract)\b|\bcounteract modifier is \+\d+/i.test(sentence));
+    const at = sentences.findIndex((sentence) => /\b(?:attempts? (?:a counteract check|to counteract)|to counteract ailments|the salve attempts to counteract)\b|\bcounteract modifier (?:is|of) \+\d+/i.test(sentence));
     if (at < 0) return null;
     const said = sentences.slice(at, at + 3).join(" ");
     // (Or a spell on a creature nearby, Etheric Essence Disruptor's "attempt to counteract an active divine or occult spell within 30
     // feet, with a +7 counteract modifier and a counteract rank of 2": a spell's Effect on a creature within that distance, its
     // tradition the GM's to check.)
     const near = /\battempt to counteract an active ((?:arcane|divine|occult|primal)(?: or (?:arcane|divine|occult|primal))?) spell within (\d+) feet\b/i.exec(said);
+    // (Or conditions on an adjacent creature, Violet Ray's "You apply the violet ray to an adjacent creature and attempt to counteract the
+    // Blinded, Clumsy, … condition with a counteract rank of 6 and a counteract modifier of +22": the creatures beside its user.)
+    const adjacent = /\bto an adjacent creature and attempt to counteract\b/i.test(said);
+    // (A list of conditions to pick from, The Teamster's "Select one of the following conditions currently affecting you: Blinded, …".)
+    const listed = /\bSelect one of the following conditions currently affecting you: ([^.]+)\./i.exec(text)?.[1] ?? "";
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)
-    if (!near && !/\b(?:on you|affecting you|afflicting you|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
+    if (!near && !adjacent && !listed && !/\b(?:on you|affecting you|afflicting you|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
     if (/\bcan't be counteracted\b|\bthe triggering spell\b/i.test(said) || (!near && /\bwithin \d+ feet\b/i.test(said))) return null;
     const modifier = Number(
         /\+(\d+) counteract modifier\b/i.exec(said)?.[1]
@@ -47,14 +52,21 @@ export function readCounteract(html, { level = 0 } = {}) {
     // Immobilized, Slowed, Stupefied, or Paralyzed".)
     const trigger = /\bthe effect causing your condition\b/i.test(said) ? /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "" : "";
     const counteractSentence = `${sentences.slice(Math.max(0, at - 1), at + 3).filter((sentence) => /\bcounteract|\bremoving\b/i.test(sentence)).join(" ")} ${trigger}`.trim();
-    const words = counteractSentence.toLowerCase();
+    const words = `${counteractSentence} ${listed}`.toLowerCase();
     const conditions = [...new Set([...CONDITIONS.filter((slug) => new RegExp(String.raw`\b${slug}\b`).test(words)), ...Object.entries(CONDITION_WORDS).filter(([word]) => words.includes(word)).map(([, slug]) => slug)])];
     const traits = [...new Set([...[...counteractSentence.matchAll(/\bthe (\w+) trait\b/gi)].map((match) => match[1].toLowerCase()), ...[...counteractSentence.matchAll(/\b(emotion|mental|transmutation|fear) effects?\b/gi)].map((match) => match[1].toLowerCase())])];
     const afflictions = ["curse", "disease", "poison"].filter((kind) => new RegExp(String.raw`\b${kind}s?\b`, "i").test(counteractSentence));
     if (!conditions.length && !traits.length && !afflictions.length) return null;
-    const pick = /\bhighest[- ]level\b/i.test(counteractSentence) ? "highest" : /\b(?:each|all|every)\b/i.test(counteractSentence) && !/\bone (?:effect|condition)\b/i.test(counteractSentence) ? "each" : "one";
+    const singled = /\b(?:one|a single) (?:effect|condition)\b/i.test(`${counteractSentence} ${sentences.slice(at, at + 4).join(" ")}`) || Boolean(listed);
+    const pick = /\bhighest[- ]level\b/i.test(counteractSentence) ? "highest" : /\b(?:each|all|every)\b/i.test(counteractSentence) && !singled ? "each" : "one";
     // (Moon Radish Soup: "if successful, it reduces the value of your stupefied condition by 1 (or by 2 on a critical success)".)
     const reduce = /\breduces the value of your \w+ condition by (\d+)(?: \(or by (\d+) on a critical success\))?/i.exec(said);
-    const notes = sentences.slice(at + 1, at + 4).filter((sentence) => /\b(?:doesn't happen until|temporarily immune|You're then|hostile|negative)\b/i.test(sentence));
-    return { modifier, rank, conditions, traits, afflictions, pick, ...(reduce ? { reduce: { success: Number(reduce[1]), criticalSuccess: Number(reduce[2] ?? reduce[1]) } } : {}), ...(notes.length ? { notes } : {}) };
+    const notes = [
+        ...sentences.slice(at + 1, at + 4).filter((sentence) => /\b(?:doesn't happen until|temporarily immune|You're then|hostile|negative|the condition returns|levels lower)\b/i.test(sentence)),
+        // (The Teamster's "If the source of the condition is more than 4 levels lower than your current level, The Teamster automatically
+        // counters the condition", before the counteract.)
+        ...sentences.slice(Math.max(0, at - 1), at).filter((sentence) => /\bautomatically counters?\b/i.test(sentence)),
+        ...(/\busing the source of the condition to determine\b/i.test(said) ? ["Its DC and rank are those of what caused the condition."] : [])
+    ];
+    return { modifier, rank, conditions, traits, afflictions, pick, ...(adjacent ? { within: 5 } : {}), ...(reduce ? { reduce: { success: Number(reduce[1]), criticalSuccess: Number(reduce[2] ?? reduce[1]) } } : {}), ...(notes.length ? { notes } : {}) };
 }

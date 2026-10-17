@@ -14,7 +14,7 @@ import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
 import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
-import { isSnare, snareChoices, snareZone } from "./snares.js";
+import { isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
@@ -116,6 +116,9 @@ function compileOne(given, options = {}) {
         const ways = chosen.map(({ name, html: wayHtml }) => ({ name, html: wayHtml, plan: compileOne({ ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: wayHtml } } }, options) }));
         if (ways.every((way) => way.plan?.builtin === "zone")) return { ...base, builtin: "ways", once: true, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, item: itemInfo(item) };
     }
+    // (A snare that leaves an area where it was, src/compiler/snares.js: Smoke Screen Snare's smoke — the ability module's zone.then.)
+    const leaves = snareThen(item, base);
+    if (leaves) return { ...leaves, item: itemInfo(item) };
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     const snare = snareZone(item, read);
     if (snare) return { ...snare, item: itemInfo(item) };
