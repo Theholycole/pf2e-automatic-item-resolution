@@ -138,11 +138,13 @@ test("spellguns: an attack against AC at the user's spell or firearm attack, the
     assert.equal(routeOf(torrent), "save");
     assert.deepEqual([torrent.resolution.check.roll, torrent.resolution.check.against.statistic, torrent.ownCheck.choose, torrent.targeting.range], ["skill", "ac", ["spell", "firearm"], "30 feet"]);
     assert.deepEqual([component(torrent).formula, torrent.resolution.outcomes.criticalSuccess.damage.multiplier, torrent.resolution.outcomes.criticalSuccess.forcedMovement, torrent.resolution.outcomes.success.forcedMovement], ["2d6[bludgeoning]", 2, { kind: "push", distance: 10 }, { kind: "push", distance: 5 }]);
-    // Sparking: blinded for a round on a critical success; dazzled while the persistent damage lasts — no time, a note.
+    // Sparking: blinded for a round on a critical success; dazzled while the persistent damage lasts — the ability module's condition for
+    // as long as that persistent fire lasts.
     const sparking = compileItem(source("Sparking Spellgun (Lesser)"));
     assert.deepEqual(sparking.resolution.sharedDamage.components.map((entry) => entry.formula), ["4d6[fire]", "1d4[persistent,fire]"]);
-    assert.deepEqual(sparking.resolution.outcomes.criticalSuccess.effects.map((effect) => [effect.slug, effect.duration?.value ?? null]), [["blinded", 1], ["dazzled", null]]);
-    assert.match(sparking.notes.join(" "), /while the persistent damage lasts/);
+    assert.deepEqual(sparking.resolution.outcomes.criticalSuccess.effects.map((effect) => [effect.slug, effect.duration?.value ?? effect.duration?.mode ?? null]), [["blinded", 1], ["dazzled", "while"]]);
+    assert.deepEqual(sparking.resolution.outcomes.success.effects.find((effect) => effect.slug === "dazzled").duration, { mode: "while", persistent: "fire" });
+    assert.equal(sparking.notes, undefined);
     // Moonlit: its damage at night or at other times, picked on the card.
     assert.deepEqual(compileItem(source("Moonlit Spellgun (Lesser)")).damageChoices.map((choice) => choice.formula), ["3d8[fire,silver]", "3d6[fire,silver]"]);
     // Live: the card offers the user's spell attack and firearm attack; the save card's check is the one picked.

@@ -39,6 +39,9 @@ export function withItemData(html, item) {
     // (A save at its wielder's better DC, Meloth's Lifedrinker's "takes @Damage[6d6[mental]] damage with a Will save; the DC is equal
     // to the wielder's class or spell DC, whichever is higher": its owner's class-or-spell DC, a basic save, as PF2e writes it.)
     text = text.replace(/\btakes (@Damage\[[^\]]*\]\])(?: damage)? with an? (Fortitude|Reflex|Will) save; the DC is equal to the wielder's class or spell DC, whichever is higher\b/g, (whole, damage, save) => `takes ${damage} damage with a @Check[${save.toLowerCase()}|against:class-spell|basic] save`);
+    // (Extra Strike damage a number of dice set by the armor's save bonus, a Battlezoo hide's: its resilient rune's, 1 + the rune, at most
+    // 4 — the dice in words, as the Strike-damage reader takes them.)
+    text = text.replace(/\bYour melee Strikes deal additional (\w+) damage for (\d+ (?:minutes?|rounds?))\.\s*The amount of \1 damage dealt is equal to (\d+)d(\d+) × the (?:armor|item)'s item bonus to (?:saving throws|saves) against \1 effects\./gi, (whole, type, time, count, faces) => `Your melee Strikes deal ${Number(count) * Math.min(4, 1 + (Number(item?.system?.runes?.resilient) || 0))}d${faces} additional ${type} damage for ${time}.`);
     // (A spell's effect given its DC first, Dread Blindfold's "This has the effect of a DC 37 vision of death spell": the spell, then its DC,
     // as the cast reader takes it.)
     text = text.replace(/\bThis has the effects? of an? DC (\d+) ((?:<em>)?[a-z][a-z' -]+?(?:<\/em>)?) spell\b/gi, (whole, dc, name) => `This has the effect of ${name} (DC ${dc})`);

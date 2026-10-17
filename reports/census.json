@@ -15,11 +15,11 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 218,
-   "resolves": 748,
+   "resolves": 751,
    "builtin:readied-bonus": 21,
    "builtin:zone": 98,
    "builtin:item-action": 15,
-   "partial": 100,
+   "partial": 97,
    "note-only": 164,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
@@ -35,8 +35,8 @@
    "results": {
     "builtin:cast-spell": 11,
     "none": 118,
-    "resolves": 211,
-    "partial": 48,
+    "resolves": 214,
+    "partial": 45,
     "note-only": 83,
     "builtin:zone": 13,
     "builtin:readied-bonus": 7,
@@ -310,7 +310,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 175,
+   "resolves": 178,
    "gaps": 0,
    "none": 15
   },
@@ -340,7 +340,7 @@
   },
   "strike": {
    "count": 31,
-   "resolves": 12,
+   "resolves": 15,
    "gaps": 0,
    "none": 3
   },
@@ -370,13 +370,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 264,
+   "resolves": 267,
    "gaps": 0,
    "none": 25
   },
   "duration": {
    "count": 943,
-   "resolves": 604,
+   "resolves": 607,
    "gaps": 0,
    "none": 13
   }
@@ -3690,8 +3690,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "save"
   },
   {
@@ -6052,8 +6053,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "save"
   },
   {
@@ -9855,8 +9857,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "save"
   },
   {

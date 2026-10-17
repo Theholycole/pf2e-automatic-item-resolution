@@ -3334,6 +3334,45 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, targets: [allyToken.uuid] });
         await until(() => !ally.hasCondition("prone"), "the ally no longer Prone", { timeout: 8000 });
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Sparking Spellgun (Lesser): its hit's persistent fire and Dazzled for as long as that fire lasts (the ability module's condition
+    // while a persistent damage lasts) — gone with the fire.
+    async sparkingDazzled(scene) {
+        const { actor: gunner } = await creature(scene, "Spark Gunner", { type: "character", x: 17, y: 7 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Spark Target", { x: 19, y: 7, ac: 1, alliance: "opposition" });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const gun = await give(gunner, "Sparking Spellgun (Lesser)");
+        await wait(500);
+        let since = Date.now();
+        await gun.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the spellgun's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const firearm = choices.find((choice) => choice.kind === "firearm");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: choices.indexOf(firearm) });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the attack card" });
+        await rollAndApply(attack);
+        const fire = () => foe.itemTypes.condition.find((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "fire");
+        await until(() => fire() && foe.itemTypes.condition.some((condition) => condition.slug === "dazzled"), `persistent fire and Dazzled (${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 10000 });
+        await fire().delete();
+        await until(() => !foe.itemTypes.condition.some((condition) => condition.slug === "dazzled"), "Dazzled gone with the fire", { timeout: 10000 });
+        return { degree: game.messages.get(attack.id).flags["pf2e-automatic-ability-resolution"].card.targets?.[0]?.degree };
+    },
+
+    // Battlezoo's Runebranded Hide: its melee Strikes' extra electricity, 1d6 per point of its save bonus (a resilient rune: 2d6), for 1 minute.
+    async runebrandedHide(scene) {
+        assert(game.modules.get("battlezoo-bestiary-pf2e")?.active, "Battlezoo Bestiary isn't active in pftest.");
+        const { actor: wearer } = await creature(scene, "Hide Wearer", { type: "character", x: 18, y: 5 });
+        const hide = await give(wearer, "Runebranded Hide", "battlezoo-bestiary-pf2e.pf2e-battlezoo-equipment");
+        await hide.update({ "system.runes.resilient": 1, "system.equipped.inSlot": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(hide.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the hide's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => wearer.itemTypes.effect.some((effect) => effect.system.rules.some((rule) => rule.key === "DamageDice" && rule.diceNumber === 2 && rule.dieSize === "d6" && rule.damageType === "electricity")), "2d6 electricity on its melee Strikes", { timeout: 8000 });
+        return { effects: wearer.itemTypes.effect.map((effect) => effect.name) };
     }
 };
 

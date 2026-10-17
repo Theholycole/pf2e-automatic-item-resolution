@@ -459,7 +459,10 @@ function equalTempHP(plan, text) {
     const match = EQUAL_TEMP.exec(String(text ?? ""));
     if (!match || !plan?.resolution?.outcomes || plan.builtin) return plan;
     if (Object.values(plan.resolution.outcomes).some((row) => (row?.effects ?? []).some((effect) => effect?.kind === "tempHP" || effect?.kind === "temp-hp"))) return plan;
-    const note = `${match[0].charAt(0).toUpperCase()}${match[0].slice(1)} (the damage dealt): add them by hand.`;
+    // (Equal to a creature's level, Bloodthirsty's: the card's own, plan.item.levelTemp; "the damage dealt" only when it's that.)
+    if (/\bequal to (?:(?:half|twice|double|three times|four times) )?the (?:[a-z]+ )?(?:creature|foe|enemy|target)'s level\b/i.test(match[0])) return plan;
+    const dealt = /\ban equal amount of\b|\bequal to (?:half )?the damage\b/i.test(match[0]);
+    const note = `${match[0].charAt(0).toUpperCase()}${match[0].slice(1)}${dealt ? " (the damage dealt)" : ""}: add them by hand.`;
     return { ...plan, notes: [...(plan.notes ?? []), note], partial: true };
 }
 

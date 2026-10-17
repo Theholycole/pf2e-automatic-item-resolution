@@ -611,3 +611,9 @@ test("what a hit does that isn't a condition: its save's note on a failure (Blis
     assert.equal(compileActivations(item("Reaper's Toll"))[0].plan?.strike?.fromNotes, undefined);
     assert.equal(compileActivations(item("Freeze Ammunition"))[0].plan?.strike?.fromNotes, undefined);
 });
+
+test("extra Strike damage of dice set by the armor's save bonus (a Battlezoo hide's): 1 + its resilient rune, at most 4", () => {
+    // (In this module's words.)
+    const hide = (resilient) => compileActivations({ _id: "testHide00000001", type: "armor", name: "Stand-in Hide", system: { level: { value: 8 }, traits: { value: ["magical"] }, runes: { potency: 1, resilient, property: [] }, description: { value: "<p>A hide that hums.</p><p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><hr /><p><strong>Effect</strong> Your melee Strikes deal additional cold damage for 2 rounds. The amount of cold damage dealt is equal to 1d8 × the item's item bonus to saves against cold effects.</p>" } } })[0].plan.item.strikeDamage[0];
+    assert.deepEqual([hide(0).diceNumber, hide(1).diceNumber, hide(3).diceNumber, hide(1).dieSize, hide(1).damageType, hide(1).predicate], [1, 2, 4, "d8", "cold", ["item:melee"]]);
+});

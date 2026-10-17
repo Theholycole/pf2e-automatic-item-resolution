@@ -31,7 +31,9 @@ const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds:
 // A degree row's text (plain) → its riders and what it says that they don't: { row, notes }. Each "is …" clause on its own,
 // so one's time isn't another's: "is Blinded for 1 round, and is Dazzled while the persistent damage lasts" — blinded for
 // a round; dazzled with no time of its own, and a note of how long.
-function degreeRow(words) {
+// (Its persistent damage's type, persistent: a condition "while the persistent damage lasts" is the ability module's condition for
+// as long as that damage lasts, duration { mode: "while", persistent } — ability 17daa23.)
+function degreeRow(words, persistent = null) {
     const notes = [];
     let row = none();
     const add = (riders) => {
@@ -47,7 +49,9 @@ function degreeRow(words) {
         for (const clause of clauses) {
             const riders = riderRow(`The target ${clause.replace(/\s+while\b.*$/i, "")}.`);
             if ((riders.effects ?? []).length || (riders.modifiers ?? []).length || riders.forcedMovement) {
-                add(riders);
+                const lasting = persistent && /\bwhile the persistent damage lasts\b/i.test(clause);
+                add(lasting ? { ...riders, effects: (riders.effects ?? []).map((effect) => (effect.kind === "condition" ? { ...effect, duration: { mode: "while", persistent } } : effect)) } : riders);
+                if (lasting) continue;
                 // (What its time leaves to the GM: "while the persistent damage lasts", "but can attempt a … save at the end of each of
                 // its turns to end the effect".)
                 if (/\bwhile\b|\bbut can\b|\bsave\b/i.test(clause)) notes.push(`The target ${clause}.`);
@@ -75,7 +79,8 @@ export function readSpellgun(html) {
     const degrees = text.replace(/^.*?(?=\bCritical Success\b)/s, "");
     const criticalWords = /\bCritical Success\b\s*(.*?)(?=\bSuccess\b|$)/s.exec(degrees)?.[1] ?? "";
     const successWords = /(?:^|[.\s])Success\b\s*(.*?)(?=\bThe damage is\b|\bFailure\b|$)/s.exec(degrees.replace(/\bCritical Success\b/, "CRITICAL"))?.[1] ?? "";
-    const critical = degreeRow(criticalWords);
+    const persistent = (damaged ? (choices ? [choices[0].formula] : formulas).map(component) : []).find((entry) => entry.category === "persistent")?.type ?? null;
+    const critical = degreeRow(criticalWords, persistent);
     // ("As critical success, except the target is Clumsy instead of slowed": the critical success's row, that condition swapped;
     // "As critical success, but for the drained condition, the target is Drained 1, or …": that condition's value.)
     const swap = /^\s*As critical success, except (?:the target is )?(\w+) instead of (\w+)/i.exec(successWords);
@@ -89,7 +94,7 @@ export function readSpellgun(html) {
         ? { row: { ...critical.row, effects: critical.row.effects.map((effect) => (effect.slug === swap[2].toLowerCase() ? { ...effect, slug: swap[1].toLowerCase() } : effect)) }, notes: [] }
         : revalue
             ? { row: { ...critical.row, effects: critical.row.effects.map((effect) => (effect.slug === revalue[1].toLowerCase() ? { ...effect, value: Number(revalue[2]) } : effect)) }, notes: revalue[3].trim() ? [`${revalue[1]} ${revalue[2]}${revalue[3]}.`] : [] }
-            : degreeRow(successWords);
+            : degreeRow(successWords, persistent);
     // (No damage and nothing read on its degrees: not one.)
     const rides = (row) => (row.effects ?? []).length || (row.modifiers ?? []).length || row.forcedMovement;
     if (!damaged && !rides(critical.row) && !rides(success.row)) return null;
