@@ -9,11 +9,11 @@
    "resolves": 722,
    "builtin:cast-spell": 469,
    "none": 697,
-   "partial": 125,
+   "partial": 126,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 38,
-   "note-only": 234,
+   "note-only": 233,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
@@ -26,9 +26,9 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 387,
+   "save": 388,
    "cast": 469,
-   "item": 600,
+   "item": 599,
    "none": 882,
    "focus": 45,
    "fortune": 48,
@@ -70,8 +70,8 @@
    "results": {
     "resolves": 152,
     "none": 114,
-    "partial": 30,
-    "note-only": 34,
+    "partial": 31,
+    "note-only": 33,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 12,
@@ -22533,9 +22533,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Words of Wisdom (Moderate)",

@@ -390,3 +390,10 @@ test("Lockpicker's Oil: its user's status bonus to Thievery checks to Pick a Loc
     assert.deepEqual([bonus.selector, bonus.value, bonus.type, bonus.predicate, bonus.duration.value, bonus.duration.unit], ["thievery", 2, "status", ["action:pick-a-lock"], 1, "minutes"]);
     assert.equal(oil.partial, true);
 });
+
+test("Lance of Sun's Radiance: a line's basic Reflex damage, Blinded on a critical failure; a dragon's other damage a note", () => {
+    const lance = compileActivations(item("Lance of Sun's Radiance"), { spellEffects }).find((entry) => entry.activation.name === "Sun Cutting Scales").plan;
+    assert.deepEqual([lance.resolution.kind, lance.resolution.check.statistic, lance.resolution.check.basic, lance.targeting.area], ["save", "reflex", true, { type: "line", value: 120 }]);
+    assert.ok(lance.resolution.outcomes.criticalFailure.effects.some((effect) => effect.slug === "blinded"));
+    assert.deepEqual(lance.notes, ["A dragon takes 6d12 spirit damage instead (by hand)."]);
+});

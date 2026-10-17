@@ -119,6 +119,9 @@ export function withItemData(html, item) {
     // the creature is already slowed, it's permanently petrified": degree rows, the critical failure's the failure's and the rest
     // its note.)
     text = text.replace(/(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save\.)\s*On a failure, it's (@UUID\[[^\]]+\]\{[^}]+\}) for (\d+ (?:rounds?|minutes?)); on a critical failure, (if [^,.]+), it's ([^.]+)\.\s*/g, (whole, check, link, time, condition, worse) => `${check}</p><p><strong>Failure</strong> The target is ${link} for ${time}.</p><p><strong>Critical Failure</strong> The target is ${link} for ${time}. ${condition.charAt(0).toUpperCase()}${condition.slice(1)}, it's ${worse}.</p><p>`);
+    // (Other damage for one kind of creature in the middle of the sentence, Lance of Sun's Radiance's "Creatures in the area take 6d8
+    // spirit damage, or 6d12 spirit damage if they're a dragon (… basic save)": the damage and its save, the dragon's a note.)
+    text = text.replace(/(\btake @Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})? damage), or (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage if they're an? ([\w-]+) (\(@Check\[[^\]]*\](?:\{[^}]*\})? save\))\./g, (whole, base, other, kind, save) => `${base} ${save}. A ${kind} takes ${other} damage instead.`);
     // (A lock's bonus for anyone picking it, Lockpicker's Oil's "Anyone attempting to Pick the Lock within the next minute gains a +1
     // status bonus to the Thievery check": its user's, for that minute — anyone else's a note.)
     text = text.replace(/\bAnyone attempting to (?:@UUID\[[^\]]*\]\{)?(Pick (?:the|a) Lock)\}? within the next minute gains an? \+(\d+) (status|circumstance|item) bonus to the (\w+) check\./g, (whole, action, value, type, skill) => `You gain a +${value} ${type} bonus to ${skill} checks to Pick a Lock for 1 minute. Anyone else attempting to Pick that Lock within the minute gains the bonus too.`);

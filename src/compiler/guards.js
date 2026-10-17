@@ -417,7 +417,9 @@ const SAVE_EXTRAS = [
     // Sickened 1": only if it does.)
     /^During this time, if the (?:creature|target)\b[^.]*\b(?:become|becomes|is|are)\b[^.]*\.$/i,
     // (Another damage instead for some creatures, the GM's to pick: a third-party item's alternative for a kind of creature.)
-    /\bcreature takes \d+d\d+ \w+ damage instead of \w+ damage\b[^.]*\.$/i
+    /\bcreature takes \d+d\d+ \w+ damage instead of \w+ damage\b[^.]*\.$/i,
+    // (Lance of Sun's Radiance's dragon, src/compiler/item-data.js: "A dragon takes 6d12 spirit damage instead".)
+    /^An? [\w-]+ takes \(?\d+d\d+\)? \w+ damage instead\.$/i
 ];
 function saveExtras(plan, text) {
     if (!plan?.resolution?.outcomes || plan.builtin || plan.resolution.kind !== "save") return plan;
