@@ -54,6 +54,9 @@ const ACTIVATE_LINE = new RegExp(String.raw`^\s*Activate\s+(${NAMES})\b`, "i");
 // instead of Athletics, and you add the blade of the Rabbit Prince's item bonus to the check" — that skill, the weapon's
 // potency as an item bonus.)
 const CHOICE = new RegExp(String.raw`\bYou (?:can )?attempt to ((?:${NAMES})(?:,\s*(?:${NAMES}))*,?\s+or\s+(?:${NAMES}))\s+(?:the|an?|one|that) [\w' -]*?(?:creature|opponent|foe|enemy|target)\b([^.]*)\.`, "i");
+// (Or the activation itself is either: Blast Boots' "When you Activate the blast boots, you can High Jump or Long Jump, without the need
+// to Stride first".)
+const ACTIVATE_CHOICE = new RegExp(String.raw`\bWhen you Activate (?:it|the [\w' -]+?), you can ((?:${NAMES})(?:,\s*(?:${NAMES}))*,?\s+or\s+(?:${NAMES}))\b([^.]*)\.`, "i");
 const CHOICE_BONUS = /\bYou gain an? \+(\d+) (status|circumstance|item) bonus to (?:your|the) check\b/i;
 const ITEM_BONUS = /\badd the [\w' -]+? item bonus to the check\b/i;
 const USING = /\busing (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy|Performance) instead of (?:Athletics|Acrobatics|Thievery|Deception|Intimidation)\b/i;
@@ -80,7 +83,7 @@ export function readItemAction(html, item = null) {
     const raw = String(html ?? "");
     if (/@UUID\[[^\]]*\]\{Effect:/i.test(raw)) return null;
     const text = plainText(raw).replace(/\bCraft Requirements\b.*$/i, "");
-    const choice = CHOICE.exec(text);
+    const choice = CHOICE.exec(text) ?? ACTIVATE_CHOICE.exec(text);
     if (choice) {
         const names = [...choice[1].matchAll(new RegExp(NAMES, "gi"))].map(([name]) => name.replace(/\s+/g, " "));
         const slugs = names.map((name) => ACTION_SLUGS[name.toLowerCase()]).filter(Boolean);

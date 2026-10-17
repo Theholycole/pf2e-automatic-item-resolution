@@ -3121,6 +3121,87 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
         await until(() => !crawler.hasCondition("prone"), "no longer Prone", { timeout: 8000 });
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Thousand-Pains Fulu (Stone): the affixed creature's basic DC 19 Fortitude save against 3d6 bludgeoning, on the ability module's card.
+    async fuluBasicSave(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Fulu Affixer", { type: "character", x: 15, y: 7 });
+        const { token: foe } = await creature(scene, "Fulu Bearer", { x: 16, y: 7, alliance: "opposition" });
+        const fulu = await give(user, "Thousand-Pains Fulu (Stone)");
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await fulu.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the fulu's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        const { check, sharedDamage, outcomes } = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution;
+        assert(check.basic && check.against?.value === 19 && /3d6/.test(sharedDamage.components[0].formula), `basic DC 19 against 3d6 (${JSON.stringify(check)})`);
+        assert(outcomes.failure.noteEffects?.length === 1, "the failure's note");
+        return { save: save.id };
+    },
+
+    // Blast Boots (Lesser): its card's pick of PF2e's High Jump or Long Jump; High Jump rolls PF2e's Athletics check.
+    async blastBootsJump(scene) {
+        const { actor: jumper } = await creature(scene, "Boot Jumper", { type: "character", x: 18, y: 7 });
+        const boots = await give(jumper, "Blast Boots (Lesser)");
+        const since = Date.now();
+        await boots.consume();
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the action card" });
+        assert(/High Jump/.test(card.content) && /Long Jump/.test(card.content), "both jumps offered");
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [], choice: 0 });
+        const roll = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check" && message.speaker?.actor === jumper.id, { what: "PF2e's High Jump roll", timeout: 12000 });
+        return { options: (roll.flags.pf2e.context.options ?? []).filter((option) => /jump/.test(option)) };
+    },
+
+    // Blood-Drinker's Drink Blood: temporary Hit Points of twice the targeted creature's level (level 3: 6).
+    async bloodDrinkerTemp(scene) {
+        const { actor: wielder, token: wielderToken } = await creature(scene, "Blood Wielder", { type: "character", x: 16, y: 5 });
+        const { token: fallen } = await creature(scene, "Blood Fallen", { x: 17, y: 5, alliance: "opposition", level: 3 });
+        const blade = await give(wielder, "Blood-Drinker");
+        await wielderToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the blade's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, targets: [fallen.uuid] });
+        await until(() => wielder.system.attributes.hp.temp === 6, `6 temporary Hit Points (${wielder.system.attributes.hp.temp})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Meloth's Lifedrinker (Level 7)'s Vision of Meloth: a basic Will save against 6d6 mental at its owner's class-or-spell DC.
+    async lifedrinkerVision(scene) {
+        const { actor: wielder } = await creature(scene, "Meloth Wielder", { x: 4, y: 9, level: 9 });
+        const { token: foe } = await creature(scene, "Meloth Target", { x: 5, y: 9, alliance: "opposition" });
+        const blade = await give(wielder, "Meloth's Lifedrinker (Level 7)");
+        await target(foe);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the vision's card" });
+        const against = card.getFlag(NS, "card").plan.resolution.check.against;
+        const expected = wielder.system.attributes.classOrSpellDC?.value ?? Math.max(wielder.system.attributes.classDC?.value ?? 0, wielder.system.attributes.spellDC?.value ?? 0);
+        assert(against?.value === expected && expected > 0, `the owner's DC ${expected} (${JSON.stringify(against)})`);
+        assert(/reduced to 0 HP/.test(card.content), "the at-0-HP note");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        return { dc: against.value };
+    },
+
+    // Wasp Guard: the triggering enemy (targeted) takes 1d8 persistent poison from the ability module's card.
+    async waspGuardSwarm(scene) {
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Wasp Wearer", { type: "character", x: 16, y: 12 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Wasp Enemy", { x: 17, y: 12, alliance: "opposition" });
+        const armor = await give(wearer, "Wasp Guard");
+        await armor.update({ "system.equipped.inSlot": true, "system.equipped.invested": true });
+        await wearerToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(armor.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the armor's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await applyAbilityCard(await messageAfter(since, abilitySaveCard, { what: "the ability module's card" }));
+        await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "poison"), "persistent poison on the enemy", { timeout: 10000 });
+        return { conditions: foe.itemTypes.condition.map((condition) => condition.slug) };
     }
 };
 

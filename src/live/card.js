@@ -110,6 +110,7 @@ export function previewLines(state) {
     for (const speed of plan?.item?.speeds ?? []) lines.push(speedText(speed));
     for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
     for (const light of plan?.item?.light ?? []) lines.push(lightText(light));
+    for (const entry of plan?.item?.levelTemp ?? []) lines.push(levelTempText(entry));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
@@ -270,6 +271,13 @@ const SENSE_WORDS = { darkvision: "Darkvision", "greater-darkvision": "Greater d
 export function senseText(sense) {
     const time = sense.duration?.mode === "fixed" ? (sense.duration.anchor === "source-turn" ? ` until the ${sense.duration.expiry === "turn-end" ? "end" : "start"} of the next turn` : ` for ${timeText(sense.duration)}`) : "";
     return `${SENSE_WORDS[sense.selector] ?? sense.selector}${time}`;
+}
+
+// Temporary Hit Points from the targeted creature's level in words: "Temporary Hit Points equal to twice the level of the creature
+// targeted, for 1 minute".
+const TIMES_WORDS = { 0.5: "half", 2: "twice", 3: "three times", 4: "four times" };
+export function levelTempText(entry) {
+    return `Temporary Hit Points equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted${entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
 }
 
 // A light its user sheds in words: "Bright light in 20 feet and dim light to 40 feet for 10 minutes".

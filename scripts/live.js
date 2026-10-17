@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
@@ -363,7 +363,9 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     // (A condition it lowers on others: the creatures the presser targets, before anything is applied.)
     const reduce = state.plan.item?.reduce ?? [];
     // (Or its flat check, the creature its user touches: Nettle Balm's.)
-    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" ? await targetedCreatures(targets) : [];
+    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || state.plan.item?.levelTemp?.length ? await targetedCreatures(targets) : [];
+    // (Temporary Hit Points from a creature's level: that creature targeted.)
+    if (state.plan.item?.levelTemp?.length && !others.length) throw new Error("Target the creature first (the one its trigger names), then press Apply.");
     // ("Creatures of your choice": none targeted is its user alone.)
     if (reduce.some((entry) => entry.who === "targets" && !entry.optional) && !others.length) throw new Error("Target the creatures it helps first, then press Apply.");
     // (One of several conditions, as picked.)
@@ -455,6 +457,17 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         if (!target.actor) break;
         await target.actor.createEmbeddedDocuments("Item", [senseEffectSource(sense, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${senseText(sense)}`);
+    }
+    // (Temporary Hit Points from the targeted creature's level: Bloodthirsty's twice the level of the creature it reduced to 0 —
+    // the ability module's own temporary Hit Points, with their time.)
+    for (const entry of state.plan.item?.levelTemp ?? []) {
+        const level = Number(others[0]?.actor?.level);
+        const amount = Number.isFinite(level) ? Math.floor(entry.multiplier * level) : 0;
+        const ability = game.modules.get(ABILITY_ID)?.api?.live;
+        if (amount > 0 && ability?.applyChange && target.actor) {
+            const said = await ability.applyChange({ op: "tempHp", target: DRINKER_ID, amount, duration: entry.duration ?? null }, abilityState(state));
+            lines.push(`${said ?? `${recipient.name}: ${amount} temporary Hit Points`} (from ${others[0].name}, level ${level})`);
+        } else lines.push(`${recipient.name}: ${levelTempText(entry)} — ${others[0] ? `${others[0].name}'s level gives none` : "no creature targeted"}; apply it by hand.`);
     }
     // (A light its user sheds: Sprite Apple's — an Effect with PF2e's TokenLight rule.)
     for (const light of state.plan.item?.light ?? []) {

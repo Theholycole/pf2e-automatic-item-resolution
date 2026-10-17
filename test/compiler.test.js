@@ -548,3 +548,30 @@ test("a weapon's own activation shedding a trait and adding damage for a round (
     assert.equal(strikeDamageEffectSource(strikeDamage[0], { item }).system.rules[0].selector, "whip0000000001-damage");
     assert.deepEqual([weaponText(weapon[0]), strikeDamageText(strikeDamage[0])], ["The weapon loses nonlethal for 1 round", "+1d6 persistent bleed damage on the weapon's Strikes for 1 round"]);
 });
+
+test("a fulu affixed to a creature: its basic save against the fulu's damage, at the one creature touched; what a failure primes later a note on the target", () => {
+    const fulu = compileItem(item("Thousand-Pains Fulu (Void)"));
+    assert.deepEqual([fulu.resolution.kind, fulu.resolution.check.statistic, fulu.resolution.check.basic, fulu.resolution.check.against.value, fulu.resolution.sharedDamage.components[0].formula], ["save", "fortitude", true, 38, "12d10[void]"]);
+    assert.deepEqual(fulu.targeting, { target: "1 creature", range: "touch", area: null });
+    const [note] = fulu.resolution.outcomes.failure.noteEffects;
+    assert.match(note.text, /^On a failure or critical failure, if the target takes any other damage within 1 minute/);
+    assert.deepEqual([note.duration.value, note.duration.unit], [1, "minutes"]);
+    assert.deepEqual(fulu.resolution.outcomes.criticalFailure.noteEffects, [note]);
+    assert.equal(fulu.resolution.outcomes.success.noteEffects, undefined);
+});
+
+test("activations: a choice of jumps (Blast Boots), temporary Hit Points from the targeted creature's level (Bloodthirsty), a save at its owner's better DC with its at-0-HP line a note (Meloth's Lifedrinker), a swarm's damage at the triggering enemy (Wasp Guard)", async () => {
+    const { levelTempText } = await import("../src/live/card.js");
+    const boots = compileItem(item("Blast Boots (Moderate)"));
+    assert.deepEqual([boots.builtin, boots.action.slugs], ["item-action", ["high-jump", "long-jump"]]);
+    const [thirst] = compileActivations(item("Bloodthirsty"));
+    assert.deepEqual(thirst.plan.item.levelTemp.map((entry) => [entry.multiplier, entry.duration.value, entry.duration.unit]), [[2, 1, "minutes"]]);
+    assert.equal(levelTempText(thirst.plan.item.levelTemp[0]), "Temporary Hit Points equal to twice the level of the creature targeted, for 1 minute");
+    // (Not the weapon's own reach: PF2e's reach-15 is an NPC attack's trait only, which AdjustStrike won't add to a character's weapon.)
+    assert.equal(compileActivations(item("Soulpiercer"))[0].plan?.item?.weapon, undefined);
+    const vision = compileActivations(item("Meloth's Lifedrinker (Level 7)"))[1].plan;
+    assert.deepEqual([vision.resolution.check.statistic, vision.resolution.check.basic, vision.resolution.check.against], ["will", true, { dc: "owner", statistic: "class-spell" }]);
+    assert.match(vision.notes.at(-1), /^If the target is reduced to 0 HP by this effect/);
+    const [wasps] = compileActivations(item("Wasp Guard"));
+    assert.deepEqual(wasps.plan.resolution.sharedDamage.components.map(({ formula, type, category }) => [formula, type, category]), [["1d8", "poison", "persistent"]]);
+});

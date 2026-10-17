@@ -175,6 +175,23 @@ function tempHitPoints(sentences, duration, used = new Set()) {
     return null;
 }
 
+// Temporary Hit Points from another creature's level: Bloodthirsty's "You gain a number of temporary Hit Points equal to twice the
+// creature's level" (the one reduced to 0 Hit Points) → [{ multiplier, duration }], the item card's: the creature its presser targets.
+const TIMES = { half: 0.5, twice: 2, "three times": 3, "four times": 4 };
+function levelTempOf(sentences, duration, used = new Set()) {
+    for (const [index, sentence] of sentences.entries()) {
+        if (/^\s*(?:If|When|Whenever|Each time)\b/i.test(sentence)) continue;
+        const match = /\byou gain (?:a number of )?temporary Hit Points equal to (?:(half|twice|three times|four times) )?the (?:triggering |target |reduced )?(?:creature|foe|enemy|target)'s level\b/i.exec(sentence);
+        if (!match) continue;
+        used.add(index);
+        // (Their time in a sentence of their own after: "These Hit Points remain for 1 minute".)
+        const later = sentences.slice(index + 1, index + 3).find((next) => /\b(?:temporary )?Hit Points (?:remain|last)\b/i.test(next));
+        if (later) used.add(sentences.indexOf(later));
+        return [{ multiplier: TIMES[match[1]?.toLowerCase()] ?? 1, duration: durationIn(sentence, null) ?? (later ? durationIn(later, null) : null) ?? duration }];
+    }
+    return [];
+}
+
 // "you regain 3d10 Hit Points"; or another creature's, "restoring 4d6+15 Hit Points to it" (a willing, adjacent creature:
 // other, so the card offers the user and the creatures next to them).
 const AMOUNT_PARENS = String.raw`\(?(\d+d\d+(?:\s*[+-]\s*\d+)?|\d+)\)?`;
@@ -685,7 +702,8 @@ export function ownRow(item, { healing = true } = {}) {
     const strikeDamage = strikeDamageOf(sentences, duration, used);
     const suppress = suppressOf(sentences, duration, used);
     const light = lightOf(sentences, duration, used);
-    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length) return null;
+    const levelTemp = levelTempOf(sentences, duration, used);
+    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length && !levelTemp.length) return null;
     // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other || temp?.other);
     if (heal?.other) delete heal.other;
@@ -698,7 +716,7 @@ export function ownRow(item, { healing = true } = {}) {
     // (Nor when it may be used, "You can use this action while Unconscious".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     if (secondary) unread.push(secondary);
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

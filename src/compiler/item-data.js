@@ -36,6 +36,12 @@ const IMMOBILIZED = "@UUID[Compendium.pf2e.conditionitems.Item.eIcWbB5o3pP6OIMe]
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
+    // (A save at its wielder's better DC, Meloth's Lifedrinker's "takes @Damage[6d6[mental]] damage with a Will save; the DC is equal
+    // to the wielder's class or spell DC, whichever is higher": its owner's class-or-spell DC, a basic save, as PF2e writes it.)
+    text = text.replace(/\btakes (@Damage\[[^\]]*\]\])(?: damage)? with an? (Fortitude|Reflex|Will) save; the DC is equal to the wielder's class or spell DC, whichever is higher\b/g, (whole, damage, save) => `takes ${damage} damage with a @Check[${save.toLowerCase()}|against:class-spell|basic] save`);
+    // (A swarm sent at the triggering enemy, Wasp Guard's "The swarm flies to the triggering enemy's space and swarms about them,
+    // dealing @Damage[1d8[persistent,poison]] damage": that enemy takes it.)
+    text = text.replace(/\bThe \w+ (?:flies|moves|rushes) to the triggering (enemy|creature)'s space and [^,.]*, dealing (@Damage\[[^\]]*\]\])(?: damage)?\./g, (whole, who, damage) => `The triggering ${who} takes ${damage} damage.`);
     // (A heading's space inside its bold tag and a bold action glyph, a third-party module's markup: PF2e's own, as the activation
     // reader takes it.)
     text = text.replace(/<strong>(Activate|Trigger|Effect|Requirements?|Frequency) <\/strong>/g, "<strong>$1</strong> ").replace(/<span class="action-glyph"><strong>([^<]+)<\/strong><\/span>/g, '<span class="action-glyph">$1</span>');
@@ -176,6 +182,12 @@ export function withItemData(html, item) {
     // (A weapon that sheds a trait and gains extra damage for a round, a third-party whip's activation: its own Strikes' damage and its
     // trait gone, as the row reader takes a weapon's.)
     text = text.replace(/\bFor (\d+) (rounds?|minutes?), [^.—–]*?[—–]\s*it (?:loses|drops) the (\w+) trait and (?:attacks|Strikes) (?:also |additionally )?deal @Damage\[(\d+d\d+)\[(\w+)\]\] damage\./g, (whole, count, unit, trait, dice, type) => `For ${count} ${unit}, the weapon loses the ${trait} trait. For ${count} ${unit}, your Strikes with the weapon deal ${dice} additional ${type === "bleed" ? "persistent bleed" : type} damage.`);
+    // (A fulu affixed to a creature, Thousand-Pains Fulu's "A creature to which the fulu is affixed must attempt a
+    // @Check[fortitude|dc:27|basic]. … The fulu deals @Damage[7d6[piercing]] as hair, nails, and connective tissues stab inward":
+    // the target's basic save against that damage; the persistent damage it primes for later stays a note.)
+    const affixed = /\bA creature to which the fulu is affixed must attempt an? (@Check\[(?:fortitude|reflex|will)\|[^\]]*\bbasic\b[^\]]*\])\./.exec(text);
+    const fuluDeals = /\s*\bThe fulu deals (@Damage\[[^\]]*\]\])(?: damage)?[^.]*\./.exec(text);
+    if (affixed && fuluDeals) text = text.replace(fuluDeals[0], "").replace(affixed[0], `The target takes ${fuluDeals[1]} damage with a ${affixed[1]} save.`);
     // (Ammunition that releases something around its target, a third-party one: its damage to "the creature" there and a condition while
     // that damage lasts — on a hit, the Strike's extra persistent damage and the condition, its end the GM's.)
     text = text.replace(/(\bThis (?:ammo|ammunition) releases [^.]*? around (?:its|the) target\.) (?:The|That) creature takes @Damage\[\((\d+d\d+)\)\[(\w+),persistent\]\] damage\. (?:As|So) long as it (?:keeps taking|continues to take) this \w+ damage, it is (@UUID\[[^\]]*\]\{(\w+)\})([^.]*)\./g, (whole, opening, dice, type, condition, name, rest) => `${opening} On a hit, the target is ${condition}. The Strike deals an additional @Damage[${dice}[persistent,${type}]] damage. It stays ${name} while it takes the persistent damage${rest}.`);

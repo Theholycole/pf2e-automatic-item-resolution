@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 220,
-   "resolves": 742,
+   "none": 218,
+   "resolves": 748,
    "builtin:readied-bonus": 21,
    "builtin:zone": 98,
-   "builtin:item-action": 12,
+   "builtin:item-action": 15,
    "partial": 96,
-   "note-only": 175,
+   "note-only": 168,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -180,10 +180,11 @@
   "gadget": {
    "count": 77,
    "results": {
-    "none": 11,
+    "none": 9,
     "builtin:zone": 14,
     "resolves": 29,
-    "note-only": 7,
+    "note-only": 6,
+    "builtin:item-action": 3,
     "builtin:no-effect": 5,
     "partial": 3,
     "builtin:counteract": 8
@@ -247,8 +248,8 @@
     "builtin:readied-bonus": 2,
     "none": 14,
     "partial": 2,
-    "note-only": 13,
-    "resolves": 13,
+    "note-only": 7,
+    "resolves": 19,
     "builtin:reroll": 1,
     "builtin:cast-spell": 1
    },
@@ -303,13 +304,13 @@
   },
   "temp-hp": {
    "count": 37,
-   "resolves": 25,
+   "resolves": 26,
    "gaps": 0,
    "none": 2
   },
   "damage": {
    "count": 277,
-   "resolves": 169,
+   "resolves": 175,
    "gaps": 0,
    "none": 15
   },
@@ -321,7 +322,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 330,
+   "resolves": 336,
    "gaps": 0,
    "none": 27
   },
@@ -375,7 +376,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 598,
+   "resolves": 604,
    "gaps": 0,
    "none": 13
   }
@@ -384,13 +385,13 @@
   "totals": {
    "cast": 32,
    "none": 294,
-   "item": 638,
+   "item": 631,
    "fortune": 23,
    "zone": 98,
    "expose": 89,
    "later": 79,
-   "action": 12,
-   "save": 132,
+   "action": 15,
+   "save": 136,
    "counteract": 28,
    "reroll": 2,
    "coat": 45,
@@ -454,10 +455,11 @@
     "ways": 1
    },
    "gadget": {
-    "none": 17,
+    "none": 15,
     "zone": 14,
-    "item": 23,
+    "item": 22,
     "save": 15,
+    "action": 3,
     "counteract": 8
    },
    "mutagen": {
@@ -472,9 +474,9 @@
    },
    "fulu": {
     "fortune": 2,
-    "none": 17,
-    "item": 22,
-    "save": 3,
+    "none": 19,
+    "item": 16,
+    "save": 7,
     "reroll": 1,
     "cast": 1
    },
@@ -488,8 +490,8 @@
    }
   },
   "noCard": {
-   "no-plan": 220,
-   "triggered": 21,
+   "no-plan": 218,
+   "triggered": 23,
    "gm": 52,
    "other": 1
   }
@@ -4060,9 +4062,10 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Devil's Trap",
@@ -8098,7 +8101,9 @@
     "gadget"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Miraculous Paintbrush",
@@ -9511,9 +9516,10 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": null
   },
   {
    "name": "Purple Pepper Powder",
@@ -12831,9 +12837,10 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Topology Protoplasm",
@@ -14720,9 +14727,10 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Oil of Swiftness",
@@ -18108,9 +18116,10 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Colorful Coating (Blue)",
@@ -19124,9 +19133,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Material Essence Disruptor (Greater)",
@@ -24735,7 +24744,9 @@
     "gadget"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Battering Snare",
@@ -28469,9 +28480,10 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": null
   },
   {
    "name": "Green Dragon's Breath Potion (Young)",

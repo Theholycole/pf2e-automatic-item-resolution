@@ -36,6 +36,7 @@ import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { overUnverified, withoutUnverifiedLinks } from "./unverified-links.js";
+import { affixedTargeting, withPrimedNotes, withZeroHPNote } from "./primed.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
@@ -197,9 +198,11 @@ function compileOne(given, options = {}) {
     const rune = readRuneLoan(plainText(item?.system?.description?.value), item);
     if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     if (!plan) return null;
+    // (What a failed save primes for later, a note Effect from those rows; a fulu's affixed creature, src/compiler/primed.js.)
+    plan = affixedTargeting(withZeroHPNote(withPrimedNotes(plan, plainText(item?.system?.description?.value)), plainText(item?.system?.description?.value)), plainText(given?.system?.description?.value));
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    const { resist, speeds, senses, light, weapon, strikeDamage, firstDegree, suppress, ...rest } = plan;
-    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}) };
+    const { resist, speeds, senses, light, levelTemp, weapon, strikeDamage, firstDegree, suppress, ...rest } = plan;
+    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;
@@ -240,6 +243,8 @@ function rowPlan(item, base) {
         ...(row?.senses ? { senses: row.senses } : {}),
         // (A light its user sheds: plan.item.light.)
         ...(row?.light ? { light: row.light } : {}),
+        // (Temporary Hit Points from the targeted creature's level: plan.item.levelTemp.)
+        ...(row?.levelTemp ? { levelTemp: row.levelTemp } : {}),
         // (A change to its user's weapon, the same: plan.item.weapon; extra damage on its Strikes, plan.item.strikeDamage.)
         ...(row?.weapon ? { weapon: row.weapon } : {}),
         ...(row?.strikeDamage ? { strikeDamage: row.strikeDamage } : {}),
