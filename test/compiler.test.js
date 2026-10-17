@@ -464,3 +464,17 @@ test("third-party wordings: a balm's flat check for the creature touched during 
     assert.deepEqual(candy.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.value, modifier.duration.unit]), [["strike-damage", 2, "item", ["item:melee"], 5, "minutes"]]);
     assert.deepEqual(candy.unread, ["Secondary Effect Swallow it to feel full."]);
 });
+
+test("a weapon's own activation shedding a trait and adding damage for a round (a third-party whip, in this module's words): PF2e's AdjustStrike and DamageDice on that weapon alone, by its id", async () => {
+    const { weaponEffectSource, strikeDamageEffectSource, weaponText, strikeDamageText } = await import("../src/live/card.js");
+    const whip = { name: "Stand-in Thorn Whip", type: "weapon", system: { level: { value: 5 }, traits: { value: ["magical"] }, description: { value: "<p><strong>Activate</strong> (manipulate)</p><p><strong>Frequency</strong> once per hour</p><p><strong>Effect</strong> For 1 round, sharp spines sprout along the lash—it drops the nonlethal trait and Strikes additionally deal @Damage[1d6[bleed]] damage.</p>" } } };
+    const [entry] = compileActivations(whip);
+    const { weapon, strikeDamage } = entry.plan.item;
+    assert.deepEqual([weapon[0].property, weapon[0].value, weapon[0].mode, weapon[0].own, weapon[0].duration.value], ["weapon-traits", "nonlethal", "remove", true, 1]);
+    assert.deepEqual([strikeDamage[0].diceNumber, strikeDamage[0].dieSize, strikeDamage[0].category, strikeDamage[0].damageType, strikeDamage[0].own], [1, "d6", "persistent", "bleed", true]);
+    assert.equal(entry.plan.partial, undefined, "both sentences read");
+    const item = { name: "Stand-in Thorn Whip", uuid: "Actor.hero.Item.whip0000000001" };
+    assert.deepEqual(weaponEffectSource(weapon[0], { item }).system.rules, [{ key: "AdjustStrike", mode: "remove", property: "weapon-traits", value: "nonlethal", definition: ["item:id:whip0000000001"] }]);
+    assert.equal(strikeDamageEffectSource(strikeDamage[0], { item }).system.rules[0].selector, "whip0000000001-damage");
+    assert.deepEqual([weaponText(weapon[0]), strikeDamageText(strikeDamage[0])], ["The weapon loses nonlethal for 1 round", "+1d6 persistent bleed damage on the weapon's Strikes for 1 round"]);
+});

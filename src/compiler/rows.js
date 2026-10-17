@@ -471,12 +471,15 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
         const range = /\bYou increase the range increment of the (?:weapon|firearm|crossbow|bow)(?: to which [\w' ]+? is attached)? by (\d+) feet\b/i.exec(sentence);
         const thrown = /\bthe affixed weapon gains the thrown (\d+) feet weapon trait\b/i.exec(sentence);
+        // (The item's own weapon losing a trait for a while, "For 1 round, the weapon loses the nonlethal trait": that weapon, by its id.)
+        const loses = /\bthe weapon loses the (\w+) trait\b/i.exec(sentence);
         if (range) found.push({ property: "range-increment", value: Number(range[1]), definition: ["item:ranged"], duration: timeIn(sentence, duration) });
         else if (thrown) found.push({ property: "weapon-traits", value: `thrown-${thrown[1]}`, definition: ["item:melee"], duration: timeIn(sentence, duration) });
+        else if (loses) found.push({ property: "weapon-traits", value: loses[1].toLowerCase(), mode: "remove", own: true, definition: [], duration: timeIn(sentence, duration) });
         else continue;
         // ("or until you're no longer wielding the weapon, whichever comes first" is the same in practice; ", and when you make a thrown
         // Strike with it, it flies back …" says more.)
-        if (!/,\s*and\b/i.test(sentence.slice((range ?? thrown).index))) used.add(index);
+        if (!/,\s*and\b/i.test(sentence.slice((range ?? thrown ?? loses).index))) used.add(index);
     }
     return found;
 }
@@ -484,17 +487,22 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
 // Extra damage on its user's Strikes for a while, PF2e's DamageDice (a FlatModifier for a number): Martial Mayhem Mutagen's "your
 // melee Strikes deal 1d4 additional precision damage to Off-Guard creatures" → [{ diceNumber, dieSize } | { value }, category,
 // damageType, predicate, duration]. Its sentence stays on the note (what else it says, the GM's).
-const STRIKE_TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void";
-const STRIKE_EXTRA = new RegExp(String.raw`\byour (melee |ranged |unarmed )?Strikes deal (?:(\d+)d(\d+)|(\d+)) additional (?:(precision|persistent|splash) )?(?:(${STRIKE_TYPES}) )?damage(?: to (off-guard|frightened|prone|grabbed|flat-footed) creatures)?`, "i");
-function strikeDamageOf(sentences, duration) {
+// (Or the item's own weapon's, "your Strikes with the weapon deal 1d4 additional persistent bleed damage": that weapon, by its id.)
+const STRIKE_TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void|bleed";
+const STRIKE_EXTRA = new RegExp(String.raw`\byour (melee |ranged |unarmed )?Strikes( with the weapon)? deal (?:(\d+)d(\d+)|(\d+)) additional (?:(precision|persistent|splash) )?(?:(${STRIKE_TYPES}) )?damage(?: to (off-guard|frightened|prone|grabbed|flat-footed) creatures)?`, "i");
+function strikeDamageOf(sentences, duration, used = new Set()) {
     const found = [];
-    for (const sentence of sentences) {
+    for (const [index, sentence] of sentences.entries()) {
         if (/^\s*(?:If|When|Whenever)\b/i.test(sentence)) continue;
         const match = STRIKE_EXTRA.exec(sentence);
         if (!match) continue;
-        const [, range, count, faces, flat, category, type, condition] = match;
+        const [, range, own, count, faces, flat, category, type, condition] = match;
         const predicate = [...(range ? [`item:${range.trim().toLowerCase() === "unarmed" ? "category:unarmed" : range.trim().toLowerCase()}`] : []), ...(condition ? [`target:condition:${condition.toLowerCase() === "flat-footed" ? "off-guard" : condition.toLowerCase()}`] : [])];
-        found.push({ ...(count ? { diceNumber: Number(count), dieSize: `d${faces}` } : { value: Number(flat) }), category: category?.toLowerCase() ?? null, damageType: type?.toLowerCase() ?? null, predicate, duration: timeIn(sentence, duration) });
+        // (Bleed is always persistent.)
+        const kind = type?.toLowerCase() === "bleed" ? "persistent" : category?.toLowerCase() ?? null;
+        found.push({ ...(count ? { diceNumber: Number(count), dieSize: `d${faces}` } : { value: Number(flat) }), category: kind, damageType: type?.toLowerCase() ?? null, predicate, ...(own ? { own: true } : {}), duration: timeIn(sentence, duration) });
+        // (The weapon's own, a sentence of just that: read.)
+        if (own && /^\s*For (?:\d+|one|an?) \w+, your Strikes with the weapon deal [^,;]+ damage\.\s*$/i.test(sentence)) used.add(index);
     }
     return found;
 }
@@ -620,7 +628,7 @@ export function ownRow(item, { healing = true } = {}) {
     const speeds = speedsOf(sentences, duration, used);
     const senses = sensesOf(sentences, duration, used);
     const weapon = weaponAdjustOf(sentences, duration, used);
-    const strikeDamage = strikeDamageOf(sentences, duration);
+    const strikeDamage = strikeDamageOf(sentences, duration, used);
     const suppress = suppressOf(sentences, duration, used);
     if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length) return null;
     // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)

@@ -170,6 +170,9 @@ export function withItemData(html, item) {
     // (A balm used during Assisted Recovery, a third-party one naming its damage types a sentence before the flat check it gives the
     // creature touched: that check against persistent damage of those types, at the creature touched — the recovery reader's.)
     text = text.replace(/\bas part of your Assisted Recovery against ((?:\w+)(?:,? (?:or|and) \w+)*) damage\.(\s*)The creature (?:touched|you touch) (?:immediately )?attempts an? (@Check\[flat\|dc:\d+\](?:\{[^}]*\})?) to end the persistent damage\b/g, (whole, types, space, check) => `as part of your Assisted Recovery against ${types} damage.${space}A creature you touch immediately attempts a ${check} to end persistent ${types} damage`);
+    // (A weapon that sheds a trait and gains extra damage for a round, a third-party whip's activation: its own Strikes' damage and its
+    // trait gone, as the row reader takes a weapon's.)
+    text = text.replace(/\bFor (\d+) (rounds?|minutes?), [^.—–]*?[—–]\s*it (?:loses|drops) the (\w+) trait and (?:attacks|Strikes) (?:also |additionally )?deal @Damage\[(\d+d\d+)\[(\w+)\]\] damage\./g, (whole, count, unit, trait, dice, type) => `For ${count} ${unit}, the weapon loses the ${trait} trait. For ${count} ${unit}, your Strikes with the weapon deal ${dice} additional ${type === "bleed" ? "persistent bleed" : type} damage.`);
     // (A creature's own check modifier given as an inline roll ahead of its skill's name, a third-party alchemical creature's Shove: the
     // plain modifier, as the own-check reader takes it.)
     text = text.replace(/\bwith an? (?:\[\[\/r 1d20\+(\d+)\]\](?:\{[^}]*\})?|\+(\d+)) (?:Athletics|Acrobatics) modifier to its check\b/g, (whole, rolled, plain) => `with a +${rolled ?? plain} modifier`);

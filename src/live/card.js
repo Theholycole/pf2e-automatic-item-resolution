@@ -279,12 +279,17 @@ export function weaponText(adjust) {
     const which = adjust.definition?.includes("item:ranged") ? "ranged" : adjust.definition?.includes("item:melee") ? "melee" : "";
     if (adjust.property === "range-increment") return `+${adjust.value} feet to its ${which ? `${which} ` : ""}weapons' range increment${forTime(adjust.duration)}`;
     const thrown = /^thrown-(\d+)$/.exec(adjust.value);
+    // (The item's own weapon losing a trait: "The weapon loses nonlethal for 1 round".)
+    if (adjust.mode === "remove") return `${adjust.own ? "The weapon loses" : `Its ${which ? `${which} ` : ""}weapons lose`} ${adjust.value}${forTime(adjust.duration)}`;
     return `Its ${which ? `${which} ` : ""}weapons gain ${thrown ? `thrown ${thrown[1]} feet` : adjust.value}${forTime(adjust.duration)}`;
 }
 
 // That change's Effect: PF2e's AdjustStrike on those weapons.
+// (The item's own weapon, by its id on the actor: "Actor.abc.Item.def" → "def".)
+const ownId = (uuid) => /\.Item\.([A-Za-z0-9]+)$/.exec(String(uuid ?? ""))?.[1] ?? null;
 export function weaponEffectSource(adjust, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    const rule = { key: "AdjustStrike", mode: "add", property: adjust.property, value: adjust.value, definition: adjust.definition ?? [] };
+    const definition = adjust.own && ownId(item.uuid) ? [`item:id:${ownId(item.uuid)}`] : adjust.definition ?? [];
+    const rule = { key: "AdjustStrike", mode: adjust.mode ?? "add", property: adjust.property, value: adjust.value, definition };
     return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: [rule], duration: adjust.duration, flag: { weapon: adjust.property }, item, user, worldTime, initiative, moduleId });
 }
 
@@ -334,12 +339,12 @@ export function strikeDamageText(extra) {
     const kind = [extra.category, extra.damageType].filter(Boolean).join(" ");
     const range = (extra.predicate ?? []).find((option) => /^item:(?:melee|ranged|category:unarmed)$/.test(option))?.replace(/^item:(?:category:)?/, "");
     const against = (extra.predicate ?? []).find((option) => option.startsWith("target:condition:"))?.replace("target:condition:", "");
-    return `+${amount}${kind ? ` ${kind}` : ""} damage on ${range ? `${range} ` : ""}Strikes${against ? ` against ${against} creatures` : ""}${forTime(extra.duration)}`;
+    return `+${amount}${kind ? ` ${kind}` : ""} damage on ${extra.own ? "the weapon's " : range ? `${range} ` : ""}Strikes${against ? ` against ${against} creatures` : ""}${forTime(extra.duration)}`;
 }
 
 // Its Effect: PF2e's DamageDice on Strike damage (a FlatModifier for a number), with its predicate.
 export function strikeDamageEffectSource(extra, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    const common = { selector: "strike-damage", ...(extra.category ? { [extra.diceNumber ? "category" : "damageCategory"]: extra.category } : {}), ...(extra.damageType ? { damageType: extra.damageType } : {}), ...(extra.predicate?.length ? { predicate: extra.predicate } : {}), label: item.name ?? "Item" };
+    const common = { selector: extra.own && ownId(item.uuid) ? `${ownId(item.uuid)}-damage` : "strike-damage", ...(extra.category ? { [extra.diceNumber ? "category" : "damageCategory"]: extra.category } : {}), ...(extra.damageType ? { damageType: extra.damageType } : {}), ...(extra.predicate?.length ? { predicate: extra.predicate } : {}), label: item.name ?? "Item" };
     const rule = extra.diceNumber ? { key: "DamageDice", ...common, diceNumber: extra.diceNumber, dieSize: extra.dieSize } : { key: "FlatModifier", ...common, value: extra.value };
     return ownEffectSource({ name: "Strike damage", img: "icons/svg/sword.svg", words: strikeDamageText(extra), rules: [rule], duration: extra.duration, flag: { strikeDamage: true }, item, user, worldTime, initiative, moduleId });
 }
