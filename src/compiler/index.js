@@ -36,7 +36,7 @@ import { readTeaCeremony } from "./tea.js";
 import { readCounteract } from "./counteract.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { overUnverified, withoutUnverifiedLinks } from "./unverified-links.js";
-import { affixedTargeting, withPrimedNotes, withZeroHPNote } from "./primed.js";
+import { affixedTargeting, withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
@@ -127,7 +127,8 @@ function compileOne(given, options = {}) {
     if (leaves) return { ...leaves, item: itemInfo(item) };
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     const snare = snareZone(item, read);
-    if (snare) return { ...snare, item: itemInfo(item) };
+    // (Its condition for as long as a persistent damage lasts: Freezing Embrace Snare's clumsy.)
+    if (snare) return withWhilePersistent({ ...snare, item: itemInfo(item) }, plainText(item?.system?.description?.value));
     // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Noisome Garum's stench.)
     const aura = auraZonePlan(html, base, item.name);
     if (aura) return { ...aura, item: itemInfo(item) };
@@ -202,6 +203,8 @@ function compileOne(given, options = {}) {
     plan = affixedTargeting(withZeroHPNote(withPrimedNotes(plan, plainText(item?.system?.description?.value)), plainText(item?.system?.description?.value)), plainText(given?.system?.description?.value));
     // (Healing its text gives its user beside a linked Effect, when PF2e's data has none: Wine of the Blood.)
     plan = withStatedHealing(plan, item?.system?.description?.value);
+    // (A condition for as long as a persistent damage lasts: Freezing Embrace Snare's clumsy, src/compiler/primed.js.)
+    plan = withWhilePersistent(plan, plainText(item?.system?.description?.value));
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const { resist, speeds, senses, light, levelTemp, weapon, strikeDamage, firstDegree, suppress, ...rest } = plan;
     const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}) };

@@ -30,7 +30,7 @@ import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { saveOrPlan } from "./save-or.js";
 import { spellstrikePlan } from "./spellstrike.js";
-import { withPrimedNotes, withZeroHPNote } from "./primed.js";
+import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
 import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan } from "./covered-square.js";
@@ -210,6 +210,7 @@ function compileEach(item, options = {}) {
         plan = withZeroHPNote(withPrimedNotes(plan, plainText(activation.html)), plainText(activation.html));
         // (Healing its text gives its user beside a linked Effect, src/compiler/consumables.js: Kindler Cameo.)
         plan = withStatedHealing(plan, activation.html, html);
+        plan = withWhilePersistent(plan, plainText(activation.html));
         // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Arctic Worm Chitin Shield, Alluring
         // Lantern, Sandstorm Top — over a save at the creatures targeted once.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = auraZonePlan(activation.html, base, base.source?.name) ?? plan;

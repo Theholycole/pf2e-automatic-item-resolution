@@ -17,6 +17,7 @@ import { readPenalties } from "../../../pf2e-automatic-ability-resolution/src/co
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { plainText } from "./rows.js";
+import { withWhilePersistent } from "./primed.js";
 import { asAbility } from "./ability-shape.js";
 import { guardValues } from "./guards.js";
 
@@ -60,7 +61,10 @@ export function riderRow(text) {
 const merge = (...rows) => rows.reduce((all, row) => ({ ...all, effects: [...all.effects, ...row.effects], modifiers: [...all.modifiers, ...row.modifiers], ...(row.forcedMovement ? { forcedMovement: row.forcedMovement } : all.forcedMovement ? { forcedMovement: all.forcedMovement } : {}) }), none());
 
 // The bomb's riders: { success, criticalSuccess } rows, from its "On a hit" and "On a critical hit" sentences.
-export const bombRiders = (item) => hitRiders(plainText(item?.system?.description?.value));
+// (Spider Satchel's "…, and fascinates the target while the persistent damage lasts": the condition, its time a sentence of its own —
+// the ability module's condition for as long as that persistent damage lasts, src/compiler/primed.js.)
+const bombText = (item) => plainText(item?.system?.description?.value).replace(/,\s*and fascinates the target while the persistent damage lasts\./gi, ", and the target is Fascinated. It stays fascinated while the persistent damage lasts.");
+export const bombRiders = (item) => hitRiders(bombText(item));
 
 // Riders only some creatures take, with who: Ghost Charge's "A primary target that takes damage from a ghost charge becomes
 // Enfeebled 1 until the start of your next turn" (its vitality "harms only undead and creatures with void healing": those), Tallow
@@ -210,7 +214,7 @@ export function compileBomb(item) {
     const splash = Number(item.system?.splashDamage?.value) || 0;
     const save = bombSave(item);
     if (!splash && !save && !hasRow(riders.success) && !hasRow(riders.criticalSuccess)) return null;
-    return guardValues({
+    return withWhilePersistent(guardValues({
         modelVersion: MODEL_VERSION,
         source: { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type },
         rank: 1,
@@ -226,5 +230,5 @@ export function compileBomb(item) {
         },
         item: { type: item.type, group: "bomb", level: Number(item.system?.level?.value) || 0, splash: splash ? { value: splash, type: item.system?.damage?.damageType ?? "untyped" } : null, save, ...(gated ? { riderOnly: gated.only } : {}) },
         ...(gated?.notes.length ? { notes: gated.notes } : {})
-    });
+    }), bombText(item));
 }

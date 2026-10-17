@@ -3373,6 +3373,31 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
         await until(() => wearer.itemTypes.effect.some((effect) => effect.system.rules.some((rule) => rule.key === "DamageDice" && rule.diceNumber === 2 && rule.dieSize === "d6" && rule.damageType === "electricity")), "2d6 electricity on its melee Strikes", { timeout: 8000 });
         return { effects: wearer.itemTypes.effect.map((effect) => effect.name) };
+    },
+
+    // Spider Satchel (Lesser): after PF2e's damage (its persistent poison) the bomb card's Fascinated, for as long as the poison lasts.
+    async satchelFascinated(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Satchel Thrower", { type: "character", x: 12, y: 9 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Satchel Target", { x: 14, y: 9, ac: 1, alliance: "opposition" });
+        const bomb = await give(thrower, "Spider Satchel (Lesser)");
+        await bomb.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await throwerToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(thrower, bomb);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        const since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const card = await messageAfter(since, itemCard("bomb"));
+        await foe.applyDamage({ damage: rolled.rolls[0], token: foeToken });
+        const poison = () => foe.itemTypes.condition.find((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "poison");
+        await until(() => poison(), "the persistent poison", { timeout: 6000 });
+        await game.modules.get(NS).api.live.apply(card.id, { included: [] });
+        await until(() => foe.hasCondition("fascinated"), `Fascinated (${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 8000 });
+        await poison().delete();
+        await until(() => !foe.hasCondition("fascinated"), "Fascinated gone with the poison", { timeout: 10000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
