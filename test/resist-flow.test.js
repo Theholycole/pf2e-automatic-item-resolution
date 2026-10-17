@@ -80,7 +80,8 @@ test("a Speed of a new kind: PF2e's BaseSpeed on the land Speed or a number, for
     // feet or your Speed, whichever is lower".
     assert.equal(compileActivations(source("Buoyant Buckle"))[0].plan.item.speeds[0].value, `floor(${LAND}*0.5)`);
     assert.equal(compileActivations(source("Soaring Wings (Major)"))[0].plan.item.speeds[0].value, `max(20,${LAND})`);
-    const mudwings = compileItem(source("Thrice-Fried Mudwings"));
+    // (Thrice-Fried Mudwings' meal: the first of its ways, src/compiler/ways.js.)
+    const mudwings = compileItem(source("Thrice-Fried Mudwings")).ways[0].plan;
     assert.deepEqual([mudwings.item.speeds[0].value, mudwings.item.speeds[0].duration.value], [`min(30,${LAND})`, 10]);
     // "granting you a fly Speed of 25 feet or your land Speed, whichever is slower. This effect lasts for 5 minutes" (Winged).
     const winged = compileActivations(source("Winged"))[0].plan.item.speeds[0];

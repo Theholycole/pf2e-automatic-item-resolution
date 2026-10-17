@@ -14,16 +14,17 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 240,
+   "none": 237,
    "resolves": 740,
    "builtin:readied-bonus": 21,
    "builtin:zone": 87,
    "builtin:item-action": 12,
    "note-only": 188,
-   "partial": 80,
+   "partial": 79,
    "builtin:counteract": 28,
    "builtin:no-effect": 53,
    "builtin:reroll": 2,
+   "builtin:ways": 4,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
   }
@@ -38,10 +39,11 @@
     "note-only": 92,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 40,
+    "partial": 39,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
+    "builtin:ways": 1,
     "builtin:save-bonus": 1
    },
    "mechanisms": {
@@ -141,7 +143,7 @@
    "count": 115,
    "results": {
     "resolves": 110,
-    "none": 3,
+    "builtin:ways": 3,
     "builtin:zone": 1,
     "note-only": 1
    },
@@ -308,7 +310,7 @@
    "count": 277,
    "resolves": 169,
    "gaps": 0,
-   "none": 24
+   "none": 21
   },
   "linked-effect": {
    "count": 393,
@@ -350,7 +352,7 @@
    "count": 156,
    "resolves": 60,
    "gaps": 0,
-   "none": 33
+   "none": 30
   },
   "counteract": {
    "count": 79,
@@ -380,8 +382,8 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 315,
-   "item": 637,
+   "none": 312,
+   "item": 636,
    "fortune": 23,
    "zone": 87,
    "expose": 89,
@@ -391,7 +393,8 @@
    "counteract": 28,
    "reroll": 2,
    "coat": 45,
-   "strike": 8
+   "strike": 8,
+   "ways": 4
   },
   "byCategory": {
    "other": {
@@ -399,13 +402,14 @@
     "none": 151,
     "later": 12,
     "save": 89,
-    "item": 218,
+    "item": 217,
     "zone": 9,
     "fortune": 7,
     "strike": 3,
     "expose": 3,
     "action": 1,
     "counteract": 5,
+    "ways": 1,
     "coat": 3
    },
    "potion": {
@@ -436,7 +440,7 @@
    "poison": {
     "expose": 63,
     "coat": 42,
-    "none": 3,
+    "ways": 3,
     "zone": 1,
     "later": 3,
     "save": 2,
@@ -482,7 +486,7 @@
    }
   },
   "noCard": {
-   "no-plan": 240,
+   "no-plan": 237,
    "triggered": 21,
    "gm": 53,
    "other": 1
@@ -5706,7 +5710,9 @@
     "damage",
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Antidote (Major)",
@@ -13846,7 +13852,9 @@
     "damage",
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Dimensional Cleavestone",
@@ -14889,14 +14897,9 @@
     "trigger",
     "duration"
    ],
-   "result": "partial",
-   "kind": "check",
-   "unread": [
-    "Activate Interact You intercept the attack with a pair of your wings.",
-    "You gain resistance 15 against physical damage for the triggering attack only, shattering one set of your wings in the process.",
-    "The first time you use this Activation, your fly Speed becomes 15 feet, or half your Speed, whichever is lower, for the duration."
-   ],
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Brass Dragon's Breath Potion (Young)",
@@ -19880,7 +19883,9 @@
     "damage",
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Ghost Dust",

@@ -39,6 +39,7 @@ import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
 import { damageMaterial } from "./materials.js";
+import { waysPlan } from "./ways.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -121,6 +122,9 @@ function compileOne(given, options = {}) {
         const row = rowPlan(item, base);
         if (row && !row.noteOnly) plan = row;
     }
+    // (Used in one of several ways, each its own Activate block, src/compiler/ways.js: Toadskin Salve's reactions — over nothing, a note
+    // or a reading of only part of it.)
+    if (!plan || plan.noteOnly || plan.partial || plan.builtin === "no-effect") plan = waysPlan(item, base, options) ?? plan;
     // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
     if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(item, options) ?? plan;
     // (The ability compiler's cast, with what its words say and it left out: on its user, a DC, a modifier.)
