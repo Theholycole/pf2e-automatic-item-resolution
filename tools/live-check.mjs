@@ -2361,6 +2361,59 @@ export const cases = {
         await rollAndApply(check);
         await until(() => ["grabbed", "restrained"].some((slug) => foe.hasCondition(slug)), "grabbed (Fortitude DC far below +12)", { timeout: 10000 });
         return { conditions: foe.itemTypes.condition.map((condition) => condition.slug) };
+    },
+
+    // Medic's Shield's Adrenaline Boost: PF2e's Administer First Aid on a dying ally (its user's Medicine raised so it succeeds); the
+    // success ends Dying, heals 6d6+20 and Quickens.
+    async medicsShield(scene) {
+        const { actor: medic, token: medicToken } = await creature(scene, "Shield Medic", { type: "character", x: 2, y: 5 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Fallen Ally", { type: "character", x: 3, y: 5 });
+        await ally.update({ "system.attributes.hp.value": 0 });
+        await ally.increaseCondition("dying");
+        await medic.createEmbeddedDocuments("Item", [{ name: `${PREFIX} sure hands`, type: "effect", system: { rules: [{ key: "FlatModifier", selector: "medicine", value: 40 }], duration: { value: -1, unit: "unlimited", expiry: null, sustained: false } } }]);
+        const shield = await give(medic, "Medic's Shield");
+        await medicToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, itemCard("item-action"), { what: "the First Aid card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        await until(() => ally.hasCondition("quickened"), "Quickened after the First Aid", { timeout: 15000 });
+        assert(!ally.hasCondition("dying"), "no longer dying");
+        return { hp: ally.system.attributes.hp.value, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Words of Wisdom: Deception picked on the card — its +1 item bonus and its critical failures made failures, beside Diplomacy's +1.
+    async wordsPick(scene) {
+        const { actor: speaker, token: speakerToken } = await creature(scene, "Phrase Speaker", { type: "character", x: 5, y: 5 });
+        const tattoo = await give(speaker, "Words of Wisdom (Lesser)");
+        await speakerToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(tattoo.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the tattoo's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, skillPick: 1 });
+        const has = (key, selector) => speaker.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === key && [].concat(rule.selector).includes(selector)));
+        await until(() => has("FlatModifier", "deception") && has("AdjustDegreeOfSuccess", "deception") && has("AdjustDegreeOfSuccess", "diplomacy"), "Deception's bonus and better degrees", { timeout: 8000 });
+        await until(() => has("FlatModifier", "diplomacy"), "Diplomacy's +1", { timeout: 8000 });
+        return { effects: speaker.itemTypes.effect.map((effect) => effect.name) };
+    },
+
+    // North Wind's Night Verse: a –5-foot status penalty to the targeted creature's Speeds for 1 round.
+    async northWind(scene) {
+        const { actor: wielder, token: wielderToken } = await creature(scene, "Verse Wielder", { type: "character", x: 8, y: 5 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Chilled Foe", { x: 9, y: 5, alliance: "opposition" });
+        const verse = await give(wielder, "North Wind's Night Verse");
+        await wielderToken.object?.control?.();
+        const before = foe.system.movement?.speeds?.land?.value ?? foe.system.attributes?.speed?.total;
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(verse.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the verse's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await applyAbilityCard(await messageAfter(since, abilitySaveCard, { what: "the ability module's card" }));
+        const speed = () => foe.system.movement?.speeds?.land?.value ?? foe.system.attributes?.speed?.total;
+        await until(() => speed() === before - 5, `Speed ${before} → ${before - 5} (now ${speed()})`, { timeout: 10000 });
+        assert(!wielder.itemTypes.effect.some((effect) => /Night Verse/.test(effect.name)), "not on its wielder");
+        return { before, after: speed() };
     }
 };
 
