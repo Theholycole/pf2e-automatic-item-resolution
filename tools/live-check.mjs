@@ -2328,6 +2328,39 @@ export const cases = {
         const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
         assert(/1d4/.test(formula) && /precision/.test(JSON.stringify(rolled.rolls)), `+1d4 precision in PF2e's roll (${formula})`);
         return { formula };
+    },
+
+    // Clockwork Helm: its card offers its user's best ranged Strike's modifier (a shortbow) for the beam's attack.
+    async helmRanged(scene) {
+        const { actor: tinker, token: tinkerToken } = await creature(scene, "Helm Tinker", { type: "character", x: 12, y: 19 });
+        const bow = await give(tinker, "Shortbow");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        const helm = await give(tinker, "Clockwork Helm");
+        await tinkerToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(helm.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the helm's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const strike = tinker.system.actions.find((action) => action.item?.id === bow.id);
+        assert(choices.some((choice) => choice.kind === "ranged" && choice.modifier === strike.totalModifier), `the shortbow's ${strike?.totalModifier} offered (${JSON.stringify(choices)})`);
+        return { choices };
+    },
+
+    // Octopus Potion (Lesser): the arms' Grapple at +12, on the ability module's card at the creature targeted.
+    async octopusGrapple(scene) {
+        const { actor: drinker, token: drinkerToken } = await creature(scene, "Octopus Drinker", { type: "character", x: 15, y: 19 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Octopus Foe", { x: 16, y: 19, alliance: "opposition", save: -30 });
+        const potion = await give(drinker, "Octopus Potion (Lesser)");
+        await drinkerToken.object?.control?.();
+        let since = Date.now();
+        await potion.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the potion's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
+        await rollAndApply(check);
+        await until(() => ["grabbed", "restrained"].some((slug) => foe.hasCondition(slug)), "grabbed (Fortitude DC far below +12)", { timeout: 10000 });
+        return { conditions: foe.itemTypes.condition.map((condition) => condition.slug) };
     }
 };
 
