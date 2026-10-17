@@ -2253,6 +2253,21 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { rows: rows.map((row) => ({ ticked: row.id === bless.id, dc: 5, rank: 1 })) });
         await until(() => !foe.items.get(bless.id), "Bless counteracted", { timeout: 8000 });
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Magical Medal (Phoenix's Fire): its dying user regains 1 Hit Point and is no longer dying, Wounded unchanged.
+    async phoenixMedal(scene) {
+        const { actor: holder } = await creature(scene, "Medal Holder", { x: 15, y: 11, hp: 0 });
+        await holder.increaseCondition("dying");
+        const medal = await give(holder, "Magical Medal (Phoenix's Fire)");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(medal.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the medal's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => !holder.hasCondition("dying"), "no longer dying", { timeout: 8000 });
+        assert(holder.system.attributes.hp.value === 1, `1 Hit Point (${holder.system.attributes.hp.value})`);
+        assert((holder.getCondition("wounded")?.value ?? 0) === 0, `Wounded unchanged (${holder.getCondition("wounded")?.value})`);
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
