@@ -206,7 +206,7 @@ export function speedEffectSource(speed, { item = {}, user = {}, worldTime = 0, 
 export function recoveryText(recovery) {
     if (recovery.choose) return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent damage of its type (picked below)`;
     const types = recovery.types.length > 1 ? `${recovery.types.slice(0, -1).join(", ")} or ${recovery.types.at(-1)}` : recovery.types[0];
-    return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent ${types} damage`;
+    return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent ${types} damage${recovery.who === "targets" ? ", for the creature touched (targeted)" : ""}`;
 }
 
 // One of the card's own Effects (its resistance, Speed or vision): PF2e's rules for the item's time (unlimited with none),

@@ -79,7 +79,12 @@ export function readOwnCheck(given) {
         const maneuver = OWN_MANEUVER.exec(sentence);
         if (maneuver) {
             const slug = ACTION_SLUGS[(maneuver[1] ?? maneuver[3]).toLowerCase()] ?? (maneuver[1] ?? maneuver[3]).toLowerCase();
-            return { kind: "maneuver", slug, modifier: Number(maneuver[2] ?? maneuver[4]), notes };
+            // (At each creature along a line a released creature charges down, the line's length from the text; extra damage of its own
+            // on a critical success, when the text gives one for that maneuver.)
+            const line = /\bany creature (?:in|along) its (?:path|way)\b/i.test(sentence) ? /\b(\d+)-foot line\b/i.exec(text)?.[1] : null;
+            const critical = new RegExp(String.raw`\bCreatures (?:that|whom) it critically (?:succeeds|beats) (?:at|with) its (?:check|roll) to ${maneuver[1] ?? maneuver[3]} (?:also|additionally) take (\d+d\d+) (${TYPES}) damage\b`, "i").exec(text);
+            const left = notes.filter((note) => !(critical && note.includes(critical[0])) && !(line && /^The [\w' -]+? charges in an? \d+-foot line\.$/i.test(note)) && !/^Activate\b/.test(note));
+            return { kind: "maneuver", slug, modifier: Number(maneuver[2] ?? maneuver[4]), notes: left, ...(line ? { line: Number(line) } : {}), ...(critical ? { critical: { formula: critical[1], type: critical[2].toLowerCase() } } : {}) };
         }
         const attack = OWN_ATTACK.exec(sentence);
         if (attack) return { kind: "attack", range: attack[1]?.toLowerCase() ?? null, modifier: Number(attack[2] ?? attack[3]), formula: attack[4].replace(/\s+/g, ""), category: attack[5] ? "persistent" : null, type: attack[6].toLowerCase(), notes };
@@ -103,7 +108,10 @@ export function ownCheckPlan(text, base, options = {}) {
         const at = (action) => ({ ...action.resolution, check: { ...action.resolution.check, modifier: read.modifier } });
         // (One of several: each one's resolution, picked on the card — plan.checkChoices [{ label, resolution }].)
         const choices = (read.slugs ?? []).map((slug) => options.basicActions?.[slug]).filter((action) => action?.resolution?.check && !action.builtin);
-        return { ...common, targeting: { ...(basic.targeting ?? {}), target: "1 creature" }, resolution: at(basic), ...(choices.length > 1 ? { checkChoices: choices.map((action, index) => ({ label: read.slugs[index].charAt(0).toUpperCase() + read.slugs[index].slice(1), resolution: at(action) })) } : {}) };
+        // (A critical success's extra damage: shared, on that row.)
+        const withCritical = (resolution) => (read.critical ? { ...resolution, sharedDamage: { rollOnce: false, components: [{ id: "critical", formula: read.critical.formula, type: read.critical.type, category: null }] }, outcomes: { ...resolution.outcomes, criticalSuccess: { ...(resolution.outcomes?.criticalSuccess ?? none()), damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["critical"] } } } } : resolution);
+        const targeting = read.line ? { target: `each creature in a ${read.line}-foot line, in order`, range: null, area: { type: "line", value: read.line } } : { ...(basic.targeting ?? {}), target: "1 creature" };
+        return { ...common, targeting, resolution: withCritical(at(basic)), ...(choices.length > 1 ? { checkChoices: choices.map((action, index) => ({ label: read.slugs[index].charAt(0).toUpperCase() + read.slugs[index].slice(1), resolution: withCritical(at(action)) })) } : {}) };
     }
     const component = { id: "0", formula: read.formula, type: read.type, category: read.category };
     // (A condition on any hit, Clockwork Helm's Drained 2: the bombs' rider reader.)

@@ -40,7 +40,8 @@ export function readRecovery(text) {
         const types = [...new Set(match[2].toLowerCase().split(/,? (?:or|and) |, /).map((word) => word.trim()).filter(Boolean))];
         const lowered = LOWER_TO.exec(plain);
         const dc = match[1] ? Number(match[1]) : lowered ? Number(lowered[1] ?? lowered[2]) : LOWER.test(plain) ? 10 : null;
-        return { types, dc };
+        // (Another creature's, the one its user touches: the creatures the presser targets, whoever else the item's Effect is for.)
+        return { types, dc, ...(/^\s*(?:A creature you touch|The creature touched)\b/i.test(sentence) ? { who: "targets" } : {}) };
     }
     return null;
 }

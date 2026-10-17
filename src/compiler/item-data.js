@@ -167,6 +167,12 @@ export function withItemData(html, item) {
     const radius = /\bThe radius of the burst is (\d+) feet\.\s*/i.exec(text);
     const mistTime = /\bThe mist lasts for (\d+ (?:minutes?|rounds?)) or until (?:dispersed|dissipated) by a strong wind\.\s*/i.exec(text);
     if (radius && mistTime) text = text.replace(/\bcreates an opaque mist in a burst centered on one corner of your space\. Creatures within that area are concealed, and all other creatures are concealed to them\./i, `creates an opaque mist in a @Template[burst|distance:${radius[1]}] centered on one corner of your space for ${mistTime[1]}. Creatures within the mist are Concealed, and all other creatures are concealed to them.`).replace(mistTime[0], "A strong wind disperses it. ").replace(radius[0], "");
+    // (A balm used during Assisted Recovery, a third-party one naming its damage types a sentence before the flat check it gives the
+    // creature touched: that check against persistent damage of those types, at the creature touched — the recovery reader's.)
+    text = text.replace(/\bas part of your Assisted Recovery against ((?:\w+)(?:,? (?:or|and) \w+)*) damage\.(\s*)The creature (?:touched|you touch) (?:immediately )?attempts an? (@Check\[flat\|dc:\d+\](?:\{[^}]*\})?) to end the persistent damage\b/g, (whole, types, space, check) => `as part of your Assisted Recovery against ${types} damage.${space}A creature you touch immediately attempts a ${check} to end persistent ${types} damage`);
+    // (A creature's own check modifier given as an inline roll ahead of its skill's name, a third-party alchemical creature's Shove: the
+    // plain modifier, as the own-check reader takes it.)
+    text = text.replace(/\bwith an? (?:\[\[\/r 1d20\+(\d+)\]\](?:\{[^}]*\})?|\+(\d+)) (?:Athletics|Acrobatics) modifier to its check\b/g, (whole, rolled, plain) => `with a +${rolled ?? plain} modifier`);
     // (Wind Ocarina's gusts: "The area is difficult terrain to creatures attempting to move through it", difficult terrain.)
     text = text.replace(/\bThe area is difficult terrain to creatures attempting to move through it\./g, "The area is difficult terrain.");
     // (Allies who Stand at once, Core Bugle's Reveille "You and all allies within a 30-foot emanation can immediately Stand as a free action":

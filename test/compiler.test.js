@@ -448,3 +448,19 @@ test("a condition's penalty ignored for a while: Chilled Fire Noodles' Fatigued 
     const [ring] = compileActivations(item("Ring of the Weary Traveler"));
     assert.deepEqual(ring.plan.item.suppress.map((entry) => [entry.slug, entry.duration.value, entry.duration.unit]), [["fatigued", 10, "minutes"]]);
 });
+
+// (Stand-ins in this module's own words for third-party alchemical items: their texts stay out of the repository.)
+const standIn = (name, body, level = 4) => ({ name, type: "consumable", system: { category: "other", level: { value: level }, traits: { value: ["alchemical", "consumable"] }, description: { value: body } } });
+
+test("third-party wordings: a balm's flat check for the creature touched during Assisted Recovery, a charging creature's Shove at its own +N down a line, a candy's bonus while chewed with its second use a note", async () => {
+    const { compileBasicActions, BASIC_ACTIONS } = await import("../../pf2e-automatic-ability-resolution/src/compiler/index.js");
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    const balm = compileItem(standIn("Stand-in Salve", "<p><strong>Activate</strong> Assisted Recovery (manipulate)</p><p>This salve stings. You can Activate the salve as part of your Assisted Recovery against cold or sonic damage. The creature touched attempts a @Check[flat|dc:5] to end the persistent damage, and on a failure it carries on.</p>"));
+    assert.deepEqual([balm.item.recipient, balm.item.recovery], ["targets", { types: ["cold", "sonic"], dc: 5, who: "targets" }]);
+    const beast = compileItem(standIn("Stand-in Beast Jar", "<p><strong>Activate</strong> Interact</p><p>A beast springs from the jar and runs down a @Template[type:line|distance:30]. It has to attempt to Shove any creature along its way with a [[/r 1d20+12]]{+12} Athletics modifier to its check, flinging them aside. Creatures whom it critically beats with its roll to Shove additionally take 1d8 bludgeoning damage.</p>"), { basicActions });
+    assert.deepEqual([beast.ownCheck.kind, beast.ownCheck.modifier, beast.resolution.check.statistic, beast.targeting.area], ["maneuver", 12, "athletics", { type: "line", value: 30 }]);
+    assert.deepEqual([beast.resolution.sharedDamage.components[0].formula, beast.resolution.outcomes.criticalSuccess.damage.sourceComponentIds, beast.resolution.outcomes.success.damage.mode], ["1d8", ["critical"], "none"]);
+    const candy = compileItem(standIn("Stand-in Jerky", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><p>While you're chewing this jerky, for up to 5 minutes, you have a +2 item bonus to your damage rolls with melee weapons.</p><p><strong>Secondary Effect</strong> Swallow it to feel full.</p>"));
+    assert.deepEqual(candy.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.value, modifier.duration.unit]), [["strike-damage", 2, "item", ["item:melee"], 5, "minutes"]]);
+    assert.deepEqual(candy.unread, ["Secondary Effect Swallow it to feel full."]);
+});

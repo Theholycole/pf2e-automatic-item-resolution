@@ -362,7 +362,8 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     if (state.plan.item?.rune && !state.plan.item.rune.own && !state.weapons?.length) throw new Error(`${state.user.name} has no weapon for ${state.item.name}.`);
     // (A condition it lowers on others: the creatures the presser targets, before anything is applied.)
     const reduce = state.plan.item?.reduce ?? [];
-    const others = reduce.some((entry) => entry.who === "targets") ? await targetedCreatures(targets) : [];
+    // (Or its flat check, the creature its user touches: Nettle Balm's.)
+    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" ? await targetedCreatures(targets) : [];
     // ("Creatures of your choice": none targeted is its user alone.)
     if (reduce.some((entry) => entry.who === "targets" && !entry.optional) && !others.length) throw new Error("Target the creatures it helps first, then press Apply.");
     // (One of several conditions, as picked.)
@@ -522,7 +523,12 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // lower — Quenching Potion's 10 — then the condition's own DC again if it stays.)
     if (state.plan.item?.recovery) {
         const recovery = state.plan.item.recovery;
-        lines.push(...await recover(target.actor, recipient.name, recovery.choose ? { ...recovery, choose: false, types: [recovery.types[state.recoveryType ?? 0] ?? recovery.types[0]] } : recovery));
+        const picked = recovery.choose ? { ...recovery, choose: false, types: [recovery.types[state.recoveryType ?? 0] ?? recovery.types[0]] } : recovery;
+        // (Another creature's, when the card's recipient is its user: each creature targeted.)
+        const theirs = recovery.who === "targets" && state.plan.item?.recipient !== "targets";
+        const creatures = theirs ? others : [{ actor: target.actor, name: recipient.name }];
+        if (!creatures.length) lines.push("Its flat check is for the creature touched: target it and use the card again, or roll it by hand.");
+        for (const creature of creatures) lines.push(...await recover(creature.actor, creature.name, picked));
     }
     // (Restored outright: Elixir of Rejuvenation's maximum Hit Points — PF2e's healing of what's missing — and its afflictions of a
     // level or lower, PF2e's affliction items, deleted.)

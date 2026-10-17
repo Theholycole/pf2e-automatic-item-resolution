@@ -287,7 +287,10 @@ function modifiersOf(sentences, duration, used = new Set()) {
     const pattern = /\b(?:you (?:gain|get|have|receive|take|suffer)|grants? you|granting you)(?: an?)? ([+-])(\d+)(-foot)? (?:(item|status|circumstance) )?(bonus|penalty) (?:to|on) ([^.;]+?)(?=(?: for (?:\d+|one|an?) \w+| until\b| while\b| during (?:those|these|the|that|this)\b| for (?:this|that|the) (?:movement|move|Stride)\b|,? (?:but|which|though|unless|if)\b|,? and (?:you|your)\b| as long as\b|;|\.|$))/gi;
     for (const [index, whole] of sentences.entries()) {
         // ("When you Activate this fulu, you gain …", "Upon drinking …,": the use itself, not a condition.)
-        const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "");
+        // (A candy's time, said as while it's chewed "for up to" a time: its most.)
+        const sentence = whole.replace(/^\s*(?:When|After|Upon|Once) (?:you )?(?:activate|drink|consume|eat|imbibe|apply|use|chew|inhale)\w*\b[^,]*,\s*/i, "")
+            .replace(/^\s*While you're (?:chewing|sucking on) [^,]+,\s*/i, "")
+            .replace(/\bfor up to (\d+|one|an?) (rounds?|minutes?|hours?)\b/gi, "for $1 $2");
         // ("While the effect lasts, you gain …", "During this time, …": its time, not a condition.)
         const said = sentence.replace(/^\s*(?:While (?:the|this|its) (?:effect|elixir|potion|benefit)s? lasts?|While (?:it's |it is )?activated|While this effect is active|During this time|For the duration),\s*/i, "")
             // ("You Stride twice and gain a +10-foot item bonus to your Speed …", Quick Runner's Shirt: the same "you".)
@@ -329,6 +332,13 @@ function modifiersOf(sentences, duration, used = new Set()) {
                 used.add(index);
                 if (both) modifiers.push({ selector: "land-speed", value, ...timed }, { selector: `${both[1].toLowerCase()}-speed`, value, ...timed });
                 else modifiers.push({ selector: /s$/i.test(speeds[1]) ? "all-speeds" : "land-speed", value, ...timed });
+                continue;
+            }
+            // (A bonus to damage with one kind of weapon, "damage rolls with melee weapons": its Strikes' damage, by PF2e's item option.)
+            const weaponDamage = /^(?:your )?damage rolls with (melee|ranged) weapons$/i.exec(list.trim());
+            if (weaponDamage) {
+                used.add(index);
+                modifiers.push({ selector: "strike-damage", value, ...timed, predicate: [`item:${weaponDamage[1].toLowerCase()}`] });
                 continue;
             }
             // A scope after the list ("… against diseases", "… to Climb"): a predicate when PF2e has one, else left out.
@@ -569,7 +579,7 @@ export function allyAreaRow(text, duration = null) {
 // Items whose text isn't one use with one result: activated on a trigger, an affliction's stages, a second
 // effect, a choice of ways to use it ("may be applied to armor, a weapon, or mixed into an elixir"), or one
 // that links PF2e Effects (those Effects hold its rules).
-const NOT_ONE_RESULT = /\bStage 1\b|\bSecondary Effect\b|\broll (?:a |an )?(?:d\d+|\d+d\d+)\b[^.]*\btable\b|\bon the (?:following )?table\b|\b(?:may|can) be (?:applied|used|mixed|poured)\b[^.]*\bor\b|\bin (?:either|one) of the following ways\b|\bchoose one\b|\b(?:changes|differs|varies) depending on (?:your usage|how you use)/i;
+const NOT_ONE_RESULT = /\bStage 1\b|\broll (?:a |an )?(?:d\d+|\d+d\d+)\b[^.]*\btable\b|\bon the (?:following )?table\b|\b(?:may|can) be (?:applied|used|mixed|poured)\b[^.]*\bor\b|\bin (?:either|one) of the following ways\b|\bchoose one\b|\b(?:changes|differs|varies) depending on (?:your usage|how you use)/i;
 // A talisman's or an activation's Trigger, Requirements and Frequency say when it's used, not what it does: taken out before
 // reading ("Trigger You become Blinded …" isn't a condition it gives). Each runs to its sentence's end or to "Effect".
 const WHEN_CLAUSES = /\b(?:Trigger|Requirements?|Frequency)\b[^.]*?(?=\bEffect\b|\.(?:\s|$)|$)\.?/g;
@@ -589,7 +599,10 @@ export function ownRow(item, { healing = true } = {}) {
     // spirit damage Effect You gain resistance 5 to the triggering damage type" — chosen of those, on the card.)
     // (A banner's ally, the creature the presser targets — src/compiler/consumables.js grantsOthers: Zealous Banner's "An ally within
     // the banner's aura becomes Quickened for 1 round".)
-    const text = plainText(html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ")
+    // (A second use after the first, a candy's "Secondary Effect" once it's swallowed or bitten: the first read, the second a note.)
+    const split = /<strong>\s*Secondary Effect\s*<\/strong>|\bSecondary Effect\b/i.exec(html);
+    const secondary = split ? plainText(html.slice(split.index)).trim() : null;
+    const text = plainText(split ? html.slice(0, split.index) : html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ")
         .replace(/\bAn? (?:ally|creature) within (?:the|your) banner's aura becomes\b/gi, "You become")
         .replace(/\bTrigger You would take ((?:\w+, )*\w+,? or \w+) damage\s+Effect (You gain resistance \d+ to the) triggering (damage type\b[^.]*\.)/i, "Effect $2 chosen $3 Choose $1.")
         .replace(WHEN_CLAUSES, " ").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
@@ -621,6 +634,7 @@ export function ownRow(item, { healing = true } = {}) {
     // ("allowing you to move with greater speed": flavor, not a Speed.)
     // (Nor when it may be used, "You can use this action while Unconscious".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
+    if (secondary) unread.push(secondary);
     return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
 }
 
