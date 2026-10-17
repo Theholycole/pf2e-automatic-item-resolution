@@ -2997,6 +2997,83 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
         await until(() => user.system.attributes.hp.temp === 35, `35 temporary Hit Points (${user.system.attributes.hp.temp})`, { timeout: 8000 });
         return { temp: user.system.attributes.hp.temp };
+    },
+
+    // Alchemists+ Compressed Gogiteth: its +18 Strikes along its Strides, the ability module's attack card at the three creatures targeted.
+    async tpGogiteth(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Gogiteth Releaser", { type: "character", x: 4, y: 13 });
+        const foes = [];
+        for (const x of [5, 6, 7]) foes.push((await creature(scene, `Gogiteth Foe ${x}`, { x, y: 13, alliance: "opposition" })).token);
+        const flask = await give(user, "Compressed Gogiteth", "pf2e-team-plus-alchemists.pf2e-items");
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await flask.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the flask's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: foes.map((foe) => foe.uuid) });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the attack card" });
+        const state = attack.flags["pf2e-automatic-ability-resolution"].card;
+        const check = state.plan.resolution.check;
+        assert(check.modifier === 18 && check.against?.statistic === "ac", `+18 against AC (${JSON.stringify(check)})`);
+        assert((state.targets ?? []).length === 3, `at all three (${(state.targets ?? []).length})`);
+        return { targets: state.targets.length };
+    },
+
+    // Alchemists+ Fume Ammunition: its readied Strike; on PF2e's hit (AC 1) the target is Dazzled and the damage roll carries 3d4 persistent acid.
+    async tpFumeAmmo(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Fume Archer", { type: "character", x: 0, y: 11 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Fume Target", { x: 3, y: 11, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Fume Ammunition", "pf2e-team-plus-alchemists.pf2e-items");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(archer, bow);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        await until(() => foe.hasCondition("dazzled"), "dazzled on the hit", { timeout: 10000 });
+        since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
+        assert(/3d4/.test(formula) && /persistent/.test(formula) && /acid/.test(formula), `3d4 persistent acid on the roll (${formula})`);
+        return { formula };
+    },
+
+    // Alchemists+ Encapsulated Titanosaur: the spell module casts Earthquake at rank 8 (DC 35) at the creatures targeted.
+    async tpTitanosaur(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: user, token: userToken } = await creature(scene, "Titanosaur Keeper", { type: "character", x: 5, y: 17, level: 15 });
+        const { token: one } = await creature(scene, "Quake Foe One", { x: 7, y: 17, alliance: "opposition" });
+        const { token: two } = await creature(scene, "Quake Foe Two", { x: 8, y: 17, alliance: "opposition" });
+        const capsule = await give(user, "Encapsulated Titanosaur", "pf2e-team-plus-alchemists.pf2e-items");
+        await userToken.object?.control?.();
+        const since = Date.now();
+        await capsule.consume();
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [one.uuid, two.uuid] });
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        const flag = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        assert(flag.rank === 8, `rank 8 (${flag.rank})`);
+        return { flag, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Alchemists+ Surfing Grass: its user, Prone, stands at the end of the Crawl (the extra distance a note).
+    async tpSurfingGrass(scene) {
+        const { actor: crawler } = await creature(scene, "Grass Crawler", { type: "character", x: 6, y: 11 });
+        await crawler.increaseCondition("prone");
+        const grass = await give(crawler, "Surfing Grass", "pf2e-team-plus-alchemists.pf2e-items");
+        const since = Date.now();
+        await grass.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the grass's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => !crawler.hasCondition("prone"), "no longer Prone", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 

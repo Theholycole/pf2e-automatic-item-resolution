@@ -25,6 +25,11 @@ const MANY = /\b(?:each|every|all|up to (?:two|three|four|\d+)(?! feet))\b/i;
 const WARRIORS = /\b(two|three|four|five|six|seven|eight|\d+) warriors manifest with an? \+(\d+) attack modifier\b/i;
 const WARRIOR_STRIKE = new RegExp(String.raw`\bmakes a Strike for (\d+d\d+(?:\s*\+\s*\d+)?) (${TYPES})(?: damage)?\b`, "i");
 const WARRIOR_RANGE = /\badjacent to an enemy within (\d+) feet\b/i;
+// (A released creature that Strides some times, Striking once on each Stride at another creature than before, Compressed Gogiteth:
+// up to that many enemies, the item's attack at each.)
+const STRIDES = /\bStrides up to \d+ feet (two|three|four|five) times\b/i;
+const STRIDE_STRIKE = new RegExp(String.raw`\bOnce per Stride, it (?:can|may) attempt an? \+(\d+) Strike\b[^.;]*?\bdealing (\d+d\d+(?:\s*\+\s*\d+)?) (${TYPES}) damage\b[^.]*?\b(?:a|each|another) (?:different|other) creature\b`, "i");
+const ENDS_ON_FUMBLE = /\bIf [^.]*\bStrikes is a critical failure\b[^.]*\./i;
 const COUNTS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
 // (Its modifier or its user's, the higher: Urn of Ashes' "Attempt a spell attack roll against the target's AC, using a modifier
 // of +15 or your own spell attack modifier, whichever is higher. On a success, the bolt deals 4d4 void damage (doubled on a
@@ -65,6 +70,13 @@ export function readOwnCheck(given) {
         if (!choice) continue;
         const slugs = [choice[1], choice[2]].map((name) => ACTION_SLUGS[name.toLowerCase()] ?? name.toLowerCase());
         return { kind: "maneuver", slug: slugs[0], slugs, modifier: Number(choice[3]), notes: sentences.filter((_, at) => at !== index) };
+    }
+    const strides = STRIDES.exec(String(text ?? ""));
+    const strideStrike = strides && STRIDE_STRIKE.exec(String(text ?? ""));
+    if (strideStrike) {
+        const count = COUNTS[strides[1].toLowerCase()];
+        const fumble = ENDS_ON_FUMBLE.exec(String(text ?? ""))?.[0];
+        return { kind: "attack", range: null, count, reach: null, modifier: Number(strideStrike[1]), formula: strideStrike[2].replace(/\s+/g, ""), category: null, type: strideStrike[3].toLowerCase(), notes: [`Up to ${count} Strikes along its Strides, each at a different creature you target, with no multiple attack penalty; the GM moves it.`, ...(fumble ? [fumble] : [])] };
     }
     const warriors = WARRIORS.exec(String(text ?? ""));
     const warriorStrike = warriors && WARRIOR_STRIKE.exec(String(text ?? ""));

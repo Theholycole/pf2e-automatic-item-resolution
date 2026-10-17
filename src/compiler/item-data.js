@@ -36,6 +36,9 @@ const IMMOBILIZED = "@UUID[Compendium.pf2e.conditionitems.Item.eIcWbB5o3pP6OIMe]
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
+    // (A heading's space inside its bold tag and a bold action glyph, a third-party module's markup: PF2e's own, as the activation
+    // reader takes it.)
+    text = text.replace(/<strong>(Activate|Trigger|Effect|Requirements?|Frequency) <\/strong>/g, "<strong>$1</strong> ").replace(/<span class="action-glyph"><strong>([^<]+)<\/strong><\/span>/g, '<span class="action-glyph">$1</span>');
     // (Its DC first, its type named: a third-party module's "@Check[dc:28|type:fortitude]" — PF2e's order.)
     text = text.replace(/@Check\[dc:(\d+)\|type:(\w+)((?:\|[^\]]*)?)\]/gi, "@Check[$2|dc:$1$3]");
     // (A save link without the word: Life's Last Breath's "The target must succeed at a @Check[fortitude|dc:38] or take 4d6 void
@@ -173,6 +176,9 @@ export function withItemData(html, item) {
     // (A weapon that sheds a trait and gains extra damage for a round, a third-party whip's activation: its own Strikes' damage and its
     // trait gone, as the row reader takes a weapon's.)
     text = text.replace(/\bFor (\d+) (rounds?|minutes?), [^.—–]*?[—–]\s*it (?:loses|drops) the (\w+) trait and (?:attacks|Strikes) (?:also |additionally )?deal @Damage\[(\d+d\d+)\[(\w+)\]\] damage\./g, (whole, count, unit, trait, dice, type) => `For ${count} ${unit}, the weapon loses the ${trait} trait. For ${count} ${unit}, your Strikes with the weapon deal ${dice} additional ${type === "bleed" ? "persistent bleed" : type} damage.`);
+    // (Ammunition that releases something around its target, a third-party one: its damage to "the creature" there and a condition while
+    // that damage lasts — on a hit, the Strike's extra persistent damage and the condition, its end the GM's.)
+    text = text.replace(/(\bThis (?:ammo|ammunition) releases [^.]*? around (?:its|the) target\.) (?:The|That) creature takes @Damage\[\((\d+d\d+)\)\[(\w+),persistent\]\] damage\. (?:As|So) long as it (?:keeps taking|continues to take) this \w+ damage, it is (@UUID\[[^\]]*\]\{(\w+)\})([^.]*)\./g, (whole, opening, dice, type, condition, name, rest) => `${opening} On a hit, the target is ${condition}. The Strike deals an additional @Damage[${dice}[persistent,${type}]] damage. It stays ${name} while it takes the persistent damage${rest}.`);
     // (A creature's own check modifier given as an inline roll ahead of its skill's name, a third-party alchemical creature's Shove: the
     // plain modifier, as the own-check reader takes it.)
     text = text.replace(/\bwith an? (?:\[\[\/r 1d20\+(\d+)\]\](?:\{[^}]*\})?|\+(\d+)) (?:Athletics|Acrobatics) modifier to its check\b/g, (whole, rolled, plain) => `with a +${rolled ?? plain} modifier`);

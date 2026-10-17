@@ -497,6 +497,23 @@ test("third-party wordings: a balm's flat check for the creature touched during 
     assert.deepEqual(candy.unread, ["Secondary Effect Swallow it to feel full."]);
 });
 
+test("third-party wordings: a released creature's Strikes along its Strides at different creatures, ammunition's gas on a hit, a grass that ends its user's Prone", async () => {
+    const { compileBasicActions, BASIC_ACTIONS } = await import("../../pf2e-automatic-ability-resolution/src/compiler/index.js");
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    // (In this module's words.)
+    const hound = compileItem(standIn("Stand-in Hound Flask", "<p><strong>Activate</strong> <span class=\"action-glyph\">2</span> Interact</p><hr /><p>A bony hound leaps out. It Strides up to 25 feet two times. Once per Stride, it may attempt a [[/r 1d20+9]]{+9} Strike with its jaws against a creature within reach, dealing @Damage[2d6+3[slashing]] damage, against a different creature each time. If any of its Strikes is a critical failure, it crumbles at once.</p>"), { basicActions });
+    assert.deepEqual([hound.ownCheck, hound.targeting.target, hound.resolution.sharedDamage.components[0].formula, hound.resolution.sharedDamage.components[0].type], [{ kind: "attack", modifier: 9 }, "up to 2 enemies", "2d6+3", "slashing"]);
+    assert.match(hound.notes[1], /critical failure/);
+    // A bold heading with its space inside and a bold glyph: the activation still read.
+    const smoke = { _id: "testSmokeAmmo001", type: "ammo", name: "Stand-in Smoke Shot", system: { level: { value: 5 }, traits: { value: ["alchemical", "consumable"] }, uses: { value: 1, max: 1, autoDestroy: true }, description: { value: "<p><strong>Ammunition</strong> any</p><p><strong>Activate </strong><span class=\"action-glyph\"><strong>1</strong></span> Interact</p><hr /><p>This ammunition releases a puff of smoke around the target. That creature takes @Damage[(2d4)[fire,persistent]] damage. As long as it keeps taking this fire damage, it is @UUID[Compendium.pf2e.conditionitems.TkIyaNPgTZFBCCuh]{Dazzled}, coughing.</p>" } } };
+    const [shot] = compileActivations(smoke);
+    assert.deepEqual([shot.plan.strike.ammo, shot.plan.strike.damage, shot.plan.resolution.outcomes.success.effects.map((effect) => effect.slug)], [true, [{ diceNumber: 2, dieSize: "d4", category: "persistent", damageType: "fire" }], ["dazzled"]]);
+    assert.match(shot.plan.strike.notes[0], /^It stays Dazzled while it takes the persistent damage/);
+    const grass = compileItem(standIn("Stand-in Moss", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> @UUID[Compendium.pf2e.actionspf2e.Tj055UcNm6UEgtCg]{Crawl}</p><hr /><p>Moss grows under you as you Crawl. You Crawl an extra distance of 5 feet. Afterwards you can let the moss lift you up, ending the Prone condition.</p>"));
+    assert.deepEqual(grass.item.reduce, [{ slug: "prone", by: "all" }]);
+    assert.ok(grass.notes.some((note) => /extra distance of 5 feet/.test(note)), "the Crawl's distance a note");
+});
+
 test("a weapon's own activation shedding a trait and adding damage for a round (a third-party whip, in this module's words): PF2e's AdjustStrike and DamageDice on that weapon alone, by its id", async () => {
     const { weaponEffectSource, strikeDamageEffectSource, weaponText, strikeDamageText } = await import("../src/live/card.js");
     const whip = { name: "Stand-in Thorn Whip", type: "weapon", system: { level: { value: 5 }, traits: { value: ["magical"] }, description: { value: "<p><strong>Activate</strong> (manipulate)</p><p><strong>Frequency</strong> once per hour</p><p><strong>Effect</strong> For 1 round, sharp spines sprout along the lash—it drops the nonlethal trait and Strikes additionally deal @Damage[1d6[bleed]] damage.</p>" } } };

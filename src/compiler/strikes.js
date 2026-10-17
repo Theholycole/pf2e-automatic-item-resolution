@@ -103,7 +103,7 @@ function ammoStrike(text) {
     if (firing) return { range: "ranged", unarmed: false, after: text.slice(firing.index), sentence: null, next: false, missKeeps: false, uses: 1, hit: false, ammo: true };
     let after = text;
     for (const [pattern, replacement] of AMMO_HITS) after = after.replace(pattern, replacement);
-    if (after === text || !/\bOn a hit\b/.test(after)) return null;
+    if (!/\bOn a hit\b/.test(after)) return null;
     return { range: "ranged", unarmed: false, after: after.replace(/^.*?\b(?=On a hit\b)/s, ""), sentence: null, next: false, missKeeps: false, uses: 1, hit: false, ammo: true };
 }
 

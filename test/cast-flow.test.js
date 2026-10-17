@@ -209,3 +209,10 @@ test("the ability compiler's cast gets what the words say and it left out: on it
     // "You cast 5th-rank Dispel Magic with a counteract bonus of +21 against the object" (Scarlet Queen).
     assert.equal(castOf("Scarlet Queen").attack, 21);
 });
+
+test("a released creature's stomp replicating a spell's effects at a rank and DC (Encapsulated Titanosaur, in this module's words)", () => {
+    const capsule = { name: "Stand-in Capsule", type: "consumable", system: { category: "other", level: { value: 15 }, traits: { value: ["alchemical", "consumable"] }, description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">2</span> Interact</p><hr /><p>A great beast bursts out of the capsule. It walks a little way and stamps its feet, replicating the effects of a 6th-rank @UUID[Compendium.pf2e.spells-srd.Item.x7SPrsRxGb2Vy2nu]{Earthquake} (basic @Check[reflex|dc:30] against the falling rubble), though nothing about it is magical.</p>" } } };
+    const plan = castWordsPlan(capsule, { spells });
+    assert.deepEqual([plan.builtin, plan.spell.name, plan.rank, plan.dc, plan.area], ["cast-spell", "Earthquake", 6, 30, true]);
+});
+
