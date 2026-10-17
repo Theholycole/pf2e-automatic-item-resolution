@@ -4,7 +4,7 @@
 // DC and rank the card shows (the GM's where PF2e didn't know), and removes what it counteracts.
 
 import { DEGREE_WORDS, counteractCandidates, counteractCardHTML, counteractResult, createCounteractCard } from "../src/live/counteract-card.js";
-import { FLAG, MODULE_ID, creatureOf, creaturesNear, entryOf, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, afflictionsOf, creatureOf, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
 export async function postCounteractCard({ message, plan, used, actor, token }) {
     const counteract = plan.item?.counteract;
@@ -30,9 +30,11 @@ function originDC(effect) {
 function snapshot(actor) {
     return {
         // (A spell's Effect: PF2e's "Spell Effect: …", from its spell-effects pack, or an Effect a spell put on it.)
-        effects: (actor.itemTypes?.effect ?? []).map((effect) => ({ id: effect.id, name: effect.name, traits: effect.system?.traits?.value ?? [], level: Number(effect.system?.level?.value) || null, dc: originDC(effect), spell: /^Spell Effect:/i.test(effect.name) || /\.spell-effects\./.test(effect._stats?.compendiumSource ?? effect.flags?.core?.sourceId ?? "") || effect.system?.context?.origin?.item?.includes?.(".Item.") && /spell/i.test(String(effect.system?.context?.origin?.rollOptions ?? "")) })),
+        // (Not an affliction's: Pseudo Afflictions' Effects are afflictions, below.)
+        effects: (actor.itemTypes?.effect ?? []).filter((effect) => !effect.flags?.["pseudo-afflictions"]?.stages).map((effect) => ({ id: effect.id, name: effect.name, traits: effect.system?.traits?.value ?? [], level: Number(effect.system?.level?.value) || null, dc: originDC(effect), spell: /^Spell Effect:/i.test(effect.name) || /\.spell-effects\./.test(effect._stats?.compendiumSource ?? effect.flags?.core?.sourceId ?? "") || effect.system?.context?.origin?.item?.includes?.(".Item.") && /spell/i.test(String(effect.system?.context?.origin?.rollOptions ?? "")) })),
         conditions: (actor.itemTypes?.condition ?? []).map((condition) => ({ id: condition.id, slug: condition.slug, name: condition.name, value: Number.isFinite(condition.value) ? condition.value : null, grantedBy: condition.flags?.pf2e?.grantedBy?.id ?? null })),
-        afflictions: (actor.itemTypes?.affliction ?? []).map((affliction) => ({ id: affliction.id, name: affliction.name, traits: affliction.system?.traits?.value ?? [], level: Number(affliction.system?.level?.value) || null, dc: Number(affliction.system?.save?.value) || null }))
+        // (PF2e's affliction items, and the Effects Pseudo Afflictions tracks them with: scripts/foundry.js afflictionsOf.)
+        afflictions: afflictionsOf(actor).map(({ id, name, traits, level, dc }) => ({ id, name, traits, level: level || null, dc }))
     };
 }
 
@@ -78,6 +80,9 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
             lines.push(`${row.name}: ${outcome}, lowered by ${by}.`);
         } else if (row.kind === "condition") {
             await actor.decreaseCondition(row.slug, { forceRemove: true });
+            lines.push(`${row.name}: ${outcome}, counteracted.`);
+        } else if (row.kind === "affliction") {
+            await removeAfflictions(actor, [row.id]);
             lines.push(`${row.name}: ${outcome}, counteracted.`);
         } else {
             await actor.deleteEmbeddedDocuments("Item", [row.id]);

@@ -108,6 +108,8 @@ test("Elixir of Rejuvenation: its drinker healed up to its maximum Hit Points an
     const drinker = foundry.makeActor({ id: "restore-drinker", name: "Rejuvenated", owners: ["player"], hp: 4, max: 50 });
     foundry.place(drinker, 1, 20000);
     await drinker.createEmbeddedDocuments("Item", [{ type: "affliction", name: "Ghoul Fever", system: { level: { value: 3 } } }, { type: "affliction", name: "Elder Curse", system: { level: { value: 22 } } }]);
+    // (And one Pseudo Afflictions tracks as its Effect, as PF2e's production builds have no affliction items.)
+    await drinker.createEmbeddedDocuments("Item", [{ type: "effect", name: "Affliction Effect: Viper Venom", system: { traits: { value: ["poison"] }, level: { value: 1 } }, flags: { "pseudo-afflictions": { save: { value: 16 }, stages: { 1: {} } } } }]);
     const item = foundry.giveItem(drinker, source("Elixir of Rejuvenation"));
     const data = item.toObject();
     const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: drinker.id }, actor: drinker, token: drinker.token.document });
@@ -120,5 +122,6 @@ test("Elixir of Rejuvenation: its drinker healed up to its maximum Hit Points an
     await applied(card);
     assert.equal(drinker.system.attributes.hp.value, 50);
     assert.deepEqual(drinker.itemTypes.affliction.map((affliction) => affliction.name), ["Elder Curse"]);
-    assert.ok(card.flags[MODULE_ID].card.results.some((line) => /Ghoul Fever removed/.test(line)), card.flags[MODULE_ID].card.results.join(" | "));
+    assert.ok(card.flags[MODULE_ID].card.results.some((line) => /Ghoul Fever, Viper Venom removed/.test(line)), card.flags[MODULE_ID].card.results.join(" | "));
+    assert.ok(!drinker.itemTypes.effect.some((effect) => /Viper Venom/.test(effect.name)), "Pseudo Afflictions' Effect gone");
 });

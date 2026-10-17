@@ -13,7 +13,7 @@
 //   other change goes through the ability module's api.live.applyChange.
 
 import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText } from "../src/live/card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -526,9 +526,10 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const missing = (Number(hp.max) || 0) - (Number(hp.value) || 0);
         lines.push(missing > 0 ? await heal(target, recipient.name, missing, state) : `${recipient.name} is at its maximum Hit Points already`);
     }
+    // (PF2e's affliction items and Pseudo Afflictions' Effects: scripts/foundry.js afflictionsOf.)
     if (restore?.afflictions) {
-        const gone = (target.actor.itemTypes?.affliction ?? []).filter((affliction) => (Number(affliction.system?.level?.value) || 0) <= restore.afflictions.level);
-        if (gone.length) await target.actor.deleteEmbeddedDocuments("Item", gone.map((affliction) => affliction.id));
+        const gone = afflictionsOf(target.actor).filter((affliction) => affliction.level <= restore.afflictions.level);
+        await removeAfflictions(target.actor, gone.map((affliction) => affliction.id));
         lines.push(gone.length ? `${recipient.name}: ${gone.map((affliction) => affliction.name).join(", ")} removed` : `${recipient.name} has no afflictions to remove`);
     }
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)

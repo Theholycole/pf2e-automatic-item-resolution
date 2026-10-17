@@ -106,3 +106,18 @@ test("Etheric Essence Disruptor: a spell's Effect on a creature within 30 feet �
     assert.equal(blessed.created.some((entry) => entry.id === "effect-bless"), false, "Bless ended");
     assert.equal(blessed.created.some((entry) => entry.id === "effect-other"), true, "not a spell's: kept");
 });
+
+test("Contagion Metabolizer (Lesser): a poison Pseudo Afflictions tracks is an affliction — its counteract rank half its level, its DC the affliction's save — not a plain Effect", async () => {
+    const drinker = foundry.makeActor({ id: "counter-poisoned", name: "Poisoned", owners: ["player"] });
+    foundry.place(drinker, 0, 14700);
+    drinker.created.push({ id: "effect-venom", type: "effect", name: "Affliction Effect: Viper Venom", system: { traits: { value: ["poison"] }, level: { value: 3 } }, flags: { "pseudo-afflictions": { save: { type: "fortitude", value: 16 }, stages: { 1: {} } } } });
+    const metabolizer = foundry.giveItem(drinker, source("Contagion Metabolizer (Lesser)"));
+    const data = metabolizer.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: metabolizer.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: drinker.id }, actor: drinker, token: drinker.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: 0, userId: "player" });
+    await settle();
+    assert.deepEqual(card.flags[MODULE_ID].card.rows.map((row) => [row.name, row.kind, row.rank, row.dc]), [["Viper Venom", "affliction", 2, 16]]);
+});

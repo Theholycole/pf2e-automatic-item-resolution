@@ -91,6 +91,25 @@ export async function applyRiders({ plan, degree, user, target, item }) {
     return lines;
 }
 
+// A creature's afflictions: PF2e's affliction items where it has them (not in its production builds), and the Effects Pseudo Afflictions
+// tracks them with ("Affliction Effect: …", its flag with the save and stages). → [{ document, id, name, traits, level, dc }].
+const PSEUDO_AFFLICTIONS = "pseudo-afflictions";
+export function afflictionsOf(actor) {
+    const own = (actor?.itemTypes?.affliction ?? []).map((affliction) => ({ document: affliction, id: affliction.id, name: affliction.name, traits: affliction.system?.traits?.value ?? [], level: Number(affliction.system?.level?.value) || 0, dc: Number(affliction.system?.save?.value) || null }));
+    const tracked = (actor?.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[PSEUDO_AFFLICTIONS]?.stages).map((effect) => ({ document: effect, id: effect.id, name: effect.name.replace(/^Affliction Effect:\s*/i, ""), traits: effect.system?.traits?.value ?? [], level: Number(effect.system?.level?.value) || 0, dc: Number(effect.flags[PSEUDO_AFFLICTIONS].save?.value) || null }));
+    return [...own, ...tracked];
+}
+
+// Afflictions removed, with the conditions they gave (Pseudo Afflictions marks them granted by its Effect, which PF2e may not delete
+// with it).
+export async function removeAfflictions(actor, ids) {
+    if (!actor || !ids?.length) return;
+    const granted = (actor.itemTypes?.condition ?? []).filter((condition) => ids.includes(condition.flags?.pf2e?.grantedBy?.id)).map((condition) => condition.id);
+    await actor.deleteEmbeddedDocuments("Item", ids);
+    const left = granted.filter((id) => actor.items?.get?.(id));
+    if (left.length) await actor.deleteEmbeddedDocuments("Item", left).catch(() => null);
+}
+
 // The started encounter the creature is in, and its combatant there: the GM may be viewing another encounter, or an unlinked
 // one (game.combat is the viewed one). → { combat, combatant } or null.
 export function encounterOf(actor) {

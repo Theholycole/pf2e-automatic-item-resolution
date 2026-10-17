@@ -2414,6 +2414,171 @@ export const cases = {
         await until(() => speed() === before - 5, `Speed ${before} → ${before - 5} (now ${speed()})`, { timeout: 10000 });
         assert(!wielder.itemTypes.effect.some((effect) => /Night Verse/.test(effect.name)), "not on its wielder");
         return { before, after: speed() };
+    },
+
+    // Lockpicker's Oil: its user's first critical failure on a Thievery check to Pick a Lock (Thievery lowered so it critically fails)
+    // is a failure (PF2e's AdjustDegreeOfSuccess), and that roll removes the Effect.
+    async lockpickFirst(scene) {
+        const { actor: picker, token: pickerToken } = await creature(scene, "Lock Picker", { type: "character", x: 11, y: 5 });
+        await picker.createEmbeddedDocuments("Item", [{ name: `${PREFIX} clumsy hands`, type: "effect", system: { rules: [{ key: "FlatModifier", selector: "thievery", value: -60 }], duration: { value: -1, unit: "unlimited", expiry: null, sustained: false } } }]);
+        const oil = await give(picker, "Lockpicker's Oil");
+        await pickerToken.object?.control?.();
+        let since = Date.now();
+        await oil.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the oil's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const first = () => picker.itemTypes.effect.find((effect) => effect.getFlag(NS, "firstDegree"));
+        await until(() => first(), "the first-critical-failure Effect", { timeout: 8000 });
+        since = Date.now();
+        await picker.skills.thievery.roll({ extraRollOptions: ["action:pick-a-lock"], dc: { value: 20 }, skipDialog: true });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check", { what: "the Thievery check" });
+        const { outcome, unadjustedOutcome } = rolled.flags.pf2e.context;
+        assert(unadjustedOutcome === "criticalFailure" && outcome === "failure", `a critical failure made a failure (${unadjustedOutcome} → ${outcome})`);
+        await until(() => !first(), "the Effect gone after that roll", { timeout: 8000 });
+        return { outcome, unadjustedOutcome };
+    },
+
+    // Big Rock Bullet: readied, then a sling's hit (AC 1) posts the rock's 4d6 bludgeoning (doubled on a critical hit) at the target
+    // on the ability module's card, in place of the sling's damage.
+    async bigRockInstead(scene) {
+        const { actor: slinger, token: slingerToken } = await creature(scene, "Rock Slinger", { type: "character", x: 13, y: 5 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Rock Target", { x: 15, y: 5, ac: 1, alliance: "opposition", hp: 200 });
+        const sling = await give(slinger, "Sling");
+        const bullets = await give(slinger, "Big Rock Bullet");
+        await bullets.update({ "system.baseItem": "sling-bullets", "system.quantity": 2 });
+        await sling.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        // (A reload weapon's ammunition is loaded into it, PF2e's subitem — the same id as the stack it came from.)
+        await sling.attach(bullets, { quantity: 1, skipConfirm: true });
+        await wait(500);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(bullets.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await slingerToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(slinger, sling);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        const damage = await messageAfter(since, abilitySaveCard, { what: "the rock's damage card" });
+        const plan = damage.flags["pf2e-automatic-ability-resolution"].card.plan;
+        const formula = plan.resolution.sharedDamage.components[0].formula;
+        const multiplier = plan.resolution.outcomes.success.damage.multiplier;
+        assert(formula === "4d6" && multiplier === (outcome === "criticalSuccess" ? 2 : 1), `4d6 bludgeoning ×${multiplier} (${formula})`);
+        const before = foe.system.attributes.hp.value;
+        await applyAbilityCard(damage);
+        await until(() => foe.system.attributes.hp.value < before, "the rock's damage on the target", { timeout: 10000 });
+        assert(!slinger.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider")), "the readied Strike spent");
+        return { outcome, lost: before - foe.system.attributes.hp.value };
+    },
+
+    // Striking Snare: spikes picked on the ways card; placed (the placement click stood in for), a creature entering its square
+    // attempts the basic Reflex save against 9d8 piercing.
+    async strikingSnareWays(scene) {
+        const { actor: setter, token: setterToken } = await creature(scene, "Snare Setter", { type: "character", x: 2, y: 8 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Snare Walker", { x: 6, y: 8, alliance: "opposition", hp: 200, save: -30 });
+        const snare = await give(setter, "Striking Snare");
+        await setterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        try {
+            let since = Date.now();
+            await snare.consume();
+            const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+            await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+            await until(() => scene.regions.some((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Striking Snare/.test(region.name)), "the snare's Region", { timeout: 8000 });
+            const region = scene.regions.find((entry) => entry.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Striking Snare/.test(entry.name));
+            const save = region.flags["pf2e-automatic-ability-resolution"].zone.zone.saves[0].plan.resolution;
+            assert(save.sharedDamage.components[0].formula === "9d8[piercing]" && save.check.basic, `basic Reflex against 9d8 piercing (${JSON.stringify(save.sharedDamage.components)})`);
+            assert(game.messages.get(ways.id).getFlag(NS, "card").status === "applied", "the ways card closed");
+            const shape = region.shapes[0];
+            since = Date.now();
+            await foeToken.update({ x: shape.x ?? shape.points?.[0], y: shape.y ?? shape.points?.[1] });
+            const card = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+            const before = foe.system.attributes.hp.value;
+            await rollAndApply(card);
+            await until(() => foe.system.attributes.hp.value < before, "piercing damage on the walker", { timeout: 10000 });
+            return { lost: before - foe.system.attributes.hp.value };
+        } finally {
+            canvas.regions.placeRegion = placing;
+        }
+    },
+
+    // Vaccine (Minor): +2 item bonus to saves against diseases for an hour, PF2e's own predicate.
+    async vaccineBonus(scene) {
+        const { actor: patient } = await creature(scene, "Vaccinated", { type: "character", x: 2, y: 10 });
+        const vaccine = await give(patient, "Vaccine (Minor)");
+        const since = Date.now();
+        await vaccine.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the vaccine's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => patient.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("saving-throw") && rule.value === 2 && JSON.stringify(rule.predicate ?? []).includes("item:trait:disease"))), "+2 to saves against diseases", { timeout: 8000 });
+        const effect = patient.itemTypes.effect.find((entry) => (entry.system.rules ?? []).some((rule) => [].concat(rule.selector).includes("saving-throw")));
+        return { duration: effect.system.duration };
+    },
+
+    // Sure-Step Crampons: Activate switches on PF2e's own toggle — +2 to the Reflex DC against a Trip — and moving its wearer's token
+    // switches it off.
+    async cramponsToggle(scene) {
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Crampon Wearer", { type: "character", x: 4, y: 10 });
+        const crampons = await give(wearer, "Sure-Step Crampons");
+        await crampons.update({ "system.equipped.invested": true });
+        const reflexDC = (options) => {
+            const statistic = wearer.getStatistic("reflex");
+            const withOptions = statistic.withRollOptions?.({ extraRollOptions: options }) ?? statistic.clone?.({ rollOptions: options }) ?? statistic;
+            return withOptions.dc.value;
+        };
+        const before = reflexDC(["action:trip"]);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(crampons.uuid, 0);
+        const card = await messageAfter(since, itemCard("toggle"), { what: "the toggle card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => wearer.rollOptions?.all?.["sure-step-crampons"], "PF2e's sure-step-crampons on", { timeout: 8000 });
+        const on = reflexDC(["action:trip"]);
+        assert(on === before + 2, `Reflex DC against a Trip ${before} → ${before + 2} (${on})`);
+        await wearerToken.update({ x: wearerToken.x + 100 });
+        await until(() => !wearer.rollOptions?.all?.["sure-step-crampons"], "switched off after moving", { timeout: 8000 });
+        return { before, on, after: reflexDC(["action:trip"]) };
+    },
+
+    // Phantom Roll's Stealth, Infiltrator's Elixir's Deception DC, Armor Polishing Kit's Diplomacy to Make an Impression: on the whole
+    // roll for their time.
+    async narrowBonuses(scene) {
+        const { actor: spy } = await creature(scene, "Narrow Spy", { type: "character", x: 6, y: 10 });
+        const deceptionDC = () => spy.skills.deception.dc.value;
+        const beforeDC = deceptionDC();
+        const has = (selector, value) => spy.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes(selector) && rule.value === value));
+        for (const [name, selector, value] of [["Phantom Roll", "stealth", 1], ["Infiltrator's Elixir", "deception-dc", 4], ["Armor Polishing Kit", "diplomacy", 1]]) {
+            const item = await give(spy, name);
+            const since = Date.now();
+            await item.consume();
+            const card = await messageAfter(since, itemCard("item"), { what: `${name}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+            await until(() => has(selector, value), `${name}: +${value} to ${selector}`, { timeout: 8000 });
+        }
+        assert(deceptionDC() === beforeDC + 4, `Deception DC ${beforeDC} → ${beforeDC + 4} (${deceptionDC()})`);
+        return { beforeDC, afterDC: deceptionDC() };
+    },
+
+    // Elixir of Rejuvenation: its drinker (an NPC at 10 of 50 Hit Points, with Pseudo Afflictions' Viper Venom — PF2e's production builds
+    // have no affliction items) healed to 50 and the venom gone.
+    async rejuvenation(scene) {
+        const { actor: drinker } = await creature(scene, "Rejuvenated", { x: 8, y: 10, hp: 10 });
+        await drinker.update({ "system.attributes.hp.max": 50 });
+        const pack = game.packs.get("pseudo-afflictions.effects");
+        const entry = pack ? (await pack.getIndex()).find((row) => /Viper Venom/.test(row.name)) : null;
+        const venom = entry ? (await pack.getDocument(entry._id)).toObject() : { name: "Affliction Effect: Viper Venom", type: "effect", system: { level: { value: 1 }, traits: { value: ["poison"] } }, flags: { "pseudo-afflictions": { save: { type: "fortitude", value: 16 }, stages: { 1: {} } } } };
+        delete venom._id;
+        const [affliction] = await drinker.createEmbeddedDocuments("Item", [venom]);
+        const elixir = await give(drinker, "Elixir of Rejuvenation");
+        const since = Date.now();
+        await elixir.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the elixir's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => drinker.system.attributes.hp.value === drinker.system.attributes.hp.max, `full Hit Points (${drinker.system.attributes.hp.value}/${drinker.system.attributes.hp.max})`, { timeout: 8000 });
+        if (affliction) await until(() => !drinker.items.get(affliction.id), "the affliction removed", { timeout: 8000 });
+        return { hp: drinker.system.attributes.hp.value, afflictionMade: Boolean(affliction), results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
