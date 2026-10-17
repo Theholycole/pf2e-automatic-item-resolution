@@ -6,14 +6,14 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 733,
-   "builtin:cast-spell": 469,
-   "none": 669,
+   "resolves": 734,
+   "builtin:cast-spell": 470,
+   "none": 668,
    "partial": 155,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 40,
-   "note-only": 210,
+   "note-only": 209,
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
@@ -27,9 +27,9 @@
   },
   "live": {
    "save": 397,
-   "cast": 469,
+   "cast": 470,
    "item": 582,
-   "none": 854,
+   "none": 853,
    "focus": 45,
    "fortune": 50,
    "reroll": 25,
@@ -48,14 +48,14 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 445,
-    "builtin:cast-spell": 340,
-    "none": 450,
+    "resolves": 446,
+    "builtin:cast-spell": 341,
+    "none": 449,
     "partial": 71,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
     "builtin:readied-bonus": 33,
-    "note-only": 144,
+    "note-only": 143,
     "builtin:reroll": 17,
     "builtin:zone": 9,
     "builtin:modes": 16,
@@ -5641,9 +5641,9 @@
    "time": "1",
    "frequency": "once per turn",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Crystal Ball (Peridot)",
@@ -23973,9 +23973,9 @@
    "time": "free",
    "frequency": "once per minute",
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Aeon Stone (Olivine Pendeloque)",

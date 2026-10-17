@@ -39,6 +39,9 @@ export function withItemData(html, item) {
     // (A save at its wielder's better DC, Meloth's Lifedrinker's "takes @Damage[6d6[mental]] damage with a Will save; the DC is equal
     // to the wielder's class or spell DC, whichever is higher": its owner's class-or-spell DC, a basic save, as PF2e writes it.)
     text = text.replace(/\btakes (@Damage\[[^\]]*\]\])(?: damage)? with an? (Fortitude|Reflex|Will) save; the DC is equal to the wielder's class or spell DC, whichever is higher\b/g, (whole, damage, save) => `takes ${damage} damage with a @Check[${save.toLowerCase()}|against:class-spell|basic] save`);
+    // (A spell's effect given its DC first, Dread Blindfold's "This has the effect of a DC 37 vision of death spell": the spell, then its DC,
+    // as the cast reader takes it.)
+    text = text.replace(/\bThis has the effects? of an? DC (\d+) ((?:<em>)?[a-z][a-z' -]+?(?:<\/em>)?) spell\b/gi, (whole, dc, name) => `This has the effect of ${name} (DC ${dc})`);
     // (A swarm sent at the triggering enemy, Wasp Guard's "The swarm flies to the triggering enemy's space and swarms about them,
     // dealing @Damage[1d8[persistent,poison]] damage": that enemy takes it.)
     text = text.replace(/\bThe \w+ (?:flies|moves|rushes) to the triggering (enemy|creature)'s space and [^,.]*, dealing (@Damage\[[^\]]*\]\])(?: damage)?\./g, (whole, who, damage) => `The triggering ${who} takes ${damage} damage.`);

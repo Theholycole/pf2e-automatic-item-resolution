@@ -242,6 +242,11 @@ test("Copper Penny stands its user up (prone ended), the rest a note; Possum's P
     assert.ok(possum.unread.some((sentence) => /nonlethal trait/.test(sentence)));
 });
 
+test("Standard of the Sure-Footed's Help Up: prone ended on the ally targeted", () => {
+    const [help] = compileActivations(source("Standard of the Sure-Footed"));
+    assert.deepEqual(help.plan.item.reduce, [{ slug: "prone", by: "all", who: "targets" }]);
+});
+
 test("Core Bugle's Reveille: prone ended on its user and on the allies targeted (each Stands)", () => {
     const [reveille] = compileActivations(source("Core Bugle"));
     assert.deepEqual(reveille.plan.item.reduce, [{ slug: "prone", by: "all" }, { slug: "prone", by: "all", who: "targets", optional: true }]);

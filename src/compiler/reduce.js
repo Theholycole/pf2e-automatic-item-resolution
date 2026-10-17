@@ -67,6 +67,9 @@ export function readReductions(text) {
     }
     // (Standing up at once: Copper Penny's "When you Activate it, you Stand and can't be knocked prone again on the current turn".)
     if (/\bWhen you Activate (?:it|the [\w' -]+?), you Stand\b/i.test(ownUse(text))) add({ slug: "prone", by: "all" });
+    // (An ally in the banner's aura lifted up, Standard of the Sure-Footed's "An ally within the banner's aura can Stand as a free action":
+    // the ally targeted.)
+    if (/\bAn? (?:ally|creature) within (?:the|your) [\w' -]+?'s aura can Stand as a free action\b/i.test(ownUse(text))) add({ slug: "prone", by: "all", who: "targets" });
     // (Or brought to its feet by the item, at its choice: a third-party grass that ends its user's Prone after the Crawl it's used in.)
     if (/\byou can\b[^.]*\bending the Prone condition\b/i.test(ownUse(text))) add({ slug: "prone", by: "all" });
     // (Any one condition, picked on the card: Armbands of the Gorgon's "remove a single condition of your choice currently

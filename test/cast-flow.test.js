@@ -216,3 +216,9 @@ test("a released creature's stomp replicating a spell's effects at a rank and DC
     assert.deepEqual([plan.builtin, plan.spell.name, plan.rank, plan.dc, plan.area], ["cast-spell", "Earthquake", 6, 30, true]);
 });
 
+test("a spell's effects given its DC first (Dread Blindfold's Vision of Death at DC 37), or after (Planar Ribbon's Scrying at DC 40)", () => {
+    const blindfold = compileActivations(source("Dread Blindfold"), { spells })[0].plan;
+    assert.deepEqual([blindfold.builtin, blindfold.spell.name, blindfold.dc], ["cast-spell", "Vision of Death", 37]);
+    assert.equal(compileActivations(source("Planar Ribbon"), { spells })[0].plan.dc, 40);
+});
+

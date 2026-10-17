@@ -3303,6 +3303,37 @@ export const cases = {
         assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
         await until(() => foe.itemTypes.effect.some((effect) => /Magekiller Bullet/.test(effect.name) && effect.system.duration?.value === 7 && effect.system.duration?.unit === "days"), `the curse's note for 7 days (${foe.itemTypes.effect.map((effect) => `${effect.name} ${effect.system.duration?.value} ${effect.system.duration?.unit}`).join(", ")})`, { timeout: 10000 });
         return { effects: foe.itemTypes.effect.map((effect) => effect.name) };
+    },
+
+    // Dread Blindfold's Visions of Terror: the spell module casts Vision of Death at DC 37 at the creature targeted.
+    async dreadBlindfoldCast(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Blindfold Wearer", { type: "character", x: 11, y: 4, level: 18 });
+        const { token: foe } = await creature(scene, "Blindfold Foe", { x: 13, y: 4, alliance: "opposition" });
+        const blindfold = await give(wearer, "Dread Blindfold");
+        await wearerToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(blindfold.uuid, 0);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        const flag = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        assert(flag.dc === 37, `DC 37 (${flag.dc})`);
+        return { flag };
+    },
+
+    // Standard of the Sure-Footed's Help Up: the ally targeted, Prone, stands.
+    async sureFootedStand(scene) {
+        const { actor: bearer } = await creature(scene, "Banner Bearer", { type: "character", x: 15, y: 4 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Fallen Ally", { x: 17, y: 4 });
+        await ally.increaseCondition("prone");
+        const banner = await give(bearer, "Standard of the Sure-Footed");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(banner.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the banner's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, targets: [allyToken.uuid] });
+        await until(() => !ally.hasCondition("prone"), "the ally no longer Prone", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
