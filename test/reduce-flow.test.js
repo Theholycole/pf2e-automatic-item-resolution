@@ -241,3 +241,8 @@ test("Copper Penny stands its user up (prone ended), the rest a note; Possum's P
     assert.deepEqual(possum.resolution.outcomes.success.effects, [{ kind: "condition", slug: "prone", value: null, duration: null }]);
     assert.ok(possum.unread.some((sentence) => /nonlethal trait/.test(sentence)));
 });
+
+test("Core Bugle's Reveille: prone ended on its user and on the allies targeted (each Stands)", () => {
+    const [reveille] = compileActivations(source("Core Bugle"));
+    assert.deepEqual(reveille.plan.item.reduce, [{ slug: "prone", by: "all" }, { slug: "prone", by: "all", who: "targets", optional: true }]);
+});

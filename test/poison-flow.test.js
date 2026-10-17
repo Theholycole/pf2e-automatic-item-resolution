@@ -222,6 +222,15 @@ test("Spider Gun's Web Shot: a square placed within 30 feet for 1 minute, its Re
     }
 });
 
+test("clouds and gusts as the ability module's zones: Smogger's smog on its user (Concealed, 1 minute), Smoke Fan's 5-foot burst of smoke (Concealed, 1 minute), Wind Ocarina's gusts (difficult terrain, 1 minute)", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const { compileItem } = await import("../src/compiler/index.js");
+    const summary = (plan) => [plan.builtin, plan.zone.area, plan.zone.centre, plan.zone.lasts.value, plan.zone.lasts.unit, plan.zone.concealed, plan.zone.terrain.length];
+    assert.deepEqual(summary(compileActivations(source("Smogger"))[0].plan), ["zone", { type: "emanation", value: 10 }, "self", 1, "minutes", true, 0]);
+    assert.deepEqual(summary(compileItem(source("Smoke Fan"))), ["zone", { type: "burst", value: 5 }, "self", 1, "minutes", true, 0]);
+    assert.deepEqual(summary(compileItem(source("Wind Ocarina"))), ["zone", { type: "emanation", value: 5 }, "self", 1, "minutes", false, 1]);
+});
+
 test("the drinker's own save rolls for its user, no targets; a save set off by attackers stays open for the item's time", async () => {
     const { isOwnSave, ATTACKER } = await import("../src/live/poison-card.js");
     const { compileItem } = await import("../src/compiler/index.js");

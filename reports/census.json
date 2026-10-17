@@ -17,10 +17,10 @@
    "none": 221,
    "resolves": 740,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 88,
+   "builtin:zone": 91,
    "builtin:item-action": 12,
    "partial": 91,
-   "note-only": 191,
+   "note-only": 188,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -37,8 +37,8 @@
     "none": 118,
     "resolves": 209,
     "partial": 44,
-    "note-only": 93,
-    "builtin:zone": 9,
+    "note-only": 92,
+    "builtin:zone": 10,
     "builtin:readied-bonus": 7,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
@@ -181,9 +181,9 @@
    "count": 77,
    "results": {
     "none": 11,
-    "builtin:zone": 12,
+    "builtin:zone": 14,
     "resolves": 29,
-    "note-only": 9,
+    "note-only": 7,
     "builtin:no-effect": 5,
     "partial": 3,
     "builtin:counteract": 8
@@ -384,9 +384,9 @@
   "totals": {
    "cast": 32,
    "none": 295,
-   "item": 648,
+   "item": 645,
    "fortune": 23,
-   "zone": 88,
+   "zone": 91,
    "expose": 89,
    "later": 79,
    "action": 12,
@@ -403,8 +403,8 @@
     "none": 145,
     "later": 12,
     "save": 92,
-    "item": 220,
-    "zone": 9,
+    "item": 219,
+    "zone": 10,
     "fortune": 7,
     "strike": 3,
     "expose": 3,
@@ -455,8 +455,8 @@
    },
    "gadget": {
     "none": 17,
-    "zone": 12,
-    "item": 25,
+    "zone": 14,
+    "item": 23,
     "save": 15,
     "counteract": 8
    },
@@ -12796,9 +12796,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Thousand-Pains Fulu (Icicle)",
@@ -14438,9 +14438,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Force Tiles",
@@ -22705,9 +22705,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Demon Bone Tiles (Seraptis)",
