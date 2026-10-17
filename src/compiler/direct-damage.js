@@ -71,7 +71,9 @@ export function readDirectDamage(text) {
 // made the attack that triggered your Shield Block becomes Frightened 2", Highhelm War Shield's "The creature becomes
 // Grabbed"): { effects, modifiers, notes } or null — the bombs' rider reader on the sentence. Not one scoped to you ("Off-
 // Guard against the next melee attack you attempt"), nor under a condition.
-const ONE_IS = /^(?:The|That) (?:(?:attacking|triggering|struck|damaged|affected) )?(?:creature|target|attacker|foe|enemy)(?: that [^.]{1,80}?)? (?:is|becomes)\b\s*(.+)$/i;
+// (Or a penalty it takes: North Wind's Night Verse's "The target takes a –5-foot status penalty to its Speeds for 1 round",
+// src/compiler/item-data.js.)
+const ONE_IS = /^(?:The|That) (?:(?:attacking|triggering|struck|damaged|affected) )?(?:creature|target|attacker|foe|enemy)(?: that [^.]{1,80}?)? (is|becomes|takes)\b\s*(.+)$/i;
 // (Before the Strike its user then makes: Gallows Tooth's "make a melee Strike against an adjacent creature. That creature is
 // Off-Guard against the Strike and until the end of your turn" — the creature off-guard now, the Strike a note. Enemies around
 // its user: Jade Bauble's "Until the start of your next turn, enemies within the reach of the weapon … are Off-Guard" — each
@@ -92,7 +94,10 @@ export function readOutrightConditions(text) {
     for (const [index, sentence] of sentences.entries()) {
         const match = ONE_IS.exec(sentence);
         if (!match || NOT_OUTRIGHT.test(sentence) || /\b(?:against (?:the next|your)|to you\b|to your\b)/i.test(sentence)) continue;
-        const row = riderRow(`is ${match[1]}`);
+        // (A penalty it takes only from later hits — Silkspinner's Shield's "Successful shield bash Strikes made with the shield during
+        // this time entangle the target … The target takes a –10-foot … penalty": not outright.)
+        if (/^takes$/i.test(match[1]) && /\b(?:during this time|Strikes? made with)\b/i.test(body)) continue;
+        const row = riderRow(`${/^takes$/i.test(match[1]) ? "takes" : "is"} ${match[2]}`);
         if (!row.effects.length && !row.modifiers.length) continue;
         // (Not its Activate line, nor a sentence with no rule in it: a talisman's has no "Effect" to start from.)
         return { effects: row.effects, modifiers: row.modifiers, notes: sentences.filter((other, at) => at !== index && !STATS.test(other) && !/^Activate\b/.test(other) && RULE_WORDS.test(other)) };

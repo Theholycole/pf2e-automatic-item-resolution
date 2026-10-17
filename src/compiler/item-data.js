@@ -125,6 +125,9 @@ export function withItemData(html, item) {
     // Effect's start.)
     const ownModifier = /\bThe Athletics modifier is (?:\[\[\/r 1d20\+(\d+)[^\]]*\]\](?:\{[^}]*\})?|\+(\d+))/i.exec(text);
     if (ownModifier) text = text.replace(/\bThe arms share your multiple attack penalty and attempt to ((?:@UUID\[[^\]]*\]\{)?Grapple\}?) ([^.<]+)\./, (whole, grapple, whom) => `The arms attempt to ${grapple} ${whom} with a +${ownModifier[1] ?? ownModifier[2]} modifier. They share your multiple attack penalty.`).replace(/\[\[\/r (\d+d\d+) #Added Effect\]\]/g, "$1").replace(/\bAdded Effect\b/g, "Added effect");
+    // (A penalty given to the triggering creature, North Wind's Night Verse's "You point the night verse at the triggering creature. A gust
+    // … freezes its bones, imparting a –5-foot status penalty to its Speeds for 1 round": the target's.)
+    if (/\bat the triggering creature\./i.test(text)) text = text.replace(/,\s*imparting (an? [-–−]\d+(?:-foot)? (?:status|circumstance|item) penalty to its [^.<]+)\./g, ". The target takes $1.");
     // (A missile that hits on its own, Cape of Justice's "The shuriken hits automatically and deals 1d4+1 force damage, or 2d4+2 force
     // damage if the target is your designated offender": damage outright at the target, the other case a note.)
     text = text.replace(/\bThe [\w-]+ hits automatically and deals (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage(?:, or (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage if the target is ([^.]+))?\./g, (whole, damage, other, which) => `The target takes ${damage} damage.${other ? ` A target that's ${which} takes ${other} damage instead.` : ""}`);

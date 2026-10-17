@@ -16,7 +16,7 @@ import { isWays } from "./ways-card.js";
 // drinker.
 const targetedRow = (plan) => plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic" && Boolean(plan.targeting?.target)
     && !/^(?:the drinker|you|yourself|self|itself)$/i.test(String(plan.targeting.target).trim())
-    && ((plan.resolution.outcomes?.success?.effects ?? []).some((effect) => effect.recipient !== "self") || (plan.resolution.outcomes?.success?.damage?.mode ?? "none") !== "none");
+    && ((plan.resolution.outcomes?.success?.effects ?? []).some((effect) => effect.recipient !== "self") || (plan.resolution.outcomes?.success?.damage?.mode ?? "none") !== "none" || (plan.resolution.outcomes?.success?.modifiers ?? []).length > 0);
 
 const playedOnItemCard = (plan) => ["healing", "effect"].includes(plan?.resolution?.kind) || (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic");
 

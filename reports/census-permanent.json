@@ -6,14 +6,14 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 728,
+   "resolves": 729,
    "builtin:cast-spell": 469,
    "none": 691,
    "partial": 126,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 40,
-   "note-only": 230,
+   "note-only": 229,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
@@ -26,9 +26,9 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 392,
+   "save": 395,
    "cast": 469,
-   "item": 598,
+   "item": 595,
    "none": 876,
    "focus": 45,
    "fortune": 50,
@@ -68,10 +68,10 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 152,
+    "resolves": 153,
     "none": 114,
     "partial": 31,
-    "note-only": 33,
+    "note-only": 32,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 12,
@@ -2461,9 +2461,9 @@
    "time": "free",
    "frequency": "once per minute",
    "trigger": true,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Sandstorm Top",
@@ -22758,7 +22758,7 @@
    "trigger": false,
    "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Spellstrike Ammunition (Type III)",
@@ -26501,7 +26501,7 @@
    "trigger": false,
    "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Reef Heart",

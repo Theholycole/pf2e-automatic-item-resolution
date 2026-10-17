@@ -544,3 +544,12 @@ test("Clockwork Helm: \"Make a spell or ranged attack roll (your choice)\" — t
     assert.deepEqual([helm.ownCheck.kind, helm.ownCheck.choose, helm.resolution.sharedDamage.components[0].formula, helm.resolution.sharedDamage.components[0].type], ["attack", ["spell", "ranged"], "10d8", "fire"]);
     assert.deepEqual(["success", "criticalSuccess"].map((degree) => [helm.resolution.outcomes[degree].damage.multiplier, helm.resolution.outcomes[degree].effects.map((effect) => `${effect.slug}${effect.value}`)]), [[1, ["drained2"]], [2, ["drained2"]]]);
 });
+
+test("North Wind's Night Verse: \"imparting a –5-foot status penalty to its Speeds for 1 round\" at the triggering creature — the creature targeted's penalty, not its user's", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const verse = compileActivations(item("North Wind's Night Verse"), { spellEffects })[0].plan;
+    assert.deepEqual(verse.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.duration.value]), [["all-speeds", -5, "status", 1]]);
+    assert.equal(routeOf(verse), "save");
+    // (Not one only from later hits: Silkspinner's Shield's entangling shield bashes.)
+    assert.notEqual(compileActivations(item("Silkspinner's Shield"), { spellEffects })[0].plan?.resolution?.outcomes?.success?.modifiers?.[0]?.selector, "all-speeds");
+});
