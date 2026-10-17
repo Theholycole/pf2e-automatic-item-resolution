@@ -93,9 +93,12 @@ function attackChoices(actor, kinds, { atLeast = null } = {}) {
     const best = (values) => Math.max(...values.map(Number).filter(Number.isFinite));
     const spell = best((actor?.spellcasting?.contents ?? []).map((entry) => entry?.statistic?.check?.mod));
     const firearm = best((actor?.system?.actions ?? []).filter((action) => (action?.item?.group ?? action?.item?.system?.group) === "firearm").map((action) => action.totalModifier));
+    // (Its best ranged Strike, for an item that takes "a spell or ranged attack roll", Clockwork Helm.)
+    const ranged = best((actor?.system?.actions ?? []).filter((action) => action?.item?.isRanged === true).map((action) => action.totalModifier));
     const choices = [
         ...(kinds.includes("spell") && Number.isFinite(spell) ? [{ kind: "spell", label: `Spell attack ${sign(spell)}`, modifier: spell }] : []),
-        ...(kinds.includes("firearm") && Number.isFinite(firearm) ? [{ kind: "firearm", label: `Firearm attack ${sign(firearm)}`, modifier: firearm }] : [])
+        ...(kinds.includes("firearm") && Number.isFinite(firearm) ? [{ kind: "firearm", label: `Firearm attack ${sign(firearm)}`, modifier: firearm }] : []),
+        ...(kinds.includes("ranged") && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : [])
     ];
     if (!Number.isFinite(atLeast)) return choices;
     const own = { kind: "spell", label: `The item's ${sign(atLeast)}`, modifier: atLeast };
@@ -110,7 +113,7 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     if (Number.isInteger(checkChoice) && state.plan?.checkChoices?.[checkChoice]) state = { ...state, checkChoice };
     // (A spellgun's attack, as picked; with none its user has, the GM rolls it.)
     if (Number.isInteger(attackChoice) && state.attackChoices?.[attackChoice]) state = { ...state, attackChoice };
-    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no spell attack or firearm Strike: roll ${state.item.name}'s attack by hand.`);
+    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
     // (The damage picked: Necklace of Fireballs' bead.)
     if (Number.isInteger(damageChoice) && state.plan?.damageChoices?.[damageChoice]) state = { ...state, damageChoice };
     // (Its time is up: the card closes.)

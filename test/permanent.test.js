@@ -537,3 +537,9 @@ test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 for
     const clasp = compileActivations(item("Swarmeater's Clasp"), { spellEffects })[0].plan;
     assert.deepEqual([clasp.resolution.outcomes.success.effects[0].formula, clasp.partial], ["3d10+8", true]);
 });
+
+test("Clockwork Helm: \"Make a spell or ranged attack roll (your choice)\" — the card's pick of its user's spell attack or best ranged Strike, 10d8 fire on a hit (doubled on a critical hit) and Drained 2", () => {
+    const helm = compileActivations(item("Clockwork Helm"), { spellEffects })[0].plan;
+    assert.deepEqual([helm.ownCheck.kind, helm.ownCheck.choose, helm.resolution.sharedDamage.components[0].formula, helm.resolution.sharedDamage.components[0].type], ["attack", ["spell", "ranged"], "10d8", "fire"]);
+    assert.deepEqual(["success", "criticalSuccess"].map((degree) => [helm.resolution.outcomes[degree].damage.multiplier, helm.resolution.outcomes[degree].effects.map((effect) => `${effect.slug}${effect.value}`)]), [[1, ["drained2"]], [2, ["drained2"]]]);
+});

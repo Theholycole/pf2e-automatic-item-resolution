@@ -87,3 +87,13 @@ test("Urn of Ashes: its bolt at its user's spell attack or its own +15, whicheve
     assert.deepEqual(card.flags[MODULE_ID].card.attackChoices, [{ kind: "spell", label: "Spell attack +19", modifier: 19 }]);
     assert.deepEqual([card.flags[MODULE_ID].card.plan.resolution.sharedDamage.components[0].formula, card.flags[MODULE_ID].card.plan.targeting.range], ["4d4", "30 feet"]);
 });
+
+test("Clockwork Helm: its beam at its user's spell attack or best ranged Strike, the card's pick", async () => {
+    const tinker = foundry.makeActor({ id: "activate-tinker", name: "Tinker", owners: ["player"] });
+    foundry.place(tinker, 400, 8000);
+    tinker.spellcasting = { contents: [{ statistic: { check: { mod: 11 } } }] };
+    tinker.system.actions = [{ item: { isRanged: true }, totalModifier: 13 }, { item: { isRanged: false }, totalModifier: 16 }];
+    const helm = foundry.giveItem(tinker, source("Clockwork Helm"));
+    const [card] = (await activate(helm, 0)).filter((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.deepEqual(card.flags[MODULE_ID].card.attackChoices.map((choice) => choice.label), ["Spell attack +11", "Ranged attack +13"]);
+});

@@ -7,6 +7,7 @@
 
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { ACTION_SLUGS } from "./item-actions.js";
+import { riderRow } from "./bombs.js";
 
 const MANEUVERS = ["grapple", "shove", "trip", "disarm", "reposition", "demoralize", "feint"];
 const NAMES = MANEUVERS.join("|");
@@ -30,6 +31,10 @@ const COUNTS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 
 // critical success)" — the card's pick of its user's spell attack, at least +15.)
 const HIGHER_ATTACK = new RegExp(String.raw`\bAttempt a spell attack roll against the target's AC, using a modifier of \+(\d+) or your own spell attack modifier, whichever is higher\.\s*On a (?:hit|success), [^.]*?\bdeals (\d+d\d+(?:\s*\+\s*\d+)?) (?:(persistent) )?(${TYPES}) damage \(doubled on a critical (?:hit|success)\)\.?`, "i");
 const WITHIN = /\bwithin (\d+) feet\b/i;
+// (An attack with its user's own spell or ranged attack modifier, their pick: Clockwork Helm's "Make a spell or ranged attack roll (your
+// choice) to affect the target. On a hit, the target takes 10d8 fire damage and is Drained 2." — the card's pick of the two, the
+// damage doubled on a critical hit, the condition on any hit.)
+const CHOSEN_ATTACK = new RegExp(String.raw`\bMake a spell or ranged attack roll \(your choice\)[^.]*\.\s*On a hit, the target takes (\d+d\d+(?:\s*\+\s*\d+)?) (?:(persistent) )?(${TYPES}) damage(?: and is ([^.]+))?\.`, "i");
 // (One of two maneuvers at the item's modifier: Twisting Twine's "attempting to Disarm or Trip (your choice) a creature in
 // the square with a total of +9 to the Athletics check" — both plans, the card's picker.)
 const MANEUVER_CHOICE = new RegExp(String.raw`\battempt(?:s|ing)? to (${NAMES}) or (${NAMES}) \(your choice\)[^.]*?\bwith a total of \+(\d+) to the (?:Athletics|Acrobatics|Intimidation|Deception) check\b`, "i");
@@ -44,6 +49,11 @@ export function readOwnCheck(given) {
     // alchemical items: one sentence too.)
     const text = String(given ?? "").replace(/(\d+d\d+) plus (\d+)\b/g, "$1+$2").replace(/(\+\d+ (?:attack )?modifier)\. The Strike deals\b/g, "$1, dealing").replace(/(\+\d+ (?:attack )?modifier\b[^.]*)\. On a successful Strike,? it deals\b/g, "$1, dealing");
     const sentences = sentencesOf(text);
+    const chosen = CHOSEN_ATTACK.exec(String(text ?? ""));
+    if (chosen) {
+        const notes = sentencesOf(String(text ?? "").replace(chosen[0], "")).filter((sentence) => !/^You fire a beam\b[^.]*\bat a target\.$/i.test(sentence));
+        return { kind: "attack", range: null, reach: null, modifier: 0, choose: ["spell", "ranged"], formula: chosen[1].replace(/\s+/g, ""), category: chosen[2] ? "persistent" : null, type: chosen[3].toLowerCase(), ...(chosen[4] ? { rider: chosen[4].trim() } : {}), notes };
+    }
     const higher = HIGHER_ATTACK.exec(String(text ?? ""));
     if (higher) {
         const notes = sentencesOf(String(text ?? "").replace(higher[0], "")).filter((sentence) => !/^The [\w' -]+? (?:shoots|fires|hurls|launches) [^.]+ at an? (?:foe|creature|enemy|target) within \d+ feet\.$/i.test(sentence));
@@ -96,7 +106,9 @@ export function ownCheckPlan(text, base, options = {}) {
         return { ...common, targeting: { ...(basic.targeting ?? {}), target: "1 creature" }, resolution: at(basic), ...(choices.length > 1 ? { checkChoices: choices.map((action, index) => ({ label: read.slugs[index].charAt(0).toUpperCase() + read.slugs[index].slice(1), resolution: at(action) })) } : {}) };
     }
     const component = { id: "0", formula: read.formula, type: read.type, category: read.category };
-    const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [], modifiers: [] });
+    // (A condition on any hit, Clockwork Helm's Drained 2: the bombs' rider reader.)
+    const riders = read.rider ? riderRow(`The target is ${read.rider}.`).effects ?? [] : [];
+    const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [...riders], modifiers: [] });
     return {
         ...common,
         targeting: { target: read.count ? `up to ${read.count} enemies` : "1 creature", range: read.reach ?? null, area: null },
