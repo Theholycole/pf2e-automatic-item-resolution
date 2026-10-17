@@ -44,6 +44,9 @@ export function strikeLines(plan) {
         strike.splash ? `+${strike.splash.value} ${strike.splash.damageType} splash damage` : null,
         strike.runes ? `Its weapon is a +${strike.runes.potency} ${["", "", "greater ", "major "][strike.runes.striking] ?? ""}striking weapon for it (PF2e keeps the weapon's own runes when they're better)` : null,
         ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage`),
+        // (Damage in place of the weapon's, Big Rock Bullet's: the card's own roll.)
+        strike.instead?.hit ? `On a hit: ${strike.instead.hit.formula} ${strike.instead.hit.type} damage in place of the weapon's (doubled on a critical hit)` : null,
+        strike.instead?.failure ? `On a failure (not a critical failure): ${strike.instead.failure.formula} ${strike.instead.failure.type} damage` : null,
         hit ? `On a hit: ${hit}` : null,
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
         strike.save ? `On a hit: ${saveText(strike.save)} for the target` : null,
@@ -61,7 +64,34 @@ export function strikeHint(plan, name) {
     const strike = plan.strike ?? {};
     if (strike.hit) return `${name}'s Strike already hit: its damage roll carries it.`;
     const which = strike.uses === 2 ? `next two ${strikeWord(plan)}s` : `next ${strikeWord(plan)}`;
+    if (strike.instead) return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} carries it; its attack roll posts the damage to roll, so don't roll the weapon's own.`;
     return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} ${strike.uses === 2 ? "carry" : "carries"} it; ${strike.missKeeps ? "only a hit spends it" : "a miss spends it"}.`;
+}
+
+// Damage in place of the weapon's for the attack's degree (Big Rock Bullet's): the ability module's card of it — the check
+// family with no roll, the damage shared, doubled on a critical hit — or null when that degree deals none.
+export function insteadDamagePlan(plan, outcome) {
+    const instead = plan?.strike?.instead;
+    const entry = outcome === "success" || outcome === "criticalSuccess" ? instead?.hit : outcome === "failure" ? instead?.failure : null;
+    if (!entry) return null;
+    const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+    return {
+        modelVersion: plan.modelVersion,
+        source: plan.source,
+        rank: plan.rank ?? 1,
+        traits: plan.traits ?? [],
+        activation: plan.activation,
+        automation: { level: "automatic" },
+        targeting: { target: "the creature the Strike hits", range: null, area: null },
+        trigger: { event: "use" },
+        resolution: {
+            kind: "check",
+            check: { roll: "automatic", statistic: "automatic" },
+            sharedDamage: { rollOnce: true, components: [{ id: "0", formula: entry.formula, type: entry.type, category: null }] },
+            outcomes: { criticalSuccess: none(), success: { damage: { mode: "shared", multiplier: outcome === "criticalSuccess" ? 2 : 1, sourceComponentIds: ["0"] }, effects: [], modifiers: [] }, failure: none(), criticalFailure: none() }
+        },
+        directDamage: { formula: entry.formula, type: entry.type, category: null }
+    };
 }
 
 export function strikeCardHTML(state, { canApply = false } = {}) {
@@ -142,6 +172,8 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     if (ammoId && options.some((option) => /(?:^|:)ammo:id:/.test(option)) && !options.some((option) => option === `ammo:id:${ammoId}` || option.endsWith(`:ammo:id:${ammoId}`))) return null;
     if (plan.strike?.unarmed && !options.includes("item:category:unarmed")) return null;
     if (outcome === "success" || outcome === "criticalSuccess") return "hit";
+    // (A failure that still deals damage in place of the weapon's: Big Rock Bullet's.)
+    if (outcome === "failure" && plan.strike?.instead?.failure) return "failure";
     return plan.strike?.missKeeps ? "keep" : "spend";
 }
 

@@ -2,7 +2,7 @@
 // way, and Set has PF2e switch the item's RollOption to it (actor.toggleRollOption), on the active GM's client. One switched
 // on for a while (src/compiler/option-on.js: Glacier Hammer's Grow Icicles until the end of the turn, Screaming Pinion's
 // Transcendent Shot for its next attack) is kept on the actor (flag optionUntil.<item id>) and switched off then: at PF2e's
-// pf2e.endTurn for that creature, or after a damage roll with that item.
+// pf2e.endTurn for that creature, after a damage roll with that item, or when its token moves.
 
 import { createToggleCard, toggleCardHTML, toggleRequest } from "../src/live/toggle-card.js";
 import { FLAG, MODULE_ID, entryOf, isActiveGM, stateOf } from "./foundry.js";
@@ -42,6 +42,12 @@ export async function togglesAfterDamage(message) {
     const itemId = String(message.flags.pf2e.origin?.uuid ?? "").split(".").at(-1);
     if (!itemId) return;
     await switchOff(message.actor, (id, entry) => id === itemId && entry.until === "damage");
+}
+
+// A token moved (Foundry's updateToken, its x or y changed): its creature's toggles on until it moves (Sure-Step Crampons').
+export async function togglesOnMove(token, changes) {
+    if (!isActiveGM() || !("x" in (changes ?? {}) || "y" in (changes ?? {}))) return;
+    await switchOff(token?.actor, (itemId, entry) => entry.until === "move");
 }
 
 export async function postToggleCard({ message, plan, used, actor, token }) {

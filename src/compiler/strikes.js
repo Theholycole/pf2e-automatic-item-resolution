@@ -147,8 +147,42 @@ export function castOnHit(html) {
     };
 }
 
+// Ammunition whose damage takes the place of its weapon's, by the attack's degree: Big Rock Bullet's "The target takes
+// @Damage[4d6[bludgeoning]] damage on a successful hit. Even on a failed attack roll (but not a critical failure), the target
+// takes @Damage[2d6[bludgeoning]] damage" — read as in place of the sling's damage. strike.instead { hit, failure }, each
+// { formula, type }: live play rolls it at the target on the ability module's card (a critical hit doubles it, as the Strike's
+// damage), and the weapon's own damage isn't rolled. Its other sentences are notes.
+const INSTEAD = /\bThe target takes @Damage\[\(?(\d+d\d+(?:\+\d+)?)\)?\[(\w+)\]\] damage on a successful hit\.\s*Even on a failed attack roll \(but not a critical failure\), the target takes @Damage\[\(?(\d+d\d+(?:\+\d+)?)\)?\[(\w+)\]\] damage\.\s*/i;
+function insteadPlan(item, base) {
+    const text = String(item?.system?.description?.value ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const match = INSTEAD.exec(text);
+    if (!match) return null;
+    // (After the activation's lines, what it does besides: Catch Rock's reaction against it.)
+    const body = text.slice(match.index + match[0].length).replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\s*\bCraft Requirements\b.*$/s, "");
+    const notes = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && /\b(?:reactions?|damage|save|bonus|penalty|conditions?|Strikes?)\b/i.test(sentence));
+    const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: notes.length ? "guided" : "automatic" },
+        targeting: { target: "the creature the Strike hits", range: null, area: null },
+        trigger: { event: "strike", on: ["success", "criticalSuccess", "failure"], cost: "free" },
+        resolution: {
+            kind: "save",
+            check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
+            outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() }
+        },
+        strike: { range: "ranged", save: null, ammo: true, instead: { hit: { formula: match[1], type: match[2].toLowerCase() }, failure: { formula: match[3], type: match[4].toLowerCase() } }, uses: 1, until: "turn-end", missKeeps: false, notes },
+        ...(notes.length ? { partial: true } : {})
+    };
+}
+
 export function compileStrike(item, base) {
     const html = String(item?.system?.description?.value ?? "");
+    if (isAmmo(item)) {
+        const instead = insteadPlan(item, base);
+        if (instead) return instead;
+    }
     // ("This Strike deals an additional 2d6 precision damage, and on a hit, the creature is Clumsy 1": the rider its own sentence.)
     const text = plainText(html).replace(/,? and on a hit, /gi, ". On a hit, ");
     // (Activated ammunition: its hit is the next ranged Strike's with it. A consumable that's ammunition only in its words —

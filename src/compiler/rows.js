@@ -47,11 +47,16 @@ export function plainText(html) {
 
 // The item's own time: "Duration 1 minute", "The duration is 1 hour", "with a duration of 10 minutes", else the first
 // "for N minutes" or "for 2d4 rounds" (rolled: its average, rounded down, with valueRoll); null when it has none.
+// (Or weeks and years when it's stated, Vaccine's "Duration 1 week" — in days, PF2e's longest unit; not a "for 1 week" that may be
+// something else's, Cayden's Tankard's "that item can't produce the effect for 1 week".)
 const UNIT_WORD = String.raw`(rounds?|minutes?|hours?|days?)`;
+const STATED_UNIT = String.raw`(rounds?|minutes?|hours?|days?|weeks?|years?)`;
+const IN_DAYS = { week: 7, weeks: 7, year: 365, years: 365 };
 export function itemDuration(text) {
     // ("The next time you would die from damage within 8 hours after you drink the ambrosia": its time, before the
     // "immune … for 24 hours" that follows.)
-    const stated = new RegExp(String.raw`\b(?:Duration|The duration is|with a duration of|lasts? for) (\d+|one|an?) ${UNIT_WORD}\b|\bwithin (\d+|one|an?) ${UNIT_WORD} after (?:you )?(?:drink|consum|eat|imbib|apply|applied|activat)`, "i").exec(text)
+    // ("These effects expire 24 hours after you eat the roll", "This bonus expires after 24 hours": the same.)
+    const stated = new RegExp(String.raw`\b(?:Duration|The duration is|with a duration of|lasts? for|expires? after) (\d+|one|an?) ${STATED_UNIT}\b|\b(?:within|expires?) (\d+|one|an?) ${UNIT_WORD} after (?:you )?(?:drink|consum|eat|imbib|apply|applied|activat)`, "i").exec(text)
         ?? new RegExp(String.raw`\bfor (?:the next )?(\d+|one|an?) ${UNIT_WORD}\b`, "i").exec(text);
     const rolled = new RegExp(String.raw`\b(?:for|Duration|The duration is) (\d+)d(\d+) ${UNIT_WORD}\b`, "i").exec(text);
     if (rolled && (!stated || rolled.index < stated.index)) {
@@ -61,7 +66,9 @@ export function itemDuration(text) {
     const next = !stated ? /\bfor the next (round|minute|hour|day)\b/i.exec(text) : null;
     if (!stated && !next) return null;
     const [count, unit] = stated ? [stated[1] ?? stated[3], stated[2] ?? stated[4]] : ["1", next[1]];
-    return { mode: "fixed", value: WORD_NUMBERS[count.toLowerCase()] ?? Number(count), unit: UNITS[unit.toLowerCase()], expiry: "turn-start", anchor: "effect-start" };
+    const value = WORD_NUMBERS[count.toLowerCase()] ?? Number(count);
+    const days = IN_DAYS[unit.toLowerCase()];
+    return { mode: "fixed", value: days ? value * days : value, unit: days ? "days" : UNITS[unit.toLowerCase()], expiry: "turn-start", anchor: "effect-start" };
 }
 
 // Healing that brings its creature back from dying without raising Wounded: Magical Medal (Phoenix's Fire)'s "You lose the dying
@@ -204,6 +211,8 @@ const SELECTORS = [
     [/^will(?: saves?| saving throws?)?$/i, "will"], [/^perception(?: checks?)?$/i, "perception"], [/^(?:ac|armor class)$/i, "ac"],
     [/^attack rolls?$/i, "attack-roll"], [/^checks$/i, "check"], [/^damage rolls?$/i, "damage"], [/^initiative(?: rolls?| checks?)?$/i, "initiative"], [/^skill checks$/i, "skill-check"],
     ...SKILLS.map((skill) => [new RegExp(`^${skill}(?: checks?)?$`, "i"), skill]),
+    // (A DC: "your Deception DC", "Fortitude DC" — PF2e's "{statistic}-dc" domain.)
+    ...[...SKILLS, "fortitude", "reflex", "will", "perception"].map((statistic) => [new RegExp(`^(?:your )?${statistic} DC$`, "i"), `${statistic}-dc`]),
     // ("Intelligence-based skill checks": PF2e's int-based domain.)
     [/^strength-based (?:skill )?checks?$/i, "str-based"], [/^dexterity-based (?:skill )?checks?$/i, "dex-based"], [/^constitution-based (?:skill )?checks?$/i, "con-based"],
     [/^intelligence-based (?:skill )?checks?$/i, "int-based"], [/^wisdom-based (?:skill )?checks?$/i, "wis-based"], [/^charisma-based (?:skill )?checks?$/i, "cha-based"]

@@ -101,3 +101,24 @@ test("Soothing Powder: the type picked on the card is the persistent damage its 
     assert.deepEqual([fire.rolled, bleed.rolled], [[10], []]);
     medic.persistent = [];
 });
+
+test("Elixir of Rejuvenation: its drinker healed up to its maximum Hit Points and its afflictions of level 20 or lower removed; the dead creature brought back a note", async () => {
+    const elixir = compileItem(source("Elixir of Rejuvenation"));
+    assert.deepEqual([routeOf(elixir), elixir.item.restore, elixir.partial, elixir.noteOnly], ["item", { hp: "max", afflictions: { level: 20 } }, true, undefined]);
+    const drinker = foundry.makeActor({ id: "restore-drinker", name: "Rejuvenated", owners: ["player"], hp: 4, max: 50 });
+    foundry.place(drinker, 1, 20000);
+    await drinker.createEmbeddedDocuments("Item", [{ type: "affliction", name: "Ghoul Fever", system: { level: { value: 3 } } }, { type: "affliction", name: "Elder Curse", system: { level: { value: 22 } } }]);
+    const item = foundry.giveItem(drinker, source("Elixir of Rejuvenation"));
+    const data = item.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: drinker.id }, actor: drinker, token: drinker.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    assert.match(card.content, /Heals up to its maximum Hit Points, and removes its afflictions of level 20 or lower/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    await applied(card);
+    assert.equal(drinker.system.attributes.hp.value, 50);
+    assert.deepEqual(drinker.itemTypes.affliction.map((affliction) => affliction.name), ["Elder Curse"]);
+    assert.ok(card.flags[MODULE_ID].card.results.some((line) => /Ghoul Fever removed/.test(line)), card.flags[MODULE_ID].card.results.join(" | "));
+});

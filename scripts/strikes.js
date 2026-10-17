@@ -6,7 +6,7 @@
 // spends it. A melee one waits for a melee Strike (PF2e's "item:melee" / "item:ranged" roll options), the item's own
 // weapon for a Strike with it ("item:id:…").
 
-import { MODULE_KEY, createStrikeCard, dieText, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
+import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, startInitiative, stateOf } from "./foundry.js";
 
@@ -55,6 +55,7 @@ export async function strikeWithRider(message) {
     const options = context.options ?? [];
     const what = riderFor(rider.plan, { ranged: options.includes("item:ranged") && !options.includes("item:melee"), outcome: context.outcome, options, weaponId: rider.weaponId ?? null, ammoId: rider.ammoId ?? null });
     if (!what || what === "keep") return;
+    if (rider.plan.strike?.instead) return strikeInstead({ message, context, actor, effect, rider, what });
     // (Weapon Shot's striking rune counts: the damage roll's dice are its; so does flat splash damage, Jistkan War Crossbow's.)
     const rolled = addsToDamage(rider.plan);
     // (A hit whose damage roll the Effect adds to: kept for it.)
@@ -106,6 +107,30 @@ export async function strikeWithRider(message) {
         }
     }
     await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(lines.join("; ") || "the Strike hit")}.</p>` });
+}
+
+// Damage in place of the weapon's (Big Rock Bullet's): spent by the attack roll, which posts that degree's damage at the target on
+// the ability module's card.
+async function strikeInstead({ message, context, actor, effect, rider, what }) {
+    await useOne(actor, effect, rider);
+    const speaker = ChatMessage.getSpeaker({ actor });
+    const plan = what === "spend" ? null : insteadDamagePlan(rider.plan, context.outcome);
+    if (!plan) {
+        await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike critically missed; it's spent.</p>` });
+        return;
+    }
+    const entry = context.outcome === "failure" ? rider.plan.strike.instead.failure : rider.plan.strike.instead.hit;
+    const amount = `${entry.formula} ${entry.type}${context.outcome === "criticalSuccess" ? ", doubled" : ""}`;
+    const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;
+    const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
+    const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+    if (!targetToken?.actor || !postCard) {
+        await ChatMessage.create({ speaker, whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(amount)} damage in place of the weapon's${targetToken?.actor ? "" : ", but the Strike had no target"}; roll it by hand.</p>` });
+        return;
+    }
+    const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
+    await postCard({ plan, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: [targetToken.object ?? targetToken], cause: `${rider.item.name} ${context.outcome === "failure" ? "missed" : "hit"}` });
+    await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(targetToken.name ?? targetToken.actor.name)} takes ${escape(amount)} damage in place of the weapon's; its card follows.</p>` });
 }
 
 // PF2e's damage roll of a Strike by a creature whose readied Strike carries extra dice: that Strike's damage is rolled, so

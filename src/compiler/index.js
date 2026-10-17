@@ -14,7 +14,7 @@ import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
 import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
-import { snareZone } from "./snares.js";
+import { isSnare, snareChoices, snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
@@ -40,6 +40,8 @@ import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
 import { damageMaterial } from "./materials.js";
 import { waysPlan } from "./ways.js";
+import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
+import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -107,6 +109,13 @@ function compileOne(given, options = {}) {
     // (A spell only named as an example isn't cast: src/compiler/guards.js.)
     const read = castMentionOnly(abilityRead, html) ? null : abilityRead;
     const base = basePlan(item);
+    // (A snare whose damage type its crafter chose, src/compiler/snares.js: Striking Snare's stones or spikes — the ways card's
+    // pick, each way the snare's zone, the card closed once one is placed.)
+    const chosen = isSnare(item) ? snareChoices(html) : null;
+    if (chosen) {
+        const ways = chosen.map(({ name, html: wayHtml }) => ({ name, html: wayHtml, plan: compileOne({ ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: wayHtml } } }, options) }));
+        if (ways.every((way) => way.plan?.builtin === "zone")) return { ...base, builtin: "ways", once: true, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, item: itemInfo(item) };
+    }
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     const snare = snareZone(item, read);
     if (snare) return { ...snare, item: itemInfo(item) };
@@ -173,13 +182,16 @@ function compileOne(given, options = {}) {
     const recovery = readRecovery(plainText(item?.system?.description?.value));
     if (recovery && !plan) plan = recoveryPlan(base, recoveryNotes(plainText(item?.system?.description?.value)));
     else if (recovery && plan.noteOnly) plan = { ...withoutNoteOnly(plan), partial: true };
+    // (Restored to its maximum Hit Points and rid of afflictions, src/compiler/restore.js: Elixir of Rejuvenation; with a note alone,
+    // the note is the rest of it.)
+    if (readRestore(plainText(item?.system?.description?.value))) plan = !plan ? restorePlan(base, restoreNotes(plainText(item?.system?.description?.value))) : plan.noteOnly ? { ...withoutNoteOnly(plan), partial: true } : plan;
     // (A weapon lent a property rune for a while, src/compiler/rune-loans.js: Burial Oil; a note alone gives way to it.)
     const rune = readRuneLoan(plainText(item?.system?.description?.value), item);
     if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    const { resist, speeds, senses, weapon, strikeDamage, ...rest } = plan;
-    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}) };
+    const { resist, speeds, senses, weapon, strikeDamage, firstDegree, ...rest } = plan;
+    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;
@@ -196,7 +208,10 @@ function compileOne(given, options = {}) {
 // A row that reads only part of the text (Megaphone Mutagen's drawback, not its benefit for auditory actions) also
 // carries the note, and counts as partial (plan.partial): "Effect + note", as the spell module counts its own.
 function rowPlan(item, base) {
-    const row = ownRow(item);
+    const found = ownRow(item);
+    // (A time's first critical failure made a failure, src/compiler/first-degree.js: Lockpicker's Oil — its sentence read.)
+    const firstDegree = found ? firstDegreeOf(plainText(item?.system?.description?.value), found.modifiers) : null;
+    const row = firstDegree ? { ...found, unread: (found.unread ?? []).filter((sentence) => !firstDegreeSentence(sentence)) } : found;
     const partial = Boolean(row?.unread?.length);
     const note = !row || partial ? noteRow(item) : null;
     if (!row && !note) return null;
@@ -217,7 +232,8 @@ function rowPlan(item, base) {
         ...(row?.senses ? { senses: row.senses } : {}),
         // (A change to its user's weapon, the same: plan.item.weapon; extra damage on its Strikes, plan.item.strikeDamage.)
         ...(row?.weapon ? { weapon: row.weapon } : {}),
-        ...(row?.strikeDamage ? { strikeDamage: row.strikeDamage } : {})
+        ...(row?.strikeDamage ? { strikeDamage: row.strikeDamage } : {}),
+        ...(firstDegree ? { firstDegree } : {})
     };
 }
 
@@ -273,6 +289,8 @@ function itemInfo(item) {
         ...(readRecovery(plainText(item?.system?.description?.value)) ? { recovery: readRecovery(plainText(item?.system?.description?.value)) } : {}),
         // (A property rune it lends a weapon: the item card's, src/compiler/rune-loans.js.)
         ...(readRuneLoan(plainText(item?.system?.description?.value), item) ? { rune: readRuneLoan(plainText(item?.system?.description?.value), item) } : {}),
+        // (Restored to its maximum Hit Points, its afflictions removed: the item card's, src/compiler/restore.js.)
+        ...(readRestore(plainText(item?.system?.description?.value)) ? { restore: readRestore(plainText(item?.system?.description?.value)) } : {}),
         // (Back from dying without raising Wounded, src/compiler/rows.js.)
         ...(keepsWounded(plainText(item?.system?.description?.value)) ? { keepWounded: true } : {})
     };

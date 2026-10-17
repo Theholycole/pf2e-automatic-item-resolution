@@ -4,6 +4,8 @@
 // classes (pf2e-aar-card, aar-*), so both modules' cards look alike.
 
 import { skillPickRules } from "../compiler/skill-pick.js";
+import { firstDegreeRules } from "../compiler/first-degree.js";
+import { restoreText } from "../compiler/restore.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -110,6 +112,9 @@ export function previewLines(state) {
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
+    if (plan?.item?.firstDegree) lines.push(firstDegreeText(plan.item.firstDegree));
+    // (Its maximum Hit Points and its afflictions, src/compiler/restore.js.)
+    if (plan?.item?.restore) lines.push(restoreText(plan.item.restore));
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
     if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
@@ -293,6 +298,20 @@ export function skillPickText(pick) {
 export function skillPickEffectSource(pick, index, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const skill = pick.skills[index] ?? pick.skills[0];
     return ownEffectSource({ name: skill.charAt(0).toUpperCase() + skill.slice(1), img: "icons/svg/upgrade.svg", words: skillPickText({ ...pick, skills: [skill, skill] }).replace(/the skill picked \([^)]*\)/, skill), rules: skillPickRules(pick, index, item.name ?? null), duration: pick.duration, flag: { skillPick: skill }, item, user, worldTime, initiative, moduleId });
+}
+
+// A time's first critical failure made a failure, in words: "The first critical failure on Thievery checks to Pick a Lock becomes a
+// failure, within 1 minute".
+export function firstDegreeText(first) {
+    const actions = [].concat(first.predicate ?? []).filter((term) => typeof term === "string" && term.startsWith("action:")).map((term) => term.slice(7).split("-").map((word, at) => (at === 0 || !["a", "an", "the", "of"].includes(word) ? word.charAt(0).toUpperCase() + word.slice(1) : word)).join(" "));
+    const skill = first.selector.charAt(0).toUpperCase() + first.selector.slice(1);
+    const time = first.duration?.mode === "fixed" ? `, within ${timeText(first.duration)}` : "";
+    return `The first critical failure on ${skill} checks${actions.length ? ` to ${actions.join(" or ")}` : ""} becomes a failure${time}`;
+}
+
+// Its Effect: PF2e's AdjustDegreeOfSuccess, which the first roll it changes removes (scripts/first-degree.js).
+export function firstDegreeEffectSource(first, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: "first critical failure", img: "icons/svg/upgrade.svg", words: firstDegreeText(first), rules: firstDegreeRules(first, item.name ?? null), duration: first.duration, flag: { firstDegree: { selector: first.selector, adjustment: first.adjustment } }, item, user, worldTime, initiative, moduleId });
 }
 
 // Extra damage on its user's Strikes in words: "+1d4 precision damage on melee Strikes against off-guard creatures for 10 minutes".

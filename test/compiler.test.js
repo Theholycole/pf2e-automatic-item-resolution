@@ -384,11 +384,18 @@ test("Guardian Rose: \"you avoid being knocked out and regain 2d8+5 Hit Points\"
     assert.equal(rose.partial, true);
 });
 
-test("Lockpicker's Oil: its user's status bonus to Thievery checks to Pick a Lock for 1 minute; anyone else's and the critical failure a note", () => {
+test("Lockpicker's Oil: its user's status bonus to Thievery checks to Pick a Lock for 1 minute, and the minute's first critical failure on them a failure; anyone else's a note", async () => {
+    const { firstDegreeEffectSource, firstDegreeText } = await import("../src/live/card.js");
     const oil = compileItem(item("Lockpicker's Oil (Greater)"));
     const [bonus] = oil.resolution.outcomes.success.modifiers;
     assert.deepEqual([bonus.selector, bonus.value, bonus.type, bonus.predicate, bonus.duration.value, bonus.duration.unit], ["thievery", 2, "status", ["action:pick-a-lock"], 1, "minutes"]);
+    assert.deepEqual(oil.item.firstDegree, { selector: "thievery", adjustment: { criticalFailure: "one-degree-better" }, predicate: ["action:pick-a-lock"], duration: bonus.duration });
+    assert.deepEqual(oil.unread, ["Anyone else attempting to Pick that Lock within the minute gains the bonus too."]);
     assert.equal(oil.partial, true);
+    assert.equal(firstDegreeText(oil.item.firstDegree), "The first critical failure on Thievery checks to Pick a Lock becomes a failure, within 1 minute");
+    const effect = firstDegreeEffectSource(oil.item.firstDegree, { item: { name: "Lockpicker's Oil (Greater)" } });
+    assert.deepEqual(effect.system.rules, [{ key: "AdjustDegreeOfSuccess", selector: "thievery", adjustment: { criticalFailure: "one-degree-better" }, predicate: ["action:pick-a-lock"], label: "Lockpicker's Oil (Greater)" }]);
+    assert.deepEqual([effect.flags["pf2e-automatic-item-resolution"].firstDegree.selector, effect.system.duration.value, effect.system.duration.unit], ["thievery", 1, "minutes"]);
 });
 
 test("Lance of Sun's Radiance: a line's basic Reflex damage, Blinded on a critical failure; a dragon's other damage a note", () => {
@@ -406,4 +413,27 @@ test("Octopus Potion: its arms' Grapple at the potion's own Athletics modifier, 
     assert.deepEqual([potion.resolution.check.statistic, potion.resolution.check.modifier, potion.resolution.check.against.statistic, potion.ownCheck.modifier], ["athletics", 12, "fortitude", 12]);
     assert.ok(potion.resolution.outcomes.success.effects.some((effect) => effect.slug === "grabbed"));
     assert.equal(potion.partial, true);
+});
+
+test("Vaccine: +2 item bonus to saves against diseases for its time (a week read as 7 days, a year 365, permanent unlimited), the strain's immunity a note", () => {
+    const times = ["Vaccine (Minor)", "Vaccine (Lesser)", "Vaccine (Moderate)", "Vaccine (Greater)", "Vaccine (Major)"].map((name) => {
+        const vaccine = compileItem(item(name));
+        const [bonus] = vaccine.resolution.outcomes.success.modifiers;
+        assert.deepEqual([bonus.selector, bonus.value, bonus.type, bonus.predicate], ["saving-throw", 2, "item", ["item:trait:disease"]], name);
+        assert.equal(vaccine.partial, true);
+        assert.match(vaccine.unread[0], /^Its immunity to the one strain of disease it was made for/);
+        return bonus.duration ? `${bonus.duration.value} ${bonus.duration.unit}` : null;
+    });
+    assert.deepEqual(times, ["1 hours", "24 hours", "7 days", "365 days", null]);
+});
+
+test("bonuses narrower than PF2e's rolls, on the whole roll for their time: Phantom Roll's Stealth, Infiltrator's Elixir's Deception DC, Armor Polishing Kit's Diplomacy to Make an Impression; the narrower words notes", () => {
+    const summary = (name) => {
+        const plan = compileItem(item(name));
+        const [bonus] = plan.resolution.outcomes.success.modifiers;
+        return [bonus.selector, bonus.value, bonus.type, bonus.predicate ?? null, `${bonus.duration.value} ${bonus.duration.unit}`, plan.partial, plan.unread[0]];
+    };
+    assert.deepEqual(summary("Phantom Roll"), ["stealth", 1, "item", null, "24 hours", true, "The bonus is only for Stealth checks during the Avoid Notice exploration activity."]);
+    assert.deepEqual(summary("Infiltrator's Elixir"), ["deception-dc", 4, "status", null, "10 minutes", true, "The bonus is only to avoid others seeing through your disguise, and you add your level to this DC even if untrained."]);
+    assert.deepEqual(summary("Armor Polishing Kit"), ["diplomacy", 1, "circumstance", ["action:make-an-impression"], "24 hours", true, "The bonus is only on soldiers, guards, Gorumites, and other martially minded characters, for whoever wears the armor maintained by this kit."]);
 });

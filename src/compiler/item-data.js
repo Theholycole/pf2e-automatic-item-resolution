@@ -140,6 +140,19 @@ export function withItemData(html, item) {
     // (A lock's bonus for anyone picking it, Lockpicker's Oil's "Anyone attempting to Pick the Lock within the next minute gains a +1
     // status bonus to the Thievery check": its user's, for that minute — anyone else's a note.)
     text = text.replace(/\bAnyone attempting to (?:@UUID\[[^\]]*\]\{)?(Pick (?:the|a) Lock)\}? within the next minute gains an? \+(\d+) (status|circumstance|item) bonus to the (\w+) check\./g, (whole, action, value, type, skill) => `You gain a +${value} ${type} bonus to ${skill} checks to Pick a Lock for 1 minute. Anyone else attempting to Pick that Lock within the minute gains the bonus too.`);
+    // (Damage and a save with no degrees given, Ice Slick Snare's "it takes @Damage[2d6[cold]] damage and must attempt a
+    // @Check[reflex|dc:22|traits:damaging-effect] saving throw", where PF2e's own text ends: a basic save against that damage.)
+    if (!/\b(?:Critical Success|Critical Failure)\b/.test(text)) text = text.replace(/(\btakes @Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage and must attempt an? @Check\[(fortitude|reflex|will)\|dc:(\d+)(?![^\]]*\bbasic\b)[^\]]*\] saving throw\./g, "$1 damage with a @Check[$2|dc:$3|basic] saving throw.");
+    // (A vaccine's bonus against "other strains of the same disease", which PF2e can't tell apart: its bonus to saves against
+    // diseases, the strain's immunity a note.)
+    text = text.replace(/\bA vaccine grants a creature immunity to a specific strain of disease ([^,.]*), and an? \+(\d+) (item|status|circumstance) bonus on all saving throws against other strains of the same disease\./g, (whole, level, value, type) => `You gain a +${value} ${type} bonus to saving throws against diseases. Its immunity to the one strain of disease it was made for (${level}) is the GM's, and the bonus is only against other strains of that disease.`);
+    // (A bonus narrower than PF2e's roll, applied to the whole roll for its time, the narrower words a note: Phantom Roll's "+1 item
+    // bonus to Stealth checks you attempt during the Avoid Notice exploration activity", Infiltrator's Elixir's "+4 status bonus to
+    // your Deception DC to avoid others seeing through your disguise", Armor Polishing Kit's "Creatures wearing armor that has been
+    // maintained by this kit gain a +1 circumstance bonus on Diplomacy checks to Make an Impression on soldiers, guards, …".)
+    text = text.replace(/\byou gain an? \+(\d+) (item|status|circumstance) bonus to (\w+) checks you attempt during the (?:@UUID\[[^\]]*\]\{)?([A-Z][\w ]+?)\}? exploration activity\./g, (whole, value, type, skill, activity) => `you gain a +${value} ${type} bonus to ${skill} checks. The bonus is only for ${skill} checks during the ${activity} exploration activity.`);
+    text = text.replace(/\bYou gain an? \+(\d+) (item|status|circumstance) bonus to your (\w+) DC (to avoid others seeing through your disguise)(, and [^.]*)?\./g, (whole, value, type, skill, scope, rest) => `You gain a +${value} ${type} bonus to your ${skill} DC. The bonus is only ${scope}${rest ?? ""}.`);
+    text = text.replace(/\bCreatures wearing armor that has been maintained by this kit gain an? \+(\d+) (item|status|circumstance) bonus on (\w+) checks to ((?:@UUID\[[^\]]*\]\{)?[A-Z][\w ]+?\}?) on ([^.]+)\./g, (whole, value, type, skill, action, whom) => `You gain a +${value} ${type} bonus to ${skill} checks to ${action}. The bonus is only on ${whom}, for whoever wears the armor maintained by this kit.`);
     // (An attack with a talisman's ranged weapon, Alchemist's Damper's "Trigger You attack with the affixed firearm": its Strike, as the
     // Strike reader takes it.)
     text = text.replace(/\bYou attack with the affixed (firearm|crossbow|bow)\b/g, "You attempt a ranged Strike with the affixed $1");

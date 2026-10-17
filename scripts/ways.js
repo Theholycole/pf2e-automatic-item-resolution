@@ -21,6 +21,7 @@ export async function applyWaysCard(message, { choice = null } = {}, postCardFor
     const data = state.item.data ?? { name: state.item.name, system: {} };
     const used = { data: { ...data, name: `${state.item.name} (${way.name})`, system: { ...(data.system ?? {}), description: { value: way.html } } }, actor };
     await postCardFor({ message: null, plan: way.plan, used, actor, token });
-    const next = { ...state, choice: index, results: [...state.results, `${way.name}: its card.`] };
+    // (Used once, a snare's crafted choice: closed.)
+    const next = { ...state, choice: index, ...(state.plan.once ? { status: "applied" } : {}), results: [...state.results, `${way.name}: ${way.plan.builtin === "zone" ? "placed" : "its card"}.`] };
     return message.update({ content: waysCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

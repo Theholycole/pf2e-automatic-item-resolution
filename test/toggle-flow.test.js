@@ -71,3 +71,24 @@ test("an activation named for one of the item's toggles: on until the end of the
     assert.deepEqual(wielder.toggled.at(-1), { domain: "all", option: "grow-icicles", itemId: hammer.id, value: false, suboption: null });
     assert.equal(wielder.getFlag(MODULE_ID, `optionUntil.${hammer.id}`), undefined);
 });
+
+test("Sure-Step Crampons: its unnamed activation switches on PF2e's own toggle for it (the bonus to Fortitude and Reflex against Shove, Trip, forced movement and prone), off again when its wearer's token moves", async () => {
+    const crampons = compileActivations(source("Sure-Step Crampons"))[0].plan;
+    assert.deepEqual([routeOf(crampons), crampons.until, crampons.modes[0].plan], ["toggle", "move", { builtin: "roll-option", option: "sure-step-crampons", value: true }]);
+    const worn = foundry.giveItem(wielder, source("Sure-Step Crampons"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: worn.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "toggle");
+    assert.match(card.content, /It goes off again when Wielder(?:&#39;|')s token moves\./);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.deepEqual(wielder.toggled.at(-1), { domain: "all", option: "sure-step-crampons", itemId: worn.id, value: true, suboption: null });
+    // Turned elsewhere (no move): still on; moved: off.
+    await foundry.call("updateToken", { actor: wielder }, { rotation: 90 });
+    await settle();
+    assert.equal(wielder.toggled.at(-1).value, true);
+    await foundry.call("updateToken", { actor: wielder }, { x: 100 });
+    await settle();
+    assert.deepEqual(wielder.toggled.at(-1), { domain: "all", option: "sure-step-crampons", itemId: worn.id, value: false, suboption: null });
+});

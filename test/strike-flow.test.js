@@ -370,3 +370,36 @@ test("a Strike's attack without its range penalty (Sniper's Bead, Jistkan War Cr
     ]);
     assert.deepEqual(strikeLines(crossbow), ["No range penalty out to its third range increment", "+10 piercing splash damage"]);
 });
+
+test("Big Rock Bullet: its damage in place of the sling's — the hit's on the ability module's card (doubled on a critical hit), a failure's smaller damage, nothing on a critical failure", async () => {
+    const [rock] = compileActivations(source("Big Rock Bullet"));
+    assert.equal(routeOf(rock.plan), "strike");
+    assert.deepEqual(rock.plan.strike.instead, { hit: { formula: "4d6", type: "bludgeoning" }, failure: { formula: "2d6", type: "bludgeoning" } });
+    assert.deepEqual(rock.plan.strike.notes, ["Creatures with the Catch Rock reaction can use it against a big rock bullet."]);
+    assert.ok(strikeLines(rock.plan).includes("On a failure (not a critical failure): 2d6 bludgeoning damage"));
+    assert.deepEqual(strikeRules(rock.plan, { ammoId: "x" }), [], "nothing on PF2e's own damage roll");
+    const bullets = foundry.giveItem(fighter, { ...source("Big Rock Bullet"), system: { ...source("Big Rock Bullet").system, quantity: 3 } });
+    const ready = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: bullets.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+    };
+    const posted = async (outcome) => {
+        const before = foundry.posted.length;
+        await attack(outcome, ["item:ranged", `item:ammo:id:${bullets.id}`]);
+        assert.equal(readied().length, 0, `${outcome} spends it`);
+        return foundry.posted.slice(before);
+    };
+    await ready();
+    const [miss] = await posted("failure");
+    assert.deepEqual([miss.plan.resolution.sharedDamage.components[0].formula, miss.plan.resolution.outcomes.success.damage.multiplier], ["2d6", 1]);
+    await ready();
+    const [critical] = await posted("criticalSuccess");
+    assert.deepEqual([critical.plan.resolution.sharedDamage.components[0].formula, critical.plan.resolution.outcomes.success.damage.multiplier], ["4d6", 2]);
+    assert.equal(critical.tokens[0].actor?.id ?? critical.tokens[0].document?.actor?.id, foe.id);
+    await ready();
+    assert.deepEqual(await posted("criticalFailure"), []);
+});

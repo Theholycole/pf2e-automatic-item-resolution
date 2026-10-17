@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
@@ -22,12 +22,13 @@ import { needsTargets } from "../src/live/cast-card.js";
 import { startItemZone } from "./zones.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
+import { firstDegreeRolled } from "./first-degree.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
-import { applyToggleCard, postToggleCard, togglesAfterDamage, togglesAtTurnEnd } from "./toggle.js";
+import { applyToggleCard, postToggleCard, togglesAfterDamage, togglesAtTurnEnd, togglesOnMove } from "./toggle.js";
 import { activate, indexOf, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
@@ -67,6 +68,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         // (A spell cast into Spellstrike Ammunition, at the creature its Strike hits: scripts/spellstrike.js.)
         strikeWithSpellstrike(message).catch((error) => console.error(`${MODULE_ID} | spellstrike`, error));
         fortuneRolled(message).catch((error) => console.error(`${MODULE_ID} | roll twice`, error));
+        // (A time's first critical failure made a failure, its Effect gone after: scripts/first-degree.js.)
+        firstDegreeRolled(message).catch((error) => console.error(`${MODULE_ID} | first critical failure`, error));
         // (An item's toggle on until its next damage roll: scripts/toggle.js.)
         togglesAfterDamage(message).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
     });
@@ -79,6 +82,10 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         loseUnspentFocus(combatant, encounter).catch((error) => console.error(`${MODULE_ID} | unspent Focus Point`, error));
         // (An item's toggle on until the end of the turn: scripts/toggle.js.)
         togglesAtTurnEnd(combatant).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
+    });
+    // (An item's toggle on until its user moves: scripts/toggle.js.)
+    Hooks.on("updateToken", (token, changes) => {
+        togglesOnMove(token, changes).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
     });
     game.socket.on(SOCKET, (data) => {
         if (isActiveGM()) onRequest(data).catch((error) => console.error(`${MODULE_ID} | ${data?.action}`, error));
@@ -453,6 +460,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         await target.actor.createEmbeddedDocuments("Item", [skillPickEffectSource(state.plan.item.skillPick, state.skillPick ?? 0, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${state.plan.item.skillPick.skills[state.skillPick ?? 0]} too`);
     }
+    // (A time's first critical failure made a failure: Lockpicker's Oil — an Effect the first roll it changes removes.)
+    if (state.plan.item?.firstDegree && target.actor) {
+        await target.actor.createEmbeddedDocuments("Item", [firstDegreeEffectSource(state.plan.item.firstDegree, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        lines.push(`${recipient.name}: ${firstDegreeText(state.plan.item.firstDegree)}`);
+    }
     // (Extra damage on its user's Strikes: Martial Mayhem Mutagen's precision damage against off-guard creatures — PF2e's DamageDice.)
     for (const extra of state.plan.item?.strikeDamage ?? []) {
         if (!target.actor) break;
@@ -505,6 +517,19 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     if (state.plan.item?.recovery) {
         const recovery = state.plan.item.recovery;
         lines.push(...await recover(target.actor, recipient.name, recovery.choose ? { ...recovery, choose: false, types: [recovery.types[state.recoveryType ?? 0] ?? recovery.types[0]] } : recovery));
+    }
+    // (Restored outright: Elixir of Rejuvenation's maximum Hit Points — PF2e's healing of what's missing — and its afflictions of a
+    // level or lower, PF2e's affliction items, deleted.)
+    const restore = state.plan.item?.restore;
+    if (restore?.hp === "max") {
+        const hp = target.actor.system?.attributes?.hp ?? {};
+        const missing = (Number(hp.max) || 0) - (Number(hp.value) || 0);
+        lines.push(missing > 0 ? await heal(target, recipient.name, missing, state) : `${recipient.name} is at its maximum Hit Points already`);
+    }
+    if (restore?.afflictions) {
+        const gone = (target.actor.itemTypes?.affliction ?? []).filter((affliction) => (Number(affliction.system?.level?.value) || 0) <= restore.afflictions.level);
+        if (gone.length) await target.actor.deleteEmbeddedDocuments("Item", gone.map((affliction) => affliction.id));
+        lines.push(gone.length ? `${recipient.name}: ${gone.map((affliction) => affliction.name).join(", ")} removed` : `${recipient.name} has no afflictions to remove`);
     }
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
     if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {

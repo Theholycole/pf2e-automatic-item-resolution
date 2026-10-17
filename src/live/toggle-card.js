@@ -27,7 +27,7 @@ export function toggleRequest(state, { rules = [], itemId = null } = {}) {
 }
 
 // How long it stays on (src/compiler/option-on.js), in words for the card.
-const UNTIL_WORDS = { "turn-end": "It goes off again at the end of {user}'s turn.", damage: "It goes off again after the item's next damage roll." };
+const UNTIL_WORDS = { "turn-end": "It goes off again at the end of {user}'s turn.", damage: "It goes off again after the item's next damage roll.", move: "It goes off again when {user}'s token moves." };
 export const untilText = (state) => (UNTIL_WORDS[state.plan?.until] ?? "").replace("{user}", state.user?.name ?? "its user");
 
 export function toggleCardHTML(state, { canApply = false } = {}) {

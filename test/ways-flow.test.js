@@ -50,3 +50,35 @@ test("Toadskin Salve's Use: the ways card; \"Use it\" on the second way posts it
     const state = card.flags[MODULE_ID].card;
     assert.deepEqual([state.status, state.results.length], ["open", 1]);
 });
+
+test("Striking Snare: stones or spikes, picked on the ways card before it's placed — each the snare's zone, a basic Reflex save against its 9d8; the card closed once placed. Ice Slick Snare: its 2d6 cold a basic Reflex save, the ice a note", async () => {
+    const snare = compileItem(source("Striking Snare"));
+    assert.deepEqual([routeOf(snare), snare.once, snare.ways.map((way) => way.name)], ["ways", true, ["Stones: bludgeoning", "Spikes: piercing"]]);
+    for (const [way, type] of [[snare.ways[0], "bludgeoning"], [snare.ways[1], "piercing"]]) {
+        const save = way.plan.zone.saves[0].plan.resolution;
+        assert.deepEqual([routeOf(way.plan), save.check.statistic, save.check.basic, save.check.against.value, save.sharedDamage.components[0].formula], ["zone", "reflex", true, 26, `9d8[${type}]`]);
+    }
+    const ice = compileItem(source("Ice Slick Snare"));
+    const iceSave = ice.zone.saves[0].plan.resolution;
+    assert.deepEqual([iceSave.check.statistic, iceSave.check.basic, iceSave.check.against.value, iceSave.sharedDamage.components[0].formula], ["reflex", true, 22, "2d6[cold]"]);
+    assert.ok(ice.zone.notes.includes("It leaves a slippery patch of ice on the ground (the GM's)."));
+    const zones = [];
+    foundry.ability.live.startZone = async (options) => zones.push(options);
+    try {
+        const item = foundry.giveItem(fighter, source("Striking Snare"));
+        const data = item.toObject();
+        const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: fighter.id }, actor: fighter, token: fighter.token.document });
+        await foundry.call("createChatMessage", use);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+        assert.equal(card.flags[MODULE_ID].card.kind, "ways");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, choice: 1, userId: "player" });
+        await settle();
+        assert.equal(zones.length, 1);
+        assert.equal(zones[0].item.name, "Striking Snare (Spikes: piercing)");
+        assert.equal(zones[0].plan.zone.saves[0].plan.resolution.sharedDamage.components[0].formula, "9d8[piercing]");
+        assert.deepEqual([card.flags[MODULE_ID].card.status, card.flags[MODULE_ID].card.results], ["applied", ["Spikes: piercing: placed."]]);
+    } finally {
+        delete foundry.ability.live.startZone;
+    }
+});

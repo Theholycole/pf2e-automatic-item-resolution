@@ -14,17 +14,17 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 234,
+   "none": 221,
    "resolves": 740,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 87,
+   "builtin:zone": 88,
    "builtin:item-action": 12,
-   "partial": 82,
-   "note-only": 188,
+   "partial": 91,
+   "note-only": 191,
    "builtin:counteract": 28,
-   "builtin:no-effect": 53,
+   "builtin:no-effect": 52,
    "builtin:reroll": 2,
-   "builtin:ways": 4,
+   "builtin:ways": 5,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
   }
@@ -34,10 +34,10 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 121,
+    "none": 118,
     "resolves": 209,
-    "partial": 42,
-    "note-only": 92,
+    "partial": 44,
+    "note-only": 93,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
     "builtin:no-effect": 13,
@@ -120,11 +120,11 @@
    "count": 149,
    "results": {
     "resolves": 86,
-    "none": 9,
+    "none": 5,
     "builtin:counteract": 11,
-    "partial": 4,
-    "builtin:no-effect": 10,
-    "note-only": 28,
+    "partial": 11,
+    "builtin:no-effect": 9,
+    "note-only": 26,
     "builtin:zone": 1
    },
    "mechanisms": {
@@ -163,9 +163,10 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 13,
-    "builtin:zone": 64,
-    "note-only": 5
+    "none": 11,
+    "builtin:zone": 65,
+    "note-only": 5,
+    "builtin:ways": 1
    },
    "mechanisms": {
     "damage": 49,
@@ -244,10 +245,10 @@
    "count": 46,
    "results": {
     "builtin:readied-bonus": 2,
-    "none": 18,
+    "none": 14,
     "partial": 2,
+    "note-only": 13,
     "resolves": 13,
-    "note-only": 9,
     "builtin:reroll": 1,
     "builtin:cast-spell": 1
    },
@@ -310,7 +311,7 @@
    "count": 277,
    "resolves": 169,
    "gaps": 0,
-   "none": 18
+   "none": 16
   },
   "linked-effect": {
    "count": 393,
@@ -322,7 +323,7 @@
    "count": 491,
    "resolves": 330,
    "gaps": 0,
-   "none": 29
+   "none": 27
   },
   "affliction": {
    "count": 144,
@@ -358,13 +359,13 @@
    "count": 79,
    "resolves": 18,
    "gaps": 0,
-   "none": 14
+   "none": 12
   },
   "area": {
    "count": 44,
    "resolves": 18,
    "gaps": 0,
-   "none": 9
+   "none": 7
   },
   "condition": {
    "count": 433,
@@ -376,16 +377,16 @@
    "count": 943,
    "resolves": 596,
    "gaps": 0,
-   "none": 21
+   "none": 13
   }
  },
  "live": {
   "totals": {
    "cast": 32,
-   "none": 309,
-   "item": 636,
+   "none": 295,
+   "item": 648,
    "fortune": 23,
-   "zone": 87,
+   "zone": 88,
    "expose": 89,
    "later": 79,
    "action": 12,
@@ -393,16 +394,16 @@
    "counteract": 28,
    "reroll": 2,
    "coat": 45,
-   "strike": 8,
-   "ways": 4
+   "ways": 5,
+   "strike": 8
   },
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 148,
+    "none": 145,
     "later": 12,
     "save": 92,
-    "item": 217,
+    "item": 220,
     "zone": 9,
     "fortune": 7,
     "strike": 3,
@@ -431,8 +432,8 @@
     "strike": 5
    },
    "elixir": {
-    "item": 116,
-    "none": 20,
+    "item": 121,
+    "none": 15,
     "counteract": 11,
     "save": 1,
     "zone": 1
@@ -447,9 +448,10 @@
     "item": 1
    },
    "snare": {
-    "none": 13,
-    "zone": 64,
-    "item": 5
+    "none": 11,
+    "zone": 65,
+    "item": 5,
+    "ways": 1
    },
    "gadget": {
     "none": 17,
@@ -470,8 +472,8 @@
    },
    "fulu": {
     "fortune": 2,
-    "none": 21,
-    "item": 18,
+    "none": 17,
+    "item": 22,
     "save": 3,
     "reroll": 1,
     "cast": 1
@@ -486,9 +488,9 @@
    }
   },
   "noCard": {
-   "no-plan": 234,
+   "no-plan": 221,
    "triggered": 21,
-   "gm": 53,
+   "gm": 52,
    "other": 1
   }
  },
@@ -1588,7 +1590,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Martial Mayhem Mutagen (Lesser)",
@@ -2361,7 +2365,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Aetheric Irritant (Lesser)",
@@ -3646,7 +3652,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Swamp Lily Quilt",
@@ -4564,7 +4572,9 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Scour",
@@ -5400,7 +5410,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "Its immunity to the one strain of disease it was made for (of a level equal to or less than the vaccine's level) is the GM's, and the bonus is only against other strains of that disease.",
+    "For example, a vaccine could grant immunity to putrid plague inflicted by harpies, but would only grant a +2 saving throw bonus against putrid plague inflicted by a giant rat."
+   ],
+   "live": "item"
   },
   {
    "name": "Brimstone Fumes",
@@ -6732,7 +6748,13 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "The bonus is only on soldiers, guards, Gorumites, and other martially minded characters, for whoever wears the armor maintained by this kit.",
+    "This bonus expires after 24 hours, or if the armor is soiled in some way, such as by walking through a sewer or falling in a mud pit."
+   ],
+   "live": "item"
   },
   {
    "name": "Blightburn Resin",
@@ -7986,7 +8008,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Reverberating Stone (Greater)",
@@ -9109,7 +9133,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "Its immunity to the one strain of disease it was made for (of a level equal to or less than the vaccine's level) is the GM's, and the bonus is only against other strains of that disease.",
+    "For example, a vaccine could grant immunity to putrid plague inflicted by harpies, but would only grant a +2 saving throw bonus against putrid plague inflicted by a giant rat."
+   ],
+   "live": "item"
   },
   {
    "name": "Krasovnatype",
@@ -9724,7 +9754,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "Its immunity to the one strain of disease it was made for (of a level equal to or less than the vaccine's level) is the GM's, and the bonus is only against other strains of that disease.",
+    "For example, a vaccine could grant immunity to putrid plague inflicted by harpies, but would only grant a +2 saving throw bonus against putrid plague inflicted by a giant rat."
+   ],
+   "live": "item"
   },
   {
    "name": "Skitter Knot (Lesser)",
@@ -15126,7 +15162,9 @@
     "healing"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Magic Wand (1st-Rank Spell)",
@@ -17877,7 +17915,9 @@
     "area",
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Healer's Gel (Greater)",
@@ -18550,7 +18590,13 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "The bonus is only for Stealth checks during the Avoid Notice exploration activity.",
+    "You can also Avoid Notice at full Speed or combine it with Investigate or Scout while moving at half Speed."
+   ],
+   "live": "item"
   },
   {
    "name": "Bomb Snare",
@@ -19392,8 +19438,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "Anyone else attempting to Pick that Lock within the minute gains the bonus too.",
-    "In addition, the first time during that minute that anyone gets a critical failure on the Thievery check, they get a failure instead."
+    "Anyone else attempting to Pick that Lock within the minute gains the bonus too."
    ],
    "live": "item"
   },
@@ -19601,9 +19646,12 @@
     "polymorph"
    ],
    "mechanisms": [],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "The bonus is only to avoid others seeing through your disguise, and you add your level to this DC even if untrained."
+   ],
+   "live": "item"
   },
   {
    "name": "Seven-Color Raw Fish Salad",
@@ -24704,8 +24752,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Its immunity to the one strain of disease it was made for (of a level equal to or less than the vaccine's level) is the GM's, and the bonus is only against other strains of that disease.",
+    "For example, a vaccine could grant immunity to putrid plague inflicted by harpies, but would only grant a +2 saving throw bonus against putrid plague inflicted by a giant rat."
+   ],
    "live": "item"
   },
   {
@@ -26718,7 +26770,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "note-only",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Black Powder (Horn)",
@@ -29123,8 +29177,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "Anyone else attempting to Pick that Lock within the minute gains the bonus too.",
-    "In addition, the first time during that minute that anyone gets a critical failure on the Thievery check, they get a failure instead."
+    "Anyone else attempting to Pick that Lock within the minute gains the bonus too."
    ],
    "live": "item"
   },
@@ -29773,8 +29826,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Its immunity to the one strain of disease it was made for (of a level equal to or less than the vaccine's level) is the GM's, and the bonus is only against other strains of that disease.",
+    "For example, a vaccine could grant immunity to putrid plague inflicted by harpies, but would only grant a +2 saving throw bonus against putrid plague inflicted by a giant rat."
+   ],
    "live": "item"
   },
   {
@@ -30302,8 +30359,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "Anyone else attempting to Pick that Lock within the minute gains the bonus too.",
-    "In addition, the first time during that minute that anyone gets a critical failure on the Thievery check, they get a failure instead."
+    "Anyone else attempting to Pick that Lock within the minute gains the bonus too."
    ],
    "live": "item"
   },
