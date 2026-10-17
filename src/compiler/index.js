@@ -16,6 +16,7 @@ import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, 
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
+import { coatedSquarePlan } from "./covered-square.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
@@ -37,6 +38,7 @@ import { readCounteract } from "./counteract.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { overUnverified, withoutUnverifiedLinks } from "./unverified-links.js";
 import { affixedTargeting, withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
+import { withHitDelivery } from "./hit-delivery.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
@@ -132,6 +134,9 @@ function compileOne(given, options = {}) {
     // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Noisome Garum's stench.)
     const aura = auraZonePlan(html, base, item.name);
     if (aura) return { ...aura, item: itemInfo(item) };
+    // (A square its user coats for a while, src/compiler/covered-square.js: Colorful Coating's.)
+    const coated = coatedSquarePlan(html, base, item, options);
+    if (coated) return { ...coated, item: itemInfo(item) };
     // (The ability compiler's last fallback, "no-effect" — the GM's — gives way to a reading of the item's own: its
     // linked Effect, PF2e's healing, a spell's Effect, its row; not to a note alone.)
     const own = read?.builtin === "no-effect" ? ownPlan(item, base, options) ?? rowPlan(item, base) : null;
@@ -205,9 +210,11 @@ function compileOne(given, options = {}) {
     plan = withStatedHealing(plan, item?.system?.description?.value);
     // (A condition for as long as a persistent damage lasts: Freezing Embrace Snare's clumsy, src/compiler/primed.js.)
     plan = withWhilePersistent(plan, plainText(item?.system?.description?.value));
+    // (A poison its hit gives, src/compiler/hit-delivery.js: Viper's Fang's venom on its Strike's hit.)
+    plan = withHitDelivery(plan, plainText(item?.system?.description?.value), { trigger: /\bTrigger\s+(.+?)(?:\s+(?:Requirements?|Effect)\b|$)/s.exec(plainText(item?.system?.description?.value))?.[1] ?? null, itemType: item.type });
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    const { resist, speeds, senses, light, levelTemp, weapon, strikeDamage, firstDegree, suppress, ...rest } = plan;
-    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}) };
+    const { resist, speeds, senses, light, levelTemp, weapon, strikeDamage, firstDegree, suppress, coats, coatLasts, ...rest } = plan;
+    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;

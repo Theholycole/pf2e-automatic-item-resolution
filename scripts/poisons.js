@@ -3,14 +3,17 @@
 // card on the target (the ability module's api.live.postCard, the affliction
 // handed to Pseudo Afflictions as for monster venom); a critical miss wastes it.
 
-import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, repeatsLater, saveText, withAttackChoice, withCheckChoice } from "../src/live/poison-card.js";
+import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, coatableWeapons, repeatsLater, saveText, withAttackChoice, withCheckChoice } from "../src/live/poison-card.js";
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
 import { ABILITY_ID, FLAG, MODULE_ID, entryOf, lowerCondition, stateOf } from "./foundry.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
 export async function postPoisonCard({ message, plan, used, actor, token }) {
-    const weapons = poisonableWeapons(actor.itemTypes?.weapon ?? []);
+    // (A weapon's own poison or curse for its next hit, src/compiler/hit-delivery.js: that weapon; a talisman's, any of its user's.)
+    const all = actor.itemTypes?.weapon ?? [];
+    const own = plan.item?.coats === "self" ? all.filter((weapon) => weapon.id === used.data?._id) : [];
+    const weapons = plan.item?.coats === "self" && own.length ? coatableWeapons(own) : plan.item?.coats === "any" ? coatableWeapons(all) : poisonableWeapons(all);
     const state = createPoisonCard({
         plan,
         item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null, description: used.data.system?.description?.value ?? "" },
@@ -48,7 +51,7 @@ export async function strikeWithPoison(message) {
     const effect = (actor?.itemTypes?.effect ?? []).find((entry) => entry.flags?.[MODULE_ID]?.[MODULE_KEY]?.weaponId === weaponId);
     if (!effect) return;
     const poison = effect.flags[MODULE_ID][MODULE_KEY];
-    const what = poisonStrike(context.outcome);
+    const what = poisonStrike(context.outcome, { coats: poison.plan?.item?.coats ?? null });
     if (what === "keep") return;
     await actor.deleteEmbeddedDocuments("Item", [effect.id]);
     const speaker = ChatMessage.getSpeaker({ actor });

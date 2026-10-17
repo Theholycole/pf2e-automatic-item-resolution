@@ -5,7 +5,7 @@
 
 const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
 
-export const isSnare = (item) => item?.type === "consumable" && (item.system?.category === "snare" || /\bsnare\b/i.test(item.name ?? ""));
+export const isSnare = (item) => item?.type === "consumable" && (item.system?.category === "snare" || (item.system?.traits?.value ?? []).includes("snare") || /\bsnare\b/i.test(item.name ?? ""));
 
 // The snare's save as the zone's: the ability compiler's plan, on the creature that enters.
 export function snareZone(item, read) {

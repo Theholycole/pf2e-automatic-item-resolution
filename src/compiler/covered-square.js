@@ -109,3 +109,85 @@ export function raisedAreaPlan(html, base, item, options = {}) {
         }
     };
 }
+
+// A square its user coats for a while: Colorful Coating's "slather over one 5-foot square within your reach or space … its effect in the
+// square you coated lasts for 1 minute". The ability module's zone, that square placed within reach, for that time, with what its colour
+// says there: difficult terrain (Violet's, Green's), hazardous terrain's damage on entering (Orange's "dealing 1d4 acid to any creature
+// that moves through it"), a save on entering (Violet's Reflex save or a –15-foot penalty to Speeds, Immobilized on a critical failure,
+// through the ability compiler's reading of it). Its other rules — uneven ground, Escaping, climbing, once a round — are notes. Null when
+// the colour does none of these (Blue's, Red's, Indigo's, Yellow's: the GM's).
+const COATED = /\bslather over one 5-foot square within your reach or space\b[\s\S]*?\bits effect in the square you coated lasts for (\d+) (minutes?|rounds?)\./i;
+const ENTERS = /^Any creature that enters the square must succeed at an? (@Check\[[^\]]*\])(?:\{[^}]*\})? (?:save|saving throw) or (.+)\.$/i;
+const MOVES_THROUGH = /^The square becomes hazardous terrain, dealing @Damage\[((?:[^[\]]|\[[^\]]*\])*)\](?:\{[^}]*\})? (?:damage )?to any creature that moves through it\.$/i;
+const RULES = /\b(?:penalty|bonus|DC|Escap\w*|Interact|actions?|damage|once per round|Climb|Balance|Steps?|Crawls?)\b/i;
+export function coatedSquarePlan(html, base, item, options = {}) {
+    const text = String(html ?? "");
+    const coated = COATED.exec(text);
+    if (!coated) return null;
+    // (The colour's own paragraphs, after the general one; its links kept for the save's reading.)
+    const own = text.slice(text.indexOf("</p>", coated.index) + 4).replace(/<\/?(?:p|hr|br)\b[^>]*>/gi, " ").replace(/\s+/g, " ").trim();
+    const sentences = own.split(/(?<=[.!?])\s+(?=[A-Z@])/).map((sentence) => sentence.trim()).filter(Boolean);
+    const said = (sentence) => sentence.replace(/@\w+\[(?:[^[\]]|\[[^\]]*\])*\]\{([^}]*)\}/g, "$1").replace(/@Damage\[((?:[^[\]]|\[[^\]]*\])*)\]/g, (_all, formula) => formula.replace(/\[(\w+)\]/, " $1")).replace(/<[^>]+>/g, "");
+    const terrain = [];
+    let hazard = null;
+    let entering = null;
+    // (Its results after it, "On a critical failure, …", while they follow.)
+    let open = false;
+    const notes = [];
+    for (const sentence of sentences) {
+        if (open && /^On a (?:critical )?(?:failure|success)\b/i.test(sentence)) {
+            entering.follow.push(sentence);
+            continue;
+        }
+        open = false;
+        const enters = ENTERS.exec(sentence);
+        if (enters) {
+            entering = { check: enters[1], rest: enters[2], follow: [] };
+            open = true;
+            continue;
+        }
+        const through = MOVES_THROUGH.exec(sentence);
+        if (through) {
+            hazard = { formulas: [through[1]] };
+            continue;
+        }
+        // (What it makes, not what lessens another's, Yellow's "reduces difficult terrain caused by slipperiness".)
+        if (/\b(?:is|becomes|making it(?: both)?) (?:greater )?difficult terrain\b/i.test(sentence)) {
+            if (!terrain.length) terrain.push({ movement: ["walk"], difficulty: /\bgreater difficult terrain\b/i.test(sentence) ? 3 : 2 });
+            const uneven = /\buneven ground with a DC to (?:@UUID\[[^\]]*\]\{)?Balance\}? of (\d+)\b/i.exec(sentence);
+            if (uneven) notes.push(`It's also uneven ground: a creature moving there Balances against DC ${uneven[1]}.`);
+            continue;
+        }
+        if (RULES.test(said(sentence))) notes.push(said(sentence));
+    }
+    if (!terrain.length && !hazard && !entering) return null;
+    const saves = [];
+    if (entering) {
+        const sub = `<p><strong>Effect</strong> The target must succeed at a ${entering.check} save or ${entering.rest}.</p>${entering.follow.map((sentence) => `<p>${sentence}</p>`).join("")}`;
+        const read = compileAbility({ ...item, type: "action", system: { ...(item?.system ?? {}), description: { value: sub }, actionType: { value: "passive" }, actions: { value: null } } }, options);
+        if (read?.resolution?.kind !== "save" || read.resolution.check?.against?.dc !== "fixed") return null;
+        saves.push({ when: ["enter"], plan: { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the square", range: null, area: null } } });
+    }
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "square", value: 5 },
+            centre: "placed",
+            // (Within its user's reach, or its own space.)
+            range: 5,
+            lasts: { mode: "fixed", value: Number(coated[1]), unit: UNITS[coated[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" },
+            untilReused: false,
+            concealed: false,
+            terrain,
+            others: false,
+            hazard,
+            saves,
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes: ["A square within your reach, or your own.", ...notes]
+        }
+    };
+}

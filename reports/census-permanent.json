@@ -12,7 +12,7 @@
    "partial": 154,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
-   "builtin:readied-bonus": 40,
+   "builtin:readied-bonus": 44,
    "note-only": 209,
    "builtin:reroll": 25,
    "builtin:counteract": 6,
@@ -22,22 +22,22 @@
    "builtin:item-action": 22,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
-   "builtin:spellstrike": 9,
-   "builtin:ac-reaction": 4
+   "builtin:spellstrike": 9
   },
   "live": {
-   "save": 405,
+   "save": 408,
    "cast": 470,
    "item": 582,
-   "none": 845,
+   "none": 835,
    "focus": 45,
-   "fortune": 50,
+   "fortune": 54,
    "reroll": 25,
    "strike": 81,
    "counteract": 6,
    "toggle": 32,
    "zone": 17,
    "action": 22,
+   "coat": 3,
    "spellstrike": 9,
    "later": 4
   },
@@ -78,10 +78,9 @@
     "builtin:item-action": 9,
     "builtin:zone": 4,
     "builtin:no-effect": 12,
-    "builtin:readied-bonus": 5,
+    "builtin:readied-bonus": 7,
     "builtin:roll-twice": 1,
-    "builtin:save-bonus": 1,
-    "builtin:ac-reaction": 2
+    "builtin:save-bonus": 1
    }
   },
   "ammo": {
@@ -117,9 +116,8 @@
     "builtin:reroll": 3,
     "partial": 8,
     "builtin:item-action": 2,
-    "builtin:ac-reaction": 2,
+    "builtin:readied-bonus": 3,
     "builtin:zone": 2,
-    "builtin:readied-bonus": 1,
     "builtin:focus-point": 2,
     "builtin:roll-twice": 2
    }
@@ -6161,7 +6159,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "coat"
   },
   {
    "name": "Hydra Spear",
@@ -12916,7 +12914,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "coat"
   },
   {
    "name": "Bracelet of Buoyancy",
@@ -12938,7 +12936,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Bravery Baldric (Flight)",
@@ -13952,9 +13950,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "builtin:ac-reaction",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Jiang-Shi Bell",
@@ -16951,7 +16949,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "The Paladin",
@@ -17095,7 +17093,7 @@
    "trigger": true,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Fiend's Hunger",
@@ -20218,9 +20216,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:ac-reaction",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Cane of the Maelstrom",
@@ -21744,7 +21742,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "coat"
   },
   {
    "name": "Lion's Pelt (Chain)",
@@ -26070,9 +26068,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:ac-reaction",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Floating Shield (Greater)",
@@ -28594,9 +28592,9 @@
    "time": "reaction",
    "frequency": "once per minute",
    "trigger": true,
-   "result": "builtin:ac-reaction",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Deflecting Branch",

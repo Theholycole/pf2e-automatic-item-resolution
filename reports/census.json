@@ -15,12 +15,12 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 218,
-   "resolves": 751,
+   "resolves": 749,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 98,
+   "builtin:zone": 102,
    "builtin:item-action": 15,
    "partial": 97,
-   "note-only": 164,
+   "note-only": 162,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -35,10 +35,10 @@
    "results": {
     "builtin:cast-spell": 11,
     "none": 118,
-    "resolves": 214,
+    "resolves": 213,
     "partial": 45,
-    "note-only": 83,
-    "builtin:zone": 13,
+    "note-only": 81,
+    "builtin:zone": 16,
     "builtin:readied-bonus": 7,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
@@ -66,13 +66,14 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 125,
+    "resolves": 124,
     "note-only": 14,
     "none": 18,
     "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
     "builtin:counteract": 2,
-    "partial": 5
+    "partial": 5,
+    "builtin:zone": 1
    },
    "mechanisms": {
     "linked-effect": 55,
@@ -310,7 +311,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 178,
+   "resolves": 177,
    "gaps": 0,
    "none": 15
   },
@@ -322,7 +323,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 336,
+   "resolves": 334,
    "gaps": 0,
    "none": 27
   },
@@ -364,19 +365,19 @@
   },
   "area": {
    "count": 44,
-   "resolves": 18,
+   "resolves": 17,
    "gaps": 0,
    "none": 7
   },
   "condition": {
    "count": 433,
-   "resolves": 267,
+   "resolves": 265,
    "gaps": 0,
    "none": 25
   },
   "duration": {
    "count": 943,
-   "resolves": 607,
+   "resolves": 606,
    "gaps": 0,
    "none": 13
   }
@@ -384,28 +385,28 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 290,
-   "item": 631,
+   "none": 287,
+   "item": 629,
    "fortune": 23,
-   "zone": 98,
+   "zone": 102,
    "expose": 89,
    "later": 79,
    "action": 15,
    "save": 140,
    "counteract": 28,
    "reroll": 2,
-   "coat": 45,
+   "coat": 46,
    "ways": 5,
    "strike": 9
   },
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 144,
+    "none": 143,
     "later": 12,
     "save": 93,
-    "item": 216,
-    "zone": 13,
+    "item": 214,
+    "zone": 16,
     "fortune": 7,
     "strike": 3,
     "expose": 3,
@@ -417,20 +418,22 @@
    "potion": {
     "item": 76,
     "later": 63,
-    "none": 29,
+    "none": 28,
     "cast": 9,
     "save": 3,
-    "counteract": 2
+    "counteract": 2,
+    "zone": 1
    },
    "talisman": {
-    "none": 47,
+    "none": 46,
     "fortune": 14,
     "action": 11,
     "item": 53,
     "reroll": 1,
     "cast": 9,
     "save": 15,
-    "strike": 6
+    "strike": 6,
+    "coat": 1
    },
    "elixir": {
     "item": 121,
@@ -491,7 +494,7 @@
   },
   "noCard": {
    "no-plan": 218,
-   "triggered": 19,
+   "triggered": 16,
    "gm": 52,
    "other": 1
   }
@@ -5555,9 +5558,9 @@
     "area",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Toothy Knife (Greater)",
@@ -7773,9 +7776,9 @@
     "area",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Sprite Apple (Teal)",
@@ -20653,10 +20656,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Potion of Shared Life",
@@ -21822,10 +21824,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Sargassum Phial",
@@ -27131,7 +27132,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "coat"
   },
   {
    "name": "Blessed Ampoule",

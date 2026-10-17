@@ -26,6 +26,11 @@ export function poisonableWeapons(weapons) {
         .sort((a, b) => Number(b.held) - Number(a.held));
 }
 
+// Any of them, held ones first: what a weapon's own poison or a talisman's coats (src/compiler/hit-delivery.js), whatever its damage.
+export function coatableWeapons(weapons) {
+    return (weapons ?? []).map((weapon) => ({ id: weapon.id ?? weapon._id, name: weapon.name, held: weapon.system?.equipped?.carryType === "held" })).sort((a, b) => Number(b.held) - Number(a.held));
+}
+
 export function createPoisonCard({ plan, item, user, weapons }) {
     return { kind: "poison", status: "open", plan, item, user, weapons, weapon: weapons.length ? 0 : null, results: [] };
 }
@@ -63,14 +68,15 @@ export function outrightText(plan) {
 export function poisonCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const weapon = state.weapons[state.weapon];
-    const choice = !state.weapons.length ? `<p class="aar-warning">${escape(state.user.name)} has no piercing or slashing weapon to coat.</p>`
+    const coats = state.plan?.item?.coats ?? null;
+    const choice = !state.weapons.length ? `<p class="aar-warning">${escape(state.user.name)} has no ${coats ? "" : "piercing or slashing "}weapon ${coats ? "for it" : "to coat"}.</p>`
         : open && canApply && state.weapons.length > 1
             ? `<p class="aar-actions">Coat: <select data-air-field="weapon">${state.weapons.map((entry, index) => `<option value="${index}"${index === state.weapon ? " selected" : ""}>${escape(entry.name)}</option>`).join("")}</select></p>`
             : `<p class="aar-actions">Coat: ${escape(weapon?.name ?? "")}</p>`;
-    const hint = open ? `<p class="aar-hint">Its next Strike that hits exposes the target (${escape(saveText(state.plan))}); a critical miss wastes it.</p>` : "";
+    const hint = open ? `<p class="aar-hint">Its next Strike that hits exposes the target (${escape(saveText(state.plan))})${coats ? "" : "; a critical miss wastes it"}.</p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply && state.weapons.length ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Coat the weapon</button></footer>` : open && state.weapons.length ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to coat it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">injury poison</span></header>${choice}${hint}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${coats ? "on its next hit" : "injury poison"}</span></header>${choice}${hint}${results}${controls}</section>`;
 }
 
 // The Effect on the user that marks the coated weapon; it lasts until the poison is spent.
@@ -81,8 +87,9 @@ export function poisonEffectSource({ state, weapon, description = "", img = null
         img: img ?? "icons/svg/poison.svg",
         flags: { [moduleId]: { [MODULE_KEY]: { weaponId: weapon.id, weaponName: weapon.name, item: state.item, plan: state.plan } } },
         system: {
-            description: { value: `<p>${escape(saveText(state.plan))} on the next creature ${escape(weapon.name)} hits; a critical miss wastes it.</p>${description}` },
-            duration: { value: -1, unit: "unlimited", expiry: null, sustained: false },
+            description: { value: `<p>${escape(saveText(state.plan))} on the next creature ${escape(weapon.name)} hits${state.plan?.item?.coats ? "" : "; a critical miss wastes it"}.</p>${description}` },
+            // (Its own time, when it has one: Protector's Final Gift's "within the next minute".)
+            duration: state.plan?.item?.coatLasts ? { value: state.plan.item.coatLasts.value, unit: state.plan.item.coatLasts.unit, expiry: "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false },
             start: { value: worldTime, initiative: null },
             rules: []
         }
@@ -90,9 +97,10 @@ export function poisonEffectSource({ state, weapon, description = "", img = null
 }
 
 // What a Strike with the coated weapon does to the poison: "expose" the target, "spend" it unused, or "keep" it.
-export function poisonStrike(outcome) {
+// (A weapon's own poison or curse for its next hit, coats: not an injury poison's, so a critical miss doesn't waste it.)
+export function poisonStrike(outcome, { coats = null } = {}) {
     if (outcome === "success" || outcome === "criticalSuccess") return "expose";
-    if (outcome === "criticalFailure") return "spend";
+    if (outcome === "criticalFailure" && !coats) return "spend";
     return "keep";
 }
 

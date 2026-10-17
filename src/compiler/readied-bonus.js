@@ -8,7 +8,8 @@
 // (src/live/fortune-card.js). Pure.
 
 // A sentence that says a rule (a note), not flavor ("This green fulu depicts venomous creatures and vermin").
-const RULE_SENTENCE = /\b(?:checks?|saves?|saving throws?|bonus|penalty|damage|conditions?|Strikes?|actions?|resistance|Speeds?|Hit Points|critical (?:success|failure)|failure|success|instead|increases?|DC)\b/i;
+// (And what a miss does, Bismuth Armor's "If the attack misses, … who becomes Dazzled for 1 round".)
+const RULE_SENTENCE = /\b(?:checks?|saves?|saving throws?|bonus|penalty|damage|conditions?|Strikes?|actions?|resistance|Speeds?|Hit Points|critical (?:success|failure)|failure|success|instead|increases?|DC|misses|Dazzled|Blinded|Frightened|Off-Guard|Prone|Sickened|Stunned|Slowed)\b/i;
 
 // The text's trigger: to its Requirements or Effect, or (a talisman's, with no "Effect" after it) to its sentence's end.
 const triggerOf = (plain) => /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|\.(?=\s|$)|$)/s.exec(plain)?.[1] ?? null;
@@ -19,7 +20,7 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^
 // "You gain a +2 status bonus to …", "giving you a +4 status bonus to your AC and saves against the effect", "you gain a
 // +1 circumstance bonus against the triggering save".
 // (And "you draw strength from your adoring crowd and gain a +1 status bonus to the triggering check", Champion's Laurels.)
-const GAIN = /\b(?:you gain|you receive|giving you|you get|granting you|grants? you|gaining|(?<=\byou [a-z]+ [^.]*?)and gain) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
+const GAIN = /\b(?:you gain|you receive|giving you|you get|granting you|grants? you|gaining|(?<=\byou [a-z]+ [^.]*?)(?:and|to) gain) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
 // (Another creature's, the one its trigger is about: Resonant Guitar's "The target gains a +2 status bonus to AC against the
 // triggering attack" — bonus.recipient "target", the creature the presser targets.)
 const TARGET_GAIN = /\bThe target gains an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$)/;
@@ -253,10 +254,12 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     return { ...base, builtin: "readied-bonus", automation: { level: notes.length ? "guided" : "automatic" }, targeting, trigger: { event: "use" }, bonus, notes, ...(notes.length ? { partial: true } : {}) };
 }
 
-// The plan to keep: the bonus over nothing, a note alone or the GM's fallback.
+// The plan to keep: the bonus over nothing, a note alone or the GM's fallback — and over the ability compiler's "ac-reaction", which
+// its live cards offer only for a monster's own reactions (Deflecting Branch's "+4 circumstance bonus to AC against the triggering
+// attack": the user's Effect for it, as Sparkwarden's).
 export function readiedBonusOver(plan, bonus) {
     if (!bonus) return plan;
-    return !plan || plan.noteOnly || plan.builtin === "no-effect" ? bonus : plan;
+    return !plan || plan.noteOnly || plan.builtin === "no-effect" || plan.builtin === "ac-reaction" ? bonus : plan;
 }
 
 // What a degree's change alone leaves to the table: the text's other rule sentences.

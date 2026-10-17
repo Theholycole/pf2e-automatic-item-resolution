@@ -3415,6 +3415,82 @@ export const cases = {
         const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
         assert(check.basic && check.against?.value === 35, `basic DC 35 (${JSON.stringify(check)})`);
         return { save: save.id };
+    },
+
+    // Colorful Coating (Violet): its square placed (the click stood in for), difficult terrain; a creature entering it attempts the
+    // Reflex save (at −30, a critical failure: Immobilized).
+    async violetCoating(scene) {
+        const { actor: coater, token: coaterToken } = await creature(scene, "Coat Painter", { type: "character", x: 15, y: 13 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Coat Walker", { x: 18, y: 13, alliance: "opposition", save: -30 });
+        const coating = await give(coater, "Colorful Coating (Violet)");
+        await coaterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Colorful Coating/.test(region.name));
+        try {
+            await coating.consume();
+            await until(() => square(), "the coating's Region", { timeout: 8000 });
+            const zone = square().flags["pf2e-automatic-ability-resolution"].zone.zone;
+            assert(zone.terrain.length && zone.saves[0].when.includes("enter"), `difficult terrain and the save on entering (${JSON.stringify(zone.terrain)})`);
+            const shape = square().shapes[0];
+            const since = Date.now();
+            await foeToken.update({ x: shape.x, y: shape.y });
+            const card = await messageAfter(since, abilitySaveCard, { what: "the coating's save card", timeout: 10000 });
+            const check = card.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+            assert(check.statistic === "reflex" && check.against.value === 20, `Reflex DC 20 (${JSON.stringify(check)})`);
+            await rollAndApply(card);
+            await until(() => foe.hasCondition("immobilized"), "Immobilized", { timeout: 10000 });
+            return { region: square()?.name };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await square()?.delete().catch(() => null);
+        }
+    },
+
+    // Alghollthu Lash: its activation readies the slime on the lash alone; a critical miss keeps it; the lash's hit (AC 1) posts the
+    // DC 25 Fortitude save card and spends it.
+    async lashNextHit(scene) {
+        const { actor: wielder, token: wielderToken } = await creature(scene, "Lash Wielder", { type: "character", x: 15, y: 16 });
+        const { token: foeToken } = await creature(scene, "Lash Target", { x: 16, y: 16, ac: 1, alliance: "opposition" });
+        const sword = await give(wielder, "Shortsword");
+        const lash = await give(wielder, "Alghollthu Lash");
+        await lash.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(lash.uuid, 0);
+        const card = await messageAfter(since, itemCard("poison"), { what: "the lash's card" });
+        const state = card.getFlag(NS, "card");
+        assert(state.weapons.length === 1 && state.weapons[0].id === lash.id, `only the lash (${state.weapons.map((entry) => entry.name).join(", ")}; not ${sword.name})`);
+        await game.modules.get(NS).api.live.apply(card.id, { weapon: 0 });
+        await wait(600);
+        const readied = () => wielder.itemTypes.effect.find((entry) => entry.getFlag(NS, "poison")?.weaponId === lash.id);
+        assert(readied(), "the slime on the lash");
+        await wielderToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(wielder, lash);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the slime's save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && check.against.value === 25, `Fortitude DC 25 (${JSON.stringify(check)})`);
+        await wait(500);
+        assert(!readied(), "spent");
+        return { save: save.id };
+    },
+
+    // Deflecting Branch: its reaction's card gives its user +4 circumstance AC for the turn (the ability compiler's "ac-reaction", a
+    // monster's own, as the readied bonus).
+    async branchDeflect(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Branch Deflector", { type: "character", x: 15, y: 19 });
+        const branch = await give(user, "Deflecting Branch");
+        await userToken.object?.control?.();
+        const before = user.system.attributes.ac.value;
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(branch.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the branch's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("ac") && rule.value === 4 && rule.type === "circumstance")), "+4 circumstance AC", { timeout: 8000 });
+        await until(() => user.system.attributes.ac.value === before + 4, `AC ${before} + 4`, { timeout: 8000 });
+        return { ac: [before, user.system.attributes.ac.value] };
     }
 };
 

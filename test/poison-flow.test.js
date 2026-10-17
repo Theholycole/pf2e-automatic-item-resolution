@@ -222,6 +222,59 @@ test("Spider Gun's Web Shot: a square placed within 30 feet for 1 minute, its Re
     }
 });
 
+test("Colorful Coating: the square its user coats within reach for 1 minute — Violet's difficult terrain and Reflex save on entering (a –15-foot penalty to Speeds, Immobilized on a critical failure), Green's difficult terrain with its uneven ground a note, Orange's hazardous acid on entering; Blue's isn't a zone. Grasping Tree (the snare trait, not its category) is a snare", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const violet = compileItem(source("Colorful Coating (Violet)"));
+    const zone = violet.zone;
+    assert.deepEqual([violet.builtin, zone.area, zone.centre, zone.range, zone.lasts.value, zone.lasts.unit, zone.terrain, zone.hazard, zone.saves[0].when], ["zone", { type: "square", value: 5 }, "placed", 5, 1, "minutes", [{ movement: ["walk"], difficulty: 2 }], null, ["enter"]]);
+    const save = zone.saves[0].plan.resolution;
+    assert.deepEqual([save.check.statistic, save.check.against.value, save.outcomes.failure.modifiers.map((modifier) => [modifier.selector, modifier.value]), save.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["reflex", 20, [["all-speeds", -15]], ["immobilized"]]);
+    assert.ok(zone.notes.some((note) => /Escaping \(DC 20\)/.test(note)));
+    const green = compileItem(source("Colorful Coating (Green)")).zone;
+    assert.deepEqual([green.terrain.length, green.saves, green.notes.includes("It's also uneven ground: a creature moving there Balances against DC 20.")], [1, [], true]);
+    const orange = compileItem(source("Colorful Coating (Orange)")).zone;
+    assert.deepEqual([orange.terrain, orange.hazard, orange.notes.includes("A creature can take this acid damage only once per round.")], [[], { formulas: ["1d4[acid]"] }, true]);
+    assert.notEqual(compileItem(source("Colorful Coating (Blue)")).builtin, "zone");
+    const tree = compileItem(source("Grasping Tree"));
+    assert.deepEqual([tree.builtin, tree.zone.once, tree.zone.saves[0].plan.resolution.check.against.value, tree.zone.saves[0].plan.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["zone", true, 19, ["immobilized"]]);
+});
+
+test("a weapon's own poison or curse for its next hit: Alghollthu Lash's coat card offers only the lash, a critical miss keeps it, its hit posts the slime's save card; Protector's Final Gift's lasts its minute; Lionfish Spear's goes to the creature it just hit; Viper's Fang's coats any weapon", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const { routeOf } = await import("../src/live/route.js");
+    const { plainText } = await import("../src/compiler/rows.js");
+    const [lionfish] = compileActivations(source("Lionfish Spear"));
+    assert.deepEqual([routeOf(lionfish.plan, plainText(lionfish.activation.html)), lionfish.plan.targeting.target, lionfish.plan.resolution.afflictionHandoff.dc], ["save", "the creature hit", 28]);
+    const [gift] = compileActivations(source("Protector's Final Gift"));
+    assert.deepEqual([routeOf(gift.plan, plainText(gift.activation.html)), gift.plan.item.coats, gift.plan.item.coatLasts], ["coat", "self", { value: 1, unit: "minutes" }]);
+    const fang = compileItem(source("Viper's Fang"));
+    assert.deepEqual([routeOf(fang, plainText(source("Viper's Fang").system.description.value)), fang.item.coats], ["coat", "any"]);
+    const lash = foundry.giveItem(rogue, source("Alghollthu Lash"));
+    rogue.weapons.push({ ...lash, system: { ...lash.system, equipped: { carryType: "held" } } });
+    try {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: lash.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "poison");
+        assert.deepEqual(card.flags[MODULE_ID].card.weapons.map((entry) => entry.name), ["Alghollthu Lash"]);
+        assert.match(card.content, /on its next hit/);
+        assert.doesNotMatch(card.content, /critical miss wastes it/);
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, weapon: 0, userId: "player" });
+        await settle();
+        assert.ok(poisonOn(lash.id), "on the lash");
+        const before = foundry.posted.length;
+        await strike(lash.id, "criticalFailure");
+        assert.ok(poisonOn(lash.id), "a critical miss keeps it");
+        await strike(lash.id, "success");
+        assert.equal(poisonOn(lash.id), undefined, "spent");
+        const [posted] = foundry.posted.slice(before);
+        assert.deepEqual([posted.plan.resolution.check.against.value, posted.tokens.map((token) => token.name)], [25, ["Ogre"]]);
+    } finally {
+        rogue.weapons.pop();
+    }
+});
+
 test("clouds and gusts as the ability module's zones: Smogger's smog on its user (Concealed, 1 minute), Smoke Fan's 5-foot burst of smoke (Concealed, 1 minute), Wind Ocarina's gusts (difficult terrain, 1 minute)", async () => {
     const { compileActivations } = await import("../src/compiler/permanent.js");
     const { compileItem } = await import("../src/compiler/index.js");

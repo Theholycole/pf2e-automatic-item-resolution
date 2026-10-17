@@ -83,6 +83,12 @@ test("the reading: a bonus for a moment — the roll that triggered it, or the t
     assert.deepEqual(spark.bonus.resistance, { type: "all-damage", value: 2 });
     assert.deepEqual([spark.bonus.duration.value, spark.bonus.duration.expiry, spark.bonus.spend], [0, "turn-end", []]);
     assert.match(spark.notes.join(" "), /Only against what triggered it/);
+    // The ability compiler's "ac-reaction", a monster's own reaction: its user's Effect for it instead — Deflecting Branch's "+4
+    // circumstance bonus to AC against the triggering attack", Dragon Turtle Plate's "to gain a +1 …", Bismuth Armor's miss a note.
+    const branch = compileActivations(source("Deflecting Branch"))[0].plan;
+    assert.deepEqual([branch.builtin, routeOf(branch), branch.bonus.modifiers, branch.bonus.duration.expiry], ["readied-bonus", "fortune", [{ selector: "ac", type: "circumstance", value: 4 }], "turn-end"]);
+    assert.equal(compileActivations(source("Dragon Turtle Plate"))[0].plan.bonus.modifiers[0].value, 1);
+    assert.match(compileActivations(source("Bismuth Armor"))[0].plan.notes.join(" "), /Dazzled for 1 round/);
     // "+2 circumstance bonus to your Fortitude DC against the triggering Grapple".
     assert.equal(compileActivations(source("Shacklebreaker"))[0].plan.bonus.modifiers[0].selector, "fortitude-dc");
     // "Until the start of your next turn, you gain a +4 item bonus to Stealth checks to Hide and Sneak".

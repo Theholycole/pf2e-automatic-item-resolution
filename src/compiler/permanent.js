@@ -31,6 +31,7 @@ import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { saveOrPlan } from "./save-or.js";
 import { spellstrikePlan } from "./spellstrike.js";
 import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
+import { withHitDelivery } from "./hit-delivery.js";
 import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan } from "./covered-square.js";
@@ -211,6 +212,8 @@ function compileEach(item, options = {}) {
         // (Healing its text gives its user beside a linked Effect, src/compiler/consumables.js: Kindler Cameo.)
         plan = withStatedHealing(plan, activation.html, html);
         plan = withWhilePersistent(plan, plainText(activation.html));
+        // (A poison or curse its hit gives, src/compiler/hit-delivery.js: Lionfish Spear's at the creature hit, Alghollthu Lash's on its next.)
+        plan = withHitDelivery(plan, plainText(activation.html), { trigger: activation.trigger, itemType: item.type });
         // (Damage of its user's choice of two types, each row giving both: the card's picker, src/compiler/type-choice.js.)
         plan = withRowTypeChoice(plan, plainText(activation.html));
         // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Arctic Worm Chitin Shield, Alluring
@@ -282,7 +285,7 @@ function compileEach(item, options = {}) {
             }
         }
         const frequency = activation.frequency?.max ? activation.frequency : null;
-        const { resist, speeds, senses, light, levelTemp, weapon, strikeDamage, suppress, ...kept } = plan;
+        const { resist, speeds, senses, light, levelTemp, weapon, strikeDamage, suppress, coats, coatLasts, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)
         const others = targetedRecipient(plan, plainText(activation.html));
         return {
@@ -294,7 +297,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && plan.builtin === "counteract" ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && plan.builtin === "counteract" ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) }
             }
         };
     });
