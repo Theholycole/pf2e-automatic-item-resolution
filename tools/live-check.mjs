@@ -2268,6 +2268,66 @@ export const cases = {
         assert(holder.system.attributes.hp.value === 1, `1 Hit Point (${holder.system.attributes.hp.value})`);
         assert((holder.getCondition("wounded")?.value ?? 0) === 0, `Wounded unchanged (${holder.getCondition("wounded")?.value})`);
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Toadskin Salve: its Use posts the ways card; "Use it" on the second way posts the resistance card, whose Apply gives PF2e's
+    // Resistance 3 to physical damage; the ways card stays open.
+    async toadskinWays(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Salve User", { type: "character", x: 15, y: 13 });
+        const salve = await give(user, "Toadskin Salve");
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await salve.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the resistance card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "Resistance" && rule.value === 3)), "resistance 3 on the user", { timeout: 8000 });
+        const state = game.messages.get(ways.id).getFlag(NS, "card");
+        assert(state.status === "open" && state.results.length === 1, `the ways card open (${JSON.stringify(state.results)})`);
+        return { results: state.results };
+    },
+
+    // Resonant Guitar's Chord of Protection: +2 status bonus to AC on the ally targeted, not the bard.
+    async guitarAlly(scene) {
+        const { actor: bard, token: bardToken } = await creature(scene, "Guitar Bard", { type: "character", x: 15, y: 15 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Guarded Ally", { x: 17, y: 15 });
+        const guitar = await give(bard, "Resonant Guitar");
+        await bardToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(guitar.uuid, 1);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the bonus card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        await until(() => ally.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("ac") && rule.value === 2)), "+2 AC on the ally", { timeout: 8000 });
+        assert(!bard.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("ac"))), "not on the bard");
+        return { ac: ally.system.attributes.ac.value };
+    },
+
+    // Martial Mayhem Mutagen (Moderate): PF2e's DamageDice, 1d4 precision on melee Strikes against an off-guard target.
+    async mayhemDamage(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Mayhem Fighter", { type: "character", x: 18, y: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Mayhem Target", { x: 19, y: 17, ac: 1, alliance: "opposition" });
+        await foe.increaseCondition("off-guard");
+        const sword = await give(fighter, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const mutagen = await give(fighter, "Martial Mayhem Mutagen (Moderate)");
+        let since = Date.now();
+        await mutagen.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the mutagen's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => fighter.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "DamageDice")), "the DamageDice Effect", { timeout: 8000 });
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(fighter, sword);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
+        assert(/1d4/.test(formula) && /precision/.test(JSON.stringify(rolled.rolls)), `+1d4 precision in PF2e's roll (${formula})`);
+        return { formula };
     }
 };
 

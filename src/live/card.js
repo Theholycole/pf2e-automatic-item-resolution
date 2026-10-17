@@ -106,6 +106,7 @@ export function previewLines(state) {
     for (const speed of plan?.item?.speeds ?? []) lines.push(speedText(speed));
     for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
+    for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
     if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
@@ -276,6 +277,22 @@ export function weaponText(adjust) {
 export function weaponEffectSource(adjust, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const rule = { key: "AdjustStrike", mode: "add", property: adjust.property, value: adjust.value, definition: adjust.definition ?? [] };
     return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: [rule], duration: adjust.duration, flag: { weapon: adjust.property }, item, user, worldTime, initiative, moduleId });
+}
+
+// Extra damage on its user's Strikes in words: "+1d4 precision damage on melee Strikes against off-guard creatures for 10 minutes".
+export function strikeDamageText(extra) {
+    const amount = extra.diceNumber ? `${extra.diceNumber}${extra.dieSize}` : String(extra.value);
+    const kind = [extra.category, extra.damageType].filter(Boolean).join(" ");
+    const range = (extra.predicate ?? []).find((option) => /^item:(?:melee|ranged|category:unarmed)$/.test(option))?.replace(/^item:(?:category:)?/, "");
+    const against = (extra.predicate ?? []).find((option) => option.startsWith("target:condition:"))?.replace("target:condition:", "");
+    return `+${amount}${kind ? ` ${kind}` : ""} damage on ${range ? `${range} ` : ""}Strikes${against ? ` against ${against} creatures` : ""}${forTime(extra.duration)}`;
+}
+
+// Its Effect: PF2e's DamageDice on Strike damage (a FlatModifier for a number), with its predicate.
+export function strikeDamageEffectSource(extra, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const common = { selector: "strike-damage", ...(extra.category ? { [extra.diceNumber ? "category" : "damageCategory"]: extra.category } : {}), ...(extra.damageType ? { damageType: extra.damageType } : {}), ...(extra.predicate?.length ? { predicate: extra.predicate } : {}), label: item.name ?? "Item" };
+    const rule = extra.diceNumber ? { key: "DamageDice", ...common, diceNumber: extra.diceNumber, dieSize: extra.dieSize } : { key: "FlatModifier", ...common, value: extra.value };
+    return ownEffectSource({ name: "Strike damage", img: "icons/svg/sword.svg", words: strikeDamageText(extra), rules: [rule], duration: extra.duration, flag: { strikeDamage: true }, item, user, worldTime, initiative, moduleId });
 }
 
 // The card's HTML. canApply: whether this user may press Apply (the item's owner or the GM).

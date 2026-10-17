@@ -167,3 +167,16 @@ test("a change to its user's weapons: Magnifying Scope's range increment until t
     // (Its weapon flying back to its hand: the note.)
     assert.equal(arrowhead.partial, true);
 });
+
+test("extra damage on its user's Strikes for a while: Martial Mayhem Mutagen's precision damage on melee Strikes against off-guard creatures — PF2e's DamageDice (a FlatModifier for a number)", async () => {
+    const { strikeDamageEffectSource, strikeDamageText } = await import("../src/live/card.js");
+    const moderate = compileItem(source("Martial Mayhem Mutagen (Moderate)"));
+    const [extra] = moderate.item.strikeDamage;
+    assert.deepEqual([extra.diceNumber, extra.dieSize, extra.category, extra.predicate, extra.duration.value, extra.duration.unit], [1, "d4", "precision", ["item:melee", "target:condition:off-guard"], 10, "minutes"]);
+    assert.equal(strikeDamageText(extra), "+1d4 precision damage on melee Strikes against off-guard creatures for 10 minutes");
+    assert.deepEqual(strikeDamageEffectSource(extra, { item: { name: "Martial Mayhem Mutagen (Moderate)" } }).system.rules, [{ key: "DamageDice", selector: "strike-damage", category: "precision", predicate: ["item:melee", "target:condition:off-guard"], label: "Martial Mayhem Mutagen (Moderate)", diceNumber: 1, dieSize: "d4" }]);
+    const lesser = compileItem(source("Martial Mayhem Mutagen (Lesser)")).item.strikeDamage[0];
+    assert.deepEqual(strikeDamageEffectSource(lesser, { item: { name: "Lesser" } }).system.rules[0], { key: "FlatModifier", selector: "strike-damage", damageCategory: "precision", predicate: ["item:melee", "target:condition:off-guard"], label: "Lesser", value: 1 });
+    // (Its other words — the off-guard after a hit, the drawback's Clumsy after a miss — the note's.)
+    assert.equal(moderate.partial, true);
+});

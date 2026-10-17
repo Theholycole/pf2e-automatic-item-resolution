@@ -462,6 +462,24 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
     return found;
 }
 
+// Extra damage on its user's Strikes for a while, PF2e's DamageDice (a FlatModifier for a number): Martial Mayhem Mutagen's "your
+// melee Strikes deal 1d4 additional precision damage to Off-Guard creatures" → [{ diceNumber, dieSize } | { value }, category,
+// damageType, predicate, duration]. Its sentence stays on the note (what else it says, the GM's).
+const STRIKE_TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void";
+const STRIKE_EXTRA = new RegExp(String.raw`\byour (melee |ranged |unarmed )?Strikes deal (?:(\d+)d(\d+)|(\d+)) additional (?:(precision|persistent|splash) )?(?:(${STRIKE_TYPES}) )?damage(?: to (off-guard|frightened|prone|grabbed|flat-footed) creatures)?`, "i");
+function strikeDamageOf(sentences, duration) {
+    const found = [];
+    for (const sentence of sentences) {
+        if (/^\s*(?:If|When|Whenever)\b/i.test(sentence)) continue;
+        const match = STRIKE_EXTRA.exec(sentence);
+        if (!match) continue;
+        const [, range, count, faces, flat, category, type, condition] = match;
+        const predicate = [...(range ? [`item:${range.trim().toLowerCase() === "unarmed" ? "category:unarmed" : range.trim().toLowerCase()}`] : []), ...(condition ? [`target:condition:${condition.toLowerCase() === "flat-footed" ? "off-guard" : condition.toLowerCase()}`] : [])];
+        found.push({ ...(count ? { diceNumber: Number(count), dieSize: `d${faces}` } : { value: Number(flat) }), category: category?.toLowerCase() ?? null, damageType: type?.toLowerCase() ?? null, predicate, duration: timeIn(sentence, duration) });
+    }
+    return found;
+}
+
 // A vision for its user: "you gain darkvision until you deactivate it" (Obsidian Goggles), "You gain greater darkvision until
 // the beginning of your next turn" (Darkvision Scope) → [{ selector, duration }] (PF2e's Sense rule, the item card's
 // Effect). Another way it ends ("as long as you continue to look through the scope", "or the item is no longer invested by
@@ -557,7 +575,8 @@ export function ownRow(item, { healing = true } = {}) {
     const speeds = speedsOf(sentences, duration, used);
     const senses = sensesOf(sentences, duration, used);
     const weapon = weaponAdjustOf(sentences, duration, used);
-    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length) return null;
+    const strikeDamage = strikeDamageOf(sentences, duration);
+    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length) return null;
     // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other || temp?.other);
     if (heal?.other) delete heal.other;
@@ -569,7 +588,7 @@ export function ownRow(item, { healing = true } = {}) {
     // ("allowing you to move with greater speed": flavor, not a Speed.)
     // (Nor when it may be used, "You can use this action while Unconscious".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(weapon.length ? { weapon } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,
