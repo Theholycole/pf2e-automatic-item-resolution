@@ -119,6 +119,9 @@ export function withItemData(html, item) {
     // the creature is already slowed, it's permanently petrified": degree rows, the critical failure's the failure's and the rest
     // its note.)
     text = text.replace(/(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save\.)\s*On a failure, it's (@UUID\[[^\]]+\]\{[^}]+\}) for (\d+ (?:rounds?|minutes?)); on a critical failure, (if [^,.]+), it's ([^.]+)\.\s*/g, (whole, check, link, time, condition, worse) => `${check}</p><p><strong>Failure</strong> The target is ${link} for ${time}.</p><p><strong>Critical Failure</strong> The target is ${link} for ${time}. ${condition.charAt(0).toUpperCase()}${condition.slice(1)}, it's ${worse}.</p><p>`);
+    // (A missile that hits on its own, Cape of Justice's "The shuriken hits automatically and deals 1d4+1 force damage, or 2d4+2 force
+    // damage if the target is your designated offender": damage outright at the target, the other case a note.)
+    text = text.replace(/\bThe [\w-]+ hits automatically and deals (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage(?:, or (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage if the target is ([^.]+))?\./g, (whole, damage, other, which) => `The target takes ${damage} damage.${other ? ` A target that's ${which} takes ${other} damage instead.` : ""}`);
     // (A damage link with its save and no "damage" word, Black Hole Armor's "Each creature in the burst takes @Damage[10d8[piercing]]
     // with a @Check[reflex|dc:35] save": the reader's "… damage with a … save".)
     text = text.replace(/(\btakes? @Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) with an? (@Check\[(?:type:)?(?:fortitude|reflex|will)\b)/g, "$1 damage with a $2");

@@ -8,8 +8,8 @@
   "results": {
    "resolves": 724,
    "builtin:cast-spell": 469,
-   "none": 695,
-   "partial": 127,
+   "none": 693,
+   "partial": 129,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 38,
@@ -26,10 +26,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 390,
+   "save": 391,
    "cast": 469,
-   "item": 599,
-   "none": 880,
+   "item": 600,
+   "none": 878,
    "focus": 45,
    "fortune": 48,
    "reroll": 25,
@@ -50,8 +50,8 @@
    "results": {
     "resolves": 439,
     "builtin:cast-spell": 340,
-    "none": 462,
-    "partial": 68,
+    "none": 460,
+    "partial": 70,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
     "builtin:readied-bonus": 31,
@@ -18691,9 +18691,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Stole of Civility",
@@ -26740,9 +26740,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Cape of Justice",

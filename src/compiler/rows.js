@@ -152,8 +152,8 @@ function tempHitPoints(sentences, duration, used = new Set()) {
         if (match && (other || !/\b(?:if|when|whenever|each time|the next time)\b/i.test(sentence.slice(0, match.index)))) {
             // (Its other half stays unread, for the note: "You drop to 1 Hit Point instead of being reduced to 0 HP or dying,
             // and you gain 100 temporary Hit Points" — the 1 HP the GM sets.)
-            // (And "you avoid being knocked out": the GM's, on the note.)
-            if (!/\binstead\b|\bavoid being knocked out\b/i.test(sentence)) used.add(index);
+            // (And "you avoid being knocked out", or "and deal the same amount of bludgeoning damage to the swarm": the GM's, on the note.)
+            if (!/\binstead\b|\bavoid being knocked out\b|\band deals? (?:the same|an equal)\b/i.test(sentence)) used.add(index);
             const amount = match[1].replace(/\s+/g, "");
             // (Their time in a sentence of their own after: "You lose any remaining temporary Hit Points after 1 minute", "These
             // temporary Hit Points last for 1 hour" — before the item's.)
@@ -177,7 +177,8 @@ function textHealing(sentences, used = new Set()) {
         // (The Survivor's "you drop to 1 Hit Point instead and immediately restore an additional 4d8+16 Hit Points".)
         // (And Guardian Rose's "you avoid being knocked out and regain 2d8+5 Hit Points": the same "you".)
         // (And one Hit Point, Magical Medal (Phoenix's Fire)'s "regain 1 Hit Point".)
-        const self = new RegExp(String.raw`\b(?:you|you [a-z ]{1,40}? and) (?:immediately )?regain (?:an additional )?${AMOUNT_PARENS} Hit Points?\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b|\band (?:immediately )?restore an additional ${AMOUNT_PARENS} Hit Points\b(?! to)`, "i").exec(sentence);
+        // (And Swarmeater's Clasp's "You recover 3d10+8 Hit Points".)
+        const self = new RegExp(String.raw`\b(?:you|you [a-z ]{1,40}? and) (?:immediately )?(?:regain|recover) (?:an additional )?${AMOUNT_PARENS} Hit Points?\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b|\band (?:immediately )?restore an additional ${AMOUNT_PARENS} Hit Points\b(?! to)`, "i").exec(sentence);
         // (And another's own words: "Your ally regains 2d8 hit points", The Midwife's "restore to the target 6d8+24 Hit Points", Banner of
         // the Rising Star's "An ally within the banner's aura with the Dying condition regains 30 Hit Points".)
         const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b|\b(?:An?|One|That) ally\b[^.]*?\bregains ${AMOUNT_PARENS} Hit Points?\b|\brestor(?:e|es|ing) to (?:it|the (?:target|creature)|that creature) ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
@@ -187,8 +188,8 @@ function textHealing(sentences, used = new Set()) {
         const lead = sentence.slice(0, match?.index ?? 0).replace(/^\s*If you (?:consume|eat|drink) (?:a portion|it|one)[^,]*,\s*/i, "").replace(/^\s*When you activate (?:it|the [\w' -]+?|an? [\w' -]+?),\s*/i, "");
         if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(lead)) {
             // (What it does "instead" — "you drop to 1 Hit Point instead" — stays on the note for the GM.)
-            // (And "you avoid being knocked out": the GM's, on the note.)
-            if (!/\binstead\b|\bavoid being knocked out\b/i.test(sentence)) used.add(index);
+            // (And "you avoid being knocked out", or "and deal the same amount of bludgeoning damage to the swarm": the GM's, on the note.)
+            if (!/\binstead\b|\bavoid being knocked out\b|\band deals? (?:the same|an equal)\b/i.test(sentence)) used.add(index);
             const amount = match.slice(1).find((group) => group !== undefined).replace(/\s+/g, "");
             return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), ...(other && !self ? { other: true } : {}) };
         }

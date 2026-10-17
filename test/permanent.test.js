@@ -529,3 +529,11 @@ test("healing back from dying without raising Wounded (Magical Medal (Phoenix's 
     const armor = compileActivations(item("Black Hole Armor"), { spellEffects })[1].plan;
     assert.deepEqual([armor.resolution.kind, armor.resolution.check.statistic, armor.resolution.check.basic, armor.targeting.area], ["save", "reflex", true, { type: "burst", value: 10 }]);
 });
+
+test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 force damage\" at the target, the designated offender's more a note; Swarmeater's Clasp's \"You recover 3d10+8 Hit Points\", the swarm's damage a note", () => {
+    const cape = compileActivations(item("Cape of Justice"), { spellEffects })[0].plan;
+    assert.deepEqual([cape.resolution.check.roll, cape.resolution.sharedDamage.components[0].formula, cape.resolution.sharedDamage.components[0].type, cape.targeting.target], ["automatic", "1d4+1", "force", "1 creature"]);
+    assert.ok(cape.notes.some((note) => /designated offender takes 2d4\+2 force damage instead/.test(note)));
+    const clasp = compileActivations(item("Swarmeater's Clasp"), { spellEffects })[0].plan;
+    assert.deepEqual([clasp.resolution.outcomes.success.effects[0].formula, clasp.partial], ["3d10+8", true]);
+});
