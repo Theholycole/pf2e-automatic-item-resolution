@@ -553,3 +553,9 @@ test("North Wind's Night Verse: \"imparting a –5-foot status penalty to its Sp
     // (Not one only from later hits: Silkspinner's Shield's entangling shield bashes.)
     assert.notEqual(compileActivations(item("Silkspinner's Shield"), { spellEffects })[0].plan?.resolution?.outcomes?.success?.modifiers?.[0]?.selector, "all-speeds");
 });
+
+test("its user's bonus with a creature named stays on the item card (Spectacles of Inquiry), a target's penalty outright goes to the targets (North Wind's Night Verse)", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    assert.equal(routeOf(compileActivations(item("Spectacles of Inquiry"), { spellEffects })[0].plan), "item");
+    assert.equal(routeOf(compileActivations(item("North Wind's Night Verse"), { spellEffects })[0].plan), "save");
+});
