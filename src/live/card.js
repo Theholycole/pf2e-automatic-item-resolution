@@ -267,10 +267,12 @@ export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime
 }
 
 // A vision in words: "Darkvision until the start of the next turn", "Greater darkvision".
-const SENSE_WORDS = { darkvision: "Darkvision", "greater-darkvision": "Greater darkvision", "low-light-vision": "Low-light vision" };
+const SENSE_WORDS = { darkvision: "Darkvision", "greater-darkvision": "Greater darkvision", "low-light-vision": "Low-light vision", bloodsense: "Bloodsense", tremorsense: "Tremorsense", scent: "Scent", lifesense: "Lifesense", echolocation: "Echolocation", wavesense: "Wavesense", thoughtsense: "Thoughtsense", "motion-sense": "Motion sense" };
 export function senseText(sense) {
     const time = sense.duration?.mode === "fixed" ? (sense.duration.anchor === "source-turn" ? ` until the ${sense.duration.expiry === "turn-end" ? "end" : "start"} of the next turn` : ` for ${timeText(sense.duration)}`) : "";
-    return `${SENSE_WORDS[sense.selector] ?? sense.selector}${time}`;
+    // (Its acuity and range: "Imprecise tremorsense 30 feet for 1 minute".)
+    const name = SENSE_WORDS[sense.selector] ?? sense.selector;
+    return `${sense.acuity ? `${sense.acuity.charAt(0).toUpperCase()}${sense.acuity.slice(1)} ${name.toLowerCase()}` : name}${Number.isFinite(sense.range) ? ` ${sense.range} feet` : ""}${time}`;
 }
 
 // Temporary Hit Points from the targeted creature's level in words: "Temporary Hit Points equal to twice the level of the creature
@@ -294,7 +296,7 @@ export function lightEffectSource(light, { item = {}, user = {}, worldTime = 0, 
 
 // Its vision's Effect: PF2e's Sense rule.
 export function senseEffectSource(sense, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    return ownEffectSource({ name: SENSE_WORDS[sense.selector] ?? sense.selector, img: "icons/svg/eye.svg", words: senseText(sense), rules: [{ key: "Sense", selector: sense.selector }], duration: sense.duration, flag: { sense: sense.selector }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: SENSE_WORDS[sense.selector] ?? sense.selector, img: "icons/svg/eye.svg", words: senseText(sense), rules: [{ key: "Sense", selector: sense.selector, ...(sense.acuity ? { acuity: sense.acuity } : {}), ...(Number.isFinite(sense.range) ? { range: sense.range } : {}) }], duration: sense.duration, flag: { sense: sense.selector }, item, user, worldTime, initiative, moduleId });
 }
 
 // A change to its user's weapons in words: "+20 feet to its ranged weapons' range increment until the start of the next turn", "Its

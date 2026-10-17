@@ -608,8 +608,30 @@ function sensesOf(sentences, duration, used = new Set()) {
             found.push({ selector, duration: time });
         }
     }
+    // (Other senses with their acuity and range: Nosoi Charm's "You gain lifesense as an imprecise sense with a range of 30 feet for 1
+    // hour", Arbor Wine's "you have tremorsense at a range of 30 feet", Blood Sight Elixir's "You gain blood sight as an imprecise sense
+    // with a duration of 10 minutes. Blood sight has a range of 60 feet" — PF2e's Sense rule with them.)
+    const other = /\b(?:you (?:gain|have|get)|grants? you|granting you) (?:(precise|imprecise) )?(blood sight|bloodsense|tremorsense|scent|lifesense|echolocation|wavesense|thoughtsense|motion sense)\b([^.]*)\./gi;
+    for (const [index, sentence] of sentences.entries()) {
+        if (/^\s*(?:If|When|Whenever|While|Each time|Unless|In animal form|Armor)\b/i.test(sentence)) continue;
+        for (const match of sentence.matchAll(other)) {
+            const selector = OTHER_SENSES[match[2].toLowerCase()];
+            if (found.some((entry) => entry.selector === selector)) continue;
+            const rest = match[3];
+            const acuity = (match[1] ?? /\bas an? (precise|imprecise) sense\b/i.exec(rest)?.[1] ?? "imprecise").toLowerCase();
+            // (Its range in the sentence, or a sentence of its own after: "Blood sight has a range of 60 feet".)
+            const said = /\b(?:with a range of|at a range of|a range of|out to(?: a range of)?|to a range of)\s*(\d+) feet\b|\((\d+) feet\)/i.exec(rest);
+            const next = said ? null : sentences.slice(index + 1, index + 3).find((later) => new RegExp(String.raw`\b${match[2]}\b[^.]*\bhas a range of (\d+) feet\b`, "i").test(later));
+            const range = Number(said?.[1] ?? said?.[2] ?? (next ? /\brange of (\d+) feet\b/i.exec(next)[1] : NaN));
+            const lasting = /\bwith a duration of ((?:\d+|one|an?) (?:rounds?|minutes?|hours?))\b/i.exec(rest);
+            const time = lasting ? durationIn(`for ${lasting[1]}`, null) : durationIn(sentence, duration);
+            if (!/\bas long as\b/i.test(sentence)) used.add(index);
+            found.push({ selector, acuity, ...(Number.isFinite(range) ? { range } : {}), duration: time });
+        }
+    }
     return found;
 }
+const OTHER_SENSES = { "blood sight": "bloodsense", bloodsense: "bloodsense", tremorsense: "tremorsense", scent: "scent", lifesense: "lifesense", echolocation: "echolocation", wavesense: "wavesense", thoughtsense: "thoughtsense", "motion sense": "motion-sense" };
 
 // A light its user sheds: Sprite Apple's "you shed bright light in a 20-foot emanation (and dim light for the next 20 feet)",
 // Silver Crescent's "you shed cool, white light like a torch" → [{ bright, dim, duration }] in feet from its user (PF2e's

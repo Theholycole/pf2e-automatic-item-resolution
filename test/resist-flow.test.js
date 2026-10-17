@@ -114,6 +114,14 @@ test("a vision: PF2e's Sense rule, its own end on the note", () => {
     assert.deepEqual(senseEffectSource(goggles.plan.item.senses[0], { item: { name: "Obsidian Goggles (Greater): Darkvision" } }).system.rules, [{ key: "Sense", selector: "darkvision" }]);
 });
 
+test("other senses with their acuity and range: Blood Sight Elixir's bloodsense (its range a sentence after), PF2e's Sense rule with them", () => {
+    const lesser = compileItem(source("Blood Sight Elixir (Lesser)"));
+    assert.deepEqual(lesser.item.senses.map(({ selector, acuity, range, duration }) => [selector, acuity, range, duration.value, duration.unit]), [["bloodsense", "imprecise", 60, 10, "minutes"]]);
+    assert.equal(compileItem(source("Blood Sight Elixir (Major)")).item.senses[0].acuity, "precise");
+    assert.equal(senseText(lesser.item.senses[0]), "Imprecise bloodsense 60 feet for 10 minutes");
+    assert.deepEqual(senseEffectSource(lesser.item.senses[0], { item: { name: "Blood Sight Elixir (Lesser)" } }).system.rules, [{ key: "Sense", selector: "bloodsense", acuity: "imprecise", range: 60 }]);
+});
+
 test("a light its user sheds: PF2e's TokenLight rule, its dim light the whole radius; a torch's for \"like a torch\"", () => {
     // Sprite Apple's "you shed bright light in a 20-foot emanation (and dim light for the next 20 feet)", for 10 minutes.
     const apple = compileItem(source("Sprite Apple (Pink)"));

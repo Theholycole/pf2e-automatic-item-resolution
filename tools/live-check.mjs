@@ -3247,6 +3247,19 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, targets: [fiend.uuid] });
         await until(() => knight.system.attributes.hp.value === 16, `healed by 6 (${knight.system.attributes.hp.value})`, { timeout: 8000 });
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Blood Sight Elixir (Lesser): imprecise bloodsense 60 feet for 10 minutes, PF2e's Sense rule on the drinker.
+    async bloodSight(scene) {
+        const { actor: drinker } = await creature(scene, "Blood Seer", { type: "character", x: 16, y: 6 });
+        const elixir = await give(drinker, "Blood Sight Elixir (Lesser)");
+        const since = Date.now();
+        await elixir.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the elixir's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const senses = () => (drinker.perception?.senses ?? drinker.system.perception?.senses ?? []).map((sense) => [sense.type, sense.acuity, sense.range]);
+        await until(() => senses().some(([type, acuity, range]) => type === "bloodsense" && acuity === "imprecise" && range === 60), `bloodsense on its senses (${JSON.stringify(senses())})`, { timeout: 8000 });
+        return { senses: senses() };
     }
 };
 
