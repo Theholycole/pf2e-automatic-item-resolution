@@ -592,3 +592,22 @@ test("Purloining Cloak's reaction: the attacker's Perception check against DC 38
     assert.deepEqual([dodge.plan.resolution.check.statistic, dodge.plan.resolution.check.against.value], ["perception", 38]);
     assert.deepEqual(dodge.plan.resolution.outcomes.failure.effects.map((effect) => effect.slug), ["off-guard"]);
 });
+
+test("what a hit does that isn't a condition: its save's note on a failure (Blister Ammunition, with its critical hit's Dazzled), or the hit's own note with its time (Magekiller Bullet, Kortos Diamond); not a save before the attack, the user's own gain, nor over another reading", () => {
+    const [blister] = compileActivations(item("Blister Ammunition (Lesser)"));
+    const save = blister.plan.strike.save.resolution;
+    assert.deepEqual([save.check.statistic, save.check.against.value], ["fortitude", 19]);
+    const [note] = save.outcomes.failure.noteEffects;
+    assert.match(note.text, /^Failed save: begin to itch uncontrollably for 3 rounds\./);
+    assert.deepEqual([note.duration.value, note.duration.unit], [3, "rounds"]);
+    assert.deepEqual(blister.plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), ["dazzled"]);
+    assert.ok(blister.plan.strike.notes.some((line) => /^On a critical hit, increase the Fortitude DC by 2/.test(line)), "the critical hit's DC a note");
+    const [magekiller] = compileActivations(item("Magekiller Bullet"));
+    const [curse] = magekiller.plan.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([curse.duration.value, curse.duration.unit, /Casts a Spell/.test(curse.text)], [7, "days", true]);
+    assert.equal(compileActivations(item("Kortos Diamond"))[0].plan.resolution.outcomes.success.noteEffects[0].duration.value, 1);
+    // A save before the attack (Reactive Flash), the user's own temporary Hit Points (Reaper's Toll), a save plan read already (Freeze Ammunition).
+    assert.equal(compileItem(item("Reactive Flash"))?.strike?.fromNotes, undefined);
+    assert.equal(compileActivations(item("Reaper's Toll"))[0].plan?.strike?.fromNotes, undefined);
+    assert.equal(compileActivations(item("Freeze Ammunition"))[0].plan?.strike?.fromNotes, undefined);
+});

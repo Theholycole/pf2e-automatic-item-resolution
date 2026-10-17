@@ -12,6 +12,7 @@ import { plainText } from "./rows.js";
 import { readStrikeExtras } from "./strike-damage.js";
 import { itemActionPlan } from "./item-actions.js";
 import { directDamagePlan } from "./direct-damage.js";
+import { hitNotes } from "./hit-notes.js";
 
 // "make a melee Strike", "make a weapon or unarmed attack Strike", "make a ranged or melee Strike", "attempt a Strike" (not
 // a creature's own, "makes a beak Strike with a +8 modifier").
@@ -219,11 +220,11 @@ export function compileStrike(item, base, options = {}) {
     const kinds = wordsOnly ? (/^\s*Ammunition ([a-z ,]+?)(?= Activate\b|\.|$)/i.exec(text)?.[1] ?? "").toLowerCase().split(/,\s*|\s+or\s+/).map((kind) => AMMUNITION[kind.trim()]).filter(Boolean) : [];
     const strike = found && wordsOnly ? { ...found, ammo: false, next: true, wordsAmmo: true, ...(kinds.length ? { ammunition: kinds } : {}) } : found;
     if (!strike) return null;
-    const riders = hitRiders(strike.after);
+    let riders = hitRiders(strike.after);
     // (A save for the creature the Strike hits: "On a hit, the target must succeed at a DC 22 Fortitude save or be Dazzled";
     // ammunition's, anywhere in what its hit does.)
     const hitSentence = strike.ammo ? ammoSave(strike.after) : /(?:On a hit|If (?:you|it|the Strike) hits?|If you hit and deal damage|If you successfully deal damage)[^.]*\b(?:save|saving throw)\b|@Check\[(?:fortitude|reflex|will)/i.test(strike.after);
-    const save = hitSentence ? bombSave({ ...item, system: { ...(item.system ?? {}), description: { value: html } } }, { scope: { scope: "target" } }) : null;
+    let save = hitSentence ? bombSave({ ...item, system: { ...(item.system ?? {}), description: { value: html } } }, { scope: { scope: "target" } }) : null;
     const riderSentence = (sentence) => {
         const row = hitRiders(sentence);
         return hasRow(row.success) || hasRow(row.criticalSuccess) || Boolean(save && /^(?:On a hit|If (?:you|it|the Strike) hits?)\b[^.]*\b(?:save|saving throw)\b/i.test(sentence));
@@ -233,8 +234,21 @@ export function compileStrike(item, base, options = {}) {
     const read = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
     // (The cast's own sentence isn't a note.)
     if (cast) read.notes = read.notes.filter((note) => !note.includes(cast.name) && !(cast.attackFromHit && /^As with the spell\b/i.test(note)));
-    const extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration || read.runes) } : read;
-    if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read && !cast && !follow) return null;
+    let extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration || read.runes) } : read;
+    // (What a hit does that isn't a condition, a note Effect on the creature hit — its save's, or the hit's own with its time,
+    // src/compiler/hit-notes.js: Blister Ammunition, Magekiller Bullet. Only when nothing else is read.)
+    // (Not a Strike its trigger names, another creature's: Cauthooj Bagpipes' "Trigger A creature … attempts a melee Strike".)
+    const othersStrike = !strike.ammo && /\bTrigger\b(?:(?!\bEffect\b).)*\bStrikes?\b/is.test(text);
+    const noted = !hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read && !cast && !follow && !strike.hit && !othersStrike ? hitNotes(strike.after, base) : null;
+    if (noted?.save) {
+        save = noted.save;
+        // (A critical hit's change the save can't hold — "increase the Fortitude DC by 2" — a note; a condition it adds, its row.)
+        riders = { success: riders.success, criticalSuccess: hitRiders(noted.notes.map((note) => note.replace(/\bincrease the \w+ DC by \d+ \([^)]*\),?\s*(?:and\s+)?/i, "")).join(" ")).criticalSuccess };
+        // (Its note's own sentences aren't the Strike card's notes too.)
+        const said = noted.save.plan.resolution.outcomes.failure.noteEffects[0].text;
+        extras = { ...extras, notes: [...extras.notes.filter((note) => !noted.notes.includes(note) && !said.includes(note)), ...noted.notes] };
+    } else if (noted?.note) riders = { success: { ...riders.success, noteEffects: [noted.note] }, criticalSuccess: { ...riders.criticalSuccess, noteEffects: [noted.note] } };
+    if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read && !cast && !follow && !noted) return null;
     const anyRider = hasRow(riders.success) || hasRow(riders.criticalSuccess);
     // (A trigger's Strike that already hit — Spore Sap's "Trigger You successfully Strike a creature with the spore sap Effect
     // The target must succeed at a DC 28 Fortitude save …": its save is the plan, at the creature struck; its extra damage
@@ -246,7 +260,9 @@ export function compileStrike(item, base, options = {}) {
     // (The maneuver after it: its own card, not the Strike's riders — Iron Cube's "If this knocks the target Prone" isn't the hit's.)
     const empty = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
     if (follow) return strikePlan({ base, item, strike, riders: { success: empty(), criticalSuccess: empty() }, save, extras: { ...extras, notes: extras.notes.filter((note) => !(follow.notes ?? []).includes(note) && !FOLLOW.test(note) && !/^If this knocks the target Prone\b/i.test(note)) }, cast, follow });
-    return strikePlan({ base, item, strike, riders, save, extras, cast });
+    const plan = strikePlan({ base, item, strike, riders, save, extras, cast });
+    // (A plan of hit notes alone: below any other reading, src/compiler/strikes.js strikeOver.)
+    return noted && plan?.strike ? { ...plan, strike: { ...plan.strike, fromNotes: true } } : plan;
 }
 
 function strikePlan({ base, item, strike, riders, save, extras: read, cast = null, follow = null }) {
@@ -299,6 +315,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
 // save": not a save at whoever's targeted, Strike or no Strike).
 export function strikeOver(plan, strike) {
     if (!strike) return plan;
+    // (Hit notes alone give way to any other reading but a note.)
+    if (strike.strike?.fromNotes) return !plan || plan.noteOnly || plan.builtin === "no-effect" ? strike : plan;
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") return strike;
     return plan.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && strike.strike?.save ? strike : plan;
 }

@@ -75,7 +75,8 @@ export async function strikeWithRider(message) {
     }
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
-    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement) {
+    // (A note for the creature hit counts: Magekiller Bullet's curse.)
+    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}.</p>` });
         return;

@@ -3260,6 +3260,49 @@ export const cases = {
         const senses = () => (drinker.perception?.senses ?? drinker.system.perception?.senses ?? []).map((sense) => [sense.type, sense.acuity, sense.range]);
         await until(() => senses().some(([type, acuity, range]) => type === "bloodsense" && acuity === "imprecise" && range === 60), `bloodsense on its senses (${JSON.stringify(senses())})`, { timeout: 8000 });
         return { senses: senses() };
+    },
+
+    // Blister Ammunition (Lesser): on PF2e's hit, its DC 19 Fortitude save at the creature hit; failed, the itch a note Effect on it.
+    async blisterAmmoSave(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Blister Archer", { type: "character", x: 17, y: 6 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Blister Target", { x: 19, y: 6, ac: 1, save: -30, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Blister Ammunition (Lesser)");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(archer, bow);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ammunition's save card" });
+        await rollAndApply(save);
+        await until(() => foe.itemTypes.effect.some((effect) => /^Blister Ammunition \(Lesser\): note$/.test(effect.name)), `the itch's note on the target (${foe.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+        return { effects: foe.itemTypes.effect.map((effect) => [effect.name, effect.system.duration?.value, effect.system.duration?.unit]) };
+    },
+
+    // Magekiller Bullet: on PF2e's hit, its curse a note Effect on the creature hit for a week.
+    async magekillerNote(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Magekiller Archer", { type: "character", x: 6, y: 9, level: 16 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Magekiller Target", { x: 8, y: 9, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const bullets = await give(archer, "Magekiller Bullet");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": bullets.id });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(bullets.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await strike(archer, bow);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        await until(() => foe.itemTypes.effect.some((effect) => /Magekiller Bullet/.test(effect.name) && effect.system.duration?.value === 7 && effect.system.duration?.unit === "days"), `the curse's note for 7 days (${foe.itemTypes.effect.map((effect) => `${effect.name} ${effect.system.duration?.value} ${effect.system.duration?.unit}`).join(", ")})`, { timeout: 10000 });
+        return { effects: foe.itemTypes.effect.map((effect) => effect.name) };
     }
 };
 

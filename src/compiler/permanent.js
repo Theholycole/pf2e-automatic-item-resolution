@@ -256,7 +256,7 @@ function compileEach(item, options = {}) {
         // (A save or a result no row holds — death, a push, a pull to its user — src/compiler/save-or.js: Vorpal, Hauling.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = saveOrPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
-        if (!plan) plan = pf2eRulesPlan(item, base, plainText(activation.html));
+        if (!plan || plan.strike?.fromNotes) plan = pf2eRulesPlan(item, base, plainText(activation.html)) ?? plan;
         // (A counteract on its user, src/compiler/counteract.js — Heartstone's "attempts to counteract one disease affecting you": the
         // consumables' counteract card.)
         const counteract = readCounteract(activation.html, { level: item.system?.level?.value });

@@ -6,14 +6,14 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 731,
+   "resolves": 733,
    "builtin:cast-spell": 469,
-   "none": 674,
-   "partial": 141,
+   "none": 669,
+   "partial": 155,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 40,
-   "note-only": 221,
+   "note-only": 210,
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
@@ -28,12 +28,12 @@
   "live": {
    "save": 397,
    "cast": 469,
-   "item": 593,
-   "none": 859,
+   "item": 582,
+   "none": 854,
    "focus": 45,
    "fortune": 50,
    "reroll": 25,
-   "strike": 65,
+   "strike": 81,
    "counteract": 6,
    "toggle": 32,
    "zone": 17,
@@ -68,8 +68,8 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 153,
-    "none": 109,
+    "resolves": 154,
+    "none": 108,
     "partial": 38,
     "note-only": 26,
     "builtin:cast-spell": 83,
@@ -87,12 +87,12 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "none": 41,
-    "partial": 19,
-    "resolves": 43,
+    "partial": 33,
+    "resolves": 44,
     "builtin:pf2e-rules": 24,
-    "note-only": 14,
+    "none": 37,
     "builtin:no-effect": 2,
+    "note-only": 3,
     "builtin:spellstrike": 9,
     "builtin:zone": 1
    }
@@ -423,9 +423,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Schematic Scanner",
@@ -3046,9 +3046,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Misleading",
@@ -4690,9 +4690,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Drum of Upheaval",
@@ -6713,9 +6713,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Spider Gun (Greater)",
@@ -10721,9 +10721,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Falconsight Eye",
@@ -13830,9 +13830,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "General's Signet",
@@ -15264,9 +15264,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Kortos Diamond",
@@ -17236,9 +17236,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Decanter of Endless Water",
@@ -17533,9 +17533,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Sandals of the Stag",
@@ -19799,9 +19799,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Fife of the Faithful",
@@ -22039,9 +22039,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Volcanic Vigor",
@@ -25651,9 +25651,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Penetrating Ammunition",
@@ -25761,9 +25761,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Ovinrbaane",
@@ -26434,9 +26434,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Kaldemash's Lament",
@@ -27491,9 +27491,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Mala Beads of Foresight",
@@ -27667,9 +27667,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Ring of Bestial Friendship",
