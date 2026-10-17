@@ -38,8 +38,11 @@ function rangeOf(words) {
 // "next Strike" (its own damage counts, "successful" in missKeeps); uses, how many Strikes it's for; hit, a trigger's
 // Strike that already hit — or null. Not one of several Strikes ("Make up to four Strikes", "make a Strike against each
 // creature in the area"), nor one it makes for you with its own modifier (an item's attack, "with an attack modifier of +14").
+// (A talisman's, with no Effect heading: Blessed Ampoule's "Trigger Your Strike with the affixed weapon hits a target Requirements …
+// When activated, the weapon's physical damage for the Strike becomes spirit damage" — what follows its Requirements.)
+const TALISMAN_HIT = /\bTrigger\s+(?:Your Strike with the affixed weapon hits an? (?:target|creature)|You hit an? (?:target|creature) with an? (?:melee |ranged )?Strike with the affixed weapon)\b(?:\s+Requirements\b[^.]*\.)?/i;
 export function readStrike(text) {
-    const triggered = TRIGGER_HIT.exec(text);
+    const triggered = TRIGGER_HIT.exec(text) ?? TALISMAN_HIT.exec(text);
     if (triggered) {
         const after = text.slice(triggered.index + triggered[0].length).trim();
         return { range: null, unarmed: false, after, sentence: sentenceOf(after), next: false, missKeeps: false, uses: 1, hit: true };

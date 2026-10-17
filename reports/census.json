@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 218,
-   "resolves": 749,
+   "none": 217,
+   "resolves": 750,
    "builtin:readied-bonus": 21,
    "builtin:zone": 102,
    "builtin:item-action": 15,
@@ -91,10 +91,10 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 37,
+    "none": 36,
     "builtin:readied-bonus": 12,
     "builtin:item-action": 11,
-    "resolves": 53,
+    "resolves": 54,
     "note-only": 8,
     "builtin:no-effect": 9,
     "builtin:reroll": 1,
@@ -353,9 +353,9 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 60,
+   "resolves": 61,
    "gaps": 0,
-   "none": 30
+   "none": 29
   },
   "counteract": {
    "count": 79,
@@ -385,7 +385,7 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 283,
+   "none": 282,
    "item": 630,
    "fortune": 23,
    "zone": 102,
@@ -397,7 +397,7 @@
    "reroll": 2,
    "coat": 46,
    "ways": 5,
-   "strike": 9
+   "strike": 10
   },
   "byCategory": {
    "other": {
@@ -425,14 +425,14 @@
     "zone": 1
    },
    "talisman": {
-    "none": 46,
+    "none": 45,
     "fortune": 14,
     "action": 11,
     "item": 53,
     "reroll": 1,
     "cast": 9,
     "save": 15,
-    "strike": 6,
+    "strike": 7,
     "coat": 1
    },
    "elixir": {
@@ -495,7 +495,7 @@
    }
   },
   "noCard": {
-   "no-plan": 218,
+   "no-plan": 217,
    "triggered": 12,
    "gm": 52,
    "other": 1
@@ -27148,7 +27148,10 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "strike"
   },
   {
    "name": "Nevercold (Compressed)",

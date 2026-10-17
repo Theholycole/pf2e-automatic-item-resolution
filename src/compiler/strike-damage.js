@@ -24,7 +24,8 @@ const WEAPON_DICE = /\b(?:an )?extra (?:(one|two|three|four|\d+) )?(?:die|dice) 
 // "+1 status bonus to this Strike", "with a +1 circumstance bonus to the attack roll".
 const ATTACK = /\+(\d+) (status|circumstance|item) bonus to (?:this Strike|the Strike|the attack roll|your attack roll|this attack|the attack)\b/i;
 // ("All damage from this Strike is fire damage"; Battering Ammunition's "It deals bludgeoning damage instead of its normal damage type".)
-const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike is (${TYPES}) damage\b|\b(?:It|The Strike|This Strike|The ammunition) deals (${TYPES}) damage instead of its (?:normal|usual) damage type\b`, "i");
+// (And Blessed Ampoule's "the weapon's physical damage for the Strike becomes spirit damage".)
+const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike is (${TYPES}) damage\b|\b(?:It|The Strike|This Strike|The ammunition) deals (${TYPES}) damage instead of its (?:normal|usual) damage type\b|\bthe weapon's (?:physical )?damage for the Strike becomes (${TYPES}) damage\b`, "i");
 // "Your outcome is one degree of success better than what you rolled": PF2e's AdjustDegreeOfSuccess on the attack roll.
 const BETTER = /\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i;
 // (Its runes for the Strike: Weapon Shot's "For the Strike with which you consume the ammunition, the weapon is a +1
@@ -125,7 +126,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         }
         const altered = ALTERATION.exec(rest);
         if (altered) {
-            alteration = (altered[1] ?? altered[2]).toLowerCase();
+            alteration = (altered[1] ?? altered[2] ?? altered[3]).toLowerCase();
             rest = rest.replace(altered[0], " ");
         }
         const upgraded = RUNES.exec(rest);

@@ -151,6 +151,10 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     const sap = activation("Spore Sap").plan;
     assert.equal(sap.resolution.check.roll, "save");
     assert.deepEqual(sap.resolution.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.value, effect.duration?.unit]), [["stupefied", 2, "minutes"]]);
+    // A talisman's trigger's hit, with no Effect heading (Blessed Ampoule's "Trigger Your Strike with the affixed weapon hits a target
+    // Requirements …"): its damage roll becomes spirit.
+    const ampoule = compileItem(source("Blessed Ampoule"));
+    assert.deepEqual([ampoule.strike.hit, ampoule.strike.alteration], [true, "spirit"]);
 });
 
 test("the readied Strike's PF2e rules: dice on its weapon's damage, the bonus on its attack, a damage type", () => {

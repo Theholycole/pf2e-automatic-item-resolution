@@ -3623,6 +3623,40 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await walls()?.delete().catch(() => null);
         }
+    },
+
+    // Blessed Ampoule: used after the shortsword's hit (AC 1), it readies that Strike's damage roll as spirit; PF2e's roll is spirit,
+    // and spends it.
+    async blessedAmpouleSpirit(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Ampoule Striker", { type: "character", x: 0, y: 12 });
+        const { token: foeToken } = await creature(scene, "Ampoule Target", { x: 1, y: 12, ac: 1, alliance: "opposition" });
+        const sword = await give(fighter, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const ampoule = await give(fighter, "Blessed Ampoule");
+        // (The tokens drawn before they're targeted.)
+        await until(() => fighterToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await wait(600);
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(fighter, sword);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        let since = Date.now();
+        await ampoule.consume();
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const readied = () => fighter.itemTypes.effect.find((entry) => entry.getFlag(NS, "strikeRider"));
+        assert(readied()?.system.rules.some((rule) => rule.key === "DamageAlteration" && rule.value === "spirit"), "the readied spirit damage");
+        since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
+        assert(/spirit/.test(formula) && !/piercing/.test(formula), `PF2e's damage roll is spirit (${formula})`);
+        const end = Date.now() + 6000;
+        while (Date.now() < end && readied()) await wait(250);
+        assert(!readied(), "spent by the damage roll");
+        return { outcome, formula };
     }
 };
 
