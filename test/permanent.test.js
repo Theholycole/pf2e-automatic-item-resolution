@@ -497,6 +497,17 @@ test("auras that act at a turn's start or end in them, as the ability module's z
     const horn = compileActivations(item("Horn of Rust"), { spellEffects })[1].plan;
     assert.deepEqual([horn.zone.area.value, horn.zone.saves[0].when, horn.ownEffect?.label], [5, ["start"], "Effect: Horn of Rust"]);
     assert.match(horn.zone.notes.join(" "), /exposed to a potent form of tetanus/);
+    // Bloodburn Censer: its smoke's damage type picked on the ways card, each way the zone on its user's token — the Fortitude save as
+    // it's made and on entering, that type's persistent damage, Enfeebled while it lasts.
+    const censer = compileActivations(item("Bloodburn Censer"), { spellEffects })[0].plan;
+    assert.deepEqual([censer.builtin, censer.once, censer.ways.map((way) => way.name)], ["ways", true, ["Fire", "Poison"]]);
+    const smoke = censer.ways[1].plan.zone;
+    const failure = smoke.saves[0].plan.resolution.outcomes.failure;
+    assert.deepEqual([smoke.area, smoke.centre, smoke.saves[0].when, failure.effects.map((effect) => [effect.slug, effect.value, effect.duration])], [{ type: "emanation", value: 20 }, "self", ["initial", "enter"], [["enfeebled", 2, { mode: "while", persistent: "poison" }]]]);
+    // Alkenstar Phalanx: its two 60-foot walls one 120-foot line placed through its user's space, greater difficult terrain, the basic
+    // Fortitude save on entering and at a turn's start there.
+    const phalanx = compileActivations(item("Alkenstar Phalanx"), { spellEffects })[0].plan.zone;
+    assert.deepEqual([phalanx.area, phalanx.centre, phalanx.terrain, phalanx.saves[0].when, phalanx.saves[0].plan.resolution.check.basic, phalanx.saves[0].plan.resolution.check.against.value], [{ type: "line", value: 120 }, "placed", [{ movement: ["walk"], difficulty: 3 }], ["enter", "start"], true, 32]);
 });
 
 test("a bonus for this turn's movement: Quick Runner's Shirt's +10-foot item bonus during its Strides, Cape of the Open Sky's to its Speed and fly Speed for that movement — until the end of the turn", () => {

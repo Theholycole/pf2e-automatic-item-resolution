@@ -192,7 +192,7 @@ test("riders only some creatures take: Ghost Charge's enfeebled on undead or voi
     goblin.attributes.hp.negativeHealing = false;
 });
 
-test("a condition for as long as a persistent damage lasts: Spider Satchel's Fascinated with its poison, Freezing Embrace Snare's clumsy with its cold; not Tallow Bomb's floor-held sickened, nor Bloodburn Censer's fire-or-poison", async () => {
+test("a condition for as long as a persistent damage lasts: Spider Satchel's Fascinated with its poison, Freezing Embrace Snare's clumsy with its cold; not Tallow Bomb's floor-held sickened; Bloodburn Censer's for the type picked", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const { compileActivations } = await import("../src/compiler/permanent.js");
     const { compileBomb } = await import("../src/compiler/bombs.js");
@@ -201,5 +201,6 @@ test("a condition for as long as a persistent damage lasts: Spider Satchel's Fas
     const snare = compileItem(source("Freezing Embrace Snare")).zone.saves[0].plan.resolution.outcomes;
     assert.deepEqual([snare.failure.effects[0].duration, snare.success.effects[0].duration.mode], [{ mode: "while", persistent: "cold" }, "fixed"]);
     assert.equal(compileBomb(source("Tallow Bomb (Lesser)")).resolution.outcomes.criticalSuccess.effects[0].duration, null);
-    assert.equal(compileActivations(source("Bloodburn Censer"))[0].plan.resolution.outcomes.failure.effects[0].duration, null);
+    // (Its rows of several types none; its ways, each one type, theirs.)
+    assert.deepEqual(compileActivations(source("Bloodburn Censer"))[0].plan.ways.map((way) => way.plan.zone.saves[0].plan.resolution.outcomes.failure.effects[0].duration), [{ mode: "while", persistent: "fire" }, { mode: "while", persistent: "poison" }]);
 });

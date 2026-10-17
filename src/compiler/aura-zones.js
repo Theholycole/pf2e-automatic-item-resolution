@@ -129,6 +129,28 @@ export function readSelfAura(html, name = "Aura") {
     };
 }
 
+// An aura activation's save on those in it as it's made and on entering, its damage a type its user picks: Bloodburn Censer's smoke "in
+// a @Template[emanation|distance:20]", "the smoke deals your choice of fire or poison damage. Each living creature that's in the area or
+// enters it attempts a @Check[fortitude|dc:34] saving throw, then becomes temporarily immune for 1 hour". The ways card, a way for each
+// type (src/compiler/type-choice.js's damageChoices), each the zone on its user's token with that type's rows; its condition while that
+// persistent damage lasts (src/compiler/primed.js). Who it spares and the immunity are notes. Null for anything else.
+const IN_OR_ENTERS = /\bEach (living )?creature (?:that's|that is|who's) in the area or enters it attempts an? @Check\[/i;
+export function choiceAuraWays(plan, activation, base, { withWhile = (entry) => entry } = {}) {
+    const html = String(activation?.html ?? "");
+    const emanation = /@Template\[(?:type:)?emanation\|distance:(\d+)[^\]]*\]/i.exec(html);
+    const enters = IN_OR_ENTERS.exec(html);
+    if (plan?.resolution?.kind !== "save" || !(plan.damageChoices?.length > 1) || !emanation || !enters || !(activation.traits ?? []).includes("aura")) return null;
+    const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const notes = [...(enters[1] ? ["Only a living creature attempts the save."] : []), ...(/\bthen becomes temporarily immune for 1 hour\b/i.test(plain) ? ["A creature that has attempted the save is immune to it for 1 hour: don't roll it again for that creature."] : [])];
+    const { damageChoices, ...save } = plan;
+    const ways = damageChoices.map((choice) => {
+        const one = withWhile({ ...save, resolution: { ...save.resolution, outcomes: choice.outcomes }, trigger: { event: "zone" }, targeting: { target: "a creature in the area", range: null, area: null } });
+        const zone = { area: { type: "emanation", value: Number(emanation[1]) }, centre: "self", range: null, lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [{ when: ["initial", "enter"], plan: one }], damage: [], effect: null, modifiers: [], notes };
+        return { name: choice.label, html, plan: { ...base, builtin: "zone", source: base.source, actions: null, zone } };
+    });
+    return { ...base, builtin: "ways", once: true, automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan.trigger?.frequency ? { frequency: plan.trigger.frequency } : {}), event: "use" }, ways };
+}
+
 // The builtin, its base the activation's or the item's; its user's own Effect beside it, ownEffect.
 export function auraZonePlan(html, base, name) {
     const read = readAuraZone(html, name) ?? readSelfAura(html, name);

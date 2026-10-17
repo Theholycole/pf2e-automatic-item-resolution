@@ -3564,6 +3564,65 @@ export const cases = {
         const read = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
         assert(read.basic && read.statistic === "reflex" && read.against?.value === 20, `basic Reflex DC 20 (${JSON.stringify(read)})`);
         return { save: save.id };
+    },
+
+    // Bloodburn Censer: the ways card picks the smoke's type (Poison); its zone on the user's token, and a creature in it as it's made
+    // attempts the DC 34 Fortitude save (at −30, a critical failure: Enfeebled 3).
+    async censerSmoke(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Censer Bearer", { type: "character", x: 18, y: 28 });
+        const { actor: foe } = await creature(scene, "Smoke Breather", { x: 19, y: 28, alliance: "opposition", save: -30 });
+        const censer = await give(user, "Bloodburn Censer");
+        await userToken.object?.control?.();
+        const smoke = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Bloodburn Censer/.test(region.name));
+        try {
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(censer.uuid, 0);
+            const card = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { choice: 1 });
+            await until(() => smoke(), "the smoke's Region", { timeout: 8000 });
+            // (Its user's own card too, as it's made: an emanation's maker chooses whether it's affected. The foe's here.)
+            const save = await messageAfter(since, (message) => abilitySaveCard(message) && (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).some((entry) => entry.actorUuid === foe.uuid), { what: "the smoke's save card", timeout: 10000 });
+            const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+            assert(check.statistic === "fortitude" && check.against.value === 34, `Fortitude DC 34 (${JSON.stringify(check)})`);
+            await rollAndApply(save);
+            await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "enfeebled" && condition.value === 3), "Enfeebled 3", { timeout: 10000 });
+            return { region: smoke()?.name };
+        } finally {
+            await smoke()?.delete().catch(() => null);
+        }
+    },
+
+    // Alkenstar Phalanx: its walls placed (the click stood in for) as one 120-foot line, greater difficult terrain; a creature entering
+    // attempts the basic Fortitude save (DC 32).
+    async phalanxWalls(scene) {
+        // (On the scene: a token off it can't move. Row 8 east of the raiser, the line's.)
+        const { actor: user, token: userToken } = await creature(scene, "Phalanx Raiser", { type: "character", x: 0, y: 8 });
+        const { token: foeToken } = await creature(scene, "Wall Walker", { x: 3, y: 10, alliance: "opposition", hp: 400 });
+        const phalanx = await give(user, "Alkenstar Phalanx");
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const walls = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Alkenstar Phalanx/.test(region.name));
+        try {
+            await game.modules.get(NS).api.live.activate(phalanx.uuid, 0);
+            await until(() => walls(), "the walls' Region", { timeout: 8000 });
+            const zone = walls().flags["pf2e-automatic-ability-resolution"].zone.zone;
+            assert(zone.area.type === "line" && zone.area.value === 120 && zone.terrain[0]?.difficulty === 3, `a 120-foot line of greater difficult terrain (${JSON.stringify(zone.area)})`);
+            const shape = walls().shapes[0];
+            const since = Date.now();
+            // (Three squares along the line from where it starts.)
+            const turn = ((shape.rotation ?? 0) * Math.PI) / 180;
+            const point = { x: shape.x + 3 * canvas.grid.size * Math.cos(turn), y: shape.y + 3 * canvas.grid.size * Math.sin(turn) };
+            await foeToken.update({ x: point.x - (canvas.grid.size / 2), y: point.y - (canvas.grid.size / 2) });
+            const card = await messageAfter(since, abilitySaveCard, { what: "the walls' save card", timeout: 10000 });
+            const check = card.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+            assert(check.basic && check.statistic === "fortitude" && check.against.value === 32, `basic Fortitude DC 32 (${JSON.stringify(check)})`);
+            return { region: walls().name };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await walls()?.delete().catch(() => null);
+        }
     }
 };
 

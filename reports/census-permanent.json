@@ -6,7 +6,7 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 733,
+   "resolves": 731,
    "builtin:cast-spell": 470,
    "none": 668,
    "partial": 154,
@@ -17,28 +17,30 @@
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
-   "builtin:zone": 19,
+   "builtin:zone": 20,
    "builtin:modes": 32,
    "builtin:item-action": 22,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
-   "builtin:spellstrike": 9
+   "builtin:spellstrike": 9,
+   "builtin:ways": 1
   },
   "live": {
    "save": 421,
    "cast": 470,
    "item": 582,
-   "none": 819,
+   "none": 817,
    "focus": 45,
    "fortune": 54,
    "reroll": 25,
    "strike": 82,
    "counteract": 6,
-   "zone": 19,
+   "zone": 20,
    "toggle": 32,
    "action": 22,
    "coat": 3,
    "spellstrike": 9,
+   "ways": 1,
    "later": 4
   },
   "withFrequency": 1749,
@@ -48,7 +50,7 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 446,
+    "resolves": 445,
     "builtin:cast-spell": 341,
     "none": 449,
     "partial": 70,
@@ -62,7 +64,8 @@
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
     "builtin:counteract": 5,
-    "builtin:item-action": 10
+    "builtin:item-action": 10,
+    "builtin:ways": 1
    }
   },
   "weapon": {
@@ -109,10 +112,10 @@
    "results": {
     "builtin:cast-spell": 34,
     "note-only": 17,
-    "resolves": 57,
+    "resolves": 56,
     "builtin:counteract": 1,
     "none": 27,
-    "builtin:zone": 3,
+    "builtin:zone": 4,
     "builtin:no-effect": 5,
     "builtin:reroll": 3,
     "partial": 8,
@@ -7845,9 +7848,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Stargazer's Spyglass",
@@ -15163,9 +15166,9 @@
    "time": "2",
    "frequency": "once per day Cost incense worth at least 5 gp",
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": null
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Doomsday Door",

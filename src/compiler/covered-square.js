@@ -191,3 +191,47 @@ export function coatedSquarePlan(html, base, item, options = {}) {
         }
     };
 }
+
+// Walls it raises: Alkenstar Phalanx's "You raise walls of rapidly shifting metal plates in two @Template[type:line|distance:60]{60-foot
+// lines} going in opposite directions. Each wall is 60 feet high and is greater difficult terrain. Whenever a creature enters or starts
+// their turn in the wall's space, they take @Damage[6d10[slashing]] damage (@Check[fortitude|dc:32|basic] save)." The ability module's
+// zone: one line twice that long, placed through its user's space, greater difficult terrain, the basic save on entering and at a
+// turn's start there (through the ability compiler's reading of it). Its height and cover are notes.
+const WALLS = /\bYou raise walls of [^.]*?\bin two @Template\[(?:type:)?line\|distance:(\d+)[^\]]*\](?:\{[^}]*\})? going in opposite directions\./i;
+const IN_THE_WALL = /\bWhenever a creature (enters or starts|starts|enters) (?:their|its) turn in the wall's space, (?:they|it) takes? (@Damage\[(?:[^[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage \((@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})?) save\)\./i;
+export function raisedWallsPlan(html, base, item, options = {}) {
+    const text = String(html ?? "");
+    const walls = WALLS.exec(text);
+    const inside = IN_THE_WALL.exec(text);
+    if (!walls || !inside) return null;
+    const read = compileAbility({ ...item, type: "action", system: { ...(item?.system ?? {}), description: { value: `<p><strong>Effect</strong> The target takes ${inside[2]} damage (${inside[3]} save).</p>` }, actionType: { value: "passive" }, actions: { value: null } } }, options);
+    if (read?.resolution?.kind !== "save" || read.resolution.check?.against?.dc !== "fixed") return null;
+    const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "a creature in the wall's space", range: null, area: null } };
+    const when = [...(/\benters\b/i.test(inside[1]) ? ["enter"] : []), ...(/\bstarts\b/i.test(inside[1]) ? ["start"] : [])];
+    const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const length = Number(walls[1]);
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "line", value: length * 2 },
+            centre: "placed",
+            range: null,
+            lasts: null,
+            untilReused: false,
+            concealed: false,
+            terrain: [{ movement: ["walk"], difficulty: /\bgreater difficult terrain\b/i.test(plain) ? 3 : 2 }],
+            others: false,
+            hazard: null,
+            saves: [{ when, plan }],
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes: [
+                `Two ${length}-foot walls going in opposite directions from you: place this ${length * 2}-foot line through your own space.`,
+                ...[/\bEach wall is \d+ feet high\b/i, /\bThe shifting walls also provide greater cover from any attack originating from the opposite side\./i].map((pattern) => pattern.exec(plain)?.[0]).filter(Boolean).map((sentence) => (/\.$/.test(sentence) ? sentence : `${sentence}.`))
+            ]
+        }
+    };
+}

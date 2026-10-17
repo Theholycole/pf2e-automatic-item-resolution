@@ -22,7 +22,7 @@ import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
-import { auraZonePlan } from "./aura-zones.js";
+import { auraZonePlan, choiceAuraWays } from "./aura-zones.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
@@ -34,7 +34,7 @@ import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.j
 import { withHitDelivery } from "./hit-delivery.js";
 import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
-import { coveredSquarePlan, raisedAreaPlan } from "./covered-square.js";
+import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
 import { readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
@@ -216,6 +216,8 @@ function compileEach(item, options = {}) {
         plan = withHitDelivery(plan, plainText(activation.html), { trigger: activation.trigger, itemType: item.type });
         // (Damage of its user's choice of two types, each row giving both: the card's picker, src/compiler/type-choice.js.)
         plan = withRowTypeChoice(plan, plainText(activation.html));
+        // (An aura's save as it's made and on entering, its damage type picked: the ways card, a zone for each type — Bloodburn Censer.)
+        plan = choiceAuraWays(plan, activation, base, { withWhile: (entry) => withWhilePersistent(entry, plainText(activation.html)) }) ?? plan;
         // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Arctic Worm Chitin Shield, Alluring
         // Lantern, Sandstorm Top — over a save at the creatures targeted once.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = auraZonePlan(activation.html, base, base.source?.name) ?? plan;
@@ -257,6 +259,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = perceptionCheckPlan(activation.html, base, item, options) ?? plan;
         // (A square it covers for a while, with a save on entering, src/compiler/covered-square.js: Spider Gun's Web Shot.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = coveredSquarePlan(activation.html, base, item, options) ?? plan;
+        // (Walls it raises, with a save in their space, src/compiler/covered-square.js: Alkenstar Phalanx — over the save read alone.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = raisedWallsPlan(activation.html, base, item, options) ?? plan;
         // (An area of stalagmites it raises for a while, src/compiler/covered-square.js: Stoneraiser Javelin.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = raisedAreaPlan(activation.html, base, item, options) ?? plan;
         // (A save or a result no row holds — death, a push, a pull to its user — src/compiler/save-or.js: Vorpal, Hauling.)

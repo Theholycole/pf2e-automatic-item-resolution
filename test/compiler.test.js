@@ -618,13 +618,12 @@ test("extra Strike damage of dice set by the armor's save bonus (a Battlezoo hid
     assert.deepEqual([hide(0).diceNumber, hide(1).diceNumber, hide(3).diceNumber, hide(1).dieSize, hide(1).damageType, hide(1).predicate], [1, 2, 4, "d8", "cold", ["item:melee"]]);
 });
 
-test("damage of its user's choice of two types, each row giving both (Bloodburn Censer): the card's picker, each type's own rows with its condition until that persistent damage ends", async () => {
-    const { withDamageChoice } = await import("../src/compiler/beads.js");
+test("damage of its user's choice of two types, each row giving both (Bloodburn Censer): a way for each type, each type's own rows with its condition until that persistent damage ends", async () => {
     const censer = compileActivations(item("Bloodburn Censer"))[0].plan;
-    assert.deepEqual(censer.damageChoices.map((choice) => choice.label), ["Fire", "Poison"]);
-    const poison = withDamageChoice(censer, 1).resolution.outcomes.failure;
-    assert.deepEqual([poison.damage.formulas.map((entry) => entry.formula), poison.effects[0].duration], [["4d6[persistent,poison]"], { mode: "while", persistent: "poison" }]);
-    assert.deepEqual(withDamageChoice(censer, 0).resolution.outcomes.success.damage.formulas.map((entry) => entry.formula), ["2d6[persistent,fire]"]);
+    assert.deepEqual(censer.ways.map((way) => way.name), ["Fire", "Poison"]);
+    const rows = (index) => censer.ways[index].plan.zone.saves[0].plan.resolution.outcomes;
+    assert.deepEqual([rows(1).failure.damage.formulas.map((entry) => entry.formula), rows(1).failure.effects[0].duration], [["4d6[persistent,poison]"], { mode: "while", persistent: "poison" }]);
+    assert.deepEqual(rows(0).success.damage.formulas.map((entry) => entry.formula), ["2d6[persistent,fire]"]);
 });
 
 test("live routes: a fulu affixed is used (not a trigger its primed damage names); the word aura in flavor isn't an aura activation, its trait is", async () => {
@@ -633,5 +632,5 @@ test("live routes: a fulu affixed is used (not a trigger its primed damage names
     const route = (name) => routeOf(compileItem(item(name)), plainText(item(name).system.description.value));
     assert.deepEqual([route("Thousand-Pains Fulu (Void)"), route("Thousand-Pains Fulu (Burl)"), route("Moritype")], ["save", "save", "save"]);
     const [censer] = compileActivations(item("Bloodburn Censer"));
-    assert.equal(routeOf(censer.plan, plainText(censer.activation.html)), null, "Light Incense's (aura, manipulate): a lasting aura, not a save card");
+    assert.equal(routeOf(censer.plan, plainText(censer.activation.html)), "ways", "Light Incense's (aura, manipulate): the ways card of its zones, not a save card");
 });
