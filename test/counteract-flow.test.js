@@ -76,3 +76,33 @@ test("counteracts on an activation: Bracers of Pain's \"the effect causing your 
     const skarja = compileActivations(source("Skarja's Heartstone"))[0].plan;
     assert.deepEqual([skarja.item.counteract.modifier, skarja.item.counteract.rank, skarja.item.counteract.afflictions], [23, 7, ["disease"]]);
 });
+
+test("Etheric Essence Disruptor: a spell's Effect on a creature within 30 feet — the creatures there to pick, that one's spell Effects listed, the tradition a note", async () => {
+    const plan = compileItem(source("Etheric Essence Disruptor (Lesser)"));
+    assert.deepEqual([plan.builtin, plan.targeting.range, plan.item.counteract.modifier, plan.item.counteract.rank, plan.item.counteract.spells, plan.item.counteract.within], ["counteract", 30, 7, 2, true, 30]);
+    assert.deepEqual(plan.item.counteract.notes, ["Only an active divine or occult spell: tick one that is."]);
+    assert.equal(routeOf(plan), "counteract");
+    const engineer = foundry.makeActor({ id: "counter-engineer", name: "Engineer", owners: ["player"] });
+    const blessed = foundry.makeActor({ id: "counter-blessed", name: "Blessed Foe" });
+    foundry.place(engineer, 0, 14500);
+    foundry.place(blessed, 300, 14500);
+    blessed.created.push({ id: "effect-bless", type: "effect", name: "Spell Effect: Bless", system: { traits: { value: [] }, level: { value: 1 } } }, { id: "effect-other", type: "effect", name: "Effect: Rage", system: { traits: { value: [] } } });
+    const disruptor = foundry.giveItem(engineer, source("Etheric Essence Disruptor (Lesser)"));
+    const data = disruptor.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: disruptor.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: engineer.id }, actor: engineer, token: engineer.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    assert.match(card.content, /Counteract \+7, rank 2: one spell on a creature within 30 feet/);
+    const state = card.flags[MODULE_ID].card;
+    const at = state.drinkers.findIndex((entry) => entry.name === "Blessed Foe");
+    assert.ok(at > 0, "the creature 15 feet away is offered");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: at, userId: "player" });
+    await settle();
+    assert.deepEqual(card.flags[MODULE_ID].card.rows.map((row) => [row.name, row.kind, row.rank, row.ticked]), [["Spell Effect: Bless", "effect", 1, true]]);
+    // (The stand-in's natural 10: 17 against DC 15 is a success, rank 1 ≤ 2 + 1.)
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, rows: [{ ticked: true, dc: 15 }], userId: "player" });
+    await settle();
+    assert.equal(blessed.created.some((entry) => entry.id === "effect-bless"), false, "Bless ended");
+    assert.equal(blessed.created.some((entry) => entry.id === "effect-other"), true, "not a spell's: kept");
+});

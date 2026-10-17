@@ -21,8 +21,8 @@
    "builtin:item-action": 12,
    "note-only": 188,
    "partial": 80,
-   "builtin:counteract": 20,
-   "builtin:no-effect": 61,
+   "builtin:counteract": 28,
+   "builtin:no-effect": 53,
    "builtin:reroll": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
@@ -181,8 +181,9 @@
     "builtin:zone": 12,
     "resolves": 29,
     "note-only": 9,
-    "builtin:no-effect": 13,
-    "partial": 3
+    "builtin:no-effect": 5,
+    "partial": 3,
+    "builtin:counteract": 8
    },
    "mechanisms": {
     "damage": 10,
@@ -379,7 +380,7 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 323,
+   "none": 315,
    "item": 637,
    "fortune": 23,
    "zone": 87,
@@ -387,7 +388,7 @@
    "later": 79,
    "action": 12,
    "save": 129,
-   "counteract": 20,
+   "counteract": 28,
    "reroll": 2,
    "coat": 45,
    "strike": 8
@@ -447,10 +448,11 @@
     "item": 5
    },
    "gadget": {
-    "none": 25,
+    "none": 17,
     "zone": 12,
     "item": 25,
-    "save": 15
+    "save": 15,
+    "counteract": 8
    },
    "mutagen": {
     "item": 68
@@ -482,7 +484,7 @@
   "noCard": {
    "no-plan": 240,
    "triggered": 21,
-   "gm": 61,
+   "gm": 53,
    "other": 1
   }
  },
@@ -10092,9 +10094,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Potion of Stable Form (Greater)",
@@ -10818,9 +10820,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Thunderbird Tuft (Lesser)",
@@ -14009,9 +14011,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Heartening Missive (Turtle)",
@@ -19067,9 +19069,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Darkvision Elixir (Greater)",
@@ -19682,9 +19684,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Addlebrain",
@@ -25048,9 +25050,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Glimmering Missive",
@@ -26442,9 +26444,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Blue Dragonfly Poison",
@@ -28681,9 +28683,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Numbing Tonic (Greater)",

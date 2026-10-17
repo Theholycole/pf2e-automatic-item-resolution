@@ -31,7 +31,8 @@ export function counteractCandidates(creature, counteract) {
     const fits = (traits) => (counteract.traits ?? []).some((trait) => traits.includes(trait)) || (counteract.afflictions ?? []).some((kind) => traits.includes(kind));
     for (const effect of creature.effects ?? []) {
         const grants = grantsOf(effect);
-        if (!fits(effect.traits ?? []) && !grants.some((slug) => (counteract.conditions ?? []).includes(slug))) continue;
+        // (A spell's Effect, for an item that counteracts a spell: each one the creature has.)
+        if (counteract.spells ? !effect.spell : !fits(effect.traits ?? []) && !grants.some((slug) => (counteract.conditions ?? []).includes(slug))) continue;
         rows.push({ id: effect.id, name: effect.name, kind: "effect", rank: Number.isFinite(effect.level) ? effect.level : null, dc: Number.isFinite(effect.dc) ? effect.dc : null });
     }
     // (A condition no listed Effect grants: itself, the GM's numbers.)
@@ -59,6 +60,8 @@ export function counteractResult({ total, natural, dc, ours, theirs }) {
 const list = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} or ${words.at(-1)}` : words[0] ?? "");
 // "Counteract +8, rank 2: each effect inflicting clumsy or enfeebled, or with the emotion trait".
 export function counteractText(counteract) {
+    // ("Counteract +7, rank 2: one spell on a creature within 30 feet".)
+    if (counteract.spells) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: one spell on a creature${counteract.within ? ` within ${counteract.within} feet` : ""}`;
     const what = [
         counteract.conditions?.length ? `inflicting ${list(counteract.conditions)}` : null,
         counteract.traits?.length ? `with the ${list(counteract.traits)} trait` : null,

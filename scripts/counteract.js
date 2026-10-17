@@ -9,7 +9,8 @@ import { FLAG, MODULE_ID, creatureOf, creaturesNear, entryOf, stateOf } from "./
 export async function postCounteractCard({ message, plan, used, actor, token }) {
     const counteract = plan.item?.counteract;
     if (!counteract) return null;
-    const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: creaturesNear(token, 5) });
+    // (A spell on a creature within some distance: every creature there, foe or friend, for the GM to pick.)
+    const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: creaturesNear(token, counteract.within ?? 5) });
     return ChatMessage.create({ content: counteractCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
@@ -28,7 +29,8 @@ function originDC(effect) {
 // The creature as the card's search reads it.
 function snapshot(actor) {
     return {
-        effects: (actor.itemTypes?.effect ?? []).map((effect) => ({ id: effect.id, name: effect.name, traits: effect.system?.traits?.value ?? [], level: Number(effect.system?.level?.value) || null, dc: originDC(effect) })),
+        // (A spell's Effect: PF2e's "Spell Effect: …", from its spell-effects pack, or an Effect a spell put on it.)
+        effects: (actor.itemTypes?.effect ?? []).map((effect) => ({ id: effect.id, name: effect.name, traits: effect.system?.traits?.value ?? [], level: Number(effect.system?.level?.value) || null, dc: originDC(effect), spell: /^Spell Effect:/i.test(effect.name) || /\.spell-effects\./.test(effect._stats?.compendiumSource ?? effect.flags?.core?.sourceId ?? "") || effect.system?.context?.origin?.item?.includes?.(".Item.") && /spell/i.test(String(effect.system?.context?.origin?.rollOptions ?? "")) })),
         conditions: (actor.itemTypes?.condition ?? []).map((condition) => ({ id: condition.id, slug: condition.slug, name: condition.name, value: Number.isFinite(condition.value) ? condition.value : null, grantedBy: condition.flags?.pf2e?.grantedBy?.id ?? null })),
         afflictions: (actor.itemTypes?.affliction ?? []).map((affliction) => ({ id: affliction.id, name: affliction.name, traits: affliction.system?.traits?.value ?? [], level: Number(affliction.system?.level?.value) || null, dc: Number(affliction.system?.save?.value) || null }))
     };

@@ -19,9 +19,13 @@ export function readCounteract(html, { level = 0 } = {}) {
     const at = sentences.findIndex((sentence) => /\b(?:attempts? (?:a counteract check|to counteract)|to counteract ailments|the salve attempts to counteract)\b|\bcounteract modifier is \+\d+/i.test(sentence));
     if (at < 0) return null;
     const said = sentences.slice(at, at + 3).join(" ");
+    // (Or a spell on a creature nearby, Etheric Essence Disruptor's "attempt to counteract an active divine or occult spell within 30
+    // feet, with a +7 counteract modifier and a counteract rank of 2": a spell's Effect on a creature within that distance, its
+    // tradition the GM's to check.)
+    const near = /\battempt to counteract an active ((?:arcane|divine|occult|primal)(?: or (?:arcane|divine|occult|primal))?) spell within (\d+) feet\b/i.exec(said);
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)
-    if (!/\b(?:on you|affecting you|afflicting you|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
-    if (/\bcan't be counteracted\b|\bwithin \d+ feet\b|\bthe triggering spell\b/i.test(said)) return null;
+    if (!near && !/\b(?:on you|affecting you|afflicting you|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
+    if (/\bcan't be counteracted\b|\bthe triggering spell\b/i.test(said) || (!near && /\bwithin \d+ feet\b/i.test(said))) return null;
     const modifier = Number(
         /\+(\d+) counteract modifier\b/i.exec(said)?.[1]
         ?? /\bcounteract (?:check )?modifier (?:of |is )?\+(\d+)/i.exec(said)?.[1]
@@ -36,6 +40,7 @@ export function readCounteract(html, { level = 0 } = {}) {
     const stated = new RegExp(String.raw`\b${ORDINAL}-rank counteract\b|\bat ${ORDINAL}-rank\b|\bcounteract (?:rank|level) (?:of |is )?${ORDINAL}\b`, "i").exec(said);
     // (No rank stated: an item's is half its level, rounded up.)
     const rank = stated ? Number(stated[1] ?? stated[2] ?? stated[3]) : Math.max(1, Math.ceil(Number(level) / 2));
+    if (near) return { modifier, rank, conditions: [], traits: [], afflictions: [], spells: true, within: Number(near[2]), pick: "one", notes: [`Only an active ${near[1]} spell: tick one that is.`] };
     // (What it counteracts: in the sentences that say counteract — Fu Water names them in the one after "to counteract
     // ailments within yourself".)
     // (Bracers of Pain's "the effect causing your condition": the conditions its Trigger names, "You gain an effect that makes you

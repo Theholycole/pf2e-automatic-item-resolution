@@ -146,8 +146,10 @@ function compileOne(given, options = {}) {
     // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
     plan = directDamageOver(guardText(plan, plainText(item?.system?.description?.value)), directDamagePlan(plainText(item?.system?.description?.value), base, { item }));
     // (A counteract on the drinker, src/compiler/counteract.js: its own card; with another reading, beside its card.)
-    if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value })) {
-        plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
+    const counteracting = readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value });
+    if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && counteracting) {
+        // (A spell on a creature nearby: that creature, within that distance.)
+        plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: counteracting.within ? { target: "1 creature", range: counteracting.within, area: null } : { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
     }
     // (A save or a result no row holds — death, a push, a pull to its user — src/compiler/save-or.js.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = saveOrPlan(item?.system?.description?.value, base) ?? plan;
