@@ -8,11 +8,11 @@
   "results": {
    "resolves": 724,
    "builtin:cast-spell": 469,
-   "none": 693,
+   "none": 691,
    "partial": 129,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
-   "builtin:readied-bonus": 38,
+   "builtin:readied-bonus": 40,
    "note-only": 232,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
@@ -29,9 +29,9 @@
    "save": 391,
    "cast": 469,
    "item": 600,
-   "none": 878,
+   "none": 876,
    "focus": 45,
-   "fortune": 48,
+   "fortune": 50,
    "reroll": 25,
    "strike": 56,
    "counteract": 4,
@@ -50,11 +50,11 @@
    "results": {
     "resolves": 439,
     "builtin:cast-spell": 340,
-    "none": 460,
+    "none": 458,
     "partial": 70,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
-    "builtin:readied-bonus": 31,
+    "builtin:readied-bonus": 33,
     "note-only": 147,
     "builtin:reroll": 17,
     "builtin:zone": 8,
@@ -2890,9 +2890,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Hallajin Key",
@@ -12042,9 +12042,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Codebreaker's Parchment (Greater)",

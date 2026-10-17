@@ -20,6 +20,9 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^
 // +1 circumstance bonus against the triggering save".
 // (And "you draw strength from your adoring crowd and gain a +1 status bonus to the triggering check", Champion's Laurels.)
 const GAIN = /\b(?:you gain|you receive|giving you|you get|granting you|grants? you|gaining|(?<=\byou [a-z]+ [^.]*?)and gain) an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$| and (?:gain|you) )/i;
+// (Another creature's, the one its trigger is about: Resonant Guitar's "The target gains a +2 status bonus to AC against the
+// triggering attack" — bonus.recipient "target", the creature the presser targets.)
+const TARGET_GAIN = /\bThe target gains an? \+(\d+) (circumstance|status|item) bonus (to|against|on) ([^.]+?)(?=\.|$)/;
 const RESIST_AND_BONUS = /\b(?:granting you|you gain) resistance (\d+) (?:against|to) (acid|cold|electricity|fire|sonic|force|mental|poison|spirit|vitality|void) and an? \+(\d+) (circumstance|status|item) bonus (?:on|to) (?:your )?([^;.]+?) against the [\w ]*?effect\b/i;
 // (Its type first: Pyrefeather Cloak's "You gain fire resistance 5 and a +1 circumstance bonus to saving throws against the triggering
 // effect" — the same groups.)
@@ -93,7 +96,8 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
         if (selectors.length) return { modifiers: selectors.map((selector) => ({ selector, type: match[4].toLowerCase(), value: Number(match[3]) })), resistance: { type: match[2].toLowerCase(), value: Number(match[1]) }, duration: durationOf(sentence), spend: [], notes: [`Only against what triggered it: ${sentence}`] };
     }
     for (const [index, sentence] of sentences.entries()) {
-        const match = GAIN.exec(sentence);
+        const other = triggered ? TARGET_GAIN.exec(sentence) : null;
+        const match = GAIN.exec(sentence) ?? other;
         if (!match) continue;
         // (Its user's own: not an ally's, an area's, nor under a condition of its own.)
         // ("When activated, …", "When you activate the coin, you gain …": the use itself, not a condition.)
@@ -128,7 +132,7 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
             // (Its other rule sentences, not its flavor nor its Usage, Activate or Trigger lines.)
             ...sentences.filter((_, at) => at !== index).filter((other) => !/^This is a fortune effect\.?$/i.test(other) && !/^(?:Usage|Activate|Trigger|Prerequisites?|Requirements?)\b/.test(other) && RULE_SENTENCE.test(other))
         ];
-        return { modifiers, resistance: resist ? { type: "all-damage", value: Number(resist[1]) } : null, duration: durationOf(sentence), spend, notes };
+        return { modifiers, resistance: resist ? { type: "all-damage", value: Number(resist[1]) } : null, duration: durationOf(sentence), spend, notes, ...(other && !GAIN.exec(sentence) ? { recipient: "target" } : {}) };
     }
     // (Only an item used one way: Toadskin Salve's two reactions, Thrice-Fried Mudwings' meal and its reaction aren't one card.)
     return (plain.match(/\bActivate\b/g) ?? []).length <= 1 ? readResistMoment(sentences, triggered) : null;
@@ -141,6 +145,8 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
 // with a note that it's only that hit's. Not a lasting one ("that lasts for 10 minutes"), nor another's ("grants the target").
 const DAMAGE_TYPES = ["acid", "bludgeoning", "cold", "electricity", "fire", "force", "mental", "piercing", "poison", "slashing", "sonic", "spirit", "vitality", "void", "holy", "unholy", "physical"];
 const TYPE_WORDS = String.raw`(?:${DAMAGE_TYPES.join("|")})`;
+// (And another's: Hallajin Key's "Lumna grants the target resistance 10 to the triggering damage" — recipient "target".)
+const TARGET_RESIST = /\bgrants? the target resistance (\d+) to the triggering damage\b/i;
 const RESIST_MOMENT = new RegExp(String.raw`\b(?:you gain|granting you|gaining) resistance (\d+) (?:(?:to|against) (?:(${TYPE_WORDS}(?:(?:,|, and| and| or|, or) ${TYPE_WORDS})*) )?damage (?:against|for|from) (?:the triggering|that) (?:attack|Strike|hit|damage)(?: only)?|to the triggering damage(?: type)?|against that (${TYPE_WORDS}) damage)\b`, "i");
 // ("You gain 20 resistance to all damage against the triggering damage", Scapular of Shields; "you reduce the damage taken by
 // 10", Mantle of Amazing Health; "you reduce the damage from the triggering critical hit by 10", Indomitable Keepsake.)
@@ -152,7 +158,8 @@ const TYPE_FIRST = new RegExp(String.raw`\b(?:you gain|granting you|gaining) (${
 function readResistMoment(sentences, triggered) {
     if (!triggered) return null;
     for (const [index, sentence] of sentences.entries()) {
-        const found = RESIST_MOMENT.exec(sentence);
+        const target = TARGET_RESIST.exec(sentence);
+        const found = RESIST_MOMENT.exec(sentence) ?? (target ? [target[0], target[1], null, null] : null);
         const first = found ? null : RESIST_NUMBER_FIRST.exec(sentence);
         const reduced = found || first ? null : REDUCE_DAMAGE.exec(sentence);
         // (Crown of the Fire Eater's "Increase your fire resistance from the crown from 5 to 15": that much for the triggering damage —
@@ -174,7 +181,7 @@ function readResistMoment(sentences, triggered) {
         const type = !words.length ? "all-damage" : words.length === 1 ? words[0] : words;
         // (Its other rule sentences, not its flavor: "This spiky glob of magnetic liquid attaches …".)
         const notes = [`Only against what triggered it: ${sentence}`, ...sentences.filter((_, at) => at !== index).filter((other) => !/^(?:Activate|Trigger|Prerequisites?|Requirements?)\b/.test(other) && /\b(?:checks?|saves?|bonus|penalty|damage|conditions?|Strikes?|actions?|resistance|Speeds?|Hit Points)\b/i.test(other))];
-        return { modifiers: [], resistance: { type, value: Number(match[1]) }, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], notes };
+        return { modifiers: [], resistance: { type, value: Number(match[1]) }, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], notes, ...(target && !RESIST_MOMENT.test(sentence) ? { recipient: "target" } : {}) };
     }
     return null;
 }
@@ -223,7 +230,10 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     if (!read) return null;
     if (degree) read.degree = degree;
     const { notes, ...bonus } = read;
-    return { ...base, builtin: "readied-bonus", automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: "the user", range: null, area: null }, trigger: { event: "use" }, bonus, notes, ...(notes.length ? { partial: true } : {}) };
+    // (Another creature's: the one the presser targets, within the distance its trigger names.)
+    const within = /\bwithin (\d+) feet\b/i.exec(trigger ?? triggerOf(String(text ?? "")) ?? "")?.[1];
+    const targeting = bonus.recipient === "target" ? { target: "1 creature", range: within ? `${within} feet` : null, area: null } : { target: "the user", range: null, area: null };
+    return { ...base, builtin: "readied-bonus", automation: { level: notes.length ? "guided" : "automatic" }, targeting, trigger: { event: "use" }, bonus, notes, ...(notes.length ? { partial: true } : {}) };
 }
 
 // The plan to keep: the bonus over nothing, a note alone or the GM's fallback.

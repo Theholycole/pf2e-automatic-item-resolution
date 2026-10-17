@@ -4,7 +4,7 @@
 // GM's client, a check message whose domains hold the roll an Effect is for removes it (a bonus for one roll; a RollTwice
 // should PF2e's "remove expired effects" setting be off). A bonus for a time ends with PF2e's own duration.
 
-import { MODULE_KEY, createFortuneCard, fortuneCardHTML, fortuneEffectSource, readiedWords } from "../src/live/fortune-card.js";
+import { MODULE_KEY, createFortuneCard, fortuneCardHTML, fortuneEffectSource, isForTarget, readiedWords } from "../src/live/fortune-card.js";
 import { FLAG, MODULE_ID, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
 
 export async function postFortuneCard({ message, plan, used, actor, token }) {
@@ -12,16 +12,23 @@ export async function postFortuneCard({ message, plan, used, actor, token }) {
     return ChatMessage.create({ content: fortuneCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
-export async function applyFortuneCard(message) {
+// choices: { targets } (token uuids), for a bonus another creature gets (Resonant Guitar's): each of them, not the user.
+export async function applyFortuneCard(message, { targets = [] } = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "fortune" || state.status !== "open") return null;
-    const actor = await fromUuid(state.user.actorUuid).catch(() => null);
-    if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
-    // (The same item's earlier one, unused: replaced.)
-    const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.item?.name === state.item.name);
-    if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
-    await actor.createEmbeddedDocuments("Item", [fortuneEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID })]);
-    const next = { ...state, status: "applied", results: [`${state.user.name}: ${readiedWords(state.plan)}.`] };
+    const forTarget = isForTarget(state.plan);
+    if (forTarget && !targets.length) throw new Error("Target the creature first.");
+    const creatures = forTarget
+        ? (await Promise.all(targets.map(async (uuid) => { const token = await fromUuid(uuid).catch(() => null); return token?.actor ? { actor: token.actor, name: token.name ?? token.actor.name } : null; }))).filter(Boolean)
+        : [{ actor: await fromUuid(state.user.actorUuid).catch(() => null), name: state.user.name }];
+    if (!creatures.length || !creatures[0].actor) throw new Error(`${forTarget ? "That creature" : state.user.name} isn't there any more.`);
+    for (const { actor } of creatures) {
+        // (The same item's earlier one, unused: replaced.)
+        const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.item?.name === state.item.name);
+        if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
+        await actor.createEmbeddedDocuments("Item", [fortuneEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID })]);
+    }
+    const next = { ...state, status: "applied", results: creatures.map(({ name }) => `${name}: ${readiedWords(state.plan)}.`) };
     return message.update({ content: fortuneCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 

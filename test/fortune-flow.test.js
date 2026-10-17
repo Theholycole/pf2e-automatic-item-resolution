@@ -142,11 +142,13 @@ test("resistance against the hit that triggered it: PF2e's Resistance for the tu
     // "You gain resistance 3 against that spirit damage" (Third Blessing).
     assert.deepEqual(compileActivations(source("Three-Pillared Yang Na")).find((entry) => entry.plan?.builtin === "readied-bonus").plan.bonus.resistance, { type: "spirit", value: 3 });
     // Not one: an item used two ways (Toadskin Salve's two reactions, Thrice-Fried Mudwings' meal), a lasting one (Adaptive Aegis's
-    // "that lasts for 10 minutes"), another creature's (Hallajin Key's "grants the target resistance 10").
+    // "that lasts for 10 minutes"), and another creature's is for the creature targeted (Hallajin Key's "grants the target resistance 10").
     assert.notEqual(compileItem(source("Toadskin Salve"))?.builtin, "readied-bonus");
     assert.notEqual(compileItem(source("Thrice-Fried Mudwings"))?.builtin, "readied-bonus");
     assert.equal(readReadiedBonus("Trigger You would take mental, poison, or spirit damage Effect You gain resistance 5 to the triggering damage type that lasts for 10 minutes."), null);
-    assert.equal(readReadiedBonus("Trigger A creature within 60 feet of the key takes electricity or mental damage Effect Lumna grants the target resistance 10 to the triggering damage."), null);
+    // (Another creature's, Hallajin Key's: for the creature the presser targets — bonus.recipient "target".)
+    const lumna = readReadiedBonus("Trigger A creature within 60 feet of the key takes electricity or mental damage Effect Lumna grants the target resistance 10 to the triggering damage.");
+    assert.deepEqual([lumna.recipient, lumna.resistance], ["target", { type: ["electricity", "mental"], value: 10 }]);
     // Ferrofluid Urchin: "Trigger You take physical damage … You gain resistance 3 to the triggering damage" — Apply gives the Effect.
     const item = foundry.giveItem(hero, source("Ferrofluid Urchin (Lesser)"));
     const data = item.toObject();
@@ -235,4 +237,28 @@ test("moment bonuses in more words: Pyrefeather Cloak's type-first resistance, C
     const crown = plan("Crown of the Fire Eater (Greater)");
     assert.deepEqual(crown.bonus.resistance, { type: "fire", value: 25 });
     assert.ok(crown.notes.some((note) => /regain a number of Hit Points/.test(note)));
+});
+
+test("a bonus for another creature (Resonant Guitar's Chord of Protection, +2 status to AC against the triggering attack): Apply gives the creature targeted the Effect, not the user; no target, refused", async () => {
+    const bard = foundry.makeActor({ id: "fortune-bard", name: "Bard", owners: ["player"] });
+    const ally = foundry.makeActor({ id: "fortune-ally", name: "Guarded Ally" });
+    foundry.place(bard, 0, 16100);
+    foundry.place(ally, 100, 16100);
+    const guitar = foundry.giveItem(bard, source("Resonant Guitar"));
+    const plan = compileActivations(source("Resonant Guitar"))[1].plan;
+    assert.deepEqual([plan.builtin, plan.bonus.recipient, plan.targeting.range], ["readied-bonus", "target", "30 feet"]);
+    const before = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: guitar.uuid, activation: 1, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(before).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "fortune");
+    assert.match(card.content, /For the creature targeted \(within 30 feet\): \+2 status bonus to AC/);
+    const errors = foundry.notifications.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [], userId: "player" });
+    await settle();
+    assert.ok(foundry.notifications.slice(errors).some((text) => /Target the creature first/.test(text)));
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ally.token.document.uuid], userId: "player" });
+    await settle();
+    const given = ally.itemTypes.effect.find((effect) => effect.flags?.[MODULE_ID]?.rollTwice);
+    assert.deepEqual(given?.system.rules.map((rule) => [rule.key, rule.selector, rule.value]), [["FlatModifier", "ac", 2]]);
+    assert.equal(bard.itemTypes.effect.some((effect) => effect.flags?.[MODULE_ID]?.rollTwice), false, "not the user's");
 });
