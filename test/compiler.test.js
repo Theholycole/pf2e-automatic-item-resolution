@@ -572,6 +572,9 @@ test("activations: a choice of jumps (Blast Boots), temporary Hit Points from th
     const vision = compileActivations(item("Meloth's Lifedrinker (Level 7)"))[1].plan;
     assert.deepEqual([vision.resolution.check.statistic, vision.resolution.check.basic, vision.resolution.check.against], ["will", true, { dc: "owner", statistic: "class-spell" }]);
     assert.match(vision.notes.at(-1), /^If the target is reduced to 0 HP by this effect/);
+    const [holy] = compileActivations(item("Holy"));
+    assert.deepEqual(holy.plan.item.levelTemp, [{ multiplier: 2, heal: true, duration: null }]);
+    assert.equal(levelTempText(holy.plan.item.levelTemp[0]), "Hit Points regained equal to twice the level of the creature targeted");
     const [wasps] = compileActivations(item("Wasp Guard"));
     assert.deepEqual(wasps.plan.resolution.sharedDamage.components.map(({ formula, type, category }) => [formula, type, category]), [["1d8", "poison", "persistent"]]);
 });

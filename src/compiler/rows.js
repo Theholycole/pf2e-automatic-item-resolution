@@ -177,11 +177,17 @@ function tempHitPoints(sentences, duration, used = new Set()) {
 
 // Temporary Hit Points from another creature's level: Bloodthirsty's "You gain a number of temporary Hit Points equal to twice the
 // creature's level" (the one reduced to 0 Hit Points) → [{ multiplier, duration }], the item card's: the creature its presser targets.
-const TIMES = { half: 0.5, twice: 2, "three times": 3, "four times": 4 };
+// (Or Hit Points regained, Holy's "You regain HP equal to double the unholy creature's level" → [{ multiplier, heal: true }].)
+const TIMES = { half: 0.5, twice: 2, double: 2, "three times": 3, "four times": 4 };
 function levelTempOf(sentences, duration, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
         if (/^\s*(?:If|When|Whenever|Each time)\b/i.test(sentence)) continue;
         const match = /\byou gain (?:a number of )?temporary Hit Points equal to (?:(half|twice|three times|four times) )?the (?:triggering |target |reduced )?(?:creature|foe|enemy|target)'s level\b/i.exec(sentence);
+        const regain = match ? null : /\byou regain (?:HP|Hit Points) equal to (?:(half|twice|double|three times|four times) )?the (?:triggering |target |reduced |[a-z]+ )?(?:creature|foe|enemy|target)'s level\b/i.exec(sentence);
+        if (regain) {
+            used.add(index);
+            return [{ multiplier: TIMES[regain[1]?.toLowerCase()] ?? 1, heal: true, duration: null }];
+        }
         if (!match) continue;
         used.add(index);
         // (Their time in a sentence of their own after: "These Hit Points remain for 1 minute".)

@@ -465,8 +465,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const amount = Number.isFinite(level) ? Math.floor(entry.multiplier * level) : 0;
         const ability = game.modules.get(ABILITY_ID)?.api?.live;
         if (amount > 0 && ability?.applyChange && target.actor) {
-            const said = await ability.applyChange({ op: "tempHp", target: DRINKER_ID, amount, duration: entry.duration ?? null }, abilityState(state));
-            lines.push(`${said ?? `${recipient.name}: ${amount} temporary Hit Points`} (from ${others[0].name}, level ${level})`);
+            // (Or Hit Points regained: Holy's Holy Healing.)
+            const said = await ability.applyChange(entry.heal ? { op: "heal", target: DRINKER_ID, amount } : { op: "tempHp", target: DRINKER_ID, amount, duration: entry.duration ?? null }, abilityState(state));
+            lines.push(`${said ?? `${recipient.name}: ${amount} ${entry.heal ? "Hit Points regained" : "temporary Hit Points"}`} (from ${others[0].name}, level ${level})`);
         } else lines.push(`${recipient.name}: ${levelTempText(entry)} — ${others[0] ? `${others[0].name}'s level gives none` : "no creature targeted"}; apply it by hand.`);
     }
     // (A light its user sheds: Sprite Apple's — an Effect with PF2e's TokenLight rule.)

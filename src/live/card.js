@@ -277,6 +277,7 @@ export function senseText(sense) {
 // targeted, for 1 minute".
 const TIMES_WORDS = { 0.5: "half", 2: "twice", 3: "three times", 4: "four times" };
 export function levelTempText(entry) {
+    if (entry.heal) return `Hit Points regained equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted`;
     return `Temporary Hit Points equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted${entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
 }
 

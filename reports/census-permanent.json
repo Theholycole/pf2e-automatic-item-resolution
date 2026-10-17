@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 730,
+   "resolves": 731,
    "builtin:cast-spell": 469,
-   "none": 675,
+   "none": 674,
    "partial": 141,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
@@ -28,8 +28,8 @@
   "live": {
    "save": 397,
    "cast": 469,
-   "item": 592,
-   "none": 860,
+   "item": 593,
+   "none": 859,
    "focus": 45,
    "fortune": 50,
    "reroll": 25,
@@ -48,9 +48,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 444,
+    "resolves": 445,
     "builtin:cast-spell": 340,
-    "none": 451,
+    "none": 450,
     "partial": 71,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
@@ -6227,9 +6227,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "check",
+   "live": "item",
    "rune": true
   },
   {

@@ -3232,6 +3232,21 @@ export const cases = {
         const resolution = check.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
         assert(resolution.statistic === "perception" && resolution.against?.value === 38, `Perception against DC 38 (${JSON.stringify(resolution)})`);
         return { check: check.id };
+    },
+
+    // A holy longsword's Holy Healing: Hit Points regained of twice the targeted unholy creature's level (level 3: 6).
+    async holyHealing(scene) {
+        const { actor: knight, token: knightToken } = await creature(scene, "Holy Knight", { x: 18, y: 12, hp: 10 });
+        const { token: fiend } = await creature(scene, "Unholy Foe", { x: 19, y: 12, alliance: "opposition", level: 3 });
+        const sword = await give(knight, "Longsword");
+        await sword.update({ "system.runes.potency": 1, "system.runes.property": ["holy"] });
+        await knightToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(sword.uuid, "rune:holy:0");
+        const card = await messageAfter(since, itemCard("item"), { what: "the rune's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, targets: [fiend.uuid] });
+        await until(() => knight.system.attributes.hp.value === 16, `healed by 6 (${knight.system.attributes.hp.value})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
