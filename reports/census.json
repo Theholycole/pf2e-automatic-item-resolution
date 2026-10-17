@@ -14,10 +14,10 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 217,
+   "none": 216,
    "resolves": 750,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 102,
+   "builtin:zone": 103,
    "builtin:item-action": 15,
    "partial": 97,
    "note-only": 162,
@@ -164,8 +164,8 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 11,
-    "builtin:zone": 69,
+    "none": 10,
+    "builtin:zone": 70,
     "note-only": 1,
     "builtin:ways": 1
    },
@@ -313,7 +313,7 @@
    "count": 277,
    "resolves": 177,
    "gaps": 0,
-   "none": 15
+   "none": 14
   },
   "linked-effect": {
    "count": 393,
@@ -385,10 +385,10 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 282,
+   "none": 281,
    "item": 630,
    "fortune": 23,
-   "zone": 102,
+   "zone": 103,
    "expose": 89,
    "later": 81,
    "action": 15,
@@ -453,8 +453,8 @@
     "item": 1
    },
    "snare": {
-    "none": 11,
-    "zone": 69,
+    "none": 10,
+    "zone": 70,
     "item": 1,
     "ways": 1
    },
@@ -495,7 +495,7 @@
    }
   },
   "noCard": {
-   "no-plan": 217,
+   "no-plan": 216,
    "triggered": 12,
    "gm": 52,
    "other": 1
@@ -1389,7 +1389,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Sneaky Key",

@@ -235,6 +235,10 @@ test("Colorful Coating: the square its user coats within reach for 1 minute — 
     const orange = compileItem(source("Colorful Coating (Orange)")).zone;
     assert.deepEqual([orange.terrain, orange.hazard, orange.notes.includes("A creature can take this acid damage only once per round.")], [[], { formulas: ["1d4[acid]"] }, true]);
     assert.notEqual(compileItem(source("Colorful Coating (Blue)")).builtin, "zone");
+    // Boom Snare: no save, its 1d4 persistent fire on the creature that enters (the adjacent creatures' a note), once.
+    const boom = compileItem(source("Boom Snare"));
+    assert.deepEqual([boom.builtin, boom.zone.once, boom.zone.saves, boom.zone.damage], ["zone", true, [], [{ when: "enter", formulas: ["1d4[persistent,fire]"] }]]);
+    assert.match(boom.zone.notes.join(" "), /adjacent to that square takes the same damage/);
     const tree = compileItem(source("Grasping Tree"));
     assert.deepEqual([tree.builtin, tree.zone.once, tree.zone.saves[0].plan.resolution.check.against.value, tree.zone.saves[0].plan.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["zone", true, 19, ["immobilized"]]);
 });

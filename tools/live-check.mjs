@@ -3657,6 +3657,34 @@ export const cases = {
         while (Date.now() < end && readied()) await wait(250);
         assert(!readied(), "spent by the damage roll");
         return { outcome, formula };
+    },
+
+    // Boom Snare: placed (the placement click stood in for), the creature entering its square takes its 1d4 persistent fire (no save);
+    // then it's spent.
+    async boomSnare(scene) {
+        const { token: setterToken, actor: setter } = await creature(scene, "Boom Setter", { type: "character", x: 9, y: 14 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Boom Walker", { x: 12, y: 14, alliance: "opposition", hp: 200 });
+        const snare = await give(setter, "Boom Snare");
+        // (The tokens drawn first: its area needs its setter's token.)
+        await until(() => setterToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await setterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const boom = () => scene.regions.find((entry) => entry.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Boom Snare/.test(entry.name));
+        try {
+            await snare.consume();
+            await until(() => boom(), "the snare's Region", { timeout: 8000 });
+            const shape = boom().shapes[0];
+            const since = Date.now();
+            await foeToken.update({ x: shape.x ?? shape.points?.[0], y: shape.y ?? shape.points?.[1] });
+            const card = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check?.roll !== "save", { what: "the snare's damage card", timeout: 10000 });
+            await applyAbilityCard(card);
+            await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "persistent-damage"), "persistent fire on the walker", { timeout: 10000 });
+            return { card: card.id };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await boom()?.delete().catch(() => null);
+        }
     }
 };
 

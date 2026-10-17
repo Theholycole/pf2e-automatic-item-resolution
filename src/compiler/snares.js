@@ -7,8 +7,35 @@ const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
 
 export const isSnare = (item) => item?.type === "consumable" && (item.system?.category === "snare" || (item.system?.traits?.value ?? []).includes("snare") || /\bsnare\b/i.test(item.name ?? ""));
 
-// The snare's save as the zone's: the ability compiler's plan, on the creature that enters.
+// A snare's outright damage, no save: Boom Snare's "The target and all creatures in adjacent squares take @Damage[1d4[persistent,fire]]
+// damage". The zone's damage on the creature that enters; the adjacent creatures' a note.
+const OUTRIGHT = /\bThe target(?: and all creatures in adjacent squares)? takes? (@Damage\[((?:[^[\]]|\[[^\]]*\])*)\](?:\{[^}]*\})?) damage\./i;
+function damageSnare(item) {
+    const text = String(item?.system?.description?.value ?? "");
+    const outright = OUTRIGHT.exec(text);
+    if (!outright || /@Check\[/.test(text)) return null;
+    const adjacent = /\band all creatures in adjacent squares\b/i.test(outright[0]);
+    return {
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "square", value: 5 }, centre: "placed", range: 5, lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null,
+            saves: [],
+            damage: [{ when: "enter", formulas: [outright[2]] }],
+            effect: null,
+            modifiers: [],
+            notes: ["The first creature to enter the square sets it off; then it's spent.", ...(adjacent ? [`Each creature adjacent to that square takes the same damage (roll it for them by hand).`] : [])],
+            once: true
+        }
+    };
+}
+
+// The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage.)
 export function snareZone(item, read) {
+    if (isSnare(item) && read?.resolution?.kind !== "save") {
+        const damage = damageSnare(item);
+        if (damage) return { ...damage, source: read?.source ?? { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type } };
+    }
     if (!isSnare(item) || read?.resolution?.kind !== "save" || read.resolution.check?.against?.dc !== "fixed") return null;
     if (!ROW_KEYS.some((degree) => read.resolution.outcomes?.[degree])) return null;
     const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null } };
