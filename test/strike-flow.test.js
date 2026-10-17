@@ -403,3 +403,20 @@ test("Big Rock Bullet: its damage in place of the sling's — the hit's on the a
     await ready();
     assert.deepEqual(await posted("criticalFailure"), []);
 });
+
+test("Drake Rifles' Drake Shot: a Strike with the rifle itself, its splash of its own type on the damage roll (a failure's splash a note), and its type's rider on a hit; a weapon's rider-only Strike is its own (Growth Gun)", () => {
+    const shot = (name) => compileActivations(source(name))[0].plan;
+    const hit = (plan) => plan.resolution.outcomes.success;
+    for (const [type, effects] of [["Acid", [["sickened", 1]]], ["Electricity", [["off-guard", null], ["dazzled", null]]], ["Poison", [["enfeebled", 1], ["clumsy", 1]]], ["Fire", [["prone", null]]]]) {
+        const plan = shot(`Drake Rifle (${type})`);
+        assert.equal(routeOf(plan), "strike", type);
+        assert.deepEqual([plan.strike.own, plan.strike.range, plan.strike.splash], [true, "ranged", { value: 1, damageType: type.toLowerCase() }], type);
+        assert.deepEqual(hit(plan).effects.map((effect) => [effect.slug, effect.value]), effects, type);
+        assert.ok(plan.strike.notes.includes("On a failure, the target and creatures within 5 feet of it still take that splash damage."), type);
+    }
+    assert.deepEqual(hit(shot("Drake Rifle (Fire)")).forcedMovement, { kind: "push", distance: 10 });
+    assert.deepEqual(hit(shot("Drake Rifle (Cold)")).modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.duration.value]), [["all-speeds", -10, "status", 1]]);
+    const growth = shot("Growth Gun");
+    assert.deepEqual([growth.strike.own, hit(growth).effects.map((effect) => effect.slug)], [true, ["slowed"]]);
+    assert.equal(riderFor(growth, { ranged: true, outcome: "success", options: ["item:ranged", "item:id:other"], weaponId: "gun" }), null, "another weapon's Strike doesn't carry it");
+});

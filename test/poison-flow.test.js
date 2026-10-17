@@ -202,6 +202,26 @@ test("a snare goes to the ability module's zones (startZone, once); without them
 });
 
 
+test("Spider Gun's Web Shot: a square placed within 30 feet for 1 minute, its Reflex save on entering (Immobilized on a critical failure); Activate starts the ability module's zone", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [web] = compileActivations(source("Spider Gun (Greater)"));
+    const zone = web.plan.zone;
+    const save = zone.saves[0].plan.resolution;
+    assert.deepEqual([web.plan.builtin, zone.area, zone.centre, zone.range, zone.lasts.value, zone.lasts.unit, zone.once ?? false, zone.saves[0].when], ["zone", { type: "square", value: 5 }, "placed", 30, 1, "minutes", false, ["enter"]]);
+    assert.deepEqual([save.check.statistic, save.check.against.value, save.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.duration?.value, effect.duration?.unit]), save.outcomes.failure.effects], ["reflex", 25, [["immobilized", 1, "rounds"]], []]);
+    assert.ok(zone.notes.includes("It can attempt an Athletics check against DC 25 instead of the Reflex save."));
+    const zones = [];
+    foundry.ability.live.startZone = async (options) => zones.push(options);
+    try {
+        const gun = foundry.giveItem(rogue, source("Spider Gun (Greater)"));
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: gun.uuid, activation: 0, userId: "player" });
+        await settle();
+        assert.deepEqual([zones.length, zones[0]?.plan?.zone?.range], [1, 30]);
+    } finally {
+        delete foundry.ability.live.startZone;
+    }
+});
+
 test("the drinker's own save rolls for its user, no targets; a save set off by attackers stays open for the item's time", async () => {
     const { isOwnSave, ATTACKER } = await import("../src/live/poison-card.js");
     const { compileItem } = await import("../src/compiler/index.js");

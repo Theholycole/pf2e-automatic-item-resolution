@@ -6,19 +6,19 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 729,
+   "resolves": 728,
    "builtin:cast-spell": 469,
-   "none": 687,
-   "partial": 129,
+   "none": 685,
+   "partial": 134,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 40,
-   "note-only": 229,
+   "note-only": 224,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
    "builtin:modes": 32,
-   "builtin:zone": 12,
+   "builtin:zone": 15,
    "builtin:item-action": 22,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
@@ -28,15 +28,15 @@
   "live": {
    "save": 393,
    "cast": 469,
-   "item": 597,
-   "none": 872,
+   "item": 591,
+   "none": 870,
    "focus": 45,
    "fortune": 50,
    "reroll": 25,
-   "strike": 59,
+   "strike": 64,
    "counteract": 4,
    "toggle": 32,
-   "zone": 12,
+   "zone": 15,
    "action": 22,
    "spellstrike": 9,
    "later": 4
@@ -68,14 +68,15 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 153,
-    "none": 114,
-    "partial": 31,
-    "note-only": 32,
+    "resolves": 152,
+    "none": 112,
+    "partial": 36,
+    "note-only": 27,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 12,
     "builtin:item-action": 9,
+    "builtin:zone": 3,
     "builtin:no-effect": 12,
     "builtin:readied-bonus": 5,
     "builtin:roll-twice": 1,
@@ -2814,9 +2815,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Wilderness Weave",
@@ -3511,9 +3512,9 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Wardrobe Stone (Moderate)",
@@ -6723,9 +6724,9 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Elemental Ammunition (Lesser, Poison)",
@@ -7218,9 +7219,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Mind's Light Circlet",
@@ -7769,9 +7770,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Rending Gauntlets (Greater)",
@@ -9949,9 +9950,9 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Squire's Tabard",
@@ -20206,9 +20207,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Cane of the Maelstrom",
@@ -28328,9 +28329,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Faith Tattoo (Greater)",

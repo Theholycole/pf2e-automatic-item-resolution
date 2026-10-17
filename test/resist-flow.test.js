@@ -120,9 +120,9 @@ test("resistance to a type it makes its user choose: the card's picker, the type
     assert.deepEqual(potion.item.resist.map((entry) => [entry.type, entry.choose, entry.value, entry.duration.value]), [[null, ["acid", "cold", "electricity", "fire", "sonic"], 5, 1]]);
     assert.equal(potion.partial, undefined, "the list's own sentence is read with it");
     // "attuned to one of four energy types (acid, cold, electricity, or fire) … resistance 5 to the attuned energy type and reduces the DC …":
-    // the DC on the note; "applied to up to 5 willing creatures", the card's drinker choice.
+    // the DC on the note; "applied to up to 5 willing creatures", each one targeted.
     const ointment = compileItem(source("Energy Ointment (Lesser)"));
-    assert.deepEqual([ointment.item.resist[0].choose, ointment.item.recipient, ointment.partial], [["acid", "cold", "electricity", "fire"], "drinker", true]);
+    assert.deepEqual([ointment.item.resist[0].choose, ointment.item.recipient, ointment.targeting.target, ointment.partial], [["acid", "cold", "electricity", "fire"], "targets", "up to 5 creatures", true]);
     // "Choose acid, cold, electricity, or fire. The robe grants resistance 15 to the chosen damage type": until its next use.
     const [robe] = compileActivations(source("Chromatic Robe"));
     assert.deepEqual([robe.plan.item.resist[0].value, robe.plan.item.resist[0].duration], [15, null]);

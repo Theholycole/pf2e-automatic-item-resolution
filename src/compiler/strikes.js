@@ -258,7 +258,9 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
-        strike: { range: strike.range, save: save ? save.plan : null, ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}) },
+        // (A weapon's own Strike, riders alone or not: Gloaming Arc's "Attempt a melee Strike with the gloaming arc", Growth Gun's "Make a
+        // ranged Strike" — only a Strike with it carries them.)
+        strike: { range: strike.range, save: save ? save.plan : null, ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}) },
         ...((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length ? { partial: true } : {})
     };
 }

@@ -153,6 +153,19 @@ export function withItemData(html, item) {
     text = text.replace(/\byou gain an? \+(\d+) (item|status|circumstance) bonus to (\w+) checks you attempt during the (?:@UUID\[[^\]]*\]\{)?([A-Z][\w ]+?)\}? exploration activity\./g, (whole, value, type, skill, activity) => `you gain a +${value} ${type} bonus to ${skill} checks. The bonus is only for ${skill} checks during the ${activity} exploration activity.`);
     text = text.replace(/\bYou gain an? \+(\d+) (item|status|circumstance) bonus to your (\w+) DC (to avoid others seeing through your disguise)(, and [^.]*)?\./g, (whole, value, type, skill, scope, rest) => `You gain a +${value} ${type} bonus to your ${skill} DC. The bonus is only ${scope}${rest ?? ""}.`);
     text = text.replace(/\bCreatures wearing armor that has been maintained by this kit gain an? \+(\d+) (item|status|circumstance) bonus on (\w+) checks to ((?:@UUID\[[^\]]*\]\{)?[A-Z][\w ]+?\}?) on ([^.]+)\./g, (whole, value, type, skill, action, whom) => `You gain a +${value} ${type} bonus to ${skill} checks to ${action}. The bonus is only on ${whom}, for whoever wears the armor maintained by this kit.`);
+    // (A drake rifle's Drake Shot: "As long as the Strike isn't a critical failure, the drake rifle deals @Damage[(1 *
+    // @item.system.damage.dice[splash])[@item.system.damage.damageType]]{1 splash damage per weapon damage die} to the target and
+    // creatures within 5 feet of the target" — its splash on the Strike's damage roll, a failure's a note — and "On a hit, the drake
+    // rifle provides one of the following additional effects based on its damage type: <li>Fire A massive explosion knocks the target
+    // back. The target is pushed 10 feet away from you, and if it's on the ground, it falls Prone." — its own type's rider, as the
+    // Strike reader takes it.)
+    text = text.replace(/\bAs long as the Strike isn't a critical failure, the [\w' -]+? deals @Damage\[\(1 \* @item\.system\.damage\.dice\[splash\]\)\[@item\.system\.damage\.damageType\]\](?:\{[^}]*\})? to the target and creatures within (?:@Template\[[^\]]*\]\{)?(\d+) feet\}? of the target\.(?:\s*This splash damage is of the same type as its normal damage\.)?/g, (whole, feet) => {
+        // (Its source data counts the striking rune apart; PF2e's prepared data has it in the dice already.)
+        const dice = Math.max(Number(item?.system?.damage?.dice) || 1, 1 + (Number(item?.system?.runes?.striking) || 0));
+        const type = String(item?.system?.damage?.damageType ?? "").toLowerCase();
+        return type ? `The Strike deals ${dice} ${type} splash damage for this Strike. On a failure, the target and creatures within ${feet} feet of it still take that splash damage.` : whole;
+    });
+    text = text.replace(/<p>On a hit, the [\w' -]+? provides one of the following additional effects based on its damage type:<\/p>\s*<ul>\s*<li>\s*<strong>\w+<\/strong>\s*[^.<]*\.\s*([\s\S]*?)<\/li>\s*<\/ul>/g, (whole, rider) => `<p>On a hit, ${rider.replace(/\s*\(@UUID\[[^\]]*\]\{Effect: [^}]+\}\)/g, "").replace(/, and if it's on the ground, it falls (@UUID\[[^\]]*\]\{Prone\})\./, " and falls $1. A target that isn't on the ground doesn't fall Prone.")}</p>`);
     // (An attack with a talisman's ranged weapon, Alchemist's Damper's "Trigger You attack with the affixed firearm": its Strike, as the
     // Strike reader takes it.)
     text = text.replace(/\bYou attack with the affixed (firearm|crossbow|bow)\b/g, "You attempt a ranged Strike with the affixed $1");

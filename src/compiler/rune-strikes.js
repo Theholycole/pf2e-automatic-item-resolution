@@ -10,9 +10,14 @@
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { etchedKeys } from "./runes.js";
+import { ownerDCs } from "./item-data.js";
 
 // The sentence's critical-hit opening, and who it's for.
-const OPENING = /^(?:(?:In addition, )?On a critical hit(?: with (?:this|the) weapon)?|When you critically hit (?:a target |a creature )?(?:with (?:this|the|a|an) [\w -]*?weapon(?: with this rune)?)?|If you critically hit a target with an? [\w -]*?weapon)\s*,?\s*/i;
+// (A weapon's own, its name or kind in it: Mindlance's "When you critically succeed at an attack roll with a mindlance", Deathseeker's
+// "When you critically succeed at a Strike made with a deathseeker", Golden Blade of Mzali's "When you critically hit a creature
+// with the spear"; Fearcutter's "… a creature with the unholy trait with Fearcutter" only against that trait, below.)
+const OPENING = /^(?:(?:In addition, )?On a critical hit(?: with (?:this|the) weapon| with (?:a|an|the) [\w' -]+?)?|When you critically hit (?:a target |a creature )?(?:with (?:this|the|a|an) [\w -]*?weapon(?: with this rune)?|with (?:this|the|a|an) [\w' -]+?(?=\s*,))?|If you critically hit a target with an? [\w -]*?weapon|When you critically succeed at (?:an attack roll|a Strike)(?: made)? (?:with|using) (?:(?:this|the|a|an) )?[\w' -]+?(?=\s*,))\s*,?\s*/i;
+const TRAIT_OPENING = /^When you critically hit a creature with the (\w+) trait with [\w' -]+?\s*,\s*/i;
 const FOR = [
     [/^against a creature possessing another creature, the possessing creature\b/i, { note: "only against a creature possessing another" }, "the target"],
     [/^(?:the )?undead(?: creature)? is\b/i, { trait: "undead" }, "the target is"],
@@ -37,6 +42,9 @@ export function runeCritRiders(rune) {
         if (already) {
             only = { condition: already[1].toLowerCase() };
             text = `The target ${sentence.slice(already[0].length).replace(/\s+as well\b/i, "")}`;
+        } else if (TRAIT_OPENING.test(sentence)) {
+            only = { trait: TRAIT_OPENING.exec(sentence)[1].toLowerCase() };
+            text = sentence.replace(TRAIT_OPENING, "");
         } else if (OPENING.test(sentence)) {
             text = sentence.replace(OPENING, "");
             for (const [pattern, who, words] of FOR) {
@@ -57,7 +65,16 @@ export function runeCritRiders(rune) {
             .replace(/^your target\b/i, "The target")
             // (Merciful's "a merciful weapon causes the target to become Fascinated", Flickering's "…, Dazzling the creature for 1 round".)
             .replace(/^(?:an? [\w ]+? weapon )?causes the target to become\b/i, "The target becomes")
-            .replace(/^.*?,\s*(@UUID\[[^\]]*\]\{)?(Dazzl|Blind|Deafen|Frighten)ing(\})? the (?:creature|target) for ([^.(]+).*$/i, (whole, link = "", verb, close = "", time) => `The target is ${link}${verb}ed${close} for ${time.trim()}.`)
+            .replace(/^.*?,\s*(@UUID\[[^\]]*\]\{)?(Dazzl|Blind|Deafen|Frighten)ing(\})? the (?:struck )?(?:creature|target) for ([^.(]+).*$/i, (whole, link = "", verb, close = "", time) => `The target is ${link}${verb}ed${close} for ${time.trim()}.`)
+            // (Spider Gun's "the venom clings to the target and they take persistent poison damage equal to @Damage[(1d4+@item.system.
+            // damage.dice)[persistent,poison]]": the target takes it, the weapon's dice counted — its own and its striking rune's.)
+            .replace(/^(?:[^.]*? and )?they take (?:@UUID\[[^\]]*\]\{)?persistent (?:\w+ )?damage\}?(?: of the same type as the weapon)? equal to (@Damage\[(?:[^[\]]|\[[^\]]*\])*\])\.?/i, "The target takes $1 damage.")
+            .replace(/@item\.system\.damage\.dice\b/g, String(Math.max(Number(rune?.system?.damage?.dice) || 1, 1 + (Number(rune?.system?.runes?.striking) || 0))))
+            // (Deflecting Branch's "you knock the target Prone".)
+            .replace(/^you knock the target (@UUID\[[^\]]*\]\{Prone\}|Prone)\.$/i, "The target is knocked $1.")
+            // (Thundercrasher's "a Fortitude save against your class DC": its wielder's, filled in live play — src/compiler/item-data.js's
+            // stand-in, the core's { dc: "owner" }.)
+            .replace(/\ban? (Fortitude|Reflex|Will) save against your (class|spell) DC\b/gi, (whole, save, kind) => `a @Check[${save.toLowerCase()}|dc:${kind.toLowerCase() === "class" ? 9001 : 9002}] save`)
             .replace(/^the target\b/i, "The target")
             // (A save link without the word: Brilliant's "succeed at a DC 29 Fortitude or be Blinded".)
             .replace(/(@Check\[[^\]]*\](?:\{[^}]*\})?) or be\b/g, "$1 save or be");
@@ -67,20 +84,27 @@ export function runeCritRiders(rune) {
         } catch {
             plan = null;
         }
+        plan = ownerDCs(plan);
         if (!readable(plan)) return;
+        // (Damage PF2e's own rules roll on a critical hit already — Golden Blade of Mzali's, Bloodletting Kukri's: not twice.)
+        if (rolledByPF2e(rune) && damageOnly(plan)) return;
         riders.push({ plan, optional, only, text: sentence });
     });
     return riders;
 }
 
-// A plan the card can play: a save at a fixed DC, or a row with no roll that does something.
+// The item's own PF2e rules that add damage on a critical hit; a plan that only deals damage.
+const rolledByPF2e = (item) => (item?.system?.rules ?? []).some((rule) => ["DamageDice", "FlatModifier"].includes(rule?.key) && (rule.critical === true || /critical/i.test(JSON.stringify(rule.predicate ?? []))));
+const damageOnly = (plan) => Object.values(plan.resolution.outcomes ?? {}).every((row) => !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement);
+
+// A plan the card can play: a save at a fixed DC (or its wielder's, filled in live play), or a row with no roll that does something.
 function readable(plan) {
     const resolution = plan?.resolution;
     if (!resolution?.outcomes) return false;
     const rows = Object.values(resolution.outcomes);
     const does = rows.some((row) => (row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement || (row?.damage?.mode ?? "none") !== "none");
     if (!does) return false;
-    if (resolution.kind === "save") return resolution.check?.against?.dc === "fixed";
+    if (resolution.kind === "save") return ["fixed", "owner"].includes(resolution.check?.against?.dc);
     return resolution.kind === "check" && resolution.check?.roll === "automatic";
 }
 

@@ -119,6 +119,43 @@ test("live: a critical hit with a Thundering, Crushing weapon posts both cards a
     assert.equal(cards[0].tokens[0].name ?? cards[0].tokens[0].actor?.name, "Foe");
 });
 
+test("weapons' own critical-hit sentences: Mindlance's frightened and Serpent Dagger's sickened unless they save, Thundercrasher's save at its wielder's class DC, Stargazer's dazzle, Fearcutter only against the unholy, Deflecting Branch's prone, Spider Gun's persistent poison with its dice counted; none for damage PF2e's rules roll (Golden Blade of Mzali, Chain of Command)", async () => {
+    const { etchedCritRiders } = await import("../src/compiler/rune-strikes.js");
+    const ridersOf = (name) => etchedCritRiders(equipment.find((doc) => doc.name === name), runes);
+    const row = (rider, degree) => rider.plan.resolution.outcomes[degree];
+    const [mindlance] = ridersOf("Mindlance");
+    assert.deepEqual([mindlance.plan.resolution.check.statistic, mindlance.plan.resolution.check.against.value, row(mindlance, "failure").effects.map((effect) => [effect.slug, effect.value])], ["will", 24, [["frightened", 2]]]);
+    const [serpent] = ridersOf("Serpent Dagger");
+    assert.deepEqual([serpent.plan.resolution.check.statistic, row(serpent, "failure").effects.map((effect) => [effect.slug, effect.value])], ["fortitude", [["sickened", 1]]]);
+    const [thunder] = ridersOf("Thundercrasher");
+    assert.deepEqual([thunder.plan.resolution.check.statistic, thunder.plan.resolution.check.against, row(thunder, "failure").effects.map((effect) => effect.slug)], ["fortitude", { dc: "owner", statistic: "class" }, ["deafened"]]);
+    assert.deepEqual(row(ridersOf("Stargazer")[0], "success").effects.map((effect) => [effect.slug, effect.duration?.value]), [["dazzled", 1]]);
+    const [fear] = ridersOf("Fearcutter");
+    assert.deepEqual([fear.only, row(fear, "success").effects.map((effect) => [effect.slug, effect.value])], [{ trait: "unholy" }, [["frightened", 1]]]);
+    assert.deepEqual(row(ridersOf("Deflecting Branch")[0], "success").effects.map((effect) => effect.slug), ["prone"]);
+    assert.deepEqual(ridersOf("Spider Gun (Major)")[0].plan.resolution.sharedDamage.components.map((component) => component.formula), ["(1d4+3)[persistent,poison]"]);
+    assert.deepEqual([ridersOf("Golden Blade of Mzali").length, ridersOf("Chain of Command").length], [0, 0]);
+});
+
+test("live: Thundercrasher's critical hit posts its save at its wielder's class DC; with none, the GM's", async () => {
+    const foe = foundry.makeActor({ id: "rune-foe-2", name: "Deafened Foe" });
+    foundry.place(foe, 200, 26000);
+    const hammer = foundry.giveItem(knight, equipment.find((doc) => doc.name === "Thundercrasher"));
+    const critical = async () => {
+        const before = foundry.posted.length;
+        await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome: "criticalSuccess", target: { token: foe.token.uuid } }, origin: { uuid: hammer.uuid, type: "weapon" } } }, speaker: { actor: knight.id }, actor: knight, token: knight.token.document }));
+        await settle();
+        return foundry.posted.slice(before);
+    };
+    knight.system.attributes.classDC = { value: 27 };
+    const [card] = await critical();
+    assert.deepEqual([card.item.name, card.plan.resolution.check.against], ["Thundercrasher", { dc: "fixed", value: 27 }]);
+    delete knight.system.attributes.classDC;
+    const count = foundry.messages.length;
+    assert.deepEqual(await critical(), []);
+    assert.match(foundry.messages.slice(count).map((message) => message.content).join(" "), /Thundercrasher.*has no class DC/);
+});
+
 test("Swarming: double the weapon's damage dice as its damage, of the weapon's type, in a 30-foot cone with a basic Reflex save", () => {
     const dagger = equipment.find((doc) => doc.name === "Dagger");
     const weapon = { ...dagger, system: { ...dagger.system, runes: { potency: 2, striking: 1, property: ["swarming"] } } };

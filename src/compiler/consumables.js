@@ -52,6 +52,8 @@ const OTHERS_GRANT = [
     [/(?:^|[.:]\s+)Allies within \d+ feet gain\b/i, inArea("your allies")],
     [/\bChoose (?:a|one|an) (adjacent |willing )?(ally|creature|foe|enemy)\b([^.]*)/i, one((match) => `1 ${match[2].toLowerCase()}`, (match) => (match[1]?.trim() === "adjacent" ? "5 feet" : feet(match[3])))],
     [/\bUp to (\w+) (?:willing )?creatures of your choice within (\d+) feet/i, one((match) => `up to ${countOf(match[1])} creatures`, (match) => `${match[2]} feet`)],
+    // (Energy Ointment's "This thick grease can be applied to up to 5 willing creatures": each one touched.)
+    [/\bcan be applied to up to (\w+) willing creatures\b/i, one((match) => `up to ${countOf(match[1])} creatures`, "touch")],
     [/\bCreatures of your choosing within (\d+) feet/i, one("creatures of your choice", (match) => `${match[1]} feet`)],
     [/\b(?:An?|One) (?:Medium or smaller )?(ally|creature) within (?:the|your) banner's aura\b/i, one((match) => `1 ${match[1].toLowerCase()}`, "30 feet")],
     [/\bgiving all creatures within \d+ feet\b/i, inArea("all creatures")],
