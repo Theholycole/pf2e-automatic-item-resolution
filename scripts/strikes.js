@@ -8,6 +8,7 @@
 
 import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
+import { postActionCard } from "./item-actions.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, startInitiative, stateOf } from "./foundry.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -66,11 +67,17 @@ export async function strikeWithRider(message) {
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike missed; it's spent.</p>` });
         return;
     }
+    // (A maneuver after the hit, Iron Cube's Trip: its own card, PF2e's action at the creature the Strike hit — still targeted.)
+    const follow = rider.plan.strike?.follow;
+    if (follow) {
+        const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
+        await postActionCard({ message: null, plan: follow, used: { data: { name: rider.item.name, uuid: rider.item.uuid ?? null } }, actor, token: sourceToken?.object ?? sourceToken });
+    }
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
     if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
-        await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}.</p>` });
+        await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}.</p>` });
         return;
     }
     const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;

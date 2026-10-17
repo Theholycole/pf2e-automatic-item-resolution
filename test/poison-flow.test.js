@@ -247,6 +247,17 @@ test("snares that leave an area where they were (the ability module's zone.then)
     assert.match(shadow.notes[0], /^Darkness: Light can't enter the square/);
 });
 
+test("Metalmist Spheres' mist (5, 10 and 15 feet, Concealed, 1 minute) and Stoneraiser Javelin's stalagmites (a 5-foot burst within 30 feet for 1 minute: difficult terrain, 4d4 piercing on each move into it, the Reflex save for those there as it appears)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    assert.deepEqual(["Lesser", "Moderate", "Greater"].map((grade) => compileItem(source(`Metalmist Sphere (${grade})`)).zone).map((zone) => [zone.area.value, zone.concealed, zone.lasts.value]), [[5, true, 1], [10, true, 1], [15, true, 1]]);
+    const [javelin] = compileActivations(source("Stoneraiser Javelin"));
+    const zone = javelin.plan.zone;
+    assert.deepEqual([zone.area, zone.centre, zone.range, zone.lasts.value, zone.terrain, zone.damage], [{ type: "burst", value: 5 }, "placed", 30, 1, [{ movement: ["walk"], difficulty: 2 }], [{ when: "enter", formulas: ["4d4[piercing]"] }]]);
+    const save = zone.saves[0];
+    assert.deepEqual([save.when, save.plan.resolution.check.statistic, save.plan.resolution.check.against.value, save.plan.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug), save.plan.resolution.outcomes.criticalFailure.damage.multiplier], [["initial"], "reflex", 28, ["prone"], 2]);
+});
+
 test("the drinker's own save rolls for its user, no targets; a save set off by attackers stays open for the item's time", async () => {
     const { isOwnSave, ATTACKER } = await import("../src/live/poison-card.js");
     const { compileItem } = await import("../src/compiler/index.js");

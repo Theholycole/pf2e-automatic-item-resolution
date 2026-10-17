@@ -489,6 +489,29 @@ function strikeDamageOf(sentences, duration) {
     return found;
 }
 
+// A condition's penalty its user ignores for a while, PF2e's AdjustModifier suppressing that condition's modifier: Chilled Fire Noodles'
+// "you temporarily ignore the -1 status penalty to AC and saving throws caused by the Fatigued condition for 1 hour", Ring of the Weary
+// Traveler's "For 10 minutes, you can ignore the penalties from the fatigued condition" → [{ slug, selectors, duration }] (the
+// condition's own modifier slug, and the selectors it has in PF2e unless the sentence names them). The condition stays.
+const CONDITION_SELECTORS = { fatigued: ["ac", "saving-throw"] };
+function suppressOf(sentences, duration, used = new Set()) {
+    const found = [];
+    const pattern = /\b(?:temporarily |can )?ignore the (?:[-–−]\d+ (?:status |circumstance )?penalty to ([A-Za-z ]+?) caused by|penalties from) the (\w+) condition\b/i;
+    for (const [index, sentence] of sentences.entries()) {
+        const match = pattern.exec(sentence);
+        if (!match) continue;
+        const slug = match[2].toLowerCase();
+        const named = match[1] ? match[1].split(/\s*(?:,|\band\b)\s*/).map((word) => ({ ac: "ac", "saving throws": "saving-throw", saves: "saving-throw" })[word.trim().toLowerCase()]).filter(Boolean) : [];
+        const selectors = named.length ? named : CONDITION_SELECTORS[slug];
+        if (!selectors) continue;
+        used.add(index);
+        // ("This does not remove the condition, it merely suppresses the penalties": said by it.)
+        sentences.forEach((other, at) => { if (/\bdoes not remove the condition\b/i.test(other)) used.add(at); });
+        found.push({ slug, selectors, duration: durationIn(sentence, duration) });
+    }
+    return found;
+}
+
 // A vision for its user: "you gain darkvision until you deactivate it" (Obsidian Goggles), "You gain greater darkvision until
 // the beginning of your next turn" (Darkvision Scope) → [{ selector, duration }] (PF2e's Sense rule, the item card's
 // Effect). Another way it ends ("as long as you continue to look through the scope", "or the item is no longer invested by
@@ -585,7 +608,8 @@ export function ownRow(item, { healing = true } = {}) {
     const senses = sensesOf(sentences, duration, used);
     const weapon = weaponAdjustOf(sentences, duration, used);
     const strikeDamage = strikeDamageOf(sentences, duration);
-    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length) return null;
+    const suppress = suppressOf(sentences, duration, used);
+    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length) return null;
     // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other || temp?.other);
     if (heal?.other) delete heal.other;
@@ -597,7 +621,7 @@ export function ownRow(item, { healing = true } = {}) {
     // ("allowing you to move with greater speed": flavor, not a Speed.)
     // (Nor when it may be used, "You can use this action while Unconscious".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

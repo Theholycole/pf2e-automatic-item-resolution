@@ -10,6 +10,8 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { bombSave, hasRow, hitRiders } from "./bombs.js";
 import { plainText } from "./rows.js";
 import { readStrikeExtras } from "./strike-damage.js";
+import { itemActionPlan } from "./item-actions.js";
+import { directDamagePlan } from "./direct-damage.js";
 
 // "make a melee Strike", "make a weapon or unarmed attack Strike", "make a ranged or melee Strike", "attempt a Strike" (not
 // a creature's own, "makes a beak Strike with a +8 modifier").
@@ -177,7 +179,30 @@ function insteadPlan(item, base) {
     };
 }
 
-export function compileStrike(item, base) {
+// A maneuver after the Strike's hit: Iron Cube's "If it hits and deals damage, you can attempt an Athletics check to Trip the creature you
+// hit. If this knocks the target Prone, the target takes 2d6 bludgeoning damage from the force of the impact", Serpent's Lash's "If you
+// hit and deal damage, you also Reposition the creature 5 feet (10 feet on a critical hit)": strike.follow, the item-action plan of that
+// maneuver (src/compiler/item-actions.js, PF2e's own action and the ability module's rows), with what its success adds — live play
+// posts its card after the hit. What else the text says about it is the follow's notes.
+const MANEUVERS = "Trip|Shove|Grapple|Disarm|Reposition";
+const FOLLOW = new RegExp(String.raw`\bIf (?:it|you) hits? and deals? damage, you (?:can attempt an Athletics check to|also) (?:@UUID\[[^\]]*\]\{(${MANEUVERS})\}|\[\[\/act (${MANEUVERS.toLowerCase()})\b[^\]]*\]\](?:\{[^}]*\})?|(${MANEUVERS}))`, "i");
+const PRONE_DAMAGE = /\bIf this knocks the target (?:@UUID\[[^\]]*\]\{)?Prone\}?, the target takes @Damage\[(\d+d\d+)\[(\w+)\]\] damage\b/i;
+function followOf(html, base, options) {
+    const match = FOLLOW.exec(String(html ?? ""));
+    if (!match) return null;
+    const name = (match[1] ?? match[2] ?? match[3]).toLowerCase();
+    const plan = itemActionPlan(`<p>You attempt to ${name.charAt(0).toUpperCase()}${name.slice(1)} the creature.</p>`, base, options);
+    if (!plan?.action) return null;
+    const prone = PRONE_DAMAGE.exec(String(html ?? ""));
+    const damage = prone ? directDamagePlan(`The target takes ${prone[1]} ${prone[2].toLowerCase()} damage.`, { ...base, activation: base.activation ?? null }) : null;
+    const after = plainText(String(html ?? "").slice(match.index + match[0].length)).split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
+    // (The rest of its own sentence, Serpent's Lash's "the creature 5 feet (10 feet on a critical hit)": with the maneuver's name.)
+    if (after[0] && /^[a-z]/.test(after[0])) after[0] = `${name.charAt(0).toUpperCase()}${name.slice(1)} ${after[0]}`;
+    const notes = after.filter((sentence) => sentence && !/^If this knocks the target Prone\b/i.test(sentence) && /\b(?:feet|penalty|free hand|requirement|feat|attacks?|damage)\b/i.test(sentence)).slice(0, 4);
+    return { ...plan, action: { ...plan.action, ...(damage ? { damage: { success: damage, criticalSuccess: damage } } : {}) }, ...(notes.length ? { notes } : {}) };
+}
+
+export function compileStrike(item, base, options = {}) {
     const html = String(item?.system?.description?.value ?? "");
     if (isAmmo(item)) {
         const instead = insteadPlan(item, base);
@@ -204,11 +229,12 @@ export function compileStrike(item, base) {
         return hasRow(row.success) || hasRow(row.criticalSuccess) || Boolean(save && /^(?:On a hit|If (?:you|it|the Strike) hits?)\b[^.]*\b(?:save|saving throw)\b/i.test(sentence));
     };
     const cast = castOnHit(html);
+    const follow = followOf(html, base, options);
     const read = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
     // (The cast's own sentence isn't a note.)
     if (cast) read.notes = read.notes.filter((note) => !note.includes(cast.name) && !(cast.attackFromHit && /^As with the spell\b/i.test(note)));
     const extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration || read.runes) } : read;
-    if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read && !cast) return null;
+    if (!hasRow(riders.success) && !hasRow(riders.criticalSuccess) && !save && !extras.read && !cast && !follow) return null;
     const anyRider = hasRow(riders.success) || hasRow(riders.criticalSuccess);
     // (A trigger's Strike that already hit — Spore Sap's "Trigger You successfully Strike a creature with the spore sap Effect
     // The target must succeed at a DC 28 Fortitude save …": its save is the plan, at the creature struck; its extra damage
@@ -217,10 +243,13 @@ export function compileStrike(item, base) {
         if (extras.read) return anyRider || save ? null : strikePlan({ base, item, strike, riders, save, extras });
         return save && !anyRider ? { ...save.plan, source: base.source, rank: base.rank, traits: base.traits, activation: base.activation, targeting: { target: "the creature struck", range: null, area: null }, trigger: { event: "use" } } : null;
     }
+    // (The maneuver after it: its own card, not the Strike's riders — Iron Cube's "If this knocks the target Prone" isn't the hit's.)
+    const empty = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+    if (follow) return strikePlan({ base, item, strike, riders: { success: empty(), criticalSuccess: empty() }, save, extras: { ...extras, notes: extras.notes.filter((note) => !(follow.notes ?? []).includes(note) && !FOLLOW.test(note) && !/^If this knocks the target Prone\b/i.test(note)) }, cast, follow });
     return strikePlan({ base, item, strike, riders, save, extras, cast });
 }
 
-function strikePlan({ base, item, strike, riders, save, extras: read, cast = null }) {
+function strikePlan({ base, item, strike, riders, save, extras: read, cast = null, follow = null }) {
     // (A Strike with no die size of its own, "an extra die of weapon damage", from an item that isn't the weapon: not read.)
     if (read.dice.some((entry) => !entry.dieSize)) return null;
     // (With a save on the hit, its own sentence and its degrees are the save card's, not notes: "It takes 4d10 void damage with a
@@ -260,8 +289,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
         },
         // (A weapon's own Strike, riders alone or not: Gloaming Arc's "Attempt a melee Strike with the gloaming arc", Growth Gun's "Make a
         // ranged Strike" — only a Strike with it carries them.)
-        strike: { range: strike.range, save: save ? save.plan : null, ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}) },
-        ...((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length ? { partial: true } : {})
+        strike: { range: strike.range, save: save ? save.plan : null, ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
+        ...(((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length) || follow?.notes?.length ? { partial: true } : {})
     };
 }
 

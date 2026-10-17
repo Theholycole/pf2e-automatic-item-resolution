@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 221,
-   "resolves": 740,
+   "none": 220,
+   "resolves": 742,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 95,
+   "builtin:zone": 98,
    "builtin:item-action": 12,
-   "partial": 91,
-   "note-only": 184,
+   "partial": 92,
+   "note-only": 179,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -35,10 +35,10 @@
    "results": {
     "builtin:cast-spell": 11,
     "none": 118,
-    "resolves": 209,
+    "resolves": 211,
     "partial": 44,
-    "note-only": 92,
-    "builtin:zone": 10,
+    "note-only": 87,
+    "builtin:zone": 13,
     "builtin:readied-bonus": 7,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
@@ -90,7 +90,7 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 38,
+    "none": 37,
     "builtin:readied-bonus": 12,
     "builtin:item-action": 11,
     "resolves": 53,
@@ -98,7 +98,7 @@
     "builtin:no-effect": 9,
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
-    "partial": 13,
+    "partial": 14,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -311,7 +311,7 @@
    "count": 277,
    "resolves": 169,
    "gaps": 0,
-   "none": 16
+   "none": 15
   },
   "linked-effect": {
    "count": 393,
@@ -341,7 +341,7 @@
    "count": 31,
    "resolves": 12,
    "gaps": 0,
-   "none": 4
+   "none": 3
   },
   "on-weapon": {
    "count": 67,
@@ -369,13 +369,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 262,
+   "resolves": 264,
    "gaps": 0,
-   "none": 26
+   "none": 25
   },
   "duration": {
    "count": 943,
-   "resolves": 596,
+   "resolves": 598,
    "gaps": 0,
    "none": 13
   }
@@ -383,10 +383,10 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 295,
-   "item": 641,
+   "none": 294,
+   "item": 638,
    "fortune": 23,
-   "zone": 95,
+   "zone": 98,
    "expose": 89,
    "later": 79,
    "action": 12,
@@ -395,7 +395,7 @@
    "reroll": 2,
    "coat": 45,
    "ways": 5,
-   "strike": 8
+   "strike": 9
   },
   "byCategory": {
    "other": {
@@ -403,8 +403,8 @@
     "none": 145,
     "later": 12,
     "save": 92,
-    "item": 219,
-    "zone": 10,
+    "item": 216,
+    "zone": 13,
     "fortune": 7,
     "strike": 3,
     "expose": 3,
@@ -422,14 +422,14 @@
     "counteract": 2
    },
    "talisman": {
-    "none": 48,
+    "none": 47,
     "fortune": 14,
     "action": 11,
     "item": 53,
     "reroll": 1,
     "cast": 9,
     "save": 15,
-    "strike": 5
+    "strike": 6
    },
    "elixir": {
     "item": 121,
@@ -488,7 +488,7 @@
    }
   },
   "noCard": {
-   "no-plan": 221,
+   "no-plan": 220,
    "triggered": 21,
    "gm": 52,
    "other": 1
@@ -10350,9 +10350,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Pepper Poultice",
@@ -10793,8 +10793,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -14339,7 +14340,9 @@
     "strike",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Wand of Noisome Acid (8th-Rank)",
@@ -20050,9 +20053,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Potion of Resistance (Moderate)",
@@ -23398,8 +23401,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -23509,9 +23513,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Energy Breath Potion (Electricity, Greater)",

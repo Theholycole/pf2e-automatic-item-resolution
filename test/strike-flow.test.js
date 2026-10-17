@@ -430,3 +430,20 @@ test("Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check 
     assert.equal(routeOf(dodge.plan), "save");
     assert.match(dodge.plan.notes[0], /^You Step, .* \(by hand\)\.$/);
 });
+
+test("Iron Cube: its melee Strike's hit posts PF2e's Trip card at the creature hit, the 2d6 bludgeoning on its success; Serpent's Lash's Reposition after its whip's hit", async () => {
+    const cube = compileItem(source("Iron Cube"));
+    assert.deepEqual([routeOf(cube), cube.strike.range, cube.strike.follow.action.slug, cube.strike.follow.action.damage.success.resolution.sharedDamage.components[0].formula, cube.partial], ["strike", "melee", "trip", "2d6", true]);
+    assert.deepEqual(cube.resolution.outcomes.success.effects, [], "the prone is the Trip's, not the hit's");
+    assert.ok(strikeLines(cube).some((line) => /^On a hit: its .*card at the creature hit \(with its damage on a success\)$/.test(line)));
+    const [lash] = compileActivations(source("Serpent's Lash"));
+    assert.deepEqual([lash.plan.strike.own, lash.plan.strike.follow.action.slug, lash.plan.strike.follow.notes], [true, "reposition", ["Reposition the creature 5 feet (10 feet on a critical hit)."]]);
+    const card = await useCard("Iron Cube");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const before = foundry.messages.length;
+    await attack("success", ["item:melee"]);
+    const posted = foundry.messages.slice(before).map((message) => message.flags?.[MODULE_ID]?.card?.kind).filter(Boolean);
+    assert.ok(posted.includes("item-action"), `the Trip card (${posted.join(", ")})`);
+    assert.equal(readied().length, 0);
+});

@@ -111,6 +111,7 @@ export function previewLines(state) {
     for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
+    for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
     if (plan?.item?.firstDegree) lines.push(firstDegreeText(plan.item.firstDegree));
     // (Its maximum Hit Points and its afflictions, src/compiler/restore.js.)
@@ -298,6 +299,19 @@ export function skillPickText(pick) {
 export function skillPickEffectSource(pick, index, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const skill = pick.skills[index] ?? pick.skills[0];
     return ownEffectSource({ name: skill.charAt(0).toUpperCase() + skill.slice(1), img: "icons/svg/upgrade.svg", words: skillPickText({ ...pick, skills: [skill, skill] }).replace(/the skill picked \([^)]*\)/, skill), rules: skillPickRules(pick, index, item.name ?? null), duration: pick.duration, flag: { skillPick: skill }, item, user, worldTime, initiative, moduleId });
+}
+
+// A condition's penalty ignored, in words: "Ignores Fatigued's penalty to AC and saving throws for 1 hour".
+const SELECTOR_WORDS = { ac: "AC", "saving-throw": "saving throws" };
+export function suppressText(entry) {
+    const to = entry.selectors.map((selector) => SELECTOR_WORDS[selector] ?? selector).join(" and ");
+    return `Ignores ${entry.slug.charAt(0).toUpperCase()}${entry.slug.slice(1)}'s penalty to ${to}${forTime(entry.duration)} (the condition stays)`;
+}
+
+// Its Effect: PF2e's AdjustModifier suppressing that condition's own modifier.
+export function suppressEffectSource(entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const rule = { key: "AdjustModifier", selectors: entry.selectors, slug: entry.slug, suppress: true };
+    return ownEffectSource({ name: `${entry.slug} ignored`, img: "icons/svg/upgrade.svg", words: suppressText(entry), rules: [rule], duration: entry.duration, flag: { suppress: entry.slug }, item, user, worldTime, initiative, moduleId });
 }
 
 // A time's first critical failure made a failure, in words: "The first critical failure on Thievery checks to Pick a Lock becomes a

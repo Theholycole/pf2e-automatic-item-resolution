@@ -437,3 +437,14 @@ test("bonuses narrower than PF2e's rolls, on the whole roll for their time: Phan
     assert.deepEqual(summary("Infiltrator's Elixir"), ["deception-dc", 4, "status", null, "10 minutes", true, "The bonus is only to avoid others seeing through your disguise, and you add your level to this DC even if untrained."]);
     assert.deepEqual(summary("Armor Polishing Kit"), ["diplomacy", 1, "circumstance", ["action:make-an-impression"], "24 hours", true, "The bonus is only on soldiers, guards, Gorumites, and other martially minded characters, for whoever wears the armor maintained by this kit."]);
 });
+
+test("a condition's penalty ignored for a while: Chilled Fire Noodles' Fatigued penalty to AC and saves for 1 hour, Ring of the Weary Traveler's for 10 minutes — PF2e's AdjustModifier suppressing the fatigued modifier", async () => {
+    const { suppressEffectSource, suppressText } = await import("../src/live/card.js");
+    const noodles = compileItem(item("Chilled Fire Noodles"));
+    assert.deepEqual(noodles.item.suppress.map((entry) => [entry.slug, entry.selectors, entry.duration.value, entry.duration.unit]), [["fatigued", ["ac", "saving-throw"], 1, "hours"]]);
+    assert.equal(noodles.noteOnly, undefined);
+    assert.equal(suppressText(noodles.item.suppress[0]), "Ignores Fatigued's penalty to AC and saving throws for 1 hour (the condition stays)");
+    assert.deepEqual(suppressEffectSource(noodles.item.suppress[0], { item: { name: "Chilled Fire Noodles" } }).system.rules, [{ key: "AdjustModifier", selectors: ["ac", "saving-throw"], slug: "fatigued", suppress: true }]);
+    const [ring] = compileActivations(item("Ring of the Weary Traveler"));
+    assert.deepEqual(ring.plan.item.suppress.map((entry) => [entry.slug, entry.duration.value, entry.duration.unit]), [["fatigued", 10, "minutes"]]);
+});

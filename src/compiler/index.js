@@ -142,7 +142,7 @@ function compileOne(given, options = {}) {
     // (The ability compiler's cast, with what its words say and it left out: on its user, a DC, a modifier.)
     plan = fillCast(plan, item?.system?.description?.value, options);
     // (A Strike with riders, src/compiler/strikes.js: Fear Gem.)
-    plan = strikeOver(plan, compileStrike(item, base));
+    plan = strikeOver(plan, compileStrike(item, base, options));
     // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Lucky Rabbit's Foot.)
     plan = rerollOver(plan, rerollPlan(item?.system?.description?.value, base));
     // (Its user's next roll of a kind rolled twice, src/compiler/fortune.js: Gorum's Tear.)
@@ -193,8 +193,8 @@ function compileOne(given, options = {}) {
     if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     if (!plan) return null;
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    const { resist, speeds, senses, weapon, strikeDamage, firstDegree, ...rest } = plan;
-    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}) };
+    const { resist, speeds, senses, weapon, strikeDamage, firstDegree, suppress, ...rest } = plan;
+    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;
@@ -236,6 +236,8 @@ function rowPlan(item, base) {
         // (A change to its user's weapon, the same: plan.item.weapon; extra damage on its Strikes, plan.item.strikeDamage.)
         ...(row?.weapon ? { weapon: row.weapon } : {}),
         ...(row?.strikeDamage ? { strikeDamage: row.strikeDamage } : {}),
+        // (A condition's penalty ignored, the same: plan.item.suppress.)
+        ...(row?.suppress ? { suppress: row.suppress } : {}),
         ...(firstDegree ? { firstDegree } : {})
     };
 }

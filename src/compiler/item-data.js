@@ -161,6 +161,12 @@ export function withItemData(html, item) {
     // (A cloud given by its radius in words, Smoke Fan's "it creates a cloud of colored smoke. The smoke fills a 5-foot radius. … The smoke
     // lasts for 1 minute": a burst there for that time, as the ability compiler reads a zone; "the smoke's area" the smoke.)
     text = text.replace(/\bit creates a cloud of ([\w ]*?smoke)\. The smoke fills a (\d+)-foot radius\.([\s\S]*?)\bThe smoke lasts for (\d+ (?:minutes?|rounds?))(?: or until (?:dissipated|dispersed) by a strong wind)?\./i, (whole, smoke, feet, between, time) => `it creates a cloud of ${smoke} that fills a @Template[burst|distance:${feet}] for ${time}.${between.replace(/\bthe smoke's area\b/i, "the smoke")} A strong wind disperses it.`);
+    // (A mist given its radius later, Metalmist Sphere's "creates an opaque mist in a burst centered on one corner of your space. Creatures
+    // within that area are concealed … The mist lasts for 1 minute or until dispersed by a strong wind. … The radius of the burst is 5
+    // feet": that burst for that time, Concealed inside, as the ability compiler reads a zone.)
+    const radius = /\bThe radius of the burst is (\d+) feet\.\s*/i.exec(text);
+    const mistTime = /\bThe mist lasts for (\d+ (?:minutes?|rounds?)) or until (?:dispersed|dissipated) by a strong wind\.\s*/i.exec(text);
+    if (radius && mistTime) text = text.replace(/\bcreates an opaque mist in a burst centered on one corner of your space\. Creatures within that area are concealed, and all other creatures are concealed to them\./i, `creates an opaque mist in a @Template[burst|distance:${radius[1]}] centered on one corner of your space for ${mistTime[1]}. Creatures within the mist are Concealed, and all other creatures are concealed to them.`).replace(mistTime[0], "A strong wind disperses it. ").replace(radius[0], "");
     // (Wind Ocarina's gusts: "The area is difficult terrain to creatures attempting to move through it", difficult terrain.)
     text = text.replace(/\bThe area is difficult terrain to creatures attempting to move through it\./g, "The area is difficult terrain.");
     // (Allies who Stand at once, Core Bugle's Reveille "You and all allies within a 30-foot emanation can immediately Stand as a free action":

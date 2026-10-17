@@ -57,3 +57,55 @@ export function coveredSquarePlan(html, base, item, options = {}) {
         }
     };
 }
+
+// An area of stalagmites it raises for a while: Stoneraiser Javelin's "You hurl the stoneraiser javelin at an unoccupied space within 30
+// feet. The javelin's power flows into the ground, which erupts in a 5-foot-radius burst of razor-sharp stalagmites. … the stalagmites'
+// spaces are difficult terrain. A creature takes 4d4 piercing damage for every move action it takes that enters at least one of the
+// affected spaces. … The stalagmites crumble to dust after 1 minute. Any creature in the area when the stalagmites appear is pushed to
+// the nearest unoccupied space of its choice …. Pushed creatures must attempt a DC 28 Reflex saving throw or take 4d4 piercing damage"
+// with its degree rows. The ability module's zone: a burst placed within that distance, difficult terrain, the damage on each move into
+// it, the save for those there as it appears. The push, the cover and the stalagmites' own statistics are notes.
+const RAISED = /\bYou hurl the (?:<em>)?[\w' -]+?(?:<\/em>)? at an unoccupied space within (\d+) feet\.(?:<\/p>\s*<p>|\s)+The [\w' -]+? power flows into the ground, which erupts in a (\d+)-foot-radius burst of razor-sharp (\w+)\./i;
+const ENTERING = /\bA creature takes @Damage\[([^\]]*\])\] damage for every move action it takes that enters at least one of the affected spaces\./i;
+const CRUMBLE = /\bThe \w+ crumble to dust after (\d+) (minutes?|rounds?)\./i;
+const PUSHED = /\bPushed creatures must attempt a DC (\d+) (Fortitude|Reflex|Will) saving throw or take (@Damage\[[^\]]*\]\]) damage\./i;
+export function raisedAreaPlan(html, base, item, options = {}) {
+    const text = String(html ?? "");
+    const raised = RAISED.exec(text);
+    const entering = ENTERING.exec(text);
+    const crumble = CRUMBLE.exec(text);
+    if (!raised || !entering || !crumble || !/\bspaces are difficult terrain\b/i.test(text)) return null;
+    const pushed = PUSHED.exec(text);
+    // (Those there as it appears: their save, its degree rows as the ability compiler reads them.)
+    const rows = pushed ? text.slice(text.indexOf("</p>", pushed.index) + 4) : "";
+    const save = pushed ? compileAbility({ ...item, type: "action", system: { ...(item?.system ?? {}), description: { value: `<p><strong>Effect</strong> The target takes ${pushed[3]} damage with a @Check[${pushed[2].toLowerCase()}|dc:${pushed[1]}] saving throw.</p>${rows}` }, actionType: { value: "free" }, actions: { value: null } } }, options) : null;
+    const savePlan = save?.resolution?.kind === "save" ? { ...save, trigger: { event: "zone" }, targeting: { target: "each creature in the area as it appears", range: null, area: null } } : null;
+    const plain = text.replace(/<[^>]+>/g, " ").replace(/@Damage\[(\d+d\d+)\[(\w+)\]\]/g, "$1 $2").replace(/\s+/g, " ");
+    const notes = [
+        ...(/\bhas cover from creatures on the opposite side\b/i.test(plain) ? [`The ${raised[3]} give cover to creatures on either side from those on the other.`] : []),
+        ...(/\bis pushed to the nearest unoccupied space of its choice\b/i.test(plain) ? ["A creature in the area as it appears is pushed to the nearest unoccupied space of its choice (forced movement): move its token."] : []),
+        ...[/\bEach 5-foot-by-5-foot section has [^.]+\./i, /\bIt's immune to [^.]+\./i, /\bA destroyed section [^.]+\./i].map((pattern) => pattern.exec(plain)?.[0]).filter(Boolean),
+        "Its damage on entering is once for each move action that enters it."
+    ];
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "burst", value: Number(raised[2]) },
+            centre: "placed",
+            range: Number(raised[1]),
+            lasts: { mode: "fixed", value: Number(crumble[1]), unit: UNITS[crumble[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" },
+            untilReused: false,
+            concealed: false,
+            terrain: [{ movement: ["walk"], difficulty: 2 }],
+            others: false,
+            hazard: null,
+            saves: savePlan ? [{ when: ["initial"], plan: savePlan }] : [],
+            damage: [{ when: "enter", formulas: [entering[1]] }],
+            effect: null,
+            modifiers: [],
+            notes
+        }
+    };
+}
