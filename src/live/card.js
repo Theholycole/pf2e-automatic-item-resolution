@@ -3,6 +3,8 @@
 // Foundry, so it is tested in Node. The card wears the ability module's
 // classes (pf2e-aar-card, aar-*), so both modules' cards look alike.
 
+import { skillPickRules } from "../compiler/skill-pick.js";
+
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 // The id the core's context gives the user (as the ability module's cards: "source") and the drinker.
@@ -107,6 +109,7 @@ export function previewLines(state) {
     for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
+    if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
     if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
@@ -279,6 +282,19 @@ export function weaponEffectSource(adjust, { item = {}, user = {}, worldTime = 0
     return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: [rule], duration: adjust.duration, flag: { weapon: adjust.property }, item, user, worldTime, initiative, moduleId });
 }
 
+// A picked skill's bonus in words: "+1 item to the skill picked (intimidation, deception or performance), and a critical failure
+// on it or diplomacy becomes a failure, for 1 minute".
+export function skillPickText(pick) {
+    const list = `${pick.skills.slice(0, -1).join(", ")} or ${pick.skills.at(-1)}`;
+    return `${pick.modifier.value > 0 ? "+" : "−"}${Math.abs(pick.modifier.value)} ${pick.modifier.type} to the skill picked (${list})${pick.degree ? `, and a critical failure on it or ${pick.degree.selectors.join(" or ")} becomes a failure` : ""}${forTime(pick.duration)}`;
+}
+
+// That skill's Effect: the bonus on it and the better degree (src/compiler/skill-pick.js skillPickRules).
+export function skillPickEffectSource(pick, index, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const skill = pick.skills[index] ?? pick.skills[0];
+    return ownEffectSource({ name: skill.charAt(0).toUpperCase() + skill.slice(1), img: "icons/svg/upgrade.svg", words: skillPickText({ ...pick, skills: [skill, skill] }).replace(/the skill picked \([^)]*\)/, skill), rules: skillPickRules(pick, index, item.name ?? null), duration: pick.duration, flag: { skillPick: skill }, item, user, worldTime, initiative, moduleId });
+}
+
 // Extra damage on its user's Strikes in words: "+1d4 precision damage on melee Strikes against off-guard creatures for 10 minutes".
 export function strikeDamageText(extra) {
     const amount = extra.diceNumber ? `${extra.diceNumber}${extra.dieSize}` : String(extra.value);
@@ -332,6 +348,11 @@ export function cardHTML(state, { canApply = false } = {}) {
         : !state.weapons.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no weapon for it.</p>` : "")
             : open && canApply ? `<p class="aar-actions">Weapon: <select data-air-field="runeWeapon">${state.weapons.map((weapon, index) => `<option value="${index}"${index === (state.runeWeapon ?? 0) ? " selected" : ""}>${escape(weapon.name)}</option>`).join("")}</select></p>`
                 : Number.isInteger(state.runeWeapon) ? `<p class="aar-actions">Weapon: ${escape(state.weapons[state.runeWeapon]?.name ?? "")}</p>` : "";
+    // (A skill its user picked when the item was made, Words of Wisdom's phrase: a picker.)
+    const skillPick = state.plan?.item?.skillPick ?? null;
+    const skillPicker = !skillPick ? ""
+        : open && canApply ? `<p class="aar-actions">Its skill: <select data-air-field="skillPick">${skillPick.skills.map((skill, index) => `<option value="${index}"${index === (state.skillPick ?? 0) ? " selected" : ""}>${escape(skill.charAt(0).toUpperCase() + skill.slice(1))}</option>`).join("")}</select></p>`
+            : `<p class="aar-actions">Its skill: ${escape(skillPick.skills[state.skillPick ?? 0] ?? "")}</p>`;
     // (One of several runes: the one picked.)
     const runeChoices = state.plan?.item?.rune?.choices ?? null;
     const runeChoicePick = !runeChoices?.length ? ""
@@ -343,5 +364,5 @@ export function cardHTML(state, { canApply = false } = {}) {
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${runePick}${runeChoicePick}${previewList}${targetHint}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${runePick}${runeChoicePick}${skillPicker}${previewList}${targetHint}${results}${controls}</section>`;
 }

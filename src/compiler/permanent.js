@@ -34,6 +34,7 @@ import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { readTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
+import { pickedSentence, skillPickOf } from "./skill-pick.js";
 import { damageMaterial } from "./materials.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
@@ -251,6 +252,19 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = optionPlan(item, activation, base) ?? plan;
         if (!plan) return { activation, plan: null, index };
         plan = damageMaterial(withTypeChoices(plan, typeChoice), plainText(activation.html));
+        // (A skill its user picked when the item was made, named in the item's own text, src/compiler/skill-pick.js: Words of Wisdom's
+        // phrase — the card's picker; what it reads off the unread list, and the plan whole again when that was all.)
+        const skillPick = skillPickOf(plainText(html), plainText(activation.html), plan);
+        if (skillPick) {
+            const unread = (plan.unread ?? []).filter((sentence) => !pickedSentence(sentence));
+            const whole = !unread.length;
+            const success = plan.resolution?.outcomes?.success;
+            plan = { ...plan, ...(whole ? { automation: { level: "automatic" } } : { unread }), ...(whole && success ? { resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...success, noteEffects: [] } } } } : {}) };
+            if (whole) {
+                delete plan.partial;
+                delete plan.unread;
+            }
+        }
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, weapon, strikeDamage, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)
@@ -264,7 +278,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && plan.builtin === "counteract" ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && plan.builtin === "counteract" ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}) }
             }
         };
     });

@@ -97,3 +97,18 @@ test("Clockwork Helm: its beam at its user's spell attack or best ranged Strike,
     const [card] = (await activate(helm, 0)).filter((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
     assert.deepEqual(card.flags[MODULE_ID].card.attackChoices.map((choice) => choice.label), ["Spell attack +11", "Ranged attack +13"]);
 });
+
+test("Words of Wisdom: the phrase's skill picked on the card — its +1 item bonus and \"a critical failure becomes a failure\" on that skill and Diplomacy, for the minute; the plan whole", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const plan = compileActivations(source("Words of Wisdom (Lesser)"))[0].plan;
+    assert.deepEqual([plan.item.skillPick.skills, plan.item.skillPick.modifier, plan.item.skillPick.degree.selectors, plan.partial], [["intimidation", "deception", "performance"], { value: 1, type: "item" }, ["diplomacy"], undefined]);
+    const speaker = foundry.makeActor({ id: "activate-speaker", name: "Speaker", owners: ["player"] });
+    foundry.place(speaker, 500, 8000);
+    const tattoo = foundry.giveItem(speaker, source("Words of Wisdom (Lesser)"));
+    const [card] = (await activate(tattoo, 0)).filter((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.match(card.content, /Its skill: <select data-air-field="skillPick">/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: 0, skillPick: 1, userId: "player" });
+    await settle();
+    const effect = speaker.itemTypes.effect.find((entry) => entry.flags?.[MODULE_ID]?.skillPick);
+    assert.deepEqual(effect?.system.rules.map((rule) => [rule.key, rule.selector]), [["FlatModifier", "deception"], ["AdjustDegreeOfSuccess", "diplomacy"], ["AdjustDegreeOfSuccess", "deception"]]);
+});

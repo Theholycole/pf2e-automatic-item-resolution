@@ -296,10 +296,11 @@ test("temporary Hit Points, a penalty, a resistance and later words: Razmiri Way
     const stone = at("Aeon Stone (Olivine Pendeloque)");
     assert.deepEqual(stone.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.unit]), [["attack-roll", -1, "minutes"]]);
     assert.equal(stone.partial, true);
-    // "+1 item bonus to Diplomacy checks and checks of the skill associated with your phrase": Diplomacy, the other a note.
+    // "+1 item bonus to Diplomacy checks and checks of the skill associated with your phrase": Diplomacy, the other the card's pick
+    // (src/compiler/skill-pick.js).
     const words = at("Words of Wisdom (Lesser)");
     assert.deepEqual(words.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["diplomacy", 1, "item"]]);
-    assert.equal(words.partial, true);
+    assert.deepEqual([words.item.skillPick.skills.length, words.partial], [3, undefined]);
     // "Trigger You would take mental, poison, or spirit damage Effect You gain resistance 5 to the triggering damage type": picked.
     assert.deepEqual(at("Safeguarding").item.resist, [{ type: null, choose: ["mental", "poison", "spirit"], value: 5, duration: { mode: "fixed", value: 10, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
     // The 6d6 in its emanation; the minute of damage to whoever touches its wearer, a note.

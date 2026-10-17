@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, strikeDamageEffectSource, strikeDamageText } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
@@ -215,7 +215,7 @@ function choicesOf(state, root) {
     if (state.kind === "fortune") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
-    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), recoveryType: Number(root.querySelector("[data-air-field='recoveryType']")?.value ?? state.recoveryType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), runeChoice: Number(root.querySelector("[data-air-field='runeChoice']")?.value ?? state.runeChoice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), recoveryType: Number(root.querySelector("[data-air-field='recoveryType']")?.value ?? state.recoveryType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), runeChoice: Number(root.querySelector("[data-air-field='runeChoice']")?.value ?? state.runeChoice ?? 0), skillPick: Number(root.querySelector("[data-air-field='skillPick']")?.value ?? state.skillPick ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
 }
 
 const APPLY = {
@@ -305,7 +305,7 @@ async function onRequest(data) {
         : state.kind === "toggle" || state.kind === "ways" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null }
-        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, recoveryType: Number.isInteger(data.recoveryType) ? data.recoveryType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, runeWeapon: Number.isInteger(data.runeWeapon) ? data.runeWeapon : null, runeChoice: Number.isInteger(data.runeChoice) ? data.runeChoice : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
+        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, recoveryType: Number.isInteger(data.recoveryType) ? data.recoveryType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, runeWeapon: Number.isInteger(data.runeWeapon) ? data.runeWeapon : null, runeChoice: Number.isInteger(data.runeChoice) ? data.runeChoice : null, skillPick: Number.isInteger(data.skillPick) ? data.skillPick : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
@@ -345,7 +345,7 @@ async function targetedCreatures(uuids) {
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
 
-async function applyCard(message, { drinker = null, ceremony = false, resistType = null, recoveryType = null, reduceChoice = null, runeWeapon = null, runeChoice = null, targets = [] } = {}) {
+async function applyCard(message, { drinker = null, ceremony = false, resistType = null, recoveryType = null, reduceChoice = null, runeWeapon = null, runeChoice = null, skillPick = null, targets = [] } = {}) {
     let state = stateOf(message);
     if (!state || state.status !== "open") return null;
     // (The weapon picked for the rune it lends.)
@@ -362,6 +362,7 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     if (Number.isInteger(reduceChoice) && reduce.some((entry) => entry.choose?.[reduceChoice])) state = { ...state, reduceChoice };
     // (Its resistance's type, as picked.)
     if (Number.isInteger(resistType) && (state.plan.item?.resist ?? []).some((entry) => entry.choose?.[resistType])) state = { ...state, resistType };
+    if (Number.isInteger(skillPick) && state.plan.item?.skillPick?.skills?.[skillPick]) state = { ...state, skillPick };
     // (Its flat check's type, as picked: Soothing Powder's.)
     if (Number.isInteger(recoveryType) && state.plan.item?.recovery?.choose && state.plan.item.recovery.types[recoveryType]) state = { ...state, recoveryType };
     // (A tea's Tea Ceremony, as ticked.)
@@ -446,6 +447,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         if (!target.actor) break;
         await target.actor.createEmbeddedDocuments("Item", [senseEffectSource(sense, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${senseText(sense)}`);
+    }
+    // (A skill its user picked when the item was made: Words of Wisdom's phrase — its bonus and better degree, an Effect.)
+    if (state.plan.item?.skillPick && target.actor) {
+        await target.actor.createEmbeddedDocuments("Item", [skillPickEffectSource(state.plan.item.skillPick, state.skillPick ?? 0, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        lines.push(`${recipient.name}: ${state.plan.item.skillPick.skills[state.skillPick ?? 0]} too`);
     }
     // (Extra damage on its user's Strikes: Martial Mayhem Mutagen's precision damage against off-guard creatures — PF2e's DamageDice.)
     for (const extra of state.plan.item?.strikeDamage ?? []) {
