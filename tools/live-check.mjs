@@ -2579,6 +2579,213 @@ export const cases = {
         await until(() => drinker.system.attributes.hp.value === drinker.system.attributes.hp.max, `full Hit Points (${drinker.system.attributes.hp.value}/${drinker.system.attributes.hp.max})`, { timeout: 8000 });
         if (affliction) await until(() => !drinker.items.get(affliction.id), "the affliction removed", { timeout: 8000 });
         return { hp: drinker.system.attributes.hp.value, afflictionMade: Boolean(affliction), results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Drake Rifle (Acid)'s Drake Shot: the rifle's readied Strike (AC 1) leaves its target Sickened 1.
+    async drakeShot(scene) {
+        const { actor: shooter, token: shooterToken } = await creature(scene, "Drake Shooter", { type: "character", x: 0, y: 0 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Drake Target", { x: 3, y: 0, ac: 1, alliance: "opposition", hp: 200 });
+        const rifle = await give(shooter, "Drake Rifle (Acid)");
+        await rifle.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        const rounds = await give(shooter, "Rounds (Flintlock Musket)");
+        await rounds.update({ "system.baseItem": "rounds-drake-rifle", "system.quantity": 3 });
+        await rifle.attach(rounds, { quantity: 1, skipConfirm: true });
+        await wait(500);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(rifle.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await shooterToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await strike(shooter, shooter.items.get(rifle.id));
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        await until(() => foe.hasCondition("sickened"), "Sickened on the target", { timeout: 10000 });
+        return { outcome };
+    },
+
+    // Spider Gun's Web Shot: its square placed (the click stood in for); a creature entering it attempts the Reflex save (at −30, a
+    // critical failure: Immobilized).
+    async webShot(scene) {
+        const { actor: gunner, token: gunnerToken } = await creature(scene, "Web Gunner", { type: "character", x: 6, y: 0 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Web Walker", { x: 9, y: 0, alliance: "opposition", save: -30 });
+        const gun = await give(gunner, "Spider Gun");
+        await gunnerToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const web = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Spider Gun/.test(region.name));
+        try {
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(gun.uuid, 0);
+            await until(() => web(), "the web's Region", { timeout: 8000 });
+            const shape = web().shapes[0];
+            since = Date.now();
+            await foeToken.update({ x: shape.x, y: shape.y });
+            const card = await messageAfter(since, abilitySaveCard, { what: "the web's save card", timeout: 10000 });
+            await rollAndApply(card);
+            await until(() => foe.hasCondition("immobilized"), "Immobilized", { timeout: 10000 });
+            return { region: web()?.name };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await web()?.delete().catch(() => null);
+        }
+    },
+
+    // Serpent Dagger: a critical hit (AC −20) posts its Fortitude save card at the target (DC 19); at −30 it's Sickened.
+    async serpentCrit(scene) {
+        const { actor: rogue, token: rogueToken } = await creature(scene, "Serpent Rogue", { type: "character", x: 12, y: 0 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Serpent Target", { x: 13, y: 0, ac: -20, alliance: "opposition", hp: 200, save: -30 });
+        const dagger = await give(rogue, "Serpent Dagger");
+        await dagger.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await rogueToken.object?.control?.();
+        await target(foeToken);
+        const since = Date.now();
+        const { attack } = await strike(rogue, dagger);
+        assert(attack.flags.pf2e.context.outcome === "criticalSuccess", `a critical hit (AC −20): ${attack.flags.pf2e.context.outcome}`);
+        const card = await messageAfter(since, abilitySaveCard, { what: "the dagger's save card" });
+        const check = card.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && check.against.value === 19, `Fortitude DC 19 (${JSON.stringify(check)})`);
+        await rollAndApply(card);
+        await until(() => foe.hasCondition("sickened"), "Sickened", { timeout: 10000 });
+        return { check };
+    },
+
+    // Thundercrasher: a critical hit's save is against its wielder's class DC — its card at that DC, or without one the GM's note.
+    async thunderCrit(scene) {
+        const { actor: gunner, token: gunnerToken } = await creature(scene, "Thunder Gunner", { type: "character", x: 15, y: 0 });
+        const { token: foeToken } = await creature(scene, "Thunder Target", { x: 16, y: 0, ac: -20, alliance: "opposition", hp: 200 });
+        const gun = await give(gunner, "Thundercrasher");
+        await gun.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        const rounds = await give(gunner, "Rounds (Blunderbuss)");
+        await rounds.update({ "system.quantity": 3 });
+        await gun.attach(rounds, { quantity: 1, skipConfirm: true });
+        await wait(500);
+        await gunnerToken.object?.control?.();
+        await target(foeToken);
+        const since = Date.now();
+        const { attack } = await strike(gunner, gunner.items.get(gun.id));
+        assert(attack.flags.pf2e.context.outcome === "criticalSuccess", `a critical hit (AC −20): ${attack.flags.pf2e.context.outcome}`);
+        const classDC = Number(gunner.system.attributes?.classDC?.value) || null;
+        const found = await messageAfter(since, (message) => abilitySaveCard(message) || /Thundercrasher.*has no class DC/.test(message.content ?? ""), { what: "the save card or the GM's note" });
+        const against = found.flags?.["pf2e-automatic-ability-resolution"]?.card?.plan?.resolution?.check?.against ?? null;
+        assert(classDC ? against?.value === classDC : !against, `class DC ${classDC} → ${JSON.stringify(against)}`);
+        return { classDC, against };
+    },
+
+    // Smogger: its smog an emanation attached to its wearer's token, concealing, for 1 minute.
+    async smoggerZone(scene) {
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Smog Wearer", { type: "character", x: 18, y: 0 });
+        const smogger = await give(wearer, "Smogger");
+        await smogger.update({ "system.equipped.invested": true });
+        await wearerToken.object?.control?.();
+        await game.modules.get(NS).api.live.activate(smogger.uuid, 0);
+        const smog = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Smogger/.test(region.name));
+        await until(() => smog(), "the smog's Region", { timeout: 8000 });
+        const zone = smog().flags["pf2e-automatic-ability-resolution"].zone;
+        const attached = smog().attachment?.token?.id ?? smog().attachment?.token ?? null;
+        assert(zone.zone.concealed && attached === wearerToken.id, `concealing, attached to the wearer (${zone.zone.concealed}, ${attached})`);
+        // (Gone again, so it conceals no later case's creatures.)
+        await smog().delete();
+        return { area: zone.zone.area };
+    },
+
+    // Smoke Screen Snare (Lesser): placed (the click stood in for); the first creature to enter sets it off, and its concealing smoke
+    // appears at the snare's square (the ability module's zone.then) as the snare goes.
+    async smokeSnareThen(scene) {
+        const { actor: setter, token: setterToken } = await creature(scene, "Smoke Setter", { type: "character", x: 0, y: 1 });
+        const { token: walkerToken } = await creature(scene, "Smoke Walker", { x: 4, y: 1, alliance: "opposition" });
+        const snare = await give(setter, "Smoke Screen Snare (Lesser)");
+        await setterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        try {
+            await snare.consume();
+            const named = (test) => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Smoke Screen Snare/.test(region.name) && test(region.flags["pf2e-automatic-ability-resolution"].zone.zone));
+            await until(() => named((zone) => zone.once), "the snare's Region", { timeout: 8000 });
+            const shape = named((zone) => zone.once).shapes[0];
+            await walkerToken.update({ x: shape.x, y: shape.y });
+            await until(() => named((zone) => zone.concealed && !zone.once), "the smoke's Region", { timeout: 10000 });
+            assert(!named((zone) => zone.once), "the snare spent");
+            return { smoke: named((zone) => zone.concealed).flags["pf2e-automatic-ability-resolution"].zone.zone.area };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            for (const region of scene.regions.filter((entry) => /Smoke Screen Snare/.test(entry.name))) await region.delete().catch(() => null);
+        }
+    },
+
+    // Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check against DC 38 (its Perception at −30): Off-Guard.
+    async cunningDodge(scene) {
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Dodging Wearer", { type: "character", x: 6, y: 1 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Dodged Foe", { x: 7, y: 1, alliance: "opposition" });
+        await foe.update({ "system.perception.mod": -30 });
+        const mantle = await give(wearer, "Mercurial Mantle");
+        await mantle.update({ "system.equipped.invested": true });
+        await wearerToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(mantle.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the mantle's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the Perception check card" });
+        const statistic = check.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check.statistic;
+        assert(statistic === "perception", `a Perception check (${statistic})`);
+        await rollAndApply(check);
+        await until(() => foe.hasCondition("off-guard"), "Off-Guard", { timeout: 10000 });
+        return { statistic };
+    },
+
+    // Violet Ray's Electric Love: the counteract card offers the adjacent ally; its Clumsy counteracted (+22 against the DC typed).
+    async violetRay(scene) {
+        const { actor: healer, token: healerToken } = await creature(scene, "Ray Healer", { type: "character", x: 9, y: 1 });
+        const { actor: patient } = await creature(scene, "Ray Patient", { x: 10, y: 1 });
+        await patient.increaseCondition("clumsy", { value: 1 });
+        const ray = await give(healer, "Violet Ray");
+        await healerToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(ray.uuid, 0);
+        const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        const at = card.getFlag(NS, "card").drinkers.findIndex((entry) => entry.name === patient.name);
+        assert(at >= 0, `the adjacent patient offered (${JSON.stringify(card.getFlag(NS, "card").drinkers.map((entry) => entry.name))})`);
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: at });
+        await wait(500);
+        const rows = game.messages.get(card.id).getFlag(NS, "card").rows;
+        assert(rows.some((row) => row.slug === "clumsy"), `Clumsy listed (${JSON.stringify(rows)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { rows: rows.map((row) => ({ ticked: row.slug === "clumsy", dc: 5, rank: 1 })) });
+        await until(() => !patient.hasCondition("clumsy"), "Clumsy counteracted", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Core Bugle's Reveille: its prone user and the prone ally targeted stand.
+    async coreBugle(scene) {
+        const { actor: bugler, token: buglerToken } = await creature(scene, "Bugler", { type: "character", x: 12, y: 1 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Fallen Soldier", { x: 14, y: 1 });
+        for (const actor of [bugler, ally]) await actor.increaseCondition("prone");
+        const bugle = await give(bugler, "Core Bugle");
+        await buglerToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(bugle.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the bugle's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        await until(() => !bugler.hasCondition("prone") && !ally.hasCondition("prone"), "both standing", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Energy Ointment (Lesser): resistance 5 to fire (picked) on each of the two creatures targeted.
+    async ointmentTargets(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Ointment User", { type: "character", x: 16, y: 1 });
+        const { actor: first, token: firstToken } = await creature(scene, "Anointed One", { x: 17, y: 1 });
+        const { actor: second, token: secondToken } = await creature(scene, "Anointed Two", { x: 18, y: 1 });
+        const ointment = await give(user, "Energy Ointment (Lesser)");
+        await userToken.object?.control?.();
+        const since = Date.now();
+        await ointment.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the ointment's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [firstToken.uuid, secondToken.uuid], resistType: 3 });
+        const resists = (actor) => actor.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes("fire") && rule.value === 5));
+        await until(() => resists(first) && resists(second), "fire resistance 5 on both", { timeout: 8000 });
+        assert(!resists(user), "not on its user");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     }
 };
 
