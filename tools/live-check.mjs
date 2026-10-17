@@ -55,6 +55,9 @@ async function creature(scene, name, { type = "npc", x = 0, y = 0, hp = 50, ac =
     const actor = await Actor.create({ name: `${PREFIX} ${name}`, type, system, flags: { [NS]: { [FIXTURE]: true } } });
     const [token] = await scene.createEmbeddedDocuments("Token", [{ ...actor.prototypeToken.toObject(), actorId: actor.id, actorLink: true, x: x * 100, y: y * 100 }]);
     await wait(300);
+    // (Drawn on the canvas before the case goes on: on a lab scene just made, the first case's creatures weren't yet, and what looks for
+    // creatures nearby found none.)
+    for (const stop = Date.now() + 5000; Date.now() < stop && canvas.scene?.id === scene.id && !token.object; ) await wait(100);
     return { actor, token };
 }
 
@@ -2786,6 +2789,87 @@ export const cases = {
         await until(() => resists(first) && resists(second), "fire resistance 5 on both", { timeout: 8000 });
         assert(!resists(user), "not on its user");
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Iron Cube: its readied melee Strike's hit (AC 1) posts PF2e's Trip card at the creature hit.
+    async ironCubeTrip(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Cube Fighter", { type: "character", x: 2, y: 13 });
+        const { token: foeToken } = await creature(scene, "Cube Target", { x: 3, y: 13, ac: 1, alliance: "opposition" });
+        const sword = await give(fighter, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const cube = await give(fighter, "Iron Cube");
+        await fighterToken.object?.control?.();
+        let since = Date.now();
+        await cube.consume();
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(fighter, sword);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const trip = await messageAfter(since, itemCard("item-action"), { what: "the Trip card" });
+        assert(trip.getFlag(NS, "card").plan.action.slug === "trip", "PF2e's Trip");
+        return { card: trip.id };
+    },
+
+    // Stoneraiser Javelin: its stalagmites placed (the click stood in for) — difficult terrain; a creature moving in takes 4d4 piercing.
+    async stoneraiserZone(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Javelin Thrower", { type: "character", x: 18, y: 19 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Stalagmite Walker", { x: 17, y: 17, alliance: "opposition", hp: 200 });
+        const javelin = await give(thrower, "Stoneraiser Javelin");
+        await throwerToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const field = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Stoneraiser/.test(region.name));
+        try {
+            await game.modules.get(NS).api.live.activate(javelin.uuid, 0);
+            await until(() => field(), "the stalagmites' Region", { timeout: 8000 });
+            const zone = field().flags["pf2e-automatic-ability-resolution"].zone.zone;
+            assert(zone.terrain.length && zone.damage[0].when === "enter", `difficult terrain and damage on entering (${JSON.stringify(zone.damage)})`);
+            const shape = field().shapes[0];
+            const since = Date.now();
+            await foeToken.update({ x: shape.x, y: shape.y });
+            // (Not the save of those there as it appeared — its thrower among them — but the damage on moving in.)
+            const card = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check?.roll !== "save", { what: "the stalagmites' damage card", timeout: 10000 });
+            const before = foe.system.attributes.hp.value;
+            await applyAbilityCard(card);
+            await until(() => foe.system.attributes.hp.value < before, "piercing damage on the walker", { timeout: 10000 });
+            return { lost: before - foe.system.attributes.hp.value };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await field()?.delete().catch(() => null);
+        }
+    },
+
+    // Metalmist Sphere (Lesser): its concealing mist, a 5-foot burst on its user for 1 minute.
+    async metalmistZone(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Mist User", { type: "character", x: 17, y: 3 });
+        const sphere = await give(user, "Metalmist Sphere (Lesser)");
+        await userToken.object?.control?.();
+        await sphere.consume();
+        const mist = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Metalmist/.test(region.name));
+        await until(() => mist(), "the mist's Region", { timeout: 8000 });
+        const zone = mist().flags["pf2e-automatic-ability-resolution"].zone.zone;
+        assert(zone.concealed && zone.area.type === "burst" && zone.area.value === 5, `a concealing 5-foot burst (${JSON.stringify(zone.area)})`);
+        await mist().delete();
+        return { area: zone.area };
+    },
+
+    // Chilled Fire Noodles: a Fatigued eater's AC and saves without Fatigued's −1 for the hour (PF2e's AdjustModifier suppressing it).
+    async noodlesFatigue(scene) {
+        const { actor: eater } = await creature(scene, "Noodle Eater", { type: "character", x: 19, y: 3 });
+        const fresh = eater.system.attributes.ac.value;
+        await eater.increaseCondition("fatigued");
+        await until(() => eater.system.attributes.ac.value === fresh - 1, `Fatigued's −1 to AC (${eater.system.attributes.ac.value})`, { timeout: 5000 });
+        const noodles = await give(eater, "Chilled Fire Noodles");
+        const since = Date.now();
+        await noodles.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the noodles' card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => eater.system.attributes.ac.value === fresh, `AC back to ${fresh} (${eater.system.attributes.ac.value})`, { timeout: 8000 });
+        assert(eater.hasCondition("fatigued"), "still Fatigued");
+        return { ac: eater.system.attributes.ac.value };
     }
 };
 
