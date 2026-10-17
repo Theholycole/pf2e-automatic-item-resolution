@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 237,
+   "none": 234,
    "resolves": 740,
    "builtin:readied-bonus": 21,
    "builtin:zone": 87,
    "builtin:item-action": 12,
+   "partial": 82,
    "note-only": 188,
-   "partial": 79,
    "builtin:counteract": 28,
    "builtin:no-effect": 53,
    "builtin:reroll": 2,
@@ -34,12 +34,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 124,
+    "none": 121,
     "resolves": 209,
+    "partial": 42,
     "note-only": 92,
     "builtin:zone": 9,
     "builtin:readied-bonus": 7,
-    "partial": 39,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -310,7 +310,7 @@
    "count": 277,
    "resolves": 169,
    "gaps": 0,
-   "none": 21
+   "none": 18
   },
   "linked-effect": {
    "count": 393,
@@ -322,7 +322,7 @@
    "count": 491,
    "resolves": 330,
    "gaps": 0,
-   "none": 32
+   "none": 29
   },
   "affliction": {
    "count": 144,
@@ -370,7 +370,7 @@
    "count": 433,
    "resolves": 262,
    "gaps": 0,
-   "none": 29
+   "none": 26
   },
   "duration": {
    "count": 943,
@@ -382,14 +382,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 312,
+   "none": 309,
    "item": 636,
    "fortune": 23,
    "zone": 87,
    "expose": 89,
    "later": 79,
    "action": 12,
-   "save": 129,
+   "save": 132,
    "counteract": 28,
    "reroll": 2,
    "coat": 45,
@@ -399,9 +399,9 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 151,
+    "none": 148,
     "later": 12,
-    "save": 89,
+    "save": 92,
     "item": 217,
     "zone": 9,
     "fortune": 7,
@@ -486,7 +486,7 @@
    }
   },
   "noCard": {
-   "no-plan": 237,
+   "no-plan": 234,
    "triggered": 21,
    "gm": 53,
    "other": 1
@@ -830,7 +830,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Hobbling Snare",
@@ -13225,7 +13227,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Poet's Fritter (Lesser)",
@@ -22161,7 +22165,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Poracha Fulu",

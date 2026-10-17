@@ -397,3 +397,13 @@ test("Lance of Sun's Radiance: a line's basic Reflex damage, Blinded on a critic
     assert.ok(lance.resolution.outcomes.criticalFailure.effects.some((effect) => effect.slug === "blinded"));
     assert.deepEqual(lance.notes, ["A dragon takes 6d12 spirit damage instead (by hand)."]);
 });
+
+test("Octopus Potion: its arms' Grapple at the potion's own Athletics modifier, given in a later sentence (+12 for the lesser), PF2e's Grapple rows; the random target and the added-effect table notes", async () => {
+    const { compileBasicActions, BASIC_ACTIONS } = await import("../../pf2e-automatic-ability-resolution/src/compiler/index.js");
+    const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    const potion = compileItem(item("Octopus Potion (Lesser)"), { basicActions });
+    assert.deepEqual([potion.resolution.check.statistic, potion.resolution.check.modifier, potion.resolution.check.against.statistic, potion.ownCheck.modifier], ["athletics", 12, "fortitude", 12]);
+    assert.ok(potion.resolution.outcomes.success.effects.some((effect) => effect.slug === "grabbed"));
+    assert.equal(potion.partial, true);
+});

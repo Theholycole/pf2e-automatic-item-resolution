@@ -119,6 +119,12 @@ export function withItemData(html, item) {
     // the creature is already slowed, it's permanently petrified": degree rows, the critical failure's the failure's and the rest
     // its note.)
     text = text.replace(/(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save\.)\s*On a failure, it's (@UUID\[[^\]]+\]\{[^}]+\}) for (\d+ (?:rounds?|minutes?)); on a critical failure, (if [^,.]+), it's ([^.]+)\.\s*/g, (whole, check, link, time, condition, worse) => `${check}</p><p><strong>Failure</strong> The target is ${link} for ${time}.</p><p><strong>Critical Failure</strong> The target is ${link} for ${time}. ${condition.charAt(0).toUpperCase()}${condition.slice(1)}, it's ${worse}.</p><p>`);
+    // (A grapple at the item's own Athletics modifier given later, Octopus Potion's "The arms share your multiple attack penalty and attempt to
+    // Grapple a random enemy within 15 feet of you. … The Athletics modifier is +12": the check at +12, as the own-check reader takes
+    // it; its "[[/r 1d4 #Added Effect]]" table roll as its dice and its table's "Added Effect" in lower case, so neither is read as the
+    // Effect's start.)
+    const ownModifier = /\bThe Athletics modifier is (?:\[\[\/r 1d20\+(\d+)[^\]]*\]\](?:\{[^}]*\})?|\+(\d+))/i.exec(text);
+    if (ownModifier) text = text.replace(/\bThe arms share your multiple attack penalty and attempt to ((?:@UUID\[[^\]]*\]\{)?Grapple\}?) ([^.<]+)\./, (whole, grapple, whom) => `The arms attempt to ${grapple} ${whom} with a +${ownModifier[1] ?? ownModifier[2]} modifier. They share your multiple attack penalty.`).replace(/\[\[\/r (\d+d\d+) #Added Effect\]\]/g, "$1").replace(/\bAdded Effect\b/g, "Added effect");
     // (A missile that hits on its own, Cape of Justice's "The shuriken hits automatically and deals 1d4+1 force damage, or 2d4+2 force
     // damage if the target is your designated offender": damage outright at the target, the other case a note.)
     text = text.replace(/\bThe [\w-]+ hits automatically and deals (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage(?:, or (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage if the target is ([^.]+))?\./g, (whole, damage, other, which) => `The target takes ${damage} damage.${other ? ` A target that's ${which} takes ${other} damage instead.` : ""}`);
