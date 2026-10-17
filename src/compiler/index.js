@@ -13,7 +13,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
 import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf } from "./consumables.js";
-import { allyAreaRow, noteRow, ownRow, plainText } from "./rows.js";
+import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -267,7 +267,9 @@ function itemInfo(item) {
         // (Its flat check to end persistent damage: the item card's, after its row, src/compiler/recovery.js.)
         ...(readRecovery(plainText(item?.system?.description?.value)) ? { recovery: readRecovery(plainText(item?.system?.description?.value)) } : {}),
         // (A property rune it lends a weapon: the item card's, src/compiler/rune-loans.js.)
-        ...(readRuneLoan(plainText(item?.system?.description?.value), item) ? { rune: readRuneLoan(plainText(item?.system?.description?.value), item) } : {})
+        ...(readRuneLoan(plainText(item?.system?.description?.value), item) ? { rune: readRuneLoan(plainText(item?.system?.description?.value), item) } : {}),
+        // (Back from dying without raising Wounded, src/compiler/rows.js.)
+        ...(keepsWounded(plainText(item?.system?.description?.value)) ? { keepWounded: true } : {})
     };
 }
 

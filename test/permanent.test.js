@@ -520,3 +520,12 @@ test("a bonus to some actions' checks: Eye of the Wise's \"attempts to Decipher 
     const stasis = compileActivations(item("Aeon Stone (Flickering)"), { spellEffects })[1].plan;
     assert.deepEqual(stasis.resolution.outcomes.success.modifiers, []);
 });
+
+test("healing back from dying without raising Wounded (Magical Medal (Phoenix's Fire)'s 1 Hit Point; Banner of the Rising Star's 30 for an ally in its aura), and a damage link's save with no \"damage\" word (Black Hole Armor)", () => {
+    const medal = compileActivations(item("Magical Medal (Phoenix's Fire)"), { spellEffects })[0].plan;
+    assert.deepEqual([medal.resolution.outcomes.success.effects.map((effect) => effect.kind), medal.item.keepWounded, medal.partial], [["heal"], true, undefined]);
+    const banner = compileActivations(item("Banner of the Rising Star"), { spellEffects })[0].plan;
+    assert.deepEqual([banner.resolution.outcomes.success.effects[0].amount, banner.item.recipient, banner.targeting.range, banner.item.keepWounded], [30, "targets", "30 feet", true]);
+    const armor = compileActivations(item("Black Hole Armor"), { spellEffects })[1].plan;
+    assert.deepEqual([armor.resolution.kind, armor.resolution.check.statistic, armor.resolution.check.basic, armor.targeting.area], ["save", "reflex", true, { type: "burst", value: 10 }]);
+});

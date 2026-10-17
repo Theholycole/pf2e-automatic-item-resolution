@@ -119,6 +119,9 @@ export function withItemData(html, item) {
     // the creature is already slowed, it's permanently petrified": degree rows, the critical failure's the failure's and the rest
     // its note.)
     text = text.replace(/(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save\.)\s*On a failure, it's (@UUID\[[^\]]+\]\{[^}]+\}) for (\d+ (?:rounds?|minutes?)); on a critical failure, (if [^,.]+), it's ([^.]+)\.\s*/g, (whole, check, link, time, condition, worse) => `${check}</p><p><strong>Failure</strong> The target is ${link} for ${time}.</p><p><strong>Critical Failure</strong> The target is ${link} for ${time}. ${condition.charAt(0).toUpperCase()}${condition.slice(1)}, it's ${worse}.</p><p>`);
+    // (A damage link with its save and no "damage" word, Black Hole Armor's "Each creature in the burst takes @Damage[10d8[piercing]]
+    // with a @Check[reflex|dc:35] save": the reader's "… damage with a … save".)
+    text = text.replace(/(\btakes? @Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) with an? (@Check\[(?:type:)?(?:fortitude|reflex|will)\b)/g, "$1 damage with a $2");
     // (Other damage for one kind of creature in the middle of the sentence, Lance of Sun's Radiance's "Creatures in the area take 6d8
     // spirit damage, or 6d12 spirit damage if they're a dragon (… basic save)": the damage and its save, the dragon's a note.)
     text = text.replace(/(\btake @Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})? damage), or (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) damage if they're an? ([\w-]+) (\(@Check\[[^\]]*\](?:\{[^}]*\})? save\))\./g, (whole, base, other, kind, save) => `${base} ${save}. A ${kind} takes ${other} damage instead.`);

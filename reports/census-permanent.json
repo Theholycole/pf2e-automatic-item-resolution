@@ -6,14 +6,14 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 722,
+   "resolves": 724,
    "builtin:cast-spell": 469,
-   "none": 697,
-   "partial": 126,
+   "none": 695,
+   "partial": 127,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 38,
-   "note-only": 233,
+   "note-only": 232,
    "builtin:reroll": 25,
    "builtin:counteract": 4,
    "builtin:pf2e-rules": 24,
@@ -26,10 +26,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 388,
+   "save": 390,
    "cast": 469,
    "item": 599,
-   "none": 882,
+   "none": 880,
    "focus": 45,
    "fortune": 48,
    "reroll": 25,
@@ -48,14 +48,14 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 438,
+    "resolves": 439,
     "builtin:cast-spell": 340,
-    "none": 463,
-    "partial": 67,
+    "none": 462,
+    "partial": 68,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
     "builtin:readied-bonus": 31,
-    "note-only": 148,
+    "note-only": 147,
     "builtin:reroll": 17,
     "builtin:zone": 8,
     "builtin:modes": 15,
@@ -109,9 +109,9 @@
    "results": {
     "builtin:cast-spell": 34,
     "note-only": 17,
-    "resolves": 57,
+    "resolves": 58,
     "builtin:counteract": 1,
-    "none": 29,
+    "none": 28,
     "builtin:no-effect": 5,
     "builtin:reroll": 3,
     "partial": 7,
@@ -6292,9 +6292,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Whip of Compliance",
@@ -7757,9 +7757,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Drake Rifle (Fire)",
@@ -8826,9 +8826,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Furnace of Endings (Greater)",

@@ -508,7 +508,8 @@ async function heal({ token, actor }, name, amount, state) {
     const healed = (Number(actor.system?.attributes?.hp?.value) || 0) - before;
     const parts = [`${name} regains ${healed} Hit Points${healed < amount ? ` (of ${amount})` : ""}${state.rolled?.kind === "healing" ? ", PF2e's roll" : ""}`];
     if (wasDying && dying) {
-        const revived = await dying.recoverFromDying(actor, wasDying);
+        // (Magical Medal (Phoenix's Fire)'s "Your Wounded value does not increase": the core's keepWounded.)
+        const revived = await dying.recoverFromDying(actor, wasDying, { keepWounded: Boolean(state.plan?.item?.keepWounded) });
         if (revived) parts.push(dying.revivedNote(revived));
     } else if (wasDying) parts.push("It was dying: end Dying and raise Wounded by hand.");
     return parts.join(". ");

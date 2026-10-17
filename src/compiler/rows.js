@@ -64,6 +64,11 @@ export function itemDuration(text) {
     return { mode: "fixed", value: WORD_NUMBERS[count.toLowerCase()] ?? Number(count), unit: UNITS[unit.toLowerCase()], expiry: "turn-start", anchor: "effect-start" };
 }
 
+// Healing that brings its creature back from dying without raising Wounded: Magical Medal (Phoenix's Fire)'s "You lose the dying
+// condition and regain 1 Hit Point. Your Wounded value does not increase." — plan.item.keepWounded, the core's recoverFromDying
+// keepWounded in live play.
+export const keepsWounded = (text) => /\b(?:Your|their|its|his|her) Wounded (?:value|condition) does(?:n't| not) increase\b|\bdoes(?:n't| not) increase (?:their|your|its) Wounded (?:value|condition)\b/i.test(String(text ?? ""));
+
 // A sentence's own time, else the item's.
 export function durationIn(sentence, fallback) {
     const own = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?|days?)\b/i.exec(sentence);
@@ -171,9 +176,11 @@ function textHealing(sentences, used = new Set()) {
         // for 3d8 Hit Points", "healing the wielder for 10 Hit Points".)
         // (The Survivor's "you drop to 1 Hit Point instead and immediately restore an additional 4d8+16 Hit Points".)
         // (And Guardian Rose's "you avoid being knocked out and regain 2d8+5 Hit Points": the same "you".)
-        const self = new RegExp(String.raw`\b(?:you|you [a-z ]{1,40}? and) (?:immediately )?regain (?:an additional )?${AMOUNT_PARENS} Hit Points\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b|\band (?:immediately )?restore an additional ${AMOUNT_PARENS} Hit Points\b(?! to)`, "i").exec(sentence);
-        // (And another's own words: "Your ally regains 2d8 hit points", The Midwife's "restore to the target 6d8+24 Hit Points".)
-        const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b|\brestor(?:e|es|ing) to (?:it|the (?:target|creature)|that creature) ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
+        // (And one Hit Point, Magical Medal (Phoenix's Fire)'s "regain 1 Hit Point".)
+        const self = new RegExp(String.raw`\b(?:you|you [a-z ]{1,40}? and) (?:immediately )?regain (?:an additional )?${AMOUNT_PARENS} Hit Points?\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b|\band (?:immediately )?restore an additional ${AMOUNT_PARENS} Hit Points\b(?! to)`, "i").exec(sentence);
+        // (And another's own words: "Your ally regains 2d8 hit points", The Midwife's "restore to the target 6d8+24 Hit Points", Banner of
+        // the Rising Star's "An ally within the banner's aura with the Dying condition regains 30 Hit Points".)
+        const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b|\b(?:An?|One|That) ally\b[^.]*?\bregains ${AMOUNT_PARENS} Hit Points?\b|\brestor(?:e|es|ing) to (?:it|the (?:target|creature)|that creature) ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
         const match = self ?? other;
         // (Tallowheart Mass's "If you consume a portion, you regain …": the eating is the activation, not a condition.)
         // (Nor Lover's Knot's "When you activate a lover's knot, you regain 2d6 Hit Points": the activation itself.)
@@ -559,7 +566,8 @@ export function ownRow(item, { healing = true } = {}) {
     // against inhaled threats" before its "+1 status bonus to saves against inhaled threats".)
     const restated = (sentence) => modifiers.length > 0 && /\ban? (?:item |status |circumstance )?bonus\b/i.test(sentence) && !/[+\-–]\d|\d+d\d+|\bDC\b/.test(sentence);
     // ("allowing you to move with greater speed": flavor, not a Speed.)
-    const unread = sentences.filter((sentence, index) => !used.has(index) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
+    // (Nor when it may be used, "You can use this action while Unconscious".)
+    const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(weapon.length ? { weapon } : {}), ...(other ? { other } : {}) };
 }
 
