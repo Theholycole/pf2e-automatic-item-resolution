@@ -7,7 +7,7 @@
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf, triggerOn } from "./activation.js";
-import { othersTargeting, targetedRecipient, allyAreaPlan, castPlan, checkGated, effectLinks, fitPlan, ownPlan } from "./consumables.js";
+import { othersTargeting, targetedRecipient, allyAreaPlan, castPlan, checkGated, effectLinks, fitPlan, ownPlan, withStatedHealing } from "./consumables.js";
 import { castWordsPlan, fillCast } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
@@ -208,6 +208,8 @@ function compileEach(item, options = {}) {
         plan = withDegreeEffects(plan, activation.html, options.itemEffects);
         // (What a failed save primes for later, and what its damage dropping the creature does: notes, src/compiler/primed.js.)
         plan = withZeroHPNote(withPrimedNotes(plan, plainText(activation.html)), plainText(activation.html));
+        // (Healing its text gives its user beside a linked Effect, src/compiler/consumables.js: Kindler Cameo.)
+        plan = withStatedHealing(plan, activation.html, html);
         // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Arctic Worm Chitin Shield, Alluring
         // Lantern, Sandstorm Top — over a save at the creatures targeted once.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = auraZonePlan(activation.html, base, base.source?.name) ?? plan;

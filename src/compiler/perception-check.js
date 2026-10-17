@@ -7,7 +7,8 @@
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 
-const CHECK = /\bthe (?:target|triggering (?:creature|enemy)) attempts an? @Check\[perception\|dc:(\d+)\](?:\{[^}]*\})? check(?: before you roll)?\./i;
+// (Its other parameters too: Purloining Cloak's "@Check[perception|dc:38|name:Detect Reaction|showDC:all]".)
+const CHECK = /\bthe (?:target|triggering (?:creature|enemy)) attempts an? @Check\[perception\|dc:(\d+)(?:\|[^\]]*)?\](?:\{[^}]*\})? check(?: before you roll)?\./i;
 
 // The activation's html and the plan's base → a save plan at the creature targeted, or null.
 export function perceptionCheckPlan(html, base, item, options = {}) {
@@ -19,7 +20,7 @@ export function perceptionCheckPlan(html, base, item, options = {}) {
     const worded = rows
         .replace(/\bThis creature is\b/g, "The target is")
         .replace(/\bagainst the Strike\./g, "against your melee attacks until the end of your turn.")
-        .replace(/\b(?:off-guard|@UUID\[[^\]]*\]\{Off-Guard\}) against all your attacks until the end of its next turn\./gi, "@UUID[Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg]{Off-Guard} against your attacks until the end of its next turn.");
+        .replace(/\b(?:off-guard|@UUID\[[^\]]*\]\{Off-Guard\}) against all your attacks until the end of (?:its|their) next turn\./gi, "@UUID[Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg]{Off-Guard} against your attacks until the end of its next turn.");
     const read = compileAbility({ ...item, type: "action", system: { ...(item?.system ?? {}), description: { value: `<p><strong>Effect</strong> The target must attempt a @Check[will|dc:${check[1]}] save.</p>${worded}` }, actionType: { value: "free" }, actions: { value: null } } }, options);
     if (read?.resolution?.kind !== "save" || read.resolution.check?.statistic !== "will") return null;
     const before = text.slice(0, check.index).replace(/<[^>]+>/g, " ").replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\s+/g, " ").replace(/^.*?\bEffect\b\s*/s, "").trim();

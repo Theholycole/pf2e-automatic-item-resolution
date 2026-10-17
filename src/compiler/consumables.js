@@ -119,6 +119,27 @@ export function nativeHealing(item) {
     return { components: [{ id: "healing", formula: String(damage.formula), kinds: ["healing"] }], recipients: "living" };
 }
 
+// The healing its text gives its own user beside a linked Effect, when PF2e's data has none: Kindler Cameo's "You regain
+// @Damage[(3d10+12)[healing]] Hit Points, and you gain a +2 status bonus to Will saves", Wine of the Blood's "When you drink wine of
+// the blood, you recover @Damage[2d10[healing]] Hit Points" — the core's native healing, rolled with the Effect applied. Not under a
+// condition ("If you spend 10 minutes …") nor for others.
+const OWN_HEALING = /^(?:When you (?:Activate|drink|eat|consume|imbibe)\b[^,]*,\s*|[^.]*?\b(?:Effect\s+)?)?You (?:[a-z]+ [^,.]*?(?:, | and ))?(?:regain|recover) @Damage\[\(?([^\[\]()]+)\)?\[healing\](?:\|[^\]]*)?\](?:\{[^}]*\})?(?: Hit Points)?/i;
+// (An item that gives its bearer void healing, Emerald Fulcrum Lens: its own healing heals them still — any recipient.)
+export function statedHealing(text, whole = text) {
+    for (const sentence of String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/)) {
+        if (/^\s*(?:If|Whenever|While|Each time|At the start|At the end)\b/i.test(sentence)) continue;
+        const match = OWN_HEALING.exec(sentence.trim());
+        if (match && /^[\dd+\s-]+$/.test(match[1])) return { components: [{ id: "healing", formula: match[1].replace(/\s+/g, ""), kinds: ["healing"] }], recipients: /\bYou gain void healing\b/i.test(String(whole ?? "")) ? "any" : "living" };
+    }
+    return null;
+}
+// (An Effect plan with it: the healing beside the Effect.)
+export function withStatedHealing(plan, text, whole = text) {
+    if (plan?.resolution?.kind !== "effect" || plan.resolution.native?.healing) return plan;
+    const healing = statedHealing(text, whole);
+    return healing ? { ...plan, resolution: { ...plan.resolution, native: { ...(plan.resolution.native ?? {}), healing } } } : plan;
+}
+
 // What PF2e rolls itself when the item is used (its system.damage): live play takes that roll instead of a second one.
 export function pf2eRoll(item) {
     const damage = item?.system?.damage;

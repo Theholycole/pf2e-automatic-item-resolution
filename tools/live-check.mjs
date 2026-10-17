@@ -3202,6 +3202,36 @@ export const cases = {
         await applyAbilityCard(await messageAfter(since, abilitySaveCard, { what: "the ability module's card" }));
         await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "poison"), "persistent poison on the enemy", { timeout: 10000 });
         return { conditions: foe.itemTypes.condition.map((condition) => condition.slug) };
+    },
+
+    // Kindler Cameo: its PF2e Effect and the 3d10+12 Hit Points its text gives, rolled on the card.
+    async kindlerCameoHeal(scene) {
+        const { actor: wearer } = await creature(scene, "Cameo Wearer", { x: 16, y: 13, hp: 10 });
+        const cameo = await give(wearer, "Kindler Cameo");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(cameo.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the cameo's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => wearer.system.attributes.hp.value >= 25, `healed by at least 15 (${wearer.system.attributes.hp.value})`, { timeout: 8000 });
+        assert(wearer.itemTypes.effect.some((effect) => /Kindler Cameo/.test(effect.name)), "its Effect");
+        return { hp: wearer.system.attributes.hp.value };
+    },
+
+    // Purloining Cloak's reaction: the attacker's Perception check against DC 38 on the ability module's card.
+    async purloiningPerception(scene) {
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Cloak Wearer", { type: "character", x: 18, y: 13 });
+        const { token: foe } = await creature(scene, "Cloak Attacker", { x: 19, y: 13, alliance: "opposition" });
+        const cloak = await give(wearer, "Purloining Cloak");
+        await wearerToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(cloak.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the cloak's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the Perception card" });
+        const resolution = check.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(resolution.statistic === "perception" && resolution.against?.value === 38, `Perception against DC 38 (${JSON.stringify(resolution)})`);
+        return { check: check.id };
     }
 };
 

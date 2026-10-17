@@ -575,3 +575,17 @@ test("activations: a choice of jumps (Blast Boots), temporary Hit Points from th
     const [wasps] = compileActivations(item("Wasp Guard"));
     assert.deepEqual(wasps.plan.resolution.sharedDamage.components.map(({ formula, type, category }) => [formula, type, category]), [["1d8", "poison", "persistent"]]);
 });
+
+test("healing its text gives its user beside a linked Effect (Kindler Cameo, Wine of the Blood), its bearer's own void healing no bar (Emerald Fulcrum Lens); not under a condition (Platter of Putrid Dreams)", () => {
+    const [cameo] = compileActivations(item("Kindler Cameo"));
+    assert.deepEqual([cameo.plan.resolution.kind, cameo.plan.resolution.native.healing.components[0].formula, cameo.plan.resolution.native.healing.recipients], ["effect", "3d10+12", "living"]);
+    assert.equal(compileItem(item("Wine of the Blood")).resolution.native.healing.components[0].formula, "2d10");
+    assert.equal(compileActivations(item("Emerald Fulcrum Lens"))[0].plan.resolution.native.healing.recipients, "any");
+    assert.equal(compileActivations(item("Platter of Putrid Dreams"))[0].plan.resolution.native?.healing, undefined);
+});
+
+test("Purloining Cloak's reaction: the attacker's Perception check against DC 38 (its check link's other parameters too), Off-Guard on a failure", () => {
+    const [dodge] = compileActivations(item("Purloining Cloak"));
+    assert.deepEqual([dodge.plan.resolution.check.statistic, dodge.plan.resolution.check.against.value], ["perception", 38]);
+    assert.deepEqual(dodge.plan.resolution.outcomes.failure.effects.map((effect) => effect.slug), ["off-guard"]);
+});
