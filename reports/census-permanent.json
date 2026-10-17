@@ -26,10 +26,10 @@
    "builtin:ac-reaction": 4
   },
   "live": {
-   "save": 397,
+   "save": 405,
    "cast": 470,
    "item": 582,
-   "none": 853,
+   "none": 845,
    "focus": 45,
    "fortune": 50,
    "reroll": 25,
@@ -5598,7 +5598,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Dragontooth Leiomano",
@@ -9171,7 +9171,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Keep Stone Amulet",
@@ -14736,7 +14736,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Grisly Scythe",
@@ -15211,7 +15211,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "The Teamster",
@@ -16885,7 +16885,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Reactive Mail (Major)",
@@ -18961,7 +18961,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Blessed Lantern Flail",
@@ -23234,7 +23234,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Eidolon Cape",
@@ -24640,7 +24640,7 @@
    "trigger": false,
    "result": "resolves",
    "kind": "save",
-   "live": null
+   "live": "save"
   },
   {
    "name": "Maestro's Chair",

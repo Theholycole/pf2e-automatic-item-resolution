@@ -3398,6 +3398,23 @@ export const cases = {
         await poison().delete();
         await until(() => !foe.hasCondition("fascinated"), "Fascinated gone with the poison", { timeout: 10000 });
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Thousand-Pains Fulu (Burl): its card on use (its text's "aura" is flavor, not an aura activation), the basic save at DC 35.
+    async fuluBurlCard(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Burl Affixer", { type: "character", x: 12, y: 13 });
+        const { token: foe } = await creature(scene, "Burl Bearer", { x: 13, y: 13, alliance: "opposition" });
+        const fulu = await give(user, "Thousand-Pains Fulu (Burl)");
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await fulu.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the fulu's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.basic && check.against?.value === 35, `basic DC 35 (${JSON.stringify(check)})`);
+        return { save: save.id };
     }
 };
 

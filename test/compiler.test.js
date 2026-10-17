@@ -626,3 +626,12 @@ test("damage of its user's choice of two types, each row giving both (Bloodburn 
     assert.deepEqual([poison.damage.formulas.map((entry) => entry.formula), poison.effects[0].duration], [["4d6[persistent,poison]"], { mode: "while", persistent: "poison" }]);
     assert.deepEqual(withDamageChoice(censer, 0).resolution.outcomes.success.damage.formulas.map((entry) => entry.formula), ["2d6[persistent,fire]"]);
 });
+
+test("live routes: a fulu affixed is used (not a trigger its primed damage names); the word aura in flavor isn't an aura activation, its trait is", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { plainText } = await import("../src/compiler/rows.js");
+    const route = (name) => routeOf(compileItem(item(name)), plainText(item(name).system.description.value));
+    assert.deepEqual([route("Thousand-Pains Fulu (Void)"), route("Thousand-Pains Fulu (Burl)"), route("Moritype")], ["save", "save", "save"]);
+    const [censer] = compileActivations(item("Bloodburn Censer"));
+    assert.equal(routeOf(censer.plan, plainText(censer.activation.html)), null, "Light Incense's (aura, manipulate): a lasting aura, not a save card");
+});

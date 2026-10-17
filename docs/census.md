@@ -51,19 +51,19 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 
 | Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | fortune | action | counteract | ways | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 216 | 3 | 3 | 92 | 12 | 11 | 13 | 3 | 0 | 7 | 1 | 5 | 1 | 145 |
+| other | 512 | 216 | 3 | 3 | 93 | 12 | 11 | 13 | 3 | 0 | 7 | 1 | 5 | 1 | 144 |
 | potion | 182 | 76 | 0 | 0 | 3 | 63 | 9 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 29 |
 | talisman | 156 | 53 | 0 | 0 | 15 | 0 | 9 | 0 | 6 | 1 | 14 | 11 | 0 | 0 | 47 |
 | elixir | 149 | 121 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 11 | 0 | 15 |
 | poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | snare | 82 | 1 | 0 | 0 | 0 | 0 | 0 | 69 | 0 | 0 | 0 | 0 | 0 | 1 | 11 |
-| gadget | 77 | 22 | 0 | 0 | 15 | 0 | 0 | 14 | 0 | 0 | 0 | 3 | 8 | 0 | 15 |
+| gadget | 77 | 22 | 0 | 0 | 16 | 0 | 0 | 14 | 0 | 0 | 0 | 3 | 8 | 0 | 14 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | oil | 66 | 49 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 12 |
-| fulu | 46 | 16 | 0 | 0 | 7 | 0 | 1 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 19 |
+| fulu | 46 | 16 | 0 | 0 | 9 | 0 | 1 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 17 |
 | drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **631** | **45** | **89** | **136** | **79** | **32** | **98** | **9** | **2** | **23** | **15** | **28** | **5** | **294** |
+| **all** | **1486** | **631** | **45** | **89** | **140** | **79** | **32** | **98** | **9** | **2** | **23** | **15** | **28** | **5** | **290** |
 
 Why the rest have no card yet:
 
@@ -71,7 +71,7 @@ Why the rest have no card yet:
 |---|---:|
 | nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 218 |
 | the ability compiler's GM fallback ("no-effect") | 52 |
-| a save on a trigger or a passive (an aura, a reaction) | 23 |
+| a save on a trigger or a passive (an aura, a reaction) | 19 |
 | another plan not played yet | 1 |
 
 ## What they do

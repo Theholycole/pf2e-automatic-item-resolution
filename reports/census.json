@@ -384,14 +384,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 294,
+   "none": 290,
    "item": 631,
    "fortune": 23,
    "zone": 98,
    "expose": 89,
    "later": 79,
    "action": 15,
-   "save": 136,
+   "save": 140,
    "counteract": 28,
    "reroll": 2,
    "coat": 45,
@@ -401,9 +401,9 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 145,
+    "none": 144,
     "later": 12,
-    "save": 92,
+    "save": 93,
     "item": 216,
     "zone": 13,
     "fortune": 7,
@@ -455,10 +455,10 @@
     "ways": 1
    },
    "gadget": {
-    "none": 15,
+    "none": 14,
     "zone": 14,
     "item": 22,
-    "save": 15,
+    "save": 16,
     "action": 3,
     "counteract": 8
    },
@@ -474,9 +474,9 @@
    },
    "fulu": {
     "fortune": 2,
-    "none": 19,
+    "none": 17,
     "item": 16,
-    "save": 7,
+    "save": 9,
     "reroll": 1,
     "cast": 1
    },
@@ -491,7 +491,7 @@
   },
   "noCard": {
    "no-plan": 218,
-   "triggered": 23,
+   "triggered": 19,
    "gm": 52,
    "other": 1
   }
@@ -9528,7 +9528,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Purple Pepper Powder",
@@ -18963,7 +18963,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Fundamental Oil",
@@ -24755,7 +24755,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Blast Boots (Lesser)",
@@ -28505,7 +28505,7 @@
    "result": "resolves",
    "kind": "save",
    "gaps": [],
-   "live": null
+   "live": "save"
   },
   {
    "name": "Green Dragon's Breath Potion (Young)",

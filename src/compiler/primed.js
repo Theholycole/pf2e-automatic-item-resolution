@@ -36,7 +36,8 @@ export function withZeroHPNote(plan, text) {
 // A fulu affixed to a creature: that creature, touched.
 export function affixedTargeting(plan, text) {
     if (!plan?.resolution || !/\bA creature to which the fulu is affixed\b/i.test(String(text ?? ""))) return plan;
-    return { ...plan, targeting: { target: "1 creature", range: "touch", area: null } };
+    // (Used when affixed: not a trigger its primed damage's condition names, "if the target takes any other damage".)
+    return { ...plan, targeting: { target: "1 creature", range: "touch", area: null }, trigger: { ...(plan.trigger ?? {}), event: "use" } };
 }
 
 // A condition for as long as a persistent damage lasts, Freezing Embrace Snare's "It is clumsy 1 for as long as it takes this persistent
