@@ -35,7 +35,7 @@ import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
-import { readTypeChoice, withTypeChoices } from "./type-choice.js";
+import { readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
 import { pickedSentence, skillPickOf } from "./skill-pick.js";
 import { damageMaterial } from "./materials.js";
@@ -211,6 +211,8 @@ function compileEach(item, options = {}) {
         // (Healing its text gives its user beside a linked Effect, src/compiler/consumables.js: Kindler Cameo.)
         plan = withStatedHealing(plan, activation.html, html);
         plan = withWhilePersistent(plan, plainText(activation.html));
+        // (Damage of its user's choice of two types, each row giving both: the card's picker, src/compiler/type-choice.js.)
+        plan = withRowTypeChoice(plan, plainText(activation.html));
         // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Arctic Worm Chitin Shield, Alluring
         // Lantern, Sandstorm Top — over a save at the creatures targeted once.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = auraZonePlan(activation.html, base, base.source?.name) ?? plan;

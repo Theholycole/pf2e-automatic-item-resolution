@@ -51,6 +51,8 @@ export function beadsPlan(html, base) {
 export function withDamageChoice(plan, index = 0) {
     const choice = plan?.damageChoices?.[index];
     if (!choice) return plan;
+    // (A type picked of those each row gives both of, Bloodburn Censer's fire or poison: that type's own rows, src/compiler/type-choice.js.)
+    if (choice.outcomes) return { ...plan, resolution: { ...plan.resolution, outcomes: choice.outcomes } };
     const components = plan.resolution.sharedDamage.components.map((component, at) => (at === 0 ? { ...component, formula: choice.formula } : component));
     return { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components } } };
 }

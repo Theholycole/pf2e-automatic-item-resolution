@@ -4,6 +4,8 @@
 // ability compiler from the save, so the activation is compiled without it; its damage then becomes the card's picker
 // (plan.damageChoices, as Necklace of Fireballs' beads), one formula per type. Pure.
 
+import { withWhilePersistent } from "./primed.js";
+
 const TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void";
 const LIST = new RegExp(String.raw`;?\s*the damage type depends on the type of [\w' ]+?\.\s*((?:(?:and )?[A-Z]?[a-z]+ [\w ]+? deals? (?:${TYPES}) damage(?:,\s*|\.\s*))+)`, "i");
 const ENTRY = new RegExp(String.raw`(?:and )?([A-Za-z]+) [\w ]+? deals? (${TYPES}) damage`, "gi");
@@ -45,3 +47,25 @@ export function withTypeChoices(plan, choice) {
     const typed = (type) => (/\[[\w,]+\]$/.test(formula) ? formula.replace(/\[([\w,]+)\]$/, (whole, inside) => `[${inside.split(",").map((part) => (TYPES.split("|").includes(part) || part === "untyped" ? type : part)).join(",")}]`) : `${formula}[${type}]`);
     return { ...plan, damageChoices: choice.types.map(({ label, type }) => ({ label, formula: typed(type) })), ...(choice.notes ? { notes: [...(plan.notes ?? []), ...choice.notes], partial: true } : {}) };
 }
+
+// Damage of its user's choice of two types, each degree's row giving both, Bloodburn Censer's "the smoke deals your choice of fire or
+// poison damage … Success The creature … takes @Damage[2d6[persistent,fire]] or @Damage[2d6[persistent,poison]] damage": the
+// card's picker of those types (plan.damageChoices with a type, no formula), the rows keeping the picked type's formulas
+// (src/compiler/beads.js withDamageChoice) — not both.
+const CHOICE_OF = new RegExp(String.raw`\byour choice of (${TYPES}) or (${TYPES}) damage\b`, "i");
+const typeOf = (formula) => (/\[([\w,\s]+)\]/.exec(String(formula ?? ""))?.[1] ?? "").split(",").map((part) => part.trim().toLowerCase());
+export function withRowTypeChoice(plan, text) {
+    const choice = CHOICE_OF.exec(String(text ?? ""));
+    if (!choice || plan?.damageChoices || !plan?.resolution?.outcomes) return plan;
+    const types = [choice[1].toLowerCase(), choice[2].toLowerCase()];
+    const both = Object.values(plan.resolution.outcomes).some((row) => types.every((type) => (row?.damage?.formulas ?? []).some((entry) => typeOf(entry.formula).includes(type))));
+    if (!both) return plan;
+    // (Each type's own rows: the other type's formulas left out, and a condition "until the persistent damage ends" then that type's,
+    // src/compiler/primed.js.)
+    const rowsFor = (type) => {
+        const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => [degree, row?.damage?.formulas ? { ...row, damage: { ...row.damage, formulas: row.damage.formulas.filter((entry) => !types.some((other) => other !== type && typeOf(entry.formula).includes(other))) } } : row]));
+        return withWhilePersistent({ ...plan, resolution: { ...plan.resolution, outcomes } }, text).resolution.outcomes;
+    };
+    return { ...plan, damageChoices: types.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)}`, type, outcomes: rowsFor(type) })) };
+}
+

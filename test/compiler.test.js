@@ -617,3 +617,12 @@ test("extra Strike damage of dice set by the armor's save bonus (a Battlezoo hid
     const hide = (resilient) => compileActivations({ _id: "testHide00000001", type: "armor", name: "Stand-in Hide", system: { level: { value: 8 }, traits: { value: ["magical"] }, runes: { potency: 1, resilient, property: [] }, description: { value: "<p>A hide that hums.</p><p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><hr /><p><strong>Effect</strong> Your melee Strikes deal additional cold damage for 2 rounds. The amount of cold damage dealt is equal to 1d8 × the item's item bonus to saves against cold effects.</p>" } } })[0].plan.item.strikeDamage[0];
     assert.deepEqual([hide(0).diceNumber, hide(1).diceNumber, hide(3).diceNumber, hide(1).dieSize, hide(1).damageType, hide(1).predicate], [1, 2, 4, "d8", "cold", ["item:melee"]]);
 });
+
+test("damage of its user's choice of two types, each row giving both (Bloodburn Censer): the card's picker, each type's own rows with its condition until that persistent damage ends", async () => {
+    const { withDamageChoice } = await import("../src/compiler/beads.js");
+    const censer = compileActivations(item("Bloodburn Censer"))[0].plan;
+    assert.deepEqual(censer.damageChoices.map((choice) => choice.label), ["Fire", "Poison"]);
+    const poison = withDamageChoice(censer, 1).resolution.outcomes.failure;
+    assert.deepEqual([poison.damage.formulas.map((entry) => entry.formula), poison.effects[0].duration], [["4d6[persistent,poison]"], { mode: "while", persistent: "poison" }]);
+    assert.deepEqual(withDamageChoice(censer, 0).resolution.outcomes.success.damage.formulas.map((entry) => entry.formula), ["2d6[persistent,fire]"]);
+});
