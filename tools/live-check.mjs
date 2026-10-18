@@ -3512,7 +3512,7 @@ export const cases = {
     },
 
     // Devil's Trident's Stay a Foe: its activation readies the trident's Strike; the hit has the spell module cast Paralyze (rank 3,
-    // DC 25) at the creature hit.
+    // DC 25) at the creature hit. (On a crowded lab, late in a full run, the cast comes some 20 seconds after the hit.)
     async tridentParalyze(scene) {
         const { actor: wielder, token: wielderToken } = await creature(scene, "Trident Wielder", { type: "character", x: 15, y: 25 });
         const { token: foeToken } = await creature(scene, "Trident Target", { x: 16, y: 25, ac: 1, alliance: "opposition" });
@@ -3528,7 +3528,7 @@ export const cases = {
         since = Date.now();
         const { attack } = await strike(wielder, trident);
         assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
-        const cast = await messageAfter(since, (message) => message.flags?.pf2e?.origin?.type === "spell" && /Paralyze/.test(message.flags?.pf2e?.origin?.uuid ? fromUuidSync(message.flags.pf2e.origin.uuid)?.name ?? message.flavor ?? "" : message.flavor ?? ""), { what: "the spell module's Paralyze", timeout: 15000 });
+        const cast = await messageAfter(since, (message) => message.flags?.pf2e?.origin?.type === "spell" && /Paralyze/.test(message.flags?.pf2e?.origin?.uuid ? fromUuidSync(message.flags.pf2e.origin.uuid)?.name ?? message.flavor ?? "" : message.flavor ?? ""), { what: "the spell module's Paralyze", timeout: 40000 });
         return { cast: cast.id };
     },
 
