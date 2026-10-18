@@ -278,3 +278,52 @@ export function belchedCloudPlan(html, base) {
         }
     };
 }
+
+// A square its user fills with something that harms only some creatures: Sanctified Beans' "choose an adjacent square to exhale into. You
+// fill that square with soothing vapors that harm any fiend, fey, ghost, spirit, or undead creature that ends their turn in that square for
+// the next minute, causing them to take @Damage[(4d8+4)[spirit]] damage (@Check[will|dc:28|basic] save). An incorporeal creature that takes
+// this damage must also attempt a @Check[fortitude|dc:28] save" with its degree rows. The ability module's zone: that square next to its
+// user, its basic save at a turn's end there only for creatures with one of those traits (zone.saves[i].only, ability b4ad3ce), and the
+// second save only for an incorporeal one.
+const EXHALED = /\bchoose an adjacent square to exhale into\.\s*You fill that square with [^.]*?\bthat harm any ([\w, ]+?) creature that ends their turn in that square for the next (minute|\d+ minutes|\d+ rounds), causing them to take (@Damage\[(?:[^[\]]|\[[^\]]*\])*\])(?:\{[^}]*\})? damage \((@Check\[(?:fortitude|reflex|will)\|[^\]]*\])(?:\{[^}]*\})? save\)\./i;
+const ALSO = /\bAn? (\w+) creature that takes this damage must also attempt an? (@Check\[(?:fortitude|reflex|will)\|[^\]]*\])(?:\{[^}]*\})? save[^.]*\.(?:<\/p>\s*<hr \/>\s*|\s*)([\s\S]*)$/i;
+export function exhaledSquarePlan(html, base, item, options = {}) {
+    const text = String(html ?? "");
+    const exhaled = EXHALED.exec(text);
+    if (!exhaled) return null;
+    const traits = exhaled[1].split(/,\s*(?:or\s+)?|\s+or\s+/).map((trait) => trait.trim().toLowerCase()).filter(Boolean);
+    const read = (description) => compileAbility({ ...item, type: "action", system: { ...(item?.system ?? {}), description: { value: description }, actionType: { value: "passive" }, actions: { value: null } } }, options);
+    const damage = read(`<p><strong>Effect</strong> The target takes ${exhaled[3]} damage (${exhaled[4]} save).</p>`);
+    if (damage?.resolution?.kind !== "save" || damage.resolution.check?.against?.dc !== "fixed") return null;
+    const saves = [{ when: ["end"], only: { traits }, plan: { ...damage, trigger: { event: "zone" }, targeting: { target: "a creature in the square", range: null, area: null } } }];
+    const also = ALSO.exec(text.slice(exhaled.index + exhaled[0].length));
+    if (also) {
+        const second = read(`<p><strong>Effect</strong> The target must attempt a ${also[2]} save.</p>${also[3]}`);
+        if (second?.resolution?.kind === "save") saves.push({ when: ["end"], only: { traits: [also[1].toLowerCase()] }, plan: { ...second, trigger: { event: "zone" }, targeting: { target: "an incorporeal creature in the square", range: null, area: null } } });
+    }
+    const time = /^\d+/.test(exhaled[2]) ? { value: Number(exhaled[2].split(" ")[0]), unit: /round/i.test(exhaled[2]) ? "rounds" : "minutes" } : { value: 1, unit: "minutes" };
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "square", value: 5 },
+            centre: "placed",
+            range: 5,
+            lasts: { mode: "fixed", ...time, expiry: "turn-start", anchor: "effect-start" },
+            untilReused: false,
+            concealed: false,
+            terrain: [],
+            others: false,
+            hazard: null,
+            saves,
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes: [
+                `Only a ${traits.slice(0, -1).join(", ")} or ${traits.at(-1)} creature that ends its turn there takes the damage.`,
+                ...(also ? [`An ${also[1].toLowerCase()} creature also attempts the second save (only when it took the damage).`] : [])
+            ]
+        }
+    };
+}

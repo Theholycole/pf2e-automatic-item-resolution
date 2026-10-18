@@ -247,6 +247,10 @@ test("Colorful Coating: the square its user coats within reach for 1 minute — 
     const black = compileItem(source("Spun Cloud (Black)")).zone;
     const red = compileItem(source("Spun Cloud (Red)")).zone;
     assert.deepEqual([black.area, black.range, black.concealed, black.lasts.value, red.saves[0].when, red.saves[0].plan.resolution.check.against.value], [{ type: "burst", value: 20 }, 60, true, 1, ["initial", "enter"], 24]);
+    // Sanctified Beans: an adjacent square for 1 minute, its basic Will save against 4d8+4 spirit at a turn's end only for a fiend, fey, ghost,
+    // spirit or undead creature (zone.saves[i].only), and its Fortitude save only for an incorporeal one.
+    const beans = compileItem(source("Sanctified Beans")).zone;
+    assert.deepEqual([beans.area, beans.range, beans.lasts.value, beans.saves.map((entry) => [entry.when, entry.only.traits, entry.plan.resolution.check.statistic, entry.plan.resolution.check.basic])], [{ type: "square", value: 5 }, 5, 1, [[["end"], ["fiend", "fey", "ghost", "spirit", "undead"], "will", true], [["end"], ["incorporeal"], "fortitude", false]]]);
     const tree = compileItem(source("Grasping Tree"));
     assert.deepEqual([tree.builtin, tree.zone.once, tree.zone.saves[0].plan.resolution.check.against.value, tree.zone.saves[0].plan.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["zone", true, 19, ["immobilized"]]);
 });

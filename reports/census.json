@@ -15,9 +15,9 @@
   "results": {
    "builtin:cast-spell": 32,
    "none": 214,
-   "resolves": 751,
+   "resolves": 750,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 106,
+   "builtin:zone": 107,
    "builtin:item-action": 15,
    "partial": 97,
    "note-only": 160,
@@ -34,8 +34,8 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "builtin:zone": 18,
-    "resolves": 212,
+    "builtin:zone": 19,
+    "resolves": 211,
     "partial": 45,
     "note-only": 81,
     "builtin:readied-bonus": 7,
@@ -311,7 +311,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 177,
+   "resolves": 176,
    "gaps": 0,
    "none": 14
   },
@@ -323,7 +323,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 335,
+   "resolves": 334,
    "gaps": 0,
    "none": 26
   },
@@ -371,13 +371,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 264,
+   "resolves": 263,
    "gaps": 0,
    "none": 24
   },
   "duration": {
    "count": 943,
-   "resolves": 606,
+   "resolves": 605,
    "gaps": 0,
    "none": 13
   }
@@ -385,10 +385,10 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 279,
+   "none": 278,
    "item": 628,
    "fortune": 23,
-   "zone": 106,
+   "zone": 107,
    "expose": 89,
    "later": 80,
    "action": 15,
@@ -402,8 +402,8 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "zone": 18,
-    "none": 141,
+    "zone": 19,
+    "none": 140,
     "later": 11,
     "save": 94,
     "item": 214,
@@ -496,7 +496,7 @@
   },
   "noCard": {
    "no-plan": 214,
-   "triggered": 12,
+   "triggered": 11,
    "gm": 52,
    "other": 1
   }
@@ -28440,10 +28440,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": null
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Sanguine Mutagen (Major)",

@@ -3829,6 +3829,50 @@ export const cases = {
         assert(forUuids(pull).includes(nearby.uuid) && !forUuids(pull).includes(foe.uuid), `the pull for the bystander, not the target (${forUuids(pull).join(", ")})`);
         assert(forUuids(blast).includes(foe.uuid) && forUuids(blast).includes(nearby.uuid), `the blast for both (${forUuids(blast).join(", ")})`);
         return { pull: pull.id, blast: blast.id };
+    },
+
+    // Sanctified Beans: its square placed (the click stood in for); at the end of their turns there, an incorporeal undead gets the basic Will
+    // save against 4d8+4 spirit and the incorporeal Fortitude save, a creature with none of the traits neither (the zone's only: { traits }).
+    async sanctifiedBeans(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Bean Exhaler", { type: "character", x: 13, y: 5 });
+        const { actor: plain, token: plainToken } = await creature(scene, "Bean Bystander", { x: 16, y: 5, alliance: "opposition" });
+        const { actor: ghost, token: ghostToken } = await creature(scene, "Bean Ghost", { x: 17, y: 5, alliance: "opposition" });
+        await ghost.update({ "system.traits.value": ["undead", "incorporeal"] });
+        const beans = await give(user, "Sanctified Beans");
+        await until(() => userToken.object && plainToken.object && ghostToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Sanctified Beans/.test(region.name));
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await beans.consume();
+            await until(() => square(), "the beans' Region", { timeout: 8000 });
+            const shape = square().shapes[0];
+            const at = { x: (shape.x ?? shape.points?.[0]) - (shape.type === "rectangle" ? 0 : canvas.grid.size / 2), y: (shape.y ?? shape.points?.[1]) - (shape.type === "rectangle" ? 0 : canvas.grid.size / 2) };
+            await plainToken.update(at);
+            await ghostToken.update(at);
+            await wait(800);
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 30 }, { tokenId: plainToken.id, sceneId: scene.id, actorId: plain.id, initiative: 20 }, { tokenId: ghostToken.id, sceneId: scene.id, actorId: ghost.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            const since = Date.now();
+            for (let turn = 0; turn < 3; turn++) {
+                await combat.nextTurn();
+                await wait(900);
+            }
+            await wait(1500);
+            const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message));
+            const forActor = (actor) => cards.filter((message) => (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).some((entry) => entry.actorUuid === actor.uuid));
+            const statistics = forActor(ghost).map((message) => message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check.statistic).sort();
+            assert(forActor(plain).length === 0, `no card for the bystander (${forActor(plain).length})`);
+            assert(JSON.stringify(statistics) === JSON.stringify(["fortitude", "will"]), `the ghost's Will and Fortitude saves (${statistics.join(", ")})`);
+            return { ghost: statistics };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await square()?.delete().catch(() => null);
+            await combat.delete().catch(() => null);
+        }
     }
 };
 
