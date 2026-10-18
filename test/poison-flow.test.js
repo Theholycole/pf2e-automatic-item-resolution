@@ -251,6 +251,10 @@ test("Colorful Coating: the square its user coats within reach for 1 minute — 
     // spirit or undead creature (zone.saves[i].only), and its Fortitude save only for an incorporeal one.
     const beans = compileItem(source("Sanctified Beans")).zone;
     assert.deepEqual([beans.area, beans.range, beans.lasts.value, beans.saves.map((entry) => [entry.when, entry.only.traits, entry.plan.resolution.check.statistic, entry.plan.resolution.check.basic])], [{ type: "square", value: 5 }, 5, 1, [[["end"], ["fiend", "fey", "ghost", "spirit", "undead"], "will", true], [["end"], ["incorporeal"], "fortitude", false]]]);
+    // Aetheric Irritant: placed within reach for 10 minutes, its Will save on entering and at a turn's start only for fey, spirit or undead
+    // creatures, a failure's difficult terrain a note Effect until the creature's next turn.
+    const chime = compileItem(source("Aetheric Irritant (Moderate)")).zone;
+    assert.deepEqual([chime.area, chime.centre, chime.range, chime.lasts.value, chime.terrain, chime.saves[0].when, chime.saves[0].only.traits, chime.saves[0].plan.resolution.check.against.value], [{ type: "burst", value: 15 }, "placed", 5, 10, [], ["enter", "start"], ["fey", "spirit", "undead"], 18]);
     const tree = compileItem(source("Grasping Tree"));
     assert.deepEqual([tree.builtin, tree.zone.once, tree.zone.saves[0].plan.resolution.check.against.value, tree.zone.saves[0].plan.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["zone", true, 19, ["immobilized"]]);
 });

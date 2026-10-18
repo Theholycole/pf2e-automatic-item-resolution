@@ -3873,6 +3873,39 @@ export const cases = {
             await square()?.delete().catch(() => null);
             await combat.delete().catch(() => null);
         }
+    },
+
+    // Aetheric Irritant (Lesser): placed (the click stood in for), an undead entering it gets the DC 15 Will save, a creature with none of the
+    // traits doesn't.
+    async aethericChime(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Chime Ringer", { type: "character", x: 1, y: 18 });
+        const { actor: plain, token: plainToken } = await creature(scene, "Chime Bystander", { x: 6, y: 16, alliance: "opposition" });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Chime Zombie", { x: 7, y: 16, alliance: "opposition" });
+        await undead.update({ "system.traits.value": ["undead"] });
+        const chime = await give(user, "Aetheric Irritant (Lesser)");
+        await until(() => userToken.object && plainToken.object && undeadToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const area = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Aetheric Irritant/.test(region.name));
+        try {
+            await chime.consume();
+            await until(() => area(), "the chime's Region", { timeout: 8000 });
+            const shape = area().shapes[0];
+            const at = { x: shape.x - canvas.grid.size / 2, y: shape.y - canvas.grid.size / 2 };
+            const since = Date.now();
+            await plainToken.update({ x: at.x + canvas.grid.size, y: at.y });
+            await undeadToken.update({ x: at.x, y: at.y + canvas.grid.size });
+            await wait(2500);
+            const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message));
+            const forActor = (actor) => cards.filter((message) => (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).some((entry) => entry.actorUuid === actor.uuid));
+            assert(forActor(plain).length === 0, `no card for the bystander (${forActor(plain).length})`);
+            assert(forActor(undead).length === 1 && forActor(undead)[0].flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check.against.value === 15, `the zombie's DC 15 Will save (${forActor(undead).length})`);
+            return { cards: cards.length };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await area()?.delete().catch(() => null);
+        }
     }
 };
 

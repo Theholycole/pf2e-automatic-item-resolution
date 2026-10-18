@@ -8,6 +8,7 @@
 // move, and the webbing's own statistics are notes. Pure.
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
+import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 
 const COVERED = /\bYou fire a mass of (\w+) at a square within (\d+) feet\. That square becomes covered in \1 for (\d+) (minutes?|rounds?|hours?)\./i;
 const SAVE = /\bThe first time each turn a creature in the (\w+) begins to use a move action or enters the \1 during a move action, it (?:must|has to) attempt an @Check\[athletics\|dc:(\d+)\](?:\{[^}]*\})? check or @Check\[reflex\|dc:\2\](?:\{[^}]*\})? save against DC \2\./i;
@@ -323,6 +324,58 @@ export function exhaledSquarePlan(html, base, item, options = {}) {
             notes: [
                 `Only a ${traits.slice(0, -1).join(", ")} or ${traits.at(-1)} creature that ends its turn there takes the damage.`,
                 ...(also ? [`An ${also[1].toLowerCase()} creature also attempts the second save (only when it took the damage).`] : [])
+            ]
+        }
+    };
+}
+
+// A chime placed in a square that troubles only some creatures around it: Aetheric Irritant's "place it on the ground in a square within
+// your reach. The aetheric irritant affects an area in a @Template[type:emanation|distance:10]. Creatures with the fey, spirit, or undead
+// traits must attempt a @Check[will|dc:15] save when they enter the affected area and at the beginning of every turn they are in the affected
+// area. Those who fail the save treat the area as difficult terrain until the beginning of their next turn. … after 10 minutes". The ability
+// module's zone placed within reach (its emanation from that square as a burst the GM places), the save on entering and at a turn's start
+// only for creatures with those traits (only: { traits }), a failure's difficult terrain a note Effect on the creature until its next turn.
+const PLACED_AROUND = /\bplace it on the ground in a square within your reach\.\s*The [\w' -]+? affects an area in an? @Template\[(?:type:)?emanation\|distance:(\d+)[^\]]*\](?:\{[^}]*\})?\.\s*Creatures with the ([\w, ]+?) traits? must attempt an? (@Check\[(?:fortitude|reflex|will)\|[^\]]*\])(?:\{[^}]*\})? save when they enter the affected area and at the beginning of every turn they are in the affected area\.\s*Those who fail the save ([^.]+)\./i;
+export function placedChimePlan(html, base, item, options = {}) {
+    const text = String(html ?? "");
+    const placed = PLACED_AROUND.exec(text);
+    if (!placed) return null;
+    const check = /@Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(placed[3]);
+    const lasting = /\bafter (\d+) (minutes?|rounds?) of being activated\b/i.exec(text);
+    if (!check || !lasting) return null;
+    const traits = placed[2].split(/,\s*(?:or\s+)?|\s+or\s+/).map((trait) => trait.trim().toLowerCase()).filter(Boolean);
+    const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+    const failed = { ...none(), noteEffects: [{ text: `Failed save: ${placed[4]}.`, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "target-turn" } }] };
+    const plan = {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: "guided" },
+        targeting: { target: "a creature in the area", range: null, area: null },
+        trigger: { event: "zone" },
+        resolution: { kind: "save", check: { roll: "save", statistic: check[1].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(check[2]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: failed, criticalFailure: failed } }
+    };
+    const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "burst", value: Number(placed[1]) },
+            centre: "placed",
+            range: 5,
+            lasts: { mode: "fixed", value: Number(lasting[1]), unit: UNITS[lasting[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" },
+            untilReused: false,
+            concealed: false,
+            terrain: [],
+            others: false,
+            hazard: null,
+            saves: [{ when: ["enter", "start"], only: { traits }, plan }],
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes: [
+                `Its ${placed[1]}-foot emanation from the square it's placed in.`,
+                ...[/\bA creature that critically succeeds at the save is immune[^.]*\./i, /\bor it is moved, whichever comes first\b/i].map((pattern) => pattern.exec(plain)?.[0]).filter(Boolean).map((said) => (/^or it is moved/i.test(said) ? "It ends sooner if it's moved." : said))
             ]
         }
     };
