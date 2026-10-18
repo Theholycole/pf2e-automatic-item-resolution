@@ -39,6 +39,7 @@ import { ownerDCs, withItemData } from "./item-data.js";
 import { overUnverified, withoutUnverifiedLinks } from "./unverified-links.js";
 import { affixedTargeting, withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
 import { withHitDelivery } from "./hit-delivery.js";
+import { cleanNotes } from "./notes.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
@@ -230,6 +231,9 @@ function compileOne(given, options = {}) {
     const targeting = recipient === "targets" ? { ...(rest.targeting ?? {}), ...othersTargeting(plainText(item?.system?.description?.value)) } : rest.targeting;
     // (Damage treated as silver: that material in its formulas, src/compiler/materials.js.)
     // (A row's own linked Effect, src/compiler/degree-effects.js: Crackling Bubble Gum's failure.)
+    // (Its notes without the Activate line, the crafting or a Destruction line: src/compiler/notes.js.)
+    if (Array.isArray(rest.notes)) rest.notes = cleanNotes(rest.notes);
+    if (Array.isArray(rest.strike?.notes)) rest.strike = { ...rest.strike, notes: cleanNotes(rest.strike.notes) };
     return withDegreeEffects(damageMaterial(withTypeChoices(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), typeChoice), plainText(item?.system?.description?.value)), item?.system?.description?.value, options.itemEffects);
 }
 

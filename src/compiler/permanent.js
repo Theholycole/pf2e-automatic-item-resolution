@@ -21,6 +21,7 @@ import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { hitAuraPlan } from "./hit-auras.js";
 import { hitAroundPlan } from "./hit-around.js";
+import { cleanNotes } from "./notes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
@@ -306,9 +307,9 @@ function compileEach(item, options = {}) {
             index,
             plan: {
                 ...kept,
-                // (Its notes without the Activate line before their first sentence: the ability compiler's "Activate—Absorb Essence 1 (…)
-                // Requirements … Effect You absorb …".)
-                ...(Array.isArray(kept.notes) ? { notes: kept.notes.map((note) => (typeof note === "string" ? note.replace(/^\s*Activat(?:e|ion)\b[^.]*?\bEffect\s+/i, "").replace(/^\s*Activat(?:e|ion)\s*[—–-][^()]*?\([^)]*\)\s*/i, "") : note)).filter((note) => note !== "") } : {}),
+                // (Its notes without the Activate line before their first sentence, the crafting or a Destruction line: src/compiler/notes.js.)
+                ...(Array.isArray(kept.notes) ? { notes: cleanNotes(kept.notes) } : {}),
+                ...(Array.isArray(kept.strike?.notes) ? { strike: { ...kept.strike, notes: cleanNotes(kept.strike.notes) } } : {}),
                 ...(others ? { targeting: { ...(kept.targeting ?? {}), ...othersTargeting(plainText(activation.html)) } } : {}),
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
