@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-17",
+ "generated": "2026-10-18",
  "system": "~/.local/share/FoundryVTT/Data/systems/pf2e/packs",
  "totals": {
   "consumables": 1724,
@@ -17,10 +17,10 @@
    "none": 215,
    "resolves": 752,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 103,
+   "builtin:zone": 104,
    "builtin:item-action": 15,
    "partial": 97,
-   "note-only": 161,
+   "note-only": 160,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -125,8 +125,8 @@
     "builtin:counteract": 11,
     "partial": 15,
     "builtin:no-effect": 9,
-    "note-only": 22,
-    "builtin:zone": 1
+    "note-only": 21,
+    "builtin:zone": 2
    },
    "mechanisms": {
     "condition": 21,
@@ -386,9 +386,9 @@
   "totals": {
    "cast": 32,
    "none": 280,
-   "item": 629,
+   "item": 628,
    "fortune": 23,
-   "zone": 103,
+   "zone": 104,
    "expose": 89,
    "later": 81,
    "action": 15,
@@ -436,12 +436,12 @@
     "coat": 1
    },
    "elixir": {
-    "item": 121,
+    "item": 120,
     "none": 14,
     "counteract": 11,
     "save": 1,
-    "later": 1,
-    "zone": 1
+    "zone": 2,
+    "later": 1
    },
    "poison": {
     "expose": 63,
@@ -14237,9 +14237,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Skeptic's Elixir (Greater)",

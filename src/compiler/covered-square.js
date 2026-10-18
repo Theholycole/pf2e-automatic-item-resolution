@@ -235,3 +235,46 @@ export function raisedWallsPlan(html, base, item, options = {}) {
         }
     };
 }
+
+// A cloud its user breathes into an adjacent square: Capsaicin Tonic's "You belch out a foul-smelling cloud of blisteringly spicy gas that
+// fills a single square adjacent to you. Creatures within the cloud are Concealed … The cloud remains for 1 minute but can be dispersed by
+// a strong wind. The cloud deals @Damage[1d4[fire]] damage to creatures that enter the cloud on their turn, as well as to creatures that
+// start their turn in the cloud". The ability module's zone: that square placed next to its user, Concealed inside, its damage on
+// entering and at a turn's start; its once a round and the wind are notes, and so are the tonic's later belches.
+const BELCHED = /\bcloud of [^.]*?\bthat fills a single square adjacent to you\./i;
+const CLOUD_DAMAGE = /\bThe cloud deals @Damage\[((?:[^[\]]|\[[^\]]*\])*)\](?:\{[^}]*\})? damage to creatures that enter the cloud on their turn, as well as to creatures that start their turn in the cloud\b/i;
+const REMAINS = /\bThe cloud remains for (\d+) (minutes?|rounds?)\b/i;
+export function belchedCloudPlan(html, base) {
+    const text = String(html ?? "");
+    const remains = REMAINS.exec(text);
+    if (!BELCHED.test(text) || !remains || !/\bCreatures within the cloud are (?:@UUID\[[^\]]*\]\{)?Concealed\b/i.test(text)) return null;
+    const damage = CLOUD_DAMAGE.exec(text);
+    const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const uses = /\bIn the next hour, you can use the activation below up to (\w+) times\b/i.exec(plain)?.[1];
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "square", value: 5 },
+            centre: "placed",
+            range: 5,
+            lasts: { mode: "fixed", value: Number(remains[1]), unit: UNITS[remains[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" },
+            untilReused: false,
+            concealed: true,
+            terrain: [],
+            others: false,
+            hazard: null,
+            saves: [],
+            damage: damage ? [{ when: "enter", formulas: [damage[1]] }, { when: "start", formulas: [damage[1]] }] : [],
+            effect: null,
+            modifiers: [],
+            notes: [
+                "Creatures outside the cloud are concealed to creatures within it.",
+                ...(damage ? ["A creature takes its damage no more than once a round."] : []),
+                ...(/\bdispersed by a strong wind\b/i.test(plain) ? ["A strong wind disperses it."] : []),
+                ...(uses ? [`This is its first use: it can be used up to ${uses} times within the hour, the others placed by hand.`] : [])
+            ]
+        }
+    };
+}

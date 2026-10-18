@@ -239,6 +239,9 @@ test("Colorful Coating: the square its user coats within reach for 1 minute — 
     const boom = compileItem(source("Boom Snare"));
     assert.deepEqual([boom.builtin, boom.zone.once, boom.zone.saves, boom.zone.damage], ["zone", true, [], [{ when: "enter", formulas: ["1d4[persistent,fire]"] }]]);
     assert.match(boom.zone.notes.join(" "), /adjacent to that square takes the same damage/);
+    // Capsaicin Tonic: its cloud in an adjacent square for 1 minute, Concealed inside, its 1d4 fire on entering and at a turn's start.
+    const cloud = compileItem(source("Capsaicin Tonic")).zone;
+    assert.deepEqual([cloud.area, cloud.range, cloud.concealed, cloud.lasts.value, cloud.damage.map((entry) => entry.when)], [{ type: "square", value: 5 }, 5, true, 1, ["enter", "start"]]);
     const tree = compileItem(source("Grasping Tree"));
     assert.deepEqual([tree.builtin, tree.zone.once, tree.zone.saves[0].plan.resolution.check.against.value, tree.zone.saves[0].plan.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug)], ["zone", true, 19, ["immobilized"]]);
 });

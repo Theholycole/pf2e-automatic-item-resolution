@@ -16,7 +16,7 @@ import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, 
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
-import { coatedSquarePlan } from "./covered-square.js";
+import { belchedCloudPlan, coatedSquarePlan } from "./covered-square.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
@@ -137,6 +137,9 @@ function compileOne(given, options = {}) {
     // (A square its user coats for a while, src/compiler/covered-square.js: Colorful Coating's.)
     const coated = coatedSquarePlan(html, base, item, options);
     if (coated) return { ...coated, item: itemInfo(item) };
+    // (A cloud its user breathes into an adjacent square, src/compiler/covered-square.js: Capsaicin Tonic's.)
+    const belched = belchedCloudPlan(html, base);
+    if (belched) return { ...belched, item: itemInfo(item) };
     // (The ability compiler's last fallback, "no-effect" — the GM's — gives way to a reading of the item's own: its
     // linked Effect, PF2e's healing, a spell's Effect, its row; not to a note alone.)
     const own = read?.builtin === "no-effect" ? ownPlan(item, base, options) ?? rowPlan(item, base) : null;

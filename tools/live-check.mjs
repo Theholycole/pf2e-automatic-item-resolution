@@ -3711,6 +3711,36 @@ export const cases = {
         const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
         assert(check.statistic === "fortitude" && check.against.value === 20, `Fortitude DC 20 (${JSON.stringify(check)})`);
         return { save: save.id };
+    },
+
+    // Capsaicin Tonic: its cloud placed next to its user (the click stood in for), Concealed inside for 1 minute; a creature moving in
+    // takes its 1d4 fire.
+    async capsaicinCloud(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Tonic Belcher", { type: "character", x: 13, y: 9 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Cloud Walker", { x: 16, y: 9, alliance: "opposition", hp: 200 });
+        const tonic = await give(user, "Capsaicin Tonic");
+        await until(() => userToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const cloud = () => scene.regions.find((entry) => entry.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Capsaicin Tonic/.test(entry.name));
+        try {
+            await tonic.consume();
+            await until(() => cloud(), "the cloud's Region", { timeout: 8000 });
+            const zone = cloud().flags["pf2e-automatic-ability-resolution"].zone.zone;
+            assert(zone.concealed && zone.lasts?.value === 1 && zone.damage.some((entry) => entry.when === "enter"), `Concealed, 1 minute, damage on entering (${JSON.stringify(zone.damage)})`);
+            const shape = cloud().shapes[0];
+            const since = Date.now();
+            const before = foe.system.attributes.hp.value;
+            await foeToken.update({ x: shape.x ?? shape.points?.[0], y: shape.y ?? shape.points?.[1] });
+            const card = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check?.roll !== "save", { what: "the cloud's damage card", timeout: 10000 });
+            await applyAbilityCard(card);
+            await until(() => foe.system.attributes.hp.value < before, "fire damage on the walker", { timeout: 10000 });
+            return { lost: before - foe.system.attributes.hp.value };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await cloud()?.delete().catch(() => null);
+        }
     }
 };
 
