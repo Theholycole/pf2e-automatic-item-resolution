@@ -265,6 +265,10 @@ test("routes for saves and checks read but not played: Frogskin Tincture's toxin
     // An activation pressed by hand whatever its trigger reads (Reactive Mail's "provoke", Exploding Shield's "death"); a drum isn't a
     // snare (Snare of Speed's Larghissimo); its user's own skill check against a creature's DC (The Crows, Whip-Tongue Sling).
     assert.deepEqual([activation("Reactive Mail"), activation("Exploding Shield"), activation("Snare of Speed", 1), activation("The Crows"), activation("Whip-Tongue Sling", 1)], ["save", "save", "save", "save", "save"]);
+    // Gorget of the Primal Roar's "a single Intimidation check compared to the Will DCs of all enemies within 30 feet": the check against each
+    // one's Will DC, Frightened 2 / 1.
+    const gorget = compileActivations(source("Gorget of the Primal Roar"))[0].plan;
+    assert.deepEqual([activation("Gorget of the Primal Roar"), gorget.resolution.check.statistic, gorget.resolution.check.against.statistic, gorget.resolution.outcomes.criticalSuccess.effects.map((effect) => `${effect.slug} ${effect.value}`), gorget.resolution.outcomes.success.effects.map((effect) => `${effect.slug} ${effect.value}`)], ["save", "intimidation", "will", ["frightened 2"], ["frightened 1"]]);
     // Tarantula Ampoule's effigy: its Fortitude save at the creature it lunges at, a failure's piercing damage, a critical failure's
     // exposure to its venom a note.
     const ampoule = compileItem(source("Tarantula Ampoule"));

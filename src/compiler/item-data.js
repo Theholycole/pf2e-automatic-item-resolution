@@ -59,6 +59,9 @@ export function withItemData(html, item) {
     // storm cloud conceals creatures within it".)
     // (And Red's "Any creature in the cloud, or that later enters the cloud, must succeed at …": those there as it's made, and on entering.)
     text = text.replace(/\bThe cloud dissipates after (\d+) (minutes?|rounds?)\./g, "The cloud lasts for $1 $2.").replace(/\bA dark storm cloud conceals creatures within it\./g, "Creatures within the cloud are Concealed.").replace(/\bAny creature in the cloud, or that later enters the cloud, must\b/g, "Each creature within the area when it uses this, or that enters the cloud, must");
+    // (One check against each enemy's DC, Gorget of the Primal Roar's "attempting a single @Check[intimidation] check compared to the Will
+    // DCs of all enemies within 30 feet": the check against each one's DC, the creatures its presser targets.)
+    text = text.replace(/\battempting a single @Check\[(\w+)\] check compared to the (Fortitude|Reflex|Will|Perception) DCs of all enemies within (\d+) feet\b/g, (whole, skill, defense, feet) => `attempting a @Check[${skill}|against:${defense.toLowerCase()}] check against the ${defense} DC of each enemy within ${feet} feet`);
     // (A heading's space inside its bold tag and a bold action glyph, a third-party module's markup: PF2e's own, as the activation
     // reader takes it.)
     text = text.replace(/<strong>(Activate|Trigger|Effect|Requirements?|Frequency) <\/strong>/g, "<strong>$1</strong> ").replace(/<span class="action-glyph"><strong>([^<]+)<\/strong><\/span>/g, '<span class="action-glyph">$1</span>');

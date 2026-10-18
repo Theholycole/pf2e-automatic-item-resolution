@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 731,
+   "resolves": 732,
    "builtin:cast-spell": 470,
-   "none": 668,
+   "none": 667,
    "partial": 154,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
@@ -26,10 +26,10 @@
    "builtin:ways": 1
   },
   "live": {
-   "save": 421,
+   "save": 422,
    "cast": 470,
    "item": 582,
-   "none": 817,
+   "none": 816,
    "focus": 45,
    "fortune": 54,
    "reroll": 25,
@@ -50,9 +50,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 445,
+    "resolves": 446,
     "builtin:cast-spell": 341,
-    "none": 449,
+    "none": 448,
     "partial": 70,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
@@ -15596,9 +15596,9 @@
    "time": "1",
    "frequency": "once during the duration of each polymorph effect",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Wyvern Nafir",
