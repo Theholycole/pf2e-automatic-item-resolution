@@ -3769,6 +3769,38 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await cloud()?.delete().catch(() => null);
         }
+    },
+
+    // Ghoul Stiletto: its activation readies the dagger's next Strike; the hit (AC 1) posts the target's DC 17 Fortitude save card and
+    // attaches the 10-foot stench aura to the target's token.
+    async ghoulStench(scene) {
+        const { actor: rogue, token: rogueToken } = await creature(scene, "Stiletto Rogue", { type: "character", x: 2, y: 13 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Stench Bearer", { x: 3, y: 13, ac: 1, alliance: "opposition" });
+        const dagger = await give(rogue, "Ghoul Stiletto");
+        await dagger.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await until(() => rogueToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        const aura = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Ghoul Stiletto/.test(region.name));
+        try {
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(dagger.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            await rogueToken.object?.control?.();
+            await target(foeToken);
+            since = Date.now();
+            const { attack } = await strike(rogue, dagger);
+            assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+            const save = await messageAfter(since, (message) => abilitySaveCard(message) && (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).some((entry) => entry.actorUuid === foe.uuid), { what: "the stench save card" });
+            const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+            assert(check.statistic === "fortitude" && check.against.value === 17, `Fortitude DC 17 (${JSON.stringify(check)})`);
+            await until(() => aura(), "the stench aura's Region", { timeout: 10000 });
+            const attached = aura().attachment?.token;
+            assert((attached?.id ?? attached) === foeToken.id, `attached to the target's token (${attached?.id ?? attached})`);
+            return { region: aura().name };
+        } finally {
+            await aura()?.delete().catch(() => null);
+        }
     }
 };
 

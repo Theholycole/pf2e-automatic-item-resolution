@@ -98,6 +98,15 @@ export async function strikeWithRider(message) {
             lines.push(`${target.name}: its save card follows.`);
         } else lines.push(`${target.name}: ${saveText(save)} (roll it by hand).`);
     }
+    // (An aura on the creature hit, src/compiler/hit-auras.js — Ghoul Stiletto's stench: the ability module's zone on its token.)
+    const zone = rider.plan.strike?.zone;
+    if (zone) {
+        const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
+        if (startZone) {
+            await startZone({ item: { name: rider.item.name, uuid: rider.item.uuid ?? null, actor }, plan: { builtin: "zone", source: rider.plan.source, zone }, sourceToken: targetToken });
+            lines.push(`${target.name}: its ${zone.area.value}-foot aura is on its token`);
+        } else lines.push(`${target.name}: mark its ${zone.area.value}-foot aura by hand`);
+    }
     // (A spell cast at the creature hit: the spell module's, its own save at the item's DC — Stone Bullet's Petrify.)
     const cast = rider.plan.strike?.cast;
     if (cast) {

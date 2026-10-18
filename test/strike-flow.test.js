@@ -161,6 +161,12 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     const silenced = silencer.strike.save.resolution.outcomes.failure.noteEffects[0];
     assert.deepEqual([silencer.strike.range, silencer.strike.save.resolution.check.against.value, silenced.duration.unit], ["ranged", 20, "rounds"]);
     assert.match(silenced.text, /casting spells that include verbal components/);
+    // Ghoul Stiletto's wound: the dagger's next Strike, its hit's Fortitude save, and a 10-foot aura on the creature hit for 1 minute with
+    // the same save at a turn's start or end in it (Ghast Stiletto's for those there as it starts and those entering).
+    const ghoul = compileActivations(source("Ghoul Stiletto"))[0].plan;
+    assert.deepEqual([ghoul.strike.own, ghoul.strike.save.resolution.check.against.value, ghoul.strike.zone.area, ghoul.strike.zone.saves[0].when, ghoul.strike.zone.lasts.value], [true, 17, { type: "emanation", value: 10 }, ["start", "end"], 1]);
+    assert.deepEqual(compileActivations(source("Ghast Stiletto"))[0].plan.strike.zone.saves[0].when, ["initial", "enter"]);
+    assert.match(strikeLines(ghoul).join(" | "), /a 10-foot aura on the target for 1 minutes/);
 });
 
 test("the readied Strike's PF2e rules: dice on its weapon's damage, the bonus on its attack, a damage type", () => {

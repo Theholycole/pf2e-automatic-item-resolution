@@ -9,11 +9,11 @@
    "resolves": 732,
    "builtin:cast-spell": 470,
    "none": 667,
-   "partial": 154,
+   "partial": 156,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 44,
-   "note-only": 209,
+   "note-only": 207,
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
@@ -28,12 +28,12 @@
   "live": {
    "save": 422,
    "cast": 470,
-   "item": 582,
+   "item": 580,
    "none": 816,
    "focus": 45,
    "fortune": 54,
    "reroll": 25,
-   "strike": 82,
+   "strike": 84,
    "counteract": 6,
    "zone": 20,
    "toggle": 32,
@@ -73,8 +73,8 @@
    "results": {
     "resolves": 154,
     "none": 108,
-    "partial": 38,
-    "note-only": 26,
+    "partial": 40,
+    "note-only": 24,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 12,
@@ -15077,9 +15077,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Open Mind",
@@ -15099,9 +15099,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Thrower's Bandolier",

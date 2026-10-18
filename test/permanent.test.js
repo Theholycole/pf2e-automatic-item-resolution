@@ -160,8 +160,10 @@ test("an Effect's opening flavor left out when it keeps the rest from being read
     const bulwark = compileActivations(item("Suit of False Impression"), { spellEffects })[0].plan;
     assert.deepEqual([bulwark.resolution.check.statistic, bulwark.resolution.check.against.value, bulwark.targeting.area], ["will", 22, { type: "emanation", value: 15 }]);
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => bulwark.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["frightened 1"], ["frightened 2"]]);
-    // Ghast Stiletto's opening says which creature it's for ("the next living target struck"): not flavor, still a note alone.
-    assert.equal(compileActivations(item("Ghast Stiletto"), { spellEffects })[0].plan.noteOnly, true);
+    // Ghast Stiletto's opening says which creature it's for ("the next living target struck"): not flavor — the dagger's next Strike and
+    // the aura on the creature hit (src/compiler/hit-auras.js).
+    const ghast = compileActivations(item("Ghast Stiletto"), { spellEffects })[0].plan;
+    assert.deepEqual([ghast.noteOnly ?? false, ghast.strike?.zone?.area?.value], [false, 10]);
 });
 
 test("Bloodline Robe's Quickened on its user's next turn, its limit a note; Life's Last Breath's save written without the word", () => {

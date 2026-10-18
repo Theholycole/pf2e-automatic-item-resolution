@@ -19,6 +19,7 @@ import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { beadsPlan } from "./beads.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
+import { hitAuraPlan } from "./hit-auras.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
@@ -190,6 +191,8 @@ function compileEach(item, options = {}) {
         if (!plan) plan = rowPlanFor(part, base);
         // (A Strike with riders, src/compiler/strikes.js: Duelist's Beacon.)
         plan = strikeOver(plan, compileStrike(part, base, options));
+        // (A wound that makes the creature hit give off an aura, src/compiler/hit-auras.js: Ghoul Stiletto's stench.)
+        plan = hitAuraPlan(activation.html, base, part, options) ?? plan;
         // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Starfaring Cloak.)
         plan = rerollOver(plan, rerollPlan(activation.html, base));
         // (Its user's next roll of a kind rolled twice, src/compiler/fortune.js: Sunweave.)
