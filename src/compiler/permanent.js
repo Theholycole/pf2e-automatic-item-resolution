@@ -79,7 +79,10 @@ export function splitActivations(html) {
     const text = String(html ?? "");
     const starts = [...text.matchAll(/<strong>\s*Activat(?:e|ion)\b/gi)].map((match) => match.index);
     return starts.map((start, index) => {
-        const block = text.slice(start, starts[index + 1] ?? text.length);
+        // (To a section heading after it, if one comes first: Essence Forge's "<h2>Essence Forge Crafting</h2>" table isn't its last activation's.)
+        const whole = text.slice(start, starts[index + 1] ?? text.length);
+        const heading = whole.search(/<h[1-6]\b/i);
+        const block = heading > 0 ? whole.slice(0, heading) : whole;
         const head = /<strong>\s*Activat(?:e|ion)\s*(?:[—–-]\s*([^<]*?))?\s*<\/strong>([\s\S]*?)(?=<\/p>|<br|<hr|<strong>|$)/i.exec(block);
         const glyph = /<span class="action-glyph">\s*([^<\s]+)\s*<\/span>/i.exec(head?.[2] ?? "")?.[1]?.toLowerCase();
         const words = plainText(head?.[2] ?? "");

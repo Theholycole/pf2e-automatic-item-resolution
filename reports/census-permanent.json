@@ -6,14 +6,14 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 732,
+   "resolves": 736,
    "builtin:cast-spell": 470,
-   "none": 665,
-   "partial": 158,
+   "none": 661,
+   "partial": 159,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 44,
-   "note-only": 207,
+   "note-only": 206,
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
@@ -28,12 +28,12 @@
   "live": {
    "save": 422,
    "cast": 470,
-   "item": 580,
-   "none": 814,
+   "item": 583,
+   "none": 810,
    "focus": 45,
    "fortune": 54,
    "reroll": 25,
-   "strike": 86,
+   "strike": 87,
    "counteract": 6,
    "zone": 20,
    "toggle": 32,
@@ -50,9 +50,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 446,
+    "resolves": 449,
     "builtin:cast-spell": 341,
-    "none": 448,
+    "none": 445,
     "partial": 70,
     "builtin:focus-point": 43,
     "builtin:no-effect": 98,
@@ -71,10 +71,10 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 154,
-    "none": 108,
-    "partial": 40,
-    "note-only": 24,
+    "resolves": 155,
+    "none": 107,
+    "partial": 41,
+    "note-only": 23,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
     "builtin:modes": 12,
@@ -3202,9 +3202,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Cleft Head Marking (Greater)",
@@ -10282,9 +10282,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "healing",
+   "live": "item"
   },
   {
    "name": "Vaultbreaker's Harness",
@@ -10524,9 +10524,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "healing",
+   "live": "item"
   },
   {
    "name": "Burr Shield",
@@ -22625,7 +22625,7 @@
    "time": "1",
    "frequency": "once per day (but see below)",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -25872,9 +25872,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "healing",
+   "live": "item"
   },
   {
    "name": "Frostwalker Pattern",

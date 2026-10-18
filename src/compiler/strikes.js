@@ -326,5 +326,8 @@ export function strikeOver(plan, strike) {
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") return strike;
     // (Or a spell cast on its hit, over a save the ability compiler read in the text beside it: Devil's Trident's Paralyze, not the
     // disease another of its activations gives.)
+    // (And over a plain cast of the spell its hit casts: Devil's Trident's "Attempt a Strike. On a hit, the trident casts … Paralyze" isn't
+    // Paralyze cast outright.)
+    if (plan.builtin === "cast-spell" && strike.strike?.cast && plan.spell?.uuid === strike.strike.cast.uuid) return strike;
     return plan.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && (strike.strike?.save || strike.strike?.cast) ? strike : plan;
 }

@@ -62,6 +62,16 @@ export function withItemData(html, item) {
     // (One check against each enemy's DC, Gorget of the Primal Roar's "attempting a single @Check[intimidation] check compared to the Will
     // DCs of all enemies within 30 feet": the check against each one's DC, the creatures its presser targets.)
     text = text.replace(/\battempting a single @Check\[(\w+)\] check compared to the (Fortitude|Reflex|Will|Perception) DCs of all enemies within (\d+) feet\b/g, (whole, skill, defense, feet) => `attempting a @Check[${skill}|against:${defense.toLowerCase()}] check against the ${defense} DC of each enemy within ${feet} feet`);
+    // (A next Strike's extra damage told as its projectile's, Blade of Fallen Stars' "On your next ranged Strike, the weapon fires … In addition
+    // to the normal Strike damage, the projectile also deals @Damage[6d8[cold]] damage and creates …": the next Strike's extra damage.)
+    text = text.replace(/\bOn your next (ranged |melee )?Strike, the weapon [^.]*\.\s*In addition to the normal Strike damage, the [\w ]+? also deals (@Damage\[(?:[^[\]]|\[[^\]]*\])*\])(?:\{[^}]*\})? damage( and )?/g, (whole, range, damage, and) => `The next ${range ?? ""}Strike you make with the weapon deals an additional ${damage} damage${and ? ". It also " : ""}`);
+    // (Extra damage on every Strike for a while told as a construct's, Solar Shellflower's "For the next 1 minute, whenever you Strike an enemy
+    // with the solar shellflower, the construct fires a smaller jet of fire that automatically hits the target, dealing @Damage[3d4[persistent,
+    // fire]] … or twice that on a critical hit": its Strikes' extra damage for that time — PF2e's extra dice double on a critical hit anyway.)
+    text = text.replace(/\bFor the next (\d+) (minutes?|rounds?), whenever you Strike an enemy with the (?:<em>)?[\w' -]+?(?:<\/em>)?\s*, the [\w' -]+? that automatically hits the target, dealing @Damage\[(\d+d\d+)\[(persistent,)?(\w+)\]\](?:\{[^}]*\})? or twice that on a critical hit\./g, (whole, count, unit, dice, persistent, type) => `For ${count} ${unit}, your Strikes with the weapon deal ${dice} additional ${persistent ? "persistent " : ""}${type} damage.`);
+    // (Healing gated on what the item holds, Essence Forge's "If the essence value in the forge is equal to or greater than 50 gp, the forge
+    // heals you for @Damage[(3d8+10)[healing]] HP. Otherwise the absorbed essence has no effect.": the healing, its gate a note.)
+    text = text.replace(/\bIf the essence value in the forge is equal to or greater than ([\d,]+ gp), the forge heals you for (@Damage\[(?:[^[\]]|\[[^\]]*\])*\])(?:\{[^}]*\})? HP\. Otherwise the absorbed essence has no effect\./g, (whole, value, healing) => `You regain ${healing} Hit Points. It heals only when the essence in the forge is worth at least ${value}.`);
     // (A heading's space inside its bold tag and a bold action glyph, a third-party module's markup: PF2e's own, as the activation
     // reader takes it.)
     text = text.replace(/<strong>(Activate|Trigger|Effect|Requirements?|Frequency) <\/strong>/g, "<strong>$1</strong> ").replace(/<span class="action-glyph"><strong>([^<]+)<\/strong><\/span>/g, '<span class="action-glyph">$1</span>');

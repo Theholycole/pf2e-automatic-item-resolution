@@ -169,6 +169,16 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     assert.match(strikeLines(ghoul).join(" | "), /a 10-foot aura on the target for 1 minutes/);
     // Saves for the creatures around the one hit: Dispersing Bullet's push (Fortitude 21, the target left out, the push a note), Singularity
     // Ammunition's pull and then its blast (7d12 bludgeoning, basic Reflex 28, the target too).
+    // Blade of Fallen Stars' projectile: the next ranged Strike's extra 6d8 cold, its Faerie Fire a note; Solar Shellflower's construct: its
+    // Strikes' extra 3d4 persistent fire for 1 minute (the item's Effect); Essence Forge's healing, its gate a note.
+    const blade = compileActivations(source("Blade of Fallen Stars"))[1].plan.strike;
+    assert.deepEqual([blade.range, blade.damage.map((entry) => `${entry.diceNumber}${entry.dieSize} ${entry.damageType}`)], ["ranged", ["6d8 cold"]]);
+    assert.match(blade.notes.join(" "), /Faerie Fire/);
+    const shellflower = compileActivations(source("Solar Shellflower"))[0].plan.item.strikeDamage[0];
+    assert.deepEqual([shellflower.diceNumber, shellflower.dieSize, shellflower.category, shellflower.damageType, shellflower.own, shellflower.duration.value], [3, "d4", "persistent", "fire", true, 1]);
+    const forge = compileActivations(source("Essence Forge (Lesser)"))[2].plan;
+    assert.deepEqual([forge.resolution.kind, forge.resolution.native.healing.components[0].formula], ["healing", "3d8+10"]);
+    assert.match(forge.notes.join(" "), /only when the essence in the forge is worth at least 50 gp/);
     const dispersing = compileActivations(source("Dispersing Bullet"))[0].plan.strike;
     assert.deepEqual([dispersing.ammo, dispersing.around.map((entry) => [entry.radius, entry.includeTarget, entry.plan.resolution.check.against.value])], [true, [[10, false, 21]]]);
     assert.match(dispersing.around[0].plan.notes[0], /pushed 10 feet from the target; 15 feet on a critical failure/);
