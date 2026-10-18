@@ -55,6 +55,10 @@ export function withItemData(html, item) {
     // (A save for whoever the affixed weapon hits, Golden Silencer's "A target hit by a ranged Strike from the affixed weapon must succeed at
     // a @Check[fortitude|dc:20] save or be silenced as well …": its next ranged Strike's, on a hit.)
     text = text.replace(/\bA target hit by an? (ranged |melee )?Strike from the affixed weapon must succeed at\b/g, (whole, range) => `The next ${range ?? ""}Strike you make with the affixed weapon is silent. On a hit, the target must succeed at`);
+    // (A cloud's time and cover in words the zone reader takes, the Spun Clouds' "The cloud dissipates after 1 minute" and Black's "A dark
+    // storm cloud conceals creatures within it".)
+    // (And Red's "Any creature in the cloud, or that later enters the cloud, must succeed at …": those there as it's made, and on entering.)
+    text = text.replace(/\bThe cloud dissipates after (\d+) (minutes?|rounds?)\./g, "The cloud lasts for $1 $2.").replace(/\bA dark storm cloud conceals creatures within it\./g, "Creatures within the cloud are Concealed.").replace(/\bAny creature in the cloud, or that later enters the cloud, must\b/g, "Each creature within the area when it uses this, or that enters the cloud, must");
     // (A heading's space inside its bold tag and a bold action glyph, a third-party module's markup: PF2e's own, as the activation
     // reader takes it.)
     text = text.replace(/<strong>(Activate|Trigger|Effect|Requirements?|Frequency) <\/strong>/g, "<strong>$1</strong> ").replace(/<span class="action-glyph"><strong>([^<]+)<\/strong><\/span>/g, '<span class="action-glyph">$1</span>');

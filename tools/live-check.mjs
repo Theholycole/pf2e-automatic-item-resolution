@@ -3741,6 +3741,34 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await cloud()?.delete().catch(() => null);
         }
+    },
+
+    // Spun Cloud (Red): its 20-foot burst placed (the click stood in for) for 1 minute; a creature in it as it's made attempts the
+    // DC 24 Will save (at −30, a critical failure: Frightened 3).
+    async redSpunCloud(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Cloud Spinner", { type: "character", x: 13, y: 2 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Cloud Victim", { x: 17, y: 2, alliance: "opposition", save: -30 });
+        const cloudItem = await give(user, "Spun Cloud (Red)");
+        await until(() => userToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        // (Its burst centred on the victim.)
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [{ ...data, shapes: (data.shapes ?? []).map((shape) => ({ ...shape, x: foeToken.x + canvas.grid.size / 2, y: foeToken.y + canvas.grid.size / 2 })) }]))[0];
+        const cloud = () => scene.regions.find((entry) => entry.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Spun Cloud/.test(entry.name));
+        try {
+            const since = Date.now();
+            await cloudItem.consume();
+            await until(() => cloud(), "the cloud's Region", { timeout: 8000 });
+            const card = await messageAfter(since, (message) => abilitySaveCard(message) && (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).some((entry) => entry.actorUuid === foe.uuid), { what: "the cloud's save card", timeout: 10000 });
+            const check = card.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+            assert(check.statistic === "will" && check.against.value === 24, `Will DC 24 (${JSON.stringify(check)})`);
+            await rollAndApply(card);
+            await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "frightened" && condition.value === 3), "Frightened 3", { timeout: 10000 });
+            return { region: cloud()?.name };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await cloud()?.delete().catch(() => null);
+        }
     }
 };
 

@@ -14,10 +14,10 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 215,
-   "resolves": 752,
+   "none": 214,
+   "resolves": 751,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 104,
+   "builtin:zone": 106,
    "builtin:item-action": 15,
    "partial": 97,
    "note-only": 160,
@@ -34,12 +34,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "none": 118,
-    "resolves": 213,
+    "builtin:zone": 18,
+    "resolves": 212,
     "partial": 45,
     "note-only": 81,
-    "builtin:zone": 16,
     "builtin:readied-bonus": 7,
+    "none": 117,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
@@ -323,7 +323,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 336,
+   "resolves": 335,
    "gaps": 0,
    "none": 26
   },
@@ -371,13 +371,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 265,
+   "resolves": 264,
    "gaps": 0,
-   "none": 25
+   "none": 24
   },
   "duration": {
    "count": 943,
-   "resolves": 607,
+   "resolves": 606,
    "gaps": 0,
    "none": 13
   }
@@ -385,12 +385,12 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 280,
+   "none": 279,
    "item": 628,
    "fortune": 23,
-   "zone": 104,
+   "zone": 106,
    "expose": 89,
-   "later": 81,
+   "later": 80,
    "action": 15,
    "save": 141,
    "counteract": 28,
@@ -402,11 +402,11 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "none": 142,
-    "later": 12,
+    "zone": 18,
+    "none": 141,
+    "later": 11,
     "save": 94,
     "item": 214,
-    "zone": 16,
     "fortune": 7,
     "strike": 3,
     "expose": 3,
@@ -495,7 +495,7 @@
    }
   },
   "noCard": {
-   "no-plan": 215,
+   "no-plan": 214,
    "triggered": 12,
    "gm": 52,
    "other": 1
@@ -663,7 +663,9 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Dr. Ushernacht's Astonishing Ink (Moderate)",
@@ -25872,10 +25874,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Ablative Shield Plating (Lesser)",
