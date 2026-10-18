@@ -3906,6 +3906,42 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await area()?.delete().catch(() => null);
         }
+    },
+
+    // Soulcutter's Soothe Souls: its 20-foot emanation on its user; at the start of their turns in it, an undead takes the 1d8 spirit damage
+    // (its card), a creature with none of the traits doesn't (zone.damage[i].only).
+    async soulcutterSoothe(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Soulcutter Wielder", { type: "character", x: 2, y: 4 });
+        const { actor: plain, token: plainToken } = await creature(scene, "Soothed Bystander", { x: 3, y: 4, alliance: "opposition" });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Castigated Zombie", { x: 2, y: 5, alliance: "opposition" });
+        await undead.update({ "system.traits.value": ["undead"] });
+        const blade = await give(user, "Soulcutter");
+        await until(() => userToken.object && plainToken.object && undeadToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const index = (await import(`/modules/${NS}/src/compiler/permanent.js`)).compileActivations(blade).findIndex((entry) => /Soothe/.test(entry.activation.name ?? ""));
+        const area = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Soulcutter/.test(region.name));
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 30 }, { tokenId: plainToken.id, sceneId: scene.id, actorId: plain.id, initiative: 20 }, { tokenId: undeadToken.id, sceneId: scene.id, actorId: undead.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            await game.modules.get(NS).api.live.activate(blade.uuid, index);
+            await until(() => area(), "the aura's Region", { timeout: 8000 });
+            const since = Date.now();
+            for (let turn = 0; turn < 2; turn++) {
+                await combat.nextTurn();
+                await wait(1200);
+            }
+            await wait(1500);
+            const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message));
+            const forActor = (actor) => cards.filter((message) => (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).some((entry) => entry.actorUuid === actor.uuid));
+            assert(forActor(plain).length === 0, `no card for the bystander (${forActor(plain).length})`);
+            assert(forActor(undead).length === 1, `the zombie's damage card (${forActor(undead).length})`);
+            return { cards: cards.length };
+        } finally {
+            await area()?.delete().catch(() => null);
+            await combat.delete().catch(() => null);
+        }
     }
 };
 

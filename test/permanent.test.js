@@ -508,6 +508,13 @@ test("auras that act at a turn's start or end in them, as the ability module's z
     assert.deepEqual([smoke.area, smoke.centre, smoke.saves[0].when, failure.effects.map((effect) => [effect.slug, effect.value, effect.duration])], [{ type: "emanation", value: 20 }, "self", ["initial", "enter"], [["enfeebled", 2, { mode: "while", persistent: "poison" }]]]);
     // Alkenstar Phalanx: its two 60-foot walls one 120-foot line placed through its user's space, greater difficult terrain, the basic
     // Fortitude save on entering and at a turn's start there.
+    // Soulcutter's Soothe Souls: the aura on its user for its minute, its spirit damage at a turn's start only for fiends and undead (its
+    // Heroic grade's a basic Will save), the living's healing a note.
+    const soothe = compileActivations(item("Soulcutter"), { spellEffects }).find((entry) => /Soothe/.test(entry.activation.name ?? "")).plan.zone;
+    assert.deepEqual([soothe.area, soothe.centre, soothe.lasts.value, soothe.damage], [{ type: "emanation", value: 20 }, "self", 1, [{ when: "start", only: { traits: ["fiend", "undead"] }, formulas: ["1d8[spirit]"] }]]);
+    assert.match(soothe.notes.join(" "), /living creature that starts its turn in the area regains 1d8 Hit Points/);
+    const heroic = compileActivations(item("Soulcutter (Heroic)"), { spellEffects }).find((entry) => /Soothe/.test(entry.activation.name ?? "")).plan.zone;
+    assert.deepEqual([heroic.saves[0].only.traits, heroic.saves[0].plan.resolution.check.basic, heroic.saves[0].plan.resolution.check.against.value], [["fiend", "undead"], true, 38]);
     const phalanx = compileActivations(item("Alkenstar Phalanx"), { spellEffects })[0].plan.zone;
     assert.deepEqual([phalanx.area, phalanx.centre, phalanx.terrain, phalanx.saves[0].when, phalanx.saves[0].plan.resolution.check.basic, phalanx.saves[0].plan.resolution.check.against.value], [{ type: "line", value: 120 }, "placed", [{ movement: ["walk"], difficulty: 3 }], ["enter", "start"], true, 32]);
 });

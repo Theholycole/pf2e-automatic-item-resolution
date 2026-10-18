@@ -151,9 +151,59 @@ export function choiceAuraWays(plan, activation, base, { withWhile = (entry) => 
     return { ...base, builtin: "ways", once: true, automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan.trigger?.frequency ? { frequency: plan.trigger.frequency } : {}), event: "use" }, ways };
 }
 
+// An aura around its user that heals some and harms others at a turn's start: Soulcutter's Soothe Souls, "within a
+// @Template[type:emanation|distance:20] around you … You can Sustain this activation for up to 1 minute. Living creatures that start their turn
+// in the area regain 1d8 Hit Points, and any fiend or undead creature that starts its turn in the area takes @Damage[1d8[spirit]] damage" (its
+// Heroic grade's with a @Check[will|dc:38|basic] save). The zone on its user's token for the minute, the damage — or its basic save — at a
+// turn's start only for creatures with those traits (only: { traits }, ability b4ad3ce); the healing of the living a note.
+const AROUND_YOU_AREA = /\bwithin an? @Template\[(?:type:)?emanation\|distance:(\d+)[^\]]*\](?:\{[^}]*\})? around you\b/i;
+const HEALS_AND_HARMS = /\bLiving creatures that start their turn in the area regain (@Damage\[(?:[^[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?|\d+d\d+(?:\+\d+)?) Hit Points, and any ([\w ]+?) creature that starts (?:its|their) turn in the area takes (@Damage\[(?:[^[\]]|\[[^\]]*\])*\])(?:\{[^}]*\})? damage(?: \((@Check\[(?:fortitude|reflex|will)\|[^\]]*\])(?:\{[^}]*\})? save\))?\./i;
+export function readHealingAura(html, name = "Aura") {
+    const text = String(html ?? "");
+    const around = AROUND_YOU_AREA.exec(text);
+    const harms = HEALS_AND_HARMS.exec(text);
+    const sustained = /\bSustain this activation for up to (\d+) (minutes?|rounds?)\b/i.exec(text);
+    if (!around || !harms) return null;
+    const traits = harms[2].split(/\s+or\s+|,\s*/).map((trait) => trait.trim().toLowerCase()).filter(Boolean);
+    const formula = /@Damage\[((?:[^[\]]|\[[^\]]*\])*)\]/.exec(harms[3])?.[1];
+    if (!formula) return null;
+    let saves = [];
+    let damage = [];
+    if (harms[4]) {
+        let plan = null;
+        try {
+            plan = compileAbility({ name, type: "action", system: { slug: null, description: { value: `<p>The target takes ${harms[3]} damage (${harms[4]} save).</p>` }, actionType: { value: "free" }, actions: { value: null }, traits: { value: [] } } }, {});
+        } catch {
+            plan = null;
+        }
+        if (plan?.resolution?.kind !== "save") return null;
+        saves = [{ when: ["start"], only: { traits }, plan: { ...plan, trigger: { event: "zone" }, targeting: { target: "a creature in the area", range: null, area: null } } }];
+    } else damage = [{ when: "start", only: { traits }, formulas: [formula] }];
+    const healing = harms[1].replace(/@Damage\[\(?([^\]\[]+?)\)?\[healing\]\]/i, "$1");
+    return {
+        area: { type: "emanation", value: Number(around[1]) },
+        centre: "self",
+        range: null,
+        lasts: sustained ? durationIn(`for ${sustained[1]} ${sustained[2]}`, null) : null,
+        untilReused: false,
+        concealed: false,
+        terrain: [],
+        others: false,
+        hazard: null,
+        saves,
+        damage,
+        effect: null,
+        modifiers: [],
+        notes: [
+            ...(sustained ? [`It lasts while you Sustain it, up to ${sustained[1]} ${sustained[2]}: end it on this card sooner if you stop.`] : []),
+            `Each living creature that starts its turn in the area regains ${healing} Hit Points (roll it by hand).`
+        ]
+    };
+}
+
 // The builtin, its base the activation's or the item's; its user's own Effect beside it, ownEffect.
 export function auraZonePlan(html, base, name) {
-    const read = readAuraZone(html, name) ?? readSelfAura(html, name);
+    const read = readAuraZone(html, name) ?? readSelfAura(html, name) ?? readHealingAura(html, name);
     if (!read) return null;
     const { own, ...zone } = read;
     return { ...base, builtin: "zone", source: base.source, actions: null, zone, ...(own ? { ownEffect: own } : {}) };
