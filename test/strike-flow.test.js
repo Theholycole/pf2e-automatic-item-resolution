@@ -167,6 +167,13 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     assert.deepEqual([ghoul.strike.own, ghoul.strike.save.resolution.check.against.value, ghoul.strike.zone.area, ghoul.strike.zone.saves[0].when, ghoul.strike.zone.lasts.value], [true, 17, { type: "emanation", value: 10 }, ["start", "end"], 1]);
     assert.deepEqual(compileActivations(source("Ghast Stiletto"))[0].plan.strike.zone.saves[0].when, ["initial", "enter"]);
     assert.match(strikeLines(ghoul).join(" | "), /a 10-foot aura on the target for 1 minutes/);
+    // Saves for the creatures around the one hit: Dispersing Bullet's push (Fortitude 21, the target left out, the push a note), Singularity
+    // Ammunition's pull and then its blast (7d12 bludgeoning, basic Reflex 28, the target too).
+    const dispersing = compileActivations(source("Dispersing Bullet"))[0].plan.strike;
+    assert.deepEqual([dispersing.ammo, dispersing.around.map((entry) => [entry.radius, entry.includeTarget, entry.plan.resolution.check.against.value])], [true, [[10, false, 21]]]);
+    assert.match(dispersing.around[0].plan.notes[0], /pushed 10 feet from the target; 15 feet on a critical failure/);
+    const singularity = compileActivations(source("Singularity Ammunition"))[0].plan.strike;
+    assert.deepEqual(singularity.around.map((entry) => [entry.radius, entry.includeTarget, entry.plan.resolution.check.statistic, entry.plan.resolution.check.basic]), [[10, false, "fortitude", false], [5, true, "reflex", true]]);
 });
 
 test("the readied Strike's PF2e rules: dice on its weapon's damage, the bonus on its attack, a damage type", () => {

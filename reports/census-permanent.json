@@ -8,8 +8,8 @@
   "results": {
    "resolves": 732,
    "builtin:cast-spell": 470,
-   "none": 667,
-   "partial": 156,
+   "none": 665,
+   "partial": 158,
    "builtin:focus-point": 45,
    "builtin:no-effect": 120,
    "builtin:readied-bonus": 44,
@@ -29,11 +29,11 @@
    "save": 422,
    "cast": 470,
    "item": 580,
-   "none": 816,
+   "none": 814,
    "focus": 45,
    "fortune": 54,
    "reroll": 25,
-   "strike": 84,
+   "strike": 86,
    "counteract": 6,
    "zone": 20,
    "toggle": 32,
@@ -89,10 +89,10 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "partial": 33,
+    "partial": 35,
     "resolves": 44,
     "builtin:pf2e-rules": 24,
-    "none": 37,
+    "none": 35,
     "builtin:no-effect": 2,
     "note-only": 3,
     "builtin:spellstrike": 9,
@@ -12144,9 +12144,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Choral Toga",
@@ -21100,9 +21100,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Energized Shield (Greater)",

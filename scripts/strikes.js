@@ -9,7 +9,7 @@
 import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { postActionCard } from "./item-actions.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, entryOf, startInitiative, stateOf } from "./foundry.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -76,7 +76,7 @@ export async function strikeWithRider(message) {
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
     // (A note for the creature hit counts: Magekiller Bullet's curse.)
-    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
+    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}.</p>` });
         return;
@@ -97,6 +97,22 @@ export async function strikeWithRider(message) {
             await postCard({ plan: save, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: [targetToken.object ?? targetToken], cause: `${rider.item.name} hit` });
             lines.push(`${target.name}: its save card follows.`);
         } else lines.push(`${target.name}: ${saveText(save)} (roll it by hand).`);
+    }
+    // (Saves for the creatures around the one hit, src/compiler/hit-around.js — Dispersing Bullet's push, Singularity Ammunition's pull and
+    // blast: each save card at the creatures within that distance of it, and it too when the text says.)
+    for (const entry of rider.plan.strike?.around ?? []) {
+        const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+        const near = creaturesNear(targetToken, entry.radius).map((other) => canvas.tokens.placeables.find((placeable) => placeable.document.uuid === other.tokenUuid)).filter(Boolean);
+        const tokens = [...(entry.includeTarget ? [targetToken.object ?? targetToken] : []), ...near];
+        if (!tokens.length) {
+            lines.push(`no creature within ${entry.radius} feet of ${target.name}`);
+            continue;
+        }
+        const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
+        if (postCard) {
+            await postCard({ plan: entry.plan, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens, cause: `${rider.item.name} hit ${target.name}` });
+            lines.push(`${saveText(entry.plan)} for ${tokens.length} creature${tokens.length === 1 ? "" : "s"} within ${entry.radius} feet of ${target.name}`);
+        } else lines.push(`${saveText(entry.plan)} for the creatures within ${entry.radius} feet of ${target.name} (roll it by hand)`);
     }
     // (An aura on the creature hit, src/compiler/hit-auras.js — Ghoul Stiletto's stench: the ability module's zone on its token.)
     const zone = rider.plan.strike?.zone;

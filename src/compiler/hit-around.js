@@ -1,0 +1,63 @@
+// Saves for the creatures around the creature a Strike hits: Dispersing Bullet's "When an activated dispersing bullet hits a target …
+// All creatures in a @Template[type:emanation|distance:10] around the target of the attack (not including the target) must succeed at a
+// @Check[fortitude|dc:21] save or be pushed 10 feet from the target (15 feet on a critical failure)", Singularity Ammunition's pull
+// toward the creature hit and then "The singularity then explodes, dealing @Damage[7d12[bludgeoning]] damage to the original target and
+// all creatures in a @Template[emanation|distance:5] (@Check[reflex|dc:28|basic])". The ammunition's Strike, its hit's strike.around:
+// [{ radius, includeTarget, plan }] — live play posts each save card at the creatures within that distance of the creature hit. A push or
+// pull away from or toward that creature (not its user) is the card's note. Pure.
+
+import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
+import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
+
+const HIT = /\b(?:When an activated [\w' -]+? hits a (?:target|creature)|centered on the creature hit)\b/i;
+const AROUND = /\bAll creatures in an? @Template\[(?:type:)?emanation\|distance:(\d+)[^\]]*\](?:\{[^}]*\})? (?:around|from) the target(?: of the attack)?( \(not including the target\))? must succeed at an? (@Check\[(?:fortitude|reflex|will)\|[^\]]*\])(?:\{[^}]*\})? save or be ((?:pushed|pulled) [^.]+)\./i;
+const EXPLODES = /\bThe [\w ]+? then explodes, dealing @Damage\[((?:[^[\]]|\[[^\]]*\])*)\](?:\{[^}]*\})? damage to the original target and all creatures in an? @Template\[(?:type:)?emanation\|distance:(\d+)[^\]]*\](?:\{[^}]*\})? \((@Check\[(?:fortitude|reflex|will)\|[^\]]*\])(?:\{[^}]*\})?(?: save)?\)\./i;
+const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+
+// One save sentence as the ability compiler reads it, on "the target" (each creature the card is posted at).
+function savePlan(item, sentence, options) {
+    const read = compileAbility({ ...item, type: "action", system: { ...(item?.system ?? {}), description: { value: `<p><strong>Effect</strong> ${sentence}</p>` }, actionType: { value: "passive" }, actions: { value: null } } }, options);
+    return read?.resolution?.kind === "save" && read.resolution.check?.against?.dc === "fixed" ? { ...read, trigger: { event: "use" } } : null;
+}
+
+// The activation's html, its base, the item → the Strike plan with strike.around, or null.
+export function hitAroundPlan(html, base, item, options = {}) {
+    const text = String(html ?? "");
+    const around = AROUND.exec(text);
+    const explodes = EXPLODES.exec(text);
+    if (!HIT.test(text) || (!around && !explodes)) return null;
+    const entries = [];
+    if (around) {
+        // (Its save with no rows of its own: what a failure does is moving the creature, from or to the one hit — the card's note.)
+        const check = /@Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(around[3]);
+        if (!check) return null;
+        const moved = around[4].replace(/\s*\(([^)]*) on a critical failure\)/i, "; $1 on a critical failure");
+        const plan = {
+            ...base,
+            modelVersion: MODEL_VERSION,
+            automation: { level: "guided" },
+            targeting: { target: "1 creature", range: null, area: null },
+            trigger: { event: "use" },
+            resolution: { kind: "save", check: { roll: "save", statistic: check[1].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(check[2]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+            notes: [`On a failure, it's ${moved} (move its token).`]
+        };
+        // (Not the creature hit itself: it's the one the others are pushed from or pulled toward.)
+        entries.push({ radius: Number(around[1]), includeTarget: false, plan });
+    }
+    if (explodes) {
+        const plan = savePlan(item, `The target takes @Damage[${explodes[1]}] damage (${explodes[3]} save).`, options);
+        if (!plan) return null;
+        entries.push({ radius: Number(explodes[2]), includeTarget: true, plan });
+    }
+    const ammo = item?.type === "ammo" || item?.type === "consumable";
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: "guided" },
+        targeting: { target: "the creature the Strike hits", range: null, area: null },
+        trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
+        resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+        strike: { range: "ranged", save: null, ...(ammo ? { ammo: true } : {}), around: entries, notes: [] },
+        partial: Boolean(around)
+    };
+}

@@ -3801,6 +3801,34 @@ export const cases = {
         } finally {
             await aura()?.delete().catch(() => null);
         }
+    },
+
+    // Singularity Ammunition: activated, loaded in a shortbow; the hit (AC 1) posts the pull's Fortitude save (DC 30) for the creature next
+    // to the target, and the blast's basic Reflex save (DC 28) for the target and that creature.
+    async singularityAround(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Singularity Archer", { type: "character", x: 5, y: 15 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Singularity Target", { x: 8, y: 15, ac: 1, alliance: "opposition" });
+        const { actor: nearby, token: nearbyToken } = await creature(scene, "Singularity Bystander", { x: 9, y: 15, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Singularity Ammunition");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        await until(() => archerToken.object && foeToken.object && nearbyToken.object, "the tokens drawn", { timeout: 5000 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(archer, bow);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const forUuids = (message) => (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).map((entry) => entry.actorUuid);
+        const pull = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check?.statistic === "fortitude", { what: "the pull's save card", timeout: 10000 });
+        const blast = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check?.statistic === "reflex", { what: "the blast's save card", timeout: 10000 });
+        assert(forUuids(pull).includes(nearby.uuid) && !forUuids(pull).includes(foe.uuid), `the pull for the bystander, not the target (${forUuids(pull).join(", ")})`);
+        assert(forUuids(blast).includes(foe.uuid) && forUuids(blast).includes(nearby.uuid), `the blast for both (${forUuids(blast).join(", ")})`);
+        return { pull: pull.id, blast: blast.id };
     }
 };
 

@@ -20,6 +20,7 @@ import { beadsPlan } from "./beads.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { hitAuraPlan } from "./hit-auras.js";
+import { hitAroundPlan } from "./hit-around.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
@@ -193,6 +194,8 @@ function compileEach(item, options = {}) {
         plan = strikeOver(plan, compileStrike(part, base, options));
         // (A wound that makes the creature hit give off an aura, src/compiler/hit-auras.js: Ghoul Stiletto's stench.)
         plan = hitAuraPlan(activation.html, base, part, options) ?? plan;
+        // (Saves for the creatures around the one it hits, src/compiler/hit-around.js: Dispersing Bullet, Singularity Ammunition.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = hitAroundPlan(activation.html, base, part, options) ?? plan;
         // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Starfaring Cloak.)
         plan = rerollOver(plan, rerollPlan(activation.html, base));
         // (Its user's next roll of a kind rolled twice, src/compiler/fortune.js: Sunweave.)
