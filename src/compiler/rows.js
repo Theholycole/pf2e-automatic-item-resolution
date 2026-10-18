@@ -712,7 +712,9 @@ export function ownRow(item, { healing = true } = {}) {
     const text = plainText(split ? html.slice(0, split.index) : html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ")
         .replace(/\bAn? (?:ally|creature) within (?:the|your) banner's aura becomes\b/gi, "You become")
         .replace(/\bTrigger You would take ((?:\w+, )*\w+,? or \w+) damage\s+Effect (You gain resistance \d+ to the) triggering (damage type\b[^.]*\.)/i, "Effect $2 chosen $3 Choose $1.")
-        .replace(WHEN_CLAUSES, " ").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
+        .replace(WHEN_CLAUSES, " ").replace(/^\s*Activat(?:e|ion)\b[^.]*?\bEffect\s+/i, "").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
+    // (Its Activate line up to its Effect gone first, or its Requirements run into the first sentence: Essence Forge's "… Requirements The
+    // essence forge contains essence You absorb the essence …".)
     if (NOT_ONE_RESULT.test(text) || EFFECT_LINK.test(html)) return null;
     const duration = itemDuration(text);
     const sentences = sentencesOf(text);
