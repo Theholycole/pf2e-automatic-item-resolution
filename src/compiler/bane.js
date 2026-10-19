@@ -81,3 +81,39 @@ export function tattooWaysPlan(html, base, item) {
     if (ways.length < 2) return null;
     return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true };
 }
+
+// Armor recalling a victory, the creature's trait giving the resistance: Victory Plate's "for 1 minute, you gain resistance 5 to a damage type
+// based on the creature's trait (…)", its list "Aberration or Fey — mental, Celestial — good, Construct — poison, Dragon or Elemental — one
+// energy type that matches one of the dragon's or elemental's traits, Fiend — evil, Ooze — precision, and the resistance is 10, Undead — void".
+// The ways card's pick of the trait (each energy type its own way for a dragon or an elemental), each way the item card's resistance
+// (plan.item.resist); good and evil are PF2e's holy and unholy.
+const RECALLED = /\bfor (\d+) (minutes?|rounds?|hours?), you gain resistance (\d+) to a damage type based on the creature's trait\b/i;
+const VICTORY_ROW = /<li>\s*<strong>([^<]+)<\/strong>\s*([^<]+?)\s*<\/li>/gi;
+const ENERGY = ["acid", "cold", "electricity", "fire", "sonic"];
+const VICTORY_TYPES = { good: "holy", evil: "unholy", mental: "mental", poison: "poison", precision: "precision", void: "void", vitality: "vitality" };
+export function victoryWaysPlan(html, base, item) {
+    const text = String(html ?? "");
+    const recalled = RECALLED.exec(text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
+    if (!recalled) return null;
+    const unit = /^hour/i.test(recalled[2]) ? "hours" : /^round/i.test(recalled[2]) ? "rounds" : "minutes";
+    const duration = { mode: "fixed", value: Number(recalled[1]), unit, expiry: "turn-start", anchor: "effect-start" };
+    const way = (name, type, value) => ({
+        name,
+        html: `<p>Resistance ${value} to ${type} damage for ${recalled[1]} ${recalled[2]}.</p>`,
+        plan: { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, item: { type: item?.type, level: Number(item?.system?.level?.value) || 0, recipient: "user", resist: [{ type, value, duration }] } }
+    });
+    const ways = [];
+    for (const [, names, words] of text.matchAll(VICTORY_ROW)) {
+        const label = names.trim();
+        const value = Number(/\bthe resistance is (\d+)\b/i.exec(words)?.[1] ?? recalled[3]);
+        if (/\bone energy type\b/i.test(words)) {
+            for (const type of ENERGY) ways.push(way(`${label}: ${type}`, type, value));
+            continue;
+        }
+        const type = VICTORY_TYPES[/^\s*(\w+)/.exec(words)?.[1]?.toLowerCase()];
+        if (!type) return null;
+        ways.push(way(`${label}: ${type}`, type, value));
+    }
+    if (ways.length < 2) return null;
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true };
+}

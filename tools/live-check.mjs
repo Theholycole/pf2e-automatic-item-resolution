@@ -4384,6 +4384,51 @@ export const cases = {
         return { before, tower: 2 };
     },
 
+    // Holy Water: PF2e's Strike; its splash card ticks only the creature beside the target with the unholy trait, which alone takes it.
+    async holyWaterSplash(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Holy Thrower", { type: "character", x: 0, y: 13 });
+        const { token: targetToken } = await creature(scene, "Holy Target", { x: 0, y: 15, ac: 1, alliance: "opposition" });
+        const { actor: plain } = await creature(scene, "Holy Bystander", { x: 0, y: 16, alliance: "opposition" });
+        const { actor: fiend } = await creature(scene, "Holy Fiend", { x: 1, y: 15, alliance: "opposition" });
+        await fiend.update({ "system.traits.value": ["fiend", "unholy"] });
+        const vial = await give(thrower, "Holy Water");
+        await vial.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await throwerToken.object?.control?.();
+        await target(targetToken);
+        const hp = (actor) => actor.system.attributes.hp.value;
+        const before = { plain: hp(plain), fiend: hp(fiend) };
+        const { action, attack } = await strike(thrower, vial);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const since = Date.now();
+        await action.damage({ event: shift() });
+        const card = await messageAfter(since, itemCard("bomb"), { what: "the splash card" });
+        const state = card.getFlag(NS, "card");
+        const tick = (actor) => state.splashed.find((entry) => entry.actorUuid === actor.uuid)?.include;
+        assert(tick(fiend) === true && tick(plain) === false, `the fiend ticked, the bystander not (${state.splashed.map((entry) => `${entry.name}:${entry.include}`).join(", ")})`);
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(800);
+        assert(hp(fiend) < before.fiend && hp(plain) === before.plain, `only the fiend splashed: fiend ${before.fiend} → ${hp(fiend)}, bystander ${before.plain} → ${hp(plain)}`);
+        return { splash: state.splash, hint: state.hint };
+    },
+
+    // Victory Plate: an ooze recalled (picked on the ways card) — resistance 10 to precision for 1 minute, as PF2e's Resistance rule.
+    async victoryOoze(scene) {
+        const { actor: user } = await creature(scene, "Victory Wearer", { type: "character", x: 1, y: 17 });
+        const plate = await give(user, "Victory Plate");
+        await plate.update({ "system.equipped.inSlot": true, "system.equipped.invested": true }).catch(() => null);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(plate.uuid, 1);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the trait picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Ooze: precision") });
+        const card = await messageAfter(since, itemCard("item"), { what: "the ooze way's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const precision = () => (user.system.attributes.resistances ?? []).find((entry) => entry.type === "precision");
+        await until(() => precision()?.value === 10, `resistance 10 to precision (${JSON.stringify((user.system.attributes.resistances ?? []).map((entry) => [entry.type, entry.value]))})`, { timeout: 8000 });
+        return { resistance: precision().value };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

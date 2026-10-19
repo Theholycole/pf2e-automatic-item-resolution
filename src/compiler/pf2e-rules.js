@@ -4,7 +4,8 @@
 // to the Strike that uses it, activated or not, so there is nothing to apply when it's activated; its splash on the
 // creatures around the target is the splash card's after the damage roll (scripts/bombs.js). The plan is a builtin,
 // "pf2e-rules", with what those rules do as a note: no card of its own. What else the text says (Gravebane Ammunition's
-// save, Garrote Shot's critical hit, Penetrating Ammunition's line) stays a note for the GM, and the plan is partial. Pure.
+// save, Garrote Shot's critical hit, Penetrating Ammunition's line) stays a note for the GM, and the plan is partial. Holy
+// Water and the other thrown splash weapons whose activation is PF2e's own Strike get the same builtin. Pure.
 
 const OWN = /\{item\|_?id\}/;
 const ownSelector = (rule) => [].concat(rule.selector ?? []).some((selector) => OWN.test(String(selector)));
@@ -46,8 +47,27 @@ const listText = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")
 // (A sentence beyond the damage: a save, a critical hit, a line, resistance or Hardness.)
 const MORE = /@Check\[|\bsav(?:e|ing throw)\b|\bcritical\b|@Template\[|\bline\b|\bresistance\b|\bHardness\b|\bcan't\b|\bnatural 20\b/i;
 
+// The trait a splash weapon harms only creatures with, from its text: Holy Water's "can damage only creatures with the unholy
+// trait" → "unholy"; null when it harms any.
+export function onlyHarms(item) {
+    const match = /\bcan damage only creatures with the (\w+) trait\b/i.exec(String(item?.system?.description?.value ?? "").replace(/<[^>]+>/g, " "));
+    return match ? match[1].toLowerCase() : null;
+}
+
+// A thrown consumable weapon with splash damage (Holy Water): its "Activate A Strike" is PF2e's own Strike, which rolls its
+// damage and splash; the splash card after the damage roll lists the creatures within 5 feet of the target.
+function splashWeaponPlan(item, base) {
+    const traits = item?.system?.traits?.value ?? [];
+    if (item?.type !== "weapon" || !traits.includes("consumable") || !traits.includes("thrown") || !(Number(item.system?.splashDamage?.value) > 0)) return null;
+    const harms = onlyHarms(item);
+    const notes = [`PF2e's own Strike with ${item.name} rolls its damage and its splash.`, "After the damage roll, the splash card lists the creatures within 5 feet of the target for its splash."];
+    if (harms) notes.push(`It harms only creatures with the ${harms} trait: the splash card leaves the others unticked, and its damage on a target without the trait is for the GM to leave unapplied.`);
+    return { ...base, builtin: "pf2e-rules", rules: [], notes };
+}
+
 // The plan for an activated ammunition's activation that PF2e's own rules do, or null. text: the activation's (plain).
 export function pf2eRulesPlan(item, base, text = "") {
+    if (item?.type === "weapon") return splashWeaponPlan(item, base);
     if (item?.type !== "ammo") return null;
     const rules = ownStrikeRules(item);
     if (!rules.length) return null;

@@ -238,6 +238,18 @@ test("a tattoo of one animal (Tooth and Claw Tattoo): the ways card's pick of th
     assert.deepEqual([rule.damage.base, rule.traits, rule.baseType], [{ damageType: "slashing", dice: 1, die: "d8" }, ["unarmed", "forceful"], "claw"]);
 });
 
+test("armor recalling a victory (Victory Plate): the ways card's pick of the creature's trait, each way its resistance for 1 minute (good and evil as holy and unholy, an ooze's precision higher)", () => {
+    const [, recall] = compileActivations(source("Victory Plate"));
+    assert.equal(recall.plan.builtin, "ways");
+    const ways = Object.fromEntries(recall.plan.ways.map((way) => [way.name, way.plan.item.resist[0]]));
+    assert.deepEqual(Object.keys(ways), ["Aberration or Fey: mental", "Celestial: holy", "Construct: poison", "Dragon or Elemental: acid", "Dragon or Elemental: cold", "Dragon or Elemental: electricity", "Dragon or Elemental: fire", "Dragon or Elemental: sonic", "Fiend: unholy", "Ooze: precision", "Undead: void"]);
+    assert.deepEqual([ways["Ooze: precision"].value, ways["Fiend: unholy"].value, ways["Celestial: holy"].duration.value, ways["Celestial: holy"].duration.unit], [10, 5, 1, "minutes"]);
+    assert.equal(resistanceText([ways["Ooze: precision"]]), "Resistance 10 to precision for 1 minute");
+    assert.deepEqual(resistanceEffectSource([ways["Ooze: precision"]], { item: { name: "Victory Plate" } }).system.rules, [{ key: "Resistance", type: "precision", value: 10 }]);
+    const [, greater] = compileActivations(source("Victory Plate (Greater)"));
+    assert.deepEqual(greater.plan.ways.filter((way) => /Ooze|Undead/.test(way.name)).map((way) => way.plan.item.resist[0].value), [20, 10]);
+});
+
 test("a shield changing form until activated again (Sapling Shield): a tower shield's +2 AC and –5-foot Speed by PF2e's ItemAlteration on that shield, its Hardness and Bulk a note", async () => {
     const { shieldFormEffectSource, shieldFormText } = await import("../src/live/card.js");
     const [sapling] = compileActivations(source("Sapling Shield (Major)"));

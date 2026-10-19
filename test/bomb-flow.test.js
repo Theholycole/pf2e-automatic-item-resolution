@@ -162,6 +162,27 @@ test("splash ammunition: a longbow's Strike with Elemental Ammunition puts its s
     }
 });
 
+test("Holy Water: PF2e's Strike, its splash card ticking only the creatures with the unholy trait", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [activation] = compileActivations(source("Holy Water"));
+    assert.equal(activation.plan.builtin, "pf2e-rules");
+    assert.match(activation.plan.notes.at(-1), /only creatures with the unholy trait/);
+    const vial = foundry.giveItem(alchemist, source("Holy Water"));
+    boss.system.traits = { value: ["fiend", "unholy"] };
+    try {
+        const card = cardAfter(await damage(vial, { outcome: "success", type: "spirit" }));
+        const state = stateOf(card);
+        assert.deepEqual(state.splashed.map((entry) => [entry.name, entry.include]), [["Kyra", false], ["Goblin Boss", true]]);
+        assert.match(card.content, /Holy Water harms only creatures with the unholy trait; Goblin hasn&#39;t it|Holy Water harms only creatures with the unholy trait; Goblin hasn't it/);
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        assert.ok(stateOf(card).results.includes("Goblin Boss takes the splash (1 spirit)"), stateOf(card).results.join(" | "));
+        assert.ok(!stateOf(card).results.some((line) => line.startsWith("Kyra")), stateOf(card).results.join(" | "));
+    } finally {
+        delete boss.system.traits;
+    }
+});
+
 test("riders in a bomb's damage sentence: Atrophy Bomb's enfeebled, Peshpine Grenade's stupefied (its time from the other sentence), Goo Grenade's Speed penalty", async () => {
     const { compileBomb } = await import("../src/compiler/bombs.js");
     const rows = (name) => compileBomb(source(name)).resolution.outcomes;

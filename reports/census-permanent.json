@@ -8,28 +8,28 @@
   "results": {
    "resolves": 742,
    "builtin:cast-spell": 470,
-   "none": 624,
+   "none": 622,
    "partial": 176,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
    "builtin:no-effect": 100,
-   "note-only": 196,
+   "note-only": 194,
    "builtin:reroll": 25,
-   "builtin:pf2e-rules": 24,
+   "builtin:pf2e-rules": 26,
    "builtin:zone": 23,
    "builtin:modes": 32,
    "builtin:conjure": 13,
    "builtin:item-action": 23,
    "builtin:roll-twice": 11,
    "builtin:save-bonus": 3,
-   "builtin:ways": 7,
+   "builtin:ways": 9,
    "builtin:spellstrike": 9
   },
   "live": {
    "save": 432,
    "cast": 470,
-   "item": 587,
+   "item": 585,
    "none": 753,
    "focus": 45,
    "counteract": 25,
@@ -40,7 +40,7 @@
    "toggle": 32,
    "conjure": 13,
    "action": 23,
-   "ways": 7,
+   "ways": 9,
    "coat": 3,
    "spellstrike": 9,
    "later": 3
@@ -75,7 +75,7 @@
    "activations": 460,
    "results": {
     "resolves": 156,
-    "none": 102,
+    "none": 100,
     "partial": 43,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
@@ -86,6 +86,7 @@
     "builtin:counteract": 2,
     "builtin:readied-bonus": 7,
     "builtin:no-effect": 10,
+    "builtin:pf2e-rules": 2,
     "builtin:roll-twice": 2,
     "builtin:save-bonus": 1
    }
@@ -116,7 +117,7 @@
    "activations": 164,
    "results": {
     "builtin:cast-spell": 34,
-    "note-only": 17,
+    "note-only": 15,
     "resolves": 57,
     "builtin:counteract": 1,
     "none": 26,
@@ -127,7 +128,8 @@
     "builtin:item-action": 2,
     "builtin:readied-bonus": 3,
     "builtin:focus-point": 2,
-    "builtin:roll-twice": 2
+    "builtin:roll-twice": 2,
+    "builtin:ways": 2
    }
   },
   "shield": {
@@ -6621,7 +6623,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },
@@ -19176,9 +19178,9 @@
    "time": "2",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Calamity Glass",
@@ -23052,9 +23054,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Hydra Head Club",
@@ -28469,7 +28471,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:pf2e-rules",
    "kind": null,
    "live": null
   },

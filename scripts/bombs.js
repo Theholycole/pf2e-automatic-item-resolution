@@ -6,6 +6,7 @@
 // stays PF2e's: on a hit it already includes the target's splash.
 
 import { compileBomb, isBomb } from "../src/compiler/bombs.js";
+import { onlyHarms } from "../src/compiler/pf2e-rules.js";
 import { bombCardHTML, createBombCard, riderRow, saveFor, splashText, withChoices } from "../src/live/bomb-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
 
@@ -75,14 +76,18 @@ async function cardForSplash(message, context, weapon, { claims = null } = {}) {
     if (!actor) return;
     const userToken = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
     const source = ammo ?? weapon;
+    // (Holy Water harms only creatures with the unholy trait: each creature's traits, for its tick.)
+    const harms = onlyHarms(weapon) ?? onlyHarms(ammo);
+    const withTraits = async (entry) => (entry && harms ? { ...entry, traits: [...((await fromUuid(entry.actorUuid).catch(() => null))?.system?.traits?.value ?? [])] } : entry);
     const state = createBombCard({
         plan: { resolution: { outcomes: {} }, item: { splashOnly: true } },
         item: { name: ammo && weapon ? `${weapon.name} (${ammo.name})` : source?.name ?? "Splash", uuid: source?.uuid ?? null, slug: source?.system?.slug ?? null },
         user: entryOf(userToken, actor),
-        target,
+        target: await withTraits(target),
         outcome: context.outcome,
         splash,
-        near
+        near: await Promise.all(near.map(withTraits)),
+        harms
     });
     const card = await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
     if (card) await message.update({ [`flags.${MODULE_ID}.coveredSplash`]: indices, [`flags.${MODULE_ID}.covered`]: card.id });
