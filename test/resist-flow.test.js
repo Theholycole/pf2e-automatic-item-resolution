@@ -270,6 +270,9 @@ test("resistance to all damage but some (Silhouette Cloak): PF2e's Resistance wi
     assert.deepEqual(resistanceEffectSource([resist], { item: { name: "Silhouette Cloak" } }).system.rules, [{ key: "Resistance", type: "all-damage", value: 20, exceptions: ["force", "ghost-touch"], doubleVs: ["non-magical"] }]);
     assert.ok(shadow.plan.unread.some((sentence) => /light trait/.test(sentence)), "the light trait's exception a note");
     assert.equal(resistanceText(fold.plan.item.resist), "Resistance 20 to all damage except force and ghost touch, double against non magical until the end of the turn");
+    // (Its exceptions in parentheses, Phase Spike's during its Stride.)
+    const [stride] = compileActivations(source("Phase Spike"));
+    assert.equal(resistanceText(stride.plan.item.resist), "Resistance 10 to all damage except force, spirit and ghost touch, double against non magical until the end of the turn");
 });
 
 test("a shield changing form until activated again (Sapling Shield): a tower shield's +2 AC and –5-foot Speed by PF2e's ItemAlteration on that shield, its Hardness and Bulk a note", async () => {

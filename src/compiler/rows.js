@@ -460,8 +460,19 @@ function sourcedResistances(sentences, duration, used) {
 const ALL_BUT = /\byou gain resistance (\d+) to all damage except ([^.]+)\./i;
 const DOUBLED = /^\s*This increases to resistance (\d+) against nonmagical damage\.\s*$/i;
 const EXCEPTION_WORDS = [[/^force(?: damage)?$/i, "force"], [/^spirit(?: damage)?$/i, "spirit"], [/^damage (?:caused by|from Strikes with) (?:a |the )?ghost touch(?: property)? rune$/i, "ghost-touch"]];
+// (Or its exceptions in parentheses, Phase Spike's "You also gain resistance 10 to all damage during this Stride (except force or spirit damage
+// and damage caused by a ghost touch rune); double this resistance against non-magical damage" — for this movement.)
+const ALL_BUT_PARENS = /\byou (?:also )?gain resistance (\d+) to all damage((?: during this Stride)?) \(except ([^)]+)\); double this resistance against non-magical damage\./i;
 function allButResistance(sentences, duration, used) {
     for (const [index, sentence] of sentences.entries()) {
+        const parens = ALL_BUT_PARENS.exec(sentence);
+        if (parens) {
+            const words = parens[3].split(/,\s*(?:and\s+)?|\s+(?:and|or)\s+/).map((word) => word.trim()).filter(Boolean).map((word) => (/^\w+$/.test(word) ? `${word} damage` : word));
+            const exceptions = words.map((word) => EXCEPTION_WORDS.find(([pattern]) => pattern.test(word))?.[1]).filter(Boolean);
+            if (exceptions.length !== words.length) return [];
+            used.add(index);
+            return [{ type: "all-damage", value: Number(parens[1]), exceptions, doubleVs: ["non-magical"], duration: timeIn(parens[2] ? "for this movement" : sentence, duration) }];
+        }
         const match = ALL_BUT.exec(sentence);
         if (!match) continue;
         const words = match[2].split(/,\s*(?:and\s+)?|\s+and\s+/).map((word) => word.trim()).filter(Boolean);

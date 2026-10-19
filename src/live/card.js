@@ -198,7 +198,8 @@ export function resistanceText(resist) {
     // (A type to choose: "acid, cold or fire (one, chosen)".)
     // (Damage from some creatures: its own words, "spirit and void damage from unholy creatures".)
     // (All damage but some: "all damage except force and ghost touch, double against non-magical".)
-    const but = (entry) => (entry.exceptions?.length ? ` except ${entry.exceptions.map(typeWords).join(" and ")}` : "") + (entry.doubleVs?.length ? `, double against ${entry.doubleVs.map(typeWords).join(" and ")}` : "");
+    const list = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} and ${words.at(-1)}` : words[0]);
+    const but = (entry) => (entry.exceptions?.length ? ` except ${list(entry.exceptions.map(typeWords))}` : "") + (entry.doubleVs?.length ? `, double against ${entry.doubleVs.map(typeWords).join(" and ")}` : "");
     for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), entry.type === "custom" ? entry.label.charAt(0).toLowerCase() + entry.label.slice(1) : entry.type ? `${typeWords(entry.type)}${but(entry)}` : `${entry.choose.slice(0, -1).join(", ")} or ${entry.choose.at(-1)} (one, chosen)`]);
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration;
     // (A turn's end or start: "until the end of the turn".)
