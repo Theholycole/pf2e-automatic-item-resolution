@@ -12,9 +12,36 @@ const CONDITION_WORDS = { paralysis: "paralyzed", petrification: "petrified" };
 const ORDINAL = String.raw`(\d+)(?:st|nd|rd|th)?`;
 const FREE = /\bcounteract (the triggering spell|the triggering illusion|the fire|the effect or item|the spell|the darkness|that effect|the effect(?= with a counteract modifier))\b|\bto end (a magical darkness effect)\b/i;
 
+// (Determination's benefit, Flame Navette's "you gain the benefit of the fighter's Determination class feat, with a counteract rank of 8
+// and a counteract modifier of +22": the feat's own choice on its user — one nonpermanent condition ends outright, or one spell or magical
+// effect is counteracted.)
+const DETERMINATION = /\bgain the benefit of the fighter's Determination class feat, with a counteract rank of (\d+) and a counteract modifier of \+(\d+)/i;
+
 // The text → { modifier, rank, conditions, traits, afflictions, pick: "each" | "one" | "highest", reduce?, notes } or null.
+// (Determination's: { …, spells, magical, endsConditions, self }.)
 export function readCounteract(html, { level = 0 } = {}) {
     const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const determination = DETERMINATION.exec(text);
+    if (determination) {
+        const feat = /\bIf you have the Determination feat, you can use your own modifier if it's better\./i.test(text);
+        return {
+            modifier: Number(determination[2]),
+            rank: Number(determination[1]),
+            conditions: [...CONDITIONS, "persistent-damage"],
+            traits: [],
+            afflictions: [],
+            spells: true,
+            magical: true,
+            endsConditions: true,
+            self: true,
+            pick: "one",
+            notes: [
+                "Tick one: a condition ends outright; a spell or magical effect is counteracted.",
+                "It doesn't undo Hit Point damage already taken, and can't end an ongoing affliction.",
+                ...(feat ? ["With the Determination feat, use your own counteract modifier if it's better (by hand)."] : [])
+            ]
+        };
+    }
     // (The sentence that counteracts, and the next one, where the rank or modifier is often given.)
     const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z(])/);
     const at = sentences.findIndex((sentence) => /\b(?:attempts? (?:a counteract check|to counteract)|to counteract ailments|the salve attempts to counteract)\b|\bcounteract modifier (?:is|of) \+\d+/i.test(sentence));
@@ -43,6 +70,10 @@ export function readCounteract(html, { level = 0 } = {}) {
         // (Twilight Lantern's "the effect", a darkness effect it targets; Crimson Tome's "that effect", one restoring the slain to life.)
         const name = { "the triggering spell": "the triggering spell", "the triggering illusion": "the triggering illusion", "the fire": "the magical fire", "the effect or item": "the magical effect or item", "the spell": "the spell", "the darkness": "the magical darkness", "a magical darkness effect": "the magical darkness", "that effect": "the effect", "the effect": /\bdarkness effect\b/i.test(`${sentences[at - 1] ?? ""} ${said}`) ? "the darkness effect" : "the effect" }[(free[1] ?? free[2]).toLowerCase()];
         const after = sentences.slice(at + 1, at + 3).filter((sentence) => /\b(?:If it fails|If the spell is successfully counteracted|Regardless of the result|Once you do|This expends|If you succeed)\b/i.test(sentence));
+        // (What each degree does beside ending it, Herald's Ring's "Critical Success All of the damage is reflected back on its source", the
+        // GM's by the result the card reports.)
+        const degrees = sentences.slice(at + 1).map((sentence) => /^(Critical Success|Success|Failure|Critical Failure) (.+)$/.exec(sentence.trim())).filter(Boolean).map(([, degree, what]) => `${degree.charAt(0)}${degree.slice(1).toLowerCase()}: ${what.replace(/\.$/, "")} (by hand).`);
+        after.push(...degrees);
         return { modifier: Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]), rank, conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...after] };
     }
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)

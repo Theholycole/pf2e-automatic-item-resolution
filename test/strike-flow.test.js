@@ -441,6 +441,34 @@ test("Big Rock Bullet: its damage in place of the sling's — the hit's on the a
     assert.deepEqual(await posted("criticalFailure"), []);
 });
 
+test("Iron Cudgel (Brutal Finish): a melee Strike with one more weapon die (PF2e's DamageDice with no die size, as the feat's own), the weapon's die on a failure at the creature missed", async () => {
+    const cudgel = compileItem({ ...source("Iron Cudgel"), ownerLevel: 14 });
+    assert.equal(routeOf(cudgel), "strike");
+    assert.deepEqual([cudgel.strike.range, cudgel.strike.damage.map((entry) => [entry.diceNumber, entry.dieSize]), cudgel.strike.failDice], ["melee", [[1, null]], 1]);
+    assert.deepEqual(strikeRules(cudgel, { label: "Iron Cudgel" }).map((rule) => [rule.key, rule.selector, rule.diceNumber, "dieSize" in rule]), [["DamageDice", "melee-strike-damage", 1, false]]);
+    assert.ok(strikeLines(cudgel).includes("+1 weapon die damage"));
+    assert.ok(strikeLines(cudgel).includes("On a failure (not a critical failure): 1 weapon damage die as damage"));
+    // (At 18th level, two of each; with the feat, one more by hand.)
+    const high = compileItem({ ...source("Iron Cudgel"), ownerLevel: 18 });
+    assert.deepEqual([high.strike.damage[0].diceNumber, high.strike.failDice], [2, 2]);
+    assert.ok(high.strike.notes.some((note) => /With the Brutal Finish feat\b/.test(note)));
+    assert.equal(riderFor(cudgel, { outcome: "failure", options: ["item:melee"] }), "failure");
+    // Live: readied, then a failed attack with the greataxe posts the axe's 1d12 slashing at the foe.
+    const axe = foundry.giveItem(fighter, source("Greataxe"));
+    const card = await useCard("Iron Cudgel");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.equal(readied().length, 1);
+    const before = foundry.posted.length;
+    const missed = foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome: "failure", options: ["item:melee"], target: { actor: foe.uuid, token: foe.token.uuid } }, origin: { uuid: axe.uuid, type: "weapon" } } }, speaker: { actor: fighter.id }, actor: fighter, token: fighter.token.document });
+    await foundry.call("createChatMessage", missed);
+    await settle();
+    assert.equal(readied().length, 0, "the failure spends it");
+    const [miss] = foundry.posted.slice(before);
+    assert.deepEqual([miss.plan.resolution.sharedDamage.components[0].formula, miss.plan.resolution.sharedDamage.components[0].type], ["1d12", "slashing"]);
+    assert.equal(miss.tokens[0].actor?.id ?? miss.tokens[0].document?.actor?.id, foe.id);
+});
+
 test("Drake Rifles' Drake Shot: a Strike with the rifle itself, its splash of its own type on the damage roll (a failure's splash a note), and its type's rider on a hit; a weapon's rider-only Strike is its own (Growth Gun)", () => {
     const shot = (name) => compileActivations(source(name))[0].plan;
     const hit = (plan) => plan.resolution.outcomes.success;

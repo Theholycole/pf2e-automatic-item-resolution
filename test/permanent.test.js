@@ -891,3 +891,23 @@ test("Fulu Compendium's Paralyzing Page: the Spirit-Sealing Fulu's own save at D
     const { compileItem } = await import("../src/compiler/index.js");
     assert.ok(compileItem(item("Ghost Ampoule")).notes.some((note) => /^Only living creatures \(not constructs or undead/.test(note)));
 });
+
+test("saves whose failure is the GM's to carry out, their words on the card: Cauthooj Bagpipes' Throw Song (Will DC 31, the Strike redirected), Planar Ribbon (Reflex DC 42, places swapped; not its trait)", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const song = compileActivations(item("Cauthooj Bagpipes"), { spellEffects })[1].plan;
+    assert.deepEqual([routeOf(song), song.resolution.check.statistic, song.resolution.check.against.value, song.partial], ["save", "will", 31, true]);
+    assert.deepEqual(song.resolution.outcomes.failure.manualInstructions, song.resolution.outcomes.criticalFailure.manualInstructions);
+    assert.match(song.resolution.outcomes.failure.manualInstructions[0], /^\{target\}: The creature redirects the Strike to another creature of your choice\b.*takes a –2 penalty to the Strike \(by hand\)\.$/);
+    assert.deepEqual(song.resolution.outcomes.success.manualInstructions, []);
+    const ribbon = compileActivations(item("Planar Ribbon"), { spellEffects })[1].plan;
+    assert.deepEqual([ribbon.resolution.check.statistic, ribbon.resolution.check.against.value], ["reflex", 42]);
+    assert.equal(ribbon.resolution.outcomes.failure.manualInstructions[0], "{target}: You exchange positions with the target and all of that creature's allies are off-guard to you until the end of your turn (by hand).");
+});
+
+test("Admirer's Bouquet handed to the triggering ally: its +1 item bonus to saves against emotion and mental effects on that ally, for as long as it carries the bouquet (the end a note), the new save a note", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const bouquet = compileActivations(item("Admirer's Bouquet"), { spellEffects })[1].plan;
+    assert.deepEqual([routeOf(bouquet), bouquet.item.recipient, bouquet.targeting.target], ["item", "targets", "the triggering ally"]);
+    assert.deepEqual(bouquet.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.duration, modifier.predicate]), [["saving-throw", 1, "item", null, [{ or: ["item:trait:emotion", "item:trait:mental"] }]]]);
+    assert.equal(bouquet.unread[0], "The bonus ends once the ally no longer carries the bouquet (end it by hand).");
+});

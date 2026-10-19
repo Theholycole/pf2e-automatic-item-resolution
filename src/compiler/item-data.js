@@ -228,6 +228,22 @@ export function withItemData(html, item) {
     // until it Escapes against a DC of 19" — the hit's own, for its rolled rounds (the bombs' rider reader), the Escape a note, since "against
     // a" would read as a condition.)
     text = text.replace(/\bwrapping the target in vines\.(?:<\/p>)?\s*(?:<p>)?The target takes an? ([–-]\d+-foot circumstance penalty to its Speeds for \[\[\/r \d+d\d+\]\] rounds), or until it ((?:@UUID\[[^\]]*\]\{)?Escapes\}?) against a DC of (\d+)\./i, (all, penalty, escapes, dc) => `wrapping the target in vines: the target takes a ${penalty}. The penalty ends early if the target ${escapes} (DC ${dc}).`);
+    // (Herald's Ring's "by attempting to counteract the effect. The ring has a counteract modifier of +23": the modifier in the counteract's
+    // own sentence, as src/compiler/counteract.js reads one aimed at the triggering effect.)
+    text = text.replace(/\bto counteract the effect\. The (?:<em>)?[\w' -]+?(?:<\/em>)? has a counteract modifier of\b/i, "to counteract the effect with a counteract modifier of");
+    // (Admonishing Band's shot "with the effects of Warning Shot": that feat's Demoralize, as the item-action reader takes it — at a foe out
+    // to the firearm's maximum range, with no penalty for one that doesn't share a language with you.)
+    text = text.replace(/\bWhen you activate it, you fire your gun into the air with the effects of (?:@UUID\[[^\]]*\]\{)?Warning Shot\}?\./i, "When you activate it, you attempt to Demoralize a foe by firing your gun into the air. The foe can be as far as the firearm's maximum range, and the check takes no penalty for a foe that doesn't share a language with you.");
+    // (Admirer's Bouquet handed over, "If they accept the bouquet, they gain a +1 item bonus to saves against emotion and mental effects as
+    // long as they continue to carry the admirer's bouquet": the triggering ally's, for as long as it carries the bouquet.)
+    text = text.replace(/\bIf they accept the bouquet, they gain (an? \+\d+ item bonus to saves against emotion and mental effects) as long as they continue to carry the admirer's bouquet\./i, "The triggering ally gains $1. The bonus ends once the ally no longer carries the bouquet (end it by hand).");
+    // (Iron Cudgel's "you use Brutal Finish, as the fighter feat": that feat's Strike — with a melee weapon in two hands, one more weapon
+    // damage die (two at 18th level, by its owner's level), the die alone on a failure, the turn over after it; the feat's own extra die a
+    // note.)
+    text = text.replace(/\bWhen you activate the cudgel, you use (?:@UUID\[[^\]]*\]\{)?Brutal Finish\}?, as the fighter feat\. You must meet the normal requirements, including those of the press trait\.(<\/p>\s*<p>)If you have the Brutal Finish feat, add an additional weapon damage die on a success or a failure to the normal results\./i, (all, paragraph) => {
+        const dice = Number(item?.ownerLevel) >= 18 ? "two" : "one";
+        return `When you activate the cudgel, make a melee Strike with a weapon you're wielding in two hands. The Strike deals ${dice === "two" ? "an extra two dice" : "an extra die"} of weapon damage. On a failure, you deal damage equal to ${dice} weapon damage ${dice === "two" ? "dice" : "die"}. After the Strike, your turn ends.${paragraph}With the Brutal Finish feat, one more weapon damage die on a hit and on a failure (by hand).`;
+    });
     // (Megaphone Mutagen's "+1 item bonus to skill checks you make as part of auditory actions, except Deception and Diplomacy checks": those
     // checks by PF2e's options, src/compiler/rows.js; the longer range of its user's auditory actions and spells a note.)
     text = text.replace(/\bbonus to skill checks you make as part of (auditory|visual) actions, except ([A-Z]\w+) and ([A-Z]\w+) checks\./gi, (all, trait, first, second) => `bonus to skill checks for ${trait.toLowerCase()} actions, except ${first} and ${second} checks.`);

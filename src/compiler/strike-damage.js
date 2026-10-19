@@ -19,6 +19,9 @@ const OWN_DIE = new RegExp(String.raw`\bdeals? (\d+)d(\d+) (?:(persistent|precis
 // (The hit's own added damage in other words: Shatterpoint Ammunition's "In addition, the target takes 1d8 persistent sonic
 // damage from the vibrations", "the target takes 2d6 acid damage in addition to the damage normally dealt".)
 const TARGET_TAKES = new RegExp(String.raw`^In addition, (?:the target|it) (?:also )?takes (\d+)d(\d+) (?:(persistent|precision|splash) )?(?:(${TYPES}) )?damage\b|\b(?:the target|it) (?:also )?takes (\d+)d(\d+) (?:(persistent|precision|splash) )?(?:(${TYPES}) )?damage in addition to\b`, "i");
+// (Damage on a failure too, Brutal Finish's "On a failure, you deal damage equal to one weapon damage die": that many of the weapon's dice
+// at the creature it missed, src/live/strike-card.js riderFor.)
+const FAIL_DICE = /^On a failure, you deal damage equal to (one|two|three|\d+) weapon damage (?:die|dice)\.?$/i;
 // "an extra die of weapon damage", "an extra two dice of weapon damage".
 const WEAPON_DICE = /\b(?:an )?extra (?:(one|two|three|four|\d+) )?(?:die|dice) of weapon damage\b/i;
 // "+1 status bonus to this Strike", "with a +1 circumstance bonus to the attack roll".
@@ -103,6 +106,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const suppress = [];
     let splash = null;
     let offGuard = false;
+    let failDice = 0;
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
     const striking = Number(item?.system?.runes?.striking) || 0;
@@ -114,6 +118,11 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         }
         RUNE_STEP.lastIndex = 0;
         if (riderSentence(sentence)) continue;
+        const failing = FAIL_DICE.exec(sentence.trim());
+        if (failing) {
+            failDice = COUNT[failing[1].toLowerCase()] ?? Number(failing[1]);
+            continue;
+        }
         let rest = sentence;
         const isStrike = Boolean(strikeSentence) && sentence.includes(strikeSentence.trim().slice(0, 40));
         const found = sentenceDice(sentence, { own: own && isStrike });
@@ -184,5 +193,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     // (The rune step in place of the first die, for the item's rune.)
     const step = steps.filter((entry) => striking >= entry.rune).sort((a, b) => b.rune - a.rune)[0];
     if (step && dice.length) dice[0] = { ...dice[0], diceNumber: step.count, dieSize: `d${step.faces}` };
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice) };
 }

@@ -172,3 +172,46 @@ test("a counteract beside another reading on an activation: Golden Gloves' halo 
     const [gloves] = compileActivations(source("Golden Gloves"));
     assert.deepEqual([routeOf(gloves.plan), gloves.plan.item.counteract.modifier, gloves.plan.item.counteract.rank, gloves.plan.item.counteract.afflictions, gloves.plan.item.counteract.pick], ["save", 31, 9, ["curse", "disease", "poison"], "one"]);
 });
+
+test("Herald's Ring's Reflect Sound: the triggering effect counteracted at +23 (rank 7, half its level), each degree's reflected damage a note for the GM", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const reflect = compileActivations(source("Herald's Ring"))[1];
+    assert.equal(routeOf(reflect.plan), "counteract");
+    const counteract = reflect.plan.item.counteract;
+    assert.deepEqual([counteract.modifier, counteract.rank, counteract.free.name], [23, 7, "the effect"]);
+    assert.deepEqual(counteract.notes.map((note) => note.split(":")[0]), ["Critical success", "Success", "Failure", "Critical failure"]);
+    assert.match(counteract.notes[1], /^Success: Half of the damage is reflected back at its source, and the other half is negated \(by hand\)\.$/);
+});
+
+test("Flame Navette (Determination): one condition on its user ends outright, no numbers; a spell or magical Effect is counteracted at +22, rank 8; no one else offered", async () => {
+    const navette = compileItem(source("Flame Navette"));
+    assert.equal(routeOf(navette), "counteract");
+    const counteract = navette.item.counteract;
+    assert.deepEqual([counteract.modifier, counteract.rank, counteract.pick, counteract.self, counteract.endsConditions], [22, 8, "one", true, true]);
+    assert.ok(counteract.conditions.includes("frightened") && counteract.conditions.includes("persistent-damage"));
+    const scared = foundry.makeActor({ id: "counter-scared", name: "Scared", owners: ["player"], conditions: ["frightened"] });
+    foundry.place(scared, 0, 14100);
+    // (A creature beside it isn't offered: Determination is its user's.)
+    const friend = foundry.makeActor({ id: "counter-friend", name: "Friend", owners: ["player"], conditions: ["frightened"] });
+    foundry.place(friend, 100, 14100);
+    scared.created.push({ id: "effect-slow", type: "effect", name: "Spell Effect: Haste Undone", system: { traits: { value: ["arcane"] }, level: { value: 3 } } });
+    scared.created.push({ id: "effect-plain", type: "effect", name: "Effect: Rousing Speech", system: { traits: { value: [] }, level: { value: 1 } } });
+    const item = foundry.giveItem(scared, source("Flame Navette"));
+    const data = item.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: scared.id }, actor: scared, token: scared.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    assert.equal(card.flags[MODULE_ID].card.kind, "counteract");
+    assert.deepEqual(card.flags[MODULE_ID].card.drinkers.map((entry) => entry.name), ["Scared"]);
+    assert.match(card.content, /Counteract \+22, rank 8: one spell or magical effect on you, or one condition, which ends outright/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: 0, userId: "player" });
+    await settle();
+    const state = card.flags[MODULE_ID].card;
+    assert.deepEqual(state.rows.map((row) => [row.kind, row.name, Boolean(row.ends)]), [["effect", "Spell Effect: Haste Undone", false], ["condition", "Frightened 1", true]]);
+    assert.match(card.content, /Frightened 1<\/label> \(ends outright\)/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, rows: [{ ticked: false }, { ticked: true }], userId: "player" });
+    await settle();
+    assert.equal(scared.hasCondition("frightened"), false);
+    assert.match(card.content, /Frightened 1: ended\./);
+});

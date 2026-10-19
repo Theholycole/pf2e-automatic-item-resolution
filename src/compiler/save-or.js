@@ -98,3 +98,40 @@ export function degreeSentencesPlan(html, base) {
         partial: true
     };
 }
+
+// A save whose failure only the GM can carry out, Cauthooj Bagpipes' Throw Song: "The triggering creature must attempt a
+// @Check[will|dc:31] save. On a failure, the creature redirects the Strike to another creature of your choice … If no other creatures are
+// within range, the affected creature instead takes a –2 penalty to the Strike." Or one said as a condition, Planar Ribbon's "If that
+// creature fails a @Check[reflex|dc:42] save, you exchange positions with the target and all of that creature's allies are off-guard to you
+// until the end of your turn." The save rolled at the creature its presser targets, a failure's and a critical failure's words on the card
+// for the GM; nothing on a success. Only when nothing else reads the activation (the last of the save readers). Pure.
+const SAVE_TAG = String.raw`@Check\[(?:type:)?(fortitude|reflex|will)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?`;
+const MUST_THEN_FAIL = new RegExp(String.raw`\b(?:The|the) (?:triggering creature|target|creature) must attempt an? ${SAVE_TAG} save\.\s*On a failure, ([^]+)$`, "i");
+const IF_FAILS = new RegExp(String.raw`\bIf (?:that creature|the target|the triggering creature|it) fails an? ${SAVE_TAG} save, ([^]+)$`, "i");
+export function failureNotesPlan(html, base) {
+    // (The activation's Effect paragraph, without its crafting line.)
+    const text = readable(String(html ?? "").replace(/<\/p>/g, "\n").replace(/^[^]*?<strong>Effect<\/strong>/i, "").replace(/\bCraft Requirements\b[^\n]*/i, "")).replace(/\s+/g, " ").trim();
+    const match = MUST_THEN_FAIL.exec(text) ?? IF_FAILS.exec(text);
+    if (!match) return null;
+    const [, statistic, dc, rest] = match;
+    // (A degree of its own after it, or damage: another reader's.)
+    if (/\b(?:Critical (?:Success|Failure)|On a critical failure|On a success)\b|@Damage|\d+d\d+/i.test(rest)) return null;
+    // (Not what the activation itself is, "This activation has the teleportation trait".)
+    const said = rest.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && !/^This (?:activation )?has the [\w, ]+ traits?\.$/i.test(sentence));
+    if (!said.length) return null;
+    const words = said.map((sentence, at) => (at === 0 ? `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}` : sentence).replace(/\.$/, "")).join(". ");
+    const row = () => ({ ...none(), manualInstructions: [`{target}: ${words} (by hand).`] });
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: "guided" },
+        targeting: { target: "1 creature", range: null, area: null },
+        trigger: { event: "use" },
+        resolution: {
+            kind: "save",
+            check: { roll: "save", statistic: statistic.toLowerCase(), basic: false, against: { dc: "fixed", value: Number(dc) } },
+            outcomes: { criticalSuccess: none(), success: none(), failure: row(), criticalFailure: row() }
+        },
+        partial: true
+    };
+}

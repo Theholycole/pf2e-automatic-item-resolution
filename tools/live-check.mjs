@@ -3045,6 +3045,100 @@ export const cases = {
         return { lit };
     },
 
+    // Flame Navette (Determination): its user's frightened ends outright on the counteract card, no DC or rank asked; no one else offered.
+    async flameNavette(scene) {
+        const { actor: user } = await creature(scene, "Navette Wearer", { type: "character", x: 8, y: 16 });
+        await creature(scene, "Navette Neighbor", { type: "character", x: 9, y: 16 });
+        await user.increaseCondition("frightened");
+        const navette = await give(user, "Flame Navette");
+        const since = Date.now();
+        await navette.consume();
+        const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        const drinkers = card.getFlag(NS, "card").drinkers.map((entry) => entry.name);
+        assert(drinkers.length === 1, `only its user offered (${JSON.stringify(drinkers)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await wait(500);
+        const rows = game.messages.get(card.id).getFlag(NS, "card").rows;
+        assert(rows.some((row) => row.slug === "frightened" && row.ends), `frightened listed, ending outright (${JSON.stringify(rows)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { rows: rows.map((row) => ({ ticked: row.slug === "frightened" })) });
+        await until(() => !user.hasCondition("frightened"), "frightened ended", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Iron Cudgel (Brutal Finish): readied, then a failed greataxe Strike posts the axe's 1d12 slashing at the foe it missed. (The foe's
+    // AC is set so a failure is likely; the Strike is readied again until one fails.)
+    async ironCudgel(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Cudgel Fighter", { type: "character", x: 13, y: 7 });
+        const axe = await give(fighter, "Greataxe");
+        await axe.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        await wait(500);
+        const modifier = (fighter.system.actions ?? []).find((entry) => entry.item?.id === axe.id)?.totalModifier ?? 0;
+        const { actor: foe, token: foeToken } = await creature(scene, "Cudgel Target", { x: 14, y: 7, ac: modifier + 13, alliance: "opposition", hp: 200 });
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        const outcomes = [];
+        for (let attempt = 0; attempt < 8; attempt++) {
+            const cudgel = await give(fighter, "Iron Cudgel");
+            let since = Date.now();
+            await cudgel.consume();
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => fighter.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider")), "the readied Strike", { timeout: 6000 });
+            since = Date.now();
+            const { attack } = await strike(fighter, axe);
+            const outcome = attack.flags.pf2e.context.outcome;
+            outcomes.push(outcome);
+            if (outcome !== "failure") {
+                for (const effect of fighter.itemTypes.effect.filter((entry) => entry.getFlag(NS, "strikeRider"))) await effect.delete();
+                continue;
+            }
+            const damage = await messageAfter(since, abilitySaveCard, { what: "the failure's damage card" });
+            const component = damage.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage.components[0];
+            assert(component.formula === "1d12" && component.type === "slashing", `the axe's die (${JSON.stringify(component)})`);
+            const before = foe.system.attributes.hp.value;
+            await applyAbilityCard(damage);
+            await until(() => foe.system.attributes.hp.value < before, "the die's damage on the foe", { timeout: 10000 });
+            assert(!fighter.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider")), "the readied Strike spent");
+            return { outcomes, lost: before - foe.system.attributes.hp.value };
+        }
+        throw new Error(`no failure in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
+    },
+
+    // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects.
+    async admirersBouquet(scene) {
+        const { actor: giver } = await creature(scene, "Bouquet Giver", { type: "character", x: 16, y: 16 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Bouquet Ally", { type: "character", x: 17, y: 16 });
+        const bouquet = await give(giver, "Admirer's Bouquet");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(bouquet.uuid, 1);
+        const card = await messageAfter(since, (message) => itemCard("expose")(message) || itemCard("item")(message), { what: "the bouquet's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        const automatic = await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
+        await applyAbilityCard(automatic);
+        const bonus = () => ally.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && rule.type === "item" && Number(rule.value) === 1 && [].concat(rule.selector).includes("saving-throw"));
+        await until(bonus, "+1 item to saves on the ally", { timeout: 8000 });
+        assert(JSON.stringify(bonus().predicate ?? []).includes("item:trait:mental"), `against mental effects (${JSON.stringify(bonus().predicate)})`);
+        return { predicate: bonus().predicate };
+    },
+
+    // Cauthooj Bagpipes' Throw Song: the triggering creature's DC 31 Will save card, its failure's redirect words for the GM.
+    async throwSong(scene) {
+        const { actor: piper } = await creature(scene, "Bagpiper", { type: "character", x: 16, y: 13 });
+        const { token: foeToken } = await creature(scene, "Pipe Attacker", { x: 17, y: 13, alliance: "opposition" });
+        const pipes = await give(piper, "Cauthooj Bagpipes");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(pipes.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the save card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const plan = save.flags["pf2e-automatic-ability-resolution"].card.plan;
+        assert(plan.resolution.check.statistic === "will" && plan.resolution.check.against.value === 31, `Will DC 31 (${JSON.stringify(plan.resolution.check)})`);
+        assert(/redirects the Strike/.test(JSON.stringify(plan.resolution.outcomes.failure.manualInstructions)), "the redirect for the GM on a failure");
+        return { save: save.id };
+    },
+
     // Alchemists+ Halfling Sandwich (Lesser): Apply readies its +1 status bonus; the next save takes it and spends it.
     async tpHalflingSandwich(scene) {
         const { actor: eater } = await creature(scene, "Sandwich Eater", { x: 8, y: 18 });

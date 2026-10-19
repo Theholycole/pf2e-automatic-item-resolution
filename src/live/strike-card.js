@@ -25,7 +25,7 @@ function rowText(row) {
 }
 
 // A die in words: "4d6 mental", "1d4 persistent force", "1d8 precision", "1d6".
-export const dieText = (entry) => [`${entry.diceNumber}${entry.dieSize}`, entry.category, entry.damageType].filter(Boolean).join(" ");
+export const dieText = (entry) => [entry.dieSize ? `${entry.diceNumber}${entry.dieSize}` : `${entry.diceNumber} weapon ${entry.diceNumber === 1 ? "die" : "dice"}`, entry.category, entry.damageType].filter(Boolean).join(" ");
 
 // What the Strike carries, as lines: "On a hit: frightened 1", "On a critical hit: frightened 2", "On a hit: DC 22 Fortitude
 // save", "+4d6 mental damage", "+1 status bonus to the attack roll", "All its damage is fire", "Also: …" (what's left to the
@@ -49,6 +49,7 @@ export function strikeLines(plan) {
         // (Damage in place of the weapon's, Big Rock Bullet's: the card's own roll.)
         strike.instead?.hit ? `On a hit: ${strike.instead.hit.formula} ${strike.instead.hit.type} damage in place of the weapon's (doubled on a critical hit)` : null,
         strike.instead?.failure ? `On a failure (not a critical failure): ${strike.instead.failure.formula} ${strike.instead.failure.type} damage` : null,
+        strike.failDice ? `On a failure (not a critical failure): ${strike.failDice} weapon damage ${strike.failDice === 1 ? "die" : "dice"} as damage` : null,
         hit ? `On a hit: ${hit}` : null,
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
         strike.save ? `On a hit: ${saveText(strike.save)} for the target` : null,
@@ -124,7 +125,8 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
         slug: `${slug}-extra-${index + 1}`,
         ...(label ? { label } : {}),
         diceNumber: entry.diceNumber,
-        dieSize: entry.dieSize,
+        // (No size, a weapon die: PF2e takes the weapon's.)
+        ...(entry.dieSize ? { dieSize: entry.dieSize } : {}),
         ...(entry.damageType ? { damageType: entry.damageType } : {}),
         ...(entry.category ? { category: entry.category } : {}),
         // (Only against some creatures: Bane Ammunition's type, "target:trait:dragon".)
@@ -187,6 +189,8 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     if (outcome === "success" || outcome === "criticalSuccess") return "hit";
     // (A failure that still deals damage in place of the weapon's: Big Rock Bullet's.)
     if (outcome === "failure" && plan.strike?.instead?.failure) return "failure";
+    // (Or the weapon's own dice on a failure: Brutal Finish's.)
+    if (outcome === "failure" && plan.strike?.failDice) return "failure";
     return plan.strike?.missKeeps ? "keep" : "spend";
 }
 

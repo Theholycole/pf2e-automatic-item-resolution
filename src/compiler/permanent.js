@@ -45,7 +45,7 @@ import { withAttackRiders } from "./attack-riders.js";
 import { withAreaTraitNote } from "./area-trait.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
-import { degreeSentencesPlan, saveOrPlan } from "./save-or.js";
+import { degreeSentencesPlan, failureNotesPlan, saveOrPlan } from "./save-or.js";
 import { spellstrikePlan } from "./spellstrike.js";
 import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
 import { withHitDelivery } from "./hit-delivery.js";
@@ -443,6 +443,8 @@ function compileEach(item, options = {}) {
         plan = withScaled(plan, plainText(activation.html));
         // (Its degrees in sentences, Gearblade's "On a failure, … takes … damage. On a critical failure, they take …".)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = degreeSentencesPlan(activation.html, base) ?? plan;
+        // (A save whose failure is the GM's to carry out, its words on the card: Cauthooj Bagpipes' Throw Song, Planar Ribbon.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = failureNotesPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
         if (!plan || plan.strike?.fromNotes) plan = pf2eRulesPlan(item, base, plainText(activation.html)) ?? plan;
         // (A counteract on its user, src/compiler/counteract.js — Heartstone's "attempts to counteract one disease affecting you": the

@@ -856,6 +856,8 @@ export function ownRow(item, { healing = true } = {}) {
     const secondary = split ? plainText(html.slice(split.index)).trim() : null;
     const text = plainText(split ? html.slice(0, split.index) : html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ")
         .replace(/\bAn? (?:ally|creature) within (?:the|your) banner's aura becomes\b/gi, "You become")
+        // (The ally its trigger names, Admirer's Bouquet's "The triggering ally gains …": the row for the creature the presser targets.)
+        .replace(/\bThe triggering ally gains\b/g, "You gain")
         .replace(/\bTrigger You would take ((?:\w+, )*\w+,? or \w+) damage\s+Effect (You gain resistance \d+ to the) triggering (damage type\b[^.]*\.)/i, "Effect $2 chosen $3 Choose $1.")
         .replace(WHEN_CLAUSES, " ").replace(/^\s*Activat(?:e|ion)\b[^.]*?\bEffect\s+/i, "").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
     // (Its Activate line up to its Effect gone first, or its Requirements run into the first sentence: Essence Forge's "… Requirements The

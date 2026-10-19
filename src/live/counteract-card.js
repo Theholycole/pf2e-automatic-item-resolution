@@ -34,7 +34,9 @@ export function counteractCandidates(creature, counteract) {
     for (const effect of creature.effects ?? []) {
         const grants = grantsOf(effect);
         // (A spell's Effect, for an item that counteracts a spell: each one the creature has.)
-        if (counteract.spells ? !effect.spell : !fits(effect.traits ?? []) && !grants.some((slug) => (counteract.conditions ?? []).includes(slug))) continue;
+        // (Or a magical one too, Determination's "spell or other magical effect": one with the magical trait or a tradition's.)
+        const magical = counteract.magical && (effect.traits ?? []).some((trait) => ["magical", "arcane", "divine", "occult", "primal"].includes(trait));
+        if (counteract.spells ? !effect.spell && !magical : !fits(effect.traits ?? []) && !grants.some((slug) => (counteract.conditions ?? []).includes(slug))) continue;
         rows.push({ id: effect.id, name: effect.name, kind: "effect", rank: Number.isFinite(effect.level) ? effect.level : null, dc: Number.isFinite(effect.dc) ? effect.dc : null });
     }
     // (A condition no listed Effect grants: itself, the GM's numbers.)
@@ -42,7 +44,7 @@ export function counteractCandidates(creature, counteract) {
         if (!(counteract.conditions ?? []).includes(condition.slug) || (condition.grantedBy && rows.some((row) => row.id === condition.grantedBy))) continue;
         // (PF2e's condition names carry their value already: "Clumsy 1".)
         const name = condition.name ?? condition.slug;
-        rows.push({ id: condition.id, name: Number.isFinite(condition.value) && !new RegExp(String.raw`\b${condition.value}$`).test(name) ? `${name} ${condition.value}` : name, kind: "condition", slug: condition.slug, rank: null, dc: null });
+        rows.push({ id: condition.id, name: Number.isFinite(condition.value) && !new RegExp(String.raw`\b${condition.value}$`).test(name) ? `${name} ${condition.value}` : name, kind: "condition", slug: condition.slug, rank: null, dc: null, ...(counteract.endsConditions ? { ends: true } : {}) });
     }
     for (const affliction of creature.afflictions ?? []) {
         if (!fits(affliction.traits ?? [])) continue;
@@ -62,6 +64,8 @@ export function counteractResult({ total, natural, dc, ours, theirs }) {
 const list = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} or ${words.at(-1)}` : words[0] ?? "");
 // "Counteract +8, rank 2: each effect inflicting clumsy or enfeebled, or with the emotion trait".
 export function counteractText(counteract) {
+    // ("Counteract +22, rank 8: one spell or magical effect on you, or one condition, which ends outright" — Determination's.)
+    if (counteract.endsConditions) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: one spell or magical effect on you, or one condition, which ends outright`;
     // ("Counteract +7, rank 2: one spell on a creature within 30 feet".)
     if (counteract.spells) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: one spell on a creature${counteract.within ? ` within ${counteract.within} feet` : ""}`;
     // ("Counteract +26, rank 7: the triggering spell".)
@@ -89,7 +93,7 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
         button = "Find what it counteracts";
     } else if (open && state.step === "pick") {
         body = state.rows.length
-            ? `${state.counteract.free ? `<p class="aar-actions">Its DC and rank${Number.isFinite(state.counteract.rank) ? "" : `, and the item's counteract rank <input type="number" data-air-ownrank value="${escape(state.ownRank ?? "")}" style="width:3em"${canApply ? "" : " disabled"}>`}:</p><ul class="aar-targets">` : `<p class="aar-actions">On ${escape(who.name)}${state.counteract.pick === "one" ? " (tick one)" : ""}:</p><ul class="aar-targets">`}${state.rows.map((row, index) => `<li class="aar-target"><label><input type="checkbox" data-air-row="${index}"${row.ticked ? " checked" : ""}${canApply ? "" : " disabled"}> ${escape(row.name)}</label> DC <input type="number" data-air-dc="${index}" value="${row.dc ?? ""}" style="width:3.5em"${canApply ? "" : " disabled"}> rank <input type="number" data-air-rank="${index}" value="${row.rank ?? ""}" style="width:3em"${canApply ? "" : " disabled"}></li>`).join("")}</ul>`
+            ? `${state.counteract.free ? `<p class="aar-actions">Its DC and rank${Number.isFinite(state.counteract.rank) ? "" : `, and the item's counteract rank <input type="number" data-air-ownrank value="${escape(state.ownRank ?? "")}" style="width:3em"${canApply ? "" : " disabled"}>`}:</p><ul class="aar-targets">` : `<p class="aar-actions">On ${escape(who.name)}${state.counteract.pick === "one" ? " (tick one)" : ""}:</p><ul class="aar-targets">`}${state.rows.map((row, index) => `<li class="aar-target"><label><input type="checkbox" data-air-row="${index}"${row.ticked ? " checked" : ""}${canApply ? "" : " disabled"}> ${escape(row.name)}</label>${row.ends ? " (ends outright)" : ` DC <input type="number" data-air-dc="${index}" value="${row.dc ?? ""}" style="width:3.5em"${canApply ? "" : " disabled"}> rank <input type="number" data-air-rank="${index}" value="${row.rank ?? ""}" style="width:3em"${canApply ? "" : " disabled"}>`}</li>`).join("")}</ul>`
             : `<p class="aar-hint">${escape(who.name)} has nothing this counteracts.</p>`;
         button = state.rows.length ? "Counteract" : "";
     }

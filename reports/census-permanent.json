@@ -8,10 +8,10 @@
   "results": {
    "resolves": 766,
    "builtin:cast-spell": 472,
-   "none": 554,
-   "partial": 200,
+   "none": 550,
+   "partial": 203,
    "builtin:focus-point": 47,
-   "builtin:counteract": 26,
+   "builtin:counteract": 27,
    "builtin:readied-bonus": 47,
    "builtin:no-effect": 100,
    "note-only": 165,
@@ -30,12 +30,12 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 440,
+   "save": 442,
    "cast": 472,
-   "item": 590,
-   "none": 685,
+   "item": 591,
+   "none": 681,
    "focus": 47,
-   "counteract": 26,
+   "counteract": 27,
    "fortune": 58,
    "reroll": 45,
    "strike": 92,
@@ -60,10 +60,10 @@
    "results": {
     "resolves": 462,
     "builtin:cast-spell": 345,
-    "none": 386,
-    "partial": 89,
+    "none": 382,
+    "partial": 92,
     "builtin:focus-point": 45,
-    "builtin:counteract": 22,
+    "builtin:counteract": 23,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
     "note-only": 118,
@@ -5797,9 +5797,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Lady's Knife",
@@ -7772,9 +7772,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Cultist Cowl (Greater)",
@@ -14494,9 +14494,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Cordelia's Construct Key",
@@ -20319,9 +20319,9 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Helm Of Zeal",

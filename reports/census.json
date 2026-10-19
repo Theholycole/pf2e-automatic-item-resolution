@@ -14,16 +14,16 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 189,
+   "none": 186,
    "resolves": 753,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
-   "partial": 124,
-   "builtin:item-action": 15,
+   "partial": 125,
+   "builtin:item-action": 16,
    "note-only": 128,
    "builtin:conjure": 7,
    "builtin:ways": 11,
-   "builtin:counteract": 29,
+   "builtin:counteract": 30,
    "builtin:no-effect": 50,
    "builtin:teleport": 6,
    "builtin:reroll": 3,
@@ -93,16 +93,17 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 30,
+    "none": 27,
     "builtin:readied-bonus": 13,
-    "builtin:item-action": 11,
+    "builtin:item-action": 12,
     "resolves": 57,
     "note-only": 7,
     "builtin:no-effect": 8,
     "builtin:reroll": 1,
     "builtin:ways": 2,
+    "builtin:counteract": 1,
     "builtin:cast-spell": 9,
-    "partial": 14,
+    "partial": 15,
     "builtin:teleport": 2,
     "builtin:roll-twice": 2
    },
@@ -367,7 +368,7 @@
    "count": 79,
    "resolves": 18,
    "gaps": 0,
-   "none": 12
+   "none": 11
   },
   "area": {
    "count": 44,
@@ -391,21 +392,21 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 250,
+   "none": 247,
    "item": 620,
    "fortune": 25,
    "zone": 111,
    "save": 147,
    "expose": 89,
    "later": 80,
-   "action": 15,
+   "action": 16,
    "conjure": 7,
    "ways": 11,
-   "counteract": 29,
+   "counteract": 30,
    "teleport": 6,
    "reroll": 3,
    "coat": 46,
-   "strike": 12
+   "strike": 13
   },
   "byCategory": {
    "other": {
@@ -435,16 +436,17 @@
     "zone": 1
    },
    "talisman": {
-    "none": 38,
+    "none": 35,
     "fortune": 15,
-    "action": 11,
+    "action": 12,
     "item": 52,
     "reroll": 1,
     "ways": 2,
+    "counteract": 1,
     "cast": 9,
     "teleport": 2,
     "save": 16,
-    "strike": 9,
+    "strike": 10,
     "coat": 1
    },
    "elixir": {
@@ -510,7 +512,7 @@
    }
   },
   "noCard": {
-   "no-plan": 189,
+   "no-plan": 186,
    "triggered": 11,
    "gm": 50
   }
@@ -2500,7 +2502,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:item-action",
+   "kind": null,
+   "live": "action"
   },
   {
    "name": "Bloodhammer Reserve Black Label",
@@ -2730,7 +2734,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Incense of Distilled Death",
@@ -17238,7 +17244,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Worm Vial",

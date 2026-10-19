@@ -1037,3 +1037,9 @@ test("Savior Spike: a readied +1 item to the Grab an Edge its trigger names — 
     assert.match(readiedWords(spike), /^\+1 item bonus to check \(grab an edge\)/);
     assert.deepEqual(compileItem(item("Matchmaker Fulu")).notes ?? [], [], "its read degree sentence not a note");
 });
+
+test("Admonishing Band's Warning Shot: PF2e's Demoralize with the item, its range and language words a note", () => {
+    const plan = compileItem(item("Admonishing Band"));
+    assert.deepEqual([plan.builtin, plan.action.slug, plan.action.targeted], ["item-action", "demoralize", true]);
+    assert.match(plan.action.after, /^The foe can be as far as the firearm's maximum range, and the check takes no penalty for a foe that doesn't share a language with you\. If you already have the Warning Shot feat\b/);
+});

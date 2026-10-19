@@ -10,7 +10,8 @@ export async function postCounteractCard({ message, plan, used, actor, token }) 
     const counteract = plan.item?.counteract;
     if (!counteract) return null;
     // (A spell on a creature within some distance: every creature there, foe or friend, for the GM to pick.)
-    const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: creaturesNear(token, counteract.within ?? 5) });
+    // (Its user's own, Determination's: no one else to pick.)
+    const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: counteract.self ? [] : creaturesNear(token, counteract.within ?? 5) });
     return ChatMessage.create({ content: counteractCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
@@ -57,7 +58,8 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
     let ticked = chosen.filter((row) => row.ticked);
     if (!ticked.length) throw new Error("Tick what to counteract.");
     if (state.counteract.pick !== "each" && ticked.length > 1) ticked = ticked.slice(0, 1);
-    const missing = ticked.filter((row) => !Number.isFinite(row.dc) || !Number.isFinite(row.rank));
+    // (A condition that ends outright, Determination's, needs neither.)
+    const missing = ticked.filter((row) => !row.ends && (!Number.isFinite(row.dc) || !Number.isFinite(row.rank)));
     if (missing.length) throw new Error(`Give the DC and rank for ${missing.map((row) => row.name).join(", ")}.`);
     // (Its own rank when the text leaves it to its stored spell: the card's.)
     const ours = Number.isFinite(state.counteract.rank) ? state.counteract.rank : Number(ownRank);
@@ -67,6 +69,11 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
     if (!actor) throw new Error(`${target.name} isn't there any more.`);
     const lines = [];
     for (const row of ticked) {
+        if (row.ends) {
+            await actor.decreaseCondition(row.slug, { forceRemove: true });
+            lines.push(`${row.name}: ended.`);
+            continue;
+        }
         const roll = await new Roll(`1d20 + ${state.counteract.modifier}`).evaluate();
         await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: counteract ${row.name} (DC ${row.dc}, rank ${row.rank})` });
         const natural = Number(roll.dice?.[0]?.total ?? NaN);

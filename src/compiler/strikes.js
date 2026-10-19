@@ -272,8 +272,9 @@ export function compileStrike(item, base, options = {}) {
 }
 
 function strikePlan({ base, item, strike, riders, save, extras: read, cast = null, follow = null }) {
-    // (A Strike with no die size of its own, "an extra die of weapon damage", from an item that isn't the weapon: not read.)
-    if (read.dice.some((entry) => !entry.dieSize)) return null;
+    // (A Strike with no die size of its own, "an extra die of weapon damage", from an item that isn't the weapon: PF2e's DamageDice with no
+    // die size, which takes the weapon's — as PF2e's own Brutal Finish does. Only weapon dice, though: other dice need their size.)
+    if (read.dice.some((entry) => !entry.dieSize && !entry.weaponDie)) return null;
     // (With a save on the hit, its own sentence and its degrees are the save card's, not notes: "It takes 4d10 void damage with a
     // DC 25 Fortitude saving throw", "Critical Success The foe is unaffected.")
     const extras = save ? { ...read, notes: read.notes.filter((note) => !/^(?:Critical Success|Success|Failure|Critical Failure)\b/.test(note) && !/@Check\[(?:fortitude|reflex|will)\b/i.test(note)) } : read;
@@ -289,6 +290,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.suppress ? { suppress: extras.suppress } : {}),
               ...(extras.splash ? { splash: extras.splash } : {}),
               ...(extras.offGuard ? { offGuard: true } : {}),
+              // (Weapon dice on a failure: Brutal Finish's.)
+              ...(extras.failDice ? { failDice: extras.failDice } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),
