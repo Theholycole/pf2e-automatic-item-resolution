@@ -295,6 +295,12 @@ export function withItemData(html, item) {
     // (A missive's benefit for its recipient, Heartening Missive (Bull)'s "The recipient gains a +1 item bonus to Fortitude saves for the next
     // 24 hours": that bonus on the creature it reaches — the one the presser targets, as for a creature touched.)
     text = text.replace(/\bThe recipient gains an? (\+\d+ (?:item|status|circumstance) bonus to (?:Fortitude|Reflex|Will) saves) for the next (\d+ (?:hours|minutes))\./, (all, bonus, time) => `It's for a creature you touch, its recipient. You gain a ${bonus} for ${time}.`);
+    // (Cover against what triggered it, Limestone Shield's "granting you standard cover from that effect": cover's circumstance bonus to its
+    // user's AC and Reflex saves versus that effect, as the moment's-bonus reader takes it.)
+    text = text.replace(/,? granting you (lesser|standard|greater) cover from (?:that|the triggering) (?:effect|attack)\./i, (all, kind) => `. You gain a +${{ lesser: 1, standard: 2, greater: 4 }[kind.toLowerCase()]} circumstance bonus to your AC and Reflex saves against the triggering effect, as ${kind.toLowerCase()} cover.`);
+    // (PF2e's Recall Knowledge with the item's bonus, Jug of Fond Remembrance's "and then Recall Knowledge about a creature you can see, with a
+    // +2 circumstance bonus to the check": the action reader's "attempt a Recall Knowledge check with a +2 circumstance bonus".)
+    text = text.replace(/\band then (@UUID\[[^\]]*\]\{Recall Knowledge\}|Recall Knowledge) about a creature you can see, with an? \+(\d+) (circumstance|item|status) bonus to the check\./i, (all, link, value, type) => `and then attempt a Recall Knowledge check with a +${value} ${type} bonus about a creature you can see.`);
     // (Its wielder's next attack rolled twice in the weapon's own words, Aerekostes's "On the next attack made using Aerekostes before the end
     // of their next turn, their wielder rolls twice and takes the better result": the user's, as the roll-twice reader takes it.)
     text = text.replace(/\bOn the next attack made using (?:<em>)?[\w' -]+?(?:<\/em>)? before the end of their next turn, their wielder rolls twice and takes the better result\./i, "You roll your next attack roll with it twice and take the better result. Only an attack before the end of your next turn.");

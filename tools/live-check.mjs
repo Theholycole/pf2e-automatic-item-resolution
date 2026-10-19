@@ -4232,6 +4232,33 @@ export const cases = {
         const [line] = game.messages.get(card.id).getFlag(NS, "card").results;
         assert(/against DC 30: a (?:critical )?(?:success|failure)/.test(line), `the result reported (${line})`);
         return { line };
+    },
+
+    // Golden Gloves' Heaven's Wings: the enemies' save card, and beside it the counteract card for one affliction its user suffers (+31, rank 9).
+    async goldenGlovesHalo(scene) {
+        const { actor: user } = await creature(scene, "Halo Wearer", { type: "character", x: 1, y: 5 });
+        const gloves = await give(user, "Golden Gloves");
+        await gloves.update({ "system.equipped.invested": true }).catch(() => null);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(gloves.uuid, 0);
+        const save = await messageAfter(since, itemCard("expose"), { what: "the halo's save card" });
+        const counter = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        assert(/Counteract \+31, rank 9/.test(counter.content), `its counteract (${counter.content.slice(0, 200)})`);
+        return { save: save.id, counteract: counter.id };
+    },
+
+    // Limestone Shield's Block Elements: standard cover against the triggering effect — its card gives its user +2 circumstance AC and Reflex.
+    async limestoneCover(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Limestone Bearer", { type: "character", x: 1, y: 7 });
+        const shield = await give(user, "Limestone Shield");
+        await userToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 1);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the shield's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const has = (selector) => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes(selector) && rule.value === 2 && rule.type === "circumstance"));
+        await until(() => has("ac") && has("reflex"), "+2 circumstance AC and Reflex", { timeout: 8000 });
+        return { ok: true };
     }
 };
 

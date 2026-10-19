@@ -188,6 +188,8 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - Smoldering Armor's "The armor is sheathed in a Fire Shield": the spell's Effect on its wearer.
   - Deravon's Helm's "save to resist being compelled to drop Prone": the save or Prone, with its timing a note.
   - Anointed Waterskin's "granting you the effects of Bless": PF2e's Spell Effect.
+  - Limestone Shield's "granting you standard cover from that effect": +2 circumstance to AC and Reflex saves against that effect, the moment's bonus.
+  - Jug of Fond Remembrance's "Recall Knowledge … with a +2 circumstance bonus": PF2e's Recall Knowledge with that bonus, its degree and Stupefied the card's words.
   - Heartening Missive (Bull, Rabbit, Turtle)'s "The recipient gains a +1 item bonus to Fortitude saves for the next 24 hours": that bonus on the recipient the presser targets.
 - **Smoke sprayed into a square** (`covered-square.js` sprayedSmokePlan): Beekeeper's Smoker's adjacent square, Concealed inside. It's the ability module's placed zone, and its 1d4 rounds are the GM's.
 - **A snare that attacks** (`snares.js`): "a … wheel of spinning blades launches at it, making a Strike with an attack modifier of +35 and dealing 8d8 slashing damage" (Flying Blade Wheel Snare). The first creature into its square gets the ability module's card with the snare's +35 against its AC, and the damage on a hit (doubled on a critical hit). Its later Strikes are notes.

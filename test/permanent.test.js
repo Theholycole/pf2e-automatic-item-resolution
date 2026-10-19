@@ -643,3 +643,11 @@ test("more one-offs: Aerekostes's next attack rolled twice, Anointed Waterskin's
     const [stone] = compileActivations(item("Stone of Unrivaled Skill"), { spellEffects });
     assert.deepEqual([stone.plan.item.skillPick.skills.length, stone.plan.item.skillPick.modifier, stone.plan.item.skillPick.duration.value], [16, { value: 3, type: "status" }, 10]);
 });
+
+test("cover against what triggered it (Limestone Shield: +2 circumstance to AC and Reflex saves for that effect) and PF2e's Recall Knowledge with an item's bonus (Jug of Fond Remembrance: +2 circumstance, its degree and Stupefied the card's words)", async () => {
+    const [, block] = compileActivations(item("Limestone Shield"), { spellEffects });
+    assert.deepEqual([block.plan.builtin, block.plan.bonus.modifiers.map((modifier) => [modifier.selector, modifier.type, modifier.value])], ["readied-bonus", [["ac", "circumstance", 2], ["reflex", "circumstance", 2]]]);
+    const [jug] = compileActivations(item("Jug of Fond Remembrance"), { spellEffects });
+    assert.deepEqual([jug.plan.builtin, jug.plan.action.slug, jug.plan.action.bonus], ["item-action", "recall-knowledge", { value: 2, type: "circumstance" }]);
+    assert.match(jug.plan.action.after, /Stupefied 1 for 3 rounds/);
+});
