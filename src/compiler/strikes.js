@@ -16,7 +16,8 @@ import { hitNotes } from "./hit-notes.js";
 
 // "make a melee Strike", "make a weapon or unarmed attack Strike", "make a ranged or melee Strike", "attempt a Strike" (not
 // a creature's own, "makes a beak Strike with a +8 modifier").
-const STRIKE = /\b(?:make|makes|attempt|attempts) an? ((?:(?:melee|ranged|unarmed|weapon|thrown|single|or|attack) ){0,4})Strike\b/i;
+// (And a shield bash, Jawbreaker Shield's "You make a shield bash Strike as a reaction against the attacker".)
+const STRIKE = /\b(?:make|makes|attempt|attempts) an? ((?:(?:melee|ranged|unarmed|weapon|thrown|single|or|attack|shield bash) ){0,4})Strike\b/i;
 // "You Strike the creature you are grappling", "Make two unarmed Strikes", "the next successful Strike you make with it",
 // a trigger's hit ("Trigger You … successfully Strike your target Effect …").
 const YOU_STRIKE = /\bYou Strike (?:the|a|an|with)\b/;

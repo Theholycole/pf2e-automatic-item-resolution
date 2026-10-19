@@ -539,3 +539,14 @@ test("a Strike treated as a precious material (Quicksilver Cloak's silver shot):
     assert.ok(strikeLines(slide.plan).includes("It's treated as silver"));
     assert.deepEqual(strikeRules(slide.plan, { label: "Quicksilver Cloak" }), [{ key: "AdjustStrike", mode: "add", property: "materials", value: "silver", definition: ["item:ranged"] }]);
 });
+
+test("Jawbreaker Shield: its reaction's shield bash, a hit posting the DC 31 Fortitude save — 1d6 bleed on a failure, and on the critical failure \"As failure, and …\"; Trollhound Pick's \"As failure, but Enfeebled 2\" keeps the failure's minute", () => {
+    const [bash] = compileActivations(source("Jawbreaker Shield"));
+    assert.equal(routeOf(bash.plan), "strike");
+    const save = bash.plan.strike.save.resolution;
+    assert.deepEqual([save.check.statistic, save.check.against.value], ["fortitude", 31]);
+    assert.deepEqual([save.outcomes.failure.damage.formulas[0].formula, save.outcomes.criticalFailure.damage.formulas[0].formula], ["1d6[bleed]", "1d6[bleed]"]);
+    const [ravenous] = compileActivations(source("Trollhound Pick"));
+    const enfeebled = ravenous.plan.strike.save.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "enfeebled");
+    assert.deepEqual([enfeebled.value, enfeebled.duration.value, enfeebled.duration.unit], [2, 1, "minutes"]);
+});

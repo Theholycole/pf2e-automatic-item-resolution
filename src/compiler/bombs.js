@@ -20,7 +20,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { plainText } from "./rows.js";
 import { withWhilePersistent } from "./primed.js";
 import { asAbility } from "./ability-shape.js";
-import { guardValues } from "./guards.js";
+import { asRowCopies, guardValues } from "./guards.js";
 
 export const isBomb = (item) => item?.type === "weapon" && item.system?.group === "bomb";
 
@@ -175,7 +175,7 @@ export function bombSave(item, { scope: given = null } = {}) {
     };
     // (An area the ability compiler read is fine for a burst: the card finds the creatures in it.)
     const usable = (read) => read?.resolution?.kind === "save" && read.resolution.check?.against?.dc === "fixed" && (!read.targeting?.area || scope.scope === "burst")
-        && Object.values(read.resolution.outcomes ?? {}).some((row) => (row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement);
+        && Object.values(read.resolution.outcomes ?? {}).some((row) => (row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement || (row?.damage?.mode === "formulas" && (row.damage.formulas ?? []).length));
     let read = compile(item);
     // (Its save's own sentence alone, when the rest of its text keeps the ability compiler from it — Roc-Shaft Arrow's "The target
     // must succeed at a DC 19 Fortitude save or be pushed 10 feet (20 feet on a critical failure)", after its flavor.)
@@ -183,6 +183,8 @@ export function bombSave(item, { scope: given = null } = {}) {
         const sentence = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=[A-Z])/).find((one) => /@Check\[(?:fortitude|reflex|will)\|/i.test(one) && /\bmust (?:succeed at|attempt)\b/i.test(one));
         if (sentence) read = compile({ ...item, system: { ...(item.system ?? {}), description: { value: `<p>${sentence.trim()}</p>` } } });
     }
+    // (A row "As failure, and …" with what that row has, as the item side's other saves get: Jawbreaker Shield's critical failure.)
+    if (usable(read)) read = asRowCopies(read, text);
     const resolution = usable(read)
         ? { check: read.resolution.check, outcomes: read.resolution.outcomes, ...(read.resolution.afflictionHandoff ? { afflictionHandoff: read.resolution.afflictionHandoff } : {}) }
         : plainSave(html, text);

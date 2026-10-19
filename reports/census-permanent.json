@@ -4,9 +4,9 @@
   "items": 2679,
   "staves": 560,
   "ours": 2119,
-  "activations": 2578,
+  "activations": 2577,
   "results": {
-   "resolves": 771,
+   "resolves": 772,
    "builtin:cast-spell": 473,
    "none": 530,
    "partial": 200,
@@ -14,7 +14,7 @@
    "builtin:counteract": 27,
    "builtin:readied-bonus": 47,
    "builtin:no-effect": 100,
-   "note-only": 165,
+   "note-only": 163,
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 8,
@@ -31,13 +31,13 @@
   "live": {
    "save": 442,
    "cast": 473,
-   "item": 591,
+   "item": 589,
    "none": 658,
    "focus": 47,
    "counteract": 27,
    "fortune": 58,
    "reroll": 45,
-   "strike": 92,
+   "strike": 93,
    "table": 7,
    "teleport": 8,
    "zone": 23,
@@ -50,12 +50,12 @@
    "spellstrike": 9,
    "take": 1
   },
-  "withFrequency": 1735,
+  "withFrequency": 1734,
   "withTrigger": 427
  },
  "byType": {
   "equipment": {
-   "activations": 1675,
+   "activations": 1674,
    "results": {
     "resolves": 462,
     "builtin:cast-spell": 345,
@@ -65,7 +65,7 @@
     "builtin:counteract": 23,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
-    "note-only": 119,
+    "note-only": 118,
     "builtin:reroll": 34,
     "builtin:table": 4,
     "builtin:teleport": 4,
@@ -147,8 +147,8 @@
    "activations": 100,
    "results": {
     "builtin:cast-spell": 11,
-    "note-only": 14,
-    "resolves": 32,
+    "note-only": 13,
+    "resolves": 33,
     "none": 18,
     "partial": 11,
     "builtin:modes": 4,
@@ -12483,9 +12483,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Flashblade",
@@ -23997,17 +23997,6 @@
    "result": "builtin:counteract",
    "kind": null,
    "live": "counteract"
-  },
-  {
-   "name": "Book of Endless Walls",
-   "type": "equipment",
-   "activation": "Bewildering Walls",
-   "time": "free",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
   },
   {
    "name": "Ghost Lantern",

@@ -244,6 +244,9 @@ export function withItemData(html, item) {
         const dice = Number(item?.ownerLevel) >= 18 ? "two" : "one";
         return `When you activate the cudgel, make a melee Strike with a weapon you're wielding in two hands. The Strike deals ${dice === "two" ? "an extra two dice" : "an extra die"} of weapon damage. On a failure, you deal damage equal to ${dice} weapon damage ${dice === "two" ? "dice" : "die"}. After the Strike, your turn ends.${paragraph}With the Brutal Finish feat, one more weapon damage die on a hit and on a failure (by hand).`;
     });
+    // (Jawbreaker Shield's "If the shield bash hits, the target takes damage and must attempt a DC 31 Fortitude saving throw": the hit's
+    // save, as the Strike reader takes it — the bash's own damage PF2e's.)
+    text = text.replace(/\bIf the (shield bash|Strike) hits, the target takes damage and must attempt a DC (\d+) (Fortitude|Reflex|Will) saving throw\./i, (all, what, dc, save) => `On a hit, the target attempts a @Check[${save.toLowerCase()}|dc:${dc}] save.`);
     // (Megaphone Mutagen's "+1 item bonus to skill checks you make as part of auditory actions, except Deception and Diplomacy checks": those
     // checks by PF2e's options, src/compiler/rows.js; the longer range of its user's auditory actions and spells a note.)
     text = text.replace(/\bbonus to skill checks you make as part of (auditory|visual) actions, except ([A-Z]\w+) and ([A-Z]\w+) checks\./gi, (all, trait, first, second) => `bonus to skill checks for ${trait.toLowerCase()} actions, except ${first} and ${second} checks.`);

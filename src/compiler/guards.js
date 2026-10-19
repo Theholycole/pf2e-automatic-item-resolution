@@ -141,11 +141,14 @@ function sentenceTimes(plan, text) {
 // A row "As success, but …" keeps the success row's conditions — The Waxworks' failure, "As success, but 4d6 persistent fire plus
 // 4d6 persistent mental damage", is Confused as its success is — which the ability compiler sometimes leaves off: each one the
 // row doesn't name again (a value or time of its own) or take away ("no longer", "instead of", "isn't").
-const AS_ROW = /^As (success|failure), (?:but|except)\b/i;
+// (Or "As failure, and …", Jawbreaker Shield's critical failure: the failure's damage too, when the row names none of its own.)
+// (Its first sentence or after one of its own: Jawbreaker Shield's "You break the target's jaw. As failure, and …".)
+const AS_ROW = /(?:^|[.!?]\s+)As (success|failure), (?:but|except|and)\b/i;
 // (The row's own time for all of it — Wintershot's "As success, but …, and the light affects the creature for 1 minute" — in a
 // sentence that names no condition; one that does, "the creature is slowed 1 for 1 minute", is that condition's.)
 const ROW_TIME = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?)\b/i;
-function asRowCopies(plan, text) {
+// (Exported alone for a bomb's or a Strike's save, src/compiler/bombs.js bombSave: the other guards are its plan's own.)
+export function asRowCopies(plan, text) {
     if (plan?.resolution?.kind !== "save" || plan.builtin || !plan.resolution.outcomes) return plan;
     const words = degreeWords(text);
     const outcomes = { ...plan.resolution.outcomes };
@@ -166,6 +169,11 @@ function asRowCopies(plan, text) {
         const as = AS_ROW.exec(own);
         const base = as ? outcomes[as[1].toLowerCase()] : null;
         if (!row || !base) continue;
+        if ((!row.damage || row.damage.mode === "none") && base.damage?.mode === "formulas" && (base.damage.formulas ?? []).length && !/\d+d\d+|\bdamage\b/i.test(own.replace(AS_ROW, " "))) {
+            row = { ...row, damage: structuredClone(base.damage) };
+            outcomes[degree] = row;
+            changed = true;
+        }
         // (A condition it names again with a new value and no time of its own keeps the base row's time: Floppy Rag Doll's "As failure,
         // but Clumsy 2", its failure's clumsy until your next turn.)
         if (!ROW_TIME.test(own) && !/\buntil\b/i.test(own) && (row.effects ?? []).some((effect) => effect?.kind === "condition" && !effect.duration && (base.effects ?? []).some((other) => other?.slug === effect.slug && other.duration))) {
