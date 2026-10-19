@@ -5168,6 +5168,90 @@ export const cases = {
         return { lasting: lasting(), mythic: mythic() };
     },
 
+    // Hollow Robes' Hollow Target: its user's persistent fire and bleed ended outright, for a Mythic Point (a mythic NPC's).
+    async hollowTarget(scene) {
+        const { actor: user } = await creature(scene, "Hollow Wearer", { x: 20, y: 10 });
+        await user.update({ "system.traits.value": [...(user.system.traits.value ?? []), "mythic"] });
+        await user.update({ "system.resources.mythicPoints.value": 1 });
+        const persistent = (formula, damageType) => { const source = game.pf2e.ConditionManager.getCondition("persistent-damage").toObject(); source.system.persistent = { formula, damageType, dc: 15 }; return source; };
+        await user.createEmbeddedDocuments("Item", [persistent("1d6", "fire"), persistent("2", "bleed")]);
+        const robes = await give(user, "Hollow Robes");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(robes.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the robes' card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => !user.itemTypes.condition.some((entry) => entry.slug === "persistent-damage"), "the persistent damage ended", { timeout: 8000 });
+        assert(user.system.resources.mythicPoints.value === 0, `the Mythic Point spent (${user.system.resources.mythicPoints.value})`);
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Skeletal Claw: the undead targeted gets 10 temporary Hit Points (the ability module's card, its automatic row).
+    async skeletalClaw(scene) {
+        const { actor: user } = await creature(scene, "Claw Caster", { type: "character", x: 20, y: 12 });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Claw Skeleton", { x: 21, y: 12 });
+        const claw = await give(user, "Skeletal Claw");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(claw.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the claw's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [undeadToken.uuid] });
+        const ability = await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
+        await applyAbilityCard(ability);
+        await until(() => undead.system.attributes.hp.temp === 10, `10 temporary Hit Points (${undead.system.attributes.hp.temp})`, { timeout: 8000 });
+        return { temp: undead.system.attributes.hp.temp };
+    },
+
+    // Whispering Veil's Spire Power: a Mythic Point gained (a mythic NPC's, from 1 to 2); a character under the Hero Points setting gains a Hero Point.
+    async spirePower(scene) {
+        const { actor: user } = await creature(scene, "Veil Wearer", { x: 20, y: 14 });
+        await user.update({ "system.traits.value": [...(user.system.traits.value ?? []), "mythic"] });
+        await user.update({ "system.resources.mythicPoints.value": 1 });
+        const gain = async (actor) => {
+            const veil = actor.itemTypes.equipment.find((entry) => entry.name === "Whispering Veil") ?? (await give(actor, "Whispering Veil"));
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(veil.uuid, 0);
+            const card = await messageAfter(since, itemCard("focus"), { what: "the veil's card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "the point gained", { timeout: 8000 });
+            return game.messages.get(card.id).getFlag(NS, "card").results;
+        };
+        const mythic = await gain(user);
+        assert(user.system.resources.mythicPoints.value === 2 && /gains 1 Mythic Point \(2 of 3\)/.test(mythic[0] ?? ""), `a Mythic Point gained (${JSON.stringify(mythic)})`);
+        const { actor: hero } = await creature(scene, "Veil Hero", { type: "character", x: 21, y: 14 });
+        await hero.update({ "system.resources.heroPoints.value": 1 });
+        await game.settings.set(NS, "heroPointsForMythic", true);
+        try {
+            const heroic = await gain(hero);
+            assert(hero.system.resources.heroPoints.value === 2 && /gains 1 Hero Point/.test(heroic[0] ?? ""), `a Hero Point gained (${JSON.stringify(heroic)})`);
+        } finally {
+            await game.settings.set(NS, "heroPointsForMythic", false);
+        }
+        return { mythic: user.system.resources.mythicPoints.value, hero: hero.system.resources.heroPoints.value };
+    },
+
+    // Mask of Mercy: its user's latest roll of Hit Points (here a Strike's damage roll, the same message kind) rolled again, the higher kept.
+    async maskOfMercy(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Mercy Healer", { type: "character", x: 20, y: 16 });
+        const { token: dummy } = await creature(scene, "Mercy Dummy", { x: 21, y: 16, ac: 1 });
+        const sword = await give(user, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await userToken.object?.control?.();
+        await target(dummy);
+        const struck = await strike(user, sword);
+        let since = Date.now();
+        await struck.action.damage({ event: shift() });
+        await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the roll" });
+        const mask = await give(user, "Mask of Mercy");
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(mask.uuid, 0);
+        const card = await messageAfter(since, itemCard("reroll"), { what: "the mask's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "the roll again", { timeout: 8000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(/healing rerolled: \d+, (?:higher than|not higher than) \d+/.test(results[0] ?? ""), `rolled again, the higher kept (${JSON.stringify(results)})`);
+        return { results };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

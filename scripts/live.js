@@ -710,6 +710,12 @@ async function heal({ token, actor }, name, amount, state) {
 async function recover(actor, name, recovery) {
     const persistent = () => (actor?.itemTypes?.condition ?? []).filter((condition) => condition.slug === "persistent-damage" && recovery.types.includes(condition.system?.persistent?.damageType));
     const found = persistent();
+    // (Ended outright, Hollow Robes': each deleted, no check.)
+    if (recovery.ends) {
+        if (!found.length) return [`${name} has no persistent damage to end.`];
+        await actor.deleteEmbeddedDocuments("Item", found.map((condition) => condition.id));
+        return found.map((condition) => `${name}: ${condition.name} ended`);
+    }
     if (!found.length) return [`${name} has no persistent ${recoveryText(recovery).replace(/^.* persistent /, "")}: no flat check.`];
     const lines = [];
     for (const condition of found) {

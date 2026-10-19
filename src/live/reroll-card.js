@@ -72,6 +72,7 @@ export function rerollText(reroll) {
         // ("either": the creature targeted, else its user — Robe of the Archmagi's ally.)
         return `${reroll.who === "either" ? "The targeted creature's (else your) latest" : reroll.who === "target" ? "The targeted creature's latest" : reroll.who === "attacker" ? "The latest" : "Your latest"} ${what}${reroll.who === "attacker" ? " at you" : ""}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
     }
+    if (reroll.healing) return `Your latest healing roll, rolled again: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
     const whose = reroll.who === "attacker" ? `The latest ${reroll.what === "spellAttack" ? "spell attack roll" : "attack roll"} at you` : reroll.who === "companion" ? `The targeted companion's latest ${what}` : `Your latest ${what}`;
     const bonus = reroll.bonus?.mythic ? " at mythic proficiency (your level + 10)" : reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";
     return `${whose}, rerolled${bonus}: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;

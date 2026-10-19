@@ -8,14 +8,14 @@
   "results": {
    "resolves": 756,
    "builtin:cast-spell": 472,
-   "none": 571,
-   "partial": 188,
-   "builtin:focus-point": 45,
+   "none": 567,
+   "partial": 190,
+   "builtin:focus-point": 47,
    "builtin:counteract": 26,
    "builtin:readied-bonus": 46,
    "builtin:no-effect": 100,
-   "note-only": 177,
-   "builtin:reroll": 43,
+   "note-only": 176,
+   "builtin:reroll": 44,
    "builtin:table": 7,
    "builtin:teleport": 8,
    "builtin:pf2e-rules": 26,
@@ -30,14 +30,14 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 438,
+   "save": 439,
    "cast": 472,
    "item": 587,
-   "none": 702,
-   "focus": 45,
+   "none": 698,
+   "focus": 47,
    "counteract": 26,
    "fortune": 57,
-   "reroll": 43,
+   "reroll": 44,
    "strike": 88,
    "table": 7,
    "teleport": 8,
@@ -60,14 +60,14 @@
    "results": {
     "resolves": 456,
     "builtin:cast-spell": 345,
-    "none": 396,
+    "none": 393,
     "partial": 84,
-    "builtin:focus-point": 43,
+    "builtin:focus-point": 45,
     "builtin:counteract": 22,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
     "note-only": 124,
-    "builtin:reroll": 32,
+    "builtin:reroll": 33,
     "builtin:table": 4,
     "builtin:teleport": 4,
     "builtin:zone": 11,
@@ -85,12 +85,12 @@
    "results": {
     "resolves": 167,
     "none": 85,
-    "partial": 47,
+    "partial": 48,
     "builtin:cast-spell": 82,
     "builtin:reroll": 7,
     "builtin:table": 1,
     "builtin:modes": 12,
-    "note-only": 16,
+    "note-only": 15,
     "builtin:item-action": 9,
     "builtin:zone": 6,
     "builtin:counteract": 2,
@@ -131,10 +131,10 @@
    "activations": 164,
    "results": {
     "builtin:cast-spell": 33,
-    "partial": 11,
+    "partial": 12,
     "resolves": 58,
     "builtin:counteract": 1,
-    "none": 22,
+    "none": 21,
     "builtin:zone": 4,
     "note-only": 14,
     "builtin:no-effect": 5,
@@ -6073,9 +6073,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Silver Snake Cane",
@@ -11229,9 +11229,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Hollow Robes",
@@ -11251,9 +11251,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Hollow Robes",
@@ -18384,9 +18384,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Whispering Veil",
@@ -24761,9 +24761,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Hydration Cloak",

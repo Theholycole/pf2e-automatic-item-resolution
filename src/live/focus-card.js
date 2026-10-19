@@ -9,8 +9,10 @@ export function createFocusCard({ plan, item, user }) {
 }
 
 // What it gives, in words: "1 Focus Point, only to cast a witch hex spell; lost at the end of the turn if not spent".
-export function focusText(focus) {
-    const points = `${focus.amount} Focus Point${focus.amount === 1 ? "" : "s"}`;
+// (word: the point's name, "Focus Point" — or a Mythic Point's, "Mythic Point" or "Hero Point" as the world setting has it.)
+export const pointWord = (focus, word = null) => word ?? (focus?.resource === "mythic" ? "Mythic Point" : "Focus Point");
+export function focusText(focus, word = null) {
+    const points = `${focus.amount} ${pointWord(focus, word)}${focus.amount === 1 ? "" : "s"}`;
     return [focus.only ? `${points}, only to ${focus.only}` : points, focus.lost === "turn-end" ? "lost at the end of the turn if not spent" : null].filter(Boolean).join("; ");
 }
 
@@ -31,7 +33,8 @@ export function unspent(grant, pool) {
 
 export function focusCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
+    const word = pointWord(state.plan.focus, state.word ?? null);
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Gain the Focus Point${state.plan.focus.amount === 1 ? "" : "s"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">Focus Point</span></header><p class="aar-actions">${escape(state.user.name)}: ${escape(focusText(state.plan.focus))}</p>${results}${controls}</section>`;
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Gain the ${word}${state.plan.focus.amount === 1 ? "" : "s"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${escape(word)}</span></header><p class="aar-actions">${escape(state.user.name)}: ${escape(focusText(state.plan.focus, word))}</p>${results}${controls}</section>`;
 }

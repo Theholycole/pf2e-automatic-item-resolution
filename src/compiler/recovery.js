@@ -25,9 +25,13 @@ const NOT_YOURS = /\b(?:each|every|all) (?:other )?(?:all(?:y|ies)|creatures?)\b
 const OWN_TYPE = /\battempt a new flat check to remove persistent damage the (?:powder|salve|remedy) works against\b/i;
 const POPULAR = new RegExp(String.raw`\bthe most popular being ((?:${TYPE}) [\w ]+?(?:, (?:and )?(?:${TYPE}) [\w ]+?)*)\.`, "i");
 
-// The text (plain) → { types, dc } or null. dc: null for the usual one.
+// (Or ended outright, no check, Hollow Robes' "All persistent damage you're currently taking ends": every type, { ends: true }.)
+const ENDS = /\bAll persistent damage you're currently taking ends\b/i;
+
+// The text (plain) → { types, dc, ends? } or null. dc: null for the usual one.
 export function readRecovery(text) {
     const plain = String(text ?? "");
+    if (ENDS.test(plain)) return { types: [...TYPES], dc: null, ends: true };
     if (OWN_TYPE.test(plain)) {
         const listed = [...(POPULAR.exec(plain)?.[1] ?? "").matchAll(new RegExp(String.raw`\b(${TYPE})\b`, "gi"))].map(([type]) => type.toLowerCase());
         const lowered = LOWER_TO.exec(plain);
@@ -52,7 +56,7 @@ export function recoveryNotes(text) {
     return String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z@])/).map((sentence) => sentence.trim())
         // (The check's own sentence too when it says more: Searing Suture's "The target creature takes 1d6 fire damage and can
         // immediately attempt …", Quenching Potion's "…, and attempt a new saving throw against any poison affecting you".)
-        .filter((sentence) => sentence && RULE_WORDS.test(CHECK.test(sentence) ? sentence.replace(CHECK, "").replace(/\bflat check\b|\bpersistent (?:\w+ )?damage\b/gi, "").replace(LOWER_TO, "") : sentence) && !(LOWER.test(sentence) && !CHECK.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
+        .filter((sentence) => sentence && !ENDS.test(sentence) && RULE_WORDS.test(CHECK.test(sentence) ? sentence.replace(CHECK, "").replace(/\bflat check\b|\bpersistent (?:\w+ )?damage\b/gi, "").replace(LOWER_TO, "") : sentence) && !(LOWER.test(sentence) && !CHECK.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
 }
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });

@@ -91,9 +91,11 @@ async function rerollDamage(message, state, triggering, actor) {
     const again = await old.reroll();
     const higher = Number(again.total) > Number(old.total);
     if (higher) await again.toMessage({ speaker: triggering.speaker ?? ChatMessage.getSpeaker({ actor }), flavor: `${triggering.flavor ?? ""}<p>${state.item.name}: rerolled, the higher kept.</p>` });
+    // (Healing, Mask of Mercy's: its words.)
+    const what = state.plan.reroll.healing ? "healing" : "damage";
     const lines = [higher
-        ? `${actor.name}'s damage rerolled: ${again.total}, higher than ${old.total} — apply the new roll's damage (its message has PF2e's buttons), not the first.`
-        : `${actor.name}'s damage rerolled: ${again.total}, not higher than ${old.total} — the first roll stands.`];
+        ? `${actor.name}'s ${what} rerolled: ${again.total}, higher than ${old.total} — apply the new roll's ${what} (its message has PF2e's buttons), not the first.`
+        : `${actor.name}'s ${what} rerolled: ${again.total}, not higher than ${old.total} — the first roll stands.`];
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

@@ -861,6 +861,23 @@ test("a Mythic Point spent for more (the user's answer of 2026-10-19): the ways 
     assert.equal(withMythicUpgrade({ builtin: "reroll", spend: { mythicPoints: 1 } }, "If you spend 1 Mythic Point, more.").builtin, "reroll");
 });
 
+test("more mythic and healing items: Hollow Robes' persistent damage ended outright, Whispering Veil's Mythic Point gained (Preordained Spear keeps its doomed card), Mask of Mercy's healing rolled again, Skeletal Claw's temporary Hit Points for the undead", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { rerollText } = await import("../src/live/reroll-card.js");
+    const { focusText } = await import("../src/live/focus-card.js");
+    const hollow = compileActivations(item("Hollow Robes"))[1].plan;
+    assert.deepEqual([hollow.item.recovery.ends, hollow.item.recovery.types.length > 10, hollow.spend], [true, true, { mythicPoints: 1 }]);
+    assert.ok(!(hollow.notes ?? []).some((note) => /persistent damage you're currently taking ends/.test(note)), "its ending not a note too");
+    const veil = compileActivations(item("Whispering Veil"))[0].plan;
+    assert.deepEqual([routeOf(veil), veil.focus], ["focus", { amount: 1, only: null, lost: "turn-end", resource: "mythic" }]);
+    assert.equal(focusText(veil.focus, "Hero Point"), "1 Hero Point; lost at the end of the turn if not spent");
+    assert.notEqual(routeOf(compileActivations(item("Preordained Spear"))[0].plan), "focus");
+    const mask = compileActivations(item("Mask of Mercy"))[0].plan;
+    assert.equal(rerollText(mask.reroll), "Your latest healing roll, rolled again: the higher result");
+    const claw = compileActivations(item("Skeletal Claw"))[0].plan;
+    assert.deepEqual([routeOf(claw), claw.resolution.outcomes.success.effects[0].kind, claw.resolution.outcomes.success.effects[0].amount], ["save", "temp-hp", 10]);
+});
+
 test("an ally's persistent damage taken onto its user: Bloodstained Waistcoat's bleed, the take card at the ally targeted", async () => {
     const { routeOf } = await import("../src/live/route.js");
     const { takeText } = await import("../src/live/take-card.js");

@@ -54,7 +54,7 @@ test("in an encounter: the point gained, its note, and taken back at the end of 
         await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
         await settle();
         assert.equal(witch.system.resources.focus.value, 2);
-        assert.deepEqual(witch.getFlag(MODULE_ID, "focusGrant"), { before: 1, gained: 1, combatId: "fight", combatantId: "c-witch", item: "Hexing Jar" });
+        assert.deepEqual(witch.getFlag(MODULE_ID, "focusGrant"), { before: 1, gained: 1, combatId: "fight", combatantId: "c-witch", item: "Hexing Jar", key: "focus", word: "Focus Point" });
         const note = foundry.applied.slice(before).find((entry) => entry.change.effect?.kind === "note");
         assert.equal(note.change.effect.note.duration.expiry, "turn-end");
         assert.match(card.content, /gains 1 Focus Point \(2 of 2\)/);

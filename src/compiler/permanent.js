@@ -27,6 +27,7 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { takePlan } from "./take-condition.js";
+import { givenTempPlan } from "./given-temp.js";
 import { withScaled } from "./scaled.js";
 import { readLinkedTable, readTable } from "./random-table.js";
 import { mythicWaysPlan, rerollOver, rerollPlan } from "./rerolls.js";
@@ -253,7 +254,10 @@ function compileEach(item, options = {}) {
         };
         // (A Focus Point for its user, src/compiler/focus.js: the item module's own builtin.)
         // (Spellstrike Ammunition's spell cast into it, src/compiler/spellstrike.js: the module's own card.)
-        let plan = focusPlan(activation.html, base) ?? spellstrikePlan(activation.html, base);
+        // (A Mythic Point gained only when nothing else is read: Preordained Spear's doomed value lowered is its card, the point a note.)
+        const gain = focusPlan(activation.html, base);
+        const mythicGain = gain?.focus?.resource === "mythic" ? gain : null;
+        let plan = (mythicGain ? null : gain) ?? spellstrikePlan(activation.html, base);
         let read = null;
         if (!plan) {
             try {
@@ -391,6 +395,9 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
         // (An ally's persistent damage taken onto its user, src/compiler/take-condition.js: Bloodstained Waistcoat's Staunch Bleeding.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = takePlan(activation.html, base) ?? plan;
+        // (Temporary Hit Points for another creature, src/compiler/given-temp.js: Skeletal Claw's undead.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = givenTempPlan(activation.html, base) ?? plan;
+        if (mythicGain) plan = !plan || plan.noteOnly || plan.builtin === "no-effect" ? mythicGain : (plan.notes ?? []).some((note) => /\bMythic Point\b/.test(note)) ? plan : { ...plan, notes: [...(plan.notes ?? []), "Its user also gains 1 Mythic Point (by hand)."] };
         // (Fruit it grows that heal when eaten: Verdant Branch's — consumables in its user's inventory.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = fruitPlan(activation.html, base, item) ?? plan;
         // (A roll on its own table, src/compiler/random-table.js: Madcap Top's d20, Pistol of Wonder's d% — each row's own card; over any

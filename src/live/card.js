@@ -224,6 +224,7 @@ export function speedEffectSource(speed, { item = {}, user = {}, worldTime = 0, 
 
 // Its flat check to end persistent damage in words: "A flat check (DC 10) to end persistent acid, fire, poison or void damage".
 export function recoveryText(recovery) {
+    if (recovery.ends) return "All its user's persistent damage ends";
     if (recovery.choose) return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent damage of its type (picked below)`;
     const types = recovery.types.length > 1 ? `${recovery.types.slice(0, -1).join(", ")} or ${recovery.types.at(-1)}` : recovery.types[0];
     return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent ${types} damage${recovery.who === "targets" ? ", for the creature touched (targeted)" : ""}`;
