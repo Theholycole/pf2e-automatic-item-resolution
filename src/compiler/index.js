@@ -47,6 +47,7 @@ import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
 import { damageMaterial } from "./materials.js";
 import { waysPlan } from "./ways.js";
+import { elementWaysPlan } from "./bane.js";
 import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 
@@ -166,6 +167,8 @@ function compileOne(given, options = {}) {
     // (Used in one of several ways, each its own Activate block, src/compiler/ways.js: Toadskin Salve's reactions — over nothing, a note
     // or a reading of only part of it.)
     if (!plan || plan.noteOnly || plan.partial || plan.builtin === "no-effect") plan = waysPlan(item, base, options) ?? plan;
+    // (An elixir made for one element, src/compiler/bane.js: Warding Element Draught — the element picked on the ways card.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = elementWaysPlan(item, base) ?? plan;
     // (An item thrown as a Strike that PF2e can't roll, src/compiler/thrown.js: Sack of Rotten Fruit, Life Salt, Oil.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = thrownPlan(html, base, item, options) ?? plan;
     // (A creature it becomes, src/compiler/conjured.js: Beetle Gel, Marvelous Miniature (Horse).)

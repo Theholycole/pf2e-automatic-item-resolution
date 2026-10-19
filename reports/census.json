@@ -20,12 +20,12 @@
    "builtin:zone": 108,
    "builtin:item-action": 15,
    "partial": 104,
-   "note-only": 151,
+   "note-only": 150,
    "builtin:conjure": 7,
    "builtin:counteract": 29,
    "builtin:no-effect": 51,
    "builtin:reroll": 2,
-   "builtin:ways": 5,
+   "builtin:ways": 6,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
   }
@@ -127,7 +127,8 @@
     "builtin:counteract": 11,
     "partial": 15,
     "builtin:no-effect": 9,
-    "note-only": 21,
+    "note-only": 20,
+    "builtin:ways": 1,
     "builtin:zone": 2
    },
    "mechanisms": {
@@ -389,7 +390,7 @@
   "totals": {
    "cast": 32,
    "none": 271,
-   "item": 623,
+   "item": 622,
    "fortune": 23,
    "zone": 108,
    "expose": 89,
@@ -400,7 +401,7 @@
    "counteract": 29,
    "reroll": 2,
    "coat": 46,
-   "ways": 5,
+   "ways": 6,
    "strike": 12
   },
   "byCategory": {
@@ -441,10 +442,11 @@
     "coat": 1
    },
    "elixir": {
-    "item": 120,
+    "item": 119,
     "none": 14,
     "counteract": 11,
     "save": 1,
+    "ways": 1,
     "zone": 2,
     "later": 1
    },
@@ -6880,9 +6882,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Wand of Slaughter (7th-Rank Spell)",

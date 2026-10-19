@@ -4294,6 +4294,24 @@ export const cases = {
         const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
         assert(/persistent/.test(formula) && /poison/.test(formula), `the dragon's damage carries the persistent poison (${formula})`);
         return { rule: dice(), formula };
+    },
+
+    // Warding Element Draught: Fire picked on the ways card — its drinker's +1 item bonus to saves against fire effects for 10 minutes.
+    async wardingDraught(scene) {
+        const { actor: drinker } = await creature(scene, "Draught Drinker", { type: "character", x: 5, y: 9 });
+        const draught = await give(drinker, "Warding Element Draught");
+        let since = Date.now();
+        await draught.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the element picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Fire") });
+        const card = await messageAfter(since, itemCard("item"), { what: "the Fire way's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const bonus = () => drinker.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("saving-throw") && JSON.stringify(rule.predicate ?? []).includes("item:trait:fire"));
+        await until(() => bonus(), "the fire-only save bonus", { timeout: 8000 });
+        assert(Number(bonus().value) === 1 && bonus().type === "item", `+1 item (${JSON.stringify(bonus())})`);
+        return { rule: bonus() };
     }
 };
 

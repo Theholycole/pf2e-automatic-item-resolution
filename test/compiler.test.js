@@ -681,3 +681,10 @@ test("a snare that attacks: Flying Blade Wheel Snare's +35 against the AC of the
     const [entry] = wheel.zone.saves;
     assert.deepEqual([wheel.builtin, wheel.zone.once, entry.when, entry.plan.resolution.check.modifier, entry.plan.resolution.check.against.statistic, entry.plan.resolution.sharedDamage.components[0].formula, entry.plan.resolution.outcomes.criticalSuccess.damage.multiplier], ["zone", true, ["enter"], 35, "ac", "8d8[slashing]", 2]);
 });
+
+test("an elixir made for one element (Warding Element Draught): the ways card's pick of the element, its drinker's +1 item bonus to AC and saves against effects with that trait for 10 minutes", () => {
+    const draught = compileItem(item("Warding Element Draught"));
+    assert.deepEqual([draught.builtin, draught.ways.map((way) => way.name)], ["ways", ["Air", "Earth", "Fire", "Metal", "Water", "Wood"]]);
+    const fire = draught.ways[2].plan.resolution.outcomes.success.modifiers;
+    assert.deepEqual(fire.map((modifier) => [modifier.selector, modifier.type, modifier.value, modifier.predicate, modifier.duration.value]), [["ac", "item", 1, ["item:trait:fire"], 10], ["saving-throw", "item", 1, ["item:trait:fire"], 10]]);
+});
