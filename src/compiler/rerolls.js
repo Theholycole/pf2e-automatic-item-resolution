@@ -3,13 +3,16 @@
 // attack roll and use the worse result"): a builtin the item module plays with PF2e's own reroll (scripts/rerolls.js).
 // One with a bonus on the reroll (Redsand Hourglass's "+4 circumstance bonus") is rolled by the card itself, since PF2e's
 // reroll keeps the roll's modifiers. Not one another creature rerolls (an ally, allies) other than a companion the
-// presser targets, one behind a coin flip or a Mythic Point, or a choice of results the module can't make. Pure.
+// presser targets, one behind a Mythic Point, or a choice of results the module can't make. One behind a coin flip has the card flip it first
+// (plan.reroll.coin). Pure.
 
 import { plainText } from "./rows.js";
 
 // (Its object named: "reroll the triggering Reflex save", "reroll your saving throw", "reroll a single failed saving
 // throw" — not a table's "Reroll two results", "10 = reroll".)
 const SENTENCE = /[^.]*\breroll(?:s|ing)?\s+(?:the|your|that|this|a single|their)\b[^.]*\./i;
+// "Flip the coin. If it lands on the smiling face, …" → its winning side.
+const COIN = /\bFlip the coin\.\s*If it lands on the ([\w' -]+? (?:side|face)),/i;
 const WHAT = [["save", /\b(?:saving throw|save)\b/i], ["attack", /\b(?:attack roll|Strike)\b/i], ["check", /\bcheck\b/i], ["roll", /\broll\b/i]];
 
 // The text → { what: "save" | "attack" | "check" | "roll", keep: "new" | "higher" | "lower", who: "self" | "attacker" |
@@ -25,7 +28,10 @@ export function readReroll(html) {
     // rolls it itself, the user's answer of 2026-10-15.)
     const bonusMatch = /\bwith an? \+(\d+) (circumstance|item|status)? ?bonus\b/i.exec(sentence);
     const bonus = bonusMatch ? { value: Number(bonusMatch[1]), type: (bonusMatch[2] ?? "untyped").toLowerCase() } : null;
-    if (/\b(?:If it lands on|Mythic Point|flat check)\b/i.test(effect.slice(0, match.index + sentence.length))) return null;
+    // (Behind a coin flip, Lucky Silver's "Flip the coin. If it lands on the smiling face, reroll the triggering check": the card flips it
+    // first, plan.reroll.coin.)
+    const coin = COIN.exec(effect.slice(0, match.index + sentence.length));
+    if (/\b(?:Mythic Point|flat check)\b/i.test(effect.slice(0, match.index + sentence.length)) || (!coin && /\bIf it lands on\b/i.test(effect.slice(0, match.index + sentence.length)))) return null;
     // (A reroll kept for later — Old Tillimaquin's "within the next 24 hours" — isn't this roll's.)
     if (/\bwithin the next\b|\blater\b/i.test(sentence)) return null;
     if (/\b(?:the result of your choice|either result)\b/i.test(sentence)) return null;
@@ -36,7 +42,10 @@ export function readReroll(html) {
     if (!attacker && !companion && /\b(?:the creature|the triggering ally|your companion|an? ally|allies|the target|they)\b[^.]*\brerolls?\b/i.test(sentence)) return null;
     // (What is rerolled: the sentence's own word, else the trigger's: "reroll the triggering roll" for "You make an attack roll …".)
     const object = /\breroll(?:s|ing)?\b\s+(.*)$/i.exec(sentence)?.[1] ?? "";
-    const what = WHAT.find(([, pattern]) => pattern.test(object.split(/\b(?:and|,)\b/)[0]))?.[0] ?? "roll";
+    const named = WHAT.find(([, pattern]) => pattern.test(object.split(/\b(?:and|,)\b/)[0]))?.[0] ?? "roll";
+    // ("the triggering check" for a trigger of "a skill check or a saving throw", Lucky Silver's: either roll.)
+    const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+    const what = named === "check" && /\bcheck\b/i.test(trigger) && /\bsaving throw\b/i.test(trigger) ? "roll" : named;
     // ("you must take the second result, even if it's worse": the new one.)
     const keep = /\b(?:take|use|keep|using|taking|takes|uses) the (?:better|higher)\b/i.test(sentence) ? "higher" : /\b(?:take|use|keep|using|taking|takes|uses) the (?:worse|lower)\b/i.test(sentence) ? "lower" : "new";
     // (Only what follows from the reroll: "If you fail the second roll as well, you can Stride up to your Speed.")
@@ -44,7 +53,7 @@ export function readReroll(html) {
     const after = /^If\b/.test(next) ? next : "";
     // (A named save: "reroll the triggering Reflex save" — PF2e's check domains say which.)
     const statistic = what === "save" ? /\b(Fortitude|Reflex|Will)\b/i.exec(object)?.[1]?.toLowerCase() ?? null : null;
-    return { what, keep, who: attacker ? "attacker" : companion ? "companion" : "self", ...(statistic ? { statistic } : {}), ...(bonus ? { bonus } : {}), ...(after ? { after } : {}) };
+    return { what, keep, who: attacker ? "attacker" : companion ? "companion" : "self", ...(statistic ? { statistic } : {}), ...(bonus ? { bonus } : {}), ...(after ? { after } : {}), ...(coin ? { coin: { win: coin[1] } } : {}) };
 }
 
 // A change to the roll that triggered it, after the roll and without a new one (the user's answer 3 of 2026-10-15, as for a
@@ -76,8 +85,17 @@ const CHANGES = [
 ];
 const RAISE_BONUS = /\b(?:You gain an? \+(\d+) (circumstance|status|item) bonus to (?:your|the) [\w ]*?(?:attack roll|check|save|saving throw)|Roll (\d+d\d+) and add the result to your [\w ]*?(?:check|save|attack roll|roll) as an? (circumstance|status|item) bonus)\b[^.]*\b(?:possibly turning|which might|might improve|could turn)\b/i;
 const SKILL_NAMES = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery", "perception"];
+// (Or its d20 set, behind a coin flip: Fortune's Coin's "Flip the coin. If it lands on the seraph side, you get a 12 on the die instead of
+// what you rolled" → raise.die 12, coin.)
+const SET_DIE = /\bFlip the (?:\[\[\/r 1dc[^\]]*\]\]\{)?coin\}?\.\s*If it lands on the ([\w' -]+? (?:side|face)), you get an? (\d+) on the die instead of what you rolled\./i;
 export function readRaise(html) {
     const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const setDie = SET_DIE.exec(String(html ?? "").replace(/<[^>]+>/g, " ")) ?? SET_DIE.exec(text);
+    if (setDie) {
+        const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+        const what = /\battack\b/i.test(trigger) && !/\bcheck\b/i.test(trigger) ? "attack" : /\bsav(?:e|ing throw)\b/i.test(trigger) && !/\bcheck\b/i.test(trigger) ? "save" : "roll";
+        return { what, keep: "new", who: "self", raise: { die: Number(setDie[2]) }, coin: { win: setDie[1] } };
+    }
     const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
     // (After the roll only: "You fail …", "You would miss …", "You succeed at …" — not "but you haven't rolled yet".)
     if (!/\b(?:fail|fails|failed|critically fail|succeed|succeeds|would miss|miss|roll a)\b/i.test(trigger) || /\bhaven't rolled\b/i.test(trigger)) return null;
@@ -109,10 +127,23 @@ export function readArmorRaise(html) {
     return { what: "attack", keep: "new", who: "attacker", raise: { ac: { value: Number(bonus[1]), type: bonus[2].toLowerCase() } }, ...(after ? { after: after.trim() } : {}) };
 }
 
+// A save that automatically succeeds, its user's or an ally's, said before it's rolled: Robe of the Archmagi's "Trigger You or an ally within 30
+// feet attempts a saving throw against an arcane spell, but you haven't rolled yet Effect You or the ally automatically succeed at your save"
+// — the card turns that save's failure or critical failure into a success once it's rolled (who "either": the creature targeted, else its
+// user).
+// (Its user's own, "You automatically succeed at your save", is PF2e's AdjustDegreeOfSuccess before the roll, src/compiler/readied-bonus.js.)
+const AUTO_SUCCEED = /\bYou or the ally automatically succeed at (?:your|the) sav(?:e|ing throw)\b/i;
+export function readAutoSuccess(html) {
+    const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+    if (!AUTO_SUCCEED.test(text) || !/\bsaving throw\b/i.test(trigger)) return null;
+    return { what: "save", keep: "new", who: "either", raise: { change: { failure: "success", criticalFailure: "success" } } };
+}
+
 export function rerollPlan(html, base) {
-    const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html);
+    const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html) ?? readAutoSuccess(html);
     if (!reroll) return null;
-    return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
+    return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" ? "the creature targeted" : reroll.who === "either" ? "its user or the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
 }
 
 // The plan to keep: the reroll over nothing, a note alone or the GM's fallback.

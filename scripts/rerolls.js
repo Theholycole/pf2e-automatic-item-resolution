@@ -25,14 +25,23 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "reroll" || state.status !== "open") return null;
     const reroll = state.plan.reroll;
-    // (Whose roll: the user's, or for a companion's reroll the creature targeted.)
-    const companion = reroll.who === "companion" ? await fromUuid(Array.isArray(targets) ? targets[0] ?? "" : "").catch(() => null) : null;
+    // (Whose roll: the user's, or for a companion's reroll the creature targeted; "either", the creature targeted if any, else the user.)
+    const companion = reroll.who === "companion" || reroll.who === "either" ? await fromUuid(Array.isArray(targets) ? targets[0] ?? "" : "").catch(() => null) : null;
     if (reroll.who === "companion" && !companion?.actor) throw new Error("Target the companion first.");
     const actor = companion?.actor ?? (await fromUuid(state.user.actorUuid).catch(() => null));
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const recent = (game.messages?.contents ?? []).slice(-RECENT);
     const id = triggeringRoll(recent.map(asRoll), reroll, { actorUuid: actor.uuid, actorId: actor.id });
     if (!id) throw new Error(reroll.who === "attacker" ? `No attack roll at ${state.user.name} to reroll in the recent chat.` : `No ${reroll.statistic ? `${reroll.statistic} ` : ""}${WHAT_WORDS[reroll.what] ?? "roll"} by ${actor.name} to reroll in the recent chat.`);
+    // (Behind a coin flip, Lucky Silver's and Fortune's Coin's: the card flips it; the other side, nothing happens.)
+    if (reroll.coin) {
+        const flip = await new Roll("1d2").evaluate();
+        await flip.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: the coin (1 = the ${reroll.coin.win})` });
+        if (flip.total !== 1) {
+            const next = { ...state, status: "applied", results: [`The coin doesn't land on the ${reroll.coin.win}: nothing happens.`] };
+            return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+        }
+    }
     if (reroll.raise) return raiseRoll(message, state, game.messages.get(id), actor);
     if (reroll.bonus) return rerollWithBonus(message, state, game.messages.get(id), actor);
     const Check = game.pf2e?.Check;
@@ -89,7 +98,9 @@ async function raiseRoll(message, state, triggering, actor) {
     const result = raisedResult({ oldTotal: Number(old.total), oldNatural, dc, oldDegree, raise, bonusRolled });
     const degree = (value) => (value === null || value === undefined ? "no degree (no DC)" : DEGREE_WORDS[value]);
     const lines = [
-        raise.ac
+        Number.isFinite(raise.die)
+            ? `${actor.name}'s roll: a ${raise.die} on the die instead of ${oldNatural ?? "?"} — ${result.total}${dc ? ` against DC ${dc}` : ""}: ${degree(result.degree)} (was ${degree(result.before)}).`
+            : raise.ac
             ? `${triggering.actor?.name ?? "The attacker"}'s attack roll (${old.total}) against ${state.user.name}'s AC ${dc ?? "?"} + ${raise.ac.value} ${raise.ac.type} = ${result.dc ?? "?"}: ${degree(result.degree)} (was ${degree(result.before)}).`
             : raise.change
             ? `${actor.name}'s roll (${old.total}): ${degree(result.before)} becomes ${degree(result.degree)}.`

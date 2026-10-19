@@ -744,3 +744,16 @@ test("a bonus to its user's AC against an attack already rolled (Animal-Turning 
     assert.deepEqual(raisedResult({ oldTotal: 21, oldNatural: 12, dc: 20, oldDegree: 2, raise: plan.reroll.raise }), { degree: 1, total: 21, before: 2, dc: 22 });
     assert.match(plan.reroll.after, /^If this causes the Strike to miss, you become Concealed/);
 });
+
+test("rerolls behind a coin flip and dice set (Lucky Silver's reroll, Fortune's Coin's 12 on the die) and a save that automatically succeeds (Robe of the Archmagi, its user's or the ally targeted)", async () => {
+    const { raisedResult, rerollText } = await import("../src/live/reroll-card.js");
+    const [silver] = compileActivations(item("Lucky Silver"));
+    assert.deepEqual([silver.plan.reroll.what, silver.plan.reroll.coin], ["roll", { win: "smiling face" }]);
+    assert.equal(rerollText(silver.plan.reroll), "Flip the coin; on the smiling face: your latest roll, rerolled: the new result");
+    const [coin] = compileActivations(item("Fortune's Coin"));
+    assert.deepEqual([coin.plan.reroll.raise, coin.plan.reroll.coin], [{ die: 12 }, { win: "seraph side" }]);
+    assert.deepEqual(raisedResult({ oldTotal: 9, oldNatural: 3, dc: 15, oldDegree: 1, raise: coin.plan.reroll.raise }), { degree: 2, total: 18, before: 1, die: 12 });
+    assert.equal(compileActivations(item("Fortune's Coin (Platinum)"))[0].plan.reroll.raise.die, 14);
+    const [robe] = compileActivations(item("Robe of the Archmagi (Greater)"));
+    assert.deepEqual([robe.plan.reroll.who, robe.plan.reroll.raise.change], ["either", { failure: "success", criticalFailure: "success" }]);
+});

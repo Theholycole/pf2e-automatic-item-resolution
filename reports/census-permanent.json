@@ -8,14 +8,14 @@
   "results": {
    "resolves": 751,
    "builtin:cast-spell": 471,
-   "none": 594,
+   "none": 593,
    "partial": 187,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
    "builtin:no-effect": 100,
-   "note-only": 184,
-   "builtin:reroll": 25,
+   "note-only": 179,
+   "builtin:reroll": 31,
    "builtin:table": 7,
    "builtin:teleport": 7,
    "builtin:pf2e-rules": 26,
@@ -31,12 +31,12 @@
   "live": {
    "save": 435,
    "cast": 471,
-   "item": 591,
-   "none": 725,
+   "item": 586,
+   "none": 724,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
-   "reroll": 25,
+   "reroll": 31,
    "strike": 88,
    "table": 7,
    "teleport": 7,
@@ -64,8 +64,8 @@
     "builtin:counteract": 21,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
-    "note-only": 130,
-    "builtin:reroll": 17,
+    "note-only": 125,
+    "builtin:reroll": 22,
     "builtin:table": 4,
     "builtin:teleport": 4,
     "builtin:zone": 11,
@@ -130,11 +130,11 @@
     "partial": 10,
     "resolves": 58,
     "builtin:counteract": 1,
-    "none": 24,
+    "none": 23,
     "builtin:zone": 4,
     "note-only": 14,
     "builtin:no-effect": 5,
-    "builtin:reroll": 3,
+    "builtin:reroll": 4,
     "builtin:item-action": 2,
     "builtin:readied-bonus": 3,
     "builtin:focus-point": 2,
@@ -1367,9 +1367,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Demon Mask",
@@ -2173,9 +2173,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Oculus of Abaddon",
@@ -3949,9 +3949,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Sunweave",
@@ -12019,9 +12019,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Conflagration Club",
@@ -15801,9 +15801,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "The Courtesan",
@@ -17596,9 +17596,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Clockwork Shield (Greater)",

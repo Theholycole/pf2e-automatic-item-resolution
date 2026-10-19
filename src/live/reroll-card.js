@@ -31,6 +31,11 @@ export function raisedResult({ oldTotal, oldNatural = null, dc = null, oldDegree
         const to = raise.change[name];
         return { degree: to ? DEGREE_NAMES.indexOf(to) : before, total: oldTotal, before };
     }
+    // (Its d20 counted as another number, Fortune's Coin's 12: the total with that die instead, its degree again.)
+    if (Number.isFinite(raise.die)) {
+        const total = Number(oldTotal) - (Number(oldNatural) || 0) + raise.die;
+        return { degree: degreeOf({ total, dc, natural: raise.die }), total, before, die: raise.die };
+    }
     // (Its user's AC raised against the attack: the same roll against that much higher a DC.)
     if (raise.ac) {
         const raised = Number.isFinite(Number(dc)) ? Number(dc) + raise.ac.value : null;
@@ -44,12 +49,20 @@ export function raisedResult({ oldTotal, oldNatural = null, dc = null, oldDegree
 export function rerollText(reroll) {
     const named = [].concat(reroll.statistic ?? []).map((name) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`).join(" or ");
     const what = named ? `${named} ${reroll.what === "save" ? "save" : "check"}` : WHAT_WORDS[reroll.what] ?? "roll";
+    // (Behind a coin flip: said first.)
+    const coin = reroll.coin ? `Flip the coin; on the ${reroll.coin.win}: ` : "";
+    if (coin) {
+        const rest = rerollText({ ...reroll, coin: null });
+        return `${coin}${rest.charAt(0).toLowerCase()}${rest.slice(1)}`;
+    }
+    if (Number.isFinite(reroll.raise?.die)) return `Your latest ${what}: a ${reroll.raise.die} on the die instead of what you rolled, its degree again`;
     // (Its user's AC raised against the latest attack at them: that attack's degree again.)
     if (reroll.raise?.ac) return `The latest attack roll at you: +${reroll.raise.ac.value} ${reroll.raise.ac.type} bonus to your AC against it, its degree again`;
     if (reroll.raise) {
         const changes = Object.entries(reroll.raise.change ?? {}).map(([from, to]) => `${DEGREE_TEXT[from]} becomes ${DEGREE_TEXT[to]}`);
         const bonus = reroll.raise.bonus ? `+${reroll.raise.bonus.value ?? reroll.raise.bonus.formula} ${reroll.raise.bonus.type} bonus added, its degree again` : null;
-        return `Your latest ${what}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
+        // ("either": the creature targeted, else its user — Robe of the Archmagi's ally.)
+        return `${reroll.who === "either" ? "The targeted creature's (else your) latest" : "Your latest"} ${what}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
     }
     const whose = reroll.who === "attacker" ? "The latest attack roll at you" : reroll.who === "companion" ? `The targeted companion's latest ${what}` : `Your latest ${what}`;
     const bonus = reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";

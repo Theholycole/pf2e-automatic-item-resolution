@@ -4729,6 +4729,32 @@ export const cases = {
         return { count, healing };
     },
 
+    // Coins and a robe after the roll: Lucky Silver flips its coin, then rerolls the failed save or does nothing; Fortune's Coin flips, then
+    // counts the failed check's die as a 12 or does nothing; Robe of the Archmagi (Greater) turns the targeted ally's failed save into a success.
+    async coinFlips(scene) {
+        const { actor: hero } = await creature(scene, "Coin Flipper", { type: "character", x: 18, y: 14 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Robe Ally", { type: "character", x: 19, y: 14 });
+        const results = {};
+        const use = async (name, rolling, choices = {}) => {
+            await rolling();
+            await wait(600);
+            const item = await give(hero, name);
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, 0);
+            const card = await messageAfter(since, itemCard("reroll"), { what: `${name}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [], ...choices });
+            await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", `${name} applied`, { timeout: 8000 });
+            return game.messages.get(card.id).getFlag(NS, "card").results;
+        };
+        results.silver = await use("Lucky Silver", () => hero.saves.reflex.roll({ skipDialog: true, dc: { value: 60 } }));
+        assert(/nothing happens|Rerolled/.test(results.silver.join(" ")), `the coin, then a reroll or nothing (${JSON.stringify(results.silver)})`);
+        results.coin = await use("Fortune's Coin", () => hero.perception.roll({ skipDialog: true, dc: { value: 60 } }));
+        assert(/nothing happens|a 12 on the die/.test(results.coin.join(" ")), `the coin, then a 12 or nothing (${JSON.stringify(results.coin)})`);
+        results.robe = await use("Robe of the Archmagi (Greater)", () => ally.saves.will.roll({ skipDialog: true, dc: { value: 60 } }), { targets: [allyToken.uuid] });
+        assert(results.robe.some((line) => line.startsWith("PFTEST ITEM Robe Ally's roll") && /becomes a success/.test(line)), `the ally's failed save a success (${JSON.stringify(results.robe)})`);
+        return results;
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });
