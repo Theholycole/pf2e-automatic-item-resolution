@@ -140,8 +140,24 @@ export function readAutoSuccess(html) {
     return { what: "save", keep: "new", who: "either", raise: { change: { failure: "success", criticalFailure: "success" } } };
 }
 
+// Its user's save against the attack roll that hit, The Demon's Lantern's "attempt a Reflex saving throw. If your saving throw is higher
+// than the attack roll for the triggering attack, it misses. If the attack misses, the attacker is Dazzled until the end of your next turn":
+// the card rolls that save and compares it with the latest attack roll at its user; higher, the attack misses (for the GM) and the
+// attacker gets what a miss gives. → { what: "attack", who: "attacker", keep: "new", contest: { statistic }, onMiss? { slug, duration } }.
+const CONTEST = /\battempt an? (Reflex|Fortitude|Will) saving throw\. If your saving throw is higher than the attack roll for the triggering attack, it misses\./i;
+const ON_MISS = /\bIf the attack misses, the attacker is (Dazzled|Frightened 1|Off-Guard|Sickened 1) until the end of your next turn\./i;
+export function readContest(html) {
+    const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+    const contest = CONTEST.exec(text);
+    if (!contest || !/\bhits you\b/i.test(trigger)) return null;
+    const miss = ON_MISS.exec(text);
+    const [slug, value] = miss ? miss[1].toLowerCase().split(" ") : [];
+    return { what: "attack", who: "attacker", keep: "new", contest: { statistic: contest[1].toLowerCase() }, ...(miss ? { onMiss: { slug, value: value ? Number(value) : null, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } } } : {}) };
+}
+
 export function rerollPlan(html, base) {
-    const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html) ?? readAutoSuccess(html);
+    const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html) ?? readAutoSuccess(html) ?? readContest(html);
     if (!reroll) return null;
     return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" ? "the creature targeted" : reroll.who === "either" ? "its user or the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
 }

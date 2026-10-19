@@ -49,6 +49,8 @@ export function raisedResult({ oldTotal, oldNatural = null, dc = null, oldDegree
 export function rerollText(reroll) {
     const named = [].concat(reroll.statistic ?? []).map((name) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`).join(" or ");
     const what = named ? `${named} ${reroll.what === "save" ? "save" : "check"}` : WHAT_WORDS[reroll.what] ?? "roll";
+    // (Its user's save against the attack that hit: The Demon's Lantern's.)
+    if (reroll.contest) return `The latest attack roll at you: your ${reroll.contest.statistic.charAt(0).toUpperCase()}${reroll.contest.statistic.slice(1)} save against its total; higher, it misses${reroll.onMiss ? `, and the attacker is ${reroll.onMiss.slug}${reroll.onMiss.value ? ` ${reroll.onMiss.value}` : ""} till your next turn ends` : ""}`;
     // (Behind a coin flip: said first.)
     const coin = reroll.coin ? `Flip the coin; on the ${reroll.coin.win}: ` : "";
     if (coin) {
@@ -114,6 +116,6 @@ export function rerollCardHTML(state, { canApply = false } = {}) {
     const reroll = state.plan.reroll;
     const after = open && reroll.after ? `<ul class="aar-notes"><li>${escape(reroll.after)}</li></ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${reroll.raise ? "Change the roll" : "Reroll"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${reroll.raise ? "changed roll" : "reroll"}</span></header><p class="aar-actions">${escape(rerollText(reroll))}</p>${after}${results}${controls}</section>`;
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${reroll.contest ? "Roll the save" : reroll.raise ? "Change the roll" : "Reroll"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${reroll.contest ? "save against the attack" : reroll.raise ? "changed roll" : "reroll"}</span></header><p class="aar-actions">${escape(rerollText(reroll))}</p>${after}${results}${controls}</section>`;
 }

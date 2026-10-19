@@ -4755,6 +4755,32 @@ export const cases = {
         return results;
     },
 
+    // The Demon's Lantern after a Strike at its user: its user's Reflex save against that attack roll; higher, the attacker is Dazzled.
+    async lanternFlash(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Lantern Bearer", { type: "character", x: 18, y: 16 });
+        const { actor: brute, token: bruteToken } = await creature(scene, "Lantern Brute", { type: "character", x: 19, y: 16 });
+        const club = await give(brute, "Shortsword");
+        await club.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await bruteToken.object?.control?.();
+        await target(userToken);
+        const { attack } = await strike(brute, club);
+        const total = Number(attack.rolls[0].total);
+        const lantern = await give(user, "The Demon's Lantern");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(lantern.uuid, 0);
+        const card = await messageAfter(since, itemCard("reroll"), { what: "the lantern's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "the save rolled", { timeout: 8000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        const said = new RegExp(`^PFTEST ITEM Lantern Bearer's Reflex save (\\d+) against PFTEST ITEM Lantern Brute's attack roll ${total}: (higher|not higher)`).exec(results[0] ?? "");
+        assert(said, `the save against the attack's ${total} (${JSON.stringify(results)})`);
+        const misses = said[2] === "higher";
+        assert(misses === Number(said[1]) > total, `higher only when the save beats ${total} (${said[1]})`);
+        await wait(600);
+        assert(brute.hasCondition("dazzled") === misses, `the brute dazzled only on a miss (${misses}, ${brute.hasCondition("dazzled")})`);
+        return { total, save: Number(said[1]), misses, results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

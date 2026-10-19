@@ -757,3 +757,12 @@ test("rerolls behind a coin flip and dice set (Lucky Silver's reroll, Fortune's 
     const [robe] = compileActivations(item("Robe of the Archmagi (Greater)"));
     assert.deepEqual([robe.plan.reroll.who, robe.plan.reroll.raise.change], ["either", { failure: "success", criticalFailure: "success" }]);
 });
+
+test("its user's save against the attack that hit (The Demon's Lantern's Reflex save; a miss dazzles the attacker until the end of its user's next turn)", async () => {
+    const { rerollText } = await import("../src/live/reroll-card.js");
+    const { routeOf } = await import("../src/live/route.js");
+    const [lantern] = compileActivations(item("The Demon's Lantern"));
+    assert.equal(routeOf(lantern.plan), "reroll");
+    assert.deepEqual([lantern.plan.reroll.who, lantern.plan.reroll.contest, lantern.plan.reroll.onMiss.slug, lantern.plan.reroll.onMiss.duration.expiry], ["attacker", { statistic: "reflex" }, "dazzled", "turn-end"]);
+    assert.match(rerollText(lantern.plan.reroll), /^The latest attack roll at you: your Reflex save against its total; higher, it misses, and the attacker is dazzled till your next turn ends$/);
+});

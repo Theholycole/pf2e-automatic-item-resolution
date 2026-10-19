@@ -3,7 +3,7 @@
 // which the GM may do for any message) — keeping the new result as PF2e's own "Keep new" does, or the higher or lower.
 
 import { DEGREE_WORDS, bonusReroll, createRerollCard, raisedResult, rerollCardHTML, triggeringRoll } from "../src/live/reroll-card.js";
-import { FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, applyRiders, entryOf, stateOf } from "./foundry.js";
 
 // How far back in the chat the triggering roll can be.
 const RECENT = 40;
@@ -32,7 +32,7 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const recent = (game.messages?.contents ?? []).slice(-RECENT);
     const id = triggeringRoll(recent.map(asRoll), reroll, { actorUuid: actor.uuid, actorId: actor.id });
-    if (!id) throw new Error(reroll.who === "attacker" ? `No attack roll at ${state.user.name} to reroll in the recent chat.` : `No ${reroll.statistic ? `${reroll.statistic} ` : ""}${WHAT_WORDS[reroll.what] ?? "roll"} by ${actor.name} to reroll in the recent chat.`);
+    if (!id) throw new Error(reroll.who === "attacker" ? `No attack roll at ${state.user.name}${reroll.contest ? "" : " to reroll"} in the recent chat.` : `No ${reroll.statistic ? `${reroll.statistic} ` : ""}${WHAT_WORDS[reroll.what] ?? "roll"} by ${actor.name} to reroll in the recent chat.`);
     // (Behind a coin flip, Lucky Silver's and Fortune's Coin's: the card flips it; the other side, nothing happens.)
     if (reroll.coin) {
         const flip = await new Roll("1d2").evaluate();
@@ -42,6 +42,7 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
             return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
         }
     }
+    if (reroll.contest) return contestRoll(message, state, game.messages.get(id), actor);
     if (reroll.raise) return raiseRoll(message, state, game.messages.get(id), actor);
     if (reroll.bonus) return rerollWithBonus(message, state, game.messages.get(id), actor);
     const Check = game.pf2e?.Check;
@@ -73,6 +74,28 @@ async function rerollWithBonus(message, state, triggering, actor) {
         `${actor.name}'s reroll: ${result.total} (${newNatural} + ${modifier} + ${reroll.bonus.value} ${reroll.bonus.type})${dc ? ` against DC ${dc}` : ""}${degree(result.degree)}; the first roll was ${old.total}${degree(result.oldDegree)}.`,
         `${result.kept === "new" ? "The new result stands" : "The first result stands"}. PF2e's message isn't changed: the GM uses this one.`
     ];
+    const next = { ...state, status: "applied", results: lines };
+    return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// Its user's save against the attack that hit (src/compiler/rerolls.js readContest): PF2e rolls the save; higher than the attack's total, the
+// attack misses — the GM's to undo, PF2e's message as it was — and the attacker gets what a miss gives (The Demon's Lantern's Dazzled).
+async function contestRoll(message, state, triggering, actor) {
+    const reroll = state.plan.reroll;
+    const attack = Number(triggering.rolls?.[0]?.total);
+    if (!Number.isFinite(attack)) throw new Error("That attack roll has no total.");
+    const save = await actor.saves?.[reroll.contest.statistic]?.roll?.({ skipDialog: true });
+    const total = Number(save?.total ?? save?.rolls?.[0]?.total);
+    if (!Number.isFinite(total)) throw new Error(`${actor.name}'s ${reroll.contest.statistic} save didn't roll.`);
+    const attacker = triggering.actor ?? null;
+    const misses = total > attack;
+    const named = `${reroll.contest.statistic.charAt(0).toUpperCase()}${reroll.contest.statistic.slice(1)}`;
+    const lines = [`${actor.name}'s ${named} save ${total} against ${attacker?.name ?? "the attacker"}'s attack roll ${attack}: ${misses ? "higher — the attack misses (PF2e's message isn't changed: the GM undoes its damage)" : "not higher — the attack stands"}.`];
+    if (misses && reroll.onMiss && attacker) {
+        const plan = { resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [{ kind: "condition", slug: reroll.onMiss.slug, value: reroll.onMiss.value ?? null, duration: reroll.onMiss.duration }], modifiers: [] } } } };
+        const target = entryOf(triggering.token?.object ?? attacker.getActiveTokens?.(true)?.[0] ?? null, attacker);
+        lines.push(...(await applyRiders({ plan, degree: "success", user: state.user, target, item: state.item })));
+    }
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
