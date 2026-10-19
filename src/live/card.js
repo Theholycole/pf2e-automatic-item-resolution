@@ -282,6 +282,8 @@ export function senseText(sense) {
 // targeted, for 1 minute".
 const TIMES_WORDS = { 0.5: "half", 2: "twice", 3: "three times", 4: "four times" };
 export function levelTempText(entry) {
+    // (From an amount typed on the card: "Temporary Hit Points equal to half the damage dealt (typed on the card), at most 10, for 1 minute".)
+    if (entry.from === "amount") return `${entry.heal ? "Hit Points regained" : "Temporary Hit Points"} equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}${entry.of} (typed on the card)${entry.max ? `, at most ${entry.max}` : ""}${!entry.heal && entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
     if (entry.heal) return `Hit Points regained equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted`;
     return `Temporary Hit Points equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted${entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
 }
@@ -470,11 +472,16 @@ export function cardHTML(state, { canApply = false } = {}) {
     const runeChoicePick = !runeChoices?.length ? ""
         : open && canApply ? `<p class="aar-actions">Rune: <select data-air-field="runeChoice">${runeChoices.map((choice, index) => `<option value="${index}"${index === (state.runeChoice ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
             : `<p class="aar-actions">Rune: ${escape(runeChoices[state.runeChoice ?? 0]?.name ?? "")}</p>`;
+    // (Temporary Hit Points or healing from an amount its trigger gave — Bloodknuckles' bleed damage: typed on the card.)
+    const amountOf = (state.plan?.item?.levelTemp ?? []).find((entry) => entry.from === "amount")?.of ?? null;
+    const amountField = !amountOf ? ""
+        : open && canApply ? `<p class="aar-actions">Amount (${escape(amountOf)}): <input type="number" min="0" data-air-field="amount" value="${escape(state.amount ?? "")}" style="width:4em"></p>`
+            : Number.isFinite(state.amount) ? `<p class="aar-actions">Amount (${escape(amountOf)}): ${escape(state.amount)}</p>` : "";
     // ("Creatures of your choice", none needed: Cayden's Tankard ends its user's own either way.)
     const optional = (state.plan?.item?.reduce ?? []).filter((entry) => entry.who === "targets").every((entry) => entry.optional) && state.plan?.item?.recipient !== "targets";
     const targetHint = open && canApply && forAllies ? `<p class="aar-hint">${optional ? "Target the other creatures it helps, if any" : "Target the creatures it helps (your own token too, when it helps you)"}, then press Apply.</p>` : "";
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${runePick}${runeChoicePick}${skillPicker}${previewList}${targetHint}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${amountField}${runePick}${runeChoicePick}${skillPicker}${previewList}${targetHint}${results}${controls}</section>`;
 }

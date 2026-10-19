@@ -458,6 +458,8 @@ const EQUAL_TEMP = /\byou gain (?:an equal amount of|a number of) temporary Hit 
 function equalTempHP(plan, text) {
     const match = EQUAL_TEMP.exec(String(text ?? ""));
     if (!match || !plan?.resolution?.outcomes || plan.builtin) return plan;
+    // (Read as the card's typed amount, src/compiler/rows.js levelTempOf: Vampiric Scythe's half the damage it dealt.)
+    if ((plan.levelTemp ?? plan.item?.levelTemp ?? []).some((entry) => entry.from === "amount")) return plan;
     if (Object.values(plan.resolution.outcomes).some((row) => (row?.effects ?? []).some((effect) => effect?.kind === "tempHP" || effect?.kind === "temp-hp"))) return plan;
     // (Equal to a creature's level, Bloodthirsty's: the card's own, plan.item.levelTemp; "the damage dealt" only when it's that.)
     if (/\bequal to (?:(?:half|twice|double|three times|four times) )?the (?:[a-z]+ )?(?:creature|foe|enemy|target)'s level\b/i.test(match[0])) return plan;

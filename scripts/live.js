@@ -223,7 +223,7 @@ function choicesOf(state, root) {
     if (state.kind === "fortune") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
-    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), recoveryType: Number(root.querySelector("[data-air-field='recoveryType']")?.value ?? state.recoveryType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), runeChoice: Number(root.querySelector("[data-air-field='runeChoice']")?.value ?? state.runeChoice ?? 0), skillPick: Number(root.querySelector("[data-air-field='skillPick']")?.value ?? state.skillPick ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), recoveryType: Number(root.querySelector("[data-air-field='recoveryType']")?.value ?? state.recoveryType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), runeChoice: Number(root.querySelector("[data-air-field='runeChoice']")?.value ?? state.runeChoice ?? 0), skillPick: Number(root.querySelector("[data-air-field='skillPick']")?.value ?? state.skillPick ?? 0), ...(root.querySelector("[data-air-field='amount']") ? { amount: root.querySelector("[data-air-field='amount']").value } : {}), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
 }
 
 const APPLY = {
@@ -313,7 +313,7 @@ async function onRequest(data) {
         : state.kind === "toggle" || state.kind === "ways" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null, ...(data.ownRank !== undefined ? { ownRank: data.ownRank === null ? null : String(data.ownRank) } : {}) }
-        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, recoveryType: Number.isInteger(data.recoveryType) ? data.recoveryType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, runeWeapon: Number.isInteger(data.runeWeapon) ? data.runeWeapon : null, runeChoice: Number.isInteger(data.runeChoice) ? data.runeChoice : null, skillPick: Number.isInteger(data.skillPick) ? data.skillPick : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
+        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, recoveryType: Number.isInteger(data.recoveryType) ? data.recoveryType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, runeWeapon: Number.isInteger(data.runeWeapon) ? data.runeWeapon : null, runeChoice: Number.isInteger(data.runeChoice) ? data.runeChoice : null, skillPick: Number.isInteger(data.skillPick) ? data.skillPick : null, ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}), targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
@@ -353,9 +353,16 @@ async function targetedCreatures(uuids) {
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
 
-async function applyCard(message, { drinker = null, ceremony = false, resistType = null, recoveryType = null, reduceChoice = null, runeWeapon = null, runeChoice = null, skillPick = null, targets = [] } = {}) {
+async function applyCard(message, { drinker = null, ceremony = false, resistType = null, recoveryType = null, reduceChoice = null, runeWeapon = null, runeChoice = null, skillPick = null, amount = null, targets = [] } = {}) {
     let state = stateOf(message);
     if (!state || state.status !== "open") return null;
+    // (An amount its trigger gave, typed on the card: Bloodknuckles' bleed damage.)
+    const byAmount = (state.plan.item?.levelTemp ?? []).filter((entry) => entry.from === "amount");
+    if (byAmount.length) {
+        const typed = amount === null || amount === undefined || amount === "" ? NaN : Number(amount);
+        if (!Number.isFinite(typed) || typed < 0) throw new Error(`Type the amount (${byAmount[0].of}) first, then press Apply.`);
+        state = { ...state, amount: typed };
+    }
     // (The weapon picked for the rune it lends.)
     if (Number.isInteger(runeWeapon) && state.weapons?.[runeWeapon]) state = { ...state, runeWeapon };
     // (The rune picked of several.)
@@ -364,9 +371,10 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     // (A condition it lowers on others: the creatures the presser targets, before anything is applied.)
     const reduce = state.plan.item?.reduce ?? [];
     // (Or its flat check, the creature its user touches: Nettle Balm's.)
-    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || state.plan.item?.levelTemp?.length ? await targetedCreatures(targets) : [];
+    const byLevel = (state.plan.item?.levelTemp ?? []).some((entry) => entry.from !== "amount");
+    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel ? await targetedCreatures(targets) : [];
     // (Temporary Hit Points from a creature's level: that creature targeted.)
-    if (state.plan.item?.levelTemp?.length && !others.length) throw new Error("Target the creature first (the one its trigger names), then press Apply.");
+    if (byLevel && !others.length) throw new Error("Target the creature first (the one its trigger names), then press Apply.");
     // ("Creatures of your choice": none targeted is its user alone.)
     if (reduce.some((entry) => entry.who === "targets" && !entry.optional) && !others.length) throw new Error("Target the creatures it helps first, then press Apply.");
     // (One of several conditions, as picked.)
@@ -462,6 +470,16 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (Temporary Hit Points from the targeted creature's level: Bloodthirsty's twice the level of the creature it reduced to 0 —
     // the ability module's own temporary Hit Points, with their time.)
     for (const entry of state.plan.item?.levelTemp ?? []) {
+        // (From the amount typed: its multiple, rounded down, at most its maximum.)
+        if (entry.from === "amount") {
+            const amount = Math.min(Math.floor(entry.multiplier * state.amount), entry.max ?? Infinity);
+            const ability = game.modules.get(ABILITY_ID)?.api?.live;
+            if (amount > 0 && ability?.applyChange && target.actor) {
+                const said = await ability.applyChange(entry.heal ? { op: "heal", target: DRINKER_ID, amount } : { op: "tempHp", target: DRINKER_ID, amount, duration: entry.duration ?? null }, abilityState(state));
+                lines.push(`${said ?? `${recipient.name}: ${amount} ${entry.heal ? "Hit Points regained" : "temporary Hit Points"}`} (from ${entry.of}: ${state.amount})`);
+            } else lines.push(`${recipient.name}: ${levelTempText(entry)} — ${amount > 0 ? "apply it by hand" : "none from that amount"}.`);
+            continue;
+        }
         const level = Number(others[0]?.actor?.level);
         const amount = Number.isFinite(level) ? Math.floor(entry.multiplier * level) : 0;
         const ability = game.modules.get(ABILITY_ID)?.api?.live;

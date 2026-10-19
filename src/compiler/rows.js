@@ -179,8 +179,28 @@ function tempHitPoints(sentences, duration, used = new Set()) {
 // creature's level" (the one reduced to 0 Hit Points) → [{ multiplier, duration }], the item card's: the creature its presser targets.
 // (Or Hit Points regained, Holy's "You regain HP equal to double the unholy creature's level" → [{ multiplier, heal: true }].)
 const TIMES = { half: 0.5, twice: 2, double: 2, "three times": 3, "four times": 4 };
+// (Or from an amount its trigger gave, typed on the card: Bloodknuckles' "You gain temporary Hit Points equal to the value of the
+// triggering bleed damage, up to a maximum of 10 temporary HP", Reaper's Toll's "If your Strike hits, you gain temporary Hit Points equal
+// to half the damage dealt", Assassin's Skin's "instead regain Hit Points equal to the bleed damage" → [{ from: "amount", of, multiplier,
+// max?, heal?, duration }].)
+const AMOUNT_TEMP = /\b(?:you|and(?: instead)?) (gain|regain) (?:a number of )?(temporary Hit Points|Hit Points|HP) equal to (?:(half|twice|double) )?(?:the value of )?(the (?![\w ]*?'s level\b)[^,.]+?)(?:,? up to a maximum of (\d+)(?: temporary (?:HP|Hit Points))?)?(?=,|\.|$| until\b| for\b| which\b)/i;
+function amountTempOf(sentence, index, sentences, duration, used) {
+    const own = sentence.replace(/^\s*If (?:your|the) Strike hits,\s*/i, "");
+    if (/^\s*(?:If|When|Whenever|Each time)\b/i.test(own)) return null;
+    const match = AMOUNT_TEMP.exec(own);
+    if (!match) return null;
+    used.add(index);
+    const heal = !/^temporary/i.test(match[2]);
+    const later = heal ? null : sentences.slice(index + 1, index + 3).find((next) => /\b(?:temporary )?Hit Points (?:remain|last)\b|\blose any remaining temporary Hit Points after\b/i.test(next));
+    if (later) used.add(sentences.indexOf(later));
+    // ("until your next turn": until its start.)
+    const time = heal ? null : timeIn(own.replace(/\buntil your next turn\b/i, "until the start of your next turn"), null) ?? (later ? durationIn(later.replace(/\bafter (?=\d|one|an?\b)/i, "for "), null) : null) ?? duration;
+    return { from: "amount", of: match[4].replace(/\s*\([^)]*\)/g, "").trim(), multiplier: TIMES[match[3]?.toLowerCase()] ?? 1, ...(match[5] ? { max: Number(match[5]) } : {}), ...(heal ? { heal: true } : {}), duration: time };
+}
 function levelTempOf(sentences, duration, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
+        const amount = amountTempOf(sentence, index, sentences, duration, used);
+        if (amount) return [amount];
         if (/^\s*(?:If|When|Whenever|Each time)\b/i.test(sentence)) continue;
         const match = /\byou gain (?:a number of )?temporary Hit Points equal to (?:(half|twice|three times|four times) )?the (?:triggering |target |reduced )?(?:creature|foe|enemy|target)'s level\b/i.exec(sentence);
         const regain = match ? null : /\byou regain (?:HP|Hit Points) equal to (?:(half|twice|double|three times|four times) )?the (?:triggering |target |reduced |[a-z]+ )?(?:creature|foe|enemy|target)'s level\b/i.exec(sentence);

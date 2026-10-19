@@ -579,6 +579,22 @@ test("activations: a choice of jumps (Blast Boots), temporary Hit Points from th
     assert.deepEqual(wasps.plan.resolution.sharedDamage.components.map(({ formula, type, category }) => [formula, type, category]), [["1d8", "poison", "persistent"]]);
 });
 
+test("temporary Hit Points or healing from an amount its trigger gave, typed on the card: Bloodknuckles' bleed damage (at most 10), Reaper's Toll's and Vampiric Scythe's half the damage dealt, Azure Briolette's twice the spell's rank until its next turn, Assassin's Skin's healing", async () => {
+    const { levelTempText } = await import("../src/live/card.js");
+    const entry = (name, index = 0) => compileActivations(item(name))[index].plan.item.levelTemp[0];
+    const knuckles = entry("Bloodknuckles");
+    assert.deepEqual([knuckles.from, knuckles.of, knuckles.multiplier, knuckles.max, knuckles.duration.value, knuckles.duration.unit], ["amount", "the triggering bleed damage", 1, 10, 1, "minutes"]);
+    assert.equal(levelTempText(knuckles), "Temporary Hit Points equal to the triggering bleed damage (typed on the card), at most 10, for 1 minute");
+    assert.deepEqual([entry("Reaper's Toll").of, entry("Reaper's Toll").multiplier], ["the damage dealt", 0.5]);
+    assert.deepEqual([entry("Vampiric Scythe", 1).multiplier, compileActivations(item("Vampiric Scythe"))[1].plan.notes ?? []], [0.5, []]);
+    const briolette = entry("Aeon Stone (Azure Briolette)");
+    assert.deepEqual([briolette.of, briolette.multiplier, briolette.duration.unit, briolette.duration.expiry], ["the spell's rank", 2, "rounds", "turn-start"]);
+    const skin = entry("Assassin's Skin");
+    assert.deepEqual([skin.heal, skin.of], [true, "the bleed damage"]);
+    assert.equal(levelTempText(skin), "Hit Points regained equal to the bleed damage (typed on the card)");
+    assert.equal(entry("Blood-Drinker Blade (Greater)", 1).of, "the bleed damage the creature takes");
+});
+
 test("healing its text gives its user beside a linked Effect (Kindler Cameo, Wine of the Blood), its bearer's own void healing no bar (Emerald Fulcrum Lens); not under a condition (Platter of Putrid Dreams)", () => {
     const [cameo] = compileActivations(item("Kindler Cameo"));
     assert.deepEqual([cameo.plan.resolution.kind, cameo.plan.resolution.native.healing.components[0].formula, cameo.plan.resolution.native.healing.recipients], ["effect", "3d10+12", "living"]);

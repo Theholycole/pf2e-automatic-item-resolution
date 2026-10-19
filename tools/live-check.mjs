@@ -4449,6 +4449,21 @@ export const cases = {
         return { ways: names, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Bloodknuckles: temporary Hit Points equal to the triggering bleed damage typed on the card (14), at most 10; none typed refuses.
+    async bloodknucklesTemp(scene) {
+        const { actor: user } = await creature(scene, "Bloodknuckles Brawler", { type: "character", x: 3, y: 19 });
+        const knuckles = await give(user, "Bloodknuckles");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(knuckles.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the card" });
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id, {}).catch((error) => { refused = error.message; });
+        assert(/Type the amount/.test(refused ?? ""), `no amount refused (${refused})`);
+        await game.modules.get(NS).api.live.apply(card.id, { amount: 14 });
+        await until(() => user.system.attributes.hp.temp === 10, `10 temporary Hit Points (${user.system.attributes.hp.temp})`, { timeout: 8000 });
+        return { temp: user.system.attributes.hp.temp, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });
