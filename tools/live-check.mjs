@@ -4186,6 +4186,35 @@ export const cases = {
         await until(() => bonus(recipient), "the recipient's Fortitude bonus", { timeout: 8000 });
         assert(Number(bonus(recipient).value) === 1 && bonus(recipient).type === "item" && !bonus(writer), `+1 item to Fortitude on the recipient only (${JSON.stringify(bonus(recipient))})`);
         return { rule: bonus(recipient) };
+    },
+
+    // Flying Blade Wheel Snare: the first creature into its square gets the snare's +35 attack card against its AC, 8d8 slashing on a hit.
+    async bladeWheelSnare(scene) {
+        const { token: setterToken, actor: setter } = await creature(scene, "Wheel Setter", { type: "character", x: 17, y: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Wheel Walker", { x: 19, y: 17, ac: 1, alliance: "opposition", hp: 300 });
+        const snare = await give(setter, "Flying Blade Wheel Snare");
+        await until(() => setterToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await setterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const wheel = () => scene.regions.find((entry) => entry.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Flying Blade Wheel Snare/.test(entry.name));
+        try {
+            await snare.consume();
+            await until(() => wheel(), "the snare's Region", { timeout: 8000 });
+            const shape = wheel().shapes[0];
+            const since = Date.now();
+            await foeToken.update({ x: shape.x ?? shape.points?.[0], y: shape.y ?? shape.points?.[1] });
+            const card = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.targets?.some((entry) => entry.actorUuid === foe.uuid), { what: "the snare's attack card", timeout: 10000 });
+            const check = card.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+            assert(check.statistic === "attack" && check.modifier === 35 && check.against?.statistic === "ac", `the snare's +35 against AC (${JSON.stringify(check)})`);
+            const before = foe.system.attributes.hp.value;
+            await applyAbilityCard(card);
+            await until(() => foe.system.attributes.hp.value < before, "slashing damage on the walker", { timeout: 10000 });
+            return { lost: before - foe.system.attributes.hp.value };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await wheel()?.delete().catch(() => null);
+        }
     }
 };
 

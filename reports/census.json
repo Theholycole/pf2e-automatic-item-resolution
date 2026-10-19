@@ -14,10 +14,10 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 209,
+   "none": 208,
    "resolves": 750,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 107,
+   "builtin:zone": 108,
    "builtin:item-action": 15,
    "partial": 104,
    "note-only": 151,
@@ -166,8 +166,8 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 10,
-    "builtin:zone": 70,
+    "none": 9,
+    "builtin:zone": 71,
     "note-only": 1,
     "builtin:ways": 1
    },
@@ -316,7 +316,7 @@
    "count": 277,
    "resolves": 176,
    "gaps": 0,
-   "none": 12
+   "none": 11
   },
   "linked-effect": {
    "count": 393,
@@ -388,10 +388,10 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 273,
+   "none": 272,
    "item": 623,
    "fortune": 23,
-   "zone": 107,
+   "zone": 108,
    "expose": 89,
    "later": 80,
    "action": 15,
@@ -458,8 +458,8 @@
     "item": 1
    },
    "snare": {
-    "none": 10,
-    "zone": 70,
+    "none": 9,
+    "zone": 71,
     "item": 1,
     "ways": 1
    },
@@ -502,7 +502,7 @@
    }
   },
   "noCard": {
-   "no-plan": 209,
+   "no-plan": 208,
    "triggered": 11,
    "gm": 52,
    "other": 1
@@ -26389,7 +26389,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Succubus Kiss",

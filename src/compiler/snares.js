@@ -3,6 +3,8 @@
 // { builtin: "zone", zone: { area: { type: "square", value: 5 }, centre: "placed", range: 5, saves: [{ when: ["enter"],
 // plan }], once: true, … } } — its startZone plays it (asked of its session: once, and a used-up item). Pure.
 
+import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
+
 const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
 
 export const isSnare = (item) => item?.type === "consumable" && (item.system?.category === "snare" || (item.system?.traits?.value ?? []).includes("snare") || /\bsnare\b/i.test(item.name ?? ""));
@@ -30,9 +32,50 @@ function damageSnare(item) {
     };
 }
 
-// The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage.)
+// A snare that attacks: Flying Blade Wheel Snare's "When a creature enters the square, a … wheel of spinning blades launches at it,
+// making a [[/r 1d20+35]]{Strike} with an attack modifier of +35 and dealing @Damage[8d8[slashing]] damage". The zone's attack on the
+// creature that enters — the ability module's card, the snare's own +35 against its AC, the damage on a hit (doubled on a critical hit);
+// its later Strikes and how long it spins notes.
+const ATTACKS = /\bmaking an? (?:\[\[\/r 1d20\+\d+\]\](?:\{[^}]*\})?|Strike) with an attack modifier of \+(\d+) and dealing @Damage\[((?:[^[\]]|\[[^\]]*\])*)\](?:\{[^}]*\})? damage\./i;
+const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+function attackSnare(item) {
+    const text = String(item?.system?.description?.value ?? "");
+    const attack = ATTACKS.exec(text);
+    if (!attack) return null;
+    const plain = text.replace(/\[\[[^\]]*\]\]\{([^}]*)\}/g, "$1").replace(/@\w+\[(?:[^[\]]|\[[^\]]*\])*\](?:\{([^}]*)\})?/g, (all, label) => label ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [], modifiers: [] });
+    const plan = {
+        modelVersion: MODEL_VERSION,
+        source: { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type },
+        rank: 1,
+        traits: [...(item.system?.traits?.value ?? [])],
+        activation: { time: null, traits: [] },
+        automation: { level: "guided" },
+        trigger: { event: "zone" },
+        targeting: { target: "the creature that enters the snare's square", range: null, area: null },
+        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: Number(attack[1]) }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: attack[2], type: null, category: null }] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } }
+    };
+    const after = plain.slice(plain.search(/\bdealing\b/i)).split(/(?<=[.!?])\s+(?=[A-Z])/).slice(1).map((sentence) => sentence.trim()).filter(Boolean);
+    return {
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "square", value: 5 }, centre: "placed", range: 5, lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null,
+            saves: [{ when: ["enter"], plan }],
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes: ["The first creature to enter the square sets it off.", ...after],
+            once: true
+        }
+    };
+}
+
+// The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage, or its attack.)
 export function snareZone(item, read) {
     if (isSnare(item) && read?.resolution?.kind !== "save") {
+        const attack = attackSnare(item);
+        if (attack) return { ...attack, source: read?.source ?? attack.zone.saves[0].plan.source };
         const damage = damageSnare(item);
         if (damage) return { ...damage, source: read?.source ?? { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type } };
     }

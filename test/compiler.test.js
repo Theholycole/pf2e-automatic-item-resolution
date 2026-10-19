@@ -675,3 +675,9 @@ test("a missive's benefit for its recipient: Heartening Missive (Bull)'s +1 item
     assert.equal(compileItem(item("Heartening Missive (Rabbit)")).resolution.outcomes.success.modifiers[0].selector, "reflex");
     assert.equal(compileItem(item("Heartening Missive (Turtle)")).resolution.outcomes.success.modifiers[0].selector, "will");
 });
+
+test("a snare that attacks: Flying Blade Wheel Snare's +35 against the AC of the creature entering its square, 8d8 slashing on a hit (doubled on a critical hit), once", () => {
+    const wheel = compileItem(item("Flying Blade Wheel Snare"));
+    const [entry] = wheel.zone.saves;
+    assert.deepEqual([wheel.builtin, wheel.zone.once, entry.when, entry.plan.resolution.check.modifier, entry.plan.resolution.check.against.statistic, entry.plan.resolution.sharedDamage.components[0].formula, entry.plan.resolution.outcomes.criticalSuccess.damage.multiplier], ["zone", true, ["enter"], 35, "ac", "8d8[slashing]", 2]);
+});
