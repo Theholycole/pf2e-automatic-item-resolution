@@ -10,7 +10,7 @@ import { plainText } from "./rows.js";
 const CONDITIONS = ["blinded", "clumsy", "confused", "controlled", "dazzled", "deafened", "doomed", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "grabbed", "immobilized", "paralyzed", "petrified", "restrained", "sickened", "slowed", "stunned", "stupefied"];
 const CONDITION_WORDS = { paralysis: "paralyzed", petrification: "petrified" };
 const ORDINAL = String.raw`(\d+)(?:st|nd|rd|th)?`;
-const FREE = /\bcounteract (the triggering spell|the fire|the effect or item|the spell|the darkness)\b|\bto end (a magical darkness effect)\b/i;
+const FREE = /\bcounteract (the triggering spell|the triggering illusion|the fire|the effect or item|the spell|the darkness|that effect|the effect(?= with a counteract modifier))\b|\bto end (a magical darkness effect)\b/i;
 
 // The text → { modifier, rank, conditions, traits, afflictions, pick: "each" | "one" | "highest", reduce?, notes } or null.
 export function readCounteract(html, { level = 0 } = {}) {
@@ -40,7 +40,8 @@ export function readCounteract(html, { level = 0 } = {}) {
         const stated = new RegExp(String.raw`\bcounteract rank (?:of |is )?${ORDINAL}\b|\ban? ${ORDINAL}-rank (?:Dispel Magic|counteract)\b`, "i").exec(said);
         const stored = /\busing the rank of the spell stored in\b/i.test(said);
         const rank = stated ? Number(stated[1] ?? stated[2]) : stored ? null : Math.max(1, Math.ceil(Number(level) / 2));
-        const name = { "the triggering spell": "the triggering spell", "the fire": "the magical fire", "the effect or item": "the magical effect or item", "the spell": "the spell", "the darkness": "the magical darkness", "a magical darkness effect": "the magical darkness" }[(free[1] ?? free[2]).toLowerCase()];
+        // (Twilight Lantern's "the effect", a darkness effect it targets; Crimson Tome's "that effect", one restoring the slain to life.)
+        const name = { "the triggering spell": "the triggering spell", "the triggering illusion": "the triggering illusion", "the fire": "the magical fire", "the effect or item": "the magical effect or item", "the spell": "the spell", "the darkness": "the magical darkness", "a magical darkness effect": "the magical darkness", "that effect": "the effect", "the effect": /\bdarkness effect\b/i.test(`${sentences[at - 1] ?? ""} ${said}`) ? "the darkness effect" : "the effect" }[(free[1] ?? free[2]).toLowerCase()];
         const after = sentences.slice(at + 1, at + 3).filter((sentence) => /\b(?:If it fails|If the spell is successfully counteracted|Regardless of the result|Once you do|This expends|If you succeed)\b/i.test(sentence));
         return { modifier: Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]), rank, conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...after] };
     }

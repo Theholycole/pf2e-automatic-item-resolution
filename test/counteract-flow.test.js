@@ -156,3 +156,13 @@ test("a counteract aimed at what isn't on a creature (Antimagic Armor's triggeri
     await settle();
     assert.match(card.content, /the triggering spell: 40 against DC 30: a critical success, counteracted \(end it by hand\)/);
 });
+
+test("more counteracts at what isn't on a creature: Twilight Lantern's darkness effect, Draconal Mask's triggering illusion, Frost Brand's magical fire", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const lantern = compileActivations(source("Twilight Lantern (Major)"))[1];
+    assert.deepEqual([lantern.plan.item.counteract.modifier, lantern.plan.item.counteract.free.name], [28, "the darkness effect"]);
+    const [mask] = compileActivations(source("Draconal Mask"));
+    assert.deepEqual([mask.plan.item.counteract.rank, mask.plan.item.counteract.free.name], [9, "the triggering illusion"]);
+    const [brand] = compileActivations(source("Frost Brand"));
+    assert.deepEqual([brand.plan.item.counteract.modifier, brand.plan.item.counteract.free.name], [27, "the magical fire"]);
+});

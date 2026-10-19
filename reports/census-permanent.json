@@ -11,11 +11,11 @@
    "none": 635,
    "partial": 170,
    "builtin:focus-point": 45,
-   "builtin:no-effect": 106,
+   "builtin:counteract": 25,
    "builtin:readied-bonus": 44,
+   "builtin:no-effect": 100,
    "note-only": 200,
    "builtin:reroll": 25,
-   "builtin:counteract": 19,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 23,
    "builtin:modes": 32,
@@ -30,12 +30,12 @@
    "save": 432,
    "cast": 470,
    "item": 585,
-   "none": 770,
+   "none": 764,
    "focus": 45,
+   "counteract": 25,
    "fortune": 55,
    "reroll": 25,
    "strike": 87,
-   "counteract": 19,
    "zone": 23,
    "toggle": 32,
    "conjure": 12,
@@ -57,11 +57,11 @@
     "none": 425,
     "partial": 79,
     "builtin:focus-point": 43,
-    "builtin:no-effect": 87,
+    "builtin:counteract": 21,
     "builtin:readied-bonus": 33,
+    "builtin:no-effect": 81,
     "note-only": 138,
     "builtin:reroll": 17,
-    "builtin:counteract": 15,
     "builtin:zone": 11,
     "builtin:conjure": 12,
     "builtin:modes": 16,
@@ -264,9 +264,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Shacklebreaker (Greater)",
@@ -6565,9 +6565,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Stormshard",
@@ -9945,9 +9945,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Spider Gun (Major)",
@@ -11863,9 +11863,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Life Shot (Minor)",
@@ -12413,9 +12413,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Scapular of Shields",
@@ -20653,9 +20653,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Phylactery of Faithfulness (Greater)",
