@@ -1018,3 +1018,13 @@ test("a bonus for the creatures in the light its user sheds (Sprite Apple): plan
     assert.ok(chartreuse.unread.some((sentence) => /Diplomacy checks attempted against animals/.test(sentence)), "its narrower half a note");
     assert.equal(compileItem(item("Sprite Apple (Golden)")).item.lightAura, undefined);
 });
+
+test("a bonus to the next save against one trait's effects, whenever it comes (Psychic Warding Bracelet): the readied-bonus card over the monster builtin, kept until that save, its trait the predicate", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { readiedWords, fortuneEffectSource } = await import("../src/live/fortune-card.js");
+    const bracelet = compileItem(item("Psychic Warding Bracelet"));
+    assert.deepEqual([routeOf(bracelet), bracelet.bonus.modifiers, bracelet.bonus.spend, bracelet.bonus.lasting], ["fortune", [{ selector: "saving-throw", type: "item", value: 2, predicate: ["item:trait:mental"] }], ["saving-throw"], true]);
+    assert.equal(readiedWords(bracelet), "+2 item bonus to saving throw against mental effects, for the next such roll, whenever it comes");
+    const source = fortuneEffectSource({ state: { plan: bracelet, item: { name: "Psychic Warding Bracelet" }, user: {} }, moduleId: "pf2e-automatic-item-resolution" });
+    assert.deepEqual([source.system.duration.unit, source.system.rules[0].predicate], ["unlimited", ["item:trait:mental"]]);
+});

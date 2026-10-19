@@ -16,7 +16,7 @@
    "builtin:cast-spell": 35,
    "none": 190,
    "resolves": 751,
-   "builtin:readied-bonus": 21,
+   "builtin:readied-bonus": 22,
    "builtin:zone": 111,
    "partial": 124,
    "builtin:item-action": 15,
@@ -27,8 +27,7 @@
    "builtin:no-effect": 51,
    "builtin:teleport": 6,
    "builtin:reroll": 3,
-   "builtin:roll-twice": 2,
-   "builtin:save-bonus": 1
+   "builtin:roll-twice": 2
   }
  },
  "byCategory": {
@@ -40,15 +39,14 @@
     "resolves": 210,
     "partial": 61,
     "note-only": 65,
-    "builtin:readied-bonus": 7,
+    "builtin:readied-bonus": 8,
     "builtin:ways": 4,
     "none": 104,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 6,
     "builtin:item-action": 1,
-    "builtin:conjure": 1,
-    "builtin:save-bonus": 1
+    "builtin:conjure": 1
    },
    "mechanisms": {
     "casts-spell": 17,
@@ -393,9 +391,9 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 253,
+   "none": 252,
    "item": 619,
-   "fortune": 23,
+   "fortune": 24,
    "zone": 111,
    "save": 147,
    "expose": 89,
@@ -413,11 +411,11 @@
    "other": {
     "cast": 14,
     "zone": 22,
-    "none": 126,
+    "none": 125,
     "later": 11,
     "save": 96,
     "item": 211,
-    "fortune": 7,
+    "fortune": 8,
     "ways": 4,
     "teleport": 4,
     "counteract": 6,
@@ -514,8 +512,7 @@
   "noCard": {
    "no-plan": 190,
    "triggered": 11,
-   "gm": 51,
-   "other": 1
+   "gm": 51
   }
  },
  "gapCounts": {},
@@ -21888,9 +21885,9 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "builtin:save-bonus",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Dream Pollen Snare",

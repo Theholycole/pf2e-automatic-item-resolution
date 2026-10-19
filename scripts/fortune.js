@@ -58,10 +58,14 @@ export async function fortuneRolled(message) {
     const domains = context.domains ?? [];
     // (A RollTwice Effect PF2e removes itself after the roll, when its "remove expired effects" setting is on: not twice.)
     const pf2eRemoves = Boolean(game.pf2e?.settings?.automation?.removeEffects);
+    const options = new Set(context.options ?? []);
     const spent = (actor?.itemTypes?.effect ?? []).filter((effect) => {
         const flag = effect.flags?.[MODULE_ID]?.[MODULE_KEY];
         if (pf2eRemoves && (effect.system?.rules ?? []).some((rule) => rule.key === "RollTwice")) return false;
-        return flag && (flag.spend ?? [flag.selector]).some((selector) => selector && domains.includes(selector));
+        if (!flag || !(flag.spend ?? [flag.selector]).some((selector) => selector && domains.includes(selector))) return false;
+        // (Only a roll its bonus is for: a save against a mental effect for Psychic Warding Bracelet's, not any save.)
+        const predicates = (effect.system?.rules ?? []).filter((rule) => rule.key === "FlatModifier" && Array.isArray(rule.predicate) && rule.predicate.length);
+        return !predicates.length || predicates.some((rule) => rule.predicate.every((term) => typeof term !== "string" || options.has(term)));
     });
     if (spent.length) await actor.deleteEmbeddedDocuments("Item", spent.map((effect) => effect.id)).catch(() => null);
 }

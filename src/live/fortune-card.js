@@ -35,14 +35,17 @@ export function bonusWords(bonus) {
     const resistance = bonus.resistance ? `resistance ${bonus.resistance.value} to ${types.length ? `${types.length > 1 ? `${types.slice(0, -1).join(", ")} or ${types.at(-1)}` : types[0]} damage` : "damage"}` : null;
     // ("immunity to physical damage": none of it.)
     const immunity = bonus.immunity ? `immunity to ${bonus.immunity.type} damage` : null;
-    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}` : null, resistance, immunity, degree].filter(Boolean).join(", ");
+    // ("against mental effects": a trait predicate, Psychic Warding Bracelet's.)
+    const traits = (first?.predicate ?? []).filter((term) => typeof term === "string" && term.startsWith("item:trait:")).map((term) => term.slice("item:trait:".length));
+    const against = traits.length ? ` against ${traits.join(" or ")} effects` : "";
+    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}` : null, resistance, immunity, degree].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
 export function readiedWords(plan) {
     if (plan.builtin === "roll-twice") return `next ${rollWords(plan.rollTwice)}: roll twice, take the better`;
     const bonus = plan.bonus;
-    const until = bonus.spend?.length ? "for the next such roll" : bonus.duration?.expiry === "turn-start" ? "until the start of the next turn" : bonus.duration?.value ? "until the end of the next turn" : "until the end of this turn";
+    const until = bonus.lasting ? "for the next such roll, whenever it comes" : bonus.spend?.length ? "for the next such roll" : bonus.duration?.expiry === "turn-start" ? "until the start of the next turn" : bonus.duration?.value ? "until the end of the next turn" : "until the end of this turn";
     return `${bonusWords(bonus)}, ${until}`;
 }
 
@@ -73,7 +76,8 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
     const plan = state.plan;
     const fortune = plan.builtin === "roll-twice";
     const spend = fortune ? [plan.rollTwice.selector] : plan.bonus.spend ?? [];
-    const duration = fortune || spend.length ? { value: 1, unit: "minutes", expiry: "turn-start" } : plan.bonus.duration;
+    // (Kept until its roll comes, whenever: Psychic Warding Bracelet's next save against a mental effect.)
+    const duration = plan.bonus?.lasting ? { value: -1, unit: "unlimited", expiry: null } : fortune || spend.length ? { value: 1, unit: "minutes", expiry: "turn-start" } : plan.bonus.duration;
     return {
         name: `${state.item.name}: ${fortune ? "roll twice" : "bonus"}`,
         type: "effect",

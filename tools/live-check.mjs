@@ -5637,6 +5637,29 @@ export const cases = {
         return { ok: true };
     },
 
+    // Psychic Warding Bracelet: its readied +2 item to the next save against a mental effect, kept with no time limit; a Fortitude save
+    // doesn't spend it, a Will save against a mental effect gets it and spends it.
+    async wardingBracelet(scene) {
+        const { actor: wearer } = await creature(scene, "Bracelet Wearer", { type: "character", x: 20, y: 8 });
+        const bracelet = await give(wearer, "Psychic Warding Bracelet");
+        const since = Date.now();
+        await bracelet.consume();
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the bracelet's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const warded = () => wearer.itemTypes.effect.find((effect) => effect.getFlag(NS, "rollTwice") && (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && JSON.stringify(rule.predicate ?? []).includes("item:trait:mental")));
+        await until(warded, "the readied bonus", { timeout: 8000 });
+        assert(warded().system.duration.unit === "unlimited", `no time limit (${warded().system.duration.unit})`);
+        await wearer.saves.fortitude.roll({ skipDialog: true });
+        await wait(1200);
+        assert(warded(), "kept through a Fortitude save");
+        const before = Date.now();
+        await wearer.saves.will.roll({ skipDialog: true, extraRollOptions: ["item:trait:mental"] });
+        const will = await messageAfter(before, (message) => (message.flags?.pf2e?.context?.domains ?? []).includes("will"), { what: "the Will save" });
+        assert((will.flags.pf2e.modifiers ?? []).some((modifier) => modifier.type === "item" && modifier.modifier === 2 && modifier.enabled !== false), "+2 item on the Will save against a mental effect");
+        await until(() => !warded(), "spent by it", { timeout: 8000 });
+        return { ok: true };
+    },
+
     // Vine Arrow: activated, loaded in a shortbow; its hit (AC 1) gives the target a -10-foot circumstance penalty to its Speeds for 2d4
     // rounds (its rider in the paragraph after the hit's), Immobilized too on a critical hit.
     async vineArrow(scene) {

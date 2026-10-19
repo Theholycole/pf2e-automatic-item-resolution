@@ -95,8 +95,20 @@ function pickedRoll(sentences) {
     return null;
 }
 
+// (The next save against one trait's effects, whenever it comes: Psychic Warding Bracelet's "You gain a +2 item bonus to your next save
+// against a mental effect" — kept until then (bonus.lasting), spent by that save alone, its trait the modifier's predicate.)
+const NEXT_SAVE = /\bYou gain an? \+(\d+) (item|status|circumstance) bonus to your next (?:save|saving throw) against an? (mental|fear|emotion|poison|disease|curse|death|illusion|visual|auditory) effect\b[^.]*\./i;
+function nextSave(plain) {
+    const next = NEXT_SAVE.exec(plain);
+    if (!next) return null;
+    const notes = plain.replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && !sentence.includes(next[0].trim()) && /\b(?:save|bonus|penalty|Interact|minutes?)\b/i.test(sentence));
+    return { modifiers: [{ selector: "saving-throw", type: next[2].toLowerCase(), value: Number(next[1]), predicate: [`item:trait:${next[3].toLowerCase()}`] }], resistance: null, duration: null, spend: ["saving-throw"], lasting: true, notes };
+}
+
 export function readReadiedBonus(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
+    const next = trigger ? null : nextSave(plain);
+    if (next) return next;
     const picked = trigger ? null : pickedRoll(plain.replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()));
     if (picked) return picked;
     const triggered = trigger ?? triggerOf(plain);
@@ -271,7 +283,8 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
 // attack": the user's Effect for it, as Sparkwarden's).
 export function readiedBonusOver(plan, bonus) {
     if (!bonus) return plan;
-    return !plan || plan.noteOnly || plan.builtin === "no-effect" || plan.builtin === "ac-reaction" ? bonus : plan;
+    // (And over the ability compiler's "save-bonus", a monster's own standing bonus: Psychic Warding Bracelet's next save.)
+    return !plan || plan.noteOnly || plan.builtin === "no-effect" || plan.builtin === "ac-reaction" || (plan.builtin === "save-bonus" && bonus.bonus?.lasting) ? bonus : plan;
 }
 
 // What a degree's change alone leaves to the table: the text's other rule sentences.
