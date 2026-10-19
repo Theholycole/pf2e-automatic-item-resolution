@@ -46,7 +46,7 @@ export function readCounteract(html, { level = 0 } = {}) {
         return { modifier: Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]), rank, conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...after] };
     }
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)
-    if (!near && !adjacent && !listed && !/\b(?:on you|affecting you|afflicting you|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
+    if (!near && !adjacent && !listed && !/\b(?:on you|affecting you|afflicting you|you are currently suffering|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
     if (/\bcan't be counteracted\b|\bthe triggering spell\b/i.test(said) || (!near && /\bwithin \d+ feet\b/i.test(said))) return null;
     const modifier = Number(
         /\+(\d+) counteract modifier\b/i.exec(said)?.[1]
@@ -72,7 +72,8 @@ export function readCounteract(html, { level = 0 } = {}) {
     const words = `${counteractSentence} ${listed}`.toLowerCase();
     const conditions = [...new Set([...CONDITIONS.filter((slug) => new RegExp(String.raw`\b${slug}\b`).test(words)), ...Object.entries(CONDITION_WORDS).filter(([word]) => words.includes(word)).map(([, slug]) => slug)])];
     const traits = [...new Set([...[...counteractSentence.matchAll(/\bthe (\w+) trait\b/gi)].map((match) => match[1].toLowerCase()), ...[...counteractSentence.matchAll(/\b(emotion|mental|transmutation|fear) effects?\b/gi)].map((match) => match[1].toLowerCase())])];
-    const afflictions = ["curse", "disease", "poison"].filter((kind) => new RegExp(String.raw`\b${kind}s?\b`, "i").test(counteractSentence));
+    // (Or "any one affliction", Golden Gloves': each kind.)
+    const afflictions = /\bany one affliction\b/i.test(counteractSentence) ? ["curse", "disease", "poison"] : ["curse", "disease", "poison"].filter((kind) => new RegExp(String.raw`\b${kind}s?\b`, "i").test(counteractSentence));
     if (!conditions.length && !traits.length && !afflictions.length) return null;
     const singled = /\b(?:one|a single) (?:effect|condition)\b/i.test(`${counteractSentence} ${sentences.slice(at, at + 4).join(" ")}`) || Boolean(listed);
     const pick = /\bhighest[- ]level\b/i.test(counteractSentence) ? "highest" : /\b(?:each|all|every)\b/i.test(counteractSentence) && !singled ? "each" : "one";

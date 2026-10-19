@@ -166,3 +166,9 @@ test("more counteracts at what isn't on a creature: Twilight Lantern's darkness 
     const [brand] = compileActivations(source("Frost Brand"));
     assert.deepEqual([brand.plan.item.counteract.modifier, brand.plan.item.counteract.free.name], [27, "the magical fire"]);
 });
+
+test("a counteract beside another reading on an activation: Golden Gloves' halo — its enemies' Fortitude save, then one affliction its user suffers counteracted at +31, rank 9", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [gloves] = compileActivations(source("Golden Gloves"));
+    assert.deepEqual([routeOf(gloves.plan), gloves.plan.item.counteract.modifier, gloves.plan.item.counteract.rank, gloves.plan.item.counteract.afflictions, gloves.plan.item.counteract.pick], ["save", 31, 9, ["curse", "disease", "poison"], "one"]);
+});
