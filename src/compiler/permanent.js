@@ -44,7 +44,7 @@ import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
-import { readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
+import { DRAGON_TYPES, readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
 import { pickedSentence, skillPickOf } from "./skill-pick.js";
 import { damageMaterial } from "./materials.js";
@@ -168,6 +168,35 @@ function chosenEffectsPlan(html, base, item, options, own = null) {
     if (ways.length < 2 && !(ways.length && left.length)) return null;
     const notes = left.map((option) => `Or: ${option.replace(/@Damage\[(\d+d\d+)\[healing\]\]/i, "$1 Hit Points")} (by hand).`);
     return { ...base, builtin: "ways", automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, ...(notes.length ? { notes, partial: true } : {}) };
+}
+
+// A breath whose area, damage type and save are its user's draconic benefactor's: Pact of the Herald and Host's torrent of energy (a cone,
+// or a longer line), "dealing 1d6 damage per level. Each creature in the area must attempt a basic saving throw against the higher of
+// your class DC or spell DC", its three save links after. The ways card's pick of the save, each way that basic
+// save at its user's better DC in the cone (the line a note), its damage type the dragon's (picked on the save card).
+const BENEFACTOR_BREATH = /\bYou exhale a torrent of energy in an? (@Template\[[^\]]*\]) or an? (@Template\[[^\]]*\]), dealing @Damage\[([^\]|]*?)(?:\|([^\]]*))?\](?:\{[^}]*\})?\.\s*Each creature in the area must attempt a basic saving throw against the higher of your class DC or spell DC\./i;
+// (Its save links as item-data.js leaves them, "dc:9003" — the owner's better DC.)
+const BENEFACTOR_SAVE = /@Check\[(fortitude|reflex|will)\|(?:against:class-spell|dc:9003)\|basic[^\]]*\]/gi;
+function benefactorBreathPlan(html, base, item, options, own) {
+    const text = String(html ?? "");
+    const breath = BENEFACTOR_BREATH.exec(text);
+    if (!breath) return null;
+    // (Its Activate and Frequency lines, a paragraph again: an activation's block starts inside its first one.)
+    const lines = text.slice(0, Math.max(0, text.indexOf("<p><strong>Effect</strong>")));
+    const head = /^\s*<p>/.test(lines) ? lines : `<p>${lines}`;
+    const ways = [];
+    for (const [check, save] of text.matchAll(BENEFACTOR_SAVE)) {
+        const body = `<p><strong>Effect</strong> Each creature in a ${breath[1]} takes @Damage[${breath[3]}[untyped]${breath[4] ? `|${breath[4]}` : ""}] damage with a ${check} save.</p>`;
+        const [entry] = compileEach({ ...item, system: { ...(item.system ?? {}), description: { value: `${head}${body}` } } }, options);
+        const plan = entry?.plan;
+        if (!plan?.resolution?.sharedDamage) return null;
+        const name = `${save.charAt(0).toUpperCase()}${save.slice(1).toLowerCase()}`;
+        const typed = withTypeChoices(plan, { types: DRAGON_TYPES.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)}`, type })) });
+        ways.push({ name, html: body, plan: { ...typed, notes: [...(typed.notes ?? []), `Its area can be a ${/distance:(\d+)/.exec(breath[2])?.[1] ?? 60}-foot line instead (place it by hand); its damage type is your benefactor's (picked on the card).`], partial: true, item: { ...(plan.item ?? {}), activation: own ?? plan.item?.activation } } });
+    }
+    if (ways.length < 2) return null;
+    const rest = plainText(text.slice(breath.index + breath[0].length)).split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\bcan't use this ability again\b/i.test(sentence));
+    return { ...base, builtin: "ways", automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, ...(rest.length ? { notes: rest.map((sentence) => sentence.trim()), partial: true } : { partial: true }) };
 }
 
 function compileEach(item, options = {}) {
@@ -325,6 +354,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tattooWaysPlan(activation.html, base, item) ?? plan;
         // (A short teleport for its user, src/compiler/teleport.js: Dweomerveil's Dimension Leap — the space picked on the canvas.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
+        // (A breath that's its user's draconic benefactor's: Pact of the Herald and Host — the save picked on the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = benefactorBreathPlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (Effects its user picks one of, listed in a sentence: Heartripper Blade's — the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenEffectsPlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (A shot whose rider is the gun's modular configuration's, src/compiler/bane.js: Hydrocannon's Tinker Shot — picked on the ways card.)

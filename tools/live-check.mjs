@@ -4617,6 +4617,30 @@ export const cases = {
         return { formula };
     },
 
+    // Pact of the Herald and Host's Breath of the Dragon: Reflex picked on the ways card, fire on the save card — a basic Reflex save card at
+    // the target, at its user's spell DC, its damage 1d6 per level (3d6 at 3rd level).
+    async benefactorBreath(scene) {
+        const { actor: user } = await creature(scene, "Pact Breather", { type: "character", x: 16, y: 4 });
+        const { token: foe } = await creature(scene, "Breath Foe", { x: 17, y: 4, alliance: "opposition" });
+        await user.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Arcane Spells`, type: "spellcastingEntry", system: { tradition: { value: "arcane" }, prepared: { value: "innate" }, ability: { value: "cha" }, proficiency: { value: 1 } } }]);
+        const pact = await give(user, "Pact of the Herald and Host");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(pact.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the save picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Reflex") });
+        const card = await messageAfter(since, itemCard("expose"), { what: "the breath's save card" });
+        const choices = card.getFlag(NS, "card").plan.damageChoices;
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid], damageChoice: choices.findIndex((choice) => choice.label === "Fire") });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const plan = save.flags["pf2e-automatic-ability-resolution"].card.plan;
+        const formula = plan.resolution.sharedDamage.components[0].formula;
+        assert(/^(?:3|\(3\)|\(@actor\.level\))d6\[fire\]$/.test(formula) && plan.resolution.check.statistic === "reflex" && plan.resolution.check.basic, `1d6 per level fire, a basic Reflex save (${formula}, ${JSON.stringify(plan.resolution.check)})`);
+        return { formula, against: plan.resolution.check.against };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

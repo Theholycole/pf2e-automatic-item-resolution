@@ -31,7 +31,7 @@ function readWritten(text) {
 // (your choice). The breath's damage type matches the Breath Weapon of the dragon type associated with the orb": the dragons' breath
 // types, the GM's pick; the line in place of the cone a note.)
 const DRAGON_TYPE = /\s*The breath's damage type matches the Breath Weapon of the dragon type associated with the [^.]*?\([^)]*\)\./i;
-const DRAGON_TYPES = ["acid", "cold", "electricity", "fire", "poison", "sonic", "force", "mental", "spirit", "void", "vitality"];
+export const DRAGON_TYPES = ["acid", "cold", "electricity", "fire", "poison", "sonic", "force", "mental", "spirit", "void", "vitality"];
 function readDragonType(text) {
     if (!DRAGON_TYPE.test(text) || !/\bdeals (\d+d\d+) damage \(@Check/i.test(text)) return null;
     const either = /\bin either an? @Template\[(?:type:)?(cone|line)\|distance:(\d+)\](?:\{[^}]*\})? or an? @Template\[(?:type:)?(cone|line)\|distance:(\d+)\](?:\{[^}]*\})? \(your choice\)/i.exec(text);

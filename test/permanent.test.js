@@ -724,3 +724,14 @@ test("damage only the table knows the amount of (Twisting Gale's Strike damage a
     assert.deepEqual([cone.scaled, cone.damageChoices.map((choice) => choice.formula)], [{ of: "charge stored in the club", die: "d6" }, ["1d6[acid]", "1d6[cold]", "1d6[electricity]", "1d6[fire]", "1d6[sonic]"]]);
     assert.equal(scaledFormula("1d6[fire]", cone.scaled, 4), "4d6[fire]");
 });
+
+test("a breath that's its user's draconic benefactor's (Pact of the Herald and Host): the ways card's Fortitude, Reflex or Will, each a basic save at the better of its user's class and spell DCs in the cone, 1d6 per level of the dragon's damage type picked on the card", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const [breath] = compileActivations(item("Pact of the Herald and Host"));
+    assert.deepEqual([breath.plan.builtin, breath.plan.ways.map((way) => way.name)], ["ways", ["Fortitude", "Reflex", "Will"]]);
+    const reflex = breath.plan.ways[1].plan;
+    assert.deepEqual([routeOf(reflex), reflex.resolution.check.statistic, reflex.resolution.check.basic, reflex.resolution.check.against], ["save", "reflex", true, { dc: "owner", statistic: "class-spell" }]);
+    assert.deepEqual([reflex.targeting.area, reflex.resolution.sharedDamage.components[0].formula], [{ type: "cone", value: 30 }, "(@actor.level)d6[untyped]"]);
+    assert.equal(reflex.damageChoices.find((choice) => choice.label === "Fire").formula, "(@actor.level)d6[fire]");
+    assert.deepEqual([reflex.item.activation.frequency.per, breath.plan.notes], ["day", ["You can't use this ability again for 1d4 rounds."]]);
+});
