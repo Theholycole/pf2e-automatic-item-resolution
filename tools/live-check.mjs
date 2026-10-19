@@ -4781,6 +4781,56 @@ export const cases = {
         return { total, save: Number(said[1]), misses, results };
     },
 
+    // The attack and save rolls the reroll card plays without "reroll": Scapular of Shields (a critical hit at AC 1 a hit), Phantom Fang (its
+    // DC 5 flat check, the attack a hit), Keep Stone Amulet (the caster's Ray of Frost rerolled, the lower kept), Extra Lung (a new save).
+    async attackRerolls(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Reroll Bearer", { x: 18, y: 18, ac: 1 });
+        const { actor: brute, token: bruteToken } = await creature(scene, "Reroll Brute", { type: "character", x: 19, y: 18 });
+        const blade = await give(brute, "Shortsword");
+        await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await bruteToken.object?.control?.();
+        await target(userToken);
+        const use = async (name, choices = {}) => {
+            const item = await give(user, name);
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, 0);
+            const card = await messageAfter(since, itemCard("reroll"), { what: `${name}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [], ...choices });
+            await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", `${name} applied`, { timeout: 8000 });
+            return game.messages.get(card.id).getFlag(NS, "card").results;
+        };
+        const results = {};
+        let { attack } = await strike(brute, blade);
+        const outcome = attack.flags.pf2e.context.outcome;
+        results.scapular = await use("Scapular of Shields");
+        assert(outcome !== "criticalSuccess" || results.scapular[0] === `PFTEST ITEM Reroll Brute's attack roll (${attack.rolls[0].total}): a critical success becomes a success.`, `the critical hit a hit (${outcome}: ${JSON.stringify(results.scapular)})`);
+        ({ attack } = await strike(brute, blade));
+        results.fang = await use("Phantom Fang");
+        // (A natural 1 misses even AC 1: then no flat check.)
+        const missed = ["failure", "criticalFailure"].includes(attack.flags.pf2e.context.outcome);
+        assert(missed ? /attack already missed .*: no flat check\.$/.test(results.fang[0] ?? "") : /^Flat check \d+ against DC 5: (?:PFTEST ITEM Reroll Brute's attack still hits|failed — PFTEST ITEM Reroll Brute's attack misses)/.test(results.fang[0] ?? ""), `the flat check against the hit (${JSON.stringify(results.fang)})`);
+        // (Ray of Frost, the brute's innate spell, at the bearer: its spell attack rerolled, the lower kept.)
+        const [entry] = await brute.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Innate`, type: "spellcastingEntry", system: { tradition: { value: "arcane" }, prepared: { value: "innate" }, ability: { value: "cha" } } }]);
+        const spells = game.packs.get("pf2e.spells-srd");
+        const ray = (await spells.getDocument((await spells.getIndex()).find((row) => row.name === "Ray of Frost")._id)).toObject();
+        delete ray._id;
+        const [spell] = await brute.createEmbeddedDocuments("Item", [{ ...ray, system: { ...ray.system, location: { value: entry.id } } }]);
+        let since = Date.now();
+        await spell.rollAttack(shift());
+        await messageAfter(since, (message) => (message.flags?.pf2e?.context?.domains ?? []).includes("spell-attack-roll"), { what: "the spell attack roll" });
+        since = Date.now();
+        results.amulet = await use("Keep Stone Amulet");
+        assert(results.amulet[0] === "Rerolled PFTEST ITEM Reroll Brute's attack roll, keeping the lower result.", `the spell attack rerolled (${JSON.stringify(results.amulet)})`);
+        await messageAfter(since, (message) => (message.flags?.pf2e?.context?.domains ?? []).includes("spell-attack-roll") && message.flags.pf2e.context.isReroll, { what: "PF2e's reroll of the spell attack" });
+        await user.saves.fortitude.roll({ skipDialog: true, dc: { value: 20 } });
+        await wait(600);
+        since = Date.now();
+        results.lung = await use("Extra Lung");
+        assert(results.lung[0] === "Rerolled PFTEST ITEM Reroll Bearer's saving throw.", `the save rerolled (${JSON.stringify(results.lung)})`);
+        await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "saving-throw" && message.flags.pf2e.context.isReroll, { what: "PF2e's reroll of the save" });
+        return { outcome, results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

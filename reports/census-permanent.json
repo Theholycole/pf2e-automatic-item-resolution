@@ -8,14 +8,14 @@
   "results": {
    "resolves": 751,
    "builtin:cast-spell": 471,
-   "none": 592,
+   "none": 588,
    "partial": 187,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
    "builtin:no-effect": 100,
    "note-only": 179,
-   "builtin:reroll": 32,
+   "builtin:reroll": 36,
    "builtin:table": 7,
    "builtin:teleport": 7,
    "builtin:pf2e-rules": 26,
@@ -32,11 +32,11 @@
    "save": 435,
    "cast": 471,
    "item": 586,
-   "none": 723,
+   "none": 719,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
-   "reroll": 32,
+   "reroll": 36,
    "strike": 88,
    "table": 7,
    "teleport": 7,
@@ -58,14 +58,14 @@
    "results": {
     "resolves": 455,
     "builtin:cast-spell": 342,
-    "none": 410,
+    "none": 407,
     "partial": 84,
     "builtin:focus-point": 43,
     "builtin:counteract": 21,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
     "note-only": 125,
-    "builtin:reroll": 23,
+    "builtin:reroll": 26,
     "builtin:table": 4,
     "builtin:teleport": 4,
     "builtin:zone": 11,
@@ -81,10 +81,10 @@
    "activations": 460,
    "results": {
     "resolves": 162,
-    "none": 89,
+    "none": 88,
     "partial": 47,
     "builtin:cast-spell": 83,
-    "builtin:reroll": 5,
+    "builtin:reroll": 6,
     "builtin:table": 1,
     "builtin:modes": 12,
     "note-only": 17,
@@ -7513,9 +7513,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Runeveil Ammunition",
@@ -9199,9 +9199,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Skarja's Heartstone",
@@ -10189,9 +10189,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Brilliant",
@@ -12437,9 +12437,9 @@
    "time": "reaction",
    "frequency": "once per minute",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Scapular of Shields",

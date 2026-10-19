@@ -82,6 +82,7 @@ async function rerollWithBonus(message, state, triggering, actor) {
 // attack misses — the GM's to undo, PF2e's message as it was — and the attacker gets what a miss gives (The Demon's Lantern's Dazzled).
 async function contestRoll(message, state, triggering, actor) {
     const reroll = state.plan.reroll;
+    if (reroll.contest.flat) return flatAgainst(message, state, triggering, actor);
     const attack = Number(triggering.rolls?.[0]?.total);
     if (!Number.isFinite(attack)) throw new Error("That attack roll has no total.");
     const save = await actor.saves?.[reroll.contest.statistic]?.roll?.({ skipDialog: true });
@@ -95,6 +96,23 @@ async function contestRoll(message, state, triggering, actor) {
         const plan = { resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [{ kind: "condition", slug: reroll.onMiss.slug, value: reroll.onMiss.value ?? null, duration: reroll.onMiss.duration }], modifiers: [] } } } };
         const target = entryOf(triggering.token?.object ?? attacker.getActiveTokens?.(true)?.[0] ?? null, attacker);
         lines.push(...(await applyRiders({ plan, degree: "success", user: state.user, target, item: state.item })));
+    }
+    const next = { ...state, status: "applied", results: lines };
+    return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// Its user Concealed against the attack (src/compiler/rerolls.js readConcealedAgainst): an attack that hit, a DC 5 flat check rolled here;
+// failed, it misses — the GM's to undo, as for the save against it. An attack that missed anyway needs no check.
+async function flatAgainst(message, state, triggering, actor) {
+    const dc = state.plan.reroll.contest.flat;
+    const outcome = triggering.flags?.pf2e?.context?.outcome ?? null;
+    const attacker = triggering.actor?.name ?? "the attacker";
+    let lines;
+    if (outcome === "failure" || outcome === "criticalFailure") lines = [`${attacker}'s attack already missed ${actor.name}: no flat check.`];
+    else {
+        const roll = await new Roll("1d20").evaluate();
+        await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: flat check DC ${dc} (${actor.name} Concealed)` });
+        lines = [roll.total >= dc ? `Flat check ${roll.total} against DC ${dc}: ${attacker}'s attack still hits ${actor.name}.` : `Flat check ${roll.total} against DC ${dc}: failed — ${attacker}'s attack misses ${actor.name} (PF2e's message isn't changed: the GM undoes its damage).`];
     }
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
@@ -126,7 +144,7 @@ async function raiseRoll(message, state, triggering, actor) {
             : raise.ac
             ? `${triggering.actor?.name ?? "The attacker"}'s attack roll (${old.total}) against ${state.user.name}'s AC ${dc ?? "?"} + ${raise.ac.value} ${raise.ac.type} = ${result.dc ?? "?"}: ${degree(result.degree)} (was ${degree(result.before)}).`
             : raise.change
-            ? `${actor.name}'s roll (${old.total}): ${degree(result.before)} becomes ${degree(result.degree)}.`
+            ? `${state.plan.reroll.who === "attacker" ? `${triggering.actor?.name ?? "The attacker"}'s attack roll` : `${actor.name}'s roll`} (${old.total}): ${degree(result.before)} becomes ${degree(result.degree)}.`
             : `${actor.name}'s roll: ${old.total} + ${result.added} ${raise.bonus.type} = ${result.total}${dc ? ` against DC ${dc}` : ""}: ${degree(result.degree)} (was ${degree(result.before)}).`,
         "PF2e's message isn't changed: the GM uses this result."
     ];

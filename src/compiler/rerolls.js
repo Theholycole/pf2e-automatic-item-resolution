@@ -156,8 +156,35 @@ export function readContest(html) {
     return { what: "attack", who: "attacker", keep: "new", contest: { statistic: contest[1].toLowerCase() }, ...(miss ? { onMiss: { slug, value: value ? Number(value) : null, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } } } : {}) };
 }
 
+// (Or a DC 5 flat check, the user Concealed against the attack: Phantom Fang's "causing you to become Concealed against the triggering attack"
+// — failed, the attack misses.)
+const CONCEALED_AGAINST = /\b(?:you )?become Concealed against the triggering (?:attack|Strike)\b/i;
+export function readConcealedAgainst(html) {
+    const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+    if (!CONCEALED_AGAINST.test(text) || !/\b(?:targeted by|hits you|attacks you)\b/i.test(trigger)) return null;
+    return { what: "attack", who: "attacker", keep: "new", contest: { flat: 5 } };
+}
+
+// Other rolls of the attack and save that triggered it, said without "reroll": Keep Stone Amulet's "The caster must roll the spell attack
+// roll twice and take the worse result" (the caster's spell attack at its user, rerolled and the worse kept — rolling twice is that);
+// Scapular of Shields' "You take normal damage from the triggering attack as if the attack were a normal hit instead" (a critical hit at its
+// user a hit); Extra Lung's "immediately attempting a new save against the effect" (its user's latest save, rerolled).
+const ROLL_TWICE = /\bThe (?:caster|attacker) must roll the (spell attack roll|attack roll) twice and take the (worse|lower|better|higher) result\b/i;
+const NORMAL_HIT = /\bYou take normal damage from the triggering attack as if the attack were a normal hit instead\b/i;
+const NEW_SAVE = /\bimmediately attempting a new save against the effect\b/i;
+export function readOtherRoll(html) {
+    const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+    const twice = ROLL_TWICE.exec(text);
+    if (twice) return { what: /spell/i.test(twice[1]) ? "spellAttack" : "attack", who: "attacker", keep: /worse|lower/i.test(twice[2]) ? "lower" : "higher" };
+    if (NORMAL_HIT.test(text) && /\bcritically hit\b/i.test(trigger)) return { what: "attack", who: "attacker", keep: "new", raise: { change: { criticalSuccess: "success" } } };
+    if (NEW_SAVE.test(text)) return { what: "save", who: "self", keep: "new" };
+    return null;
+}
+
 export function rerollPlan(html, base) {
-    const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html) ?? readAutoSuccess(html) ?? readContest(html);
+    const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html) ?? readAutoSuccess(html) ?? readContest(html) ?? readConcealedAgainst(html) ?? readOtherRoll(html);
     if (!reroll) return null;
     return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" ? "the creature targeted" : reroll.who === "either" ? "its user or the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
 }

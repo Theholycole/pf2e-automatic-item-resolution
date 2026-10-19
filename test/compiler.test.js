@@ -766,3 +766,18 @@ test("its user's save against the attack that hit (The Demon's Lantern's Reflex 
     assert.deepEqual([lantern.plan.reroll.who, lantern.plan.reroll.contest, lantern.plan.reroll.onMiss.slug, lantern.plan.reroll.onMiss.duration.expiry], ["attacker", { statistic: "reflex" }, "dazzled", "turn-end"]);
     assert.match(rerollText(lantern.plan.reroll), /^The latest attack roll at you: your Reflex save against its total; higher, it misses, and the attacker is dazzled till your next turn ends$/);
 });
+
+test("attack and save rolls played without the word reroll: Keep Stone Amulet's spell attack rolled twice (rerolled, the worse kept), Scapular of Shields' critical hit a hit, Extra Lung's new save, Phantom Fang's Concealed (a DC 5 flat check)", async () => {
+    const { rerollText, triggeringRoll } = await import("../src/live/reroll-card.js");
+    const reroll = (name) => compileActivations(item(name))[0].plan.reroll;
+    assert.deepEqual(reroll("Keep Stone Amulet"), { what: "spellAttack", who: "attacker", keep: "lower" });
+    assert.equal(rerollText(reroll("Keep Stone Amulet")), "The latest spell attack roll at you, rerolled: the lower result");
+    // (A spell attack: PF2e's attack roll with "spell-attack-roll" among its domains, not a Strike's.)
+    const messages = [{ id: "spell", type: "attack-roll", domains: ["spell-attack-roll"], targetActorUuid: "Actor.me" }, { id: "strike", type: "attack-roll", domains: ["strike-attack-roll"], targetActorUuid: "Actor.me" }];
+    assert.equal(triggeringRoll(messages, reroll("Keep Stone Amulet"), { actorUuid: "Actor.me" }), "spell");
+    assert.equal(triggeringRoll(messages, { what: "attack", who: "attacker" }, { actorUuid: "Actor.me" }), "strike");
+    assert.deepEqual(reroll("Scapular of Shields").raise, { change: { criticalSuccess: "success" } });
+    assert.equal(rerollText(reroll("Scapular of Shields")), "The latest attack roll at you: a critical success becomes a success");
+    assert.deepEqual(reroll("Extra Lung"), { what: "save", who: "self", keep: "new" });
+    assert.deepEqual(reroll("Phantom Fang").contest, { flat: 5 });
+});

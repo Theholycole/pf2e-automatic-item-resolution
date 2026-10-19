@@ -9,6 +9,8 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 export const CHECK_TYPES = Object.freeze({
     save: ["saving-throw"],
     attack: ["attack-roll"],
+    // (A spell attack: PF2e's attack roll, "spell-attack-roll" among its domains.)
+    spellAttack: ["attack-roll"],
     check: ["skill-check", "perception-check", "flat-check", "counteract-check"],
     roll: ["saving-throw", "attack-roll", "skill-check", "perception-check", "flat-check", "counteract-check", "initiative"]
 });
@@ -17,7 +19,7 @@ export function createRerollCard({ plan, item, user }) {
     return { kind: "reroll", status: "open", plan, item, user, results: [] };
 }
 
-const WHAT_WORDS = { save: "saving throw", attack: "attack roll", check: "check", roll: "roll" };
+const WHAT_WORDS = { save: "saving throw", attack: "attack roll", spellAttack: "spell attack roll", check: "check", roll: "roll" };
 const KEEP_WORDS = { new: "the new result", higher: "the higher result", lower: "the lower result" };
 
 const DEGREE_NAMES = ["criticalFailure", "failure", "success", "criticalSuccess"];
@@ -50,6 +52,7 @@ export function rerollText(reroll) {
     const named = [].concat(reroll.statistic ?? []).map((name) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`).join(" or ");
     const what = named ? `${named} ${reroll.what === "save" ? "save" : "check"}` : WHAT_WORDS[reroll.what] ?? "roll";
     // (Its user's save against the attack that hit: The Demon's Lantern's.)
+    if (reroll.contest?.flat) return `The latest attack roll at you: a DC ${reroll.contest.flat} flat check, you Concealed; failed, it misses`;
     if (reroll.contest) return `The latest attack roll at you: your ${reroll.contest.statistic.charAt(0).toUpperCase()}${reroll.contest.statistic.slice(1)} save against its total; higher, it misses${reroll.onMiss ? `, and the attacker is ${reroll.onMiss.slug}${reroll.onMiss.value ? ` ${reroll.onMiss.value}` : ""} till your next turn ends` : ""}`;
     // (Behind a coin flip: said first.)
     const coin = reroll.coin ? `Flip the coin; on the ${reroll.coin.win}: ` : "";
@@ -64,9 +67,9 @@ export function rerollText(reroll) {
         const changes = Object.entries(reroll.raise.change ?? {}).map(([from, to]) => `${DEGREE_TEXT[from]} becomes ${DEGREE_TEXT[to]}`);
         const bonus = reroll.raise.bonus ? `+${reroll.raise.bonus.value ?? reroll.raise.bonus.formula} ${reroll.raise.bonus.type} bonus added, its degree again` : null;
         // ("either": the creature targeted, else its user — Robe of the Archmagi's ally.)
-        return `${reroll.who === "either" ? "The targeted creature's (else your) latest" : "Your latest"} ${what}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
+        return `${reroll.who === "either" ? "The targeted creature's (else your) latest" : reroll.who === "attacker" ? "The latest" : "Your latest"} ${what}${reroll.who === "attacker" ? " at you" : ""}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
     }
-    const whose = reroll.who === "attacker" ? "The latest attack roll at you" : reroll.who === "companion" ? `The targeted companion's latest ${what}` : `Your latest ${what}`;
+    const whose = reroll.who === "attacker" ? `The latest ${reroll.what === "spellAttack" ? "spell attack roll" : "attack roll"} at you` : reroll.who === "companion" ? `The targeted companion's latest ${what}` : `Your latest ${what}`;
     const bonus = reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";
     return `${whose}, rerolled${bonus}: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
 }
@@ -101,7 +104,7 @@ export function triggeringRoll(messages, reroll, { actorUuid, actorId }) {
     for (const message of [...messages].reverse()) {
         if (!message?.type || message.isReroll) continue;
         if (reroll.who === "attacker") {
-            if (message.type === "attack-roll" && message.targetActorUuid === actorUuid) return message.id;
+            if (message.type === "attack-roll" && message.targetActorUuid === actorUuid && (reroll.what !== "spellAttack" || (message.domains ?? []).includes("spell-attack-roll"))) return message.id;
             continue;
         }
         // (A companion's: actorUuid is the creature targeted.)
@@ -116,6 +119,6 @@ export function rerollCardHTML(state, { canApply = false } = {}) {
     const reroll = state.plan.reroll;
     const after = open && reroll.after ? `<ul class="aar-notes"><li>${escape(reroll.after)}</li></ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${reroll.contest ? "Roll the save" : reroll.raise ? "Change the roll" : "Reroll"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${reroll.contest ? "save against the attack" : reroll.raise ? "changed roll" : "reroll"}</span></header><p class="aar-actions">${escape(rerollText(reroll))}</p>${after}${results}${controls}</section>`;
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${reroll.contest?.flat ? "Roll the flat check" : reroll.contest ? "Roll the save" : reroll.raise ? "Change the roll" : "Reroll"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${reroll.contest?.flat ? "flat check against the attack" : reroll.contest ? "save against the attack" : reroll.raise ? "changed roll" : "reroll"}</span></header><p class="aar-actions">${escape(rerollText(reroll))}</p>${after}${results}${controls}</section>`;
 }
