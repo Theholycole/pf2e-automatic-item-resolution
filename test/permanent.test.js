@@ -570,7 +570,7 @@ test("one-off readings: Sky Hammer's Comet Fall a 6th-rank arcane Fireball at DC
     const shield = compileActivations(item("Worldscale Shield"), { spellEffects })[0].plan;
     assert.deepEqual([routeOf(shield), shield.bonus.immunity, shield.bonus.breaks, shield.spend], ["fortune", { type: "physical" }, true, { mythicPoints: 1 }]);
     assert.deepEqual(readiedRules(shield), [{ key: "Immunity", type: "physical" }]);
-    assert.equal(readiedWords(shield), "immunity to physical damage, until the end of this turn");
+    assert.equal(readiedWords(shield), "immunity to physical damage, against what triggered it, this turn");
     const boots = compileActivations(item("Avalanche Boots"), { spellEffects })[0].plan;
     assert.deepEqual(boots.ways.map((way) => [way.name, routeOf(way.plan), way.plan.resolution.outcomes.success.forcedMovement.distance, way.plan.resolution.outcomes.success.effects.map((effect) => effect.slug)]), [
         ["After a success: 5 feet more", "save", 5, []],

@@ -82,13 +82,16 @@ test("the reading: a bonus for a moment — the roll that triggered it, or the t
     assert.deepEqual(spark.bonus.modifiers.map((modifier) => modifier.selector), ["ac", "saving-throw"]);
     assert.deepEqual(spark.bonus.resistance, { type: "all-damage", value: 2 });
     assert.deepEqual([spark.bonus.duration.value, spark.bonus.duration.expiry, spark.bonus.spend], [0, "turn-end", []]);
-    assert.match(spark.notes.join(" "), /Only against what triggered it/);
+    // (Only against what triggered it: bonus.against, spent by that — no note.)
+    assert.equal(spark.bonus.against, true);
+    assert.equal(spark.partial, undefined);
     // The ability compiler's "ac-reaction", a monster's own reaction: its user's Effect for it instead — Deflecting Branch's "+4
     // circumstance bonus to AC against the triggering attack", Dragon Turtle Plate's "to gain a +1 …", Bismuth Armor's miss a note.
     const branch = compileActivations(source("Deflecting Branch"))[0].plan;
     assert.deepEqual([branch.builtin, routeOf(branch), branch.bonus.modifiers, branch.bonus.duration.expiry], ["readied-bonus", "fortune", [{ selector: "ac", type: "circumstance", value: 4 }], "turn-end"]);
     assert.equal(compileActivations(source("Dragon Turtle Plate"))[0].plan.bonus.modifiers[0].value, 1);
-    assert.match(compileActivations(source("Bismuth Armor"))[0].plan.notes.join(" "), /Dazzled for 1 round/);
+    // (Its miss now the attacker's Dazzled, bonus.onAttack.)
+    assert.deepEqual(compileActivations(source("Bismuth Armor"))[0].plan.bonus.onAttack, { miss: { condition: { slug: "dazzled", value: null, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "effect-start" } } } });
     // "+2 circumstance bonus to your Fortitude DC against the triggering Grapple".
     assert.equal(compileActivations(source("Shacklebreaker"))[0].plan.bonus.modifiers[0].selector, "fortitude-dc");
     // "Until the start of your next turn, you gain a +4 item bonus to Stealth checks to Hide and Sneak".
@@ -143,8 +146,8 @@ test("resistance against the hit that triggered it: PF2e's Resistance for the tu
     const parry = compileActivations(source("Deflecting"))[0].plan;
     assert.equal(routeOf(parry), "fortune");
     assert.deepEqual([parry.bonus.modifiers, parry.bonus.resistance, parry.bonus.duration.value, parry.bonus.duration.expiry], [[], { type: "physical", value: 5 }, 0, "turn-end"]);
-    assert.equal(readiedWords(parry), "resistance 5 to physical damage, until the end of this turn");
-    assert.match(parry.notes[0], /^Only against what triggered it/);
+    assert.equal(readiedWords(parry), "resistance 5 to physical damage, against what triggered it, this turn");
+    assert.deepEqual([parry.bonus.against, parry.notes], [true, []]);
     // "You gain resistance 3 against that spirit damage" (Third Blessing).
     assert.deepEqual(compileActivations(source("Three-Pillared Yang Na")).find((entry) => entry.plan?.builtin === "readied-bonus").plan.bonus.resistance, { type: "spirit", value: 3 });
     // Not one: an item used two ways (Toadskin Salve's two reactions, Thrice-Fried Mudwings' meal), a lasting one (Adaptive Aegis's
@@ -163,13 +166,17 @@ test("resistance against the hit that triggered it: PF2e's Resistance for the tu
     await settle();
     const card = foundry.messages[foundry.messages.indexOf(use) + 1];
     assert.equal(card.flags[MODULE_ID].card.kind, "fortune");
-    assert.match(card.content, /resistance 3 to physical damage, until the end of this turn/);
+    assert.match(card.content, /resistance 3 to physical damage, against what triggered it, this turn/);
     assert.doesNotMatch(card.content, /spiky glob/, "its flavor isn't a note");
     await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
     await settle();
     const effect = fortunes().find((entry) => entry.name === "Ferrofluid Urchin (Lesser): bonus");
     assert.deepEqual(effect.system.rules, [{ key: "Resistance", type: "physical", value: 3 }]);
     assert.deepEqual([effect.system.duration.value, effect.system.duration.expiry], [0, "turn-end"]);
+    // (The damage it takes spends it.)
+    await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { appliedDamage: { uuid: hero.uuid, isHealing: false, updates: [] }, context: { type: "damage-taken" } } }, speaker: { actor: hero.id }, actor: hero, token: hero.token.document }));
+    await settle();
+    assert.equal(fortunes().some((entry) => entry.name === "Ferrofluid Urchin (Lesser): bonus"), false);
 });
 
 test("a talisman's moment bonus: its trigger its first sentence, \"When activated, …\", \"grants you\", a name of several words", () => {
@@ -230,7 +237,9 @@ test("Ring of Torag: resistance 5 against fire and +1 to AC and saves, together,
     const ring = compileActivations(source("Ring of Torag")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
     assert.deepEqual(ring.bonus.modifiers.map((modifier) => `${modifier.selector} +${modifier.value} ${modifier.type}`), ["ac +1 status", "saving-throw +1 status"]);
     assert.deepEqual(ring.bonus.resistance, { type: "fire", value: 5 });
-    assert.match(ring.notes[0], /^Only against what triggered it/);
+    assert.deepEqual([ring.bonus.against, ring.notes], [true, []]);
+    // (A sentence saying more than the bonus stays: Broken Tusk Pendant's "… or a +2 item bonus if the animal is the specific kind …".)
+    assert.match(compileActivations(source("Broken Tusk Pendant"))[0].plan.notes[0], /^Only against what triggered it: .*\bor a \+2 item bonus if\b/);
 });
 
 test("moment bonuses in more words: Pyrefeather Cloak's type-first resistance, Curious Teardrop's \"You receive\", Calamity's Bane Tattoo's any check, Crown of the Fire Eater's raised resistance", async () => {
@@ -267,6 +276,36 @@ test("a bonus for another creature (Resonant Guitar's Chord of Protection, +2 st
     const given = ally.itemTypes.effect.find((effect) => effect.flags?.[MODULE_ID]?.rollTwice);
     assert.deepEqual(given?.system.rules.map((rule) => [rule.key, rule.selector, rule.value]), [["FlatModifier", "ac", 2]]);
     assert.equal(bard.itemTypes.effect.some((effect) => effect.flags?.[MODULE_ID]?.rollTwice), false, "not the user's");
+    // (Its Strike still hitting: the barrier's 3d10 sonic on the attacker, and the Effect spent.)
+    assert.match(card.content, /if it hits, 3d10 sonic damage to the attacker/);
+    const attacker = foundry.makeActor({ id: "fortune-attacker", name: "Attacker", hp: 40, max: 40 });
+    foundry.place(attacker, 200, 16100);
+    await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome: "success", options: [], target: { actor: ally.uuid, token: ally.token.uuid } } } }, speaker: { actor: attacker.id }, actor: attacker, token: attacker.token.document }));
+    await settle();
+    assert.deepEqual(attacker.healed.map((entry) => entry.damage), ["(3d10)[sonic]"]);
+    assert.ok(foundry.messages.some((message) => /Resonant Guitar[^<]*<\/strong>: the attack still hit — 3d10 sonic damage to Attacker/.test(message.content)));
+    assert.equal(ally.itemTypes.effect.some((effect) => effect.flags?.[MODULE_ID]?.rollTwice), false);
+});
+
+test("Bismuth Armor: the spell attack at its user misses — the attacker Dazzled for 1 round (the ability module's timed condition), the Effect spent", async () => {
+    const wearer = foundry.makeActor({ id: "fortune-wearer", name: "Wearer", owners: ["player"] });
+    const caster = foundry.makeActor({ id: "fortune-caster", name: "Caster" });
+    foundry.place(wearer, 0, 16600);
+    foundry.place(caster, 100, 16600);
+    const armor = foundry.giveItem(wearer, source("Bismuth Armor"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: armor.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "fortune");
+    assert.match(card.content, /\+2 circumstance bonus to AC, against what triggered it, this turn; if it misses, the attacker dazzled for 1 round/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const before = foundry.applied.length;
+    await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { context: { type: "spell-attack-roll", outcome: "failure", options: [], target: { actor: wearer.uuid, token: wearer.token.uuid } } } }, speaker: { actor: caster.id }, actor: caster, token: caster.token.document }));
+    await settle();
+    const [change] = foundry.applied.slice(before);
+    assert.deepEqual([change.change.op, change.change.slug, change.change.target, change.state.targets[0].name, change.change.duration.value], ["condition", "dazzled", "t0", "Caster", 1]);
+    assert.equal(wearer.itemTypes.effect.some((effect) => effect.flags?.[MODULE_ID]?.rollTwice), false);
 });
 
 test("the roll named before it, in a clause of its own: \"when you make an attack roll at a foe …, you can roll twice\" — its user's next attack roll, the rest notes (the module's own wording)", () => {
@@ -274,4 +313,57 @@ test("the roll named before it, in a clause of its own: \"when you make an attac
     assert.deepEqual(read, { selector: "attack-roll", keep: "higher", notes: ["A war cry rises.", "Every foe counts as one."] });
     // (Not someone else's roll, nor a damage roll.)
     assert.equal(readRollTwice("Effect When you make a damage roll, you can roll twice and keep the better result."), null);
+});
+
+test("only against what triggered it (bonus.against): the attack at its creature spends it, a hit keeping one with resistance until the damage; a check against its DC, its own save, the damage it takes", async () => {
+    const guard = foundry.makeActor({ id: "fortune-guard", name: "Guard", owners: ["player"] });
+    const foe = foundry.makeActor({ id: "fortune-foe", name: "Foe" });
+    foundry.place(guard, 0, 16400);
+    foundry.place(foe, 100, 16400);
+    const mine = () => guard.itemTypes.effect.filter((effect) => effect.flags?.[MODULE_ID]?.rollTwice);
+    const gain = async (name) => {
+        const item = foundry.giveItem(guard, source(name));
+        const index = compileActivations(source(name)).findIndex((entry) => entry.plan?.builtin === "readied-bonus");
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: item.uuid, activation: index, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "fortune");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return card;
+    };
+    const post = async (flags, actor) => {
+        await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: flags }, speaker: { actor: actor.id }, actor, token: actor.token.document }));
+        await settle();
+    };
+    const attack = (outcome) => post({ context: { type: "attack-roll", outcome, options: [], target: { actor: guard.uuid, token: guard.token.uuid } } }, foe);
+    // Sparkwarden (+1 status to AC and saves, resistance 2): a hit at it leaves it for the damage; that damage spends it.
+    const card = await gain("Sparkwarden");
+    assert.match(card.content, /\+1 status bonus to AC and saving throw, resistance 2 to damage, against what triggered it, this turn/);
+    assert.deepEqual(mine()[0].flags[MODULE_ID].rollTwice.against, { damage: true, save: true });
+    await attack("success");
+    assert.equal(mine().length, 1, "the damage still to come");
+    await post({ context: { type: "saving-throw", domains: ["reflex", "saving-throw"] } }, guard);
+    assert.equal(mine().length, 1, "a save with damage to come: kept");
+    await post({ appliedDamage: { uuid: guard.uuid, isHealing: false, updates: [] }, context: { type: "damage-taken" } }, guard);
+    assert.equal(mine().length, 0);
+    // Sparkwarden again, missed: nothing to come.
+    await gain("Sparkwarden");
+    await attack("failure");
+    assert.equal(mine().length, 0);
+    // Deflecting Branch (+4 circumstance to AC): the attack spends it, hit or miss; another creature's attack doesn't.
+    await gain("Deflecting Branch");
+    await post({ context: { type: "attack-roll", outcome: "success", options: [], target: { actor: foe.uuid, token: foe.token.uuid } } }, guard);
+    assert.equal(mine().length, 1, "an attack at someone else");
+    await attack("success");
+    assert.equal(mine().length, 0);
+    // Shacklebreaker (+1 to its Fortitude DC against the Grapple): the Grapple check at it.
+    await gain("Shacklebreaker");
+    assert.equal(mine().length, 1);
+    await post({ context: { type: "skill-check", outcome: "failure", options: ["action:grapple"], target: { actor: guard.uuid, token: guard.token.uuid } } }, foe);
+    assert.equal(mine().length, 0);
+    // Spellcutter (+4 status to AC and saves, nothing against damage): its own save.
+    await gain("Spellcutter");
+    await post({ context: { type: "saving-throw", domains: ["will", "saving-throw"] } }, guard);
+    assert.equal(mine().length, 0);
 });

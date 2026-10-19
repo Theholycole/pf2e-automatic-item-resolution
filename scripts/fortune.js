@@ -2,10 +2,11 @@
 // (src/compiler/fortune.js, src/compiler/readied-bonus.js, src/live/fortune-card.js): Apply gives the user an Effect with
 // PF2e's rules (one at a time per item); PF2e rolls that roll twice and removes a RollTwice Effect after it. On the active
 // GM's client, a check message whose domains hold the roll an Effect is for removes it (a bonus for one roll; a RollTwice
-// should PF2e's "remove expired effects" setting be off). A bonus for a time ends with PF2e's own duration.
+// should PF2e's "remove expired effects" setting be off). A bonus for a time ends with PF2e's own duration. One only against what
+// triggered it goes after that: the attack or check at its creature, its creature's save, or the damage it takes.
 
 import { MODULE_KEY, createFortuneCard, fortuneCardHTML, fortuneEffectSource, isForTarget, readiedWords } from "../src/live/fortune-card.js";
-import { FLAG, MODULE_ID, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, damageRollClass, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
 
 export async function postFortuneCard({ message, plan, used, actor, token }) {
     const state = createFortuneCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: entryOf(token, actor) });
@@ -73,4 +74,61 @@ export async function fortuneRolled(message) {
         return !predicates.length || predicates.some((rule) => fits(rule.predicate));
     });
     if (spent.length) await actor.deleteEmbeddedDocuments("Item", spent.map((effect) => effect.id)).catch(() => null);
+}
+
+// (Only against what triggered it, an Effect's flag against { damage, save, onAttack? }: the next attack roll or check at its creature
+// spends it — a hit keeping one with resistance or immunity until the damage — as does its creature's next save, when it has a bonus to
+// saves and no damage still to come, and the next damage it takes, one with resistance or immunity. Its turn's end otherwise. The attack's
+// result does what onAttack says to the attacker: a condition on a miss (the ability module's timed condition), damage on a hit.)
+const ATTACKS = new Set(["attack-roll", "spell-attack-roll"]);
+export async function againstRolled(message) {
+    if (!isActiveGM()) return;
+    const flags = message?.flags?.pf2e;
+    const context = flags?.context;
+    if (!context?.type) return;
+    const actorOf = async (uuid) => (uuid ? await fromUuid(uuid).catch(() => null) : null);
+    const guarded = (actor) => (actor?.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.against);
+    const remove = async (actor, effects) => {
+        if (effects.length) await actor.deleteEmbeddedDocuments("Item", effects.map((effect) => effect.id)).catch(() => null);
+    };
+    if (context.type === "damage-taken" && flags.appliedDamage && !flags.appliedDamage.isHealing) {
+        const actor = await actorOf(flags.appliedDamage.uuid);
+        return remove(actor, guarded(actor).filter((effect) => effect.flags[MODULE_ID][MODULE_KEY].against.damage));
+    }
+    if (context.type === "saving-throw") return remove(message.actor, guarded(message.actor).filter((effect) => { const against = effect.flags[MODULE_ID][MODULE_KEY].against; return against.save && !against.damage; }));
+    if (!(ATTACKS.has(context.type) || context.type === "skill-check" || context.type === "check") || !context.target?.actor) return;
+    const actor = await actorOf(context.target.actor);
+    const attack = ATTACKS.has(context.type);
+    const hit = attack && ["success", "criticalSuccess"].includes(context.outcome);
+    const spent = [];
+    for (const effect of guarded(actor)) {
+        const against = effect.flags[MODULE_ID][MODULE_KEY].against;
+        // (Its attack already come, a hit whose damage is still to: not this one's.)
+        if (against.attacked) continue;
+        if (attack && against.onAttack) await onAttackResult(against.onAttack, { hit, attacker: message.actor, attackerToken: message.token ?? null, guarded: actor, item: effect.flags[MODULE_ID][MODULE_KEY].item });
+        if (hit && against.damage) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.against.attacked`]: true });
+        else spent.push(effect);
+    }
+    return remove(actor, spent);
+}
+
+async function onAttackResult(onAttack, { hit, attacker, attackerToken, guarded, item }) {
+    if (!attacker) return;
+    const name = String(item?.name ?? "Item").replace(/[&<>"']/g, "");
+    if (!hit && onAttack.miss) {
+        const ability = game.modules.get(ABILITY_ID)?.api?.live;
+        const token = attackerToken ?? attacker.getActiveTokens?.(true, true)?.[0] ?? null;
+        const state = { plan: {}, ability: { name, uuid: item?.uuid ?? null, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item" }, source: { actorUuid: guarded.uuid, tokenUuid: guarded.getActiveTokens?.(true, true)?.[0]?.uuid ?? null, name: guarded.name }, targets: [{ id: "t0", actorUuid: attacker.uuid, tokenUuid: token?.uuid ?? null, name: token?.name ?? attacker.name }] };
+        const condition = onAttack.miss.condition;
+        const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: condition.slug, value: condition.value, target: "t0", duration: condition.duration }, state) : null;
+        await ChatMessage.create({ content: `<p><strong>${name}</strong>: the attack missed — ${line ?? `${attacker.name} ${condition.slug}${condition.value ? ` ${condition.value}` : ""} for ${condition.duration.value} round${condition.duration.value === 1 ? "" : "s"}${ability?.applyChange ? "" : " (by hand: the ability module isn't active)"}`}.</p>`, speaker: ChatMessage.getSpeaker({ actor: guarded }) });
+    }
+    if (hit && onAttack.hit) {
+        const DamageRoll = damageRollClass();
+        if (!DamageRoll) return;
+        const damage = onAttack.hit.damage;
+        const roll = await new DamageRoll(`(${damage.formula})[${damage.type}]`).evaluate();
+        await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: guarded }), flavor: `<strong>${name}</strong>: the attack still hit — ${damage.formula} ${damage.type} damage to ${attacker.name}` });
+        await attacker.applyDamage({ damage: roll, token: attackerToken ?? attacker.getActiveTokens?.(true, true)?.[0] ?? undefined });
+    }
 }

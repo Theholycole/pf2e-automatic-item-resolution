@@ -21,7 +21,7 @@ import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
 import { startItemConjure, startItemZone } from "./zones.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
-import { applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
+import { againstRolled, applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
 import { attackRidersEffectSource, attackRidersRolled, weaponDamageDealt } from "./attack-riders.js";
 import { withUserDCs } from "./item-dcs.js";
@@ -78,6 +78,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         // (A spell cast into Spellstrike Ammunition, at the creature its Strike hits: scripts/spellstrike.js.)
         strikeWithSpellstrike(message).catch((error) => console.error(`${MODULE_ID} | spellstrike`, error));
         fortuneRolled(message).catch((error) => console.error(`${MODULE_ID} | roll twice`, error));
+        // (A bonus only against what triggered it, spent by that: scripts/fortune.js.)
+        againstRolled(message).catch((error) => console.error(`${MODULE_ID} | against the trigger`, error));
         // (A time's first critical failure made a failure, its Effect gone after: scripts/first-degree.js.)
         firstDegreeRolled(message).catch((error) => console.error(`${MODULE_ID} | first critical failure`, error));
         // (What each melee attack roll sets off while an item lasts: scripts/attack-riders.js.)

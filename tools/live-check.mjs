@@ -830,7 +830,13 @@ export const cases = {
         assert(effect?.system.rules.some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes("physical") && rule.value === 3), `the Resistance rule (${JSON.stringify(effect?.system.rules)})`);
         const resistances = wearer.attributes.resistances ?? [];
         assert(resistances.some((entry) => entry.type === "physical" && entry.value === 3), `resistance 3 to physical (${JSON.stringify(resistances.map((entry) => [entry.type, entry.value]))})`);
-        return { duration: effect.system.duration };
+        // (Only against what triggered it: the damage it then takes, 5 slashing less 3, spends it.)
+        const hp = wearer.system.attributes.hp.value;
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await wearer.applyDamage({ damage: await new DamageRoll("5[slashing]").evaluate(), token: wearer.getActiveTokens(true, true)[0] });
+        await until(() => !wearer.itemTypes.effect.some((entry) => entry.getFlag(NS, "rollTwice")), "the Effect spent by the damage", { timeout: 8000 });
+        assert(wearer.system.attributes.hp.value === hp - 2, `5 less 3: ${hp} → ${wearer.system.attributes.hp.value}`);
+        return { duration: effect.system.duration, hp: [hp, wearer.system.attributes.hp.value] };
     },
 
     // Resolute Shield's Stand Firm: twice its Hardness 12 as resistance to the triggering physical damage (the fortune card's Effect, for the turn).
@@ -3824,6 +3830,17 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id);
         await until(() => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("ac") && rule.value === 4 && rule.type === "circumstance")), "+4 circumstance AC", { timeout: 8000 });
         await until(() => user.system.attributes.ac.value === before + 4, `AC ${before} + 4`, { timeout: 8000 });
+        // (Only against what triggered it: a monster's Strike at its user spends it.)
+        const { actor: foe, token: foeToken } = await creature(scene, "Branch Attacker", { x: 16, y: 19, alliance: "opposition" });
+        await foe.createEmbeddedDocuments("Item", [{ name: "Claw", type: "melee", system: { bonus: { value: 10 }, damageRolls: { claw: { damage: "1d4", damageType: "slashing" } }, traits: { value: [] } } }]);
+        const claw = (foe.system.actions ?? []).find((entry) => entry.label === "Claw");
+        assert(claw, "the attacker's Claw");
+        await foeToken.object?.control?.();
+        await target(userToken);
+        const rolled = Date.now();
+        await claw.variants[0].roll({ event: shift() });
+        await messageAfter(rolled, (message) => message.flags?.pf2e?.context?.type === "attack-roll", { what: "the Claw's attack roll" });
+        await until(() => !user.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")), "the Effect spent by the attack", { timeout: 8000 });
         return { ac: [before, user.system.attributes.ac.value] };
     },
 

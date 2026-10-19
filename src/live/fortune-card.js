@@ -8,6 +8,7 @@
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export const MODULE_KEY = "rollTwice";
+const SAVES = new Set(["saving-throw", "fortitude", "reflex", "will"]);
 export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity));
 
 const ROLL_WORDS = { initiative: "initiative roll", "attack-roll": "attack roll", "saving-throw": "saving throw", "skill-check": "skill check", perception: "Perception check", fortitude: "Fortitude save", reflex: "Reflex save", will: "Will save", ac: "AC", check: "check" };
@@ -45,8 +46,14 @@ export function bonusWords(bonus) {
 export function readiedWords(plan) {
     if (plan.builtin === "roll-twice") return `next ${rollWords(plan.rollTwice)}: roll twice, take the better`;
     const bonus = plan.bonus;
-    const until = bonus.lasting ? "for the next such roll, whenever it comes" : bonus.spend?.length ? "for the next such roll" : bonus.duration?.expiry === "turn-start" ? "until the start of the next turn" : bonus.duration?.value ? "until the end of the next turn" : "until the end of this turn";
-    return `${bonusWords(bonus)}, ${until}`;
+    // (Only against what triggered it: "against what triggered it, this turn".)
+    const time = bonus.duration?.expiry === "turn-start" ? "until the start of the next turn" : bonus.duration?.value ? "until the end of the next turn" : "this turn";
+    const until = bonus.lasting ? "for the next such roll, whenever it comes" : bonus.spend?.length ? "for the next such roll" : bonus.against ? `against what triggered it, ${time}` : time === "this turn" ? "until the end of this turn" : time;
+    // (What the triggering attack's result does to the attacker: "if it misses, the attacker dazzled for 1 round".)
+    const miss = bonus.onAttack?.miss?.condition;
+    const hit = bonus.onAttack?.hit?.damage;
+    const riders = [miss ? `if it misses, the attacker ${miss.slug}${miss.value ? ` ${miss.value}` : ""} for ${miss.duration.value} round${miss.duration.value === 1 ? "" : "s"}` : null, hit ? `if it hits, ${hit.formula} ${hit.type} damage to the attacker` : null].filter(Boolean);
+    return `${bonusWords(bonus)}, ${until}${riders.length ? `; ${riders.join("; ")}` : ""}`;
 }
 
 // A bonus for the creature the presser targets, not its user (src/compiler/readied-bonus.js bonus.recipient).
@@ -82,7 +89,9 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
         name: `${state.item.name}: ${fortune ? "roll twice" : "bonus"}`,
         type: "effect",
         img: img ?? (fortune ? "icons/svg/d20-highlight.svg" : "icons/svg/upgrade.svg"),
-        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend } } },
+        // (Only against what triggered it: what spends it — with resistance or immunity, the damage still to come after a hit; with a
+        // bonus to saves, its creature's save.)
+        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
         system: {
             description: { value: `<p>${escape(readiedWords(plan))}.${(plan.notes ?? []).length ? ` ${escape(plan.notes.join(" "))}` : ""}</p>` },
             duration: { ...duration, sustained: false },

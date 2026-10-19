@@ -298,6 +298,10 @@ export function createFakeFoundry() {
                 this.total = Number(/\d+/.exec(this.formula)?.[0] ?? 0);
                 return this;
             }
+            // (Posted: a message with its flavor as its content, the roll beside it.)
+            async toMessage({ flavor = "", speaker = {} } = {}) {
+                return makeMessage({ content: flavor, speaker, rolls: [this] });
+            }
         }] } },
         ui: { notifications: { error: (text) => notifications.push(text), warn: (text) => notifications.push(text) } },
         document: { querySelectorAll: () => [] }

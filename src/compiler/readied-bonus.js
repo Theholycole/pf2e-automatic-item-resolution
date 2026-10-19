@@ -271,6 +271,9 @@ export function readDegreeAdjust(text, { trigger = null } = {}) {
 }
 
 // The builtin: { builtin: "readied-bonus", bonus: { modifiers, resistance, duration, spend, degree? }, notes }.
+const MISS_CONDITION = /^If the (?:attack|Strike) misses, [^.]*?\bwho becomes (Dazzled|Frightened|Off-Guard|Sickened|Stupefied|Clumsy|Enfeebled|Blinded|Deafened|Stunned|Slowed)(?: (\d+))? for (\d+) rounds?\.$/i;
+const HIT_DAMAGE = /^If the (?:attack|Strike) still hits, [^.]*?\bdealing (\d+d\d+(?:\+\d+)?) (acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void) damage to the attacker\.$/i;
+
 export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     const degree = readDegreeAdjust(text, { trigger });
     const read = readReadiedBonus(text, { trigger }) ?? (degree ? { modifiers: [], resistance: null, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [degree.selector], notes: degreeNotes(text) } : null);
@@ -278,7 +281,27 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     if (degree) read.degree = degree;
     // (The degree's own sentences, read now, aren't notes too.)
     if (degree) read.notes = (read.notes ?? []).filter((note) => !UPGRADES.some(([pattern]) => pattern.test(note)) && !/^If you roll a critical failure, you get a failure instead\.$/i.test(String(note).trim()));
-    const { notes, ...bonus } = read;
+    const { notes: read_notes, ...bonus } = read;
+    // (Only against what triggered it: that attack, check, save or damage alone — bonus.against, the Effect spent by it
+    // (scripts/fortune.js), its turn's end still the latest. The note goes, unless its sentence says more than the bonus: Broken Tusk
+    // Pendant's "… or a +2 item bonus if the animal is the specific kind …".)
+    const ONLY = /^Only against what triggered it: /;
+    const only = (read_notes ?? []).filter((note) => ONLY.test(note));
+    if (only.length) bonus.against = true;
+    // (Its restatement goes too: Sparkshade Parasol's "(This applies only to any damage the effect deals.)".)
+    // (And what the triggering attack's result does to the attacker, bonus.onAttack { miss?, hit? }, applied by its degree: Bismuth Armor's
+    // "If the attack misses, the spell reflects toward the caster, who becomes Dazzled for 1 round", Resonant Guitar's "If the Strike still
+    // hits, the barrier breaks, dealing 3d10 sonic damage to the attacker".)
+    const onAttack = {};
+    for (const note of only.length ? read_notes : []) {
+        const miss = MISS_CONDITION.exec(String(note).trim());
+        if (miss) onAttack.miss = { note, condition: { slug: miss[1].toLowerCase(), value: miss[2] ? Number(miss[2]) : null, duration: { mode: "fixed", value: Number(miss[3]), unit: "rounds", expiry: "turn-start", anchor: "effect-start" } } };
+        const hit = HIT_DAMAGE.exec(String(note).trim());
+        if (hit) onAttack.hit = { note, damage: { formula: hit[1], type: hit[2].toLowerCase() } };
+    }
+    if (onAttack.miss || onAttack.hit) bonus.onAttack = Object.fromEntries(Object.entries(onAttack).map(([key, { note, ...rest }]) => [key, rest]));
+    const read_ = new Set(Object.values(onAttack).map((entry) => entry.note));
+    const notes = (read_notes ?? []).filter((note) => !read_.has(note) && !(only.length && /^\(This applies only to (?:any )?(?:the )?damage the (?:effect|attack) deals\.\)$/i.test(String(note).trim())) && (!ONLY.test(note) || /\bor an? \+\d|\bif\b|\bunless\b|\binstead\b/i.test(note.replace(ONLY, ""))));
     // (Another creature's: the one the presser targets, within the distance its trigger names.)
     const within = /\bwithin (\d+) feet\b/i.exec(trigger ?? triggerOf(String(text ?? "")) ?? "")?.[1];
     const targeting = bonus.recipient === "target" ? { target: "1 creature", range: within ? `${within} feet` : null, area: null } : { target: "the user", range: null, area: null };
