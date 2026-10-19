@@ -597,3 +597,17 @@ test("an item thrown as a Strike PF2e can't roll: its user's thrown attack again
     assert.deepEqual([razors.plan.resolution.sharedDamage.components[0].formula, razors.plan.targeting.range, razors.plan.resolution.outcomes.criticalSuccess.damage.multiplier], ["3d8", "100 feet", 2]);
     assert.ok(razors.plan.notes.some((note) => /^Deadly d10/.test(note)) && razors.plan.notes.some((note) => /^Volley 30 feet/.test(note)));
 });
+
+test("a save's degrees in sentences (Gearblade: DC 36 Reflex, 3d12 bludgeoning on a failure, 6d12 on a critical failure, the limb a line for the GM); damage as many as the weapon's dice (Scizore of the Crab); a plain skill check against the triggering creature's DC (Shadowmist Cape's Stealth, Storyteller's Opus's Deception)", () => {
+    const [gearblade] = compileActivations(item("Gearblade"), { spellEffects });
+    const outcomes = gearblade.plan.resolution.outcomes;
+    assert.deepEqual([gearblade.plan.resolution.check.statistic, gearblade.plan.resolution.check.against.value, outcomes.failure.damage.formulas[0].formula, outcomes.criticalFailure.damage.formulas[0].formula, outcomes.success.damage.mode], ["reflex", 36, "3d12[bludgeoning]", "6d12[bludgeoning]", "none"]);
+    assert.match(outcomes.criticalFailure.manualInstructions[0], /the limb becomes unusable until healed by a Regenerate spell/);
+    const [, pinch] = compileActivations(item("Scizore of the Crab"), { spellEffects });
+    assert.deepEqual(pinch.plan.resolution.sharedDamage.components.map((component) => component.formula), ["1[slashing]"]);
+    const [shadowmist] = compileActivations(item("Shadowmist Cape"), { spellEffects });
+    assert.deepEqual([shadowmist.plan.resolution.check.statistic, shadowmist.plan.resolution.check.against], ["stealth", { dc: "target", statistic: "perception" }]);
+    assert.deepEqual([shadowmist.plan.resolution.outcomes.success.effects, shadowmist.plan.resolution.outcomes.success.manualInstructions], [[], ["{source} (success): you're Hidden from that creature until the end of your next turn or until right after you use a hostile action against that creature (by hand)."]], "its user's, not the creature's");
+    const [opus] = compileActivations(item("Storyteller's Opus"), { spellEffects });
+    assert.equal(opus.plan.resolution.check.statistic, "deception");
+});

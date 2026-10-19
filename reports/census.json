@@ -14,12 +14,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 210,
+   "none": 209,
    "resolves": 750,
    "builtin:readied-bonus": 21,
    "builtin:zone": 107,
    "builtin:item-action": 15,
-   "partial": 100,
+   "partial": 101,
    "note-only": 154,
    "builtin:conjure": 7,
    "builtin:counteract": 28,
@@ -70,11 +70,11 @@
    "results": {
     "resolves": 124,
     "note-only": 14,
-    "none": 18,
+    "none": 17,
     "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
     "builtin:counteract": 2,
-    "partial": 5,
+    "partial": 6,
     "builtin:zone": 1
    },
    "mechanisms": {
@@ -388,8 +388,8 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 274,
-   "item": 622,
+   "none": 273,
+   "item": 623,
    "fortune": 23,
    "zone": 107,
    "expose": 89,
@@ -421,9 +421,9 @@
     "coat": 3
    },
    "potion": {
-    "item": 77,
+    "item": 78,
     "later": 63,
-    "none": 27,
+    "none": 26,
     "cast": 9,
     "save": 3,
     "counteract": 2,
@@ -502,7 +502,7 @@
    }
   },
   "noCard": {
-   "no-plan": 210,
+   "no-plan": 209,
    "triggered": 11,
    "gm": 52,
    "other": 1
@@ -22344,7 +22344,13 @@
     "potion"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "unread": [
+    "You can use the limb to perform simple Interact actions, such as opening an unlocked door.",
+    "Your limb can't perform actions that require significant manual dexterity, including any action that would require a check to accomplish."
+   ],
+   "live": "item"
   },
   {
    "name": "Rainbow Vinegar (Greater)",

@@ -112,6 +112,7 @@ export function previewLines(state) {
     for (const light of plan?.item?.light ?? []) lines.push(lightText(light));
     for (const entry of plan?.item?.levelTemp ?? []) lines.push(levelTempText(entry));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
+    for (const attack of plan?.item?.attacks ?? []) lines.push(attackText(attack));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
@@ -307,6 +308,7 @@ export function weaponText(adjust) {
     const thrown = /^thrown-(\d+)$/.exec(adjust.value);
     // (The item's own weapon losing a trait: "The weapon loses nonlethal for 1 round".)
     if (adjust.mode === "remove") return `${adjust.own ? "The weapon loses" : `Its ${which ? `${which} ` : ""}weapons lose`} ${adjust.value}${forTime(adjust.duration)}`;
+    if (adjust.own) return `The weapon gains ${adjust.value}${forTime(adjust.duration)}`;
     return `Its ${which ? `${which} ` : ""}weapons gain ${thrown ? `thrown ${thrown[1]} feet` : adjust.value}${forTime(adjust.duration)}`;
 }
 
@@ -317,6 +319,18 @@ export function weaponEffectSource(adjust, { item = {}, user = {}, worldTime = 0
     const definition = adjust.own && ownId(item.uuid) ? [`item:id:${ownId(item.uuid)}`] : adjust.definition ?? [];
     const rule = { key: "AdjustStrike", mode: adjust.mode ?? "add", property: adjust.property, value: adjust.value, definition };
     return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: [rule], duration: adjust.duration, flag: { weapon: adjust.property }, item, user, worldTime, initiative, moduleId });
+}
+
+// An unarmed attack it grants in words: "A claw unarmed attack (1d6 slashing; agile) until the end of the turn".
+export function attackText(attack) {
+    const traits = attack.traits.filter((trait) => trait !== "unarmed");
+    return `A ${attack.name} unarmed attack (${attack.dice}${attack.die} ${attack.type}${traits.length ? `; ${traits.join(", ")}` : ""})${forTime(attack.duration)}`;
+}
+
+// Its Effect: PF2e's Strike rule, as its own Effects grant one (Bestial Mutagen's claw).
+export function attackEffectSource(attack, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const rule = { key: "Strike", category: "unarmed", group: "brawling", ...(["claw", "jaws", "fist", "horn", "tail", "foot", "fangs", "tusk"].includes(attack.name) ? { baseType: attack.name } : {}), damage: { base: { damageType: attack.type, dice: attack.dice, die: attack.die } }, label: `${attack.name.charAt(0).toUpperCase()}${attack.name.slice(1)}`, range: null, slug: `${attack.name}-${String(item.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`, traits: attack.traits };
+    return ownEffectSource({ name: `${attack.name} attack`, img: "icons/svg/sword.svg", words: attackText(attack), rules: [rule], duration: attack.duration, flag: { attack: attack.name }, item, user, worldTime, initiative, moduleId });
 }
 
 // A picked skill's bonus in words: "+1 item to the skill picked (intimidation, deception or performance), and a critical failure

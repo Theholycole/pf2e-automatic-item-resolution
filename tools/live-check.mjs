@@ -3999,6 +3999,63 @@ export const cases = {
                 if (base?.flags?.[ABILITY]?.conjured) await base.delete().catch(() => null);
             }
         }
+    },
+
+    // Ring of the Tiger: its card gives its user an agile claw unarmed attack (1d6 slashing) until the end of the turn — PF2e's Strike rule,
+    // a Strike PF2e lists among the user's actions.
+    async tigerClaw(scene) {
+        const { actor: brawler } = await creature(scene, "Tiger Brawler", { type: "character", x: 3, y: 9 });
+        const ring = await give(brawler, "Ring of the Tiger");
+        await ring.update({ "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(ring.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the ring's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const claw = () => (brawler.system.actions ?? []).find((action) => /claw/i.test(action.label ?? action.item?.name ?? ""));
+        await until(() => claw(), `a claw Strike among ${(brawler.system.actions ?? []).map((action) => action.label).join(", ")}`, { timeout: 8000 });
+        const strike = claw();
+        const effect = brawler.itemTypes.effect.find((entry) => entry.system.rules.some((rule) => rule.key === "Strike"));
+        assert(effect?.system.duration.expiry === "turn-end" && effect.system.duration.value === 0, `until the end of the turn (${JSON.stringify(effect?.system.duration)})`);
+        assert((strike.item?.system?.traits?.value ?? strike.traits?.map((trait) => trait.name) ?? []).includes("agile"), "agile");
+        return { strike: strike.label, damage: strike.item?.system?.damage };
+    },
+
+    // Gearblade's Disarm: the card's DC 36 Reflex save at the creature disarmed, 3d12 bludgeoning on a failure (6d12 on a critical failure).
+    async gearbladeSave(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Gearblade Wielder", { type: "character", x: 3, y: 11 });
+        const { token: foe } = await creature(scene, "Gearblade Foe", { x: 4, y: 11, alliance: "opposition" });
+        const blade = await give(user, "Gearblade");
+        await until(() => userToken.object && foe.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 0);
+        const posted = await messageAfter(since, itemCard("expose"), { what: "the gearblade's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(posted.id, { targets: [foe.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the Reflex save's card" });
+        const resolution = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution;
+        assert(resolution.check.statistic === "reflex" && resolution.check.against.value === 36 && resolution.outcomes.failure.damage.formulas[0].formula === "3d12[bludgeoning]", `DC 36 Reflex, 3d12 on a failure (${JSON.stringify(resolution.check)})`);
+        return { save: save.id };
+    },
+
+    // Shadowmist Cape's reaction: its user's Stealth check against the attacker's Perception DC; a success's Hidden its user's, by hand.
+    async shadowmistStealth(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Shadowmist Wearer", { type: "character", x: 3, y: 13 });
+        const { token: foe } = await creature(scene, "Shadowmist Attacker", { x: 4, y: 13, alliance: "opposition" });
+        const cape = await give(user, "Shadowmist Cape");
+        await cape.update({ "system.equipped.invested": true });
+        await until(() => userToken.object && foe.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(cape.uuid, 0);
+        const posted = await messageAfter(since, itemCard("expose"), { what: "the cape's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(posted.id, { targets: [foe.uuid] });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the Stealth check's card" });
+        const plan = check.flags["pf2e-automatic-ability-resolution"].card.plan;
+        assert(plan.resolution.check.statistic === "stealth" && plan.resolution.check.against?.statistic === "perception", `Stealth against Perception (${JSON.stringify(plan.resolution.check)})`);
+        assert(!(plan.resolution.outcomes.success.effects ?? []).length, "no Hidden on the attacker");
+        return { check: check.id };
     }
 };
 

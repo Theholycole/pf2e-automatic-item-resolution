@@ -520,6 +520,33 @@ function speedsOf(sentences, duration, used = new Set()) {
     return found;
 }
 
+// An unarmed attack its user gains for a while, PF2e's Strike rule: Ring of the Tiger's "granting you an agile claw unarmed attack that
+// inflicts 1d6 slashing damage, and you Strike with the claw. Then the claw turns back to normal" (until the end of the turn), Tentacle
+// Potion (Greater)'s "You can also use the limb to make an unarmed attack that deals 1d6 bludgeoning damage and has the sweep trait" (for
+// the limb's 24 hours) → [{ name, dice, die, type, traits, duration }].
+const UNARMED_NAMES = ["claw", "jaws", "fist", "horn", "tail", "tentacle", "foot", "fangs", "tusk"];
+function attacksOf(sentences, duration, used = new Set()) {
+    const found = [];
+    for (const [index, sentence] of sentences.entries()) {
+        const granted = /\bgranting you an? (agile )?(\w+) unarmed attack that (?:inflicts|deals) (\d+)d(\d+) (bludgeoning|piercing|slashing) damage\b/i.exec(sentence);
+        const limb = granted ? null : /\buse the limb to make an unarmed attack that deals (\d+)d(\d+) (bludgeoning|piercing|slashing) damage(?: and has the (\w+) trait)?/i.exec(sentence);
+        if (!granted && !limb) continue;
+        const name = granted ? granted[2].toLowerCase() : "tentacle";
+        if (!UNARMED_NAMES.includes(name)) continue;
+        // (One Strike, "Then the claw turns back to normal": until the end of the turn.)
+        const once = sentences.slice(index + 1).some((other) => /^Then the \w+ turns back to normal\b/i.test(other));
+        // (Or the limb's own time, "The limb lasts 24 hours".)
+        const lasts = sentences.map((other) => /^The (?:limb|claw|tentacle) lasts (\d+) (hours?|minutes?)\b/i.exec(other)).find(Boolean);
+        const time = once ? { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end" } : lasts ? { mode: "fixed", value: Number(lasts[1]), unit: lasts[2].toLowerCase().replace(/s?$/, "s"), expiry: "turn-start" } : timeIn(sentence, duration);
+        found.push(granted
+            ? { name, dice: Number(granted[3]), die: `d${granted[4]}`, type: granted[5].toLowerCase(), traits: ["unarmed", ...(granted[1] ? ["agile"] : [])], duration: time }
+            : { name, dice: Number(limb[1]), die: `d${limb[2]}`, type: limb[3].toLowerCase(), traits: ["unarmed", ...(limb[4] ? [limb[4].toLowerCase()] : [])], duration: time });
+        used.add(index);
+        if (once) used.add(sentences.findIndex((other, at) => at > index && /^Then the \w+ turns back to normal\b/i.test(other)));
+    }
+    return found;
+}
+
 // A change to its user's weapon for a while, PF2e's AdjustStrike: Magnifying Scope's "You increase the range increment of the weapon
 // to which the scope is attached by 20 feet until the beginning of your next turn" (its ranged weapons' range increment), Dragonbone
 // Arrowhead's "until the end of the current turn, the affixed weapon gains the thrown 20 feet weapon trait" (its melee weapons') →
@@ -532,13 +559,17 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
         const thrown = /\bthe affixed weapon gains the thrown (\d+) feet weapon trait\b/i.exec(sentence);
         // (The item's own weapon losing a trait for a while, "For 1 round, the weapon loses the nonlethal trait": that weapon, by its id.)
         const loses = /\bthe weapon loses the (\w+) trait\b/i.exec(sentence);
+        // (Or gaining one for a while, Chain of Command's "The chain of command gains the nonlethal trait for 1 minute": a weapon trait, on that
+        // weapon — not an attack's, Possum's Play's "the triggering attack gains the nonlethal trait".)
+        const gains = /\bThe (?!target\b|triggering\b)[a-z][\w' -]*? gains the (nonlethal|agile|finesse|forceful|reach|sweep|trip|shove|disarm|grapple|backstab) trait for \d+ (?:rounds?|minutes?|hours?)\b/i.exec(sentence);
         if (range) found.push({ property: "range-increment", value: Number(range[1]), definition: ["item:ranged"], duration: timeIn(sentence, duration) });
         else if (thrown) found.push({ property: "weapon-traits", value: `thrown-${thrown[1]}`, definition: ["item:melee"], duration: timeIn(sentence, duration) });
         else if (loses) found.push({ property: "weapon-traits", value: loses[1].toLowerCase(), mode: "remove", own: true, definition: [], duration: timeIn(sentence, duration) });
+        else if (gains) found.push({ property: "weapon-traits", value: gains[1].toLowerCase(), mode: "add", own: true, definition: [], duration: timeIn(sentence, duration) });
         else continue;
         // ("or until you're no longer wielding the weapon, whichever comes first" is the same in practice; ", and when you make a thrown
         // Strike with it, it flies back …" says more.)
-        if (!/,\s*and\b/i.test(sentence.slice((range ?? thrown ?? loses).index))) used.add(index);
+        if (!/,\s*and\b/i.test(sentence.slice((range ?? thrown ?? loses ?? gains).index))) used.add(index);
     }
     return found;
 }
@@ -733,7 +764,8 @@ export function ownRow(item, { healing = true } = {}) {
     const suppress = suppressOf(sentences, duration, used);
     const light = lightOf(sentences, duration, used);
     const levelTemp = levelTempOf(sentences, duration, used);
-    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length && !levelTemp.length) return null;
+    const attacks = attacksOf(sentences, duration, used);
+    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length && !levelTemp.length && !attacks.length) return null;
     // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other || temp?.other);
     if (heal?.other) delete heal.other;
@@ -746,7 +778,7 @@ export function ownRow(item, { healing = true } = {}) {
     // (Nor when it may be used, "You can use this action while Unconscious".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     if (secondary) unread.push(secondary);
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(attacks.length ? { attacks } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

@@ -200,3 +200,20 @@ test("extra damage on its user's Strikes for a while: Martial Mayhem Mutagen's p
     // (Its other words — the off-guard after a hit, the drawback's Clumsy after a miss — the note's.)
     assert.equal(moderate.partial, true);
 });
+
+test("an unarmed attack its user gains, PF2e's Strike rule: Ring of the Tiger's agile claw (1d6 slashing) until the end of the turn, Tentacle Potion (Greater)'s 1d6 bludgeoning sweep limb for its 24 hours; Chain of Command's own weapon gaining nonlethal for 1 minute", async () => {
+    const { attackEffectSource, attackText } = await import("../src/live/card.js");
+    const [ring] = compileActivations(source("Ring of the Tiger"));
+    const [claw] = ring.plan.item.attacks;
+    assert.equal(routeOf(ring.plan), "item");
+    assert.equal(attackText(claw), "A claw unarmed attack (1d6 slashing; agile) until the end of the turn");
+    const effect = attackEffectSource(claw, { item: { name: "Ring of the Tiger" } });
+    assert.deepEqual([effect.system.rules, effect.system.duration.value, effect.system.duration.expiry], [[{ key: "Strike", category: "unarmed", group: "brawling", baseType: "claw", damage: { base: { damageType: "slashing", dice: 1, die: "d6" } }, label: "Claw", range: null, slug: "claw-ring-of-the-tiger", traits: ["unarmed", "agile"] }], 0, "turn-end"]);
+    const [greater] = compileActivations(source("Ring of the Tiger (Greater)"));
+    assert.equal(greater.plan.item.attacks[0].dice, 2);
+    const tentacle = compileItem(source("Tentacle Potion (Greater)")).item.attacks[0];
+    assert.equal(attackText(tentacle), "A tentacle unarmed attack (1d6 bludgeoning; sweep) for 24 hours");
+    const [chain] = compileActivations(source("Chain of Command"));
+    assert.deepEqual(chain.plan.item.weapon.map((adjust) => [adjust.property, adjust.value, adjust.mode, adjust.own, adjust.duration.value, adjust.duration.unit]), [["weapon-traits", "nonlethal", "add", true, 1, "minutes"]]);
+    assert.equal(weaponText(chain.plan.item.weapon[0]), "The weapon gains nonlethal for 1 minute");
+});

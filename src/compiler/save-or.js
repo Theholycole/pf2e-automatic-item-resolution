@@ -69,3 +69,32 @@ export function saveOrPlan(html, base) {
         ...(read.notes.length ? { notes: read.notes, partial: true } : {})
     };
 }
+
+// A save's degrees written as sentences, Gearblade's "The target must attempt a @Check[reflex|dc:36] save. On a failure, the limb holding
+// their weapon is also pulled into the gearblade, and the creature takes @Damage[3d12[bludgeoning]] damage. On a critical failure, they
+// take @Damage[6d12[bludgeoning]] damage and the limb becomes unusable until healed by a Regenerate spell or a similar effect": the save at
+// the creature its presser targets, each degree's damage, and what else it does the card's words for the GM.
+const LINKED = String.raw`(?:[^.@]|@\w+\[[^\]]*\](?:\{[^}]*\})?)`;
+const DAMAGE = String.raw`@Damage\[((?:[^[\]]|\[[^\]]*\])*)\]`;
+const DEGREE_SENTENCES = new RegExp(String.raw`\bmust attempt an? @Check\[(?:type:)?(fortitude|reflex|will)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})? save\.\s*On a failure, (${LINKED}*?),? and the (?:creature|target) takes ${DAMAGE} damage\.\s*On a critical failure, (?:they|it|the (?:creature|target)) takes? ${DAMAGE} damage(?: and (${LINKED}*))?\.`, "i");
+const readable = (text) => String(text ?? "").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+
+export function degreeSentencesPlan(html, base) {
+    const match = DEGREE_SENTENCES.exec(String(html ?? ""));
+    if (!match) return null;
+    const [, statistic, dc, failExtra, failDamage, critDamage, critExtra] = match;
+    const row = (formula, extra) => ({ ...none(), damage: { mode: "formulas", formulas: [{ formula }], rollScope: "outcome" }, manualInstructions: extra ? [`{target}: ${readable(extra)} (by hand).`] : [] });
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: "guided" },
+        targeting: { target: "1 creature", range: null, area: null },
+        trigger: { event: "use" },
+        resolution: {
+            kind: "save",
+            check: { roll: "save", statistic: statistic.toLowerCase(), basic: false, against: { dc: "fixed", value: Number(dc) } },
+            outcomes: { criticalSuccess: none(), success: none(), failure: row(failDamage, failExtra), criticalFailure: row(critDamage, critExtra) }
+        },
+        partial: true
+    };
+}

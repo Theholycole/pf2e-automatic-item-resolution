@@ -234,8 +234,8 @@ function compileOne(given, options = {}) {
     // (A poison its hit gives, src/compiler/hit-delivery.js: Viper's Fang's venom on its Strike's hit.)
     plan = withHitDelivery(plan, plainText(item?.system?.description?.value), { trigger: /\bTrigger\s+(.+?)(?:\s+(?:Requirements?|Effect)\b|$)/s.exec(plainText(item?.system?.description?.value))?.[1] ?? null, itemType: item.type });
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
-    const { resist, speeds, senses, light, levelTemp, weapon, strikeDamage, firstDegree, suppress, coats, coatLasts, ...rest } = plan;
-    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) };
+    const { resist, speeds, senses, light, levelTemp, weapon, attacks, strikeDamage, firstDegree, suppress, coats, coatLasts, ...rest } = plan;
+    const info = { ...itemInfo(item), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;
@@ -283,6 +283,8 @@ function rowPlan(item, base) {
         ...(row?.levelTemp ? { levelTemp: row.levelTemp } : {}),
         // (A change to its user's weapon, the same: plan.item.weapon; extra damage on its Strikes, plan.item.strikeDamage.)
         ...(row?.weapon ? { weapon: row.weapon } : {}),
+        // (An unarmed attack it grants: plan.item.attacks, PF2e's Strike rule.)
+        ...(row?.attacks ? { attacks: row.attacks } : {}),
         ...(row?.strikeDamage ? { strikeDamage: row.strikeDamage } : {}),
         // (A condition's penalty ignored, the same: plan.item.suppress.)
         ...(row?.suppress ? { suppress: row.suppress } : {}),

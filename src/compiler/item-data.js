@@ -269,6 +269,18 @@ export function withItemData(html, item) {
     text = withOwnerNumbers(text, item);
     // (Dice per weapon damage die — Unholy Bloodshed's: one die where no weapon says more, src/compiler/runes.js giving its weapon's.)
     text = perWeaponDie(text, item?.type === "weapon" ? weaponDice(item) : 1, item?.type === "weapon" ? item.system?.damage?.damageType ?? null : null);
+    // (A skill check written without its link against the creature that triggered it, Shadowmist Cape's "Attempt a Stealth check against the
+    // triggering creature's Perception DC. If you roll a success, you're Hidden from that creature …", Storyteller's Opus's Deception: the
+    // link the ability compiler reads, its degrees as "On a success".)
+    const unlinked = /\bAttempt an? (Acrobatics|Athletics|Deception|Diplomacy|Intimidation|Performance|Stealth|Thievery) check against the triggering ([\w ]+?)'s (Perception|Fortitude|Reflex|Will) DC\./;
+    if (unlinked.test(text)) {
+        text = text.replace(unlinked, (all, skill, who, defense) => `Attempt a @Check[${skill.toLowerCase()}|against:${defense.toLowerCase()}] check against the triggering ${who}'s ${defense} DC.`)
+            .replace(/\bIf you roll a (critical )?success, /g, (all, critical) => `On a ${critical ?? ""}success, `)
+            .replace(/\bIf you succeed, /g, "On a success, ");
+    }
+    // (Damage as many as the weapon's damage dice, Scizore of the Crab's "dealing slashing damage equal to the scizore of the crab's number
+    // of damage dice": that number — its die count and striking rune — at the creature it holds.)
+    if (item?.type === "weapon") text = text.replace(/,?\s*dealing (\w+) damage equal to the (?:<em>)?[\w' -]+?(?:<\/em>)?(?: )?'s number of damage dice\./i, (all, type) => `. The target takes @Damage[${weaponDice(item)}[${type.toLowerCase()}]] damage.`);
     // (A condition that "increases to" a value on a failed save, as the ability compiler reads one: Putrescent Glob's "the creature
     // you damaged must succeed at a … save or its sickened condition increases to Sickened 2" — "The target must succeed at a
     // … save or be Sickened 2".)
