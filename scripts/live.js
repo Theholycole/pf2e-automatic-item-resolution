@@ -161,7 +161,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         plan = filled.plan;
     }
     // (Its DCs its user's class or spell DC when higher, under the world setting: scripts/item-dcs.js.)
-    plan = withUserDCs(plan, actor, plainText(used.data.system?.description?.value));
+    plan = withUserDCs(plan, actor, plainText(used.data.system?.description?.value), used.data);
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     // (An item that also counteracts on its drinker — Panacea Fruit heals too: its counteract card beside its own.)
     // (Its cost, a Mythic Point, the main card's alone: src/compiler/spend.js.)

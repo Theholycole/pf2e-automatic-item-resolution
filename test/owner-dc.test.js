@@ -111,3 +111,22 @@ test("live, the setting on: Spark Wafer's DC 14 Reflex save posted at its user's
     const off = await use(reader, "ownerWafer000002");
     assert.equal(off.flags[MODULE_ID].card.plan.resolution.check.against.value, 14);
 });
+
+test("the setting on, a poison keeps its own DC (an alchemist's own feats raise it): Black Adder Venom's coat card at its own DC 18, not its user's spell DC 27", async () => {
+    const { isPoison } = await import("../scripts/item-dcs.js");
+    assert.deepEqual([isPoison(source("Black Adder Venom")), isPoison(source("Spark Wafer")), isPoison({ system: { traits: { value: ["poison", "inhaled"] } } })], [true, false, true]);
+    const settings = globalThis.game.settings;
+    globalThis.game.settings = { get: (module, key) => module === MODULE_ID && key === "itemDCsFromUser" };
+    try {
+        const item = foundry.giveItem(reader, { ...source("Black Adder Venom"), _id: "ownerVenom000001" });
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: null, type: "consumable" } } }, speaker: { actor: reader.id }, actor: reader, token: reader.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+        const dc = JSON.stringify(card.flags[MODULE_ID].card.plan).match(/"dc":"fixed","value":(\d+)/)?.[1];
+        assert.equal(Number(dc), 18);
+        assert.equal(JSON.stringify(card.flags[MODULE_ID].card.plan).includes("(the world setting)"), false);
+    } finally {
+        globalThis.game.settings = settings;
+    }
+});

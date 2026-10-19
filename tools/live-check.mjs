@@ -5915,6 +5915,13 @@ export const cases = {
             const raised = (await wafer()).getFlag(NS, "card").plan;
             assert(raised.resolution.check.against.value === spellDC, `at the spell DC ${spellDC} (${raised.resolution.check.against.value})`);
             assert((raised.notes ?? []).some((note) => note.includes(`Its DC is ${spellDC}, its user's spell DC, over the item's own 14`)), `its note (${JSON.stringify(raised.notes)})`);
+            // (Not a poison's: an alchemist's own feats raise it — Black Adder Venom keeps its DC 18.)
+            const venom = await give(user, "Black Adder Venom");
+            const since = Date.now();
+            await venom.consume();
+            const coat = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the venom's card" });
+            const poisonDC = Number(/"dc":"fixed","value":(\d+)/.exec(JSON.stringify(coat.getFlag(NS, "card").plan))?.[1]);
+            assert(poisonDC === 18, `the venom's own DC 18 (${poisonDC})`);
             await game.settings.set(NS, "itemDCsFromUser", false);
             const own = (await wafer()).getFlag(NS, "card").plan;
             assert(own.resolution.check.against.value === 14, `the wafer's own 14 with the setting off (${own.resolution.check.against.value})`);

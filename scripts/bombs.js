@@ -100,7 +100,7 @@ export async function cardForBomb(message, { claims = null } = {}) {
     const data = await bombOf(message.flags.pf2e.origin);
     if (!isBomb(data)) return cardForSplash(message, context, data, { claims });
     // (Its saves' DCs its thrower's class or spell DC when higher, under the world setting: scripts/item-dcs.js.)
-    const plan = withUserDCs(compileBomb(data), message.actor, data.system?.description?.value ?? "");
+    const plan = withUserDCs(compileBomb(data), message.actor, data.system?.description?.value ?? "", data);
     if (!plan) return;
     const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;
     const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
