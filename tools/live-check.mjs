@@ -4171,6 +4171,21 @@ export const cases = {
                 if (base?.flags?.[ABILITY]?.conjured) await base.delete().catch(() => null);
             }
         }
+    },
+
+    // Heartening Missive (Bull): its +1 item bonus to Fortitude saves for 24 hours on the recipient the presser targets, not its writer.
+    async missiveRecipient(scene) {
+        const { actor: writer } = await creature(scene, "Missive Writer", { type: "character", x: 17, y: 15 });
+        const { actor: recipient, token: recipientToken } = await creature(scene, "Missive Recipient", { type: "character", x: 18, y: 15 });
+        const missive = await give(writer, "Heartening Missive (Bull)");
+        const since = Date.now();
+        await missive.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the missive's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [recipientToken.uuid] });
+        const bonus = (actor) => actor.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("fortitude"));
+        await until(() => bonus(recipient), "the recipient's Fortitude bonus", { timeout: 8000 });
+        assert(Number(bonus(recipient).value) === 1 && bonus(recipient).type === "item" && !bonus(writer), `+1 item to Fortitude on the recipient only (${JSON.stringify(bonus(recipient))})`);
+        return { rule: bonus(recipient) };
     }
 };
 

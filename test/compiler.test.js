@@ -668,3 +668,10 @@ test("a beam's own ranged attack with fire and persistent fire on a hit, and a b
     const swarm = conjuredPlan(vial.system.description.value, { source: { name: "Test Vial" } }, vial);
     assert.deepEqual([swarm.creatures[0].from.uuid, swarm.creatures[0].initiative], ["Compendium.pf2e.pathfinder-monster-core.Actor.drcSWbCIWc7P4lKO", "roll"]);
 });
+
+test("a missive's benefit for its recipient: Heartening Missive (Bull)'s +1 item bonus to Fortitude saves for 24 hours on the creature targeted (Rabbit's Reflex, Turtle's Will)", () => {
+    const bull = compileItem(item("Heartening Missive (Bull)"));
+    assert.deepEqual([bull.item.recipient, bull.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.duration.value, modifier.duration.unit])], ["targets", [["fortitude", 1, "item", 24, "hours"]]]);
+    assert.equal(compileItem(item("Heartening Missive (Rabbit)")).resolution.outcomes.success.modifiers[0].selector, "reflex");
+    assert.equal(compileItem(item("Heartening Missive (Turtle)")).resolution.outcomes.success.modifiers[0].selector, "will");
+});

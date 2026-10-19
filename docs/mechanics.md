@@ -188,6 +188,7 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - Smoldering Armor's "The armor is sheathed in a Fire Shield": the spell's Effect on its wearer.
   - Deravon's Helm's "save to resist being compelled to drop Prone": the save or Prone, with its timing a note.
   - Anointed Waterskin's "granting you the effects of Bless": PF2e's Spell Effect.
+  - Heartening Missive (Bull, Rabbit, Turtle)'s "The recipient gains a +1 item bonus to Fortitude saves for the next 24 hours": that bonus on the recipient the presser targets.
 - **Smoke sprayed into a square** (`covered-square.js` sprayedSmokePlan): Beekeeper's Smoker's adjacent square, Concealed inside. It's the ability module's placed zone, and its 1d4 rounds are the GM's.
 - **Any skill, picked on the card** (`skill-pick.js`): Stone of Unrivaled Skill's "+3 status bonus to skill checks using the skill you chose for your contract" for 10 minutes.
 - An artifact's **Destruction** paragraph isn't part of the activation before it (`permanent.js` splitActivations). Orb of Dragonkind's explosion "within 90 feet" isn't its breath's range, and the Bloodstones of Arazni's explosions aren't their activations' saves.

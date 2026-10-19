@@ -19,8 +19,8 @@
    "builtin:readied-bonus": 21,
    "builtin:zone": 107,
    "builtin:item-action": 15,
-   "partial": 101,
-   "note-only": 154,
+   "partial": 104,
+   "note-only": 151,
    "builtin:conjure": 7,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
@@ -37,8 +37,8 @@
     "builtin:cast-spell": 11,
     "builtin:zone": 19,
     "resolves": 211,
-    "partial": 47,
-    "note-only": 81,
+    "partial": 50,
+    "note-only": 78,
     "builtin:readied-bonus": 7,
     "none": 114,
     "builtin:no-effect": 13,
@@ -3824,8 +3824,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Once you finish composing the missive, it folds itself into the shape of an animal and Flies at a speed of 45 feet (about 15 miles per hour) toward the location for up to 24 hours.",
+    "After Activating the missive, the recipient gets its benefit and becomes temporarily immune to all heartening missives for 24 hours If the missive fails to reach its recipient in 24 hours, it returns to its sender at the same pace, becoming non-magical when it arrives.",
+    "Folded into a bull, this missive grants the recipient a sense of solidity."
+   ],
    "live": "item"
   },
   {
@@ -11305,8 +11310,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Once you finish composing the missive, it folds itself into the shape of an animal and Flies at a speed of 45 feet (about 15 miles per hour) toward the location for up to 24 hours.",
+    "After Activating the missive, the recipient gets its benefit and becomes temporarily immune to all heartening missives for 24 hours If the missive fails to reach its recipient in 24 hours, it returns to its sender at the same pace, becoming non-magical when it arrives.",
+    "Folded into a rabbit sitting on its haunches, this missive grants the recipient a sense of mischief and agility."
+   ],
    "live": "item"
   },
   {
@@ -14141,8 +14151,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Once you finish composing the missive, it folds itself into the shape of an animal and Flies at a speed of 45 feet (about 15 miles per hour) toward the location for up to 24 hours.",
+    "After Activating the missive, the recipient gets its benefit and becomes temporarily immune to all heartening missives for 24 hours If the missive fails to reach its recipient in 24 hours, it returns to its sender at the same pace, becoming non-magical when it arrives.",
+    "Folded into a square-shelled turtle, this missive grants the recipient a firm sense of self and serenity."
+   ],
    "live": "item"
   },
   {

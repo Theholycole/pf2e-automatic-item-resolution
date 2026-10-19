@@ -292,6 +292,9 @@ export function withItemData(html, item) {
     // Prone as its first action on their next turn (on a critical failure, the target must spend all three actions on its next turn
     // remaining prone)": the save or Prone, its turn's words for the GM.)
     text = text.replace(/\bThe targeted creature must make an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save to resist being compelled to drop (?:@UUID\[[^\]]*\]\{)?Prone\}? as its first action on their next turn \(on a critical failure, ([^)]*)\)\.(?:\s*(If the target is an? \w+, they take an? [–-]\d+ status penalty to the save)\.)?/i, (all, check, critical, kind) => `The target must succeed at a ${check} save or fall Prone. It drops prone as its first action on its next turn; on a critical failure, ${critical} (by hand).${kind ? ` ${kind} (by hand).` : ""}`);
+    // (A missive's benefit for its recipient, Heartening Missive (Bull)'s "The recipient gains a +1 item bonus to Fortitude saves for the next
+    // 24 hours": that bonus on the creature it reaches — the one the presser targets, as for a creature touched.)
+    text = text.replace(/\bThe recipient gains an? (\+\d+ (?:item|status|circumstance) bonus to (?:Fortitude|Reflex|Will) saves) for the next (\d+ (?:hours|minutes))\./, (all, bonus, time) => `It's for a creature you touch, its recipient. You gain a ${bonus} for ${time}.`);
     // (Its wielder's next attack rolled twice in the weapon's own words, Aerekostes's "On the next attack made using Aerekostes before the end
     // of their next turn, their wielder rolls twice and takes the better result": the user's, as the roll-twice reader takes it.)
     text = text.replace(/\bOn the next attack made using (?:<em>)?[\w' -]+?(?:<\/em>)? before the end of their next turn, their wielder rolls twice and takes the better result\./i, "You roll your next attack roll with it twice and take the better result. Only an attack before the end of your next turn.");
