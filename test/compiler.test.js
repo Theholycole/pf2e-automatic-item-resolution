@@ -743,6 +743,24 @@ test("effects its user picks one of, each its own named paragraph (a third-party
     assert.match(plan.notes[0], /Its area is there: target the creatures in it\.$/);
 });
 
+test("third-party bonuses read from their own packs (their words not kept here): a lodestone's saves and Fortitude DC against forced movement, a pearl's saves against curses, a steak's Intimidation and a lozenge's Performance, the narrower words notes", async () => {
+    const { readDocuments: read } = await import("../../pf2e-automatic-ability-resolution/tools/leveldb.mjs");
+    const modules = `${process.env.HOME}/.local/share/FoundryVTT/Data/modules`;
+    const find = (module, pack, name) => { try { return read(`${modules}/${module}/packs/${pack}`).find((doc) => doc.collection === "items" && doc.name === name); } catch { return null; } };
+    const mods = (doc) => {
+        const plan = doc.type === "consumable" ? compileItem({ ...doc, ownerLevel: 5 }) : compileActivations({ ...doc, ownerLevel: 5 })[0].plan;
+        return [plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, `${modifier.duration.value} ${modifier.duration.unit}`, JSON.stringify(modifier.predicate ?? null)]), [...(plan.notes ?? []), ...(plan.unread ?? [])].length];
+    };
+    const support = find("pf2e-team-plus-magic", "items", "Steady Support");
+    if (support) assert.deepEqual(mods(support)[0], [["saving-throw", 2, "item", "1 rounds", JSON.stringify(["forced-movement"])], ["fortitude-dc", 2, "item", "1 rounds", JSON.stringify(["forced-movement"])]]);
+    const pearl = find("pf2e-team-plus-tian-xia", "player-options", "Black Pearl of Mewru");
+    if (pearl) assert.deepEqual(mods(pearl), [[["saving-throw", 2, "status", "1 minutes", JSON.stringify(["item:trait:curse"])]], 1]);
+    const steak = find("pf2e-team-plus-alchemists", "pf2e-items", "Draconic Steak");
+    if (steak) assert.deepEqual(mods(steak)[0], [["intimidation", 2, "circumstance", "24 hours", "null"]]);
+    const voice = find("pf2e-team-plus-alchemists", "pf2e-items", "Honeyed Voice");
+    if (voice) assert.deepEqual(mods(voice)[0], [["performance", 2, "item", "1 hours", "null"]]);
+});
+
 test("a bonus with three scopes (Hagbane Biscuit): the +1 status bonus to saves against hags read by PF2e's origin trait for 10 minutes, its Perception and Recall Knowledge parts and the cold iron by hand", () => {
     const plan = compileItem(item("Hagbane Biscuit"));
     assert.deepEqual(plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.value]), [["saving-throw", 1, "status", ["origin:trait:hag"], 10]]);

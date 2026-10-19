@@ -5254,7 +5254,7 @@ export const cases = {
 
     // Narrow bonuses on PF2e's roll options: Elixir of the Peaks (Lesser)'s +1 item to Athletics for Climb, High Jump and Long Jump; Potion of
     // Disguise (Lesser)'s +4 status Deception DC; Healing Vapor (Lesser)'s +1 item to saves against diseases and poisons for both creatures targeted.
-    async narrowBonuses(scene) {
+    async rollOptionBonuses(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Bonus Drinker", { type: "character", x: 20, y: 18 });
         const { actor: ally, token: allyToken } = await creature(scene, "Bonus Ally", { type: "character", x: 21, y: 18 });
         const ruled = (actor, test) => actor.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && test(rule)));
@@ -5297,6 +5297,54 @@ export const cases = {
         const versed = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("attack-roll") && JSON.stringify(rule.predicate ?? []).includes("target:trait:undead"));
         await until(() => versed(user) && versed(ally), "+2 item to attacks against undead for both", { timeout: 8000 });
         return { ok: true };
+    },
+
+    // Hollow Robes' Empty Robes: +2 item to Intimidation for the minute, its wearer not made Invisible (the robes stay seen).
+    async emptyRobes(scene) {
+        const { actor: wearer } = await creature(scene, "Empty Wearer", { type: "character", x: 20, y: 14 });
+        const robes = await give(wearer, "Hollow Robes");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(robes.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the robes' card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const bonus = () => wearer.itemTypes.effect.find((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("intimidation") && rule.value === 2));
+        await until(bonus, "+2 item to Intimidation", { timeout: 8000 });
+        const { value, unit } = bonus().system.duration;
+        assert(value === 1 && unit === "minutes", `for 1 minute (${value} ${unit})`);
+        assert(!wearer.conditions.bySlug?.("invisible")?.length && !wearer.itemTypes.condition.some((entry) => entry.slug === "invisible"), "not Invisible");
+        return { duration: `${value} ${unit}` };
+    },
+
+    // Third-party bonuses read from their packs: Magic+'s Steady Support (+2 item to the Fortitude DC against forced movement, a Shove's or
+    // Reposition's option), Tian Xia+'s Black Pearl of Mewru (+2 status to saves against curses), Alchemists+' Draconic Steak (+2
+    // circumstance Intimidation) and Honeyed Voice (+2 item Performance).
+    async thirdPartyBonuses(scene) {
+        for (const module of ["pf2e-team-plus-magic", "pf2e-team-plus-tian-xia", "pf2e-team-plus-alchemists"]) assert(game.modules.get(module)?.active, `${module} isn't active in pftest.`);
+        const { actor: user } = await creature(scene, "Third Bonus User", { type: "character", x: 20, y: 16 });
+        const fortitudeDC = (options) => {
+            const statistic = user.getStatistic("fortitude");
+            const withOptions = statistic.withRollOptions?.({ extraRollOptions: options }) ?? statistic.clone?.({ rollOptions: options }) ?? statistic;
+            return withOptions.dc.value;
+        };
+        const ruled = (test) => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && test(rule)));
+        const before = [fortitudeDC(["forced-movement"]), fortitudeDC([])];
+        const eat = async (name, pack) => {
+            const item = await give(user, name, pack);
+            const since = Date.now();
+            await item.consume();
+            const card = await messageAfter(since, itemCard("item"), { what: `${name}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        };
+        await eat("Steady Support", "pf2e-team-plus-magic.items");
+        await until(() => fortitudeDC(["forced-movement"]) === before[0] + 2, `Fortitude DC against forced movement ${before[0]} → ${before[0] + 2} (${fortitudeDC(["forced-movement"])})`, { timeout: 8000 });
+        assert(fortitudeDC([]) === before[1], `not otherwise (${fortitudeDC([])})`);
+        await eat("Black Pearl of Mewru", "pf2e-team-plus-tian-xia.player-options");
+        await until(() => ruled((rule) => [].concat(rule.selector).includes("saving-throw") && rule.type === "status" && JSON.stringify(rule.predicate ?? []).includes("item:trait:curse")), "+2 status to saves against curses", { timeout: 8000 });
+        await eat("Draconic Steak", "pf2e-team-plus-alchemists.pf2e-items");
+        await until(() => ruled((rule) => [].concat(rule.selector).includes("intimidation") && rule.type === "circumstance" && rule.value === 2), "+2 circumstance Intimidation", { timeout: 8000 });
+        await eat("Honeyed Voice", "pf2e-team-plus-alchemists.pf2e-items");
+        await until(() => ruled((rule) => [].concat(rule.selector).includes("performance") && rule.type === "item" && rule.value === 2), "+2 item Performance", { timeout: 8000 });
+        return { before, after: [fortitudeDC(["forced-movement"]), fortitudeDC([])] };
     },
 
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
