@@ -4663,6 +4663,21 @@ export const cases = {
         return { total, ac, results };
     },
 
+    // Madcap Top's table, a 2 rolled: its row's cast card — Slow at DC 27, the spell module's.
+    async madcapTable(scene) {
+        const { actor: user } = await creature(scene, "Top Spinner", { type: "character", x: 16, y: 8 });
+        const top = await give(user, "Madcap Top");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(top.uuid, 0);
+        const card = await messageAfter(since, itemCard("table"), { what: "the table card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { total: 2 });
+        const cast = await messageAfter(since, itemCard("cast"), { what: "the row's cast card" });
+        const plan = cast.getFlag(NS, "card").plan;
+        assert(plan.spell?.name === "Slow" && plan.dc === 27, `Slow at DC 27 (${plan.spell?.name}, ${plan.dc})`);
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

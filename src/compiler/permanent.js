@@ -27,6 +27,7 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { withScaled } from "./scaled.js";
+import { readTable } from "./random-table.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
@@ -199,6 +200,15 @@ function benefactorBreathPlan(html, base, item, options, own) {
     return { ...base, builtin: "ways", automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, ...(rest.length ? { notes: rest.map((sentence) => sentence.trim()), partial: true } : { partial: true }) };
 }
 
+// An item whose effect is a roll on its own table, src/compiler/random-table.js: each row compiled alone as the item's use.
+function tablePlan(html, base, item, options, own) {
+    const read = readTable(html, (rowHtml) => compileEach({ ...item, system: { ...(item.system ?? {}), description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p>${rowHtml}` } } }, options)[0]?.plan ?? null);
+    if (!read) return null;
+    const rows = read.rows.map((row) => (row.plan ? { ...row, plan: { ...row.plan, source: base.source, item: { ...(row.plan.item ?? {}), activation: own ?? row.plan.item?.activation } } } : row));
+    const before = plainText(String(html ?? "").replace(/<table\b[\s\S]*$/i, "")).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\b(?:target|spell|decisions?)\b/i.test(sentence) && !/\broll\b[^.]*\btable\b/i.test(sentence));
+    return { ...base, builtin: "table", automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, table: { die: read.die, rows }, ...(before.length ? { notes: before.map((sentence) => sentence.trim()) } : {}), partial: true };
+}
+
 function compileEach(item, options = {}) {
     if (!handlesPermanent(item, options)) return [];
     // (Its own data in its text first — a weapon's striking and potency runes, src/compiler/item-data.js.)
@@ -354,6 +364,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tattooWaysPlan(activation.html, base, item) ?? plan;
         // (A short teleport for its user, src/compiler/teleport.js: Dweomerveil's Dimension Leap — the space picked on the canvas.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
+        // (A roll on its own table, src/compiler/random-table.js: Madcap Top's d20, Pistol of Wonder's d% — each row's own card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tablePlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (A breath that's its user's draconic benefactor's: Pact of the Herald and Host — the save picked on the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = benefactorBreathPlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (Effects its user picks one of, listed in a sentence: Heartripper Blade's — the ways card.)

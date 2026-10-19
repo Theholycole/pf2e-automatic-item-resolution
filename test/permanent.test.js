@@ -751,3 +751,17 @@ test("a cast in other words, \"as if you cast\" (Crown of the Companion's Share 
     assert.ok(bond.plan.notes.includes("At the end of the spell's duration, your ally recovers 4d8 Hit Points and you recover half of what they recover."));
     assert.notEqual(compileActivations(item("Whisperer of Souls"), { spells })[0].plan?.builtin, "cast-spell");
 });
+
+test("a roll on its own table (Madcap Top's d20, Pistol of Wonder's d%): each row compiled alone — a spell it names cast at the table's DC and attack, a row nothing reads its words for the GM", async () => {
+    const { spellIndex } = await import("../src/compiler/index.js");
+    const { routeOf } = await import("../src/live/route.js");
+    const { rowFor } = await import("../src/compiler/random-table.js");
+    const spells = spellIndex(readDocuments(path.join(`${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`, "spells")).filter((doc) => doc.collection === "items"));
+    const [spin] = compileActivations(item("Madcap Top"), { spells });
+    assert.deepEqual([routeOf(spin.plan), spin.plan.table.die, spin.plan.table.rows.length], ["table", "1d20", 20]);
+    const slow = rowFor(spin.plan.table, 2).plan;
+    assert.deepEqual([slow.builtin, slow.spell.name, slow.dc, slow.attack], ["cast-spell", "Slow", 27, 17]);
+    assert.equal(rowFor(spin.plan.table, 13).plan, undefined);
+    const [shot] = compileActivations(item("Pistol of Wonder"), { spells });
+    assert.deepEqual([shot.plan.table.die, rowFor(shot.plan.table, 6).plan.spell.name, rowFor(shot.plan.table, 6).plan.rank, rowFor(shot.plan.table, 51).plan.dc], ["1d100", "Rewrite Memory", 6, 29]);
+});
