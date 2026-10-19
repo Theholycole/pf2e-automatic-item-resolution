@@ -725,9 +725,12 @@ function lightOf(sentences, duration, used = new Set()) {
 // emanation. You and all allies in this area gain a +3 status bonus to saving throws against mental effects", Blakenshipper's
 // "… gain 15 temporary Hit Points that last for 1 round" → { row: { effects, modifiers }, radius, self, notes } or null:
 // the sentence read as its user's own ("you gain …") for each creature the presser targets. The rest of the text is notes.
-const ALLIES = /^(You and (?:your )?)?(?:all )?(?:your )?allies (?:(?:within|in) (?:a |an )?(\d+)[- ](?:foot|feet)(?: emanation| radius| of you)?|in this area)(?: (?:that|who) can (?:see|hear) you)?,? (gain|receive)\b/i;
+// (Or a condition they're in: a third-party scepter quickens its user and the allies near them, "are Quickened".)
+const ALLIES = /^(You and (?:your )?)?(?:all )?(?:your )?allies (?:(?:within|in) (?:a |an )?(\d+)[- ](?:foot|feet)(?: emanation| radius| of you)?|in this area)(?: (?:that|who) can (?:see|hear) you)?,? (gain|receive|are|become)\b/i;
 export function allyAreaRow(text, duration = null) {
-    const sentences = sentencesOf(String(text ?? "").replace(/^.*?\bEffect\b\s*/s, ""));
+    // (Its activation's lines without an Effect heading — a frequency and a cost in spell slots, then the allies' sentence: read from the
+    // allies on.)
+    const sentences = sentencesOf(String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "").replace(/^.*?\b(?:Cost|Frequency|Requirements?)\b[^.]*?\s(?=You and (?:your )?(?:all )?allies\b)/s, ""));
     const index = sentences.findIndex((sentence) => ALLIES.test(sentence.trim()));
     if (index < 0) return null;
     const sentence = sentences[index].trim();
@@ -735,7 +738,7 @@ export function allyAreaRow(text, duration = null) {
     const radius = Number(match[2] ?? /(\d+)-foot (?:emanation|radius|aura)/i.exec(sentences.slice(0, index).join(" "))?.[1]);
     if (!radius) return null;
     // ("their attack rolls", "the Quickened condition": as its user's own words.)
-    const own = sentence.replace(match[0], "You gain").replace(/\btheir\b/gi, "your").replace(/\bgain the (\w+) condition\b/i, "become $1");
+    const own = sentence.replace(match[0], /^(?:are|become)$/i.test(match[3]) ? `You ${match[3].toLowerCase()}` : "You gain").replace(/\btheir\b/gi, "your").replace(/\bgain the (\w+) condition\b/i, "become $1");
     // (Sustained "for up to 1 minute": that long at most, the Sustain on the note.)
     const sustained = /\bSustain [^.]*?\bfor up to (\d+|one|a) (rounds?|minutes?)\b/i.exec(text);
     const time = durationIn(own, duration ?? itemDuration(text) ?? (sustained ? { mode: "fixed", value: WORD_NUMBERS[sustained[1].toLowerCase()] ?? Number(sustained[1]), unit: UNITS[sustained[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } : null));

@@ -282,6 +282,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               damage: extras.dice,
               attack: extras.attack,
               alteration: extras.alteration,
+              ...(extras.material ? { material: extras.material } : {}),
               ...(extras.degree ? { degree: extras.degree } : {}),
               ...(extras.runes ? { runes: extras.runes } : {}),
               ...(extras.options ? { options: extras.options } : {}),

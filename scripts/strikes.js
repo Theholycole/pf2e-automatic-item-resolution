@@ -57,7 +57,8 @@ export async function strikeWithRider(message) {
     const what = riderFor(rider.plan, { ranged: options.includes("item:ranged") && !options.includes("item:melee"), outcome: context.outcome, options, weaponId: rider.weaponId ?? null, ammoId: rider.ammoId ?? null });
     if (!what || what === "keep") return;
     if (rider.plan.strike?.instead) return strikeInstead({ message, context, actor, effect, rider, what });
-    // (Weapon Shot's striking rune counts: the damage roll's dice are its; so does flat splash damage, Jistkan War Crossbow's.)
+    // (Weapon Shot's striking rune counts: the damage roll's dice are its; so does flat splash damage, Jistkan War Crossbow's, and
+    // a precious material, Quicksilver Cloak's silver.)
     const rolled = addsToDamage(rider.plan);
     // (A hit whose damage roll the Effect adds to: kept for it.)
     if (what === "hit" && rolled) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.awaiting`]: true });
@@ -168,7 +169,7 @@ async function strikeInstead({ message, context, actor, effect, rider, what }) {
 
 // PF2e's damage roll of a Strike by a creature whose readied Strike carries extra dice: that Strike's damage is rolled, so
 // it's spent (with its Effect's rules in the roll). The item's own weapon must be the one rolled.
-const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.runes?.striking || plan.strike?.splash);
+const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash);
 async function damageWithRider(message) {
     const context = message.flags.pf2e.context;
     if (context.sourceType !== "attack") return;

@@ -38,6 +38,7 @@ export function strikeLines(plan) {
     return [
         strike.attack ? `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll` : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
+        strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
         ...(strike.options ?? []).map((option) => (/^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
         ...(strike.suppress ?? []).map((penalty) => `No ${penalty} penalty`),
@@ -130,6 +131,8 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     }));
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });
+    // (A precious material for it: PF2e's AdjustStrike on the Strikes it's for.)
+    if (strike.material) rules.push({ key: "AdjustStrike", mode: "add", property: "materials", value: strike.material, definition: weaponId ? [`item:id:${weaponId}`] : strike.unarmed ? ["item:category:unarmed"] : range ? [`item:${range}`] : [] });
     if (strike.degree) rules.push({ key: "AdjustDegreeOfSuccess", selector: attackSelector, adjustment: strike.degree, ...(label ? { label } : {}), ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     // (Its roll options for the attack — "ignore-range-penalty:2", Sniper's Bead —, a trait's penalty suppressed — kickback, Alchemist's
     // Damper —, flat splash damage — Jistkan War Crossbow.)

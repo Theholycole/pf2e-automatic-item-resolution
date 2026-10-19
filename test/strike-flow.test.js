@@ -504,3 +504,10 @@ test("a shot whose rider is the gun's modular configuration's (Hydrocannon's Tin
     assert.deepEqual(piercing.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["all-speeds", -10, "circumstance"]]);
     assert.deepEqual([slashing.strike.own, slashing.strike.damage], [true, [{ diceNumber: 1, dieSize: "d6", category: "persistent", damageType: "bleed" }]]);
 });
+
+test("a Strike treated as a precious material (Quicksilver Cloak's silver shot): PF2e's AdjustStrike materials on the ranged Strike it readies, kept for its damage roll", () => {
+    const [slide] = compileActivations(source("Quicksilver Cloak"));
+    assert.deepEqual([slide.plan.strike.range, slide.plan.strike.material], ["ranged", "silver"]);
+    assert.ok(strikeLines(slide.plan).includes("It's treated as silver"));
+    assert.deepEqual(strikeRules(slide.plan, { label: "Quicksilver Cloak" }), [{ key: "AdjustStrike", mode: "add", property: "materials", value: "silver", definition: ["item:ranged"] }]);
+});

@@ -687,3 +687,14 @@ test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spu
     assert.equal(teleportText(compileActivations(item("Gloaming Shard"))[0].plan.teleport), "To a space adjacent to the creature targeted");
     assert.notEqual(compileActivations(item("Spear of the Destroyer's Flame"))[0].plan?.builtin, "teleport");
 });
+
+test("allies in an area put in a condition, read without an Effect heading (a third-party scepter: its user and the allies within 30 feet Quickened for 1 minute, the extra action's limit a note)", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { readDocuments: read } = await import("../../pf2e-automatic-ability-resolution/tools/leveldb.mjs");
+    const scepter = read(`${process.env.HOME}/.local/share/FoundryVTT/Data/modules/pf2e-team-plus-magic/packs/items`).find((doc) => doc.collection === "items" && doc.name === "Scepter of Quickening");
+    if (!scepter) return;
+    const [, hasten] = compileActivations(scepter);
+    assert.deepEqual([routeOf(hasten.plan), hasten.plan.allyArea], ["save", true]);
+    assert.deepEqual(hasten.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.unit]), [["quickened", 1, "minutes"]]);
+    assert.equal(hasten.plan.notes.length, 1);
+});

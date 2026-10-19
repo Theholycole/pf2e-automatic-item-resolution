@@ -4566,6 +4566,35 @@ export const cases = {
         return { ways: names, formula };
     },
 
+    // Quicksilver Cloak's Slide Through: the readied ranged Strike is silver — PF2e's AdjustStrike materials, in the hit's damage roll.
+    async quicksilverShot(scene) {
+        const { actor: archer } = await creature(scene, "Quicksilver Archer", { type: "character", x: 17, y: 2 });
+        const cloak = await give(archer, "Quicksilver Cloak");
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Arrows");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(cloak.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const rule = () => archer.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((entry) => entry.key === "AdjustStrike" && entry.property === "materials");
+        await until(() => rule(), "the silver AdjustStrike", { timeout: 8000 });
+        const { token: foeToken } = await creature(scene, "Quicksilver Target", { x: 19, y: 2, ac: 1, alliance: "opposition", hp: 300 });
+        await until(() => foeToken.object, "the target drawn", { timeout: 5000 });
+        await target(foeToken);
+        const { action, attack } = await strike(archer, bow);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        await wait(800);
+        since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const materials = (rolled.rolls[0]?.instances ?? []).flatMap((instance) => [...(instance.materials ?? [])]);
+        const options = rolled.flags.pf2e.context.options ?? [];
+        assert(materials.includes("silver") || options.some((option) => /material:silver/.test(option)), `silver in the damage roll (${JSON.stringify(materials)}; ${options.filter((option) => /material/.test(option)).join(", ")})`);
+        return { materials, outcome };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 746,
+   "resolves": 747,
    "builtin:cast-spell": 470,
-   "none": 610,
+   "none": 609,
    "partial": 181,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
@@ -31,12 +31,12 @@
    "save": 431,
    "cast": 470,
    "item": 590,
-   "none": 741,
+   "none": 740,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
    "reroll": 25,
-   "strike": 87,
+   "strike": 88,
    "teleport": 6,
    "zone": 23,
    "toggle": 32,
@@ -54,9 +54,9 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 455,
+    "resolves": 456,
     "builtin:cast-spell": 341,
-    "none": 419,
+    "none": 418,
     "partial": 80,
     "builtin:focus-point": 43,
     "builtin:counteract": 21,
@@ -14242,9 +14242,9 @@
    "time": "1",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Memory Guitar",

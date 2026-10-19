@@ -25,6 +25,7 @@ const WEAPON_DICE = /\b(?:an )?extra (?:(one|two|three|four|\d+) )?(?:die|dice) 
 const ATTACK = /\+(\d+) (status|circumstance|item) bonus to (?:this Strike|the Strike|the attack roll|your attack roll|this attack|the attack)\b/i;
 // ("All damage from this Strike is fire damage"; Battering Ammunition's "It deals bludgeoning damage instead of its normal damage type".)
 // (And Blessed Ampoule's "the weapon's physical damage for the Strike becomes spirit damage".)
+const MATERIAL_STRIKE = /\bThe (?:attack|Strike) is treated as (silver|cold iron|adamantine)\b\.?/i;
 const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike is (${TYPES}) damage\b|\b(?:It|The Strike|This Strike|The ammunition) deals (${TYPES}) damage instead of its (?:normal|usual) damage type\b|\bthe weapon's (?:physical )?damage for the Strike becomes (${TYPES}) damage\b`, "i");
 // "Your outcome is one degree of success better than what you rolled": PF2e's AdjustDegreeOfSuccess on the attack roll.
 const BETTER = /\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i;
@@ -92,6 +93,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const dice = [];
     let attack = null;
     let alteration = null;
+    let material = null;
     let degree = null;
     let runes = null;
     const options = [];
@@ -123,6 +125,12 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         if (bonus && !attack) {
             attack = { value: Number(bonus[1]), type: bonus[2].toLowerCase() };
             rest = rest.replace(bonus[0], " ");
+        }
+        // (A precious material for the Strike, Quicksilver Cloak's "The attack is treated as silver": PF2e's AdjustStrike materials.)
+        const treated = MATERIAL_STRIKE.exec(rest);
+        if (treated) {
+            material = { silver: "silver", "cold iron": "cold-iron", adamantine: "adamantine" }[treated[1].toLowerCase()];
+            rest = rest.replace(treated[0], " ");
         }
         const altered = ALTERATION.exec(rest);
         if (altered) {
@@ -167,5 +175,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     // (The rune step in place of the first die, for the item's rune.)
     const step = steps.filter((entry) => striking >= entry.rune).sort((a, b) => b.rune - a.rune)[0];
     if (step && dice.length) dice[0] = { ...dice[0], diceNumber: step.count, dieSize: `d${step.faces}` };
-    return { dice, attack, alteration, degree, ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), notes, read: Boolean(dice.length || attack || alteration || degree || runes || options.length || suppress.length || splash) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash) };
 }
