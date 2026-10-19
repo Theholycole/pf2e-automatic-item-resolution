@@ -197,9 +197,13 @@ export function resistanceText(resist) {
     const byValue = new Map();
     // (A type to choose: "acid, cold or fire (one, chosen)".)
     // (Damage from some creatures: its own words, "spirit and void damage from unholy creatures".)
-    for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), entry.type === "custom" ? entry.label.charAt(0).toLowerCase() + entry.label.slice(1) : entry.type ? typeWords(entry.type) : `${entry.choose.slice(0, -1).join(", ")} or ${entry.choose.at(-1)} (one, chosen)`]);
+    // (All damage but some: "all damage except force and ghost touch, double against non-magical".)
+    const but = (entry) => (entry.exceptions?.length ? ` except ${entry.exceptions.map(typeWords).join(" and ")}` : "") + (entry.doubleVs?.length ? `, double against ${entry.doubleVs.map(typeWords).join(" and ")}` : "");
+    for (const entry of resist) byValue.set(entry.value, [...(byValue.get(entry.value) ?? []), entry.type === "custom" ? entry.label.charAt(0).toLowerCase() + entry.label.slice(1) : entry.type ? `${typeWords(entry.type)}${but(entry)}` : `${entry.choose.slice(0, -1).join(", ")} or ${entry.choose.at(-1)} (one, chosen)`]);
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration;
-    return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${duration ? ` for ${timeText(duration)}` : ""}`;
+    // (A turn's end or start: "until the end of the turn".)
+    const time = !duration ? "" : duration.anchor === "source-turn" ? ` until the ${duration.expiry === "turn-end" ? "end" : "start"} of the ${duration.value ? "next " : ""}turn` : ` for ${timeText(duration)}`;
+    return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${time}`;
 }
 
 // A Speed in words: "A fly Speed equal to your land Speed until the end of the next turn", "A swim Speed of 30 feet".
@@ -272,7 +276,7 @@ export const chosenResistances = (resist, index = 0) => resist.map((entry) => (e
 // Its resistance's Effect: PF2e's Resistance rules. moduleId: the flag's scope.
 // One resistance as PF2e's rule; damage from some creatures as its custom type, the damage's types and its source's traits.
 // (Or immunity, Dragonclaw Scutcheon's "immunity to all damage of that type": PF2e's Immunity rule.)
-const resistanceRule = ({ type, value, from = [], damage = [], label, immune = false }) => (immune ? { key: "Immunity", type } : type === "custom" ? { key: "Resistance", type: "custom", definition: [...(damage.length ? [{ or: damage.map((kind) => `damage:type:${kind}`) }] : []), { or: from.map((trait) => `origin:trait:${trait}`) }], label, value } : { key: "Resistance", type, value });
+const resistanceRule = ({ type, value, from = [], damage = [], label, immune = false, exceptions = [], doubleVs = [] }) => (immune ? { key: "Immunity", type } : exceptions.length || doubleVs.length ? { key: "Resistance", type, value, ...(exceptions.length ? { exceptions } : {}), ...(doubleVs.length ? { doubleVs } : {}) } : type === "custom" ? { key: "Resistance", type: "custom", definition: [...(damage.length ? [{ or: damage.map((kind) => `damage:type:${kind}`) }] : []), { or: from.map((trait) => `origin:trait:${trait}`) }], label, value } : { key: "Resistance", type, value });
 export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration ?? null;
     return ownEffectSource({ name: "resistance", img: "icons/svg/shield.svg", words: resistanceText(resist), rules: resist.map(resistanceRule), duration, flag: { resist: true }, item, user, worldTime, initiative, moduleId });

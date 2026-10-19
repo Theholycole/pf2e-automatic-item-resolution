@@ -263,6 +263,15 @@ test("a talisman of one dragon: Dragonclaw Scutcheon's immunity to the picked ty
     assert.ok(cold.notes.includes("Until the end of your next turn, the affixed weapon's other Strikes deal cold damage too (by hand)."));
 });
 
+test("resistance to all damage but some (Silhouette Cloak): PF2e's Resistance with exceptions and doubled against non-magical; its reaction the first activation's resistance until the end of the turn, the light trait's exception a note", () => {
+    const [shadow, fold] = compileActivations(source("Silhouette Cloak"));
+    const [resist] = shadow.plan.item.resist;
+    assert.deepEqual([resist.type, resist.value, resist.exceptions, resist.doubleVs], ["all-damage", 20, ["force", "ghost-touch"], ["non-magical"]]);
+    assert.deepEqual(resistanceEffectSource([resist], { item: { name: "Silhouette Cloak" } }).system.rules, [{ key: "Resistance", type: "all-damage", value: 20, exceptions: ["force", "ghost-touch"], doubleVs: ["non-magical"] }]);
+    assert.ok(shadow.plan.unread.some((sentence) => /light trait/.test(sentence)), "the light trait's exception a note");
+    assert.equal(resistanceText(fold.plan.item.resist), "Resistance 20 to all damage except force and ghost touch, double against non magical until the end of the turn");
+});
+
 test("a shield changing form until activated again (Sapling Shield): a tower shield's +2 AC and –5-foot Speed by PF2e's ItemAlteration on that shield, its Hardness and Bulk a note", async () => {
     const { shieldFormEffectSource, shieldFormText } = await import("../src/live/card.js");
     const [sapling] = compileActivations(source("Sapling Shield (Major)"));

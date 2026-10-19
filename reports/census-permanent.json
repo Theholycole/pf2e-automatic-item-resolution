@@ -8,8 +8,8 @@
   "results": {
    "resolves": 751,
    "builtin:cast-spell": 471,
-   "none": 599,
-   "partial": 182,
+   "none": 597,
+   "partial": 184,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
@@ -31,8 +31,8 @@
   "live": {
    "save": 435,
    "cast": 471,
-   "item": 586,
-   "none": 730,
+   "item": 588,
+   "none": 728,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
@@ -58,8 +58,8 @@
    "results": {
     "resolves": 455,
     "builtin:cast-spell": 342,
-    "none": 415,
-    "partial": 80,
+    "none": 413,
+    "partial": 82,
     "builtin:focus-point": 43,
     "builtin:counteract": 21,
     "builtin:readied-bonus": 33,
@@ -26838,9 +26838,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Silhouette Cloak",
@@ -26849,9 +26849,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Flash Beetle Lantern",

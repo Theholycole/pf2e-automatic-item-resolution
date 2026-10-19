@@ -453,9 +453,34 @@ function sourcedResistances(sentences, duration, used) {
     return found;
 }
 
+// Resistance to all damage but some, Silhouette Cloak's "You gain resistance 20 to all damage except force damage, damage from effects with
+// the light trait, and damage from Strikes with the ghost touch property rune. This increases to resistance 40 against nonmagical damage."
+// → [{ type: "all-damage", value, exceptions, doubleVs?, duration }] (PF2e's Resistance with exceptions and doubleVs; an exception PF2e
+// has no word for — the light trait's — stays a note).
+const ALL_BUT = /\byou gain resistance (\d+) to all damage except ([^.]+)\./i;
+const DOUBLED = /^\s*This increases to resistance (\d+) against nonmagical damage\.\s*$/i;
+const EXCEPTION_WORDS = [[/^force(?: damage)?$/i, "force"], [/^spirit(?: damage)?$/i, "spirit"], [/^damage (?:caused by|from Strikes with) (?:a |the )?ghost touch(?: property)? rune$/i, "ghost-touch"]];
+function allButResistance(sentences, duration, used) {
+    for (const [index, sentence] of sentences.entries()) {
+        const match = ALL_BUT.exec(sentence);
+        if (!match) continue;
+        const words = match[2].split(/,\s*(?:and\s+)?|\s+and\s+/).map((word) => word.trim()).filter(Boolean);
+        const exceptions = words.map((word) => EXCEPTION_WORDS.find(([pattern]) => pattern.test(word))?.[1]).filter(Boolean);
+        if (!exceptions.length) return [];
+        const value = Number(match[1]);
+        const doubled = DOUBLED.exec(sentences[index + 1] ?? "");
+        if (doubled && Number(doubled[1]) === value * 2) used.add(index + 1);
+        if (exceptions.length === words.length) used.add(index);
+        return [{ type: "all-damage", value, exceptions, ...(doubled && Number(doubled[1]) === value * 2 ? { doubleVs: ["non-magical"] } : {}), duration: timeIn(sentence, duration) }];
+    }
+    return [];
+}
+
 function resistancesOf(sentences, duration, used = new Set()) {
     const sourced = sourcedResistances(sentences, duration, used);
     if (sourced.length) return sourced;
+    const allBut = allButResistance(sentences, duration, used);
+    if (allBut.length) return allBut;
     const found = [];
     // ("you gain resistance 5 to fire", "that creature gains 3 resistance to acid", "resistance 3 to area damage and splash damage".)
     const pattern = /\b(?:you (?:gain|get|have)|(?:that|the) creature (?:gains|has)) (?:resistance (\d+)|(\d+) resistance) to ((?:all|[a-z]+)(?: damage)?(?:(?:,|, and| and) [a-z]+(?: damage)?)*)(?: damage)?(?=[.;]|,? (?:but|and)\b| for\b| until\b|$)/gi;

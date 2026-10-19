@@ -4694,6 +4694,21 @@ export const cases = {
         return { results };
     },
 
+    // Silhouette Cloak's reaction: resistance 20 to all damage except force and ghost touch, doubled against non-magical, on its wearer.
+    async silhouetteFold(scene) {
+        const { actor: user } = await creature(scene, "Silhouette Wearer", { type: "character", x: 18, y: 10 });
+        const cloak = await give(user, "Silhouette Cloak");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(cloak.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const resist = () => (user.system.attributes.resistances ?? []).find((entry) => entry.type === "all-damage");
+        await until(() => resist()?.value === 20, `resistance 20 to all damage (${JSON.stringify((user.system.attributes.resistances ?? []).map((entry) => [entry.type, entry.value]))})`, { timeout: 8000 });
+        const entry = resist();
+        assert([...(entry.exceptions ?? [])].includes("force") && [...(entry.doubleVs ?? [])].includes("non-magical"), `force excepted, double against non-magical (${JSON.stringify({ exceptions: entry.exceptions, doubleVs: entry.doubleVs })})`);
+        return { exceptions: [...entry.exceptions], doubleVs: [...entry.doubleVs] };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

@@ -309,6 +309,11 @@ export function withItemData(html, item) {
     // Knowledge about hags, and to saving throws made against hags' abilities and spells": the saves against hags read (PF2e's origin
     // trait), the other two by hand.)
     text = text.replace(/\bgranting you an? \+(\d+) (status|item|circumstance) bonus Perception checks to pierce a hag's disguise, to skill checks to (@UUID\[[^\]]*\]\{Recall Knowledge\}|Recall Knowledge) about hags, and to saving throws made against hags' abilities and spells\./i, (all, value, type) => `granting you a +${value} ${type} bonus to saving throws against hags. You also gain that bonus to Perception checks to pierce a hag's disguise and to Recall Knowledge about hags (by hand).`);
+    // (A reaction that gives the first activation's benefits for a moment, Silhouette Cloak's "gaining the benefits of the first activation until
+    // the end of the current creature's turn. The damage resistance applies to the triggering damage": that activation's resistance until the
+    // end of the turn, its other benefits by hand.)
+    const first = /\byou gain resistance \d+ to all damage except [^.]+\.(?:\s*This increases to resistance \d+ against nonmagical damage\.)?/i.exec(text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
+    if (first) text = text.replace(/\bgaining the benefits of the first activation until the end of the current creature's turn\. The damage resistance applies to the triggering damage\./i, `gaining the first activation's resistance. Until the end of the current turn, ${first[0].charAt(0).toLowerCase()}${first[0].slice(1)} Its other benefits of the first activation apply until then too (by hand).`);
     // (A portion's use as its own activation, Tallowheart Mass's "If you rub a portion between your hands, the mass melts into your flesh and
     // you gain the Quickened condition for 1 minute": its user's, as the conditions reader takes one.)
     text = text.replace(/\bIf you rub a portion between your hands, the mass melts into your flesh and you gain the (@UUID\[[^\]]*\]\{Quickened\}|Quickened) condition for (\d+ (?:minutes?|rounds?))\./i, (all, quickened, time) => `You become ${quickened} for ${time}.`);
