@@ -4,7 +4,7 @@ A Foundry VTT module (id `pf2e-automatic-item-resolution`) that automates Pathfi
 
 Spell-casting items (scrolls, wands, staves, catalysts, spellhearts) belong to PF2e Automatic Spell Resolution.
 
-**Status (2026-10-19): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 239 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
+**Status (2026-10-19): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 238 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
 
 ## Install
 
@@ -61,7 +61,7 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
   - **Setting "Hero Points instead of Mythic Points"** (world, off by default): those costs are paid with the user's Hero Points.
   - **A Mythic Point spent for more** (the Day's Breath potions, Vortex Pouch, Shield of Snakes, Sorshen's Scintillating Garment and Sinuous Guisarme): the card has two buttons, "As it is" and "Spending a Mythic Point". The second is the upgraded use, which costs the point. The breaths last 7 days, 30 days or a year, and the guisarme's spell has DC 50. Where the module can't do the upgrade itself, its text is a note on the card.
 
-The census counts what's played: 1,132 of the 1,486 consumables this module handles get a card, and 1,617 of the 2,593 activations of permanent items. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module. A module's own linked Effect is applied only when its rules match the item's text; otherwise the creature gets a note of the text. The exceptions are 20 Effects you chose to have applied anyway: ones whose numbers or grade differ from the text, and ones whose rules the check can't read.
+The census counts what's played: 1,132 of the 1,486 consumables this module handles get a card, and 1,617 of the 2,593 activations of permanent items. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module. A module's own linked Effect is applied only when its rules match the item's text; otherwise the creature gets a note of the text. The exception is the 12 Effects you chose to have applied anyway. Their items' text would otherwise give only a note: the Effect is a grade off, or the check can't read its rules. Items whose text the module plays itself keep that.
 
 ## The module's own items
 

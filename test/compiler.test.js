@@ -325,12 +325,13 @@ test("a third-party module's own Effect: linked in its short form, checked again
     // (The Effects applied whatever the check says, the user's answer of 2026-10-19: by their Effect's id, kept in the item when compiled.)
     const { appliedAnyway } = await import("../src/compiler/verify-effect.js");
     const { withoutUnverifiedLinks } = await import("../src/compiler/unverified-links.js");
-    assert.equal(appliedAnyway("Compendium.some-module.misc.Item.WEKdjn7LktX1GBL8"), true, "by its id");
+    assert.equal(appliedAnyway("Compendium.some-module.misc.Item.cjD7GRKEz6jAj8Cy"), true, "by its id");
+    assert.equal(appliedAnyway("Compendium.some-module.misc.Item.yW1V8GYB29XXhV0K"), false, "one whose text is played instead");
     assert.equal(appliedAnyway("Compendium.some-module.some-pack.Item.ABCDEFGHIJKLMNOP"), false);
     const statusSnack = (id) => ({ system: { description: { value: `<p>You gain a +1 item bonus to Stealth checks for 1 hour. @UUID[Compendium.some-module.some-pack.Item.${id}]{Effect: Test Snack}</p>` } } });
     const effect = () => ({ name: "Effect: Test Snack", rules: [{ key: "FlatModifier", selector: "stealth", value: 1, type: "status" }] });
     assert.ok(withoutUnverifiedLinks(statusSnack("ABCDEFGHIJKLMNOP"), { moduleEffect: effect, conditionNames: {} }), "a mismatch dropped");
-    assert.equal(withoutUnverifiedLinks(statusSnack("WEKdjn7LktX1GBL8"), { moduleEffect: effect, conditionNames: {} }), null, "one applied anyway kept");
+    assert.equal(withoutUnverifiedLinks(statusSnack("cjD7GRKEz6jAj8Cy"), { moduleEffect: effect, conditionNames: {} }), null, "one applied anyway kept");
 });
 
 test("a module's own Effect its text doesn't bear out, known when compiled: its text read instead, when that's more than a note", () => {

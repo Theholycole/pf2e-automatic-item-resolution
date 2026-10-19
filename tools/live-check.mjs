@@ -35,6 +35,14 @@ async function messageAfter(since, test, { timeout = 8000, what = "the card" } =
 const itemCard = (kind) => (message) => message.getFlag(NS, "card")?.kind === kind;
 const abilitySaveCard = (message) => Boolean(message.flags?.["pf2e-automatic-ability-resolution"]?.card?.plan?.resolution?.check);
 
+// The lab's squares a case needs free (a teleport's): this module's test tokens a case before left there removed. (The lab is 20 squares
+// across and nearly every one is some case's.)
+async function clearSquares(scene, squares) {
+    const size = canvas.grid.size;
+    const ids = scene.tokens.filter((token) => String(token.name ?? token.actor?.name ?? "").startsWith(PREFIX) && squares.some(([x, y]) => token.x === x * size && token.y === y * size)).map((token) => token.id);
+    if (ids.length) await scene.deleteEmbeddedDocuments("Token", ids);
+}
+
 async function lab() {
     assert(game.world.id === "pftest" && game.user.isGM, "Disposable pftest, as GM, only.");
     assert(game.modules.get(NS)?.active, "Enable PF2e Automatic Item Resolution first.");
@@ -473,7 +481,7 @@ export const cases = {
     },
 
     // Alchemists+: Olobigonde Fugu's own Effect matches its text and is applied; Spotlight Sunflower (Moderate)'s doesn't (it
-    // links the Lesser one's) and, its text a note only, gives a note instead.
+    // links the Lesser one's), but its text is a note only, so its Effect is applied anyway (the user's answer of 2026-10-19).
     async thirdPartyEffects(scene) {
         assert(game.modules.get("pf2e-team-plus-alchemists")?.active, "Alchemists+ isn't active in pftest.");
         const { actor: eater } = await creature(scene, "Fugu Eater", { type: "character", x: 6, y: 3 });
@@ -494,8 +502,8 @@ export const cases = {
         end = Date.now() + 6000;
         let results = [];
         while (Date.now() < end && !(results = game.messages.get(card.id).getFlag(NS, "card").results ?? []).length) await wait(250);
-        assert(!eater.itemTypes.effect.some((entry) => entry.name === "Effect: Spotlight Sunflower (Lesser)"), "not the mismatching Effect");
-        assert(results.some((line) => /wasn't applied/.test(line)), `a note instead (${JSON.stringify(results)})`);
+        await until(() => eater.itemTypes.effect.some((entry) => entry.name === "Effect: Spotlight Sunflower (Lesser)"), "the mismatching Effect applied anyway", { timeout: 6000 });
+        assert(!results.some((line) => /wasn't applied/.test(line)), `no note instead (${JSON.stringify(results)})`);
         return { results };
     },
 
@@ -4575,6 +4583,7 @@ export const cases = {
 
     // Quartz-Coil Rail Transport (Lesser), a consumable: up to 20 feet — 25 feet off refused, then 20 feet off, the token there at once.
     async quartzCoil(scene) {
+        await clearSquares(scene, [[0, 4], [4, 4], [5, 4]]);
         const { actor: user, token } = await creature(scene, "Coil Rider", { type: "character", x: 0, y: 4 });
         const coil = await give(user, "Quartz-Coil Rail Transport (Lesser)");
         const since = Date.now();
@@ -4591,6 +4600,7 @@ export const cases = {
 
     // Dimension Shot: a space adjacent to the creature hit (targeted) — one two squares off it refused, then one beside it, the token there.
     async dimensionShot(scene) {
+        await clearSquares(scene, [[0, 6], [4, 6], [5, 6], [6, 6]]);
         const { actor: user, token } = await creature(scene, "Dimension Archer", { type: "character", x: 0, y: 6 });
         const { token: foeToken } = await creature(scene, "Dimension Mark", { x: 6, y: 6, alliance: "opposition" });
         const shot = await give(user, "Dimension Shot");
@@ -5156,20 +5166,6 @@ export const cases = {
         await drink("Spending a Mythic Point");
         assert(lasting().includes("7 days") && mythic() === 0, `7 days, the point spent (${lasting()}; ${mythic()})`);
         return { lasting: lasting(), mythic: mythic() };
-    },
-
-    // A third-party Effect applied though its numbers differ from its text (the user's answer of 2026-10-19): Alchemists+ Concealing Puffball
-    // (Lesser)'s own Effect on its drinker, not a note.
-    async appliedAnyway(scene) {
-        if (!game.modules.get("pf2e-team-plus-alchemists")?.active) return { skipped: "Alchemists+ isn't active" };
-        const { actor: user } = await creature(scene, "Puffball Drinker", { type: "character", x: 20, y: 8 });
-        const puffball = await give(user, "Concealing Puffball (Lesser)", "pf2e-team-plus-alchemists.pf2e-items");
-        const since = Date.now();
-        await puffball.consume();
-        const card = await messageAfter(since, itemCard("item"), { what: "the puffball's card" });
-        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
-        await until(() => user.itemTypes.effect.some((effect) => effect.name === "Effect: Concealing Puffball (Lesser)"), "its own Effect", { timeout: 8000 });
-        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
