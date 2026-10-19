@@ -51,6 +51,17 @@ export function withArmorPotency(html, armor) {
         .replace(said, "");
 }
 
+// (A weapon rune's bonus as its weapon's potency, Cunning's "Attempt to Recall Knowledge about the target of the required attack, gaining
+// an item bonus to the Recall Knowledge skill check equal to the weapon's item bonus to attack rolls from its potency rune": that check
+// with the weapon's +N, as the skill-action reader takes it; the critical hit's +2 circumstance a note.)
+export function withWeaponPotency(html, weapon) {
+    const text = String(html ?? "");
+    const potency = Number(weapon?.system?.runes?.potency) || 0;
+    const said = /\bAttempt to (?:@UUID\[[^\]]*\]\{)?Recall Knowledge\}? about the target of the required attack, gaining an item bonus to the Recall Knowledge skill check equal to the weapon's item bonus to attack rolls from its potency rune\./i;
+    if (!potency || !said.test(text)) return text;
+    return text.replace(said, `Attempt a Recall Knowledge check with a +${potency} item bonus about the target of the required attack.`);
+}
+
 export function etchedRuneActivations(item, index, options = {}) {
     if (!ETCHED_ONTO.includes(item?.type) || !index?.size) return [];
     const found = [];
@@ -58,7 +69,7 @@ export function etchedRuneActivations(item, index, options = {}) {
         const source = index.get(key);
         if (!source) continue;
         // (Its text with the weapon's own numbers: "1d8 per weapon damage die of the etched weapon".)
-        const text = item.type === "weapon" ? perWeaponDie(source.system?.description?.value, weaponDice(item), item.system?.damage?.damageType ?? null) : item.type === "armor" ? withArmorPotency(source.system?.description?.value, item) : source.system?.description?.value;
+        const text = item.type === "weapon" ? withWeaponPotency(perWeaponDie(source.system?.description?.value, weaponDice(item), item.system?.damage?.damageType ?? null), item) : item.type === "armor" ? withArmorPotency(source.system?.description?.value, item) : source.system?.description?.value;
         const rune = text === source.system?.description?.value ? source : { ...source, system: { ...source.system, description: { ...(source.system?.description ?? {}), value: text } } };
         for (const entry of compileActivations(rune, options)) found.push({ ...entry, index: `rune:${key}:${entry.index}`, rune: { key, name: source.name, uuid: source.uuid ?? null } });
     }

@@ -170,3 +170,14 @@ test("Swallow-Spike etched on +2 armor: its attack at the armor's bonus (+16, 2d
     for (const entry of [reaction, action]) assert.deepEqual([entry.plan.ownCheck.modifier, entry.plan.resolution.sharedDamage.components[0].formula, entry.plan.resolution.sharedDamage.components[0].type], [16, "2d6+4", "piercing"]);
     assert.deepEqual([reaction.plan.activation.time, action.plan.activation.time, action.plan.trigger.event], ["reaction", "1", "use"]);
 });
+
+test("Cunning etched onto a +2 longsword: PF2e's Recall Knowledge with its weapon's +2 item bonus (the potency rune's), the critical hit's +2 circumstance a note", () => {
+    const sword = structuredClone(equipment.find((doc) => doc.name === "Longsword"));
+    sword.system.runes = { potency: 2, striking: 1, property: ["cunning"] };
+    const [cunning] = etchedRuneActivations(sword, runes);
+    assert.deepEqual([cunning.plan.builtin, cunning.plan.action.slug, cunning.plan.action.bonus], ["item-action", "recall-knowledge", { value: 2, type: "item" }]);
+    assert.match(cunning.plan.action.after, /^If the required attack was a critical hit, you also gain a \+2 circumstance bonus to this check\.$/);
+    // (No potency: the words as PF2e wrote them, nothing to roll.)
+    sword.system.runes.potency = 0;
+    assert.equal(etchedRuneActivations(sword, runes)[0].plan?.builtin === "item-action", false);
+});
