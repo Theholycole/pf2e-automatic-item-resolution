@@ -24,6 +24,7 @@ import { hitAroundPlan } from "./hit-around.js";
 import { cleanNotes } from "./notes.js";
 import { thrownPlan } from "./thrown.js";
 import { conjuredPlan } from "./conjured.js";
+import { baneWaysPlan } from "./bane.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
@@ -280,6 +281,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = coveredSquarePlan(activation.html, base, item, options) ?? plan;
         // (Walls it raises, with a save in their space, src/compiler/covered-square.js: Alkenstar Phalanx — over the save read alone.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = raisedWallsPlan(activation.html, base, item, options) ?? plan;
+        // (Ammunition made against one type of creature, src/compiler/bane.js: Bane Ammunition — the type picked on the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = baneWaysPlan(activation.html, base, part, options) ?? plan;
         // (Smoke sprayed into an adjacent square, src/compiler/covered-square.js: Beekeeper's Smoker.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = sprayedSmokePlan(activation.html, base) ?? plan;
         // (An area of stalagmites it raises for a while, src/compiler/covered-square.js: Stoneraiser Javelin.)

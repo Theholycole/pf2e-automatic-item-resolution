@@ -8,7 +8,7 @@
   "results": {
    "resolves": 742,
    "builtin:cast-spell": 470,
-   "none": 634,
+   "none": 631,
    "partial": 170,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
@@ -24,13 +24,13 @@
    "builtin:roll-twice": 11,
    "builtin:save-bonus": 3,
    "builtin:spellstrike": 9,
-   "builtin:ways": 1
+   "builtin:ways": 4
   },
   "live": {
    "save": 432,
    "cast": 470,
    "item": 584,
-   "none": 763,
+   "none": 760,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
@@ -42,7 +42,7 @@
    "action": 23,
    "coat": 3,
    "spellstrike": 9,
-   "ways": 1,
+   "ways": 4,
    "later": 3
   },
   "withFrequency": 1749,
@@ -96,10 +96,11 @@
     "partial": 35,
     "resolves": 44,
     "builtin:pf2e-rules": 24,
-    "none": 35,
+    "none": 32,
     "builtin:no-effect": 2,
     "note-only": 3,
     "builtin:spellstrike": 9,
+    "builtin:ways": 3,
     "builtin:zone": 1
    }
   },
@@ -13075,9 +13076,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Kindler Cameo",
@@ -17517,9 +17518,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Devoted Vestments",
@@ -24556,9 +24557,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Blade Byrnie (Greater)",

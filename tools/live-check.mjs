@@ -4259,6 +4259,41 @@ export const cases = {
         const has = (selector) => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes(selector) && rule.value === 2 && rule.type === "circumstance"));
         await until(() => has("ac") && has("reflex"), "+2 circumstance AC and Reflex", { timeout: 8000 });
         return { ok: true };
+    },
+
+    // Bane Ammunition (Moderate): the ways card's pick of its type — Dragon — readies the bow's next Strike with that arrow, 2d6
+    // persistent poison only against a creature with the dragon trait (PF2e's DamageDice predicate).
+    async baneArrow(scene) {
+        const { actor: archer } = await creature(scene, "Bane Archer", { type: "character", x: 1, y: 9 });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Bane Ammunition (Moderate)");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the type picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Dragon") });
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const dice = () => archer.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "DamageDice" && JSON.stringify(rule.predicate ?? []).includes("target:trait:dragon"));
+        await until(() => dice(), "the dragon-only poison dice", { timeout: 8000 });
+        assert(dice().diceNumber === 2 && dice().dieSize === "d6" && dice().category === "persistent" && dice().damageType === "poison", `2d6 persistent poison (${JSON.stringify(dice())})`);
+        // (Against a dragon, PF2e's damage roll carries it.)
+        const { actor: wyrm, token: wyrmToken } = await creature(scene, "Bane Wyrm", { x: 3, y: 9, ac: 1, alliance: "opposition", hp: 300 });
+        await wyrm.update({ "system.traits.value": ["dragon"] });
+        await until(() => wyrmToken.object, "the wyrm drawn", { timeout: 5000 });
+        await target(wyrmToken);
+        const { action, attack } = await strike(archer, bow);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        await wait(800);
+        since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
+        assert(/persistent/.test(formula) && /poison/.test(formula), `the dragon's damage carries the persistent poison (${formula})`);
+        return { rule: dice(), formula };
     }
 };
 

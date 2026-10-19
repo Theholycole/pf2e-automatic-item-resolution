@@ -124,7 +124,9 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
         diceNumber: entry.diceNumber,
         dieSize: entry.dieSize,
         ...(entry.damageType ? { damageType: entry.damageType } : {}),
-        ...(entry.category ? { category: entry.category } : {})
+        ...(entry.category ? { category: entry.category } : {}),
+        // (Only against some creatures: Bane Ammunition's type, "target:trait:dragon".)
+        ...(entry.predicate ? { predicate: entry.predicate } : {})
     }));
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });

@@ -484,3 +484,14 @@ test("Iron Cube: its melee Strike's hit posts PF2e's Trip card at the creature h
     assert.ok(posted.includes("item-action"), `the Trip card (${posted.join(", ")})`);
     assert.equal(readied().length, 0);
 });
+
+test("ammunition made against one type of creature (Bane Ammunition): the ways card's pick of the type, each way the next Strike's 2d6 persistent poison only against a creature with that trait", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const { strikeRules } = await import("../src/live/strike-card.js");
+    const [bane] = compileActivations(source("Bane Ammunition (Moderate)"));
+    assert.equal(bane.plan.builtin, "ways");
+    assert.deepEqual(bane.plan.ways.map((way) => way.name), ["Aberration", "Animal", "Beast", "Dragon", "Fey", "Giant", "Ooze", "Fungus and Plant"]);
+    const dragon = bane.plan.ways[3].plan;
+    assert.deepEqual([dragon.strike.ammo, strikeRules(dragon, { ammoId: "ammo1" }).find((rule) => rule.key === "DamageDice")], [true, { key: "DamageDice", selector: "ranged-strike-damage", slug: "item-extra-1", diceNumber: 2, dieSize: "d6", damageType: "poison", category: "persistent", predicate: ["target:trait:dragon"] }]);
+    assert.deepEqual(bane.plan.ways[7].plan.strike.damage[0].predicate, [{ or: ["target:trait:fungus", "target:trait:plant"] }]);
+});
