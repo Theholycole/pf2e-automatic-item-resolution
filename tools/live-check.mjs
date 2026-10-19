@@ -649,6 +649,25 @@ export const cases = {
         return { cast: cast.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Gate Attenuator's Elemental Spell: its six element spells as the cast card's picks — Snowball (water) picked, the spell module's cast at
+    // rank 1 at the creature targeted.
+    async gateAttenuator(scene) {
+        const { actor: user } = await creature(scene, "Attenuator Wearer", { type: "character", x: 15, y: 26 });
+        const { token: foeToken } = await creature(scene, "Attenuator Target", { x: 17, y: 26, alliance: "opposition" });
+        const gate = await give(user, "Gate Attenuator");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(gate.uuid, 0);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        const state = card.getFlag(NS, "card");
+        const names = state.plan.choices?.map((entry) => entry.spell.name) ?? [];
+        assert(names.length === 6 && names[4] === "Snowball" && state.plan.dc === 17, `six spells, DC 17 (${names.join(", ")}; ${state.plan.dc})`);
+        await game.modules.get(NS).api.live.apply(card.id, { choice: 4, targets: [foeToken.uuid] });
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        const flag = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        assert(flag.rank === 1 && (/Snowball/.test(cast.flavor ?? "") || /Snowball/.test(cast.content ?? "") || cast.item?.name === "Snowball"), `Snowball at rank 1 (${flag.rank})`);
+        return { cast: cast.id };
+    },
+
     // Night Sky Elixir: a +1 item bonus to saves only against what devils make (PF2e's origin:trait:devil).
     async nightSkyBonus(scene) {
         const { actor: drinker } = await creature(scene, "Night Sky Drinker", { x: 14, y: 8 });

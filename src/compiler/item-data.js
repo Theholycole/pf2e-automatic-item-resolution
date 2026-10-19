@@ -316,6 +316,11 @@ export function withItemData(html, item) {
     // reads it as Scapular of Shields'. What the shield itself takes is the GM's.)
     const hardness = Number(item?.system?.hardness);
     if (Number.isFinite(hardness) && hardness > 0) text = text.replace(/\bThe [\w' -]+? prevents you from taking an amount of damage up to (twice|three times) the shield's Hardness\./i, (all, times) => `You gain ${hardness * (times === "twice" ? 2 : 3)} resistance to ${/\bphysical damage\b/i.test(text) ? "physical" : "all"} damage against the triggering damage.`);
+    // (A spell by the element it's attuned to, Gate Attenuator's "casts a 5th-rank spell, with a spell attack modifier of +18 and spell DC of 28 …
+    // The spell corresponds to the element the item is attuned to" and its list "air Pressure Zone, earth Sand Form, …": the listed spells as
+    // the cast card's choices, at that rank, attack and DC.)
+    const byElement = [...text.matchAll(/<p><strong>(?:air|earth|fire|metal|water|wood)<\/strong> (@UUID\[Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+\]\{[^}]+\})<\/p>/g)].map((match) => match[1]);
+    if (byElement.length > 1) text = text.replace(/\bThe (?:<em>)?[\w' -]+?(?:<\/em>)? casts an? (\d+)(st|nd|rd|th)-rank spell, with a spell attack modifier of \+(\d+) and (?:a )?spell DC of (\d+)\./i, (all, rank, suffix, attack, dc) => `The item casts a ${rank}${suffix}-rank ${byElement.slice(0, -1).join(", ")}, or ${byElement.at(-1)} (the one of the element it's attuned to), with a spell attack modifier of +${attack} and a spell DC of ${dc}.`);
     // (A counteract its user is "affected by" as a spell, Key to the Stomach's "You're affected by a 5th-rank Cleanse Affliction spell to remove a
     // poison (counteract modifier +15)": the counteract card on its user, as src/compiler/counteract.js reads one aimed at "you".)
     text = text.replace(/\bYou're affected by an? (\d+)(?:st|nd|rd|th)-rank (@UUID\[[^\]]*\]\{Cleanse Affliction\}|Cleanse Affliction) spell to remove an? (poison|disease|curse) \(counteract modifier (?:\[\[\/r 1d20\+(\d+)[^\]]*\]\](?:\{[^}]*\})?|\+(\d+))\)\./i, (all, rank, spell, kind, rolled, plain) => `The item attempts to counteract one ${kind} affecting you, using a ${rank}th-rank counteract and a +${rolled ?? plain} counteract modifier (as ${spell}).`);

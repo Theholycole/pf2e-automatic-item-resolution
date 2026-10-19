@@ -93,6 +93,9 @@ test("a cast in words: the spell by its name, its rank, DC, counteract modifier,
     // "5th-rank Vitality Lash or Light, or 4th-rank Holy Light or Vital Beacon": a rank holds for the spells after it.
     assert.deepEqual(castOf("Dawnlight (Major)").choices.map((entry) => entry.rank), [5, 5, 4, 4]);
     assert.equal(castOf("Dawnlight (Major)").attack, 18, "its counteract modifier");
+    // (Gate Attenuator's "casts a 5th-rank spell" by the element it's attuned to: its six listed spells as choices, at its attack and DC.)
+    const gate = compileActivations(source("Gate Attenuator (Greater)"), { spells })[0].plan;
+    assert.deepEqual([gate.choices.map((entry) => `${entry.spell.name}@${entry.rank}`), gate.dc, gate.attack], [["Pressure Zone@5", "Sand Form@5", "Flames of Ego@5", "Impaling Spike@5", "Freezing Rain@5", "Entwined Roots@5"], 28, 18]);
     // "a counteract modifier of [[/r 1d20+23]]".
     assert.equal(castOf("Rod of Negation").attack, 23);
     // An area spell: no targets needed.
