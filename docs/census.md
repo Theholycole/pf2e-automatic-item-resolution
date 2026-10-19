@@ -24,7 +24,7 @@ Results, for the items this module handles:
 | builtin:cast-spell | 32 | 2% |
 | builtin:roll-twice | 2 | 0% |
 | builtin:readied-bonus | 21 | 1% |
-| builtin:no-effect | 52 | 3% |
+| builtin:no-effect | 51 | 3% |
 | builtin:save-bonus | 1 | 0% |
 | none | 208 | 14% |
 
@@ -51,7 +51,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 
 | Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | fortune | action | counteract | ways | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 214 | 3 | 3 | 96 | 11 | 11 | 19 | 3 | 0 | 7 | 1 | 5 | 1 | 137 |
+| other | 512 | 214 | 3 | 3 | 96 | 11 | 11 | 19 | 3 | 0 | 7 | 1 | 6 | 1 | 136 |
 | potion | 182 | 78 | 0 | 0 | 3 | 63 | 9 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 26 |
 | talisman | 156 | 52 | 1 | 0 | 15 | 0 | 9 | 0 | 9 | 1 | 14 | 11 | 0 | 0 | 44 |
 | elixir | 149 | 120 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 0 | 14 |
@@ -63,14 +63,14 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | fulu | 46 | 16 | 0 | 0 | 9 | 1 | 1 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 16 |
 | drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **623** | **46** | **89** | **144** | **80** | **32** | **108** | **12** | **2** | **23** | **15** | **28** | **5** | **272** |
+| **all** | **1486** | **623** | **46** | **89** | **144** | **80** | **32** | **108** | **12** | **2** | **23** | **15** | **29** | **5** | **271** |
 
 Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
 | nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 208 |
-| the ability compiler's GM fallback ("no-effect") | 52 |
+| the ability compiler's GM fallback ("no-effect") | 51 |
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
 | another plan not played yet | 1 |
 

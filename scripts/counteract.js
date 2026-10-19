@@ -39,7 +39,7 @@ function snapshot(actor) {
 }
 
 // choices: { drinker } for step 1; { rows: [{ ticked, dc, rank }] } for step 2.
-export async function applyCounteractCard(message, { drinker = null, rows = null } = {}) {
+export async function applyCounteractCard(message, { drinker = null, rows = null, ownRank = null } = {}) {
     let state = stateOf(message);
     if (!state || state.kind !== "counteract" || state.status !== "open") return null;
     if (state.step === "find") {
@@ -59,6 +59,9 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
     if (state.counteract.pick !== "each" && ticked.length > 1) ticked = ticked.slice(0, 1);
     const missing = ticked.filter((row) => !Number.isFinite(row.dc) || !Number.isFinite(row.rank));
     if (missing.length) throw new Error(`Give the DC and rank for ${missing.map((row) => row.name).join(", ")}.`);
+    // (Its own rank when the text leaves it to its stored spell: the card's.)
+    const ours = Number.isFinite(state.counteract.rank) ? state.counteract.rank : Number(ownRank);
+    if (!Number.isFinite(ours) || ownRank === "") throw new Error("Give the item's counteract rank (its stored spell's).");
     const target = state.drinkers[state.drinker] ?? state.user;
     const { actor } = await creatureOf(target);
     if (!actor) throw new Error(`${target.name} isn't there any more.`);
@@ -67,10 +70,15 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         const roll = await new Roll(`1d20 + ${state.counteract.modifier}`).evaluate();
         await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: counteract ${row.name} (DC ${row.dc}, rank ${row.rank})` });
         const natural = Number(roll.dice?.[0]?.total ?? NaN);
-        const { degree, removed } = counteractResult({ total: roll.total, natural: Number.isFinite(natural) ? natural : null, dc: row.dc, ours: state.counteract.rank, theirs: row.rank });
+        const { degree, removed } = counteractResult({ total: roll.total, natural: Number.isFinite(natural) ? natural : null, dc: row.dc, ours, theirs: row.rank });
         const outcome = `${roll.total} against DC ${row.dc}: ${DEGREE_WORDS[degree] ?? "no result"}`;
         if (!removed) {
             lines.push(`${row.name}: ${outcome}, not counteracted.`);
+            continue;
+        }
+        // (Not on a creature: the GM ends it.)
+        if (row.kind === "free") {
+            lines.push(`${row.name}: ${outcome}, counteracted (end it by hand).`);
             continue;
         }
         // (Moon Radish Soup lowers the condition rather than ending it.)

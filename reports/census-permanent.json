@@ -8,14 +8,14 @@
   "results": {
    "resolves": 742,
    "builtin:cast-spell": 470,
-   "none": 636,
+   "none": 635,
    "partial": 170,
    "builtin:focus-point": 45,
-   "builtin:no-effect": 118,
+   "builtin:no-effect": 106,
    "builtin:readied-bonus": 44,
    "note-only": 200,
    "builtin:reroll": 25,
-   "builtin:counteract": 6,
+   "builtin:counteract": 19,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 23,
    "builtin:modes": 32,
@@ -30,12 +30,12 @@
    "save": 432,
    "cast": 470,
    "item": 585,
-   "none": 783,
+   "none": 770,
    "focus": 45,
    "fortune": 55,
    "reroll": 25,
    "strike": 87,
-   "counteract": 6,
+   "counteract": 19,
    "zone": 23,
    "toggle": 32,
    "conjure": 12,
@@ -54,19 +54,19 @@
    "results": {
     "resolves": 453,
     "builtin:cast-spell": 341,
-    "none": 426,
+    "none": 425,
     "partial": 79,
     "builtin:focus-point": 43,
-    "builtin:no-effect": 96,
+    "builtin:no-effect": 87,
     "builtin:readied-bonus": 33,
     "note-only": 138,
     "builtin:reroll": 17,
+    "builtin:counteract": 15,
     "builtin:zone": 11,
     "builtin:conjure": 12,
     "builtin:modes": 16,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:counteract": 5,
     "builtin:item-action": 10,
     "builtin:ways": 1
    }
@@ -83,8 +83,9 @@
     "builtin:modes": 12,
     "builtin:item-action": 9,
     "builtin:zone": 6,
-    "builtin:no-effect": 12,
+    "builtin:counteract": 2,
     "builtin:readied-bonus": 7,
+    "builtin:no-effect": 10,
     "builtin:roll-twice": 2,
     "builtin:save-bonus": 1
    }
@@ -136,8 +137,9 @@
     "resolves": 32,
     "none": 27,
     "builtin:modes": 4,
-    "builtin:no-effect": 3,
+    "builtin:no-effect": 2,
     "partial": 5,
+    "builtin:counteract": 1,
     "builtin:zone": 1,
     "builtin:readied-bonus": 1,
     "builtin:item-action": 1
@@ -1639,9 +1641,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Insistent Door Knocker (Major)",
@@ -3968,9 +3970,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Miter of Communion",
@@ -4298,9 +4300,9 @@
    "time": "3",
    "frequency": "once per week",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Primordial Flame",
@@ -5202,9 +5204,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Freedom's Flame",
@@ -10163,9 +10165,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Extra Lung",
@@ -10185,9 +10187,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null,
+   "live": "counteract",
    "rune": true
   },
   {
@@ -11000,9 +11002,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Icicle",
@@ -15334,9 +15336,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Horn of Blasting",
@@ -18155,9 +18157,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Ring of Counterspells",
@@ -18853,9 +18855,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Armbands of the Gorgon",
@@ -22860,9 +22862,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null,
+   "live": "counteract",
    "rune": true
   },
   {
@@ -23335,9 +23337,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null,
+   "live": "counteract",
    "rune": true
   },
   {
@@ -25072,9 +25074,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Chatterer of Follies",

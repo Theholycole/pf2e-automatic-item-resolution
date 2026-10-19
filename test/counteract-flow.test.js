@@ -133,3 +133,26 @@ test("Violet Ray's Electric Love: one condition on an adjacent creature (+22, ra
     assert.ok(["paralyzed", "petrified", "grabbed", "doomed"].every((slug) => teamster.plan.item.counteract.conditions.includes(slug)));
     assert.match(teamster.plan.item.counteract.notes[0], /more than 4 levels lower/);
 });
+
+test("a counteract aimed at what isn't on a creature (Antimagic Armor's triggering spell at +26, rank 7; Countering Charm's rank the stored spell's): straight to its one row, the GM's DC and rank, the result reported, nothing removed", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [antimagic] = compileActivations(source("Antimagic"));
+    assert.deepEqual([routeOf(antimagic.plan), antimagic.plan.item.counteract.modifier, antimagic.plan.item.counteract.rank, antimagic.plan.item.counteract.free.name], ["counteract", 26, 7, "the triggering spell"]);
+    const [charm] = compileActivations(source("Countering Charm (Major)"));
+    assert.equal(charm.plan.item.counteract.rank, null);
+    const armor = foundry.giveItem(weak, source("Countering Charm (Major)"));
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: armor.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.at(-1);
+    const state = card.flags[MODULE_ID].card;
+    assert.deepEqual([state.kind, state.step, state.rows.map((row) => row.name)], ["counteract", "pick", ["the triggering spell"]]);
+    assert.match(card.content, /data-air-ownrank/);
+    // (Without the item's own rank: refused; with it, 10 + 30 = 40 against DC 30 is a critical success — rank 9 ≤ 8 + 3, counteracted.)
+    const errors = foundry.notifications.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, rows: [{ ticked: true, dc: 30, rank: 9 }], ownRank: "", userId: "player" });
+    await settle();
+    assert.ok(foundry.notifications.slice(errors).some((text) => /Give the item's counteract rank/.test(text)));
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, rows: [{ ticked: true, dc: 30, rank: 9 }], ownRank: "8", userId: "player" });
+    await settle();
+    assert.match(card.content, /the triggering spell: 40 against DC 30: a critical success, counteracted \(end it by hand\)/);
+});

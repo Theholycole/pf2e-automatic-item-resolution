@@ -13,6 +13,8 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 
 export function createCounteractCard({ counteract, item, user, drinkers = [] }) {
     const choices = [user, ...drinkers.filter((entry) => entry.actorUuid !== user.actorUuid || entry.tokenUuid !== user.tokenUuid)];
+    // (Not on a creature — the triggering spell, a magical fire: straight to its one row, its DC and rank the GM's.)
+    if (counteract.free) return { kind: "counteract", status: "open", step: "pick", counteract, item, user, drinkers: choices, drinker: 0, rows: [{ id: "free", name: counteract.free.name, kind: "free", rank: null, dc: null, ticked: true }], results: [] };
     return { kind: "counteract", status: "open", step: "find", counteract, item, user, drinkers: choices, drinker: 0, rows: [], results: [] };
 }
 
@@ -62,6 +64,8 @@ const list = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} or
 export function counteractText(counteract) {
     // ("Counteract +7, rank 2: one spell on a creature within 30 feet".)
     if (counteract.spells) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: one spell on a creature${counteract.within ? ` within ${counteract.within} feet` : ""}`;
+    // ("Counteract +26, rank 7: the triggering spell".)
+    if (counteract.free) return `Counteract +${counteract.modifier}${Number.isFinite(counteract.rank) ? `, rank ${counteract.rank}` : ""}: ${counteract.free.name}`;
     const what = [
         counteract.conditions?.length ? `inflicting ${list(counteract.conditions)}` : null,
         counteract.traits?.length ? `with the ${list(counteract.traits)} trait` : null,
@@ -85,7 +89,7 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
         button = "Find what it counteracts";
     } else if (open && state.step === "pick") {
         body = state.rows.length
-            ? `<p class="aar-actions">On ${escape(who.name)}${state.counteract.pick === "one" ? " (tick one)" : ""}:</p><ul class="aar-targets">${state.rows.map((row, index) => `<li class="aar-target"><label><input type="checkbox" data-air-row="${index}"${row.ticked ? " checked" : ""}${canApply ? "" : " disabled"}> ${escape(row.name)}</label> DC <input type="number" data-air-dc="${index}" value="${row.dc ?? ""}" style="width:3.5em"${canApply ? "" : " disabled"}> rank <input type="number" data-air-rank="${index}" value="${row.rank ?? ""}" style="width:3em"${canApply ? "" : " disabled"}></li>`).join("")}</ul>`
+            ? `${state.counteract.free ? `<p class="aar-actions">Its DC and rank${Number.isFinite(state.counteract.rank) ? "" : `, and the item's counteract rank <input type="number" data-air-ownrank value="${escape(state.ownRank ?? "")}" style="width:3em"${canApply ? "" : " disabled"}>`}:</p><ul class="aar-targets">` : `<p class="aar-actions">On ${escape(who.name)}${state.counteract.pick === "one" ? " (tick one)" : ""}:</p><ul class="aar-targets">`}${state.rows.map((row, index) => `<li class="aar-target"><label><input type="checkbox" data-air-row="${index}"${row.ticked ? " checked" : ""}${canApply ? "" : " disabled"}> ${escape(row.name)}</label> DC <input type="number" data-air-dc="${index}" value="${row.dc ?? ""}" style="width:3.5em"${canApply ? "" : " disabled"}> rank <input type="number" data-air-rank="${index}" value="${row.rank ?? ""}" style="width:3em"${canApply ? "" : " disabled"}></li>`).join("")}</ul>`
             : `<p class="aar-hint">${escape(who.name)} has nothing this counteracts.</p>`;
         button = state.rows.length ? "Counteract" : "";
     }

@@ -10,6 +10,7 @@ import { plainText } from "./rows.js";
 const CONDITIONS = ["blinded", "clumsy", "confused", "controlled", "dazzled", "deafened", "doomed", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "grabbed", "immobilized", "paralyzed", "petrified", "restrained", "sickened", "slowed", "stunned", "stupefied"];
 const CONDITION_WORDS = { paralysis: "paralyzed", petrification: "petrified" };
 const ORDINAL = String.raw`(\d+)(?:st|nd|rd|th)?`;
+const FREE = /\bcounteract (the triggering spell|the fire|the effect or item|the spell|the darkness)\b|\bto end (a magical darkness effect)\b/i;
 
 // The text → { modifier, rank, conditions, traits, afflictions, pick: "each" | "one" | "highest", reduce?, notes } or null.
 export function readCounteract(html, { level = 0 } = {}) {
@@ -28,6 +29,21 @@ export function readCounteract(html, { level = 0 } = {}) {
     const adjacent = /\bto an adjacent creature and attempt to counteract\b/i.test(said);
     // (A list of conditions to pick from, The Teamster's "Select one of the following conditions currently affecting you: Blinded, …".)
     const listed = /\bSelect one of the following conditions currently affecting you: ([^.]+)\./i.exec(text)?.[1] ?? "";
+    // (Or what it's aimed at that isn't on a creature: Antimagic Armor's "attempts to counteract the triggering spell", Frost Brand's "the blade
+    // attempts to counteract the fire", Cloth of Nullification's "attempt to counteract the effect or item", Reflecting Shield's "the spell",
+    // Brilliant's "to end a magical darkness effect": the card's one row for it, its DC and rank the GM's, and the GM's to end once
+    // counteracted. Its own rank when the text says it's a stored spell's: the GM's too.)
+    const free = FREE.exec(said);
+    if (free && !/\bcan't be counteracted\b/i.test(said)) {
+        const modifierOf = /\+(\d+) counteract modifier\b|\bcounteract (?:check )?modifier (?:of |is )?\+(\d+)|\bcounteract (?:check )?modifier (?:of |is )?1d20\s*\+\s*(\d+)/i.exec(said);
+        if (!modifierOf) return null;
+        const stated = new RegExp(String.raw`\bcounteract rank (?:of |is )?${ORDINAL}\b|\ban? ${ORDINAL}-rank (?:Dispel Magic|counteract)\b`, "i").exec(said);
+        const stored = /\busing the rank of the spell stored in\b/i.test(said);
+        const rank = stated ? Number(stated[1] ?? stated[2]) : stored ? null : Math.max(1, Math.ceil(Number(level) / 2));
+        const name = { "the triggering spell": "the triggering spell", "the fire": "the magical fire", "the effect or item": "the magical effect or item", "the spell": "the spell", "the darkness": "the magical darkness", "a magical darkness effect": "the magical darkness" }[(free[1] ?? free[2]).toLowerCase()];
+        const after = sentences.slice(at + 1, at + 3).filter((sentence) => /\b(?:If it fails|If the spell is successfully counteracted|Regardless of the result|Once you do|This expends|If you succeed)\b/i.test(sentence));
+        return { modifier: Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]), rank, conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...after] };
+    }
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)
     if (!near && !adjacent && !listed && !/\b(?:on you|affecting you|afflicting you|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;
     if (/\bcan't be counteracted\b|\bthe triggering spell\b/i.test(said) || (!near && /\bwithin \d+ feet\b/i.test(said))) return null;

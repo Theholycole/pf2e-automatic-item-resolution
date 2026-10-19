@@ -22,8 +22,8 @@
    "partial": 104,
    "note-only": 151,
    "builtin:conjure": 7,
-   "builtin:counteract": 28,
-   "builtin:no-effect": 52,
+   "builtin:counteract": 29,
+   "builtin:no-effect": 51,
    "builtin:reroll": 2,
    "builtin:ways": 5,
    "builtin:roll-twice": 2,
@@ -41,9 +41,9 @@
     "note-only": 78,
     "builtin:readied-bonus": 7,
     "none": 114,
-    "builtin:no-effect": 13,
+    "builtin:no-effect": 12,
+    "builtin:counteract": 6,
     "builtin:item-action": 1,
-    "builtin:counteract": 5,
     "builtin:conjure": 1,
     "builtin:ways": 1,
     "builtin:save-bonus": 1
@@ -388,7 +388,7 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 272,
+   "none": 271,
    "item": 623,
    "fortune": 23,
    "zone": 108,
@@ -397,7 +397,7 @@
    "action": 15,
    "save": 144,
    "conjure": 7,
-   "counteract": 28,
+   "counteract": 29,
    "reroll": 2,
    "coat": 46,
    "ways": 5,
@@ -407,15 +407,15 @@
    "other": {
     "cast": 11,
     "zone": 19,
-    "none": 137,
+    "none": 136,
     "later": 11,
     "save": 96,
     "item": 214,
     "fortune": 7,
+    "counteract": 6,
     "strike": 3,
     "expose": 3,
     "action": 1,
-    "counteract": 5,
     "conjure": 1,
     "ways": 1,
     "coat": 3
@@ -504,7 +504,7 @@
   "noCard": {
    "no-plan": 208,
    "triggered": 11,
-   "gm": 52,
+   "gm": 51,
    "other": 1
   }
  },
@@ -4101,9 +4101,9 @@
     "counteract",
     "duration"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Journeybread (Power)",

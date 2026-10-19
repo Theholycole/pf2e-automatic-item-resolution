@@ -2249,7 +2249,7 @@ export const cases = {
         const since = Date.now();
         await disruptor.consume();
         const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
-        const at = card.getFlag(NS, "card").drinkers.findIndex((entry) => entry.name === foe.name);
+        const at = card.getFlag(NS, "card").drinkers.findIndex((entry) => entry.actorUuid === foe.uuid);
         assert(at > 0, `the foe 15 feet away offered (${JSON.stringify(card.getFlag(NS, "card").drinkers.map((entry) => entry.name))})`);
         await game.modules.get(NS).api.live.apply(card.id, { drinker: at });
         await wait(500);
@@ -2750,7 +2750,7 @@ export const cases = {
         const since = Date.now();
         await game.modules.get(NS).api.live.activate(ray.uuid, 0);
         const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
-        const at = card.getFlag(NS, "card").drinkers.findIndex((entry) => entry.name === patient.name);
+        const at = card.getFlag(NS, "card").drinkers.findIndex((entry) => entry.actorUuid === patient.uuid);
         assert(at >= 0, `the adjacent patient offered (${JSON.stringify(card.getFlag(NS, "card").drinkers.map((entry) => entry.name))})`);
         await game.modules.get(NS).api.live.apply(card.id, { drinker: at });
         await wait(500);
@@ -4215,6 +4215,23 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await wheel()?.delete().catch(() => null);
         }
+    },
+
+    // Cloth of Nullification: a counteract at what isn't on a creature — the card's one row, the GM's DC 30 and rank 5, its +32 rolled at rank
+    // 10 (any result but a critical failure counteracts rank 5), reported for the GM to end.
+    async clothCounter(scene) {
+        const { actor: user } = await creature(scene, "Cloth Waver", { type: "character", x: 1, y: 3 });
+        const cloth = await give(user, "Cloth of Nullification");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(cloth.uuid, 0);
+        const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        const state = card.getFlag(NS, "card");
+        assert(state.step === "pick" && state.rows.length === 1 && state.rows[0].kind === "free", `straight to its one row (${JSON.stringify(state.rows)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { rows: [{ ticked: true, dc: 30, rank: 5 }] });
+        await until(() => game.messages.get(card.id)?.getFlag(NS, "card")?.status === "applied", "the counteract rolled", { timeout: 8000 });
+        const [line] = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(/against DC 30: a (?:critical )?(?:success|failure)/.test(line), `the result reported (${line})`);
+        return { line };
     }
 };
 
