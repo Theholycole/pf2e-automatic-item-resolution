@@ -878,6 +878,19 @@ test("more mythic and healing items: Hollow Robes' persistent damage ended outri
     assert.deepEqual([routeOf(claw), claw.resolution.outcomes.success.effects[0].kind, claw.resolution.outcomes.success.effects[0].amount], ["save", "temp-hp", 10]);
 });
 
+test("narrow bonuses on PF2e's roll options, the narrower words a note (the user's answer 14 of 2026-10-17): Elixir of the Peaks, Oozepick, Conspirator's Cookie, Mender's Soup, Aroma Concealer, Potion of Disguise, Fungal Walk Musk, Healing Vapor for the creatures targeted", () => {
+    const bonus = (name) => compileItem({ ...item(name), ownerLevel: 10 }).resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, `${modifier.duration.value} ${modifier.duration.unit}`, JSON.stringify(modifier.predicate ?? null)]);
+    assert.deepEqual(bonus("Elixir of the Peaks (Moderate)"), [["athletics", 2, "item", "1 days", JSON.stringify([{ or: ["action:climb", "action:high-jump", "action:long-jump"] }])]]);
+    assert.deepEqual(bonus("Oozepick"), [["thievery", 2, "item", "1 hours", JSON.stringify([{ or: ["action:pick-a-lock", "action:disable-a-device"] }])]]);
+    assert.deepEqual(bonus("Conspirator's Cookie")[0].slice(0, 4), ["diplomacy", 1, "item", "1 hours"]);
+    assert.deepEqual(bonus("Mender's Soup"), [["crafting", 1, "item", "24 hours", JSON.stringify(["action:repair"])]]);
+    assert.deepEqual(bonus("Aroma Concealer")[0].slice(0, 2), ["stealth", 2]);
+    assert.deepEqual(bonus("Potion of Disguise (Lesser)"), [["deception-dc", 4, "status", "24 hours", "null"]]);
+    assert.deepEqual(bonus("Fungal Walk Musk"), [["ac", 1, "item", "1 days", JSON.stringify(["origin:trait:fungus"])]]);
+    const vapor = compileItem({ ...item("Healing Vapor (Major)"), ownerLevel: 10 });
+    assert.deepEqual([vapor.item.recipient, vapor.resolution.outcomes.success.modifiers[0].value], ["targets", 3]);
+});
+
 test("an ally's persistent damage taken onto its user: Bloodstained Waistcoat's bleed, the take card at the ally targeted", async () => {
     const { routeOf } = await import("../src/live/route.js");
     const { takeText } = await import("../src/live/take-card.js");

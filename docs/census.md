@@ -18,8 +18,8 @@ Results, for the items this module handles:
 | Result | Items | Share |
 |---|---:|---:|
 | resolves | 751 | 51% |
-| partial | 104 | 7% |
-| note-only | 149 | 10% |
+| partial | 121 | 8% |
+| note-only | 132 | 9% |
 | builtin:zone | 111 | 7% |
 | builtin:cast-spell | 32 | 2% |
 | builtin:roll-twice | 2 | 0% |
@@ -32,15 +32,15 @@ Results, for the items this module handles:
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 210 | 49 | 77 | 0 | 69 | 107 |
-| potion | 182 | 124 | 6 | 14 | 0 | 21 | 17 |
+| other | 512 | 210 | 58 | 68 | 0 | 69 | 107 |
+| potion | 182 | 124 | 9 | 11 | 0 | 21 | 17 |
 | talisman | 156 | 57 | 14 | 7 | 0 | 48 | 30 |
-| elixir | 149 | 86 | 15 | 20 | 0 | 23 | 5 |
+| elixir | 149 | 86 | 19 | 16 | 0 | 23 | 5 |
 | poison | 115 | 110 | 0 | 1 | 0 | 4 | 0 |
 | snare | 82 | 0 | 0 | 1 | 0 | 72 | 9 |
 | gadget | 77 | 29 | 4 | 6 | 0 | 30 | 8 |
 | mutagen | 68 | 60 | 8 | 0 | 0 | 0 | 0 |
-| oil | 66 | 28 | 6 | 11 | 0 | 16 | 5 |
+| oil | 66 | 28 | 7 | 10 | 0 | 16 | 5 |
 | fulu | 46 | 20 | 2 | 7 | 0 | 5 | 12 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |

@@ -5252,6 +5252,30 @@ export const cases = {
         return { results };
     },
 
+    // Narrow bonuses on PF2e's roll options: Elixir of the Peaks (Lesser)'s +1 item to Athletics for Climb, High Jump and Long Jump; Potion of
+    // Disguise (Lesser)'s +4 status Deception DC; Healing Vapor (Lesser)'s +1 item to saves against diseases and poisons for both creatures targeted.
+    async narrowBonuses(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Bonus Drinker", { type: "character", x: 20, y: 18 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Bonus Ally", { type: "character", x: 21, y: 18 });
+        const ruled = (actor, test) => actor.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && test(rule)));
+        const drink = async (name, choices) => {
+            const potion = await give(user, name);
+            const since = Date.now();
+            await potion.consume();
+            const card = await messageAfter(since, itemCard("item"), { what: `${name}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, choices);
+            await wait(800);
+        };
+        await drink("Elixir of the Peaks (Lesser)", { drinker: 0 });
+        assert(ruled(user, (rule) => [].concat(rule.selector).includes("athletics") && rule.value === 1 && JSON.stringify(rule.predicate ?? []).includes("action:climb")), "+1 item to Athletics to Climb");
+        await drink("Potion of Disguise (Lesser)", { drinker: 0 });
+        assert(ruled(user, (rule) => [].concat(rule.selector).includes("deception-dc") && rule.value === 4 && rule.type === "status"), "+4 status Deception DC");
+        await drink("Healing Vapor (Lesser)", { targets: [userToken.uuid, allyToken.uuid] });
+        const vapor = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("saving-throw") && rule.value === 1 && JSON.stringify(rule.predicate ?? []).includes("item:trait:disease"));
+        await until(() => vapor(user) && vapor(ally), "+1 item to saves against diseases and poisons for both", { timeout: 8000 });
+        return { ok: true };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

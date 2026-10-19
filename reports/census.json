@@ -18,9 +18,9 @@
    "resolves": 751,
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
-   "partial": 104,
+   "partial": 121,
    "builtin:item-action": 15,
-   "note-only": 149,
+   "note-only": 132,
    "builtin:conjure": 7,
    "builtin:ways": 11,
    "builtin:counteract": 29,
@@ -38,8 +38,8 @@
     "builtin:cast-spell": 11,
     "builtin:zone": 22,
     "resolves": 210,
-    "partial": 49,
-    "note-only": 77,
+    "partial": 58,
+    "note-only": 68,
     "builtin:readied-bonus": 7,
     "builtin:ways": 4,
     "none": 107,
@@ -71,12 +71,12 @@
    "count": 182,
    "results": {
     "resolves": 124,
-    "note-only": 14,
+    "note-only": 11,
+    "partial": 9,
     "none": 17,
     "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
     "builtin:counteract": 2,
-    "partial": 6,
     "builtin:zone": 1
    },
    "mechanisms": {
@@ -129,9 +129,9 @@
     "resolves": 86,
     "none": 5,
     "builtin:counteract": 11,
-    "partial": 15,
+    "partial": 19,
     "builtin:no-effect": 9,
-    "note-only": 20,
+    "note-only": 16,
     "builtin:ways": 1,
     "builtin:zone": 2
    },
@@ -232,8 +232,8 @@
     "resolves": 28,
     "builtin:conjure": 6,
     "builtin:no-effect": 6,
-    "note-only": 11,
-    "partial": 6,
+    "note-only": 10,
+    "partial": 7,
     "none": 5,
     "builtin:cast-spell": 2,
     "builtin:counteract": 2
@@ -1484,8 +1484,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only against Perception checks to see through the disguise, and you add your level even if untrained; the disguise lasts as long as the GM rolled in secret, ended by hand."
+   ],
    "live": "item"
   },
   {
@@ -3666,8 +3669,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only for up to four living creatures in the vapors, while they stay in them."
+   ],
    "live": "item"
   },
   {
@@ -4722,8 +4728,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only while you are in mountainous terrain, where it also protects you from severe cold and adds to saving throws against high altitude."
+   ],
    "live": "item"
   },
   {
@@ -9315,8 +9324,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only against the mechanism the ooze was first poured into, where the ooze counts as thieves' tools."
+   ],
    "live": "item"
   },
   {
@@ -9933,8 +9945,13 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "For 1 day after you slather this musk on your body, fungus creatures take a -4 penalty to Perception checks to Seek you or otherwise notice you.",
+    "If a fungus creature is mindless, it instead has a -6 penalty.",
+    "The bonus is only against the melee attacks of fungus creatures with no vision."
+   ],
    "live": "item"
   },
   {
@@ -13268,8 +13285,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only against Perception checks to see through the disguise, and you add your level even if untrained; the disguise lasts as long as the GM rolled in secret, ended by hand."
+   ],
    "live": "item"
   },
   {
@@ -14955,8 +14975,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only against Perception checks to see through the disguise, and you add your level even if untrained; the disguise lasts as long as the GM rolled in secret, ended by hand."
+   ],
    "live": "item"
   },
   {
@@ -15357,8 +15380,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only for up to four living creatures in the vapors, while they stay in them."
+   ],
    "live": "item"
   },
   {
@@ -17165,8 +17191,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only for up to four living creatures in the vapors, while they stay in them."
+   ],
    "live": "item"
   },
   {
@@ -17781,8 +17810,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only while you are in mountainous terrain, where it also protects you from severe cold and adds to saving throws against high altitude."
+   ],
    "live": "item"
   },
   {
@@ -21531,8 +21563,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only while you are in mountainous terrain, where it also protects you from severe cold and adds to saving throws against high altitude."
+   ],
    "live": "item"
   },
   {
@@ -21616,8 +21651,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only against the mechanism the ooze was first poured into, where the ooze counts as thieves' tools."
+   ],
    "live": "item"
   },
   {
@@ -21963,8 +22001,11 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only in the chosen language, and you can add your level even if untrained."
+   ],
    "live": "item"
   },
   {
@@ -25122,8 +25163,12 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Items you successfully Repair during this time regain an additional 5 Hit Points, by hand.",
+    "If you eat mender's soup over the entire period required to attempt a Crafting check to Craft (typically a minimum of eating the soup each day for 4 days), the +1 bonus from the soup can be applied to that check, too."
+   ],
    "live": "item"
   },
   {
@@ -25769,8 +25814,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only against creatures using primarily smell, and it also applies to the DC to Track you by scent."
+   ],
    "live": "item"
   },
   {
@@ -26978,8 +27026,12 @@
     "heal",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "A creature benefiting from the vapors regains 2 Hit Points every minute.",
+    "The bonus is only for up to four living creatures in the vapors, while they stay in them."
+   ],
    "live": "item"
   },
   {
@@ -27881,8 +27933,11 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "The bonus is only while you are in mountainous terrain, where it also protects you from severe cold and adds to saving throws against high altitude."
+   ],
    "live": "item"
   },
   {
