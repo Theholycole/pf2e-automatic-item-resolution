@@ -40,6 +40,9 @@ const WITHIN = /\bwithin (\d+) feet\b/i;
 // (An attack with its user's own spell or ranged attack modifier, their pick: Clockwork Helm's "Make a spell or ranged attack roll (your
 // choice) to affect the target. On a hit, the target takes 10d8 fire damage and is Drained 2." — the card's pick of the two, the
 // damage doubled on a critical hit, the condition on any hit.)
+// (Its user's ranged attack roll for a beam's damage, fire and persistent fire on a hit — a third-party mirror's: the best ranged Strike,
+// picked on the card, both parts of the damage on a hit.)
+const RANGED_ATTACK = new RegExp(String.raw`\bAttempt a ranged attack roll to deal (\d+d\d+) (${TYPES})(?: plus (\d+(?:d\d+)?) persistent (${TYPES}))? damage on hit\.`, "i");
 const CHOSEN_ATTACK = new RegExp(String.raw`\bMake a spell or ranged attack roll \(your choice\)[^.]*\.\s*On a hit, the target takes (\d+d\d+(?:\s*\+\s*\d+)?) (?:(persistent) )?(${TYPES}) damage(?: and is ([^.]+))?\.`, "i");
 // (One of two maneuvers at the item's modifier: Twisting Twine's "attempting to Disarm or Trip (your choice) a creature in
 // the square with a total of +9 to the Athletics check" — both plans, the card's picker.)
@@ -59,6 +62,12 @@ export function readOwnCheck(given) {
     if (chosen) {
         const notes = sentencesOf(String(text ?? "").replace(chosen[0], "")).filter((sentence) => !/^You fire a beam\b[^.]*\bat a target\.$/i.test(sentence));
         return { kind: "attack", range: null, reach: null, modifier: 0, choose: ["spell", "ranged"], formula: chosen[1].replace(/\s+/g, ""), category: chosen[2] ? "persistent" : null, type: chosen[3].toLowerCase(), ...(chosen[4] ? { rider: chosen[4].trim() } : {}), notes };
+    }
+    const ranged = RANGED_ATTACK.exec(String(text ?? ""));
+    if (ranged) {
+        const notes = sentencesOf(String(text ?? "").replace(ranged[0], "")).filter((sentence) => !/^You [\w ]+? on a creature within \d+ feet\b/i.test(sentence));
+        const range = WITHIN.exec(String(text ?? "").replace(/^.*?\bEffect\b/s, ""))?.[1];
+        return { kind: "attack", range: null, reach: range ? `${range} feet` : null, modifier: 0, choose: ["ranged"], formula: ranged[1], category: null, type: ranged[2].toLowerCase(), ...(ranged[3] ? { extra: { formula: ranged[3], type: ranged[4].toLowerCase(), category: "persistent" } } : {}), notes };
     }
     const higher = HIGHER_ATTACK.exec(String(text ?? ""));
     if (higher) {
@@ -127,13 +136,15 @@ export function ownCheckPlan(text, base, options = {}) {
         return { ...common, targeting, resolution: withCritical(at(basic)), ...(choices.length > 1 ? { checkChoices: choices.map((action, index) => ({ label: read.slugs[index].charAt(0).toUpperCase() + read.slugs[index].slice(1), resolution: withCritical(at(action)) })) } : {}) };
     }
     const component = { id: "0", formula: read.formula, type: read.type, category: read.category };
+    // (A second part of its damage, its persistent fire: the same hit's.)
+    const extra = read.extra ? { id: "1", ...read.extra } : null;
     // (A condition on any hit, Clockwork Helm's Drained 2: the bombs' rider reader.)
     const riders = read.rider ? riderRow(`The target is ${read.rider}.`).effects ?? [] : [];
-    const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [...riders], modifiers: [] });
+    const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: extra ? ["0", "1"] : ["0"] }, effects: [...riders], modifiers: [] });
     return {
         ...common,
         targeting: { target: read.count ? `up to ${read.count} enemies` : "1 creature", range: read.reach ?? null, area: null },
-        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: read.modifier }, sharedDamage: { rollOnce: true, components: [component] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } }
+        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: read.modifier }, sharedDamage: { rollOnce: true, components: extra ? [component, extra] : [component] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } }
     };
 }
 

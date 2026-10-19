@@ -4148,6 +4148,29 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await smoke()?.delete().catch(() => null);
         }
+    },
+
+    // Bottle-O-Ooze (Moderate) (Alchemists+): its Large ooze beside its user — AC 15, 58 Hit Points from the item's own numbers.
+    async bottledOoze(scene) {
+        assert(game.modules.get("pf2e-team-plus-alchemists")?.active, "Alchemists+ isn't active in pftest.");
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Ooze Thrower", { type: "character", x: 15, y: 19 });
+        const bottle = await give(thrower, "Bottle-O-Ooze (Moderate)", "pf2e-team-plus-alchemists.pf2e-items");
+        await until(() => throwerToken.object, "the token drawn", { timeout: 5000 });
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const made = () => scene.tokens.filter((token) => token.actor?.flags?.[ABILITY]?.conjured?.itemName === "Bottle-O-Ooze (Moderate)" && token.actor.flags[ABILITY].conjured.sourceTokenUuid === throwerToken.uuid);
+        try {
+            await bottle.consume();
+            await until(() => made().length === 1, "the ooze's token", { timeout: 10000 });
+            const ooze = made()[0].actor;
+            assert(ooze.system.attributes.ac.value === 15 && ooze.system.attributes.hp.max === 58 && ooze.system.traits.size.value === "lg", `AC 15, 58 HP, Large (${ooze.system.attributes.ac.value}, ${ooze.system.attributes.hp.max}, ${ooze.system.traits.size.value})`);
+            return { ooze: made()[0].name };
+        } finally {
+            for (const token of made()) {
+                const base = game.actors.get(token.actorId);
+                await token.delete().catch(() => null);
+                if (base?.flags?.[ABILITY]?.conjured) await base.delete().catch(() => null);
+            }
+        }
     }
 };
 

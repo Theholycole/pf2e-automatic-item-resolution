@@ -41,7 +41,7 @@ import { affixedTargeting, withPrimedNotes, withWhilePersistent, withZeroHPNote 
 import { withHitDelivery } from "./hit-delivery.js";
 import { cleanNotes } from "./notes.js";
 import { thrownPlan } from "./thrown.js";
-import { conjuredPlan } from "./conjured.js";
+import { conjuredPlan, statedCreaturePlan } from "./conjured.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor } from "./flavor.js";
@@ -170,6 +170,8 @@ function compileOne(given, options = {}) {
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = thrownPlan(html, base, item, options) ?? plan;
     // (A creature it becomes, src/compiler/conjured.js: Beetle Gel, Marvelous Miniature (Horse).)
     plan = conjuredPlan(html, base, item) ?? plan;
+    // (Or one whose numbers it gives, src/compiler/conjured.js statedCreaturePlan: a third-party bottled ooze, a canister's zombie.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = statedCreaturePlan(html, base, item) ?? plan;
     // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
     if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(item, options) ?? plan;
     // (The ability compiler's cast, with what its words say and it left out: on its user, a DC, a modifier.)

@@ -646,3 +646,25 @@ test("a consumable thrown as a Strike: Sack of Rotten Fruit's 1d4 bludgeoning, t
     assert.deepEqual([oil.resolution.sharedDamage.components[0].formula, oil.resolution.sharedDamage.components[0].type], ["1d6", "fire"]);
     assert.deepEqual(oil.notes, ["Its damage only when the oil ignites.", "You must succeed at a DC 10 flat check for the oil to ignite successfully when it hits."]);
 });
+
+test("a creature whose numbers the item gives (the shape of a third-party bottled ooze and canister zombie, in this module's words): the conjured token with that AC and Hit Points, its size and time, the rest the GM's", async () => {
+    const { statedCreaturePlan } = await import("../src/compiler/conjured.js");
+    const bottle = { name: "Test Bottle", type: "consumable", system: { level: { value: 7 }, description: { value: "<p>Throw it and it expands into a large sized jelly and holds its position for 2 rounds. Those in its area must attempt a @Check[reflex|dc:23] save. Its save modifier equal to its item level applies. The ooze has AC 15; HP 58; Immunities acid; Resistances slashing 7; Weaknesses area 7</p>" } } };
+    const ooze = statedCreaturePlan(bottle.system.description.value, { source: { name: "Test Bottle" } }, bottle);
+    assert.deepEqual([ooze.builtin, ooze.creatures[0].name, ooze.creatures[0].size, ooze.creatures[0].stats.ac, ooze.creatures[0].stats.hp, ooze.creatures[0].stats.saves.will, ooze.lasts.value, ooze.lasts.unit], ["conjure", "Jelly", "large", 15, 58, 7, 2, "rounds"]);
+    assert.ok(ooze.notes.some((note) => /DC 23 Reflex save or Grabbed/.test(note)));
+    const jar = { name: "Test Jar", type: "consumable", system: { level: { value: 1 }, description: { value: "<p>Once smashed releases a zombie. Its numbers: AC 12; HP 20. It moves up to 15 feet, then rolls its attack roll of [[/r 1d20+6]]{plus six} and deals @Damage[1d6[bludgeoning]] damage. This one lasts for 2 rounds.</p>" } } };
+    const zombie = statedCreaturePlan(jar.system.description.value, { source: { name: "Test Jar" } }, jar);
+    assert.deepEqual([zombie.creatures[0].name, zombie.creatures[0].stats.ac, zombie.creatures[0].stats.hp, zombie.creatures[0].stats.speeds.land, zombie.lasts.value, zombie.lasts.unit], ["Zombie", 12, 20, 15, 2, "rounds"]);
+    assert.ok(zombie.notes.some((note) => /\+6, 1d6 bludgeoning/.test(note)));
+});
+
+test("a beam's own ranged attack with fire and persistent fire on a hit, and a bestiary creature linked in a module's short form (both in this module's words)", async () => {
+    const { ownCheckPlan } = await import("../src/compiler/own-checks.js");
+    const beam = ownCheckPlan("Effect You aim at a creature within 30 feet. Attempt a ranged attack roll to deal 2d8 fire plus 2 persistent fire damage on hit. It cools afterwards.", { source: { name: "Test Lens" } });
+    assert.deepEqual([beam.ownCheck.choose, beam.targeting.range, beam.resolution.sharedDamage.components.map((component) => [component.formula, component.type, component.category]), beam.resolution.outcomes.criticalSuccess.damage.sourceComponentIds], [["ranged"], "30 feet", [["2d8", "fire", null], ["2", "fire", "persistent"]], ["0", "1"]]);
+    const { conjuredPlan } = await import("../src/compiler/conjured.js");
+    const vial = { name: "Test Vial", type: "consumable", system: { description: { value: "<p>Throwing it lures a swarm, causing an @UUID[Compendium.pf2e.pathfinder-monster-core.drcSWbCIWc7P4lKO]{Army Ant Swarm} to appear there. It stays for 3 rounds.</p>" } } };
+    const swarm = conjuredPlan(vial.system.description.value, { source: { name: "Test Vial" } }, vial);
+    assert.deepEqual([swarm.creatures[0].from.uuid, swarm.creatures[0].initiative], ["Compendium.pf2e.pathfinder-monster-core.Actor.drcSWbCIWc7P4lKO", "roll"]);
+});

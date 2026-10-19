@@ -6,10 +6,12 @@
 // creature's token beside its user, on their side, gone at 0 Hit Points (it reverts) and when its time is up; a minion takes no turns of its
 // own (its user commands it). What else it says — when it can be used again, what it can't do — the card's notes. Pure.
 
-const LINK = String.raw`@UUID\[(Compendium\.[\w.-]+\.Actor\.[A-Za-z0-9]+)\]\{([^}]+)\}`;
+// (A third-party module's short form too, "Compendium.pf2e.pathfinder-monster-core.<id>": a bestiary's, its Actor.)
+const LINK = String.raw`@UUID\[(Compendium\.[\w.-]+\.Actor\.[A-Za-z0-9]+|Compendium\.pf2e\.(?:pathfinder-monster-core(?:-2)?|pathfinder-bestiary(?:-2|-3)?)\.[A-Za-z0-9]{16})\]\{([^}]+)\}`;
+const fullUuid = (uuid) => (/\.Actor\./.test(uuid) ? uuid : uuid.replace(/\.([A-Za-z0-9]{16})$/, ".Actor.$1"));
 // "transforms into a @UUID…", "becomes a pair of adult @UUID…", "turns into a @UUID…", "becomes a fully grown @UUID…", "with the statistics
 // of a @UUID…", "uses all the statistics of a @UUID…".
-const BECOMES = new RegExp(String.raw`\b(?:becomes|transforms? into|turns into|(?:with|uses all) the statistics of)( a pair of)? (?:an? )?(?:[\w-]+ ){0,3}?${LINK}`, "i");
+const BECOMES = new RegExp(String.raw`\b(?:becomes|transforms? into|turns into|(?:with|uses all) the statistics of|causing)( a pair of)? (?:an? )?(?:[\w-]+ ){0,3}?${LINK}`, "i");
 const UNITS = { minute: "minutes", minutes: "minutes", round: "rounds", rounds: "rounds", hour: "hours", hours: "hours" };
 const plainOf = (html) => String(html ?? "")
     .replace(/\[\[[^\]]*\]\]\{([^}]*)\}/g, "$1")
@@ -41,8 +43,10 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
     const count = becomes[1] ? 2 : 1;
     const name = count > 1 ? singular(becomes[3]) : becomes[3];
     const whole = plainOf(item?.system?.description?.value ?? text);
-    // (Not one that "ignores your commands", Ruby Hippopotamus's: it takes its own turns.)
+    // (Not one that "ignores your commands", Ruby Hippopotamus's: it takes its own turns — as does one made to appear and attack, a third-party
+    // vial's swarm.)
     const own = /\bignores your commands\b/i.test(whole);
+    const appears = /^causing\b/i.test(becomes[0]) && /\bto appear\b/i.test(text.slice(becomes.index, becomes.index + becomes[0].length + 20));
     const minion = !own && /\bhas the minion trait\b/i.test(whole);
     // (Fossil Fragments' "it has the construct and earth traits and lacks its normal creature type trait".)
     const added = /\bit has the (\w+) and (\w+) traits\b/i.exec(whole);
@@ -70,10 +74,76 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
         automation: { level: "guided" },
         targeting: { target: "self", range: null, area: null },
         trigger: { event: "use" },
-        creatures: [{ name, count, size: null, stats: null, from: { uuid: becomes[2] }, traits, initiative: own ? "roll" : null }],
+        creatures: [{ name, count, size: null, stats: null, from: { uuid: fullUuid(becomes[2]) }, traits, initiative: own || appears ? "roll" : null }],
         max: count,
         lasts,
         vanishAtZero: true,
         notes
     };
+}
+
+// A creature an item lets out whose numbers its own text gives, not a stat block it links (Team+ Alchemists' Bottle-O-Ooze grades, a
+// thrown bottle that swells into an ooze of the grade's size and stays put for its minute; their Canopic Canisters, a smashed jar whose
+// zombie lasts a few rounds and Strikes beside its user each turn): the conjured token with that AC and those Hit Points, its saves the
+// item's level when the text says so; the rest — its grab, its Strike, its immunities — the card's notes for the GM.
+const SIZES = { tiny: "tiny", small: "small", medium: "medium", large: "large", huge: "huge", gargantuan: "gargantuan" };
+const STATS = /\bAC (\d+); HP (\d+)\b/;
+const SWELLS = /\bexpands into an? (tiny|small|medium|large|huge|gargantuan) sized (\w+) and holds its position for (\d+) (minutes?|rounds?)\b/i;
+const LETS_OUT = /\bsmashed releases an? (\w+)\./i;
+export function statedCreaturePlan(html, base, item) {
+    const text = String(html ?? "");
+    const plain = plainOf(text);
+    const stats = STATS.exec(plain);
+    if (!stats) return null;
+    const level = Number(item?.system?.level?.value) || 0;
+    const time = (value, unit) => ({ mode: "fixed", value: Number(value), unit: UNITS[String(unit).toLowerCase()], expiry: "turn-start", anchor: "effect-start" });
+    const swells = SWELLS.exec(plain);
+    if (swells) {
+        const big = ["large", "huge", "gargantuan"].includes(swells[1].toLowerCase());
+        const grab = /@Check\[reflex\|dc:(\d+)/i.exec(text)?.[1] ?? /\bCheck\[reflex\|dc:(\d+)/i.exec(text)?.[1];
+        const defenses = /\bImmunities ([^;]+); Resistances ([^;]+); Weaknesses ([^.]+?)(?: Craft Requirements\b|$)/i.exec(plain);
+        const saves = /\bsave modifier equal to its item level\b/i.test(plain) ? { fortitude: level, reflex: level, will: level } : null;
+        return {
+            ...base,
+            builtin: "conjure",
+            automation: { level: "guided" },
+            targeting: { target: "self", range: null, area: null },
+            trigger: { event: "use" },
+            creatures: [{ name: `${swells[2].charAt(0).toUpperCase()}${swells[2].slice(1).toLowerCase()}`, count: 1, size: SIZES[swells[1].toLowerCase()], stats: { ac: Number(stats[1]), hp: Number(stats[2]), ...(saves ? { saves } : {}), speeds: { land: 0 } }, from: null, traits: [swells[2].toLowerCase()], initiative: null }],
+            max: 1,
+            lasts: time(swells[3], swells[4]),
+            vanishAtZero: true,
+            notes: [
+                "It lands where the bottle was thrown: move its token there.",
+                "It stays put; its spaces are difficult terrain to move through.",
+                ...(big && grab ? [`A creature in its area or moving through its space: a DC ${grab} Reflex save or Grabbed until it Escapes (by hand).`] : []),
+                ...(defenses ? [`Its immunities (${defenses[1].trim()}), resistances (${defenses[2].trim()}) and weaknesses (${defenses[3].trim()}) by hand.`] : [])
+            ]
+        };
+    }
+    const out = LETS_OUT.exec(plain);
+    const lasts = /\blasts for (\d+) (minutes?|rounds?)\b/i.exec(plain.replace(/\blasts for the listed duration\b/i, ""));
+    const strike = /\battack roll of \[\[\/r 1d20\+(\d+)\]\](?:\{[^}]*\})? and deals @Damage\[(\d+d\d+)\[(\w+)\]\]/i.exec(text);
+    if (out && lasts) {
+        const moves = /\bmoves up to (\d+) feet\b/i.exec(plain)?.[1];
+        const defenses = /\bImmunities ([^;]+); Weaknesses ([^.]+?)(?: Craft Requirements\b|$)/i.exec(plain);
+        return {
+            ...base,
+            builtin: "conjure",
+            automation: { level: "guided" },
+            targeting: { target: "self", range: null, area: null },
+            trigger: { event: "use" },
+            creatures: [{ name: `${out[1].charAt(0).toUpperCase()}${out[1].slice(1).toLowerCase()}`, count: 1, size: "medium", stats: { ac: Number(stats[1]), hp: Number(stats[2]), speeds: { land: Number(moves) || 0 } }, from: null, traits: [out[1].toLowerCase(), ...(/\bconsidered an undead creature\b/i.test(plain) ? ["undead"] : [])], initiative: null }],
+            max: 1,
+            lasts: time(lasts[1], lasts[2]),
+            vanishAtZero: true,
+            notes: [
+                ...(moves ? [`It moves up to ${moves} feet in a direction of its user's choice, then stays there (move its token).`] : []),
+                ...(strike ? [`At the start of each of its user's turns it Strikes an adjacent creature of their choice: +${strike[1]}, ${strike[2]} ${strike[3]} (by hand).`] : []),
+                ...(/\bautomatically critically fails any saving throws\b/i.test(plain) ? ["It critically fails every save (by hand)."] : []),
+                ...(defenses ? [`Its immunities (${defenses[1].trim()}) and weaknesses (${defenses[2].trim()}) by hand.`] : [])
+            ]
+        };
+    }
+    return null;
 }
