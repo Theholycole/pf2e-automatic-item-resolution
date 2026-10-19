@@ -688,3 +688,12 @@ test("an elixir made for one element (Warding Element Draught): the ways card's 
     const fire = draught.ways[2].plan.resolution.outcomes.success.modifiers;
     assert.deepEqual(fire.map((modifier) => [modifier.selector, modifier.type, modifier.value, modifier.predicate, modifier.duration.value]), [["ac", "item", 1, ["item:trait:fire"], 10], ["saving-throw", "item", 1, ["item:trait:fire"], 10]]);
 });
+
+test("a drifting cloud of sticky bubbles (Clinging Bubbles): the zone placed for its minute, the Speed penalty on a creature entering it (Lesser's square and –5, Greater's 10-foot burst and –15)", () => {
+    const moderate = compileItem(item("Clinging Bubbles (Moderate)"));
+    const entry = moderate.zone.saves[0];
+    assert.deepEqual([moderate.builtin, moderate.zone.area, moderate.zone.lasts.value, entry.when, entry.plan.resolution.outcomes.success.modifiers], ["zone", { type: "burst", value: 5 }, 1, ["enter"], [{ selector: "land-speed", type: "circumstance", value: -10 }]]);
+    const lesser = compileItem(item("Clinging Bubbles (Lesser)")).zone;
+    assert.deepEqual([lesser.area, lesser.saves[0].plan.resolution.outcomes.success.modifiers[0].value], [{ type: "square", value: 5 }, -5]);
+    assert.equal(compileItem(item("Clinging Bubbles (Greater)")).zone.area.value, 10);
+});

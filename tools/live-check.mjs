@@ -4312,6 +4312,35 @@ export const cases = {
         await until(() => bonus(), "the fire-only save bonus", { timeout: 8000 });
         assert(Number(bonus().value) === 1 && bonus().type === "item", `+1 item (${JSON.stringify(bonus())})`);
         return { rule: bonus() };
+    },
+
+    // Clinging Bubbles (Moderate): its cloud placed (the click stood in for) for 1 minute; a creature moving into it takes its –10-foot
+    // circumstance penalty to its Speed, which stays until it pops the bubbles.
+    async clingingBubbles(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Bubble Blower", { type: "character", x: 9, y: 3 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Bubble Walker", { x: 13, y: 3, alliance: "opposition" });
+        const vial = await give(user, "Clinging Bubbles (Moderate)");
+        await until(() => userToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const cloud = () => scene.regions.find((entry) => entry.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Clinging Bubbles/.test(entry.name));
+        try {
+            await vial.consume();
+            await until(() => cloud(), "the bubbles' Region", { timeout: 8000 });
+            const shape = cloud().shapes[0];
+            const since = Date.now();
+            await foeToken.update({ x: (shape.x ?? shape.points?.[0]) - (shape.type === "rectangle" ? 0 : canvas.grid.size / 2), y: (shape.y ?? shape.points?.[1]) - (shape.type === "rectangle" ? 0 : canvas.grid.size / 2) });
+            const card = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.targets?.some((entry) => entry.actorUuid === foe.uuid), { what: "the bubbles' card", timeout: 10000 });
+            await applyAbilityCard(card);
+            const penalty = () => foe.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("land-speed"));
+            await until(() => penalty(), "the walker's Speed penalty", { timeout: 10000 });
+            assert(Number(penalty().value) === -10 && penalty().type === "circumstance", `−10 circumstance (${JSON.stringify(penalty())})`);
+            return { rule: penalty() };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await cloud()?.delete().catch(() => null);
+        }
     }
 };
 

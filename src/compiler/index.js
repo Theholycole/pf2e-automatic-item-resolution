@@ -16,7 +16,7 @@ import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, 
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
-import { belchedCloudPlan, coatedSquarePlan, exhaledSquarePlan, placedChimePlan } from "./covered-square.js";
+import { belchedCloudPlan, bubbleCloudPlan, coatedSquarePlan, exhaledSquarePlan, placedChimePlan } from "./covered-square.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
@@ -148,6 +148,9 @@ function compileOne(given, options = {}) {
     const exhaled = exhaledSquarePlan(html, base, item, options);
     if (exhaled) return { ...exhaled, item: itemInfo(item) };
     // (A cloud its user breathes into an adjacent square, src/compiler/covered-square.js: Capsaicin Tonic's.)
+    // (A drifting cloud of sticky bubbles, src/compiler/covered-square.js: Clinging Bubbles.)
+    const bubbles = bubbleCloudPlan(html, base, item);
+    if (bubbles) return { ...bubbles, item: itemInfo(item) };
     const belched = belchedCloudPlan(html, base);
     if (belched) return { ...belched, item: itemInfo(item) };
     // (The ability compiler's last fallback, "no-effect" — the GM's — gives way to a reading of the item's own: its

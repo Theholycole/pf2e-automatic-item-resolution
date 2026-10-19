@@ -14,10 +14,10 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 208,
+   "none": 205,
    "resolves": 750,
    "builtin:readied-bonus": 21,
-   "builtin:zone": 108,
+   "builtin:zone": 111,
    "builtin:item-action": 15,
    "partial": 104,
    "note-only": 150,
@@ -35,12 +35,12 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 11,
-    "builtin:zone": 19,
+    "builtin:zone": 22,
     "resolves": 211,
     "partial": 50,
     "note-only": 78,
     "builtin:readied-bonus": 7,
-    "none": 114,
+    "none": 111,
     "builtin:no-effect": 12,
     "builtin:counteract": 6,
     "builtin:item-action": 1,
@@ -389,10 +389,10 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 271,
+   "none": 268,
    "item": 622,
    "fortune": 23,
-   "zone": 108,
+   "zone": 111,
    "expose": 89,
    "later": 80,
    "action": 15,
@@ -407,8 +407,8 @@
   "byCategory": {
    "other": {
     "cast": 11,
-    "zone": 19,
-    "none": 136,
+    "zone": 22,
+    "none": 133,
     "later": 11,
     "save": 96,
     "item": 214,
@@ -504,7 +504,7 @@
    }
   },
   "noCard": {
-   "no-plan": 208,
+   "no-plan": 205,
    "triggered": 11,
    "gm": 51,
    "other": 1
@@ -3300,7 +3300,9 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Amnemonic Charm",
@@ -11298,7 +11300,9 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Heartening Missive (Rabbit)",
@@ -21695,7 +21699,9 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Sparkler",

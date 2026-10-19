@@ -318,6 +318,61 @@ export function sprayedSmokePlan(html, base) {
     };
 }
 
+// A cloud of sticky bubbles its user blows, Clinging Bubbles' "An improbably large cloud of bubbles emerges in a @Template[burst|distance:5].
+// This cloud travels in a straight line, moving 10 feet at the end of your turns. … any creature who enters the same space as the bubble
+// cloud becomes shrouded in them, taking a –10-foot circumstance penalty to its Speed. … The bubbles pop naturally and harmlessly after 1
+// minute": the ability module's zone placed next to its user for that minute, the penalty on a creature entering it (an Effect that stays
+// until it pops them); the cloud's drift, the popping and the cloud's own numbers notes.
+const BUBBLES = /\bcloud of bubbles emerges in (a square adjacent to you|an? @Template\[(?:type:)?burst\|distance:(\d+)\][^.]*)\./i;
+const SHROUDED = /\btaking an? [–-](\d+)-foot circumstance penalty to its Speed\b/i;
+const POPS = /\bpop naturally and harmlessly after (\d+) (minutes?|rounds?)\b/i;
+export function bubbleCloudPlan(html, base, item) {
+    const text = String(html ?? "");
+    const bubbles = BUBBLES.exec(text);
+    const shrouded = SHROUDED.exec(text);
+    if (!bubbles || !shrouded) return null;
+    const pops = POPS.exec(text);
+    const plain = text.replace(/@\w+\[[^\]]*\](?:\{([^}]*)\})?/g, (all, label) => label ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+    const plan = {
+        modelVersion: MODEL_VERSION,
+        source: base?.source ?? { name: item?.name ?? null },
+        rank: 1,
+        traits: [...(item?.system?.traits?.value ?? [])],
+        activation: { time: null, traits: [] },
+        automation: { level: "guided" },
+        trigger: { event: "zone" },
+        targeting: { target: "a creature entering the bubbles", range: null, area: null },
+        resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), modifiers: [{ selector: "land-speed", type: "circumstance", value: -Number(shrouded[1]) }] } } }
+    };
+    const sentences = (pattern) => (pattern.exec(plain)?.[0] ?? null);
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: bubbles[2] ? { type: "burst", value: Number(bubbles[2]) } : { type: "square", value: 5 },
+            centre: "placed",
+            range: bubbles[2] ? 10 : 5,
+            lasts: pops ? { mode: "fixed", value: Number(pops[1]), unit: UNITS[pops[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } : null,
+            untilReused: false,
+            concealed: false,
+            terrain: [],
+            others: false,
+            hazard: null,
+            saves: [{ when: ["enter"], plan }],
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes: [
+                "It drifts 10 feet in a straight line at the end of its user's turns: move it by hand.",
+                ...[/[^.]*\bInteract action to pop the bubbles[^.]*\./i, /[^.]*\bredirected with strong winds\./i, /[^.]*\bThe cloud of bubbles has AC[^.]*\./i].map(sentences).filter(Boolean).map((sentence) => sentence.trim()),
+                "The penalty stays on a creature until it pops the bubbles: remove its Effect then."
+            ]
+        }
+    };
+}
+
 // A square its user fills with something that harms only some creatures: Sanctified Beans' "choose an adjacent square to exhale into. You
 // fill that square with soothing vapors that harm any fiend, fey, ghost, spirit, or undead creature that ends their turn in that square for
 // the next minute, causing them to take @Damage[(4d8+4)[spirit]] damage (@Check[will|dc:28|basic] save). An incorporeal creature that takes
