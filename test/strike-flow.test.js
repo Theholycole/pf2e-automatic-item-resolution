@@ -550,3 +550,82 @@ test("Jawbreaker Shield: its reaction's shield bash, a hit posting the DC 31 For
     const enfeebled = ravenous.plan.strike.save.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "enfeebled");
     assert.deepEqual([enfeebled.value, enfeebled.duration.value, enfeebled.duration.unit], [2, 1, "minutes"]);
 });
+
+test("a whetstone's riders, the weapon picked on its card: Frenzied Quintessence Quickened after each hit with it, Analysis Eye's weaknesses and resistances to the GM once a creature, Leeching Fangs' healing — half the Hit Point damage it deals a living creature", async () => {
+    const { attackRidersText } = await import("../src/compiler/attack-riders.js");
+    const frenzied = compileItem(source("Frenzied Quintessence"));
+    assert.equal(routeOf(frenzied), "item");
+    // (No time of its own, a whetstone's 1 minute — not the Quickened's 1 round.)
+    assert.deepEqual([frenzied.item.attackRiders.duration.value, frenzied.item.attackRiders.duration.unit], [1, "minutes"]);
+    assert.equal(attackRidersText(frenzied.item.attackRiders.riders), "On a hit with the weapon picked: you are quickened for 1 round (its extra action only to Stride toward a foe or Strike)");
+    assert.equal(frenzied.notes, undefined);
+    assert.equal(frenzied.noteOnly, undefined);
+    assert.equal(attackRidersText(compileItem(source("Analysis Eye")).item.attackRiders.riders, "Longsword"), "On the first hit with Longsword at each creature: one of its weaknesses or resistances, whispered to the GM to tell you");
+    assert.equal(attackRidersText(compileItem(source("Leeching Fangs")).item.attackRiders.riders), "Hit Point damage the weapon picked deals to a living creature heals you half as much");
+
+    const duelist = foundry.makeActor({ id: "strike-duelist", name: "Duelist", hp: 10, max: 40, owners: ["player"] });
+    const target = foundry.makeActor({ id: "strike-target", name: "Target" });
+    foundry.place(duelist, 0, 10400);
+    foundry.place(target, 100, 10400);
+    target.system.attributes.weaknesses = [{ type: "fire", value: 5, label: "Fire 5" }];
+    target.system.attributes.resistances = [{ type: "cold", value: 3, label: "Cold 3" }];
+    const dagger = { id: "duelist-dagger", name: "Dagger", system: { level: { value: 0 } } };
+    const sword = { id: "duelist-sword", name: "Longsword", system: { level: { value: 0 } } };
+    duelist.weapons.push(dagger, sword);
+    for (const name of ["Frenzied Quintessence", "Analysis Eye", "Leeching Fangs"]) {
+        const item = foundry.giveItem(duelist, source(name));
+        const data = item.toObject();
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: item.type } } }, speaker: { actor: duelist.id }, actor: duelist, token: duelist.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+        assert.deepEqual(card.flags[MODULE_ID].card.weapons.map((weapon) => weapon.name), ["Dagger", "Longsword"]);
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", runeWeapon: 1 });
+        await settle();
+    }
+    const watches = duelist.itemTypes.effect.filter((effect) => effect.flags?.[MODULE_ID]?.attackRiders);
+    assert.deepEqual(watches.map((effect) => [effect.name, effect.flags[MODULE_ID].attackRiders.weapon.id, effect.system.duration.value, effect.system.duration.unit]), [["Frenzied Quintessence (Longsword)", "duelist-sword", 1, "minutes"], ["Analysis Eye (Longsword)", "duelist-sword", 1, "minutes"], ["Leeching Fangs (Longsword)", "duelist-sword", 1, "minutes"]]);
+
+    const strike = async (weapon, outcome) => {
+        const message = foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome, options: ["item:melee", `item:id:${weapon.id}`], target: { actor: target.uuid, token: target.token.uuid } }, origin: { uuid: `${duelist.uuid}.Item.${weapon.id}`, type: "weapon" } } }, speaker: { actor: duelist.id }, actor: duelist, token: duelist.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+    };
+    // A hit with the dagger: nothing; with the longsword: Quickened for 1 round, its user's, and the target's weakness and resistance to the GM.
+    const before = foundry.applied.length;
+    const posted = foundry.messages.length;
+    await strike(dagger, "success");
+    assert.equal(foundry.applied.length, before);
+    assert.equal(foundry.messages.length, posted + 1, "only the attack roll's own message");
+    await strike(sword, "success");
+    const quickened = foundry.applied.slice(before).map((entry) => entry.change);
+    assert.deepEqual(quickened.map((change) => [change.op, change.slug, change.value, change.target, change.duration.value, change.duration.expiry]), [["condition", "quickened", null, "source", 1, "turn-end"]]);
+    const learned = foundry.messages.slice(posted).filter((message) => /Analysis Eye/.test(message.content));
+    assert.equal(learned.length, 1);
+    assert.match(learned[0].content, /\(GM\): pick one of Target's to tell Duelist: weakness Fire 5; resistance Cold 3\./);
+    assert.deepEqual(learned[0].whisper, ["gm"]);
+    assert.ok(foundry.messages.slice(posted).some((message) => message.content === "<p><strong>Frenzied Quintessence</strong>: ability applied condition; its extra action only to Stride toward a foe or Strike.</p>"));
+    // (A second hit at it: nothing more to learn; a miss: no Quickened.)
+    await strike(sword, "criticalSuccess");
+    await strike(sword, "failure");
+    assert.equal(foundry.messages.slice(posted).filter((message) => /Analysis Eye/.test(message.content)).length, 1);
+    assert.equal(foundry.applied.slice(before).length, 2);
+
+    // The damage the longsword dealt (PF2e's damage-taken message, its origin the weapon): half as much healing — 9 → 4; the dagger's, none.
+    const dealt = async (weapon, victim, damage) => {
+        const message = foundry.makeMessage({ flags: { pf2e: { appliedDamage: { uuid: victim.uuid, isHealing: false, updates: [{ path: "system.attributes.hp.value", value: damage }] }, context: { type: "damage-taken", options: [] }, origin: { actor: duelist.uuid, uuid: `${duelist.uuid}.Item.${weapon.id}`, type: "weapon" } } }, speaker: { actor: victim.id }, actor: victim, token: victim.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+    };
+    await dealt(dagger, target, 9);
+    assert.deepEqual(duelist.healed, []);
+    await dealt(sword, target, 9);
+    assert.deepEqual(duelist.healed.map((entry) => entry.damage), [-4]);
+    assert.equal(duelist.system.attributes.hp.value, 14);
+    assert.match(foundry.messages.at(-1).content, /Leeching Fangs<\/strong>: Duelist heals 4, half the 9 Hit Point damage dealt to Target\./);
+    // (Not a living creature's: no healing.)
+    const zombie = foundry.makeActor({ id: "strike-zombie", name: "Zombie", undead: true });
+    foundry.place(zombie, 200, 10400);
+    await dealt(sword, zombie, 8);
+    assert.deepEqual(duelist.healed.map((entry) => entry.damage), [-4]);
+});

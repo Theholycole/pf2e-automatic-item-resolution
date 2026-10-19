@@ -106,6 +106,10 @@ export function createFakeFoundry() {
             get hitPoints() {
                 return this.system.attributes.hp;
             },
+            // (PF2e's mode of being: undead for the undead stand-in, else living.)
+            get modeOfBeing() {
+                return this.system.attributes.hp.negativeHealing ? "undead" : "living";
+            },
             isOfType: (...types) => types.includes("creature") || types.includes("character"),
             hasCondition(slug) {
                 return this.conditions.has(slug);

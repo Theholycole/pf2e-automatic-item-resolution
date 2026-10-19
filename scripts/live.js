@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
+import { abilityState, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
@@ -23,7 +23,7 @@ import { startItemConjure, startItemZone } from "./zones.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
-import { attackRidersEffectSource, attackRidersRolled } from "./attack-riders.js";
+import { attackRidersEffectSource, attackRidersRolled, weaponDamageDealt } from "./attack-riders.js";
 import { withUserDCs } from "./item-dcs.js";
 import { attackRidersText } from "../src/compiler/attack-riders.js";
 import { lightAuraZone } from "../src/compiler/light-aura.js";
@@ -82,6 +82,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         firstDegreeRolled(message).catch((error) => console.error(`${MODULE_ID} | first critical failure`, error));
         // (What each melee attack roll sets off while an item lasts: scripts/attack-riders.js.)
         attackRidersRolled(message).catch((error) => console.error(`${MODULE_ID} | attack riders`, error));
+        // (The damage a whetstone's weapon dealt: Leeching Fangs' healing, scripts/attack-riders.js.)
+        weaponDamageDealt(message).catch((error) => console.error(`${MODULE_ID} | weapon damage dealt`, error));
         // (An item's toggle on until its next damage roll: scripts/toggle.js.)
         togglesAfterDamage(message).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
     });
@@ -205,7 +207,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         rolled,
         // (A rune it lends a weapon: its user's weapons to pick from.)
         // (Or one it makes its user's best, up to a level: Blade Phantom's Guide.)
-        weapons: (plan.item?.rune && !plan.item.rune.own) || plan.item?.proficiency ? (actor.itemTypes?.weapon ?? []).filter((weapon) => !weapon.isOfType?.("bomb") && weapon.system?.group !== "bomb" && !(plan.item?.proficiency?.maxLevel && Number(weapon.system?.level?.value) > plan.item.proficiency.maxLevel)).map((weapon) => ({ id: weapon.id, name: weapon.name })) : []
+        // (Or a whetstone's: Frenzied Quintessence.)
+        weapons: picksWeapon(plan) ? (actor.itemTypes?.weapon ?? []).filter((weapon) => !weapon.isOfType?.("bomb") && weapon.system?.group !== "bomb" && !(plan.item?.proficiency?.maxLevel && Number(weapon.system?.level?.value) > plan.item.proficiency.maxLevel)).map((weapon) => ({ id: weapon.id, name: weapon.name })) : []
     });
     const card = await ChatMessage.create({
         content: cardHTML(state, { canApply: true }),
@@ -607,8 +610,13 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     if (state.plan.item?.attackRiders && target.actor) {
         const old = (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.attackRiders?.item?.name === state.item.name);
         if (old.length) await target.actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
-        await target.actor.createEmbeddedDocuments("Item", [attackRidersEffectSource(state.plan.item.attackRiders, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null })]);
-        lines.push(`${recipient.name}: ${attackRidersText(state.plan.item.attackRiders.riders)}`);
+        // (A whetstone's: the weapon picked on the card.)
+        const weapon = state.plan.item.attackRiders.riders.some((rider) => rider.weapon) ? state.weapons?.[state.runeWeapon ?? 0] ?? null : null;
+        if (state.plan.item.attackRiders.riders.some((rider) => rider.weapon) && !weapon?.id) lines.push(`${recipient.name}: no weapon for ${state.item.name}.`);
+        else {
+            await target.actor.createEmbeddedDocuments("Item", [attackRidersEffectSource(state.plan.item.attackRiders, { item: state.item, user: state.user, weapon, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null })]);
+            lines.push(`${recipient.name}: ${attackRidersText(state.plan.item.attackRiders.riders, weapon?.name ?? null)}`);
+        }
     }
     // (The creature its bonuses are against: a TokenMark Effect at it, the item's earlier mark gone.)
     if (state.plan.item?.mark && others[0]?.token && target.actor) {

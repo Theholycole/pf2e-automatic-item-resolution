@@ -311,6 +311,45 @@ export const cases = {
         return { effects: foe.itemTypes.effect.map((effect) => effect.name) };
     },
 
+    // Three whetstones on a longsword (Frenzied Quintessence, Analysis Eye, Leeching Fangs): its hit (AC 1) Quickens its user and tells the
+    // GM and its user the target's one weakness; its damage, applied as PF2e's damage button does (the weapon its origin), heals its user
+    // half as much.
+    async whetstoneRiders(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Whetstone Duelist", { type: "character", x: 8, y: 14 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Whetstone Target", { x: 9, y: 14, ac: 1, hp: 80, alliance: "opposition" });
+        await foe.update({ "system.attributes.weaknesses": [{ type: "fire", value: 5 }] });
+        const sword = await give(user, "Longsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await user.update({ "system.attributes.hp.value": 1 });
+        for (const name of ["Frenzied Quintessence", "Analysis Eye", "Leeching Fangs"]) {
+            const stone = await give(user, name);
+            const since = Date.now();
+            await stone.consume();
+            const card = await messageAfter(since, itemCard("item"), { what: `${name}'s card` });
+            const at = card.getFlag(NS, "card").weapons.findIndex((weapon) => weapon.id === sword.id);
+            assert(at >= 0, `the longsword offered (${name})`);
+            await game.modules.get(NS).api.live.apply(card.id, { runeWeapon: at });
+        }
+        const watches = () => user.itemTypes.effect.filter((effect) => effect.getFlag(NS, "attackRiders")?.weapon?.id === sword.id);
+        await until(() => watches().length === 3, "three watch Effects on the longsword", { timeout: 8000 });
+        await userToken.object?.control?.();
+        await target(foeToken);
+        let since = Date.now();
+        const { action, attack } = await strike(user, sword);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        await until(() => user.hasCondition("quickened"), "Quickened", { timeout: 8000 });
+        const learned = await messageAfter(since, (message) => /Analysis Eye/.test(message.content) && /weakness fire 5/i.test(message.content), { what: "the weakness learned" });
+        since = Date.now();
+        await action.damage({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const before = user.system.attributes.hp.value;
+        await foe.applyDamage({ damage: rolled.rolls[0], token: foeToken, item: rolled.item });
+        const healed = await messageAfter(since, (message) => /Leeching Fangs/.test(message.content) && /heals \d+/.test(message.content), { what: "the leech healing" });
+        const amount = Number(/heals (\d+)/.exec(healed.content)[1]);
+        await until(() => user.system.attributes.hp.value === Math.min(user.system.attributes.hp.max, before + amount), `healed ${amount}`, { timeout: 8000 });
+        return { watches: watches().map((effect) => effect.name), learned: learned.content, healed: healed.content, hp: [before, user.system.attributes.hp.value, user.system.attributes.hp.max] };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });

@@ -17,6 +17,9 @@ export const DRINKER_ID = "drinker";
 // A new card: the plan, the item ({ name, uuid, sourceId, slug, img }), its user
 // ({ actorUuid, tokenUuid, name }), the creatures it can be fed to (the user first),
 // and PF2e's own roll for it ({ total, formula, kind, messageId } or null).
+// Whether its card picks one of its user's weapons: a rune it lends one, one it makes its user's best, a whetstone's riders.
+export const picksWeapon = (plan) => Boolean((plan?.item?.rune && !plan.item.rune.own) || plan?.item?.proficiency || (plan?.item?.attackRiders?.riders ?? []).some((rider) => rider.weapon));
+
 // weapons: its user's, [{ id, name }], for a rune it lends a weapon (plan.item.rune), picked on the card.
 export function createItemCard({ plan, item, user, drinkers = [], rolled = null, weapons = [] }) {
     const drinker = plan?.item?.recipient === "drinker";
@@ -31,7 +34,7 @@ export function createItemCard({ plan, item, user, drinkers = [], rolled = null,
         drinker: drinker ? 0 : null,
         // (A tea's Tea Ceremony: ticked on the card, false until then; null for any other item.)
         ceremony: plan?.item?.ceremony ? false : null,
-        ...((plan?.item?.rune && !plan.item.rune.own) || plan?.item?.proficiency ? { weapons, runeWeapon: 0 } : {}),
+        ...(picksWeapon(plan) ? { weapons, runeWeapon: 0 } : {}),
         // (One of several runes, picked: Boughshatter's Decaying, Grievous or Wounding.)
         ...(plan?.item?.rune?.choices?.length ? { runeChoice: 0 } : {}),
         rolled,

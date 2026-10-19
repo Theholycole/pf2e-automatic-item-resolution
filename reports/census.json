@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 186,
-   "resolves": 754,
+   "none": 184,
+   "resolves": 757,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
    "partial": 125,
    "builtin:item-action": 16,
-   "note-only": 127,
+   "note-only": 126,
    "builtin:conjure": 7,
    "builtin:ways": 11,
    "builtin:counteract": 30,
@@ -36,12 +36,12 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 22,
-    "resolves": 213,
+    "resolves": 216,
     "partial": 61,
-    "note-only": 63,
+    "note-only": 62,
     "builtin:readied-bonus": 8,
     "builtin:ways": 4,
-    "none": 103,
+    "none": 101,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 6,
@@ -354,9 +354,9 @@
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 58,
+   "resolves": 59,
    "gaps": 0,
-   "none": 1
+   "none": 0
   },
   "trigger": {
    "count": 156,
@@ -378,13 +378,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 263,
+   "resolves": 264,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 606,
+   "resolves": 607,
    "gaps": 0,
    "none": 13
   }
@@ -392,8 +392,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 247,
-   "item": 620,
+   "none": 245,
+   "item": 622,
    "fortune": 25,
    "zone": 111,
    "save": 147,
@@ -412,10 +412,10 @@
    "other": {
     "cast": 14,
     "zone": 22,
-    "none": 124,
+    "none": 122,
     "later": 11,
     "save": 96,
-    "item": 212,
+    "item": 214,
     "fortune": 8,
     "ways": 4,
     "teleport": 4,
@@ -512,7 +512,7 @@
    }
   },
   "noCard": {
-   "no-plan": 186,
+   "no-plan": 184,
    "triggered": 11,
    "gm": 50
   }
@@ -9453,7 +9453,10 @@
     "whetstone"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Glowing Lantern Fruit",
@@ -27249,8 +27252,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -28759,7 +28763,10 @@
    "mechanisms": [
     "on-weapon"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Moonlit Spellgun (Minor)",

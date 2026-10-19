@@ -55,7 +55,7 @@ import { teleportPlan } from "./teleport.js";
 import { withScaled } from "./scaled.js";
 import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
-import { withAttackRiders } from "./attack-riders.js";
+import { readAttackRiders, withAttackRiders } from "./attack-riders.js";
 import { withAreaTraitNote } from "./area-trait.js";
 import { readLightAura } from "./light-aura.js";
 
@@ -320,6 +320,9 @@ function compileOne(given, options = {}) {
     if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     // (A weapon its user treats as their best for a while, src/compiler/proficiency-loan.js: Blade Phantom's Guide — the item card's too.)
     if (readProficiencyLoan(plainText(item?.system?.description?.value)) && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
+    // (What a whetstone's weapon sets off while it lasts, src/compiler/attack-riders.js: Frenzied Quintessence's Quickened after each hit —
+    // the item card's weapon picker, then its watch Effect.)
+    if ((readAttackRiders(item?.system?.description?.value)?.riders ?? []).some((rider) => rider.weapon) && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     if (!plan) return null;
     // (What a failed save primes for later, a note Effect from those rows; a fulu's affixed creature, src/compiler/primed.js.)
     plan = affixedTargeting(withZeroHPNote(withPrimedNotes(plan, plainText(item?.system?.description?.value)), plainText(item?.system?.description?.value)), plainText(given?.system?.description?.value));
