@@ -117,3 +117,35 @@ export function victoryWaysPlan(html, base, item) {
     if (ways.length < 2) return null;
     return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true };
 }
+
+// A talisman made from a dragon, its damage type the dragon's: Dragontooth Trophy's "On the triggering Strike and until the end of your next
+// turn, the damage type of the affixed weapon changes to the type matching the dragon the claw came from", Dragonclaw Scutcheon's "you and
+// all of your carried, wielded, or worn items gain immunity to all damage of that type until the end of your next turn". The ways card's
+// pick of the dragon's damage type: each way the triggering Strike's damage of that type (src/compiler/strikes.js, its later Strikes a
+// note), or that immunity (the item card's, PF2e's Immunity rule).
+const DRAGON_DAMAGE = ["acid", "cold", "electricity", "fire", "poison", "sonic", "force", "mental", "spirit", "void", "vitality"];
+const TROPHY = /\bOn the triggering Strike and until the end of your next turn, the damage type of the affixed weapon changes to the type matching the dragon the claw came from\./i;
+const SCUTCHEON = /\bWhen you Activate the scutcheon, you and all of your carried, wielded, or worn items gain immunity to all damage of that type until the end of your next turn\./i;
+const capital = (word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`;
+export function dragonWaysPlan(html, base, item, options = {}) {
+    const text = String(html ?? "");
+    const ways = [];
+    if (TROPHY.test(text)) {
+        for (const type of DRAGON_DAMAGE) {
+            const plain = text.replace(TROPHY, `All damage from this Strike is ${type} damage.`);
+            const plan = compileStrike({ ...item, system: { ...(item?.system ?? {}), description: { value: plain } } }, base, options);
+            if (plan?.strike?.alteration !== type) return null;
+            ways.push({ name: capital(type), html: `<p>The triggering Strike's damage is ${type}.</p>`, plan: { ...plan, notes: [...(plan.notes ?? []), `Until the end of your next turn, the affixed weapon's other Strikes deal ${type} damage too (by hand).`], partial: true } });
+        }
+    } else if (SCUTCHEON.test(text)) {
+        const duration = { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" };
+        for (const type of DRAGON_DAMAGE) {
+            const plan = { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, item: { type: item?.type, level: Number(item?.system?.level?.value) || 0, recipient: "user", resist: [{ type, value: null, immune: true, duration }] } };
+            ways.push({ name: capital(type), html: `<p>Immunity to ${type} damage until the end of your next turn.</p>`, plan });
+        }
+    }
+    if (ways.length < 2) return null;
+    // (The three talismans of one dragon together: their Dragon Breath, the GM's.)
+    const set = /\bIf you have a dragonclaw scutcheon, dragonscale cameo, and dragontooth trophy\b[^.]*\.[^.]*\./i.exec(text.replace(/<[^>]+>/g, " ").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\(@Check\[(\w+)\|dc:(\d+)\|basic\]\)/g, (all, save, dc) => `(DC ${dc} basic ${save.charAt(0).toUpperCase()}${save.slice(1)} save)`));
+    return { ...base, builtin: "ways", automation: { level: set ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true, ...(set ? { notes: [`${set[0].trim()} (by hand)`], partial: true } : {}) };
+}

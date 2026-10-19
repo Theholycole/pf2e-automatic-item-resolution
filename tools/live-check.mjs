@@ -4494,6 +4494,23 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Dragonclaw Scutcheon: fire picked on the ways card — immunity to fire until the end of the next turn, as PF2e's Immunity rule.
+    async scutcheonImmunity(scene) {
+        const { actor: user } = await creature(scene, "Scutcheon Bearer", { type: "character", x: 2, y: 2 });
+        const scutcheon = await give(user, "Dragonclaw Scutcheon");
+        let since = Date.now();
+        await scutcheon.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the dragon type picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Fire") });
+        const card = await messageAfter(since, itemCard("item"), { what: "the fire way's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const immune = () => (user.system.attributes.immunities ?? []).some((entry) => entry.type === "fire");
+        await until(() => immune(), `immunity to fire (${JSON.stringify((user.system.attributes.immunities ?? []).map((entry) => entry.type))})`, { timeout: 8000 });
+        return { immunities: user.system.attributes.immunities.map((entry) => entry.type) };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

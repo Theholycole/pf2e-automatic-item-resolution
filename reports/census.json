@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 203,
+   "none": 201,
    "resolves": 750,
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
@@ -25,7 +25,7 @@
    "builtin:counteract": 29,
    "builtin:no-effect": 51,
    "builtin:reroll": 2,
-   "builtin:ways": 6,
+   "builtin:ways": 8,
    "builtin:teleport": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
@@ -94,13 +94,14 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 33,
+    "none": 31,
     "builtin:readied-bonus": 12,
     "builtin:item-action": 11,
     "resolves": 56,
     "note-only": 7,
     "builtin:no-effect": 9,
     "builtin:reroll": 1,
+    "builtin:ways": 2,
     "builtin:cast-spell": 9,
     "partial": 14,
     "builtin:teleport": 2,
@@ -331,7 +332,7 @@
    "count": 491,
    "resolves": 334,
    "gaps": 0,
-   "none": 23
+   "none": 22
   },
   "affliction": {
    "count": 144,
@@ -343,7 +344,7 @@
    "count": 33,
    "resolves": 5,
    "gaps": 0,
-   "none": 6
+   "none": 5
   },
   "strike": {
    "count": 31,
@@ -361,7 +362,7 @@
    "count": 156,
    "resolves": 61,
    "gaps": 0,
-   "none": 27
+   "none": 25
   },
   "counteract": {
    "count": 79,
@@ -391,7 +392,7 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 266,
+   "none": 264,
    "item": 622,
    "fortune": 23,
    "zone": 111,
@@ -402,8 +403,8 @@
    "conjure": 7,
    "counteract": 29,
    "reroll": 2,
+   "ways": 8,
    "coat": 46,
-   "ways": 6,
    "strike": 12,
    "teleport": 2
   },
@@ -434,11 +435,12 @@
     "zone": 1
    },
    "talisman": {
-    "none": 42,
+    "none": 40,
     "fortune": 14,
     "action": 11,
     "item": 52,
     "reroll": 1,
+    "ways": 2,
     "cast": 9,
     "teleport": 2,
     "save": 15,
@@ -508,7 +510,7 @@
    }
   },
   "noCard": {
-   "no-plan": 203,
+   "no-plan": 201,
    "triggered": 11,
    "gm": 51,
    "other": 1
@@ -2428,7 +2430,9 @@
     "casts-spell",
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Life-Boosting Oil (Greater)",
@@ -7871,7 +7875,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Enigma-Sight Potion",

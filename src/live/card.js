@@ -186,6 +186,14 @@ export function effectSource(template, { application = null, item = {}, user = {
 // piercing for 10 minutes".
 const typeWords = (type) => (type === "all-damage" ? "all damage" : type.replace(/-/g, " "));
 export function resistanceText(resist) {
+    // (Immunity, its own words: "Immunity to fire until the end of the next turn".)
+    const immune = resist.filter((entry) => entry.immune);
+    if (immune.length) {
+        const duration = immune.find((entry) => entry.duration?.mode === "fixed")?.duration;
+        const time = !duration ? "" : duration.anchor === "source-turn" ? ` until the ${duration.expiry === "turn-end" ? "end" : "start"} of the next turn` : ` for ${timeText(duration)}`;
+        const rest = resist.filter((entry) => !entry.immune);
+        return `Immunity to ${immune.map((entry) => typeWords(entry.type)).join(" and ")}${time}${rest.length ? `; ${resistanceText(rest)}` : ""}`;
+    }
     const byValue = new Map();
     // (A type to choose: "acid, cold or fire (one, chosen)".)
     // (Damage from some creatures: its own words, "spirit and void damage from unholy creatures".)
@@ -263,7 +271,8 @@ export const chosenResistances = (resist, index = 0) => resist.map((entry) => (e
 
 // Its resistance's Effect: PF2e's Resistance rules. moduleId: the flag's scope.
 // One resistance as PF2e's rule; damage from some creatures as its custom type, the damage's types and its source's traits.
-const resistanceRule = ({ type, value, from = [], damage = [], label }) => (type === "custom" ? { key: "Resistance", type: "custom", definition: [...(damage.length ? [{ or: damage.map((kind) => `damage:type:${kind}`) }] : []), { or: from.map((trait) => `origin:trait:${trait}`) }], label, value } : { key: "Resistance", type, value });
+// (Or immunity, Dragonclaw Scutcheon's "immunity to all damage of that type": PF2e's Immunity rule.)
+const resistanceRule = ({ type, value, from = [], damage = [], label, immune = false }) => (immune ? { key: "Immunity", type } : type === "custom" ? { key: "Resistance", type: "custom", definition: [...(damage.length ? [{ or: damage.map((kind) => `damage:type:${kind}`) }] : []), { or: from.map((trait) => `origin:trait:${trait}`) }], label, value } : { key: "Resistance", type, value });
 export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration ?? null;
     return ownEffectSource({ name: "resistance", img: "icons/svg/shield.svg", words: resistanceText(resist), rules: resist.map(resistanceRule), duration, flag: { resist: true }, item, user, worldTime, initiative, moduleId });

@@ -250,6 +250,19 @@ test("armor recalling a victory (Victory Plate): the ways card's pick of the cre
     assert.deepEqual(greater.plan.ways.filter((way) => /Ooze|Undead/.test(way.name)).map((way) => way.plan.item.resist[0].value), [20, 10]);
 });
 
+test("a talisman of one dragon: Dragonclaw Scutcheon's immunity to the picked type until the end of the next turn (PF2e's Immunity rule), Dragontooth Trophy's triggering Strike of that damage type", () => {
+    const scutcheon = compileItem(source("Dragonclaw Scutcheon"));
+    assert.equal(scutcheon.builtin, "ways");
+    const fire = scutcheon.ways.find((way) => way.name === "Fire").plan.item.resist;
+    assert.equal(resistanceText(fire), "Immunity to fire until the end of the next turn");
+    assert.deepEqual(resistanceEffectSource(fire, { item: { name: "Dragonclaw Scutcheon" } }).system.rules, [{ key: "Immunity", type: "fire" }]);
+    assert.match(scutcheon.notes[0], /8th-rank Dragon Breath focus spell \(DC 35 basic Reflex save\).*\(by hand\)$/);
+    const trophy = compileItem(source("Dragontooth Trophy"));
+    const cold = trophy.ways.find((way) => way.name === "Cold").plan;
+    assert.deepEqual([routeOf(cold), cold.strike.alteration, cold.strike.hit], ["strike", "cold", true]);
+    assert.ok(cold.notes.includes("Until the end of your next turn, the affixed weapon's other Strikes deal cold damage too (by hand)."));
+});
+
 test("a shield changing form until activated again (Sapling Shield): a tower shield's +2 AC and –5-foot Speed by PF2e's ItemAlteration on that shield, its Hardness and Bulk a note", async () => {
     const { shieldFormEffectSource, shieldFormText } = await import("../src/live/card.js");
     const [sapling] = compileActivations(source("Sapling Shield (Major)"));
