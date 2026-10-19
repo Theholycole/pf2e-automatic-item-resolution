@@ -794,6 +794,7 @@ test("degrees changed on another creature's roll: Crimson Bluff's Strike one deg
     const tome = compileActivations(item("Tome of Dripping Shadows"))[0].plan;
     assert.deepEqual([tome.builtin, tome.reroll.who, tome.reroll.raise.change, tome.targeting.target], ["reroll", "target", { criticalFailure: "failure" }, "the creature targeted"]);
     assert.match(tome.reroll.after, /^For the next minute, you become Concealed to all creatures/);
+    assert.deepEqual(compileActivations(item("The Lost"))[0].plan.reroll.raise.change, { criticalFailure: "failure", failure: "success" });
 });
 
 test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude), Resolute Shield's twice its Hardness as resistance", () => {

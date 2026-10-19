@@ -4903,7 +4903,7 @@ export const cases = {
 
     // Degrees changed on another creature's roll: Crimson Bluff's Swap Places (the brute's critical hit at AC 1 a hit), Golden Greaves (the
     // brute's Shove at its user one degree down to a critical failure, when it failed), Tome of Dripping Shadows (the creature targeted's
-    // critically failed save a failure).
+    // critically failed save a failure); and The Lost's on its user's own failed save.
     async otherDegrees(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Degree Bearer", { x: 18, y: 20, ac: 1, save: 12 });
         const { actor: brute, token: bruteToken } = await creature(scene, "Degree Brute", { type: "character", x: 19, y: 20 });
@@ -4937,6 +4937,11 @@ export const cases = {
         await wait(600);
         results.tome = await use("Tome of Dripping Shadows", 0, { targets: [foeToken.uuid] });
         assert(results.tome[0]?.startsWith("PFTEST ITEM Degree Foe's roll (") && results.tome[0].endsWith("a critical failure becomes a failure."), `the foe's critical failure a failure (${JSON.stringify(results.tome)})`);
+        // (The Lost: its user's own failed save one degree better.)
+        await user.saves.will.roll({ skipDialog: true, dc: { value: 60 } });
+        await wait(600);
+        results.lost = await use("The Lost", 0);
+        assert(/^PFTEST ITEM Degree Bearer's roll \(\d+\): (?:a critical failure becomes a failure|a failure becomes a success)\.$/.test(results.lost[0] ?? ""), `the failed save one degree better (${JSON.stringify(results.lost)})`);
         return { outcome, shoved, results };
     },
 

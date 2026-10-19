@@ -81,7 +81,10 @@ const CHANGES = [
     [/\bIf you critically failed, you fail instead\b/i, ["criticalFailure", "failure"]],
     [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["criticalFailure", "failure"]],
     [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["failure", "success"]],
-    [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["success", "criticalSuccess"]]
+    [/\bAdjust the result of your [\w ]*?(?:saving throw|save|check|roll) up by one degree of success\b/i, ["success", "criticalSuccess"]],
+    // (The Lost's "Increase the result of your failed saving throw by one degree of success": each failed degree one better.)
+    [/\bIncrease the result of your failed (?:saving throw|save|check|roll) by one degree of success\b/i, ["criticalFailure", "failure"]],
+    [/\bIncrease the result of your failed (?:saving throw|save|check|roll) by one degree of success\b/i, ["failure", "success"]]
 ];
 const RAISE_BONUS = /\b(?:You gain an? \+(\d+) (circumstance|status|item) bonus to (?:your|the) [\w ]*?(?:attack roll|check|save|saving throw)|Roll (\d+d\d+) and add the result to your [\w ]*?(?:check|save|attack roll|roll) as an? (circumstance|status|item) bonus)\b[^.]*\b(?:possibly turning|which might|might improve|could turn)\b/i;
 const SKILL_NAMES = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery", "perception"];
