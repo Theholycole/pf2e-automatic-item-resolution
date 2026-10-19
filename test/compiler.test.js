@@ -365,13 +365,14 @@ test("temporary Hit Points an item grants you (Moss Cover's oil), for its stated
     assert.deepEqual([gain.kind, gain.amount, gain.duration.value, gain.duration.unit], ["temp-hp", 12, 1, "hours"]);
 });
 
-test("action scopes in lower case, the last item's only; X-based checks; a sentence's tail a note (Martial Mayhem Mutagen)", () => {
+test("action scopes in lower case, the last item's only; X-based checks; a sentence's tail the Strikes' extra damage, read (Martial Mayhem Mutagen)", () => {
     const plan = compileItem(item("Martial Mayhem Mutagen (Lesser)"));
     assert.deepEqual(plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate ?? null]), [
         ["skill-check", 1, [{ or: ["action:disarm", "action:grapple", "action:reposition", "action:shove", "action:trip"] }]],
         ["will", -2, null], ["int-based", -2, null], ["perception", -2, ["action:sense-motive"]]
     ]);
-    assert.ok(plan.unread.some((sentence) => /1 additional precision damage to Off-Guard creatures/.test(sentence)), "the Strikes' extra damage on the note");
+    assert.deepEqual(plan.item.strikeDamage.map((entry) => [entry.value, entry.category, entry.predicate]), [[1, "precision", ["item:melee", "target:condition:off-guard"]]]);
+    assert.ok(!plan.unread.some((sentence) => /1 additional precision damage to Off-Guard creatures/.test(sentence)), "the Strikes' extra damage read, not on the note");
 });
 
 test("of several linked Effects, the item's own (its name, or the wearer's); the others a note; not per degree, for allies, or unnamed", () => {

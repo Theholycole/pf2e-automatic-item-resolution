@@ -402,7 +402,10 @@ function modifiersOf(sentences, duration, used = new Set()) {
             // stays a note too.)
             const tail = said.slice(match.index + match[0].length);
             // (Nor one only while something else lasts — "… to skill checks to Recall Knowledge while Investigating": that stays on the note.)
-            if ((!/^,? and (?:you|your)\b/i.test(tail) || !MECHANICAL.test(tail)) && !partly && !/^,? while\b/i.test(tail)) used.add(index);
+            // (Unless what goes on is the Strikes' extra damage the strike-damage reader takes, Martial Mayhem Mutagen's: all of it read.)
+            const strikeTail = /^,? and (your (?:melee |ranged |unarmed )?Strikes\b[^.;]*)\.?\s*$/i.exec(tail);
+            const readTail = strikeTail && new RegExp(`^${STRIKE_EXTRA.source}$`, "i").test(strikeTail[1].trim());
+            if ((!/^,? and (?:you|your)\b/i.test(tail) || !MECHANICAL.test(tail) || readTail) && !partly && !/^,? while\b/i.test(tail)) used.add(index);
             for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate && !lastOnly ? { predicate } : {}) });
             // (Sense Motive is a Perception check in PF2e: "skill checks to sense-motive" are Perception's.)
             const perceptionOnly = JSON.stringify(predicate ?? []) === JSON.stringify(["action:sense-motive"]);
