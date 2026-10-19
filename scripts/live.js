@@ -25,6 +25,7 @@ import { applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
 import { attackRidersEffectSource, attackRidersRolled } from "./attack-riders.js";
 import { attackRidersText } from "../src/compiler/attack-riders.js";
+import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
@@ -579,6 +580,16 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         lines.push(`${recipient.name}: ${firstDegreeText(state.plan.item.firstDegree)}`);
     }
     // (Extra damage on its user's Strikes: Martial Mayhem Mutagen's precision damage against off-guard creatures — PF2e's DamageDice.)
+    // (A bonus for the creatures in the light it sheds, Sprite Apple's: the ability module's zone on the recipient's token for the light's time.)
+    if (state.plan.item?.lightAura && target.actor) {
+        const aura = state.plan.item.lightAura;
+        const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
+        const words = aura.modifiers.map((modifier) => modifierText({ ...modifier, duration: null })).join(", ");
+        if (startZone && target.token) {
+            await startZone({ item: { name: state.item.name, uuid: state.item.uuid ?? null, actor: target.actor }, plan: { builtin: "zone", source: state.plan.source, zone: lightAuraZone(aura) }, sourceToken: target.token });
+            lines.push(`${recipient.name}'s light, ${aura.radius} feet: each creature in it gets ${words}`);
+        } else lines.push(`${recipient.name}'s light, ${aura.radius} feet: ${words} for each creature in it (by hand).`);
+    }
     // (What each melee attack roll sets off while it lasts, Martial Mayhem Mutagen's: a watch Effect on the recipient, its earlier one gone.)
     if (state.plan.item?.attackRiders && target.actor) {
         const old = (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.attackRiders?.item?.name === state.item.name);

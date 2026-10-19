@@ -128,6 +128,7 @@ export function previewLines(state) {
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     if (plan?.item?.mark) lines.push(markText(plan.item.mark));
     if (plan?.item?.attackRiders) lines.push(attackRidersText(plan.item.attackRiders.riders));
+    if (plan?.item?.lightAura) lines.push(`For each creature in the bright light (${plan.item.lightAura.radius} feet): ${plan.item.lightAura.modifiers.map((modifier) => modifierText({ ...modifier, duration: null })).join(", ")}${forTime(plan.item.lightAura.duration)}`);
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));

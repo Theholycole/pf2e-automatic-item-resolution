@@ -1005,3 +1005,16 @@ test("a released creature's own attack with a condition on its critical hit (a t
     const [dazzled] = plan.resolution.outcomes.criticalSuccess.effects;
     assert.deepEqual([plan.ownCheck, dazzled.slug, dazzled.duration?.value, dazzled.duration?.unit, plan.resolution.outcomes.success.effects.length], [{ kind: "attack", modifier: 8 }, "dazzled", 1, "rounds", 0]);
 });
+
+test("a bonus for the creatures in the light its user sheds (Sprite Apple): plan.item.lightAura beside the light, an ability-module zone of that radius with its modifiers; a narrower second half, or a DC against one skill, stays a note", async () => {
+    const { lightAuraZone } = await import("../src/compiler/light-aura.js");
+    const pink = compileItem(item("Sprite Apple (Pink)"));
+    assert.deepEqual([pink.item.light[0].bright, pink.item.lightAura.radius, pink.item.lightAura.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type])], [20, 20, [["performance", 1, "item"]]]);
+    const zone = lightAuraZone(pink.item.lightAura);
+    assert.deepEqual([zone.area, zone.centre, zone.lasts.value, zone.lasts.unit, zone.modifiers[0].duration], [{ type: "emanation", value: 20 }, "self", 10, "minutes", null]);
+    assert.deepEqual(compileItem(item("Sprite Apple (Teal)")).item.lightAura.modifiers.map((modifier) => [modifier.selector, modifier.predicate]), [["saving-throw", ["item:trait:fear"]]]);
+    const chartreuse = compileItem(item("Sprite Apple (Chartreuse)"));
+    assert.deepEqual(chartreuse.item.lightAura.modifiers.map((modifier) => modifier.selector), ["nature"]);
+    assert.ok(chartreuse.unread.some((sentence) => /Diplomacy checks attempted against animals/.test(sentence)), "its narrower half a note");
+    assert.equal(compileItem(item("Sprite Apple (Golden)")).item.lightAura, undefined);
+});

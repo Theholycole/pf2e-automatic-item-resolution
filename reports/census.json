@@ -2076,8 +2076,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected.",
-    "Creatures in the bright light feel a burst of creativity, gaining a +1 item bonus to Performance checks."
+    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected."
    ],
    "live": "item"
   },
@@ -7833,8 +7832,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected.",
-    "Creatures in the bright light feel a sense of calm, gaining a +1 item bonus to saving throws against fear effects."
+    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected."
    ],
    "live": "item"
   },

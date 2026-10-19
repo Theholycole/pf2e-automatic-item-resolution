@@ -5637,6 +5637,49 @@ export const cases = {
         return { ok: true };
     },
 
+    // Vine Arrow: activated, loaded in a shortbow; its hit (AC 1) gives the target a -10-foot circumstance penalty to its Speeds for 2d4
+    // rounds (its rider in the paragraph after the hit's), Immobilized too on a critical hit.
+    async vineArrow(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Vine Archer", { type: "character", x: 2, y: 15, level: 10 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Vine Target", { x: 4, y: 15, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Vine Arrow");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await strike(archer, bow);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const slowed = () => foe.itemTypes.effect.find((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("all-speeds") && rule.value === -10));
+        await until(slowed, "-10 feet to its Speeds", { timeout: 10000 });
+        const rounds = slowed().system.duration?.value;
+        assert(rounds >= 2 && rounds <= 8 && slowed().system.duration.unit === "rounds", `for 2d4 rounds (${rounds} ${slowed().system.duration.unit})`);
+        if (attack.flags.pf2e.context.outcome === "criticalSuccess") await until(() => foe.itemTypes.condition.some((entry) => entry.slug === "immobilized"), "Immobilized on the critical hit", { timeout: 8000 });
+        return { rounds, outcome: attack.flags.pf2e.context.outcome };
+    },
+
+    // Sprite Apple (Pink): beside its light (spriteAppleLight), the ability module's 20-foot zone on its eater's token, whose +1 item to
+    // Performance a creature standing in it gets.
+    async spriteAppleAura(scene) {
+        await clearSquares(scene, [[12, 13], [13, 13]]);
+        const { actor: eater } = await creature(scene, "Apple Eater", { type: "character", x: 12, y: 13 });
+        const { actor: friend } = await creature(scene, "Apple Friend", { type: "character", x: 13, y: 13 });
+        const apple = await give(eater, "Sprite Apple (Pink)");
+        const since = Date.now();
+        await apple.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the apple's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const regionOf = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone?.itemName === "Sprite Apple (Pink)" && region.flags["pf2e-automatic-ability-resolution"].zone.sourceActorUuid === eater.uuid);
+        await until(regionOf, "the light's zone on its token", { timeout: 8000 });
+        const performs = (actor) => actor.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("performance") && rule.value === 1));
+        await until(() => performs(friend), "+1 item to Performance for the creature in the light", { timeout: 10000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

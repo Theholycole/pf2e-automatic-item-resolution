@@ -218,6 +218,10 @@ export function withItemData(html, item) {
     // Survival checks to Track that creature" for its 7 days — the bow's own extra damage, marked to the creature (src/compiler/marked.js),
     // and the Track bonus, whose creature is a note.)
     text = text.replace(/\bFor the next (\d+) days or until that creature is slain, your attacks with the bow against that creature deal (\d+d\d+) additional damage, and you gain an? \+(\d+) circumstance bonus to Survival checks to Track that creature\./i, (all, days, dice, value) => `For ${days} days, your Strikes with the weapon deal ${dice} additional damage. That damage is only against that creature, and the oath ends early if it's slain. You gain a +${value} circumstance bonus to Survival checks to Track for ${days} days; the bonus is only to Track that creature.`);
+    // (Vine Arrow's hit, its rider in the next paragraph: "The target takes a –10-foot circumstance penalty to its Speeds for 2d4 rounds, or
+    // until it Escapes against a DC of 19" — the hit's own, for its rolled rounds (the bombs' rider reader), the Escape a note, since "against
+    // a" would read as a condition.)
+    text = text.replace(/\bwrapping the target in vines\.(?:<\/p>)?\s*(?:<p>)?The target takes an? ([–-]\d+-foot circumstance penalty to its Speeds for \[\[\/r \d+d\d+\]\] rounds), or until it ((?:@UUID\[[^\]]*\]\{)?Escapes\}?) against a DC of (\d+)\./i, (all, penalty, escapes, dc) => `wrapping the target in vines: the target takes a ${penalty}. The penalty ends early if the target ${escapes} (DC ${dc}).`);
     // (Megaphone Mutagen's "+1 item bonus to skill checks you make as part of auditory actions, except Deception and Diplomacy checks": those
     // checks by PF2e's options, src/compiler/rows.js; the longer range of its user's auditory actions and spells a note.)
     text = text.replace(/\bbonus to skill checks you make as part of (auditory|visual) actions, except ([A-Z]\w+) and ([A-Z]\w+) checks\./gi, (all, trait, first, second) => `bonus to skill checks for ${trait.toLowerCase()} actions, except ${first} and ${second} checks.`);
