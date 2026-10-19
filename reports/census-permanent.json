@@ -8,11 +8,11 @@
   "results": {
    "resolves": 752,
    "builtin:cast-spell": 471,
-   "none": 585,
+   "none": 584,
    "partial": 187,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
-   "builtin:readied-bonus": 45,
+   "builtin:readied-bonus": 46,
    "builtin:no-effect": 100,
    "note-only": 178,
    "builtin:reroll": 39,
@@ -32,10 +32,10 @@
    "save": 436,
    "cast": 471,
    "item": 585,
-   "none": 716,
+   "none": 715,
    "focus": 45,
    "counteract": 25,
-   "fortune": 56,
+   "fortune": 57,
    "reroll": 39,
    "strike": 88,
    "table": 7,
@@ -148,13 +148,13 @@
     "builtin:cast-spell": 11,
     "note-only": 15,
     "resolves": 32,
-    "none": 20,
+    "none": 19,
     "partial": 11,
     "builtin:modes": 4,
     "builtin:no-effect": 2,
     "builtin:counteract": 1,
     "builtin:zone": 1,
-    "builtin:readied-bonus": 2,
+    "builtin:readied-bonus": 3,
     "builtin:item-action": 1
    }
   }
@@ -16516,9 +16516,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Reaper's Toll",

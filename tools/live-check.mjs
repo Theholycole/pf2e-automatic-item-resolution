@@ -709,6 +709,20 @@ export const cases = {
         return { duration: effect.system.duration };
     },
 
+    // Resolute Shield's Stand Firm: twice its Hardness 12 as resistance to the triggering physical damage (the fortune card's Effect, for the turn).
+    async resoluteShield(scene) {
+        const { actor: wearer } = await creature(scene, "Resolute Wearer", { x: 14, y: 13 });
+        const shield = await give(wearer, "Resolute Shield");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(800);
+        const resistances = wearer.attributes.resistances ?? [];
+        assert(resistances.some((entry) => entry.type === "physical" && entry.value === 24), `resistance 24 to physical (${JSON.stringify(resistances.map((entry) => [entry.type, entry.value]))})`);
+        return { resistances: resistances.map((entry) => `${entry.type} ${entry.value}`) };
+    },
+
     // Potion of Resistance: the type picked on the card (fire, the fourth) — PF2e's Resistance 5 to fire for an hour.
     async resistTypePick(scene) {
         const { actor: drinker } = await creature(scene, "Resistance Drinker", { x: 16, y: 14 });

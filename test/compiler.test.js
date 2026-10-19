@@ -796,11 +796,14 @@ test("degrees changed on another creature's roll: Crimson Bluff's Strike one deg
     assert.match(tome.reroll.after, /^For the next minute, you become Concealed to all creatures/);
 });
 
-test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude)", () => {
+test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude), Resolute Shield's twice its Hardness as resistance", () => {
     const spiral = compileItem({ ...item("Spiral Labyrinth"), ownerLevel: 14 });
     assert.deepEqual([spiral.resolution.check.statistic, spiral.resolution.check.basic, spiral.resolution.check.against.value, spiral.scaled.of], ["reflex", true, 32, "the damage your shield blocked, its Hardness 10 higher for that Shield Block"]);
     const net = compileItem({ ...item("Spring-Loaded Net Launcher"), ownerLevel: 2 });
     assert.deepEqual([net.targeting.range, net.ownCheck.choose, net.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.resolution.outcomes.success.modifiers[0]], ["60 feet", ["thrown"], ["off-guard", "immobilized"], { selector: "all-speeds", value: -10, type: "circumstance", duration: null }]);
     const [azarim] = compileActivations(item("Azarim"));
     assert.deepEqual([azarim.plan.resolution.check.statistic, azarim.plan.resolution.check.against.value, azarim.plan.resolution.outcomes.failure.effects[0].slug, azarim.plan.resolution.outcomes.failure.effects[0].value], ["fortitude", 23, "enfeebled", 2]);
+    // (Resolute Shield's "up to twice the shield's Hardness": its Hardness 12 doubled, resistance to the triggering physical damage.)
+    const [resolute] = compileActivations(item("Resolute Shield"));
+    assert.deepEqual([resolute.plan.builtin, resolute.plan.bonus.resistance], ["readied-bonus", { type: "physical", value: 24 }]);
 });
