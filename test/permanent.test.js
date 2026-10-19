@@ -923,3 +923,15 @@ test("an activation that takes minutes isn't the item's standing save bonus (PF2
     const blade = compileActivations(item("Serithtial"), { spellEffects, spells })[0].plan;
     assert.deepEqual([blade.builtin, blade.choices.map((choice) => [choice.spell.name, choice.rank])], ["cast-spell", [["Heal", 9], ["Ring of Truth", 9]]]);
 });
+
+test("a partial plan without its Effect's opening flavor among its notes (Bloodgorger Scythe's Sapling Slash, whole now; Heedless Spurs, its other notes kept); a plan that isn't partial keeps its words (the module's own wording)", async () => {
+    const slash = compileActivations(item("Bloodgorger Scythe"), { spellEffects })[1].plan;
+    assert.deepEqual([slash.partial, JSON.stringify(slash).includes("grows large enough to be commanded")], [undefined, false]);
+    const spurs = compileActivations(item("Heedless Spurs"), { spellEffects })[0].plan;
+    assert.deepEqual([spurs.partial, JSON.stringify(spurs).includes("You kick both spurs")], [true, false]);
+    const { flavorSentence, withoutFlavorNotes } = await import("../src/compiler/flavor.js");
+    const html = "<p><strong>Activate</strong> 1</p><p><strong>Effect</strong> A gust swirls around you. You Stride twice.</p>";
+    assert.equal(flavorSentence(html), "A gust swirls around you.");
+    const kept = { notes: ["A gust swirls around you."], builtin: "no-effect" };
+    assert.equal(withoutFlavorNotes(kept, html), kept);
+});

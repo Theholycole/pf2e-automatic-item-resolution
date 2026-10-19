@@ -49,7 +49,7 @@ import { degreeSentencesPlan, failureNotesPlan, saveOrPlan } from "./save-or.js"
 import { spellstrikePlan } from "./spellstrike.js";
 import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
 import { withHitDelivery } from "./hit-delivery.js";
-import { withoutFlavor, withoutLater } from "./flavor.js";
+import { withoutFlavor, withoutFlavorNotes, withoutLater } from "./flavor.js";
 import { choiceOptionPlan, optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
@@ -478,6 +478,8 @@ function compileEach(item, options = {}) {
                 delete plan.unread;
             }
         }
+        // (Not its opening flavor among what it leaves the GM, src/compiler/flavor.js.)
+        plan = withoutFlavorNotes(plan, activation.html);
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, coats, coatLasts, creates, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)

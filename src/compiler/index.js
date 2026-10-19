@@ -44,7 +44,7 @@ import { thrownPlan } from "./thrown.js";
 import { conjuredPlan, statedCreaturePlan } from "./conjured.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
-import { withoutFlavor } from "./flavor.js";
+import { withoutFlavor, withoutFlavorNotes } from "./flavor.js";
 import { damageMaterial } from "./materials.js";
 import { waysPlan } from "./ways.js";
 import { elementWaysPlan, dragonWaysPlan } from "./bane.js";
@@ -130,7 +130,8 @@ export function compileItem(given, options = {}) {
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
     const text = plainText(given?.system?.description?.value);
-    return withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value);
+    // (Not its opening flavor among what a partial plan leaves the GM, src/compiler/flavor.js.)
+    return withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

@@ -21,6 +21,43 @@ export function withoutFlavor(html) {
     return `${text.slice(0, start)}${rest.slice(sentence[0].length).trimStart()}${text.slice(start + rest.length)}`;
 }
 
+// That flavor sentence as the plan's notes give it, plain ("A gust swirls around you."), or null.
+export function flavorSentence(html) {
+    const text = String(html ?? "");
+    if (withoutFlavor(text) === text) return null;
+    const effect = /<strong>\s*Effect\s*<\/strong>\s*/i.exec(text);
+    const rest = text.slice(effect.index + effect[0].length);
+    return /^[^.!?]*[.!?]/.exec(rest)[0].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+}
+
+// The partial plan without that flavor among what it leaves the GM — its notes, unread sentences, a row's words ("{target}: …") — and no
+// longer partial when that was all it left: a third-party blade's crit reaction, its damage, Slowed and allies' save read, its opening
+// line a note. Pure.
+// (Only a partial plan's: a card that's the GM's anyway, or a builtin's, keeps its words whole — its first line may be all it says.)
+export function withoutFlavorNotes(plan, html) {
+    const flavor = plan?.partial ? flavorSentence(html) : null;
+    if (!plan || !flavor) return plan;
+    const said = (entry) => String(entry ?? "").replace(/^\{target\}:\s*/, "").replace(/\s*\(by hand\)\.?$/, "").replace(/\s+/g, " ").trim().replace(/\.?$/, ".") === flavor.replace(/\.?$/, ".");
+    const kept = (list) => (Array.isArray(list) ? list.filter((entry) => !said(entry)) : list);
+    const outcomes = plan.resolution?.outcomes ? Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: kept(row.manualInstructions) } : row])) : null;
+    const next = {
+        ...plan,
+        ...(plan.notes ? { notes: kept(plan.notes) } : {}),
+        ...(plan.unread ? { unread: kept(plan.unread) } : {}),
+        ...(plan.strike?.notes ? { strike: { ...plan.strike, notes: kept(plan.strike.notes) } } : {}),
+        ...(outcomes ? { resolution: { ...plan.resolution, outcomes } } : {})
+    };
+    if (JSON.stringify(next) === JSON.stringify(plan)) return plan;
+    const left = [...(next.notes ?? []), ...(next.unread ?? []), ...(next.strike?.notes ?? []), ...Object.values(next.resolution?.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? []), ...(next.resolution?.reminders ?? [])];
+    if (!next.notes?.length) delete next.notes;
+    if (Array.isArray(next.unread) && !next.unread.length) delete next.unread;
+    if (next.partial && !left.length) {
+        delete next.partial;
+        if (next.automation?.level === "guided") next.automation = { ...next.automation, level: "automatic" };
+    }
+    return next;
+}
+
 // An Effect's later part that waits for something — Thunder Mail's "Additionally, for the next minute, whenever a creature touches
 // you or hits you with a melee unarmed attack …, it takes 1d8 electricity damage" — which keeps the ability compiler from what it
 // does now: { html without those sentences, notes: [their words] }, or null when there are none. The compilers try once more
