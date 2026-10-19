@@ -4283,6 +4283,18 @@ export const cases = {
         return { save: save.id, counteract: counter.id };
     },
 
+    // Key to the Stomach's Iron Gut: the counteract card for one poison its user suffers (+15, rank 5), as Cleanse Affliction.
+    async ironGut(scene) {
+        const { actor: user } = await creature(scene, "Iron Gut", { type: "character", x: 1, y: 9 });
+        const key = await give(user, "Key to the Stomach");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(key.uuid, 0);
+        const counter = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        assert(/Counteract \+15, rank 5/.test(counter.content), `its counteract (${counter.content.slice(0, 200)})`);
+        assert(JSON.stringify(counter.getFlag(NS, "card").counteract.afflictions) === '["poison"]', "a poison's");
+        return { counteract: counter.id };
+    },
+
     // Limestone Shield's Block Elements: standard cover against the triggering effect — its card gives its user +2 circumstance AC and Reflex.
     async limestoneCover(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Limestone Bearer", { type: "character", x: 1, y: 7 });

@@ -808,7 +808,7 @@ test("degrees changed on another creature's roll: Crimson Bluff's Strike one deg
     assert.deepEqual(compileActivations(item("The Lost"))[0].plan.reroll.raise.change, { criticalFailure: "failure", failure: "success" });
 });
 
-test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude), Resolute Shield's twice its Hardness as resistance, Rusting Carapace, Last Hope and Briar's saves", () => {
+test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude), Resolute Shield's twice its Hardness as resistance, Rusting Carapace, Last Hope and Briar's saves, Key to the Stomach's counteract", () => {
     const spiral = compileItem({ ...item("Spiral Labyrinth"), ownerLevel: 14 });
     assert.deepEqual([spiral.resolution.check.statistic, spiral.resolution.check.basic, spiral.resolution.check.against.value, spiral.scaled.of], ["reflex", true, 32, "the damage your shield blocked, its Hardness 10 higher for that Shield Block"]);
     const net = compileItem({ ...item("Spring-Loaded Net Launcher"), ownerLevel: 2 });
@@ -825,4 +825,7 @@ test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage t
     assert.deepEqual([hope.plan.scaled.die, hope.plan.resolution.sharedDamage.components[0].formula, hope.plan.resolution.check.against.value], ["d10", "1d10[vitality]", 37]);
     const briar = compileActivations(item("Briar"))[9];
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => briar.plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["stunned 1"], ["stunned 3"]]);
+    // (Key to the Stomach's Cleanse Affliction "to remove a poison": the counteract card for one poison on its user, +15 at rank 5.)
+    const [key] = compileActivations(item("Key to the Stomach"));
+    assert.deepEqual([key.plan.builtin, key.plan.item.counteract.modifier, key.plan.item.counteract.rank, key.plan.item.counteract.afflictions], ["counteract", 15, 5, ["poison"]]);
 });
