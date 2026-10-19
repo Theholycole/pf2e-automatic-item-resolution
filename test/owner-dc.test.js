@@ -112,21 +112,39 @@ test("live, the setting on: Spark Wafer's DC 14 Reflex save posted at its user's
     assert.equal(off.flags[MODULE_ID].card.plan.resolution.check.against.value, 14);
 });
 
-test("the setting on, a poison keeps its own DC (an alchemist's own feats raise it): Black Adder Venom's coat card at its own DC 18, not its user's spell DC 27", async () => {
+test("poisons and alchemists: the setting raises Black Adder Venom's 18 to its user's spell DC 27, and to 31 with Potent Poisoner's +4; setting or not, an alchemist's infused item saves at their alchemist class DC (PF2e's Powerful Alchemy)", async () => {
     const { isPoison } = await import("../scripts/item-dcs.js");
     assert.deepEqual([isPoison(source("Black Adder Venom")), isPoison(source("Spark Wafer")), isPoison({ system: { traits: { value: ["poison", "inhaled"] } } })], [true, false, true]);
+    const post = async (actor, data) => {
+        const item = foundry.giveItem(actor, data);
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: null, type: "consumable" } } }, speaker: { actor: actor.id }, actor, token: actor.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const plan = foundry.messages[foundry.messages.indexOf(message) + 1].flags[MODULE_ID].card.plan;
+        return { dc: Number(JSON.stringify(plan).match(/"dc":"fixed","value":(\d+)/)?.[1]), notes: plan.notes ?? [] };
+    };
+    const venom = (id, traits = null) => ({ ...source("Black Adder Venom"), _id: id, ...(traits ? { system: { ...source("Black Adder Venom").system, traits: { ...source("Black Adder Venom").system.traits, value: [...source("Black Adder Venom").system.traits.value, ...traits] } } } : {}) });
     const settings = globalThis.game.settings;
     globalThis.game.settings = { get: (module, key) => module === MODULE_ID && key === "itemDCsFromUser" };
     try {
-        const item = foundry.giveItem(reader, { ...source("Black Adder Venom"), _id: "ownerVenom000001" });
-        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: null, type: "consumable" } } }, speaker: { actor: reader.id }, actor: reader, token: reader.token.document });
-        await foundry.call("createChatMessage", message);
-        await settle();
-        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
-        const dc = JSON.stringify(card.flags[MODULE_ID].card.plan).match(/"dc":"fixed","value":(\d+)/)?.[1];
-        assert.equal(Number(dc), 18);
-        assert.equal(JSON.stringify(card.flags[MODULE_ID].card.plan).includes("(the world setting)"), false);
+        assert.equal((await post(reader, venom("ownerVenom000001"))).dc, 27);
+        reader.created.push({ id: "feat-potent", type: "feat", name: "Potent Poisoner", system: { slug: "potent-poisoner" } });
+        const potent = await post(reader, venom("ownerVenom000002"));
+        assert.equal(potent.dc, 31);
+        assert.ok(potent.notes.includes("Its DC is 31, its user's spell DC 27 + 4 (Potent Poisoner), over the item's own 18 (the world setting)."), JSON.stringify(potent.notes));
+        // (Not a poison: no +4.)
+        reader.created = reader.created.filter((entry) => entry.id !== "feat-potent");
     } finally {
         globalThis.game.settings = settings;
     }
+    // The setting off: the printed DC, unless it's an alchemist's infused item.
+    const alchemist = foundry.makeActor({ id: "owner-alchemist", name: "Alchemist", owners: ["player"] });
+    foundry.place(alchemist, 200, 12000);
+    alchemist.classDCs = { alchemist: { dc: { value: 25 } } };
+    assert.equal((await post(alchemist, venom("ownerVenom000003", ["infused"]))).dc, 18, "without Powerful Alchemy");
+    alchemist.created.push({ id: "feature-powerful", type: "feat", name: "Powerful Alchemy", system: { slug: "powerful-alchemy" } });
+    const infused = await post(alchemist, venom("ownerVenom000004", ["infused"]));
+    assert.equal(infused.dc, 25);
+    assert.ok(infused.notes.includes("Its DC is 25, its user's alchemist class DC, over the item's own 18 (Powerful Alchemy, an infused item)."), JSON.stringify(infused.notes));
+    assert.equal((await post(alchemist, venom("ownerVenom000005"))).dc, 18, "not infused");
 });

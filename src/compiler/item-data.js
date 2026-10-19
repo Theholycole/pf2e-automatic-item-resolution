@@ -536,15 +536,20 @@ export function ownerDCs(plan) {
 // The world setting's DCs (scripts/item-dcs.js, the user's answer of 2026-10-19): each save another creature attempts against the item's
 // own DC — and a cast's DC — raised to its user's class DC or spell DC when that's higher. → { plan, raised: [{ from, to, which }] },
 // the plan with a note saying so. The caller leaves out its user's own saves. Pure.
-export function raiseItemDCs(plan, dcs = {}) {
+// (plus: a bonus on top of the higher of the two, Potent Poisoner's +4 under the user's house rule of 2026-10-19 — { value, name };
+// reason: why, for the note.)
+export function raiseItemDCs(plan, dcs = {}, { plus = null, reason = "the world setting", label = null } = {}) {
     const best = [["class", Number(dcs.class)], ["spell", Number(dcs.spell)]].filter(([, value]) => Number.isFinite(value) && value > 0).sort((a, b) => b[1] - a[1])[0];
     if (!plan || !best) return { plan, raised: [] };
     const [which, value] = best;
+    const bonus = Number(plus?.value) || 0;
     const raised = [];
     const up = (from) => {
-        if (!Number.isFinite(Number(from)) || Number(from) >= value) return from;
-        raised.push({ from: Number(from), to: value, which });
-        return value;
+        if (!Number.isFinite(Number(from))) return from;
+        const to = Math.max(Number(from), value) + bonus;
+        if (to <= Number(from)) return from;
+        raised.push({ from: Number(from), to, which });
+        return to;
     };
     const walk = (node) => {
         if (Array.isArray(node)) return node.map(walk);
@@ -561,7 +566,9 @@ export function raiseItemDCs(plan, dcs = {}) {
     }
     if (!raised.length) return { plan, raised };
     const froms = [...new Set(raised.map((entry) => entry.from))].sort((a, b) => a - b);
-    const note = `Its DC is ${value}, its user's ${which} DC, over the item's own ${froms.join(" and ")} (the world setting).`;
+    const tos = [...new Set(raised.map((entry) => entry.to))].sort((a, b) => a - b);
+    const base = froms.every((from) => from <= value) ? `its user's ${label ?? which} DC${bonus ? ` ${value} + ${bonus} (${plus.name})` : ""}` : `+${bonus} (${plus?.name ?? "bonus"})`;
+    const note = `Its DC is ${tos.join(" and ")}, ${base}, over the item's own ${froms.join(" and ")} (${reason}).`;
     return { plan: { ...next, notes: [...(next.notes ?? []), note] }, raised };
 }
 
