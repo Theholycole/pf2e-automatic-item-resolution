@@ -320,6 +320,9 @@ export const cases = {
         await foe.update({ "system.attributes.weaknesses": [{ type: "fire", value: 5 }] });
         const sword = await give(user, "Longsword");
         await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        // (A bare character has no maximum Hit Points: 30, so the healing shows.)
+        await user.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Hit Points`, type: "effect", system: { rules: [{ key: "FlatModifier", selector: "hp", value: 30 }], duration: { value: -1, unit: "unlimited", expiry: null, sustained: false } } }]);
+        await until(() => user.system.attributes.hp.max >= 30, "30 maximum Hit Points", { timeout: 5000 });
         await user.update({ "system.attributes.hp.value": 1 });
         for (const name of ["Frenzied Quintessence", "Analysis Eye", "Leeching Fangs"]) {
             const stone = await give(user, name);
@@ -346,7 +349,8 @@ export const cases = {
         await foe.applyDamage({ damage: rolled.rolls[0], token: foeToken, item: rolled.item });
         const healed = await messageAfter(since, (message) => /Leeching Fangs/.test(message.content) && /heals \d+/.test(message.content), { what: "the leech healing" });
         const amount = Number(/heals (\d+)/.exec(healed.content)[1]);
-        await until(() => user.system.attributes.hp.value === Math.min(user.system.attributes.hp.max, before + amount), `healed ${amount}`, { timeout: 8000 });
+        assert(amount >= 1 && before + amount <= user.system.attributes.hp.max, `room to heal ${amount} from ${before} (max ${user.system.attributes.hp.max})`);
+        await until(() => user.system.attributes.hp.value === before + amount, `healed ${amount}`, { timeout: 8000 });
         return { watches: watches().map((effect) => effect.name), learned: learned.content, healed: healed.content, hp: [before, user.system.attributes.hp.value, user.system.attributes.hp.max] };
     },
 
