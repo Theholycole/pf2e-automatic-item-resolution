@@ -225,3 +225,36 @@ test("a condition for as long as a persistent damage lasts: Spider Satchel's Fas
     // (Its rows of several types none; its ways, each one type, theirs.)
     assert.deepEqual(compileActivations(source("Bloodburn Censer"))[0].plan.ways.map((way) => way.plan.zone.saves[0].plan.resolution.outcomes.failure.effects[0].duration), [{ mode: "while", persistent: "fire" }, { mode: "while", persistent: "poison" }]);
 });
+
+test("a cloud a bomb leaves around its target (Silver Orb): the ability module's zone at the target's square on Apply — a hit's damage card, or a plain miss's card from the attack roll (no damage rolled); not on a critical miss", async () => {
+    const { compileBomb } = await import("../src/compiler/bombs.js");
+    const plan = compileBomb(source("Silver Orb (Lesser)"));
+    const zone = plan.item.cloud.zone;
+    assert.deepEqual([zone.area, zone.lasts.value, zone.lasts.unit, zone.concealed, plan.item.cloud.onMiss], [{ type: "burst", value: 5 }, 1, "minutes", true, true]);
+    const save = zone.saves[0];
+    assert.deepEqual([save.when, save.plan.resolution.check.statistic, save.plan.resolution.check.basic, save.plan.resolution.check.against.value, save.plan.resolution.sharedDamage.components[0].formula], [["end"], "fortitude", true, 19, "1d6[slashing,silver]"]);
+    assert.ok(plan.notes.some((note) => /^Only a breathing creature\b/.test(note)));
+    const zones = [];
+    foundry.ability.live.startZone = async (options) => zones.push(options);
+    try {
+        const orb = foundry.giveItem(alchemist, source("Silver Orb (Lesser)"));
+        const hit = await damage(orb, { outcome: "success", splash: 0, type: "slashing" });
+        const card = cardAfter(hit);
+        assert.match(card.content, /A 5-foot cloud around Goblin for 1 minute, concealing those inside; at the end of each turn in it, a DC 19 basic Fortitude save against 1d6 slashing, silver/);
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        assert.deepEqual([zones.length, zones[0].plan.zone.area.value, zones[0].sourceToken?.id ?? zones[0].sourceToken?.document?.id], [1, 5, goblin.token.id]);
+        // A plain miss: PF2e rolls no damage, so the card comes from the attack roll.
+        const data = orb.toObject();
+        const miss = foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome: "failure", target: { actor: goblin.uuid, token: goblin.token.uuid } }, origin: { uuid: orb.uuid, sourceId: data._stats.compendiumSource, type: "weapon" } } }, speaker: { actor: alchemist.id }, actor: alchemist, token: alchemist.token.document });
+        await foundry.call("createChatMessage", miss);
+        await settle();
+        assert.equal(stateOf(cardAfter(miss))?.kind, "bomb");
+        const critical = foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome: "criticalFailure", target: { actor: goblin.uuid, token: goblin.token.uuid } }, origin: { uuid: orb.uuid, sourceId: data._stats.compendiumSource, type: "weapon" } } }, speaker: { actor: alchemist.id }, actor: alchemist, token: alchemist.token.document });
+        await foundry.call("createChatMessage", critical);
+        await settle();
+        assert.equal(cardAfter(critical), undefined);
+    } finally {
+        delete foundry.ability.live.startZone;
+    }
+});

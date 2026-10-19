@@ -39,6 +39,20 @@ export function saveLine(state) {
     return `DC ${check.against.value} ${statistic} save: ${who.map((entry) => entry.name).join(", ")}${save.scope === "splash" ? " (as ticked for the splash)" : ""}`;
 }
 
+// The cloud it leaves around the target (plan.item.cloud, src/compiler/bomb-cloud.js), in words — on any degree but a critical miss
+// (or only on a hit, as its text says) — or null.
+export function cloudLine(state) {
+    const cloud = state.plan?.item?.cloud;
+    if (!cloud || !state.target) return null;
+    const hit = state.outcome === "success" || state.outcome === "criticalSuccess";
+    if (state.outcome === "criticalFailure" || (!cloud.onMiss && !hit)) return null;
+    const zone = cloud.zone;
+    const check = zone.saves[0].plan.resolution.check;
+    const damage = zone.saves[0].plan.resolution.sharedDamage?.components?.map((component) => component.formula.replace(/\[([^\]]*)\]/, " $1").replace(/,/g, ", ")).join(" and ");
+    const statistic = `${check.statistic.charAt(0).toUpperCase()}${check.statistic.slice(1)}`;
+    return `A ${zone.area.value}-foot cloud around ${state.target.name} for ${zone.lasts.value} ${zone.lasts.value === 1 ? zone.lasts.unit.replace(/s$/, "") : zone.lasts.unit}${zone.concealed ? ", concealing those inside" : ""}; at the end of each turn in it, a DC ${check.against.value} basic ${statistic} save against ${damage}`;
+}
+
 // The row the Strike's degree gives the target.
 export const riderRow = (state) => state.plan?.resolution?.outcomes?.[state.outcome] ?? null;
 
@@ -75,7 +89,7 @@ export function bombCardHTML(state, { canApply = false } = {}) {
     const splash = state.splash.length && state.splashed.length
         ? `<p class="aar-actions">Splash (${escape(splashText(state.splash))}):</p><ul class="aar-targets">${state.splashed.map((entry, index) => `<li class="aar-target"><label><input type="checkbox" data-air-splash="${index}"${entry.include ? " checked" : ""}${open && canApply ? "" : " disabled"}> ${escape(entry.name)}</label></li>`).join("")}</ul>`
         : state.splash.length ? `<p class="aar-hint">No other creature within 5 feet of the target for the splash.</p>` : "";
-    const riders = open ? [...riderLines(state), ...(saveLine(state) ? [saveLine(state)] : [])] : [];
+    const riders = open ? [...riderLines(state), ...(saveLine(state) ? [saveLine(state)] : []), ...(cloudLine(state) ? [cloudLine(state)] : [])] : [];
     if (open && state.hint) riders.unshift(state.hint);
     const riderList = riders.length ? `<ul class="aar-notes">${riders.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";

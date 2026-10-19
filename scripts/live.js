@@ -15,7 +15,7 @@
 import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
-import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
+import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
@@ -69,6 +69,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         if (!isActiveGM()) return;
         cardForUse(message).catch((error) => console.error(`${MODULE_ID} | item card`, error));
         cardForBomb(message, { claims }).catch((error) => console.error(`${MODULE_ID} | bomb card`, error));
+        // (A bomb's cloud on a plain miss, when no damage is rolled: scripts/bombs.js.)
+        cloudOnMiss(message).catch((error) => console.error(`${MODULE_ID} | bomb cloud`, error));
         strikeWithPoison(message).catch((error) => console.error(`${MODULE_ID} | poisoned Strike`, error));
         strikeWithRider(message).catch((error) => console.error(`${MODULE_ID} | readied Strike`, error));
         // (A weapon's property runes on a critical hit: scripts/rune-strikes.js.)

@@ -12,6 +12,7 @@
 // persistent fire damage …", "against a prepared spellcaster") is left out, as
 // are saves (the ability module's save card, later). Pure.
 
+import { readBombCloud } from "./bomb-cloud.js";
 import { STAGE_CONDITIONS, readConditions, readDuration } from "../../../pf2e-automatic-ability-resolution/src/compiler/inline.js";
 import { readPenalties } from "../../../pf2e-automatic-ability-resolution/src/compiler/checks.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
@@ -213,7 +214,9 @@ export function compileBomb(item) {
     const riders = gated ? { success: gated.rows.success ?? none(), criticalSuccess: gated.rows.criticalSuccess ?? none() } : read;
     const splash = Number(item.system?.splashDamage?.value) || 0;
     const save = bombSave(item);
-    if (!splash && !save && !hasRow(riders.success) && !hasRow(riders.criticalSuccess)) return null;
+    // (A cloud it leaves around the target, src/compiler/bomb-cloud.js: Silver Orb's.)
+    const cloud = readBombCloud(item?.system?.description?.value, item?.name);
+    if (!splash && !save && !cloud && !hasRow(riders.success) && !hasRow(riders.criticalSuccess)) return null;
     return withWhilePersistent(guardValues({
         modelVersion: MODEL_VERSION,
         source: { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type },
@@ -228,7 +231,7 @@ export function compileBomb(item) {
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: riders.criticalSuccess, success: riders.success, failure: none(), criticalFailure: none() }
         },
-        item: { type: item.type, group: "bomb", level: Number(item.system?.level?.value) || 0, splash: splash ? { value: splash, type: item.system?.damage?.damageType ?? "untyped" } : null, save, ...(gated ? { riderOnly: gated.only } : {}) },
-        ...(gated?.notes.length ? { notes: gated.notes } : {})
+        item: { type: item.type, group: "bomb", level: Number(item.system?.level?.value) || 0, splash: splash ? { value: splash, type: item.system?.damage?.damageType ?? "untyped" } : null, save, ...(gated ? { riderOnly: gated.only } : {}), ...(cloud ? { cloud } : {}) },
+        ...(gated?.notes.length || cloud?.zone.notes.length ? { notes: [...(gated?.notes ?? []), ...(cloud?.zone.notes ?? [])] } : {})
     }), bombText(item));
 }

@@ -253,6 +253,27 @@ export const cases = {
         return { splash: state.splash, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Silver Orb (Lesser): a hit's bomb card names the cloud; its Apply sets the ability module's 5-foot zone down at the target's square.
+    async silverOrbCloud(scene) {
+        const { actor: thrower, token: throwerToken } = await creature(scene, "Orb Thrower", { type: "character", x: 2, y: 12 });
+        const { token: foeToken } = await creature(scene, "Orb Target", { x: 5, y: 12, ac: 1, alliance: "opposition", hp: 200 });
+        const orb = await give(thrower, "Silver Orb (Lesser)");
+        await orb.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await throwerToken.object?.control?.();
+        await target(foeToken);
+        const { action, attack } = await strike(thrower, orb);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const since = Date.now();
+        await action.damage({ event: shift() });
+        const card = await messageAfter(since, itemCard("bomb"), { what: "the bomb card" });
+        assert(/5-foot cloud around/.test(card.content), "the cloud on the card");
+        const regions = () => (canvas.scene?.regions?.contents ?? []).filter((region) => region.name?.includes("Silver Orb"));
+        const before = regions().length;
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        await until(() => regions().length > before, "the cloud's zone", { timeout: 10000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results, regions: regions().length };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });

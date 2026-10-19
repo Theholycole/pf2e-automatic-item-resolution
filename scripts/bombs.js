@@ -7,7 +7,7 @@
 
 import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { onlyHarms } from "../src/compiler/pf2e-rules.js";
-import { bombCardHTML, createBombCard, riderRow, saveFor, splashText, withChoices } from "../src/live/bomb-card.js";
+import { bombCardHTML, cloudLine, createBombCard, riderRow, saveFor, splashText, withChoices } from "../src/live/bomb-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
 import { withUserDCs } from "./item-dcs.js";
 
@@ -112,7 +112,8 @@ export async function cardForBomb(message, { claims = null } = {}) {
     const save = plan.item?.save ?? null;
     const burst = target && save?.scope === "burst" ? creaturesNear(targetToken, save.radius ?? 5) : [];
     const saves = target && save && (save.scope !== "target" || ["success", "criticalSuccess"].includes(context.outcome));
-    if (!riders && !saves && !(splash.length && (near.length || (context.outcome === "failure" && target)))) return;
+    const cloud = target && cloudLine({ plan, target, outcome: context.outcome });
+    if (!riders && !saves && !cloud && !(splash.length && (near.length || (context.outcome === "failure" && target)))) return;
     const actor = message.actor;
     if (!actor) return;
     const userToken = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
@@ -182,6 +183,34 @@ export async function applyBombCard(message, { included = null } = {}) {
             lines.push(`${savers.map((entry) => entry.name).join(", ")}: DC ${check.against.value} ${check.statistic} save against ${state.item.name} (roll it by hand).`);
         }
     }
+    // (The cloud it leaves around the target: the ability module's zone, set down at the target's square.)
+    if (cloudLine(state)) {
+        const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
+        const { token } = await creatureOf(state.target);
+        const thrower = await fromUuid(state.user.actorUuid).catch(() => null);
+        if (startZone && token) {
+            await startZone({ item: { name: state.item.name, uuid: state.item.uuid ?? null, actor: thrower }, plan: { builtin: "zone", source: state.plan.source, zone: state.plan.item.cloud.zone }, sourceToken: token.object ?? token });
+            lines.push(`${state.item.name}'s cloud around ${state.target.name}`);
+        } else lines.push(`${state.item.name}'s cloud around ${state.target.name}: mark it by hand.`);
+    }
     const next = { ...state, status: "applied", results: lines.length ? lines : ["Nothing to apply."] };
     return message.update({ content: bombCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// A miss with a bomb that leaves its cloud anyway and has no splash (so PF2e rolls no damage on a miss): its card from the attack roll.
+export async function cloudOnMiss(message) {
+    const context = message?.flags?.pf2e?.context;
+    if (context?.type !== "attack-roll" || context.outcome !== "failure" || message.flags?.[MODULE_ID]) return;
+    const data = await bombOf(message.flags.pf2e.origin);
+    if (!isBomb(data)) return;
+    const plan = compileBomb(data);
+    if (!plan?.item?.cloud?.onMiss || plan.item.splash) return;
+    const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;
+    const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
+    const target = targetToken?.actor ? entryOf(targetToken.object ?? targetToken, targetToken.actor) : null;
+    const actor = message.actor;
+    if (!target || !actor) return;
+    const userToken = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
+    const state = createBombCard({ plan, item: { name: data.name, uuid: data.uuid ?? null, slug: data.system?.slug ?? null }, user: entryOf(userToken, actor), target, outcome: "failure" });
+    await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
