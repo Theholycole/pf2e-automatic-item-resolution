@@ -94,6 +94,30 @@ export function compileItem(given, options = {}) {
     return ownerDCs(instead ?? compileOne(given, options));
 }
 
+// Effects its user picks one of, each its own named paragraph after "Choose one of the following effects": a third-party jar whose
+// creature's burble is either Confusion (a Will save, Confused for 1d4 rounds on a failure) or Sonic Beam (sonic damage around it, a
+// basic Will save). The ways card's pick, each paragraph compiled alone as the item's use (a condition for those who fail the save
+// reworded as each creature's save or the condition); what comes before the choice is a note. Only when every paragraph reads something.
+const CHOSEN_PARAGRAPHS = /\bChoose one of the following effects[^<]*<\/p>((?:\s*<p>\s*<strong>[^<]+<\/strong>[\s\S]*?<\/p>){2,})/i;
+const OPTION = /<p>\s*<strong>([^<]+)<\/strong>\s*(?:\([^)]*\)\s*)?([\s\S]*?)<\/p>/g;
+function chosenParagraphsPlan(given, item, base, options) {
+    const html = String(item?.system?.description?.value ?? "");
+    const chosen = CHOSEN_PARAGRAPHS.exec(html);
+    if (!chosen) return null;
+    const activate = /<p>\s*<strong>\s*Activat[\s\S]*?<\/p>/i.exec(html)?.[0] ?? "";
+    const ways = [];
+    for (const [, name, words] of chosen[1].matchAll(OPTION)) {
+        const body = words.trim().replace(/^Creatures that fail an? (@Check\[[^\]]*\]) save are (.+?) for (.+?)\.$/i, "Each creature in the area must succeed at a $1 save or become $2 for $3.");
+        const plan = compileOne({ ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: `${activate}<p>${body}</p>` } } }, options);
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.builtin === "ways") return null;
+        ways.push({ name: name.trim(), html: `<p>${body}</p>`, plan });
+    }
+    if (ways.length < 2) return null;
+    // (What it says before the choice: the jar's creature flying ahead first — where its area is.)
+    const intro = plainText(html.slice(0, chosen.index)).replace(/^.*?\bActivat\w*\b[^.]*?(?:Interact|\))\s*/i, "").split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\b(?:feet|emerges|appears|flies|moves)\b/i.test(sentence));
+    return { ...base, builtin: "ways", automation: { level: intro.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true, item: itemInfo(item), ...(intro.length ? { notes: intro.map((sentence) => `${sentence.trim()} Its area is there: target the creatures in it.`), partial: true } : {}) };
+}
+
 function compileOne(given, options = {}) {
     if (!handlesItem(given, options)) return null;
     // (The generic spellgun: the plan of the spell loaded into it, src/compiler/generic-spellgun.js; none until one is.)
@@ -171,6 +195,8 @@ function compileOne(given, options = {}) {
     // (Used in one of several ways, each its own Activate block, src/compiler/ways.js: Toadskin Salve's reactions — over nothing, a note
     // or a reading of only part of it.)
     if (!plan || plan.noteOnly || plan.partial || plan.builtin === "no-effect") plan = waysPlan(item, base, options) ?? plan;
+    // (Effects its user picks one of, each its own named paragraph: a third-party jar's burble, Confusion or Sonic Beam.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenParagraphsPlan(given, item, base, options) ?? plan;
     // (An elixir made for one element, src/compiler/bane.js: Warding Element Draught — the element picked on the ways card.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = elementWaysPlan(item, base) ?? plan;
     // (An item thrown as a Strike that PF2e can't roll, src/compiler/thrown.js: Sack of Rotten Fruit, Life Salt, Oil.)

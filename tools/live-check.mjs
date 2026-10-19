@@ -4511,6 +4511,28 @@ export const cases = {
         return { immunities: user.system.attributes.immunities.map((entry) => entry.type) };
     },
 
+    // Alchemists+'s Jabberwock Jar: its Confusion picked on the ways card — the ability module's DC 40 Will save card at the targeted creature,
+    // Confused on a failure.
+    async jabberwockConfusion(scene) {
+        assert(game.modules.get("pf2e-team-plus-alchemists")?.active, "Alchemists+ isn't active in pftest.");
+        const { actor: user } = await creature(scene, "Jabberwock Opener", { type: "character", x: 9, y: 2 });
+        const { token: foe } = await creature(scene, "Burble Target", { x: 10, y: 2, alliance: "opposition" });
+        const jar = await give(user, "Jabberwock Jar", "pf2e-team-plus-alchemists.pf2e-items");
+        let since = Date.now();
+        await jar.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the burble picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Confusion") });
+        const card = await messageAfter(since, itemCard("expose"), { what: "the Confusion's save card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const plan = save.flags["pf2e-automatic-ability-resolution"].card.plan;
+        assert(plan.resolution.check.against?.value === 40 && plan.resolution.check.statistic === "will", `a DC 40 Will save (${JSON.stringify(plan.resolution.check)})`);
+        assert(plan.resolution.outcomes.failure.effects.some((effect) => effect.slug === "confused"), "Confused on a failure");
+        return { ways: names };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

@@ -713,3 +713,15 @@ test("a drifting cloud of sticky bubbles (Clinging Bubbles): the zone placed for
     assert.deepEqual([lesser.area, lesser.saves[0].plan.resolution.outcomes.success.modifiers[0].value], [{ type: "square", value: 5 }, -5]);
     assert.equal(compileItem(item("Clinging Bubbles (Greater)")).zone.area.value, 10);
 });
+
+test("effects its user picks one of, each its own named paragraph (a third-party jar's burble): the ways card's Confusion (a Will save or Confused for 1d4 rounds) or Sonic Beam (a basic Will save's sonic damage), its creature's flight a note", async () => {
+    const { readDocuments: read } = await import("../../pf2e-automatic-ability-resolution/tools/leveldb.mjs");
+    const jar = read(`${process.env.HOME}/.local/share/FoundryVTT/Data/modules/pf2e-team-plus-alchemists/packs/pf2e-items`).find((doc) => doc.collection === "items" && doc.name === "Jabberwock Jar");
+    if (!jar) return;
+    const plan = compileItem(jar);
+    assert.deepEqual([plan.builtin, plan.ways.map((way) => way.name)], ["ways", ["Confusion", "Sonic Beam"]]);
+    const [confusion, beam] = plan.ways.map((way) => way.plan.resolution);
+    assert.deepEqual([confusion.check.statistic, confusion.check.against.value, confusion.outcomes.failure.effects[0].slug, confusion.outcomes.failure.effects[0].duration.valueRoll], ["will", 40, "confused", "1d4"]);
+    assert.deepEqual([beam.check.basic, beam.sharedDamage.components[0].formula], [true, "20d6[sonic]"]);
+    assert.match(plan.notes[0], /Its area is there: target the creatures in it\.$/);
+});
