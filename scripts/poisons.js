@@ -104,7 +104,14 @@ function attackChoices(actor, kinds, { atLeast = null } = {}) {
     const rank = Number(actor?.system?.proficiencies?.attacks?.simple?.rank ?? NaN);
     const dex = Number(actor?.system?.abilities?.dex?.mod ?? NaN);
     const thrown = Number.isFinite(rank) && Number.isFinite(dex) ? dex + (rank > 0 ? Number(actor.level ?? 0) + 2 * rank : 0) : NaN;
+    // (A simple melee weapon's, Doom Switch's — src/compiler/effect-strike.js: its user's Strength modifier and simple weapon proficiency; a
+    // creature with no proficiencies, its best melee Strike.)
+    const str = Number(actor?.system?.abilities?.str?.mod ?? NaN);
+    const melee = Number.isFinite(rank) && Number.isFinite(str) ? str + (rank > 0 ? Number(actor.level ?? 0) + 2 * rank : 0) : NaN;
+    const meleeStrike = best((actor?.system?.actions ?? []).filter((action) => action?.item?.isMelee === true || (action?.item && action.item.isRanged === false)).map((action) => action.totalModifier));
     const choices = [
+        ...(kinds.includes("melee") && Number.isFinite(melee) ? [{ kind: "melee", label: `Melee (simple weapon) ${sign(melee)}`, modifier: melee }] : []),
+        ...(kinds.includes("melee") && !Number.isFinite(melee) && Number.isFinite(meleeStrike) ? [{ kind: "melee", label: `Melee attack ${sign(meleeStrike)}`, modifier: meleeStrike }] : []),
         ...(kinds.includes("thrown") && Number.isFinite(thrown) ? [{ kind: "thrown", label: `Thrown (simple weapon) ${sign(thrown)}`, modifier: thrown }] : []),
         ...(kinds.includes("thrown") && !Number.isFinite(thrown) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
         ...(kinds.includes("spell") && Number.isFinite(spell) ? [{ kind: "spell", label: `Spell attack ${sign(spell)}`, modifier: spell }] : []),

@@ -51,6 +51,7 @@ import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.j
 import { withHitDelivery } from "./hit-delivery.js";
 import { withoutFlavor, withoutFlavorNotes, withoutLater } from "./flavor.js";
 import { withSlotCost } from "./slot-cost.js";
+import { effectStrikePlan } from "./effect-strike.js";
 import { choiceOptionPlan, optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
@@ -450,6 +451,8 @@ function compileEach(item, options = {}) {
         plan = withScaled(plan, plainText(activation.html));
         // (Its degrees in sentences, Gearblade's "On a failure, … takes … damage. On a critical failure, they take …".)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = degreeSentencesPlan(activation.html, base) ?? plan;
+        // (A no-damage attack whose degrees are PF2e's own Effects on the target, src/compiler/effect-strike.js: Doom Switch's Bragging Rights.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = effectStrikePlan(activation.html, base) ?? plan;
         // (Damage for whoever touches or hits its user for a while, src/compiler/direct-damage.js: Numerian Steel Breastplate's field — the
         // card kept open, as a retaliation potion's.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = retaliationPlan(plainText(activation.html), base) ?? plan;

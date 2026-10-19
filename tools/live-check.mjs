@@ -292,6 +292,25 @@ export const cases = {
         return { rule: rule(), results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Doom Switch's Bragging Rights: its user's simple melee attack on the ability module's card; whatever the degree, PF2e's own Bragging
+    // Rights Effect for it on the target.
+    async doomSwitch(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Doom Bragger", { type: "character", x: 6, y: 12 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Doom Target", { x: 7, y: 12, alliance: "opposition" });
+        const doom = await give(user, "Doom Switch");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(doom.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the switch's card" });
+        assert((card.getFlag(NS, "card").attackChoices ?? []).some((choice) => choice.kind === "melee"), `a melee attack choice (${JSON.stringify(card.getFlag(NS, "card").attackChoices)})`);
+        await userToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        await rollAndApply(attack);
+        await until(() => foe.itemTypes.effect.some((effect) => /^Effect: Bragging Rights/.test(effect.name)), "a Bragging Rights Effect on the target", { timeout: 10000 });
+        return { effects: foe.itemTypes.effect.map((effect) => effect.name) };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });

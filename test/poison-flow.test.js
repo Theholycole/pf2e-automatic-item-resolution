@@ -456,3 +456,27 @@ test("a fragment naming its creature without a link (Fossil Fragment (Petrified 
     const [tree] = compileActivations(source("Fossil Fragment (Petrified Wood)"));
     assert.deepEqual([tree.plan.builtin, tree.plan.creatures[0].from, tree.plan.creatures[0].traits, tree.plan.lasts.value], ["conjure", { name: "Awakened Tree" }, ["minion", "construct", "earth"], 1]);
 });
+
+test("Doom Switch's Bragging Rights: its user's simple melee attack (Strength, simple proficiency) against AC on the ability module's card, PF2e's own Effects on the target by degree — Success or Better, Failure or Worse (its degree choice preset there); the temporary Hit Points by hand", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [bragging] = compileActivations(source("Doom Switch"));
+    const outcomes = bragging.plan.resolution.outcomes;
+    assert.deepEqual([bragging.plan.ownCheck.choose, ...["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => outcomes[degree].nativeEffects[0].label)], [["melee"], "Effect: Bragging Rights (Success or Better)", "Effect: Bragging Rights (Success or Better)", "Effect: Bragging Rights (Failure or Worse)", "Effect: Bragging Rights (Failure or Worse)"]);
+    assert.deepEqual(bragging.plan.notes, ["If you reduce the target to 0 Hit Points during this time, you gain temporary Hit Points equal to twice the target's level for 1 round (by hand).", "On a success, instead: you gain temporary Hit Points equal to the target's level (by hand)."]);
+    const brawler = foundry.makeActor({ id: "poison-brawler", name: "Brawler", owners: ["player"] });
+    foundry.place(brawler, 100, 4600);
+    brawler.level = 3;
+    brawler.system = { ...brawler.system, proficiencies: { attacks: { simple: { rank: 1 } } }, abilities: { str: { mod: 4 }, dex: { mod: 1 } } };
+    const doom = foundry.giveItem(brawler, source("Doom Switch"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: doom.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    // (Strength +4, trained in simple weapons at level 3: +9.)
+    assert.deepEqual(card.flags[MODULE_ID].card.attackChoices, [{ kind: "melee", label: "Melee (simple weapon) +9", modifier: 9 }]);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
+    await settle();
+    const [attack] = foundry.posted.slice(before);
+    assert.deepEqual([attack.plan.resolution.check.modifier, attack.plan.resolution.outcomes.failure.nativeEffects[0].uuid], [9, "Compendium.pf2e.equipment-effects.Item.PJUNqF2k9x8IiZhb"]);
+});
