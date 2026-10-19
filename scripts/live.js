@@ -574,6 +574,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     }
     // (The conditions it lowers: Lion Badge's frightened, by 1 — PF2e's decreaseCondition, once for each, "to 0" removing it;
     // one of several as picked; another's on each creature the presser targets.)
+    // (One a condition it also ends was overriding — Restrained over Grabbed — is ended on a second pass, once it shows.)
+    const unmasked = [];
+    const still = [];
     for (const entry of reduce) {
         const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
         const creatures = entry.who === "targets" ? others : [{ actor: target.actor, name: recipient.name }];
@@ -581,8 +584,16 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             const line = await lowerCondition(creature.actor, creature.name, slug, entry.by);
             // (Of a list it ends — Cayden's Tankard's six — only the ones there.)
             if (reduce.length <= 2 || !/: nothing to lower\.$/.test(line)) lines.push(line);
+            else if (entry.by === "all") unmasked.push([creature, slug]);
+            // (One another condition gave — Immobilized from Restrained — looked at again once the rest are done.)
+            if (entry.by === "all" && / is still \S+$/.test(line)) still.push([creature, slug, lines.length - 1]);
         }
     }
+    for (const [creature, slug] of unmasked) {
+        if (!creature.actor?.hasCondition?.(slug)) continue;
+        lines.push(await lowerCondition(creature.actor, creature.name, slug, "all"));
+    }
+    for (const [creature, slug, at] of still) if (!creature.actor?.hasCondition?.(slug)) lines[at] = `${creature.name} is no longer ${slug}`;
     // (Its flat check to end persistent damage: PF2e's own recovery roll for each of those types, at the text's DC when it's
     // lower — Quenching Potion's 10 — then the condition's own DC again if it stays.)
     if (state.plan.item?.recovery) {

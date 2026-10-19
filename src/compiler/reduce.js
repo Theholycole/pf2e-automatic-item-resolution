@@ -44,6 +44,9 @@ const TRIGGERING = /\breduc(?:e|es|ing) the value of the triggering condition by
 // Paralyzed, Restrained, and slowed conditions on yourself and creatures of your choice within 120 feet of you" — each, "all".)
 const CONDITIONS = "blinded|clumsy|confused|controlled|dazzled|deafened|doomed|drained|enfeebled|fascinated|fatigued|fleeing|frightened|grabbed|immobilized|off-guard|paralyzed|prone|restrained|sickened|slowed|stunned|stupefied|wounded";
 const ENDING = new RegExp(String.raw`\bend(?:s|ing)? the ((?:(?:${CONDITIONS}),\s*)*(?:and )?(?:${CONDITIONS})) conditions on yourself and (?:creatures|allies) of your choice within \d+ feet\b`, "i");
+// (Or ended on its user alone: Spleen Bloodstone of Arazni's "The Confused, Controlled, Grabbed, Immobilized, Paralyzed, Petrified, and
+// Restrained conditions, as well as any Speed penalties affecting you, immediately end unless …" — each, "all"; the rest a note.)
+const END_OWN = new RegExp(String.raw`\bThe ((?:(?:${CONDITIONS}|petrified),\s*)*(?:and )?(?:${CONDITIONS}|petrified)) conditions(?:, as well as [^,]+,)? immediately end\b`, "i");
 const triggerOf = (text) => /\bTrigger\b(.*?)(?:\bEffect\b|$)/s.exec(String(text ?? ""))?.[1] ?? "";
 // (Its use only: not a later "Secondary Effect" — Ginger Chew's "Reduce your sickened value by 1" is for when it's used again.)
 const ownUse = (text) => String(text ?? "").split(/\bSecondary Effect\b/)[0];
@@ -80,6 +83,8 @@ export function readReductions(text) {
         add({ slug, by: "all" });
         add({ slug, by: "all", who: "targets", optional: true });
     }
+    const ended = END_OWN.exec(ownUse(text));
+    if (ended) for (const slug of ended[1].toLowerCase().match(new RegExp(`${CONDITIONS}|petrified`, "g"))) add({ slug, by: "all" });
     for (const sentence of ownUse(text).split(/(?<=[.!?])\s+(?=[A-Z])/)) {
         if (TIMED.test(sentence) || DEGREE_ROW.test(sentence.trim())) continue;
         const area = AREA.test(sentence);

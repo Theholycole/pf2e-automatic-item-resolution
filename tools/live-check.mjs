@@ -4464,6 +4464,20 @@ export const cases = {
         return { temp: user.system.attributes.hp.temp, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Spleen Bloodstone of Arazni's Break Bonds: its user's Grabbed and Restrained end.
+    async breakBonds(scene) {
+        const { actor: user } = await creature(scene, "Arazni Faithful", { type: "character", x: 5, y: 19 });
+        const stone = await give(user, "Spleen Bloodstone of Arazni");
+        await user.increaseCondition("grabbed");
+        await user.increaseCondition("restrained");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(stone.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => !user.hasCondition("grabbed") && !user.hasCondition("restrained"), `grabbed and restrained ended (${user.conditions.map((condition) => condition.slug).join(", ")})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

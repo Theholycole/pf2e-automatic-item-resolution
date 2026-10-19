@@ -292,6 +292,9 @@ export function withItemData(html, item) {
     // Prone as its first action on their next turn (on a critical failure, the target must spend all three actions on its next turn
     // remaining prone)": the save or Prone, its turn's words for the GM.)
     text = text.replace(/\bThe targeted creature must make an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save to resist being compelled to drop (?:@UUID\[[^\]]*\]\{)?Prone\}? as its first action on their next turn \(on a critical failure, ([^)]*)\)\.(?:\s*(If the target is an? \w+, they take an? [–-]\d+ status penalty to the save)\.)?/i, (all, check, critical, kind) => `The target must succeed at a ${check} save or fall Prone. It drops prone as its first action on its next turn; on a critical failure, ${critical} (by hand).${kind ? ` ${kind} (by hand).` : ""}`);
+    // (A portion's use as its own activation, Tallowheart Mass's "If you rub a portion between your hands, the mass melts into your flesh and
+    // you gain the Quickened condition for 1 minute": its user's, as the conditions reader takes one.)
+    text = text.replace(/\bIf you rub a portion between your hands, the mass melts into your flesh and you gain the (@UUID\[[^\]]*\]\{Quickened\}|Quickened) condition for (\d+ (?:minutes?|rounds?))\./i, (all, quickened, time) => `You become ${quickened} for ${time}.`);
     // (A missive's benefit for its recipient, Heartening Missive (Bull)'s "The recipient gains a +1 item bonus to Fortitude saves for the next
     // 24 hours": that bonus on the creature it reaches — the one the presser targets, as for a creature touched.)
     text = text.replace(/\bThe recipient gains an? (\+\d+ (?:item|status|circumstance) bonus to (?:Fortitude|Reflex|Will) saves) for the next (\d+ (?:hours|minutes))\./, (all, bonus, time) => `It's for a creature you touch, its recipient. You gain a ${bonus} for ${time}.`);
