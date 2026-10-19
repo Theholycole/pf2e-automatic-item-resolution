@@ -42,6 +42,11 @@ const WITHIN = /\bwithin (\d+) feet\b/i;
 // damage doubled on a critical hit, the condition on any hit.)
 // (Its user's ranged attack roll for a beam's damage, fire and persistent fire on a hit — a third-party mirror's: the best ranged Strike,
 // picked on the card, both parts of the damage on a hit.)
+// (Its user's spell attack for a ray of stored energy, a third-party ring's Release Power: the damage on a hit, doubled on a critical
+// hit, its type the energy it stored — the card's pick of the energy types.)
+const SPELL_RAY = /\bMake a spell attack roll against the target(?:'|’|&#39;)s AC, dealing (\d+d\d+) damage on a success\b[^.]*?\btwice\b[^.]*?\bcritical success\./i;
+const STORED_TYPE = /\bThe damage is of the same\b[^.]*?\btype as\b[^.]*?\benergy\b[^.]*\./i;
+const ENERGY = ["acid", "cold", "electricity", "fire", "force", "sonic", "vitality", "void"];
 const RANGED_ATTACK = new RegExp(String.raw`\bAttempt a ranged attack roll to deal (\d+d\d+) (${TYPES})(?: plus (\d+(?:d\d+)?) persistent (${TYPES}))? damage on hit\.`, "i");
 const CHOSEN_ATTACK = new RegExp(String.raw`\bMake a spell or ranged attack roll \(your choice\)[^.]*\.\s*On a hit, the target takes (\d+d\d+(?:\s*\+\s*\d+)?) (?:(persistent) )?(${TYPES}) damage(?: and is ([^.]+))?\.`, "i");
 // (One of two maneuvers at the item's modifier: Twisting Twine's "attempting to Disarm or Trip (your choice) a creature in
@@ -62,6 +67,12 @@ export function readOwnCheck(given) {
     if (chosen) {
         const notes = sentencesOf(String(text ?? "").replace(chosen[0], "")).filter((sentence) => !/^You fire a beam\b[^.]*\bat a target\.$/i.test(sentence));
         return { kind: "attack", range: null, reach: null, modifier: 0, choose: ["spell", "ranged"], formula: chosen[1].replace(/\s+/g, ""), category: chosen[2] ? "persistent" : null, type: chosen[3].toLowerCase(), ...(chosen[4] ? { rider: chosen[4].trim() } : {}), notes };
+    }
+    const ray = SPELL_RAY.exec(String(text ?? ""));
+    const stored = ray && STORED_TYPE.exec(String(text ?? ""));
+    if (stored) {
+        const notes = sentencesOf(String(text ?? "").replace(ray[0], "").replace(stored[0], "")).filter((sentence) => !/^You shoot a ray of\b/i.test(sentence) && !/^Activat/i.test(sentence) && !/^Requirements?\b/i.test(sentence));
+        return { kind: "attack", range: null, reach: null, modifier: 0, choose: ["spell"], formula: ray[1], category: null, type: null, typeChoices: ENERGY, notes: [...notes, `${stored[0].replace(/\.$/, "")} (picked on the card).`] };
     }
     const ranged = RANGED_ATTACK.exec(String(text ?? ""));
     if (ranged) {
@@ -135,7 +146,8 @@ export function ownCheckPlan(text, base, options = {}) {
         const targeting = read.line ? { target: `each creature in a ${read.line}-foot line, in order`, range: null, area: { type: "line", value: read.line } } : { ...(basic.targeting ?? {}), target: "1 creature" };
         return { ...common, targeting, resolution: withCritical(at(basic)), ...(choices.length > 1 ? { checkChoices: choices.map((action, index) => ({ label: read.slugs[index].charAt(0).toUpperCase() + read.slugs[index].slice(1), resolution: withCritical(at(action)) })) } : {}) };
     }
-    const component = { id: "0", formula: read.formula, type: read.type, category: read.category };
+    // (Its type picked on the card, of those it says: untyped until then, each choice its formula of that type.)
+    const component = read.typeChoices ? { id: "0", formula: `${read.formula}[untyped]`, type: null, category: read.category } : { id: "0", formula: read.formula, type: read.type, category: read.category };
     // (A second part of its damage, its persistent fire: the same hit's.)
     const extra = read.extra ? { id: "1", ...read.extra } : null;
     // (A condition on any hit, Clockwork Helm's Drained 2: the bombs' rider reader.)
@@ -144,7 +156,8 @@ export function ownCheckPlan(text, base, options = {}) {
     return {
         ...common,
         targeting: { target: read.count ? `up to ${read.count} enemies` : "1 creature", range: read.reach ?? null, area: null },
-        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: read.modifier }, sharedDamage: { rollOnce: true, components: extra ? [component, extra] : [component] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } }
+        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: read.modifier }, sharedDamage: { rollOnce: true, components: extra ? [component, extra] : [component] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } },
+        ...(read.typeChoices ? { damageChoices: read.typeChoices.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)}`, formula: `${read.formula}[${type}]` })) } : {})
     };
 }
 

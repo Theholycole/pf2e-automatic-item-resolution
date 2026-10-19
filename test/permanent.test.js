@@ -698,3 +698,15 @@ test("allies in an area put in a condition, read without an Effect heading (a th
     assert.deepEqual(hasten.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.unit]), [["quickened", 1, "minutes"]]);
     assert.equal(hasten.plan.notes.length, 1);
 });
+
+test("a ray of stored energy at its user's spell attack (a third-party power ring's Release Power): 5d4 doubled on a critical hit, its energy type picked on the card", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { readDocuments: read } = await import("../../pf2e-automatic-ability-resolution/tools/leveldb.mjs");
+    const ring = read(`${process.env.HOME}/.local/share/FoundryVTT/Data/modules/pf2e-team-plus-magic/packs/items`).find((doc) => doc.collection === "items" && doc.name === "Energy");
+    if (!ring) return;
+    const release = compileActivations(ring).find((entry) => entry.activation.name === "Release Power");
+    assert.deepEqual([routeOf(release.plan), release.plan.ownCheck.choose], ["save", ["spell"]]);
+    assert.deepEqual(release.plan.resolution.sharedDamage.components.map((component) => component.formula), ["5d4[untyped]"]);
+    assert.deepEqual([release.plan.resolution.outcomes.criticalSuccess.damage.multiplier, release.plan.resolution.outcomes.success.damage.multiplier], [2, 1]);
+    assert.deepEqual(release.plan.damageChoices.map((choice) => choice.formula), ["5d4[acid]", "5d4[cold]", "5d4[electricity]", "5d4[fire]", "5d4[force]", "5d4[sonic]", "5d4[vitality]", "5d4[void]"]);
+});
