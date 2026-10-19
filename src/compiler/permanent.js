@@ -26,6 +26,7 @@ import { thrownPlan } from "./thrown.js";
 import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
+import { takePlan } from "./take-condition.js";
 import { withScaled } from "./scaled.js";
 import { readLinkedTable, readTable } from "./random-table.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
@@ -382,6 +383,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tattooWaysPlan(activation.html, base, item) ?? plan;
         // (A short teleport for its user, src/compiler/teleport.js: Dweomerveil's Dimension Leap — the space picked on the canvas.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
+        // (An ally's persistent damage taken onto its user, src/compiler/take-condition.js: Bloodstained Waistcoat's Staunch Bleeding.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = takePlan(activation.html, base) ?? plan;
         // (Fruit it grows that heal when eaten: Verdant Branch's — consumables in its user's inventory.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = fruitPlan(activation.html, base, item) ?? plan;
         // (A roll on its own table, src/compiler/random-table.js: Madcap Top's d20, Pistol of Wonder's d% — each row's own card; over any

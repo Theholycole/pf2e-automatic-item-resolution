@@ -11,6 +11,7 @@ import { isToggle } from "./toggle-card.js";
 import { isWays } from "./ways-card.js";
 import { isTeleport } from "./teleport-card.js";
 import { isTable } from "./table-card.js";
+import { isTake } from "./take-card.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -56,6 +57,8 @@ export function routeOf(plan, text = "") {
     if (isTable(plan)) return "table";
     // (A short teleport for its user: the space picked on the canvas, scripts/teleport.js.)
     if (isTeleport(plan)) return "teleport";
+    // (An ally's condition taken onto its user: scripts/take.js.)
+    if (isTake(plan)) return "take";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

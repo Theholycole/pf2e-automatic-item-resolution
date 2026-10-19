@@ -4927,6 +4927,25 @@ export const cases = {
         return { outcome, results };
     },
 
+    // Bloodstained Waistcoat's Staunch Bleeding: the ally targeted's 2d6 persistent bleed ends, and its user takes on the same condition.
+    async waistcoatBleed(scene) {
+        const { actor: user } = await creature(scene, "Waistcoat Wearer", { type: "character", x: 18, y: 24 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Bleeding Ally", { type: "character", x: 19, y: 24 });
+        const bleed = game.pf2e.ConditionManager.getCondition("persistent-damage").toObject();
+        bleed.system.persistent = { formula: "2d6", damageType: "bleed", dc: 15 };
+        await ally.createEmbeddedDocuments("Item", [bleed]);
+        const waistcoat = await give(user, "Bloodstained Waistcoat");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(waistcoat.uuid, 0);
+        const card = await messageAfter(since, itemCard("take"), { what: "the waistcoat's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "the bleed taken", { timeout: 8000 });
+        const bleeding = (actor) => actor.itemTypes.condition.find((entry) => entry.system.slug === "persistent-damage" && entry.system.persistent?.damageType === "bleed");
+        assert(!bleeding(ally), "the ally's bleed ended");
+        assert(bleeding(user)?.system.persistent.formula === "2d6", `the wearer bleeding 2d6 (${bleeding(user)?.system.persistent?.formula})`);
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Eye of Fortune: its user's flat check against the creature their latest Strike targeted, rolled twice (PF2e doesn't roll it) — DC 5 while
     // it's Concealed, DC 11 once it's Hidden.
     async eyeOfFortune(scene) {

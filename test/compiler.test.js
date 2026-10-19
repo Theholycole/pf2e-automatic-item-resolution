@@ -785,6 +785,14 @@ test("attack and save rolls played without the word reroll: Keep Stone Amulet's 
     assert.match(rerollText(reroll("Eye of Fortune")), /^Your latest attack roll: the flat check for its target's Concealed \(DC 5\) or Hidden \(DC 11\), rolled twice/);
 });
 
+test("an ally's persistent damage taken onto its user: Bloodstained Waistcoat's bleed, the take card at the ally targeted", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { takeText } = await import("../src/live/take-card.js");
+    const [waistcoat] = compileActivations(item("Bloodstained Waistcoat"));
+    assert.deepEqual([routeOf(waistcoat.plan), waistcoat.plan.take, waistcoat.plan.targeting.range], ["take", { slug: "persistent-damage", damageType: "bleed", range: 30 }, "30 feet"]);
+    assert.equal(takeText(waistcoat.plan.take), "The targeted ally's persistent bleed damage, moved onto you as it is (within 30 feet)");
+});
+
 test("degrees changed on another creature's roll: Crimson Bluff's Strike one degree worse, Golden Greaves' failed Shove a critical failure (a check at its user), Tome of Dripping Shadows' target's critical failure a failure", async () => {
     const { rerollText, triggeringRoll } = await import("../src/live/reroll-card.js");
     const bluff = compileActivations(item("Crimson Bluff"))[1].plan.reroll;

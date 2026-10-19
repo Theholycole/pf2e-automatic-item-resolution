@@ -8,7 +8,7 @@
   "results": {
    "resolves": 754,
    "builtin:cast-spell": 471,
-   "none": 580,
+   "none": 579,
    "partial": 188,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
@@ -26,13 +26,14 @@
    "builtin:roll-twice": 11,
    "builtin:save-bonus": 3,
    "builtin:ways": 12,
-   "builtin:spellstrike": 9
+   "builtin:spellstrike": 9,
+   "builtin:take-condition": 1
   },
   "live": {
    "save": 439,
    "cast": 471,
    "item": 584,
-   "none": 711,
+   "none": 710,
    "focus": 45,
    "counteract": 25,
    "fortune": 57,
@@ -47,6 +48,7 @@
    "ways": 12,
    "coat": 3,
    "spellstrike": 9,
+   "take": 1,
    "later": 3
   },
   "withFrequency": 1749,
@@ -58,7 +60,7 @@
    "results": {
     "resolves": 455,
     "builtin:cast-spell": 342,
-    "none": 404,
+    "none": 403,
     "partial": 84,
     "builtin:focus-point": 43,
     "builtin:counteract": 21,
@@ -74,7 +76,8 @@
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
     "builtin:ways": 5,
-    "builtin:item-action": 11
+    "builtin:item-action": 11,
+    "builtin:take-condition": 1
    }
   },
   "weapon": {
@@ -12151,9 +12154,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:take-condition",
    "kind": null,
-   "live": null
+   "live": "take"
   },
   {
    "name": "Singularity Ammunition",
