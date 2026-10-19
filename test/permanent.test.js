@@ -911,3 +911,13 @@ test("Admirer's Bouquet handed to the triggering ally: its +1 item bonus to save
     assert.deepEqual(bouquet.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.duration, modifier.predicate]), [["saving-throw", 1, "item", null, [{ or: ["item:trait:emotion", "item:trait:mental"] }]]]);
     assert.equal(bouquet.unread[0], "The bonus ends once the ally no longer carries the bouquet (end it by hand).");
 });
+
+test("an activation that takes minutes isn't the item's standing save bonus (PF2e's own rule): Crown of the Kobold King's Nightmare cast, Serithtial's 9th-rank Heal or Ring of Truth at DC 45", async () => {
+    const { spellIndex } = await import("../src/compiler/index.js");
+    const spells = spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items"));
+    assert.equal(compileActivations(item("Crown of the Kobold King"), { spellEffects })[1].plan?.builtin, undefined, "not the save bonus without the spells either");
+    const crown = compileActivations(item("Crown of the Kobold King"), { spellEffects, spells })[1].plan;
+    assert.deepEqual([crown.builtin, crown.spell.name], ["cast-spell", "Nightmare"]);
+    const blade = compileActivations(item("Serithtial"), { spellEffects, spells })[0].plan;
+    assert.deepEqual([blade.builtin, blade.choices.map((choice) => [choice.spell.name, choice.rank])], ["cast-spell", [["Heal", 9], ["Ring of Truth", 9]]]);
+});

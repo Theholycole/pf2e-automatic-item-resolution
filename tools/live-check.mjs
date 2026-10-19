@@ -824,6 +824,24 @@ export const cases = {
         return { selection: rule?.selection ?? null, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Shawl of Seasons' Change of Seasons: the toggle card's Spring way switches PF2e's own season toggle, its +5-foot Speed with it.
+    async shawlSeasons(scene) {
+        const { actor: wearer } = await creature(scene, "Shawl Wearer", { type: "character", x: 18, y: 16 });
+        const shawl = await give(wearer, "Shawl of Seasons");
+        await shawl.update({ "system.equipped.invested": true, "system.equipped.carryType": "worn" });
+        await wait(500);
+        const before = wearer.system.attributes.speed?.total ?? wearer.system.movement?.speeds?.land?.value ?? null;
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shawl.uuid, 0);
+        const card = await messageAfter(since, itemCard("toggle"), { what: "the toggle card" });
+        await game.modules.get(NS).api.live.apply(card.id, { choice: 0 });
+        await wait(800);
+        const rule = (wearer.items.get(shawl.id).system.rules ?? []).find((entry) => entry.key === "RollOption" && entry.option === "shawl-of-seasons:change-of-seasons");
+        assert(rule?.selection === "spring", `spring selected (${rule?.selection})`);
+        const after = wearer.system.attributes.speed?.total ?? wearer.system.movement?.speeds?.land?.value ?? null;
+        return { selection: rule.selection, speed: [before, after], results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Iron Wine: of its two linked Effects, its own (Effect: Iron Wine), the weakness one on the note.
     async ironWine(scene) {
         const { actor: drinker } = await creature(scene, "Wine Drinker", { x: 12, y: 18 });

@@ -7,7 +7,7 @@
   "activations": 2597,
   "results": {
    "resolves": 766,
-   "builtin:cast-spell": 472,
+   "builtin:cast-spell": 474,
    "none": 550,
    "partial": 203,
    "builtin:focus-point": 47,
@@ -20,20 +20,19 @@
    "builtin:teleport": 8,
    "builtin:pf2e-rules": 26,
    "builtin:zone": 23,
-   "builtin:modes": 32,
+   "builtin:modes": 33,
    "builtin:ways": 19,
    "builtin:conjure": 13,
    "builtin:item-action": 23,
    "builtin:roll-twice": 11,
-   "builtin:save-bonus": 3,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1
   },
   "live": {
    "save": 442,
-   "cast": 472,
+   "cast": 474,
    "item": 591,
-   "none": 681,
+   "none": 678,
    "focus": 47,
    "counteract": 27,
    "fortune": 58,
@@ -42,7 +41,7 @@
    "table": 7,
    "teleport": 8,
    "zone": 23,
-   "toggle": 32,
+   "toggle": 33,
    "ways": 19,
    "conjure": 13,
    "action": 23,
@@ -59,7 +58,7 @@
    "activations": 1693,
    "results": {
     "resolves": 462,
-    "builtin:cast-spell": 345,
+    "builtin:cast-spell": 346,
     "none": 382,
     "partial": 92,
     "builtin:focus-point": 45,
@@ -73,9 +72,8 @@
     "builtin:zone": 11,
     "builtin:ways": 9,
     "builtin:conjure": 13,
-    "builtin:modes": 16,
+    "builtin:modes": 17,
     "builtin:roll-twice": 7,
-    "builtin:save-bonus": 2,
     "builtin:item-action": 11,
     "builtin:take-condition": 1
    }
@@ -86,7 +84,7 @@
     "resolves": 170,
     "none": 82,
     "partial": 50,
-    "builtin:cast-spell": 82,
+    "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "builtin:table": 1,
     "builtin:modes": 12,
@@ -99,8 +97,7 @@
     "builtin:pf2e-rules": 2,
     "builtin:teleport": 3,
     "builtin:ways": 3,
-    "builtin:roll-twice": 2,
-    "builtin:save-bonus": 1
+    "builtin:roll-twice": 2
    }
   },
   "ammo": {
@@ -5299,9 +5296,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:save-bonus",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Wondrous Figurine (Onyx Dog)",
@@ -19270,9 +19267,9 @@
    "time": null,
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:save-bonus",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Thundercrasher",
@@ -23489,9 +23486,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:save-bonus",
+   "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Blackaxe",

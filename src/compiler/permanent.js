@@ -50,7 +50,7 @@ import { spellstrikePlan } from "./spellstrike.js";
 import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
 import { withHitDelivery } from "./hit-delivery.js";
 import { withoutFlavor, withoutLater } from "./flavor.js";
-import { optionPlan } from "./option-on.js";
+import { choiceOptionPlan, optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
 import { DRAGON_TYPES, readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
@@ -118,10 +118,12 @@ export function splitActivations(html) {
     });
 }
 
-// One activation as an ability for the ability compiler: its block as the description, its own actions.
-function asActivationAbility(item, activation) {
+// One activation as an ability for the ability compiler: its block as the description, its own actions. (modifiers: false — without
+// the item's own PF2e modifiers, for a read that took them for the activation's; its toggles stay.)
+function asActivationAbility(item, activation, { modifiers = true } = {}) {
     const { actionType, actions } = actionTypeOf(activation.time ?? null);
-    return { ...item, name: activation.name ? `${item.name}: ${activation.name}` : item.name, type: "action", system: { ...(item.system ?? {}), description: { value: activation.html }, actionType: { value: actionType }, actions: { value: actions } } };
+    const rules = modifiers ? {} : { rules: (item.system?.rules ?? []).filter((rule) => rule?.key !== "FlatModifier") };
+    return { ...item, name: activation.name ? `${item.name}: ${activation.name}` : item.name, type: "action", system: { ...(item.system ?? {}), ...rules, description: { value: activation.html }, actionType: { value: actionType }, actions: { value: actions } } };
 }
 
 const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), category: "permanent" } });
@@ -266,6 +268,10 @@ function compileEach(item, options = {}) {
         if (!plan) {
             try {
                 read = compileAbility(asActivationAbility(item, activation), options);
+                // (Not the item's standing save bonuses, PF2e's own rules — an activation that takes minutes reads as a passive: Crown of the
+                // Kobold King's Nightmare cast read as its +1 to saves against fear. Once more without its modifiers: the cast, or Shawl of
+                // Seasons' own toggle of a season.)
+                if (read?.builtin === "save-bonus") read = compileAbility(asActivationAbility(item, activation, { modifiers: false }), options);
                 // (Nothing read: once more without its Trigger and Requirements lines, src/compiler/index.js: Catoblepas Maul's "Your
                 // last action was a successful Strike".)
                 // (Only a resolution it reads that way, not a builtin: a spell its trigger names isn't cast.)
@@ -453,6 +459,8 @@ function compileEach(item, options = {}) {
         if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && counteract) plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: counteract.within ? { target: "1 creature", range: counteract.within, area: null } : { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
         // (One of the item's own PF2e toggles, named as the activation is, switched on for a while: src/compiler/option-on.js.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = optionPlan(item, activation, base) ?? plan;
+        // (Or one of the ways of a toggle named for it, the item's own PF2e implementation, over any row read from its words: Shawl of Seasons.)
+        if (plan?.builtin !== "modes") plan = choiceOptionPlan(item, activation, base) ?? plan;
         if (!plan) return { activation, plan: null, index };
         plan = damageMaterial(withTypeChoices(plan, typeChoice), plainText(activation.html));
         // (A skill its user picked when the item was made, named in the item's own text, src/compiler/skill-pick.js: Words of Wisdom's

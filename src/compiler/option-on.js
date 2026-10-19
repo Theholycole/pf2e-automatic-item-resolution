@@ -54,3 +54,29 @@ export function optionPlan(item, activation, base) {
         ...(until ? { until } : {})
     };
 }
+
+// An activation that picks one of the ways of the item's own PF2e toggle, named for it: Shawl of Seasons' Change of Seasons ("the benefits
+// of a season of your choice until your next daily preparations"), its RollOption "shawl-of-seasons:change-of-seasons" with a way per
+// season. The toggle card's ways, one per suboption, each switching the toggle to it for good (the ability compiler reads these for
+// actions, not for an activation that takes minutes). Another toggle of the item that waits on this one — the shawl's "current season" —
+// is the sheet's, a note.
+export function choiceOptionPlan(item, activation, base) {
+    const name = slugOf(activation?.name);
+    if (!name) return null;
+    const rules = item?.system?.rules ?? [];
+    const rule = rules.find((entry) => entry?.key === "RollOption" && entry.suboptions?.length && typeof entry.option === "string" && (entry.option === name || entry.option.endsWith(`:${name}`)));
+    if (!rule) return null;
+    const title = (value) => String(value).replace(/[-_]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+    const waits = rules.filter((entry) => entry !== rule && entry?.key === "RollOption" && entry.toggleable && JSON.stringify(entry.disabledIf ?? []).includes(`"${rule.option}"`));
+    const notes = waits.map((entry) => `Its "${title(String(entry.option).split(":").at(-1))}" toggle on the item's sheet too, when it applies.`);
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        builtin: "modes",
+        automation: { level: "automatic" },
+        targeting: { target: "self", range: null, area: null },
+        trigger: { event: "use" },
+        modes: rule.suboptions.map((entry) => ({ name: title(entry.value), plan: { builtin: "roll-option", option: rule.option, ...(rule.domain ? { domain: rule.domain } : {}), suboption: entry.value, label: title(entry.value) } })),
+        ...(notes.length ? { notes } : {})
+    };
+}

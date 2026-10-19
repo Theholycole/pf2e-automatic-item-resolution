@@ -92,3 +92,18 @@ test("Sure-Step Crampons: its unnamed activation switches on PF2e's own toggle f
     await settle();
     assert.deepEqual(wielder.toggled.at(-1), { domain: "all", option: "sure-step-crampons", itemId: worn.id, value: false, suboption: null });
 });
+
+test("Shawl of Seasons' Change of Seasons, an activation that takes minutes: a way per season of PF2e's own toggle for it (not the item's standing Fortitude bonus as its effect), its current-season toggle a note", async () => {
+    const [change] = compileActivations(source("Shawl of Seasons"));
+    assert.equal(routeOf(change.plan), "toggle");
+    assert.deepEqual(change.plan.modes.map((mode) => [mode.name, mode.plan.option, mode.plan.suboption]), [["Spring", "shawl-of-seasons:change-of-seasons", "spring"], ["Summer", "shawl-of-seasons:change-of-seasons", "summer"], ["Fall", "shawl-of-seasons:change-of-seasons", "fall"], ["Winter", "shawl-of-seasons:change-of-seasons", "winter"]]);
+    assert.deepEqual(change.plan.notes, ["Its \"Current Season\" toggle on the item's sheet too, when it applies."]);
+    const shawl = foundry.giveItem(wielder, source("Shawl of Seasons"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: shawl.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "toggle");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, choice: 3, userId: "player" });
+    await settle();
+    assert.deepEqual(wielder.toggled.at(-1), { domain: "all", option: "shawl-of-seasons:change-of-seasons", itemId: shawl.id, value: true, suboption: "winter" });
+});
