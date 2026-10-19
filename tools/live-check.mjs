@@ -4687,6 +4687,32 @@ export const cases = {
         return { failed };
     },
 
+    // Save cards from rewords: Rusting Carapace (8d6 at a basic DC 24 Fortitude save, 2d6 persistent on a failure), Last Hope (3 typed: 3d10
+    // vitality at the undead, basic DC 37 Fortitude), Briar's tenth activation (DC 50 Fortitude, Stunned 1, Stunned 3 on a critical failure).
+    async rewordSaves(scene) {
+        const { actor: user } = await creature(scene, "Reword Saver", { type: "character", x: 13, y: 10 });
+        const { token: foe } = await creature(scene, "Reword Foe", { x: 14, y: 10, alliance: "opposition" });
+        const saveFor = async (name, index, choices = {}) => {
+            const item = await give(user, name);
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, index);
+            const card = await messageAfter(since, itemCard("expose"), { what: `${name}'s save card` });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid], ...choices });
+            const save = await messageAfter(since, abilitySaveCard, { what: `the ability module's save card for ${name}` });
+            return save.flags["pf2e-automatic-ability-resolution"].card.plan;
+        };
+        const rust = await saveFor("Rusting Carapace", 0);
+        const persistent = rust.resolution.outcomes.failure.damage.formulas?.[0]?.formula;
+        assert(rust.resolution.sharedDamage.components[0].formula === "8d6[untyped]" && rust.resolution.check.basic && rust.resolution.check.against.value === 24 && persistent === "2d6[persistent,untyped]", `8d6, basic DC 24, 2d6 persistent on a failure (${JSON.stringify(rust.resolution.check)}, ${persistent})`);
+        const hope = await saveFor("Last Hope", 0, { scaled: 3 });
+        assert(hope.resolution.sharedDamage.components[0].formula === "3d10[vitality]" && hope.resolution.check.against.value === 37, `3d10 vitality, DC 37 (${hope.resolution.sharedDamage.components[0].formula})`);
+        const briar = await saveFor("Briar", 9);
+        const rows = ["failure", "criticalFailure"].map((degree) => briar.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`).join());
+        assert(briar.resolution.check.against.value === 50 && rows[0] === "stunned 1" && rows[1] === "stunned 3", `DC 50, Stunned 1 and 3 (${rows.join(" / ")})`);
+        return { persistent, hope: hope.resolution.sharedDamage.components[0].formula, rows };
+    },
+
     // Pact of the Herald and Host's Breath of the Dragon: Reflex picked on the ways card, fire on the save card — a basic Reflex save card at
     // the target, at its user's spell DC, its damage 1d6 per level (3d6 at 3rd level).
     async benefactorBreath(scene) {

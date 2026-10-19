@@ -797,7 +797,7 @@ test("degrees changed on another creature's roll: Crimson Bluff's Strike one deg
     assert.deepEqual(compileActivations(item("The Lost"))[0].plan.reroll.raise.change, { criticalFailure: "failure", failure: "success" });
 });
 
-test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude), Resolute Shield's twice its Hardness as resistance", () => {
+test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude), Resolute Shield's twice its Hardness as resistance, Rusting Carapace, Last Hope and Briar's saves", () => {
     const spiral = compileItem({ ...item("Spiral Labyrinth"), ownerLevel: 14 });
     assert.deepEqual([spiral.resolution.check.statistic, spiral.resolution.check.basic, spiral.resolution.check.against.value, spiral.scaled.of], ["reflex", true, 32, "the damage your shield blocked, its Hardness 10 higher for that Shield Block"]);
     const net = compileItem({ ...item("Spring-Loaded Net Launcher"), ownerLevel: 2 });
@@ -807,4 +807,11 @@ test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage t
     // (Resolute Shield's "up to twice the shield's Hardness": its Hardness 12 doubled, resistance to the triggering physical damage.)
     const [resolute] = compileActivations(item("Resolute Shield"));
     assert.deepEqual([resolute.plan.builtin, resolute.plan.bonus.resistance], ["readied-bonus", { type: "physical", value: 24 }]);
+    // (Rusting Carapace's rust at a creature, Last Hope's dice typed for the undead, Briar's Stunned save.)
+    const [rust] = compileActivations(item("Rusting Carapace"));
+    assert.deepEqual([rust.plan.resolution.sharedDamage.components[0].formula, rust.plan.resolution.check.basic, rust.plan.resolution.outcomes.failure.damage.formulas[0].formula], ["8d6[untyped]", true, "2d6[persistent,untyped]"]);
+    const [hope] = compileActivations(item("Last Hope"));
+    assert.deepEqual([hope.plan.scaled.die, hope.plan.resolution.sharedDamage.components[0].formula, hope.plan.resolution.check.against.value], ["d10", "1d10[vitality]", 37]);
+    const briar = compileActivations(item("Briar"))[9];
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => briar.plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["stunned 1"], ["stunned 3"]]);
 });

@@ -6,15 +6,15 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 752,
+   "resolves": 754,
    "builtin:cast-spell": 471,
-   "none": 583,
-   "partial": 187,
+   "none": 581,
+   "partial": 188,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
    "builtin:readied-bonus": 46,
    "builtin:no-effect": 100,
-   "note-only": 178,
+   "note-only": 177,
    "builtin:reroll": 40,
    "builtin:table": 7,
    "builtin:teleport": 7,
@@ -29,10 +29,10 @@
    "builtin:spellstrike": 9
   },
   "live": {
-   "save": 436,
+   "save": 439,
    "cast": 471,
-   "item": 585,
-   "none": 714,
+   "item": 584,
+   "none": 712,
    "focus": 45,
    "counteract": 25,
    "fortune": 57,
@@ -80,14 +80,14 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 163,
-    "none": 86,
+    "resolves": 165,
+    "none": 85,
     "partial": 47,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "builtin:table": 1,
     "builtin:modes": 12,
-    "note-only": 17,
+    "note-only": 16,
     "builtin:item-action": 9,
     "builtin:zone": 6,
     "builtin:counteract": 2,
@@ -127,10 +127,10 @@
    "activations": 164,
    "results": {
     "builtin:cast-spell": 34,
-    "partial": 10,
+    "partial": 11,
     "resolves": 58,
     "builtin:counteract": 1,
-    "none": 23,
+    "none": 22,
     "builtin:zone": 4,
     "note-only": 14,
     "builtin:no-effect": 5,
@@ -7370,9 +7370,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Humbug Pocket",
@@ -15691,9 +15691,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Wyrm's Wingspan",
@@ -28635,9 +28635,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Paradigm Cube",
