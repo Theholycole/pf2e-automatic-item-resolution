@@ -4361,6 +4361,27 @@ export const cases = {
         const damage = claw().item?.system?.damage;
         assert(damage?.die === "d4" && damage?.damageType === "slashing", `a slashing d4 claw (${JSON.stringify(damage)})`);
         return { damage };
+    },
+
+    // Sapling Shield (Moderate): the buckler becomes a tower shield (+2 AC, –5-foot Speed — PF2e's ItemAlteration on it); activated again,
+    // a buckler again.
+    async saplingShield(scene) {
+        const { actor: user } = await creature(scene, "Sapling Bearer", { type: "character", x: 11, y: 1 });
+        const shield = await give(user, "Sapling Shield (Moderate)");
+        await shield.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 }).catch(() => null);
+        const ac = () => user.items.get(shield.id)?.system?.acBonus;
+        const before = ac();
+        const press = async () => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what: "the shield's card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+        };
+        await press();
+        await until(() => ac() === 2 && user.items.get(shield.id)?.system?.speedPenalty === -5, `a tower shield's +2 AC and –5 Speed (now ${ac()}, ${user.items.get(shield.id)?.system?.speedPenalty})`, { timeout: 8000 });
+        await press();
+        await until(() => ac() === before, `back to a buckler's +${before} (now ${ac()})`, { timeout: 8000 });
+        return { before, tower: 2 };
     }
 };
 

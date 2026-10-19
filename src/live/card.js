@@ -114,6 +114,7 @@ export function previewLines(state) {
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     for (const attack of plan?.item?.attacks ?? []) lines.push(attackText(attack));
     for (const healing of plan?.item?.fastHealing ?? []) lines.push(fastHealingText(healing));
+    if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
@@ -353,6 +354,16 @@ export const fastHealingText = (healing) => `Fast healing ${healing.value}${forT
 // Its Effect: PF2e's FastHealing rule, which heals at the start of each of its turns.
 export function fastHealingEffectSource(healing, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return ownEffectSource({ name: "fast healing", img: "icons/svg/regen.svg", words: fastHealingText(healing), rules: [{ key: "FastHealing", value: healing.value }], duration: healing.duration, flag: { fastHealing: healing.value }, item, user, worldTime, initiative, moduleId });
+}
+
+// A shield's other form in words: "The shield becomes a tower shield (+2 AC, a –5-foot Speed penalty) until it's activated again".
+export const shieldFormText = (form) => `The shield becomes a ${form.name} (+${form.acBonus} AC, a ${form.speedPenalty}-foot Speed penalty) until it's activated again`;
+
+// Its Effect: PF2e's ItemAlteration on that shield, by its id on its user.
+export function shieldFormEffectSource(form, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const shieldId = /\.Item\.([A-Za-z0-9]+)$/.exec(String(item.uuid ?? ""))?.[1] ?? null;
+    const rules = [{ key: "ItemAlteration", itemId: shieldId, mode: "override", property: "ac-bonus", value: form.acBonus }, { key: "ItemAlteration", itemId: shieldId, mode: "override", property: "speed-penalty", value: form.speedPenalty }];
+    return ownEffectSource({ name: form.name, img: "icons/svg/shield.svg", words: shieldFormText(form), rules, duration: null, flag: { shieldForm: shieldId }, item, user, worldTime, initiative, moduleId });
 }
 
 // A picked skill's bonus in words: "+1 item to the skill picked (intimidation, deception or performance), and a critical failure

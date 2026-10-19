@@ -281,6 +281,9 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = coveredSquarePlan(activation.html, base, item, options) ?? plan;
         // (Walls it raises, with a save in their space, src/compiler/covered-square.js: Alkenstar Phalanx — over the save read alone.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = raisedWallsPlan(activation.html, base, item, options) ?? plan;
+        // (A shield changing form until activated again: Sapling Shield's buckler and tower shield.)
+        const shieldForm = shieldFormOf(activation.html);
+        if (shieldForm && (!plan || plan.noteOnly || plan.builtin === "no-effect")) plan = { ...base, automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, shieldForm, notes: shieldForm.notes, partial: true };
         // (Ammunition made against one type of creature, src/compiler/bane.js: Bane Ammunition — the type picked on the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = baneWaysPlan(activation.html, base, part, options) ?? plan;
         // (A tattoo of one animal, src/compiler/bane.js: Tooth and Claw Tattoo's attack — the animal picked on the ways card.)
@@ -324,7 +327,7 @@ function compileEach(item, options = {}) {
             }
         }
         const frequency = activation.frequency?.max ? activation.frequency : null;
-        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, strikeDamage, suppress, coats, coatLasts, ...kept } = plan;
+        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, coats, coatLasts, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)
         const others = targetedRecipient(plan, plainText(activation.html));
         return {
@@ -339,7 +342,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) }
             }
         };
     });
@@ -361,6 +364,19 @@ function ownConditionsAside(plan, text) {
     }));
     const moved = Object.entries(outcomes).some(([degree, row]) => row !== plan.resolution.outcomes[degree]);
     return moved ? { ...plan, resolution: { ...plan.resolution, outcomes }, automation: { level: "guided" }, partial: true } : plan;
+}
+
+// A shield that changes into another kind until it's activated again, Sapling Shield's "The buckler becomes a tower shield, gaining the
+// corresponding AC bonus, Speed penalty, and ability to Take Cover. It keeps the same Hit Points and Broken Threshold, but its Hardness and
+// Bulk increase by 2 in this form": plan.item.shieldForm — live play gives its user an Effect with PF2e's ItemAlteration on that shield (a
+// tower shield's +2 AC and –5-foot Speed), and activating it again takes the Effect off. Its Hardness and Bulk are the GM's.
+const TOWER = /\bThe buckler becomes a tower shield, gaining the corresponding AC bonus, Speed penalty, and ability to (?:@UUID\[[^\]]*\]\{)?Take Cover\b/i;
+function shieldFormOf(html) {
+    const text = String(html ?? "");
+    if (!TOWER.test(text)) return null;
+    const plain = text.replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const harder = /\bits Hardness and Bulk increase by (\d+) in this form\b/i.exec(plain)?.[1];
+    return { name: "tower shield", acBonus: 2, speedPenalty: -5, toggle: true, notes: [...(harder ? [`In this form its Hardness and Bulk are ${harder} higher (by hand).`] : []), "It can Take Cover as a tower shield does."] };
 }
 
 // The sentences of the text that end "(by hand)." — the GM's lines a reworded text gives (src/compiler/item-data.js) — on the plan's notes.
