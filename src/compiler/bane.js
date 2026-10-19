@@ -57,3 +57,27 @@ export function elementWaysPlan(item, base) {
     });
     return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true };
 }
+
+// A tattoo of one animal, chosen when it's received: Tooth and Claw Tattoo's "choose the animal from among the following: ape, bear, bull, …"
+// for its activation's "You gain an unarmed attack matching the tattoo for 1 minute. It has the same damage as your best unarmed attack and
+// has the same traits. Its damage type is bludgeoning for a fist or frog's jaws; piercing for an antler, fangs, horns, or most jaws; or
+// slashing for claws". The ways card's pick of the animal, each way that attack (plan.item.attacks, copyBest: live play copies its user's
+// best unarmed attack's die and traits into PF2e's Strike rule).
+const ANIMAL_ATTACKS = { ape: ["fist", "bludgeoning"], bear: ["claw", "slashing"], bull: ["horn", "piercing"], canine: ["jaws", "piercing"], cat: ["claw", "slashing"], deer: ["antler", "piercing"], frog: ["jaws", "bludgeoning"], shark: ["jaws", "piercing"], snake: ["fangs", "piercing"] };
+const ANIMALS = /\bchoose the animal from among the following: ([^.]+)\./i;
+const MATCHING_ATTACK = /\bYou gain an unarmed attack matching the tattoo for (\d+) (minutes?|rounds?|hours?)\.\s*It has the same damage as your best unarmed attack and has the same traits\./i;
+export function tattooWaysPlan(html, base, item) {
+    const text = String(html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const whole = String(item?.system?.description?.value ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const attack = MATCHING_ATTACK.exec(text);
+    const animals = ANIMALS.exec(whole);
+    if (!attack || !animals) return null;
+    const duration = { mode: "fixed", value: Number(attack[1]), unit: /^hour/i.test(attack[2]) ? "hours" : /^round/i.test(attack[2]) ? "rounds" : "minutes", expiry: "turn-start" };
+    const ways = animals[1].split(/,\s*(?:or\s+)?|\s+or\s+/).map((name) => name.trim().toLowerCase()).filter((name) => ANIMAL_ATTACKS[name]).map((animal) => {
+        const [name, type] = ANIMAL_ATTACKS[animal];
+        const plan = { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, item: { type: item?.type, level: Number(item?.system?.level?.value) || 0, recipient: "user", attacks: [{ name, dice: null, die: null, type, traits: ["unarmed"], copyBest: true, duration }] } };
+        return { name: `${animal.charAt(0).toUpperCase()}${animal.slice(1)}`, html: `<p>A ${name} unarmed attack (${type}), with the damage and traits of your best unarmed attack, for ${attack[1]} ${attack[2]}.</p>`, plan };
+    });
+    if (ways.length < 2) return null;
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true };
+}

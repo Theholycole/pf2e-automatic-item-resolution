@@ -508,7 +508,7 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (An unarmed attack it grants: Ring of the Tiger's claw — an Effect with PF2e's Strike rule.)
     for (const attack of state.plan.item?.attacks ?? []) {
         if (!target.actor) break;
-        await target.actor.createEmbeddedDocuments("Item", [attackEffectSource(attack, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        await target.actor.createEmbeddedDocuments("Item", [attackEffectSource(attack, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID, actor: target.actor })]);
         lines.push(`${recipient.name}: ${attackText(attack)}`);
     }
     // (Fast healing: Infernal Health's 25 a turn — an Effect with PF2e's FastHealing rule.)

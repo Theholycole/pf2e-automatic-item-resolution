@@ -14,7 +14,7 @@
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
    "builtin:no-effect": 100,
-   "note-only": 199,
+   "note-only": 196,
    "builtin:reroll": 25,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 23,
@@ -23,13 +23,13 @@
    "builtin:item-action": 23,
    "builtin:roll-twice": 11,
    "builtin:save-bonus": 3,
-   "builtin:spellstrike": 9,
-   "builtin:ways": 4
+   "builtin:ways": 7,
+   "builtin:spellstrike": 9
   },
   "live": {
    "save": 432,
    "cast": 470,
-   "item": 584,
+   "item": 581,
    "none": 760,
    "focus": 45,
    "counteract": 25,
@@ -40,9 +40,9 @@
    "toggle": 32,
    "conjure": 12,
    "action": 23,
+   "ways": 7,
    "coat": 3,
    "spellstrike": 9,
-   "ways": 4,
    "later": 3
   },
   "withFrequency": 1749,
@@ -60,15 +60,15 @@
     "builtin:counteract": 21,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
-    "note-only": 137,
+    "note-only": 134,
     "builtin:reroll": 17,
     "builtin:zone": 11,
     "builtin:conjure": 12,
     "builtin:modes": 16,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
-    "builtin:item-action": 11,
-    "builtin:ways": 1
+    "builtin:ways": 4,
+    "builtin:item-action": 11
    }
   },
   "weapon": {
@@ -5957,9 +5957,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Tooth and Claw Tattoo (Greater)",
@@ -10045,9 +10045,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Tooth and Claw Tattoo",
@@ -11212,9 +11212,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Tooth and Claw Tattoo (Major)",

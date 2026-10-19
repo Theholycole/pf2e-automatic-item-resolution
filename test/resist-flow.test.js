@@ -226,3 +226,14 @@ test("fast healing for a while, PF2e's FastHealing rule: Infernal Health's 25 at
     assert.deepEqual(fastHealingEffectSource(healing, { item: { name: "Infernal Health" } }).system.rules, [{ key: "FastHealing", value: 25 }]);
     assert.equal(health.plan.partial, true);
 });
+
+test("a tattoo of one animal (Tooth and Claw Tattoo): the ways card's pick of the animal, its unarmed attack for 1 minute copying its user's best unarmed attack's die and traits", async () => {
+    const { attackEffectSource, attackText } = await import("../src/live/card.js");
+    const [tattoo] = compileActivations(source("Tooth and Claw Tattoo"));
+    assert.deepEqual([tattoo.plan.builtin, tattoo.plan.ways.length, tattoo.plan.ways[4].name], ["ways", 9, "Cat"]);
+    const [claw] = tattoo.plan.ways[4].plan.item.attacks;
+    assert.equal(attackText(claw), "A claw unarmed attack (your best unarmed attack's damage and traits, slashing) for 1 minute");
+    const monk = { system: { actions: [{ item: { system: { category: "unarmed", damage: { die: "d4" }, traits: { value: ["agile", "finesse", "nonlethal", "unarmed"] } } } }, { item: { system: { category: "unarmed", damage: { die: "d8" }, traits: { value: ["unarmed", "forceful"] } } } }] } };
+    const [rule] = attackEffectSource(claw, { item: { name: "Tooth and Claw Tattoo" }, actor: monk }).system.rules;
+    assert.deepEqual([rule.damage.base, rule.traits, rule.baseType], [{ damageType: "slashing", dice: 1, die: "d8" }, ["unarmed", "forceful"], "claw"]);
+});

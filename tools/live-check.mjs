@@ -4341,6 +4341,26 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await cloud()?.delete().catch(() => null);
         }
+    },
+
+    // Tooth and Claw Tattoo: Cat picked on the ways card — a claw Strike with its user's best unarmed die (a fist's d4) for 1 minute.
+    async tattooClaw(scene) {
+        const { actor: user } = await creature(scene, "Tattooed Brawler", { type: "character", x: 9, y: 1 });
+        const tattoo = await give(user, "Tooth and Claw Tattoo");
+        await tattoo.update({ "system.equipped.invested": true }).catch(() => null);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(tattoo.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the animal picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Cat") });
+        const card = await messageAfter(since, itemCard("item"), { what: "the Cat way's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const claw = () => (user.system.actions ?? []).find((action) => /claw/i.test(action.label ?? action.item?.name ?? ""));
+        await until(() => claw(), `a claw Strike among ${(user.system.actions ?? []).map((action) => action.label).join(", ")}`, { timeout: 8000 });
+        const damage = claw().item?.system?.damage;
+        assert(damage?.die === "d4" && damage?.damageType === "slashing", `a slashing d4 claw (${JSON.stringify(damage)})`);
+        return { damage };
     }
 };
 
