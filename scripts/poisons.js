@@ -7,7 +7,7 @@ import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, cre
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
 import { scaledPlan } from "../src/compiler/scaled.js";
-import { ABILITY_ID, FLAG, MODULE_ID, entryOf, lowerCondition, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, lowerCondition, stateOf } from "./foundry.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
 export async function postPoisonCard({ message, plan, used, actor, token }) {
@@ -162,6 +162,21 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         await postCard({ plan: withAttackChoice(scaledPlan(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state.scaledAmount), state), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
+    // (Saves for the creatures around the one it's at, of that creature's side — src/compiler/hit-around.js aroundAllies, a third-party blade's
+    // judgment: each save card at them.)
+    for (const entry of state.plan?.around ?? []) {
+        const center = tokens[0];
+        const centerActor = center?.actor;
+        const near = creaturesNear(center, entry.radius).map((other) => canvas.tokens.placeables.find((placeable) => placeable.document.uuid === other.tokenUuid)).filter(Boolean)
+            .filter((placeable) => !entry.allies || (placeable.actor && centerActor && (placeable.actor.isAllyOf?.(centerActor) ?? placeable.actor.alliance === centerActor.alliance)));
+        const others = [...(entry.includeTarget ? [center.object ?? center] : []), ...near];
+        const where = `within ${entry.radius} feet of ${center.name ?? centerActor?.name ?? "the target"}`;
+        if (!others.length) lines.push(`No ${entry.allies ? "ally of it" : "creature"} ${where}.`);
+        else if (postCard && actor) {
+            await postCard({ plan: entry.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: others, cause: `${state.item.name} at ${center.name ?? centerActor?.name ?? "the target"}` });
+            lines.push(`${saveText(entry.plan)} for ${others.length} creature${others.length === 1 ? "" : "s"} ${where}: its card follows.`);
+        } else lines.push(`${saveText(entry.plan)} for the creatures ${where} (roll it by hand).`);
+    }
     // (The conditions it lowers on each creature in its area: Vambrace of Gorum's Blood of Iron's clumsy, enfeebled, frightened and
     // stupefied by 1, beside its temporary Hit Points.)
     if (state.plan?.allyArea) for (const entry of (state.plan.item?.reduce ?? []).filter((one) => one.who === "targets" && one.slug)) {

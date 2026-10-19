@@ -964,3 +964,20 @@ test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage t
     const [key] = compileActivations(item("Key to the Stomach"));
     assert.deepEqual([key.plan.builtin, key.plan.item.counteract.modifier, key.plan.item.counteract.rank, key.plan.item.counteract.afflictions], ["counteract", 15, 5, ["poison"]]);
 });
+
+test("a third-party blade's judgment after a critical hit (read from its own pack, its words not kept here): the target's own damage and Slowed on the targeted card, then a basic Reflex save card for that creature's allies within 20 feet, Slowed 1 on a critical failure", async () => {
+    const { readDocuments: read } = await import("../../pf2e-automatic-ability-resolution/tools/leveldb.mjs");
+    const { routeOf } = await import("../src/live/route.js");
+    let docs = [];
+    try { docs = read(`${process.env.HOME}/.local/share/FoundryVTT/Data/modules/pf2e-team-plus-tian-xia/packs/player-options`).filter((doc) => doc.collection === "items"); } catch { return; }
+    for (const [name, dice, dc] of [["Shei Long's Blade", "1d8", 19], ["Shei Long's Blade (True)", "4d8", 43]]) {
+        const blade = docs.find((doc) => doc.name === name);
+        if (!blade) continue;
+        const plan = compileActivations({ ...blade, ownerLevel: 10 })[0].plan;
+        const [around] = plan.around;
+        assert.deepEqual([routeOf(plan), plan.resolution.outcomes.success.effects.map((effect) => effect.slug), around.radius, around.allies, around.includeTarget], ["save", ["slowed"], 20, true, false], name);
+        assert.deepEqual([around.plan.resolution.check.statistic, around.plan.resolution.check.basic, around.plan.resolution.check.against.value, around.plan.resolution.sharedDamage.components[0].formula.startsWith(dice)], ["reflex", true, dc, true], name);
+        assert.deepEqual(around.plan.resolution.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.value]), [["slowed", 1]], name);
+        assert.equal(JSON.stringify(plan.resolution.outcomes.success.manualInstructions ?? []).includes("allies"), false, "its sentences not a note too");
+    }
+});

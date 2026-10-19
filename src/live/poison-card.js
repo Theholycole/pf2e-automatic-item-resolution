@@ -211,7 +211,9 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
         : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : checked ? "A check at" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.step === "then" ? "Its save: my targets" : state.own ? "Roll the save" : state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
-    const notes = open && (state.plan?.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
+    // (Saves for the creatures around the one targeted, src/compiler/hit-around.js aroundAllies: said before Apply.)
+    const aroundLines = (state.plan?.around ?? []).map((entry) => `Then ${saveText(entry.plan)} for ${entry.allies ? "its allies" : "the creatures"} within ${entry.radius} feet of it.`);
+    const notes = open && [...aroundLines, ...(state.plan?.notes ?? [])].length ? `<ul class="aar-notes">${[...aroundLines, ...(state.plan?.notes ?? [])].map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     // (A check to pick — Twisting Twine's Disarm or Trip: a picker.)
     const checkPick = open && canApply && (state.plan?.checkChoices?.length ?? 0) > 1
         ? `<p class="aar-actions">Check: <select data-air-field="checkChoice">${state.plan.checkChoices.map((choice, index) => `<option value="${index}"${index === (state.checkChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`

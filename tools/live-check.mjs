@@ -5542,6 +5542,31 @@ export const cases = {
         return { reroll: again.id, results };
     },
 
+    // Tian Xia+'s Shei Long's Blade: its judgment's targeted card at the creature, then a DC 19 basic Reflex save card for that creature's
+    // allies within 20 feet — not its user's own ally standing as near.
+    async bladeJudgment(scene) {
+        assert(game.modules.get("pf2e-team-plus-tian-xia")?.active, "Tian Xia+ isn't active in pftest.");
+        const { actor: user } = await creature(scene, "Judgment Wielder", { type: "character", x: 6, y: 15, level: 6 });
+        const { token: foeToken } = await creature(scene, "Judgment Target", { x: 7, y: 15, alliance: "opposition" });
+        const { token: friendA } = await creature(scene, "Judgment Foe Ally", { x: 8, y: 15, alliance: "opposition" });
+        const { token: friendB } = await creature(scene, "Judgment Foe Ally Two", { x: 9, y: 15, alliance: "opposition" });
+        const { token: mine } = await creature(scene, "Judgment Party Ally", { type: "character", x: 8, y: 14 });
+        const blade = await give(user, "Shei Long's Blade", "pf2e-team-plus-tian-xia.player-options");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the blade's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const reflex = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check.statistic === "reflex", { what: "the allies' Reflex save card", timeout: 10000 });
+        const state = reflex.flags["pf2e-automatic-ability-resolution"].card;
+        const check = state.plan.resolution.check;
+        assert(check.basic && check.against.value === 19, `a DC 19 basic Reflex save (${JSON.stringify(check)})`);
+        const at = (state.targets ?? []).map((entry) => entry.tokenUuid ?? entry.uuid);
+        assert(at.includes(friendA.uuid) && at.includes(friendB.uuid), `at the target's allies (${JSON.stringify(at)})`);
+        assert(!at.includes(mine.uuid) && !at.includes(foeToken.uuid), "not its user's ally, nor the target");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results, at: at.length };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

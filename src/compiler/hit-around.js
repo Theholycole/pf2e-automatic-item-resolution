@@ -61,3 +61,21 @@ export function hitAroundPlan(html, base, item, options = {}) {
         partial: Boolean(around)
     };
 }
+
+// Saves for the allies of the creature an activation hurts, beside its own row (a third-party blade's judgment after a critical hit: the
+// target's own damage and Slowed, then a basic save for "the target's allies" within some feet, Slowed 1 on a critical failure): the
+// targeted card's plan.around — live play posts that save card at the creatures within that distance of the creature targeted, of its
+// side. → [{ radius, includeTarget: false, allies: true, plan }] and the sentences read, or null.
+const ALLIES = /\bAll the target(?:'|’|&#39;)s allies[^.]*?within (\d+) feet take (@Damage\[(?:[^[\]]|\[[^\]]*\])*\])(?:\{[^}]*\})? damage with an? (@Check\[(?:fortitude|reflex|will)\|[^\]]*\bbasic\b[^\]]*\])(?:\{[^}]*\})?(?: (?:Fortitude|Reflex|Will))? save\./i;
+const ALLIES_WORSE = /^\s*Creatures who critically fail[^.]*?are slowed (\d)\./i;
+export function aroundAllies(html, item, options = {}) {
+    const text = String(html ?? "");
+    const allies = ALLIES.exec(text);
+    if (!allies) return null;
+    const plan = savePlan(item, `The target takes ${allies[2]} damage (${allies[3]} save).`, options);
+    if (!plan) return null;
+    const worse = ALLIES_WORSE.exec(text.slice(allies.index + allies[0].length).replace(/^(?:\s|<[^>]+>)+/, " "));
+    const failure = plan.resolution.outcomes.criticalFailure ?? none();
+    const resolution = worse ? { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, criticalFailure: { ...failure, effects: [...(failure.effects ?? []), { kind: "condition", slug: "slowed", value: Number(worse[1]), duration: null }] } } } : plan.resolution;
+    return { entries: [{ radius: Number(allies[1]), includeTarget: false, allies: true, plan: { ...plan, resolution } }], said: [allies[0], ...(worse ? [worse[0].trim()] : [])] };
+}

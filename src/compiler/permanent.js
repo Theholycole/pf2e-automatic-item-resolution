@@ -20,7 +20,7 @@ import { beadsPlan } from "./beads.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { hitAuraPlan } from "./hit-auras.js";
-import { hitAroundPlan } from "./hit-around.js";
+import { aroundAllies, hitAroundPlan } from "./hit-around.js";
 import { cleanNotes } from "./notes.js";
 import { thrownPlan } from "./thrown.js";
 import { conjuredPlan } from "./conjured.js";
@@ -399,6 +399,16 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = takePlan(activation.html, base) ?? plan;
         // (Temporary Hit Points for another creature, src/compiler/given-temp.js: Skeletal Claw's undead.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = givenTempPlan(activation.html, base) ?? plan;
+        // (Saves for the allies of the creature it hurts, beside its own row: plan.around, src/compiler/hit-around.js.)
+        if (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic" && plan.targeting?.target === "1 creature") {
+            const allies = aroundAllies(activation.html, part, options);
+            if (allies) {
+                const plainSaid = allies.said.map((sentence) => plainText(`<p>${sentence}</p>`).trim());
+                const said = (line) => plainSaid.some((sentence) => String(line).replace(/^\{target\}:\s*/, "").trim() === sentence);
+                const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: row.manualInstructions.filter((line) => !said(line)) } : row]));
+                plan = { ...plan, resolution: { ...plan.resolution, outcomes }, around: allies.entries, notes: (plan.notes ?? []).filter((note) => !said(note)) };
+            }
+        }
         // (A successful Shove pushed farther: Avalanche Boots' ways, src/compiler/shove-farther.js.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = shoveFartherPlan(activation.html, base) ?? plan;
         if (mythicGain) plan = !plan || plan.noteOnly || plan.builtin === "no-effect" ? mythicGain : (plan.notes ?? []).some((note) => /\bMythic Point\b/.test(note)) ? plan : { ...plan, notes: [...(plan.notes ?? []), "Its user also gains 1 Mythic Point (by hand)."] };
