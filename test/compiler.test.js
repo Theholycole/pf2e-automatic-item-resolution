@@ -726,3 +726,9 @@ test("effects its user picks one of, each its own named paragraph (a third-party
     assert.deepEqual([beam.check.basic, beam.sharedDamage.components[0].formula], [true, "20d6[sonic]"]);
     assert.match(plan.notes[0], /Its area is there: target the creatures in it\.$/);
 });
+
+test("a bonus with three scopes (Hagbane Biscuit): the +1 status bonus to saves against hags read by PF2e's origin trait for 10 minutes, its Perception and Recall Knowledge parts and the cold iron by hand", () => {
+    const plan = compileItem(item("Hagbane Biscuit"));
+    assert.deepEqual(plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.value]), [["saving-throw", 1, "status", ["origin:trait:hag"], 10]]);
+    assert.ok(plan.unread.some((line) => /\(by hand\)\.$/.test(line)) && plan.unread.some((line) => /cold iron/.test(line)));
+});

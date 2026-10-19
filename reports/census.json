@@ -19,8 +19,8 @@
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
    "builtin:item-action": 15,
-   "partial": 104,
-   "note-only": 150,
+   "partial": 105,
+   "note-only": 149,
    "builtin:conjure": 7,
    "builtin:counteract": 29,
    "builtin:no-effect": 51,
@@ -38,8 +38,8 @@
     "builtin:cast-spell": 11,
     "builtin:zone": 22,
     "resolves": 211,
-    "partial": 50,
-    "note-only": 78,
+    "partial": 51,
+    "note-only": 77,
     "builtin:readied-bonus": 7,
     "none": 111,
     "builtin:no-effect": 12,
@@ -17920,8 +17920,13 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "You also gain that bonus to Perception checks to pierce a hag's disguise and to Recall Knowledge about hags (by hand).",
+    "During this time, weapons you wield count as cold iron for any physical attacks made against hags.",
+    "If such a creature attempts to eat the biscuit, they must succeed at a @Check[fortitude|dc:18|options:inflicts:sickened] save or it fails and wastes the action (and is Sickened 1 on a critical failure)."
+   ],
    "live": "item"
   },
   {

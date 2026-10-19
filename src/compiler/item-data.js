@@ -305,6 +305,10 @@ export function withItemData(html, item) {
     // (Damage back at the foe whose attack its shield blocked, Rebound Fulu's "takes damage equal to your shield's Hardness or the damage they
     // would have dealt before the Shield Block reaction, whichever is less": the amount typed on its card, src/compiler/scaled.js.)
     text = text.replace(/\bThe foe that triggered the Shield Block reaction takes damage equal to your shield's Hardness or the damage they would have dealt before the Shield Block reaction, whichever is less\./i, "The triggering creature takes @Damage[1[untyped]] damage. Its damage is your shield's Hardness or the damage it would have dealt before the Shield Block, whichever is less (typed on the card).");
+    // (A bonus with three scopes, Hagbane Biscuit's "+1 status bonus Perception checks to pierce a hag's disguise, to skill checks to Recall
+    // Knowledge about hags, and to saving throws made against hags' abilities and spells": the saves against hags read (PF2e's origin
+    // trait), the other two by hand.)
+    text = text.replace(/\bgranting you an? \+(\d+) (status|item|circumstance) bonus Perception checks to pierce a hag's disguise, to skill checks to (@UUID\[[^\]]*\]\{Recall Knowledge\}|Recall Knowledge) about hags, and to saving throws made against hags' abilities and spells\./i, (all, value, type) => `granting you a +${value} ${type} bonus to saving throws against hags. You also gain that bonus to Perception checks to pierce a hag's disguise and to Recall Knowledge about hags (by hand).`);
     // (A portion's use as its own activation, Tallowheart Mass's "If you rub a portion between your hands, the mass melts into your flesh and
     // you gain the Quickened condition for 1 minute": its user's, as the conditions reader takes one.)
     text = text.replace(/\bIf you rub a portion between your hands, the mass melts into your flesh and you gain the (@UUID\[[^\]]*\]\{Quickened\}|Quickened) condition for (\d+ (?:minutes?|rounds?))\./i, (all, quickened, time) => `You become ${quickened} for ${time}.`);
