@@ -780,6 +780,9 @@ test("attack and save rolls played without the word reroll: Keep Stone Amulet's 
     assert.equal(rerollText(reroll("Scapular of Shields")), "The latest attack roll at you: a critical success becomes a success");
     assert.deepEqual(reroll("Extra Lung"), { what: "save", who: "self", keep: "new" });
     assert.deepEqual(reroll("Phantom Fang").contest, { flat: 5 });
+    // (Eye of Fortune: its user's own flat check against the target, rolled twice — DC 5 or 11 by the target's condition, live.)
+    assert.deepEqual(reroll("Eye of Fortune"), { what: "attack", who: "self", keep: "higher", contest: { flat: "target", twice: true } });
+    assert.match(rerollText(reroll("Eye of Fortune")), /^Your latest attack roll: the flat check for its target's Concealed \(DC 5\) or Hidden \(DC 11\), rolled twice/);
 });
 
 test("degrees changed on another creature's roll: Crimson Bluff's Strike one degree worse, Golden Greaves' failed Shove a critical failure (a check at its user), Tome of Dripping Shadows' target's critical failure a failure", async () => {

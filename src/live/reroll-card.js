@@ -52,6 +52,7 @@ export function rerollText(reroll) {
     const named = [].concat(reroll.statistic ?? []).map((name) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`).join(" or ");
     const what = named ? `${named} ${reroll.what === "save" ? "save" : "check"}` : WHAT_WORDS[reroll.what] ?? "roll";
     // (Its user's save against the attack that hit: The Demon's Lantern's.)
+    if (reroll.contest?.flat === "target") return "Your latest attack roll: the flat check for its target's Concealed (DC 5) or Hidden (DC 11), rolled twice, the higher kept; failed, it misses";
     if (reroll.contest?.flat) return `The latest attack roll at you: a DC ${reroll.contest.flat} flat check, you Concealed; failed, it misses`;
     if (reroll.contest) return `The latest attack roll at you: your ${reroll.contest.statistic.charAt(0).toUpperCase()}${reroll.contest.statistic.slice(1)} save against its total; higher, it misses${reroll.onMiss ? `, and the attacker is ${reroll.onMiss.slug}${reroll.onMiss.value ? ` ${reroll.onMiss.value}` : ""} till your next turn ends` : ""}`;
     // (Behind a coin flip: said first.)

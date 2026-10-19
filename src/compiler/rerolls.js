@@ -162,9 +162,14 @@ export function readContest(html) {
 // (Or a DC 5 flat check, the user Concealed against the attack: Phantom Fang's "causing you to become Concealed against the triggering attack"
 // — failed, the attack misses.)
 const CONCEALED_AGAINST = /\b(?:you )?become Concealed against the triggering (?:attack|Strike)\b/i;
+// (Or its user's own flat check against a concealed or hidden creature they attack, rolled twice, Eye of Fortune's "You can roll the flat check
+// for the concealed or hidden condition twice and use the higher result": the card rolls it, DC 5 or 11 by the target's condition — PF2e
+// doesn't roll it.)
+const FLAT_TWICE = /\broll the flat check for the concealed or hidden condition twice and use the (?:higher|better) result\b/i;
 export function readConcealedAgainst(html) {
     const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
     const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+    if (FLAT_TWICE.test(text)) return { what: "attack", who: "self", keep: "higher", contest: { flat: "target", twice: true } };
     if (!CONCEALED_AGAINST.test(text) || !/\b(?:targeted by|hits you|attacks you)\b/i.test(trigger)) return null;
     return { what: "attack", who: "attacker", keep: "new", contest: { flat: 5 } };
 }

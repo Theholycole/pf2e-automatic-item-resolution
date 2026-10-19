@@ -105,6 +105,7 @@ async function contestRoll(message, state, triggering, actor) {
 // Its user Concealed against the attack (src/compiler/rerolls.js readConcealedAgainst): an attack that hit, a DC 5 flat check rolled here;
 // failed, it misses — the GM's to undo, as for the save against it. An attack that missed anyway needs no check.
 async function flatAgainst(message, state, triggering, actor) {
+    if (state.plan.reroll.contest.flat === "target") return flatForTarget(message, state, triggering, actor);
     const dc = state.plan.reroll.contest.flat;
     const outcome = triggering.flags?.pf2e?.context?.outcome ?? null;
     const attacker = triggering.actor?.name ?? "the attacker";
@@ -115,6 +116,22 @@ async function flatAgainst(message, state, triggering, actor) {
         await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: flat check DC ${dc} (${actor.name} Concealed)` });
         lines = [roll.total >= dc ? `Flat check ${roll.total} against DC ${dc}: ${attacker}'s attack still hits ${actor.name}.` : `Flat check ${roll.total} against DC ${dc}: failed — ${attacker}'s attack misses ${actor.name} (PF2e's message isn't changed: the GM undoes its damage).`];
     }
+    const next = { ...state, status: "applied", results: lines };
+    return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// Its user's flat check against the creature their latest attack targeted (Eye of Fortune's, rolled twice, the higher kept): DC 11 when it's
+// Hidden, else DC 5 (Concealed). Failed, the attack misses — the GM's to undo.
+async function flatForTarget(message, state, triggering, actor) {
+    const reroll = state.plan.reroll;
+    const target = await fromUuid(triggering.flags?.pf2e?.context?.target?.actor ?? "").catch(() => null);
+    const hidden = Boolean(target?.hasCondition?.("hidden"));
+    const dc = hidden ? 11 : 5;
+    const roll = await new Roll(reroll.contest.twice ? "2d20kh" : "1d20").evaluate();
+    await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: flat check DC ${dc} (${target?.name ?? "the target"} ${hidden ? "Hidden" : "Concealed"})${reroll.contest.twice ? ", rolled twice" : ""}` });
+    const dice = (roll.dice?.[0]?.results ?? []).map((result) => result.result);
+    const said = dice.length > 1 ? `${dice.join(" and ")}, the higher ${roll.total}` : `${roll.total}`;
+    const lines = [roll.total >= dc ? `Flat check ${said} against DC ${dc}: ${actor.name}'s attack goes on against ${target?.name ?? "the target"}.` : `Flat check ${said} against DC ${dc}: failed — ${actor.name}'s attack misses ${target?.name ?? "the target"} (PF2e's message isn't changed: the GM undoes its damage).`];
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

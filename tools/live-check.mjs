@@ -4927,6 +4927,32 @@ export const cases = {
         return { outcome, results };
     },
 
+    // Eye of Fortune: its user's flat check against the creature their latest Strike targeted, rolled twice (PF2e doesn't roll it) — DC 5 while
+    // it's Concealed, DC 11 once it's Hidden.
+    async eyeOfFortune(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Fortune Eye", { type: "character", x: 18, y: 22 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Fortune Mark", { x: 19, y: 22, ac: 1 });
+        const eye = await give(user, "Eye of Fortune");
+        await until(() => userToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        const results = {};
+        for (const [condition, dc] of [["concealed", 5], ["hidden", 11]]) {
+            await foe.increaseCondition(condition);
+            await userToken.object?.control?.();
+            await target(foeToken);
+            let since = Date.now();
+            await user.system.actions[0].variants[0].roll({ event: shift() });
+            await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "attack-roll", { what: "the Strike" });
+            since = Date.now();
+            await game.modules.get(NS).api.live.activate(eye.uuid, 0);
+            const card = await messageAfter(since, itemCard("reroll"), { what: "Eye of Fortune's card" });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+            await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "the flat check rolled", { timeout: 8000 });
+            results[condition] = game.messages.get(card.id).getFlag(NS, "card").results;
+            assert(new RegExp(`^Flat check \\d+ and \\d+, the higher \\d+ against DC ${dc}: `).test(results[condition][0] ?? ""), `two dice against DC ${dc} (${JSON.stringify(results[condition])})`);
+        }
+        return results;
+    },
+
     // Degrees changed on another creature's roll: Crimson Bluff's Swap Places (the brute's critical hit at AC 1 a hit), Golden Greaves (the
     // brute's Shove at its user one degree down to a critical failure, when it failed), Tome of Dripping Shadows (the creature targeted's
     // critically failed save a failure); and The Lost's on its user's own failed save.
