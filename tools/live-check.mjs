@@ -5092,6 +5092,115 @@ export const cases = {
         return { outcome, shoved, results };
     },
 
+    // Mythic Point costs (the user's answer of 2026-10-19): Chromatic Robe's Align Energy spends its user's Mythic Point once its card applies,
+    // and refuses with none left (a mythic NPC: PF2e gives characters Mythic Points only in a mythic campaign); under the world setting, a
+    // character's Hero Point instead.
+    async mythicCost(scene) {
+        const { actor: user } = await creature(scene, "Mythic Wearer", { x: 20, y: 2 });
+        await user.update({ "system.traits.value": [...(user.system.traits.value ?? []), "mythic"] });
+        await user.update({ "system.resources.mythicPoints.value": 1 });
+        const mythic = () => user.system.resources.mythicPoints.value;
+        assert(mythic() === 1, `one Mythic Point to start (${mythic()}; max ${user.system.resources.mythicPoints.max})`);
+        const use = async (actor) => {
+            const robe = actor.itemTypes.equipment.find((entry) => entry.name === "Chromatic Robe") ?? (await give(actor, "Chromatic Robe"));
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(robe.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what: "the robe's card" });
+            let refused = null;
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, resistType: 0 }).catch((error) => { refused = error.message; });
+            return { card, refused };
+        };
+        const first = await use(user);
+        assert(!first.refused && mythic() === 0, `the Mythic Point spent (${first.refused}; ${mythic()} left)`);
+        const second = await use(user);
+        assert(/has no Mythic Point to spend/.test(second.refused ?? ""), `refused with none left (${second.refused})`);
+        assert(game.messages.get(second.card.id).getFlag(NS, "card").status === "open", "the refused card still open");
+        const { actor: hero } = await creature(scene, "Hero Wearer", { type: "character", x: 21, y: 2 });
+        await hero.update({ "system.resources.heroPoints.value": 1 });
+        const SETTING = "heroPointsForMythic";
+        await game.settings.set(NS, SETTING, true);
+        try {
+            const paid = await use(hero);
+            assert(!paid.refused && hero.system.resources.heroPoints.value === 0, `a Hero Point spent instead (${paid.refused}; ${hero.system.resources.heroPoints.value} left)`);
+            const again = await use(hero);
+            assert(/has no Hero Point to spend/.test(again.refused ?? ""), `refused with no Hero Point (${again.refused})`);
+        } finally {
+            await game.settings.set(NS, SETTING, false);
+        }
+        return { mythic: mythic(), hero: hero.system.resources.heroPoints.value };
+    },
+
+    // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
+    // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
+    // reroll — each spending a point (a character's Hero Point here, under the world setting).
+    async mythicRunes(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Mythic Rune Bearer", { type: "character", x: 20, y: 4, level: 12 });
+        const { actor: brute, token: bruteToken } = await creature(scene, "Mythic Brute", { type: "character", x: 21, y: 4 });
+        const { token: dummyToken } = await creature(scene, "Mythic Dummy", { x: 22, y: 4, ac: 1 });
+        // (A character: its Hero Points pay, under the world setting.)
+        await user.update({ "system.resources.heroPoints.value": 3 });
+        const mythic = () => user.system.resources.heroPoints.value;
+        await game.settings.set(NS, "heroPointsForMythic", true);
+        const results = {};
+        try {
+        const viaWays = async (name, way, choices = {}) => {
+            const item = await give(user, name);
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, 0);
+            const ways = await messageAfter(since, itemCard("ways"), { what: `${name}'s buttons` });
+            const names = ways.getFlag(NS, "card").plan.ways.map((entry) => entry.name);
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf(way) });
+            const card = await messageAfter(since, itemCard("reroll"), { what: `${name}'s ${way} card` });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [], ...choices });
+            await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", `${name} applied`, { timeout: 8000 });
+            return game.messages.get(card.id).getFlag(NS, "card").results;
+        };
+        await user.saves.reflex.roll({ skipDialog: true, dc: { value: 70 } });
+        await wait(600);
+        results.resilient = await viaWays("Mythic Resilient", "Against any other effect");
+        assert(/a critical failure becomes a success\.$/.test(results.resilient[0] ?? "") && mythic() === 2, `the critical failure a success, a point spent (${JSON.stringify(results.resilient)}; ${mythic()})`);
+        const blade = await give(brute, "Shortsword");
+        await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await bruteToken.object?.control?.();
+        await target(userToken);
+        const { attack } = await strike(brute, blade);
+        results.armor = await viaWays("Mythic Armor Potency", "Any other creature's Strike");
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(outcome !== "criticalSuccess" || /a critical success becomes a failure\.$/.test(results.armor[0] ?? ""), `a non-mythic critical hit a failure (${outcome}: ${JSON.stringify(results.armor)})`);
+        assert(mythic() === 1, `a second point spent (${mythic()})`);
+        // (The bearer's own Strike at the dummy: its attack rerolled at mythic proficiency, then its damage rerolled.)
+        const sword = await give(user, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await userToken.object?.control?.();
+        await target(dummyToken);
+        const struck = await strike(user, sword);
+        const potency = await give(user, "Mythic Weapon Potency");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(potency.uuid, 0);
+        let card = await messageAfter(since, itemCard("reroll"), { what: "Mythic Weapon Potency's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "the mythic reroll", { timeout: 8000 });
+        results.potency = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(/mythic proficiency over the roll's \d+/.test(results.potency[0] ?? "") && mythic() === 0, `rerolled at mythic proficiency, the last point spent (${JSON.stringify(results.potency)}; ${mythic()})`);
+        await user.update({ "system.resources.heroPoints.value": 1 });
+        since = Date.now();
+        await struck.action.damage({ event: shift() });
+        await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const striking = await give(user, "Mythic Striking");
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(striking.uuid, 0);
+        card = await messageAfter(since, itemCard("reroll"), { what: "Mythic Striking's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "the damage reroll", { timeout: 8000 });
+        results.striking = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(/damage rerolled: \d+, (?:higher than|not higher than) \d+/.test(results.striking[0] ?? "") && mythic() === 0, `the damage rerolled, a point spent (${JSON.stringify(results.striking)}; ${mythic()})`);
+        } finally {
+            await game.settings.set(NS, "heroPointsForMythic", false);
+        }
+        return results;
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

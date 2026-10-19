@@ -9,8 +9,9 @@ const ORDINAL = String.raw`(\d+)(?:st|nd|rd|th)`;
 // Names from before PF2e's remaster that item texts still use.
 const LEGACY = { "dimensional lock": "planar seal", "dimension door": "translocate", "planar binding": "binding circle", "remove disease": "cleanse affliction", "remove poison": "cleanse affliction", "magic missile": "force barrage", "true seeing": "truesight", "see invisibility": "see the unseen", "comprehend language": "translate", "shield other": "share life", "plane shift": "interplanar teleport", "feather fall": "gentle landing", "faerie fire": "revealing light", "magic weapon": "runic weapon", "magic fang": "runic body", "burning hands": "breathe fire", "color spray": "dizzying colors", "sound burst": "noise blast", "chill touch": "void warp", "disrupt undead": "vitality lash", "ray of frost": "frostbite", "produce flame": "ignition", "tanglefoot": "tangle vine", "acid splash": "caustic blast" };
 
-// PF2e's spells by name in lower case: { uuid, name, area, targets, ritual, rank } — from the spells pack's documents
-// or index entries ({ _id | uuid, name, system: { area, target, ritual, level } }).
+// PF2e's spells by name in lower case: { uuid, name, area, targets, ritual, rank, mythic } — from the spells pack's documents
+// or index entries ({ _id | uuid, name, system: { area, target, ritual, level, traits } }). (mythic: the mythic trait, which costs a
+// Mythic Point to cast — src/compiler/spend.js.)
 export function spellIndex(spells) {
     const index = {};
     for (const spell of spells ?? []) {
@@ -22,7 +23,8 @@ export function spellIndex(spells) {
             area: Boolean(spell.system?.area?.type || spell.system?.area?.value),
             targets: Boolean(String(spell.system?.target?.value ?? "").trim()),
             ritual: Boolean(spell.system?.ritual),
-            rank: Number(spell.system?.level?.value) || null
+            rank: Number(spell.system?.level?.value) || null,
+            mythic: (spell.system?.traits?.value ?? []).includes("mythic")
         };
     }
     return index;

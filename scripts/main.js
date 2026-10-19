@@ -13,6 +13,7 @@ import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { ownerOf } from "./foundry.js";
+import { registerSpendSettings } from "./spend.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -56,6 +57,9 @@ const options = () => ({ basicActions: basicActions(), spellEffects, spells, cla
 const compile = (item) => compileItem(dataOf(item), options());
 const handles = (item) => handlesItem(dataOf(item), { claims });
 
+// Its settings: Hero Points for the Mythic Points items cost (scripts/spend.js).
+Hooks.once("init", () => registerSpendSettings());
+
 // Registered when the script loads, so the order modules load in doesn't matter.
 Hooks.once("pf2eResolutionCoreReady", (core) => {
     core.registry.registerCompiler({ module: MODULE_ID, name: "items", handles, compile });
@@ -76,7 +80,7 @@ Hooks.once("ready", async () => {
     }
     try {
         const pack = game.packs.get("pf2e.spells-srd");
-        spells = pack ? spellIndex([...(await pack.getIndex({ fields: ["system.area", "system.target", "system.ritual", "system.level.value"] }))]) : {};
+        spells = pack ? spellIndex([...(await pack.getIndex({ fields: ["system.area", "system.target", "system.ritual", "system.level.value", "system.traits.value"] }))]) : {};
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spells couldn't be indexed.`, error);
     }

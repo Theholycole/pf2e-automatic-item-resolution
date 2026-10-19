@@ -13,7 +13,8 @@ import { plainText } from "./rows.js";
 const SENTENCE = /[^.]*\breroll(?:s|ing)?\s+(?:the|your|that|this|a single|their)\b[^.]*\./i;
 // "Flip the coin. If it lands on the smiling face, …" → its winning side.
 const COIN = /\bFlip the coin\.\s*If it lands on the ([\w' -]+? (?:side|face)),/i;
-const WHAT = [["save", /\b(?:saving throw|save)\b/i], ["attack", /\b(?:attack roll|Strike)\b/i], ["check", /\bcheck\b/i], ["roll", /\broll\b/i]];
+// (A damage roll too, Mythic Striking's "reroll your weapon damage dice": the card's own reroll, scripts/rerolls.js.)
+const WHAT = [["damage", /\bdamage (?:dice|roll)\b/i], ["save", /\b(?:saving throw|save)\b/i], ["attack", /\b(?:attack roll|Strike)\b/i], ["check", /\bcheck\b/i], ["roll", /\broll\b/i]];
 
 // The text → { what: "save" | "attack" | "check" | "roll", keep: "new" | "higher" | "lower", who: "self" | "attacker" |
 // "companion", statistic?, bonus? { value, type }, after? } or null. after: what the text says next, for the card ("If you fail the second roll as well, you can Stride").
@@ -27,11 +28,14 @@ export function readReroll(html) {
     // (A bonus on the reroll — Redsand Hourglass's "+4 circumstance": PF2e's reroll keeps the roll's modifiers, so the card
     // rolls it itself, the user's answer of 2026-10-15.)
     const bonusMatch = /\bwith an? \+(\d+) (circumstance|item|status)? ?bonus\b/i.exec(sentence);
-    const bonus = bonusMatch ? { value: Number(bonusMatch[1]), type: (bonusMatch[2] ?? "untyped").toLowerCase() } : null;
+    // (Or at mythic proficiency, Mythic Weapon Potency's "reroll your attack roll with mythic proficiency": the card's own d20, its
+    // proficiency its user's level + 10 instead of the roll's.)
+    const bonus = bonusMatch ? { value: Number(bonusMatch[1]), type: (bonusMatch[2] ?? "untyped").toLowerCase() } : /\bwith mythic proficiency\b/i.test(sentence) ? { mythic: true, type: "proficiency" } : null;
     // (Behind a coin flip, Lucky Silver's "Flip the coin. If it lands on the smiling face, reroll the triggering check": the card flips it
     // first, plan.reroll.coin.)
     const coin = COIN.exec(effect.slice(0, match.index + sentence.length));
-    if (/\b(?:Mythic Point|flat check)\b/i.test(effect.slice(0, match.index + sentence.length)) || (!coin && /\bIf it lands on\b/i.test(effect.slice(0, match.index + sentence.length)))) return null;
+    // (One behind a Mythic Point is read: its cost is plan.spend, src/compiler/spend.js.)
+    if (/\bflat check\b/i.test(effect.slice(0, match.index + sentence.length)) || (!coin && /\bIf it lands on\b/i.test(effect.slice(0, match.index + sentence.length)))) return null;
     // (A reroll kept for later — Old Tillimaquin's "within the next 24 hours" — isn't this roll's.)
     if (/\bwithin the next\b|\blater\b/i.test(sentence)) return null;
     if (/\b(?:the result of your choice|either result)\b/i.test(sentence)) return null;
@@ -205,9 +209,29 @@ export function readOtherRoll(html) {
     return null;
 }
 
+// A degree change that depends on whether the source is mythic, Mythic Resilient's "if the triggering save was made due to an effect created
+// by a mythic monster, hazard, or other effect, it's a normal failure instead. If … wasn't mythic, it becomes a success" and Mythic Armor
+// Potency's critical hit at its user "a normal success" from a mythic creature, "a failure" from another: the ways card's two buttons (the
+// user's answer of 2026-10-19), each way its reroll card's change.
+const MYTHIC_SAVE = /\bif the triggering save was made due to an effect created by a mythic [^.]*?, it's a normal failure instead\. If the save was made due to an effect that wasn't mythic, it becomes a success\./i;
+const MYTHIC_STRIKE = /\bif the triggering Strike was made by a mythic creature, it's a normal success instead\. If it was made by a non-mythic creature, it's a failure\./i;
+export function mythicWaysPlan(html, base) {
+    const text = plainText(html);
+    const save = MYTHIC_SAVE.test(text);
+    if (!save && !MYTHIC_STRIKE.test(text)) return null;
+    const way = (name, reroll) => ({ name, html: String(html ?? ""), plan: rerollPlanOf(reroll, base) });
+    const ways = save
+        ? [way("Against a mythic effect", { what: "save", who: "self", keep: "new", raise: { change: { criticalFailure: "failure" } } }), way("Against any other effect", { what: "save", who: "self", keep: "new", raise: { change: { criticalFailure: "success" } } })]
+        : [way("A mythic creature's Strike", { what: "attack", who: "attacker", keep: "new", raise: { change: { criticalSuccess: "success" } } }), way("Any other creature's Strike", { what: "attack", who: "attacker", keep: "new", raise: { change: { criticalSuccess: "failure" } } })];
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true };
+}
+
 export function rerollPlan(html, base) {
     const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html) ?? readAutoSuccess(html) ?? readContest(html) ?? readConcealedAgainst(html) ?? readOtherRoll(html);
-    if (!reroll) return null;
+    return reroll ? rerollPlanOf(reroll, base) : null;
+}
+
+function rerollPlanOf(reroll, base) {
     return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" || reroll.who === "target" ? "the creature targeted" : reroll.who === "either" ? "its user or the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
 }
 

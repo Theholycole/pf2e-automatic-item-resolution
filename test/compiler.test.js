@@ -804,6 +804,35 @@ test("an item the spell module shares: its spellshapes and casts there left to i
     assert.equal(playedBySpellModule({ activation: { name: null }, plan: {} }, share, { name: "Shadow Signet" }), true);
 });
 
+test("Mythic Point costs (the user's answer of 2026-10-19): a use whose effect spends one, each way of the Mythic runes' two buttons, a cast of a mythic spell; not a choice to spend one, nor another's", async () => {
+    const { withSpend, readSpend } = await import("../src/compiler/spend.js");
+    const { rerollText } = await import("../src/live/reroll-card.js");
+    assert.deepEqual(compileActivations(item("Chromatic Robe"))[0].plan.spend, { mythicPoints: 1 });
+    assert.equal(compileActivations(item("Aerekostes"))[1].plan?.spend, undefined, "the intelligent item's own Mythic Point");
+    assert.equal(compileItem(item("Three Day's Breath"))?.spend, undefined, "a choice to spend one");
+    assert.equal(readSpend("Effect If you spend 1 Mythic Point when you activate it, it lasts longer."), null);
+    // (Mythic Resilient and Mythic Armor Potency: a button for a mythic source and one for any other, each spending the point.)
+    const resilient = compileActivations(item("Mythic Resilient"))[0].plan;
+    assert.deepEqual(resilient.ways.map((way) => [way.name, way.plan.reroll.raise.change, way.plan.spend]), [["Against a mythic effect", { criticalFailure: "failure" }, { mythicPoints: 1 }], ["Against any other effect", { criticalFailure: "success" }, { mythicPoints: 1 }]]);
+    const armor = compileActivations(item("Mythic Armor Potency"))[0].plan;
+    assert.deepEqual(armor.ways.map((way) => [way.plan.reroll.who, way.plan.reroll.raise.change]), [["attacker", { criticalSuccess: "success" }], ["attacker", { criticalSuccess: "failure" }]]);
+    // (Mythic Striking's damage reroll and Mythic Weapon Potency's at mythic proficiency, the higher kept.)
+    const striking = compileActivations(item("Mythic Striking"))[0].plan;
+    assert.deepEqual([striking.reroll.what, striking.reroll.keep, striking.spend], ["damage", "higher", { mythicPoints: 1 }]);
+    assert.equal(rerollText(striking.reroll), "Your latest damage roll, rerolled: the higher result");
+    const potency = compileActivations(item("Mythic Weapon Potency"))[0].plan;
+    assert.deepEqual(potency.reroll.bonus, { mythic: true, type: "proficiency" });
+    assert.equal(rerollText(potency.reroll), "Your latest attack roll, rerolled at mythic proficiency (your level + 10): the higher result");
+    // (A cast of a mythic spell: one for the spell; a choice of spells, the mythic ones' own.)
+    const spells = { freedom: { uuid: "Compendium.pf2e.spells-srd.Item.freedom", name: "Freedom", mythic: true }, haste: { uuid: "Compendium.pf2e.spells-srd.Item.haste", name: "Haste", mythic: false } };
+    assert.deepEqual(withSpend({ builtin: "cast-spell", spell: { uuid: spells.freedom.uuid, name: "Freedom" } }, "The item casts Freedom.", { spells }).spend, { mythicPoints: 1 });
+    const choices = withSpend({ builtin: "cast-spell", spell: { uuid: spells.haste.uuid }, choices: [{ spell: spells.haste }, { spell: spells.freedom }] }, "", { spells });
+    assert.deepEqual([choices.spend, choices.choices.map((choice) => choice.spend ?? null)], [undefined, [null, { mythicPoints: 1 }]]);
+    // (Freedom's Flame's Holy Retribution: 15 spirit damage at the creature targeted, its holy weakness the GM's, for a Mythic Point.)
+    const flame = compileActivations(item("Freedom's Flame"))[1].plan;
+    assert.deepEqual([flame.resolution.sharedDamage.components[0].formula, flame.spend], ["15[spirit]", { mythicPoints: 1 }]);
+});
+
 test("an ally's persistent damage taken onto its user: Bloodstained Waistcoat's bleed, the take card at the ally targeted", async () => {
     const { routeOf } = await import("../src/live/route.js");
     const { takeText } = await import("../src/live/take-card.js");

@@ -43,6 +43,7 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
             return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
         }
     }
+    if (reroll.what === "damage") return rerollDamage(message, state, game.messages.get(id), actor);
     if (reroll.contest) return contestRoll(message, state, game.messages.get(id), actor);
     if (reroll.raise) return raiseRoll(message, state, game.messages.get(id), actor);
     if (reroll.bonus) return rerollWithBonus(message, state, game.messages.get(id), actor);
@@ -66,15 +67,33 @@ async function rerollWithBonus(message, state, triggering, actor) {
     const context = triggering.flags?.pf2e?.context ?? {};
     const dc = Number(context.dc?.value) || null;
     const modifier = Number(old.total) - (oldNatural ?? 0);
-    const roll = await new Roll(`1d20 + ${modifier + reroll.bonus.value}`).evaluate();
-    const newNatural = Number(roll.dice?.[0]?.total ?? roll.total - modifier - reroll.bonus.value);
-    await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: reroll with a +${reroll.bonus.value} ${reroll.bonus.type} bonus` });
-    const result = bonusReroll({ oldTotal: Number(old.total), oldNatural, newNatural, bonus: reroll.bonus.value, dc, keep: reroll.keep });
+    // (At mythic proficiency, Mythic Weapon Potency's: its user's level + 10 in place of the roll's own proficiency.)
+    const proficiency = reroll.bonus.mythic ? Number((triggering.flags?.pf2e?.modifiers ?? []).find((entry) => entry.slug === "proficiency" && entry.enabled !== false)?.modifier) || 0 : 0;
+    const value = reroll.bonus.mythic ? (Number(actor.level) || 0) + 10 - proficiency : reroll.bonus.value;
+    const roll = await new Roll(`1d20 + ${modifier + value}`).evaluate();
+    const newNatural = Number(roll.dice?.[0]?.total ?? roll.total - modifier - value);
+    await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: reroll.bonus.mythic ? `${state.item.name}: reroll at mythic proficiency` : `${state.item.name}: reroll with a +${value} ${reroll.bonus.type} bonus` });
+    const result = bonusReroll({ oldTotal: Number(old.total), oldNatural, newNatural, bonus: value, dc, keep: reroll.keep });
     const degree = (value) => (value === null ? "" : ` (${DEGREE_WORDS[value]})`);
     const lines = [
-        `${actor.name}'s reroll: ${result.total} (${newNatural} + ${modifier} + ${reroll.bonus.value} ${reroll.bonus.type})${dc ? ` against DC ${dc}` : ""}${degree(result.degree)}; the first roll was ${old.total}${degree(result.oldDegree)}.`,
+        `${actor.name}'s reroll: ${result.total} (${newNatural} + ${modifier} + ${value} ${reroll.bonus.mythic ? `mythic proficiency over the roll's ${proficiency}` : reroll.bonus.type})${dc ? ` against DC ${dc}` : ""}${degree(result.degree)}; the first roll was ${old.total}${degree(result.oldDegree)}.`,
         `${result.kept === "new" ? "The new result stands" : "The first result stands"}. PF2e's message isn't changed: the GM uses this one.`
     ];
+    const next = { ...state, status: "applied", results: lines };
+    return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// A damage roll rerolled, the higher kept (Mythic Striking's "reroll your weapon damage dice, taking the higher of the two results"): PF2e's
+// damage roll rolled again; the new one posted with PF2e's own buttons when it's higher, else the first stands (the GM applies whichever).
+async function rerollDamage(message, state, triggering, actor) {
+    const old = triggering.rolls?.[0];
+    if (!old || !Number.isFinite(Number(old.total))) throw new Error("That damage roll has no total.");
+    const again = await old.reroll();
+    const higher = Number(again.total) > Number(old.total);
+    if (higher) await again.toMessage({ speaker: triggering.speaker ?? ChatMessage.getSpeaker({ actor }), flavor: `${triggering.flavor ?? ""}<p>${state.item.name}: rerolled, the higher kept.</p>` });
+    const lines = [higher
+        ? `${actor.name}'s damage rerolled: ${again.total}, higher than ${old.total} — apply the new roll's damage (its message has PF2e's buttons), not the first.`
+        : `${actor.name}'s damage rerolled: ${again.total}, not higher than ${old.total} — the first roll stands.`];
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

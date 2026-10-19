@@ -11,6 +11,8 @@ export const CHECK_TYPES = Object.freeze({
     attack: ["attack-roll"],
     // (A spell attack: PF2e's attack roll, "spell-attack-roll" among its domains.)
     spellAttack: ["attack-roll"],
+    // (A damage roll: PF2e's damage message, rerolled by the card itself.)
+    damage: ["damage-roll"],
     check: ["skill-check", "perception-check", "flat-check", "counteract-check"],
     roll: ["saving-throw", "attack-roll", "skill-check", "perception-check", "flat-check", "counteract-check", "initiative"]
 });
@@ -19,7 +21,7 @@ export function createRerollCard({ plan, item, user }) {
     return { kind: "reroll", status: "open", plan, item, user, results: [] };
 }
 
-const WHAT_WORDS = { save: "saving throw", attack: "attack roll", spellAttack: "spell attack roll", check: "check", roll: "roll" };
+const WHAT_WORDS = { save: "saving throw", attack: "attack roll", spellAttack: "spell attack roll", check: "check", roll: "roll", damage: "damage roll" };
 const KEEP_WORDS = { new: "the new result", higher: "the higher result", lower: "the lower result" };
 
 const DEGREE_NAMES = ["criticalFailure", "failure", "success", "criticalSuccess"];
@@ -71,7 +73,7 @@ export function rerollText(reroll) {
         return `${reroll.who === "either" ? "The targeted creature's (else your) latest" : reroll.who === "target" ? "The targeted creature's latest" : reroll.who === "attacker" ? "The latest" : "Your latest"} ${what}${reroll.who === "attacker" ? " at you" : ""}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
     }
     const whose = reroll.who === "attacker" ? `The latest ${reroll.what === "spellAttack" ? "spell attack roll" : "attack roll"} at you` : reroll.who === "companion" ? `The targeted companion's latest ${what}` : `Your latest ${what}`;
-    const bonus = reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";
+    const bonus = reroll.bonus?.mythic ? " at mythic proficiency (your level + 10)" : reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";
     return `${whose}, rerolled${bonus}: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
 }
 

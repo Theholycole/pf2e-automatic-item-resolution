@@ -26,6 +26,7 @@ import { firstDegreeRolled } from "./first-degree.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
+import { checkSpend, paySpend } from "./spend.js";
 import { applyTableCard, postTableCard } from "./table.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
@@ -153,7 +154,13 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     }
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     // (An item that also counteracts on its drinker — Panacea Fruit heals too: its counteract card beside its own.)
-    if (route !== "counteract" && plan?.item?.counteract) await postCounteractCard({ message, plan, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | counteract card`, error));
+    // (Its cost, a Mythic Point, the main card's alone: src/compiler/spend.js.)
+    if (route !== "counteract" && plan?.item?.counteract) await postCounteractCard({ message, plan: { ...plan, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | counteract card`, error));
+    // (A cost with no card to apply it on — a zone, a conjured creature, a spell cast into ammunition: spent now, or refused.)
+    if (plan?.spend && ["zone", "conjure", "spellstrike"].includes(route)) {
+        checkSpend(actor, plan.spend, used.data.name);
+        await paySpend(actor, plan.spend, used.data.name);
+    }
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
@@ -256,7 +263,23 @@ const APPLY = {
     table: (message, choices) => applyTableCard(message, choices, postCardFor, (html) => compile?.({ name: stateOf(message)?.item?.name ?? "Table", type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null),
     item: (message, choices) => applyCard(message, choices)
 };
-const applyByKind = (message, state, choices) => APPLY[state.kind](message, choices);
+// (What its use costs — a Mythic Point, or a Hero Point under the world setting, src/compiler/spend.js and scripts/spend.js: checked before
+// the card applies, refused without one, and spent once it has — once per card, whatever its steps. A cast's chosen spell's own, a mythic one.)
+const spendOf = (state, choices) => state.plan?.spend ?? (state.kind === "cast" ? state.plan?.choices?.[Number.isInteger(choices?.choice) ? choices.choice : state.choice ?? 0]?.spend ?? null : null);
+const applyByKind = async (message, state, choices) => {
+    const spend = state.spent ? null : spendOf(state, choices);
+    if (!spend) return APPLY[state.kind](message, choices);
+    const payer = await fromUuid(state.user?.actorUuid ?? "").catch(() => null);
+    const name = state.item?.name ?? "The item";
+    checkSpend(payer, spend, name);
+    const before = JSON.stringify(stateOf(message));
+    const done = await APPLY[state.kind](message, choices);
+    const now = game.messages.get(message.id) ?? message;
+    if (JSON.stringify(stateOf(now)) === before) return done;
+    await paySpend(payer, spend, name);
+    await now.update({ [`flags.${MODULE_ID}.${FLAG}.spent`]: true });
+    return done;
+};
 
 function wireCard(message, html) {
     const state = stateOf(message);

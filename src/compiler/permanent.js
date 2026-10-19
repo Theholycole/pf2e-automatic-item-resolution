@@ -29,13 +29,14 @@ import { teleportPlan } from "./teleport.js";
 import { takePlan } from "./take-condition.js";
 import { withScaled } from "./scaled.js";
 import { readLinkedTable, readTable } from "./random-table.js";
-import { rerollOver, rerollPlan } from "./rerolls.js";
+import { mythicWaysPlan, rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
 import { auraZonePlan, choiceAuraWays } from "./aura-zones.js";
 import { isBareFigurine, ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { playedBySpellModule, spellModuleShare } from "./index.js";
+import { withSpend } from "./spend.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { degreeSentencesPlan, saveOrPlan } from "./save-or.js";
@@ -124,7 +125,8 @@ const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), ca
 export function compileActivations(item, options = {}) {
     // (An item the spell module shares — its spellshapes or casts there: those activations left to it, src/compiler/index.js spellModuleShare.)
     const share = spellModuleShare(item, options);
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: ownerDCs(entry.plan) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    // (What its use costs, a Mythic Point: src/compiler/spend.js.)
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withSpend(ownerDCs(entry.plan), plainText(entry.activation.html), options) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // An activation that makes "an attack …, as described in the rune's other activation" (Swallow-Spike's second): that other
@@ -306,7 +308,7 @@ function compileEach(item, options = {}) {
         // that's the only one. Over any other reading: what the creature does, Bismuth Leopards' dazzling, is its own.)
         plan = conjuredPlan(activation.html, base, part, html) ?? (activations.length === 1 ? conjuredPlan(html, base, part, html) : null) ?? plan;
         // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Starfaring Cloak.)
-        plan = rerollOver(plan, rerollPlan(activation.html, base));
+        plan = rerollOver(plan, mythicWaysPlan(activation.html, base) ?? rerollPlan(activation.html, base));
         // (Its user's next roll of a kind rolled twice, src/compiler/fortune.js: Sunweave.)
         plan = rollTwiceOver(plan, rollTwicePlan(plainText(activation.html), base, { trigger: activation.trigger }));
         // (A bonus for a moment, src/compiler/readied-bonus.js: Sparkwarden.)

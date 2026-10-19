@@ -4,7 +4,7 @@ A Foundry VTT module (id `pf2e-automatic-item-resolution`) that automates Pathfi
 
 Spell-casting items (scrolls, wands, staves, catalysts, spellhearts) belong to PF2e Automatic Spell Resolution.
 
-**Status (2026-10-19): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 235 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
+**Status (2026-10-19): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 237 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
 
 ## Install
 
@@ -57,6 +57,8 @@ Use an item as PF2e always does (its **Use** button, a bomb's **Strike**), or a 
 - **Spellstrike Ammunition:** its Activate opens a dialog of your spells that target another creature, at each rank up to the ammunition's maximum. PF2e spends the slot, and one piece is split off and named for the spell. When the Strike that fires it hits, the spell module casts the spell at the creature hit, the hit as its spell attack and your spell DC for its save. A miss loses it.
 - **Saves against your own DC** (The Avalanche, Penultimate Heartbeat, Chroma Kaleidoscope, Lung Bloodstone's Admonish): the card's DC is your class DC or spell DC, as the item says. With neither, the GM is told to roll it.
 - **Anything else with a duration:** a note Effect on the creature with the item's text, for that time.
+- **Mythic Points:** a use whose effect spends a Mythic Point (Chromatic Robe, the Mythic runes, Timeflaying Blade), and an item's cast of a spell with the mythic trait, spend one of its user's Mythic Points when its card applies. A user with none left gets a refusal and the card stays open. A line in the chat says what was spent. Mythic Resilient and Mythic Armor Potency have two buttons, for a mythic source and for any other. Mythic Striking rerolls the damage and keeps the higher total. Mythic Weapon Potency rerolls the attack at mythic proficiency (level + 10).
+  - **Setting "Hero Points instead of Mythic Points"** (world, off by default): those costs are paid with the user's Hero Points.
 
 The census counts what's played: 1,132 of the 1,486 consumables this module handles get a card, and 1,617 of the 2,593 activations of permanent items. Third-party modules' items (Alchemists+, Tian Xia+…) go through the same readers; their census counts them by module. A module's own linked Effect is applied only when its rules match the item's text; otherwise the creature gets a note of the text.
 

@@ -316,6 +316,9 @@ export function withItemData(html, item) {
     // reads it as Scapular of Shields'. What the shield itself takes is the GM's.)
     const hardness = Number(item?.system?.hardness);
     if (Number.isFinite(hardness) && hardness > 0) text = text.replace(/\bThe [\w' -]+? prevents you from taking an amount of damage up to (twice|three times) the shield's Hardness\./i, (all, times) => `You gain ${hardness * (times === "twice" ? 2 : 3)} resistance to ${/\bphysical damage\b/i.test(text) ? "physical" : "all"} damage against the triggering damage.`);
+    // (A holy weakness triggered again, else damage, Freedom's Flame's "The target's holy weakness is triggered again or, if the target doesn't
+    // have a holy weakness, it takes 15 spirit damage": the damage at the creature targeted, its weakness instead the GM's.)
+    text = text.replace(/\bThe target's holy weakness is triggered again or, if the target doesn't have a holy weakness, it takes (@Damage\[[^\]]*\]\]) damage\./i, (all, damage) => `The target takes ${damage} damage. If the target has a holy weakness, its holy weakness is triggered again instead (by hand).`);
     // (A spell by the element it's attuned to, Gate Attenuator's "casts a 5th-rank spell, with a spell attack modifier of +18 and spell DC of 28 …
     // The spell corresponds to the element the item is attuned to" and its list "air Pressure Zone, earth Sand Form, …": the listed spells as
     // the cast card's choices, at that rank, attack and DC.)

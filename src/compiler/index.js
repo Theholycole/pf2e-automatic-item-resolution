@@ -52,6 +52,7 @@ import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withScaled } from "./scaled.js";
+import { withSpend } from "./spend.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -122,7 +123,8 @@ export { asAbility } from "./ability-shape.js";
 export function compileItem(given, options = {}) {
     const unlinked = withoutUnverifiedLinks(given, options);
     const instead = unlinked ? overUnverified(compileOne(unlinked.item, options), unlinked.dropped, given?.system?.description?.value) : null;
-    return ownerDCs(instead ?? compileOne(given, options));
+    // (What its use costs, a Mythic Point: src/compiler/spend.js.)
+    return withSpend(ownerDCs(instead ?? compileOne(given, options)), plainText(given?.system?.description?.value), options);
 }
 
 // Effects its user picks one of, each its own named paragraph after "Choose one of the following effects": a third-party jar whose
