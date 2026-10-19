@@ -12,6 +12,8 @@ const NUMBER = { two: 2, double: 2, twice: 2, three: 3, triple: 3 };
 const OWN = /\b(?:you|You|magic to|and) (?:instantly )?teleport(?: yourself)?(?: instantly)?(?: up to (\d+) feet)? to (?:an? |any )?(?:unoccupied |open |clear )?(?:space|square|location)(?: you can see)?(?: within (\d+) feet)?(?: of (the target|you))?\b(?! of )/;
 // "Teleport up to double your Speed to a location you can see".
 const SPEED = /\bTeleport up to (double|twice|triple) your Speed to a (?:location|space) you can see\b/i;
+// (Or "The ring transports you … to an unoccupied space you can see within a range equal to your Speed", Master Magus Ring's: once its Speed.)
+const SPEED_RANGE = /\btransports you\b[^.]*?\bto an? (?:unoccupied |open )?space you can see within a range equal to your Speed\b/i;
 // "teleport to a space adjacent to the target of your Strike".
 const ADJACENT = /\bteleport to a space adjacent to the target of your Strike\b/i;
 // "You shoot an arrow at an open space on a surface within 500 feet … You teleport to that location".
@@ -26,6 +28,8 @@ export function readTeleport(text) {
     if (shot) return { within: Number(shot[1]), speedTimes: null, from: "self", match: shot };
     const speed = SPEED.exec(plain);
     if (speed) return { within: null, speedTimes: NUMBER[speed[1].toLowerCase()], from: "self", match: speed };
+    const ranged = SPEED_RANGE.exec(plain);
+    if (ranged) return { within: null, speedTimes: 1, from: "self", match: ranged };
     const adjacent = ADJACENT.exec(plain);
     if (adjacent) return { within: 5, speedTimes: null, from: "target", match: adjacent };
     const own = OWN.exec(plain);

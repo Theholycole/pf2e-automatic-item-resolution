@@ -51,6 +51,7 @@ import { elementWaysPlan, dragonWaysPlan } from "./bane.js";
 import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
+import { withScaled } from "./scaled.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -195,6 +196,8 @@ function compileOne(given, options = {}) {
     // (Used in one of several ways, each its own Activate block, src/compiler/ways.js: Toadskin Salve's reactions — over nothing, a note
     // or a reading of only part of it.)
     if (!plan || plan.noteOnly || plan.partial || plan.builtin === "no-effect") plan = waysPlan(item, base, options) ?? plan;
+    // (Damage only the table knows the amount of, typed on the save card, src/compiler/scaled.js: Rebound Fulu's.)
+    plan = withScaled(plan, plainText(html));
     // (Effects its user picks one of, each its own named paragraph: a third-party jar's burble, Confusion or Sonic Beam.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenParagraphsPlan(given, item, base, options) ?? plan;
     // (An elixir made for one element, src/compiler/bane.js: Warding Element Draught — the element picked on the ways card.)

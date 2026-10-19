@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 201,
-   "resolves": 750,
+   "none": 200,
+   "resolves": 751,
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
    "builtin:item-action": 15,
@@ -254,10 +254,10 @@
    "count": 46,
    "results": {
     "builtin:readied-bonus": 2,
-    "none": 14,
+    "none": 13,
     "partial": 2,
     "note-only": 7,
-    "resolves": 19,
+    "resolves": 20,
     "builtin:reroll": 1,
     "builtin:cast-spell": 1
    },
@@ -360,9 +360,9 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 61,
+   "resolves": 62,
    "gaps": 0,
-   "none": 25
+   "none": 24
   },
   "counteract": {
    "count": 79,
@@ -392,14 +392,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 264,
+   "none": 263,
    "item": 622,
    "fortune": 23,
    "zone": 111,
    "expose": 89,
    "later": 80,
    "action": 15,
-   "save": 144,
+   "save": 145,
    "conjure": 7,
    "counteract": 29,
    "reroll": 2,
@@ -493,9 +493,9 @@
    },
    "fulu": {
     "fortune": 2,
-    "none": 16,
+    "none": 15,
     "item": 16,
-    "save": 9,
+    "save": 10,
     "reroll": 1,
     "later": 1,
     "cast": 1
@@ -510,7 +510,7 @@
    }
   },
   "noCard": {
-   "no-plan": 201,
+   "no-plan": 200,
    "triggered": 11,
    "gm": 51,
    "other": 1
@@ -27360,7 +27360,10 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Wand of Mental Purification (6th-rank)",

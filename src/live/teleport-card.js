@@ -12,11 +12,11 @@ export function teleportRange(teleport, { speed = null } = {}) {
     return Number.isFinite(teleport?.speedTimes) && Number.isFinite(speed) ? teleport.speedTimes * speed : null;
 }
 
-const TIMES = { 2: "double", 3: "triple" };
+const TIMES = { 1: "", 2: "double ", 3: "triple " };
 // Its range in words: "Up to 30 feet", "Within 10 feet of the creature targeted", "Up to double your Speed (50 feet)".
 export function teleportText(teleport, { speed = null } = {}) {
     const range = teleportRange(teleport, { speed });
-    if (Number.isFinite(teleport?.speedTimes)) return `Up to ${TIMES[teleport.speedTimes] ?? `${teleport.speedTimes} times`} its user's Speed${Number.isFinite(range) ? ` (${range} feet)` : ""}`;
+    if (Number.isFinite(teleport?.speedTimes)) return `Up to ${TIMES[teleport.speedTimes] ?? `${teleport.speedTimes} times `}its user's Speed${Number.isFinite(range) ? ` (${range} feet)` : ""}`;
     return teleport?.from === "target" ? (range === 5 ? "To a space adjacent to the creature targeted" : `Within ${range} feet of the creature targeted`) : `Up to ${range} feet`;
 }
 

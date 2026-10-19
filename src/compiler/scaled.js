@@ -23,7 +23,12 @@ export function withScaled(plan, text) {
     const formula = String(components[0].formula ?? "");
     const choices = typed ? ENERGY.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)}`, formula: formula.replace(/\[untyped\]/, `[${type}]`) })) : null;
     const notes = (plan.notes ?? []).filter((note) => !MARK.test(note) && !TYPE_MARK.test(note));
-    return { ...plan, scaled, ...(choices ? { damageChoices: choices } : {}), ...(notes.length ? { notes } : { notes: undefined }) };
+    // (Nor the mark as a row's words for the GM: "{target}: Its damage is … (typed on the card).")
+    const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes ?? {}).map(([degree, row]) => {
+        const words = (row?.manualInstructions ?? []).filter((line) => !MARK.test(line) && !TYPE_MARK.test(line));
+        return [degree, row?.manualInstructions ? { ...row, manualInstructions: words.length ? words : undefined } : row];
+    }));
+    return { ...plan, resolution: { ...plan.resolution, outcomes }, scaled, ...(choices ? { damageChoices: choices } : {}), ...(notes.length ? { notes } : { notes: undefined }) };
 }
 
 // The damage formula for the amount typed: "1[sonic]" with 23 → "23[sonic]"; "1d6[fire]" with 4 → "4d6[fire]".

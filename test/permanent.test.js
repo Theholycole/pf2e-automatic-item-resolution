@@ -686,6 +686,8 @@ test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spu
     assert.equal(teleportText(twirl.plan.teleport, { speed: 25 }), "Up to double its user's Speed (50 feet)");
     assert.equal(teleportText(compileActivations(item("Gloaming Shard"))[0].plan.teleport), "To a space adjacent to the creature targeted");
     assert.notEqual(compileActivations(item("Spear of the Destroyer's Flame"))[0].plan?.builtin, "teleport");
+    // ("within a range equal to your Speed", Master Magus Ring: once its Speed.)
+    assert.equal(teleportText(compileActivations(item("Master Magus Ring"))[1].plan.teleport, { speed: 30 }), "Up to its user's Speed (30 feet)");
 });
 
 test("allies in an area put in a condition, read without an Effect heading (a third-party scepter: its user and the allies within 30 feet Quickened for 1 minute, the extra action's limit a note)", async () => {
@@ -723,6 +725,11 @@ test("damage only the table knows the amount of (Twisting Gale's Strike damage a
     const cone = compileActivations(item("Conflagration Club")).find((entry) => entry.activation.name === "Explosive Cone").plan;
     assert.deepEqual([cone.scaled, cone.damageChoices.map((choice) => choice.formula)], [{ of: "charge stored in the club", die: "d6" }, ["1d6[acid]", "1d6[cold]", "1d6[electricity]", "1d6[fire]", "1d6[sonic]"]]);
     assert.equal(scaledFormula("1d6[fire]", cone.scaled, 4), "4d6[fire]");
+    // (A consumable's too: Rebound Fulu's damage back at the foe, the lesser of its shield's Hardness and the blocked damage — the mark off its row.)
+    const { compileItem } = await import("../src/compiler/index.js");
+    const fulu = compileItem(item("Rebound Fulu"));
+    assert.deepEqual([routeOf(fulu), fulu.resolution.sharedDamage.components[0].formula, fulu.resolution.outcomes.success.manualInstructions], ["save", "1[untyped]", undefined]);
+    assert.match(fulu.scaled.of, /^your shield's Hardness or the damage it would have dealt/);
 });
 
 test("a breath that's its user's draconic benefactor's (Pact of the Herald and Host): the ways card's Fortitude, Reflex or Will, each a basic save at the better of its user's class and spell DCs in the cone, 1d6 per level of the dragon's damage type picked on the card", async () => {
