@@ -5715,6 +5715,26 @@ export const cases = {
         return { ok: true };
     },
 
+    // Fulu Compendium's Paralyzing Page: the Spirit-Sealing Fulu's Will save at DC 25 on the ability module's card at the undead targeted (its
+    // Will far below: Paralyzed for a round).
+    async paralyzingPage(scene) {
+        const { actor: user } = await creature(scene, "Compendium Reader", { type: "character", x: 20, y: 16, level: 9 });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Compendium Undead", { x: 21, y: 16, alliance: "opposition", save: -30 });
+        await undead.update({ "system.traits.value": [...(undead.system.traits.value ?? []), "undead"] });
+        const book = await give(user, "Fulu Compendium");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(book.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the page's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [undeadToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the Will save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "will" && check.against.value === 25, `Will DC 25 (${JSON.stringify(check)})`);
+        await rollAndApply(save);
+        await until(() => undead.itemTypes.condition.some((entry) => entry.slug === "paralyzed") || undead.itemTypes.effect.some((effect) => /paralyzed/i.test(effect.name)), "Paralyzed", { timeout: 10000 });
+        return { ok: true };
+    },
+
     // Psychic Warding Bracelet: its readied +2 item to the next save against a mental effect, kept with no time limit; a Fortitude save
     // doesn't spend it, a Will save against a mental effect gets it and spends it.
     async wardingBracelet(scene) {

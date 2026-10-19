@@ -55,6 +55,7 @@ import { withScaled } from "./scaled.js";
 import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
 import { withAttackRiders } from "./attack-riders.js";
+import { withAreaTraitNote } from "./area-trait.js";
 import { readLightAura } from "./light-aura.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
@@ -129,7 +130,7 @@ export function compileItem(given, options = {}) {
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
     const text = plainText(given?.system?.description?.value);
-    return withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value);
+    return withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

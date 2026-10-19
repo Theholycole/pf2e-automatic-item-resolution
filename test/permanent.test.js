@@ -882,3 +882,12 @@ test("Bangles of Crowns' reaction: +1 circumstance to checks for the round again
     const [temp] = compileActivations(item("Immortal Bastion"), { spellEffects })[0].plan.resolution.outcomes.success.effects;
     assert.deepEqual([temp.amount, temp.duration.value, temp.duration.unit, temp.duration.expiry], [100, 1, "rounds", "turn-start"]);
 });
+
+test("Fulu Compendium's Paralyzing Page: the Spirit-Sealing Fulu's own save at DC 25, Will or Paralyzed for a round, for the undead in its 30-foot emanation (the note says which creatures save); the living-only area saves get the same kind of note", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const page = compileActivations(item("Fulu Compendium"), { spellEffects })[0].plan;
+    assert.deepEqual([routeOf(page), page.resolution.check.statistic, page.resolution.check.against.value, page.targeting.area, page.resolution.outcomes.failure.effects.map((effect) => [effect.slug, effect.duration.value])], ["save", "will", 25, { type: "emanation", value: 30 }, [["paralyzed", 1]]]);
+    assert.deepEqual(page.notes, ["Only undead creatures in the area attempt the save: target those."]);
+    const { compileItem } = await import("../src/compiler/index.js");
+    assert.ok(compileItem(item("Ghost Ampoule")).notes.some((note) => /^Only living creatures \(not constructs or undead/.test(note)));
+});
