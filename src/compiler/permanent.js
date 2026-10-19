@@ -41,6 +41,7 @@ import { playedBySpellModule, spellModuleShare } from "./index.js";
 import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
 import { withMark } from "./marked.js";
+import { withAttackRiders } from "./attack-riders.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { degreeSentencesPlan, saveOrPlan } from "./save-or.js";
@@ -131,7 +132,7 @@ export function compileActivations(item, options = {}) {
     const share = spellModuleShare(item, options);
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // An activation that makes "an attack …, as described in the rune's other activation" (Swallow-Spike's second): that other

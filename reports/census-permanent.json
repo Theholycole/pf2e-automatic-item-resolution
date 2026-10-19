@@ -6,7 +6,7 @@
   "ours": 2119,
   "activations": 2597,
   "results": {
-   "resolves": 758,
+   "resolves": 759,
    "builtin:cast-spell": 472,
    "none": 560,
    "partial": 201,
@@ -14,7 +14,7 @@
    "builtin:counteract": 26,
    "builtin:readied-bonus": 47,
    "builtin:no-effect": 100,
-   "note-only": 166,
+   "note-only": 165,
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 8,
@@ -150,8 +150,8 @@
    "activations": 100,
    "results": {
     "builtin:cast-spell": 11,
-    "note-only": 15,
-    "resolves": 31,
+    "note-only": 14,
+    "resolves": 32,
     "none": 18,
     "partial": 11,
     "builtin:modes": 4,
@@ -13645,8 +13645,8 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
+   "result": "resolves",
+   "kind": "effect",
    "live": "item"
   },
   {

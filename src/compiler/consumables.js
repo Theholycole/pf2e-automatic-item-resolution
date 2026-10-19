@@ -237,8 +237,15 @@ const application = (link, recipient) => ({ kind: "native-spell-effect", uuid: l
 // condition (a second dose, a later activation) — not one per degree (Electromuscular Stimulator), nor one for allies in an
 // area (The Hammer of Hooves). null when there's no one such.
 const DEGREE_ROWS = /\b(?:Critical Success|Critical Failure)\b|\b(?:Success|Failure) (?:The|the|You|you|It|it)\b/;
+// (The one of several that's its user's, by the item's slug where neither name nor text tells: Silkspinner's Shield's climb Speed — its
+// "Animated Strike" Effect is the struck creature's, src/compiler/attack-riders.js.)
+const OWN_LINKS = Object.freeze({ "silkspinners-shield": "Silkspinner's Shield (Climb)" });
+// (And a linked Effect its attack riders give the struck creature, so not the GM's either: src/compiler/attack-riders.js.)
+const RIDER_LINKS = Object.freeze(["Silkspinner's Shield (Animated Strike)"]);
 export function ownLink(item, links, names = []) {
     if (links.length < 2) return null;
+    const picked = OWN_LINKS[item?.system?.slug];
+    if (picked) return links.find((link) => String(link.label ?? "").replace(/^Effect:\s*/i, "") === picked) ?? null;
     const text = plain(item?.system?.description?.value);
     if (DEGREE_ROWS.test(text) || (/\b(?:allies|emanation|aura)\b/i.test(text) && !links.some((link) => /\(Wearer\)$/i.test(link.label ?? "")))) return null;
     // (An activation's: its own name only — Weapon Siphon's unnamed activation fits a bomb, "Effect: Weapon Siphon Bomb Fitted", not
@@ -276,7 +283,7 @@ export function ownPlan(item, base, options = {}) {
     const own = ownLink(item, links, [base?.source?.name]);
     const all = !own && bothApply(item, links);
     const applications = links.length === 1 ? [application(links[0], recipient)] : all ? links.map((link) => application(link, recipient)) : own ? [application(own, recipient)] : !links.length ? spellEffectApplications(item, options.spellEffects, recipient) ?? [] : [];
-    const others = own ? links.filter((link) => link !== own).map((link) => `${link.label ?? "Another Effect"} is linked too: the GM's, when the text says it applies.`) : [];
+    const others = own ? links.filter((link) => link !== own && !RIDER_LINKS.includes(String(link.label ?? "").replace(/^Effect:\s*/i, ""))).map((link) => `${link.label ?? "Another Effect"} is linked too: the GM's, when the text says it applies.`) : [];
     // (A granted spell with no PF2e Effect: a cast; only once the spell-effects index is known, so it isn't one by mistake.)
     if (!healing && !applications.length) return !links.length && options.spellEffects ? castPlan(item) : null;
     const resolution = healing && !applications.length

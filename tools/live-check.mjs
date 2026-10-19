@@ -5637,6 +5637,29 @@ export const cases = {
         return { ok: true };
     },
 
+    // Silkspinner's Shield: its Climb Effect on its user, and for the minute its shield bash (AC 1) leaves the creature struck -10 feet to its
+    // Speeds (a hit) or Immobilized (a critical hit), for a round.
+    async silkspinnerBash(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Silkspinner Bearer", { type: "character", x: 20, y: 10, level: 15 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Silkspinner Target", { x: 21, y: 10, ac: 1, alliance: "opposition" });
+        const shield = await give(user, "Silkspinner's Shield");
+        await shield.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the shield's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => user.itemTypes.effect.some((effect) => effect.name === "Effect: Silkspinner's Shield (Climb)"), "the Climb Effect", { timeout: 8000 });
+        await until(() => user.itemTypes.effect.some((effect) => effect.getFlag(NS, "attackRiders")), "the bash watch", { timeout: 8000 });
+        await userToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await strike(user, shield);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        if (outcome === "criticalSuccess") await until(() => foe.itemTypes.condition.some((entry) => entry.slug === "immobilized"), "Immobilized on the critical hit", { timeout: 8000 });
+        else await until(() => foe.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("all-speeds") && rule.value === -10)), "-10 feet to its Speeds", { timeout: 8000 });
+        return { outcome };
+    },
+
     // Psychic Warding Bracelet: its readied +2 item to the next save against a mental effect, kept with no time limit; a Fortitude save
     // doesn't spend it, a Will save against a mental effect gets it and spends it.
     async wardingBracelet(scene) {

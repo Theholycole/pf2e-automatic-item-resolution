@@ -42,13 +42,17 @@ export async function attackRidersRolled(message) {
             targets: targetToken?.actor ? [{ id: "t0", actorUuid: targetToken.actor.uuid, tokenUuid: targetToken.uuid, name: targetToken.name }] : []
         };
         const lines = [];
+        // (Its own Strikes only, Silkspinner's Shield's bash: that item's, by its id.)
+        const ownId = String(watch.item?.uuid ?? "").split(".").at(-1);
+        const own = Boolean(ownId) && (context.options ?? []).includes(`item:id:${ownId}`);
         for (const rider of watch.riders ?? []) {
-            if (!rider.on.includes(context.outcome) || (rider.melee && !melee)) continue;
+            if (!rider.on.includes(context.outcome) || (rider.melee && !melee) || (rider.own && !own)) continue;
             if (!ability?.applyChange) {
                 lines.push(`${attackRidersText([rider])} (apply it by hand: the ability module isn't active)`);
                 continue;
             }
             if (rider.offGuard && state.targets.length) lines.push((await ability.applyChange({ op: "condition", slug: "off-guard", value: null, target: "t0", duration: rider.offGuard.duration, scope: { attacker: "source", attacks: "any", uses: rider.offGuard.uses } }, state)) ?? `${state.targets[0].name} is off-guard to ${actor.name}'s next attack`);
+            if (rider.targetModifier && state.targets.length) lines.push((await ability.applyChange({ op: "effect", target: "t0", effect: { kind: "modifier", modifier: rider.targetModifier } }, state)) ?? `${state.targets[0].name}: ${rider.targetModifier.value} feet to its Speeds`);
             if (rider.target && state.targets.length) lines.push((await ability.applyChange({ op: "condition", slug: rider.target.slug, value: rider.target.value, target: "t0", duration: rider.target.duration }, state)) ?? `${state.targets[0].name}: ${rider.target.slug} ${rider.target.value}`);
             if (rider.self) lines.push((await ability.applyChange({ op: "condition", slug: rider.self.slug, value: rider.self.value, target: "source", duration: rider.self.duration }, state)) ?? `${actor.name}: ${rider.self.slug} ${rider.self.value}`);
         }

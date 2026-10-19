@@ -862,3 +862,14 @@ test("Coronet of Stars' reassurance: the triggering ally's failed check rerolled
     assert.deepEqual([routeOf(coronet), coronet.reroll], ["reroll", { what: "check", keep: "higher", who: "target" }]);
     assert.equal(rerollText(coronet.reroll), "The targeted creature's latest check, rerolled: the higher result");
 });
+
+test("Silkspinner's Shield: its user's own linked Effect (Climb) picked of two, and for its minute each shield bash with it a rider on the creature struck — -10 feet to its Speeds for a round on a hit, Immobilized for a round on a critical hit — the Escape a note", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { attackRidersText } = await import("../src/compiler/attack-riders.js");
+    const shield = compileActivations(item("Silkspinner's Shield"), { spellEffects })[0].plan;
+    assert.deepEqual([routeOf(shield), shield.resolution.applications.map((entry) => entry.label)], ["item", ["Effect: Silkspinner's Shield (Climb)"]]);
+    const { riders, duration } = shield.item.attackRiders;
+    assert.deepEqual([riders.map((rider) => [rider.on.join("/"), rider.own, rider.targetModifier?.value ?? rider.target?.slug]), `${duration.value} ${duration.unit}`], [[["success", true, -10], ["criticalSuccess", true, "immobilized"]], "1 minutes"]);
+    assert.equal(attackRidersText(riders), "On a hit with the item: the target -10 feet to its Speeds for 1 round; On a critical hit with the item: the target immobilized for 1 round instead");
+    assert.deepEqual(shield.notes, ["The struck creature can Escape (DC 30) to end it early (by hand)."]);
+});
