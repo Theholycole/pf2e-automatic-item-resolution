@@ -13,14 +13,14 @@
   },
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 32,
-   "none": 193,
+   "builtin:cast-spell": 35,
+   "none": 190,
    "resolves": 751,
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
-   "partial": 121,
+   "partial": 124,
    "builtin:item-action": 15,
-   "note-only": 132,
+   "note-only": 129,
    "builtin:conjure": 7,
    "builtin:ways": 11,
    "builtin:counteract": 29,
@@ -35,14 +35,14 @@
   "other": {
    "count": 512,
    "results": {
-    "builtin:cast-spell": 11,
+    "builtin:cast-spell": 14,
     "builtin:zone": 22,
     "resolves": 210,
-    "partial": 58,
-    "note-only": 68,
+    "partial": 61,
+    "note-only": 65,
     "builtin:readied-bonus": 7,
     "builtin:ways": 4,
-    "none": 107,
+    "none": 104,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 6,
@@ -345,7 +345,7 @@
    "count": 33,
    "resolves": 5,
    "gaps": 0,
-   "none": 5
+   "none": 2
   },
   "strike": {
    "count": 31,
@@ -392,8 +392,8 @@
  },
  "live": {
   "totals": {
-   "cast": 32,
-   "none": 256,
+   "cast": 35,
+   "none": 253,
    "item": 619,
    "fortune": 23,
    "zone": 111,
@@ -411,9 +411,9 @@
   },
   "byCategory": {
    "other": {
-    "cast": 11,
+    "cast": 14,
     "zone": 22,
-    "none": 129,
+    "none": 126,
     "later": 11,
     "save": 96,
     "item": 211,
@@ -512,7 +512,7 @@
    }
   },
   "noCard": {
-   "no-plan": 193,
+   "no-plan": 190,
    "triggered": 11,
    "gm": 51,
    "other": 1
@@ -5939,7 +5939,9 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Potion of Fire Retaliation (Moderate)",
@@ -9070,8 +9072,13 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Sickened creatures have difficulty swallowing, so you can Activate emetic paste by applying it to your skin or that of a sickened creature within reach, typically on the throat.",
+    "Choose a creature within reach (you, or a sickened creature).",
+    "The bonus is only to saves to reduce the sickened condition, and the creature attempts one such save at once."
+   ],
    "live": "item"
   },
   {
@@ -13462,8 +13469,13 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Sickened creatures have difficulty swallowing, so you can Activate emetic paste by applying it to your skin or that of a sickened creature within reach, typically on the throat.",
+    "Choose a creature within reach (you, or a sickened creature).",
+    "The bonus is only to saves to reduce the sickened condition, and the creature attempts one such save at once."
+   ],
    "live": "item"
   },
   {
@@ -19437,8 +19449,13 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
+   "unread": [
+    "Sickened creatures have difficulty swallowing, so you can Activate emetic paste by applying it to your skin or that of a sickened creature within reach, typically on the throat.",
+    "Choose a creature within reach (you, or a sickened creature).",
+    "The bonus is only to saves to reduce the sickened condition, and the creature attempts one such save at once."
+   ],
    "live": "item"
   },
   {
@@ -25528,7 +25545,9 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Demolition Fulu (Moderate)",
@@ -28710,7 +28729,9 @@
    "mechanisms": [
     "casts-spell"
    ],
-   "result": "none"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Trident of Lightning",

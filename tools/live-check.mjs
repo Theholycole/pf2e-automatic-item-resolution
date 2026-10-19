@@ -5442,6 +5442,28 @@ export const cases = {
         return { names, moved: (foeToken.x - startX) / scene.grid.size };
     },
 
+    // Spirit Bulb: the cast card's two choices at its rank (Plant Form on its user, Summon Plant or Fungus); Emetic Paste (Lesser): +2 item
+    // to Fortitude saves for the hour, for the creature targeted.
+    async bulbAndPaste(scene) {
+        const { actor: user } = await creature(scene, "Bulb Eater", { type: "character", x: 20, y: 16, level: 10 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Paste Patient", { type: "character", x: 21, y: 16 });
+        const bulb = await give(user, "Spirit Bulb");
+        let since = Date.now();
+        await bulb.consume();
+        const cast = await messageAfter(since, itemCard("cast"), { what: "the bulb's cast card" });
+        const choices = (cast.getFlag(NS, "card").plan.choices ?? []).map((choice) => `${choice.spell.name} ${choice.rank}${choice.self ? " (self)" : ""}`);
+        assert(choices.join(" | ") === "Plant Form 5 (self) | Summon Plant or Fungus 5", `its two casts (${choices.join(" | ")})`);
+        const paste = await give(user, "Emetic Paste (Lesser)");
+        since = Date.now();
+        await paste.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the paste's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        const fortified = () => ally.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("fortitude") && rule.value === 2 && rule.type === "item"));
+        await until(fortified, "+2 item to Fortitude saves for the creature targeted", { timeout: 8000 });
+        assert(!user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("fortitude"))), "not its user's");
+        return { choices, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

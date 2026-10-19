@@ -228,3 +228,13 @@ test("a spell's effects given its DC first (Dread Blindfold's Vision of Death at
     assert.equal(compileActivations(source("Planar Ribbon"), { spells })[0].plan.dc, 40);
 });
 
+
+test("Spirit Bulb's two casts at its rank, Plant Form on its user or Summon Plant or Fungus (its \"to have it cast\" words); Emetic Paste's Fortitude bonus for the creature targeted", () => {
+    for (const [name, rank] of [["Spirit Bulb", 5], ["Spirit Bulb (Greater)", 6], ["Spirit Bulb (Major)", 7]]) {
+        const bulb = compileItem(source(name), { spells });
+        assert.deepEqual([bulb.builtin, bulb.choices.map((entry) => [entry.spell.name, entry.rank, Boolean(entry.self)])], ["cast-spell", [["Plant Form", rank, true], ["Summon Plant or Fungus", rank, false]]], name);
+    }
+    const paste = compileItem(source("Emetic Paste (Moderate)"));
+    assert.deepEqual([paste.item.recipient, paste.targeting.target, paste.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, `${modifier.duration.value} ${modifier.duration.unit}`])], ["targets", "1 creature", [["fortitude", 3, "item", "1 hours"]]]);
+    assert.ok(paste.unread.some((sentence) => /only to saves to reduce the sickened condition/.test(sentence)), "its narrower words a note");
+});
