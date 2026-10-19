@@ -29,6 +29,7 @@ import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { spellgunPlan } from "./spellguns.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
+import { readProficiencyLoan } from "./proficiency-loan.js";
 import { directDamageOver, directDamagePlan, retaliationPlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
@@ -317,6 +318,8 @@ function compileOne(given, options = {}) {
     // (A weapon lent a property rune for a while, src/compiler/rune-loans.js: Burial Oil; a note alone gives way to it.)
     const rune = readRuneLoan(plainText(item?.system?.description?.value), item);
     if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
+    // (A weapon its user treats as their best for a while, src/compiler/proficiency-loan.js: Blade Phantom's Guide — the item card's too.)
+    if (readProficiencyLoan(plainText(item?.system?.description?.value)) && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     if (!plan) return null;
     // (What a failed save primes for later, a note Effect from those rows; a fulu's affixed creature, src/compiler/primed.js.)
     plan = affixedTargeting(withZeroHPNote(withPrimedNotes(plan, plainText(item?.system?.description?.value)), plainText(item?.system?.description?.value)), plainText(given?.system?.description?.value));
@@ -440,6 +443,7 @@ function itemInfo(item) {
         ...(readRecovery(plainText(item?.system?.description?.value)) ? { recovery: readRecovery(plainText(item?.system?.description?.value)) } : {}),
         // (A property rune it lends a weapon: the item card's, src/compiler/rune-loans.js.)
         ...(readRuneLoan(plainText(item?.system?.description?.value), item) ? { rune: readRuneLoan(plainText(item?.system?.description?.value), item) } : {}),
+        ...(readProficiencyLoan(plainText(item?.system?.description?.value)) ? { proficiency: readProficiencyLoan(plainText(item?.system?.description?.value)) } : {}),
         // (Restored to its maximum Hit Points, its afflictions removed: the item card's, src/compiler/restore.js.)
         ...(readRestore(plainText(item?.system?.description?.value)) ? { restore: readRestore(plainText(item?.system?.description?.value)) } : {}),
         // (Back from dying without raising Wounded, src/compiler/rows.js.)

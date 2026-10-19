@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
+import { abilityState, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
@@ -204,7 +204,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         drinkers: plan.item?.recipient === "drinker" ? creaturesNear(token, 5) : [],
         rolled,
         // (A rune it lends a weapon: its user's weapons to pick from.)
-        weapons: plan.item?.rune && !plan.item.rune.own ? (actor.itemTypes?.weapon ?? []).filter((weapon) => !weapon.isOfType?.("bomb") && weapon.system?.group !== "bomb").map((weapon) => ({ id: weapon.id, name: weapon.name })) : []
+        // (Or one it makes its user's best, up to a level: Blade Phantom's Guide.)
+        weapons: (plan.item?.rune && !plan.item.rune.own) || plan.item?.proficiency ? (actor.itemTypes?.weapon ?? []).filter((weapon) => !weapon.isOfType?.("bomb") && weapon.system?.group !== "bomb" && !(plan.item?.proficiency?.maxLevel && Number(weapon.system?.level?.value) > plan.item.proficiency.maxLevel)).map((weapon) => ({ id: weapon.id, name: weapon.name })) : []
     });
     const card = await ChatMessage.create({
         content: cardHTML(state, { canApply: true }),
@@ -665,6 +666,18 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         else if (weapon?.id) {
             await user.actor.createEmbeddedDocuments("Item", [runeEffectSource(rune, { key, weapon, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
             lines.push(`${state.user.name}: ${runeText(rune, weapon.name)}`);
+        }
+    }
+    // (A weapon its user treats as their best: Blade Phantom's Guide — an Effect with PF2e's MartialProficiency for that weapon at the user's
+    // highest weapon proficiency rank.)
+    const loan = state.plan.item?.proficiency;
+    if (loan && user.actor) {
+        const weapon = state.weapons?.[state.runeWeapon ?? 0];
+        const rank = Math.max(0, ...Object.values(user.actor.system?.proficiencies?.attacks ?? {}).map((entry) => Number(entry?.rank) || 0));
+        if (!weapon?.id) lines.push(`${state.user.name}: no weapon for ${state.item.name}.`);
+        else {
+            await user.actor.createEmbeddedDocuments("Item", [proficiencyEffectSource(loan, { weapon, rank, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${state.user.name}: ${proficiencyText(loan, weapon.name)} (rank ${rank})`);
         }
     }
     // (A condition until the end of the user's rage: an Effect granting it, gone when the Rage ends — only while raging.)

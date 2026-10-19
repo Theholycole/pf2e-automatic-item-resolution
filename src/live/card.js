@@ -31,7 +31,7 @@ export function createItemCard({ plan, item, user, drinkers = [], rolled = null,
         drinker: drinker ? 0 : null,
         // (A tea's Tea Ceremony: ticked on the card, false until then; null for any other item.)
         ceremony: plan?.item?.ceremony ? false : null,
-        ...(plan?.item?.rune && !plan.item.rune.own ? { weapons, runeWeapon: 0 } : {}),
+        ...((plan?.item?.rune && !plan.item.rune.own) || plan?.item?.proficiency ? { weapons, runeWeapon: 0 } : {}),
         // (One of several runes, picked: Boughshatter's Decaying, Grievous or Wounding.)
         ...(plan?.item?.rune?.choices?.length ? { runeChoice: 0 } : {}),
         rolled,
@@ -111,6 +111,8 @@ export function modifierText(modifier) {
 export function previewLines(state) {
     const plan = state.plan;
     const lines = [];
+    // (A weapon its user treats as their best, src/compiler/proficiency-loan.js.)
+    if (plan?.item?.proficiency) lines.push(proficiencyText(plan.item.proficiency));
     // (A spell slot it costs, src/compiler/slot-cost.js: spent when it's applied.)
     if (plan?.spend?.spellSlot) lines.push(Number.isInteger(plan.spend.spellSlot.rank) ? `Costs a rank ${plan.spend.spellSlot.rank} spell slot` : `Costs a spell slot of rank ${plan.spend.spellSlot.min} or higher (the lowest left)`);
     // (The conditions it lowers, src/compiler/reduce.js.)
@@ -276,6 +278,15 @@ export function runeText(rune, weaponName = null) {
 
 // The rune's Effect on its user: PF2e's AdjustStrike adding the property rune to that weapon (as PF2e's own Wounding Oil).
 // key: PF2e's rune key, kebab-case ("disrupting", "greater-disrupting").
+// A weapon its user treats as their best, in words: "The weapon picked at your highest weapon proficiency for 1 minute (one of level 11
+// or lower)".
+export const proficiencyText = (loan, weaponName = null) => `${weaponName ?? "The weapon picked"} at your highest weapon proficiency${forTime(loan.duration)}${loan.maxLevel && !weaponName ? ` (one of level ${loan.maxLevel} or lower)` : ""}`;
+
+// Its Effect: PF2e's MartialProficiency for that weapon (by its id) at that rank.
+export function proficiencyEffectSource(loan, { weapon, rank, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: `${weapon.name}: proficiency`, img: "icons/svg/sword.svg", words: proficiencyText(loan, weapon.name), rules: [{ key: "MartialProficiency", slug: `${String(item.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${weapon.id}`, label: item.name ?? "Proficiency", definition: [`item:id:${weapon.id}`], value: rank }], duration: loan.duration, flag: { proficiency: weapon.id }, item, user, worldTime, initiative, moduleId });
+}
+
 export function runeEffectSource(rune, { key = rune.key, weapon, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return ownEffectSource({ name: `${rune.name} (${weapon.name})`, img: "icons/svg/sword.svg", words: runeText(rune, weapon.name), rules: [{ key: "AdjustStrike", mode: "add", property: "property-runes", value: key, definition: [`item:id:${weapon.id}`] }], duration: rune.duration, flag: { rune: key, weaponId: weapon.id }, item, user, worldTime, initiative, moduleId });
 }

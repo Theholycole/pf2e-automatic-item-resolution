@@ -70,3 +70,28 @@ test("Boughshatter: one of three runes, picked on the card (Grievous), on the we
     assert.deepEqual([effect.system.rules[0].value, effect.system.rules[0].definition], ["grievous", [`item:id:${mace.id}`]]);
     assert.match(card.content, /Gives Boughshatter the Grievous rune for 1 minute/);
 });
+
+test("Blade Phantom's Guide: the weapon picked (up to level 11) at its user's highest weapon proficiency for 1 minute — PF2e's MartialProficiency on it", async () => {
+    const guide = compileItem(source("Blade Phantom's Guide"));
+    assert.deepEqual([guide.item.proficiency.duration.value, guide.item.proficiency.duration.unit, guide.item.proficiency.maxLevel], [1, "minutes", 11]);
+    const scholar = foundry.makeActor({ id: "rune-scholar", name: "Scholar", owners: ["player"] });
+    foundry.place(scholar, 100, 24000);
+    scholar.system.proficiencies = { attacks: { simple: { rank: 1 }, martial: { rank: 3 }, unarmed: { rank: 1 } } };
+    const whip = foundry.giveItem(scholar, source("Whip"));
+    const blade = foundry.giveItem(scholar, source("Frost Brand"));
+    scholar.weapons.push(whip, blade);
+    const item = foundry.giveItem(scholar, source("Blade Phantom's Guide"));
+    const data = item.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: scholar.id }, actor: scholar, token: scholar.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    // (Frost Brand, level 16, is past the guide's 11th: not offered.)
+    assert.deepEqual(card.flags[MODULE_ID].card.weapons.map((weapon) => weapon.name), ["Whip"]);
+    assert.match(card.content, /The weapon picked at your highest weapon proficiency for 1 minute \(one of level 11 or lower\)/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", runeWeapon: 0 });
+    await settle();
+    const effect = scholar.created.find((entry) => entry.flags?.[MODULE_ID]?.proficiency);
+    assert.deepEqual(effect.system.rules, [{ key: "MartialProficiency", slug: `blade-phantom-s-guide-${whip.id}`, label: "Blade Phantom's Guide", definition: [`item:id:${whip.id}`], value: 3 }]);
+    assert.match(card.content, /Scholar: Whip at your highest weapon proficiency for 1 minute \(rank 3\)/);
+});

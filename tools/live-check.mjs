@@ -274,6 +274,24 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results, regions: regions().length };
     },
 
+    // Blade Phantom's Guide: the whip picked gets PF2e's MartialProficiency at its user's highest weapon proficiency rank for 1 minute.
+    async bladePhantom(scene) {
+        const { actor: user } = await creature(scene, "Phantom Student", { type: "character", x: 4, y: 14 });
+        const whip = await give(user, "Whip");
+        await whip.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const guide = await give(user, "Blade Phantom's Guide");
+        const since = Date.now();
+        await guide.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the guide's card" });
+        const at = card.getFlag(NS, "card").weapons.findIndex((weapon) => weapon.id === whip.id);
+        assert(at >= 0, "the whip offered");
+        await game.modules.get(NS).api.live.apply(card.id, { runeWeapon: at });
+        const rule = () => user.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((entry) => entry.key === "MartialProficiency");
+        await until(rule, "the MartialProficiency Effect", { timeout: 8000 });
+        assert(JSON.stringify(rule().definition).includes(whip.id), `for the whip (${JSON.stringify(rule())})`);
+        return { rule: rule(), results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });
