@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 751,
+   "resolves": 752,
    "builtin:cast-spell": 471,
-   "none": 588,
+   "none": 587,
    "partial": 187,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
@@ -29,10 +29,10 @@
    "builtin:spellstrike": 9
   },
   "live": {
-   "save": 435,
+   "save": 436,
    "cast": 471,
    "item": 586,
-   "none": 719,
+   "none": 718,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
@@ -80,8 +80,8 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 162,
-    "none": 88,
+    "resolves": 163,
+    "none": 87,
     "partial": 47,
     "builtin:cast-spell": 83,
     "builtin:reroll": 6,
@@ -9639,9 +9639,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Azarim",

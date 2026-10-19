@@ -781,3 +781,12 @@ test("attack and save rolls played without the word reroll: Keep Stone Amulet's 
     assert.deepEqual(reroll("Extra Lung"), { what: "save", who: "self", keep: "new" });
     assert.deepEqual(reroll("Phantom Fang").contest, { flat: 5 });
 });
+
+test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude)", () => {
+    const spiral = compileItem({ ...item("Spiral Labyrinth"), ownerLevel: 14 });
+    assert.deepEqual([spiral.resolution.check.statistic, spiral.resolution.check.basic, spiral.resolution.check.against.value, spiral.scaled.of], ["reflex", true, 32, "the damage your shield blocked, its Hardness 10 higher for that Shield Block"]);
+    const net = compileItem({ ...item("Spring-Loaded Net Launcher"), ownerLevel: 2 });
+    assert.deepEqual([net.targeting.range, net.ownCheck.choose, net.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.resolution.outcomes.success.modifiers[0]], ["60 feet", ["thrown"], ["off-guard", "immobilized"], { selector: "all-speeds", value: -10, type: "circumstance", duration: null }]);
+    const [azarim] = compileActivations(item("Azarim"));
+    assert.deepEqual([azarim.plan.resolution.check.statistic, azarim.plan.resolution.check.against.value, azarim.plan.resolution.outcomes.failure.effects[0].slug, azarim.plan.resolution.outcomes.failure.effects[0].value], ["fortitude", 23, "enfeebled", 2]);
+});

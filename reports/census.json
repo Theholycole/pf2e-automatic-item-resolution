@@ -14,12 +14,12 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 199,
-   "resolves": 751,
+   "none": 197,
+   "resolves": 752,
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
+   "partial": 106,
    "builtin:item-action": 15,
-   "partial": 105,
    "note-only": 149,
    "builtin:conjure": 7,
    "builtin:counteract": 29,
@@ -94,10 +94,10 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 31,
+    "none": 30,
     "builtin:readied-bonus": 12,
     "builtin:item-action": 11,
-    "resolves": 56,
+    "resolves": 57,
     "note-only": 7,
     "builtin:no-effect": 9,
     "builtin:reroll": 1,
@@ -187,13 +187,13 @@
   "gadget": {
    "count": 77,
    "results": {
-    "none": 9,
+    "partial": 4,
     "builtin:zone": 14,
+    "none": 8,
     "resolves": 29,
     "note-only": 6,
     "builtin:item-action": 3,
     "builtin:no-effect": 5,
-    "partial": 3,
     "builtin:counteract": 8
    },
    "mechanisms": {
@@ -330,9 +330,9 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 334,
+   "resolves": 335,
    "gaps": 0,
-   "none": 22
+   "none": 21
   },
   "affliction": {
    "count": 144,
@@ -360,9 +360,9 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 62,
+   "resolves": 63,
    "gaps": 0,
-   "none": 23
+   "none": 22
   },
   "counteract": {
    "count": 79,
@@ -392,14 +392,14 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 262,
+   "none": 260,
    "item": 622,
    "fortune": 23,
    "zone": 111,
+   "save": 147,
    "expose": 89,
    "later": 80,
    "action": 15,
-   "save": 145,
    "conjure": 7,
    "counteract": 29,
    "reroll": 3,
@@ -435,7 +435,7 @@
     "zone": 1
    },
    "talisman": {
-    "none": 40,
+    "none": 39,
     "fortune": 14,
     "action": 11,
     "item": 52,
@@ -443,7 +443,7 @@
     "ways": 2,
     "cast": 9,
     "teleport": 2,
-    "save": 15,
+    "save": 16,
     "strike": 9,
     "coat": 1
    },
@@ -472,10 +472,10 @@
     "ways": 1
    },
    "gadget": {
-    "none": 14,
+    "save": 17,
     "zone": 14,
+    "none": 13,
     "item": 22,
-    "save": 16,
     "action": 3,
     "counteract": 8
    },
@@ -510,7 +510,7 @@
    }
   },
   "noCard": {
-   "no-plan": 199,
+   "no-plan": 197,
    "triggered": 11,
    "gm": 51,
    "other": 1
@@ -709,7 +709,9 @@
     "gadget"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Applereed Mutagen (Lesser)",
@@ -6438,7 +6440,10 @@
     "fixed-dc",
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Night Sky Elixir (Moderate)",

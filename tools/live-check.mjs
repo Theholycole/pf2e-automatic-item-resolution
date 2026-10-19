@@ -3973,6 +3973,28 @@ export const cases = {
         return { thrown, save: `${check.statistic} ${check.against.value}` };
     },
 
+    // Spring-Loaded Net Launcher: an unattached Net thrown farther — its user's simple thrown attack against the target's AC, Off-Guard and
+    // Immobilized on its critical success.
+    async netLauncher(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Net Launcher", { type: "character", x: 10, y: 17 });
+        const { token: foeToken } = await creature(scene, "Net Target", { x: 13, y: 17, alliance: "opposition" });
+        const launcher = await give(user, "Spring-Loaded Net Launcher");
+        await until(() => userToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        let since = Date.now();
+        await launcher.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the launcher's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const thrown = choices.find((choice) => choice.kind === "thrown");
+        assert(thrown, `the thrown attack offered (${JSON.stringify(choices)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: choices.indexOf(thrown) });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        const plan = attack.flags["pf2e-automatic-ability-resolution"].card.plan;
+        const crit = plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug);
+        assert(plan.resolution.check.against?.statistic === "ac" && crit.includes("off-guard") && crit.includes("immobilized"), `the attack against AC, Off-Guard and Immobilized on a critical hit (${JSON.stringify(plan.resolution.check)}, ${crit.join(", ")})`);
+        return { thrown, crit };
+    },
+
     // Wondrous Figurine (Golden Lions) and Beetle Gel: the creatures they become, the ability module's conjured tokens beside their user —
     // two Lions (minions, from PF2e's own stat block), then a Flash Beetle from the oil.
     async conjuredCreatures(scene) {
@@ -4615,6 +4637,40 @@ export const cases = {
         const formula = plan.resolution.sharedDamage.components[0].formula;
         assert(formula === "4d6[fire]" && plan.resolution.check.basic && plan.resolution.check.against.value === 20, `4d6 fire, basic DC 20 Reflex (${formula}, ${JSON.stringify(plan.resolution.check)})`);
         return { formula };
+    },
+
+    // Spiral Labyrinth: the damage its user's shield blocked (12 typed) at the creature picked — the ability module's basic DC 32 Reflex save card.
+    async spiralLabyrinth(scene) {
+        const { actor: user } = await creature(scene, "Labyrinth Blocker", { type: "character", x: 13, y: 6 });
+        const { token: foe } = await creature(scene, "Labyrinth Foe", { x: 14, y: 6, alliance: "opposition" });
+        const talisman = await give(user, "Spiral Labyrinth");
+        let since = Date.now();
+        await talisman.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the talisman's save card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid], scaled: 12 });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const plan = save.flags["pf2e-automatic-ability-resolution"].card.plan;
+        const formula = plan.resolution.sharedDamage.components[0].formula;
+        assert(formula === "12[untyped]" && plan.resolution.check.basic && plan.resolution.check.against.value === 32, `12 damage, basic DC 32 Reflex (${formula}, ${JSON.stringify(plan.resolution.check)})`);
+        return { formula };
+    },
+
+    // Azarim's first activation: the creature carrying it targeted — the ability module's DC 23 Fortitude save card, Enfeebled 2 on a failure.
+    async azarimEnfeeble(scene) {
+        const { actor: user } = await creature(scene, "Azarim Holder", { type: "character", x: 13, y: 8 });
+        const { token: carrier } = await creature(scene, "Azarim Carrier", { x: 14, y: 8 });
+        const azarim = await give(user, "Azarim");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(azarim.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "Azarim's save card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [carrier.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const plan = save.flags["pf2e-automatic-ability-resolution"].card.plan;
+        const failed = plan.resolution.outcomes.failure.effects.map((effect) => `${effect.slug} ${effect.value}`);
+        assert(plan.resolution.check.statistic === "fortitude" && plan.resolution.check.against.value === 23 && failed.includes("enfeebled 2"), `DC 23 Fortitude, Enfeebled 2 on a failure (${JSON.stringify(plan.resolution.check)}, ${failed.join(", ")})`);
+        return { failed };
     },
 
     // Pact of the Herald and Host's Breath of the Dragon: Reflex picked on the ways card, fire on the save card — a basic Reflex save card at
