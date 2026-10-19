@@ -27,7 +27,7 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { withScaled } from "./scaled.js";
-import { readTable } from "./random-table.js";
+import { readLinkedTable, readTable } from "./random-table.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
@@ -203,6 +203,12 @@ function benefactorBreathPlan(html, base, item, options, own) {
 // An item whose effect is a roll on its own table, src/compiler/random-table.js: each row compiled alone as the item's use.
 function tablePlan(html, base, item, options, own) {
     const read = readTable(html, (rowHtml) => compileEach({ ...item, system: { ...(item.system ?? {}), description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p>${rowHtml}` } } }, options)[0]?.plan ?? null);
+    // (Or a RollTable it links: drawn live, the row drawn compiled then.)
+    const linked = read ? null : readLinkedTable(html);
+    if (linked) {
+        const words = plainText(String(html ?? "")).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\b(?:DC|spell attack|target|decisions?)\b/i.test(sentence) && !/\broll\b[^.]*\btable\b/i.test(sentence));
+        return { ...base, builtin: "table", automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, table: { uuid: linked.uuid, name: linked.name, rows: [], ...(linked.dc ? { dc: linked.dc } : {}), ...(linked.attack ? { attack: linked.attack } : {}) }, ...(words.length ? { notes: words.map((sentence) => sentence.trim()) } : {}), partial: true };
+    }
     if (!read) return null;
     const rows = read.rows.map((row) => (row.plan ? { ...row, plan: { ...row.plan, source: base.source, item: { ...(row.plan.item ?? {}), activation: own ?? row.plan.item?.activation } } } : row));
     const before = plainText(String(html ?? "").replace(/<table\b[\s\S]*$/i, "")).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\b(?:target|spell|decisions?)\b/i.test(sentence) && !/\broll\b[^.]*\btable\b/i.test(sentence));

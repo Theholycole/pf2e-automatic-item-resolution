@@ -4678,6 +4678,22 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Rod of Wonder: its card draws from PF2e's Rod of Wonder RollTable; the row drawn gets its own card, or its words for the GM.
+    async rodOfWonder(scene) {
+        const { actor: user } = await creature(scene, "Rod Waver", { type: "character", x: 16, y: 10 });
+        const rod = await give(user, "Rod of Wonder");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(rod.uuid, 0);
+        const card = await messageAfter(since, itemCard("table"), { what: "the table card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "the draw applied", { timeout: 8000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(/^Drawn: \S/.test(results[0] ?? "") && /Its card follows|The GM resolves it/.test(results[1] ?? ""), `a row drawn (${JSON.stringify(results)})`);
+        if (/Its card follows/.test(results[1])) await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")) && message.id !== card.id, { what: "the row's card" });
+        return { results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

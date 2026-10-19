@@ -1,3 +1,5 @@
+// (Or one on a Foundry RollTable it links, Rod of Wonder's "Roll on the Rod of Wonder table": plan.table = { uuid, name, rows: [] } — live play
+// draws from it and compiles the row drawn.)
 // An item whose effect is a roll on its own table: Madcap Top's d20 ("roll a d20 on the table below to determine the top's effect"),
 // Pistol of Wonder's d%. The table's rows → plan.table = { die: "1d20" | "1d100", rows: [{ low, high, text, plan? }] }; each row's
 // words are compiled as the item's use (a cast of the spell it names — "Slow affects the target", "A 3rd-rank Illusory Disguise makes
@@ -44,3 +46,13 @@ export function readTable(html, compile = () => null) {
 
 // The row a total falls in, or null.
 export const rowFor = (table, total) => table?.rows?.find((row) => total >= row.low && total <= row.high) ?? null;
+
+// A RollTable the text links for its roll: "Roll on the @UUID[…RollTable…]{Rod of Wonder} table" → { uuid, name } or null.
+const LINKED = /\b[Rr]oll (?:d%|d\d+|an? d\d+ )?\s*on the @UUID\[(Compendium\.[\w-]+\.[\w-]+\.RollTable\.[A-Za-z0-9]+)\]\{([^}]+)\} table\b/;
+export function readLinkedTable(html) {
+    const linked = LINKED.exec(String(html ?? ""));
+    if (!linked) return null;
+    // (Its DC and spell attack for the spells drawn, as for its own table's: Rod of Wonder's DC 27 and +17.)
+    const own = /\bAny spell DC required is DC (\d+)(?:, and any spell attack (?:roll|modifier) required is (?:\+(\d+)|\[\[\/r 1d20\+(\d+)\]\]))?/i.exec(String(html ?? ""));
+    return { uuid: linked[1], name: linked[2], ...(own ? { dc: Number(own[1]), ...(own[2] ?? own[3] ? { attack: Number(own[2] ?? own[3]) } : {}) } : {}) };
+}

@@ -14,12 +14,12 @@
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
    "builtin:no-effect": 100,
-   "note-only": 185,
+   "note-only": 184,
    "builtin:reroll": 25,
    "builtin:teleport": 7,
    "builtin:pf2e-rules": 26,
    "builtin:zone": 23,
-   "builtin:table": 4,
+   "builtin:table": 5,
    "builtin:modes": 32,
    "builtin:conjure": 13,
    "builtin:item-action": 23,
@@ -31,7 +31,7 @@
   "live": {
    "save": 435,
    "cast": 471,
-   "item": 588,
+   "item": 587,
    "none": 731,
    "focus": 45,
    "counteract": 25,
@@ -40,7 +40,7 @@
    "strike": 88,
    "teleport": 7,
    "zone": 23,
-   "table": 4,
+   "table": 5,
    "toggle": 32,
    "conjure": 13,
    "action": 23,
@@ -64,17 +64,17 @@
     "builtin:counteract": 21,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
-    "note-only": 131,
+    "note-only": 130,
     "builtin:reroll": 17,
     "builtin:teleport": 4,
     "builtin:zone": 11,
     "builtin:conjure": 13,
+    "builtin:table": 2,
     "builtin:modes": 16,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
     "builtin:ways": 5,
-    "builtin:item-action": 11,
-    "builtin:table": 1
+    "builtin:item-action": 11
    }
   },
   "weapon": {
@@ -3475,9 +3475,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:table",
+   "kind": null,
+   "live": "table"
   },
   {
    "name": "Bravery Baldric (Haste)",

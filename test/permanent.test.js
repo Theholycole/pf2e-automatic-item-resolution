@@ -765,3 +765,9 @@ test("a roll on its own table (Madcap Top's d20, Pistol of Wonder's d%): each ro
     const [shot] = compileActivations(item("Pistol of Wonder"), { spells });
     assert.deepEqual([shot.plan.table.die, rowFor(shot.plan.table, 6).plan.spell.name, rowFor(shot.plan.table, 6).plan.rank, rowFor(shot.plan.table, 51).plan.dc], ["1d100", "Rewrite Memory", 6, 29]);
 });
+
+test("a roll on a RollTable it links (Rod of Wonder): the table card draws from PF2e's own table at its DC 27 and +17 spell attack, the row drawn compiled then", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const [wave] = compileActivations(item("Rod of Wonder"));
+    assert.deepEqual([routeOf(wave.plan), wave.plan.table], ["table", { uuid: "Compendium.pf2e.rollable-tables.RollTable.uYDzWM5ji52r4mSD", name: "Rod of Wonder", rows: [], dc: 27, attack: 17 }]);
+});

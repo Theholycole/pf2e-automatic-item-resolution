@@ -247,7 +247,8 @@ const APPLY = {
     toggle: (message, choices) => applyToggleCard(message, choices),
     ways: (message, choices) => applyWaysCard(message, choices, postCardFor),
     teleport: (message, choices) => applyTeleportCard(message, choices),
-    table: (message, choices) => applyTableCard(message, choices, postCardFor),
+    // (A RollTable's row drawn: compiled as the item's use, a consumable's of that text.)
+    table: (message, choices) => applyTableCard(message, choices, postCardFor, (html) => compile?.({ name: stateOf(message)?.item?.name ?? "Table", type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null),
     item: (message, choices) => applyCard(message, choices)
 };
 const applyByKind = (message, state, choices) => APPLY[state.kind](message, choices);
