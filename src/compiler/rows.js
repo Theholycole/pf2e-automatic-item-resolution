@@ -853,13 +853,16 @@ export function ownRow(item, { healing = true } = {}) {
     // (A banner's ally, the creature the presser targets — src/compiler/consumables.js grantsOthers: Zealous Banner's "An ally within
     // the banner's aura becomes Quickened for 1 round".)
     // (A second use after the first, a candy's "Secondary Effect" once it's swallowed or bitten: the first read, the second a note.)
-    const split = /<strong>\s*Secondary Effect\s*<\/strong>|\bSecondary Effect\b/i.exec(html);
-    const secondary = split ? plainText(html.slice(split.index)).trim() : null;
-    const text = plainText(split ? html.slice(0, split.index) : html).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ")
+    // (Its Frequency, Trigger, Requirements and Cost lines ended where their paragraphs end — "once per day;" — so a block with no Effect
+    // heading, a Magic+ statblock's, doesn't lose its effect's first sentence with them.)
+    const ended = String(html ?? "").replace(/(<strong>\s*(?:Frequency|Trigger|Requirements?|Cost)\s*<\/strong>[^<]*?)\s*[;,]?\s*(<\/p>)/gi, (all, field, end) => (/[.!?]$/.test(field.trim()) ? all : `${field.trim()}.${end}`));
+    const split = /<strong>\s*Secondary Effect\s*<\/strong>|\bSecondary Effect\b/i.exec(ended);
+    const secondary = split ? plainText(ended.slice(split.index)).trim() : null;
+    const text = plainText(split ? ended.slice(0, split.index) : ended).replace(/\bWhen you feed your (?:animal companion|familiar|mount)[^,]*, it(?:'s| is| becomes) /gi, "You are ")
         .replace(/\bAn? (?:ally|creature) within (?:the|your) banner's aura becomes\b/gi, "You become")
         // (The ally its trigger names, Admirer's Bouquet's "The triggering ally gains …": the row for the creature the presser targets.)
         .replace(/\bThe triggering ally gains\b/g, "You gain")
-        .replace(/\bTrigger You would take ((?:\w+, )*\w+,? or \w+) damage\s+Effect (You gain resistance \d+ to the) triggering (damage type\b[^.]*\.)/i, "Effect $2 chosen $3 Choose $1.")
+        .replace(/\bTrigger You would take ((?:\w+, )*\w+,? or \w+) damage\.?\s+Effect (You gain resistance \d+ to the) triggering (damage type\b[^.]*\.)/i, "Effect $2 chosen $3 Choose $1.")
         .replace(WHEN_CLAUSES, " ").replace(/^\s*Activat(?:e|ion)\b[^.]*?\bEffect\s+/i, "").replace(/\bEffect\s+/g, "").replace(/\s+/g, " ");
     // (Its Activate line up to its Effect gone first, or its Requirements run into the first sentence: Essence Forge's "… Requirements The
     // essence forge contains essence You absorb the essence …".)

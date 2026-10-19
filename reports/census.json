@@ -14374,7 +14374,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "Secondary Effect Requirements You're fatigued Effect Ignore the effects of the fatigued condition for 10 minutes. The drop's other effects end for you, and when the 10 minutes are up, you're temporarily immune to scholar's drops for 1 hour. If you use this effect three times in a single day, you become temporarily immune to scholar's drops entirely until you get a full night's rest."
+    "Secondary Effect Requirements You're fatigued. Effect Ignore the effects of the fatigued condition for 10 minutes. The drop's other effects end for you, and when the 10 minutes are up, you're temporarily immune to scholar's drops for 1 hour. If you use this effect three times in a single day, you become temporarily immune to scholar's drops entirely until you get a full night's rest."
    ],
    "live": "item"
   },

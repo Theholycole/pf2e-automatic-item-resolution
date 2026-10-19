@@ -95,6 +95,8 @@ test("a spell slot an activation costs (the module's own wording): the lowest sl
     // The same whatever the slot: the lowest left.
     const [ward] = compileActivations(scepter(`${head("Steel Ward", 2)}<p>A steel sheen covers you, and you gain a +1 status bonus to AC for 1 minute.</p>`));
     assert.deepEqual(ward.plan.spend, { spellSlot: { min: 2 } });
+    // (Its effect read whole: with no Effect heading, its Frequency line ends at its paragraph.)
+    assert.deepEqual(ward.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["ac", 1, "status"]]);
     const caster = foundry.makeActor({ id: "ways-caster", name: "Slot Caster", owners: ["player"] });
     foundry.place(caster, 300, 19500);
     const entry = (id, kind, slots) => ({ id, type: "spellcastingEntry", name: `${kind} spells`, system: { prepared: { value: kind, flexible: false }, slots }, updates: [], async update(changes) { this.updates.push(changes); for (const [key, value] of Object.entries(changes)) { const parts = key.split("."); let at = this; for (const part of parts.slice(0, -1)) at = at[part]; at[parts.at(-1)] = structuredClone(value); } return this; } });
