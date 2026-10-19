@@ -39,7 +39,7 @@ import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.j
 import { withHitDelivery } from "./hit-delivery.js";
 import { withoutFlavor, withoutLater } from "./flavor.js";
 import { optionPlan } from "./option-on.js";
-import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan } from "./covered-square.js";
+import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
 import { readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
@@ -280,6 +280,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = coveredSquarePlan(activation.html, base, item, options) ?? plan;
         // (Walls it raises, with a save in their space, src/compiler/covered-square.js: Alkenstar Phalanx — over the save read alone.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = raisedWallsPlan(activation.html, base, item, options) ?? plan;
+        // (Smoke sprayed into an adjacent square, src/compiler/covered-square.js: Beekeeper's Smoker.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = sprayedSmokePlan(activation.html, base) ?? plan;
         // (An area of stalagmites it raises for a while, src/compiler/covered-square.js: Stoneraiser Javelin.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = raisedAreaPlan(activation.html, base, item, options) ?? plan;
         // (A save or a result no row holds — death, a push, a pull to its user — src/compiler/save-or.js: Vorpal, Hauling.)
@@ -304,6 +306,8 @@ function compileEach(item, options = {}) {
         // (A skill its user picked when the item was made, named in the item's own text, src/compiler/skill-pick.js: Words of Wisdom's
         // phrase — the card's picker; what it reads off the unread list, and the plan whole again when that was all.)
         const skillPick = skillPickOf(plainText(html), plainText(activation.html), plan);
+        // (A note alone, when the pick is all it does — Stone of Unrivaled Skill: the item card's own row, its Effect the pick's.)
+        if (skillPick?.any && (!plan || plan.noteOnly)) plan = { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } } };
         if (skillPick) {
             const unread = (plan.unread ?? []).filter((sentence) => !pickedSentence(sentence));
             const whole = !unread.length;

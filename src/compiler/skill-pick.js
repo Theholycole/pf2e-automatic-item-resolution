@@ -10,8 +10,14 @@ const CHOICE = /\bchoose whether the phrase is of ([^.]+)\./i;
 const ASSOCIATED = /\bchecks of the skill associated with your phrase\b/i;
 const DEGREE = /\bWhen you roll a critical failure on an? (\w+) check or the associated skill during this time, you get a failure instead\b/i;
 
+// (Or any skill, chosen with the item's bargain, Stone of Unrivaled Skill's "For the next 10 minutes, you gain a +3 status bonus to skill checks
+// using the skill you chose for your contract": the card's picker of every skill, its bonus and time from those words.)
+const CONTRACT = /\bFor the next (\d+) (minutes?|rounds?|hours?), you gain an? \+(\d+) (status|item|circumstance) bonus to skill checks using the skill you chose for your [\w ]+?\./i;
+
 // The item's text and its activation's (plain), and the activation's plan → { skills, modifier, duration, degree? } or null.
 export function skillPickOf(itemText, activationText, plan) {
+    const contract = CONTRACT.exec(String(activationText ?? ""));
+    if (contract) return { skills: [...SKILLS], modifier: { value: Number(contract[3]), type: contract[4].toLowerCase() }, duration: { mode: "fixed", value: Number(contract[1]), unit: contract[2].toLowerCase().replace(/s?$/, "s"), expiry: "turn-start" }, any: true };
     const choice = CHOICE.exec(String(itemText ?? ""));
     if (!choice || !ASSOCIATED.test(String(activationText ?? ""))) return null;
     const skills = [...choice[1].matchAll(/\((\w+)\)/g)].map((match) => match[1].toLowerCase()).filter((skill) => SKILLS.includes(skill));
@@ -22,7 +28,7 @@ export function skillPickOf(itemText, activationText, plan) {
 }
 
 // The sentences it reads, off the plan's unread list.
-export const pickedSentence = (sentence) => ASSOCIATED.test(sentence) || DEGREE.test(sentence);
+export const pickedSentence = (sentence) => ASSOCIATED.test(sentence) || DEGREE.test(sentence) || CONTRACT.test(sentence);
 
 // Its Effect's rules for the skill picked: the bonus on that skill, the better degree on it and on the activation's own skill.
 export function skillPickRules(pick, index = 0, label = null) {

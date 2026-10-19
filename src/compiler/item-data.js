@@ -281,6 +281,20 @@ export function withItemData(html, item) {
     // (A named state that is a penalty, Pacifying's "The damaged creature must succeed at a @Check[will|dc:20] save or be pacified. A pacified
     // creature takes a –2 penalty to attack rolls on any attacks that aren't nonlethal for 1 minute": the penalty, the save's failure.)
     text = text.replace(/\b(?:The|the) damaged creature must succeed at an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save or be (\w+)\. An? \2 creature takes an? ([–-]\d+) penalty to attack rolls on any attacks that aren't nonlethal for (\d+ (?:rounds?|minutes?))(?:,\s*and (\w))?/, (all, check, state, value, time, next) => `The target must succeed at a ${check} save or take a ${value} penalty to attack rolls for ${time}. Its nonlethal attacks don't take that penalty (by hand).${next ? ` ${next.toUpperCase()}` : ""}`);
+    // (A roll's dice in braces, Mirror Robe's "[[/r {1d20+9} #Mirror Robe Deception]]{+9}": the roll as PF2e writes it elsewhere.)
+    text = text.replace(/\[\[\/(\w+) \{(1d20\s*[+-]\s*\d+)\}/g, "[[/$1 $2");
+    // (An action the item takes for its user at its own modifier, Mirror Robe's "The mirror robe Creates a Diversion for you with a +9 Deception
+    // modifier": the own-check reader's "attempts to Create a Diversion with a +9 modifier".)
+    text = text.replace(/\b(The (?:<em>)?[\w' -]+?(?:<\/em>)?) Creates a Diversion for you with an? \[\[\/r 1d20\s*\+\s*(\d+)[^\]]*\]\](?:\{[^}]*\})? Deception modifier/, (all, who, modifier) => `${who} attempts to Create a Diversion for you with a +${modifier} modifier`);
+    // (A spell its armor wraps it in, Smoldering Armor's "The armor is sheathed in a Fire Shield": the spell's effects on its wearer.)
+    text = text.replace(/\bThe (?:<em>)?[\w' -]+?(?:<\/em>)? is sheathed in an? (@UUID\[Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+\]\{[^}]+\})/, "You gain the effects of $1");
+    // (A command to drop Prone, Deravon's Helm's "The targeted creature must make a @Check[will|dc:18] save to resist being compelled to drop
+    // Prone as its first action on their next turn (on a critical failure, the target must spend all three actions on its next turn
+    // remaining prone)": the save or Prone, its turn's words for the GM.)
+    text = text.replace(/\bThe targeted creature must make an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save to resist being compelled to drop (?:@UUID\[[^\]]*\]\{)?Prone\}? as its first action on their next turn \(on a critical failure, ([^)]*)\)\.(?:\s*(If the target is an? \w+, they take an? [–-]\d+ status penalty to the save)\.)?/i, (all, check, critical, kind) => `The target must succeed at a ${check} save or fall Prone. It drops prone as its first action on its next turn; on a critical failure, ${critical} (by hand).${kind ? ` ${kind} (by hand).` : ""}`);
+    // (Its wielder's next attack rolled twice in the weapon's own words, Aerekostes's "On the next attack made using Aerekostes before the end
+    // of their next turn, their wielder rolls twice and takes the better result": the user's, as the roll-twice reader takes it.)
+    text = text.replace(/\bOn the next attack made using (?:<em>)?[\w' -]+?(?:<\/em>)? before the end of their next turn, their wielder rolls twice and takes the better result\./i, "You roll your next attack roll with it twice and take the better result. Only an attack before the end of your next turn.");
     // (Damage as many as the weapon's damage dice, Scizore of the Crab's "dealing slashing damage equal to the scizore of the crab's number
     // of damage dice": that number — its die count and striking rune — at the creature it holds.)
     if (item?.type === "weapon") text = text.replace(/,?\s*dealing (\w+) damage equal to the (?:<em>)?[\w' -]+?(?:<\/em>)?(?: )?'s number of damage dice\./i, (all, type) => `. The target takes @Damage[${weaponDice(item)}[${type.toLowerCase()}]] damage.`);

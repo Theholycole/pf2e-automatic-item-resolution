@@ -6,37 +6,37 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 738,
+   "resolves": 742,
    "builtin:cast-spell": 470,
-   "none": 641,
-   "partial": 169,
+   "none": 636,
+   "partial": 170,
    "builtin:focus-point": 45,
    "builtin:no-effect": 118,
    "builtin:readied-bonus": 44,
-   "note-only": 202,
+   "note-only": 200,
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
-   "builtin:zone": 22,
+   "builtin:zone": 23,
    "builtin:modes": 32,
    "builtin:conjure": 12,
    "builtin:item-action": 22,
-   "builtin:roll-twice": 10,
+   "builtin:roll-twice": 11,
    "builtin:save-bonus": 3,
    "builtin:spellstrike": 9,
    "builtin:ways": 1
   },
   "live": {
-   "save": 430,
+   "save": 432,
    "cast": 470,
-   "item": 584,
-   "none": 788,
+   "item": 585,
+   "none": 783,
    "focus": 45,
-   "fortune": 54,
+   "fortune": 55,
    "reroll": 25,
    "strike": 87,
    "counteract": 6,
-   "zone": 22,
+   "zone": 23,
    "toggle": 32,
    "conjure": 12,
    "action": 22,
@@ -52,16 +52,16 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 450,
+    "resolves": 453,
     "builtin:cast-spell": 341,
-    "none": 429,
-    "partial": 78,
+    "none": 426,
+    "partial": 79,
     "builtin:focus-point": 43,
     "builtin:no-effect": 96,
     "builtin:readied-bonus": 33,
-    "note-only": 140,
+    "note-only": 138,
     "builtin:reroll": 17,
-    "builtin:zone": 10,
+    "builtin:zone": 11,
     "builtin:conjure": 12,
     "builtin:modes": 16,
     "builtin:roll-twice": 7,
@@ -75,7 +75,7 @@
    "activations": 460,
    "results": {
     "resolves": 156,
-    "none": 103,
+    "none": 102,
     "partial": 43,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
@@ -85,7 +85,7 @@
     "builtin:zone": 6,
     "builtin:no-effect": 12,
     "builtin:readied-bonus": 7,
-    "builtin:roll-twice": 1,
+    "builtin:roll-twice": 2,
     "builtin:save-bonus": 1
    }
   },
@@ -115,9 +115,9 @@
    "results": {
     "builtin:cast-spell": 34,
     "note-only": 17,
-    "resolves": 56,
+    "resolves": 57,
     "builtin:counteract": 1,
-    "none": 27,
+    "none": 26,
     "builtin:zone": 4,
     "builtin:no-effect": 5,
     "builtin:reroll": 3,
@@ -16325,9 +16325,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Transposition Ammunition",
@@ -16722,9 +16722,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Mirror Robe",
@@ -18067,9 +18067,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Aerekostes",
@@ -21279,9 +21279,9 @@
    "time": "2",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Heart of Sarnax",
@@ -22340,9 +22340,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Ash Gown",
@@ -23513,9 +23513,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Smoldering Armor",
@@ -24032,7 +24032,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },

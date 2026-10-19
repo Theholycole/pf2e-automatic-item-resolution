@@ -149,7 +149,7 @@ export function pf2eRoll(item) {
 // "you gain the effects of a 2nd-rank Oaken Resilience for 10 minutes", "grants you the effects of Haste for 1 minute":
 // the spell, its rank and the time the item gives. [{ spell: { uuid, name }, rank, duration }]
 const ORDINAL_RANK = String.raw`(\d+)(?:st|nd|rd|th)[- ](?:rank|level)`;
-const GRANTS_SPELL = new RegExp(String.raw`\b(?:gains?|grants? you|gives? you|has|have|receives?) the (?:same )?(?:effects?|benefits?) of (?:an? |the )?(?:${ORDINAL_RANK} )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]*)\}(?: spell)?(?: for (\d+|one|an?) (rounds?|minutes?|hours?|days?))?`, "gi");
+const GRANTS_SPELL = new RegExp(String.raw`\b(?:gains?|grants? you|granting you|gives? you|has|have|receives?) the (?:same )?(?:effects?|benefits?) of (?:an? |the )?(?:${ORDINAL_RANK} )?@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]*)\}(?: spell)?(?: for (\d+|one|an?) (rounds?|minutes?|hours?|days?))?`, "gi");
 const COUNT = { one: 1, a: 1, an: 1 };
 const UNIT = (unit) => (/^round/i.test(unit) ? "rounds" : /^minute/i.test(unit) ? "minutes" : /^hour/i.test(unit) ? "hours" : "days");
 

@@ -9,7 +9,8 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { ACTION_SLUGS } from "./item-actions.js";
 import { riderRow } from "./bombs.js";
 
-const MANEUVERS = ["grapple", "shove", "trip", "disarm", "reposition", "demoralize", "feint"];
+// (And Create a Diversion, Mirror Robe's "for you with a +9 Deception modifier" as src/compiler/item-data.js words it.)
+const MANEUVERS = ["grapple", "shove", "trip", "disarm", "reposition", "demoralize", "feint", "create a diversion"];
 const NAMES = MANEUVERS.join("|");
 const OWN_MANEUVER = new RegExp(String.raw`\b(?:attempts?|attempt another check) to (${NAMES})\b[^.]*?\bwith an? \+(\d+) (?:bonus|modifier)\b|\b(${NAMES})\b[^.]*?\busing [^.]*?\b(?:Athletics|Acrobatics|Intimidation|Deception) modifier of \+(\d+)`, "i");
 const TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void|bleed";

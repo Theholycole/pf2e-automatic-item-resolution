@@ -280,6 +280,44 @@ export function belchedCloudPlan(html, base) {
     };
 }
 
+// Smoke its user sprays into an adjacent square, Beekeeper's Smoker's "You expel smoke into an adjacent 5-foot square. All creatures in that
+// area are Concealed, and other creatures are concealed to them. The smoke lasts for 1d4 rounds or until dispersed by strong wind": the
+// ability module's zone, that square placed next to its user, Concealed inside; its 1d4 rounds the GM's (rolled and ended by hand).
+const SPRAYED = /\bYou expel smoke into an adjacent 5-foot square\.\s*All creatures in that area are (?:@UUID\[[^\]]*\]\{)?Concealed\}?, and other creatures are concealed to them\.\s*The smoke lasts for (?:\[\[\/\w+ (\d+d\d+) #rounds\]\]\{[^}]*\}|(\d+) rounds?)/i;
+export function sprayedSmokePlan(html, base) {
+    const text = String(html ?? "");
+    const sprayed = SPRAYED.exec(text);
+    if (!sprayed) return null;
+    const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const lit = /\bfills with smoke for (\d+) minutes, during which time you can squeeze the trigger to spray smoke\b/i.exec(plain);
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "square", value: 5 },
+            centre: "placed",
+            range: 5,
+            lasts: sprayed[2] ? { mode: "fixed", value: Number(sprayed[2]), unit: "rounds", expiry: "turn-start", anchor: "effect-start" } : null,
+            untilReused: false,
+            concealed: true,
+            terrain: [],
+            others: false,
+            hazard: null,
+            saves: [],
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes: [
+                "Everyone outside it is concealed to those inside.",
+                ...(sprayed[1] ? [`It lasts ${sprayed[1]} rounds: roll them and remove it by hand.`] : []),
+                ...(/\bdispersed by (?:a )?strong wind\b/i.test(plain) ? ["A strong wind disperses it."] : []),
+                ...(lit ? [`Lit, it can spray once a minute for ${lit[1]} minutes (each spray placed by its own activation).`] : [])
+            ]
+        }
+    };
+}
+
 // A square its user fills with something that harms only some creatures: Sanctified Beans' "choose an adjacent square to exhale into. You
 // fill that square with soothing vapors that harm any fiend, fey, ghost, spirit, or undead creature that ends their turn in that square for
 // the next minute, causing them to take @Damage[(4d8+4)[spirit]] damage (@Check[will|dc:28|basic] save). An incorporeal creature that takes

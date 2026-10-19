@@ -4093,6 +4093,61 @@ export const cases = {
         const resolution = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution;
         assert(resolution.sharedDamage.components[0].formula === "25d6[fire]" && resolution.check.basic && resolution.check.against.value === 40, `25d6 fire, basic DC 40 (${JSON.stringify(resolution.sharedDamage.components)})`);
         return { formula: resolution.sharedDamage.components[0].formula };
+    },
+
+    // Mirror Robe: the robe Creates a Diversion for its user at its own +9 Deception against the target's Perception DC.
+    async mirrorDiversion(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Robe Wearer", { type: "character", x: 3, y: 19 });
+        const { token: foe } = await creature(scene, "Robe Watcher", { x: 5, y: 19, alliance: "opposition" });
+        const robe = await give(user, "Mirror Robe");
+        await until(() => userToken.object && foe.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(robe.uuid, 0);
+        const posted = await messageAfter(since, itemCard("expose"), { what: "the robe's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(posted.id, { targets: [foe.uuid] });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the diversion's card" });
+        const read = check.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(read.statistic === "deception" && read.modifier === 9 && read.against?.statistic === "perception", `Deception +9 against Perception (${JSON.stringify(read)})`);
+        return { check: check.id };
+    },
+
+    // Stone of Unrivaled Skill: Stealth picked on the card (any skill) — its +3 status bonus for 10 minutes.
+    async unrivaledSkill(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Stone Taster", { type: "character", x: 7, y: 19 });
+        const stone = await give(user, "Stone of Unrivaled Skill");
+        await userToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(stone.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the stone's card" });
+        const skills = card.getFlag(NS, "card").plan.item.skillPick.skills;
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, skillPick: skills.indexOf("stealth") });
+        const rule = () => user.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((entry) => entry.key === "FlatModifier" && [].concat(entry.selector).includes("stealth"));
+        await until(() => rule(), "Stealth's bonus", { timeout: 8000 });
+        assert(Number(rule().value) === 3 && rule().type === "status", `+3 status to Stealth (${JSON.stringify(rule())})`);
+        return { rule: rule() };
+    },
+
+    // Beekeeper's Smoker: its smoke placed in a square next to its user (the click stood in for), Concealed inside.
+    async smokerSquare(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Bee Keeper", { type: "character", x: 11, y: 19 });
+        const smoker = await give(user, "Beekeeper's Smoker");
+        await until(() => userToken.object, "the token drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const smoke = () => scene.regions.find((entry) => entry.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Beekeeper's Smoker/.test(entry.name));
+        try {
+            await game.modules.get(NS).api.live.activate(smoker.uuid, 0);
+            await until(() => smoke(), "the smoke's Region", { timeout: 8000 });
+            const zone = smoke().flags["pf2e-automatic-ability-resolution"].zone.zone;
+            assert(zone.concealed && zone.area?.type === "square", `a concealing square (${JSON.stringify(zone.area)})`);
+            return { region: smoke().name };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await smoke()?.delete().catch(() => null);
+        }
     }
 };
 

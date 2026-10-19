@@ -623,3 +623,23 @@ test("an artifact's Destruction isn't its activation's (Spleen Bloodstone of Ara
     assert.deepEqual([pacifying.plan.resolution.check.statistic, pacifying.plan.resolution.outcomes.failure.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.value, modifier.duration.unit])], ["will", [["attack-roll", -2, 1, "minutes"]]]);
     assert.deepEqual(pacifying.plan.notes, ["Its nonlethal attacks don't take that penalty (by hand)."]);
 });
+
+test("more one-offs: Aerekostes's next attack rolled twice, Anointed Waterskin's Bless, Mirror Robe's Create a Diversion at +9, Beekeeper's Smoker's concealing square, Deravon's Helm's save or Prone, Smoldering Armor's Fire Shield, Stone of Unrivaled Skill's +3 to any skill picked", async () => {
+    const [forward] = compileActivations(item("Aerekostes"), { spellEffects });
+    assert.deepEqual([forward.plan.builtin, forward.plan.rollTwice.selector, forward.plan.rollTwice.keep], ["roll-twice", "attack-roll", "higher"]);
+    const [, , sip] = compileActivations(item("Anointed Waterskin"), { spellEffects });
+    assert.equal(sip.plan.resolution.applications[0].label, "Spell Effect: Bless");
+    const { compileBasicActions, BASIC_ACTIONS } = await import("../../pf2e-automatic-ability-resolution/src/compiler/index.js");
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    const [robe] = compileActivations(item("Mirror Robe"), { spellEffects, basicActions });
+    assert.deepEqual([robe.plan.resolution.check.statistic, robe.plan.resolution.check.modifier, robe.plan.resolution.check.against.statistic], ["deception", 9, "perception"]);
+    const [smoker] = compileActivations(item("Beekeeper's Smoker"), { spellEffects });
+    assert.deepEqual([smoker.plan.builtin, smoker.plan.zone.area, smoker.plan.zone.centre, smoker.plan.zone.concealed, smoker.plan.zone.lasts], ["zone", { type: "square", value: 5 }, "placed", true, null]);
+    assert.ok(smoker.plan.zone.notes.includes("It lasts 1d4 rounds: roll them and remove it by hand."));
+    const [helm] = compileActivations(item("Deravon's Helm"), { spellEffects });
+    assert.deepEqual([helm.plan.resolution.check.statistic, helm.plan.resolution.outcomes.failure.effects.map((effect) => effect.slug)], ["will", ["prone"]]);
+    const [armor] = compileActivations(item("Smoldering Armor"), { spellEffects });
+    assert.equal(armor.plan.resolution.applications[0].label, "Spell Effect: Fire Shield");
+    const [stone] = compileActivations(item("Stone of Unrivaled Skill"), { spellEffects });
+    assert.deepEqual([stone.plan.item.skillPick.skills.length, stone.plan.item.skillPick.modifier, stone.plan.item.skillPick.duration.value], [16, { value: 3, type: "status" }, 10]);
+});

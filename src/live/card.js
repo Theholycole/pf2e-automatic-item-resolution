@@ -345,7 +345,8 @@ export function fastHealingEffectSource(healing, { item = {}, user = {}, worldTi
 // A picked skill's bonus in words: "+1 item to the skill picked (intimidation, deception or performance), and a critical failure
 // on it or diplomacy becomes a failure, for 1 minute".
 export function skillPickText(pick) {
-    const list = `${pick.skills.slice(0, -1).join(", ")} or ${pick.skills.at(-1)}`;
+    // (Any skill, Stone of Unrivaled Skill's contract skill: "any skill".)
+    const list = pick.any ? "any skill" : `${pick.skills.slice(0, -1).join(", ")} or ${pick.skills.at(-1)}`;
     return `${pick.modifier.value > 0 ? "+" : "−"}${Math.abs(pick.modifier.value)} ${pick.modifier.type} to the skill picked (${list})${pick.degree ? `, and a critical failure on it or ${pick.degree.selectors.join(" or ")} becomes a failure` : ""}${forTime(pick.duration)}`;
 }
 
