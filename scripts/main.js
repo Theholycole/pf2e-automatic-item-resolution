@@ -14,6 +14,7 @@ import { setUpGenericItems } from "./generic-items.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
+import { registerItemDCSettings } from "./item-dcs.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -58,7 +59,10 @@ const compile = (item) => compileItem(dataOf(item), options());
 const handles = (item) => handlesItem(dataOf(item), { claims });
 
 // Its settings: Hero Points for the Mythic Points items cost (scripts/spend.js).
-Hooks.once("init", () => registerSpendSettings());
+Hooks.once("init", () => {
+    registerSpendSettings();
+    registerItemDCSettings();
+});
 
 // Registered when the script loads, so the order modules load in doesn't matter.
 Hooks.once("pf2eResolutionCoreReady", (core) => {

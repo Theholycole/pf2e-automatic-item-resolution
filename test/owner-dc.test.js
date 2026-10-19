@@ -79,3 +79,35 @@ test("live: the card's save is at the owner's DC; with no DC of theirs, the GM i
     const told = foundry.messages[foundry.messages.indexOf(none) + 1];
     assert.match(told.content, /has neither\. Roll it by hand/);
 });
+
+test("the world setting for item DCs: each save others attempt against the item's own DC, and a cast's DC, at its user's class or spell DC when higher — a note saying so — never a flat check, nor a DC already higher", async () => {
+    const { raiseItemDCs } = await import("../src/compiler/item-data.js");
+    const plan = { resolution: { kind: "save", check: { roll: "save", statistic: "reflex", against: { dc: "fixed", value: 18 } } }, strike: { save: { resolution: { check: { roll: "save", against: { dc: "fixed", value: 25 } } } } }, flat: { check: { roll: "flat", against: { dc: "fixed", value: 5 } } } };
+    const { plan: raised, raised: changes } = raiseItemDCs(plan, { class: 22, spell: 20 });
+    assert.deepEqual([raised.resolution.check.against.value, raised.strike.save.resolution.check.against.value, raised.flat.check.against.value, changes], [22, 25, 5, [{ from: 18, to: 22, which: "class" }]]);
+    assert.deepEqual(raised.notes, ["Its DC is 22, its user's class DC, over the item's own 18 (the world setting)."]);
+    const cast = raiseItemDCs({ builtin: "cast-spell", dc: 19, choices: [{ dc: 19 }, { dc: null }] }, { spell: 24 }).plan;
+    assert.deepEqual([cast.dc, cast.choices.map((choice) => choice.dc)], [24, [24, null]]);
+    assert.equal(raiseItemDCs(plan, {}).plan, plan, "no DC of its user's: the same plan");
+});
+
+test("live, the setting on: Spark Wafer's DC 14 Reflex save posted at its user's spell DC 27; off, the item's 14", async () => {
+    const use = async (actor, id) => {
+        const item = foundry.giveItem(actor, { ...source("Spark Wafer"), _id: id });
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: null, type: "consumable" } } }, speaker: { actor: actor.id }, actor, token: actor.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        return foundry.messages[foundry.messages.indexOf(message) + 1];
+    };
+    const settings = globalThis.game.settings;
+    globalThis.game.settings = { get: (module, key) => module === MODULE_ID && key === "itemDCsFromUser" };
+    try {
+        const card = await use(reader, "ownerWafer000001");
+        assert.equal(card.flags[MODULE_ID].card.plan.resolution.check.against.value, 27);
+        assert.ok(card.flags[MODULE_ID].card.plan.notes.some((note) => /its user's spell DC, over the item's own 14/.test(note)));
+    } finally {
+        globalThis.game.settings = settings;
+    }
+    const off = await use(reader, "ownerWafer000002");
+    assert.equal(off.flags[MODULE_ID].card.plan.resolution.check.against.value, 14);
+});

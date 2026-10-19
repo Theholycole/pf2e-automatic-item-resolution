@@ -9,6 +9,7 @@ import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { onlyHarms } from "../src/compiler/pf2e-rules.js";
 import { bombCardHTML, createBombCard, riderRow, saveFor, splashText, withChoices } from "../src/live/bomb-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
+import { withUserDCs } from "./item-dcs.js";
 
 // Whether the creature hit takes a gated rider: "void-healing" (undead, or a creature with void healing), "living" (not undead nor
 // a construct).
@@ -98,7 +99,8 @@ export async function cardForBomb(message, { claims = null } = {}) {
     if (context?.type !== "damage-roll" || message.flags?.[MODULE_ID] || !DEGREES.has(context.outcome)) return;
     const data = await bombOf(message.flags.pf2e.origin);
     if (!isBomb(data)) return cardForSplash(message, context, data, { claims });
-    const plan = compileBomb(data);
+    // (Its saves' DCs its thrower's class or spell DC when higher, under the world setting: scripts/item-dcs.js.)
+    const plan = withUserDCs(compileBomb(data), message.actor, data.system?.description?.value ?? "");
     if (!plan) return;
     const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;
     const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;

@@ -5660,6 +5660,35 @@ export const cases = {
         return { outcome };
     },
 
+    // The "Item DCs from their user" world setting: a level-8 NPC with a spellcasting entry (spell DC 26, over its class DC 24) posts Spark
+    // Wafer's Reflex save at 26 (the wafer's own is 14), with the card's note; the setting off, the wafer's own 14. The setting is put back
+    // as it was.
+    async itemDCsFromUser(scene) {
+        const before = game.settings.get(NS, "itemDCsFromUser");
+        const { actor: user } = await creature(scene, "DC Caster", { x: 20, y: 12, level: 8 });
+        await user.createEmbeddedDocuments("Item", [{ name: "Arcane Innate Spells", type: "spellcastingEntry", system: { spelldc: { value: 16, dc: 26 }, tradition: { value: "arcane" }, prepared: { value: "innate" } } }]);
+        await until(() => Number(user.system.attributes.spellDC?.value) === 26, `its spell DC 26 (${user.system.attributes.spellDC?.value})`, { timeout: 8000 });
+        const spellDC = 26;
+        const wafer = async () => {
+            const item = await give(user, "Spark Wafer");
+            const since = Date.now();
+            await item.consume();
+            return messageAfter(since, itemCard("expose"), { what: "the wafer's card" });
+        };
+        try {
+            await game.settings.set(NS, "itemDCsFromUser", true);
+            const raised = (await wafer()).getFlag(NS, "card").plan;
+            assert(raised.resolution.check.against.value === spellDC, `at the spell DC ${spellDC} (${raised.resolution.check.against.value})`);
+            assert((raised.notes ?? []).some((note) => note.includes(`Its DC is ${spellDC}, its user's spell DC, over the item's own 14`)), `its note (${JSON.stringify(raised.notes)})`);
+            await game.settings.set(NS, "itemDCsFromUser", false);
+            const own = (await wafer()).getFlag(NS, "card").plan;
+            assert(own.resolution.check.against.value === 14, `the wafer's own 14 with the setting off (${own.resolution.check.against.value})`);
+        } finally {
+            await game.settings.set(NS, "itemDCsFromUser", before);
+        }
+        return { spellDC, classDC: user.system.attributes.classDC?.value ?? null };
+    },
+
     // Psychic Warding Bracelet: its readied +2 item to the next save against a mental effect, kept with no time limit; a Fortitude save
     // doesn't spend it, a Will save against a mental effect gets it and spends it.
     async wardingBracelet(scene) {

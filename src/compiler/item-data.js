@@ -508,6 +508,38 @@ export function ownerDCs(plan) {
     return walk(plan);
 }
 
+// The world setting's DCs (scripts/item-dcs.js, the user's answer of 2026-10-19): each save another creature attempts against the item's
+// own DC — and a cast's DC — raised to its user's class DC or spell DC when that's higher. → { plan, raised: [{ from, to, which }] },
+// the plan with a note saying so. The caller leaves out its user's own saves. Pure.
+export function raiseItemDCs(plan, dcs = {}) {
+    const best = [["class", Number(dcs.class)], ["spell", Number(dcs.spell)]].filter(([, value]) => Number.isFinite(value) && value > 0).sort((a, b) => b[1] - a[1])[0];
+    if (!plan || !best) return { plan, raised: [] };
+    const [which, value] = best;
+    const raised = [];
+    const up = (from) => {
+        if (!Number.isFinite(Number(from)) || Number(from) >= value) return from;
+        raised.push({ from: Number(from), to: value, which });
+        return value;
+    };
+    const walk = (node) => {
+        if (Array.isArray(node)) return node.map(walk);
+        if (!node || typeof node !== "object") return node;
+        const out = Object.fromEntries(Object.entries(node).map(([key, entry]) => [key, walk(entry)]));
+        if (node.roll === "save" && node.against?.dc === "fixed") out.against = { ...out.against, value: up(node.against.value) };
+        return out;
+    };
+    let next = walk(plan);
+    // (A cast's own DC, the spell module's to use, and its choices'.)
+    if (next.builtin === "cast-spell") {
+        if (next.dc !== null && next.dc !== undefined) next = { ...next, dc: up(next.dc) };
+        if (Array.isArray(next.choices)) next = { ...next, choices: next.choices.map((choice) => (choice.dc !== null && choice.dc !== undefined ? { ...choice, dc: up(choice.dc) } : choice)) };
+    }
+    if (!raised.length) return { plan, raised };
+    const froms = [...new Set(raised.map((entry) => entry.from))].sort((a, b) => a - b);
+    const note = `Its DC is ${value}, its user's ${which} DC, over the item's own ${froms.join(" and ")} (the world setting).`;
+    return { plan: { ...next, notes: [...(next.notes ?? []), note] }, raised };
+}
+
 // The plan with each owner's DC filled in from dcs ({ class, spell }: numbers or null): "class-spell" the higher one. The
 // checks it can't fill stay as they are; filled reports whether any was left.
 export function fillOwnerDCs(plan, dcs = {}) {

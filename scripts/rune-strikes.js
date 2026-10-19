@@ -8,6 +8,7 @@
 import { ABILITY_ID, ownerDCsOf } from "./foundry.js";
 import { riderFits } from "../src/compiler/rune-strikes.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
+import { withUserDCs } from "./item-dcs.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -40,7 +41,9 @@ export async function strikeWithRunes(message, ridersOf) {
     for (const rider of riders.filter((entry) => riderFits(entry, creature))) {
         const name = rider.own ? weapon.name : `${weapon.name} (${rider.rune.name})`;
         // (A save against its wielder's class DC, Thundercrasher's: that DC as it is now; without one, by hand.)
-        const filled = hasOwnerDC(rider.plan) ? fillOwnerDCs(rider.plan, ownerDCsOf(actor)) : { plan: rider.plan, missing: false };
+        const owned = hasOwnerDC(rider.plan) ? fillOwnerDCs(rider.plan, ownerDCsOf(actor)) : { plan: rider.plan, missing: false };
+        // (Its DCs its wielder's class or spell DC when higher, under the world setting: scripts/item-dcs.js.)
+        const filled = { ...owned, plan: withUserDCs(owned.plan, actor) };
         if (!postCard || filled.missing) {
             await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: game.users.filter((user) => user.isGM).map((user) => user.id), content: `<p><strong>${escape(name)}</strong>, critical hit on ${escape(target.name)}: ${escape(rider.text)} Apply it by hand${filled.missing ? ` (${escape(actor.name)} has no class DC)` : ""}.</p>` });
             continue;
