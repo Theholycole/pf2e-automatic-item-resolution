@@ -370,8 +370,10 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tattooWaysPlan(activation.html, base, item) ?? plan;
         // (A short teleport for its user, src/compiler/teleport.js: Dweomerveil's Dimension Leap — the space picked on the canvas.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
-        // (A roll on its own table, src/compiler/random-table.js: Madcap Top's d20, Pistol of Wonder's d% — each row's own card.)
-        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tablePlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
+        // (A roll on its own table, src/compiler/random-table.js: Madcap Top's d20, Pistol of Wonder's d% — each row's own card; over any
+        // other reading when its text says the roll decides it — Jabali's Dice's first row's spell Effect isn't its every use.)
+        const rolled = /\b(?:roll|draw)\b[^.]*\b(?:to determine|on the (?:following |[\w' -]+ )?table|chosen randomly)\b/i.test(plainText(activation.html));
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect" || rolled) plan = tablePlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (A breath that's its user's draconic benefactor's: Pact of the Herald and Host — the save picked on the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = benefactorBreathPlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (Effects its user picks one of, listed in a sentence: Heartripper Blade's — the ways card.)

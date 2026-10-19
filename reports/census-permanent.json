@@ -6,7 +6,7 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 752,
+   "resolves": 751,
    "builtin:cast-spell": 471,
    "none": 599,
    "partial": 182,
@@ -16,7 +16,7 @@
    "builtin:no-effect": 100,
    "note-only": 184,
    "builtin:reroll": 25,
-   "builtin:table": 6,
+   "builtin:table": 7,
    "builtin:teleport": 7,
    "builtin:pf2e-rules": 26,
    "builtin:zone": 23,
@@ -31,14 +31,14 @@
   "live": {
    "save": 435,
    "cast": 471,
-   "item": 587,
+   "item": 586,
    "none": 730,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
    "reroll": 25,
    "strike": 88,
-   "table": 6,
+   "table": 7,
    "teleport": 7,
    "zone": 23,
    "toggle": 32,
@@ -56,7 +56,7 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 456,
+    "resolves": 455,
     "builtin:cast-spell": 342,
     "none": 415,
     "partial": 80,
@@ -66,7 +66,7 @@
     "builtin:no-effect": 81,
     "note-only": 130,
     "builtin:reroll": 17,
-    "builtin:table": 3,
+    "builtin:table": 4,
     "builtin:teleport": 4,
     "builtin:zone": 11,
     "builtin:conjure": 13,
@@ -17508,9 +17508,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
+   "result": "builtin:table",
+   "kind": null,
+   "live": "table"
   },
   {
    "name": "Lookout's Spyglass",

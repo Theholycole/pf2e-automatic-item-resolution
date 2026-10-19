@@ -9,7 +9,9 @@
 const TABLE = /<table\b[^>]*>\s*<thead>\s*<tr>\s*<th>\s*(d20|d%|d100|d10|d12|d8|d6|d4)\s*<\/th>[\s\S]*?<\/thead>\s*<tbody>([\s\S]*?)<\/tbody>\s*<\/table>/i;
 // (Or one whose die is its first body row's, its cells in paragraphs: a third-party robe's "[[/r d20]] | Effect" then "1 | …".)
 const BODY_TABLE = /<table\b[^>]*>\s*<tbody>\s*<tr[^>]*>\s*<td[^>]*>\s*(?:<p>)?\s*(?:<strong>)?\s*(?:\[\[\/r\s+)?(d20|d%|d100|d10|d12|d8|d6|d4)(?:\]\])?\s*(?:<\/strong>)?\s*(?:<\/p>)?\s*<\/td>[\s\S]*?<\/tr>([\s\S]*?)<\/tbody>\s*<\/table>/i;
-const ROW = /<tr[^>]*>\s*<td[^>]*>\s*(?:<p>)?\s*(\d+)\s*(?:[-–—]\s*(\d+))?\s*(?:<\/p>)?\s*<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<\/tr>/gi;
+// (Or a table of rows alone, its die said before it: Jabali's Dice's "Roll [[/r 2d6]] to determine the effect" then "2-5 | …".)
+const DIE_SAID = /\bRoll \[\[\/r (\d*d\d+)\]\] to determine the effect\b[^<]*(?:<\/p>)?\s*<table\b[^>]*>\s*<tbody>([\s\S]*?)<\/tbody>\s*<\/table>/i;
+const ROW = /<tr[^>]*>\s*<td[^>]*>\s*(?:<p>)?\s*(?:<strong>)?\s*(\d+)\s*(?:[-–—]\s*(\d+))?\s*(?:<\/strong>)?\s*(?:<\/p>)?\s*<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<\/tr>/gi;
 const DIE = { "d%": "1d100", d100: "1d100" };
 
 const plain = (html) => String(html ?? "").replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/@\w+\[[^\]]*\](?:\{([^}]*)\})?/g, (all, label) => label ?? "").replace(/\[\[\/\w+ ([^\]]*?)(?: #[^\]]*)?\]\](?:\{([^}]*)\})?/g, (all, formula, label) => label ?? formula).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -33,7 +35,8 @@ function asCast(html) {
 // (The table's own DC and spell attack for the spells it casts: "Any spell DC required is DC 27, and any spell attack roll required is +17".)
 const TABLE_DC = /\bAny spell DC required is DC (\d+)(?:, and any spell attack (?:roll|modifier) required is \+(\d+))?/i;
 export function readTable(html, compile = () => null) {
-    const table = TABLE.exec(String(html ?? "")) ?? BODY_TABLE.exec(String(html ?? ""));
+    const said = DIE_SAID.exec(String(html ?? ""));
+    const table = TABLE.exec(String(html ?? "")) ?? BODY_TABLE.exec(String(html ?? "")) ?? (said ? Object.assign([said[0], said[1], said[2]], { index: said.index }) : null);
     if (!table) return null;
     const own = TABLE_DC.exec(plain(String(html ?? "").slice(0, table.index)));
     const rows = [...table[2].matchAll(ROW)].map(([, low, high, cell]) => {
@@ -43,7 +46,7 @@ export function readTable(html, compile = () => null) {
         return { low: Number(low), high: Number(high ?? low), text: plain(cell), ...(playable ? { plan } : {}) };
     });
     if (rows.length < 2) return null;
-    return { die: DIE[table[1].toLowerCase()] ?? `1${table[1].toLowerCase()}`, rows };
+    return { die: DIE[table[1].toLowerCase()] ?? (/^\d+d/.test(table[1]) ? table[1].toLowerCase() : `1${table[1].toLowerCase()}`), rows };
 }
 
 // The row a total falls in, or null.

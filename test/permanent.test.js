@@ -764,6 +764,10 @@ test("a roll on its own table (Madcap Top's d20, Pistol of Wonder's d%): each ro
     assert.equal(rowFor(spin.plan.table, 13).plan, undefined);
     const [shot] = compileActivations(item("Pistol of Wonder"), { spells });
     assert.deepEqual([shot.plan.table.die, rowFor(shot.plan.table, 6).plan.spell.name, rowFor(shot.plan.table, 6).plan.rank, rowFor(shot.plan.table, 51).plan.dc], ["1d100", "Rewrite Memory", 6, 29]);
+    // (Its die said before a table of rows alone, Jabali's Dice's 2d6: each row a cast.)
+    const [gamble] = compileActivations(item("Jabali's Dice"), { spells });
+    assert.deepEqual([gamble.plan.table.die, gamble.plan.table.rows.map((row) => `${row.low}-${row.high}:${row.plan?.spell?.name}`)], ["2d6", ["2-5:Mountain Resilience", "6-9:Grasping Earth", "10-11:Wall of Stone", "12-12:Petrify"]]);
+    assert.equal(rowFor(gamble.plan.table, 12).plan.dc, 31);
 });
 
 test("a roll on a RollTable it links (Rod of Wonder): the table card draws from PF2e's own table at its DC 27 and +17 spell attack, the row drawn compiled then", async () => {
