@@ -651,3 +651,15 @@ test("cover against what triggered it (Limestone Shield: +2 circumstance to AC a
     assert.deepEqual([jug.plan.builtin, jug.plan.action.slug, jug.plan.action.bonus], ["item-action", "recall-knowledge", { value: 2, type: "circumstance" }]);
     assert.match(jug.plan.action.after, /Stupefied 1 for 3 rounds/);
 });
+
+test("effects its user picks one of, in a sentence (Heartripper Blade): the ways card's 2d8 healing or a clumsy, enfeebled or stupefied value lowered by 1, the affliction's stage by hand", () => {
+    const [, siphon] = compileActivations(item("Heartripper Blade"));
+    assert.equal(siphon.plan.builtin, "ways");
+    assert.deepEqual(siphon.plan.ways.map((way) => way.name), ["Restore 2d8 Hit Points", "Reduce the value of your Clumsy, Enfeebled, or Stupefied conditions by 1"]);
+    const [heal, lower] = siphon.plan.ways;
+    assert.deepEqual(heal.plan.resolution.native.healing.components.map((component) => component.formula), ["2d8"]);
+    assert.deepEqual(lower.plan.item.reduce, [{ choose: ["clumsy", "enfeebled", "stupefied"], by: 1 }]);
+    assert.deepEqual([lower.plan.item.activation.index, lower.plan.item.activation.time], [1, "reaction"]);
+    assert.equal(siphon.plan.partial, true);
+    assert.match(siphon.plan.notes[0], /^Or: reduce the stage of one toxin or disease .* \(by hand\)\.$/);
+});

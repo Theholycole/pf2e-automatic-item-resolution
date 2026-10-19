@@ -135,6 +135,39 @@ function sharedAttacks(entries) {
     });
 }
 
+// Effects its user picks one of, listed in a sentence: Heartripper Blade's "Choose one of the following effects: restore 2d8 Hit
+// Points; reduce the value of your Clumsy, Enfeebled, or Stupefied conditions by 1; or reduce the stage of one toxin or disease you're
+// suffering by one stage (…)". The ways card's pick, each way its own activation compiled alone ("You regain … Hit Points", "You reduce
+// …"); a way nothing reads stays a note, and the plan is partial then.
+const CHOOSE_EFFECTS = /\bChoose one of the following effects:\s*((?:[^.(]|\([^)]*\)|\.(?=\d))+)\./i;
+function chosenEffectsPlan(html, base, item, options, own = null) {
+    // (Its links as their words: a condition's link has periods in it.)
+    const choose = CHOOSE_EFFECTS.exec(String(html ?? "").replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1"));
+    if (!choose) return null;
+    const options_ = choose[1].split(/;\s*(?:or\s+)?/).map((option) => option.trim()).filter(Boolean);
+    if (options_.length < 2) return null;
+    const ways = [];
+    const left = [];
+    for (const option of options_) {
+        const body = /^restore (@Damage\[.*?\]\])(?:\s+Hit Points)?$/i.exec(option);
+        const sentence = body ? `You regain ${body[1]} Hit Points.` : `You ${option.charAt(0).toLowerCase()}${option.slice(1)}.`;
+        const [entry] = compileEach({ ...item, system: { ...(item.system ?? {}), description: { value: `<p><strong>Activate</strong> <span class="action-glyph">1</span></p><p><strong>Effect</strong> ${sentence}</p>` } } }, options);
+        const plan = entry?.plan;
+        // (An automatic check with nothing in its row reads nothing.)
+        const row = plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic" ? plan.resolution.outcomes?.success : null;
+        const empty = row && !row.effects?.length && !row.modifiers?.length && !plan.item?.reduce?.length && !plan.builtin;
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect" || empty) {
+            left.push(option);
+            continue;
+        }
+        const name = option.replace(/@Damage\[(\d+d\d+(?:\+\d+)?)\[healing\]\]/i, "$1 Hit Points").replace(/\s*\([^)]*\)/g, "");
+        ways.push({ name: `${name.charAt(0).toUpperCase()}${name.slice(1)}`, html: `<p>${sentence}</p>`, plan: { ...plan, source: base.source, activation: base.activation, item: { ...(plan.item ?? {}), activation: own ?? plan.item?.activation } } });
+    }
+    if (ways.length < 2 && !(ways.length && left.length)) return null;
+    const notes = left.map((option) => `Or: ${option.replace(/@Damage\[(\d+d\d+)\[healing\]\]/i, "$1 Hit Points")} (by hand).`);
+    return { ...base, builtin: "ways", automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, ...(notes.length ? { notes, partial: true } : {}) };
+}
+
 function compileEach(item, options = {}) {
     if (!handlesPermanent(item, options)) return [];
     // (Its own data in its text first — a weapon's striking and potency runes, src/compiler/item-data.js.)
@@ -288,6 +321,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = baneWaysPlan(activation.html, base, part, options) ?? plan;
         // (A tattoo of one animal, src/compiler/bane.js: Tooth and Claw Tattoo's attack — the animal picked on the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tattooWaysPlan(activation.html, base, item) ?? plan;
+        // (Effects its user picks one of, listed in a sentence: Heartripper Blade's — the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenEffectsPlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (A resistance by a recalled creature's trait, src/compiler/bane.js: Victory Plate.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "check" && !plan.resolution.outcomes?.success?.effects?.length) plan = victoryWaysPlan(activation.html, base, item) ?? plan;
         // (Smoke sprayed into an adjacent square, src/compiler/covered-square.js: Beekeeper's Smoker.)

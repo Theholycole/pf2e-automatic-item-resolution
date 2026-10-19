@@ -4429,6 +4429,26 @@ export const cases = {
         return { resistance: precision().value };
     },
 
+    // Heartripper Blade's siphon: the ways card's "reduce" way, its item card's pick of enfeebled — enfeebled 2 → 1, clumsy untouched.
+    async heartripperSiphon(scene) {
+        const { actor: user } = await creature(scene, "Heartripper Wielder", { type: "character", x: 1, y: 19 });
+        const blade = await give(user, "Heartripper Blade");
+        await user.increaseCondition("enfeebled", { value: 2 });
+        await user.increaseCondition("clumsy", { value: 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 1);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the effect picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.findIndex((name) => /^Reduce/.test(name)) });
+        const card = await messageAfter(since, itemCard("item"), { what: "the reduce way's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { reduceChoice: 1 });
+        const value = (slug) => user.getCondition(slug)?.value ?? 0;
+        await until(() => value("enfeebled") === 1, `enfeebled 2 → 1 (${value("enfeebled")})`, { timeout: 8000 });
+        assert(value("clumsy") === 1, `clumsy untouched (${value("clumsy")})`);
+        return { ways: names, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });
