@@ -6,6 +6,7 @@
 import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, coatableWeapons, repeatsLater, saveText, withAttackChoice, withCheckChoice } from "../src/live/poison-card.js";
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
+import { scaledPlan } from "../src/compiler/scaled.js";
 import { ABILITY_ID, FLAG, MODULE_ID, entryOf, lowerCondition, stateOf } from "./foundry.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
@@ -116,7 +117,7 @@ function attackChoices(actor, kinds, { atLeast = null } = {}) {
 }
 
 // targets: the token uuids the presser had targeted.
-export async function applyExposureCard(message, { targets = [], damageChoice = null, attackChoice = null, checkChoice = null } = {}) {
+export async function applyExposureCard(message, { targets = [], damageChoice = null, attackChoice = null, checkChoice = null, scaled = null } = {}) {
     let state = stateOf(message);
     if (!state || state.kind !== "expose" || state.status !== "open") return null;
     // (The check picked: Twisting Twine's Disarm or Trip.)
@@ -126,6 +127,12 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.includes("thrown") ? "attack to throw it with" : state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
     // (The damage picked: Necklace of Fireballs' bead.)
     if (Number.isInteger(damageChoice) && state.plan?.damageChoices?.[damageChoice]) state = { ...state, damageChoice };
+    // (Its damage's amount, typed: Twisting Gale's Strike damage, Conflagration Club's charges.)
+    if (state.plan?.scaled && state.step !== "then") {
+        const typed = scaled === null || scaled === undefined || scaled === "" ? NaN : Number(scaled);
+        if (!Number.isFinite(typed) || typed < 0) throw new Error(`Type the amount (${state.plan.scaled.die ? `1${state.plan.scaled.die} per ${state.plan.scaled.of}` : state.plan.scaled.of}) first.`);
+        state = { ...state, scaledAmount: typed };
+    }
     // (Its time is up: the card closes.)
     if (state.repeat && Number.isFinite(state.until) && game.time.worldTime >= state.until) {
         const over = { ...state, status: "applied", results: [...state.results, `${state.item.name}'s time is up.`] };
@@ -152,7 +159,7 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         return message.update({ content: exposureCardHTML(done, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: done });
     }
     if (postCard && actor) {
-        await postCard({ plan: withAttackChoice(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
+        await postCard({ plan: withAttackChoice(scaledPlan(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state.scaledAmount), state), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
     // (The conditions it lowers on each creature in its area: Vambrace of Gorum's Blood of Iron's clumsy, enfeebled, frightened and

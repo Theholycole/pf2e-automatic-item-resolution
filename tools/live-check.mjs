@@ -4595,6 +4595,28 @@ export const cases = {
         return { materials, outcome };
     },
 
+    // Conflagration Club's Explosive Cone: 4 charges of fire typed and picked on the save card — the ability module's basic Reflex save card
+    // at the target, its damage 4d6 fire; no amount typed refuses.
+    async clubCharges(scene) {
+        const { actor: user } = await creature(scene, "Club Wielder", { type: "character", x: 13, y: 4 });
+        const { token: foe } = await creature(scene, "Cone Target", { x: 14, y: 4, alliance: "opposition" });
+        const club = await give(user, "Conflagration Club");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(club.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the cone's save card" });
+        const fire = card.getFlag(NS, "card").plan.damageChoices.findIndex((choice) => choice.label === "Fire");
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid], damageChoice: fire }).catch((error) => { refused = error.message; });
+        assert(/Type the amount/.test(refused ?? ""), `no amount refused (${refused})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid], damageChoice: fire, scaled: 4 });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const plan = save.flags["pf2e-automatic-ability-resolution"].card.plan;
+        const formula = plan.resolution.sharedDamage.components[0].formula;
+        assert(formula === "4d6[fire]" && plan.resolution.check.basic && plan.resolution.check.against.value === 20, `4d6 fire, basic DC 20 Reflex (${formula}, ${JSON.stringify(plan.resolution.check)})`);
+        return { formula };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

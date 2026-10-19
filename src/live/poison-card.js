@@ -220,12 +220,18 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const pick = open && canApply && (state.plan?.damageChoices?.length ?? 0) > 1
         ? `<p class="aar-actions">Damage: <select data-air-field="damageChoice">${state.plan.damageChoices.map((choice, index) => `<option value="${index}"${index === (state.damageChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
         : "";
+    // (Damage only the table knows the amount of — Twisting Gale's Strike damage, Conflagration Club's charges: typed, src/compiler/scaled.js.)
+    const scaled = state.plan?.scaled ?? null;
+    const scaledWords = scaled ? (scaled.die ? `1${scaled.die} per ${scaled.of}` : scaled.of) : "";
+    const amount = !scaled || state.step === "then" ? ""
+        : open && canApply ? `<p class="aar-actions">Amount (${escape(scaledWords)}): <input type="number" min="0" data-air-field="scaled" value="${escape(state.scaledAmount ?? "")}" style="width:4em"></p>`
+            : Number.isFinite(state.scaledAmount) ? `<p class="aar-actions">Amount (${escape(scaledWords)}): ${escape(state.scaledAmount)}</p>` : "";
     // (A spellgun's attack: the user's spell or firearm attack, a picker; none, the GM's roll.)
     const attack = !open || !state.plan?.ownCheck?.choose || state.step === "then" ? ""
         : (state.attackChoices ?? []).length > 1 && canApply
             ? `<p class="aar-actions">Attack: <select data-air-field="attackChoice">${state.attackChoices.map((choice, index) => `<option value="${index}"${index === (state.attackChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
             : (state.attackChoices ?? []).length ? `<p class="aar-actions">Attack: ${escape(state.attackChoices[0].label)}</p>`
                 : `<p class="aar-hint">${escape(state.user.name)} has no spell attack or firearm Strike: the GM rolls the attack.</p>`;
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${attack}${checkPick}${pick}${notes}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.delivery ? `${escape(state.delivery)} poison` : automatic ? "No save" : checked ? "Check" : escape(saveText(state.plan))}</span></header>${hint}${attack}${checkPick}${pick}${amount}${notes}${results}${controls}</section>`;
 }
 

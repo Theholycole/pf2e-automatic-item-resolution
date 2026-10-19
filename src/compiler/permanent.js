@@ -26,6 +26,7 @@ import { thrownPlan } from "./thrown.js";
 import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
+import { withScaled } from "./scaled.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
@@ -341,6 +342,8 @@ function compileEach(item, options = {}) {
         plan = ownConditionsAside(plan, plainText(activation.html));
         // (A line its reworded text marks for the GM, item-data.js's "… (by hand).": the plan's note, when nothing reads it.)
         plan = byHandNotes(plan, plainText(activation.html));
+        // (Damage only the table knows the amount of, typed on the save card, src/compiler/scaled.js: Twisting Gale's Strike damage again.)
+        plan = withScaled(plan, plainText(activation.html));
         // (Its degrees in sentences, Gearblade's "On a failure, … takes … damage. On a critical failure, they take …".)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = degreeSentencesPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)

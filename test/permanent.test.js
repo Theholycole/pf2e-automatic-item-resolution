@@ -710,3 +710,17 @@ test("a ray of stored energy at its user's spell attack (a third-party power rin
     assert.deepEqual([release.plan.resolution.outcomes.criticalSuccess.damage.multiplier, release.plan.resolution.outcomes.success.damage.multiplier], [2, 1]);
     assert.deepEqual(release.plan.damageChoices.map((choice) => choice.formula), ["5d4[acid]", "5d4[cold]", "5d4[electricity]", "5d4[fire]", "5d4[force]", "5d4[sonic]", "5d4[vitality]", "5d4[void]"]);
 });
+
+test("damage only the table knows the amount of (Twisting Gale's Strike damage again, Juggernaut Plate's distance, Kaldemash's Lament's barrage, Conflagration Club's dice per charge): a basic save's damage typed on the save card, the club's energy type picked there", async () => {
+    const { scaledFormula, scaledPlan } = await import("../src/compiler/scaled.js");
+    const { routeOf } = await import("../src/live/route.js");
+    const gale = compileActivations(item("Twisting Gale")).find((entry) => entry.activation.name === "Sonic Gale").plan;
+    assert.deepEqual([routeOf(gale), gale.scaled, gale.resolution.check.basic, gale.resolution.check.against], ["save", { of: "your normal Strike damage" }, true, { dc: "owner", statistic: "class" }]);
+    assert.equal(scaledPlan(gale, 23).resolution.sharedDamage.components[0].formula, "23[sonic]");
+    const ram = compileActivations(item("Juggernaut Plate")).find((entry) => entry.activation.name === "Ram").plan;
+    assert.deepEqual([ram.scaled.of, ram.resolution.check.against.value, ram.resolution.sharedDamage.components[0].formula], ["the total distance traveled in feet", 39, "1[bludgeoning]"]);
+    assert.equal(compileActivations(item("Kaldemash's Lament"))[2].plan.scaled.of, "your Strike damage");
+    const cone = compileActivations(item("Conflagration Club")).find((entry) => entry.activation.name === "Explosive Cone").plan;
+    assert.deepEqual([cone.scaled, cone.damageChoices.map((choice) => choice.formula)], [{ of: "charge stored in the club", die: "d6" }, ["1d6[acid]", "1d6[cold]", "1d6[electricity]", "1d6[fire]", "1d6[sonic]"]]);
+    assert.equal(scaledFormula("1d6[fire]", cone.scaled, 4), "4d6[fire]");
+});

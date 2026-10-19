@@ -6,9 +6,9 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 747,
+   "resolves": 751,
    "builtin:cast-spell": 470,
-   "none": 609,
+   "none": 605,
    "partial": 181,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
@@ -28,10 +28,10 @@
    "builtin:spellstrike": 9
   },
   "live": {
-   "save": 431,
+   "save": 435,
    "cast": 470,
    "item": 590,
-   "none": 740,
+   "none": 736,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
@@ -77,8 +77,8 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 158,
-    "none": 94,
+    "resolves": 161,
+    "none": 91,
     "partial": 45,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
@@ -123,9 +123,9 @@
    "results": {
     "builtin:cast-spell": 34,
     "partial": 10,
-    "resolves": 57,
+    "resolves": 58,
     "builtin:counteract": 1,
-    "none": 25,
+    "none": 24,
     "builtin:zone": 4,
     "note-only": 14,
     "builtin:no-effect": 5,
@@ -1395,9 +1395,9 @@
    "time": "reaction",
    "frequency": "once per 10 minutes",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Galvanic Mortal Coil",
@@ -12036,9 +12036,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Resonant Guitar",
@@ -26481,9 +26481,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Coronet of Stars",
@@ -28255,9 +28255,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Lung Bloodstone of Arazni",
