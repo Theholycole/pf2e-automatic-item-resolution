@@ -54,6 +54,7 @@ import { teleportPlan } from "./teleport.js";
 import { withScaled } from "./scaled.js";
 import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
+import { readAttackRiders } from "./attack-riders.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -127,7 +128,22 @@ export function compileItem(given, options = {}) {
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
     const text = plainText(given?.system?.description?.value);
-    return withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value);
+    return withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value);
+}
+
+// (What each melee attack roll sets off while it lasts, Martial Mayhem Mutagen's: plan.item.attackRiders, src/compiler/attack-riders.js —
+// those sentences no longer notes.)
+function withAttackRiders(plan, html) {
+    const read = plan?.item && plan.resolution ? readAttackRiders(html) : null;
+    if (!read) return plan;
+    const said = read.said.map((sentence) => plainText(`<p>${sentence}</p>`).trim());
+    const kept = (list) => (list ?? []).filter((sentence) => !said.some((one) => String(sentence).includes(one)));
+    const unread = kept(plan.unread);
+    const notes = kept(plan.notes);
+    // (For as long as the item's own time: its modifiers', else its Effects'.)
+    const success = plan.resolution.outcomes?.success ?? {};
+    const duration = [...(success.modifiers ?? []), ...(success.effects ?? [])].map((entry) => entry.duration).find((time) => time?.mode === "fixed") ?? null;
+    return { ...plan, item: { ...plan.item, attackRiders: { riders: read.riders, duration } }, ...(plan.unread ? { unread } : {}), ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}), ...(plan.partial && !unread.length && !notes.length ? { partial: undefined } : {}) };
 }
 
 // Effects its user picks one of, each its own named paragraph after "Choose one of the following effects": a third-party jar whose

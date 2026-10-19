@@ -316,6 +316,10 @@ function scopeOf(scope) {
         const flat = terms.flatMap((term) => (typeof term === "string" ? [term] : term.or));
         return [flat.length === 1 ? flat[0] : { or: [...new Set(flat)] }];
     }
+    // ("skill checks for auditory actions, except Deception and Diplomacy checks", Megaphone Mutagen as src/compiler/item-data.js words it:
+    // the actions' trait, PF2e's item:trait option as Deafened's own rule has it, the skills left out by their check:statistic.)
+    const traitActions = /^for (auditory|visual|linguistic|olfactory) actions(?:,? except ((?:[A-Z]\w+)(?:(?:,? and|,) [A-Z]\w+)*) checks)?$/.exec(scope);
+    if (traitActions) return [`item:trait:${traitActions[1]}`, ...(traitActions[2] ? [{ nor: traitActions[2].split(/,? and |, /).map((skill) => `check:statistic:${skill.toLowerCase()}`) }] : [])];
     const to = /^to ((?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?)(?:(?:,? (?:and|or) |, )(?:[A-Z][\w]*(?: (?:a |an )?[A-Z]?[\w]+)*?))*)$/.exec(scope)
         // (In lower case too, when every name is an action's: "to disarm, grapple, reposition, shove, and trip", "to sense-motive".)
         ?? /^to ([a-z][a-z -]*(?:(?:,|,? and|,? or) [a-z][a-z -]*)*)$/.exec(scope);
@@ -390,7 +394,7 @@ function modifiersOf(sentences, duration, used = new Set()) {
                 continue;
             }
             // A scope after the list ("… against diseases", "… to Climb"): a predicate when PF2e has one, else left out.
-            const scoped = /^(.+?) ((?:against|to) .+)$/.exec(list);
+            const scoped = /^(.+?) ((?:against|to) .+)$/.exec(list) ?? /^(.+?) (for (?:auditory|visual|linguistic|olfactory) actions\b.*)$/.exec(list);
             const predicate = scoped ? scopeOf(scoped[2]) : null;
             const names = predicate ? scoped[1] : list;
             if (scoped && !predicate) continue;

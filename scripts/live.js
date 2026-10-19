@@ -23,6 +23,8 @@ import { startItemConjure, startItemZone } from "./zones.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
+import { attackRidersEffectSource, attackRidersRolled } from "./attack-riders.js";
+import { attackRidersText } from "../src/compiler/attack-riders.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
@@ -74,6 +76,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         fortuneRolled(message).catch((error) => console.error(`${MODULE_ID} | roll twice`, error));
         // (A time's first critical failure made a failure, its Effect gone after: scripts/first-degree.js.)
         firstDegreeRolled(message).catch((error) => console.error(`${MODULE_ID} | first critical failure`, error));
+        // (What each melee attack roll sets off while an item lasts: scripts/attack-riders.js.)
+        attackRidersRolled(message).catch((error) => console.error(`${MODULE_ID} | attack riders`, error));
         // (An item's toggle on until its next damage roll: scripts/toggle.js.)
         togglesAfterDamage(message).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
     });
@@ -575,6 +579,13 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         lines.push(`${recipient.name}: ${firstDegreeText(state.plan.item.firstDegree)}`);
     }
     // (Extra damage on its user's Strikes: Martial Mayhem Mutagen's precision damage against off-guard creatures — PF2e's DamageDice.)
+    // (What each melee attack roll sets off while it lasts, Martial Mayhem Mutagen's: a watch Effect on the recipient, its earlier one gone.)
+    if (state.plan.item?.attackRiders && target.actor) {
+        const old = (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.attackRiders?.item?.name === state.item.name);
+        if (old.length) await target.actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
+        await target.actor.createEmbeddedDocuments("Item", [attackRidersEffectSource(state.plan.item.attackRiders, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null })]);
+        lines.push(`${recipient.name}: ${attackRidersText(state.plan.item.attackRiders.riders)}`);
+    }
     // (The creature its bonuses are against: a TokenMark Effect at it, the item's earlier mark gone.)
     if (state.plan.item?.mark && others[0]?.token && target.actor) {
         const mark = state.plan.item.mark;

@@ -160,9 +160,11 @@ test("a condition the text puts on the drinker, for its own time, as an automati
     assert.equal(immovable.partial, true);
     assert.match(immovable.unread[0], /DC to move you/);
     assert.equal(immovable.resolution.outcomes.success.noteEffects.length, 1);
-    // Megaphone Mutagen: its drawback read (a −2 to Fortitude, Deception, Diplomacy and Stealth), its auditory benefit on the note.
+    // Megaphone Mutagen: its benefit on skill checks of auditory actions but Deception and Diplomacy (PF2e's item:trait and
+    // check:statistic options), its drawback (a −2 to Fortitude, Deception, Diplomacy and Stealth); its longer range a note.
     const megaphone = compileItem(item("Megaphone Mutagen (Lesser)"));
-    assert.deepEqual(megaphone.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value]), [["fortitude", -2], ["deception", -2], ["diplomacy", -2], ["stealth", -2]]);
+    assert.deepEqual(megaphone.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value]), [["skill-check", 1], ["fortitude", -2], ["deception", -2], ["diplomacy", -2], ["stealth", -2]]);
+    assert.deepEqual(megaphone.resolution.outcomes.success.modifiers[0].predicate, ["item:trait:auditory", { nor: ["check:statistic:deception", "check:statistic:diplomacy"] }]);
     assert.equal(megaphone.partial, true);
 });
 
@@ -980,4 +982,15 @@ test("a third-party blade's judgment after a critical hit (read from its own pac
         assert.deepEqual(around.plan.resolution.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.value]), [["slowed", 1]], name);
         assert.equal(JSON.stringify(plan.resolution.outcomes.success.manualInstructions ?? []).includes("allies"), false, "its sentences not a note too");
     }
+});
+
+test("what each melee attack roll sets off while Martial Mayhem Mutagen lasts: a hit makes the target off-guard to the next attack, a miss Clumsy 1 on its user, the Major's critical hit Clumsy 1 on the target — plan.item.attackRiders for the mutagen's time, no longer notes", async () => {
+    const { attackRidersText } = await import("../src/compiler/attack-riders.js");
+    const lesser = compileItem(item("Martial Mayhem Mutagen (Lesser)"));
+    const { riders, duration } = lesser.item.attackRiders;
+    assert.deepEqual([riders.map((rider) => [rider.on.join("/"), rider.offGuard ? "offGuard" : rider.target ? `target ${rider.target.slug}` : `self ${rider.self.slug} ${rider.self.value}`]), `${duration.value} ${duration.unit}`], [[["success/criticalSuccess", "offGuard"], ["failure/criticalFailure", "self clumsy 1"]], "1 minutes"]);
+    assert.ok(!(lesser.unread ?? []).some((sentence) => /melee attack roll/.test(sentence)), "not notes too");
+    assert.equal(attackRidersText(riders), "On a melee hit: the target off-guard to your next attack before your next turn; On a melee miss: you are clumsy 1, till your next turn ends");
+    const major = compileItem(item("Martial Mayhem Mutagen (Major)")).item.attackRiders.riders;
+    assert.deepEqual(major.filter((rider) => rider.target).map((rider) => [rider.on, rider.target.slug, rider.target.value]), [[["criticalSuccess"], "clumsy", 1]]);
 });

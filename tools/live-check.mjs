@@ -5567,6 +5567,55 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results, at: at.length };
     },
 
+    // Megaphone Mutagen (Lesser): +1 item to skill checks of auditory actions — PF2e's Demoralize gets it, its Request (Diplomacy) doesn't.
+    async megaphoneMutagen(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Megaphone Drinker", { type: "character", x: 20, y: 2 });
+        const { token: foeToken } = await creature(scene, "Megaphone Target", { x: 21, y: 2, alliance: "opposition" });
+        const mutagen = await give(user, "Megaphone Mutagen (Lesser)");
+        let since = Date.now();
+        await mutagen.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the mutagen's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("skill-check") && JSON.stringify(rule.predicate ?? []).includes("item:trait:auditory"))), "+1 to auditory skill checks", { timeout: 8000 });
+        await userToken.object?.control?.();
+        await target(foeToken);
+        const rolled = async (slug) => {
+            const since = Date.now();
+            await game.pf2e.actions.get(slug).use({ actors: [user], event: shift() });
+            const message = await messageAfter(since, (entry) => entry.flags?.pf2e?.context?.type === "skill-check", { what: `${slug}'s check` });
+            return (message.flags.pf2e.modifiers ?? []).some((modifier) => modifier.type === "item" && modifier.modifier === 1 && modifier.enabled !== false);
+        };
+        assert(await rolled("demoralize"), "Demoralize (auditory, Intimidation) gets +1");
+        assert(!(await rolled("request")), "Request (Diplomacy) doesn't");
+        return { ok: true };
+    },
+
+    // Martial Mayhem Mutagen (Lesser): while it lasts, a melee hit (AC 1) makes the target off-guard to its user's next attack (the ability
+    // module's scoped off-guard on its user), and a melee miss (AC 99) makes its user Clumsy 1.
+    async martialMayhem(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Mayhem Drinker", { type: "character", x: 20, y: 4, level: 10 });
+        const { token: soft } = await creature(scene, "Mayhem Soft Target", { x: 21, y: 4, ac: 1, alliance: "opposition" });
+        const { token: hard } = await creature(scene, "Mayhem Hard Target", { x: 21, y: 5, ac: 99, alliance: "opposition" });
+        const sword = await give(user, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const mutagen = await give(user, "Martial Mayhem Mutagen (Lesser)");
+        let since = Date.now();
+        await mutagen.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the mutagen's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => user.itemTypes.effect.some((effect) => effect.getFlag(NS, "attackRiders")), "the watch Effect", { timeout: 8000 });
+        await userToken.object?.control?.();
+        await target(soft);
+        const hit = await strike(user, sword);
+        assert(["success", "criticalSuccess"].includes(hit.attack.flags.pf2e.context.outcome), `a hit (AC 1): ${hit.attack.flags.pf2e.context.outcome}`);
+        await until(() => user.itemTypes.effect.some((effect) => effect.flags?.["pf2e-automatic-ability-resolution"]?.scopedOffGuard?.target === soft.uuid), "the target off-guard to its user's next attack", { timeout: 8000 });
+        await target(hard);
+        const miss = await strike(user, sword);
+        assert(["failure", "criticalFailure"].includes(miss.attack.flags.pf2e.context.outcome), `a miss (AC 99): ${miss.attack.flags.pf2e.context.outcome}`);
+        await until(() => (user.getCondition?.("clumsy")?.value ?? 0) === 1 || user.itemTypes.condition.some((entry) => entry.slug === "clumsy"), "its user Clumsy 1", { timeout: 8000 });
+        return { effects: user.itemTypes.effect.map((effect) => effect.name) };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

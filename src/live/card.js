@@ -6,6 +6,7 @@
 import { skillPickRules } from "../compiler/skill-pick.js";
 import { firstDegreeRules } from "../compiler/first-degree.js";
 import { restoreText } from "../compiler/restore.js";
+import { attackRidersText } from "../compiler/attack-riders.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -126,6 +127,7 @@ export function previewLines(state) {
     if (plan?.item?.creates) lines.push(createsText(plan.item.creates));
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     if (plan?.item?.mark) lines.push(markText(plan.item.mark));
+    if (plan?.item?.attackRiders) lines.push(attackRidersText(plan.item.attackRiders.riders));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
