@@ -51,7 +51,8 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
     if (!Check?.rerollFromMessage) throw new Error("PF2e's reroll isn't there; reroll it from the message's menu.");
     const triggering = game.messages.get(id);
     await Check.rerollFromMessage(triggering, reroll.keep === "new" ? {} : { keep: reroll.keep });
-    const whose = reroll.who === "attacker" ? `${triggering.actor?.name ?? "the attacker"}'s attack roll` : `${state.user.name}'s ${WHAT_WORDS[triggering.flags.pf2e.context.type === "attack-roll" ? "attack" : triggering.flags.pf2e.context.type === "saving-throw" ? "save" : "check"]}`;
+    // (The roll's own creature: the user's, or the companion's or creature's targeted.)
+    const whose = reroll.who === "attacker" ? `${triggering.actor?.name ?? "the attacker"}'s attack roll` : `${actor.name}'s ${WHAT_WORDS[triggering.flags.pf2e.context.type === "attack-roll" ? "attack" : triggering.flags.pf2e.context.type === "saving-throw" ? "save" : "check"]}`;
     const next = { ...state, status: "applied", results: [`Rerolled ${whose}${reroll.keep === "new" ? "" : `, keeping the ${reroll.keep} result`}.`] };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

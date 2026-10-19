@@ -854,3 +854,11 @@ test("next-Strike riders: Hyldarf's Fang's venom a coat of the gun itself (its u
     const arrow = compileActivations(item("Starshot Arrow (Lesser)"), { spellEffects })[0].plan;
     assert.deepEqual([routeOf(arrow), arrow.strike.ammo, arrow.strike.options], ["strike", true, ["ignore-range-penalty:6"]]);
 });
+
+test("Coronet of Stars' reassurance: the triggering ally's failed check rerolled, the higher kept — a reroll of the creature targeted", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { rerollText } = await import("../src/live/reroll-card.js");
+    const coronet = compileActivations(item("Coronet of Stars"), { spellEffects })[1].plan;
+    assert.deepEqual([routeOf(coronet), coronet.reroll], ["reroll", { what: "check", keep: "higher", who: "target" }]);
+    assert.equal(rerollText(coronet.reroll), "The targeted creature's latest check, rerolled: the higher result");
+});

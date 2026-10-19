@@ -43,7 +43,10 @@ export function readReroll(html) {
     // (Your companion's save, Navaratna of the Solar Ruby's "The creature rerolls the triggering saving throw": the creature
     // the presser targets.)
     const companion = !attacker && /^\s*The creature rerolls\b/i.test(sentence) && /\byour companion\b/i.test(effect.slice(0, match.index));
-    if (!attacker && !companion && /\b(?:the creature|the triggering ally|your companion|an? ally|allies|the target|they)\b[^.]*\brerolls?\b/i.test(sentence)) return null;
+    // (The ally its trigger names, Coronet of Stars' "The triggering ally rerolls the failed check and takes the higher result": the creature
+    // the presser targets, as a reroll of the target's.)
+    const ally = !attacker && !companion && /^\s*The triggering ally rerolls\b/i.test(sentence);
+    if (!attacker && !companion && !ally && /\b(?:the creature|the triggering ally|your companion|an? ally|allies|the target|they)\b[^.]*\brerolls?\b/i.test(sentence)) return null;
     // (What is rerolled: the sentence's own word, else the trigger's: "reroll the triggering roll" for "You make an attack roll …".)
     const object = /\breroll(?:s|ing)?\b\s+(.*)$/i.exec(sentence)?.[1] ?? "";
     const named = WHAT.find(([, pattern]) => pattern.test(object.split(/\b(?:and|,)\b/)[0]))?.[0] ?? "roll";
@@ -57,7 +60,7 @@ export function readReroll(html) {
     const after = /^If\b/.test(next) ? next : "";
     // (A named save: "reroll the triggering Reflex save" — PF2e's check domains say which.)
     const statistic = what === "save" ? /\b(Fortitude|Reflex|Will)\b/i.exec(object)?.[1]?.toLowerCase() ?? null : null;
-    return { what, keep, who: attacker ? "attacker" : companion ? "companion" : "self", ...(statistic ? { statistic } : {}), ...(bonus ? { bonus } : {}), ...(after ? { after } : {}), ...(coin ? { coin: { win: coin[1] } } : {}) };
+    return { what, keep, who: attacker ? "attacker" : companion ? "companion" : ally ? "target" : "self", ...(statistic ? { statistic } : {}), ...(bonus ? { bonus } : {}), ...(after ? { after } : {}), ...(coin ? { coin: { win: coin[1] } } : {}) };
 }
 
 // A change to the roll that triggered it, after the roll and without a new one (the user's answer 3 of 2026-10-15, as for a

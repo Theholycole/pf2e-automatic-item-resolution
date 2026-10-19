@@ -5522,6 +5522,26 @@ export const cases = {
         return { save: save.id, offGuard: true };
     },
 
+    // Coronet of Stars' reassurance: the targeted ally's failed check rerolled by PF2e, the higher kept.
+    async coronetReroll(scene) {
+        const { actor: user } = await creature(scene, "Coronet Wearer", { type: "character", x: 20, y: 18, level: 15 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Coronet Ally", { type: "character", x: 22, y: 18 });
+        const live = game.modules.get(NS).api.live;
+        let since;
+        const coronet = await give(user, "Coronet of Stars");
+        await ally.skills.athletics.roll({ dc: { value: 60 }, skipDialog: true });
+        await wait(600);
+        since = Date.now();
+        await live.activate(coronet.uuid, 1);
+        const reroll = await messageAfter(since, itemCard("reroll"), { what: "the coronet's reroll card" });
+        since = Date.now();
+        await live.apply(reroll.id, { targets: [allyToken.uuid] });
+        const again = await messageAfter(since, (message) => message.flags?.pf2e?.context?.isReroll && message.actor?.id === ally.id, { what: "the ally's reroll" });
+        const results = game.messages.get(reroll.id).getFlag(NS, "card").results;
+        assert(results.some((line) => line.includes(ally.name) && /keeping the higher/.test(line)), `the ally's check rerolled, the higher kept (${JSON.stringify(results)})`);
+        return { reroll: again.id, results };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).
