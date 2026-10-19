@@ -193,7 +193,37 @@ const AURA_DEALS = /\bThe aura deals (\d+d\d+(?:\s*\+\s*\d+)?|\d+) (\w+) damage\
 const ADJACENT_MELEE = /\bor is adjacent to you and hits you with a melee weapon strike\b/i;
 const ROUNDS = { round: 1, rounds: 1, minute: 10, minutes: 10, hour: 600, hours: 600 };
 const TIME = /\bFor (\d+) (rounds?|minutes?|hours?) after\b/i;
+// (Or an activation's, Numerian Steel Breastplate's "For 1 minute, adjacent creatures that hit you with a melee Strike, as well as creatures
+// that touch you or hit you with an unarmed attack, take 1d10 electricity damage per hit" — and Instinct Crown (Dragon)'s until the end of
+// its user's rage, its type its instinct dragon's breath, the card's pick.)
+const ADJACENT_OR_TOUCH = /\b(?:For (\d+) (rounds?|minutes?)|Until the end of your rage), adjacent creatures that hit you with a melee (?:Strike|attack), as well as creatures that touch you or hit you with an unarmed attack, take (\d+d\d+(?:\s*\+\s*\d+)?) (?:(acid|cold|electricity|fire|poison|sonic|force|mental|spirit|vitality|void) )?damage (?:per hit|each time they do)\b/i;
+const BREATH_TYPES = ["acid", "cold", "electricity", "fire", "poison", "sonic", "mental", "spirit", "void"];
+function adjacentOrTouchPlan(text, base) {
+    const match = ADJACENT_OR_TOUCH.exec(String(text ?? ""));
+    if (!match) return null;
+    const [, count, unit, dice, type] = match;
+    const breath = !type && /\bThe damage type is that of your instinct's dragon breath\b/i.test(String(text ?? ""));
+    if (!type && !breath) return null;
+    const formula = dice.replace(/\s+/g, "");
+    const success = { damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] }, effects: [], modifiers: [] };
+    const none = { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] };
+    const rounds = count ? Number(count) * ROUNDS[unit.toLowerCase()] : 10;
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: breath || !count ? "guided" : "automatic" },
+        targeting: { target: "the creature that touches you", range: null, area: null },
+        trigger: { event: "use" },
+        retaliation: { adjacentMelee: true, rounds },
+        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `${formula}[${type ? type.toLowerCase() : BREATH_TYPES[0]}]`, type: type ? type.toLowerCase() : BREATH_TYPES[0], category: null }] }, outcomes: { criticalSuccess: { ...none }, success, failure: { ...none }, criticalFailure: { ...none } } },
+        ...(breath ? { damageChoices: BREATH_TYPES.map((kind) => ({ label: kind.charAt(0).toUpperCase() + kind.slice(1), formula: `${formula}[${kind}]` })) } : {}),
+        ...(!count ? { notes: ["It lasts until the end of your rage: close the card then."], partial: true } : {})
+    };
+}
+
 export function retaliationPlan(text, base) {
+    const adjacent = adjacentOrTouchPlan(text, base);
+    if (adjacent) return adjacent;
     const touched = TOUCHER.exec(String(text ?? ""));
     const deals = touched && AURA_DEALS.exec(String(text ?? ""));
     if (!deals) return null;

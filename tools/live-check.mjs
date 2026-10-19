@@ -1133,6 +1133,24 @@ export const cases = {
         return { uses: state.uses };
     },
 
+    // Numerian Steel Breastplate's electric field: an activation's retaliation card, kept open; a press sends 1d10 electricity at the creature.
+    async fieldRetaliation(scene) {
+        const { actor: wearer } = await creature(scene, "Field Wearer", { type: "character", x: 10, y: 21 });
+        const { token: foeToken } = await creature(scene, "Field Toucher", { x: 11, y: 21, alliance: "opposition" });
+        const plate = await give(wearer, "Numerian Steel Breastplate");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(plate.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the field's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const damage = await messageAfter(since, abilitySaveCard, { what: "the ability module's no-save card" });
+        const components = damage.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage?.components ?? [];
+        assert(components.some((component) => /^1d10/.test(component.formula) && component.type === "electricity"), `1d10 electricity (${JSON.stringify(components)})`);
+        const state = game.messages.get(card.id).getFlag(NS, "card");
+        assert(state.status === "open", `still open (${state.status})`);
+        return { uses: state.uses };
+    },
+
     // Burial Oil: the card picks the longsword; its Effect's AdjustStrike gives that Strike the Vitalizing rune (PF2e's disrupting).
     async runeOil(scene) {
         const { actor: fighter } = await creature(scene, "Oiled Fighter", { type: "character", x: 10, y: 17 });

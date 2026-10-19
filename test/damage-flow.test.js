@@ -269,3 +269,12 @@ test("damage the text treats as silver: the material in its formulas, for PF2e's
     assert.equal(damageMaterial(plan, "It deals fire damage."), plan);
     assert.equal(damageMaterial({ resolution: { sharedDamage: { components: [{ id: "0", formula: "(2d6)[healing]" }] } } }, "This is treated as silver.").resolution.sharedDamage.components[0].formula, "(2d6)[healing]");
 });
+
+test("an activation's retaliation: Numerian Steel Breastplate's 1d10 electricity for a minute at whoever touches its wearer or hits it from next to it, the card kept open; Instinct Crown (Dragon)'s 2d6 of its dragon's type (picked) until the rage ends", () => {
+    const [field] = compileActivations(source("Numerian Steel Breastplate"));
+    assert.equal(routeOf(field.plan), "later");
+    assert.deepEqual([field.plan.retaliation, field.plan.resolution.sharedDamage.components[0].formula, field.plan.partial], [{ adjacentMelee: true, rounds: 10 }, "1d10[electricity]", undefined]);
+    const dragon = compileActivations(source("Instinct Crown (Dragon)"))[1].plan;
+    assert.deepEqual([routeOf(dragon), dragon.retaliation.rounds, dragon.damageChoices.map((choice) => choice.formula).slice(0, 3)], ["later", 10, ["2d6[acid]", "2d6[cold]", "2d6[electricity]"]]);
+    assert.deepEqual(dragon.notes, ["It lasts until the end of your rage: close the card then."]);
+});

@@ -13,7 +13,7 @@ import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
-import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan } from "./direct-damage.js";
+import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan, retaliationPlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { beadsPlan } from "./beads.js";
@@ -450,6 +450,9 @@ function compileEach(item, options = {}) {
         plan = withScaled(plan, plainText(activation.html));
         // (Its degrees in sentences, Gearblade's "On a failure, … takes … damage. On a critical failure, they take …".)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = degreeSentencesPlan(activation.html, base) ?? plan;
+        // (Damage for whoever touches or hits its user for a while, src/compiler/direct-damage.js: Numerian Steel Breastplate's field — the
+        // card kept open, as a retaliation potion's.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = retaliationPlan(plainText(activation.html), base) ?? plan;
         // (A save whose failure is the GM's to carry out, its words on the card: Cauthooj Bagpipes' Throw Song, Planar Ribbon.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = failureNotesPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
