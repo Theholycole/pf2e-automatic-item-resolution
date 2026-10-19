@@ -82,3 +82,45 @@ test("Striking Snare: stones or spikes, picked on the ways card before it's plac
         delete foundry.ability.live.startZone;
     }
 });
+
+test("a spell slot an activation costs (the module's own wording): the lowest slot left spent on Apply, prepared or spontaneous, refused with none; numbers by the slot's rank a way per rank, each spending that rank", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const head = (name, rank) => `<p><strong>Activate—${name}</strong> <span class="action-glyph">3</span> (concentrate)</p><p><strong>Frequency</strong> once per hour</p><p><strong>Cost</strong> a spell slot of rank ${rank} or higher</p><hr />`;
+    const scepter = (html) => ({ _id: "testSlotScepter1", type: "equipment", name: "Test Scepter", img: null, system: { category: null, traits: { value: ["magical"] }, level: { value: 8 }, description: { value: html } } });
+    // A way per rank: 1d6 per rank to the creatures in the cone.
+    const [gust] = compileActivations(scepter(`${head("Mending Gust", 4)}<p>It restores @Damage[1d6[healing]] Hit Points per rank of the expended spell to all creatures within a @Template[type:emanation|distance:15].</p>`));
+    assert.equal(gust.plan.builtin, "ways");
+    assert.deepEqual(gust.plan.ways.map((way) => [way.name, way.plan.resolution.outcomes.success.effects[0].formula, way.plan.spend.spellSlot.rank]), [4, 5, 6, 7, 8, 9, 10].map((rank) => [`A rank ${rank} slot`, `${rank}d6`, rank]));
+    assert.deepEqual(gust.plan.ways[0].plan.targeting.area, { type: "emanation", value: 15 });
+    // The same whatever the slot: the lowest left.
+    const [ward] = compileActivations(scepter(`${head("Steel Ward", 2)}<p>A steel sheen covers you, and you gain a +1 status bonus to AC for 1 minute.</p>`));
+    assert.deepEqual(ward.plan.spend, { spellSlot: { min: 2 } });
+    const caster = foundry.makeActor({ id: "ways-caster", name: "Slot Caster", owners: ["player"] });
+    foundry.place(caster, 300, 19500);
+    const entry = (id, kind, slots) => ({ id, type: "spellcastingEntry", name: `${kind} spells`, system: { prepared: { value: kind, flexible: false }, slots }, updates: [], async update(changes) { this.updates.push(changes); for (const [key, value] of Object.entries(changes)) { const parts = key.split("."); let at = this; for (const part of parts.slice(0, -1)) at = at[part]; at[parts.at(-1)] = structuredClone(value); } return this; } });
+    const prepared = entry("entry-prepared", "prepared", { slot2: { max: 1, value: 0, prepared: [{ id: "spell-a", expended: false }] } });
+    const spontaneous = entry("entry-spontaneous", "spontaneous", { slot1: { max: 3, value: 3 }, slot3: { max: 1, value: 1 } });
+    caster.created.push(prepared, spontaneous);
+    const item = foundry.giveItem(caster, scepter(`${head("Steel Ward", 2)}<p>A steel sheen covers you, and you gain a +1 status bonus to AC for 1 minute.</p>`));
+    const press = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: item.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+        const preview = card.content;
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return { card, preview, said: foundry.messages.slice(count).map((message) => message.content).join(" ") };
+    };
+    let pressed = await press();
+    assert.match(pressed.preview, /Costs a spell slot of rank 2 or higher \(the lowest left\)/);
+    assert.equal(prepared.system.slots.slot2.prepared[0].expended, true, "the rank 2 prepared spell expended");
+    assert.match(pressed.said, /Slot Caster spends a rank 2 spell slot \(prepared spells\)/);
+    pressed = await press();
+    assert.equal(spontaneous.system.slots.slot3.value, 0, "then the rank 3 spontaneous slot");
+    assert.equal(spontaneous.system.slots.slot1.value, 3, "not a lower one");
+    const errors = foundry.notifications.length;
+    pressed = await press();
+    assert.ok(foundry.notifications.slice(errors).some((text) => /Slot Caster has no spell slot of rank 2 or higher left/.test(text)));
+    assert.equal(pressed.card.flags[MODULE_ID].card.status, "open", "nothing applied");
+});

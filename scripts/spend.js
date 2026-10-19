@@ -32,8 +32,33 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 const amountOf = (spend) => Number(spend?.mythicPoints) || 0;
 const pointsOf = (actor, key) => Number(actor?.system?.resources?.[key]?.value) || 0;
 
+// A spell slot it costs (src/compiler/slot-cost.js): { min } the lowest its user has left at that rank or above, { rank } that rank's —
+// a prepared entry's first prepared spell not yet expended, or a spontaneous (or flexible) entry's slot left. → { entry, rank, at } or null.
+export function slotOf(actor, spellSlot) {
+    if (!actor || !spellSlot) return null;
+    const entries = (actor.itemTypes?.spellcastingEntry ?? []).filter((entry) => ["prepared", "spontaneous"].includes(entry.system?.prepared?.value));
+    const ranks = Number.isInteger(spellSlot.rank) ? [spellSlot.rank] : Array.from({ length: 11 - (Number(spellSlot.min) || 1) }, (unused, index) => (Number(spellSlot.min) || 1) + index);
+    for (const rank of ranks) {
+        for (const entry of entries) {
+            const slot = entry.system?.slots?.[`slot${rank}`];
+            if (!slot || !(Number(slot.max) > 0)) continue;
+            const prepared = entry.system.prepared.value === "prepared" && !entry.system.prepared.flexible;
+            if (prepared) {
+                const at = (slot.prepared ?? []).findIndex((entryOf) => entryOf?.id && !entryOf.expended);
+                if (at >= 0) return { entry, rank, at };
+            } else if (Number(slot.value) > 0) return { entry, rank, at: null };
+        }
+    }
+    return null;
+}
+const slotWords = (spellSlot) => (Number.isInteger(spellSlot.rank) ? `a rank ${spellSlot.rank} spell slot` : `a spell slot of rank ${spellSlot.min} or higher`);
+
 // Before the card applies: the user can pay, or an Error saying they can't.
 export function checkSpend(actor, spend, itemName) {
+    if (spend?.spellSlot) {
+        if (!actor) throw new Error(`${itemName}: its user isn't there to spend a spell slot.`);
+        if (!slotOf(actor, spend.spellSlot)) throw new Error(`${itemName}: ${actor.name} has no ${slotWords(spend.spellSlot).replace(/^a /, "")} left.`);
+    }
     const amount = amountOf(spend);
     if (!amount) return;
     const { key, word } = costResource();
@@ -43,6 +68,21 @@ export function checkSpend(actor, spend, itemName) {
 
 // Once it has: the point spent, said in the chat.
 export async function paySpend(actor, spend, itemName) {
+    // (A spell slot: the prepared spell expended, or one fewer slot left.)
+    if (spend?.spellSlot && actor) {
+        const found = slotOf(actor, spend.spellSlot);
+        if (found) {
+            const path = `system.slots.slot${found.rank}`;
+            const slot = found.entry.system.slots[`slot${found.rank}`];
+            if (found.at === null) await found.entry.update({ [`${path}.value`]: Math.max(0, Number(slot.value) - 1) });
+            else {
+                const prepared = structuredClone(slot.prepared);
+                prepared[found.at] = { ...prepared[found.at], expended: true };
+                await found.entry.update({ [`${path}.prepared`]: prepared });
+            }
+            await ChatMessage.create({ content: `<p><strong>${escape(itemName)}</strong>: ${escape(actor.name)} spends a rank ${found.rank} spell slot (${escape(found.entry.name)}).</p>`, speaker: ChatMessage.getSpeaker({ actor }) });
+        }
+    }
     const amount = amountOf(spend);
     if (!amount || !actor) return null;
     const { key, word } = costResource();

@@ -66,6 +66,7 @@ const OTHERS_GRANT = [
     [/\bBoth you and the triggering (enemy|creature|ally)\b/i, one((match) => `you and the triggering ${match[1].toLowerCase()}`)],
     [/\bthe triggering creature (?:rolls|is forced|takes|gains)\b/i, one("the triggering creature")],
     [/\bThe triggering ally gains\b/, one("the triggering ally")],
+    [/\bHit Points to all creatures within an? (\d+)-foot (cone|burst|emanation|line)\b/i, (match) => ({ target: "the creatures in the area", range: null, area: { type: match[2].toLowerCase(), value: Number(match[1]) } })],
     // ("An ally within 60 feet of you … Your ally regains 2d8 hit points".)
     [/\bYour ally regains\b/i, one("1 ally", (match) => feet(match.input))],
     // (Digly's Oil of Sympathy: "the most recent creature damaged by the weapon regains 2d10+5 Hit Points".)

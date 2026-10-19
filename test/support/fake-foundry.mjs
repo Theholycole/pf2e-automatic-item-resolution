@@ -168,7 +168,8 @@ export function createFakeFoundry() {
                     effect: this.created.filter((entry) => entry.type === "effect"),
                     condition: [...[...this.conditions.entries()].map(([slug, value]) => ({ id: `condition-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1), value, flags: this.conditionFlags[slug] ?? {} })), ...this.persistent],
                     affliction: this.created.filter((entry) => entry.type === "affliction"),
-                    action: this.created.filter((entry) => entry.type === "action")
+                    action: this.created.filter((entry) => entry.type === "action"),
+                    spellcastingEntry: this.created.filter((entry) => entry.type === "spellcastingEntry")
                 };
             },
             testUserPermission: (user) => user.isGM || owners.includes(user.id),

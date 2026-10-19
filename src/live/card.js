@@ -111,6 +111,8 @@ export function modifierText(modifier) {
 export function previewLines(state) {
     const plan = state.plan;
     const lines = [];
+    // (A spell slot it costs, src/compiler/slot-cost.js: spent when it's applied.)
+    if (plan?.spend?.spellSlot) lines.push(Number.isInteger(plan.spend.spellSlot.rank) ? `Costs a rank ${plan.spend.spellSlot.rank} spell slot` : `Costs a spell slot of rank ${plan.spend.spellSlot.min} or higher (the lowest left)`);
     // (The conditions it lowers, src/compiler/reduce.js.)
     for (const entry of plan?.item?.reduce ?? []) lines.push(reductionText(entry));
     // (A rune it lends a weapon, src/compiler/rune-loans.js.)

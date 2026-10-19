@@ -3177,6 +3177,31 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // A spell slot an activation costs (the module's own wording, on an item made here): Apply spends the caster's one rank 2 slot (a
+    // spontaneous entry's), then refuses with none left.
+    async slotCost(scene) {
+        const { actor: caster } = await creature(scene, "Slot Caster", { type: "character", x: 17, y: 19 });
+        const [entry] = await caster.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Slot Spells`, type: "spellcastingEntry", system: { tradition: { value: "arcane" }, prepared: { value: "spontaneous" }, ability: { value: "cha" }, slots: { slot2: { max: 1, value: 1 } } } }]);
+        const html = "<p><strong>Activate—Steel Ward</strong> <span class=\"action-glyph\">3</span> (concentrate)</p><p><strong>Frequency</strong> once per hour</p><p><strong>Cost</strong> a spell slot of rank 2 or higher</p><hr /><p>You gain a +1 status bonus to AC for 1 minute.</p>";
+        const [scepter] = await caster.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Slot Scepter`, type: "equipment", system: { description: { value: html }, level: { value: 8 } } }]);
+        const press = async (what) => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(scepter.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what });
+            let refused = null;
+            await game.modules.get(NS).api.live.apply(card.id, {}).catch((error) => (refused = error.message));
+            return { card, refused };
+        };
+        const first = await press("the scepter's card");
+        await until(() => Number(caster.items.get(entry.id).system.slots.slot2.value) === 0, "the rank 2 slot spent", { timeout: 8000 });
+        await until(() => caster.itemTypes.effect.some((effect) => effect.system.rules.some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("ac"))), "the +1 to AC", { timeout: 8000 });
+        const second = await press("the scepter's second card");
+        await wait(800);
+        const state = game.messages.get(second.card.id).getFlag(NS, "card");
+        assert(state.status === "open", `refused with no slot left (${second.refused ?? state.status})`);
+        return { refused: second.refused, results: game.messages.get(first.card.id).getFlag(NS, "card").results };
+    },
+
     // Alchemists+ Halfling Sandwich (Lesser): Apply readies its +1 status bonus; the next save takes it and spends it.
     async tpHalflingSandwich(scene) {
         const { actor: eater } = await creature(scene, "Sandwich Eater", { x: 8, y: 18 });

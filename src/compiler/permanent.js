@@ -50,6 +50,7 @@ import { spellstrikePlan } from "./spellstrike.js";
 import { withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
 import { withHitDelivery } from "./hit-delivery.js";
 import { withoutFlavor, withoutFlavorNotes, withoutLater } from "./flavor.js";
+import { withSlotCost } from "./slot-cost.js";
 import { choiceOptionPlan, optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
@@ -461,6 +462,10 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = optionPlan(item, activation, base) ?? plan;
         // (Or one of the ways of a toggle named for it, the item's own PF2e implementation, over any row read from its words: Shawl of Seasons.)
         if (plan?.builtin !== "modes") plan = choiceOptionPlan(item, activation, base) ?? plan;
+        // (A spell slot it costs, src/compiler/slot-cost.js: Magic+ scepters — spent by the card, or a way per rank when its numbers are the
+        // slot's, each compiled in that rank's words.)
+        // (The block as its own description: its opening paragraph tag back, which the split leaves off.)
+        plan = withSlotCost(plan, activation.html, base, (words) => compileActivations({ ...item, system: { ...(item.system ?? {}), description: { value: /^\s*<p\b/i.test(words) ? words : `<p>${words}` } } }, options)[0]?.plan ?? null);
         if (!plan) return { activation, plan: null, index };
         plan = damageMaterial(withTypeChoices(plan, typeChoice), plainText(activation.html));
         // (A skill its user picked when the item was made, named in the item's own text, src/compiler/skill-pick.js: Words of Wisdom's
@@ -480,6 +485,7 @@ function compileEach(item, options = {}) {
         }
         // (Not its opening flavor among what it leaves the GM, src/compiler/flavor.js.)
         plan = withoutFlavorNotes(plan, activation.html);
+
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, coats, coatLasts, creates, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)
