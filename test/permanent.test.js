@@ -837,3 +837,20 @@ test("fruit it grows that heal when eaten (Verdant Branch's 1d4, Satchel of Numb
     assert.deepEqual(fruit.resolution.native.healing.components.map((component) => component.formula), ["2d6+5"]);
     assert.equal(compileActivations(item("Satchel of Numberless Seeds"))[1].plan.item.creates.count, 5);
 });
+
+test("next-Strike riders: Hyldarf's Fang's venom a coat of the gun itself (its unnamed save PF2e's Fortitude), Sawtooth Reaper's target Off-Guard to it (PF2e's EphemeralEffect), Scope of Limning's glow a note on the creature hit, Starshot Arrow's range penalties gone", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { strikeRules, strikeLines } = await import("../src/live/strike-card.js");
+    const fang = compileActivations(item("Hyldarf's Fang"), { spellEffects })[1].plan;
+    assert.deepEqual([routeOf(fang), fang.resolution.check.statistic, fang.resolution.check.against.value, fang.item.coats, fang.item.coatLasts], ["coat", "fortitude", 34, "self", { value: 1, unit: "rounds" }]);
+    const reaper = compileActivations(item("Sawtooth Reaper"), { spellEffects })[1].plan;
+    assert.deepEqual([routeOf(reaper), reaper.strike.offGuard, reaper.strike.own], ["strike", true, true]);
+    assert.deepEqual(strikeRules(reaper, { weaponId: "reaper0000000001" }).filter((rule) => rule.key === "EphemeralEffect"), [{ key: "EphemeralEffect", affects: "target", selectors: ["reaper0000000001-attack"], uuid: "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg" }]);
+    assert.ok(strikeLines(reaper).includes("Its target is Off-Guard to it"));
+    assert.ok(reaper.strike.notes.some((note) => /Concealed, by hand/.test(note)), "the fog a note");
+    const scope = compileActivations(item("Scope of Limning"), { spellEffects })[0].plan;
+    const glow = scope.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([routeOf(scope), glow.duration.value, glow.duration.unit, /can't be Concealed/.test(glow.text)], ["strike", 1, "rounds", true]);
+    const arrow = compileActivations(item("Starshot Arrow (Lesser)"), { spellEffects })[0].plan;
+    assert.deepEqual([routeOf(arrow), arrow.strike.ammo, arrow.strike.options], ["strike", true, ["ignore-range-penalty:6"]]);
+});

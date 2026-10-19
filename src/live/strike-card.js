@@ -40,6 +40,7 @@ export function strikeLines(plan) {
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
+        strike.offGuard ? "Its target is Off-Guard to it" : null,
         ...(strike.options ?? []).map((option) => (/^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
         ...(strike.suppress ?? []).map((penalty) => `No ${penalty} penalty`),
         strike.splash ? `+${strike.splash.value} ${strike.splash.damageType} splash damage` : null,
@@ -138,6 +139,8 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     // Damper —, flat splash damage — Jistkan War Crossbow.)
     for (const option of strike.options ?? []) rules.push({ key: "RollOption", domain: attackSelector, option });
     for (const penalty of strike.suppress ?? []) rules.push({ key: "AdjustModifier", selector: attackSelector, slug: penalty, suppress: true });
+    // (Its target Off-Guard to it: PF2e's EphemeralEffect of the condition on the attack.)
+    if (strike.offGuard) rules.push({ key: "EphemeralEffect", affects: "target", selectors: [attackSelector], uuid: "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg" });
     if (strike.splash) rules.push({ key: "FlatModifier", selector: damageSelector, slug: `${slug}-splash`, ...(label ? { label } : {}), value: strike.splash.value, damageType: strike.splash.damageType, damageCategory: "splash" });
     // (Its runes for the Strike, Weapon Shot's: PF2e's rune upgrade on the weapon loaded with it — the better of the two.)
     if (strike.runes) for (const [property, value] of [["runes-potency", strike.runes.potency], ["runes-striking", strike.runes.striking]]) {

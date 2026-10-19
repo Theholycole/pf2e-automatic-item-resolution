@@ -29,6 +29,9 @@ const MATERIAL_STRIKE = /\bThe (?:attack|Strike) is treated as (silver|cold iron
 const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike is (${TYPES}) damage\b|\b(?:It|The Strike|This Strike|The ammunition) deals (${TYPES}) damage instead of its (?:normal|usual) damage type\b|\bthe weapon's (?:physical )?damage for the Strike becomes (${TYPES}) damage\b`, "i");
 // "Your outcome is one degree of success better than what you rolled": PF2e's AdjustDegreeOfSuccess on the attack roll.
 const BETTER = /\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i;
+// (The target Off-Guard to it, Sawtooth Reaper's Bloodmist Whirl's "The next Strike you make treats the target as Off-Guard": PF2e's
+// EphemeralEffect of the condition, for that attack.)
+const OFF_GUARD = /\btreats the target as Off-Guard\b|\bthe target is Off-Guard (?:to|against) (?:this|the) (?:Strike|attack)\b/i;
 // (Its runes for the Strike: Weapon Shot's "For the Strike with which you consume the ammunition, the weapon is a +1
 // striking weapon, instead of those of the weapon firing it" — potency 1, striking 1; "+2 greater striking" — 2, 2.)
 const RUNES = /\bthe weapon is a \+(\d) (?:(greater|major) )?striking weapon\s*,? instead of (?:those|the runes) of the weapon firing it\b/i;
@@ -99,6 +102,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const options = [];
     const suppress = [];
     let splash = null;
+    let offGuard = false;
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
     const striking = Number(item?.system?.runes?.striking) || 0;
@@ -157,6 +161,11 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
             splash = { value: Number(splashed[1]), damageType: splashed[2].toLowerCase() };
             rest = rest.replace(splashed[0], " ");
         }
+        const flat = OFF_GUARD.exec(rest);
+        if (flat) {
+            offGuard = true;
+            rest = rest.replace(flat[0], " ");
+        }
         const better = BETTER.exec(rest);
         if (better) {
             degree = { all: "one-degree-better" };
@@ -175,5 +184,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     // (The rune step in place of the first die, for the item's rune.)
     const step = steps.filter((entry) => striking >= entry.rune).sort((a, b) => b.rune - a.rune)[0];
     if (step && dice.length) dice[0] = { ...dice[0], diceNumber: step.count, dieSize: `d${step.faces}` };
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard) };
 }

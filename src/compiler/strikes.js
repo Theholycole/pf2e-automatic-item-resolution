@@ -288,6 +288,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.options ? { options: extras.options } : {}),
               ...(extras.suppress ? { suppress: extras.suppress } : {}),
               ...(extras.splash ? { splash: extras.splash } : {}),
+              ...(extras.offGuard ? { offGuard: true } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),

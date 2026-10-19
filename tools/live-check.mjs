@@ -5464,6 +5464,64 @@ export const cases = {
         return { choices, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Next-Strike riders: Hyldarf's Fang's venom coats the hand cannon itself and its hit (AC 1) posts the DC 34 Fortitude save card; Sawtooth
+    // Reaper's readied Strike makes its target Off-Guard to it (PF2e's EphemeralEffect); Scope of Limning's hit leaves its glow note on the
+    // creature for a round; Starshot Arrow's readied Strike carries ignore-range-penalty:6.
+    async nextStrikeRiders(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Rider Archer", { type: "character", x: 2, y: 13, level: 20 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Rider Target", { x: 3, y: 13, ac: 1, alliance: "opposition" });
+        const live = game.modules.get(NS).api.live;
+        // (A hand cannon: its rounds, and nothing to reload.)
+        const fang = await give(user, "Hyldarf's Fang");
+        const rounds = await give(user, "Rounds (Hand Cannon)");
+        await rounds.update({ "system.quantity": 5, "system.baseItem": "rounds-hand-cannon" });
+        await fang.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": rounds.id, "system.reload.value": "0" });
+        let since = Date.now();
+        await live.activate(fang.uuid, 1);
+        const coat = await messageAfter(since, itemCard("poison"), { what: "the fang's coat card" });
+        const weapons = coat.getFlag(NS, "card").weapons;
+        assert(weapons.length === 1 && weapons[0].id === fang.id, `only the gun itself (${weapons.map((entry) => entry.name).join(", ")})`);
+        await live.apply(coat.id, { weapon: 0 });
+        await wait(600);
+        await userToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const shot = await strike(user, fang);
+        assert(["success", "criticalSuccess"].includes(shot.attack.flags.pf2e.context.outcome), `a hit (AC 1): ${shot.attack.flags.pf2e.context.outcome}`);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the venom's save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && check.against.value === 34, `Fortitude DC 34 (${JSON.stringify(check)})`);
+        const reaper = await give(user, "Sawtooth Reaper");
+        await fang.update({ "system.equipped.carryType": "worn", "system.equipped.handsHeld": 0 });
+        await reaper.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        since = Date.now();
+        await live.activate(reaper.uuid, 1);
+        let card = await messageAfter(since, itemCard("strike"), { what: "the reaper's Strike card" });
+        await live.apply(card.id);
+        await wait(600);
+        assert(user.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider") && (effect.system.rules ?? []).some((rule) => rule.key === "EphemeralEffect")), "the readied Strike's EphemeralEffect");
+        const whirl = await strike(user, reaper);
+        const options = whirl.attack.flags.pf2e.context.options ?? [];
+        assert(options.includes("target:condition:off-guard"), `the target Off-Guard to it (${options.filter((option) => option.startsWith("target:condition")).join(", ")})`);
+        const scope = await give(user, "Scope of Limning");
+        since = Date.now();
+        await live.activate(scope.uuid, 0);
+        card = await messageAfter(since, itemCard("strike"), { what: "the scope's Strike card" });
+        await live.apply(card.id);
+        await wait(600);
+        const lit = await strike(user, reaper);
+        assert(["success", "criticalSuccess"].includes(lit.attack.flags.pf2e.context.outcome), `a hit (AC 1): ${lit.attack.flags.pf2e.context.outcome}`);
+        await until(() => foe.itemTypes.effect.some((effect) => /Scope of Limning/.test(effect.name) && effect.system.duration?.value === 1 && effect.system.duration?.unit === "rounds"), `the glow's note for a round (${foe.itemTypes.effect.map((effect) => `${effect.name} ${effect.system.duration?.value} ${effect.system.duration?.unit}`).join(", ")})`, { timeout: 10000 });
+        const starshot = await give(user, "Starshot Arrow (Lesser)");
+        since = Date.now();
+        await live.activate(starshot.uuid, 0);
+        card = await messageAfter(since, itemCard("strike"), { what: "the arrow's Strike card" });
+        await live.apply(card.id);
+        await wait(600);
+        assert(user.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider") && (effect.system.rules ?? []).some((rule) => rule.key === "RollOption" && rule.option === "ignore-range-penalty:6")), "the readied Strike's ignore-range-penalty:6");
+        return { save: save.id, offGuard: true };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

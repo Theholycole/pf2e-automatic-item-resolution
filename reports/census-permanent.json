@@ -6,15 +6,15 @@
   "ours": 2119,
   "activations": 2597,
   "results": {
-   "resolves": 756,
+   "resolves": 758,
    "builtin:cast-spell": 472,
-   "none": 564,
-   "partial": 198,
+   "none": 561,
+   "partial": 201,
    "builtin:focus-point": 47,
    "builtin:counteract": 26,
    "builtin:readied-bonus": 47,
    "builtin:no-effect": 100,
-   "note-only": 168,
+   "note-only": 166,
    "builtin:reroll": 44,
    "builtin:table": 7,
    "builtin:teleport": 8,
@@ -32,13 +32,13 @@
   "live": {
    "save": 439,
    "cast": 472,
-   "item": 587,
-   "none": 695,
+   "item": 585,
+   "none": 692,
    "focus": 47,
    "counteract": 26,
    "fortune": 58,
    "reroll": 44,
-   "strike": 88,
+   "strike": 92,
    "table": 7,
    "teleport": 8,
    "zone": 23,
@@ -46,7 +46,7 @@
    "ways": 19,
    "conjure": 13,
    "action": 23,
-   "coat": 3,
+   "coat": 4,
    "spellstrike": 9,
    "take": 1,
    "later": 3
@@ -58,9 +58,9 @@
   "equipment": {
    "activations": 1693,
    "results": {
-    "resolves": 456,
+    "resolves": 457,
     "builtin:cast-spell": 345,
-    "none": 392,
+    "none": 391,
     "partial": 90,
     "builtin:focus-point": 45,
     "builtin:counteract": 22,
@@ -83,14 +83,14 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 167,
+    "resolves": 168,
     "none": 84,
-    "partial": 49,
+    "partial": 50,
     "builtin:cast-spell": 82,
     "builtin:reroll": 7,
     "builtin:table": 1,
     "builtin:modes": 12,
-    "note-only": 14,
+    "note-only": 12,
     "builtin:item-action": 9,
     "builtin:zone": 6,
     "builtin:counteract": 2,
@@ -106,10 +106,10 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "partial": 35,
+    "partial": 37,
     "resolves": 44,
     "builtin:pf2e-rules": 24,
-    "none": 31,
+    "none": 29,
     "builtin:no-effect": 2,
     "note-only": 3,
     "builtin:teleport": 1,
@@ -2376,9 +2376,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Horn of Rust",
@@ -3458,9 +3458,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Immaculate Holsters",
@@ -8168,9 +8168,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Gloaming Shard",
@@ -11537,9 +11537,9 @@
    "time": "1",
    "frequency": "Once per minute",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "coat"
   },
   {
    "name": "Sentinel Horn",
@@ -18827,9 +18827,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Deflecting",

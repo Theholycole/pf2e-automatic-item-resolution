@@ -218,6 +218,21 @@ export function withItemData(html, item) {
     // Survival checks to Track that creature" for its 7 days — the bow's own extra damage, marked to the creature (src/compiler/marked.js),
     // and the Track bonus, whose creature is a note.)
     text = text.replace(/\bFor the next (\d+) days or until that creature is slain, your attacks with the bow against that creature deal (\d+d\d+) additional damage, and you gain an? \+(\d+) circumstance bonus to Survival checks to Track that creature\./i, (all, days, dice, value) => `For ${days} days, your Strikes with the weapon deal ${dice} additional damage. That damage is only against that creature, and the oath ends early if it's slain. You gain a +${value} circumstance bonus to Survival checks to Track for ${days} days; the bonus is only to Track that creature.`);
+    // (Starshot Arrow's "When you activate and shoot a starshot arrow, you take no range penalties against any target that you can personally
+    // detect": the Strike that fires it with PF2e's ignore-range-penalty option to its sixth increment, the detecting a note.)
+    text = text.replace(/\bWhen you activate and shoot a (?:<em>)?starshot arrow(?:<\/em>)?, you take no range penalties against any target that you can personally detect\./i, "For the Strike with which you consume the ammunition, you take no range increment penalty on your attack, even if the target is all the way out to the sixth range increment. The target must be one you can personally detect.");
+    // (Scope of Limning's Outline: "If your next Strike from the weapon to which the scope is attached hits a creature, … causing the creature
+    // to glow until the end of your next turn" — the readied Strike, and src/compiler/hit-notes.js's note Effect on the creature hit for
+    // that round.)
+    text = text.replace(/\bIf your next Strike from the weapon to which the scope is attached hits a creature, the sound of the impact transforms into light, causing the creature to glow until the end of your next turn\.\s*A visible creature/i, "The next Strike you make with the weapon to which the scope is attached outlines its target in light. If your Strike hits, the creature glows for 1 round, to the end of your next turn: a visible creature");
+    // (Sawtooth Reaper's Bloodmist Whirl: its next Strike's target Off-Guard (src/compiler/strike-damage.js), read after the fog that
+    // "conceals you for 1 round or until you Strike" — that, and Ensnaring Disarm's free Strike, the readied Strike's notes.)
+    text = text.replace(/\bYou whirl the chain of the sawtooth reaper, creating a crimson fog that conceals you for 1 round or until you Strike\.\s*The next Strike you make treats the target as ((?:@UUID\[[^\]]*\]\{)?Off-Guard\}?), and when you use Ensnaring Disarm you can also Strike the same target as a free action\./i, (all, offGuard) => `The next Strike you make treats the target as ${offGuard}. When you use Ensnaring Disarm, you can also Strike the same target as a free action. A crimson fog from the whirled chain conceals you for 1 round or until you Strike (Concealed, by hand).`);
+    // (Hyldarf's Fang's Linnorm's Fang: "The next Strike you make with Hyldarf's Fang before the end of your next turn delivers the venom to
+    // the target" — src/compiler/hit-delivery.js's coat of the hand cannon itself, for its round; its venom's "Saving Throw DC 34", no save named,
+    // the Fortitude save of PF2e's injury poisons.)
+    text = text.replace(/\bThe next Strike you make with Hyldarf's Fang before the end of your next turn delivers the venom to the target\./i, "The next creature you successfully Strike with this weapon within the next 1 round is exposed to Hyldarf's venom. Only the next Strike: a miss wastes it.");
+    text = text.replace(/(Hyldarf's Venom(?:<\/strong>)?\s*\(fire, injury, poison\)(?:<\/p>)?\s*(?:<p>)?(?:<strong>)?Saving Throw(?:<\/strong>)?)\s*DC (\d+)\b/i, (all, lead, dc) => `${lead} @Check[fortitude|dc:${dc}|traits:poison]`);
     // (Emetic Paste's "The paste grants the target a +2 item bonus to that save and to all saving throws to reduce the sickened condition for
     // 1 hour": its Fortitude saves for the hour, at the creature targeted — its user or a sickened creature in reach —, those saves' being
     // to reduce the Sickened and the one it attempts at once, a note.)
