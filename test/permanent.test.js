@@ -742,3 +742,12 @@ test("a breath that's its user's draconic benefactor's (Pact of the Herald and H
     assert.equal(reflex.damageChoices.find((choice) => choice.label === "Fire").formula, "(@actor.level)d6[fire]");
     assert.deepEqual([reflex.item.activation.frequency.per, breath.plan.notes], ["day", ["You can't use this ability again for 1d4 rounds."]]);
 });
+
+test("a cast in other words, \"as if you cast\" (Crown of the Companion's Share Life at the ally): the spell module's cast, its healing after a note; not a ritual (Whisperer of Souls)", async () => {
+    const { spellIndex } = await import("../src/compiler/index.js");
+    const spells = spellIndex(readDocuments(path.join(`${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`, "spells")).filter((doc) => doc.collection === "items"));
+    const [bond] = compileActivations(item("Crown of the Companion"), { spells });
+    assert.deepEqual([bond.plan.builtin, bond.plan.spell.name], ["cast-spell", "Share Life"]);
+    assert.ok(bond.plan.notes.includes("At the end of the spell's duration, your ally recovers 4d8 Hit Points and you recover half of what they recover."));
+    assert.notEqual(compileActivations(item("Whisperer of Souls"), { spells })[0].plan?.builtin, "cast-spell");
+});

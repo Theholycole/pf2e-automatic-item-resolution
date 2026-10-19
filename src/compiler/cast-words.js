@@ -35,6 +35,8 @@ function sentencesOf(html, { whole = false } = {}) {
         .replace(/@Check\[[^\]]*?\bdc:(\d+)[^\]]*\](?:\{[^}]*\})?/gi, "(DC $1)")
         .replace(/\[\[\/\w+ ([^\]]*?)(?: #[^\]]*)?\]\](?:\{([^}]*)\})?/g, (whole, formula, label) => label ?? formula)
         .replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1")
+        // (A damage roll's formula as its words, its flavor brackets inside: "@Damage[4d8[healing]]" → "4d8".)
+        .replace(/@Damage\[((?:[^\[\]]|\[[^\]]*\])*)\](?:\{([^}]*)\})?/g, (whole, formula, label) => label ?? formula.replace(/\[[^\]]*\]/g, "").replace(/\|.*$/, ""))
         .replace(/@\w+\[[^\]]*\](?:\{([^}]*)\})?/g, (whole, label) => label ?? "")
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/g, " ")
@@ -60,9 +62,10 @@ function spellAt(text, spells, names) {
 // "You cast", "you can cast", "The wayfinder can cast", "the tattoo casts", "It casts", "to cast" — not a cast of the
 // user's own ("If your next action is to Cast a Spell", "able to cast", "Supply a casting").
 // (And "The creature is targeted with Death Knell (DC 24)", "You generate the effects of a Vitality Lash cantrip", "You're the
-// subject of the Sanctuary spell", "The ring replicates the effects of an 8th-rank Spell Turning", "Cast Bless or Heal".)
-const VERB = /\b(?:you (?:can |immediately |then )?cast|(?:the|this) [\w' -]{1,40}? (?:can cast|casts)|(?:the|these) [\w' -]{1,20}?s cast|it (?:can cast|casts)|to cast|and casts?|casting|(?:is|are) targeted (?:with|by)|(?:you )?(?:generate|produce|replicates?|replicating) the effects of|(?:creating|creates?) the effects? of|you're the subject of|then casts?|have (?:it|the [\w' -]{1,30}?) cast|(?:obtain|gain)s? the effects? of|(?:this|it) has the effects? of)\s+|^Cast\s+|^(?:[A-Z][\w'’-]*\s+){1,4}(?:can cast|casts)\s+/gi;
-const NOT_A_CAST = /\b(?:your (?:next|last) action (?:is|was) to cast|if you cast|when you cast|when casting|after you cast|while casting|able to cast|ability to cast|can't cast|cannot cast|Supply a casting|spell slot|as if you had used it to cast|used as a catalyst|innate spells?|unless it succeeds)\b|\beach once per (?:day|hour|week)\b(?<!^Cast\b.*)/i;
+// subject of the Sanctuary spell", "The ring replicates the effects of an 8th-rank Spell Turning", "Cast Bless or Heal", Crown of the
+// Companion's "as if you cast Share Life targeting the ally" — not a ritual.)
+const VERB = /\b(?:you (?:can |immediately |then )?cast|(?:the|this) [\w' -]{1,40}? (?:can cast|casts)|(?:the|these) [\w' -]{1,20}?s cast|it (?:can cast|casts)|to cast|and casts?|casting|(?:is|are) targeted (?:with|by)|(?:you )?(?:generate|produce|replicates?|replicating) the effects of|(?:creating|creates?) the effects? of|you're the subject of|then casts?|have (?:it|the [\w' -]{1,30}?) cast|(?:obtain|gain)s? the effects? of|(?:this|it) has the effects? of|as if you cast(?! (?:the |a )?[\w' -]+? ritual\b))\s+|^Cast\s+|^(?:[A-Z][\w'’-]*\s+){1,4}(?:can cast|casts)\s+/gi;
+const NOT_A_CAST = /\b(?:your (?:next|last) action (?:is|was) to cast|(?<!\bas )if you cast|when you cast|when casting|after you cast|while casting|able to cast|ability to cast|can't cast|cannot cast|Supply a casting|spell slot|as if you had used it to cast|used as a catalyst|innate spells?|unless it succeeds)\b|\beach once per (?:day|hour|week)\b(?<!^Cast\b.*)/i;
 // A cast only under some condition ("On a failed or critically failed saving throw, the whip casts …"): not the activation's.
 const CONDITIONAL = /^(?:On a|If|When|Whenever|After|Until|Once)\b/i;
 // What comes before the spells: "a", "either", "the three-action version of a", "one of the following spells from the crown

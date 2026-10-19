@@ -183,7 +183,7 @@ const TIMES = { half: 0.5, twice: 2, double: 2, "three times": 3, "four times": 
 // triggering bleed damage, up to a maximum of 10 temporary HP", Reaper's Toll's "If your Strike hits, you gain temporary Hit Points equal
 // to half the damage dealt", Assassin's Skin's "instead regain Hit Points equal to the bleed damage" → [{ from: "amount", of, multiplier,
 // max?, heal?, duration }].)
-const AMOUNT_TEMP = /\b(?:you|and(?: instead)?) (gain|regain) (?:a number of )?(temporary Hit Points|Hit Points|HP) equal to (?:(half|twice|double) )?(?:the value of )?(the (?![\w ]*?'s level\b)[^,.]+?)(?:,? up to a maximum of (\d+)(?: temporary (?:HP|Hit Points))?)?(?=,|\.|$| until\b| for\b| which\b)/i;
+const AMOUNT_TEMP = /\b(?:you|and(?: instead)?) (gain|regain) (?:a number of )?(temporary Hit Points|Hit Points|HP) equal to (?:(half|twice|double|three times|four times) )?(?:the value of )?(the (?![\w ]*?'s level\b)[^,.]+?)(?:,? up to a maximum of (\d+)(?: temporary (?:HP|Hit Points))?)?(?=,|\.|$| until\b| for\b| which\b)/i;
 function amountTempOf(sentence, index, sentences, duration, used) {
     const own = sentence.replace(/^\s*If (?:your|the) Strike hits,\s*/i, "");
     if (/^\s*(?:If|When|Whenever|Each time)\b/i.test(own)) return null;

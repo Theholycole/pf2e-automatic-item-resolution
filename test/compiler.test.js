@@ -594,6 +594,9 @@ test("temporary Hit Points or healing from an amount its trigger gave, typed on 
     assert.deepEqual([skin.heal, skin.of], [true, "the bleed damage"]);
     assert.equal(levelTempText(skin), "Hit Points regained equal to the bleed damage (typed on the card)");
     assert.equal(entry("Blood-Drinker Blade (Greater)", 1).of, "the bleed damage the creature takes");
+    // (Three and four times too: Reaper's Grasp's soul's level, Shadowpiercer's counteract rank.)
+    assert.deepEqual([entry("Reaper's Grasp", 1).multiplier, entry("Reaper's Grasp", 1).of], [3, "the level of the creature whose soul you chose"]);
+    assert.deepEqual([entry("Shadowpiercer").multiplier, entry("Shadowpiercer").of, entry("Shadowpiercer").duration.unit], [4, "the effect's counteract rank", "hours"]);
 });
 
 test("healing its text gives its user beside a linked Effect (Kindler Cameo, Wine of the Blood), its bearer's own void healing no bar (Emerald Fulcrum Lens); not under a condition (Platter of Putrid Dreams)", () => {

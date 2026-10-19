@@ -6,15 +6,15 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 751,
-   "builtin:cast-spell": 470,
-   "none": 604,
-   "partial": 181,
+   "resolves": 752,
+   "builtin:cast-spell": 471,
+   "none": 602,
+   "partial": 182,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
    "builtin:no-effect": 100,
-   "note-only": 188,
+   "note-only": 187,
    "builtin:reroll": 25,
    "builtin:teleport": 7,
    "builtin:pf2e-rules": 26,
@@ -29,9 +29,9 @@
   },
   "live": {
    "save": 435,
-   "cast": 470,
-   "item": 589,
-   "none": 735,
+   "cast": 471,
+   "item": 590,
+   "none": 733,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
@@ -55,8 +55,8 @@
    "activations": 1690,
    "results": {
     "resolves": 456,
-    "builtin:cast-spell": 341,
-    "none": 417,
+    "builtin:cast-spell": 342,
+    "none": 416,
     "partial": 80,
     "builtin:focus-point": 43,
     "builtin:counteract": 21,
@@ -77,12 +77,12 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 161,
-    "none": 91,
-    "partial": 45,
+    "resolves": 162,
+    "none": 90,
+    "partial": 46,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
-    "note-only": 19,
+    "note-only": 18,
     "builtin:modes": 12,
     "builtin:item-action": 9,
     "builtin:zone": 6,
@@ -1858,9 +1858,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Powered Full Plate",
@@ -6385,9 +6385,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Bracers of Pain",
@@ -19205,7 +19205,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },

@@ -191,6 +191,8 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - Anointed Waterskin's "granting you the effects of Bless": PF2e's Spell Effect.
   - Limestone Shield's "granting you standard cover from that effect": +2 circumstance to AC and Reflex saves against that effect, the moment's bonus.
   - Jug of Fond Remembrance's "Recall Knowledge … with a +2 circumstance bonus": PF2e's Recall Knowledge with that bonus, its degree and Stupefied the card's words.
+  - Crown of the Companion's "as if you cast Share Life targeting the ally": the spell module's cast ("as if you cast" a cast verb now, not a ritual; a damage roll's formula in notes as its words).
+  - Shadowpiercer's temporary Hit Points "equal to four times the effect's counteract rank" and Reaper's Grasp's "three times the level of the creature whose soul you chose": the item card's typed amount.
   - Hagbane Biscuit's bonus with three scopes: the saves against hags (PF2e's origin trait, hags now among the creature words); its Perception and Recall Knowledge parts by hand.
   - Heartening Missive (Bull, Rabbit, Turtle)'s "The recipient gains a +1 item bonus to Fortitude saves for the next 24 hours": that bonus on the recipient the presser targets.
 - **Smoke sprayed into a square** (`covered-square.js` sprayedSmokePlan): Beekeeper's Smoker's adjacent square, Concealed inside. It's the ability module's placed zone, and its 1d4 rounds are the GM's.
