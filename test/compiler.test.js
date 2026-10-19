@@ -994,3 +994,14 @@ test("what each melee attack roll sets off while Martial Mayhem Mutagen lasts: a
     const major = compileItem(item("Martial Mayhem Mutagen (Major)")).item.attackRiders.riders;
     assert.deepEqual(major.filter((rider) => rider.target).map((rider) => [rider.on, rider.target.slug, rider.target.value]), [[["criticalSuccess"], "clumsy", 1]]);
 });
+
+test("a released creature's own attack with a condition on its critical hit (a third-party jar's pteranodon, read from its pack): that condition on the critical success row, for its round", async () => {
+    const { readDocuments: read } = await import("../../pf2e-automatic-ability-resolution/tools/leveldb.mjs");
+    let docs = [];
+    try { docs = read(`${process.env.HOME}/.local/share/FoundryVTT/Data/modules/pf2e-team-plus-alchemists/packs/pf2e-items`).filter((doc) => doc.collection === "items"); } catch { return; }
+    const jar = docs.find((doc) => doc.name === "Preserved Pteranodon");
+    if (!jar) return;
+    const plan = compileItem({ ...jar, ownerLevel: jar.system.level.value });
+    const [dazzled] = plan.resolution.outcomes.criticalSuccess.effects;
+    assert.deepEqual([plan.ownCheck, dazzled.slug, dazzled.duration?.value, dazzled.duration?.unit, plan.resolution.outcomes.success.effects.length], [{ kind: "attack", modifier: 8 }, "dazzled", 1, "rounds", 0]);
+});

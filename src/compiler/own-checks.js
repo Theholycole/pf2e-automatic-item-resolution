@@ -56,6 +56,17 @@ const MANEUVER_CHOICE = new RegExp(String.raw`\battempt(?:s|ing)? to (${NAMES}) 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const sentencesOf = (text) => String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 
+// A condition its attack's critical hit adds, in a sentence of its own (a third-party jar's released pteranodon: Dazzled, for a round, after a
+// critical hit) → { notes without it, criticalRider: "Dazzled for 1 round" }.
+const CRITICAL_RIDER = /^On a critical hit, (?:the target|it) is (?:also )?((?:[A-Z][\w-]*)(?: \d)?) for (a|an|one|\d+) (rounds?|minutes?)\b(?: as [^.]*)?\.$/;
+function withCriticalRider(notes) {
+    const index = notes.findIndex((note) => CRITICAL_RIDER.test(note));
+    if (index < 0) return { notes };
+    const [, condition, count, unit] = CRITICAL_RIDER.exec(notes[index]);
+    const value = /^\d+$/.test(count) ? Number(count) : 1;
+    return { notes: notes.filter((_, at) => at !== index), criticalRider: `${condition} for ${value} ${value === 1 ? unit.replace(/s$/, "") : unit.replace(/(?<!s)$/, "s")}` };
+}
+
 // The text (plain) → { kind: "maneuver", slug, modifier, notes } | { kind: "attack", range, modifier, formula, type, category, notes } | null.
 export function readOwnCheck(given) {
     // ("3d12 plus 19": 3d12+19; "… attack modifier. The Strike deals …": one sentence.)
@@ -120,9 +131,9 @@ export function readOwnCheck(given) {
             return { kind: "maneuver", slug, modifier: Number(maneuver[2] ?? maneuver[4]), notes: left, ...(line ? { line: Number(line) } : {}), ...(critical ? { critical: { formula: critical[1], type: critical[2].toLowerCase() } } : {}) };
         }
         const attack = OWN_ATTACK.exec(sentence);
-        if (attack) return { kind: "attack", range: attack[1]?.toLowerCase() ?? null, modifier: Number(attack[2] ?? attack[3]), formula: attack[4].replace(/\s+/g, ""), category: attack[5] ? "persistent" : null, type: attack[6].toLowerCase(), notes };
+        if (attack) return { kind: "attack", range: attack[1]?.toLowerCase() ?? null, modifier: Number(attack[2] ?? attack[3]), formula: attack[4].replace(/\s+/g, ""), category: attack[5] ? "persistent" : null, type: attack[6].toLowerCase(), ...withCriticalRider(notes) };
         const called = /\bobject\b/i.test(sentence) ? null : CALLED_ATTACK.exec(sentence);
-        if (called) return { kind: "attack", range: null, modifier: Number(called[1] ?? called[2] ?? called[3]), formula: called[4].replace(/\s+/g, ""), category: called[5] ? "persistent" : null, type: called[6].toLowerCase(), notes };
+        if (called) return { kind: "attack", range: null, modifier: Number(called[1] ?? called[2] ?? called[3]), formula: called[4].replace(/\s+/g, ""), category: called[5] ? "persistent" : null, type: called[6].toLowerCase(), ...withCriticalRider(notes) };
     }
     return null;
 }
@@ -152,7 +163,9 @@ export function ownCheckPlan(text, base, options = {}) {
     const extra = read.extra ? { id: "1", ...read.extra } : null;
     // (A condition on any hit, Clockwork Helm's Drained 2: the bombs' rider reader.)
     const riders = read.rider ? riderRow(`The target is ${read.rider}.`).effects ?? [] : [];
-    const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: extra ? ["0", "1"] : ["0"] }, effects: [...riders], modifiers: [] });
+    // (And one a critical hit adds: its own row's.)
+    const criticalRiders = read.criticalRider ? riderRow(`The target is ${read.criticalRider}.`).effects ?? [] : [];
+    const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: extra ? ["0", "1"] : ["0"] }, effects: [...riders, ...(multiplier === 2 ? criticalRiders : [])], modifiers: [] });
     return {
         ...common,
         targeting: { target: read.count ? `up to ${read.count} enemies` : "1 creature", range: read.reach ?? null, area: null },

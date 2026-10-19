@@ -5616,6 +5616,27 @@ export const cases = {
         return { effects: user.itemTypes.effect.map((effect) => effect.name) };
     },
 
+    // Alchemists+' Preserved Pteranodon: its own +8 attack on the ability module's card at the creature targeted, Dazzled for a round on its
+    // critical success row.
+    async pteranodonCritical(scene) {
+        assert(game.modules.get("pf2e-team-plus-alchemists")?.active, "Alchemists+ isn't active in pftest.");
+        const { actor: user } = await creature(scene, "Pteranodon Thrower", { type: "character", x: 20, y: 6, level: 5 });
+        const { token: foeToken } = await creature(scene, "Pteranodon Target", { x: 21, y: 6, alliance: "opposition" });
+        const jar = await give(user, "Preserved Pteranodon", "pf2e-team-plus-alchemists.pf2e-items");
+        let since = Date.now();
+        await jar.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the jar's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        const resolution = attack.flags["pf2e-automatic-ability-resolution"].card.plan.resolution;
+        assert(resolution.check.modifier === 8 && resolution.check.against.statistic === "ac", `its +8 attack (${JSON.stringify(resolution.check)})`);
+        const critical = resolution.outcomes.criticalSuccess.effects.find((effect) => effect.slug === "dazzled");
+        assert(critical?.duration?.value === 1 && critical.duration.unit === "rounds", `Dazzled for a round on a critical hit (${JSON.stringify(resolution.outcomes.criticalSuccess.effects)})`);
+        assert(!resolution.outcomes.success.effects.some((effect) => effect.slug === "dazzled"), "not on a plain hit");
+        return { ok: true };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).
