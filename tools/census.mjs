@@ -115,7 +115,10 @@ for (const item of consumables) {
 }
 
 const tally = (list, key) => list.reduce((counts, row) => ({ ...counts, [key(row)]: (counts[key(row)] ?? 0) + 1 }), {});
-const RESULTS = ["resolves", "partial", "note-only", "gaps", "builtin:zone", "builtin:cast-spell", "builtin:roll-twice", "builtin:readied-bonus", "builtin:no-effect", "builtin:save-bonus", "none", "error", "unregistered"];
+const KNOWN = ["resolves", "partial", "note-only", "gaps", "builtin:zone", "builtin:cast-spell", "builtin:roll-twice", "builtin:readied-bonus", "builtin:no-effect", "builtin:save-bonus"];
+const LAST = ["none", "error", "unregistered"];
+// (Every result the rows have: a builtin not listed above goes before "none", not left out of the table.)
+const RESULTS = [...KNOWN, ...[...new Set(rows.map((row) => row.result))].filter((name) => name !== "spell-module" && !KNOWN.includes(name) && !LAST.includes(name)).sort(), ...LAST];
 const ours = rows.filter((row) => row.result !== "spell-module");
 const categories = Object.entries(tally(rows, (row) => row.category)).sort((a, b) => b[1] - a[1]).map(([category]) => category);
 

@@ -3024,6 +3024,27 @@ export const cases = {
         return { light: { bright: token.light?.bright ?? null, dim: token.light?.dim ?? null } };
     },
 
+    // Candlecap: its activation lights its wearer's token (20 feet dim, no end); its next activation puts it out.
+    async candlecapLight(scene) {
+        const { actor: wearer, token } = await creature(scene, "Candle Wearer", { type: "character", x: 6, y: 18 });
+        const cap = await give(wearer, "Candlecap");
+        const lights = () => wearer.itemTypes.effect.filter((effect) => effect.system.rules.some((rule) => rule.key === "TokenLight"));
+        const press = async (what) => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(cap.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what });
+            await game.modules.get(NS).api.live.apply(card.id, {});
+            return card;
+        };
+        await press("the candlecap's card");
+        await until(() => lights().some((effect) => effect.system.rules.some((rule) => rule.value?.dim === 20) && effect.system.duration.unit === "unlimited"), "the unlimited TokenLight Effect", { timeout: 8000 });
+        await wait(500);
+        const lit = { bright: token.light?.bright ?? null, dim: token.light?.dim ?? null };
+        await press("the candlecap's second card");
+        await until(() => lights().length === 0, "the light put out", { timeout: 8000 });
+        return { lit };
+    },
+
     // Alchemists+ Halfling Sandwich (Lesser): Apply readies its +1 status bonus; the next save takes it and spends it.
     async tpHalflingSandwich(scene) {
         const { actor: eater } = await creature(scene, "Sandwich Eater", { x: 8, y: 18 });

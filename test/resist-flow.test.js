@@ -134,6 +134,47 @@ test("a light its user sheds: PF2e's TokenLight rule, its dim light the whole ra
     assert.deepEqual(stew("After eating it, you shed dim light in a 10-foot radius for 1 hour.").item.light.map((light) => [light.bright, light.dim]), [[0, 10]]);
 });
 
+test("a light the item its user holds or wears sheds: the item's own wordings, a hooded lantern's, a time a sentence later; not a weapon's gem or a planted toadstool", () => {
+    const lightOf = (name, index = null) => (index === null ? compileItem(source(name)) : compileActivations(source(name))[index].plan).item.light.map(({ bright, dim, duration, note }) => [bright, dim, duration ? `${duration.value} ${duration.unit}` : null, note ?? null]);
+    // Candlecap's "The candlecap sheds dim light in a 20-foot radius", Vine of Roses' "glows as bright as a torch", Eclipse's "causing it to
+    // shed light as a torch", Shining Hackle's "glows even brighter, shedding bright light in a 20-foot radius (and dim light for the next 20
+    // feet)": until put out.
+    assert.deepEqual(lightOf("Candlecap", 0), [[0, 20, null, null]]);
+    assert.deepEqual(lightOf("Vine of Roses", 0), [[20, 40, null, null]]);
+    assert.deepEqual(lightOf("Eclipse", 0), [[20, 40, null, null]]);
+    assert.deepEqual(lightOf("Shining Hackle", 0), [[20, 40, null, null]]);
+    // Oathlamp of Accord's light "as normal for a hooded lantern": 30 feet bright, 30 more dim.
+    assert.deepEqual(lightOf("Oathlamp of Accord", 0), [[30, 60, null, null]]);
+    // Candle's "A lit candle sheds dim light in a 10-foot radius for 8 hours"; One-Hour Flower's 30 feet, "At the end of an hour", shrinking.
+    assert.deepEqual(lightOf("Candle"), [[0, 10, "8 hours", null]]);
+    assert.deepEqual(lightOf("One-Hour Flower"), [[30, 30, "1 hours", "its radius shrinks by 10 feet every 20 minutes (by hand)"]]);
+    assert.equal(lightText(compileItem(source("One-Hour Flower")).item.light[0]), "Bright light in 30 feet for 1 hour; its radius shrinks by 10 feet every 20 minutes (by hand)");
+    assert.equal(lightText(compileActivations(source("Candlecap"))[0].plan.item.light[0]), "Dim light in 20 feet, until put out (its next activation)");
+    // Not the weapon a limning gem is applied to ("shedding dim light"), nor Kimanéz Luminescent Toadstool's own glow once planted.
+    assert.equal(compileItem(source("Limning Gem"))?.item?.light, undefined);
+    assert.equal(compileItem(source("Kimanéz Luminescent Toadstool"))?.item?.light, undefined);
+});
+
+test("Candlecap: its Apply lights its user's token, its next activation's Apply puts the light out", async () => {
+    const cap = foundry.giveItem(monk, source("Candlecap"));
+    const press = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: cap.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return card;
+    };
+    const lit = await press();
+    const lights = () => monk.itemTypes.effect.filter((entry) => entry.flags?.[MODULE_ID]?.light);
+    assert.deepEqual(lights().map((effect) => [effect.system.rules[0].value.dim, effect.system.duration.unit]), [[20, "unlimited"]]);
+    assert.match(lit.content, /Monk: Dim light in 20 feet, until put out/);
+    const out = await press();
+    assert.equal(lights().length, 0);
+    assert.match(out.content, /Monk: Candlecap&#39;s light put out/);
+});
+
 test("resistance to a type it makes its user choose: the card's picker, the type picked on Apply", async () => {
     // "grants 5 resistance against a single damage type for 1 hour. Each potion … defend against acid, cold, electricity, fire, or sonic damage".
     const potion = compileItem(source("Potion of Resistance (Lesser)"));

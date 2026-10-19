@@ -560,9 +560,16 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         await target.actor.createEmbeddedDocuments("Item", [createdItemSource(creates, { count, level: Number(state.plan.item?.level) || 0 })]);
         lines.push(`${recipient.name}: ${count} ${creates.name} in the inventory`);
     }
-    // (A light its user sheds: Sprite Apple's — an Effect with PF2e's TokenLight rule.)
+    // (A light its user sheds: Sprite Apple's — an Effect with PF2e's TokenLight rule. One with no time is put out by the item's next
+    // activation, Candlecap's "Activating the candlecap again douses the light": its lit Effect gone, no new one.)
     for (const light of state.plan.item?.light ?? []) {
         if (!target.actor) break;
+        const lit = light.duration?.mode === "fixed" ? [] : (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.light && effect.flags[MODULE_ID].from === state.item.name);
+        if (lit.length) {
+            await target.actor.deleteEmbeddedDocuments("Item", lit.map((effect) => effect.id));
+            lines.push(`${recipient.name}: ${state.item.name}'s light put out`);
+            continue;
+        }
         await target.actor.createEmbeddedDocuments("Item", [lightEffectSource(light, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${lightText(light)}`);
     }

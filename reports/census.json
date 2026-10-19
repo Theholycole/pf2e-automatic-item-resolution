@@ -14,13 +14,13 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 190,
-   "resolves": 751,
+   "none": 189,
+   "resolves": 753,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
    "partial": 124,
    "builtin:item-action": 15,
-   "note-only": 129,
+   "note-only": 128,
    "builtin:conjure": 7,
    "builtin:ways": 11,
    "builtin:counteract": 29,
@@ -36,12 +36,12 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 22,
-    "resolves": 210,
+    "resolves": 212,
     "partial": 61,
-    "note-only": 65,
+    "note-only": 64,
     "builtin:readied-bonus": 8,
     "builtin:ways": 4,
-    "none": 104,
+    "none": 103,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 6,
@@ -371,9 +371,9 @@
   },
   "area": {
    "count": 44,
-   "resolves": 17,
+   "resolves": 18,
    "gaps": 0,
-   "none": 6
+   "none": 5
   },
   "condition": {
    "count": 433,
@@ -383,7 +383,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 604,
+   "resolves": 605,
    "gaps": 0,
    "none": 13
   }
@@ -391,8 +391,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 251,
-   "item": 619,
+   "none": 250,
+   "item": 620,
    "fortune": 25,
    "zone": 111,
    "save": 147,
@@ -411,10 +411,10 @@
    "other": {
     "cast": 14,
     "zone": 22,
-    "none": 125,
+    "none": 124,
     "later": 11,
     "save": 96,
-    "item": 211,
+    "item": 212,
     "fortune": 8,
     "ways": 4,
     "teleport": 4,
@@ -510,7 +510,7 @@
    }
   },
   "noCard": {
-   "no-plan": 190,
+   "no-plan": 189,
    "triggered": 11,
    "gm": 50
   }
@@ -1466,7 +1466,10 @@
    "mechanisms": [
     "area"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Potion of Disguise (Moderate)",
@@ -14985,8 +14988,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

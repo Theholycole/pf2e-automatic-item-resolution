@@ -343,12 +343,12 @@ export function createdItemSource(creates, { count = 1, level = 0, img = null } 
 // A light its user sheds in words: "Bright light in 20 feet and dim light to 40 feet for 10 minutes".
 export function lightText(light) {
     const reach = light.bright ? `Bright light in ${light.bright} feet${light.dim > light.bright ? ` and dim light to ${light.dim} feet` : ""}` : `Dim light in ${light.dim} feet`;
-    return `${reach}${light.duration?.mode === "fixed" ? ` for ${timeText(light.duration)}` : ""}`;
+    return `${reach}${light.duration?.mode === "fixed" ? ` for ${timeText(light.duration)}` : ", until put out (its next activation)"}${light.note ? `; ${light.note}` : ""}`;
 }
 
 // Its light's Effect: PF2e's TokenLight rule on its user's token.
 export function lightEffectSource(light, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    return ownEffectSource({ name: "Light", img: "icons/svg/light.svg", words: lightText(light), rules: [{ key: "TokenLight", value: { bright: light.bright, dim: light.dim } }], duration: light.duration, flag: { light: true }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: "Light", img: "icons/svg/light.svg", words: lightText(light), rules: [{ key: "TokenLight", value: { bright: light.bright, dim: light.dim } }], duration: light.duration, flag: { light: true, from: item.name ?? null }, item, user, worldTime, initiative, moduleId });
 }
 
 // Its vision's Effect: PF2e's Sense rule.

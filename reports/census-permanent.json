@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2597,
   "results": {
-   "resolves": 761,
+   "resolves": 766,
    "builtin:cast-spell": 472,
-   "none": 559,
+   "none": 554,
    "partial": 200,
    "builtin:focus-point": 47,
    "builtin:counteract": 26,
@@ -32,8 +32,8 @@
   "live": {
    "save": 440,
    "cast": 472,
-   "item": 585,
-   "none": 690,
+   "item": 590,
+   "none": 685,
    "focus": 47,
    "counteract": 26,
    "fortune": 58,
@@ -58,9 +58,9 @@
   "equipment": {
    "activations": 1693,
    "results": {
-    "resolves": 459,
+    "resolves": 462,
     "builtin:cast-spell": 345,
-    "none": 389,
+    "none": 386,
     "partial": 89,
     "builtin:focus-point": 45,
     "builtin:counteract": 22,
@@ -83,8 +83,8 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 168,
-    "none": 84,
+    "resolves": 170,
+    "none": 82,
     "partial": 50,
     "builtin:cast-spell": 82,
     "builtin:reroll": 7,
@@ -7100,9 +7100,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Eclipse",
@@ -14835,9 +14835,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Life Shot (True)",
@@ -17072,9 +17072,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Vine of Roses",
@@ -22338,9 +22338,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Twilight Tattoo",
@@ -23808,9 +23808,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Fossil Fragment (Brontosaurus Phalange)",

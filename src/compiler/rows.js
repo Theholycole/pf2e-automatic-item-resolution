@@ -757,17 +757,38 @@ const OTHER_SENSES = { "blood sight": "bloodsense", bloodsense: "bloodsense", tr
 // A light its user sheds: Sprite Apple's "you shed bright light in a 20-foot emanation (and dim light for the next 20 feet)",
 // Silver Crescent's "you shed cool, white light like a torch" → [{ bright, dim, duration }] in feet from its user (PF2e's
 // TokenLight rule, the item card's Effect: dim the whole radius, as Foundry's light takes it). A torch's: 20 feet bright, 20 more dim.
+// (Or the item its user holds or wears: Candlecap's "The candlecap sheds dim light in a 20-foot radius", a weapon that "glows as bright
+// as a torch", Eclipse's "causing it to shed light as a torch", Shining Hackle's "shedding bright light in a 20-foot radius", Oathlamp
+// of Accord's light that works "as normal for a hooded lantern" — not an object it touches, Lance of Sun's Radiance's "that object".)
+// (Its "shedding" only after its user's item glows, Shining Hackle's "Your shining hackle glows even brighter, shedding": not a weapon a
+// gem is applied to, nor a planted toadstool's own glow.)
+const SHEDS = String.raw`(?:\byou (?:also )?shed|\b(?:it|that|the [\w' -]+?|an? [\w' -]+?) (?:also )?sheds|\b(?:it|the [\w' -]+?) to shed|\bYour [\w' -]+? glows?[^.,]*?, shedding)`;
+const TORCH = new RegExp(String.raw`${SHEDS} (?:[\w,]+ ){0,3}light (?:like|as) a torch\b|\bglows as bright as a torch\b`, "i");
+const BRIGHT = new RegExp(String.raw`${SHEDS} bright light in an? (\d+)[-‐]foot (?:radius|burst|emanation)\b`, "i");
+const DIM = new RegExp(String.raw`${SHEDS} dim light in an? (\d+)[-‐]foot (?:radius|burst|emanation)\b`, "i");
+const HOODED = /\bsheds light\b[^.]*\.(?:[^.]*\.)?[^.]*\bwork as normal for a hooded lantern\b/i;
+// (Its time when it says one, "for 8 hours", or a sentence after it, One-Hour Flower's "At the end of an hour, the plant
+// disintegrates"; out until its user puts it out — "until you deactivate it", "until you Dismiss it", activating it again — when it
+// doesn't: no time. Its radius shrinking as it goes, the flower's, a note on it.)
+const ENDS = /^\s*At the end of (an|one|\d+) (hours?|minutes?)\b/i;
+const SHRINKS = /^\s*The radius of this light shrinks by (\d+) feet every (\d+) (minutes?|hours?)\./i;
 function lightOf(sentences, duration, used = new Set()) {
     for (const [index, sentence] of sentences.entries()) {
         if (/^\s*(?:If|Whenever|Each time|Unless)\b/i.test(sentence)) continue;
-        const torch = /\byou (?:also )?shed (?:[\w,]+ ){0,3}light like a torch\b/i.test(sentence);
-        const bright = /\byou (?:also )?shed bright light in an? (\d+)-foot (?:radius|burst|emanation)\b/i.exec(sentence);
-        const dimOnly = bright || torch ? null : /\byou (?:also )?shed dim light in an? (\d+)-foot (?:radius|burst|emanation)\b/i.exec(sentence);
-        if (!torch && !bright && !dimOnly) continue;
+        const hooded = HOODED.test(sentences.slice(index, index + 3).join(" ")) && /\bsheds light\b/i.test(sentence);
+        const torch = !hooded && TORCH.test(sentence);
+        const bright = hooded || torch ? null : BRIGHT.exec(sentence);
+        const dimOnly = hooded || bright || torch ? null : DIM.exec(sentence);
+        if (!hooded && !torch && !bright && !dimOnly) continue;
         const more = bright ? /\bdim light (?:for|to) (?:the next )?(\d+) (?:feet|more feet)\b/i.exec(sentence.slice(bright.index)) : null;
-        const light = torch ? { bright: 20, dim: 40 } : bright ? { bright: Number(bright[1]), dim: Number(bright[1]) + (more ? Number(more[1]) : 0) } : { bright: 0, dim: Number(dimOnly[1]) };
+        const light = hooded ? { bright: 30, dim: 60 } : torch ? { bright: 20, dim: 40 } : bright ? { bright: Number(bright[1]), dim: Number(bright[1]) + (more ? Number(more[1]) : 0) } : { bright: 0, dim: Number(dimOnly[1]) };
         if (!/\bas long as\b|\bor until\b/i.test(sentence)) used.add(index);
-        return [{ ...light, duration: durationIn(sentence, null) ?? duration }];
+        if (hooded) used.add(sentences.findIndex((later, at) => at > index && /\bwork as normal for a hooded lantern\b/i.test(later)));
+        const later = sentences.slice(index + 1, index + 3);
+        const ends = later.map((one) => ENDS.exec(one)).find(Boolean);
+        const shrinks = later.map((one) => SHRINKS.exec(one)).find(Boolean);
+        const time = durationIn(sentence, null) ?? (ends ? { mode: "fixed", value: /^\d+$/.test(ends[1]) ? Number(ends[1]) : 1, unit: UNITS[ends[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } : null) ?? duration;
+        return [{ ...light, duration: time, ...(shrinks ? { note: `its radius shrinks by ${shrinks[1]} feet every ${shrinks[2]} ${shrinks[3]} (by hand)` } : {}) }];
     }
     return [];
 }
