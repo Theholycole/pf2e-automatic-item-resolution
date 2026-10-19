@@ -5276,6 +5276,29 @@ export const cases = {
         return { ok: true };
     },
 
+    // Area buffs for the creatures targeted: Inspiring Spotlight (Portable)'s +1 item to saves and Charisma-based checks for both; Undead
+    // Compendium's +2 item to attack rolls against undead — the target's trait, not an origin.
+    async areaBuffs(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Spotlight Holder", { type: "character", x: 22, y: 18 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Spotlight Ally", { type: "character", x: 23, y: 18 });
+        const ruled = (actor, test) => actor.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && test(rule)));
+        const use = async (name) => {
+            const item = await give(user, name);
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what: `${name}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [userToken.uuid, allyToken.uuid] });
+            await wait(800);
+        };
+        await use("Inspiring Spotlight (Portable)");
+        const lit = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("cha-based") && rule.value === 1);
+        await until(() => lit(user) && lit(ally), "+1 item to Charisma-based checks for both", { timeout: 8000 });
+        await use("Undead Compendium");
+        const versed = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("attack-roll") && JSON.stringify(rule.predicate ?? []).includes("target:trait:undead"));
+        await until(() => versed(user) && versed(ally), "+2 item to attacks against undead for both", { timeout: 8000 });
+        return { ok: true };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

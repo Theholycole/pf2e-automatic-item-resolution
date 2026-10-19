@@ -891,6 +891,17 @@ test("narrow bonuses on PF2e's roll options, the narrower words a note (the user
     assert.deepEqual([vapor.item.recipient, vapor.resolution.outcomes.success.modifiers[0].value], ["targets", 3]);
 });
 
+test("area buffs for the creatures targeted and other narrow bonuses: Inspiring Spotlight, Paradise Light, Undead Compendium (attacks against undead by the target's trait), Rhyton of the Radiant Ifrit, Mask of Shifting Monstrosity", () => {
+    const plan = (name) => compileActivations({ ...item(name), ownerLevel: 10 })[0].plan;
+    const mods = (name) => plan(name).resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, JSON.stringify(modifier.predicate ?? null)]);
+    assert.deepEqual([plan("Inspiring Spotlight (Mounted)").item.recipient, mods("Inspiring Spotlight (Mounted)")], ["targets", [["saving-throw", 2, "null"], ["cha-based", 2, "null"]]]);
+    assert.deepEqual(mods("Paradise Light"), [["will", 1, "null"], ["wis-based", 1, "null"]]);
+    assert.deepEqual([plan("Undead Compendium").item.recipient, mods("Undead Compendium")], ["targets", [["attack-roll", 2, JSON.stringify(["target:trait:undead"])], ["saving-throw", 2, JSON.stringify(["origin:trait:undead"])]]]);
+    assert.deepEqual(mods("Rhyton of the Radiant Ifrit").map(([selector]) => selector), ["deception", "diplomacy", "intimidation"]);
+    const mask = plan("Mask of Shifting Monstrosity").resolution.outcomes.success.modifiers[0];
+    assert.deepEqual([mask.selector, mask.value, mask.type, mask.duration.value, mask.duration.unit], ["deception-dc", 4, "item", 8, "hours"]);
+});
+
 test("an ally's persistent damage taken onto its user: Bloodstained Waistcoat's bleed, the take card at the ally targeted", async () => {
     const { routeOf } = await import("../src/live/route.js");
     const { takeText } = await import("../src/live/take-card.js");

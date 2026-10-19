@@ -293,6 +293,10 @@ function againstTerm(word) {
     if (being && CONDITION_WORDS[being[1]]) return `inflicts:${CONDITION_WORDS[being[1]]}`;
     return null;
 }
+// (A creature's trait on an attack or its damage is the target's, "+2 item bonus on attack rolls … against undead": target:trait, not the origin
+// a save's effect comes from.)
+const ATTACKS = /^(?:attack-roll|attack|strike-attack-roll|spell-attack-roll|damage|strike-damage)$/;
+const aimedAt = (predicate, selector) => (ATTACKS.test(selector) ? JSON.parse(JSON.stringify(predicate).replace(/"origin:trait:/g, '"target:trait:')) : predicate);
 function scopeOf(scope) {
     // ("against effects created by devils and divine spells cast by devils", "against undead", "against creatures with the
     // fey trait": what the creature makes, by its origin's trait.)
@@ -406,7 +410,7 @@ function modifiersOf(sentences, duration, used = new Set()) {
             const strikeTail = /^,? and (your (?:melee |ranged |unarmed )?Strikes\b[^.;]*)\.?\s*$/i.exec(tail);
             const readTail = strikeTail && new RegExp(`^${STRIKE_EXTRA.source}$`, "i").test(strikeTail[1].trim());
             if ((!/^,? and (?:you|your)\b/i.test(tail) || !MECHANICAL.test(tail) || readTail) && !partly && !/^,? while\b/i.test(tail)) used.add(index);
-            for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate && !lastOnly ? { predicate } : {}) });
+            for (const selector of selectors) modifiers.push({ selector, value, ...timed, ...(predicate && !lastOnly ? { predicate: aimedAt(predicate, selector) } : {}) });
             // (Sense Motive is a Perception check in PF2e: "skill checks to sense-motive" are Perception's.)
             const perceptionOnly = JSON.stringify(predicate ?? []) === JSON.stringify(["action:sense-motive"]);
             for (const selector of scopedSelectors ?? []) modifiers.push({ selector: perceptionOnly && selector === "skill-check" ? "perception" : selector, value, ...timed, predicate });

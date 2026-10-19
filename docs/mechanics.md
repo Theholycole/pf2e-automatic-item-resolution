@@ -229,6 +229,8 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - Potion of Disguise's Deception DC, for 24 hours; the 2d12 hours the GM rolls ends it by hand.
   - Fungal Walk Musk's AC against fungi, by PF2e's origin trait.
   - Healing Vapor's bonus to saves against diseases and poisons, for the creatures targeted, as an area buff's.
+  - Area buffs for the creatures targeted, as Knight Captain's Lance's: Inspiring Spotlight's saves and Charisma-based checks, Paradise Light's Will saves and Wisdom-based checks (its fast healing a note), and Undead Compendium's attack rolls and saves against undead. On an attack or its damage, the creature's trait is the target's (`target:trait`), not a save's `origin:trait`.
+  - Rhyton of the Radiant Ifrit's Toast! is a bonus to Deception, Diplomacy and Intimidation, "against those creatures" a note. Mask of Shifting Monstrosity's Deception DC lasts for its 8 hours.
 - **More Mythic Point and healing items:**
   - Whispering Veil's Spire Power gains a Mythic Point on the Focus Point card (`focus.js` resource "mythic"; a Hero Point under the world setting). It's lost at the end of the turn when unspent, as a Focus Point is. Fate Tempter's Ring gains one too. Preordained Spear keeps its doomed card, with the point a note.
   - Hollow Robes' Hollow Target ends all its user's persistent damage outright (`recovery.js` ends, no flat check) for a Mythic Point. The critical hit's damage reduced to 0 is the GM's.
