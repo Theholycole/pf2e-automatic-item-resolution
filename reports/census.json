@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 205,
+   "none": 203,
    "resolves": 750,
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
@@ -26,6 +26,7 @@
    "builtin:no-effect": 51,
    "builtin:reroll": 2,
    "builtin:ways": 6,
+   "builtin:teleport": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
   }
@@ -93,7 +94,7 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 35,
+    "none": 33,
     "builtin:readied-bonus": 12,
     "builtin:item-action": 11,
     "resolves": 56,
@@ -102,6 +103,7 @@
     "builtin:reroll": 1,
     "builtin:cast-spell": 9,
     "partial": 14,
+    "builtin:teleport": 2,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -359,7 +361,7 @@
    "count": 156,
    "resolves": 61,
    "gaps": 0,
-   "none": 29
+   "none": 27
   },
   "counteract": {
    "count": 79,
@@ -389,7 +391,7 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 268,
+   "none": 266,
    "item": 622,
    "fortune": 23,
    "zone": 111,
@@ -402,7 +404,8 @@
    "reroll": 2,
    "coat": 46,
    "ways": 6,
-   "strike": 12
+   "strike": 12,
+   "teleport": 2
   },
   "byCategory": {
    "other": {
@@ -431,12 +434,13 @@
     "zone": 1
    },
    "talisman": {
-    "none": 44,
+    "none": 42,
     "fortune": 14,
     "action": 11,
     "item": 52,
     "reroll": 1,
     "cast": 9,
+    "teleport": 2,
     "save": 15,
     "strike": 9,
     "coat": 1
@@ -504,7 +508,7 @@
    }
   },
   "noCard": {
-   "no-plan": 205,
+   "no-plan": 203,
    "triggered": 11,
    "gm": 51,
    "other": 1
@@ -5233,7 +5237,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:teleport",
+   "kind": null,
+   "live": "teleport"
   },
   {
    "name": "Flare Beacon (Greater)",
@@ -13327,7 +13333,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:teleport",
+   "kind": null,
+   "live": "teleport"
   },
   {
    "name": "Octopus Potion (Lesser)",

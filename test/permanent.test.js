@@ -672,3 +672,18 @@ test("conditions that end on its user (Spleen Bloodstone of Arazni's Break Bonds
     assert.deepEqual(rubbed.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.unit]), [["quickened", 1, "minutes"]]);
     assert.deepEqual(rubbed.plan.notes, ["You can use the extra action each round only for Strike actions made with weapons you wield in your hands."]);
 });
+
+test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spur, Mercurial Mantle, Gloaming Shard): the teleport card's range, from its user or the creature targeted; not within some feet of another thing", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { routeOf } = await import("../src/live/route.js");
+    const { teleportText } = await import("../src/live/teleport-card.js");
+    const [leap] = compileActivations(item("Dweomerveil"));
+    assert.deepEqual([routeOf(leap.plan), leap.plan.teleport], ["teleport", { within: 30, speedTimes: null, from: "self" }]);
+    assert.match(leap.plan.notes[0], /^If you critically succeeded at the triggering save, you can instead teleport within 45 feet\.$/);
+    assert.equal(teleportText(compileItem(item("Mad Mammoth's Juke")).teleport), "Up to 200 feet");
+    assert.equal(teleportText(compileItem(item("Golden Spur")).teleport), "Within 10 feet of the creature targeted");
+    const [, twirl] = compileActivations(item("Mercurial Mantle"));
+    assert.equal(teleportText(twirl.plan.teleport, { speed: 25 }), "Up to double its user's Speed (50 feet)");
+    assert.equal(teleportText(compileActivations(item("Gloaming Shard"))[0].plan.teleport), "To a space adjacent to the creature targeted");
+    assert.notEqual(compileActivations(item("Spear of the Destroyer's Flame"))[0].plan?.builtin, "teleport");
+});

@@ -4478,6 +4478,22 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Dweomerveil's Dimension Leap: a space 40 feet off refused, then one 20 feet off — the token there at once.
+    async dweomerLeap(scene) {
+        const { actor: user, token } = await creature(scene, "Dweomer Leaper", { type: "character", x: 0, y: 2 });
+        const veil = await give(user, "Dweomerveil");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(veil.uuid, 0);
+        const card = await messageAfter(since, itemCard("teleport"), { what: "the teleport card" });
+        const size = canvas.grid.size;
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 8 * size, y: 2 * size } }).catch((error) => { refused = error.message; });
+        assert(/40 feet away/.test(refused ?? ""), `40 feet refused (${refused})`);
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 4 * size, y: 2 * size } });
+        await until(() => token.x === 4 * size && token.y === 2 * size, `the token at (4, 2) (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

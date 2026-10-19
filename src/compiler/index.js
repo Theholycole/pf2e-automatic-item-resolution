@@ -50,6 +50,7 @@ import { waysPlan } from "./ways.js";
 import { elementWaysPlan } from "./bane.js";
 import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
+import { teleportPlan } from "./teleport.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -174,6 +175,8 @@ function compileOne(given, options = {}) {
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = elementWaysPlan(item, base) ?? plan;
     // (An item thrown as a Strike that PF2e can't roll, src/compiler/thrown.js: Sack of Rotten Fruit, Life Salt, Oil.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = thrownPlan(html, base, item, options) ?? plan;
+    // (A short teleport for its user, src/compiler/teleport.js: Mad Mammoth's Juke, Golden Spur.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(html, base, item?.system?.description?.value) ?? plan;
     // (A creature it becomes, src/compiler/conjured.js: Beetle Gel, Marvelous Miniature (Horse).)
     plan = conjuredPlan(html, base, item) ?? plan;
     // (Or one whose numbers it gives, src/compiler/conjured.js statedCreaturePlan: a third-party bottled ooze, a canister's zombie.)

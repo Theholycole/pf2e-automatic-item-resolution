@@ -1,7 +1,7 @@
 // Which card a used consumable gets (scripts/live.js), as a pure decision the census shares: "coat" (an injury
 // poison), "expose" (a contact, inhaled or ingested poison, or a drug), "cast" (a spell PF2e has no Effect for, the
 // spell module's), "save" (another item's save on its Use, at the presser's targets), "focus" (a Focus Point for its
-// user), "strike" (its user's next Strike carries its riders), "reroll" (PF2e rerolls the roll that triggered it), "fortune" (its user's next roll of a kind rolled twice), "action" (PF2e's own skill action, with its bonus), "counteract" (what it counteracts on its drinker), "item" (healing, PF2e Effects, the item's own row), or null (none yet).
+// user), "strike" (its user's next Strike carries its riders), "reroll" (PF2e rerolls the roll that triggered it), "fortune" (its user's next roll of a kind rolled twice), "action" (PF2e's own skill action, with its bonus), "counteract" (what it counteracts on its drinker), "teleport" (a short teleport for its user, the space picked on the canvas), "item" (healing, PF2e Effects, the item's own row), or null (none yet).
 
 import { isExposurePoison, isInjuryPoison, isLaterSave, isUseSave } from "./poison-card.js";
 import { isCast } from "./cast-card.js";
@@ -9,6 +9,7 @@ import { isStrikeItem } from "./strike-card.js";
 import { isFortune } from "./fortune-card.js";
 import { isToggle } from "./toggle-card.js";
 import { isWays } from "./ways-card.js";
+import { isTeleport } from "./teleport-card.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -50,6 +51,8 @@ export function routeOf(plan, text = "") {
     if (isToggle(plan)) return "toggle";
     // (One of several ways, each its own Activate block: the ways card, scripts/ways.js.)
     if (isWays(plan)) return "ways";
+    // (A short teleport for its user: the space picked on the canvas, scripts/teleport.js.)
+    if (isTeleport(plan)) return "teleport";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)
