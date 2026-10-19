@@ -166,7 +166,8 @@ function tempHitPoints(sentences, duration, used = new Set()) {
             // (Their time in a sentence of their own after: "You lose any remaining temporary Hit Points after 1 minute", "These
             // temporary Hit Points last for 1 hour" — before the item's.)
             const later = sentences.slice(index + 1, index + 3).findIndex((next) => /\btemporary Hit Points\b[^.]*\b(?:after|for) (?:\d+|one|an?) (?:rounds?|minutes?|hours?|days?)\b/i.test(next) && !/\b(?:if|when|whenever)\b/i.test(next));
-            const own = durationIn(sentence, null);
+            // ("that last until the start of your next turn", Immortal Bastion's: that turn's start or end.)
+            const own = durationIn(sentence, null) ?? (/\btemporary Hit Points that last until the (?:start|beginning|end) of your next turn\b/i.test(sentence) ? timeIn(sentence, null) : null);
             const time = own ?? (later >= 0 ? durationIn(sentences[index + 1 + later].replace(/\bafter (?=\d|one|an?\b)/i, "for "), null) : null);
             if (!own && later >= 0) used.add(index + 1 + later);
             return { kind: "temp-hp", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), duration: time ?? duration, ...(other ? { other: true } : {}) };

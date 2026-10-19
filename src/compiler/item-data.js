@@ -218,6 +218,9 @@ export function withItemData(html, item) {
     // Survival checks to Track that creature" for its 7 days — the bow's own extra damage, marked to the creature (src/compiler/marked.js),
     // and the Track bonus, whose creature is a note.)
     text = text.replace(/\bFor the next (\d+) days or until that creature is slain, your attacks with the bow against that creature deal (\d+d\d+) additional damage, and you gain an? \+(\d+) circumstance bonus to Survival checks to Track that creature\./i, (all, days, dice, value) => `For ${days} days, your Strikes with the weapon deal ${dice} additional damage. That damage is only against that creature, and the oath ends early if it's slain. You gain a +${value} circumstance bonus to Survival checks to Track for ${days} days; the bonus is only to Track that creature.`);
+    // (Bangles of Crowns' "a +1 circumstance bonus to checks against the triggering creature for 1 round": the checks for the round, against
+    // that creature alone by its mark, src/compiler/marked.js.)
+    text = text.replace(/\bYou gain an? \+(\d+) circumstance bonus to checks against the triggering creature for (1 round)\./i, (all, value, time) => `You gain a +${value} circumstance bonus to checks for ${time}. The bonus is only against the triggering creature.`);
     // (Vine Arrow's hit, its rider in the next paragraph: "The target takes a –10-foot circumstance penalty to its Speeds for 2d4 rounds, or
     // until it Escapes against a DC of 19" — the hit's own, for its rolled rounds (the bombs' rider reader), the Escape a note, since "against
     // a" would read as a condition.)

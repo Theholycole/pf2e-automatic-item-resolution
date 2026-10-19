@@ -873,3 +873,12 @@ test("Silkspinner's Shield: its user's own linked Effect (Climb) picked of two, 
     assert.equal(attackRidersText(riders), "On a hit with the item: the target -10 feet to its Speeds for 1 round; On a critical hit with the item: the target immobilized for 1 round instead");
     assert.deepEqual(shield.notes, ["The struck creature can Escape (DC 30) to end it early (by hand)."]);
 });
+
+test("Bangles of Crowns' reaction: +1 circumstance to checks for the round against the creature its trigger names (marked, the presser's target) and 15 temporary Hit Points for a minute; Immortal Bastion's 100 temporary Hit Points until the start of its user's next turn", async () => {
+    const bangles = compileActivations(item("Bangles of Crowns"), { spellEffects })[1].plan;
+    const success = bangles.resolution.outcomes.success;
+    assert.deepEqual(success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate]), [["check", 1, "circumstance", ["target:mark:bangles-of-crowns-mark"]]]);
+    assert.deepEqual([bangles.item.mark.slug, bangles.item.recipient, success.effects.map((effect) => [effect.kind, effect.amount])], ["bangles-of-crowns-mark", "user", [["temp-hp", 15]]]);
+    const [temp] = compileActivations(item("Immortal Bastion"), { spellEffects })[0].plan.resolution.outcomes.success.effects;
+    assert.deepEqual([temp.amount, temp.duration.value, temp.duration.unit, temp.duration.expiry], [100, 1, "rounds", "turn-start"]);
+});

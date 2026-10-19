@@ -5689,6 +5689,32 @@ export const cases = {
         return { spellDC, classDC: user.system.attributes.classDC?.value ?? null };
     },
 
+    // Bangles of Crowns' reaction: the frightened enemy targeted marked, +1 circumstance to its user's checks against it (PF2e's Demoralize at
+    // it gets it, at another enemy not), and 15 temporary Hit Points.
+    async banglesMark(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Bangles Wearer", { type: "character", x: 20, y: 14, level: 17 });
+        const { token: marked } = await creature(scene, "Bangles Target", { x: 21, y: 14, alliance: "opposition" });
+        const { token: other } = await creature(scene, "Bangles Other", { x: 21, y: 15, alliance: "opposition" });
+        const bangles = await give(user, "Bangles of Crowns");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(bangles.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the bangles' card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, targets: [marked.uuid] });
+        await until(() => (user.synthetics.tokenMarks.get(marked.uuid) ?? []).includes("bangles-of-crowns-mark"), "the triggering enemy marked", { timeout: 8000 });
+        await until(() => user.system.attributes.hp.temp === 15, `15 temporary Hit Points (${user.system.attributes.hp.temp})`, { timeout: 8000 });
+        await userToken.object?.control?.();
+        const demoralize = async (token) => {
+            await target(token);
+            const at = Date.now();
+            await game.pf2e.actions.get("demoralize").use({ actors: [user], event: shift() });
+            const message = await messageAfter(at, (entry) => entry.flags?.pf2e?.context?.type === "skill-check", { what: "Demoralize" });
+            return (message.flags.pf2e.modifiers ?? []).some((modifier) => modifier.type === "circumstance" && modifier.modifier === 1 && modifier.enabled !== false);
+        };
+        assert(await demoralize(marked), "+1 circumstance against the marked enemy");
+        assert(!(await demoralize(other)), "none against another");
+        return { ok: true };
+    },
+
     // Psychic Warding Bracelet: its readied +2 item to the next save against a mental effect, kept with no time limit; a Fortitude save
     // doesn't spend it, a Will save against a mental effect gets it and spends it.
     async wardingBracelet(scene) {

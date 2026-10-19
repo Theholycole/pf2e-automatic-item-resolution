@@ -4,10 +4,13 @@
 // scripts/live.js), and the bonus on a roll at a creature is predicated on the mark, `target:mark:<slug>`. A roll with no creature in it
 // (Oathbow's Survival to Track) keeps the whole roll, its creature a note. Pure.
 
-const CHOSEN = /\b(?:Choose (?:a|one) creature you can see|You swear an oath to destroy one creature you can see)\b/i;
-const AGAINST = /\bagainst (?:that|the chosen) creature\b|\bonly against the creature you swore\b/i;
-// (The rolls made at a creature: attacks and their damage, and the actions aimed at one.)
-const AT_CREATURE = /^(?:attack-roll|strike-attack-roll|strike-damage|damage)$/;
+// (Or the one its trigger names, Bangles of Crowns' "Trigger An enemy within 60 feet becomes Frightened … checks against the triggering
+// creature": the presser targets it.)
+const CHOSEN = /\b(?:Choose (?:a|one) creature you can see|You swear an oath to destroy one creature you can see)\b|\bTrigger\b[^.]*?\b(?:An? (?:enemy|creature|foe))\b/i;
+const AGAINST = /\bagainst (?:that|the chosen|the triggering) creature\b|\bonly against the creature you swore\b/i;
+// (The rolls made at a creature: attacks and their damage, the actions aimed at one, and checks in general — a check at the marked
+// creature: a save against it has it as its origin, not its target, so it isn't one.)
+const AT_CREATURE = /^(?:attack-roll|strike-attack-roll|strike-damage|damage|check|skill-check)$/;
 const AIMED = /^action:(?:sense-motive|demoralize|feint|create-a-diversion|grapple|shove|trip|disarm|reposition|request|coerce|make-an-impression|steal)$/;
 
 const slugOf = (item) => String(item?.system?.slug || item?.name || "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
