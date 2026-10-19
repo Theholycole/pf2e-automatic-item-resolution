@@ -4709,6 +4709,26 @@ export const cases = {
         return { exceptions: [...entry.exceptions], doubleVs: [...entry.doubleVs] };
     },
 
+    // Verdant Branch: its 1d4 fruit in its user's inventory; one eaten is the module's heal card, 2d6+5 Hit Points.
+    async verdantFruit(scene) {
+        const { actor: user } = await creature(scene, "Branch Bearer", { type: "character", x: 18, y: 12 });
+        const branch = await give(user, "Verdant Branch");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(branch.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the branch's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const fruit = () => user.items.find((entry) => entry.name === "Verdant Branch Fruit");
+        await until(() => fruit(), "the fruit in the inventory", { timeout: 8000 });
+        const count = fruit().quantity;
+        assert(count >= 1 && count <= 4, `1d4 fruit (${count})`);
+        since = Date.now();
+        await fruit().consume();
+        const eat = await messageAfter(since, itemCard("item"), { what: "the fruit's card" });
+        const healing = eat.getFlag(NS, "card").plan.resolution.native?.healing?.components?.[0]?.formula;
+        assert(healing === "2d6+5", `2d6+5 healing (${healing})`);
+        return { count, healing };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

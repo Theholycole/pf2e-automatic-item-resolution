@@ -114,6 +114,7 @@ export function previewLines(state) {
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     for (const attack of plan?.item?.attacks ?? []) lines.push(attackText(attack));
     for (const healing of plan?.item?.fastHealing ?? []) lines.push(fastHealingText(healing));
+    if (plan?.item?.creates) lines.push(createsText(plan.item.creates));
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
@@ -300,6 +301,29 @@ export function levelTempText(entry) {
     if (entry.from === "amount") return `${entry.heal ? "Hit Points regained" : "Temporary Hit Points"} equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}${entry.of} (typed on the card)${entry.max ? `, at most ${entry.max}` : ""}${!entry.heal && entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
     if (entry.heal) return `Hit Points regained equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted`;
     return `Temporary Hit Points equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted${entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
+}
+
+// Fruit it grows in words: "1d4 Verdant Branch Fruit in its user's inventory, each eaten for 2d6+5 Hit Points".
+export function createsText(creates) {
+    const heal = String(creates.heal ?? "").replace(/^@Damage\[\(?([^\[\])]+)\)?\[healing\]\]$/, "$1");
+    return `${creates.count} ${creates.name} in its user's inventory, each eaten for ${heal} Hit Points`;
+}
+
+// The fruit's item: a consumable eaten with an Interact action for its healing — the module's own heal card when it's eaten.
+export function createdItemSource(creates, { count = 1, level = 0, img = null } = {}) {
+    return {
+        name: creates.name,
+        type: "consumable",
+        img: img ?? "icons/consumables/fruit/apple-red.webp",
+        system: {
+            category: "other",
+            quantity: count,
+            uses: { value: 1, max: 1, autoDestroy: true },
+            level: { value: level },
+            traits: { value: ["consumable", "healing", "magical"], rarity: "common" },
+            description: { value: `<p><strong>Activate</strong> <span class="action-glyph">A</span> Interact</p><hr /><p>You eat the fruit and regain ${creates.heal} Hit Points.</p>` }
+        }
+    };
 }
 
 // A light its user sheds in words: "Bright light in 20 feet and dim light to 40 feet for 10 minutes".

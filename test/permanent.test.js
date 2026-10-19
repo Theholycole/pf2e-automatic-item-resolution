@@ -788,3 +788,15 @@ test("a table whose die is its first body row's (a third-party robe's d20 of cha
     assert.deepEqual([chaos.table.die, chaos.table.rows.length], ["1d20", 20]);
     assert.deepEqual([rowFor(chaos.table, 3).plan.builtin, rowFor(chaos.table, 3).plan.dc], ["cast-spell", 34]);
 });
+
+test("fruit it grows that heal when eaten (Verdant Branch's 1d4, Satchel of Numberless Seeds' 5): the item card's consumables in its user's inventory, each the module's own heal when eaten; when they wither a note", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { createdItemSource, createsText } = await import("../src/live/card.js");
+    const [grow] = compileActivations(item("Verdant Branch"));
+    assert.deepEqual(grow.plan.item.creates, { name: "Verdant Branch Fruit", count: "1d4", heal: "@Damage[(2d6+5)[healing]]" });
+    assert.equal(createsText(grow.plan.item.creates), "1d4 Verdant Branch Fruit in its user's inventory, each eaten for 2d6+5 Hit Points");
+    assert.deepEqual(grow.plan.notes, ["The fruits wither away after 10 minutes (by hand)."]);
+    const fruit = compileItem(createdItemSource(grow.plan.item.creates, { count: 3, level: 5 }));
+    assert.deepEqual(fruit.resolution.native.healing.components.map((component) => component.formula), ["2d6+5"]);
+    assert.equal(compileActivations(item("Satchel of Numberless Seeds"))[1].plan.item.creates.count, 5);
+});

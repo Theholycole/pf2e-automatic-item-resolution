@@ -200,6 +200,18 @@ function benefactorBreathPlan(html, base, item, options, own) {
     return { ...base, builtin: "ways", automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, ...(rest.length ? { notes: rest.map((sentence) => sentence.trim()), partial: true } : { partial: true }) };
 }
 
+// Fruit it grows that heal when eaten: Verdant Branch's "producing 1d4 ripe and flavorful fruits. A creature can pick and eat a fruit with
+// an Interact action to regain 2d6+5 Hit Points", Satchel of Numberless Seeds' tree "producing 5 fruits. A creature who eats the fruit with
+// an Interact action regains 1d6+2 Hit Points". The item card makes them consumables in its user's inventory (plan.item.creates: { name,
+// count, heal }), each eaten as the module's own heal; when they wither is a note.
+const FRUIT = /\bproducing (?:\[\[\/r (\d*d\d+)\]\](?:\{[^}]*\})?|(\d+)) (?:ripe and flavorful )?fruits\b[^.]*\.\s*A creature (?:can pick and eat a fruit|who eats the fruit) with an Interact action (?:to )?regains? (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) Hit Points\b/i;
+function fruitPlan(html, base, item) {
+    const fruit = FRUIT.exec(String(html ?? ""));
+    if (!fruit) return null;
+    const notes = plainText(String(html ?? "")).split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\bwither\b/i.test(sentence)).map((sentence) => `${sentence.trim().replace(/\.$/, "")} (by hand).`);
+    return { ...base, automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, creates: { name: `${item?.name ?? "Item"} Fruit`, count: fruit[1] ?? Number(fruit[2]), heal: fruit[3].replace(/\{[^}]*\}$/, "") }, ...(notes.length ? { notes, partial: true } : {}) };
+}
+
 // An item whose effect is a roll on its own table, src/compiler/random-table.js: each row compiled alone as the item's use.
 function tablePlan(html, base, item, options, own) {
     const read = readTable(html, (rowHtml) => compileEach({ ...item, system: { ...(item.system ?? {}), description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p>${rowHtml}` } } }, options)[0]?.plan ?? null);
@@ -370,6 +382,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tattooWaysPlan(activation.html, base, item) ?? plan;
         // (A short teleport for its user, src/compiler/teleport.js: Dweomerveil's Dimension Leap — the space picked on the canvas.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
+        // (Fruit it grows that heal when eaten: Verdant Branch's — consumables in its user's inventory.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = fruitPlan(activation.html, base, item) ?? plan;
         // (A roll on its own table, src/compiler/random-table.js: Madcap Top's d20, Pistol of Wonder's d% — each row's own card; over any
         // other reading when its text says the roll decides it — Jabali's Dice's first row's spell Effect isn't its every use.)
         const rolled = /\b(?:roll|draw)\b[^.]*\b(?:to determine|on the (?:following |[\w' -]+ )?table|chosen randomly)\b/i.test(plainText(activation.html));
@@ -423,7 +437,7 @@ function compileEach(item, options = {}) {
             }
         }
         const frequency = activation.frequency?.max ? activation.frequency : null;
-        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, coats, coatLasts, ...kept } = plan;
+        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, coats, coatLasts, creates, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)
         const others = targetedRecipient(plan, plainText(activation.html));
         return {
@@ -438,7 +452,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) }
             }
         };
     });
