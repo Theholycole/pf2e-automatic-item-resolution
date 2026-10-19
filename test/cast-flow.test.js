@@ -175,8 +175,11 @@ test("more casts in words: rank pairs, lists with their ranks and DCs, by rune, 
     assert.deepEqual([pick(blade).map(([name, rank]) => `${name}@${rank}`), blade.dc], [["Acid Grip@5", "Fireball@5", "Howling Blizzard@5", "Lightning Bolt@5"], 30]);
     // "Sorshen's Sinuous Guisarme casts one of the following spells, heightened to 10th rank, …: Charm (DC 45), Flicker, or
     // Subconscious Suggestion (DC 45)": a named item; each spell's own DC.
-    const guisarme = compileActivations(source("Sorshen's Sinuous Guisarme"), { spells }).find((entry) => entry.activation.name === "Impose Will").plan;
+    // (Its Mythic Point for DC 50, the ways card's second button: src/compiler/mythic-upgrade.js.)
+    const imposed = compileActivations(source("Sorshen's Sinuous Guisarme"), { spells }).find((entry) => entry.activation.name === "Impose Will").plan;
+    const guisarme = imposed.ways[0].plan;
     assert.deepEqual(pick(guisarme), [["Charm", 10, 45], ["Flicker", 10, null], ["Subconscious Suggestion", 10, 45]]);
+    assert.deepEqual([pick(imposed.ways[1].plan), imposed.ways[1].plan.spend], [[["Charm", 10, 50], ["Flicker", 10, null], ["Subconscious Suggestion", 10, 50]], { mythicPoints: 1 }]);
     // "Monarch casts Dream Message (heightened to 4th rank)"; "Fear (3rd)" in a list (The Whispering Reeds).
     assert.deepEqual(pick(castOf("Monarch")), [["Dream Message", 4, null]]);
     const reeds = compileActivations(source("The Whispering Reeds"), { spells }).find((entry) => entry.plan?.builtin === "cast-spell").plan;

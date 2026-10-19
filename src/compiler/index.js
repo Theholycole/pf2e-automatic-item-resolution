@@ -53,6 +53,7 @@ import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withScaled } from "./scaled.js";
 import { withSpend } from "./spend.js";
+import { withMythicUpgrade } from "./mythic-upgrade.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -124,7 +125,9 @@ export function compileItem(given, options = {}) {
     const unlinked = withoutUnverifiedLinks(given, options);
     const instead = unlinked ? overUnverified(compileOne(unlinked.item, options), unlinked.dropped, given?.system?.description?.value) : null;
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
-    return withSpend(ownerDCs(instead ?? compileOne(given, options)), plainText(given?.system?.description?.value), options);
+    // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
+    const text = plainText(given?.system?.description?.value);
+    return withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value);
 }
 
 // Effects its user picks one of, each its own named paragraph after "Choose one of the following effects": a third-party jar whose

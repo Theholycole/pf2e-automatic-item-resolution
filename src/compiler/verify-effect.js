@@ -65,6 +65,18 @@ function checkRule(rule, text, rules = []) {
 
 // The Effect's rules against the item's text (HTML or plain): { ok, failures: [{ key, why }] }. conditionNames: PF2e's
 // condition items by uuid id → name, to check a GrantItem's condition by its name.
+// Third-party Effects applied whatever the check says (the user's answer of 2026-10-19): those whose numbers or grade differ from their item's
+// text, and those the check can't read (a rule with a formula, a predicate, an AdjustModifier) — by their Effect's id. The Alchemists+,
+// Tian Xia+ and Magic+ Effects of Concealing Puffball ×3, Captivating Fern Flower (Greater), Spotlight Sunflower (Moderate), Aromatic Lavender
+// (Major), Ravenous Flytrap (Greater), Moss Cover (Greater), Wrought Sirloin, Conker Flail ×3, Mandrake Gum, Humor Leech, Antipathic,
+// Morphic and Vivisective Vials, Calling and Scepter of Energy Ablation ×2.
+export const APPLIED_ANYWAY = Object.freeze(new Set([
+    "WEKdjn7LktX1GBL8", "QNepnNyb4izD2GVY", "A2BzOqazSR9lcqm3", "ePMZjZHGqC6sCMyk", "cjD7GRKEz6jAj8Cy", "h7aZUa4T1yiI94w2", "GMyyIR9zUl2x7Z8r",
+    "yW1V8GYB29XXhV0K", "vFkrXIujLH10zSI7", "CDsNSXfdHkugg392", "yGJZdEB1TV8B8YVH", "o9NU2yBDBAryVxQX", "trltun9mNywaN2CX", "VFw3X2HnC43REpCj",
+    "YLELon4velZ8FI8h", "CyCziUL6ERtcJoPs", "XCem5wH9reNZ0i5H", "vIXDS3gCZR0ftsyd", "oo9MDcLeNtHCccRq", "m8c2qvWRzj1FDY6c"
+]));
+export const appliedAnyway = (uuid) => APPLIED_ANYWAY.has(String(uuid ?? "").split(".").at(-1));
+
 export function verifyEffectRules(rules, html, { conditionNames = {} } = {}) {
     const text = plainText(html);
     const failures = [];

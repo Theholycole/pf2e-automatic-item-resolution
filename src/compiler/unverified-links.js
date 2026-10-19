@@ -4,7 +4,7 @@
 // text when it fails; with the Effects' rules known when the item is compiled (options.moduleEffect), the item gets what its text
 // reads to instead — a readied bonus, an item action, its own Effect — when that is more than a note. Pure.
 
-import { verifyEffectRules } from "./verify-effect.js";
+import { appliedAnyway, verifyEffectRules } from "./verify-effect.js";
 
 const MODULE_EFFECT_LINK = /@UUID\[Compendium\.((?!pf2e\.)[\w-]+)\.([\w-]+)\.(?:Item\.)?([A-Za-z0-9]{16})\]\{(Effect:[^}]*)\}/g;
 
@@ -17,7 +17,7 @@ export function withoutUnverifiedLinks(item, options = {}) {
     const dropped = [];
     const kept = html.replace(MODULE_EFFECT_LINK, (link, module, pack, id, label) => {
         const effect = options.moduleEffect(`Compendium.${module}.${pack}.Item.${id}`);
-        if (!effect?.rules) return link;
+        if (!effect?.rules || appliedAnyway(id)) return link;
         const conditionNames = options.conditionNames ?? null;
         if (!conditionNames && effect.rules.some((rule) => rule?.key === "GrantItem" && /conditionitems/.test(String(rule.uuid ?? "")))) return link;
         const verdict = verifyEffectRules(effect.rules, html, { conditionNames: conditionNames ?? {} });

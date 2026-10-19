@@ -241,8 +241,11 @@ test("bonuses against what a creature makes, what an effect gives, or ranged att
     assert.deepEqual(mods("Scholar's Drop").map((modifier) => modifier.predicate), [["inflicts:fatigued"]]);
     // One Day's Breath's "While the effect lasts, you gain a +1 status bonus to saves against inhaled threats" (its time is the
     // effect's), the introduction's bonus without a number not a note; its Mythic Point is, and not needing to breathe.
-    const breath = compileItem(item("One Day's Breath"));
+    // (Its Mythic Point for 7 days, the ways card's second button: src/compiler/mythic-upgrade.js.)
+    const breaths = compileItem(item("One Day's Breath"));
+    const breath = breaths.ways[0].plan;
     assert.deepEqual(breath.resolution.outcomes.success.modifiers.map((modifier) => [modifier.value, modifier.predicate, modifier.duration.value, modifier.duration.unit]), [[1, ["item:trait:inhaled"], 24, "hours"]]);
+    assert.deepEqual(breaths.ways[1].plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.duration.value, modifier.duration.unit]), [[7, "days"]]);
     assert.deepEqual(breath.unread, ["When you inhale the bottle's contents, the air fills your lungs so completely that you no longer need to breathe, at least for a time.", "If you spend 1 Mythic Point when you activate the day's breath, you inhale so deeply that you increase the effect's duration.", "You don't need to breathe for 24 hours.", "If you spend 1 Mythic Point, you don't need to breathe for 7 days."]);
     // Trusty Helmet's Hunker Down: "+1 circumstance bonus to your AC against ranged attacks".
     const [, hunker] = compileActivations(item("Trusty Helmet"));
@@ -319,6 +322,15 @@ test("a third-party module's own Effect: linked in its short form, checked again
     const picked = (values) => [{ key: "ChoiceSet", flag: "testBrew", choices: values.map((value) => ({ value })) }, { key: "Resistance", type: "{item|flags.system.rulesSelections.testBrew}", value: 3 }];
     assert.equal(verifyEffectRules(picked(["acid", "cold"]), brewed).ok, true);
     assert.equal(verifyEffectRules(picked(["acid", "fire"]), brewed).ok, false);
+    // (The Effects applied whatever the check says, the user's answer of 2026-10-19: by their Effect's id, kept in the item when compiled.)
+    const { appliedAnyway } = await import("../src/compiler/verify-effect.js");
+    const { withoutUnverifiedLinks } = await import("../src/compiler/unverified-links.js");
+    assert.equal(appliedAnyway("Compendium.some-module.misc.Item.WEKdjn7LktX1GBL8"), true, "by its id");
+    assert.equal(appliedAnyway("Compendium.some-module.some-pack.Item.ABCDEFGHIJKLMNOP"), false);
+    const statusSnack = (id) => ({ system: { description: { value: `<p>You gain a +1 item bonus to Stealth checks for 1 hour. @UUID[Compendium.some-module.some-pack.Item.${id}]{Effect: Test Snack}</p>` } } });
+    const effect = () => ({ name: "Effect: Test Snack", rules: [{ key: "FlatModifier", selector: "stealth", value: 1, type: "status" }] });
+    assert.ok(withoutUnverifiedLinks(statusSnack("ABCDEFGHIJKLMNOP"), { moduleEffect: effect, conditionNames: {} }), "a mismatch dropped");
+    assert.equal(withoutUnverifiedLinks(statusSnack("WEKdjn7LktX1GBL8"), { moduleEffect: effect, conditionNames: {} }), null, "one applied anyway kept");
 });
 
 test("a module's own Effect its text doesn't bear out, known when compiled: its text read instead, when that's more than a note", () => {
@@ -831,6 +843,21 @@ test("Mythic Point costs (the user's answer of 2026-10-19): a use whose effect s
     // (Freedom's Flame's Holy Retribution: 15 spirit damage at the creature targeted, its holy weakness the GM's, for a Mythic Point.)
     const flame = compileActivations(item("Freedom's Flame"))[1].plan;
     assert.deepEqual([flame.resolution.sharedDamage.components[0].formula, flame.spend], ["15[spirit]", { mythicPoints: 1 }]);
+});
+
+test("a Mythic Point spent for more (the user's answer of 2026-10-19): the ways card's two buttons, the second upgraded where the text says how and costing one", async () => {
+    const { withMythicUpgrade } = await import("../src/compiler/mythic-upgrade.js");
+    // (Ten Day's Breath's own Effect for a year: its application's time.)
+    const ten = compileItem(item("Ten Day's Breath"));
+    assert.deepEqual([ten.builtin, ten.ways.map((way) => way.name), ten.ways[1].plan.spend], ["ways", ["As it is", "Spending a Mythic Point"], { mythicPoints: 1 }]);
+    assert.deepEqual(ten.ways[1].plan.resolution.applications.map((application) => [application.duration?.value, application.duration?.unit]), [[365, "days"]]);
+    assert.equal(ten.ways[0].plan.spend, undefined);
+    // (Vortex Pouch's bigger effect: a note on the second button.)
+    const [vortex] = compileActivations(item("Vortex Pouch"));
+    assert.match(vortex.plan.ways[1].plan.notes[0], /^If you spend a Mythic Point when Catching Wind/);
+    // (Not a note alone, nor a plan that costs one already.)
+    assert.notEqual(withMythicUpgrade({ noteOnly: true, resolution: {} }, "If you spend 1 Mythic Point, it lasts longer.").builtin, "ways");
+    assert.equal(withMythicUpgrade({ builtin: "reroll", spend: { mythicPoints: 1 } }, "If you spend 1 Mythic Point, more.").builtin, "reroll");
 });
 
 test("an ally's persistent damage taken onto its user: Bloodstained Waistcoat's bleed, the take card at the ally targeted", async () => {

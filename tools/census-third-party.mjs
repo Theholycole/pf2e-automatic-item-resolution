@@ -20,7 +20,7 @@ import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { compileActivations, handlesPermanent } from "../src/compiler/permanent.js";
 import { plainText } from "../src/compiler/rows.js";
 import { routeOf } from "../src/live/route.js";
-import { verifyEffectRules } from "../src/compiler/verify-effect.js";
+import { appliedAnyway, verifyEffectRules } from "../src/compiler/verify-effect.js";
 
 // (A stand-in owner, as live play passes the item's actor: its level the item's, middling attribute modifiers, no feats — so items whose
 // numbers come from their owner, Wolf Fang's Strength, count as they play.)
@@ -123,7 +123,7 @@ function verified(plan, resultName) {
     if (!linked.length || resultName !== "resolves") return resultName;
     return linked.every((entry) => {
         const effect = moduleEffect(entry.uuid);
-        return effect && verifyEffectRules(effect.system?.rules ?? [], entry.verify, { conditionNames }).ok;
+        return effect && (appliedAnyway(entry.uuid) || verifyEffectRules(effect.system?.rules ?? [], entry.verify, { conditionNames }).ok);
     }) ? "resolves" : "unverified-effect";
 }
 

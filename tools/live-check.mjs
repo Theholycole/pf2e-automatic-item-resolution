@@ -5130,6 +5130,48 @@ export const cases = {
         return { mythic: mythic(), hero: hero.system.resources.heroPoints.value };
     },
 
+    // A Mythic Point spent for more (the user's answer of 2026-10-19): One Day's Breath's two buttons — as it is, 24 hours and no point; spending
+    // one, 7 days and the point gone (a mythic NPC's).
+    async mythicUpgrade(scene) {
+        const { actor: user } = await creature(scene, "Breath Drinker", { x: 20, y: 6 });
+        await user.update({ "system.traits.value": [...(user.system.traits.value ?? []), "mythic"] });
+        await user.update({ "system.resources.mythicPoints.value": 1 });
+        const mythic = () => user.system.resources.mythicPoints.value;
+        const drink = async (way) => {
+            const potion = await give(user, "One Day's Breath");
+            let since = Date.now();
+            await potion.consume();
+            const ways = await messageAfter(since, itemCard("ways"), { what: "the breath's buttons" });
+            const names = ways.getFlag(NS, "card").plan.ways.map((entry) => entry.name);
+            assert(names.join(",") === "As it is,Spending a Mythic Point", `its buttons (${names})`);
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf(way) });
+            const card = await messageAfter(since, itemCard("item"), { what: `the ${way} card` });
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+            await wait(800);
+        };
+        const lasting = () => user.itemTypes.effect.filter((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("saving-throw"))).map((effect) => `${effect.system.duration.value} ${effect.system.duration.unit}`);
+        await drink("As it is");
+        assert(lasting().includes("24 hours") && mythic() === 1, `24 hours, no point spent (${lasting()}; ${mythic()})`);
+        await drink("Spending a Mythic Point");
+        assert(lasting().includes("7 days") && mythic() === 0, `7 days, the point spent (${lasting()}; ${mythic()})`);
+        return { lasting: lasting(), mythic: mythic() };
+    },
+
+    // A third-party Effect applied though its numbers differ from its text (the user's answer of 2026-10-19): Alchemists+ Concealing Puffball
+    // (Lesser)'s own Effect on its drinker, not a note.
+    async appliedAnyway(scene) {
+        if (!game.modules.get("pf2e-team-plus-alchemists")?.active) return { skipped: "Alchemists+ isn't active" };
+        const { actor: user } = await creature(scene, "Puffball Drinker", { type: "character", x: 20, y: 8 });
+        const puffball = await give(user, "Concealing Puffball (Lesser)", "pf2e-team-plus-alchemists.pf2e-items");
+        const since = Date.now();
+        await puffball.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the puffball's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => user.itemTypes.effect.some((effect) => effect.name === "Effect: Concealing Puffball (Lesser)"), "its own Effect", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

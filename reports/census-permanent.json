@@ -6,8 +6,8 @@
   "ours": 2119,
   "activations": 2598,
   "results": {
-   "resolves": 758,
-   "builtin:cast-spell": 474,
+   "resolves": 756,
+   "builtin:cast-spell": 472,
    "none": 571,
    "partial": 188,
    "builtin:focus-point": 45,
@@ -21,7 +21,7 @@
    "builtin:pf2e-rules": 26,
    "builtin:zone": 23,
    "builtin:modes": 32,
-   "builtin:ways": 14,
+   "builtin:ways": 18,
    "builtin:conjure": 13,
    "builtin:item-action": 23,
    "builtin:roll-twice": 11,
@@ -30,8 +30,8 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 440,
-   "cast": 474,
+   "save": 438,
+   "cast": 472,
    "item": 587,
    "none": 702,
    "focus": 45,
@@ -43,7 +43,7 @@
    "teleport": 8,
    "zone": 23,
    "toggle": 32,
-   "ways": 14,
+   "ways": 18,
    "conjure": 13,
    "action": 23,
    "coat": 3,
@@ -58,7 +58,7 @@
   "equipment": {
    "activations": 1693,
    "results": {
-    "resolves": 457,
+    "resolves": 456,
     "builtin:cast-spell": 345,
     "none": 396,
     "partial": 84,
@@ -71,7 +71,7 @@
     "builtin:table": 4,
     "builtin:teleport": 4,
     "builtin:zone": 11,
-    "builtin:ways": 7,
+    "builtin:ways": 8,
     "builtin:conjure": 13,
     "builtin:modes": 16,
     "builtin:roll-twice": 7,
@@ -86,7 +86,7 @@
     "resolves": 167,
     "none": 85,
     "partial": 47,
-    "builtin:cast-spell": 83,
+    "builtin:cast-spell": 82,
     "builtin:reroll": 7,
     "builtin:table": 1,
     "builtin:modes": 12,
@@ -98,7 +98,7 @@
     "builtin:no-effect": 10,
     "builtin:pf2e-rules": 2,
     "builtin:teleport": 3,
-    "builtin:ways": 2,
+    "builtin:ways": 3,
     "builtin:roll-twice": 2,
     "builtin:save-bonus": 1
    }
@@ -130,7 +130,7 @@
   "armor": {
    "activations": 164,
    "results": {
-    "builtin:cast-spell": 34,
+    "builtin:cast-spell": 33,
     "partial": 11,
     "resolves": 58,
     "builtin:counteract": 1,
@@ -141,9 +141,9 @@
     "builtin:reroll": 4,
     "builtin:item-action": 2,
     "builtin:readied-bonus": 3,
+    "builtin:ways": 3,
     "builtin:focus-point": 2,
-    "builtin:roll-twice": 2,
-    "builtin:ways": 2
+    "builtin:roll-twice": 2
    }
   },
   "shield": {
@@ -151,13 +151,14 @@
    "results": {
     "builtin:cast-spell": 11,
     "note-only": 15,
-    "resolves": 32,
+    "resolves": 31,
     "none": 19,
     "partial": 11,
     "builtin:modes": 4,
     "builtin:no-effect": 2,
     "builtin:counteract": 1,
     "builtin:zone": 1,
+    "builtin:ways": 1,
     "builtin:readied-bonus": 3,
     "builtin:item-action": 1
    }
@@ -8299,9 +8300,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Vortex Pouch",
@@ -13886,9 +13887,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Spell Echo Shot",
@@ -14229,9 +14230,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Obsidian Goggles (Greater)",
@@ -28264,9 +28265,9 @@
    "time": "2",
    "frequency": "once per day per spell",
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Corpsecaller Round",

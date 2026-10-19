@@ -36,7 +36,7 @@ import { applyToggleCard, postToggleCard, togglesAfterDamage, togglesAtTurnEnd, 
 import { activate, indexOf, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
-import { verifyEffectRules } from "../src/compiler/verify-effect.js";
+import { appliedAnyway, verifyEffectRules } from "../src/compiler/verify-effect.js";
 import { isUnloadedSpellgun, restoreUnloaded } from "./generic-items.js";
 import { strikeWithRunes } from "./rune-strikes.js";
 import { chargeSpellstrike, strikeWithSpellstrike } from "./spellstrike.js";
@@ -734,7 +734,8 @@ async function nativeEffect(actor, name, change, state) {
     // (A third-party module's own Effect: applied only when its rules are what the item's text says, src/compiler/verify-effect.js;
     // else a note of the text, for the Effect's time.)
     const linked = applicationFor(state.plan, change);
-    if (linked?.verify) {
+    // (Or whatever the check says, the Effects the user chose to have applied: src/compiler/verify-effect.js APPLIED_ANYWAY.)
+    if (linked?.verify && !appliedAnyway(change.effect.uuid)) {
         const data = template.toObject?.() ?? template;
         const conditionNames = Object.fromEntries((data.system?.rules ?? []).filter((rule) => rule.key === "GrantItem" && rule.uuid).map((rule) => {
             let granted = null;

@@ -37,6 +37,7 @@ import { isBareFigurine, ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { playedBySpellModule, spellModuleShare } from "./index.js";
 import { withSpend } from "./spend.js";
+import { withMythicUpgrade } from "./mythic-upgrade.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { degreeSentencesPlan, saveOrPlan } from "./save-or.js";
@@ -126,7 +127,8 @@ export function compileActivations(item, options = {}) {
     // (An item the spell module shares — its spellshapes or casts there: those activations left to it, src/compiler/index.js spellModuleShare.)
     const share = spellModuleShare(item, options);
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withSpend(ownerDCs(entry.plan), plainText(entry.activation.html), options) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withMythicUpgrade(withSpend(ownerDCs(entry.plan), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // An activation that makes "an attack …, as described in the rune's other activation" (Swallow-Spike's second): that other
