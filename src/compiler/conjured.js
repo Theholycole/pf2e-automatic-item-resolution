@@ -33,7 +33,10 @@ function lastsOf(plain) {
 // conjure plan, or null.
 export function conjuredPlan(html, base, item, wholeHtml = null) {
     const text = String(html ?? "");
-    const becomes = BECOMES.exec(text);
+    // (A fragment naming its creature without a link, Fossil Fragment (Petrified Wood)'s "becomes an awakened tree when activated": found
+    // by that name in the compendiums.)
+    const named = BECOMES.exec(text) ? null : /\bthis [\w ]+? becomes an? ([a-z][a-z ]+?) when activated\b/i.exec(text);
+    const becomes = BECOMES.exec(text) ?? (named && /^Fossil Fragment\b/.test(String(item?.name ?? base?.source?.name ?? "")) ? Object.assign([named[0], undefined, `name:${named[1]}`, named[1].replace(/\b\w/g, (letter) => letter.toUpperCase())], { index: named.index }) : null);
     if (!becomes) return null;
     // (A creature's stat block: not a vehicle, Marvelous Miniature (Boat)'s Cutter, nor a hazard, Dirt Sea in a Jar's quicksand.)
     if (/\.(?:vehicles|hazards)\./.test(becomes[2])) return null;
@@ -74,7 +77,7 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
         automation: { level: "guided" },
         targeting: { target: "self", range: null, area: null },
         trigger: { event: "use" },
-        creatures: [{ name, count, size: null, stats: null, from: { uuid: fullUuid(becomes[2]) }, traits, initiative: own || appears ? "roll" : null }],
+        creatures: [{ name, count, size: null, stats: null, from: becomes[2].startsWith("name:") ? { name } : { uuid: fullUuid(becomes[2]) }, traits, initiative: own || appears ? "roll" : null }],
         max: count,
         lasts,
         vanishAtZero: true,

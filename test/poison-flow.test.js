@@ -450,3 +450,9 @@ test("a creature an item becomes (Wondrous Figurine (Golden Lions)'s pair of Lio
     await use(foundry.giveItem(rogue, source("Beetle Gel")));
     assert.match(foundry.messages.at(-1).content, /place Flash Beetle beside its user by hand/);
 });
+
+test("a fragment naming its creature without a link (Fossil Fragment (Petrified Wood)'s awakened tree): found by that name, with the fossils' construct and earth traits", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [tree] = compileActivations(source("Fossil Fragment (Petrified Wood)"));
+    assert.deepEqual([tree.plan.builtin, tree.plan.creatures[0].from, tree.plan.creatures[0].traits, tree.plan.lasts.value], ["conjure", { name: "Awakened Tree" }, ["minion", "construct", "earth"], 1]);
+});

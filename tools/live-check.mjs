@@ -4382,6 +4382,28 @@ export const cases = {
         await press();
         await until(() => ac() === before, `back to a buckler's +${before} (now ${ac()})`, { timeout: 8000 });
         return { before, tower: 2 };
+    },
+
+    // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
+    async fossilTree(scene) {
+        const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });
+        const fossil = await give(owner, "Fossil Fragment (Petrified Wood)");
+        await until(() => ownerToken.object, "the token drawn", { timeout: 5000 });
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const made = () => scene.tokens.filter((token) => token.actor?.flags?.[ABILITY]?.conjured?.itemUuid === fossil.uuid);
+        try {
+            await game.modules.get(NS).api.live.activate(fossil.uuid, 0);
+            await until(() => made().length === 1, "the tree's token", { timeout: 10000 });
+            const tree = made()[0].actor;
+            assert(/Awakened Tree/i.test(tree.name) && tree.system.traits.value.includes("construct"), `an awakened tree, now a construct (${tree.name}: ${tree.system.traits.value.join(", ")})`);
+            return { tree: tree.name };
+        } finally {
+            for (const token of made()) {
+                const base = game.actors.get(token.actorId);
+                await token.delete().catch(() => null);
+                if (base?.flags?.[ABILITY]?.conjured) await base.delete().catch(() => null);
+            }
+        }
     }
 };
 
