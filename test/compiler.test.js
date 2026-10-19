@@ -1028,3 +1028,12 @@ test("a bonus to the next save against one trait's effects, whenever it comes (P
     const source = fortuneEffectSource({ state: { plan: bracelet, item: { name: "Psychic Warding Bracelet" }, user: {} }, moduleId: "pf2e-automatic-item-resolution" });
     assert.deepEqual([source.system.duration.unit, source.system.rules[0].predicate], ["unlimited", ["item:trait:mental"]]);
 });
+
+test("Savior Spike: a readied +1 item to the Grab an Edge its trigger names — any check, by PF2e's action:grab-an-edge (a Reflex save or Acrobatics) — and its success a critical success, its critical failure a failure; read degree sentences aren't notes too", async () => {
+    const { readiedWords, readiedRules } = await import("../src/live/fortune-card.js");
+    const spike = compileItem(item("Savior Spike"));
+    assert.deepEqual([spike.builtin, spike.bonus.spend, spike.notes ?? [], spike.partial ?? null], ["readied-bonus", ["check"], [], null]);
+    assert.deepEqual(readiedRules(spike).map((rule) => [rule.key, rule.selector, JSON.stringify(rule.predicate)]), [["FlatModifier", "check", JSON.stringify([{ or: ["action:grab-an-edge"] }])], ["AdjustDegreeOfSuccess", "check", JSON.stringify([{ or: ["action:grab-an-edge"] }])]]);
+    assert.match(readiedWords(spike), /^\+1 item bonus to check \(grab an edge\)/);
+    assert.deepEqual(compileItem(item("Matchmaker Fulu")).notes ?? [], [], "its read degree sentence not a note");
+});

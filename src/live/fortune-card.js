@@ -10,7 +10,7 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 export const MODULE_KEY = "rollTwice";
 export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity));
 
-const ROLL_WORDS = { initiative: "initiative roll", "attack-roll": "attack roll", "saving-throw": "saving throw", "skill-check": "skill check", perception: "Perception check", fortitude: "Fortitude save", reflex: "Reflex save", will: "Will save", ac: "AC" };
+const ROLL_WORDS = { initiative: "initiative roll", "attack-roll": "attack roll", "saving-throw": "saving throw", "skill-check": "skill check", perception: "Perception check", fortitude: "Fortitude save", reflex: "Reflex save", will: "Will save", ac: "AC", check: "check" };
 const actionWords = (predicate) => (predicate?.[0]?.or ?? []).map((option) => String(option).replace(/^action:/, "").replace(/-/g, " ")).join(", ");
 const nameOf = (selector) => ROLL_WORDS[selector] ?? (/-dc$/.test(selector) ? `${selector.charAt(0).toUpperCase()}${selector.slice(1, -3)} DC` : `${selector.charAt(0).toUpperCase()}${selector.slice(1)} check`);
 

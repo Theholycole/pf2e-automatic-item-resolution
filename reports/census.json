@@ -16,7 +16,7 @@
    "builtin:cast-spell": 35,
    "none": 190,
    "resolves": 751,
-   "builtin:readied-bonus": 22,
+   "builtin:readied-bonus": 23,
    "builtin:zone": 111,
    "partial": 124,
    "builtin:item-action": 15,
@@ -24,7 +24,7 @@
    "builtin:conjure": 7,
    "builtin:ways": 11,
    "builtin:counteract": 29,
-   "builtin:no-effect": 51,
+   "builtin:no-effect": 50,
    "builtin:teleport": 6,
    "builtin:reroll": 3,
    "builtin:roll-twice": 2
@@ -94,11 +94,11 @@
    "count": 156,
    "results": {
     "none": 30,
-    "builtin:readied-bonus": 12,
+    "builtin:readied-bonus": 13,
     "builtin:item-action": 11,
     "resolves": 57,
     "note-only": 7,
-    "builtin:no-effect": 9,
+    "builtin:no-effect": 8,
     "builtin:reroll": 1,
     "builtin:ways": 2,
     "builtin:cast-spell": 9,
@@ -391,9 +391,9 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 252,
+   "none": 251,
    "item": 619,
-   "fortune": 24,
+   "fortune": 25,
    "zone": 111,
    "save": 147,
    "expose": 89,
@@ -435,8 +435,8 @@
     "zone": 1
    },
    "talisman": {
-    "none": 39,
-    "fortune": 14,
+    "none": 38,
+    "fortune": 15,
     "action": 11,
     "item": 52,
     "reroll": 1,
@@ -512,7 +512,7 @@
   "noCard": {
    "no-plan": 190,
    "triggered": 11,
-   "gm": 51
+   "gm": 50
   }
  },
  "gapCounts": {},
@@ -26203,9 +26203,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Forgetful Drops",

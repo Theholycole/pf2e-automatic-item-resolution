@@ -65,7 +65,12 @@ export async function fortuneRolled(message) {
         if (!flag || !(flag.spend ?? [flag.selector]).some((selector) => selector && domains.includes(selector))) return false;
         // (Only a roll its bonus is for: a save against a mental effect for Psychic Warding Bracelet's, not any save.)
         const predicates = (effect.system?.rules ?? []).filter((rule) => rule.key === "FlatModifier" && Array.isArray(rule.predicate) && rule.predicate.length);
-        return !predicates.length || predicates.some((rule) => rule.predicate.every((term) => typeof term !== "string" || options.has(term)));
+        const fits = (predicate) => {
+            const Predicate = game.pf2e?.Predicate;
+            if (Predicate) return new Predicate(predicate).test(options);
+            return predicate.every((term) => typeof term !== "string" || options.has(term));
+        };
+        return !predicates.length || predicates.some((rule) => fits(rule.predicate));
     });
     if (spent.length) await actor.deleteEmbeddedDocuments("Item", spent.map((effect) => effect.id)).catch(() => null);
 }

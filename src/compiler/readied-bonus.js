@@ -58,6 +58,11 @@ function selectorsOf(words) {
     return [...new Set(selectors)];
 }
 
+// The roll an action its trigger names is made with, when "the check" says no more: Savior Spike's "Trigger You attempt to Grab an Edge"
+// — PF2e's Grab an Edge is a Reflex save or an Acrobatics check: any check, its action option the predicate.
+const TRIGGER_ROLLS = [[/\bGrab an Edge\b/i, ["check"]]];
+const triggerRolls = (triggered) => TRIGGER_ROLLS.find(([pattern]) => pattern.test(String(triggered ?? "")))?.[1] ?? [];
+
 // How long: "until the end of the current turn" / "this turn" (the default), "until the start of your next turn",
 // "until the end of your next turn", "for 1 minute".
 function durationOf(text) {
@@ -136,8 +141,8 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
         const [, value, type, , words] = match;
         // ("the triggering check" alone: the trigger's rolls — Mask of Allure's "You attempt a Deception, Diplomacy, Intimidation,
         // or Performance check", Whisperer of Souls' "an Occultism check to Decipher Writing, … or Recall Knowledge".)
-        const fromTrigger = !selectorsOf(words).length && /\bthe triggering (?:check|roll|skill check)\b/i.test(words) && triggered;
-        const selectors = selectorsOf(fromTrigger ? triggered : words);
+        const fromTrigger = !selectorsOf(words).length && (/\bthe triggering (?:check|roll|skill check)\b/i.test(words) || (/^the (?:check|roll|save|saving throw)$/i.test(words.trim()) && triggerRolls(triggered).length)) && triggered;
+        const selectors = fromTrigger ? (selectorsOf(triggered).length ? selectorsOf(triggered) : triggerRolls(triggered)) : selectorsOf(words);
         if (!selectors.length) continue;
         // ("to Hide and Sneak", "to Trip the target", "checks made to Escape your grapple": only for those actions.)
         // (A name of several words too: "to Recall Knowledge", "to Make an Impression"; a list: "to Decipher Writing, Identify
@@ -258,7 +263,7 @@ export function readDegreeAdjust(text, { trigger = null } = {}) {
     const attempt = /\battempt (?:an? )?([A-Z]\w+) check(?: to ((?:[A-Z][a-z']+)(?: (?:a|an|the|or) [A-Z][a-z']+| [A-Z][a-z']+)*))?/.exec(plain);
     // (Or the action it makes, by that action's skill: Cloak of Repute's "make a Request of a creature" — Diplomacy.)
     const made = new RegExp(String.raw`\b(?:make|attempt|use) an? (${Object.keys(ACTION_SKILLS).join("|")})\b`).exec(plain);
-    const selectors = [named, triggered ?? "", attempt?.[0] ?? ""].map((words) => selectorsOf(words)).find((found) => found.length) ?? (made ? [ACTION_SKILLS[made[1]]] : []);
+    const selectors = [named, triggered ?? "", attempt?.[0] ?? ""].map((words) => selectorsOf(words)).find((found) => found.length) ?? (made ? [ACTION_SKILLS[made[1]]] : triggerRolls(triggered).length ? triggerRolls(triggered) : []);
     if (selectors.length !== 1) return null;
     const actions = /\bto ((?:[A-Z][a-z']+)(?: (?:a|an|the|or) [A-Z][a-z']+| [A-Z][a-z']+)*)\b/.exec(`${triggered ?? ""} ${attempt?.[0] ?? ""}`);
     const predicate = actions ? [{ or: actions[1].split(/\s+or\s+|,\s*/).map((name) => `action:${slug(name)}`) }] : made ? [`action:${slug(made[1])}`] : null;
@@ -271,6 +276,8 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     const read = readReadiedBonus(text, { trigger }) ?? (degree ? { modifiers: [], resistance: null, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [degree.selector], notes: degreeNotes(text) } : null);
     if (!read) return null;
     if (degree) read.degree = degree;
+    // (The degree's own sentences, read now, aren't notes too.)
+    if (degree) read.notes = (read.notes ?? []).filter((note) => !UPGRADES.some(([pattern]) => pattern.test(note)) && !/^If you roll a critical failure, you get a failure instead\.$/i.test(String(note).trim()));
     const { notes, ...bonus } = read;
     // (Another creature's: the one the presser targets, within the distance its trigger names.)
     const within = /\bwithin (\d+) feet\b/i.exec(trigger ?? triggerOf(String(text ?? "")) ?? "")?.[1];

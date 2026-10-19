@@ -23,8 +23,8 @@ Results, for the items this module handles:
 | builtin:zone | 111 | 7% |
 | builtin:cast-spell | 35 | 2% |
 | builtin:roll-twice | 2 | 0% |
-| builtin:readied-bonus | 22 | 1% |
-| builtin:no-effect | 51 | 3% |
+| builtin:readied-bonus | 23 | 2% |
+| builtin:no-effect | 50 | 3% |
 | none | 190 | 13% |
 
 ## By category
@@ -52,7 +52,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | other | 512 | 211 | 3 | 3 | 96 | 11 | 14 | 22 | 3 | 0 | 8 | 1 | 6 | 4 | 125 |
 | potion | 182 | 78 | 0 | 0 | 3 | 63 | 9 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 26 |
-| talisman | 156 | 52 | 1 | 0 | 16 | 0 | 9 | 0 | 9 | 1 | 14 | 11 | 0 | 2 | 39 |
+| talisman | 156 | 52 | 1 | 0 | 16 | 0 | 9 | 0 | 9 | 1 | 15 | 11 | 0 | 2 | 38 |
 | elixir | 149 | 119 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 1 | 14 |
 | poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | snare | 82 | 1 | 0 | 0 | 0 | 0 | 0 | 71 | 0 | 0 | 0 | 0 | 0 | 1 | 9 |
@@ -62,14 +62,14 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | fulu | 46 | 16 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 14 |
 | drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **619** | **46** | **89** | **147** | **80** | **35** | **111** | **12** | **3** | **24** | **15** | **29** | **11** | **252** |
+| **all** | **1486** | **619** | **46** | **89** | **147** | **80** | **35** | **111** | **12** | **3** | **25** | **15** | **29** | **11** | **251** |
 
 Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
 | nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 190 |
-| the ability compiler's GM fallback ("no-effect") | 51 |
+| the ability compiler's GM fallback ("no-effect") | 50 |
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
 
 ## What they do

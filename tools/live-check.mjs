@@ -5735,6 +5735,29 @@ export const cases = {
         return { ok: true };
     },
 
+    // Savior Spike: its readied +1 to the next Grab an Edge (any check with PF2e's action:grab-an-edge); a plain Reflex save doesn't spend
+    // it, PF2e's Grab an Edge gets it and spends it.
+    async saviorSpike(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Spike Climber", { type: "character", x: 20, y: 18 });
+        const spike = await give(user, "Savior Spike");
+        const since = Date.now();
+        await spike.consume();
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the spike's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const readied = () => user.itemTypes.effect.find((effect) => effect.getFlag(NS, "rollTwice") && (effect.system.rules ?? []).some((rule) => rule.key === "AdjustDegreeOfSuccess"));
+        await until(readied, "the readied bonus", { timeout: 8000 });
+        await user.saves.reflex.roll({ skipDialog: true });
+        await wait(1200);
+        assert(readied(), "kept through a plain Reflex save");
+        await userToken.object?.control?.();
+        const at = Date.now();
+        await game.pf2e.actions.get("grab-an-edge").use({ actors: [user], statistic: "reflex", event: shift() });
+        const grab = await messageAfter(at, (message) => (message.flags?.pf2e?.context?.options ?? []).includes("action:grab-an-edge"), { what: "Grab an Edge" });
+        assert((grab.flags.pf2e.modifiers ?? []).some((modifier) => modifier.type === "item" && modifier.modifier === 1 && modifier.enabled !== false), "+1 item on Grab an Edge");
+        await until(() => !readied(), "spent by it", { timeout: 8000 });
+        return { ok: true };
+    },
+
     // Psychic Warding Bracelet: its readied +2 item to the next save against a mental effect, kept with no time limit; a Fortitude save
     // doesn't spend it, a Will save against a mental effect gets it and spends it.
     async wardingBracelet(scene) {
