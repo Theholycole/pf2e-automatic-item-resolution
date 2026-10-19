@@ -5,6 +5,9 @@
 // action may be used for stays a note. Not a creature's other than its user's ("Your animal companion … until the end of
 // its rage"). Pure.
 //
+// (Or fast healing for the rage, Instinct Crown (Ligneous)'s, an item only a raging user can activate: "fast healing equal to half your
+// level" → fastHealing { half: true }, the Effect's PF2e FastHealing rule at half its user's level.)
+//
 // To give another item this mechanic when its words differ, add it to EXTRA (by its slug) — see docs/mechanics.md.
 
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
@@ -28,6 +31,10 @@ export function readUntilRage(text, item = null) {
         const notes = sentences.filter((other, at) => at !== index && /\b(?:extra action|action|can|until|bonus|penalty)\b/i.test(other)).map((other) => other.trim());
         return { conditions: [{ slug, value }], notes };
     }
+    // (Fast healing with no end of its own, from an item whose activations need its user to be able to Rage: for the rage.)
+    const raging = /\bable to Rage\b/.test(String(item?.system?.description?.value ?? ""));
+    const healing = sentences.findIndex((sentence) => /\byou gain fast healing equal to (?:half|one-half) your level\.?$/i.test(sentence.trim()));
+    if (raging && healing >= 0) return { conditions: [], fastHealing: { half: true }, notes: [] };
     return null;
 }
 

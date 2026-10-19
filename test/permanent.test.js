@@ -910,6 +910,8 @@ test("Admirer's Bouquet handed to the triggering ally: its +1 item bonus to save
     assert.deepEqual([routeOf(bouquet), bouquet.item.recipient, bouquet.targeting.target], ["item", "targets", "the triggering ally"]);
     assert.deepEqual(bouquet.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.duration, modifier.predicate]), [["saving-throw", 1, "item", null, [{ or: ["item:trait:emotion", "item:trait:mental"] }]]]);
     assert.equal(bouquet.unread[0], "The bonus ends once the ally no longer carries the bouquet (end it by hand).");
+    const { modifierText } = await import("../src/live/card.js");
+    assert.equal(modifierText(bouquet.resolution.outcomes.success.modifiers[0]), "+1 item to saving-throw (against emotion or mental effects)");
 });
 
 test("an activation that takes minutes isn't the item's standing save bonus (PF2e's own rule): Crown of the Kobold King's Nightmare cast, Serithtial's 9th-rank Heal or Ring of Truth at DC 45", async () => {

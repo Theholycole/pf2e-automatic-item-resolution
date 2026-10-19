@@ -100,7 +100,10 @@ export function modifierText(modifier) {
     const predicate = modifier.predicate ?? [];
     const actions = predicate.filter((term) => typeof term === "string" && term.startsWith("action:")).map((term) => term.slice(7).replace(/-/g, " "));
     const marked = predicate.some((term) => typeof term === "string" && term.startsWith("target:mark:"));
-    const scope = [...actions, ...(marked ? ["against the marked creature"] : [])];
+    // (Its effects' traits, Admirer's Bouquet's "against emotion or mental effects": item:trait:… terms, alone or in an "or".)
+    const traitsOf = (terms) => terms.filter((term) => typeof term === "string" && term.startsWith("item:trait:")).map((term) => term.slice(11));
+    const traits = [...traitsOf(predicate), ...predicate.filter((term) => Array.isArray(term?.or)).flatMap((term) => traitsOf(term.or))];
+    const scope = [...actions, ...(marked ? ["against the marked creature"] : []), ...(traits.length ? [`against ${traits.join(" or ")} effects`] : [])];
     return `${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${scope.length ? ` (${scope.join(", ")})` : ""}${forTime(modifier.duration)}`;
 }
 
@@ -277,12 +280,14 @@ export function runeEffectSource(rune, { key = rune.key, weapon, item = {}, user
 
 // Conditions until the end of the rage, in words: "Quickened until the end of the rage".
 const conditionWords = (conditions) => conditions.map((entry) => `${entry.slug.charAt(0).toUpperCase()}${entry.slug.slice(1)}${entry.value ? ` ${entry.value}` : ""}`).join(" and ");
-export const untilRageText = (untilRage) => `${conditionWords(untilRage.conditions)} until the end of the rage`;
+export const untilRageText = (untilRage) => `${[untilRage.conditions.length ? conditionWords(untilRage.conditions) : null, untilRage.fastHealing ? `Fast healing ${Number.isFinite(untilRage.fastHealing.value) ? untilRage.fastHealing.value : "half the user's level"}` : null].filter(Boolean).join(" and ")} until the end of the rage`;
 
 // Their Effect: PF2e's GrantItem for each condition (uuids: the conditions' own, by slug), lasting at most a minute (a Rage's),
 // flagged untilRage so the Rage's end removes it (scripts/live.js).
 export function untilRageEffectSource(untilRage, uuids, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const rules = untilRage.conditions.map((entry, index) => ({ key: "GrantItem", uuid: uuids[index], ...(entry.value ? { alterations: [{ mode: "override", property: "badge-value", value: entry.value }] } : {}) })).filter((rule) => rule.uuid);
+    // (Its fast healing, at the value live play worked out from its user's level.)
+    if (Number.isFinite(untilRage.fastHealing?.value)) rules.push({ key: "FastHealing", value: untilRage.fastHealing.value });
     return ownEffectSource({ name: untilRageText(untilRage), img: "icons/svg/aura.svg", words: untilRageText(untilRage), rules, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { untilRage: true }, item, user, worldTime, initiative, moduleId });
 }
 

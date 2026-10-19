@@ -666,7 +666,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         }
     }
     // (A condition until the end of the user's rage: an Effect granting it, gone when the Rage ends — only while raging.)
-    const untilRage = state.plan.item?.untilRage;
+    // (Fast healing at half its user's level: that level's, now.)
+    const rageItem = state.plan.item?.untilRage;
+    const untilRage = rageItem?.fastHealing?.half && target.actor ? { ...rageItem, fastHealing: { value: Math.max(1, Math.floor((Number(target.actor.level) || 0) / 2)) } } : rageItem;
     if (untilRage && target.actor) {
         if (!isRaging(target.actor)) lines.push(`${recipient.name} isn't raging: no ${untilRageText(untilRage)}.`);
         else {

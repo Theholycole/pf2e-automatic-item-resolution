@@ -268,3 +268,10 @@ test("a bonus for another creature (Resonant Guitar's Chord of Protection, +2 st
     assert.deepEqual(given?.system.rules.map((rule) => [rule.key, rule.selector, rule.value]), [["FlatModifier", "ac", 2]]);
     assert.equal(bard.itemTypes.effect.some((effect) => effect.flags?.[MODULE_ID]?.rollTwice), false, "not the user's");
 });
+
+test("the roll named before it, in a clause of its own: \"when you make an attack roll at a foe …, you can roll twice\" — its user's next attack roll, the rest notes (the module's own wording)", () => {
+    const read = readRollTwice("Effect A war cry rises. Once in the fury, when you make an attack roll at a foe of your faith, you can roll twice and keep the better result. This is a fortune effect. Every foe counts as one.");
+    assert.deepEqual(read, { selector: "attack-roll", keep: "higher", notes: ["A war cry rises.", "Every foe counts as one."] });
+    // (Not someone else's roll, nor a damage roll.)
+    assert.equal(readRollTwice("Effect When you make a damage roll, you can roll twice and keep the better result."), null);
+});

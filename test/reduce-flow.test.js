@@ -202,6 +202,29 @@ test("quickened until the end of the rage: only while raging, an Effect granting
     delete globalThis.game.pf2e.ConditionManager;
 });
 
+test("fast healing for the rage, from an item only a user able to Rage can activate: its Effect's FastHealing at half its user's level, while raging (the module's own wording)", async () => {
+    const { readUntilRage } = await import("../src/compiler/rage-time.js");
+    const html = "<p>Only someone able to Rage can use this crest.</p><p><strong>Activate</strong> <span class=\"action-glyph\">2</span> (envision)</p><p><strong>Effect</strong> Bark knits over your hurts: you gain fast healing equal to one-half your level.</p>";
+    // (Not without the Rage in the item's text.)
+    assert.equal(readUntilRage("Effect Bark knits over your hurts: you gain fast healing equal to one-half your level.", { system: { description: { value: "<p>A plain crest.</p>" } } }), null);
+    const healer = foundry.makeActor({ id: "reduce-bark", name: "Bark Rager", owners: ["player"] });
+    healer.level = 9;
+    foundry.place(healer, 200, 18000);
+    const crest = foundry.giveItem(healer, { _id: "testRageCrest001", type: "equipment", name: "Test Crest", img: null, system: { category: null, traits: { value: [] }, level: { value: 6 }, description: { value: html } } });
+    const [entry] = compileActivations(crest.toObject());
+    assert.deepEqual(entry.plan.item.untilRage, { conditions: [], fastHealing: { half: true } });
+    healer.created.push({ type: "effect", slug: "effect-rage", name: "Effect: Rage", id: "bark-rage" });
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: crest.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const effect = healer.created.find((item) => item.flags?.[MODULE_ID]?.untilRage);
+    assert.deepEqual(effect.system.rules, [{ key: "FastHealing", value: 4 }]);
+    assert.match(card.content, /Bark Rager: Fast healing 4 until the end of the rage/);
+});
+
 test("Trusty Helmet's \"The value of your stupefied condition is decreased by 1\": its user's stupefied, lowered", () => {
     const helmet = compileActivations(source("Trusty Helmet"))[0].plan;
     assert.deepEqual(helmet.item.reduce, [{ slug: "stupefied", by: 1 }]);

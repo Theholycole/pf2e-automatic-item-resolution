@@ -3122,18 +3122,17 @@ export const cases = {
         throw new Error(`no failure in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
     },
 
-    // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects.
+    // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
+    // card's Apply.
     async admirersBouquet(scene) {
         const { actor: giver } = await creature(scene, "Bouquet Giver", { type: "character", x: 16, y: 16 });
         const { actor: ally, token: allyToken } = await creature(scene, "Bouquet Ally", { type: "character", x: 17, y: 16 });
         const bouquet = await give(giver, "Admirer's Bouquet");
-        let since = Date.now();
+        const since = Date.now();
         await game.modules.get(NS).api.live.activate(bouquet.uuid, 1);
-        const card = await messageAfter(since, (message) => itemCard("expose")(message) || itemCard("item")(message), { what: "the bouquet's card" });
-        since = Date.now();
+        const card = await messageAfter(since, itemCard("item"), { what: "the bouquet's card" });
+        // (The item card's own Apply, at the creature targeted.)
         await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
-        const automatic = await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
-        await applyAbilityCard(automatic);
         const bonus = () => ally.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && rule.type === "item" && Number(rule.value) === 1 && [].concat(rule.selector).includes("saving-throw"));
         await until(bonus, "+1 item to saves on the ally", { timeout: 8000 });
         assert(JSON.stringify(bonus().predicate ?? []).includes("item:trait:mental"), `against mental effects (${JSON.stringify(bonus().predicate)})`);
@@ -3155,6 +3154,27 @@ export const cases = {
         assert(plan.resolution.check.statistic === "will" && plan.resolution.check.against.value === 31, `Will DC 31 (${JSON.stringify(plan.resolution.check)})`);
         assert(/redirects the Strike/.test(JSON.stringify(plan.resolution.outcomes.failure.manualInstructions)), "the redirect for the GM on a failure");
         return { save: save.id };
+    },
+
+    // Fast healing for the rage (the module's own wording, on an item made here): a raging level-9 wearer's Effect with PF2e's FastHealing 4,
+    // gone with the Rage.
+    async rageHealing(scene) {
+        const { actor: barbarian } = await creature(scene, "Bark Rager", { type: "character", x: 15, y: 19 });
+        await barbarian.update({ "system.details.level.value": 9 });
+        const html = "<p>Only someone able to Rage can use this crest.</p><p><strong>Activate</strong> <span class=\"action-glyph\">2</span> (envision)</p><p><strong>Effect</strong> Bark knits over your hurts: you gain fast healing equal to one-half your level.</p>";
+        const [crest] = await barbarian.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Bark Crest`, type: "equipment", system: { description: { value: html }, level: { value: 6 } } }]);
+        const rageSource = (await fromUuid("Compendium.pf2e.feat-effects.Item.z3uyCMBddrPK5umr")).toObject();
+        const [rage] = await barbarian.createEmbeddedDocuments("Item", [rageSource]);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(crest.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the crest's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const healing = () => barbarian.itemTypes.effect.find((effect) => effect.getFlag(NS, "untilRage"))?.system.rules.find((rule) => rule.key === "FastHealing");
+        await until(healing, "the FastHealing Effect", { timeout: 8000 });
+        assert(Number(healing().value) === 4, `fast healing 4 (${JSON.stringify(healing())})`);
+        await rage.delete();
+        await until(() => !barbarian.itemTypes.effect.some((effect) => effect.getFlag(NS, "untilRage")), "gone with the Rage", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
     // Alchemists+ Halfling Sandwich (Lesser): Apply readies its +1 status bonus; the next save takes it and spends it.

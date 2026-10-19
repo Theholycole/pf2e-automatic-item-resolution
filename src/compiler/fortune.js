@@ -45,8 +45,19 @@ function rollOf(phrase, trigger) {
 }
 
 // The text's (an activation's block or a consumable's description, plain) fortune: { selector, keep, predicate?, notes } or null.
+// (Or the roll named before it, in a clause of its own: "when you make an attack roll against …, you can roll twice" — a Barbarians+
+// crown's, once during the rage.)
+const WHEN_TWICE = /\bwhen you (?:make|attempt) an? (attack roll|saving throw|skill check|Perception check|(?:Fortitude|Reflex|Will) save)\b[^.]*?\byou can roll twice[^.]*?\bbetter result\b/i;
 export function readRollTwice(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
+    const when = ROLL_TWICE.exec(plain) ? null : WHEN_TWICE.exec(plain);
+    if (when) {
+        const roll = rollOf(when[1], null);
+        if (!roll) return null;
+        const sentences = plain.replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
+        const notes = sentences.filter((sentence) => sentence && !sentence.includes(when[0]) && !/^(?:This is a fortune effect)\.?$/i.test(sentence) && !/^Craft Requirements\b/i.test(sentence));
+        return { ...roll, keep: "higher", notes };
+    }
     const match = ROLL_TWICE.exec(plain);
     if (!match) return null;
     const keep = /better|higher/i.test(match[2]) ? "higher" : "lower";
