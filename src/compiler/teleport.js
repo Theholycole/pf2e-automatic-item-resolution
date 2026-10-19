@@ -14,8 +14,13 @@ const OWN = /\b(?:you|You|magic to|and) (?:instantly )?teleport(?: yourself)?(?:
 const SPEED = /\bTeleport up to (double|twice|triple) your Speed to a (?:location|space) you can see\b/i;
 // (Or "The ring transports you … to an unoccupied space you can see within a range equal to your Speed", Master Magus Ring's: once its Speed.)
 const SPEED_RANGE = /\btransports you\b[^.]*?\bto an? (?:unoccupied |open )?space you can see within a range equal to your Speed\b/i;
+// (Or "You instantly transport yourself and any items you're wearing and holding from your current space to an unoccupied space up to 40 feet
+// away that you can see", Quartz-Coil Rail Transport's: that far from its user.)
+const TRANSPORT = /\bYou instantly transport yourself\b[^.]*?\bto an? (?:unoccupied |open )?space up to (\d+) feet away that you can see\b/i;
 // "teleport to a space adjacent to the target of your Strike".
 const ADJACENT = /\bteleport to a space adjacent to the target of your Strike\b/i;
+// (Dimension Shot's "If you hit a creature, you can teleport to an unoccupied space beside that creature" too: the creature targeted.)
+const BESIDE_HIT = /\bIf you hit a creature, you can teleport to an unoccupied space adjacent to that creature\b/i;
 // "You shoot an arrow at an open space on a surface within 500 feet … You teleport to that location".
 const SHOT = /\bat an open space on a surface within (\d+) feet\b[^.]*\.\s*You teleport to that location\b/i;
 // (Its other rule sentences: not its flavor.)
@@ -30,7 +35,9 @@ export function readTeleport(text) {
     if (speed) return { within: null, speedTimes: NUMBER[speed[1].toLowerCase()], from: "self", match: speed };
     const ranged = SPEED_RANGE.exec(plain);
     if (ranged) return { within: null, speedTimes: 1, from: "self", match: ranged };
-    const adjacent = ADJACENT.exec(plain);
+    const transport = TRANSPORT.exec(plain);
+    if (transport) return { within: Number(transport[1]), speedTimes: null, from: "self", match: transport };
+    const adjacent = ADJACENT.exec(plain) ?? BESIDE_HIT.exec(plain);
     if (adjacent) return { within: 5, speedTimes: null, from: "target", match: adjacent };
     const own = OWN.exec(plain);
     if (!own || !(own[1] || own[2])) return null;
@@ -41,7 +48,8 @@ export function readTeleport(text) {
 // words are notes, and the plan is partial then.
 // whole: the item's whole description, when html is one activation's.
 export function teleportPlan(html, base, whole = null) {
-    const text = String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    // (Its links as their words: "@Damage[4[electricity]|options:area-damage]" as "4 electricity", a labelled link as its label.)
+    const text = String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/@Damage\[\(?([^[\]]+?)\)?\[([\w, ]+)\](?:\|[^\]]*)?\]/g, (all, formula, type) => `${formula} ${type.replace(/,\s*/g, " ")}`).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     const body = text.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
     const read = readTeleport(body);
     if (!read) return null;

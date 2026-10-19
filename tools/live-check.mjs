@@ -4573,6 +4573,39 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Quartz-Coil Rail Transport (Lesser), a consumable: up to 20 feet — 25 feet off refused, then 20 feet off, the token there at once.
+    async quartzCoil(scene) {
+        const { actor: user, token } = await creature(scene, "Coil Rider", { type: "character", x: 0, y: 4 });
+        const coil = await give(user, "Quartz-Coil Rail Transport (Lesser)");
+        const since = Date.now();
+        await coil.consume();
+        const card = await messageAfter(since, itemCard("teleport"), { what: "the teleport card" });
+        const size = canvas.grid.size;
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 5 * size, y: 4 * size } }).catch((error) => { refused = error.message; });
+        assert(/25 feet away/.test(refused ?? ""), `25 feet refused (${refused})`);
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 4 * size, y: 4 * size } });
+        await until(() => token.x === 4 * size && token.y === 4 * size, `the token at (4, 4) (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Dimension Shot: a space adjacent to the creature hit (targeted) — one two squares off it refused, then one beside it, the token there.
+    async dimensionShot(scene) {
+        const { actor: user, token } = await creature(scene, "Dimension Archer", { type: "character", x: 0, y: 6 });
+        const { token: foeToken } = await creature(scene, "Dimension Mark", { x: 6, y: 6, alliance: "opposition" });
+        const shot = await give(user, "Dimension Shot");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shot.uuid, 0);
+        const card = await messageAfter(since, itemCard("teleport"), { what: "the teleport card" });
+        const size = canvas.grid.size;
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], destination: { x: 4 * size, y: 6 * size } }).catch((error) => { refused = error.message; });
+        assert(refused, "two squares off the creature refused");
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], destination: { x: 5 * size, y: 6 * size } });
+        await until(() => token.x === 5 * size && token.y === 6 * size, `the token beside the mark (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+        return { refused, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Dragonclaw Scutcheon: fire picked on the ways card — immunity to fire until the end of the next turn, as PF2e's Immunity rule.
     async scutcheonImmunity(scene) {
         const { actor: user } = await creature(scene, "Scutcheon Bearer", { type: "character", x: 2, y: 2 });

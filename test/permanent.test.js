@@ -688,6 +688,12 @@ test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spu
     assert.notEqual(compileActivations(item("Spear of the Destroyer's Flame"))[0].plan?.builtin, "teleport");
     // ("within a range equal to your Speed", Master Magus Ring: once its Speed.)
     assert.equal(teleportText(compileActivations(item("Master Magus Ring"))[1].plan.teleport, { speed: 30 }), "Up to its user's Speed (30 feet)");
+    // (Quartz-Coil Rail Transport's "transport yourself … up to 40 feet away", its line damage a note in words; Dimension Shot's space beside the
+    // creature hit.)
+    const coil = compileItem(item("Quartz-Coil Rail Transport (Moderate)"));
+    assert.deepEqual([routeOf(coil), coil.teleport.within], ["teleport", 40]);
+    assert.ok(coil.notes.some((note) => /take 4 electricity damage\.$/.test(note)), coil.notes.join(" / "));
+    assert.equal(teleportText(compileActivations(item("Dimension Shot"))[0].plan.teleport), "To a space adjacent to the creature targeted");
 });
 
 test("allies in an area put in a condition, read without an Effect heading (a third-party scepter: its user and the allies within 30 feet Quickened for 1 minute, the extra action's limit a note)", async () => {

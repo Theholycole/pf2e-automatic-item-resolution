@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 197,
+   "none": 193,
    "resolves": 752,
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
@@ -24,9 +24,9 @@
    "builtin:conjure": 7,
    "builtin:counteract": 29,
    "builtin:no-effect": 51,
+   "builtin:teleport": 6,
    "builtin:reroll": 3,
    "builtin:ways": 8,
-   "builtin:teleport": 2,
    "builtin:roll-twice": 2,
    "builtin:save-bonus": 1
   }
@@ -41,8 +41,9 @@
     "partial": 51,
     "note-only": 77,
     "builtin:readied-bonus": 7,
-    "none": 111,
+    "none": 107,
     "builtin:no-effect": 12,
+    "builtin:teleport": 4,
     "builtin:counteract": 6,
     "builtin:item-action": 1,
     "builtin:conjure": 1,
@@ -320,7 +321,7 @@
    "count": 277,
    "resolves": 176,
    "gaps": 0,
-   "none": 11
+   "none": 7
   },
   "linked-effect": {
    "count": 393,
@@ -392,7 +393,7 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 260,
+   "none": 256,
    "item": 622,
    "fortune": 23,
    "zone": 111,
@@ -402,21 +403,22 @@
    "action": 15,
    "conjure": 7,
    "counteract": 29,
+   "teleport": 6,
    "reroll": 3,
    "ways": 8,
    "coat": 46,
-   "strike": 12,
-   "teleport": 2
+   "strike": 12
   },
   "byCategory": {
    "other": {
     "cast": 11,
     "zone": 22,
-    "none": 133,
+    "none": 129,
     "later": 11,
     "save": 96,
     "item": 214,
     "fortune": 7,
+    "teleport": 4,
     "counteract": 6,
     "strike": 3,
     "expose": 3,
@@ -510,7 +512,7 @@
    }
   },
   "noCard": {
-   "no-plan": 197,
+   "no-plan": 193,
    "triggered": 11,
    "gm": 51,
    "other": 1
@@ -1679,7 +1681,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "builtin:teleport",
+   "kind": null,
+   "live": "teleport"
   },
   {
    "name": "Jade Cat",
@@ -4741,7 +4745,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "builtin:teleport",
+   "kind": null,
+   "live": "teleport"
   },
   {
    "name": "Animal Nip (Major)",
@@ -10137,7 +10143,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "builtin:teleport",
+   "kind": null,
+   "live": "teleport"
   },
   {
    "name": "Navigator's Feather",
@@ -22127,7 +22135,9 @@
    "mechanisms": [
     "damage"
    ],
-   "result": "none"
+   "result": "builtin:teleport",
+   "kind": null,
+   "live": "teleport"
   },
   {
    "name": "Poet's Fritter (Moderate)",
