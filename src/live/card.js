@@ -94,6 +94,15 @@ export function reductionText({ slug, choose, by, who, optional }) {
     return `${done}${choose ? " (picked below)" : ""}${who === "targets" ? ` on each creature you target${optional ? " (if any)" : ""}` : ""}`;
 }
 
+// A bonus or penalty in words: "+2 item to performance for 1 hour", "+3 item to perception (sense motive, against the marked creature)".
+export function modifierText(modifier) {
+    const predicate = modifier.predicate ?? [];
+    const actions = predicate.filter((term) => typeof term === "string" && term.startsWith("action:")).map((term) => term.slice(7).replace(/-/g, " "));
+    const marked = predicate.some((term) => typeof term === "string" && term.startsWith("target:mark:"));
+    const scope = [...actions, ...(marked ? ["against the marked creature"] : [])];
+    return `${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${scope.length ? ` (${scope.join(", ")})` : ""}${forTime(modifier.duration)}`;
+}
+
 // What Apply will do, as lines for the card.
 export function previewLines(state) {
     const plan = state.plan;
@@ -116,6 +125,7 @@ export function previewLines(state) {
     for (const healing of plan?.item?.fastHealing ?? []) lines.push(fastHealingText(healing));
     if (plan?.item?.creates) lines.push(createsText(plan.item.creates));
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
+    if (plan?.item?.mark) lines.push(markText(plan.item.mark));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
@@ -144,7 +154,7 @@ export function previewLines(state) {
         else if (effect.kind === "temp-hp") lines.push(`${amount} temporary Hit Points${time ? ` ${time}` : ""}`);
         else if (effect.kind === "heal") lines.push(`Heals ${amount} Hit Points`);
     }
-    for (const modifier of row.modifiers ?? []) lines.push(`${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${forTime(modifier.duration)}`);
+    for (const modifier of row.modifiers ?? []) lines.push(modifierText(modifier));
     for (const note of row.noteEffects ?? []) lines.push(plan.partial ? `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""}: the rest is the GM's to apply` : `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""} (nothing else to apply)`);
     // (A reduction's own notes are above, as "Also: …".)
     if (!plan?.reduce) for (const note of plan?.notes ?? []) lines.push(note);
@@ -454,7 +464,18 @@ export function strikeDamageText(extra) {
     const kind = [extra.category, extra.damageType].filter(Boolean).join(" ");
     const range = (extra.predicate ?? []).find((option) => /^item:(?:melee|ranged|category:unarmed)$/.test(option))?.replace(/^item:(?:category:)?/, "");
     const against = (extra.predicate ?? []).find((option) => option.startsWith("target:condition:"))?.replace("target:condition:", "");
-    return `+${amount}${kind ? ` ${kind}` : ""} damage on ${extra.own ? "the weapon's " : range ? `${range} ` : ""}Strikes${against ? ` against ${against} creatures` : ""}${forTime(extra.duration)}`;
+    const marked = (extra.predicate ?? []).some((option) => option.startsWith("target:mark:"));
+    return `+${amount}${kind ? ` ${kind}` : ""} damage on ${extra.own ? "the weapon's " : range ? `${range} ` : ""}Strikes${against ? ` against ${against} creatures` : ""}${marked ? " against the marked creature" : ""}${forTime(extra.duration)}`;
+}
+
+// The creature its bonuses are against, src/compiler/marked.js: "Marks the creature targeted (its bonuses against it alone) for 7 days".
+export function markText(mark, name = null) {
+    return `Marks ${name ?? "the creature targeted"} (its bonuses against that creature alone)${forTime(mark.duration)}`;
+}
+
+// The mark's Effect on its user: PF2e's TokenMark at that creature's token, which its bonuses' target:mark predicates read.
+export function markEffectSource(mark, { token, name = null, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: `${name ?? "creature"} marked`, img: "icons/svg/target.svg", words: markText(mark, name), rules: [{ key: "TokenMark", slug: mark.slug, uuid: token }], duration: mark.duration, flag: { mark: mark.slug }, item, user, worldTime, initiative, moduleId });
 }
 
 // Its Effect: PF2e's DamageDice on Strike damage (a FlatModifier for a number), with its predicate.

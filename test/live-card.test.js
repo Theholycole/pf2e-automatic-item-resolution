@@ -118,3 +118,10 @@ test("the card: a drinker choice and Apply for those who may, names escaped, res
     assert.match(applied, /Drinker: Kyra &lt;the cleric&gt;/);
     assert.match(applied, /Kyra regains 6 Hit Points/);
 });
+
+test("a bonus in words, for the card's preview and for its applied line when the ability module gives none: its actions and the marked creature", async () => {
+    const { modifierText } = await import("../src/live/card.js");
+    assert.equal(modifierText({ selector: "performance", value: 2, type: "item", duration: { mode: "fixed", value: 1, unit: "hours" } }), "+2 item to performance for 1 hour");
+    assert.equal(modifierText({ selector: "perception", value: 3, type: "item", duration: null, predicate: ["action:sense-motive", "target:mark:spectacles-of-inquiry-mark"] }), "+3 item to perception (sense motive, against the marked creature)");
+    assert.equal(modifierText({ selector: "ac", value: -1, type: "status", duration: null }), "−1 status to ac");
+});

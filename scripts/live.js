@@ -12,7 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
+import { abilityState, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
@@ -423,7 +423,10 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     const reduce = state.plan.item?.reduce ?? [];
     // (Or its flat check, the creature its user touches: Nettle Balm's.)
     const byLevel = (state.plan.item?.levelTemp ?? []).some((entry) => entry.from !== "amount");
-    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel ? await targetedCreatures(targets) : [];
+    const marks = Boolean(state.plan.item?.mark);
+    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks ? await targetedCreatures(targets) : [];
+    // (The creature its bonuses are against, src/compiler/marked.js: that one targeted.)
+    if (marks && others.length !== 1) throw new Error("Target the one creature it's against first, then press Apply.");
     // (Temporary Hit Points from a creature's level: that creature targeted.)
     if (byLevel && !others.length) throw new Error("Target the creature first (the one its trigger names), then press Apply.");
     // ("Creatures of your choice": none targeted is its user alone.)
@@ -496,6 +499,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
                 : ability?.applyChange ? await ability.applyChange(change, abilityState(state))
                 : `${name}: ${change.op} to apply by hand (the ability module isn't active).`;
             if (line) lines.push(line);
+            // (A bonus the ability module applied without a line of its own: said here, so the card doesn't read "Nothing to apply".)
+            else if (change.op === "effect" && change.effect?.kind === "modifier" && change.effect.modifier) lines.push(`${name}: ${modifierText(change.effect.modifier)}`);
         } catch (error) {
             lines.push(`Couldn't apply ${change.op} to ${name}: ${error.message}`);
         }
@@ -570,6 +575,14 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         lines.push(`${recipient.name}: ${firstDegreeText(state.plan.item.firstDegree)}`);
     }
     // (Extra damage on its user's Strikes: Martial Mayhem Mutagen's precision damage against off-guard creatures — PF2e's DamageDice.)
+    // (The creature its bonuses are against: a TokenMark Effect at it, the item's earlier mark gone.)
+    if (state.plan.item?.mark && others[0]?.token && target.actor) {
+        const mark = state.plan.item.mark;
+        const old = (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.mark === mark.slug);
+        if (old.length) await target.actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
+        await target.actor.createEmbeddedDocuments("Item", [markEffectSource(mark, { token: others[0].token.uuid, name: others[0].name, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        lines.push(`${recipient.name}: ${markText(mark, others[0].name)}`);
+    }
     for (const extra of state.plan.item?.strikeDamage ?? []) {
         if (!target.actor) break;
         await target.actor.createEmbeddedDocuments("Item", [strikeDamageEffectSource(extra, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);

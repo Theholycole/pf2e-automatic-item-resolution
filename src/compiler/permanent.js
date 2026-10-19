@@ -28,6 +28,7 @@ import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "
 import { teleportPlan } from "./teleport.js";
 import { takePlan } from "./take-condition.js";
 import { givenTempPlan } from "./given-temp.js";
+import { shoveFartherPlan } from "./shove-farther.js";
 import { withScaled } from "./scaled.js";
 import { readLinkedTable, readTable } from "./random-table.js";
 import { mythicWaysPlan, rerollOver, rerollPlan } from "./rerolls.js";
@@ -39,6 +40,7 @@ import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { playedBySpellModule, spellModuleShare } from "./index.js";
 import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
+import { withMark } from "./marked.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { degreeSentencesPlan, saveOrPlan } from "./save-or.js";
@@ -129,7 +131,7 @@ export function compileActivations(item, options = {}) {
     const share = spellModuleShare(item, options);
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withMythicUpgrade(withSpend(ownerDCs(entry.plan), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // An activation that makes "an attack …, as described in the rune's other activation" (Swallow-Spike's second): that other
@@ -397,6 +399,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = takePlan(activation.html, base) ?? plan;
         // (Temporary Hit Points for another creature, src/compiler/given-temp.js: Skeletal Claw's undead.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = givenTempPlan(activation.html, base) ?? plan;
+        // (A successful Shove pushed farther: Avalanche Boots' ways, src/compiler/shove-farther.js.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = shoveFartherPlan(activation.html, base) ?? plan;
         if (mythicGain) plan = !plan || plan.noteOnly || plan.builtin === "no-effect" ? mythicGain : (plan.notes ?? []).some((note) => /\bMythic Point\b/.test(note)) ? plan : { ...plan, notes: [...(plan.notes ?? []), "Its user also gains 1 Mythic Point (by hand)."] };
         // (Fruit it grows that heal when eaten: Verdant Branch's — consumables in its user's inventory.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = fruitPlan(activation.html, base, item) ?? plan;

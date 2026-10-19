@@ -214,6 +214,17 @@ export function withItemData(html, item) {
     text = text.replace(/\bYou gain an? \+(\d+) (status|item) bonus to your Deception DC against such Perception checks and add your level even if untrained\./i, (all, value, type) => lasting
         ? `You gain a +${value} ${type} bonus to your Deception DC for ${lasting}. The bonus is only against Perception checks to see through the disguise, and you add your level even if untrained.`
         : `You gain a +${value} ${type} bonus to your Deception DC for 24 hours. The bonus is only against Perception checks to see through the disguise, and you add your level even if untrained; the disguise lasts as long as the GM rolled in secret, ended by hand.`);
+    // (Oathbow's oath: "your attacks with the bow against that creature deal 1d6 additional damage, and you gain a +2 circumstance bonus to
+    // Survival checks to Track that creature" for its 7 days — the bow's own extra damage, marked to the creature (src/compiler/marked.js),
+    // and the Track bonus, whose creature is a note.)
+    text = text.replace(/\bFor the next (\d+) days or until that creature is slain, your attacks with the bow against that creature deal (\d+d\d+) additional damage, and you gain an? \+(\d+) circumstance bonus to Survival checks to Track that creature\./i, (all, days, dice, value) => `For ${days} days, your Strikes with the weapon deal ${dice} additional damage. That damage is only against that creature, and the oath ends early if it's slain. You gain a +${value} circumstance bonus to Survival checks to Track for ${days} days; the bonus is only to Track that creature.`);
+    // (Sky Hammer's Comet Fall: "A 6th-rank arcane Fireball spell explodes, centered on the sky hammer. The spell DC is 45." — a cast of that
+    // Fireball, at that rank and DC: the spell module's to play when it reads it (its own reading has the centre and its user's immunity),
+    // else the cast card's, those two notes.)
+    text = text.replace(/\bA (\d+)(st|nd|rd|th)-rank (arcane|divine|occult|primal) ((?:@UUID\[[^\]]*\]\{)?Fireball\}?) spell explodes, centered on the (<em>)?sky hammer(<\/em>)?\.\s*The spell DC is (\d+)\./i, (all, rank, suffix, tradition, spell, open = "", close = "", dc) => `The hammer casts ${spell} as a ${rank}${suffix}-rank ${tradition} spell (DC ${dc}), centered on the ${open}sky hammer${close}.`);
+    // (Worldscale Shield's Absorb Blow: "The worldscale shield completely absorbs the blow, preventing all damage that you would have taken
+    // from the attack" — its trigger's physical damage, src/compiler/readied-bonus.js's immunity for that attack.)
+    text = text.replace(/\bThe (<em>)?worldscale shield(<\/em>)? completely absorbs the blow, preventing all damage that you would have taken from the attack\./i, "You gain immunity to physical damage against the triggering attack.");
     // (Third-party ones, their own words not kept: a lodestone's bonus against forced movement, to DCs and checks, till its user's next turn
     // ends — saving throws and the Fortitude DC, PF2e's forced-movement option; a pearl's status bonus to saves against curses for a minute,
     // its better degree on the save that triggered it a note; a drake steak's Intimidation against creatures that smell, for its 24 hours; a

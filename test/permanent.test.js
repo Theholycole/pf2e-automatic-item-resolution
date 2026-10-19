@@ -536,16 +536,47 @@ test("Mordant Mask's Pounding Surf: Deafened until the end of its user's next tu
     assert.deepEqual([deafened.slug, deafened.duration.expiry, deafened.duration.anchor], ["deafened", "turn-end", "source-turn"]);
 });
 
-test("a bonus to some actions' checks: Eye of the Wise's \"attempts to Decipher Writing, …, or Sense Motive\", Spectacles of Inquiry's Sense Motive against one creature (a note); not an aeon stone's resonant power", () => {
+test("a bonus to some actions' checks: Eye of the Wise's \"attempts to Decipher Writing, …, or Sense Motive\", Spectacles of Inquiry's Sense Motive against the creature it marks; not an aeon stone's resonant power", () => {
     const eye = compileActivations(item("Eye of the Wise"), { spellEffects })[1].plan;
     const [bonus] = eye.resolution.outcomes.success.modifiers;
     assert.deepEqual([bonus.selector, bonus.value, bonus.type], ["check", 2, "item"]);
     assert.deepEqual(bonus.predicate, [{ or: ["action:decipher-writing", "action:disable-a-device", "action:identify-magic", "action:pick-a-lock", "action:seek", "action:sense-motive"] }]);
     const spectacles = compileActivations(item("Spectacles of Inquiry"), { spellEffects })[0].plan;
-    assert.deepEqual(spectacles.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["perception", 3, ["action:sense-motive"]]]);
-    assert.equal(spectacles.partial, true);
+    assert.deepEqual(spectacles.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["perception", 3, ["action:sense-motive", "target:mark:spectacles-of-inquiry-mark"]]]);
+    assert.deepEqual([spectacles.item.recipient, spectacles.item.mark, spectacles.partial], ["user", { slug: "spectacles-of-inquiry-mark", duration: null }, true]);
     const stasis = compileActivations(item("Aeon Stone (Flickering)"), { spellEffects })[1].plan;
     assert.deepEqual(stasis.resolution.outcomes.success.modifiers, []);
+});
+
+test("bonuses against the creature marked (PF2e's TokenMark): Oathbow's extra 1d6 on the bow's Strikes for 7 days, its Survival to Track on the whole roll; the card's line and the mark's Effect", async () => {
+    const { markText, markEffectSource, strikeDamageText } = await import("../src/live/card.js");
+    const oath = compileActivations(item("Oathbow"), { spellEffects })[0].plan;
+    const [extra] = oath.item.strikeDamage;
+    assert.deepEqual([extra.diceNumber, extra.dieSize, extra.own, extra.predicate, `${extra.duration.value} ${extra.duration.unit}`], [1, "d6", true, ["target:mark:oathbow-mark"], "7 days"]);
+    assert.deepEqual(oath.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.predicate]), [["survival", ["action:track"]]]);
+    assert.equal(strikeDamageText(extra), "+1d6 damage on the weapon's Strikes against the marked creature for 7 days");
+    assert.equal(markText(oath.item.mark, "Goblin"), "Marks Goblin (its bonuses against that creature alone) for 7 days");
+    const source = markEffectSource(oath.item.mark, { token: "Scene.s.Token.t", name: "Goblin", item: { name: "Oathbow" } });
+    assert.deepEqual([source.name, source.system.rules, source.system.duration.value, source.system.duration.unit], ["Oathbow: Goblin marked", [{ key: "TokenMark", slug: "oathbow-mark", uuid: "Scene.s.Token.t" }], 7, "days"]);
+});
+
+test("one-off readings: Sky Hammer's Comet Fall a 6th-rank arcane Fireball at DC 45, Worldscale Shield's blow absorbed (immunity to physical damage for that attack, a Mythic Point, the shield broken), Avalanche Boots' Shove pushed farther (three ways at the creature targeted)", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { readiedRules, readiedWords } = await import("../src/live/fortune-card.js");
+    const { spellIndex } = await import("../src/compiler/index.js");
+    const spells = spellIndex(readDocuments(path.join(`${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`, "spells")).filter((doc) => doc.collection === "items"));
+    const hammer = compileActivations(item("Sky Hammer"), { spellEffects, spells })[0].plan;
+    assert.deepEqual([hammer.builtin, hammer.spell?.name, hammer.rank, hammer.dc, hammer.tradition], ["cast-spell", "Fireball", 6, 45, "arcane"]);
+    const shield = compileActivations(item("Worldscale Shield"), { spellEffects })[0].plan;
+    assert.deepEqual([routeOf(shield), shield.bonus.immunity, shield.bonus.breaks, shield.spend], ["fortune", { type: "physical" }, true, { mythicPoints: 1 }]);
+    assert.deepEqual(readiedRules(shield), [{ key: "Immunity", type: "physical" }]);
+    assert.equal(readiedWords(shield), "immunity to physical damage, until the end of this turn");
+    const boots = compileActivations(item("Avalanche Boots"), { spellEffects })[0].plan;
+    assert.deepEqual(boots.ways.map((way) => [way.name, routeOf(way.plan), way.plan.resolution.outcomes.success.forcedMovement.distance, way.plan.resolution.outcomes.success.effects.map((effect) => effect.slug)]), [
+        ["After a success: 5 feet more", "save", 5, []],
+        ["After a critical success: 10 feet more", "save", 10, []],
+        ["After a critical success: 10 feet more, and Prone", "save", 10, ["prone"]]
+    ]);
 });
 
 test("healing back from dying without raising Wounded (Magical Medal (Phoenix's Fire)'s 1 Hit Point; Banner of the Rising Star's 30 for an ally in its aura), and a damage link's save with no \"damage\" word (Black Hole Armor)", () => {

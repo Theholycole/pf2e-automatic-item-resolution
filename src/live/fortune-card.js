@@ -8,7 +8,7 @@
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export const MODULE_KEY = "rollTwice";
-export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance));
+export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity));
 
 const ROLL_WORDS = { initiative: "initiative roll", "attack-roll": "attack roll", "saving-throw": "saving throw", "skill-check": "skill check", perception: "Perception check", fortitude: "Fortitude save", reflex: "Reflex save", will: "Will save", ac: "AC" };
 const actionWords = (predicate) => (predicate?.[0]?.or ?? []).map((option) => String(option).replace(/^action:/, "").replace(/-/g, " ")).join(", ");
@@ -33,7 +33,9 @@ export function bonusWords(bonus) {
     // ("resistance 5 to physical damage", "resistance 5 to mental, poison or spirit damage" — the one that hit.)
     const types = [].concat(bonus.resistance?.type ?? []).filter((type) => type !== "all-damage");
     const resistance = bonus.resistance ? `resistance ${bonus.resistance.value} to ${types.length ? `${types.length > 1 ? `${types.slice(0, -1).join(", ")} or ${types.at(-1)}` : types[0]} damage` : "damage"}` : null;
-    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}` : null, resistance, degree].filter(Boolean).join(", ");
+    // ("immunity to physical damage": none of it.)
+    const immunity = bonus.immunity ? `immunity to ${bonus.immunity.type} damage` : null;
+    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}` : null, resistance, immunity, degree].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
@@ -61,6 +63,7 @@ export function readiedRules(plan) {
     return [
         ...plan.bonus.modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: modifier.type, value: modifier.value, ...(label ? { label } : {}), ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })),
         ...(plan.bonus.resistance ? [{ key: "Resistance", type: plan.bonus.resistance.type, value: plan.bonus.resistance.value }] : []),
+        ...(plan.bonus.immunity ? [{ key: "Immunity", type: plan.bonus.immunity.type }] : []),
         ...(plan.bonus.degree ? [{ key: "AdjustDegreeOfSuccess", selector: plan.bonus.degree.selector, adjustment: plan.bonus.degree.adjustment, ...(label ? { label } : {}), ...(plan.bonus.degree.predicate ? { predicate: plan.bonus.degree.predicate } : {}) }] : [])
     ];
 }

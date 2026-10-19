@@ -28,8 +28,25 @@ export async function applyFortuneCard(message, { targets = [] } = {}) {
         if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
         await actor.createEmbeddedDocuments("Item", [fortuneEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID })]);
     }
-    const next = { ...state, status: "applied", results: creatures.map(({ name }) => `${name}: ${readiedWords(state.plan)}.`) };
+    const results = creatures.map(({ name }) => `${name}: ${readiedWords(state.plan)}.`);
+    if (state.plan.bonus?.breaks) results.push(await breakItem(state.item));
+    const next = { ...state, status: "applied", results };
     return message.update({ content: fortuneCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// The item broken by its own use (Worldscale Shield's Absorb Blow): its Hit Points down to its Broken Threshold, or to 0 — destroyed — if
+// it was broken already. → the card's line.
+async function breakItem(entry) {
+    const item = entry?.uuid ? await fromUuid(entry.uuid).catch(() => null) : null;
+    const hp = item?.system?.hp;
+    if (!item || !Number.isFinite(Number(hp?.value))) return `${entry?.name ?? "The item"}: break it by hand (it isn't there to update).`;
+    // (No Hit Points in its data — PF2e's Worldscale Shield has none, its text's 60 aside: by hand.)
+    if (!(Number(hp.max) > 0)) return `${item.name}: break it by hand (its data has no Hit Points).`;
+    const threshold = Number(hp.brokenThreshold) || 0;
+    const broken = Number(hp.value) <= threshold;
+    const value = broken ? 0 : threshold;
+    await item.update({ "system.hp.value": value });
+    return `${item.name}: ${broken ? "destroyed" : "broken"} (Hit Points ${hp.value} → ${value}).`;
 }
 
 // A check by a creature with such an Effect, rolled for its roll: the Effect gone (PF2e's own removal may have done it).

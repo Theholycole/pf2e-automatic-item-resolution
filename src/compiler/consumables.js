@@ -50,7 +50,9 @@ const OTHERS_GRANT = [
     [/\bYou grant allies(?: within (?:a )?\d+(?: feet|-foot emanation))?/i, inArea("your allies")],
     [/\ballies within \d+ feet, granting them\b/i, inArea("your allies")],
     [/(?:^|[.:]\s+)Allies within \d+ feet gain\b/i, inArea("your allies")],
-    [/\bChoose (?:a|one|an) (adjacent |willing )?(ally|creature|foe|enemy)\b([^.]*)/i, one((match) => `1 ${match[2].toLowerCase()}`, (match) => (match[1]?.trim() === "adjacent" ? "5 feet" : feet(match[3])))],
+    // (Not one its user gains a bonus against, Spectacles of Inquiry's "Choose a creature you can see. You gain … against that creature":
+    // the mark's, src/compiler/marked.js.)
+    [/\bChoose (?:a|one|an) (adjacent |willing )?(ally|creature|foe|enemy)\b(?![^.]*\.\s+You (?:gain|get|have)\b[^.]*\bagainst that creature\b)([^.]*)/i, one((match) => `1 ${match[2].toLowerCase()}`, (match) => (match[1]?.trim() === "adjacent" ? "5 feet" : feet(match[3])))],
     [/\bUp to (\w+) (?:willing )?creatures of your choice within (\d+) feet/i, one((match) => `up to ${countOf(match[1])} creatures`, (match) => `${match[2]} feet`)],
     // (Energy Ointment's "This thick grease can be applied to up to 5 willing creatures": each one touched.)
     [/\bcan be applied to up to (\w+) willing creatures\b/i, one((match) => `up to ${countOf(match[1])} creatures`, "touch")],

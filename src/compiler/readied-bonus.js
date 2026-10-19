@@ -173,9 +173,21 @@ const REDUCE_DAMAGE = /\b(?:you )?reduce the damage (?:(?:you )?take|taken|(?:fr
 const RAISED = new RegExp(String.raw`\bIncrease your (${TYPE_WORDS}) resistance from the [\w' -]+? from (\d+) to (\d+)\b`, "i");
 // (Its type first: Sparkshade Parasol's "gaining fire resistance 20 against the triggering effect".)
 const TYPE_FIRST = new RegExp(String.raw`\b(?:you gain|granting you|gaining) (${TYPE_WORDS}) resistance (\d+) against the triggering (?:effect|attack|Strike|hit|damage)\b`, "i");
+// (No damage at all from it: Worldscale Shield's blow absorbed, in this module's words "You gain immunity to physical damage against the
+// triggering attack" — PF2e's Immunity for the turn, the same note.)
+const IMMUNE_MOMENT = new RegExp(String.raw`\byou gain immunity to (${TYPE_WORDS}) damage (?:against|for|from) (?:the triggering|that) (?:attack|Strike|hit|damage)\b`, "i");
+// (The item broken by it, or destroyed if it was already: Worldscale Shield's "The worldscale shield breaks. If it was already broken,
+// it is destroyed." — scripts/fortune.js.)
+const BREAKS = /\bThe [\w' -]+? breaks\. If it was already broken, it is destroyed\./i;
 function readResistMoment(sentences, triggered) {
     if (!triggered) return null;
+    const breaks = sentences.some((sentence) => BREAKS.test(sentence) || /^If it was already broken, it is destroyed\.$/i.test(sentence.trim()));
     for (const [index, sentence] of sentences.entries()) {
+        const immune = IMMUNE_MOMENT.exec(sentence);
+        if (immune && !sentences.some((other) => LASTING.test(other))) {
+            const notes = [`Only against what triggered it: ${sentence}`, ...sentences.filter((other, at) => at !== index && !/^(?:Activate|Trigger|Prerequisites?|Requirements?|Spend)\b/.test(other) && !BREAKS.test(other) && !/\bbreaks\.$|^If it was already broken\b/i.test(other.trim()) && RULE_SENTENCE.test(other))];
+            return { modifiers: [], resistance: null, immunity: { type: immune[1].toLowerCase() }, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], notes, ...(breaks ? { breaks: true } : {}) };
+        }
         const target = TARGET_RESIST.exec(sentence);
         const found = RESIST_MOMENT.exec(sentence) ?? (target ? [target[0], target[1], null, null] : null);
         const first = found ? null : RESIST_NUMBER_FIRST.exec(sentence);

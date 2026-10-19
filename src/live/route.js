@@ -21,7 +21,9 @@ import { isTake } from "./take-card.js";
 // drinker.
 const targetedRow = (plan) => plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic" && Boolean(plan.targeting?.target)
     && !/^(?:the drinker|you|yourself|self|itself)$/i.test(String(plan.targeting.target).trim())
-    && ((plan.resolution.outcomes?.success?.effects ?? []).some((effect) => effect.recipient !== "self") || (plan.resolution.outcomes?.success?.damage?.mode ?? "none") !== "none" || (plan.resolution.check?.statistic === "automatic" && (plan.resolution.outcomes?.success?.modifiers ?? []).length > 0));
+    && ((plan.resolution.outcomes?.success?.effects ?? []).some((effect) => effect.recipient !== "self") || (plan.resolution.outcomes?.success?.damage?.mode ?? "none") !== "none" || (plan.resolution.check?.statistic === "automatic" && (plan.resolution.outcomes?.success?.modifiers ?? []).length > 0)
+        // (Or a push alone: Avalanche Boots' Shove pushed farther, src/compiler/shove-farther.js.)
+        || Boolean(plan.resolution.outcomes?.success?.forcedMovement));
 
 // Its user's own skill check against a creature's DC (The Crows' Thievery against the Reflex DC, Whip-Tongue Sling's Athletics against
 // the Fortitude DC): the ability module's card at the creatures the presser targets, its user's skill rolled (the core's check family).

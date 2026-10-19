@@ -5347,6 +5347,101 @@ export const cases = {
         return { before, after: [fortitudeDC(["forced-movement"]), fortitudeDC([])] };
     },
 
+    // Spectacles of Inquiry and Oathbow: the creature targeted marked (PF2e's TokenMark), the +3 item bonus to Sense Motive and the bow's
+    // extra 1d6 against it alone — another creature's rolls without them. Then Worldscale Shield's Absorb Blow: immunity to physical damage
+    // for the attack, a Mythic Point (a mythic NPC's), the shield broken.
+    async markedCreature(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Mark Maker", { type: "character", x: 20, y: 6, level: 12 });
+        const { token: marked } = await creature(scene, "Mark Target", { x: 22, y: 6, alliance: "opposition" });
+        const { token: other } = await creature(scene, "Unmarked Target", { x: 22, y: 8, alliance: "opposition" });
+        const markOf = (slug) => user.synthetics.tokenMarks.get(marked.uuid) ?? [];
+        const use = async (item) => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what: `${item.name}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, targets: [marked.uuid] });
+            return card;
+        };
+        const spectacles = await give(user, "Spectacles of Inquiry");
+        await use(spectacles);
+        await until(() => markOf().includes("spectacles-of-inquiry-mark"), "the target marked by the spectacles", { timeout: 8000 });
+        await userToken.object?.control?.();
+        const senseMotive = async (token) => {
+            await target(token);
+            const since = Date.now();
+            await game.pf2e.actions.get("sense-motive").use({ actors: [user], event: shift() });
+            const message = await messageAfter(since, (entry) => (entry.flags?.pf2e?.context?.domains ?? []).includes("perception"), { what: "Sense Motive" });
+            return (message.flags.pf2e.modifiers ?? []).some((modifier) => modifier.type === "item" && modifier.modifier === 3 && modifier.enabled !== false);
+        };
+        assert(await senseMotive(marked), "+3 to Sense Motive against the marked creature");
+        assert(!(await senseMotive(other)), "none against another creature");
+        const bow = await give(user, "Oathbow");
+        const arrows = await give(user, "Arrows");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        await use(bow);
+        await until(() => markOf().includes("oathbow-mark"), "the target marked by the oath", { timeout: 8000 });
+        const damageAt = async (token) => {
+            await target(token);
+            const action = (user.system.actions ?? []).find((entry) => entry.item?.id === bow.id);
+            const since = Date.now();
+            await action.damage({ event: shift() });
+            const damage = await messageAfter(since, (entry) => entry.flags?.pf2e?.context?.type === "damage-roll", { what: "damage roll" });
+            return (damage.rolls ?? []).map((roll) => roll.formula).join(" + ");
+        };
+        const against = await damageAt(marked);
+        const elsewhere = await damageAt(other);
+        assert(/1d6/.test(against) && !/1d6/.test(elsewhere), `+1d6 against the marked creature only (${against} | ${elsewhere})`);
+        // (Worldscale Shield: a mythic NPC's.)
+        const { actor: bearer } = await creature(scene, "Worldscale Bearer", { x: 20, y: 8 });
+        await bearer.update({ "system.traits.value": [...(bearer.system.traits.value ?? []), "mythic"] });
+        await bearer.update({ "system.resources.mythicPoints.value": 1 });
+        const shield = await give(bearer, "Worldscale Shield");
+        // (PF2e's data gives it no Hit Points; its text's 60, Broken Threshold 30.)
+        await shield.update({ "system.hp.max": 60, "system.hp.value": 60 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the shield's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => bearer.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "Immunity" && [].concat(rule.type).includes("physical"))), "immunity to physical damage", { timeout: 8000 });
+        await until(() => shield.system.hp.value <= shield.system.hp.brokenThreshold, `the shield broken (${shield.system.hp.value}/${shield.system.hp.brokenThreshold})`, { timeout: 8000 });
+        assert(bearer.system.resources.mythicPoints.value === 0, `the Mythic Point spent (${bearer.system.resources.mythicPoints.value})`);
+        return { against, elsewhere, shield: `${shield.system.hp.value}/${shield.system.hp.max}`, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Sky Hammer's Comet Fall: the spell module's 6th-rank Fireball at DC 45, not this module's card; Avalanche Boots: the ways card's push
+    // after a critical Shove, 10 feet more and Prone.
+    async hammerAndBoots(scene) {
+        // (In the lab, the push's squares free: 10 feet east of the target.)
+        await clearSquares(scene, [[10, 14], [11, 14], [12, 14], [13, 14]]);
+        const { actor: user, token: userToken } = await creature(scene, "Hammer Wielder", { type: "character", x: 10, y: 14, level: 20 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Boot Target", { x: 11, y: 14, alliance: "opposition" });
+        // (The spell module's cast — its own reading has the Fireball's centre and its user's immunity — not this module's card.)
+        const hammer = await give(user, "Sky Hammer");
+        const read = game.modules.get("pf2e-automatic-resolution")?.api?.itemCasts?.read?.(hammer);
+        assert(read?.casts?.[0]?.name === "Fireball" && read.casts[0].rank === 6 && read.numbers?.dc === 45, `the spell module's Fireball, rank 6, DC 45 (${JSON.stringify(read?.casts?.[0] ?? null)})`);
+        let refused = null;
+        try { await game.modules.get(NS).api.live.activate(hammer.uuid, 0); } catch (error) { refused = error.message; }
+        assert(refused, "not this module's card too");
+        const boots = await give(user, "Avalanche Boots");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(boots.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the boots' ways card" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        assert(names.length === 3 && /10 feet more, and Prone/.test(names[2]), `three ways (${names.join(" | ")})`);
+        const startX = foeToken.x;
+        await target(foeToken);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 2 });
+        const push = await messageAfter(since, itemCard("expose"), { what: "the push card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(push.id, { targets: [foeToken.uuid] });
+        const ability = await messageAfter(since, abilitySaveCard, { what: "the ability module's card" });
+        await applyAbilityCard(ability);
+        await until(() => foe.itemTypes.condition.some((entry) => entry.slug === "prone"), "the target Prone", { timeout: 8000 });
+        await until(() => foeToken.x - startX === 2 * scene.grid.size, `pushed 10 feet away (${foeToken.x - startX} px)`, { timeout: 8000 });
+        return { names, moved: (foeToken.x - startX) / scene.grid.size };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).
