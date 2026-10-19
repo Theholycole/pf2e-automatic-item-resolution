@@ -4533,6 +4533,39 @@ export const cases = {
         return { ways: names };
     },
 
+    // Hydrocannon's Tinker Shot: Slashing picked on the ways card — the readied Strike with the gun carries 1d6 persistent bleed, and PF2e's
+    // damage roll on a hit has it.
+    async hydrocannonBleed(scene) {
+        const { actor: gunner } = await creature(scene, "Hydro Gunner", { type: "character", x: 13, y: 2 });
+        const gun = await give(gunner, "Hydrocannon");
+        await gun.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(gun.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the configuration picker" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((way) => way.name);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Slashing") });
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const dice = () => gunner.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "DamageDice" && rule.damageType === "bleed");
+        await until(() => dice(), "the bleed dice", { timeout: 8000 });
+        assert([].concat(dice().selector ?? []).join(" ").startsWith(gun.id) && dice().category === "persistent", `the gun's own persistent bleed (${JSON.stringify(dice())})`);
+        const { token: foeToken } = await creature(scene, "Hydro Target", { x: 15, y: 2, ac: 1, alliance: "opposition", hp: 300 });
+        await until(() => foeToken.object, "the target drawn", { timeout: 5000 });
+        await target(foeToken);
+        const { action, attack } = await strike(gunner, gun);
+        const outcome = attack.flags.pf2e.context.outcome;
+        assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+        await wait(800);
+        since = Date.now();
+        await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+        const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
+        // (PF2e's formula names bleed without "persistent": "(2 * 1d6) bleed" on a critical hit.)
+        assert(/\bbleed\b/.test(formula) && /\b1d6\b/.test(formula), `the hit carries the bleed (${formula})`);
+        return { ways: names, formula };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

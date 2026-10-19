@@ -495,3 +495,12 @@ test("ammunition made against one type of creature (Bane Ammunition): the ways c
     assert.deepEqual([dragon.strike.ammo, strikeRules(dragon, { ammoId: "ammo1" }).find((rule) => rule.key === "DamageDice")], [true, { key: "DamageDice", selector: "ranged-strike-damage", slug: "item-extra-1", diceNumber: 2, dieSize: "d6", damageType: "poison", category: "persistent", predicate: ["target:trait:dragon"] }]);
     assert.deepEqual(bane.plan.ways[7].plan.strike.damage[0].predicate, [{ or: ["target:trait:fungus", "target:trait:plant"] }]);
 });
+
+test("a shot whose rider is the gun's modular configuration's (Hydrocannon's Tinker Shot): the ways card's Bludgeoning push (farther on a critical hit), Piercing Speed penalty, Slashing persistent bleed, each the readied Strike with the gun", () => {
+    const [tinker] = compileActivations(source("Hydrocannon"));
+    assert.deepEqual([tinker.plan.builtin, tinker.plan.ways.map((way) => way.name)], ["ways", ["Bludgeoning", "Piercing", "Slashing"]]);
+    const [bludgeoning, piercing, slashing] = tinker.plan.ways.map((way) => way.plan);
+    assert.deepEqual([bludgeoning.resolution.outcomes.success.forcedMovement, bludgeoning.resolution.outcomes.criticalSuccess.forcedMovement], [{ kind: "push", distance: 5 }, { kind: "push", distance: 10 }]);
+    assert.deepEqual(piercing.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type]), [["all-speeds", -10, "circumstance"]]);
+    assert.deepEqual([slashing.strike.own, slashing.strike.damage], [true, [{ diceNumber: 1, dieSize: "d6", category: "persistent", damageType: "bleed" }]]);
+});

@@ -149,3 +149,34 @@ export function dragonWaysPlan(html, base, item, options = {}) {
     const set = /\bIf you have a dragonclaw scutcheon, dragonscale cameo, and dragontooth trophy\b[^.]*\.[^.]*\./i.exec(text.replace(/<[^>]+>/g, " ").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\(@Check\[(\w+)\|dc:(\d+)\|basic\]\)/g, (all, save, dc) => `(DC ${dc} basic ${save.charAt(0).toUpperCase()}${save.slice(1)} save)`));
     return { ...base, builtin: "ways", automation: { level: set ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true, ...(set ? { notes: [`${set[0].trim()} (by hand)`], partial: true } : {}) };
 }
+
+// A shot whose rider depends on the gun's modular configuration: Hydrocannon's Tinker Shot, "A successful attack has an additional effect
+// depending on which modular configuration the hydrocannon is currently in", then Bludgeoning's push, Piercing's Speed penalty, Slashing's
+// bleed. The ways card's pick of the configuration (the one the gun is in), each way the readied Strike with that rider on a hit.
+const MODULAR = /\s*A successful attack has an additional effect depending on which modular configuration the (?:<em>)?[\w' -]+?(?:<\/em>)? is currently in\.\s*/i;
+const CONFIGURATION = /<li>\s*(?:<p>)?\s*<strong>(Bludgeoning|Piercing|Slashing)<\/strong>\s*([\s\S]*?)(?:<\/p>)?\s*<\/li>/gi;
+function onHit(words) {
+    const said = words.trim();
+    // ("The target is pushed 5 feet away from you; this forced movement is increased to 10 feet on a critical hit.")
+    const push = /^The target is pushed (\d+) feet away from you; this forced movement is increased to (\d+) feet on a critical hit\.$/i.exec(said);
+    if (push) return `On a hit, the target is pushed ${push[1]} feet away. On a critical hit, the target is pushed ${push[2]} feet away.`;
+    // ("The target takes 1d6 bleed damage": the Strike's extra persistent bleed, which PF2e deals on a hit.)
+    const bleed = /^The target takes @Damage\[(\d+d\d+)\[bleed\]\] damage\.$/i.exec(said);
+    if (bleed) return `This Strike deals an additional ${bleed[1]} persistent bleed damage.`;
+    return `On a hit, ${said.charAt(0).toLowerCase()}${said.slice(1)}`;
+}
+export function modularWaysPlan(html, base, item, options = {}) {
+    const text = String(html ?? "");
+    const modular = MODULAR.exec(text);
+    if (!modular) return null;
+    const before = text.slice(0, modular.index);
+    const ways = [];
+    for (const [, name, words] of text.matchAll(CONFIGURATION)) {
+        const plain = `${before}</p><p>${onHit(words)}</p>`;
+        const plan = compileStrike({ ...item, system: { ...(item?.system ?? {}), description: { value: plain } } }, base, options);
+        if (!plan?.strike) return null;
+        ways.push({ name, html: `<p>${onHit(words)}</p>`, plan });
+    }
+    if (ways.length < 2) return null;
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways };
+}

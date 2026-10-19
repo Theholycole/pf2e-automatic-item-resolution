@@ -14,7 +14,7 @@
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
    "builtin:no-effect": 100,
-   "note-only": 190,
+   "note-only": 189,
    "builtin:reroll": 25,
    "builtin:teleport": 6,
    "builtin:pf2e-rules": 26,
@@ -24,13 +24,13 @@
    "builtin:item-action": 23,
    "builtin:roll-twice": 11,
    "builtin:save-bonus": 3,
-   "builtin:ways": 10,
+   "builtin:ways": 11,
    "builtin:spellstrike": 9
   },
   "live": {
    "save": 431,
    "cast": 470,
-   "item": 591,
+   "item": 590,
    "none": 741,
    "focus": 45,
    "counteract": 25,
@@ -42,7 +42,7 @@
    "toggle": 32,
    "conjure": 13,
    "action": 23,
-   "ways": 10,
+   "ways": 11,
    "coat": 3,
    "spellstrike": 9,
    "later": 3
@@ -82,7 +82,7 @@
     "partial": 45,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
-    "note-only": 20,
+    "note-only": 19,
     "builtin:modes": 12,
     "builtin:item-action": 9,
     "builtin:zone": 6,
@@ -91,7 +91,7 @@
     "builtin:no-effect": 10,
     "builtin:pf2e-rules": 2,
     "builtin:teleport": 3,
-    "builtin:ways": 1,
+    "builtin:ways": 2,
     "builtin:roll-twice": 2,
     "builtin:save-bonus": 1
    }
@@ -20926,9 +20926,9 @@
    "time": "2",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Boots of Quick Marching",

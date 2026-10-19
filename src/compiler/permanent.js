@@ -24,7 +24,7 @@ import { hitAroundPlan } from "./hit-around.js";
 import { cleanNotes } from "./notes.js";
 import { thrownPlan } from "./thrown.js";
 import { conjuredPlan } from "./conjured.js";
-import { baneWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
+import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
@@ -326,6 +326,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
         // (Effects its user picks one of, listed in a sentence: Heartripper Blade's — the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenEffectsPlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
+        // (A shot whose rider is the gun's modular configuration's, src/compiler/bane.js: Hydrocannon's Tinker Shot — picked on the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = modularWaysPlan(activation.html, base, part, options) ?? plan;
         // (A resistance by a recalled creature's trait, src/compiler/bane.js: Victory Plate.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "check" && !plan.resolution.outcomes?.success?.effects?.length) plan = victoryWaysPlan(activation.html, base, item) ?? plan;
         // (Smoke sprayed into an adjacent square, src/compiler/covered-square.js: Beekeeper's Smoker.)
