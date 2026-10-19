@@ -26,7 +26,7 @@ Results, for the items this module handles:
 | builtin:readied-bonus | 21 | 1% |
 | builtin:no-effect | 51 | 3% |
 | builtin:save-bonus | 1 | 0% |
-| none | 200 | 13% |
+| none | 199 | 13% |
 
 ## By category
 
@@ -41,7 +41,7 @@ Results, for the items this module handles:
 | gadget | 77 | 29 | 3 | 6 | 0 | 30 | 9 |
 | mutagen | 68 | 60 | 8 | 0 | 0 | 0 | 0 |
 | oil | 66 | 28 | 6 | 11 | 0 | 16 | 5 |
-| fulu | 46 | 20 | 2 | 7 | 0 | 4 | 13 |
+| fulu | 46 | 20 | 2 | 7 | 0 | 5 | 12 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |
 
@@ -60,16 +60,16 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | gadget | 77 | 22 | 0 | 0 | 16 | 0 | 0 | 14 | 0 | 0 | 0 | 3 | 8 | 0 | 14 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | oil | 66 | 43 | 0 | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 11 |
-| fulu | 46 | 16 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 15 |
+| fulu | 46 | 16 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 14 |
 | drug | 24 | 0 | 0 | 23 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **622** | **46** | **89** | **145** | **80** | **32** | **111** | **12** | **2** | **23** | **15** | **29** | **8** | **263** |
+| **all** | **1486** | **622** | **46** | **89** | **145** | **80** | **32** | **111** | **12** | **3** | **23** | **15** | **29** | **8** | **262** |
 
 Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
-| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 200 |
+| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 199 |
 | the ability compiler's GM fallback ("no-effect") | 51 |
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
 | another plan not played yet | 1 |
@@ -82,10 +82,10 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 |---|---:|---:|---:|---:|
 | duration | 943 | 605 | 0 | 13 |
 | fixed-dc | 491 | 334 | 0 | 22 |
-| condition | 433 | 263 | 0 | 23 |
+| condition | 433 | 263 | 0 | 22 |
 | linked-effect | 393 | 379 | 0 | 0 |
 | damage | 277 | 176 | 0 | 11 |
-| trigger | 156 | 62 | 0 | 24 |
+| trigger | 156 | 62 | 0 | 23 |
 | affliction | 144 | 139 | 0 | 3 |
 | counteract | 79 | 18 | 0 | 12 |
 | on-weapon | 67 | 57 | 0 | 1 |

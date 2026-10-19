@@ -732,3 +732,12 @@ test("a bonus with three scopes (Hagbane Biscuit): the +1 status bonus to saves 
     assert.deepEqual(plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.value]), [["saving-throw", 1, "status", ["origin:trait:hag"], 10]]);
     assert.ok(plan.unread.some((line) => /\(by hand\)\.$/.test(line)) && plan.unread.some((line) => /cold iron/.test(line)));
 });
+
+test("a bonus to its user's AC against an attack already rolled (Animal-Turning Fulu): the reroll card's latest attack roll at its user, its degree again against that much higher an AC, its miss's Concealed a note", async () => {
+    const { raisedResult, rerollText } = await import("../src/live/reroll-card.js");
+    const plan = compileItem(item("Animal-Turning Fulu"));
+    assert.deepEqual([plan.builtin, plan.reroll.who, plan.reroll.raise], ["reroll", "attacker", { ac: { value: 2, type: "item" } }]);
+    assert.equal(rerollText(plan.reroll), "The latest attack roll at you: +2 item bonus to your AC against it, its degree again");
+    assert.deepEqual(raisedResult({ oldTotal: 21, oldNatural: 12, dc: 20, oldDegree: 2, raise: plan.reroll.raise }), { degree: 1, total: 21, before: 2, dc: 22 });
+    assert.match(plan.reroll.after, /^If this causes the Strike to miss, you become Concealed/);
+});

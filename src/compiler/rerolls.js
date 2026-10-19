@@ -94,8 +94,23 @@ export function readRaise(html) {
     return { what: what === "roll" && skills.length ? "check" : what, keep: "new", who: "self", ...(statistic ? { statistic } : {}), raise: { ...(Object.keys(change).length ? { change } : {}), ...(bonus ? { bonus } : {}) } };
 }
 
+// A bonus to its user's AC against an attack roll already made, Animal-Turning Fulu's "Trigger A creature with the animal trait
+// successfully Strikes you … gaining a +2 item bonus to AC against the triggering Strike. If this causes the Strike to miss, …": the
+// latest attack roll at the user, its degree again against that much higher an AC (the card works it out, the GM uses it). What else
+// it says on a miss is a note. → { what: "attack", keep: "new", who: "attacker", raise: { ac: { value, type } }, after? }.
+const STRUCK = /\b(?:successfully Strikes you|would be hit by an attack|(?:hits|critically hits) you)\b/i;
+const AC_AGAINST = /\b(?:gaining|you gain|gain) an? \+(\d+) (circumstance|status|item) bonus to (?:your )?AC against the triggering (?:Strike|attack)\b/i;
+export function readArmorRaise(html) {
+    const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|\.\s|$)/s.exec(text)?.[1] ?? "";
+    const bonus = AC_AGAINST.exec(text);
+    if (!STRUCK.test(trigger) || !bonus) return null;
+    const after = text.slice(bonus.index).split(/(?<=[.!?])\s+(?=[A-Z])/).slice(1).find((sentence) => /^If this causes the (?:Strike|attack) to miss\b/i.test(sentence.trim()));
+    return { what: "attack", keep: "new", who: "attacker", raise: { ac: { value: Number(bonus[1]), type: bonus[2].toLowerCase() } }, ...(after ? { after: after.trim() } : {}) };
+}
+
 export function rerollPlan(html, base) {
-    const reroll = readReroll(html) ?? readRaise(html);
+    const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html);
     if (!reroll) return null;
     return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
 }

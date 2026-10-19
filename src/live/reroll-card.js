@@ -31,6 +31,11 @@ export function raisedResult({ oldTotal, oldNatural = null, dc = null, oldDegree
         const to = raise.change[name];
         return { degree: to ? DEGREE_NAMES.indexOf(to) : before, total: oldTotal, before };
     }
+    // (Its user's AC raised against the attack: the same roll against that much higher a DC.)
+    if (raise.ac) {
+        const raised = Number.isFinite(Number(dc)) ? Number(dc) + raise.ac.value : null;
+        return { degree: degreeOf({ total: Number(oldTotal), dc: raised, natural: oldNatural }), total: Number(oldTotal), before, dc: raised };
+    }
     const added = Number(raise.bonus?.value ?? bonusRolled) || 0;
     const total = Number(oldTotal) + added;
     return { degree: degreeOf({ total, dc, natural: oldNatural }), total, before, added };
@@ -39,6 +44,8 @@ export function raisedResult({ oldTotal, oldNatural = null, dc = null, oldDegree
 export function rerollText(reroll) {
     const named = [].concat(reroll.statistic ?? []).map((name) => `${name.charAt(0).toUpperCase()}${name.slice(1)}`).join(" or ");
     const what = named ? `${named} ${reroll.what === "save" ? "save" : "check"}` : WHAT_WORDS[reroll.what] ?? "roll";
+    // (Its user's AC raised against the latest attack at them: that attack's degree again.)
+    if (reroll.raise?.ac) return `The latest attack roll at you: +${reroll.raise.ac.value} ${reroll.raise.ac.type} bonus to your AC against it, its degree again`;
     if (reroll.raise) {
         const changes = Object.entries(reroll.raise.change ?? {}).map(([from, to]) => `${DEGREE_TEXT[from]} becomes ${DEGREE_TEXT[to]}`);
         const bonus = reroll.raise.bonus ? `+${reroll.raise.bonus.value ?? reroll.raise.bonus.formula} ${reroll.raise.bonus.type} bonus added, its degree again` : null;

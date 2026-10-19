@@ -89,7 +89,9 @@ async function raiseRoll(message, state, triggering, actor) {
     const result = raisedResult({ oldTotal: Number(old.total), oldNatural, dc, oldDegree, raise, bonusRolled });
     const degree = (value) => (value === null || value === undefined ? "no degree (no DC)" : DEGREE_WORDS[value]);
     const lines = [
-        raise.change
+        raise.ac
+            ? `${triggering.actor?.name ?? "The attacker"}'s attack roll (${old.total}) against ${state.user.name}'s AC ${dc ?? "?"} + ${raise.ac.value} ${raise.ac.type} = ${result.dc ?? "?"}: ${degree(result.degree)} (was ${degree(result.before)}).`
+            : raise.change
             ? `${actor.name}'s roll (${old.total}): ${degree(result.before)} becomes ${degree(result.degree)}.`
             : `${actor.name}'s roll: ${old.total} + ${result.added} ${raise.bonus.type} = ${result.total}${dc ? ` against DC ${dc}` : ""}: ${degree(result.degree)} (was ${degree(result.before)}).`,
         "PF2e's message isn't changed: the GM uses this result."

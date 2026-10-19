@@ -4641,6 +4641,28 @@ export const cases = {
         return { formula, against: plan.resolution.check.against };
     },
 
+    // Animal-Turning Fulu after a Strike at its user: the reroll card's degree of that attack roll again against the user's AC + 2 item.
+    async fuluAC(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Fulu Bearer", { type: "character", x: 18, y: 6 });
+        const { actor: wolf, token: wolfToken } = await creature(scene, "Fulu Wolf", { type: "character", x: 19, y: 6 });
+        const fang = await give(wolf, "Shortsword");
+        await fang.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await wolfToken.object?.control?.();
+        await target(userToken);
+        const { attack } = await strike(wolf, fang);
+        const total = Number(attack.rolls[0].total);
+        const ac = Number(attack.flags.pf2e.context.dc?.value);
+        const fulu = await give(user, "Animal-Turning Fulu");
+        const since = Date.now();
+        await fulu.consume();
+        const card = await messageAfter(since, itemCard("reroll"), { what: "the reroll card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        await wait(800);
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(results.some((line) => line.includes(`attack roll (${total}) against PFTEST ITEM Fulu Bearer's AC ${ac} + 2 item = ${ac + 2}`)), `the attack's degree again at AC ${ac} + 2 (${JSON.stringify(results)})`);
+        return { total, ac, results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

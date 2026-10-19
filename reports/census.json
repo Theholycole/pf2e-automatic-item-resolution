@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 200,
+   "none": 199,
    "resolves": 751,
    "builtin:readied-bonus": 21,
    "builtin:zone": 111,
@@ -24,7 +24,7 @@
    "builtin:conjure": 7,
    "builtin:counteract": 29,
    "builtin:no-effect": 51,
-   "builtin:reroll": 2,
+   "builtin:reroll": 3,
    "builtin:ways": 8,
    "builtin:teleport": 2,
    "builtin:roll-twice": 2,
@@ -254,11 +254,11 @@
    "count": 46,
    "results": {
     "builtin:readied-bonus": 2,
-    "none": 13,
+    "none": 12,
     "partial": 2,
     "note-only": 7,
     "resolves": 20,
-    "builtin:reroll": 1,
+    "builtin:reroll": 2,
     "builtin:cast-spell": 1
    },
    "mechanisms": {
@@ -362,7 +362,7 @@
    "count": 156,
    "resolves": 62,
    "gaps": 0,
-   "none": 24
+   "none": 23
   },
   "counteract": {
    "count": 79,
@@ -380,7 +380,7 @@
    "count": 433,
    "resolves": 263,
    "gaps": 0,
-   "none": 23
+   "none": 22
   },
   "duration": {
    "count": 943,
@@ -392,7 +392,7 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 263,
+   "none": 262,
    "item": 622,
    "fortune": 23,
    "zone": 111,
@@ -402,7 +402,7 @@
    "save": 145,
    "conjure": 7,
    "counteract": 29,
-   "reroll": 2,
+   "reroll": 3,
    "ways": 8,
    "coat": 46,
    "strike": 12,
@@ -493,10 +493,10 @@
    },
    "fulu": {
     "fortune": 2,
-    "none": 15,
+    "none": 14,
     "item": 16,
     "save": 10,
-    "reroll": 1,
+    "reroll": 2,
     "later": 1,
     "cast": 1
    },
@@ -510,7 +510,7 @@
    }
   },
   "noCard": {
-   "no-plan": 200,
+   "no-plan": 199,
    "triggered": 11,
    "gm": 51,
    "other": 1
@@ -8694,7 +8694,9 @@
     "trigger",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Netherwalk Incense",
