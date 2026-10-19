@@ -585,3 +585,15 @@ test("its user's bonus with a creature named stays on the item card (Spectacles 
     assert.equal(routeOf(compileActivations(item("Spectacles of Inquiry"), { spellEffects })[0].plan), "item");
     assert.equal(routeOf(compileActivations(item("North Wind's Night Verse"), { spellEffects })[0].plan), "save");
 });
+
+test("an item thrown as a Strike PF2e can't roll: its user's thrown attack against AC, a hit's damage and conditions (Lady's Chalice's 2d6 spirit, Halcyon Heart's net, Rod of Razors' flechettes); its splash, deadly and volley notes", () => {
+    const [, chalice] = compileActivations(item("Lady's Chalice"), { spellEffects });
+    assert.deepEqual([chalice.plan.ownCheck.choose, chalice.plan.resolution.check.against.statistic, chalice.plan.resolution.sharedDamage.components[0].formula, chalice.plan.resolution.sharedDamage.components[0].type, chalice.plan.targeting.range], [["thrown"], "ac", "2d6", "spirit", "5 feet"]);
+    assert.match(chalice.plan.notes.join(" "), /Its splash: 2 spirit splash damage/);
+    const [net] = compileActivations(item("Halcyon Heart"), { spellEffects });
+    assert.deepEqual([net.plan.resolution.outcomes.success.effects.map((effect) => effect.slug), net.plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value])], [["off-guard"], ["off-guard", "immobilized"], [["all-speeds", -10]]]);
+    assert.match(net.plan.notes.join(" "), /The Escape DC is 44, and the net has a counteract rank of 9 and a counteract modifier of \+38\./);
+    const [razors] = compileActivations(item("Rod of Razors"), { spellEffects });
+    assert.deepEqual([razors.plan.resolution.sharedDamage.components[0].formula, razors.plan.targeting.range, razors.plan.resolution.outcomes.criticalSuccess.damage.multiplier], ["3d8", "100 feet", 2]);
+    assert.ok(razors.plan.notes.some((note) => /^Deadly d10/.test(note)) && razors.plan.notes.some((note) => /^Volley 30 feet/.test(note)));
+});

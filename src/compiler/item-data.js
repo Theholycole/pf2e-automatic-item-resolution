@@ -33,9 +33,15 @@ const FRIGHTENED = "@UUID[Compendium.pf2e.conditionitems.Item.TBSHQspnbcqxsmjL]"
 const BLINDED = "@UUID[Compendium.pf2e.conditionitems.Item.XgEqL1kFApUbl5Z2]";
 const IMMOBILIZED = "@UUID[Compendium.pf2e.conditionitems.Item.eIcWbB5o3pP6OIMe]";
 
+// A Wondrous Figurine written without the family's Activate block, Bismuth Leopards' "When activated, it transforms into a pair of …
+// Leopards": the family's own (Onyx Dog's), 2 actions, and its minion trait in creature form, src/compiler/conjured.js.
+const FIGURINE_BLOCK = "<p><strong>Activate</strong> <span class=\"action-glyph\">2</span> command, Interact</p><hr /><p><strong>Effect</strong> You activate the statue by placing it on solid ground and then speaking its name. In creature form, the figurine has the minion trait.</p>";
+export const isBareFigurine = (item, html = item?.system?.description?.value) => /^Wondrous Figurine\b/.test(String(item?.name ?? "")) && !/<strong>\s*Activat/i.test(String(html ?? "")) && /\b(?:becomes|transforms into|turns into)\b[^.]*?@UUID\[[^\]]*\.Actor\./i.test(String(html ?? ""));
+
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
+    if (isBareFigurine(item, text)) text = `${FIGURINE_BLOCK}${text}`;
     // (A save at its wielder's better DC, Meloth's Lifedrinker's "takes @Damage[6d6[mental]] damage with a Will save; the DC is equal
     // to the wielder's class or spell DC, whichever is higher": its owner's class-or-spell DC, a basic save, as PF2e writes it.)
     text = text.replace(/\btakes (@Damage\[[^\]]*\]\])(?: damage)? with an? (Fortitude|Reflex|Will) save; the DC is equal to the wielder's class or spell DC, whichever is higher\b/g, (whole, damage, save) => `takes ${damage} damage with a @Check[${save.toLowerCase()}|against:class-spell|basic] save`);

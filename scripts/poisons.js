@@ -98,7 +98,14 @@ function attackChoices(actor, kinds, { atLeast = null } = {}) {
     const firearm = best((actor?.system?.actions ?? []).filter((action) => (action?.item?.group ?? action?.item?.system?.group) === "firearm").map((action) => action.totalModifier));
     // (Its best ranged Strike, for an item that takes "a spell or ranged attack roll", Clockwork Helm.)
     const ranged = best((actor?.system?.actions ?? []).filter((action) => action?.item?.isRanged === true).map((action) => action.totalModifier));
+    // (A simple thrown weapon's, an item thrown as a Strike — src/compiler/thrown.js: its user's Dexterity modifier and simple weapon
+    // proficiency; a creature with no proficiencies, its best ranged Strike.)
+    const rank = Number(actor?.system?.proficiencies?.attacks?.simple?.rank ?? NaN);
+    const dex = Number(actor?.system?.abilities?.dex?.mod ?? NaN);
+    const thrown = Number.isFinite(rank) && Number.isFinite(dex) ? dex + (rank > 0 ? Number(actor.level ?? 0) + 2 * rank : 0) : NaN;
     const choices = [
+        ...(kinds.includes("thrown") && Number.isFinite(thrown) ? [{ kind: "thrown", label: `Thrown (simple weapon) ${sign(thrown)}`, modifier: thrown }] : []),
+        ...(kinds.includes("thrown") && !Number.isFinite(thrown) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
         ...(kinds.includes("spell") && Number.isFinite(spell) ? [{ kind: "spell", label: `Spell attack ${sign(spell)}`, modifier: spell }] : []),
         ...(kinds.includes("firearm") && Number.isFinite(firearm) ? [{ kind: "firearm", label: `Firearm attack ${sign(firearm)}`, modifier: firearm }] : []),
         ...(kinds.includes("ranged") && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : [])
@@ -116,7 +123,7 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     if (Number.isInteger(checkChoice) && state.plan?.checkChoices?.[checkChoice]) state = { ...state, checkChoice };
     // (A spellgun's attack, as picked; with none its user has, the GM rolls it.)
     if (Number.isInteger(attackChoice) && state.attackChoices?.[attackChoice]) state = { ...state, attackChoice };
-    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
+    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.includes("thrown") ? "attack to throw it with" : state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
     // (The damage picked: Necklace of Fireballs' bead.)
     if (Number.isInteger(damageChoice) && state.plan?.damageChoices?.[damageChoice]) state = { ...state, damageChoice };
     // (Its time is up: the card closes.)
@@ -135,6 +142,15 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
     const names = tokens.map((token) => token.name ?? token.actor?.name).join(", ");
     const lines = [];
+    // (Its second step, the save its hit calls for — src/compiler/thrown.js plan.thenSave: at the creature hit, then the card closes.)
+    if (state.step === "then" && state.plan?.thenSave) {
+        if (postCard && actor) {
+            await postCard({ plan: state.plan.thenSave, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: `${state.item.name} hit` });
+            lines.push(`${names}: its save card follows.`);
+        } else lines.push(`${names}: ${saveText(state.plan.thenSave)} (roll it by hand).`);
+        const done = { ...state, status: "applied", step: null, results: [...state.results, ...lines].slice(-6) };
+        return message.update({ content: exposureCardHTML(done, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: done });
+    }
     if (postCard && actor) {
         await postCard({ plan: withAttackChoice(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
@@ -147,7 +163,9 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
             if (!/: nothing to lower\.$/.test(line)) lines.push(line);
         }
     }
-    const next = afterExposure(state, lines, game.time.worldTime);
+    const after = afterExposure(state, lines, game.time.worldTime);
+    // (A save its hit then calls for: the card stays open for that second step.)
+    const next = state.plan?.thenSave ? { ...after, status: "open", step: "then" } : after;
     return message.update({ content: exposureCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 

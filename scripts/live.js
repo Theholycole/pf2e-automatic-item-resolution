@@ -19,7 +19,7 @@ import { applyBombCard, cardForBomb, hideCoveredSplash, rememberDeletedBomb } fr
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
 import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
-import { startItemZone } from "./zones.js";
+import { startItemConjure, startItemZone } from "./zones.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
@@ -134,7 +134,7 @@ async function cardForUse(message) {
 
 // The card for a plan (src/live/route.js): an injury poison's weapon to coat (scripts/poisons.js); a contact, inhaled or
 // ingested poison's exposure, or another item's save on its Use (Spark Wafer, Pyronite), for the creatures targeted; a spell
-// PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone (scripts/zones.js); a Focus Point
+// PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone or a conjured creature (scripts/zones.js); a Focus Point
 // (scripts/focus.js); a readied Strike (scripts/strikes.js); a reroll (scripts/rerolls.js); a roll twice (scripts/fortune.js); a skill action
 // (scripts/item-actions.js); else the item card below.
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
@@ -156,6 +156,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
     if (route === "cast") return postCastCard({ message, plan, used, actor, token });
     if (route === "zone") return startItemZone({ plan, used, actor, token });
+    if (route === "conjure") return startItemConjure({ plan, used, actor, token });
     if (route === "focus") return postFocusCard({ message, plan, used, actor, token });
     // (Spellstrike Ammunition: the spell cast into it, on this client: scripts/spellstrike.js.)
     if (route === "spellstrike") {

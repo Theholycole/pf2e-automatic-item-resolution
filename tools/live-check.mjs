@@ -3942,6 +3942,63 @@ export const cases = {
             await area()?.delete().catch(() => null);
             await combat.delete().catch(() => null);
         }
+    },
+
+    // Sack of Rotten Fruit: thrown as a Strike PF2e can't roll. The card offers its user's simple thrown attack; the ability module's card
+    // is that attack against the target's AC with its 1d4 bludgeoning; then the card's second step is its DC 15 Fortitude save at the
+    // creature hit.
+    async thrownSack(scene) {
+        const { actor: pitcher, token: pitcherToken } = await creature(scene, "Fruit Pitcher", { type: "character", x: 10, y: 13 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Fruit Target", { x: 13, y: 13, alliance: "opposition" });
+        const sack = await give(pitcher, "Sack of Rotten Fruit");
+        await until(() => pitcherToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        let since = Date.now();
+        await sack.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the sack's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const thrown = choices.find((choice) => choice.kind === "thrown");
+        assert(thrown, `the thrown attack offered (${JSON.stringify(choices)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: choices.indexOf(thrown) });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        const plan = attack.flags["pf2e-automatic-ability-resolution"].card.plan;
+        assert(plan.resolution.check.modifier === thrown.modifier && plan.resolution.check.against?.statistic === "ac" && plan.resolution.sharedDamage?.components?.[0]?.formula === "1d4", `the thrown attack against AC with 1d4 (${JSON.stringify(plan.resolution.check)})`);
+        await until(() => game.messages.get(card.id)?.getFlag(NS, "card")?.step === "then", "the card's save step", { timeout: 5000 });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, (message) => abilitySaveCard(message) && (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).some((entry) => entry.actorUuid === foe.uuid), { what: "the hit's save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && check.against?.value === 15, `the DC 15 Fortitude save (${JSON.stringify(check)})`);
+        assert(game.messages.get(card.id)?.getFlag(NS, "card")?.status === "applied", "the sack's card done");
+        return { thrown, save: `${check.statistic} ${check.against.value}` };
+    },
+
+    // Wondrous Figurine (Golden Lions) and Beetle Gel: the creatures they become, the ability module's conjured tokens beside their user —
+    // two Lions (minions, from PF2e's own stat block), then a Flash Beetle from the oil.
+    async conjuredCreatures(scene) {
+        const { actor: owner, token: ownerToken } = await creature(scene, "Figurine Owner", { type: "character", x: 10, y: 15 });
+        const lions = await give(owner, "Wondrous Figurine (Golden Lions)");
+        const gel = await give(owner, "Beetle Gel");
+        await until(() => ownerToken.object, "the owner's token drawn", { timeout: 5000 });
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const made = (item) => scene.tokens.filter((token) => token.actor?.flags?.[ABILITY]?.conjured?.itemUuid === item.uuid);
+        try {
+            await game.modules.get(NS).api.live.activate(lions.uuid, 0);
+            await until(() => made(lions).length === 2, "the two lions' tokens", { timeout: 10000 });
+            const lion = made(lions)[0].actor;
+            assert(lion.system.traits.value.includes("minion") && /Lion/.test(lion.name), `a lion with the minion trait (${lion.name}: ${lion.system.traits.value.join(", ")})`);
+            assert(made(lions).every((token) => token.disposition === ownerToken.disposition), "on its user's side");
+            await gel.consume();
+            await until(() => made(gel).length === 1, "the beetle's token", { timeout: 10000 });
+            return { lions: made(lions).map((token) => token.name), beetle: made(gel)[0].name };
+        } finally {
+            // (Its own: the tokens it made and their world actors.)
+            for (const token of [...made(lions), ...made(gel)]) {
+                const base = game.actors.get(token.actorId);
+                await token.delete().catch(() => null);
+                if (base?.flags?.[ABILITY]?.conjured) await base.delete().catch(() => null);
+            }
+        }
     }
 };
 

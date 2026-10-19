@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-18",
+ "generated": "2026-10-19",
  "system": "~/.local/share/FoundryVTT/Data/systems/pf2e/packs",
  "totals": {
   "consumables": 1724,
@@ -14,13 +14,14 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 32,
-   "none": 214,
+   "none": 210,
    "resolves": 750,
    "builtin:readied-bonus": 21,
    "builtin:zone": 107,
    "builtin:item-action": 15,
-   "partial": 97,
-   "note-only": 160,
+   "partial": 100,
+   "note-only": 154,
+   "builtin:conjure": 7,
    "builtin:counteract": 28,
    "builtin:no-effect": 52,
    "builtin:reroll": 2,
@@ -36,13 +37,14 @@
     "builtin:cast-spell": 11,
     "builtin:zone": 19,
     "resolves": 211,
-    "partial": 45,
+    "partial": 47,
     "note-only": 81,
     "builtin:readied-bonus": 7,
-    "none": 117,
+    "none": 114,
     "builtin:no-effect": 13,
     "builtin:item-action": 1,
     "builtin:counteract": 5,
+    "builtin:conjure": 1,
     "builtin:ways": 1,
     "builtin:save-bonus": 1
    },
@@ -223,12 +225,13 @@
    "count": 66,
    "results": {
     "resolves": 28,
-    "note-only": 17,
+    "builtin:conjure": 6,
     "builtin:no-effect": 6,
-    "none": 6,
+    "note-only": 11,
+    "partial": 6,
+    "none": 5,
     "builtin:cast-spell": 2,
-    "builtin:counteract": 2,
-    "partial": 5
+    "builtin:counteract": 2
    },
    "mechanisms": {
     "linked-effect": 17,
@@ -313,7 +316,7 @@
    "count": 277,
    "resolves": 176,
    "gaps": 0,
-   "none": 14
+   "none": 12
   },
   "linked-effect": {
    "count": 393,
@@ -325,7 +328,7 @@
    "count": 491,
    "resolves": 334,
    "gaps": 0,
-   "none": 26
+   "none": 23
   },
   "affliction": {
    "count": 144,
@@ -343,7 +346,7 @@
    "count": 31,
    "resolves": 15,
    "gaps": 0,
-   "none": 3
+   "none": 1
   },
   "on-weapon": {
    "count": 67,
@@ -367,13 +370,13 @@
    "count": 44,
    "resolves": 17,
    "gaps": 0,
-   "none": 7
+   "none": 6
   },
   "condition": {
    "count": 433,
    "resolves": 263,
    "gaps": 0,
-   "none": 24
+   "none": 23
   },
   "duration": {
    "count": 943,
@@ -385,14 +388,15 @@
  "live": {
   "totals": {
    "cast": 32,
-   "none": 278,
-   "item": 628,
+   "none": 274,
+   "item": 622,
    "fortune": 23,
    "zone": 107,
    "expose": 89,
    "later": 80,
    "action": 15,
-   "save": 141,
+   "save": 144,
+   "conjure": 7,
    "counteract": 28,
    "reroll": 2,
    "coat": 46,
@@ -403,15 +407,16 @@
    "other": {
     "cast": 11,
     "zone": 19,
-    "none": 140,
+    "none": 137,
     "later": 11,
-    "save": 94,
+    "save": 96,
     "item": 214,
     "fortune": 7,
     "strike": 3,
     "expose": 3,
     "action": 1,
     "counteract": 5,
+    "conjure": 1,
     "ways": 1,
     "coat": 3
    },
@@ -470,8 +475,10 @@
     "item": 68
    },
    "oil": {
-    "item": 49,
-    "none": 12,
+    "item": 43,
+    "conjure": 6,
+    "none": 11,
+    "save": 1,
     "later": 1,
     "cast": 2,
     "counteract": 2
@@ -495,7 +502,7 @@
    }
   },
   "noCard": {
-   "no-plan": 214,
+   "no-plan": 210,
    "triggered": 11,
    "gm": 52,
    "other": 1
@@ -1046,9 +1053,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:conjure",
+   "kind": null,
+   "live": "conjure"
   },
   {
    "name": "Skitter Knot (Greater)",
@@ -6398,9 +6405,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:conjure",
+   "kind": null,
+   "live": "conjure"
   },
   {
    "name": "Spiral Labyrinth",
@@ -7429,7 +7436,9 @@
     "fixed-dc",
     "area"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Blindpepper Bomb",
@@ -10087,9 +10096,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:conjure",
+   "kind": null,
+   "live": "conjure"
   },
   {
    "name": "Quartz-Coil Rail Transport (Lesser)",
@@ -12731,7 +12740,9 @@
     "fixed-dc",
     "strike"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Potion of Minute Echoes",
@@ -14965,7 +14976,9 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:conjure",
+   "kind": null,
+   "live": "conjure"
   },
   {
    "name": "Bougainvillea Blossom (Major)",
@@ -15969,9 +15982,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:conjure",
+   "kind": null,
+   "live": "conjure"
   },
   {
    "name": "Demolition Fulu (Greater)",
@@ -24682,7 +24695,9 @@
     "strike",
     "condition"
    ],
-   "result": "none"
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Indomitable Keepsake (Greater)",
@@ -27596,9 +27611,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:conjure",
+   "kind": null,
+   "live": "conjure"
   },
   {
    "name": "Giant Centipede Venom",
@@ -29009,9 +29024,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:conjure",
+   "kind": null,
+   "live": "conjure"
   },
   {
    "name": "Snake Oil",

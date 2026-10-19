@@ -200,7 +200,9 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
     const used = state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : "";
     const again = !state.repeat ? "" : state.attacker ? ` It stays open until its time is up${used}.` : ` It can be used again${used} until its time is up, after each recharge.`;
-    const hint = !open ? "" : state.own
+    const hint = !open ? "" : state.step === "then"
+        ? `<p class="aar-hint">If the attack hit: target the creature hit and press the button for its ${escape(saveText(state.plan.thenSave))}.</p>`
+        : state.own
         ? `<p class="aar-hint">${escape(state.user.name)}'s own save (${escape(saveText(state.plan))}).</p>`
         : state.attacker
         ? `<p class="aar-hint">Each time a creature ${state.attacker === "touch" ? `touches ${escape(state.user.name)}${state.plan?.retaliation?.adjacentMelee ? ", or hits it with a melee weapon Strike from next to it," : ""}` : `attacks ${escape(state.user.name)}`} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
@@ -208,7 +210,7 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
         ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : checked ? "A check at" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.own ? "Roll the save" : state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.step === "then" ? "Its save: my targets" : state.own ? "Roll the save" : state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     const notes = open && (state.plan?.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     // (A check to pick — Twisting Twine's Disarm or Trip: a picker.)
     const checkPick = open && canApply && (state.plan?.checkChoices?.length ?? 0) > 1
@@ -219,7 +221,7 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
         ? `<p class="aar-actions">Damage: <select data-air-field="damageChoice">${state.plan.damageChoices.map((choice, index) => `<option value="${index}"${index === (state.damageChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
         : "";
     // (A spellgun's attack: the user's spell or firearm attack, a picker; none, the GM's roll.)
-    const attack = !open || !state.plan?.ownCheck?.choose ? ""
+    const attack = !open || !state.plan?.ownCheck?.choose || state.step === "then" ? ""
         : (state.attackChoices ?? []).length > 1 && canApply
             ? `<p class="aar-actions">Attack: <select data-air-field="attackChoice">${state.attackChoices.map((choice, index) => `<option value="${index}"${index === (state.attackChoice ?? 0) ? " selected" : ""}>${escape(choice.label)}</option>`).join("")}</select></p>`
             : (state.attackChoices ?? []).length ? `<p class="aar-actions">Attack: ${escape(state.attackChoices[0].label)}</p>`

@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-18",
+ "generated": "2026-10-19",
  "totals": {
   "items": 2679,
   "staves": 592,
@@ -8,17 +8,18 @@
   "results": {
    "resolves": 736,
    "builtin:cast-spell": 470,
-   "none": 659,
-   "partial": 159,
+   "none": 647,
+   "partial": 162,
    "builtin:focus-point": 45,
-   "builtin:no-effect": 120,
+   "builtin:no-effect": 118,
    "builtin:readied-bonus": 44,
-   "note-only": 206,
+   "note-only": 205,
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 22,
    "builtin:modes": 32,
+   "builtin:conjure": 12,
    "builtin:item-action": 22,
    "builtin:roll-twice": 10,
    "builtin:save-bonus": 3,
@@ -26,10 +27,10 @@
    "builtin:ways": 1
   },
   "live": {
-   "save": 422,
+   "save": 425,
    "cast": 470,
-   "item": 583,
-   "none": 808,
+   "item": 582,
+   "none": 794,
    "focus": 45,
    "fortune": 54,
    "reroll": 25,
@@ -37,6 +38,7 @@
    "counteract": 6,
    "zone": 22,
    "toggle": 32,
+   "conjure": 12,
    "action": 22,
    "coat": 3,
    "spellstrike": 9,
@@ -52,14 +54,15 @@
    "results": {
     "resolves": 449,
     "builtin:cast-spell": 341,
-    "none": 445,
-    "partial": 70,
+    "none": 434,
+    "partial": 72,
     "builtin:focus-point": 43,
-    "builtin:no-effect": 98,
+    "builtin:no-effect": 96,
     "builtin:readied-bonus": 33,
-    "note-only": 143,
+    "note-only": 142,
     "builtin:reroll": 17,
     "builtin:zone": 10,
+    "builtin:conjure": 12,
     "builtin:modes": 16,
     "builtin:roll-twice": 7,
     "builtin:save-bonus": 2,
@@ -72,8 +75,8 @@
    "activations": 460,
    "results": {
     "resolves": 155,
-    "none": 105,
-    "partial": 41,
+    "none": 104,
+    "partial": 42,
     "note-only": 23,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
@@ -3180,9 +3183,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Blade of Fallen Stars",
@@ -5254,9 +5257,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Lieutenant's Sash",
@@ -5840,9 +5843,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Elemental Ammunition (Lesser, Fire)",
@@ -9588,9 +9591,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Tengu Feather Fan",
@@ -13182,9 +13185,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Warleader's Bulwark",
@@ -13281,9 +13284,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Camouflaging Chromatophores (Lesser)",
@@ -14339,9 +14342,9 @@
    "time": "1",
    "frequency": "six times per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Faydhaan's Dallah",
@@ -16388,9 +16391,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Auspicious Scepter",
@@ -16575,9 +16578,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Scope of Truth",
@@ -17391,9 +17394,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Godsbreath Bow",
@@ -17876,9 +17879,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Fleshgem (Earthspeaker)",
@@ -21974,9 +21977,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Talented Tap Shoes",
@@ -22128,9 +22131,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Lambent Perfume",
@@ -23653,9 +23656,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Chapbook of Terrors",
@@ -23763,9 +23766,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:conjure",
+   "kind": null,
+   "live": "conjure"
   },
   {
    "name": "The Hidden Truth",

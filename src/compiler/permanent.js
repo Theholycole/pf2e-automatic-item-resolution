@@ -22,11 +22,13 @@ import { compileStrike, strikeOver } from "./strikes.js";
 import { hitAuraPlan } from "./hit-auras.js";
 import { hitAroundPlan } from "./hit-around.js";
 import { cleanNotes } from "./notes.js";
+import { thrownPlan } from "./thrown.js";
+import { conjuredPlan } from "./conjured.js";
 import { rerollOver, rerollPlan } from "./rerolls.js";
 import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
 import { auraZonePlan, choiceAuraWays } from "./aura-zones.js";
-import { ownerDCs, withItemData } from "./item-data.js";
+import { isBareFigurine, ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { claimedBySpellModule } from "./index.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
@@ -58,7 +60,7 @@ const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", 
 const SPELL_MODULE_TRAITS = ["staff", "wand", "spellheart"];
 export function handlesPermanent(item, options = {}) {
     return PERMANENT_TYPES.has(item?.type) && !SPELL_MODULE_TRAITS.some((trait) => (item.system?.traits?.value ?? []).includes(trait)) && !(item.type === "weapon" && item.system?.group === "bomb")
-        && /<strong>\s*Activat/i.test(String(item.system?.description?.value ?? "")) && !claimedBySpellModule(item, options);
+        && (/<strong>\s*Activat/i.test(String(item.system?.description?.value ?? "")) || isBareFigurine(item)) && !claimedBySpellModule(item, options);
 }
 
 const field = (block, name) => {
@@ -134,7 +136,7 @@ function compileEach(item, options = {}) {
     if (!handlesPermanent(item, options)) return [];
     // (Its own data in its text first — a weapon's striking and potency runes, src/compiler/item-data.js.)
     const html = withItemData(item.system?.description?.value, item);
-    return splitActivations(html).map((found, index) => {
+    return splitActivations(html).map((found, index, activations) => {
         // (A damage type its user's loading picks, listed after it: compiled without the list, src/compiler/type-choice.js.)
         const typeChoice = readTypeChoice(found.html);
         const activation = typeChoice ? { ...found, html: typeChoice.html } : found;
@@ -200,6 +202,11 @@ function compileEach(item, options = {}) {
         plan = hitAuraPlan(activation.html, base, part, options) ?? plan;
         // (Saves for the creatures around the one it hits, src/compiler/hit-around.js: Dispersing Bullet, Singularity Ammunition.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = hitAroundPlan(activation.html, base, part, options) ?? plan;
+        // (An item thrown as a Strike that PF2e can't roll, src/compiler/thrown.js: Lady's Chalice, Halcyon Heart's net, Rod of Razors.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = thrownPlan(activation.html, base, part, options) ?? plan;
+        // (A creature it becomes, src/compiler/conjured.js: Wondrous Figurines, Fossil Fragments — its entry after the activation's block when
+        // that's the only one. Over any other reading: what the creature does, Bismuth Leopards' dazzling, is its own.)
+        plan = conjuredPlan(activation.html, base, part, html) ?? (activations.length === 1 ? conjuredPlan(html, base, part, html) : null) ?? plan;
         // (A reroll of the roll that triggered it, src/compiler/rerolls.js: Starfaring Cloak.)
         plan = rerollOver(plan, rerollPlan(activation.html, base));
         // (Its user's next roll of a kind rolled twice, src/compiler/fortune.js: Sunweave.)

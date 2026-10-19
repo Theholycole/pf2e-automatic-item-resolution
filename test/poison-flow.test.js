@@ -287,6 +287,34 @@ test("routes for saves and checks read but not played: Frogskin Tincture's toxin
     assert.match(dew.notes.join(" "), /If you're unholy and drink this potion, .* a DC 30 Fortitude save or the potion renders you Drained 2\./);
 });
 
+test("an item thrown as a Strike that PF2e can't roll (Sack of Rotten Fruit): its user's simple thrown attack against AC with its 1d4 bludgeoning on the ability module's card, then — the card's second step — the hit's DC 15 Fortitude save at the creature hit", async () => {
+    const pitcher = foundry.makeActor({ id: "poison-pitcher", name: "Pitcher", owners: ["player"] });
+    foundry.place(pitcher, 0, 4600);
+    pitcher.level = 5;
+    pitcher.system = { ...pitcher.system, proficiencies: { attacks: { simple: { rank: 1 } } }, abilities: { dex: { mod: 3 } } };
+    const sack = foundry.giveItem(pitcher, source("Sack of Rotten Fruit"));
+    const data = sack.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: sack.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: pitcher.id }, actor: pitcher, token: pitcher.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    const state = card.flags[MODULE_ID].card;
+    // (Dexterity +3, trained in simple weapons at level 5: +10.)
+    assert.deepEqual([state.kind, state.attackChoices], ["expose", [{ kind: "thrown", label: "Thrown (simple weapon) +10", modifier: 10 }]]);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
+    await settle();
+    const [attack] = foundry.posted.slice(before);
+    assert.deepEqual([attack.plan.resolution.check.statistic, attack.plan.resolution.check.modifier, attack.plan.resolution.sharedDamage.components[0].formula], ["thrown attack", 10, "1d4"]);
+    assert.deepEqual([card.flags[MODULE_ID].card.status, card.flags[MODULE_ID].card.step], ["open", "then"], "open for the save its hit calls for");
+    assert.match(card.content, /Its save: my targets/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
+    await settle();
+    const [save] = foundry.posted.slice(before + 1);
+    assert.deepEqual([save.plan.resolution.check.statistic, save.plan.resolution.check.against.value, save.plan.resolution.outcomes.failure.effects.map((effect) => effect.slug)], ["fortitude", 15, ["sickened"]]);
+    assert.equal(card.flags[MODULE_ID].card.status, "applied");
+});
+
 test("a weapon's own poison or curse for its next hit: Alghollthu Lash's coat card offers only the lash, a critical miss keeps it, its hit posts the slime's save card; Protector's Final Gift's lasts its minute; Lionfish Spear's goes to the creature it just hit; Viper's Fang's coats any weapon", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const { compileActivations } = await import("../src/compiler/permanent.js");
@@ -381,4 +409,44 @@ test("the drinker's own save rolls for its user, no targets; a save set off by a
     assert.equal(ATTACKER.test(plainText(oil.system.description.value)), true);
     const { routeOf } = await import("../src/live/route.js");
     assert.equal(routeOf(compileItem(oil), plainText(oil.system.description.value)), "later");
+});
+
+test("a creature an item becomes (Wondrous Figurine (Golden Lions)'s pair of Lions, Fossil Fragment's construct, Bismuth Leopards without an Activate block of its own, Beetle Gel's minion): the ability module's conjured tokens (startConjure); without it, the GM places them", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const { compileItem } = await import("../src/compiler/index.js");
+    const [lions] = compileActivations(source("Wondrous Figurine (Golden Lions)"));
+    assert.deepEqual([lions.plan.builtin, lions.plan.creatures.map((creature) => [creature.name, creature.count, creature.from.uuid, creature.traits, creature.initiative]), lions.plan.max, lions.plan.lasts.value, lions.plan.lasts.unit, lions.plan.vanishAtZero], ["conjure", [["Lion", 2, "Compendium.pf2e.pathfinder-monster-core.Actor.6KF6TQvLHHpE0uAM", ["minion"], null]], 2, 1, "hours", true]);
+    assert.ok(lions.plan.notes.includes("It lasts 1 hour: dismiss it when that's up."));
+    const [mosquito] = compileActivations(source("Fossil Fragment (Amber Mosquito)"));
+    assert.deepEqual([mosquito.plan.creatures[0].name, mosquito.plan.creatures[0].traits, mosquito.plan.lasts.value, mosquito.plan.lasts.unit], ["Giant Mosquito", ["minion", "construct", "earth"], 10, "minutes"]);
+    assert.ok(mosquito.plan.notes.some((note) => /^It's immune to bleed, death effects/.test(note)));
+    // (No Activate block of its own: the family's, 2 actions, its minion trait.)
+    const [leopards] = compileActivations(source("Wondrous Figurine (Bismuth Leopards)"));
+    assert.deepEqual([leopards.activation.time, leopards.plan.creatures[0].name, leopards.plan.creatures[0].count, leopards.plan.creatures[0].traits, leopards.plan.lasts.value], ["2", "Leopard", 2, ["minion"], 10]);
+    assert.ok(leopards.plan.notes.some((note) => /Dazzled for 1 round unless they succeed at a DC 24 will save/.test(note)));
+    // (In a fight, the elephant's 1d4 rounds; the hippopotamus takes its own turns.)
+    const [elephant] = compileActivations(source("Wondrous Figurine (Marble Elephant)"));
+    assert.deepEqual([elephant.plan.lasts.formula, elephant.plan.lasts.unit], ["1d4", "rounds"]);
+    const [hippo] = compileActivations(source("Wondrous Figurine (Ruby Hippopotamus)"));
+    assert.deepEqual([hippo.plan.creatures[0].initiative, hippo.plan.creatures[0].traits], ["roll", []]);
+    // (Not a hazard, nor a creature its hit makes.)
+    assert.notEqual(compileItem(source("Dirt Sea in a Jar"))?.builtin, "conjure");
+    assert.notEqual(compileItem(source("Viper Arrow"))?.builtin, "conjure");
+    const beetle = compileItem(source("Beetle Gel"));
+    assert.deepEqual([beetle.builtin, beetle.creatures[0].name, beetle.creatures[0].traits, beetle.lasts.value], ["conjure", "Flash Beetle", ["minion"], 10]);
+    const made = [];
+    foundry.ability.live.startConjure = async (options) => made.push(options);
+    try {
+        await use(foundry.giveItem(rogue, source("Beetle Gel")));
+        assert.equal(made.length, 1);
+        assert.deepEqual([made[0].item.name, made[0].item.actor, made[0].plan.creatures[0].name, made[0].sourceToken.uuid], ["Beetle Gel", rogue, "Flash Beetle", rogue.token.uuid]);
+        const figurine = foundry.giveItem(rogue, source("Wondrous Figurine (Onyx Dog)"));
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: figurine.uuid, activation: 0, userId: "player" });
+        await settle();
+        assert.deepEqual([made.length, made[1]?.plan?.creatures?.[0]?.name], [2, "Guard Dog"]);
+    } finally {
+        delete foundry.ability.live.startConjure;
+    }
+    await use(foundry.giveItem(rogue, source("Beetle Gel")));
+    assert.match(foundry.messages.at(-1).content, /place Flash Beetle beside its user by hand/);
 });
