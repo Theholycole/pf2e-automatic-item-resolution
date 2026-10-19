@@ -773,3 +773,14 @@ test("a roll on a RollTable it links (Rod of Wonder): the table card draws from 
     // (A card drawn at random, Deck of Illusions': the RollTable its text links before its activation.)
     assert.equal(compileActivations(item("Deck of illusions"))[0].plan.table.name, "Deck of Illusions Cards");
 });
+
+test("a table whose die is its first body row's (a third-party robe's d20 of chaos): its rows read, a spell row cast at the table's DC", async () => {
+    const { spellIndex } = await import("../src/compiler/index.js");
+    const { rowFor } = await import("../src/compiler/random-table.js");
+    const robes = readDocuments(`${process.env.HOME}/.local/share/FoundryVTT/Data/modules/pf2e-team-plus-magic/packs/items`).find((doc) => doc.collection === "items" && doc.name === "Rumbustious Robes");
+    if (!robes) return;
+    const spells = spellIndex(readDocuments(path.join(`${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`, "spells")).filter((doc) => doc.collection === "items"));
+    const chaos = compileActivations(robes, { spells }).find((entry) => entry.activation.name === "Pocket Full of Chaos").plan;
+    assert.deepEqual([chaos.table.die, chaos.table.rows.length], ["1d20", 20]);
+    assert.deepEqual([rowFor(chaos.table, 3).plan.builtin, rowFor(chaos.table, 3).plan.dc], ["cast-spell", 34]);
+});

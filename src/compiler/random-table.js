@@ -7,7 +7,9 @@
 // words for the GM (scripts/table.js). Pure.
 
 const TABLE = /<table\b[^>]*>\s*<thead>\s*<tr>\s*<th>\s*(d20|d%|d100|d10|d12|d8|d6|d4)\s*<\/th>[\s\S]*?<\/thead>\s*<tbody>([\s\S]*?)<\/tbody>\s*<\/table>/i;
-const ROW = /<tr>\s*<td>\s*(\d+)\s*(?:[-–—]\s*(\d+))?\s*<\/td>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/gi;
+// (Or one whose die is its first body row's, its cells in paragraphs: a third-party robe's "[[/r d20]] | Effect" then "1 | …".)
+const BODY_TABLE = /<table\b[^>]*>\s*<tbody>\s*<tr[^>]*>\s*<td[^>]*>\s*(?:<p>)?\s*(?:<strong>)?\s*(?:\[\[\/r\s+)?(d20|d%|d100|d10|d12|d8|d6|d4)(?:\]\])?\s*(?:<\/strong>)?\s*(?:<\/p>)?\s*<\/td>[\s\S]*?<\/tr>([\s\S]*?)<\/tbody>\s*<\/table>/i;
+const ROW = /<tr[^>]*>\s*<td[^>]*>\s*(?:<p>)?\s*(\d+)\s*(?:[-–—]\s*(\d+))?\s*(?:<\/p>)?\s*<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<\/tr>/gi;
 const DIE = { "d%": "1d100", d100: "1d100" };
 
 const plain = (html) => String(html ?? "").replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/@\w+\[[^\]]*\](?:\{([^}]*)\})?/g, (all, label) => label ?? "").replace(/\[\[\/\w+ ([^\]]*?)(?: #[^\]]*)?\]\](?:\{([^}]*)\})?/g, (all, formula, label) => label ?? formula).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -31,7 +33,7 @@ function asCast(html) {
 // (The table's own DC and spell attack for the spells it casts: "Any spell DC required is DC 27, and any spell attack roll required is +17".)
 const TABLE_DC = /\bAny spell DC required is DC (\d+)(?:, and any spell attack (?:roll|modifier) required is \+(\d+))?/i;
 export function readTable(html, compile = () => null) {
-    const table = TABLE.exec(String(html ?? ""));
+    const table = TABLE.exec(String(html ?? "")) ?? BODY_TABLE.exec(String(html ?? ""));
     if (!table) return null;
     const own = TABLE_DC.exec(plain(String(html ?? "").slice(0, table.index)));
     const rows = [...table[2].matchAll(ROW)].map(([, low, high, cell]) => {
