@@ -611,3 +611,15 @@ test("a save's degrees in sentences (Gearblade: DC 36 Reflex, 3d12 bludgeoning o
     const [opus] = compileActivations(item("Storyteller's Opus"), { spellEffects });
     assert.equal(opus.plan.resolution.check.statistic, "deception");
 });
+
+test("an artifact's Destruction isn't its activation's (Spleen Bloodstone of Arazni's explosion, Orb of Dragonkind's 90 feet); the orb's breath a basic Reflex save, its dragon's damage type picked on the card; Pacifying's save a –2 attack penalty for 1 minute, its nonlethal exception a note", () => {
+    const [, breath] = compileActivations(item("Orb of Dragonkind"), { spellEffects });
+    assert.deepEqual([breath.plan.resolution.check.statistic, breath.plan.resolution.check.basic, breath.plan.resolution.check.against.value, breath.plan.targeting.range, breath.plan.targeting.area], ["reflex", true, 40, null, { type: "cone", value: 60 }]);
+    assert.deepEqual(breath.plan.damageChoices.slice(0, 3).map((choice) => [choice.label, choice.formula]), [["Acid", "25d6[acid]"], ["Cold", "25d6[cold]"], ["Electricity", "25d6[electricity]"]]);
+    assert.ok(breath.plan.notes.includes("Its area: a 60-foot cone or a 100-foot line, its user's choice (place the other by hand)."));
+    const spleen = compileActivations(item("Spleen Bloodstone of Arazni"), { spellEffects });
+    assert.ok(spleen.every((entry) => !/explodes/i.test(JSON.stringify(entry.plan ?? {}))), "its Destruction's explosion read nowhere");
+    const [pacifying] = compileActivations(item("Pacifying"), { spellEffects });
+    assert.deepEqual([pacifying.plan.resolution.check.statistic, pacifying.plan.resolution.outcomes.failure.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.value, modifier.duration.unit])], ["will", [["attack-roll", -2, 1, "minutes"]]]);
+    assert.deepEqual(pacifying.plan.notes, ["Its nonlethal attacks don't take that penalty (by hand)."]);
+});

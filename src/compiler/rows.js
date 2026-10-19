@@ -520,6 +520,20 @@ function speedsOf(sentences, duration, used = new Set()) {
     return found;
 }
 
+// Fast healing its user gains for a while, PF2e's FastHealing rule: Infernal Health's "For 6 rounds, at the start of your turn each round,
+// you recover 25 Hit Points unless you took spirit damage since the start of your previous turn" (its "unless" a note), "you gain fast
+// healing 5 for 1 minute" → [{ value, duration }].
+function fastHealingOf(sentences, duration, used = new Set()) {
+    const found = [];
+    for (const [index, sentence] of sentences.entries()) {
+        const match = /\bat the start of your turn each round, you recover (\d+) Hit Points\b/i.exec(sentence) ?? /\byou (?:gain|have) fast healing (\d+)\b/i.exec(sentence);
+        if (!match) continue;
+        found.push({ value: Number(match[1]), duration: timeIn(sentence, duration) });
+        if (!/\bunless\b/i.test(sentence)) used.add(index);
+    }
+    return found;
+}
+
 // An unarmed attack its user gains for a while, PF2e's Strike rule: Ring of the Tiger's "granting you an agile claw unarmed attack that
 // inflicts 1d6 slashing damage, and you Strike with the claw. Then the claw turns back to normal" (until the end of the turn), Tentacle
 // Potion (Greater)'s "You can also use the limb to make an unarmed attack that deals 1d6 bludgeoning damage and has the sweep trait" (for
@@ -765,7 +779,8 @@ export function ownRow(item, { healing = true } = {}) {
     const light = lightOf(sentences, duration, used);
     const levelTemp = levelTempOf(sentences, duration, used);
     const attacks = attacksOf(sentences, duration, used);
-    if (!effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length && !levelTemp.length && !attacks.length) return null;
+    const fastHealing = fastHealingOf(sentences, duration, used);
+    if (!fastHealing.length && !effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length && !levelTemp.length && !attacks.length) return null;
     // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other || temp?.other);
     if (heal?.other) delete heal.other;
@@ -778,7 +793,7 @@ export function ownRow(item, { healing = true } = {}) {
     // (Nor when it may be used, "You can use this action while Unconscious".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     if (secondary) unread.push(secondary);
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(attacks.length ? { attacks } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(attacks.length ? { attacks } : {}), ...(fastHealing.length ? { fastHealing } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

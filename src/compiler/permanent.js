@@ -84,7 +84,9 @@ export function splitActivations(html) {
     return starts.map((start, index) => {
         // (To a section heading after it, if one comes first: Essence Forge's "<h2>Essence Forge Crafting</h2>" table isn't its last activation's.)
         const whole = text.slice(start, starts[index + 1] ?? text.length);
-        const heading = whole.search(/<h[1-6]\b/i);
+        // (Nor an artifact's Destruction paragraph after it: Orb of Dragonkind's "… explodes … to all creatures within 90 feet" isn't its
+        // breath's range.)
+        const heading = whole.search(/<h[1-6]\b|<p>\s*<strong>\s*Destruction\s*<\/strong>/i);
         const block = heading > 0 ? whole.slice(0, heading) : whole;
         const head = /<strong>\s*Activat(?:e|ion)\s*(?:[—–-]\s*([^<]*?))?\s*<\/strong>([\s\S]*?)(?=<\/p>|<br|<hr|<strong>|$)/i.exec(block);
         const glyph = /<span class="action-glyph">\s*([^<\s]+)\s*<\/span>/i.exec(head?.[2] ?? "")?.[1]?.toLowerCase();
@@ -285,6 +287,8 @@ function compileEach(item, options = {}) {
         // (A condition its own check gives its user, not the creature whose DC it's against: Shadowmist Cape's "On a success, you're Hidden
         // from that creature" — the card's words, not the target's condition.)
         plan = ownConditionsAside(plan, plainText(activation.html));
+        // (A line its reworded text marks for the GM, item-data.js's "… (by hand).": the plan's note, when nothing reads it.)
+        plan = byHandNotes(plan, plainText(activation.html));
         // (Its degrees in sentences, Gearblade's "On a failure, … takes … damage. On a critical failure, they take …".)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = degreeSentencesPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
@@ -311,7 +315,7 @@ function compileEach(item, options = {}) {
             }
         }
         const frequency = activation.frequency?.max ? activation.frequency : null;
-        const { resist, speeds, senses, light, levelTemp, weapon, attacks, strikeDamage, suppress, coats, coatLasts, ...kept } = plan;
+        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, strikeDamage, suppress, coats, coatLasts, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)
         const others = targetedRecipient(plan, plainText(activation.html));
         return {
@@ -326,7 +330,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && plan.builtin === "counteract" ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions } } : {}), ...(counteract && plan.builtin === "counteract" ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) }
             }
         };
     });
@@ -348,6 +352,15 @@ function ownConditionsAside(plan, text) {
     }));
     const moved = Object.entries(outcomes).some(([degree, row]) => row !== plan.resolution.outcomes[degree]);
     return moved ? { ...plan, resolution: { ...plan.resolution, outcomes }, automation: { level: "guided" }, partial: true } : plan;
+}
+
+// The sentences of the text that end "(by hand)." — the GM's lines a reworded text gives (src/compiler/item-data.js) — on the plan's notes.
+function byHandNotes(plan, text) {
+    if (!plan || plan.noteOnly) return plan;
+    const lines = (String(text ?? "").match(/[^.]*\(by hand\)\./g) ?? []).map((line) => line.trim());
+    const known = JSON.stringify(plan);
+    const fresh = lines.filter((line) => !known.includes(line.replace(/\s*\(by hand\)\.$/, "")));
+    return fresh.length ? { ...plan, notes: [...(plan.notes ?? []), ...fresh], partial: true, automation: { level: "guided" } } : plan;
 }
 
 // The activation's own row or note (rows.js), as the consumables' automatic row.
@@ -376,6 +389,7 @@ function rowPlanFor(item, base) {
         ...(row?.weapon ? { weapon: row.weapon } : {}),
         // (An unarmed attack it grants: plan.item.attacks, PF2e's Strike rule.)
         ...(row?.attacks ? { attacks: row.attacks } : {}),
+        ...(row?.fastHealing ? { fastHealing: row.fastHealing } : {}),
         ...(row?.strikeDamage ? { strikeDamage: row.strikeDamage } : {}),
         ...(row?.suppress ? { suppress: row.suppress } : {})
     };

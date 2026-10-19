@@ -278,6 +278,9 @@ export function withItemData(html, item) {
             .replace(/\bIf you roll a (critical )?success, /g, (all, critical) => `On a ${critical ?? ""}success, `)
             .replace(/\bIf you succeed, /g, "On a success, ");
     }
+    // (A named state that is a penalty, Pacifying's "The damaged creature must succeed at a @Check[will|dc:20] save or be pacified. A pacified
+    // creature takes a –2 penalty to attack rolls on any attacks that aren't nonlethal for 1 minute": the penalty, the save's failure.)
+    text = text.replace(/\b(?:The|the) damaged creature must succeed at an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save or be (\w+)\. An? \2 creature takes an? ([–-]\d+) penalty to attack rolls on any attacks that aren't nonlethal for (\d+ (?:rounds?|minutes?))(?:,\s*and (\w))?/, (all, check, state, value, time, next) => `The target must succeed at a ${check} save or take a ${value} penalty to attack rolls for ${time}. Its nonlethal attacks don't take that penalty (by hand).${next ? ` ${next.toUpperCase()}` : ""}`);
     // (Damage as many as the weapon's damage dice, Scizore of the Crab's "dealing slashing damage equal to the scizore of the crab's number
     // of damage dice": that number — its die count and striking rune — at the creature it holds.)
     if (item?.type === "weapon") text = text.replace(/,?\s*dealing (\w+) damage equal to the (?:<em>)?[\w' -]+?(?:<\/em>)?(?: )?'s number of damage dice\./i, (all, type) => `. The target takes @Damage[${weaponDice(item)}[${type.toLowerCase()}]] damage.`);

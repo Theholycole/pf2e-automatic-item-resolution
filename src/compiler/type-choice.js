@@ -27,11 +27,25 @@ function readWritten(text) {
     return { html: untyped, types, ...(notes.length ? { notes } : {}) };
 }
 
+// (Or its dragon's, Orb of Dragonkind's "You breathe an elemental blast that deals 25d6 damage (… basic save) in either a cone or a line
+// (your choice). The breath's damage type matches the Breath Weapon of the dragon type associated with the orb": the dragons' breath
+// types, the GM's pick; the line in place of the cone a note.)
+const DRAGON_TYPE = /\s*The breath's damage type matches the Breath Weapon of the dragon type associated with the [^.]*?\([^)]*\)\./i;
+const DRAGON_TYPES = ["acid", "cold", "electricity", "fire", "poison", "sonic", "force", "mental", "spirit", "void", "vitality"];
+function readDragonType(text) {
+    if (!DRAGON_TYPE.test(text) || !/\bdeals (\d+d\d+) damage \(@Check/i.test(text)) return null;
+    const either = /\bin either an? @Template\[(?:type:)?(cone|line)\|distance:(\d+)\](?:\{[^}]*\})? or an? @Template\[(?:type:)?(cone|line)\|distance:(\d+)\](?:\{[^}]*\})? \(your choice\)/i.exec(text);
+    const html = text.replace(DRAGON_TYPE, "").replace(/\bdeals (\d+d\d+) damage \(@Check/i, "deals @Damage[$1[untyped]] damage (@Check");
+    return { html, types: DRAGON_TYPES.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)}`, type })), notes: ["The damage type is the orb's dragon's Breath Weapon's (picked on the card).", ...(either ? [`Its area: a ${either[2]}-foot ${either[1]} or a ${either[4]}-foot ${either[3]}, its user's choice (place the other by hand).`] : [])] };
+}
+
 // The activation's html → { html (the list left out), types: [{ label, type }], notes? } or null.
 export function readTypeChoice(html) {
     const text = String(html ?? "");
     const written = readWritten(text);
     if (written) return written;
+    const dragon = readDragonType(text);
+    if (dragon) return dragon;
     const list = LIST.exec(text);
     if (!list) return null;
     const types = [...list[1].matchAll(ENTRY)].map((match) => ({ label: `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()}: ${match[2].toLowerCase()}`, type: match[2].toLowerCase() }));

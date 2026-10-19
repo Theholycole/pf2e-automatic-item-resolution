@@ -217,3 +217,12 @@ test("an unarmed attack its user gains, PF2e's Strike rule: Ring of the Tiger's 
     assert.deepEqual(chain.plan.item.weapon.map((adjust) => [adjust.property, adjust.value, adjust.mode, adjust.own, adjust.duration.value, adjust.duration.unit]), [["weapon-traits", "nonlethal", "add", true, 1, "minutes"]]);
     assert.equal(weaponText(chain.plan.item.weapon[0]), "The weapon gains nonlethal for 1 minute");
 });
+
+test("fast healing for a while, PF2e's FastHealing rule: Infernal Health's 25 at the start of each turn for 6 rounds, its spirit-damage exception a note", async () => {
+    const { fastHealingEffectSource, fastHealingText } = await import("../src/live/card.js");
+    const [health] = compileActivations(source("Infernal Health"));
+    const [healing] = health.plan.item.fastHealing;
+    assert.equal(fastHealingText(healing), "Fast healing 25 for 6 rounds");
+    assert.deepEqual(fastHealingEffectSource(healing, { item: { name: "Infernal Health" } }).system.rules, [{ key: "FastHealing", value: 25 }]);
+    assert.equal(health.plan.partial, true);
+});

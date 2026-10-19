@@ -113,6 +113,7 @@ export function previewLines(state) {
     for (const entry of plan?.item?.levelTemp ?? []) lines.push(levelTempText(entry));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
     for (const attack of plan?.item?.attacks ?? []) lines.push(attackText(attack));
+    for (const healing of plan?.item?.fastHealing ?? []) lines.push(fastHealingText(healing));
     for (const extra of plan?.item?.strikeDamage ?? []) lines.push(strikeDamageText(extra));
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
@@ -331,6 +332,14 @@ export function attackText(attack) {
 export function attackEffectSource(attack, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const rule = { key: "Strike", category: "unarmed", group: "brawling", ...(["claw", "jaws", "fist", "horn", "tail", "foot", "fangs", "tusk"].includes(attack.name) ? { baseType: attack.name } : {}), damage: { base: { damageType: attack.type, dice: attack.dice, die: attack.die } }, label: `${attack.name.charAt(0).toUpperCase()}${attack.name.slice(1)}`, range: null, slug: `${attack.name}-${String(item.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`, traits: attack.traits };
     return ownEffectSource({ name: `${attack.name} attack`, img: "icons/svg/sword.svg", words: attackText(attack), rules: [rule], duration: attack.duration, flag: { attack: attack.name }, item, user, worldTime, initiative, moduleId });
+}
+
+// Fast healing in words: "Fast healing 25 for 6 rounds".
+export const fastHealingText = (healing) => `Fast healing ${healing.value}${forTime(healing.duration)}`;
+
+// Its Effect: PF2e's FastHealing rule, which heals at the start of each of its turns.
+export function fastHealingEffectSource(healing, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: "fast healing", img: "icons/svg/regen.svg", words: fastHealingText(healing), rules: [{ key: "FastHealing", value: healing.value }], duration: healing.duration, flag: { fastHealing: healing.value }, item, user, worldTime, initiative, moduleId });
 }
 
 // A picked skill's bonus in words: "+1 item to the skill picked (intimidation, deception or performance), and a critical failure

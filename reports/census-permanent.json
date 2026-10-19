@@ -6,14 +6,14 @@
   "ours": 2087,
   "activations": 2593,
   "results": {
-   "resolves": 740,
+   "resolves": 738,
    "builtin:cast-spell": 470,
    "none": 641,
-   "partial": 166,
+   "partial": 169,
    "builtin:focus-point": 45,
    "builtin:no-effect": 118,
    "builtin:readied-bonus": 44,
-   "note-only": 203,
+   "note-only": 202,
    "builtin:reroll": 25,
    "builtin:counteract": 6,
    "builtin:pf2e-rules": 24,
@@ -29,7 +29,7 @@
   "live": {
    "save": 430,
    "cast": 470,
-   "item": 583,
+   "item": 584,
    "none": 788,
    "focus": 45,
    "fortune": 54,
@@ -43,7 +43,7 @@
    "coat": 3,
    "spellstrike": 9,
    "ways": 1,
-   "later": 4
+   "later": 3
   },
   "withFrequency": 1749,
   "withTrigger": 428
@@ -52,14 +52,14 @@
   "equipment": {
    "activations": 1690,
    "results": {
-    "resolves": 451,
+    "resolves": 450,
     "builtin:cast-spell": 341,
     "none": 429,
-    "partial": 75,
+    "partial": 78,
     "builtin:focus-point": 43,
     "builtin:no-effect": 96,
     "builtin:readied-bonus": 33,
-    "note-only": 142,
+    "note-only": 140,
     "builtin:reroll": 17,
     "builtin:zone": 10,
     "builtin:conjure": 12,
@@ -74,12 +74,12 @@
   "weapon": {
    "activations": 460,
    "results": {
-    "resolves": 157,
+    "resolves": 156,
     "none": 103,
     "partial": 43,
     "builtin:cast-spell": 83,
     "builtin:reroll": 5,
-    "note-only": 21,
+    "note-only": 22,
     "builtin:modes": 12,
     "builtin:item-action": 9,
     "builtin:zone": 6,
@@ -9899,9 +9899,9 @@
    "time": "2",
    "frequency": "three times per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Courtier's Pillow Book",
@@ -12995,9 +12995,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item",
+   "result": "partial",
+   "kind": "save",
+   "live": "save",
    "rune": true
   },
   {
@@ -13746,7 +13746,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "partial",
    "kind": "check",
    "live": "item"
   },
@@ -18375,9 +18375,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": "later"
+   "result": "none",
+   "kind": null,
+   "live": null
   },
   {
    "name": "Swallow-Spike (Greater)",
@@ -21900,9 +21900,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
-   "kind": "save",
-   "live": "save"
+   "result": "note-only",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Eternal Eruption of Droskar's Crag",
@@ -27485,8 +27485,8 @@
    "frequency": "once per day",
    "trigger": false,
    "result": "resolves",
-   "kind": "save",
-   "live": "save"
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Blister Ammunition (Moderate)",

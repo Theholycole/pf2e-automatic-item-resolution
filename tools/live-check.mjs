@@ -4056,6 +4056,43 @@ export const cases = {
         assert(plan.resolution.check.statistic === "stealth" && plan.resolution.check.against?.statistic === "perception", `Stealth against Perception (${JSON.stringify(plan.resolution.check)})`);
         assert(!(plan.resolution.outcomes.success.effects ?? []).length, "no Hidden on the attacker");
         return { check: check.id };
+    },
+
+    // Infernal Health: its user's Effect with PF2e's FastHealing 25 for 6 rounds.
+    async infernalHealth(scene) {
+        const { actor: user } = await creature(scene, "Infernal Patient", { type: "character", x: 3, y: 15 });
+        const contract = await give(user, "Infernal Health");
+        await contract.update({ "system.equipped.invested": true }).catch(() => null);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(contract.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the contract's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const effect = () => user.itemTypes.effect.find((entry) => entry.system.rules.some((rule) => rule.key === "FastHealing"));
+        await until(() => effect(), "the fast healing Effect", { timeout: 8000 });
+        const rule = effect().system.rules.find((entry) => entry.key === "FastHealing");
+        assert(Number(rule.value) === 25 && effect().system.duration.value === 6 && effect().system.duration.unit === "rounds", `fast healing 25 for 6 rounds (${JSON.stringify(rule)}, ${JSON.stringify(effect().system.duration)})`);
+        return { rule };
+    },
+
+    // Orb of Dragonkind's breath: the card's picker of its dragon's damage type; fire picked, the ability module's basic Reflex save card
+    // (DC 40) with 25d6 fire.
+    async orbBreath(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Orb Holder", { type: "character", x: 3, y: 17 });
+        const { token: foe } = await creature(scene, "Orb Target", { x: 5, y: 17, alliance: "opposition" });
+        const orb = await give(user, "Orb of Dragonkind");
+        await until(() => userToken.object && foe.object, "the tokens drawn", { timeout: 5000 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(orb.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the breath's card" });
+        assert(/data-air-field="damageChoice"/.test(card.content), "the damage type picker");
+        const choices = card.getFlag(NS, "card").plan?.damageChoices ?? [];
+        const fire = choices.findIndex((choice) => choice.label === "Fire");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid], damageChoice: fire });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
+        const resolution = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution;
+        assert(resolution.sharedDamage.components[0].formula === "25d6[fire]" && resolution.check.basic && resolution.check.against.value === 40, `25d6 fire, basic DC 40 (${JSON.stringify(resolution.sharedDamage.components)})`);
+        return { formula: resolution.sharedDamage.components[0].formula };
     }
 };
 
