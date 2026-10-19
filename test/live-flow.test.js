@@ -196,3 +196,12 @@ test("a third-party Effect is applied when its rules match the item's text, else
     assert.ok(foundry.applied.slice(before).some((entry) => entry.change.effect?.kind === "note"), "a note instead");
     assert.match(card.content, /wasn&#39;t applied, since its rules don&#39;t match the item&#39;s text \(\+2 status not stated\)/);
 });
+
+test("the live checks' case names are each used once (an object literal's later key would silently replace an earlier case)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync(new URL("../tools/live-check.mjs", import.meta.url), "utf8");
+    const names = [...source.matchAll(/^    async ([A-Za-z0-9_]+)\(scene\)/gm)].map((match) => match[1]);
+    const twice = names.filter((name, index) => names.indexOf(name) !== index);
+    assert.deepEqual(twice, []);
+    assert.ok(names.length > 200, `the cases read (${names.length})`);
+});
