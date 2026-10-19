@@ -204,7 +204,7 @@ function benefactorBreathPlan(html, base, item, options, own) {
 function tablePlan(html, base, item, options, own) {
     const read = readTable(html, (rowHtml) => compileEach({ ...item, system: { ...(item.system ?? {}), description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p>${rowHtml}` } } }, options)[0]?.plan ?? null);
     // (Or a RollTable it links: drawn live, the row drawn compiled then.)
-    const linked = read ? null : readLinkedTable(html);
+    const linked = read ? null : readLinkedTable(html, item?.system?.description?.value);
     if (linked) {
         const words = plainText(String(html ?? "")).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\b(?:DC|spell attack|target|decisions?)\b/i.test(sentence) && !/\broll\b[^.]*\btable\b/i.test(sentence));
         return { ...base, builtin: "table", automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, table: { uuid: linked.uuid, name: linked.name, rows: [], ...(linked.dc ? { dc: linked.dc } : {}), ...(linked.attack ? { attack: linked.attack } : {}) }, ...(words.length ? { notes: words.map((sentence) => sentence.trim()) } : {}), partial: true };

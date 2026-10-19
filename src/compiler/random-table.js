@@ -49,8 +49,13 @@ export const rowFor = (table, total) => table?.rows?.find((row) => total >= row.
 
 // A RollTable the text links for its roll: "Roll on the @UUID[…RollTable…]{Rod of Wonder} table" → { uuid, name } or null.
 const LINKED = /\b[Rr]oll (?:d%|d\d+|an? d\d+ )?\s*on the @UUID\[(Compendium\.[\w-]+\.[\w-]+\.RollTable\.[A-Za-z0-9]+)\]\{([^}]+)\} table\b/;
-export function readLinkedTable(html) {
-    const linked = LINKED.exec(String(html ?? ""));
+// (Or a card drawn at random from a deck its whole text links, Deck of Illusions' "You draw a card, chosen randomly from the remaining cards
+// in the deck": that RollTable.)
+const DRAWN = /\bYou draw a card, chosen randomly\b/i;
+const ANY_TABLE = /@UUID\[(Compendium\.[\w-]+\.[\w-]+\.RollTable\.[A-Za-z0-9]+)\]\{([^}]+)\}/;
+export function readLinkedTable(html, whole = null) {
+    const drawn = DRAWN.test(String(html ?? "")) ? ANY_TABLE.exec(String(whole ?? html ?? "")) : null;
+    const linked = LINKED.exec(String(html ?? "")) ?? drawn;
     if (!linked) return null;
     // (Its DC and spell attack for the spells drawn, as for its own table's: Rod of Wonder's DC 27 and +17.)
     const own = /\bAny spell DC required is DC (\d+)(?:, and any spell attack (?:roll|modifier) required is (?:\+(\d+)|\[\[\/r 1d20\+(\d+)\]\]))?/i.exec(String(html ?? ""));

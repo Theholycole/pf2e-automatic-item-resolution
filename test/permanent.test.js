@@ -770,4 +770,6 @@ test("a roll on a RollTable it links (Rod of Wonder): the table card draws from 
     const { routeOf } = await import("../src/live/route.js");
     const [wave] = compileActivations(item("Rod of Wonder"));
     assert.deepEqual([routeOf(wave.plan), wave.plan.table], ["table", { uuid: "Compendium.pf2e.rollable-tables.RollTable.uYDzWM5ji52r4mSD", name: "Rod of Wonder", rows: [], dc: 27, attack: 17 }]);
+    // (A card drawn at random, Deck of Illusions': the RollTable its text links before its activation.)
+    assert.equal(compileActivations(item("Deck of illusions"))[0].plan.table.name, "Deck of Illusions Cards");
 });
