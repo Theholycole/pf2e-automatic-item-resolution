@@ -80,6 +80,36 @@ export function claimedBySpellModule(item, { claims = null } = {}) {
     }
 }
 
+// The spell module's share of a permanent item it claims, when all it claims it for are its item spellshapes and item casts
+// (options.claimsWhy: its reasons; options.spellModuleReads: what those readers read, { shapes: [activation labels], casts: [spell uuids] }):
+// { labels, casts }, the activations it plays — the item's others are this module's (Scepter of Quickening's Quickened Casting is its,
+// Hasten to Fight this module's). "all" for an item it claims for anything else (or without its readers), null for one it doesn't claim.
+const SHARED_REASONS = new Set(["item-spellshape", "item-casts"]);
+const quietly = (call, fallback) => {
+    try {
+        return call() ?? fallback;
+    } catch {
+        return fallback;
+    }
+};
+export function spellModuleShare(item, options = {}) {
+    if (!claimedBySpellModule(item, options)) return null;
+    const why = typeof options.claimsWhy === "function" ? quietly(() => options.claimsWhy(item), []) : [];
+    if (!why.length || !why.every((reason) => SHARED_REASONS.has(reason)) || typeof options.spellModuleReads !== "function") return "all";
+    const read = quietly(() => options.spellModuleReads(item), null);
+    return read ? { labels: new Set(read.shapes ?? []), casts: new Set(read.casts ?? []) } : "all";
+}
+
+// An activation of a shared item the spell module plays: one of its spellshapes (by its name, an unnamed one by the item's), or a cast of a
+// spell it casts there.
+export function playedBySpellModule(entry, share, item) {
+    if (!share || share === "all") return Boolean(share);
+    if (share.labels.has(entry.activation?.name ?? item?.name)) return true;
+    const plan = entry.plan;
+    const spells = [plan?.spell?.uuid, ...(plan?.choices ?? []).map((choice) => choice.spell?.uuid)].filter(Boolean);
+    return plan?.builtin === "cast-spell" && spells.some((uuid) => share.casts.has(uuid));
+}
+
 export { asAbility } from "./ability-shape.js";
 
 // One item → a plan, { builtin }, or null.

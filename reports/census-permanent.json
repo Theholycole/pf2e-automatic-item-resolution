@@ -2,13 +2,13 @@
  "generated": "2026-10-19",
  "totals": {
   "items": 2679,
-  "staves": 592,
-  "ours": 2087,
-  "activations": 2593,
+  "staves": 560,
+  "ours": 2119,
+  "activations": 2598,
   "results": {
-   "resolves": 754,
+   "resolves": 757,
    "builtin:cast-spell": 474,
-   "none": 575,
+   "none": 577,
    "partial": 188,
    "builtin:focus-point": 45,
    "builtin:counteract": 26,
@@ -32,8 +32,8 @@
   "live": {
    "save": 439,
    "cast": 474,
-   "item": 584,
-   "none": 706,
+   "item": 587,
+   "none": 708,
    "focus": 45,
    "counteract": 26,
    "fortune": 57,
@@ -51,16 +51,16 @@
    "take": 1,
    "later": 3
   },
-  "withFrequency": 1749,
-  "withTrigger": 428
+  "withFrequency": 1753,
+  "withTrigger": 429
  },
  "byType": {
   "equipment": {
-   "activations": 1690,
+   "activations": 1693,
    "results": {
-    "resolves": 455,
+    "resolves": 457,
     "builtin:cast-spell": 345,
-    "none": 399,
+    "none": 400,
     "partial": 84,
     "builtin:focus-point": 43,
     "builtin:counteract": 22,
@@ -81,10 +81,10 @@
    }
   },
   "weapon": {
-   "activations": 460,
+   "activations": 462,
    "results": {
-    "resolves": 165,
-    "none": 85,
+    "resolves": 166,
+    "none": 86,
     "partial": 47,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
@@ -4828,6 +4828,39 @@
    "rune": true
   },
   {
+   "name": "Dragon's Eye Charm",
+   "type": "equipment",
+   "activation": null,
+   "time": "1",
+   "frequency": "once per day",
+   "trigger": false,
+   "result": "none",
+   "kind": null,
+   "live": null
+  },
+  {
+   "name": "Dragon's Eye Charm",
+   "type": "equipment",
+   "activation": null,
+   "time": "1",
+   "frequency": "once per day",
+   "trigger": false,
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
+  },
+  {
+   "name": "Dragon's Eye Charm",
+   "type": "equipment",
+   "activation": null,
+   "time": "1",
+   "frequency": "once per day",
+   "trigger": false,
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
+  },
+  {
    "name": "Piston Gauntlets",
    "type": "weapon",
    "activation": null,
@@ -4925,6 +4958,17 @@
    "result": "builtin:cast-spell",
    "kind": null,
    "live": "cast"
+  },
+  {
+   "name": "Sky Hammer",
+   "type": "weapon",
+   "activation": "Comet Fall",
+   "time": "reaction",
+   "frequency": null,
+   "trigger": true,
+   "result": "none",
+   "kind": null,
+   "live": null
   },
   {
    "name": "Blade of the Rabbit Prince",
@@ -24265,6 +24309,17 @@
    "result": "resolves",
    "kind": "save",
    "live": "save"
+  },
+  {
+   "name": "Searing Blade (Greater)",
+   "type": "weapon",
+   "activation": "Radiate Flames",
+   "time": "1",
+   "frequency": "once per day",
+   "trigger": false,
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Chiromantic Lines",

@@ -500,6 +500,14 @@ function resistancesOf(sentences, duration, used = new Set()) {
         // ("When smeared over a creature, that creature gains …": the one it's on, the drinker.)
         const own = sentence.replace(/^\s*When (?:smeared|applied|rubbed|spread) (?:over|on|onto|to) (?:a|an|the) (?:willing )?creature,\s*/i, "");
         if (/^\s*(?:If|When|Whenever|While|Each time)\b/i.test(own) || /\b(?:triggering|except|double|instead|chosen|choose|attuned|one type|all(?:y|ies)|creatures|emanation|aura|against (?:the|that|one))\b/i.test(own) || /\bcreature\b(?! (?:gains|has) )/i.test(own.replace(/\b(?:that|the) creature (?:gains|has)\b/i, ""))) continue;
+        // (Or its type first, Dragon's Eye Charm's "You gain fire resistance 5 for 10 minutes", Witch's Finger's "you have cold resistance 3",
+        // Injigo's Loving Embrace's "granting you mental resistance 5 and …": the same, as "resistance 5 to fire".)
+        const typeFirst = [...own.matchAll(/\b(?:you (?:gain|get|have)|granting you|(?:that|the) creature (?:gains|has)) ([a-z]+(?:(?:,|, and| and) [a-z]+)*) resistance (\d+)\b(?! to\b)(?=[.;]|,? (?:but|and)\b| for\b| until\b|$)/gi)].filter((match) => match[1].toLowerCase().split(/,? and |, /).every((word) => RESIST_TYPES.has(word.trim())));
+        for (const match of typeFirst) {
+            const more = /^,? (?:and|but)\b/i.test(own.slice(match.index + match[0].length));
+            if (!more) used.add(index);
+            for (const type of match[1].toLowerCase().split(/,? and |, /).map((word) => word.trim())) found.push({ type, value: Number(match[2]), duration: durationIn(own, duration) });
+        }
         for (const match of own.matchAll(pattern)) {
             const words = match[3].toLowerCase().split(/,? and |, /).map((word) => word.trim().replace(/ damage$/, ""));
             // (Splash and area damage: PF2e's splash-damage and area-damage.)

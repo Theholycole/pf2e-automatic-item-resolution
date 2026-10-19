@@ -35,7 +35,7 @@ import { withDegreeEffects } from "./degree-effects.js";
 import { auraZonePlan, choiceAuraWays } from "./aura-zones.js";
 import { isBareFigurine, ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
-import { claimedBySpellModule } from "./index.js";
+import { playedBySpellModule, spellModuleShare } from "./index.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { degreeSentencesPlan, saveOrPlan } from "./save-or.js";
@@ -65,7 +65,7 @@ const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", 
 const SPELL_MODULE_TRAITS = ["staff", "wand", "spellheart"];
 export function handlesPermanent(item, options = {}) {
     return PERMANENT_TYPES.has(item?.type) && !SPELL_MODULE_TRAITS.some((trait) => (item.system?.traits?.value ?? []).includes(trait)) && !(item.type === "weapon" && item.system?.group === "bomb")
-        && (/<strong>\s*Activat/i.test(String(item.system?.description?.value ?? "")) || isBareFigurine(item)) && !claimedBySpellModule(item, options);
+        && (/<strong>\s*Activat/i.test(String(item.system?.description?.value ?? "")) || isBareFigurine(item)) && spellModuleShare(item, options) !== "all";
 }
 
 const field = (block, name) => {
@@ -122,7 +122,9 @@ const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), ca
 // Each activation → { activation, plan } (plan null when nothing is read). options: as compileItem's.
 // (Each save against its owner's DC as the core's { dc: "owner" }: src/compiler/item-data.js.)
 export function compileActivations(item, options = {}) {
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: ownerDCs(entry.plan) }));
+    // (An item the spell module shares — its spellshapes or casts there: those activations left to it, src/compiler/index.js spellModuleShare.)
+    const share = spellModuleShare(item, options);
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: ownerDCs(entry.plan) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // An activation that makes "an attack …, as described in the rune's other activation" (Swallow-Spike's second): that other

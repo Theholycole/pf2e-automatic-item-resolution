@@ -34,6 +34,10 @@ const spells = spellIndex(readDocuments(path.join(packsDirectory, "spells")).fil
 const basicActions = compileBasicActions(readDocuments(path.join(packsDirectory, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
 // The spell module's claims (its src/compiler/item-claims.js, by its id next to this folder), when it's there.
 const claims = await import("../../pf2e-automatic-resolution/src/compiler/item-claims.js").then((module) => module.claims).catch(() => null);
+// (Why it claims one, and what its item spellshape and item cast readers read: an item it shares, its other activations read here.)
+const spellModule = await Promise.all([import("../../pf2e-automatic-resolution/src/compiler/item-claims.js"), import("../../pf2e-automatic-resolution/src/compiler/item-spellshape.js"), import("../../pf2e-automatic-resolution/src/compiler/item-casts.js")]).catch(() => null);
+const claimsWhy = spellModule ? (item) => spellModule[0].itemClaims(item) : null;
+const spellModuleReads = spellModule ? (item) => ({ shapes: (spellModule[1].readItemSpellshape(item)?.activations ?? []).map((activation) => activation.label), casts: (spellModule[2].readItemCasts(item)?.casts ?? []).map((cast) => cast.uuid) }) : null;
 
 function gapsOf(plan) {
     const family = registry.familyFor(plan.resolution?.kind);
@@ -60,12 +64,12 @@ const result = (plan) => {
 
 const equipment = readDocuments(path.join(packsDirectory, "equipment")).filter((doc) => doc.collection === "items" && !["consumable", "treasure", "kit"].includes(doc.type));
 const withActivate = equipment.filter((doc) => /<strong>\s*Activat/i.test(doc.system?.description?.value ?? ""));
-const staves = withActivate.filter((doc) => !handlesPermanent(doc, { claims }));
+const staves = withActivate.filter((doc) => !handlesPermanent(doc, { claims, claimsWhy, spellModuleReads }));
 const rows = [];
-for (const item of withActivate.filter((doc) => handlesPermanent(doc, { claims }))) {
+for (const item of withActivate.filter((doc) => handlesPermanent(doc, { claims, claimsWhy, spellModuleReads }))) {
     let compiled = [];
     try {
-        compiled = compileActivations(withOwner(item), { basicActions, spellEffects, spells, claims, itemEffects });
+        compiled = compileActivations(withOwner(item), { basicActions, spellEffects, spells, claims, claimsWhy, spellModuleReads, itemEffects });
     } catch (error) {
         rows.push({ name: item.name, type: item.type, activation: null, result: "error", error: error.message.slice(0, 120) });
         continue;

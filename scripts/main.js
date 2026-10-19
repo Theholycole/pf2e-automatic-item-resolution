@@ -41,8 +41,17 @@ const moduleEffect = (uuid) => moduleEffects.get(uuid) ?? null;
 const dataOf = (item) => (typeof item?.toObject === "function" ? { ...item.toObject(false), uuid: item.uuid, ...ownerOf(item.actor) } : item);
 
 // The spell module's claims (its api, when it's active): an item it acts on is left to it.
-const claims = (item) => game.modules.get(SPELL_ID)?.active ? game.modules.get(SPELL_ID)?.api?.claims?.(item) === true : false;
-const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims, itemEffects, moduleEffect, ...(conditionNames ? { conditionNames } : {}) });
+const spellApi = () => (game.modules.get(SPELL_ID)?.active ? game.modules.get(SPELL_ID)?.api ?? null : null);
+const claims = (item) => spellApi()?.claims?.(item) === true;
+// (Why it claims one, and what its item spellshape and item cast readers read there: an item it shares, its other activations this module's —
+// src/compiler/index.js spellModuleShare.)
+const claimsWhy = (item) => spellApi()?.claimsWhy?.(item) ?? [];
+const spellModuleReads = (item) => {
+    const api = spellApi();
+    if (typeof api?.itemShapes?.read !== "function" || typeof api?.itemCasts?.read !== "function") return null;
+    return { shapes: (api.itemShapes.read(item)?.activations ?? []).map((activation) => activation.label), casts: (api.itemCasts.read(item)?.casts ?? []).map((cast) => cast.uuid) };
+};
+const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims, claimsWhy, spellModuleReads, itemEffects, moduleEffect, ...(conditionNames ? { conditionNames } : {}) });
 
 const compile = (item) => compileItem(dataOf(item), options());
 const handles = (item) => handlesItem(dataOf(item), { claims });

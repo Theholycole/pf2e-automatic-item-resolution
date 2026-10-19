@@ -37,7 +37,11 @@ const itemEffects = equipmentEffectIndex(readDocuments(path.join(pf2ePacks, "equ
 const spells = spellIndex(readDocuments(path.join(pf2ePacks, "spells")).filter((doc) => doc.collection === "items"));
 const basicActions = compileBasicActions(readDocuments(path.join(pf2ePacks, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
 const claims = await import("../../pf2e-automatic-resolution/src/compiler/item-claims.js").then((module) => module.claims).catch(() => null);
-const options = { basicActions, spellEffects, spells, claims, itemEffects };
+// (Why it claims one, and what its item spellshape and item cast readers read: an item it shares, its other activations read here.)
+const spellModule = await Promise.all([import("../../pf2e-automatic-resolution/src/compiler/item-claims.js"), import("../../pf2e-automatic-resolution/src/compiler/item-spellshape.js"), import("../../pf2e-automatic-resolution/src/compiler/item-casts.js")]).catch(() => null);
+const claimsWhy = spellModule ? (item) => spellModule[0].itemClaims(item) : null;
+const spellModuleReads = spellModule ? (item) => ({ shapes: (spellModule[1].readItemSpellshape(item)?.activations ?? []).map((activation) => activation.label), casts: (spellModule[2].readItemCasts(item)?.casts ?? []).map((cast) => cast.uuid) }) : null;
+const options = { basicActions, spellEffects, spells, claims, claimsWhy, spellModuleReads, itemEffects };
 
 const GEAR = new Set(["consumable", "equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const STARFINDER = /^(?:sf|sf2e)[-_]/i;

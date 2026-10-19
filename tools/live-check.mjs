@@ -4302,6 +4302,18 @@ export const cases = {
         return { save: save.id, counteract: counter.id };
     },
 
+    // Dragon's Eye Charm, an item the spell module shares (its Ignition): the third activation, read here — fire resistance 5 for 10 minutes.
+    async sharedCharm(scene) {
+        const { actor: user } = await creature(scene, "Charm Wearer", { type: "character", x: 1, y: 11 });
+        const charm = await give(user, "Dragon's Eye Charm");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(charm.uuid, 2);
+        const card = await messageAfter(since, itemCard("item"), { what: "the charm's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => (user.attributes.resistances ?? []).some((entry) => entry.type === "fire" && entry.value === 5), "fire resistance 5", { timeout: 8000 });
+        return { resistances: (user.attributes.resistances ?? []).map((entry) => `${entry.type} ${entry.value}`) };
+    },
+
     // Key to the Stomach's Iron Gut: the counteract card for one poison its user suffers (+15, rank 5), as Cleanse Affliction.
     async ironGut(scene) {
         const { actor: user } = await creature(scene, "Iron Gut", { type: "character", x: 1, y: 9 });

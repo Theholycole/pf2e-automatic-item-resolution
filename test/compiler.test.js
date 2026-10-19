@@ -785,6 +785,25 @@ test("attack and save rolls played without the word reroll: Keep Stone Amulet's 
     assert.match(rerollText(reroll("Eye of Fortune")), /^Your latest attack roll: the flat check for its target's Concealed \(DC 5\) or Hidden \(DC 11\), rolled twice/);
 });
 
+test("an item the spell module shares: its spellshapes and casts there left to it, the item's other activations read here (Dragon's Eye Charm's fire resistance; Ignition the spell module's)", async () => {
+    const { spellModuleShare, playedBySpellModule } = await import("../src/compiler/index.js");
+    const charm = item("Dragon's Eye Charm");
+    const ignition = compileActivations(charm)[0].plan.spell?.uuid ?? "Compendium.pf2e.spells-srd.Item.6DfLZBl8wKIV03Iq";
+    const shared = { claims: () => true, claimsWhy: () => ["item-casts"], spellModuleReads: () => ({ shapes: [], casts: [ignition] }) };
+    const kept = compileActivations(charm, shared).filter((entry) => entry.plan).map((entry) => entry.index);
+    assert.ok(!kept.includes(0) && kept.includes(2), `Ignition left, the resistance kept (${kept})`);
+    // (Claimed for anything else, or without its readers: the whole item the spell module's.)
+    assert.equal(spellModuleShare(charm, { claims: () => true, claimsWhy: () => ["energy-rune"], spellModuleReads: shared.spellModuleReads }), "all");
+    assert.equal(spellModuleShare(charm, { claims: () => true }), "all");
+    assert.deepEqual(compileActivations(charm, { claims: () => true }), []);
+    assert.equal(spellModuleShare(charm, {}), null);
+    // (A spellshape by its activation's name, an unnamed one by the item's.)
+    const share = { labels: new Set(["Quickened Casting", "Shadow Signet"]), casts: new Set() };
+    assert.equal(playedBySpellModule({ activation: { name: "Quickened Casting" }, plan: {} }, share, { name: "Scepter" }), true);
+    assert.equal(playedBySpellModule({ activation: { name: "Hasten to Fight" }, plan: {} }, share, { name: "Scepter" }), false);
+    assert.equal(playedBySpellModule({ activation: { name: null }, plan: {} }, share, { name: "Shadow Signet" }), true);
+});
+
 test("an ally's persistent damage taken onto its user: Bloodstained Waistcoat's bleed, the take card at the ally targeted", async () => {
     const { routeOf } = await import("../src/live/route.js");
     const { takeText } = await import("../src/live/take-card.js");
