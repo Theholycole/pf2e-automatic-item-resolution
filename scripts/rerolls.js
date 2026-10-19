@@ -26,8 +26,9 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
     if (!state || state.kind !== "reroll" || state.status !== "open") return null;
     const reroll = state.plan.reroll;
     // (Whose roll: the user's, or for a companion's reroll the creature targeted; "either", the creature targeted if any, else the user.)
-    const companion = reroll.who === "companion" || reroll.who === "either" ? await fromUuid(Array.isArray(targets) ? targets[0] ?? "" : "").catch(() => null) : null;
+    const companion = reroll.who === "companion" || reroll.who === "either" || reroll.who === "target" ? await fromUuid(Array.isArray(targets) ? targets[0] ?? "" : "").catch(() => null) : null;
     if (reroll.who === "companion" && !companion?.actor) throw new Error("Target the companion first.");
+    if (reroll.who === "target" && !companion?.actor) throw new Error("Target the creature first.");
     const actor = companion?.actor ?? (await fromUuid(state.user.actorUuid).catch(() => null));
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const recent = (game.messages?.contents ?? []).slice(-RECENT);
@@ -144,7 +145,7 @@ async function raiseRoll(message, state, triggering, actor) {
             : raise.ac
             ? `${triggering.actor?.name ?? "The attacker"}'s attack roll (${old.total}) against ${state.user.name}'s AC ${dc ?? "?"} + ${raise.ac.value} ${raise.ac.type} = ${result.dc ?? "?"}: ${degree(result.degree)} (was ${degree(result.before)}).`
             : raise.change
-            ? `${state.plan.reroll.who === "attacker" ? `${triggering.actor?.name ?? "The attacker"}'s attack roll` : `${actor.name}'s roll`} (${old.total}): ${degree(result.before)} becomes ${degree(result.degree)}.`
+            ? `${state.plan.reroll.who === "attacker" ? `${triggering.actor?.name ?? "The attacker"}'s ${state.plan.reroll.what === "check" ? "check" : "attack roll"}` : `${actor.name}'s roll`} (${old.total}): ${degree(result.before)}${result.degree === result.before ? ", nothing to change" : ` becomes ${degree(result.degree)}`}.`
             : `${actor.name}'s roll: ${old.total} + ${result.added} ${raise.bonus.type} = ${result.total}${dc ? ` against DC ${dc}` : ""}: ${degree(result.degree)} (was ${degree(result.before)}).`,
         "PF2e's message isn't changed: the GM uses this result."
     ];

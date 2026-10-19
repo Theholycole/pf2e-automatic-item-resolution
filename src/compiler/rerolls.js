@@ -173,9 +173,23 @@ export function readConcealedAgainst(html) {
 const ROLL_TWICE = /\bThe (?:caster|attacker) must roll the (spell attack roll|attack roll) twice and take the (worse|lower|better|higher) result\b/i;
 const NORMAL_HIT = /\bYou take normal damage from the triggering attack as if the attack were a normal hit instead\b/i;
 const NEW_SAVE = /\bimmediately attempting a new save against the effect\b/i;
+// (And degrees changed on another creature's roll: Crimson Bluff's "The triggering Strike uses the outcome for one degree of success worse than
+// the result of the attack roll", Golden Greaves' "Your opponent instead critically fails on the triggering check" for a Shove, Trip or
+// Reposition at its user, Tome of Dripping Shadows' "The triggering creature's saving throw result is a failure, not a critical failure" — the
+// creature its user targets; what follows it, for the card.)
+const ONE_WORSE = /\bThe triggering Strike uses the outcome for one degree of success worse than the result of the attack roll\b/i;
+const OPPONENT_CRIT_FAILS = /\bYour opponent instead critically fails on the triggering check\b/i;
+const TARGET_SAVE_FAILURE = /\bThe triggering creature's saving throw result is a failure, not a critical failure\./i;
 export function readOtherRoll(html) {
     const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
     const trigger = /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/s.exec(text)?.[1] ?? "";
+    if (ONE_WORSE.test(text)) return { what: "attack", who: "attacker", keep: "new", raise: { change: { criticalSuccess: "success", success: "failure", failure: "criticalFailure" } } };
+    if (OPPONENT_CRIT_FAILS.test(text) && /\bfails to (?:Reposition|Shove|Trip|Grapple|Disarm)\b/i.test(trigger)) return { what: "check", who: "attacker", keep: "new", raise: { change: { failure: "criticalFailure" } } };
+    const target = TARGET_SAVE_FAILURE.exec(text);
+    if (target) {
+        const after = text.slice(target.index + target[0].length).trim().split(/(?<=[.!?])\s+(?=[A-Z])/).slice(0, 2).join(" ");
+        return { what: "save", who: "target", keep: "new", raise: { change: { criticalFailure: "failure" } }, ...(after ? { after } : {}) };
+    }
     const twice = ROLL_TWICE.exec(text);
     if (twice) return { what: /spell/i.test(twice[1]) ? "spellAttack" : "attack", who: "attacker", keep: /worse|lower/i.test(twice[2]) ? "lower" : "higher" };
     if (NORMAL_HIT.test(text) && /\bcritically hit\b/i.test(trigger)) return { what: "attack", who: "attacker", keep: "new", raise: { change: { criticalSuccess: "success" } } };
@@ -186,7 +200,7 @@ export function readOtherRoll(html) {
 export function rerollPlan(html, base) {
     const reroll = readReroll(html) ?? readRaise(html) ?? readArmorRaise(html) ?? readAutoSuccess(html) ?? readContest(html) ?? readConcealedAgainst(html) ?? readOtherRoll(html);
     if (!reroll) return null;
-    return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" ? "the creature targeted" : reroll.who === "either" ? "its user or the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
+    return { ...base, builtin: "reroll", automation: { level: "automatic" }, targeting: { target: reroll.who === "attacker" ? "the attacker" : reroll.who === "companion" || reroll.who === "target" ? "the creature targeted" : reroll.who === "either" ? "its user or the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, reroll };
 }
 
 // The plan to keep: the reroll over nothing, a note alone or the GM's fallback.

@@ -782,6 +782,20 @@ test("attack and save rolls played without the word reroll: Keep Stone Amulet's 
     assert.deepEqual(reroll("Phantom Fang").contest, { flat: 5 });
 });
 
+test("degrees changed on another creature's roll: Crimson Bluff's Strike one degree worse, Golden Greaves' failed Shove a critical failure (a check at its user), Tome of Dripping Shadows' target's critical failure a failure", async () => {
+    const { rerollText, triggeringRoll } = await import("../src/live/reroll-card.js");
+    const bluff = compileActivations(item("Crimson Bluff"))[1].plan.reroll;
+    assert.deepEqual([bluff.who, bluff.raise.change], ["attacker", { criticalSuccess: "success", success: "failure", failure: "criticalFailure" }]);
+    const greaves = compileActivations(item("Golden Greaves"))[0].plan.reroll;
+    assert.deepEqual([greaves.what, greaves.who, greaves.raise.change], ["check", "attacker", { failure: "criticalFailure" }]);
+    const messages = [{ id: "shove", type: "skill-check", targetActorUuid: "Actor.me" }, { id: "strike", type: "attack-roll", targetActorUuid: "Actor.me" }];
+    assert.equal(triggeringRoll(messages, greaves, { actorUuid: "Actor.me" }), "shove");
+    assert.equal(rerollText(greaves), "The latest check at you: a failure becomes a critical failure");
+    const tome = compileActivations(item("Tome of Dripping Shadows"))[0].plan;
+    assert.deepEqual([tome.builtin, tome.reroll.who, tome.reroll.raise.change, tome.targeting.target], ["reroll", "target", { criticalFailure: "failure" }, "the creature targeted"]);
+    assert.match(tome.reroll.after, /^For the next minute, you become Concealed to all creatures/);
+});
+
 test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage typed on the card (a basic DC 32 Reflex save), Spring-Loaded Net Launcher's Net at 60 feet, Azarim's Enfeebled 2 at its carrier (DC 23 Fortitude)", () => {
     const spiral = compileItem({ ...item("Spiral Labyrinth"), ownerLevel: 14 });
     assert.deepEqual([spiral.resolution.check.statistic, spiral.resolution.check.basic, spiral.resolution.check.against.value, spiral.scaled.of], ["reflex", true, 32, "the damage your shield blocked, its Hardness 10 higher for that Shield Block"]);

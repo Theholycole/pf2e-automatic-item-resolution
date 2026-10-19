@@ -8,14 +8,14 @@
   "results": {
    "resolves": 752,
    "builtin:cast-spell": 471,
-   "none": 587,
+   "none": 585,
    "partial": 187,
    "builtin:focus-point": 45,
    "builtin:counteract": 25,
    "builtin:readied-bonus": 45,
    "builtin:no-effect": 100,
-   "note-only": 179,
-   "builtin:reroll": 36,
+   "note-only": 178,
+   "builtin:reroll": 39,
    "builtin:table": 7,
    "builtin:teleport": 7,
    "builtin:pf2e-rules": 26,
@@ -31,12 +31,12 @@
   "live": {
    "save": 436,
    "cast": 471,
-   "item": 586,
-   "none": 718,
+   "item": 585,
+   "none": 716,
    "focus": 45,
    "counteract": 25,
    "fortune": 56,
-   "reroll": 36,
+   "reroll": 39,
    "strike": 88,
    "table": 7,
    "teleport": 7,
@@ -58,14 +58,14 @@
    "results": {
     "resolves": 455,
     "builtin:cast-spell": 342,
-    "none": 407,
+    "none": 406,
     "partial": 84,
     "builtin:focus-point": 43,
     "builtin:counteract": 21,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
-    "note-only": 125,
-    "builtin:reroll": 26,
+    "note-only": 124,
+    "builtin:reroll": 28,
     "builtin:table": 4,
     "builtin:teleport": 4,
     "builtin:zone": 11,
@@ -81,10 +81,10 @@
    "activations": 460,
    "results": {
     "resolves": 163,
-    "none": 87,
+    "none": 86,
     "partial": 47,
     "builtin:cast-spell": 83,
-    "builtin:reroll": 6,
+    "builtin:reroll": 7,
     "builtin:table": 1,
     "builtin:modes": 12,
     "note-only": 17,
@@ -13244,9 +13244,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Vagabond's Teapot",
@@ -13960,9 +13960,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Bismuth Armor",
@@ -21540,9 +21540,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Jann's Prism",

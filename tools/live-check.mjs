@@ -4887,6 +4887,45 @@ export const cases = {
         return { outcome, results };
     },
 
+    // Degrees changed on another creature's roll: Crimson Bluff's Swap Places (the brute's critical hit at AC 1 a hit), Golden Greaves (the
+    // brute's Shove at its user one degree down to a critical failure, when it failed), Tome of Dripping Shadows (the creature targeted's
+    // critically failed save a failure).
+    async otherDegrees(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Degree Bearer", { x: 18, y: 20, ac: 1, save: 12 });
+        const { actor: brute, token: bruteToken } = await creature(scene, "Degree Brute", { type: "character", x: 19, y: 20 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Degree Foe", { x: 20, y: 20, save: 0 });
+        const blade = await give(brute, "Shortsword");
+        await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await bruteToken.object?.control?.();
+        await target(userToken);
+        const use = async (name, index, choices = {}) => {
+            const item = await give(user, name);
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, index);
+            const card = await messageAfter(since, itemCard("reroll"), { what: `${name}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [], ...choices });
+            await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", `${name} applied`, { timeout: 8000 });
+            return game.messages.get(card.id).getFlag(NS, "card").results;
+        };
+        const results = {};
+        const { attack } = await strike(brute, blade);
+        const outcome = attack.flags.pf2e.context.outcome;
+        results.bluff = await use("Crimson Bluff", 1);
+        const after = { criticalSuccess: "becomes a success.", success: "becomes a failure.", failure: "becomes a critical failure.", criticalFailure: "a critical failure, nothing to change." }[outcome];
+        assert(results.bluff[0]?.startsWith(`PFTEST ITEM Degree Brute's attack roll (${attack.rolls[0].total}):`) && results.bluff[0].endsWith(after), `one degree worse than ${outcome} (${JSON.stringify(results.bluff)})`);
+        let since = Date.now();
+        await game.pf2e.actions.get("shove").use({ actors: [brute], event: shift() });
+        const shove = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check" && message.flags.pf2e.context.target?.actor === user.uuid, { what: "the Shove at the bearer" });
+        results.greaves = await use("Golden Greaves", 0);
+        const shoved = shove.flags.pf2e.context.outcome;
+        assert(results.greaves[0]?.startsWith("PFTEST ITEM Degree Brute's check (") && results.greaves[0].endsWith(shoved === "failure" ? "a failure becomes a critical failure." : `${{ criticalSuccess: "a critical success", success: "a success", criticalFailure: "a critical failure" }[shoved]}, nothing to change.`), `a failed Shove a critical failure (${shoved}: ${JSON.stringify(results.greaves)})`);
+        await foe.saves.reflex.roll({ skipDialog: true, dc: { value: 60 } });
+        await wait(600);
+        results.tome = await use("Tome of Dripping Shadows", 0, { targets: [foeToken.uuid] });
+        assert(results.tome[0]?.startsWith("PFTEST ITEM Degree Foe's roll (") && results.tome[0].endsWith("a critical failure becomes a failure."), `the foe's critical failure a failure (${JSON.stringify(results.tome)})`);
+        return { outcome, shoved, results };
+    },
+
     // Fossil Fragment (Petrified Wood): its awakened tree, found by name in the compendiums, as the ability module's conjured token.
     async fossilTree(scene) {
         const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 13, y: 1 });

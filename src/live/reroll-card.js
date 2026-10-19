@@ -67,7 +67,7 @@ export function rerollText(reroll) {
         const changes = Object.entries(reroll.raise.change ?? {}).map(([from, to]) => `${DEGREE_TEXT[from]} becomes ${DEGREE_TEXT[to]}`);
         const bonus = reroll.raise.bonus ? `+${reroll.raise.bonus.value ?? reroll.raise.bonus.formula} ${reroll.raise.bonus.type} bonus added, its degree again` : null;
         // ("either": the creature targeted, else its user — Robe of the Archmagi's ally.)
-        return `${reroll.who === "either" ? "The targeted creature's (else your) latest" : reroll.who === "attacker" ? "The latest" : "Your latest"} ${what}${reroll.who === "attacker" ? " at you" : ""}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
+        return `${reroll.who === "either" ? "The targeted creature's (else your) latest" : reroll.who === "target" ? "The targeted creature's latest" : reroll.who === "attacker" ? "The latest" : "Your latest"} ${what}${reroll.who === "attacker" ? " at you" : ""}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
     }
     const whose = reroll.who === "attacker" ? `The latest ${reroll.what === "spellAttack" ? "spell attack roll" : "attack roll"} at you` : reroll.who === "companion" ? `The targeted companion's latest ${what}` : `Your latest ${what}`;
     const bonus = reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";
@@ -104,7 +104,9 @@ export function triggeringRoll(messages, reroll, { actorUuid, actorId }) {
     for (const message of [...messages].reverse()) {
         if (!message?.type || message.isReroll) continue;
         if (reroll.who === "attacker") {
-            if (message.type === "attack-roll" && message.targetActorUuid === actorUuid && (reroll.what !== "spellAttack" || (message.domains ?? []).includes("spell-attack-roll"))) return message.id;
+            // (A check at its user — a Shove, a Trip — for a check's; else an attack roll.)
+            const kinds = reroll.what === "check" ? CHECK_TYPES.check : ["attack-roll"];
+            if (kinds.includes(message.type) && message.targetActorUuid === actorUuid && (reroll.what !== "spellAttack" || (message.domains ?? []).includes("spell-attack-roll"))) return message.id;
             continue;
         }
         // (A companion's: actorUuid is the creature targeted.)
