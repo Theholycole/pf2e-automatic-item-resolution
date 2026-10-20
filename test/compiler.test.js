@@ -922,10 +922,12 @@ test("narrow bonuses on PF2e's roll options, the narrower words a note (the user
     assert.deepEqual([vapor.item.recipient, vapor.resolution.outcomes.success.modifiers[0].value], ["targets", 3]);
 });
 
-test("area buffs for the creatures targeted and other narrow bonuses: Inspiring Spotlight, Paradise Light, Undead Compendium (attacks against undead by the target's trait), Rhyton of the Radiant Ifrit, Mask of Shifting Monstrosity", () => {
+test("area buffs for the creatures targeted (Inspiring Spotlight's a zone) and other narrow bonuses: Inspiring Spotlight, Paradise Light, Undead Compendium (attacks against undead by the target's trait), Rhyton of the Radiant Ifrit, Mask of Shifting Monstrosity", () => {
     const plan = (name) => compileActivations({ ...item(name), ownerLevel: 10 })[0].plan;
     const mods = (name) => plan(name).resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, JSON.stringify(modifier.predicate ?? null)]);
-    assert.deepEqual([plan("Inspiring Spotlight (Mounted)").item.recipient, mods("Inspiring Spotlight (Mounted)")], ["targets", [["saving-throw", 2, "null"], ["cha-based", 2, "null"]]]);
+    // (Inspiring Spotlight's burst: the ability module's zone, placed within 240 feet, its bonus for each creature inside.)
+    const spot = plan("Inspiring Spotlight (Mounted)");
+    assert.deepEqual([spot.builtin, spot.zone.area, spot.zone.centre, spot.zone.range, spot.zone.modifiers], ["zone", { type: "burst", value: 5 }, "placed", 240, [{ selector: "saving-throw", value: 2, type: "item" }, { selector: "cha-based", value: 2, type: "item" }]]);
     assert.deepEqual(mods("Paradise Light"), [["will", 1, "null"], ["wis-based", 1, "null"]]);
     assert.deepEqual([plan("Undead Compendium").item.recipient, mods("Undead Compendium")], ["targets", [["attack-roll", 2, JSON.stringify(["target:trait:undead"])], ["saving-throw", 2, JSON.stringify(["origin:trait:undead"])]]]);
     assert.deepEqual(mods("Rhyton of the Radiant Ifrit").map(([selector]) => selector), ["deception", "diplomacy", "intimidation"]);

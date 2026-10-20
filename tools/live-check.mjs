@@ -5753,12 +5753,29 @@ export const cases = {
         return { ok: true };
     },
 
-    // Area buffs for the creatures targeted: Inspiring Spotlight (Portable)'s +1 item to saves and Charisma-based checks for both; Undead
-    // Compendium's +2 item to attack rolls against undead — the target's trait, not an origin.
+    // Area buffs: Inspiring Spotlight (Portable)'s placed 5-foot burst (the click stood in for), +1 item to saves and Charisma-based checks
+    // for a creature that steps into it; Undead Compendium's +2 item to attack rolls against undead for the creatures targeted — the
+    // target's trait, not an origin.
     async areaBuffs(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Spotlight Holder", { type: "character", x: 22, y: 18 });
         const { actor: ally, token: allyToken } = await creature(scene, "Spotlight Ally", { type: "character", x: 23, y: 18 });
         const ruled = (actor, test) => actor.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && test(rule)));
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const burst = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Inspiring Spotlight/.test(region.name));
+        try {
+            const spotlight = await give(user, "Inspiring Spotlight (Portable)");
+            await game.modules.get(NS).api.live.activate(spotlight.uuid, 0);
+            await until(() => burst(), "the spotlight's Region", { timeout: 8000 });
+            const shape = burst().shapes[0];
+            await allyToken.update({ x: (shape.x ?? shape.points?.[0] ?? 0) - 50, y: (shape.y ?? shape.points?.[1] ?? 0) - 50 });
+            const lit = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("cha-based") && rule.value === 1);
+            await until(() => lit(ally), "+1 item to Charisma-based checks for the creature in the burst", { timeout: 10000 });
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await burst()?.delete().catch(() => null);
+        }
         const use = async (name) => {
             const item = await give(user, name);
             const since = Date.now();
@@ -5767,9 +5784,6 @@ export const cases = {
             await game.modules.get(NS).api.live.apply(card.id, { targets: [userToken.uuid, allyToken.uuid] });
             await wait(800);
         };
-        await use("Inspiring Spotlight (Portable)");
-        const lit = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("cha-based") && rule.value === 1);
-        await until(() => lit(user) && lit(ally), "+1 item to Charisma-based checks for both", { timeout: 8000 });
         await use("Undead Compendium");
         const versed = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("attack-roll") && JSON.stringify(rule.predicate ?? []).includes("target:trait:undead"));
         await until(() => versed(user) && versed(ally), "+2 item to attacks against undead for both", { timeout: 8000 });

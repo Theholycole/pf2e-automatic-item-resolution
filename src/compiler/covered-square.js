@@ -9,6 +9,7 @@
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
+import { allyAreaRow } from "./rows.js";
 
 const COVERED = /\bYou fire a mass of (\w+) at a square within (\d+) feet\. That square becomes covered in \1 for (\d+) (minutes?|rounds?|hours?)\./i;
 const SAVE = /\bThe first time each turn a creature in the (\w+) begins to use a move action or enters the \1 during a move action, it (?:must|has to) attempt an @Check\[athletics\|dc:(\d+)\](?:\{[^}]*\})? check or @Check\[reflex\|dc:\2\](?:\{[^}]*\})? save against DC \2\./i;
@@ -471,5 +472,50 @@ export function placedChimePlan(html, base, item, options = {}) {
                 ...[/\bA creature that critically succeeds at the save is immune[^.]*\./i, /\bor it is moved, whichever comes first\b/i].map((pattern) => pattern.exec(plain)?.[0]).filter(Boolean).map((said) => (/^or it is moved/i.test(said) ? "It ends sooner if it's moved." : said))
             ]
         }
+    };
+}
+
+// A placed burst of light whose creatures get a bonus while they're in it: Inspiring Spotlight's "The inspiring spotlight emits a 5-foot burst
+// of bright magical light within 240 feet. … Creatures within the burst gain a +2 item bonus to saving throws and Charisma-based skill checks.
+// The spotlight remains lit for 1 minute or until you Interact to turn it off." The ability module's zone, placed, its modifiers for each
+// creature inside (zone.modifiers) for its minute; its counteract against magical darkness, turning it off and moving the burst, notes.
+const LIT = /\bemits an? @Template\[(?:type:)?burst\|distance:(\d+)\] of bright magical light within (\d+) feet\b/i;
+const IN_BURST = /\bCreatures within the burst gain (an? \+\d+ (?:item|status|circumstance) bonus to [^.]+?)\.\s*The spotlight remains lit for (\d+) (minutes?|rounds?)\b/i;
+export function spotlightPlan(html, base) {
+    const text = String(html ?? "");
+    const lit = LIT.exec(text);
+    const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const inside = IN_BURST.exec(plain);
+    if (!lit || !inside) return null;
+    const unit = /^min/i.test(inside[3]) ? "minutes" : "rounds";
+    const modifiers = (allyAreaRow(`You and allies within 5 feet of you gain ${inside[1]} for ${inside[2]} ${unit}.`)?.row?.modifiers ?? []).map(({ duration, ...modifier }) => modifier);
+    if (!modifiers.length) return null;
+    const counteract = /\battempts to counteract the darkness with an? (?:\[\[[^\]]*\]\]\{)?\+(\d+)\}? modifier\b/i.exec(text)?.[1];
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "burst", value: Number(lit[1]) },
+            centre: "placed",
+            range: Number(lit[2]),
+            lasts: { mode: "fixed", value: Number(inside[2]), unit, expiry: "turn-start", anchor: "effect-start" },
+            untilReused: false,
+            concealed: false,
+            terrain: [],
+            others: false,
+            hazard: null,
+            saves: [],
+            damage: [],
+            effect: null,
+            modifiers,
+            notes: [
+                ...(counteract ? [`Where the burst meets magical darkness, the spotlight attempts to counteract it at +${counteract} (by hand).`] : []),
+                "It can be turned off early with an Interact action (end the zone then).",
+                "A creature next to the spotlight can move the burst up to 20 feet with an Interact action (move the zone by hand)."
+            ]
+        },
+        notes: undefined,
+        partial: true
     };
 }
