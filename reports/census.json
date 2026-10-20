@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 758,
+   "resolves": 761,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
-   "partial": 113,
+   "partial": 110,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 126,
@@ -36,9 +36,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 22,
-    "resolves": 206,
+    "resolves": 209,
     "builtin:ways": 18,
-    "partial": 60,
+    "partial": 57,
     "note-only": 62,
     "builtin:readied-bonus": 8,
     "none": 95,
@@ -384,7 +384,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 599,
+   "resolves": 602,
    "gaps": 0,
    "none": 13
   }
@@ -1248,12 +1248,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "This thick grease can be applied to up to 5 willing creatures to protect them from dangerous energies.",
-    "When applied, it grants resistance 10 to the attuned energy type and reduces the DC for the flat check to end persistent damage of the attuned energy type by 3."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -4291,12 +4288,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "This thick grease can be applied to up to 5 willing creatures to protect them from dangerous energies.",
-    "When applied, it grants resistance 15 to the attuned energy type and reduces the DC for the flat check to end persistent damage of the attuned energy type by 5."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -11828,12 +11822,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "This thick grease can be applied to up to 5 willing creatures to protect them from dangerous energies.",
-    "When applied, it grants resistance 5 to the attuned energy type and reduces the DC for the flat check to end persistent damage of the attuned energy type by 2."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {

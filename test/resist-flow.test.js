@@ -220,7 +220,7 @@ test("resistance to a type it makes its user choose: the card's picker, the type
     const { chosenResistances } = await import("../src/live/card.js");
     const cold = chosenResistances(ointment.item.resist, 1);
     assert.deepEqual(resistanceEffectSource(cold, { item: { name: "Energy Ointment (Lesser)" } }).system.rules, [{ key: "Resistance", type: "cold", value: 5 }, { key: "ItemAlteration", itemType: "condition", property: "pd-recovery-dc", mode: "subtract", value: 2, predicate: ["item:damage:type:cold"] }]);
-    assert.equal(resistanceText(cold), "Resistance 5 to cold, and the flat check to end persistent cold damage 2 easier for 1 hour");
+    assert.equal(resistanceText(cold), "Resistance 5 to cold, and the flat check to end persistent cold damage 2 easier for 10 minutes");
     // "Choose acid, cold, electricity, or fire. The robe grants resistance 15 to the chosen damage type": until its next use.
     const [robe] = compileActivations(source("Chromatic Robe"));
     assert.deepEqual([robe.plan.item.resist[0].value, robe.plan.item.resist[0].duration], [15, null]);

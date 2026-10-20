@@ -88,6 +88,8 @@ test("Twisting Twine: Disarm or Trip at its own +9, picked on the card; the save
     const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
     const twine = compileActivations(source("Twisting Twine (Lesser)"), { basicActions }).find((entry) => entry.activation.name === "Unravel Twine");
     assert.deepEqual(twine.plan.checkChoices.map((choice) => [choice.label, choice.resolution.check.modifier]), [["Disarm", 9], ["Trip", 9]]);
+    // (Tossed "into a square within 20 feet": its range, at the creature there; its coming back at the end of the turn no rule — not notes.)
+    assert.deepEqual([twine.plan.targeting.range, twine.plan.notes, twine.plan.partial], ["20 feet", [], undefined]);
     const user = foundry.makeActor({ id: "action-twiner", name: "Twiner", owners: ["player"] });
     const foe = foundry.makeActor({ id: "action-twined", name: "Twined" });
     foundry.place(user, 0, 23000);

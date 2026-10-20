@@ -101,7 +101,11 @@ export function readOwnCheck(given) {
         const choice = MANEUVER_CHOICE.exec(sentence);
         if (!choice) continue;
         const slugs = [choice[1], choice[2]].map((name) => ACTION_SLUGS[name.toLowerCase()] ?? name.toLowerCase());
-        return { kind: "maneuver", slug: slugs[0], slugs, modifier: Number(choice[3]), notes: sentences.filter((_, at) => at !== index) };
+        // (Where it goes, Twisting Twine's "You toss the ball of twine into a square within 20 feet": its range, at the creature there; its
+        // coming back at the end of the turn, the item's own way home, says no rule.)
+        const tossed = sentences.map((other) => /^You toss the [\w' -]+? into a square within (\d+) feet\.$/i.exec(other)).find(Boolean);
+        const home = (other) => /^At the end of your turn, the [\w' -]+? winds itself back into a ball and returns to your hand; if you don't have a free hand, it returns to your space instead\.$/i.test(other);
+        return { kind: "maneuver", slug: slugs[0], slugs, modifier: Number(choice[3]), ...(tossed ? { range: `${tossed[1]} feet` } : {}), notes: sentences.filter((other, at) => at !== index && !(tossed && other === tossed[0]) && !home(other)) };
     }
     const strides = STRIDES.exec(String(text ?? ""));
     const strideStrike = strides && STRIDE_STRIKE.exec(String(text ?? ""));
@@ -154,7 +158,7 @@ export function ownCheckPlan(text, base, options = {}) {
         const choices = (read.slugs ?? []).map((slug) => options.basicActions?.[slug]).filter((action) => action?.resolution?.check && !action.builtin);
         // (A critical success's extra damage: shared, on that row.)
         const withCritical = (resolution) => (read.critical ? { ...resolution, sharedDamage: { rollOnce: false, components: [{ id: "critical", formula: read.critical.formula, type: read.critical.type, category: null }] }, outcomes: { ...resolution.outcomes, criticalSuccess: { ...(resolution.outcomes?.criticalSuccess ?? none()), damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["critical"] } } } } : resolution);
-        const targeting = read.line ? { target: `each creature in a ${read.line}-foot line, in order`, range: null, area: { type: "line", value: read.line } } : { ...(basic.targeting ?? {}), target: "1 creature" };
+        const targeting = read.line ? { target: `each creature in a ${read.line}-foot line, in order`, range: null, area: { type: "line", value: read.line } } : { ...(basic.targeting ?? {}), target: "1 creature", ...(read.range ? { range: read.range } : {}) };
         return { ...common, targeting, resolution: withCritical(at(basic)), ...(choices.length > 1 ? { checkChoices: choices.map((action, index) => ({ label: read.slugs[index].charAt(0).toUpperCase() + read.slugs[index].slice(1), resolution: withCritical(at(action)) })) } : {}) };
     }
     // (Its type picked on the card, of those it says: untyped until then, each choice its formula of that type.)
