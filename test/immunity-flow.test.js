@@ -69,7 +69,7 @@ test("where a plan holds to it: a save's trigger.immunity (the ability module's 
     // own reading of it taken off, a note.)
     const [, command] = compileActivations(source("Mindrender Baton"));
     assert.deepEqual([command.plan.trigger.immunity, command.plan.partial], [undefined, true]);
-    assert.ok(command.plan.notes.some((note) => /^Another character can attempt a DC 32 Diplomacy/.test(note)));
+    assert.ok(command.plan.notes.some((note) => /^Another character can attempt a @Check\[diplomacy\|dc:32\b/.test(note)), command.plan.notes.join(" / "));
 });
 
 async function use(holder, name) {
@@ -122,4 +122,31 @@ test("Heartening Missives: one grade's immunity on the ally targeted blocks anot
     await settle();
     assert.ok(foundry.notifications.slice(errors).some((text) => /Missive Ally is still immune/.test(text)));
     assert.equal(rabbit.flags[MODULE_ID].card.status, "open");
+});
+
+test("Iron Wine, a second cup within a day: its Weakness Effect too (plan.dose, the doses counted on the drinker); a cup a day later, not", async () => {
+    const drinker = foundry.makeActor({ id: "dose-drinker", name: "Wine Drinker", owners: ["player"] });
+    foundry.place(drinker, 300, 31000);
+    const weakness = () => drinker.created.filter((entry) => /Iron Wine Weakness/.test(entry.name ?? ""));
+    const cup = async () => {
+        const card = await use(drinker, "Iron Wine");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return card;
+    };
+    const first = await cup();
+    assert.equal(weakness().length, 0, "not on the first cup");
+    const second = await cup();
+    assert.equal(weakness().length, 1, "on the second the same day");
+    assert.match(second.content, /more than one dose today/);
+    assert.equal(first.flags[MODULE_ID].card.status, "applied");
+    // (A day on: a first cup again.)
+    const before = globalThis.game.time.worldTime;
+    globalThis.game.time.worldTime = before + 90000;
+    try {
+        await cup();
+        assert.equal(weakness().length, 1, "not a day later");
+    } finally {
+        globalThis.game.time.worldTime = before;
+    }
 });

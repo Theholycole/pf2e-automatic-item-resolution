@@ -393,7 +393,9 @@ test("action scopes in lower case, the last item's only; X-based checks; a sente
 test("of several linked Effects, the item's own (its name, or the wearer's); the others a note; not per degree, for allies, or unnamed", () => {
     const wine = compileItem(item("Iron Wine"));
     assert.deepEqual(wine.resolution.applications.map((entry) => entry.label), ["Effect: Iron Wine"]);
-    assert.match(wine.notes[0], /^Effect: Iron Wine Weakness is linked too/);
+    // (Its Weakness Effect, for a second cup in a day: plan.dose, the card's to give — not a note.)
+    assert.deepEqual([wine.dose, wine.notes, wine.partial], [{ uuid: "Compendium.pf2e.equipment-effects.Item.nQ1LawgHvC7NZmiN", label: "Iron Wine Weakness", key: "iron-wine" }, undefined, undefined]);
+    assert.equal(compileItem(item("Rainbow Vinegar (Greater)")).dose.key, "rainbow-vinegar", "one key for every grade");
     const [belt] = compileActivations(item("Belt of the Five Kings"));
     assert.deepEqual(belt.plan.resolution.applications.map((entry) => entry.label), ["Effect: Belt of the Five Kings (Wearer)"]);
     // Per degree (Electromuscular Stimulator), an unnamed activation's (Weapon Siphon's bomb fitting): not read this way.

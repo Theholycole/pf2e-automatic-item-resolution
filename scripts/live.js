@@ -577,6 +577,15 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         await target.actor.createEmbeddedDocuments("Item", [ruleEffectSource(entry, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${entry.words}`);
     }
+    // (A second dose in a day, Iron Wine's and Rainbow Vinegar's weakness: PF2e's own Effect for it on a creature that had a dose within the last
+    // day of world time — the doses counted on it, flags.<module>.doses.<item>.)
+    const dose = state.plan.dose;
+    if (dose && target.actor) {
+        const now = Number(game.time.worldTime) || 0;
+        const taken = ((target.actor.getFlag?.(MODULE_ID, "doses") ?? {})[dose.key] ?? []).filter((time) => now - Number(time) < 86400);
+        if (taken.length) lines.push(`${(await nativeEffect(target.actor, recipient.name, { op: "effect", target: DRINKER_ID, effect: { kind: "native", uuid: dose.uuid, label: dose.label } }, state)) ?? `${recipient.name}: ${dose.label}`} (more than one dose today)`);
+        await target.actor.update({ [`flags.${MODULE_ID}.doses.${dose.key}`]: [...taken, now] });
+    }
     // (A Speed of a new kind: Umbral Wings' fly Speed — an Effect with PF2e's BaseSpeed rule.)
     for (const speed of state.plan.item?.speeds ?? []) {
         if (!target.actor) break;

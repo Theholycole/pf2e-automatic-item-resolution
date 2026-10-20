@@ -16,8 +16,10 @@ const COUNT = { a: 1, an: 1, one: 1 };
 // Its sentence: "temporarily immune …", or "immune to <its own> for N".
 const SENTENCE = /[^.]*\b(?:temporarily immune\b|immune to [^.]*?\bfor (?:the next )?(?:\d+|an?|one) (?:round|minute|hour|day|week)s?\b)[^.]*(?:\.|$)/gi;
 // (Not this item's: negated, another rule's time changed, the weather, PF2e's own action immunities.)
-// (Nor an immunity to another's attempts to end it, Mindrender Baton's "temporarily immune to that character's attempts to remove the effect".)
-const NOT_OURS = /\b(?:doesn't|does not|don't|isn't|aren't|won't|never) become\b|\bimmune to (?:that|the|their|this) [\w ]+?'s attempts\b|\bignores? any temporary immunity\b|\binstead of\b|\b(?:minor|severe|extreme|mild) (?:cold|heat)\b|\byour (?:Demoralize|Battle Medicine|Treat Wounds)\b/i;
+// (Nor an immunity to another's attempts to end it, Mindrender Baton's "temporarily immune to that character's attempts to remove the effect":
+// a rule the GM keeps, a note — ATTEMPTS.)
+const ATTEMPTS = /\bimmune to (?:that|the|their|this) [\w ]+?'s attempts\b/i;
+const NOT_OURS = /\b(?:doesn't|does not|don't|isn't|aren't|won't|never) become\b|\bignores? any temporary immunity\b|\binstead of\b|\b(?:minor|severe|extreme|mild) (?:cold|heat)\b|\byour (?:Demoralize|Battle Medicine|Treat Wounds)\b/i;
 // (Only one part of it: "immune to being blinded by poison fizz", "immune to the sickened condition caused by other durian bombs".)
 const ONE_PART = /\bimmune to (?:being \w+|the \w+ condition)\b/i;
 // (A time with no clock it can be held to.)
@@ -82,10 +84,12 @@ export function readItemImmunity(text, { name = null, activation = null, heading
         const to = /\bimmune to ([^,.;]+?)\s+for\b/i.exec(sentence)?.[1] ?? "";
         return /^(?:this|the|that|its|all|any|further|these|your)\b/i.test(to.trim()) || /^[A-Z]/.test(to.trim()) || words.some((word) => to.toLowerCase().includes(word));
     };
-    const found = [...plain.matchAll(SENTENCE)].map((match) => match[0].trim()).filter((sentence) => !NOT_OURS.test(sentence) && itself(sentence));
-    if (!found.length) return null;
+    const all = [...plain.matchAll(SENTENCE)].map((match) => match[0].trim());
+    const attempts = all.filter((sentence) => ATTEMPTS.test(sentence));
+    const found = all.filter((sentence) => !NOT_OURS.test(sentence) && !ATTEMPTS.test(sentence) && itself(sentence));
+    if (!found.length && !attempts.length) return null;
     const own = activation ? `${family}-${slugOf(activation)}` : family;
-    const unread = [];
+    const unread = [...attempts];
     const also = [];
     let immunity = null;
     for (const sentence of found) {
@@ -159,17 +163,13 @@ function leftIn(node, seen = new Set()) {
 }
 
 // A save's immunity from the ability compiler's own reading that isn't one to the item (Mindrender Baton's "temporarily immune to that
-// character's attempts to remove the effect"): taken off, its sentence a note.
+// character's attempts to remove the effect", read so before ability 9bc3db1): taken off, its sentence the reading's note.
 function withoutMisread(plan) {
-    const misread = savesIn(plan).filter((save) => save.trigger?.immunity?.raw && NOT_OURS.test(save.trigger.immunity.raw));
-    if (!misread.length) return plan;
-    const raws = misread.map((save) => save.trigger.immunity.raw);
-    for (const save of misread) {
+    for (const save of savesIn(plan).filter((entry) => entry.trigger?.immunity?.raw && (ATTEMPTS.test(entry.trigger.immunity.raw) || NOT_OURS.test(entry.trigger.immunity.raw)))) {
         const { immunity, ...trigger } = save.trigger;
         save.trigger = trigger;
     }
-    const said = (sentence) => String(sentence).replace(/@Check\[(\w+)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?/gi, (all, statistic, dc) => `DC ${dc} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)}`).replace(/@\w+\[[^\]]*\](?:\{([^}]*)\})?/g, (all, label) => label ?? "").replace(/\s+/g, " ").trim();
-    return { ...plan, notes: [...(plan.notes ?? []), ...raws.map(said).filter((sentence) => !(plan.notes ?? []).some((note) => holds(note, sentence)))], partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };
+    return plan;
 }
 
 // The plan with its immunity held to: on every save plan its trigger.immunity (the ability module's cards give the "Immune:" Effect by degree

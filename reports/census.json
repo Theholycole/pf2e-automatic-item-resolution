@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 764,
+   "resolves": 767,
    "builtin:readied-bonus": 23,
    "builtin:zone": 115,
-   "partial": 106,
+   "partial": 103,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 123,
@@ -36,9 +36,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 26,
-    "resolves": 212,
+    "resolves": 215,
     "builtin:ways": 18,
-    "partial": 53,
+    "partial": 50,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 95,
@@ -324,7 +324,7 @@
   },
   "linked-effect": {
    "count": 393,
-   "resolves": 361,
+   "resolves": 364,
    "gaps": 0,
    "none": 0
   },
@@ -384,7 +384,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 603,
+   "resolves": 606,
    "gaps": 0,
    "none": 13
   }
@@ -7286,8 +7286,9 @@
     "linked-effect",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "effect",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -11922,8 +11923,9 @@
     "linked-effect",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "effect",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -22439,8 +22441,9 @@
     "linked-effect",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "effect",
+   "gaps": [],
    "live": "item"
   },
   {
