@@ -6781,6 +6781,132 @@ export const cases = {
                 if (base?.flags?.[ABILITY]?.conjured) await base.delete().catch(() => null);
             }
         }
+    },
+
+    // Serene Smelling Salts twice (question 18's tracker): the first lowers its user's Frightened by 1 and gives them the ability module's
+    // "Immune:" Effect for an hour; the second, while that lasts, is refused (the card left open); with the Effect gone, it applies.
+    async immuneSaltsTwice(scene) {
+        await clearSquares(scene, [[18, 18]]);
+        const { actor: user } = await creature(scene, "Salts Sniffer", { type: "character", x: 18, y: 18 });
+        await user.increaseCondition("frightened", { value: 2 });
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const immune = () => user.itemTypes.effect.filter((effect) => effect.flags?.[ABILITY]?.immunity?.slug === "serene-smelling-salts");
+        const frightened = () => user.getCondition("frightened")?.value ?? 0;
+        const sniff = async () => {
+            const salts = await give(user, "Serene Smelling Salts");
+            const since = Date.now();
+            await salts.consume();
+            return messageAfter(since, itemCard("item"), { what: "the salts' card" });
+        };
+        const first = await sniff();
+        await game.modules.get(NS).api.live.apply(first.id);
+        await until(() => immune().length === 1 && frightened() === 1, "the Immune: Effect and Frightened 1", { timeout: 8000 });
+        const [effect] = immune();
+        assert(effect.system.duration.value === 1 && effect.system.duration.unit === "hours", `for an hour (${effect.system.duration.value} ${effect.system.duration.unit})`);
+        const second = await sniff();
+        let refused = null;
+        try {
+            await game.modules.get(NS).api.live.apply(second.id);
+        } catch (error) {
+            refused = error.message;
+        }
+        assert(/still immune to Serene Smelling Salts/.test(refused ?? ""), `refused (${refused})`);
+        await wait(500);
+        assert(game.messages.get(second.id).getFlag(NS, "card").status !== "applied" && frightened() === 1 && immune().length === 1, `nothing applied (${game.messages.get(second.id).getFlag(NS, "card").status}, Frightened ${frightened()}, ${immune().length} Effects)`);
+        await effect.delete();
+        await game.modules.get(NS).api.live.apply(second.id);
+        await until(() => game.messages.get(second.id).getFlag(NS, "card").status === "applied" && frightened() === 0 && immune().length === 1, "the second applied once the Effect was gone", { timeout: 8000 });
+        return { refused, effect: effect.name };
+    },
+
+    // Spun Cloud (Red) twice on one creature (question 18's tracker): the first cloud's save card, applied, gives it the ability module's
+    // "Immune:" Effect for 24 hours (regardless of its save); the second cloud, made on it while that lasts, posts no card for it.
+    async immuneSpunCloudTwice(scene) {
+        await clearSquares(scene, [[14, 9], [17, 9]]);
+        const { actor: user, token: userToken } = await creature(scene, "Twice Spinner", { type: "character", x: 14, y: 9 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Twice Clouded", { x: 17, y: 9, alliance: "opposition", save: -30 });
+        await until(() => userToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const immune = () => foe.itemTypes.effect.filter((effect) => effect.flags?.[ABILITY]?.immunity?.slug === "spun-cloud-red");
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [{ ...data, shapes: (data.shapes ?? []).map((shape) => ({ ...shape, x: foeToken.x + canvas.grid.size / 2, y: foeToken.y + canvas.grid.size / 2 })) }]))[0];
+        const cloud = () => scene.regions.find((entry) => entry.flags?.[ABILITY]?.zone && /Spun Cloud/.test(entry.name));
+        const forFoe = (message) => abilitySaveCard(message) && (message.flags[ABILITY].card.targets ?? []).some((entry) => entry.actorUuid === foe.uuid);
+        try {
+            let since = Date.now();
+            await (await give(user, "Spun Cloud (Red)")).consume();
+            await until(() => cloud(), "the first cloud's Region", { timeout: 8000 });
+            const card = await messageAfter(since, forFoe, { what: "the first cloud's save card", timeout: 10000 });
+            await rollAndApply(card);
+            await until(() => immune().length === 1, "the Immune: Effect", { timeout: 10000 });
+            const [effect] = immune();
+            assert(effect.system.duration.value === 24 && effect.system.duration.unit === "hours", `for 24 hours (${effect.system.duration.value} ${effect.system.duration.unit})`);
+            await cloud().delete();
+            await until(() => !cloud(), "the first cloud gone", { timeout: 5000 });
+            await foe.decreaseCondition("frightened", { forceRemove: true });
+            since = Date.now();
+            await (await give(user, "Spun Cloud (Red)")).consume();
+            await until(() => cloud(), "the second cloud's Region", { timeout: 8000 });
+            await wait(3000);
+            const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && forFoe(message));
+            assert(cards.length === 0, `no card for the immune creature (${cards.length})`);
+            assert(!foe.itemTypes.condition.some((condition) => condition.slug === "frightened") && immune().length === 1, "nothing on it, one Effect");
+            return { effect: effect.name };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await cloud()?.delete().catch(() => null);
+        }
+    },
+
+    // Aetheric Irritant, Lesser then Major (question 18's tracker): an undead that critically succeeds at the Lesser's save is immune to all
+    // aetheric irritants for 24 hours, so entering the Major's area, it gets no card (every grade one key).
+    async immuneIrritantGrades(scene) {
+        await clearSquares(scene, [[1, 10], [6, 10]]);
+        const { actor: user, token: userToken } = await creature(scene, "Grade Ringer", { type: "character", x: 1, y: 10 });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Grade Zombie", { x: 6, y: 10, alliance: "opposition", save: 40 });
+        await undead.update({ "system.traits.value": ["undead"] });
+        await until(() => userToken.object && undeadToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const immune = () => undead.itemTypes.effect.filter((effect) => effect.flags?.[ABILITY]?.immunity?.slug === "aetheric-irritant");
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        const area = () => scene.regions.find((region) => region.flags?.[ABILITY]?.zone && /Aetheric Irritant/.test(region.name));
+        const forZombie = (message) => abilitySaveCard(message) && (message.flags[ABILITY].card.targets ?? []).some((entry) => entry.actorUuid === undead.uuid);
+        const away = { x: undeadToken.x, y: undeadToken.y };
+        // Into the area (from its square away): the cards for it since.
+        const enter = async () => {
+            await undeadToken.update(away);
+            await wait(800);
+            const shape = area().shapes[0];
+            const since = Date.now();
+            await undeadToken.update({ x: shape.x - canvas.grid.size / 2, y: shape.y + canvas.grid.size / 2 });
+            await wait(2500);
+            return game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && forZombie(message));
+        };
+        try {
+            await (await give(user, "Aetheric Irritant (Lesser)")).consume();
+            await until(() => area(), "the Lesser's Region", { timeout: 8000 });
+            // (At +40 against DC 15, a critical success but for a natural 1: up to three tries.)
+            for (let tries = 0; tries < 3 && !immune().length; tries++) {
+                const [card] = await enter();
+                assert(card, "the Lesser's save card");
+                await rollAndApply(card);
+                await wait(1500);
+            }
+            assert(immune().length === 1, "the Immune: Effect after a critical success");
+            await area().delete();
+            await until(() => !area(), "the Lesser's area gone", { timeout: 5000 });
+            await (await give(user, "Aetheric Irritant (Major)")).consume();
+            await until(() => area(), "the Major's Region", { timeout: 8000 });
+            const cards = await enter();
+            assert(cards.length === 0, `no card for the zombie in the Major's area (${cards.length})`);
+            return { effect: immune()[0].name };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await area()?.delete().catch(() => null);
+        }
     }
 };
 
