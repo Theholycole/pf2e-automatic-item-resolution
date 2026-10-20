@@ -120,11 +120,16 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     assert.deepEqual(pick.strike.attack, { value: 1, type: "status" });
     assert.deepEqual(pick.strike.damage, [{ diceNumber: 1, dieSize: "d4", category: "persistent", damageType: "force" }]);
     assert.equal(pick.strike.own, true, "the pick's own Strike");
-    // "An extra two dice of weapon damage": the weapon's own die; "counts as two attacks" a note.
+    // "An extra two dice of weapon damage": the weapon's own die; "counts as two attacks" the card's line (PF2e's multiple attack penalty
+    // buttons are the user's), not a note.
     const piston = activation("Piston Gauntlets").plan;
     assert.deepEqual(piston.strike.damage.map((entry) => `${entry.diceNumber}${entry.dieSize}`), [`2${source("Piston Gauntlets").system.damage.die}`]);
-    assert.match(piston.strike.notes.join(" "), /two attacks/);
-    assert.equal(piston.partial, true);
+    assert.deepEqual([piston.strike.map, piston.strike.notes, piston.partial], ["double", [], undefined]);
+    assert.ok(strikeLines(piston).includes("Your multiple attack penalty rises two steps after it (it counts as two attacks)"));
+    // (Crimson Fulcrum Lens: its 2d8 for a jaws Strike, 1d8 for another — PF2e's "item:slug:jaws" —, and "doesn't count" the line too.)
+    const lens = activation("Crimson Fulcrum Lens").plan;
+    assert.deepEqual([lens.strike.damage.map((entry) => [`${entry.diceNumber}${entry.dieSize}`, entry.predicate]), lens.strike.map, lens.partial], [[["1d8", [{ not: "item:slug:jaws" }]], ["2d8", ["item:slug:jaws"]]], "none", undefined]);
+    assert.ok(strikeRules(lens).some((rule) => rule.key === "DamageDice" && rule.diceNumber === 2 && rule.predicate?.[0] === "item:slug:jaws"));
     // "All damage from this Strike is fire damage and the target takes an additional 1d6 fire damage and 1d6 persistent fire damage."
     const iris = activation("Iris of the Sky").plan;
     assert.equal(iris.strike.alteration, "fire");
@@ -143,8 +148,6 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     // Two unarmed Strikes, each with the dice.
     const wraps = activation("Amphisbaena Handwraps").plan;
     assert.deepEqual([wraps.strike.uses, wraps.strike.unarmed, wraps.strike.own], [2, true, false]);
-    // A jaws Strike's other dice: a note, not read.
-    assert.match(activation("Crimson Fulcrum Lens").plan.strike.notes.join(" "), /jaws/);
     // Damage only under a condition ("If your last action was to Stride …, this does an additional 1d4 force damage"): not read.
     assert.equal(compileActivations(source("Chimera Flail")).find((entry) => entry.activation.name === "Pouncing Whirl").plan, null);
     // A trigger's hit with a save: the save at the creature struck, its critical failure its own ("(Stupefied 2 on a critical failure)").

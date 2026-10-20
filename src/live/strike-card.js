@@ -74,6 +74,10 @@ export function strikeLines(plan) {
         ...(strike.requires ?? []).map((line) => `Its target: ${line.charAt(0).toLowerCase()}${line.slice(1).replace(/\.$/, "")}`),
         strike.missRefund ? "On a miss: the activation's use is given back (it doesn't count against its frequency)" : null,
         strike.reach ? (strike.reach.feet ? `Reach ${strike.reach.feet} feet for this Strike` : `Reach ${strike.reach.more} feet more for this Strike`) : null,
+        // (What it says of PF2e's multiple attack penalty, whose buttons are the user's to pick.)
+        strike.map === "double" ? "Your multiple attack penalty rises two steps after it (it counts as two attacks)" : null,
+        strike.map === "none" ? "It doesn't count toward your multiple attack penalty: the Strike after it is at the step you were at before it" : null,
+        strike.map === "held" && !strike.volley?.mapHeld ? "Roll them all at the multiple attack penalty you're at now (the same PF2e button); it rises only after the last" : null,
         ...(strike.notes ?? []).map((note) => `Also: ${note}`)
     ].filter(Boolean);
 }

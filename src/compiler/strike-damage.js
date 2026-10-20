@@ -113,18 +113,42 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let failHalfType = null;
     let missRefund = false;
     let reach = null;
+    // (What it says of the multiple attack penalty — PF2e's own buttons, the user's to pick: "held" until all are rolled, "double" (two attacks),
+    // "none" — the card's line.)
+    let map = null;
     const requires = [];
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
     const striking = Number(item?.system?.runes?.striking) || 0;
     const steps = [...body.matchAll(RUNE_STEP)].map((match) => ({ rune: STRIKING[match[1].toLowerCase()], count: Number(match[2]), faces: match[3] }));
-    for (const sentence of body.split(/(?<=[.!?])\s+(?=[A-Z(])/)) {
+    for (let sentence of body.split(/(?<=[.!?])\s+(?=[A-Z(])/)) {
         if (RUNE_STEP.test(sentence)) {
             RUNE_STEP.lastIndex = 0;
             continue;
         }
         RUNE_STEP.lastIndex = 0;
         if (riderSentence(sentence)) continue;
+        // (The multiple attack penalty: Piston Gauntlets' "This counts as two attacks when calculating your multiple attack penalty", Iron Cube's
+        // "Both attacks count toward your multiple attack penalty, but the penalty doesn't increase until after you've made both of them".)
+        if (/^This counts as two attacks (?:when calculating|for) your multiple attack penalty\.$/i.test(sentence.trim())) {
+            map = "double";
+            continue;
+        }
+        if (/\bmultiple attack penalty\b[^.;]*\b(?:until|only after)\b/i.test(sentence) && /^(?:Both|These|Each|All|You apply|Your)\b/.test(sentence.trim())) {
+            map = "held";
+            continue;
+        }
+        // (Crimson Fulcrum Lens' "… and doesn't count toward your multiple attack penalty": that clause; its sentence goes on.)
+        const uncounted = /,? and doesn't count toward your multiple attack penalty(?=\.$)/i.exec(sentence.trim());
+        if (uncounted) {
+            map = "none";
+            sentence = sentence.trim().replace(uncounted[0], "");
+        }
+        // (Its dice for one Strike, the lens's "(or 2d8 precision damage if you make a jaws Strike)": the other die for a Strike with that
+        // attack, PF2e's "item:slug:jaws".)
+        const alternate = /\s*\(or (\d+)d(\d+) (?:precision )?damage if you make an? (\w+) Strike\)/i.exec(sentence);
+        if (alternate) sentence = sentence.replace(alternate[0], "");
+        const from = dice.length;
         // (The splash trait's miss, said again: Drake Rifle's "On a failure, the target and creatures within 5 feet of it still take that
         // splash damage" — the splash card's on a failure, scripts/strikes.js.)
         if (/^On a failure, the target and creatures within 5 feet of it still take that splash damage\.$/i.test(sentence.trim()) && SPLASH.test(body)) continue;
@@ -173,6 +197,11 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         const found = sentenceDice(sentence, { own: own && isStrike });
         for (const entry of found) dice.push(entry.die);
         for (const entry of [...found].reverse()) rest = `${rest.slice(0, entry.start)} ${rest.slice(entry.end)}`;
+        if (alternate && dice.length === from + 1) {
+            const slug = alternate[3].toLowerCase();
+            dice[from] = { ...dice[from], predicate: [...(dice[from].predicate ?? []), { not: `item:slug:${slug}` }] };
+            dice.push({ ...dice[from], diceNumber: Number(alternate[1]), dieSize: `d${alternate[2]}`, predicate: [`item:slug:${slug}`] });
+        } else if (alternate) notes.push(alternate[0].trim());
         const weapon = WEAPON_DICE.exec(rest);
         if (weapon && !OTHERS.test(sentence)) {
             const count = COUNT[weapon[1]?.toLowerCase() ?? "a"] ?? Number(weapon[1]);
@@ -242,5 +271,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
     if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
     const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(reach ? { reach } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf || requires.length || missRefund || reach) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf || requires.length || missRefund || reach || map) };
 }

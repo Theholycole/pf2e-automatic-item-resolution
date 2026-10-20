@@ -215,7 +215,8 @@ function followOf(html, base, options) {
     const after = plainText(String(html ?? "").slice(match.index + match[0].length)).split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
     // (The rest of its own sentence, Serpent's Lash's "the creature 5 feet (10 feet on a critical hit)": with the maneuver's name.)
     if (after[0] && /^[a-z]/.test(after[0])) after[0] = `${name.charAt(0).toUpperCase()}${name.slice(1)} ${after[0]}`;
-    const notes = after.filter((sentence) => sentence && !/^If this knocks the target Prone\b/i.test(sentence) && /\b(?:feet|penalty|free hand|requirement|feat|attacks?|damage)\b/i.test(sentence)).slice(0, 4);
+    // (Not what it says of the multiple attack penalty: the Strike's own line, strike.map.)
+    const notes = after.filter((sentence) => sentence && !/^If this knocks the target Prone\b/i.test(sentence) && !(/\bmultiple attack penalty\b[^.;]*\b(?:until|only after)\b/i.test(sentence) && /^(?:Both|These|Each|All)\b/.test(sentence)) && /\b(?:feet|penalty|free hand|requirement|feat|attacks?|damage)\b/i.test(sentence)).slice(0, 4);
     return { ...plan, action: { ...plan.action, ...(damage ? { damage: { success: damage, criticalSuccess: damage } } : {}) }, ...(notes.length ? { notes } : {}) };
 }
 
@@ -368,6 +369,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.missRefund ? { missRefund: true } : {}),
               // (More reach for it: the Extending rune's, Tasset of Flexibility's.)
               ...(extras.reach ? { reach: extras.reach } : {}),
+              // (What it says of the multiple attack penalty: the card's line.)
+              ...(extras.map ? { map: extras.map } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),
