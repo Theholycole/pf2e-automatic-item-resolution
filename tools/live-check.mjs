@@ -7379,6 +7379,32 @@ export const cases = {
         return { lost: before - foe.system.attributes.hp.value };
     },
 
+    // Blight Breath (src/compiler/effect-then-card.js): PF2e's Effect on its drinker (resistance 10 to poison), then the exhale's card for
+    // later; used at a creature next to it, the ability module's basic Reflex save card, and the resistance ends with the breath let out.
+    async effectThenBreath(scene) {
+        await clearSquares(scene, [[17, 17], [18, 17]]);
+        const { actor: drinker, token: drinkerToken } = await creature(scene, "Blight Breather", { type: "character", x: 17, y: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Blighted Foe", { x: 18, y: 17, alliance: "opposition", hp: 80 });
+        const resisting = () => drinker.itemTypes.effect.filter((effect) => effect.name === "Effect: Blight Breath");
+        let since = Date.now();
+        await (await give(drinker, "Blight Breath")).consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the breath's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => resisting().length === 1, "PF2e's Blight Breath Effect", { timeout: 8000 });
+        assert(drinker.system.attributes.resistances.some((entry) => entry.type === "poison" && entry.value === 10), "resistance 10 to poison");
+        const later = await messageAfter(since, itemCard("expose"), { what: "the exhale's card" });
+        await drinkerToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(later.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the exhale's save card" });
+        await until(() => resisting().length === 0, "the resistance gone with the exhale", { timeout: 8000 });
+        const before = foe.system.attributes.hp.value;
+        await withDie(10, () => rollAndApply(save));
+        await until(() => foe.system.attributes.hp.value < before, "poison damage on the creature next to it", { timeout: 10000 });
+        return { lost: before - foe.system.attributes.hp.value };
+    },
+
     // Golden Silencer (Greater)'s Strike save (its note Effect's note.saveEnds): a critical failure silenced for 1 minute, a note Effect a new
     // Fortitude save at the end of its turns ends.
     async saveEndsSilencer(scene) {

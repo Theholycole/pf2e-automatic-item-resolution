@@ -512,6 +512,9 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
 
 // What the item card does for its recipient (its user, the drinker, or one of the allies targeted): the core's changes,
 // then its resistance, Speeds, senses, the conditions it lowers, its flat check and the Tea Ceremony. → lines for the card.
+// (World time in seconds of a duration's unit: plan.again's time.)
+const SECONDS = { rounds: 6, minutes: 60, hours: 3600, days: 86_400 };
+
 async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     const recipient = recipientOf(state);
     const user = await creatureOf(state.user);
@@ -581,13 +584,17 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: target.actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
         lines.push(`${recipient.name}: its retaliation card follows`);
     }
-    // (A burst its drinker sets off once each round while its Effect lasts — Phoenix Flask's feathers, src/compiler/round-burst.js: a "later"
-    // save card kept open that long, at the creatures around it each time.)
+    // (The save card after its Effect — plan.again: Phoenix Flask's feathers once each round while its Effect lasts, src/compiler/round-burst.js;
+    // the breath potions' exhale, Vermin Repellent Agent's attackers, Matsuki's Medicinal Wine's own save, src/compiler/effect-then-card.js —
+    // for the creature that drank it: kept for later, open for the item's time, or its own.)
     const again = state.plan.again;
     if (again?.plan && target.actor) {
-        const card = createExposureCard({ plan: again.plan, item: state.item, user: recipient, later: true, repeat: true, until: (Number(game.time.worldTime) || 0) + (Number(again.rounds) || 10) * 6, when: again.when ?? null });
+        const later = again.later !== false && (again.later || again.rounds || again.when);
+        const seconds = again.rounds ? Number(again.rounds) * 6 : again.time ? Number(again.time.value) * (SECONDS[again.time.unit] ?? 3600) : null;
+        const repeat = Boolean(later && (again.repeat || again.rounds));
+        const card = createExposureCard({ plan: again.plan, item: state.item, user: recipient, later: Boolean(later), repeat, until: repeat && seconds ? (Number(game.time.worldTime) || 0) + seconds : null, own: Boolean(again.own), attacker: again.attacker ?? false, when: again.when ?? null, ends: again.ends ?? null });
         await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: target.actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
-        lines.push(`${recipient.name}: its save card for later follows`);
+        lines.push(`${recipient.name}: ${again.own ? "its own save's card" : later ? "its save card for later" : "its save card"} follows`);
     }
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const entry of state.plan.item?.ruleEffects ?? []) {

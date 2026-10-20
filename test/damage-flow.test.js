@@ -221,6 +221,50 @@ test("Phoenix Flask (src/compiler/round-burst.js): its Effect for the drinker (t
     assert.deepEqual([later.flags[MODULE_ID].card.status, later.flags[MODULE_ID].card.uses], ["open", 2], "open for its minute, used twice");
 });
 
+test("its user's own Effect, then the save card it had (src/compiler/effect-then-card.js): Frost Breath's resistance and its exhale for later; Vermin Repellent Agent's bonus and its attackers' card for 4 hours; Matsuki's Medicinal Wine's bonus and its drinker's own save; Draft of Stellar Radiance's light and the save of whoever targets it", async () => {
+    const plans = Object.fromEntries(["Frost Breath", "Vermin Repellent Agent (Lesser)", "Matsuki's Medicinal Wine", "Draft of Stellar Radiance", "Blight Bomb (Lesser)"].map((name) => [name, compileItem(source(name))]));
+    const shape = (plan) => [routeOf(plan), plan.resolution.kind, plan.resolution.applications?.[0]?.label, plan.again && Object.fromEntries(Object.entries(plan.again).filter(([key]) => key !== "plan" && key !== "time"))];
+    assert.deepEqual(shape(plans["Frost Breath"]), ["item", "effect", "Effect: Frost Breath", { later: true }]);
+    assert.deepEqual(shape(plans["Vermin Repellent Agent (Lesser)"]), ["item", "effect", "Effect: Vermin Repellent Agent", { later: true, repeat: true, attacker: true }]);
+    assert.deepEqual(plans["Vermin Repellent Agent (Lesser)"].again.time.value, 4);
+    assert.deepEqual(shape(plans["Matsuki's Medicinal Wine"]), ["item", "effect", "Effect: Matsuki's Medicinal Wine", { later: false, own: true }]);
+    assert.deepEqual(shape(plans["Draft of Stellar Radiance"]), ["item", "effect", "Effect: Draft of Stellar Radiance", { later: true, repeat: true, attacker: true }]);
+    // (A bomb isn't one: its save is its splash's.)
+    assert.equal(plans["Blight Bomb (Lesser)"]?.again, undefined);
+    const drinker = foundry.makeActor({ id: "damage-breather", name: "Breather", owners: ["player"] });
+    foundry.place(drinker, 300, 17400);
+    for (const name of ["Frost Breath", "Vermin Repellent Agent (Lesser)", "Matsuki's Medicinal Wine"]) {
+        const item = foundry.giveItem(drinker, source(name));
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: item.toObject()._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: drinker.id }, actor: drinker, token: drinker.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        const next = foundry.messages.slice(foundry.messages.indexOf(card) + 1).find((entry) => entry.flags?.[MODULE_ID]?.card?.kind === "expose");
+        assert.ok(next, `${name}: its save card`);
+        const state = next.flags[MODULE_ID].card;
+        assert.deepEqual([state.status, Boolean(state.later), Boolean(state.repeat), Boolean(state.attacker), Boolean(state.own)], { "Frost Breath": ["open", true, false, false, false], "Vermin Repellent Agent (Lesser)": ["open", true, true, true, false], "Matsuki's Medicinal Wine": ["open", false, false, false, true] }[name], name);
+    }
+    // (Blight Breath's resistance, "for as long as you hold your breath": gone with the exhale.)
+    const holder = foundry.makeActor({ id: "damage-blight", name: "Holder", owners: ["player"] });
+    foundry.place(holder, 300, 17600);
+    const blight = foundry.giveItem(holder, source("Blight Breath"));
+    const used = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: blight.uuid, sourceId: blight.toObject()._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: holder.id }, actor: holder, token: holder.token.document });
+    await foundry.call("createChatMessage", used);
+    await settle();
+    const itemCard = foundry.messages[foundry.messages.indexOf(used) + 1];
+    await foundry.socket(SOCKET)({ action: "apply", messageId: itemCard.id, userId: "player" });
+    await settle();
+    const resisting = () => holder.itemTypes.effect.filter((effect) => effect.name === "Effect: Blight Breath").length;
+    assert.equal(resisting(), 1, "its resistance while it holds its breath");
+    const exhale = foundry.messages.slice(foundry.messages.indexOf(itemCard) + 1).find((entry) => entry.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.deepEqual(exhale.flags[MODULE_ID].card.ends.label, "Effect: Blight Breath");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: exhale.id, userId: "player", targets: [brute.token.uuid] });
+    await settle();
+    assert.equal(resisting(), 0, "gone with the exhale");
+});
+
 test("a spellgun against a defense's DC, with conditions and no damage (the module's own wording)", async () => {
     const { spellgunPlan } = await import("../src/compiler/spellguns.js");
     const html = "<p>Activate the spellgun by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's Fortitude DC. This spellgun has a range increment of 30 feet.</p><p><strong>Critical Success</strong> The target is Slowed 1 until the end of your next turn.</p><p><strong>Success</strong> As critical success, except the target is Clumsy instead of slowed.</p>";

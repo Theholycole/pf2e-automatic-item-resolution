@@ -163,9 +163,12 @@ test("a breath used again after its recharge: its card stays open for the hour, 
     } finally {
         globalThis.game.time.worldTime = saved;
     }
-    // Frost Breath's one exhale: done after it.
-    const frost = await use(foundry.giveItem(rogue, source("Frost Breath")));
-    assert.equal(frost.flags[MODULE_ID].card.repeat, undefined);
+    // Frost Breath's one exhale, after its resistance's Effect (src/compiler/effect-then-card.js): done after it.
+    const frostCard = await use(foundry.giveItem(rogue, source("Frost Breath")));
+    await foundry.socket(SOCKET)({ action: "apply", messageId: frostCard.id, userId: "player" });
+    await settle();
+    const frost = foundry.messages.slice(foundry.messages.indexOf(frostCard) + 1).find((entry) => entry.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.deepEqual([frost.flags[MODULE_ID].card.later, frost.flags[MODULE_ID].card.repeat], [true, undefined]);
     // Roaring Potion gives its scream for later, once every 1d4 rounds for an hour; drinking it screams at no one.
     const roar = (await use(foundry.giveItem(rogue, source("Roaring Potion (Lesser)")))).flags[MODULE_ID].card;
     assert.deepEqual([roar.later, roar.repeat], [true, true]);

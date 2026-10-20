@@ -13,6 +13,7 @@ import { litAreaPlan } from "./lit-area.js";
 import { withHonestPartial, withUntracedRules } from "./honest.js";
 import { withSaveEnds } from "./save-ends.js";
 import { withRoundBurst } from "./round-burst.js";
+import { withEffectThenCard } from "./effect-then-card.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
@@ -311,6 +312,8 @@ function compileOne(given, options = {}) {
     // (A burst its user sets off once each round while its Effect lasts, src/compiler/round-burst.js: Phoenix Flask's feathers — its Effect, the
     // burst's save card for later.)
     if (plan?.resolution?.kind === "save") plan = withRoundBurst(plan, plainText(html), ownPlan(item, base, options));
+    // (Its user's own Effect beside a save for others, src/compiler/effect-then-card.js: the breath potions' resistance, then the breath's card.)
+    if (plan?.resolution?.kind === "save") plan = withEffectThenCard(plan, plainText(html), ownPlan(item, base, options), item);
     // (A note alone from the ability compiler gives way to the item's own row when that reads something.)
     if (plan?.noteOnly) {
         const row = rowPlan(item, base);

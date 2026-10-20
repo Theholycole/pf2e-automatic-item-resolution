@@ -143,7 +143,8 @@ const useSave = (plan, text) => savedOnUse(plan) && !TRIGGERED.test(saveSentence
 // (Set off by a creature attacking its user while it lasts — Oil of Repulsion's "For 1 minute after you apply this oil to
 // armor, any creature that hits you with a melee Strike must attempt …", Vermin Repellent Agent's "… when attempting to attack
 // you": a card kept open for the item's time, used each time.)
-export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|Strikes|damages|grapples|swallows|touches) you\b|\bwhen attempting to attack you\b/i;
+// (Or "targets you with an attack or an ability", Draft of Stellar Radiance's.)
+export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|Strikes|damages|grapples|swallows|touches|targets) you\b|\bwhen attempting to attack you\b/i;
 // (The drinker's own save: Truth Potion's "Upon drinking the potion, attempt a @Check[will|dc:19] save", Matsuki's Medicinal
 // Wine's "When you drink a dose of this wine you must succeed at a @Check…", Energy Toxin Bottle's "You drink from the bottle
 // and must succeed at a @Check…".)
@@ -170,8 +171,9 @@ export const repeatsLater = (text = "") => AGAIN.test(text) || ATTACKER.test(tex
 // own: the drinker's own save (no targets: the user's own token); attacker: set off by a creature attacking the user.
 // attackChoices: a spellgun's attack modifiers its user has, [{ kind, label, modifier }] (scripts/poisons.js).
 // when: the moment it's used at each time, its words ("the first time each round {user} uses Fly …", src/compiler/round-burst.js).
-export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null, own = false, attacker = false, attackChoices = null, when = null }) {
-    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(later && when ? { when } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: attacker === "touch" ? "touch" : true } : {}), ...(attackChoices ? { attackChoices, attackChoice: 0 } : {}), results: [] };
+// ends: the Effect its use ends on its user ({ uuid, label }: Blight Breath's resistance, gone with the exhale).
+export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null, own = false, attacker = false, attackChoices = null, when = null, ends = null }) {
+    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(later && when ? { when } : {}), ...(later && ends ? { ends } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: attacker === "touch" ? "touch" : true } : {}), ...(attackChoices ? { attackChoices, attackChoice: 0 } : {}), results: [] };
 }
 
 // The plan with the check picked: Twisting Twine's Trip in place of its Disarm (plan.checkChoices [{ label, resolution }]).

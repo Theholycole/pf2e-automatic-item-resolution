@@ -394,16 +394,16 @@
   "totals": {
    "cast": 35,
    "none": 239,
-   "item": 620,
+   "item": 634,
    "fortune": 25,
    "zone": 115,
-   "save": 138,
+   "save": 136,
    "expose": 89,
    "ways": 25,
    "action": 16,
    "conjure": 7,
    "counteract": 33,
-   "later": 76,
+   "later": 64,
    "teleport": 6,
    "reroll": 3,
    "coat": 46,
@@ -416,11 +416,10 @@
     "none": 116,
     "ways": 18,
     "save": 88,
-    "item": 211,
+    "item": 218,
     "fortune": 8,
     "teleport": 4,
     "counteract": 9,
-    "later": 7,
     "strike": 3,
     "expose": 3,
     "action": 1,
@@ -428,11 +427,11 @@
     "coat": 3
    },
    "potion": {
-    "item": 79,
-    "later": 63,
+    "item": 85,
+    "later": 58,
     "none": 26,
     "cast": 9,
-    "save": 2,
+    "save": 1,
     "counteract": 2,
     "zone": 1
    },
@@ -505,7 +504,7 @@
    },
    "drug": {
     "expose": 23,
-    "save": 1
+    "item": 1
    },
    "toolkit": {
     "item": 8,
@@ -2778,9 +2777,9 @@
     "fixed-dc"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Drought Powder",
@@ -3362,9 +3361,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "save"
+   "live": "item"
   },
   {
    "name": "Frozen Lava",
@@ -6601,9 +6600,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Merciful Charm",
@@ -6735,9 +6734,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Gift of the Poisoned Heart",
@@ -12567,9 +12566,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "save"
+   "live": "item"
   },
   {
    "name": "Wand of Clinging Rime (9th-rank)",
@@ -12825,9 +12824,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Silver Dragon's Breath Potion (Wyrm)",
@@ -15572,9 +15571,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Liquid Gold",
@@ -16475,9 +16474,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Leaden Weight",
@@ -16977,9 +16976,9 @@
     "fixed-dc"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Warning Snare",
@@ -18287,9 +18286,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Eldritch Flare",
@@ -21077,9 +21076,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Mourner's Dawnlight Fulu",
@@ -23600,9 +23599,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Wand of Noisome Acid (6th-Rank)",
@@ -25684,9 +25683,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Ashes of the War God",
@@ -28898,9 +28897,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "later"
+   "live": "item"
   },
   {
    "name": "Material Essence Disruptor (Lesser)",

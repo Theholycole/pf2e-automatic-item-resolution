@@ -225,6 +225,14 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         const user = state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : null;
         for (const entry of own) if (user) lines.push(await lowerCondition(user, state.user.name, entry.slug, entry.by));
     }
+    // (The Effect its use ends on its user, Blight Breath's resistance with the exhale: src/compiler/effect-then-card.js.)
+    if (state.ends && actor) {
+        const held = actor.itemTypes.effect.filter((effect) => (effect._stats?.compendiumSource ?? effect.sourceId ?? effect.flags?.core?.sourceId) === state.ends.uuid || effect.name === state.ends.label);
+        if (held.length) {
+            await actor.deleteEmbeddedDocuments("Item", held.map((effect) => effect.id));
+            lines.push(`${state.user.name}: ${state.ends.label} ends.`);
+        }
+    }
     const after = afterExposure(state, lines, game.time.worldTime);
     // (A save its hit then calls for: the card stays open for that second step.)
     const next = state.plan?.thenSave ? { ...after, status: "open", step: "then" } : after;
