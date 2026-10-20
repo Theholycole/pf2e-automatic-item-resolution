@@ -71,6 +71,10 @@ test("where a plan holds to it: a save's trigger.immunity (the ability module's 
     const [, command] = compileActivations(source("Mindrender Baton"));
     assert.deepEqual([command.plan.trigger.immunity, command.plan.partial], [undefined, true]);
     assert.ok(command.plan.notes.some((note) => /^Another character can attempt a @Check\[diplomacy\|dc:32\b/.test(note)), command.plan.notes.join(" / "));
+    // (Nor one to only part of it: Poison Fizz's "temporarily immune to being blinded by poison fizz for 1 hour" — as the whole item's, a creature
+    // that only succeeded would get no card for the next fizz — taken off, a note.)
+    const pop = compileItem(source("Poison Fizz (Lesser)")).ways.find((way) => /secondary/i.test(way.name)).plan;
+    assert.deepEqual([pop.trigger.immunity, pop.partial, pop.notes.some((note) => /\bimmune to being blinded by poison fizz\b/.test(note))], [undefined, true, true]);
 });
 
 async function use(holder, name) {

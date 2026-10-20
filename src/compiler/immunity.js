@@ -164,8 +164,10 @@ function leftIn(node, seen = new Set()) {
 
 // A save's immunity from the ability compiler's own reading that isn't one to the item (Mindrender Baton's "temporarily immune to that
 // character's attempts to remove the effect", read so before ability 9bc3db1): taken off, its sentence the reading's note.
+// (Nor one to only part of it, Poison Fizz's "immune to being blinded by poison fizz for 1 hour": as the whole item's, a creature that only
+// succeeded would get no card for the next fizz's damage. A note, ONE_PART.)
 function withoutMisread(plan) {
-    for (const save of savesIn(plan).filter((entry) => entry.trigger?.immunity?.raw && (ATTEMPTS.test(entry.trigger.immunity.raw) || NOT_OURS.test(entry.trigger.immunity.raw)))) {
+    for (const save of savesIn(plan).filter((entry) => entry.trigger?.immunity?.raw && (ATTEMPTS.test(entry.trigger.immunity.raw) || NOT_OURS.test(entry.trigger.immunity.raw) || ONE_PART.test(entry.trigger.immunity.raw)))) {
         const { immunity, ...trigger } = save.trigger;
         save.trigger = trigger;
     }
