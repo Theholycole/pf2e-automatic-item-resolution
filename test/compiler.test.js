@@ -1112,16 +1112,11 @@ test("a rule sentence the plan has no trace of (src/compiler/honest.js withUntra
     assert.equal(withUntracedRules({ ...plan, resolution: { ...plan.resolution, kind: "effect", applications: [{ kind: "native-spell-effect", uuid: "Compendium.pf2e.equipment-effects.Item.x" }] } }, "Effect You become Slowed 1.").partial, undefined);
 });
 
-test("a condition for a time and a save again at its turns are each traced on their own (honest.js): Spirit-Sealing Fulu (Greater)'s critical failure for 4 rounds its row's time, its new save each turn a note; Gearbinder Oil's save each round a note; Tusk and Fang Chain's next action a note Effect, its critical failure's lost flat check another", async () => {
+test("a condition for a time and a save again at its turns are each traced on their own (honest.js): Spirit-Sealing Fulu (Greater)'s critical failure for 4 rounds its row's time; a new save each turn with no saveEnds in the plan a note; Tusk and Fang Chain's next action a note Effect, its critical failure's lost flat check another", async () => {
     const { withUntracedRules } = await import("../src/compiler/honest.js");
     const fulu = compileItem(item("Spirit-Sealing Fulu (Greater)"));
     assert.deepEqual([fulu.resolution.outcomes.failure.effects[0].duration.value, fulu.resolution.outcomes.criticalFailure.effects[0].duration.value], [1, 4]);
-    assert.equal(fulu.partial, true);
-    assert.ok(fulu.notes.some((note) => /^At the end of each of its turns, it can attempt a new Will save\b/.test(note)));
-    assert.ok(!fulu.notes.some((note) => /\bparalyzed for 4 rounds\b/.test(note)));
-    const oil = compileItem(item("Gearbinder Oil (Lesser)"));
-    assert.equal(oil.partial, true);
-    assert.ok(oil.notes.some((note) => /\bat the end of any round during which\b/.test(note)));
+    assert.ok(!(fulu.notes ?? []).some((note) => /\bparalyzed for 4 rounds\b/.test(note)));
     const chain = compileItem(item("Tusk and Fang Chain"));
     assert.deepEqual([chain.resolution.outcomes.success.effects, chain.resolution.outcomes.success.noteEffects[0].label, chain.resolution.outcomes.success.noteEffects[0].duration.anchor], [[], "Confused on its next action", "target-turn"]);
     assert.deepEqual(chain.resolution.outcomes.criticalFailure.noteEffects.map((note) => note.label), ["No flat check"]);
@@ -1131,6 +1126,33 @@ test("a condition for a time and a save again at its turns are each traced on th
     assert.equal(withUntracedRules(plan, "Effect The target must attempt a save or be slowed 1 for 2 minutes.").partial, true);
     const noted = { ...plan, notes: ["It can attempt a new Will save at the end of each of its turns."] };
     assert.equal(withUntracedRules(noted, "Effect It can attempt a new Will save at the end of each of its turns."), noted);
+    const again = "Effect The target must attempt a save or be slowed 1 for 1 minute. At the end of any round during which it took an action, it must attempt a new save.";
+    assert.equal(withUntracedRules(plan, again).partial, true);
+    const played = { resolution: { kind: "save", outcomes: { failure: { effects: [{ kind: "condition", slug: "slowed", value: 1, duration: { mode: "fixed", value: 1, unit: "minutes", saveEnds: { save: "will", dc: null } } }] } } } };
+    assert.equal(withUntracedRules(played, again), played);
+});
+
+test("a new save at its turns (src/compiler/save-ends.js, the ability's duration.saveEnds and note.saveEnds): Tusk and Fang Chain's ends its critical failure's confusion, Spirit-Sealing Fulu (Greater)'s takes a round off, Golden Silencer (Greater)'s note Effect, Gearbinder Oil's escalating slowed for 6 rounds behind a GM gate, Dreaming Round's from its failing rows with its fatigued; Jawbreaker Shield's broken jaw a note Effect a save ends", async () => {
+    const saveEnds = (row, slug) => row.effects.find((effect) => effect.slug === slug)?.duration?.saveEnds;
+    const chain = compileItem(item("Tusk and Fang Chain"));
+    assert.deepEqual([saveEnds(chain.resolution.outcomes.criticalFailure, "confused"), saveEnds(chain.resolution.outcomes.failure, "confused"), chain.partial], [{ save: "will", dc: null, mode: "end" }, undefined, undefined]);
+    const fulu = compileItem(item("Spirit-Sealing Fulu (Greater)"));
+    assert.deepEqual([saveEnds(fulu.resolution.outcomes.failure, "paralyzed"), saveEnds(fulu.resolution.outcomes.criticalFailure, "paralyzed")?.mode, fulu.partial, fulu.notes], [{ save: "will", dc: null, mode: "reduce" }, "reduce", undefined, undefined]);
+    const silencer = compileItem(item("Golden Silencer (Greater)"));
+    assert.deepEqual(silencer.strike.save.resolution.outcomes.failure.noteEffects[0].saveEnds, { save: "fortitude", dc: null, mode: "end" });
+    const oil = compileItem(item("Gearbinder Oil (Lesser)"));
+    const slowed = oil.resolution.outcomes.failure.effects[0];
+    assert.deepEqual([slowed.stack, slowed.duration], [{ by: 1, max: 3 }, { mode: "unlimited", saveEnds: { save: "fortitude", dc: null, mode: "escalate", escalate: { criticalSuccess: "end", success: -1, failure: 1, criticalFailure: 2 }, max: 3, rounds: 6, gate: "it took an action with the attack, manipulate, or move trait this round" } }]);
+    assert.deepEqual([oil.partial, oil.notes], [undefined, undefined]);
+    assert.match(oil.resolution.outcomes.criticalFailure.manualInstructions[0], /the rest by hand\): While Slowed 2 or more by it, it also can't use reactions\.$/);
+    const [round] = compileActivations(item("Dreaming Round"));
+    const outcomes = round.plan.resolution.outcomes;
+    assert.deepEqual([saveEnds(outcomes.failure, "slowed")?.escalate, saveEnds(outcomes.criticalFailure, "slowed")?.alsoEnds, saveEnds(outcomes.success, "slowed")], [{ criticalFailure: 1, failure: 1, success: -1, criticalSuccess: -1 }, ["fatigued"], undefined]);
+    // (Its sleep at 0 actions, and waking: the GM's, a note.)
+    assert.deepEqual([round.plan.partial, round.plan.notes.length, /^If the target's actions are reduced to 0\b/.test(round.plan.notes[0])], [true, 1, true]);
+    const [jaw] = compileActivations(item("Jawbreaker Shield"));
+    const broken = jaw.plan.strike.save.resolution.outcomes.criticalFailure;
+    assert.deepEqual([broken.noteEffects[0].label, broken.noteEffects[0].saveEnds, broken.manualInstructions], ["Can't Strike with its mouth", { save: "fortitude", dc: null, mode: "end" }, ["{target} (critical failure): You break the target's jaw. As failure."]]);
 });
 
 test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {

@@ -119,7 +119,7 @@ function tokensOf(sentence) {
 }
 // (A condition for a time — "or be Paralyzed for 1 round. On a critical failure, the undead is paralyzed for 4 rounds" — traced only by an
 // effect of that condition for that time; a save again at its turns — "can attempt a new Will save at the end of each of its turns" — only
-// by a recurring save in the plan. Each must be traced, whatever else of its sentence the plan has: a sentence with one that isn't is a note.)
+// by a save at its turns in the plan (src/compiler/save-ends.js, duration.saveEnds / note.saveEnds). Each must be traced, whatever else of its sentence the plan has: a sentence with one that isn't is a note.)
 const TIMED_CONDITION = new RegExp(String.raw`\b(?:is|are|be|becomes?)\s+(?:also\s+)?(?:\w+\s+)?(${CONDITIONS.replace(/\|persistent\|resistance\|weakness$/, "")})(?:\s+\d)?\s+for\s+(\d+|one|an?)\s+(round|minute|hour)s?\b`, "gi");
 const AGAIN_SAVE = String.raw`\b(?:new|repeat the|attempts? an?|another) (?:[\w@\[\]|:,-]+ ){0,3}?sav(?:e|ing throw)\b`;
 const AT_TURNS = String.raw`\b(?:(?:end|start|beginning) of (?:each of |any of )?(?:its|their) (?:next )?turns?|each round|every round|end of any round)\b`;
@@ -181,7 +181,7 @@ export function withUntracedRules(plan, text) {
         if (!sentence || SKIP.test(sentence) || RUNE_STEP_SENTENCE.test(sentence)) return false;
         // (Said on a note or a line of the plan already: traced.)
         if (spoken.includes(sentence.toLowerCase().slice(0, 60))) return false;
-        if (mustOf(sentence).some((token) => (token.recurring ? !trace.json.includes('"recurring"') : !timed.has(`${token.slug}:${token.rounds}`)))) return true;
+        if (mustOf(sentence).some((token) => (token.recurring ? !trace.json.includes('"saveends"') : !timed.has(`${token.slug}:${token.rounds}`)))) return true;
         const tokens = tokensOf(sentence);
         return tokens.length > 0 && !tokens.some((token) => (token.dice ? trace.dice.has(token.dice.toLowerCase()) : token.number !== undefined ? trace.numbers.has(token.number) : trace.json.includes(token.word)));
     });

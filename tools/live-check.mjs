@@ -175,6 +175,31 @@ async function applyAbilityCard(message) {
     button.click();
 }
 
+// Every die at that face while fn runs (Foundry's CONFIG.Dice.randomUniform, a face of ceil((1 − r) × faces)): a d20 at 10 for the degree a
+// case needs, whatever the luck.
+async function withDie(face, fn) {
+    const random = CONFIG.Dice.randomUniform;
+    CONFIG.Dice.randomUniform = () => 1 - face / 20 + 1e-9;
+    try {
+        return await fn();
+    } finally {
+        CONFIG.Dice.randomUniform = random;
+    }
+}
+
+// The ability module's card for a new save at a creature's turns (its scripts/recurring.js): the next one for that creature, and its buttons.
+const recurringFor = (actor) => (message) => message.flags?.["pf2e-automatic-ability-resolution"]?.recurring?.actorUuid === actor.uuid;
+async function pressRecurring(message, action) {
+    let button = null;
+    for (const stop = Date.now() + 8000; Date.now() < stop && !button; ) {
+        button = document.querySelector(`[data-message-id="${message.id}"] [data-aar-recurring="${action}"]`);
+        if (!button) await wait(200);
+    }
+    assert(button, `the card's ${action} button`);
+    button.click();
+}
+const recurringResult = (message) => game.messages.get(message.id)?.flags?.["pf2e-automatic-ability-resolution"]?.recurring;
+
 export const cases = {
     // A healing potion fed to a dying ally next to the user: PF2e's own roll heals her once, Dying ends, Wounded rises.
     async potionToDyingAlly(scene) {
@@ -7185,6 +7210,187 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id);
         await until(() => !drinker.hasCondition("fatigued"), "Fatigued ended", { timeout: 8000 });
         return { second: game.messages.get(second.id).getFlag(NS, "card").results };
+    },
+
+    // A new save at its turns (src/compiler/save-ends.js; the ability's duration.saveEnds): Tusk and Fang Chain's critical failure, Confused
+    // for 1 minute; once its turn is over, its Will save card; a success ends it.
+    async saveEndsChain(scene) {
+        await clearSquares(scene, [[2, 17], [3, 17]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user, token: userToken } = await creature(scene, "Chain Wearer", { type: "character", x: 2, y: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Chain Foe", { x: 3, y: 17, alliance: "opposition", save: -30, level: 16 });
+        const confused = () => foe.itemTypes.condition.some((condition) => condition.slug === "confused");
+        const tracked = () => foe.itemTypes.effect.filter((effect) => effect.flags?.[ABILITY]?.saveEnds);
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 20 }, { tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            let since = Date.now();
+            await (await give(user, "Tusk and Fang Chain")).consume();
+            const card = await messageAfter(since, itemCard("expose"), { what: "the chain's card" });
+            await userToken.object?.control?.();
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+            const save = await messageAfter(since, abilitySaveCard, { what: "its save card" });
+            await withDie(10, async () => {
+                await rollAndApply(save);
+                await until(() => confused() && tracked().length === 1, "Confused, with its save at its turns", { timeout: 10000 });
+            });
+            const flag = tracked()[0].flags[ABILITY].saveEnds;
+            assert(flag.save === "will" && flag.dc === 35 && flag.mode === "end", `a Will save at DC 35 that ends it (${JSON.stringify(flag)})`);
+            await foe.update({ "system.saves.will.value": 30 });
+            since = Date.now();
+            await combat.nextTurn();
+            const again = await messageAfter(since, recurringFor(foe), { what: "the end-of-turn save card", timeout: 10000 });
+            await withDie(10, async () => {
+                await pressRecurring(again, "roll");
+                await until(() => !confused() && !tracked().length, "the confusion ended by its save", { timeout: 10000 });
+            });
+            return { result: recurringResult(again)?.result };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
+    },
+
+    // Spirit-Sealing Fulu (Greater) at an undead (mode "reduce"): its critical failure paralyzed for 4 rounds; at the end of its turn, a
+    // success at the new Will save takes a round off.
+    async saveEndsFulu(scene) {
+        await clearSquares(scene, [[5, 17], [6, 17]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user, token: userToken } = await creature(scene, "Fulu Binder", { type: "character", x: 5, y: 17 });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Fulu Undead", { x: 6, y: 17, alliance: "opposition", save: -30, level: 10 });
+        await undead.update({ "system.traits.value": ["undead"] });
+        const tracked = () => undead.itemTypes.effect.filter((effect) => effect.flags?.[ABILITY]?.saveEnds);
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: undeadToken.id, sceneId: scene.id, actorId: undead.id, initiative: 20 }, { tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            let since = Date.now();
+            await (await give(user, "Spirit-Sealing Fulu (Greater)")).consume();
+            const card = await messageAfter(since, itemCard("expose"), { what: "the fulu's card" });
+            await userToken.object?.control?.();
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [undeadToken.uuid] });
+            const save = await messageAfter(since, abilitySaveCard, { what: "its save card" });
+            await withDie(10, async () => {
+                await rollAndApply(save);
+                await until(() => undead.hasCondition("paralyzed") && tracked().length === 1, "paralyzed, with its save at its turns", { timeout: 10000 });
+            });
+            const [effect] = tracked();
+            assert(effect.system.duration.value === 4 && effect.system.duration.unit === "rounds" && effect.flags[ABILITY].saveEnds.mode === "reduce", `4 rounds, a save taking rounds off (${effect.system.duration.value} ${effect.system.duration.unit}, ${JSON.stringify(effect.flags[ABILITY].saveEnds)})`);
+            // (A 10 on the die at +17 against DC 27: a success.)
+            await undead.update({ "system.saves.will.value": 17 });
+            since = Date.now();
+            await combat.nextTurn();
+            const again = await messageAfter(since, recurringFor(undead), { what: "the end-of-turn save card", timeout: 10000 });
+            await withDie(10, async () => {
+                await pressRecurring(again, "roll");
+                await until(() => recurringResult(again)?.status === "done", "the save's result", { timeout: 10000 });
+            });
+            assert(tracked().length === 1 && tracked()[0].system.duration.value === 3 && undead.hasCondition("paralyzed"), `a round off: 3 left, still paralyzed (${tracked()[0]?.system.duration.value}; ${recurringResult(again)?.result})`);
+            return { result: recurringResult(again)?.result };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
+    },
+
+    // Gearbinder Oil (Lesser), mode "escalate" behind the GM's gate: its critical failure Slowed 2; once its turn is over the GM
+    // says it acted (yes): a critical failure, Slowed 3 (at most 3); the next turn, no (no save); then a critical success ends it all.
+    async saveEndsGearbinder(scene) {
+        await clearSquares(scene, [[8, 17], [9, 17]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user, token: userToken } = await creature(scene, "Oil Squirter", { type: "character", x: 8, y: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Oiled Construct", { x: 9, y: 17, alliance: "opposition", save: -30, level: 6 });
+        const slowed = () => foe.getCondition("slowed")?.value ?? 0;
+        const tracked = () => foe.itemTypes.effect.filter((effect) => effect.flags?.[ABILITY]?.saveEnds);
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        const foeTurnEnds = async () => {
+            const since = Date.now();
+            // (Its own turn ends: past the user's turn first, after the first.)
+            if (combat.combatant?.actorId !== foe.id) await combat.nextTurn();
+            await combat.nextTurn();
+            return messageAfter(since, recurringFor(foe), { what: "the end-of-turn card", timeout: 10000 });
+        };
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 20 }, { tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            let since = Date.now();
+            await (await give(user, "Gearbinder Oil (Lesser)")).consume();
+            const card = await messageAfter(since, itemCard("expose"), { what: "the oil's card" });
+            await userToken.object?.control?.();
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+            const save = await messageAfter(since, abilitySaveCard, { what: "its save card" });
+            await withDie(10, async () => {
+                await rollAndApply(save);
+                await until(() => slowed() === 2 && tracked().length === 1, "Slowed 2, with its saves at its turns", { timeout: 10000 });
+            });
+            const flag = tracked()[0].flags[ABILITY].saveEnds;
+            assert(flag.mode === "escalate" && flag.max === 3 && flag.rounds === 6 && /attack, manipulate, or move/.test(flag.gate ?? ""), `escalating, at most 3, 6 rounds, gated (${JSON.stringify(flag)})`);
+            const first = await foeTurnEnds();
+            await pressRecurring(first, "yes");
+            await withDie(10, async () => {
+                await pressRecurring(first, "roll");
+                await until(() => recurringResult(first)?.status === "done", "the first save's result", { timeout: 10000 });
+            });
+            assert(slowed() === 3, `a critical failure: Slowed 3, at most (${slowed()}; ${recurringResult(first)?.result})`);
+            const second = await foeTurnEnds();
+            await pressRecurring(second, "no");
+            await until(() => recurringResult(second)?.status === "done", "no save this turn", { timeout: 8000 });
+            assert(slowed() === 3, `no save: still Slowed 3 (${slowed()})`);
+            await foe.update({ "system.saves.fortitude.value": 30 });
+            const third = await foeTurnEnds();
+            await pressRecurring(third, "yes");
+            await withDie(10, async () => {
+                await pressRecurring(third, "roll");
+                await until(() => slowed() === 0 && !tracked().length, "a critical success: it ends", { timeout: 10000 });
+            });
+            return { results: [first, second, third].map((message) => recurringResult(message)?.result) };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
+    },
+
+    // Golden Silencer (Greater)'s Strike save (its note Effect's note.saveEnds): a critical failure silenced for 1 minute, a note Effect a new
+    // Fortitude save at the end of its turns ends.
+    async saveEndsSilencer(scene) {
+        await clearSquares(scene, [[11, 17], [12, 17]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user, token: userToken } = await creature(scene, "Silencer Gunner", { type: "character", x: 11, y: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Silenced Foe", { x: 12, y: 17, alliance: "opposition", save: -30, level: 10 });
+        const tracked = () => foe.itemTypes.effect.filter((effect) => effect.flags?.[ABILITY]?.saveEnds);
+        const silencer = await give(user, "Golden Silencer (Greater)");
+        const plan = game.modules.get(NS).api.compileItem(silencer)?.strike?.save;
+        assert(plan?.resolution?.outcomes?.criticalFailure?.noteEffects?.[0]?.saveEnds, "its Strike save's note Effect with saveEnds");
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 20 }, { tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            let since = Date.now();
+            await game.modules.get(ABILITY).api.live.postCard({ plan, item: { name: silencer.name, uuid: silencer.uuid }, sourceActor: user, sourceToken: userToken, tokens: [foeToken.object], cause: `${silencer.name} hit` });
+            const save = await messageAfter(since, abilitySaveCard, { what: "its save card" });
+            await withDie(10, async () => {
+                await rollAndApply(save);
+                await until(() => tracked().length === 1, "the silenced note Effect, with its save at its turns", { timeout: 10000 });
+            });
+            const [note] = tracked();
+            assert(/silenced/i.test(note.system.description.value) && note.flags[ABILITY].saveEnds.save === "fortitude" && note.flags[ABILITY].saveEnds.dc === 27, `silenced, a Fortitude save at DC 27 (${note.name}: ${JSON.stringify(note.flags[ABILITY].saveEnds)})`);
+            await foe.update({ "system.saves.fortitude.value": 30 });
+            since = Date.now();
+            await combat.nextTurn();
+            const again = await messageAfter(since, recurringFor(foe), { what: "the end-of-turn save card", timeout: 10000 });
+            await withDie(10, async () => {
+                await pressRecurring(again, "roll");
+                await until(() => !tracked().length, "the note Effect ended by its save", { timeout: 10000 });
+            });
+            return { note: note.name, result: recurringResult(again)?.result };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
     }
 };
 
