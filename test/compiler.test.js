@@ -1230,6 +1230,22 @@ test("a proficiency its Requirements need (src/compiler/requirement.js): Lion Ba
     assert.equal(requirementWarning({ type: "npc", name: "Orc", skills: { stealth: { rank: 0 } } }, stealth, "Ghostshot Wrapping"), null);
 });
 
+test("an activation only after a hit with the weapon (src/compiler/strike-gate.js): Alghollthu Whip's Strike, Grapple or Trip, Obsidian Edge's ranged Strike, Rending Gauntlets' two unarmed hits on one creature; not Scizore of the Crab's \"or you have a creature Grabbed\"", async () => {
+    const { gateMet } = await import("../src/compiler/strike-gate.js");
+    const gate = (name) => compileActivations(item(name))[0].plan.gate;
+    assert.deepEqual([gate("Alghollthu Whip"), gate("Obsidian Edge"), gate("Rending Gauntlets (Lesser)"), gate("Scizore of the Crab")], [{ strike: { maneuvers: ["grapple", "trip"] } }, { strike: { range: "ranged", maneuvers: [] } }, { twoUnarmed: true }, undefined]);
+    const whip = { actorUuid: "Actor.a", itemUuid: "Item.whip" };
+    const roll = (more) => ({ actorUuid: "Actor.a", type: "attack-roll", outcome: "success", itemUuid: "Item.whip", targetUuid: "Token.t", ...more });
+    assert.deepEqual(gateMet(gate("Alghollthu Whip"), [roll({})], whip), { ok: true, struck: "Token.t" });
+    assert.equal(gateMet(gate("Alghollthu Whip"), [roll({ outcome: "failure" })], whip).ok, false);
+    assert.equal(gateMet(gate("Alghollthu Whip"), [roll({}), roll({ itemUuid: "Item.other" })], whip).ok, false, "not its last roll");
+    assert.equal(gateMet(gate("Alghollthu Whip"), [roll({ type: "skill-check", slug: "trip", itemUuid: null })], whip).ok, true, "a Trip");
+    assert.equal(gateMet(gate("Obsidian Edge"), [roll({ ranged: false })], whip).ok, false, "not a ranged Strike");
+    const fist = (target) => roll({ unarmed: true, itemUuid: "Item.fist", targetUuid: target });
+    assert.deepEqual(gateMet({ twoUnarmed: true }, [fist("Token.x"), fist("Token.y"), fist("Token.x")], whip), { ok: true, struck: "Token.x" });
+    assert.equal(gateMet({ twoUnarmed: true }, [fist("Token.x"), fist("Token.y")], whip).ok, false);
+});
+
 test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {
     const { readReductions } = await import("../src/compiler/reduce.js");
     assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);

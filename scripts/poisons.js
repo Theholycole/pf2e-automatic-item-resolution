@@ -150,7 +150,8 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     }
     // (The drinker's own save: its user's own token — else its token on the scene being viewed.)
     const ownToken = state.own ? state.user.tokenUuid ?? (await fromUuid(state.user.actorUuid).catch(() => null))?.getActiveTokens?.(false, true)?.[0]?.uuid ?? game.scenes?.viewed?.tokens?.find?.((token) => token.actor?.uuid === state.user.actorUuid || token.actorId === state.user.actorUuid?.split(".").at(-1))?.uuid ?? null : null;
-    const chosen = state.own ? [ownToken].filter(Boolean) : Array.isArray(targets) ? targets : [];
+    // (None targeted after a gated hit: the creature it struck, src/compiler/strike-gate.js.)
+    const chosen = state.own ? [ownToken].filter(Boolean) : Array.isArray(targets) && targets.length ? targets : state.plan?.struckToken ? [state.plan.struckToken] : [];
     const tokens = (await Promise.all(chosen.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
     if (!tokens.length) throw new Error(state.own ? `${state.user.name} has no token here.` : "Target the creatures first.");
     // (A retaliation only for creatures of a trait, a third-party salve's oozes: another refused.)

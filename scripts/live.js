@@ -33,6 +33,7 @@ import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./telepo
 import { applyTakeCard, postTakeCard } from "./take.js";
 import { checkSpend, paySpend } from "./spend.js";
 import { readProficiencyRequirement, requirementWarning } from "../src/compiler/requirement.js";
+import { gateMet } from "../src/compiler/strike-gate.js";
 import { applyTableCard, postTableCard } from "./table.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
@@ -196,6 +197,19 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.spend && ["zone", "conjure", "spellstrike"].includes(route)) {
         checkSpend(actor, plan.spend, used.data.name);
         await paySpend(actor, plan.spend, used.data.name);
+    }
+    // (Only after a hit with the weapon — Alghollthu Whip's "Your last action was a successful Strike, Grapple, or Trip with the alghollthu whip",
+    // Rending Gauntlets' two unarmed hits on one creature: its user's latest rolls in the chat. Not met: refused, no card, no use counted; met:
+    // its card at the creature struck when its presser targets none. src/compiler/strike-gate.js.)
+    if (plan?.gate?.strike || plan?.gate?.twoUnarmed) {
+        const rolls = (game.messages?.contents ?? []).slice(-12).map((entry) => {
+            const context = entry.flags?.pf2e?.context ?? {};
+            const options = context.options ?? [];
+            return { actorUuid: entry.actor?.uuid ?? (entry.speaker?.actor ? `Actor.${entry.speaker.actor}` : null), type: context.type ?? null, outcome: context.outcome ?? null, itemUuid: entry.flags?.pf2e?.origin?.uuid ?? null, slug: options.find((option) => /^action:(?:grapple|trip)$/.test(option))?.slice(7) ?? null, targetUuid: context.target?.token ?? null, ranged: options.includes("item:ranged"), unarmed: options.includes("item:category:unarmed") };
+        });
+        const met = gateMet(plan.gate, rolls, { actorUuid: actor?.uuid, itemUuid: used.data.uuid ?? used.data._stats?.compendiumSource ?? null });
+        if (!met.ok) throw new Error(`${used.data.name}: its Requirements need ${met.why}.`);
+        if (met.struck) plan = { ...plan, struckToken: met.struck };
     }
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });

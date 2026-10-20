@@ -7551,6 +7551,38 @@ export const cases = {
         return { warning: warned.content };
     },
 
+    // Apotheosis Knife's "Requirements Your previous action was a successful Strike with the apotheosis knife" (src/compiler/strike-gate.js):
+    // activated before any hit, refused; after a hit (AC 1), its save card at the creature struck, none targeted.
+    async strikeGated(scene) {
+        await clearSquares(scene, [[4, 21], [5, 21]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user, token: userToken } = await creature(scene, "Knife Wielder", { type: "character", x: 4, y: 21 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Knife Target", { x: 5, y: 21, ac: 1, alliance: "opposition" });
+        const knife = await give(user, "Apotheosis Knife");
+        await knife.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await wait(300);
+        let refused = null;
+        try {
+            await game.modules.get(NS).api.live.activate(knife.uuid, 0);
+        } catch (error) {
+            refused = error.message;
+        }
+        assert(/its Requirements need a successful Strike/.test(refused ?? ""), `refused before a hit (${refused})`);
+        await userToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await withDie(15, () => strike(user, knife));
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        await target();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(knife.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the knife's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the struck creature's save card" });
+        assert((save.flags[ABILITY].card.targets ?? []).some((entry) => entry.actorUuid === foe.uuid), "at the creature struck");
+        return { refused };
+    },
+
     // Golden Silencer (Greater)'s Strike save (its note Effect's note.saveEnds): a critical failure silenced for 1 minute, a note Effect a new
     // Fortitude save at the end of its turns ends.
     async saveEndsSilencer(scene) {
