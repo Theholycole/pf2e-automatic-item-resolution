@@ -227,6 +227,8 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
         ? `<p class="aar-hint">If the attack hit: target the creature hit and press the button for its ${escape(saveText(state.plan.thenSave))}.</p>`
         : state.own
         ? `<p class="aar-hint">${escape(state.user.name)}'s own save (${escape(saveText(state.plan))}).</p>`
+        : state.attacker && state.plan?.retaliation?.who
+        ? `<p class="aar-hint">Each time ${escape(state.plan.retaliation.who.replace("{user}", state.user.name))} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : state.attacker
         ? `<p class="aar-hint">Each time a creature ${state.attacker === "touch" ? `touches ${escape(state.user.name)}${state.plan?.retaliation?.adjacentMelee ? ", or hits it with a melee weapon Strike from next to it," : ""}` : `attacks ${escape(state.user.name)}`} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : state.later

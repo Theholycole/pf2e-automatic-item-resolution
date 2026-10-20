@@ -318,3 +318,46 @@ test("Grim Ring: drained gained from an undead lowered by 1 on its user, and the
     assert.equal(foundry.posted.slice(before)[0]?.plan.resolution.sharedDamage.components[0].formula, "2d6");
     assert.equal(wearer.conditions.get("drained"), 1);
 });
+
+test("retaliation while a resistance lasts, for creatures of one trait (plan.item.retaliate, a third-party salve's — read from its module's pack when installed): after the item card's Apply, a retaliation card kept open for that time, its damage at an ooze targeted, refused at another creature", async (context) => {
+    let salve = null;
+    try {
+        salve = readDocuments(`${process.env.HOME}/.local/share/FoundryVTT/Data/modules/pf2e-team-plus-alchemists/packs/pf2e-items`).find((doc) => doc.collection === "items" && doc.name === "Alkaline Mire (Lesser)");
+    } catch {
+        salve = null;
+    }
+    if (!salve) return context.skip("the third-party module isn't installed");
+    const plan = compileItem(salve);
+    assert.deepEqual([plan.item.resist[0].type, plan.item.retaliate.retaliation.only, plan.item.retaliate.retaliation.rounds, plan.item.retaliate.resolution.sharedDamage.components[0].formula, plan.partial, plan.unread], ["acid", { traits: ["ooze"] }, 10, "4", undefined, undefined]);
+    const wearer = foundry.makeActor({ id: "damage-salve", name: "Salved", owners: ["player"] });
+    const ooze = foundry.makeActor({ id: "damage-ooze", name: "Ooze" });
+    const rat = foundry.makeActor({ id: "damage-rat", name: "Rat" });
+    ooze.system.traits = { value: ["ooze"] };
+    foundry.place(wearer, 0, 17600);
+    foundry.place(ooze, 100, 17600);
+    foundry.place(rat, 200, 17600);
+    const item = foundry.giveItem(wearer, salve);
+    const data = item.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats?.compendiumSource ?? null, type: "consumable" } } }, speaker: { actor: wearer.id }, actor: wearer, token: wearer.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const later = foundry.messages.slice(count).find((entry) => entry.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.ok(later, "the retaliation card");
+    assert.match(later.content, /Each time a creature with the ooze trait hits Salved with an unarmed Strike while it lasts/);
+    const errors = foundry.notifications.length;
+    try {
+        await foundry.socket(SOCKET)({ action: "apply", messageId: later.id, userId: "player", targets: [rat.token.uuid] });
+    } catch {
+        // (Checked by its notification.)
+    }
+    await settle();
+    assert.ok(foundry.notifications.slice(errors).some((text) => /Rat has no ooze trait/.test(text)), foundry.notifications.slice(errors).join(" / "));
+    const posted = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: later.id, userId: "player", targets: [ooze.token.uuid] });
+    await settle();
+    assert.deepEqual(foundry.posted.slice(posted).map((entry) => entry.tokens.map((token) => token.name)), [["Ooze"]]);
+});

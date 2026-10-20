@@ -33,7 +33,7 @@ import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readProficiencyLoan } from "./proficiency-loan.js";
 import { readPatch } from "./patch.js";
 import { withSecondary } from "./secondary.js";
-import { directDamageOver, directDamagePlan, retaliationPlan, withoutDamageRestated } from "./direct-damage.js";
+import { directDamageOver, directDamagePlan, retaliationPlan, withoutDamageRestated, withRetaliateAfter } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
@@ -183,6 +183,9 @@ function withBurnTime(plan, text) {
     return { ...plan, zone: { ...plan.zone, lasts: { mode: "fixed", value: Number(burns[1]), unit: `${burns[2].toLowerCase()}s`, expiry: "turn-start", anchor: "effect-start" }, notes } };
 }
 
+// (Retaliation while its resistance lasts, for creatures of one trait: plan.item.retaliate, src/compiler/direct-damage.js.)
+const retaliateAfter = (plan) => (plan?.item?.resist?.length ? withRetaliateAfter(plan, plan) : plan);
+
 export function compileItem(given, options = {}) {
     const unlinked = withoutUnverifiedLinks(given, options);
     const instead = unlinked ? overUnverified(compileOne(unlinked.item, options), unlinked.dropped, given?.system?.description?.value) : null;
@@ -192,7 +195,7 @@ export function compileItem(given, options = {}) {
     // (Not its opening flavor among what a partial plan leaves the GM, src/compiler/flavor.js.)
     // (And a use after the first, a candy's "Secondary Effect": the ways card's second button, src/compiler/secondary.js.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
-    return withImmunity(withBurnTime(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text), text), given?.system?.description?.value, { name: given?.name });
+    return withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name });
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

@@ -153,6 +153,11 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const chosen = state.own ? [ownToken].filter(Boolean) : Array.isArray(targets) ? targets : [];
     const tokens = (await Promise.all(chosen.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
     if (!tokens.length) throw new Error(state.own ? `${state.user.name} has no token here.` : "Target the creatures first.");
+    // (A retaliation only for creatures of a trait, a third-party salve's oozes: another refused.)
+    const only = state.plan?.retaliation?.only?.traits ?? [];
+    const traitsOf = (token) => new Set([...(token.actor?.system?.traits?.value ?? []), ...(token.actor?.traits ?? [])]);
+    const unfit = only.length ? tokens.filter((token) => !only.some((trait) => traitsOf(token).has(trait))) : [];
+    if (unfit.length) throw new Error(`${unfit.map((token) => token.name ?? token.actor?.name).join(", ")} ${unfit.length === 1 ? "has" : "have"} no ${only.join(" or ")} trait: ${state.item.name}'s retaliation isn't for ${unfit.length === 1 ? "it" : "them"}.`);
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
     const sourceToken = state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null;
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;

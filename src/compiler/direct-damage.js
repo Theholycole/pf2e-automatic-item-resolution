@@ -302,3 +302,27 @@ function damageSaid(sentence, components) {
     const [, dice, persistent, type] = match;
     return components.some((component) => String(component.formula).replace(/\s+/g, "") === dice.replace(/\s+/g, "") && (component.type ?? null) === (type ? type.toLowerCase() : null) && (component.category === "persistent") === Boolean(persistent));
 }
+
+// Retaliation while what the item gives lasts, for creatures of one trait only (2026-10-20; a third-party salve's resistance, and its damage
+// for an ooze that hits the creature with an unarmed Strike): plan.item.retaliate, the plan of a "later" attack card kept open for that time
+// (scripts/live.js posts it after the item card's Apply, for the creature it gave the resistance to), its retaliation's who and only.
+const OOZE_HIT = /^If a creature with the (\w+) trait [^.]*?\bStrikes you with an unarmed attack\b[^.]*?\bit takes (\d+(?:d\d+)?)(?: (\w+) damage)?\.$/i;
+const UNTYPED_SAID = /^This damage is untyped and [^.]*?\bresisted\.$/i;
+export function withRetaliateAfter(plan, base) {
+    const notes = [...(plan?.notes ?? []), ...(plan?.unread ?? [])];
+    const found = notes.map((note) => [note, OOZE_HIT.exec(String(note).trim())]).find(([, match]) => match);
+    const lasts = (plan?.item?.resist ?? []).find((entry) => entry.duration?.mode === "fixed")?.duration;
+    if (!found || !lasts) return plan;
+    const [said, match] = found;
+    const type = (match[3] ?? "untyped").toLowerCase();
+    const damage = directDamagePlan(`The attacking creature takes ${match[2]} ${type} damage.`, { ...base, activation: base?.activation ?? null });
+    if (!damage) return plan;
+    const rounds = Number(lasts.value) * ({ rounds: 1, minutes: 10, hours: 600 }[lasts.unit] ?? 10);
+    const trait = match[1].toLowerCase();
+    const retaliate = { ...damage, targeting: { target: "the creature that hits you", range: null, area: null }, retaliation: { rounds, only: { traits: [trait] }, unarmed: true, who: `a creature with the ${trait} trait hits {user} with an unarmed Strike` } };
+    const kept = (list) => (list ?? []).filter((note) => note !== said && !UNTYPED_SAID.test(String(note).trim()));
+    const left = { notes: kept(plan.notes), unread: kept(plan.unread) };
+    const { partial, notes: _notes, unread: _unread, ...rest } = plan;
+    const done = !left.notes.length && !left.unread.length;
+    return { ...rest, ...(left.notes.length ? { notes: left.notes } : {}), ...(left.unread.length ? { unread: left.unread } : {}), ...(done ? { automation: { ...(plan.automation ?? {}), level: "automatic" } } : { partial: true }), item: { ...plan.item, retaliate } };
+}

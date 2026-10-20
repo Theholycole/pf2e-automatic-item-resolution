@@ -13,6 +13,7 @@
 //   other change goes through the ability module's api.live.applyChange.
 
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource } from "../src/live/card.js";
+import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, damageRollClass, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
@@ -570,6 +571,15 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const resist = chosenResistances(state.plan.item.resist, state.resistType ?? 0);
         await target.actor.createEmbeddedDocuments("Item", [resistanceEffectSource(resist, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${resistanceText(resist)}`);
+    }
+    // (Retaliation while its resistance lasts, for creatures of one trait — a third-party salve's damage at an ooze that hits it: a "later" attack
+    // card kept open that long, for the creature it gave the resistance to, src/compiler/direct-damage.js withRetaliateAfter.)
+    const retaliate = state.plan.item?.retaliate;
+    if (retaliate && target.actor) {
+        const seconds = (Number(retaliate.retaliation?.rounds) || 10) * 6;
+        const card = createExposureCard({ plan: retaliate, item: state.item, user: recipient, later: true, repeat: true, until: (Number(game.time.worldTime) || 0) + seconds, attacker: "touch" });
+        await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: target.actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
+        lines.push(`${recipient.name}: its retaliation card follows`);
     }
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const entry of state.plan.item?.ruleEffects ?? []) {
