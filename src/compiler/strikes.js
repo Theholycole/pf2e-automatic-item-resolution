@@ -13,6 +13,7 @@ import { readStrikeExtras } from "./strike-damage.js";
 import { itemActionPlan } from "./item-actions.js";
 import { directDamagePlan } from "./direct-damage.js";
 import { hitNotes } from "./hit-notes.js";
+import { EACH_IN, UP_TO, countOf, readVolley } from "./volley.js";
 
 // "make a melee Strike", "make a weapon or unarmed attack Strike", "make a ranged or melee Strike", "attempt a Strike" (not
 // a creature's own, "makes a beak Strike with a +8 modifier").
@@ -21,7 +22,10 @@ const STRIKE = /\b(?:make|makes|attempt|attempts) an? ((?:(?:melee|ranged|unarme
 // "You Strike the creature you are grappling", "Make two unarmed Strikes", "the next successful Strike you make with it",
 // a trigger's hit ("Trigger You … successfully Strike your target Effect …").
 const YOU_STRIKE = /\bYou Strike (?:the|a|an|with)\b/;
-const TWO = /\bMake two (unarmed )?Strikes\b/i;
+// (And "Make two ranged Strikes, each against a separate target": several at once, src/compiler/volley.js, as "Make up to four Strikes" and
+// "against each creature in the area" are.)
+const TWO = /\bMake two ((?:unarmed|ranged|melee) )?Strikes\b/i;
+const VOLLEYS = new Set(["two", "upto", "each"]);
 const NEXT = /\bthe next (successful )?(?:(melee|ranged) )?Strike you make\b/i;
 const TRIGGER_HIT = /\bTrigger\b(?:(?!\bEffect\b).)*?\b(?:successfully Strike|hit (?:\w+ )?with a Strike|Strike hits)\b(?:(?!\bEffect\b).)*\bEffect\b/i;
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
@@ -48,7 +52,7 @@ export function readStrike(text) {
         const after = text.slice(triggered.index + triggered[0].length).trim();
         return { range: null, unarmed: false, after, sentence: sentenceOf(after), next: false, missKeeps: false, uses: 1, hit: true };
     }
-    const found = [["make", STRIKE.exec(text)], ["you", YOU_STRIKE.exec(text)], ["two", TWO.exec(text)], ["next", NEXT.exec(text)]].filter(([, match]) => match).sort((a, b) => a[1].index - b[1].index)[0];
+    const found = [["upto", UP_TO.exec(text)], ["each", EACH_IN.exec(text)], ["make", STRIKE.exec(text)], ["you", YOU_STRIKE.exec(text)], ["two", TWO.exec(text)], ["next", NEXT.exec(text)]].filter(([, match]) => match).sort((a, b) => a[1].index - b[1].index)[0];
     if (!found) return null;
     const [kind, match] = found;
     // (From the start of its sentence — "All non-magical light sources … are extinguished, and the next melee Strike …" —
@@ -61,10 +65,10 @@ export function readStrike(text) {
     else for (const stop of text.slice(0, match.index).matchAll(/[.!?]\s+|\bEffect\s+/g)) start = stop.index + stop[0].length;
     const after = text.slice(start).trim();
     const sentence = inTrigger ? sentenceOf(after) : sentenceOf(text.slice(match.index));
-    if (kind !== "two" && /\b(?:against each|each (?:against|at) a different|up to \w+ Strikes|two Strikes|Strikes? with an attack modifier|attack modifier of|with an? [+-]\d+ (?:attack )?modifier|with a [+-]\d+ to hit)\b/i.test(sentence)) return null;
+    if (!VOLLEYS.has(kind) && /\b(?:against each|each (?:against|at) a different|up to \w+ Strikes|two Strikes|Strikes? with an attack modifier|attack modifier of|with an? [+-]\d+ (?:attack )?modifier|with a [+-]\d+ to hit)\b/i.test(sentence)) return null;
     // ("You Strike the creature you are grappling with a melee weapon or unarmed attack": the words after it.)
-    const words = kind === "you" ? sentence : kind === "next" ? match[2] : match[1];
-    const unarmed = kind === "two" ? Boolean(match[1]) : /\bunarmed\b/i.test(words ?? "") && !/\b(?:weapon|melee)\b/i.test(words ?? "");
+    const words = kind === "you" ? sentence : kind === "next" || kind === "upto" ? match[2] : match[1];
+    const unarmed = kind === "two" || kind === "upto" ? /\bunarmed\b/i.test(words ?? "") : /\bunarmed\b/i.test(words ?? "") && !/\b(?:weapon|melee)\b/i.test(words ?? "");
     return {
         // (Its range after the word, Tasset of Flexibility's "Make a Strike with a melee weapon".)
         range: unarmed ? null : rangeOf(words) ?? (kind === "make" && !String(words ?? "").trim() ? /^Strike with an? (melee|ranged) weapon\b/i.exec(sentence.slice(sentence.search(/\bStrike\b/)))?.[1]?.toLowerCase() ?? null : null),
@@ -73,8 +77,10 @@ export function readStrike(text) {
         sentence,
         next: kind === "next",
         missKeeps: kind === "next" && Boolean(match[1]),
-        uses: kind === "two" ? 2 : 1,
-        hit: false
+        // (Against each creature in an area: as many as are targeted at Apply.)
+        uses: kind === "two" ? 2 : kind === "upto" ? countOf(match[1]) : kind === "each" ? null : 1,
+        hit: false,
+        ...(VOLLEYS.has(kind) ? { volley: true } : {})
     };
 }
 
@@ -230,8 +236,15 @@ export function compileStrike(item, base, options = {}) {
     // (The ammunition its weapon fires, by PF2e's weapon ammo.baseType — "arrows", "bolts", "sling-bullets", "rounds…" — so a
     // reader knows which weapons it's for; "any" names none.)
     const kinds = wordsOnly ? (/^\s*Ammunition ([a-z ,]+?)(?= Activate\b|\.|$)/i.exec(text)?.[1] ?? "").toLowerCase().split(/,\s*|\s+or\s+/).map((kind) => AMMUNITION[kind.trim()]).filter(Boolean) : [];
-    const strike = found && wordsOnly ? { ...found, ammo: false, next: true, wordsAmmo: true, ...(kinds.length ? { ammunition: kinds } : {}) } : found;
+    let strike = found && wordsOnly ? { ...found, ammo: false, next: true, wordsAmmo: true, ...(kinds.length ? { ammunition: kinds } : {}) } : found;
     if (!strike) return null;
+    // (Several at once, src/compiler/volley.js: its own sentences — the targets, the penalty, the user's damage, the multiple attack penalty —
+    // read out first, its results in the hit's words; strike.volley when it says any of that.)
+    if (strike.volley) {
+        const said = readVolley(strike.after, strike.sentence, text);
+        const { volley: _, ...rest } = strike;
+        strike = { ...rest, after: said.text, sentence: said.sentence || strike.sentence, ...(Object.keys(said.volley).length || strike.uses === null ? { volley: said.volley } : {}), ...(said.notes.length ? { volleyNotes: said.notes } : {}) };
+    }
     let riders = hitRiders(strike.after);
     // (A save for the creature the Strike hits: "On a hit, the target must succeed at a DC 22 Fortitude save or be Dazzled";
     // ammunition's, anywhere in what its hit does.)
@@ -243,7 +256,9 @@ export function compileStrike(item, base, options = {}) {
     };
     const cast = castOnHit(html);
     const follow = followOf(html, base, options);
-    const read = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
+    const extrasRead = readStrikeExtras(strike.after, { item, strikeSentence: strike.sentence, own: strike.next, riderSentence });
+    // (A volley's penalty to each Strike, Caress of the Great Serpent's −2: its attack modifier. A volley is a reading of its own.)
+    const read = strike.volley ? { ...extrasRead, ...(strike.volley.penalty && !extrasRead.attack ? { attack: { value: strike.volley.penalty, type: "untyped" } } : {}), notes: [...(strike.volleyNotes ?? []), ...extrasRead.notes], read: true } : extrasRead;
     // (The cast's own sentence isn't a note.)
     if (cast) read.notes = read.notes.filter((note) => !note.includes(cast.name) && !(cast.attackFromHit && /^As with the spell\b/i.test(note)));
     let extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration || read.runes) } : read;
@@ -358,6 +373,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(strike.ammo ? { ammo: true } : {}),
               unarmed: strike.unarmed,
               uses: strike.uses,
+              ...(strike.volley ? { volley: strike.volley } : {}),
               until: strike.hit ? "turn-end" : untilOf(strike.after),
               missKeeps: strike.missKeeps,
               hit: strike.hit,

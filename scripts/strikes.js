@@ -12,7 +12,7 @@ import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
 import { USES, now } from "./activations.js";
 import { withoutUse } from "../src/live/activations-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, entryOf, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, startInitiative, stateOf } from "./foundry.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -30,18 +30,22 @@ export async function postStrikeCard({ message, plan, used, actor, token }) {
     return ChatMessage.create({ content: strikeCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
-export async function applyStrikeCard(message) {
+// choices.targets: the presser's targets — a volley against each creature in an area readies one Strike at each (src/compiler/volley.js).
+export async function applyStrikeCard(message, choices = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "strike" || state.status !== "open") return null;
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
+    const volley = state.plan.strike?.volley;
+    const targets = volley?.each ? [...new Set(choices.targets ?? [])] : null;
+    if (targets && !targets.length) throw new Error(`Target each ${volley.each} ${volley.area ? `in the ${volley.area}` : "in the area"} first, then ready the Strikes.`);
     // (One readied Strike at a time: a new one replaces the old.)
     const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]);
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
     const weaponId = state.plan.strike?.own ? itemIdOf(state.item.uuid) : null;
     const ammoId = state.plan.strike?.ammo ? itemIdOf(state.item.uuid) : null;
-    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId })]);
-    const next = { ...state, status: "applied", results: [`${strikeHint(state.plan, state.user.name)}${old.length ? " (The one readied before is gone.)" : ""}`] };
+    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: targets.length, targets } : {}) })]);
+    const next = { ...state, status: "applied", results: [`${strikeHint(state.plan, state.user.name, { uses: targets ? targets.length : null })}${old.length ? " (The one readied before is gone.)" : ""}`] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 
@@ -79,6 +83,21 @@ export async function strikeWithRider(message) {
     const options = context.options ?? [];
     const what = riderFor(rider.plan, { ranged: options.includes("item:ranged") && !options.includes("item:melee"), outcome: context.outcome, options, weaponId: rider.weaponId ?? null, ammoId: rider.ammoId ?? null });
     if (!what || what === "keep") return;
+    // (Several at once, src/compiler/volley.js: each at a creature it hasn't struck — against each creature in an area, one of those targeted
+    // when it was readied; a Strike at another isn't one of them. Each one made deals its user that damage, Caress of the Great Serpent's.)
+    const volley = rider.plan.strike?.volley;
+    if (volley) {
+        const at = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
+        const struck = rider.struck ?? [];
+        const outside = Boolean(at) && (rider.targets ?? []).length > 0 && !rider.targets.includes(at);
+        const again = Boolean(at) && struck.includes(at) && Boolean(volley.different || volley.each);
+        if (outside || again) {
+            await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escape(rider.item.name)}</strong>: ${again ? "that creature was already struck by it" : "that creature isn't one of those targeted for it"}, so this Strike isn't one of them (nothing spent).</p>` });
+            return;
+        }
+        if (at) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.struck`]: [...struck, at] });
+        if (volley.selfDamage) await volleyDamage(actor, rider, volley.selfDamage);
+    }
     // (Splash for this Strike, the splash trait's — Jistkan War Crossbow's, Drake Rifle's: the creatures within 5 feet of the target take it
     // on a hit, PF2e's damage roll giving the target its own, and the target too on a failure — the bomb card's splash list, ticked, its
     // Apply that splash damage.)
@@ -192,6 +211,19 @@ export async function strikeWithRider(message) {
         }
     }
     await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(lines.join("; ") || "the Strike hit")}.</p>` });
+}
+
+// A volley's damage to its user for a Strike made (Caress of the Great Serpent's 1d6 piercing): rolled and taken.
+async function volleyDamage(actor, rider, damage) {
+    const speaker = ChatMessage.getSpeaker({ actor });
+    const DamageRoll = damageRollClass();
+    if (!DamageRoll) {
+        await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(actor.name)} takes ${escape(damage.formula)} ${escape(damage.type)} damage for that Strike (by hand).</p>` });
+        return;
+    }
+    const roll = await new DamageRoll(`(${damage.formula})[${damage.type}]`).evaluate();
+    await actor.applyDamage({ damage: roll, token: actor.getActiveTokens?.(true, true)?.[0] ?? undefined });
+    await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(actor.name)} takes ${roll.total} ${escape(damage.type)} damage for that Strike.</p>` });
 }
 
 // Damage in place of the weapon's (Big Rock Bullet's): spent by the attack roll, which posts that degree's damage at the target on

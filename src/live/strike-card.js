@@ -5,6 +5,7 @@
 // Strike calls for, and its damage roll spends it; a miss spends it. Pure; the ability module's classes.
 
 import { saveText } from "./poison-card.js";
+import { volleyLines } from "../compiler/volley.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -36,11 +37,14 @@ export function strikeLines(plan) {
     const critical = rowText(outcomes.criticalSuccess);
     const strike = plan.strike;
     return [
+        // (Several at once, src/compiler/volley.js: how many, at whom, and what the text says of them.)
+        ...volleyLines(strike.volley, { uses: strike.uses }),
         // (Only against a kind of creature: "Only against a plant or wood creature".)
         strike.against?.length ? `Only against a ${strike.against.join(" or ")} creature (another target spends it)` : null,
         // (Damage its own PF2e rules add, Gravebane Ammunition's: said, PF2e's to roll.)
         ...(strike.ownRules ?? []).map((words) => `PF2e's own rules add ${words}`),
-        strike.attack ? `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll` : null,
+        // (A volley's penalty is its own line.)
+        strike.attack && !(strike.volley?.penalty && strike.attack.value === strike.volley.penalty) ? (strike.attack.value < 0 ? `${strike.attack.value} ${strike.attack.type === "untyped" ? "" : `${strike.attack.type} `}penalty to the attack roll` : `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll`) : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
@@ -79,12 +83,17 @@ export const strikeWord = (plan) => (plan.strike?.unarmed ? "unarmed Strike" : R
 const UNTIL_WORDS = { "turn-end": "this turn", "next-turn-end": "before the end of the next turn", minute: "within a minute" };
 
 // The card's hint: which Strike carries it and what spends it.
-export function strikeHint(plan, name) {
+// (uses: how many it readied, a volley at each creature targeted.)
+const NUMBER_WORDS = { 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight" };
+export function strikeHint(plan, name, { uses = null } = {}) {
     const strike = plan.strike ?? {};
     if (strike.hit) return `${name}'s Strike already hit: its damage roll carries it.`;
-    const which = strike.uses === 2 ? `next two ${strikeWord(plan)}s` : `next ${strikeWord(plan)}`;
+    const count = uses ?? strike.uses;
+    if (strike.volley?.each && !count) return `${name}'s next ${strikeWord(plan)}s this turn, one at each ${strike.volley.each} targeted when it's readied, carry it; a miss spends that one.`;
+    const which = count > 1 ? `next ${NUMBER_WORDS[count] ?? count} ${strikeWord(plan)}s` : `next ${strikeWord(plan)}`;
+    if (strike.volley && count > 1) return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} carry it${strike.volley.each ? `, one at each ${strike.volley.each} targeted` : strike.volley.different ? ", each at a different creature" : ""}; a miss spends that one.`;
     if (strike.instead) return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} carries it; its attack roll posts the damage to roll, so don't roll the weapon's own.`;
-    return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} ${strike.uses === 2 ? "carry" : "carries"} it; ${strike.missKeeps ? "only a hit spends it" : "a miss spends it"}.`;
+    return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} ${count > 1 ? "carry" : "carries"} it; ${strike.missKeeps ? "only a hit spends it" : "a miss spends it"}.`;
 }
 
 // Damage in place of the weapon's for the attack's degree (Big Rock Bullet's): the ability module's card of it — the check
@@ -170,16 +179,17 @@ const DURATIONS = {
 };
 
 // The Effect on the user that marks the readied Strike, until the end of the turn (or as long as the text says). Its flag
-// counts the Strikes left (uses) and whether a hit's damage roll is still to come (awaiting).
-export function strikeEffectSource({ state, img = null, worldTime = 0, initiative = null, moduleId, weaponId = null, ammoId = null }) {
+// counts the Strikes left (uses) and whether a hit's damage roll is still to come (awaiting); a volley's, the creatures targeted for it
+// (targets) and those it has struck (struck).
+export function strikeEffectSource({ state, img = null, worldTime = 0, initiative = null, moduleId, weaponId = null, ammoId = null, uses = null, targets = null }) {
     const strike = state.plan.strike ?? {};
     return {
         name: `${state.item.name}: next ${strikeWord(state.plan)}`,
         type: "effect",
         img: img ?? "icons/svg/sword.svg",
-        flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, ammoId, uses: strike.uses ?? 1, awaiting: Boolean(strike.hit) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, ammoId, uses: uses ?? strike.uses ?? 1, awaiting: Boolean(strike.hit), ...(strike.volley ? { targets: targets ?? [], struck: [] } : {}) } } },
         system: {
-            description: { value: `<p>${escape(strikeHint(state.plan, "Its user"))} ${escape(strikeLines(state.plan).join("; "))}.</p>` },
+            description: { value: `<p>${escape(strikeHint(state.plan, "Its user", { uses }))} ${escape(strikeLines(state.plan).join("; "))}.</p>` },
             duration: { ...(DURATIONS[strike.until] ?? DURATIONS["turn-end"]), sustained: false },
             start: { value: worldTime, initiative },
             rules: strikeRules(state.plan, { weaponId, ammoId, label: state.item.name })
