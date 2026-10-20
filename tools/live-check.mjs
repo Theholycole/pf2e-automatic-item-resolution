@@ -7487,6 +7487,57 @@ export const cases = {
         }
     },
 
+    // Slumber Arrow (src/compiler/kind-saves.js, guards.js failureThenAlso): its save only for a living creature — an undead targeted gets a
+    // line, no card — and the living one's critical failure Slowed 1 beside the -5-foot status penalty to its Speeds.
+    async slumberLiving(scene) {
+        await clearSquares(scene, [[14, 19], [15, 19], [16, 19]]);
+        const { actor: archer, token: archerToken } = await creature(scene, "Slumber Archer", { type: "character", x: 14, y: 19 });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Slumber Undead", { x: 15, y: 19, alliance: "opposition" });
+        const { actor: living, token: livingToken } = await creature(scene, "Slumber Living", { x: 16, y: 19, alliance: "opposition", save: -30 });
+        await undead.update({ "system.traits.value": ["undead"] });
+        const arrow = await give(archer, "Slumber Arrow");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrow.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the arrow's card" });
+        await archerToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [undeadToken.uuid, livingToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the living creature's save card" });
+        await wait(800);
+        const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message));
+        assert(cards.length === 1 && !(cards[0].flags["pf2e-automatic-ability-resolution"].card.targets ?? []).some((entry) => entry.actorUuid === undead.uuid), `one card, not for the undead (${cards.length})`);
+        await withDie(10, () => rollAndApply(save));
+        const slowed = () => living.getCondition("slowed")?.value ?? 0;
+        const slower = () => living.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && Number(rule.value) === -5 && [].concat(rule.selector).some((selector) => /speed/.test(selector)));
+        await until(() => slowed() === 1 && slower(), "Slowed 1 and the -5-foot Speed penalty", { timeout: 10000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(results.some((line) => /Slumber Undead: immune/.test(line)), `the undead's line (${JSON.stringify(results)})`);
+        return { results };
+    },
+
+    // Vermin Repellent Agent (Lesser) (src/compiler/effect-then-card.js): PF2e's Effect on its user, then its attackers' card, kept open for
+    // its 4 hours; set off by an arthropod attacking, its save card at it.
+    async verminThenCard(scene) {
+        await clearSquares(scene, [[17, 19], [18, 19]]);
+        const { actor: user, token: userToken } = await creature(scene, "Vermin Repelled", { type: "character", x: 17, y: 19 });
+        const { token: bugToken } = await creature(scene, "Vermin Bug", { x: 18, y: 19, alliance: "opposition" });
+        let since = Date.now();
+        await (await give(user, "Vermin Repellent Agent (Lesser)")).consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the repellent's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => effect.name === "Effect: Vermin Repellent Agent"), "PF2e's Vermin Repellent Agent Effect", { timeout: 8000 });
+        const later = await messageAfter(since, itemCard("expose"), { what: "its attackers' card" });
+        const state = later.getFlag(NS, "card");
+        assert(state.later && state.repeat && state.attacker && state.until - game.time.worldTime === 4 * 3600, `open for 4 hours, set off by an attacker (${JSON.stringify({ later: state.later, repeat: state.repeat, attacker: state.attacker, left: state.until - game.time.worldTime })})`);
+        await userToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(later.id, { targets: [bugToken.uuid] });
+        await messageAfter(since, abilitySaveCard, { what: "the attacking arthropod's save card" });
+        assert(game.messages.get(later.id).getFlag(NS, "card").status === "open", "still open after it");
+        return { uses: game.messages.get(later.id).getFlag(NS, "card").uses };
+    },
+
     // Golden Silencer (Greater)'s Strike save (its note Effect's note.saveEnds): a critical failure silenced for 1 minute, a note Effect a new
     // Fortitude save at the end of its turns ends.
     async saveEndsSilencer(scene) {
