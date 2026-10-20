@@ -893,6 +893,12 @@ test("more mythic and healing items: Hollow Robes' persistent damage ended outri
     // (One type ended outright beside the healing typed on the card: Assassin's Skin's bleed.)
     const skin = compileActivations(item("Assassin's Skin"))[0].plan;
     assert.deepEqual([skin.item.recovery, skin.item.levelTemp.map((entry) => [entry.from, entry.heal]), skin.partial, skin.unread], [{ types: ["bleed"], dc: null, ends: true }, [["amount", true]], undefined, undefined]);
+    // (Not a clause's: Heedless Spurs' "… also ends when the persistent bleed damage ends", Horned Lion Amulet's "… until the persistent fire
+    // damage ends".)
+    assert.equal(compileActivations(item("Heedless Spurs"))[0].plan.item.recovery, undefined);
+    assert.equal(compileItem(item("Horned Lion Amulet")).item.recovery, undefined);
+    // (A consumable's opening "This …" sentence is flavor: Blood Sight Elixir's.)
+    assert.ok(!(compileItem(item("Blood Sight Elixir (Lesser)")).notes ?? []).some((note) => /^This thick, blood-red elixir/.test(note)));
     const veil = compileActivations(item("Whispering Veil"))[0].plan;
     assert.deepEqual([routeOf(veil), veil.focus], ["focus", { amount: 1, only: null, lost: "turn-end", resource: "mythic" }]);
     assert.equal(focusText(veil.focus, "Hero Point"), "1 Hero Point; lost at the end of the turn if not spent");

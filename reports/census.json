@@ -7558,7 +7558,6 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "This thick, blood-red elixir sharpens your senses and makes you more acutely aware of blood.",
     "Blood sight has a range of 60 feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded conditions.",
     "Your blood sight is especially accurate, allowing you to also detect creatures whose Hit Points are currently at half or less of their maximum.",
     "When you detect a creature with blood sight, you get a vague approximation of the value of the creature's bleed damage, dying condition, or wounded condition.",
@@ -11122,7 +11121,6 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "This thick, blood-red elixir sharpens your senses and makes you more acutely aware of blood.",
     "Blood sight has a range of 60 feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded conditions."
    ],
    "live": "item"
@@ -12885,7 +12883,6 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "This thick, blood-red elixir sharpens your senses and makes you more acutely aware of blood.",
     "Blood sight has a range of 60 feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded conditions."
    ],
    "live": "item"
@@ -23549,7 +23546,6 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "This thick, blood-red elixir sharpens your senses and makes you more acutely aware of blood.",
     "Blood sight has a range of 60 feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded conditions."
    ],
    "live": "item"

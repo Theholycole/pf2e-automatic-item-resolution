@@ -34,7 +34,8 @@ export function readRecovery(text) {
     if (ENDS.test(plain)) return { types: [...TYPES], dc: null, ends: true };
     // (One type ended outright, Assassin's Skin's "You don't take the persistent bleed damage and instead regain Hit Points equal to the bleed
     // damage. The persistent bleed damage ends.")
-    const typeEnds = new RegExp(String.raw`\bThe persistent (${TYPE}) damage ends\.`, "i").exec(plain);
+    // (A sentence of its own, not a clause's "… ends when the persistent bleed damage ends" — Heedless Spurs', Horned Lion Amulet's.)
+    const typeEnds = new RegExp(String.raw`(?:^|[.!?]\s+)The persistent (${TYPE}) damage ends\.`).exec(plain);
     if (typeEnds) return { types: [typeEnds[1].toLowerCase()], dc: null, ends: true };
     if (OWN_TYPE.test(plain)) {
         const listed = [...(POPULAR.exec(plain)?.[1] ?? "").matchAll(new RegExp(String.raw`\b(${TYPE})\b`, "gi"))].map(([type]) => type.toLowerCase());

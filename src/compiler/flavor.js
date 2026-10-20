@@ -32,6 +32,15 @@ export function flavorSentence(html) {
         const plain = opening.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
         return RULE_WORDS.test(plain) ? null : plain;
     }
+    // (A consumable's own: the first sentence after its Activate line when it says what the item is, "This thick, blood-red elixir sharpens your
+    // senses and makes you more acutely aware of blood." (Blood Sight Elixir) — "This …" or "These …", with no link, number or rule word.)
+    if (!/<strong>\s*Effect\s*<\/strong>/i.test(text)) {
+        const opening = /<hr\s*\/?>\s*<p>((?:(?!<\/p>)[\s\S])*)<\/p>/i.exec(text)?.[1] ?? null;
+        const first = opening ? /^\s*((?:This|These)\b[^.!?]*[.!?])(?=\s+\S)/.exec(opening)?.[1] ?? null : null;
+        if (!first || /<strong>|@|\d/.test(first)) return null;
+        const plain = first.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+        return RULE_WORDS.test(plain) ? null : plain;
+    }
     if (withoutFlavor(text) === text) return null;
     const effect = /<strong>\s*Effect\s*<\/strong>\s*/i.exec(text);
     const rest = text.slice(effect.index + effect[0].length);
