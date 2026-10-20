@@ -70,9 +70,9 @@ test("an activation's row: not a condition only to some, not a random table's, n
     // "The target is Quickened for 1 round": the save card, for the creature targeted — not the item card on its user.
     const watch = compileActivations(item("Pocket Watch of Stethelos"), { spellEffects }).find(({ activation }) => activation.name === "Steal a Second");
     assert.equal(routeOf(watch.plan, plainText(watch.activation.html)), "save");
-    // "You drop to 1 Hit Point instead …, and you gain 100 temporary Hit Points": the temporary Hit Points, the rest on a note.
+    // "You drop to 1 Hit Point instead …, and you gain 100 temporary Hit Points": the temporary Hit Points, the 1 Hit Point the card's (dropToOne).
     const [bastion] = compileActivations(item("Immortal Bastion"), { spellEffects });
-    assert.equal(bastion.plan.partial, true);
+    assert.deepEqual([bastion.plan.partial, bastion.plan.item.dropToOne], [undefined, true]);
 });
 
 test("the spell module's claims, when given: what it acts on is left to it; without them, nothing changes", async (t) => {
@@ -196,11 +196,10 @@ test("the Harrow Court's damage and healing for its owner's level; The Survivor'
     assert.equal(byOwnerLevel(html, null), html);
     assert.equal(byOwnerLevel(html, 9), "<p>It deals @Damage[3d6[fire]] damage.</p>");
     assert.equal(byOwnerLevel(html, 8), "<p>It deals @Damage[2d6[fire]] damage.</p>");
-    // The Midwife heals the creature it saves (the card's other recipient); The Survivor its user, the 1 HP "instead" a note.
+    // The Midwife heals the creature it saves (the card's other recipient); The Survivor its user, after the 1 HP "instead" (dropToOne).
     assert.equal(at("The Midwife", 20).otherRecipient, true);
-    const survivor = compileActivations(item("The Survivor"), { spellEffects })[0].plan;
-    assert.deepEqual(survivor.resolution.outcomes.success.effects, [{ kind: "heal", formula: "4d8+16" }]);
-    assert.match(survivor.unread.join(" "), /you drop to 1 Hit Point instead/);
+    const survivor = compileActivations({ ...item("The Survivor"), ownerLevel: 12 }, { spellEffects })[0].plan;
+    assert.deepEqual([survivor.resolution.outcomes.success.effects, survivor.item.dropToOne, survivor.unread], [[{ kind: "heal", formula: "4d8+16" }], true, undefined]);
 });
 
 test("Fortune Cord's coins pick its damage type (the card's picker); Dragonscale Amulet's frightful presence by name, as that ability's rows", async () => {
@@ -597,6 +596,12 @@ test("healing back from dying without raising Wounded (Magical Medal (Phoenix's 
     const rose = compileItem(item("Guardian Rose"));
     assert.deepEqual([rose.resolution.outcomes.success.effects.map((effect) => effect.kind), rose.item.keepWounded, rose.partial, rose.unread], [["heal", "condition"], true, undefined, undefined]);
     assert.notEqual(compileItem(item("False Death Vial"))?.item?.keepWounded, true);
+    // (Left at 1 Hit Point instead of 0: The Survivor's healing after it, its dice by its owner's level; Immortal Bastion's 100 temporary Hit Points.)
+    const survivor = (level) => compileActivations({ ...item("The Survivor"), ownerLevel: level }, { spellEffects })[0].plan;
+    assert.deepEqual([survivor(12).item.dropToOne, survivor(12).resolution.outcomes.success.effects.map((effect) => effect.formula), survivor(18).resolution.outcomes.success.effects.map((effect) => effect.formula), survivor(18).partial], [true, ["4d8+16"], ["6d8+24"], undefined]);
+    assert.match(survivor(null).unread.join(" "), /increases to 5d8\+20 if you are at least 15th level/, "with no owner level, the steps a note");
+    const bastion = compileActivations(item("Immortal Bastion"), { spellEffects })[0].plan;
+    assert.deepEqual([bastion.item.dropToOne, bastion.resolution.outcomes.success.effects.map((effect) => [effect.kind, effect.amount]), bastion.partial], [true, [["temp-hp", 100]], undefined]);
 });
 
 test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 force damage\" at the target, the designated offender's more a note; Swarmeater's Clasp's \"You recover 3d10+8 Hit Points\", the swarm's damage a note", () => {

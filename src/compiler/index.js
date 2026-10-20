@@ -13,7 +13,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
 import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf, withStatedHealing } from "./consumables.js";
-import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
+import { allyAreaRow, dropsToOne, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { belchedCloudPlan, bubbleCloudPlan, coatedSquarePlan, exhaledSquarePlan, placedChimePlan } from "./covered-square.js";
@@ -456,7 +456,7 @@ function itemInfo(item) {
         // (Restored to its maximum Hit Points, its afflictions removed: the item card's, src/compiler/restore.js.)
         ...(readRestore(plainText(item?.system?.description?.value)) ? { restore: readRestore(plainText(item?.system?.description?.value)) } : {}),
         // (Back from dying without raising Wounded, src/compiler/rows.js.)
-        ...(keepsWounded(plainText(item?.system?.description?.value)) ? { keepWounded: true } : {})
+        ...(keepsWounded(plainText(item?.system?.description?.value)) ? { keepWounded: true } : {}), ...(dropsToOne(plainText(item?.system?.description?.value)) ? { dropToOne: true } : {})
     };
 }
 

@@ -77,6 +77,12 @@ export function itemDuration(text) {
 // (Or never knocked out, Guardian Rose's "you avoid being knocked out and regain 2d8+5 Hit Points": the Dying PF2e gave it at 0 Hit Points ended
 // on the healing, no Wounded for it — unless the text raises it, "and your Wounded condition increases by 1".)
 export const keepsWounded = (text) => /\b(?:Your|their|its|his|her) Wounded (?:value|condition) does(?:n't| not) increase\b|\bdoes(?:n't| not) increase (?:their|your|its) Wounded (?:value|condition)\b/i.test(String(text ?? "")) || (AVOIDS_KNOCKOUT.test(String(text ?? "")) && !/\bWounded condition increases\b/i.test(String(text ?? "")));
+// (Left at 1 Hit Point instead of 0, The Survivor's "Instead of being reduced to 0 Hit Points, you drop to 1 Hit Point instead and immediately
+// restore an additional 4d8+16 Hit Points", Immortal Bastion's "You drop to 1 Hit Point instead of being reduced to 0 HP or dying, and you gain
+// 100 temporary Hit Points …": item.dropToOne — the card sets its user's Hit Points to 1 and ends the Dying PF2e gave it, no Wounded for it,
+// before the healing or temporary Hit Points.)
+const DROPS_TO_ONE = /\bInstead of being reduced to 0 Hit Points, you drop to 1 Hit Point instead and\b|\bYou drop to 1 Hit Point instead of being reduced to 0 HP or dying, and\b/i;
+export const dropsToOne = (text) => DROPS_TO_ONE.test(String(text ?? ""));
 const AVOIDS_KNOCKOUT = /\bWhen you activate (?:it|an? [\w' -]+?|the [\w' -]+?)\s*, you avoid being knocked out and regain\b/i;
 
 // A sentence's own time, else the item's.
@@ -164,7 +170,7 @@ function tempHitPoints(sentences, duration, used = new Set()) {
             // (Its other half stays unread, for the note: "You drop to 1 Hit Point instead of being reduced to 0 HP or dying,
             // and you gain 100 temporary Hit Points" — the 1 HP the GM sets.)
             // (And "you avoid being knocked out", or "and deal the same amount of bludgeoning damage to the swarm": the GM's, on the note.)
-            if (!/\binstead\b|\bavoid being knocked out\b|\band deals? (?:the same|an equal)\b/i.test(sentence)) used.add(index);
+            if (!/\binstead\b|\bavoid being knocked out\b|\band deals? (?:the same|an equal)\b/i.test(sentence.replace(DROPS_TO_ONE, ""))) used.add(index);
             const amount = (match[1] ?? match[2]).replace(/\s+/g, "");
             // (Their time in a sentence of their own after: "You lose any remaining temporary Hit Points after 1 minute", "These
             // temporary Hit Points last for 1 hour" — before the item's.)
@@ -245,7 +251,7 @@ function textHealing(sentences, used = new Set()) {
         if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(lead)) {
             // (What it does "instead" — "you drop to 1 Hit Point instead" — stays on the note for the GM.)
             // (And "you avoid being knocked out", or "and deal the same amount of bludgeoning damage to the swarm": the GM's, on the note.)
-            if (!/\binstead\b|\band deals? (?:the same|an equal)\b/i.test(sentence) && (!/\bavoid being knocked out\b/i.test(sentence) || keepsWounded(sentence))) used.add(index);
+            if (!/\binstead\b|\band deals? (?:the same|an equal)\b/i.test(sentence.replace(DROPS_TO_ONE, "")) && (!/\bavoid being knocked out\b/i.test(sentence) || keepsWounded(sentence))) used.add(index);
             const amount = match.slice(1).find((group) => group !== undefined).replace(/\s+/g, "");
             return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), ...(other && !self ? { other: true } : {}) };
         }
@@ -847,7 +853,7 @@ const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.[\w-]*effects\.Item\./;
 
 // A sentence that says something a creature or its rolls get or lose (not flavor, not how long it lasts).
 // (Whole words: "AC" isn't the start of "academic", "checks" of "checkered".)
-const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es)?|immun\w*|Speeds?|damage[ds]?|Hit Points|DC \d+|Mythic Points?|breathe|breathing|up to (?:\d+|two|three|four|five|six) willing creatures|checks?|saves?|saving throws?|attack(?:s|ed|er|ers)?|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b/i;
+const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es)?|immun\w*|Speeds?|damage[ds]?|Hit Points?|DC \d+|Mythic Points?|breathe|breathing|up to (?:\d+|two|three|four|five|six) willing creatures|checks?|saves?|saving throws?|attack(?:s|ed|er|ers)?|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b/i;
 
 // The row for the item's drinker or user: { effects, modifiers, unread } with something in it, or null. unread: the
 // sentences that say something mechanical it didn't read (they go on a note, and the plan counts as partial).

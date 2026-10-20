@@ -3669,6 +3669,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
+    "A creature benefiting from the vapors regains 1 Hit Point every 2 minutes.",
     "The bonus is only for up to four living creatures in the vapors, while they stay in them."
    ],
    "live": "item"
@@ -15372,6 +15373,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
+    "A creature benefiting from the vapors regains 3 Hit Point every minute.",
     "The bonus is only for up to four living creatures in the vapors, while they stay in them."
    ],
    "live": "item"
@@ -17184,6 +17186,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
+    "A creature benefiting from the vapors regains 1 Hit Point every minute.",
     "The bonus is only for up to four living creatures in the vapors, while they stay in them."
    ],
    "live": "item"

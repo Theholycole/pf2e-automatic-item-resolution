@@ -3903,6 +3903,27 @@ export const cases = {
         return { hp: user.system.attributes.hp.value, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Immortal Bastion, its user at 0 Hit Points and Dying 1: 1 Hit Point instead, Dying and Unconscious gone with no Wounded, 100 temporary
+    // Hit Points.
+    async immortalBastion(scene) {
+        const { actor: user } = await creature(scene, "Bastion Wearer", { type: "character", x: 0, y: 14 });
+        await user.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Hit Points`, type: "effect", system: { rules: [{ key: "FlatModifier", selector: "hp", value: 30 }], duration: { value: -1, unit: "unlimited", expiry: null, sustained: false } } }]);
+        await until(() => user.system.attributes.hp.max >= 30, "30 maximum Hit Points", { timeout: 5000 });
+        await user.update({ "system.attributes.hp.value": 0 });
+        if (!user.hasCondition("dying")) await user.increaseCondition("dying");
+        if (!user.hasCondition("unconscious")) await user.increaseCondition("unconscious");
+        await until(() => user.hasCondition("dying") && user.hasCondition("unconscious"), "dying and unconscious", { timeout: 5000 });
+        const wounded = user.getCondition("wounded")?.value ?? 0;
+        const bastion = await give(user, "Immortal Bastion");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(bastion.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the bastion's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.system.attributes.hp.value === 1 && user.system.attributes.hp.temp === 100 && !user.hasCondition("dying") && !user.hasCondition("unconscious"), `1 Hit Point, 100 temporary, awake (${user.system.attributes.hp.value}/${user.system.attributes.hp.temp}; ${user.conditions.map((condition) => condition.slug).join(", ")})`, { timeout: 10000 });
+        assert((user.getCondition("wounded")?.value ?? 0) === wounded, `Wounded not raised (${wounded} → ${user.getCondition("wounded")?.value ?? 0})`);
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Magekiller Bullet: on PF2e's hit, its curse a note Effect on the creature hit for a week.
     async magekillerNote(scene) {
         const { actor: archer, token: archerToken } = await creature(scene, "Magekiller Archer", { type: "character", x: 6, y: 9, level: 16 });

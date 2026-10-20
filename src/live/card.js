@@ -446,7 +446,7 @@ export function fastHealingEffectSource(healing, { item = {}, user = {}, worldTi
 }
 
 // A shield's other form in words: "The shield becomes a tower shield (+2 AC, a –5-foot Speed penalty) until it's activated again".
-export const shieldFormText = (form) => `The shield becomes a ${form.name} (+${form.acBonus} AC, a ${form.speedPenalty}-foot Speed penalty${form.harder ? `, its Hardness and Bulk ${form.harder} higher` : ""}) until it's activated again`;
+export const shieldFormText = (form) => `The shield becomes a ${form.name} (+${form.acBonus} AC, a ${form.speedPenalty}-foot Speed penalty${form.harder ? `, its Hardness and Bulk ${form.harder} higher` : ""}${form.takeCover ? "; it can Take Cover as a tower shield does: PF2e's Take Cover, greater cover with it raised" : ""}) until it's activated again`;
 
 // Its Effect: PF2e's ItemAlteration on that shield, by its id on its user.
 export function shieldFormEffectSource(form, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {

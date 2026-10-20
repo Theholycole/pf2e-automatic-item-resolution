@@ -613,12 +613,13 @@ export const hasOwnerDC = (plan) => Boolean(plan) && /"dc":"owner"|"ownerDC"/.te
 // (The Desert, The Trumpet; The Midwife's healing): with its owner's level known (live play passes item.ownerLevel), the
 // step for that level in place of the damage before it, and the sentence gone; unknown, as it was.
 const LINK = String.raw`@Damage\[(?:[^\[\]]|\[[^\]]*\])+\](?:\{[^}]*\})?`;
-const SCALING = new RegExp(String.raw`\s*The (?:damage|amount of healing granted|healing) increases to ${LINK}[^.]*? if you're at least \d+(?:st|nd|rd|th) level(?:,? (?:and )?(?:to )?${LINK}[^.]*? if you're at least \d+(?:st|nd|rd|th) level)*\.`, "i");
+// (And The Survivor's "The amount of Hit Point restored increases to … if you are at least 15th level, …".)
+const SCALING = new RegExp(String.raw`\s*The (?:damage|amount of healing granted|healing|amount of Hit Points? restored) increases to ${LINK}[^.]*? if you(?:'re| are) at least \d+(?:st|nd|rd|th) level(?:,? (?:and )?(?:to )?${LINK}[^.]*? if you(?:'re| are) at least \d+(?:st|nd|rd|th) level)*\.`, "i");
 export function byOwnerLevel(html, level) {
     const text = String(html ?? "");
     const scaling = SCALING.exec(text);
     if (!scaling || !Number.isFinite(Number(level)) || level === null) return text;
-    const steps = [...scaling[0].matchAll(new RegExp(String.raw`(${LINK})[^@]*? if you're at least (\d+)(?:st|nd|rd|th) level`, "gi"))].map((match) => ({ link: match[1], level: Number(match[2]) }));
+    const steps = [...scaling[0].matchAll(new RegExp(String.raw`(${LINK})[^@]*? if you(?:'re| are) at least (\d+)(?:st|nd|rd|th) level`, "gi"))].map((match) => ({ link: match[1], level: Number(match[2]) }));
     const step = steps.filter((entry) => entry.level <= Number(level)).sort((a, b) => b.level - a.level)[0];
     const before = text.slice(0, scaling.index);
     const base = [...before.matchAll(new RegExp(LINK, "gi"))].at(-1);

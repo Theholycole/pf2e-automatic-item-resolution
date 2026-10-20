@@ -537,6 +537,15 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     };
     const result = await core.registry.resolve(state.plan, context, io);
     const lines = [...rolledLines];
+    // (Left at 1 Hit Point instead of 0, The Survivor's and Immortal Bastion's: its Hit Points to 1, the Dying PF2e gave it ended with no Wounded
+    // for it — before the healing or temporary Hit Points.)
+    if (state.plan.item?.dropToOne && target.actor) {
+        const dying = game.modules.get(CORE_ID)?.api?.dying;
+        const wasDying = dying?.isDying(target.actor) ?? target.actor.hasCondition?.("dying") ?? false;
+        if ((Number(target.actor.system?.attributes?.hp?.value) || 0) < 1) await target.actor.update({ "system.attributes.hp.value": 1 });
+        const revived = wasDying && dying ? await dying.recoverFromDying(target.actor, wasDying, { keepWounded: true }) : null;
+        lines.push(`${recipient.name} drops to 1 Hit Point instead of 0${revived ? `. ${dying.revivedNote(revived).replace(/\bthis spell\b/, "this item")}` : wasDying ? ". It was dying: end Dying by hand (no Wounded for it)" : ""}`);
+    }
     const ability = game.modules.get(ABILITY_ID)?.api?.live;
     for (const change of result.changes) {
         const creature = change.target === USER_ID ? user : target;
@@ -841,7 +850,8 @@ async function heal({ token, actor }, name, amount, state) {
     if (wasDying && dying) {
         // (Magical Medal (Phoenix's Fire)'s "Your Wounded value does not increase": the core's keepWounded.)
         const revived = await dying.recoverFromDying(actor, wasDying, { keepWounded: Boolean(state.plan?.item?.keepWounded) });
-        if (revived) parts.push(dying.revivedNote(revived));
+        // (The core's words are a spell's: "this spell doesn't increase it" — an item's here.)
+        if (revived) parts.push(dying.revivedNote(revived).replace(/\bthis spell\b/, "this item"));
     } else if (wasDying) parts.push("It was dying: end Dying and raise Wounded by hand.");
     return parts.join(". ");
 }
