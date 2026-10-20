@@ -12,6 +12,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { litAreaPlan } from "./lit-area.js";
 import { withHonestPartial, withUntracedRules } from "./honest.js";
 import { withSaveEnds } from "./save-ends.js";
+import { withKindSaves } from "./kind-saves.js";
 import { withRoundBurst } from "./round-burst.js";
 import { withEffectThenCard } from "./effect-then-card.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
@@ -201,7 +202,7 @@ export function compileItem(given, options = {}) {
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (A new save at the creature's turns, src/compiler/save-ends.js.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
-    return withUntracedRules(withHonestPartial(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), text), itemDuration(text)), text);
+    return withUntracedRules(withHonestPartial(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), text), text), itemDuration(text)), text);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

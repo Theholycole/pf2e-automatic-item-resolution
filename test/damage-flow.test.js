@@ -292,6 +292,39 @@ test("Horn of the Archon's Archon's Note: its allies' +1 status bonus to attack 
     assert.equal(save.flags[MODULE_ID].card.plan.resolution.check.statistic, "fortitude");
 });
 
+test("a save harder for some creatures or not for them (src/compiler/kind-saves.js, plan.ifTarget): Lamentation of the Faithless's holy creatures at -2 status and its unholy ones immune; Anglerfish Lantern's water creatures; Daybreak Ammunition's darkvision", async () => {
+    const { planFor, targetGroups } = await import("../src/live/if-target.js");
+    const [lament] = compileActivations(source("Lamentation of the Faithless"));
+    assert.deepEqual([lament.plan.ifTarget, lament.plan.partial], [[{ traits: ["unholy"], immune: true }, { traits: ["holy"], bonus: { value: -2, type: "status" } }], undefined]);
+    const holy = { system: { traits: { value: ["holy", "celestial"] } } };
+    const unholy = { traits: new Set(["unholy", "fiend"]) };
+    const plain = { system: { traits: { value: ["humanoid"] } } };
+    assert.deepEqual(planFor(lament.plan, holy).resolution.check.bonus, { value: -2, type: "status" });
+    assert.equal(planFor(lament.plan, unholy), null);
+    assert.equal(planFor(lament.plan, plain), lament.plan);
+    const groups = targetGroups(lament.plan, [{ name: "Angel", actor: holy }, { name: "Fiend", actor: unholy }, { name: "Guard", actor: plain }, { name: "Priest", actor: { system: { traits: { value: ["holy"] } } } }]);
+    assert.deepEqual(groups.map((group) => [group.plan === null ? "immune" : group.plan === lament.plan ? "plain" : group.plan.resolution.check.bonus.value, group.tokens.map((token) => token.name)]), [[-2, ["Angel", "Priest"]], ["immune", ["Fiend"]], ["plain", ["Guard"]]]);
+    const [lantern] = compileActivations(source("Anglerfish Lantern"));
+    assert.deepEqual(planFor(lantern.plan, { system: { traits: { value: ["water", "elemental"] } } }).resolution.check.bonus, { value: -2, type: "circumstance" });
+    const [daybreak] = compileActivations(source("Daybreak Ammunition"));
+    assert.deepEqual(planFor(daybreak.plan, { system: { perception: { senses: [{ type: "darkvision" }] } } }).resolution.check.bonus, { value: -2, type: "circumstance" });
+    // (Live: one card per group; none for the immune, a line instead.)
+    const priest = foundry.makeActor({ id: "damage-lament-priest", name: "Priest" });
+    priest.system.traits = { value: ["holy"] };
+    foundry.place(priest, 300, 18200);
+    const wielder = foundry.makeActor({ id: "damage-lament-wielder", name: "Mourner", owners: ["player"] });
+    foundry.place(wielder, 400, 18200);
+    const weapon = foundry.giveItem(wielder, source("Lamentation of the Faithless"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: weapon.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    const posted = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [priest.token.uuid, brute.token.uuid] });
+    await settle();
+    assert.deepEqual(foundry.posted.slice(posted).map((entry) => entry.plan.resolution.check.bonus?.value ?? 0).sort(), [-2, 0]);
+});
+
 test("a spellgun against a defense's DC, with conditions and no damage (the module's own wording)", async () => {
     const { spellgunPlan } = await import("../src/compiler/spellguns.js");
     const html = "<p>Activate the spellgun by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's Fortitude DC. This spellgun has a range increment of 30 feet.</p><p><strong>Critical Success</strong> The target is Slowed 1 until the end of your next turn.</p><p><strong>Success</strong> As critical success, except the target is Clumsy instead of slowed.</p>";
