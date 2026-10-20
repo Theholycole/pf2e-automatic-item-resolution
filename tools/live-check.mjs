@@ -1643,6 +1643,44 @@ export const cases = {
         return { degree, frightened, fleeing: foe.hasCondition("fleeing") };
     },
 
+    // A generic spellgun loaded with Acid Grip at rank 2, used up as PF2e uses it (a user's report, 2026-10-20: its card stopped working once
+    // the gun was gone). The spell's persistent acid is "@item.level" in its own text, which PF2e reads from the item — the gun, deleted by
+    // then: now its loaded rank. The hit's acid and its persistent acid both land on the target.
+    async genericSpellgunDamage(scene) {
+        await clearSquares(scene, [[10, 13], [13, 13]]);
+        const { actor: gunner } = await creature(scene, "Generic Damage Gunner", { type: "character", x: 10, y: 13 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Generic Damage Target", { x: 13, y: 13, alliance: "opposition", ac: -10, hp: 80 });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const gun = await ownItem(gunner, "generic-spellgun.json");
+        const dialog = await dialogTitled(`Load ${gun.name}`);
+        const input = dialog.element.querySelector("[name=spell]");
+        input.value = optionFor(dialog.element, input, "Acid Grip");
+        assert(input.value, "Acid Grip is offered");
+        input.dispatchEvent(new Event("input"));
+        dialog.element.querySelector("[name=rank]").value = "2";
+        dialog.element.querySelector('button[data-action="load"]').click();
+        await until(() => /^Acid Grip Spellgun/.test(gun.name), "loaded with Acid Grip");
+        const stored = JSON.stringify(gun.getFlag(NS, "genericSpellgun")?.plan ?? {});
+        assert(!/@item\./.test(stored), "its plan holds the rank, not @item references");
+        const uuid = gun.uuid;
+        let since = Date.now();
+        await gun.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the spellgun's card" });
+        await until(() => !fromUuidSync(uuid), "the spellgun used up", { timeout: 5000 });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const firearm = choices.find((choice) => choice.kind === "firearm");
+        assert(firearm, `the firearm attack offered (${JSON.stringify(choices)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: choices.indexOf(firearm) });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        const before = foe.system.attributes.hp.value;
+        await withDie(15, () => rollAndApply(attack));
+        const persistent = () => foe.itemTypes.condition.some((condition) => condition.slug === "persistent-damage" && condition.system?.persistent?.damageType === "acid");
+        await until(() => foe.system.attributes.hp.value < before && persistent(), "the acid and its persistent acid on the target", { timeout: 10000 });
+        return { lost: before - foe.system.attributes.hp.value };
+    },
+
     // An unloaded generic spellgun: its sheet has the button; used with no spell, it's back in the inventory and its user is told.
     async unloadedSpellgun(scene) {
         const { actor: gunner } = await creature(scene, "Unloaded Gunner", { type: "character", x: 10, y: 17 });

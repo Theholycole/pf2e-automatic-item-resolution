@@ -35,7 +35,11 @@ const ROW_PARTS = ["effects", "nativeEffects", "modifiers", "noteEffects", "foll
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], nativeEffects: [], modifiers: [], followUps: [], decisions: [], manualInstructions: [], terminal: null });
 
 export const isPending = (item) => Boolean(item?.flags?.[MODULE_ID]?.[GENERIC_SPELLGUN]) && !item.flags[MODULE_ID][GENERIC_SPELLGUN].spell;
-export const loadedPlan = (item) => item?.flags?.[MODULE_ID]?.[GENERIC_SPELLGUN]?.plan ?? null;
+// (A spellgun loaded before 2026-10-20 still holds "@item.rank" in its plan: resolved here too, at its rank.)
+export const loadedPlan = (item) => {
+    const flag = item?.flags?.[MODULE_ID]?.[GENERIC_SPELLGUN];
+    return flag?.plan ? withRankResolved(flag.plan, flag.rank ?? flag.plan.rank) : null;
+};
 
 // A spell's data damage that is damage (PF2e lists a healing spell's healing there too, of the kind "healing").
 const damageEntries = (spell) => Object.entries(spell?.system?.damage ?? {}).filter(([, entry]) => entry?.formula && (entry.kinds ?? ["damage"]).includes("damage"));
@@ -141,9 +145,26 @@ function dataDamage(spell) {
 
 const hit = (row, multiplier, ids) => ({ ...none(), ...row, damage: ids.length ? { mode: "shared", multiplier, sourceComponentIds: ids } : none().damage });
 
+// The plan with the spell's own references to its rank as that number (2026-10-20, a user's report: the spellgun's card stopped working once
+// PF2e used the spellgun up). A spell's text and rules say its rank as "@item.rank" or "@item.level" — Scorching Blast's "@Damage[(1d6+
+// ((@item.rank -1)*2))[persistent,fire]]", Leaden Steps' Effect's "1+@item.level" — which PF2e reads from the item they're on: on a
+// spellgun that's the gun (its level, not the spell's rank), and once the gun is used up there's none, so the card's inline rolls and
+// the Effect's rules had nothing to read. The rank loaded is what they mean.
+export function withRankResolved(plan, rank) {
+    if (!plan || !Number.isFinite(Number(rank))) return plan;
+    const at = String(Number(rank));
+    const walk = (node) => (typeof node === "string" ? node.replace(/@item\.(?:rank|level)\b/g, at) : Array.isArray(node) ? node.map(walk) : node && typeof node === "object" ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, walk(value)])) : node);
+    return walk(plan);
+}
+
 // The spellgun's plan from the spell's plan (null when the spell module has none) and the spell's data.
 // spell: { uuid, name, img, system } (its source); rank: the rank picked. → a plan, or null when a hit would carry nothing.
 export function spellgunFromSpell(given, { spell, rank }) {
+    const plan = spellgunPlan(given, { spell, rank });
+    return plan ? withRankResolved(plan, plan.rank) : plan;
+}
+
+function spellgunPlan(given, { spell, rank }) {
     const castRank = Math.max(lowestRank(spell), Math.min(10, Number(rank) || lowestRank(spell)));
     // (Its 2-action version, where its actions change it.)
     const spellPlan = given?.resolution?.native?.byActions?.[ACTIONS] ? planWithActions(given, ACTIONS) : given;

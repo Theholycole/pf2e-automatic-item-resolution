@@ -11,7 +11,7 @@ import { compileAbility } from "../../pf2e-automatic-resolution/src/compiler/ind
 import { resolveSaveSync } from "../../pf2e-resolution-core/src/families/save.js";
 import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
-import { GENERIC_SPELLGUN, descriptionFor, isPending, loadedUpdate, pickable, spellgunFromSpell } from "../src/compiler/generic-spellgun.js";
+import { GENERIC_SPELLGUN, descriptionFor, isPending, loadedPlan, loadedUpdate, pickable, spellgunFromSpell, withRankResolved } from "../src/compiler/generic-spellgun.js";
 import { GUN_STAFF, firearmProblem, gunStaffName, gunStaffUpdate, isBaseFirearm, isPending as gunStaffPending, isStaff } from "../src/compiler/gun-staff.js";
 import { routeOf } from "../src/live/route.js";
 
@@ -104,6 +104,21 @@ test("the loaded item: its name, level, price, description and plan; compileItem
     const loaded = { ...pending, name: update.name, uuid: "Actor.a.Item.g", flags: { [MODULE_ID]: { [GENERIC_SPELLGUN]: update[`flags.${MODULE_ID}.${GENERIC_SPELLGUN}`] } } };
     const plan = compileItem(loaded);
     assert.deepEqual([plan.source.name, plan.source.uuid, plan.item.recipient, plan.rank, routeOf(plan)], ["Fireball Spellgun (Rank 5)", "Actor.a.Item.g", "user", 5, "save"]);
+});
+
+test("the spell's references to its rank are the rank loaded: the card works once the spellgun is used up (a user's report)", () => {
+    // Acid Grip's persistent acid is "floor(@item.level/2)d6": on the gun PF2e would read the gun's level, and nothing once it's gone.
+    const given = spellPlan("Acid Grip");
+    assert.match(JSON.stringify(given), /@item\.level/);
+    // (Its shared damage is worked out at the rank already; a row's Effect rules and its text's inline rolls weren't.)
+    const failure = { ...given.resolution.outcomes.failure, effects: [{ slug: "test-slowed", rules: [{ key: "FlatModifier", selector: "speed", value: "-5*@item.level" }] }] };
+    const grip = spellgunFromSpell({ ...given, resolution: { ...given.resolution, outcomes: { ...given.resolution.outcomes, failure } } }, { spell: spell("Acid Grip"), rank: 4 });
+    assert.doesNotMatch(JSON.stringify(grip), /@item\./);
+    assert.equal(grip.resolution.outcomes.success.effects.find((effect) => effect.slug === "test-slowed").rules[0].value, "-5*4", "a hit is the failed save");
+    // A spellgun loaded before the fix: its stored plan is read at its rank.
+    const old = { flags: { [MODULE_ID]: { [GENERIC_SPELLGUN]: { spell: "Compendium.x", rank: 3, plan: { rank: 3, notes: ["(@item.level - 1)d6 and @item.rank"] } } } } };
+    assert.deepEqual(loadedPlan(old).notes, ["(3 - 1)d6 and 3"]);
+    assert.deepEqual([withRankResolved(null, 3), withRankResolved({ a: "@item.rank" }, undefined).a, withRankResolved({ a: ["@item.levels"] }, 2).a], [null, "@item.rank", ["@item.levels"]]);
 });
 
 test("live: a loaded generic spellgun's card offers its user's attacks; an unloaded one used comes back", async () => {
