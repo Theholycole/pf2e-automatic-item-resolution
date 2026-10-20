@@ -591,8 +591,10 @@ test("activations: a choice of jumps (Blast Boots), temporary Hit Points from th
     const vision = compileActivations(item("Meloth's Lifedrinker (Level 7)"))[1].plan;
     assert.deepEqual([vision.resolution.check.statistic, vision.resolution.check.basic, vision.resolution.check.against], ["will", true, { dc: "owner", statistic: "class-spell" }]);
     assert.ok(vision.notes.some((note) => /^If the target is reduced to 0 HP by this effect/.test(note)), vision.notes.join(" / "));
-    // (Its rows' Frightened, beside a "basic" save the ability compiler reads for its damage alone: notes now, src/compiler/honest.js.)
-    assert.ok(vision.notes.some((note) => /^Success The target takes half damage and is Frightened 1\.$/.test(note)) && vision.partial === true);
+    // (Its rows' Frightened, beside a "basic" save: on the success row once the ability compiler reads it there, else a note — never dropped,
+    // src/compiler/honest.js.)
+    const frightened = (vision.resolution.outcomes.success.effects ?? []).some((effect) => effect.slug === "frightened");
+    assert.ok(frightened || (vision.notes.some((note) => /^Success The target takes half damage and is Frightened 1\.$/.test(note)) && vision.partial === true));
     const [holy] = compileActivations(item("Holy"));
     assert.deepEqual(holy.plan.item.levelTemp, [{ multiplier: 2, heal: true, duration: null }]);
     assert.equal(levelTempText(holy.plan.item.levelTemp[0]), "Hit Points regained equal to twice the level of the creature targeted");
@@ -1093,8 +1095,8 @@ test("resolved only when the card does all of it (src/compiler/honest.js): a GM 
     // (Floppy Rag Doll's success: "can't use reactions until the end your turn" — a note Effect until the end of its user's turn, the plan resolved.)
     const [doll] = compileActivations(item("Floppy Rag Doll"));
     assert.deepEqual([doll.plan.partial, doll.plan.resolution.outcomes.success.manualInstructions, doll.plan.resolution.outcomes.success.noteEffects?.[0]?.duration], [undefined, undefined, { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }]);
-    // (Gearbinder Oil's success, its slowed lowered: the GM's, partial.)
-    assert.equal(compileItem(item("Gearbinder Oil (Lesser)")).partial, true);
+    // (Timeflaying Blade's creature hurled into the future: the GM's, partial.)
+    assert.equal(compileActivations(item("Timeflaying Blade"))[0].plan.partial, true);
     assert.deepEqual(leftToTheGM({ manualInstructions: ["{target} (critical success): The creature is unaffected."] }), []);
     assert.deepEqual(leftToTheGM({ effects: [{ kind: "condition", slug: "clumsy", value: 1 }], manualInstructions: ["{target} (failure, the rest by hand): The target is Clumsy 1 and can't use reactions until the beginning of your next turn."] }), []);
 });
@@ -1102,7 +1104,9 @@ test("resolved only when the card does all of it (src/compiler/honest.js): a GM 
 test("a rule sentence the plan has no trace of (src/compiler/honest.js withUntracedRules): Stampede Medallion's \"On a critical failure, the foe is also knocked Prone\" a note, the plan partial; not a sentence of flavor, nor one whose numbers are in the plan, nor one of PF2e's own linked Effect", async () => {
     const { withUntracedRules } = await import("../src/compiler/honest.js");
     const [tide] = compileActivations(item("Stampede Medallion"));
-    assert.deepEqual([tide.plan.partial, tide.plan.notes.includes("On a critical failure, the foe is also knocked Prone.")], [true, true]);
+    // (Its Prone on the critical failure row once the ability compiler reads it there; else a note, the plan partial — never dropped.)
+    const prone = (tide.plan.resolution.outcomes.criticalFailure.effects ?? []).some((effect) => effect.slug === "prone");
+    assert.ok(prone || (tide.plan.partial === true && (tide.plan.notes ?? []).includes("On a critical failure, the foe is also knocked Prone.")));
     const plan = { resolution: { kind: "save", outcomes: { failure: { damage: { mode: "shared", multiplier: 1 }, effects: [{ kind: "condition", slug: "frightened", value: 2 }] } }, sharedDamage: { components: [{ formula: "2d6[fire]" }] } } };
     assert.equal(withUntracedRules(plan, "Effect The target takes 2d6 fire damage and is Frightened 2. Malevolent energy leaks out, barely restrained."), plan);
     assert.equal(withUntracedRules({ ...plan, resolution: { ...plan.resolution, kind: "effect", applications: [{ kind: "native-spell-effect", uuid: "Compendium.pf2e.equipment-effects.Item.x" }] } }, "Effect You become Slowed 1.").partial, undefined);

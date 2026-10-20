@@ -305,7 +305,9 @@ function manualPenalties(plan, text) {
     }
     // (A critical failure with no row of its own is the failure's, as the reader takes one.)
     const critical = plan.resolution.outcomes.criticalFailure;
-    if (read.failure && !read.criticalFailure && words.criticalFailure === undefined && critical && !(critical.effects ?? []).length && !(critical.manualInstructions ?? []).length && !(critical.modifiers ?? []).length && (critical.damage?.mode ?? "none") === "none") read.criticalFailure = read.failure;
+    // (Or the failure's penalties the ability compiler read itself, as it does since ability c03cc7a.)
+    const failed = read.failure ?? (plan.resolution.outcomes.failure?.modifiers?.length ? plan.resolution.outcomes.failure.modifiers : null);
+    if (failed && !read.criticalFailure && words.criticalFailure === undefined && critical && !(critical.effects ?? []).length && !(critical.manualInstructions ?? []).length && !(critical.modifiers ?? []).length && (critical.damage?.mode ?? "none") === "none") read.criticalFailure = failed;
     if (!Object.keys(read).length) return plan;
     return eachRow(plan, (row, degree) => (read[degree] ? { ...row, modifiers: read[degree], ...(also[degree] ? {} : { manualInstructions: [] }) } : row));
 }
@@ -337,7 +339,8 @@ function degreeWords(text) {
     for (const match of String(text ?? "").matchAll(pattern)) if (!rows[DEGREE_KEYS[match[1]]]) rows[DEGREE_KEYS[match[1]]] = match[2].trim();
     return rows;
 }
-const emptyRow = (row) => !(row?.effects ?? []).length && !(row?.noteEffects ?? []).length && !(row?.manualInstructions ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && (row?.damage?.mode ?? "none") === "none" && !row?.healing && !row?.reduce;
+// (A floor, ability c03cc7a's row.conditionFloor, and a native Effect are results too.)
+const emptyRow = (row) => !(row?.effects ?? []).length && !(row?.noteEffects ?? []).length && !(row?.nativeEffects ?? []).length && !(row?.manualInstructions ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !row?.conditionFloor && (row?.damage?.mode ?? "none") === "none" && !row?.healing && !row?.reduce;
 function droppedIn(plan, rows) {
     if (plan?.resolution?.kind !== "save" || plan.builtin || plan.resolution.check?.against?.statistic === "ac") return plan;
     let partial = false;

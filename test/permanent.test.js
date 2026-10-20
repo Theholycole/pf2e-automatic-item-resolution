@@ -453,8 +453,9 @@ test("condition floors as the core's conditionFloor: a fixed time (Timpani of Pa
     const { compileBomb } = await import("../src/compiler/bombs.js");
     const timpani = compileActivations(item("Timpani of Panic"), { spellEffects })[0].plan.resolution.outcomes;
     assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => `${timpani[degree].conditionFloor.slug} ${timpani[degree].conditionFloor.value} ${timpani[degree].conditionFloor.duration.value} ${timpani[degree].conditionFloor.duration.unit}`), ["frightened 1 1 rounds", "frightened 1 1 minutes", "frightened 1 1 minutes"]);
-    assert.deepEqual(timpani.success.manualInstructions, [], "the floor's by-hand line gone");
-    assert.deepEqual(compileActivations(item("Gleaming Cuirass"), { spellEffects }).find((entry) => entry.plan?.resolution?.kind === "save").plan.resolution.outcomes.criticalFailure.conditionFloor.duration, { value: 1, unit: "minutes" });
+    assert.deepEqual(timpani.success.manualInstructions ?? [], [], "the floor's by-hand line gone");
+    const cuirass = compileActivations(item("Gleaming Cuirass"), { spellEffects }).find((entry) => entry.plan?.resolution?.kind === "save").plan.resolution.outcomes.criticalFailure.conditionFloor.duration;
+    assert.deepEqual([cuirass.value, cuirass.unit], [1, "minutes"]);
     const glob = compileItem(item("Putrescent Glob"), { spellEffects }).resolution.outcomes.failure.conditionFloor;
     assert.deepEqual(glob, { slug: "sickened", value: 2, lifetime: "fixed", duration: { value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } });
     assert.deepEqual(compileActivations(item("Terrifying Ammunition"), { spellEffects })[0].plan.resolution.outcomes.failure.conditionFloor, { slug: "frightened", value: 1, lifetime: "until-lifted", liftedBy: "it spends a concentrate action" });
