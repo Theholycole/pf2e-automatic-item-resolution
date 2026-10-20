@@ -1162,6 +1162,12 @@ test("a new save at its turns (src/compiler/save-ends.js, the ability's duration
     assert.deepEqual([saveEnds(outcomes.failure, "slowed")?.escalate, saveEnds(outcomes.criticalFailure, "slowed")?.alsoEnds, saveEnds(outcomes.success, "slowed")], [{ criticalFailure: 1, failure: 1, success: -1, criticalSuccess: -1 }, ["fatigued"], undefined]);
     // (Its sleep at 0 actions, and waking: the GM's, a note.)
     assert.deepEqual([round.plan.partial, round.plan.notes.length, /^If the target's actions are reduced to 0\b/.test(round.plan.notes[0])], [true, 1, true]);
+    // (A row's own save at its turns, with its DC, whatever the plan's check: Bewildering Spellgun's success.)
+    const spellgun = compileItem(item("Bewildering Spellgun"));
+    assert.deepEqual([saveEnds(spellgun.resolution.outcomes.success, "confused"), saveEnds(spellgun.resolution.outcomes.criticalSuccess, "confused"), spellgun.partial], [{ save: "will", dc: 25, mode: "end" }, undefined, undefined]);
+    // (A Speed penalty for whoever fails its save, its early end for the GM: Crackling Bubble Gum's pop.)
+    const pop = compileItem(item("Crackling Bubble Gum (Lesser)")).ways.find((way) => /secondary/i.test(way.name)).plan;
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => pop.resolution.outcomes[degree].modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, /3 Interact actions/.test(modifier.until)])), [[["all-speeds", -10, "item", true]], [["all-speeds", -10, "item", true]]]);
     const [jaw] = compileActivations(item("Jawbreaker Shield"));
     const broken = jaw.plan.strike.save.resolution.outcomes.criticalFailure;
     assert.deepEqual([broken.noteEffects[0].label, broken.noteEffects[0].saveEnds, broken.manualInstructions], ["Can't Strike with its mouth", { save: "fortitude", dc: null, mode: "end" }, ["{target} (critical failure): You break the target's jaw. As failure."]]);

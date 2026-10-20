@@ -73,8 +73,26 @@ function onConditions(row, saveEnds, { slug = null, unlimited = false } = {}) {
     return changed ? { ...row, effects } : row;
 }
 
+// (A row's own save at its turns, with its DC — Bewildering Spellgun's success, "The target is confused for 1 minute but can attempt a
+// @Check[will|dc:25] save at the end of each of its turns to end the effect" — whatever the plan's own check: a spellgun's is an attack.)
+const BUT_CAN_SAVE = /\bbut can attempt an? @Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\] save at the end of each of its turns to end the effect\./i;
+function rowSave(plan, text) {
+    const plain = String(text ?? "");
+    const match = BUT_CAN_SAVE.exec(plain);
+    if (!match || !plan?.resolution?.outcomes) return plan;
+    const parts = degreeTexts(plain);
+    const degrees = degreesOf(parts, match[0]).filter((degree) => degree !== "lead" && plan.resolution.outcomes[degree]);
+    if (!degrees.length) return plan;
+    const saveEnds = { save: SAVE_NAMES[match[1].toLowerCase()], dc: Number(match[2]), mode: "end" };
+    const outcomes = { ...plan.resolution.outcomes };
+    for (const degree of degrees) outcomes[degree] = onConditions(outcomes[degree], saveEnds);
+    if (degrees.every((degree) => outcomes[degree] === plan.resolution.outcomes[degree])) return plan;
+    return withoutSaid({ ...plan, resolution: { ...plan.resolution, outcomes } }, [{ sentence: match[0] }]);
+}
+
 // One save plan (the item's, or its Strike's save) with what its text says.
-function savePlan(plan, text) {
+function savePlan(given, text) {
+    const plan = rowSave(given, text);
     if (plan?.resolution?.kind !== "save" || plan.resolution.check?.roll !== "save" || !plan.resolution.outcomes) return plan;
     const plain = String(text ?? "");
     const parts = degreeTexts(plain);
@@ -172,6 +190,15 @@ function savePlan(plan, text) {
     return { ...next, notes, partial: true, automation: { ...(next.automation ?? {}), level: "guided" } };
 }
 
+// Partial no longer once its reading left nothing — no note, unread sentence or line by hand (Bewildering Spellgun's only note was its save).
+function settled(before, after) {
+    if (after === before || !after?.partial) return after;
+    const left = [...(after.notes ?? []), ...(after.unread ?? []), ...Object.values(after.resolution?.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? [])];
+    if (left.length) return after;
+    const { partial, ...rest } = after;
+    return { ...rest, automation: { ...(after.automation ?? {}), level: "automatic" } };
+}
+
 // The plan with its saves at the creature's turns; its Strike's save (Golden Silencer, Jawbreaker Shield) too. text: its plain text.
 export function withSaveEnds(plan, text) {
     if (!plan || plan.builtin) return plan;
@@ -180,5 +207,5 @@ export function withSaveEnds(plan, text) {
         const save = savePlan(next.strike.save, text);
         if (save !== next.strike.save) next = { ...next, strike: { ...next.strike, save } };
     }
-    return next;
+    return settled(plan, next);
 }

@@ -53,7 +53,19 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return failureThenAlso(itsNextTurn(lineDamage(nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text)), text), text);
+    return failsAlso(failureThenAlso(itsNextTurn(lineDamage(nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text)), text), text), text);
+}
+
+// A Speed penalty for whoever fails its save, said apart from its rows — Crackling Bubble Gum's pop, "A creature that fails its save is also
+// bound with sticky gum, taking a -10-foot item penalty to its Speed for 1 minute. The creature can remove the gum with a total of 3 Interact
+// actions" — the failing rows' penalty, its early end on the Effect for the GM (the ability's modifier.until).
+const FAILS_ALSO = /\bA creature that fails its save is also [^,.]*, taking an? [-–−](\d+)-foot (item|status|circumstance) penalty to its Speed for (\d+|one|an?) (rounds?|minutes?)\.(?:\s+The creature can remove the [\w ]+? with a total of (\d+) Interact actions\b)?/i;
+function failsAlso(plan, text) {
+    const match = FAILS_ALSO.exec(String(text ?? ""));
+    if (!match || plan?.resolution?.kind !== "save" || !plan.resolution.outcomes) return plan;
+    const duration = { mode: "fixed", value: /^\d+$/.test(match[3]) ? Number(match[3]) : 1, unit: /^round/i.test(match[4]) ? "rounds" : "minutes", expiry: "turn-start", anchor: "effect-start" };
+    const penalty = { selector: "all-speeds", value: -Number(match[1]), type: match[2].toLowerCase(), duration, ...(match[5] ? { until: `it, or other creatures helping, spends a total of ${match[5]} Interact actions removing it` } : {}) };
+    return eachRow(plan, (row, degree) => (["failure", "criticalFailure"].includes(degree) && row && !(row.modifiers ?? []).some((modifier) => modifier.selector === "all-speeds") ? { ...row, modifiers: [...(row.modifiers ?? []), { ...penalty }] } : row));
 }
 
 // A failure's Speed penalty with a critical failure's condition beside it — Slumber Arrow's "On a failure, it takes a -5-foot status penalty
