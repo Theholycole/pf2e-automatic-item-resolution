@@ -7,8 +7,8 @@
   "activations": 2577,
   "results": {
    "resolves": 794,
-   "builtin:cast-spell": 473,
-   "none": 524,
+   "builtin:cast-spell": 475,
+   "none": 522,
    "partial": 189,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
@@ -30,9 +30,9 @@
   },
   "live": {
    "save": 444,
-   "cast": 473,
+   "cast": 475,
    "item": 591,
-   "none": 650,
+   "none": 648,
    "focus": 47,
    "counteract": 29,
    "fortune": 58,
@@ -58,8 +58,8 @@
    "activations": 1674,
    "results": {
     "resolves": 467,
-    "builtin:cast-spell": 345,
-    "none": 361,
+    "builtin:cast-spell": 347,
+    "none": 359,
     "partial": 90,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
@@ -1623,9 +1623,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Obsidian Edge",
@@ -27380,9 +27380,9 @@
    "time": "free",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Elemental Ammunition (Moderate, Fire)",

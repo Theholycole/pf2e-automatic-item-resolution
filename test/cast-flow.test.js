@@ -84,6 +84,9 @@ test("a cast in words: the spell by its name, its rank, DC, counteract modifier,
     const mantis = compileActivations(source("Mask of the Mantis (Major)"), { spells }).find((entry) => entry.activation.name === "Enhance Vision").plan;
     assert.deepEqual(mantis.choices.map((entry) => [entry.spell.name, entry.rank]), [["Darkvision", 5], ["See the Unseen", 5]]);
     assert.equal(mantis.self, true);
+    // "You're affected by an 8th-rank Containment spell": that spell at that rank on its user (Dragon Pearl's Pearlescent Shell).
+    const pearl = compileActivations(source("Dragon Pearl (Draconic Codex)"), { spells })[0].plan;
+    assert.deepEqual([pearl.builtin, pearl.spell.name, pearl.rank, pearl.self], ["cast-spell", "Containment", 8, true]);
     // "Choose Summon Lesser Servitor or Command. You Cast the chosen Spell at 1st rank (DC 19)."
     const chimes = compileActivations(source("Worldringer"), { spells }).find((entry) => entry.activation.name === "Chimes of Command").plan;
     assert.deepEqual([chimes.choices.map((entry) => `${entry.spell.name}@${entry.rank}`), chimes.dc], [["Summon Lesser Servitor@1", "Command@1"], 19]);
