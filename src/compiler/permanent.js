@@ -15,7 +15,7 @@ import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan, retaliationPlan, withoutDamageRestated } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
-import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
+import { readRecovery, recoveryNotes, recoveryPlan, recoverySaid } from "./recovery.js";
 import { beadsPlan } from "./beads.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -382,6 +382,12 @@ function compileEach(item, options = {}) {
         else if (recovery && plan.noteOnly) {
             const { noteOnly, ...rest } = plan;
             plan = { ...rest, partial: true };
+        }
+        // (Its own sentence no longer what the plan leaves: Assassin's Skin's "The persistent bleed damage ends." beside its healing.)
+        if (recovery && plan?.partial && [...(plan.unread ?? []), ...(plan.notes ?? [])].some(recoverySaid)) {
+            const unread = (plan.unread ?? []).filter((sentence) => !recoverySaid(sentence));
+            const notes = (plan.notes ?? []).filter((sentence) => !recoverySaid(sentence));
+            plan = { ...plan, ...(plan.unread ? { unread: unread.length ? unread : undefined } : {}), ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}), ...(!unread.length && !notes.length ? { partial: undefined } : {}) };
         }
         // (A condition until the end of its user's rage, src/compiler/rage-time.js: Barbarians+ crowns.)
         // (Only when nothing else is read: Instinct Crown (Fury)'s PF2e Effect does it already.)

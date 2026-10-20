@@ -32,6 +32,10 @@ const ENDS = /\bAll persistent damage you're currently taking ends\b/i;
 export function readRecovery(text) {
     const plain = String(text ?? "");
     if (ENDS.test(plain)) return { types: [...TYPES], dc: null, ends: true };
+    // (One type ended outright, Assassin's Skin's "You don't take the persistent bleed damage and instead regain Hit Points equal to the bleed
+    // damage. The persistent bleed damage ends.")
+    const typeEnds = new RegExp(String.raw`\bThe persistent (${TYPE}) damage ends\.`, "i").exec(plain);
+    if (typeEnds) return { types: [typeEnds[1].toLowerCase()], dc: null, ends: true };
     if (OWN_TYPE.test(plain)) {
         const listed = [...(POPULAR.exec(plain)?.[1] ?? "").matchAll(new RegExp(String.raw`\b(${TYPE})\b`, "gi"))].map(([type]) => type.toLowerCase());
         const lowered = LOWER_TO.exec(plain);
@@ -73,4 +77,10 @@ export function recoveryPlan(base, notes = []) {
         resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
         ...(notes.length ? { notes, partial: true } : {})
     };
+}
+
+// Whether a sentence is the recovery's own, read as plan.item.recovery: the one ending it outright, or its flat check alone.
+export function recoverySaid(sentence) {
+    const text = String(sentence ?? "").trim();
+    return ENDS.test(text) || new RegExp(String.raw`^The persistent ${TYPE} damage ends\.?$`, "i").test(text);
 }
