@@ -204,8 +204,8 @@ test("a talisman's moment bonus: its trigger its first sentence, \"When activate
     assert.deepEqual([match.bonus.modifiers[0].selector, match.bonus.degree.adjustment], ["diplomacy", { criticalFailure: "one-degree-better" }]);
     // "+2 status bonus on your Fortitude save against the initial exposure": spent by that save.
     assert.deepEqual(compileItem(source("Sanitizing Pin")).bonus.spend, ["fortitude"]);
-    // "…, which increases to a +3 circumstance bonus …": a note.
-    assert.match(compileItem(source("Conrasu Coin (Arbiter)")).notes.join(" "), /increases to a \+3/);
+    // "…, which increases to a +3 circumstance bonus … on a creature with the aeon trait": read (a second, predicated modifier — below).
+    assert.equal(compileItem(source("Conrasu Coin (Arbiter)")).bonus.modifiers.length, 2);
     // Not a moment: "on all Fortitude saves against the same disease for the next minute" (Fulu of the Stoic Ox).
     assert.notEqual(compileItem(source("Fulu of the Stoic Ox"))?.builtin, "readied-bonus");
 });
