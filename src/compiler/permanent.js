@@ -23,6 +23,7 @@ import { hitAuraPlan } from "./hit-auras.js";
 import { aroundAllies, hitAroundPlan } from "./hit-around.js";
 import { cleanNotes } from "./notes.js";
 import { thrownPlan } from "./thrown.js";
+import { withImmunity } from "./immunity.js";
 import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
@@ -139,7 +140,8 @@ export function compileActivations(item, options = {}) {
     const share = spellModuleShare(item, options);
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // Only after its user's action succeeds, Glamorous Buckler's "On a successful Feint, the target is Dazzled for 1 round" (src/compiler/item-data.js

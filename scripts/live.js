@@ -38,6 +38,7 @@ import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
 import { applyToggleCard, postToggleCard, togglesAfterDamage, togglesAtTurnEnd, togglesOnMove } from "./toggle.js";
 import { USES, activate, indexOf, setUpActivations } from "./activations.js";
+import { withImmunityGuard } from "./immunity.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { appliedAnyway, verifyEffectRules } from "../src/compiler/verify-effect.js";
@@ -301,7 +302,9 @@ const APPLY = {
 // (What its use costs — a Mythic Point, or a Hero Point under the world setting, src/compiler/spend.js and scripts/spend.js: checked before
 // the card applies, refused without one, and spent once it has — once per card, whatever its steps. A cast's chosen spell's own, a mythic one.)
 const spendOf = (state, choices) => state.plan?.spend ?? (state.kind === "cast" ? state.plan?.choices?.[Number.isInteger(choices?.choice) ? choices.choice : state.choice ?? 0]?.spend ?? null : null);
-const applyByKind = async (message, state, choices) => {
+// (A temporary immunity after its use, scripts/immunity.js: the immune refused, the rest given its Effect once applied.)
+const applyByKind = (message, state, choices) => withImmunityGuard(message, state, choices, (given) => applyPaid(message, state, given));
+const applyPaid = async (message, state, choices) => {
     const spend = state.spent ? null : spendOf(state, choices);
     if (!spend) return APPLY[state.kind](message, choices);
     const payer = await fromUuid(state.user?.actorUuid ?? "").catch(() => null);

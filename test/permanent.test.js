@@ -321,9 +321,9 @@ test("healing a feat of its owner's changes: Lover's Knot's 2d6, or 2d6+7 with B
 test("consumables read: Serene Smelling Salts, Explosive Missive's written type, Blindpepper Bomb, Stage Fright Missive, Captivating Rosebud's penalties", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const at = (name) => compileItem({ ...item(name), ownerFeats: [] }, { spellEffects });
-    // Its frightened lowered, the immunity a note: partial, not a note alone.
+    // Its frightened lowered, its hour of immunity held to (item.immunity, scripts/immunity.js): whole.
     const salts = at("Serene Smelling Salts");
-    assert.deepEqual([salts.noteOnly, salts.partial, salts.item.reduce], [undefined, true, [{ slug: "frightened", by: 1 }]]);
+    assert.deepEqual([salts.noteOnly, salts.partial, salts.item.reduce, salts.item.immunity.slug, salts.item.immunity.duration], [undefined, undefined, [{ slug: "frightened", by: 1 }], "serene-smelling-salts", { value: 1, unit: "hours" }]);
     // "The tenor of what you write … determines the damage type …: acid for a caustic inscription, …": the card's picker.
     const missive = at("Explosive Missive");
     assert.deepEqual([missive.resolution.check.basic, missive.damageChoices.map((choice) => choice.formula)], [true, ["4d6[acid]", "4d6[cold]", "4d6[electricity]", "4d6[fire]", "4d6[sonic]"]]);

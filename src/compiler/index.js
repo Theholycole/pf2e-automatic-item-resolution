@@ -44,6 +44,7 @@ import { affixedTargeting, withPrimedNotes, withWhilePersistent, withZeroHPNote 
 import { withHitDelivery } from "./hit-delivery.js";
 import { cleanNotes } from "./notes.js";
 import { thrownPlan } from "./thrown.js";
+import { withImmunity } from "./immunity.js";
 import { conjuredPlan, statedCreaturePlan } from "./conjured.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
@@ -149,7 +150,8 @@ export function compileItem(given, options = {}) {
     const text = plainText(given?.system?.description?.value);
     // (Not its opening flavor among what a partial plan leaves the GM, src/compiler/flavor.js.)
     // (And a use after the first, a candy's "Secondary Effect": the ways card's second button, src/compiler/secondary.js.)
-    return withBurningLeft(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text);
+    // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
+    return withImmunity(withBurningLeft(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text), given?.system?.description?.value, { name: given?.name });
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
