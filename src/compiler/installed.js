@@ -59,6 +59,7 @@ export function readInstalled(text) {
     let damage = null;
     let fastHealing = false;
     let duration = null;
+    let lowered = null;
     for (const [index, sentence] of sentences.entries()) {
         // ("granting an item bonus to X equal to the acid flask's item bonus", "The mist grants an item bonus to Intimidation checks equal to …",
         // "add the bottled lightning's item bonus to your Athletics checks to …"; Living Leaf Weave's list, its value the next sentence's.)
@@ -100,6 +101,14 @@ export function readInstalled(text) {
                 if (/^(?:These effects last for|[\w ]+? remains activated for)\b/i.test(sentence) && !/\bbut\b/i.test(sentence)) said.add(index);
             }
         }
+        // (The armor's own Strength requirement lowered, Powered Full Plate's "lowered by 1, or by 2 if the loaded bottled lightning's item
+        // bonus to attack rolls is +3 or higher": PF2e's ItemAlteration on it, its penalties PF2e's from that — so that sentence too.)
+        const strength = /\bThe armor's Strength requirement is lowered by (\d+), or by (\d+) if the loaded [\w ]+?'s item bonus to attack rolls is \+(\d+) or higher\./i.exec(sentence);
+        if (strength) {
+            lowered = { by: Number(strength[1]), more: Number(strength[2]), at: Number(strength[3]) };
+            said.add(index);
+        }
+        if (/^The armor's normal penalties still apply, based on this altered Strength\.$/i.test(sentence)) said.add(index);
         // (Using it up is the card's.)
         if (/\bThe activation uses up the\b/i.test(sentence)) said.add(index);
     }
@@ -107,7 +116,7 @@ export function readInstalled(text) {
     // (Its other sentences that say a rule: notes.)
     const RULE = /\b(?:damage|bonus|penalty|Hit Points|resistance|checks?|saves?|DC|Strength|Speed|deactivat\w*|Interact|attack|Strike|grapples?|swallows?|reduce|decrease)\b/i;
     const notes = sentences.filter((sentence, index) => !said.has(index) && RULE.test(sentence));
-    return { name, count: /^two$/i.test(installed[1]) ? 2 : 1, modifiers, ...(resistance ? { resistance } : {}), ...(damage ? { damage } : {}), ...(fastHealing ? { fastHealing: true } : {}), duration, notes };
+    return { name, count: /^two$/i.test(installed[1]) ? 2 : 1, modifiers, ...(resistance ? { resistance } : {}), ...(damage ? { damage } : {}), ...(fastHealing ? { fastHealing: true } : {}), ...(lowered ? { strength: lowered } : {}), duration, notes };
 }
 
 // The plan: the item card's own row, its installed item's numbers given on Apply.

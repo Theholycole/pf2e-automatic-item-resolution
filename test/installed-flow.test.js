@@ -115,3 +115,12 @@ test("Potion Patch: one of its user's potions up to its level, picked, used thro
     assert.deepEqual(used, [healing.id]);
     assert.match(card.content, /Drinker: Healing Potion \(Lesser\) used through the patch/);
 });
+
+test("Powered Full Plate: its bottled lightning's item bonus to Athletics for 10 minutes, and the armor's Strength requirement lower by PF2e's ItemAlteration — by 2 with a +3 item", async () => {
+    const { installedEffectSource } = await import("../src/live/card.js");
+    const plate = plan("Powered Full Plate");
+    assert.deepEqual([plate.item.installed.strength, plate.partial, plate.notes], [{ by: 1, more: 2, at: 3 }, undefined, undefined]);
+    const rules = (bonus) => installedEffectSource(plate.item.installed, { id: "x", name: "Bottled Lightning", level: 1, bonus, splash: 1 }, { item: { name: "Powered Full Plate", uuid: "Actor.a.Item.plate000000000001" } }).system.rules;
+    assert.deepEqual(rules(1).map((rule) => [rule.key, rule.property ?? rule.selector, rule.value]), [["FlatModifier", "athletics", 1], ["ItemAlteration", "strength", 1]]);
+    assert.deepEqual(rules(3).find((rule) => rule.key === "ItemAlteration"), { key: "ItemAlteration", itemId: "plate000000000001", mode: "subtract", property: "strength", value: 2 });
+});

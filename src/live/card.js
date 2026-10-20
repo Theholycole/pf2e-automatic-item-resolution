@@ -604,7 +604,8 @@ export function installedText(installed, entry = null) {
         installed.modifiers.length ? `${bonus} to ${installed.modifiers.map((modifier) => `${modifier.selector}${scopeOf(modifier).length ? ` (${scopeOf(modifier).join(", ")})` : ""}`).join(", ")}` : null,
         installed.resistance ? `resistance ${entry ? entry.splash : "equal to its splash damage"} to ${installed.resistance.types.join(", ")}` : null,
         installed.fastHealing ? `${entry ? entry.level : "its level in"} Hit Points at the start of each turn` : null,
-        installed.damage ? `${entry ? entry.splash : "its splash damage as"} ${installed.damage.type} damage to each other creature within ${installed.damage.radius} feet` : null
+        installed.damage ? `${entry ? entry.splash : "its splash damage as"} ${installed.damage.type} damage to each other creature within ${installed.damage.radius} feet` : null,
+        installed.strength ? `the armor's Strength requirement ${entry ? `${entry.bonus >= installed.strength.at ? installed.strength.more : installed.strength.by} lower` : `${installed.strength.by} lower (${installed.strength.more} with a +${installed.strength.at} item)`}` : null
     ].filter(Boolean);
     const time = installed.duration?.from === "level" ? (entry ? ` for ${entry.level} rounds` : " for its level in rounds") : installed.duration?.mode === "fixed" ? ` for ${timeText(installed.duration)}` : "";
     const what = entry?.name ?? `the ${installed.name}${installed.count > 1 ? "s" : ""}`;
@@ -612,12 +613,15 @@ export function installedText(installed, entry = null) {
 }
 
 // Its Effect: PF2e's FlatModifier (item) for each bonus, Resistance, FastHealing — the installed item's numbers.
+const itemIdOf = (uuid) => String(uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? null;
 export function installedEffectSource(installed, entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const label = item.name ?? "Installed";
     const rules = [
         ...(entry.bonus > 0 ? installed.modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: "item", value: entry.bonus, label, ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })) : []),
         ...(installed.resistance && entry.splash > 0 ? installed.resistance.types.map((type) => ({ key: "Resistance", type, value: entry.splash })) : []),
-        ...(installed.fastHealing && entry.level > 0 ? [{ key: "FastHealing", value: entry.level }] : [])
+        ...(installed.fastHealing && entry.level > 0 ? [{ key: "FastHealing", value: entry.level }] : []),
+        // (The armor's own Strength requirement lowered: PF2e's ItemAlteration on that armor, by its id.)
+        ...(installed.strength && itemIdOf(item.uuid) ? [{ key: "ItemAlteration", itemId: itemIdOf(item.uuid), mode: "subtract", property: "strength", value: entry.bonus >= installed.strength.at ? installed.strength.more : installed.strength.by }] : [])
     ];
     const duration = installed.duration?.from === "level" ? { mode: "fixed", value: entry.level, unit: installed.duration.unit, expiry: "turn-start" } : installed.duration;
     return ownEffectSource({ name: "installed", img: "icons/svg/upgrade.svg", words: installedText(installed, entry), rules, duration, flag: { installed: installed.name }, item, user, worldTime, initiative, moduleId });

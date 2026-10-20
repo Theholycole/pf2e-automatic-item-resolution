@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 793,
+   "resolves": 794,
    "builtin:cast-spell": 473,
    "none": 524,
-   "partial": 190,
+   "partial": 189,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 47,
@@ -128,8 +128,8 @@
    "activations": 163,
    "results": {
     "builtin:cast-spell": 33,
-    "partial": 15,
-    "resolves": 61,
+    "partial": 14,
+    "resolves": 62,
     "builtin:counteract": 1,
     "none": 19,
     "builtin:zone": 4,
@@ -1876,7 +1876,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
