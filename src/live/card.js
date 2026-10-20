@@ -147,6 +147,8 @@ export function previewLines(state) {
     for (const healing of plan?.item?.fastHealing ?? []) lines.push(fastHealingText(healing));
     if (plan?.item?.creates) lines.push(createsText(plan.item.creates));
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
+    // (PF2e's own rules on it, Mirrorblade's flanking.)
+    for (const entry of plan?.item?.ruleEffects ?? []) lines.push(`${entry.words}${forTime(entry.duration)}`);
     // (Another of its activations recharged: Smoldering Armor's Fire Shield.)
     if (plan?.item?.recharges) lines.push(`The ${plan.item.recharges.name} activation recharges (its uses given back)`);
     if (plan?.item?.mark) lines.push(markText(plan.item.mark));
@@ -269,6 +271,11 @@ export function recoveryText(recovery) {
 
 // One of the card's own Effects (its resistance, Speed or vision): PF2e's rules for the item's time (unlimited with none),
 // named for the item, flagged as the module's. Returns a new source.
+// An Effect of PF2e's own rules on its user (item.ruleEffects): Mirrorblade's flanking.offGuardable.
+export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name }, item, user, worldTime, initiative, moduleId });
+}
+
 function ownEffectSource({ name, img, words, rules, duration, flag, item, user, worldTime, initiative, moduleId }) {
     return {
         name: `${item.name}: ${name}`,

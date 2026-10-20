@@ -863,6 +863,24 @@ const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.[\w-]*effects\.Item\./;
 // (Whole words: "AC" isn't the start of "academic", "checks" of "checkered".)
 const MECHANICAL = /\b(?:bonus(?:es)?|penalt(?:y|ies)|resistances?|weakness(?:es)?|immun\w*|Speeds?|damage[ds]?|Hit Points?|DC \d+|Mythic Points?|breathe|breathing|up to (?:\d+|two|three|four|five|six) willing creatures|checks?|saves?|saving throws?|attack(?:s|ed|er|ers)?|Strikes?|AC|conditions?|senses?|darkvision|actions?|reactions?|spells?|clumsy|concealed|dazzled|deafened|enfeebled|fatigued|fleeing|frightened|hidden|immobilized|invisible|off-guard|prone|quickened|sickened|slowed|stunned|stupefied)\b/i;
 
+// What PF2e's own rules on its user do, with no reading of their own here (item.ruleEffects [{ name, words, rules, duration }], the item
+// card's Effect): Mirrorblade's "For the next 10 minutes, you aren't Off-Guard to melee attacks from creatures flanking you" — PF2e's
+// flanking.offGuardable, as its Deny Advantage sets it, false.
+function ruleEffectsOf(sentences, duration, used = new Set()) {
+    const found = [];
+    for (const [index, sentence] of sentences.entries()) {
+        const flank = /^For the next ((?:\d+|one|an?) (?:rounds?|minutes?|hours?)), you aren't Off-Guard to melee attacks from creatures flanking you\.$/i.exec(sentence.trim());
+        // (And Deny Advantage's own words, Sturdy Neck Stock's "For 1 minute, you aren't off-guard to Hidden, undetected, or flanking creatures,
+        // or creatures using surprise attack of your level or lower": PF2e's Deny Advantage rule, offGuardable its user's level.)
+        const deny = flank ? null : /^For ((?:\d+|one|an?) (?:rounds?|minutes?|hours?)), you aren't off-guard to Hidden, undetected, or flanking creatures, or creatures using surprise attack of your level or lower\.$/i.exec(sentence.trim());
+        if (!flank && !deny) continue;
+        used.add(index);
+        if (flank) found.push({ name: "not off-guard to flankers", words: "Not Off-Guard to melee attacks from creatures flanking it", rules: [{ key: "ActiveEffectLike", mode: "override", path: "system.attributes.flanking.offGuardable", value: false }], duration: durationIn(`for ${flank[1]}`, duration) });
+        else found.push({ name: "deny advantage", words: "Not Off-Guard to hidden, undetected or flanking creatures of its level or lower, or to their surprise attacks (PF2e's Deny Advantage)", rules: [{ key: "ActiveEffectLike", mode: "override", path: "system.attributes.flanking.offGuardable", value: "@actor.level" }], duration: durationIn(`for ${deny[1]}`, duration) });
+    }
+    return found;
+}
+
 // The row for the item's drinker or user: { effects, modifiers, unread } with something in it, or null. unread: the
 // sentences that say something mechanical it didn't read (they go on a note, and the plan counts as partial).
 export function ownRow(item, { healing = true } = {}) {
@@ -907,7 +925,8 @@ export function ownRow(item, { healing = true } = {}) {
     const levelTemp = levelTempOf(sentences, duration, used);
     const attacks = attacksOf(sentences, duration, used);
     const fastHealing = fastHealingOf(sentences, duration, used);
-    if (!fastHealing.length && !effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length && !levelTemp.length && !attacks.length) return null;
+    const ruleEffects = ruleEffectsOf(sentences, duration, used);
+    if (!fastHealing.length && !effects.length && !modifiers.length && !resistances.length && !speeds.length && !senses.length && !weapon.length && !strikeDamage.length && !suppress.length && !light.length && !levelTemp.length && !attacks.length && !ruleEffects.length) return null;
     // (Healing another creature, or its temporary Hit Points: the row's recipient is chosen like a drinker's.)
     const other = Boolean(heal?.other || temp?.other);
     if (heal?.other) delete heal.other;
@@ -920,7 +939,7 @@ export function ownRow(item, { healing = true } = {}) {
     // (Nor when it may be used, "You can use this action while Unconscious".)
     const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always|The resonant power)\b/i.test(sentence) && !/^\s*This [\w ]+? can be applied to up to (?:\d+|two|three|four|five|six) willing creatures(?: to protect them from dangerous energies)?\.$/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     if (secondary) unread.push(secondary);
-    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(attacks.length ? { attacks } : {}), ...(fastHealing.length ? { fastHealing } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
+    return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(attacks.length ? { attacks } : {}), ...(fastHealing.length ? { fastHealing } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(ruleEffects.length ? { ruleEffects } : {}), ...(other ? { other } : {}) };
 }
 
 // A reminder of the item's text on its drinker or user, for its time (the user's note-Effect rule for spells,

@@ -126,6 +126,26 @@ test("other senses with their acuity and range: Blood Sight Elixir's bloodsense 
     assert.equal(compileItem(source("Blood Sight Elixir (Major)")).partial, true);
 });
 
+test("PF2e's own rules on its user (item.ruleEffects): Mirrorblade's 10 minutes of not being Off-Guard to flanking creatures — flanking.offGuardable false, as PF2e's Deny Advantage sets it; Apply puts the Effect on its user", async () => {
+    const { ruleEffectSource } = await import("../src/live/card.js");
+    const [guard] = compileActivations(source("Mirrorblade"));
+    const [entry] = guard.plan.item.ruleEffects;
+    assert.deepEqual([entry.rules, entry.duration.value, entry.duration.unit, guard.plan.partial, guard.plan.noteOnly], [[{ key: "ActiveEffectLike", mode: "override", path: "system.attributes.flanking.offGuardable", value: false }], 10, "minutes", undefined, undefined]);
+    // (And Deny Advantage's own words, Sturdy Neck Stock's: PF2e's rule for it, offGuardable its user's level.)
+    const [stock] = compileActivations(source("Sturdy Neck Stock"));
+    assert.deepEqual([stock.plan.item.ruleEffects[0].rules[0].value, stock.plan.item.ruleEffects[0].duration.value, stock.plan.noteOnly], ["@actor.level", 1, undefined]);
+    const effect = ruleEffectSource(entry, { item: { name: "Mirrorblade" } });
+    assert.deepEqual([effect.name, effect.system.duration.value, effect.system.rules[0].path], ["Mirrorblade: not off-guard to flankers", 10, "system.attributes.flanking.offGuardable"]);
+    const blade = foundry.giveItem(monk, source("Mirrorblade"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: blade.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.ok(monk.itemTypes.effect.some((one) => one.flags?.[MODULE_ID]?.ruleEffect === "not off-guard to flankers"), "the Effect on its user");
+});
+
 test("a light its user sheds: PF2e's TokenLight rule, its dim light the whole radius; a torch's for \"like a torch\"", () => {
     // Sprite Apple's "you shed bright light in a 20-foot emanation (and dim light for the next 20 feet)", for 10 minutes.
     const apple = compileItem(source("Sprite Apple (Pink)"));
