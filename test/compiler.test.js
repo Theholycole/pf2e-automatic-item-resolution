@@ -1179,6 +1179,9 @@ test("rows read from plain words (guards.js), a snare's too: Fang Snare's 1 pier
     assert.deepEqual([fang.failure.damage.formulas, fang.criticalFailure.damage.formulas, fang.failure.manualInstructions], [[{ formula: "1[piercing]" }, { formula: "2d8[poison]" }], [{ formula: "2[piercing]" }, { formula: "4d8[poison]" }], undefined]);
     const thunder = save("Thunder Snare");
     assert.deepEqual([thunder.failure.damage.formulas, thunder.failure.effects.map((effect) => [effect.slug, effect.duration.anchor]), thunder.success.effects[0].duration.anchor], [[{ formula: "1[sonic]" }], [["deafened", "target-turn"]], "target-turn"]);
+    // ("As success, but the penalty is -20 feet": the success's Speed penalty at that value, Hobbling Snare's critical failure.)
+    const hobbling = save("Hobbling Snare");
+    assert.deepEqual([hobbling.criticalFailure.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.escape?.dc]), hobbling.criticalFailure.manualInstructions], [[["land-speed", -20, 18]], undefined]);
     const stunning = save("Stunning Snare");
     assert.deepEqual(["success", "failure"].map((degree) => stunning[degree].effects.find((effect) => effect.slug === "stunned").duration), [null, null]);
     assert.equal(stunning.success.effects.find((effect) => effect.slug === "off-guard").duration.value, 1);

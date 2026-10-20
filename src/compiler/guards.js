@@ -53,7 +53,25 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return failsAlso(failureThenAlso(itsNextTurn(lineDamage(nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text)), text), text), text);
+    return asRowPenalty(failsAlso(failureThenAlso(itsNextTurn(lineDamage(nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text)), text), text), text));
+}
+
+// A row "As success, but the penalty is -20 feet" — Hobbling Snare's critical failure — which the ability compiler leaves by hand: the earlier
+// row's Speed penalties at that value, the line gone.
+const AS_ROW_PENALTY = /^\{target\} \([^)]*\): As (success|failure), but the penalty is [-–−](\d+) feet\.(?: Effect: [^(]*?)?(?: \((?:success|failure): [^)]*\))?$/i;
+function asRowPenalty(plan) {
+    if (plan?.resolution?.kind !== "save" || !plan.resolution.outcomes) return plan;
+    const outcomes = plan.resolution.outcomes;
+    return eachRow(plan, (row) => {
+        const index = (row?.manualInstructions ?? []).findIndex((line) => AS_ROW_PENALTY.test(String(line)));
+        if (index < 0) return row;
+        const match = AS_ROW_PENALTY.exec(String(row.manualInstructions[index]));
+        const speeds = (outcomes[match[1].toLowerCase()]?.modifiers ?? []).filter((modifier) => /speed/.test(String(modifier.selector)) && Number(modifier.value) < 0);
+        if (!speeds.length) return row;
+        const lines = row.manualInstructions.filter((_, other) => other !== index);
+        const { manualInstructions, ...rest } = row;
+        return { ...rest, ...(lines.length ? { manualInstructions: lines } : {}), modifiers: [...(row.modifiers ?? []).filter((modifier) => !/speed/.test(String(modifier.selector))), ...speeds.map((modifier) => ({ ...modifier, value: -Number(match[2]) }))] };
+    });
 }
 
 // A Speed penalty for whoever fails its save, said apart from its rows — Crackling Bubble Gum's pop, "A creature that fails its save is also
