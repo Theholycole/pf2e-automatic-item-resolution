@@ -357,9 +357,9 @@ test("quickened with its action's use a note, a banner's ally, a successful Fein
     // "An ally within the banner's aura becomes Quickened for 1 round": the targeted ally, its action's use a note.
     const banner = at("Zealous Banner");
     assert.deepEqual([banner.item.recipient, banner.resolution.outcomes.success.effects[0].slug, banner.partial], ["targets", "quickened", true]);
-    // "On a successful Feint, the target is Dazzled for 1 round": the target's, only after the Feint succeeds (a note).
+    // "On a successful Feint, the target is Dazzled for 1 round": the target's, only after the Feint succeeds (plan.gate: Apply checks it).
     const buckler = at("Glamorous Buckler");
-    assert.deepEqual([buckler.resolution.outcomes.success.effects[0].slug, buckler.notes], ["dazzled", ["This applies only after a successful Feint check."]]);
+    assert.deepEqual([buckler.resolution.outcomes.success.effects[0].slug, buckler.gate, buckler.notes], ["dazzled", { action: "feint" }, []]);
     // "On a hit, the creature becomes covered in a mass of flesh …. The creature becomes Slowed 1 for 1 round": the Strike's rider.
     const gun = at("Growth Gun");
     assert.deepEqual(gun.resolution.outcomes.success.effects.map((effect) => `${effect.slug} ${effect.value}`), ["slowed 1"]);

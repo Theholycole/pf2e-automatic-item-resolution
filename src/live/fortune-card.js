@@ -44,7 +44,7 @@ export function bonusWords(bonus) {
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
 export function readiedWords(plan) {
-    if (plan.builtin === "roll-twice") return `next ${rollWords(plan.rollTwice)}: roll twice, take the better`;
+    if (plan.builtin === "roll-twice") return `next ${rollWords(plan.rollTwice)}: roll twice, take the better${plan.rollTwice.duration?.expiry === "turn-end" ? ", before the end of the next turn" : ""}`;
     const bonus = plan.bonus;
     // (Only against what triggered it: "against what triggered it, this turn".)
     const time = bonus.duration?.expiry === "turn-start" ? "until the start of the next turn" : bonus.duration?.value ? "until the end of the next turn" : "this turn";
@@ -88,7 +88,8 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
     const fortune = plan.builtin === "roll-twice";
     const spend = fortune ? [plan.rollTwice.selector] : plan.bonus.spend ?? [];
     // (Kept until its roll comes, whenever: Psychic Warding Bracelet's next save against a mental effect.)
-    const duration = plan.bonus?.lasting ? { value: -1, unit: "unlimited", expiry: null } : fortune || spend.length ? { value: 1, unit: "minutes", expiry: "turn-start" } : plan.bonus.duration;
+    // (A fortune with a time of its own, Aerekostes's to the end of the next turn: that.)
+    const duration = plan.bonus?.lasting ? { value: -1, unit: "unlimited", expiry: null } : fortune && plan.rollTwice.duration ? plan.rollTwice.duration : fortune || spend.length ? { value: 1, unit: "minutes", expiry: "turn-start" } : plan.bonus.duration;
     return {
         name: `${state.item.name}: ${fortune ? "roll twice" : "bonus"}`,
         type: "effect",

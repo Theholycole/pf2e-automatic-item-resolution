@@ -510,7 +510,11 @@ test("only after its user's successful Feint (Glamorous Buckler's Dazzling Feint
     let card = await useIt();
     const errors = foundry.notifications.length;
     const before = foundry.posted.length;
-    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" }).catch(() => null);
+    try {
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
+    } catch {
+        // (The refusal's error: its notification is what's checked.)
+    }
     await settle();
     assert.ok(foundry.notifications.slice(errors).some((text) => /Duelist's feint wasn't a success/.test(text)), foundry.notifications.slice(errors).join(" / "));
     assert.equal(foundry.posted.length, before, "nothing applied");

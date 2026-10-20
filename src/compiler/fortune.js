@@ -76,7 +76,12 @@ export function readRollTwice(text, { trigger = null } = {}) {
 export function rollTwicePlan(text, base, { trigger = null } = {}) {
     const read = readRollTwice(text, { trigger });
     if (!read) return null;
-    const { notes, ...rollTwice } = read;
+    const { notes: read_notes, ...found } = read;
+    // (Its time, Aerekostes's "Only an attack before the end of your next turn" (src/compiler/item-data.js words it so): the Effect's, to the end
+    // of the next turn — not a note.)
+    const until = read_notes.find((note) => /^Only an attack before the end of your next turn\.$/i.test(note));
+    const notes = read_notes.filter((note) => note !== until);
+    const rollTwice = { ...found, ...(until ? { duration: { value: 1, unit: "rounds", expiry: "turn-end" } } : {}) };
     return { ...base, builtin: "roll-twice", automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: "the user", range: null, area: null }, trigger: { event: "use" }, rollTwice, notes, ...(notes.length ? { partial: true } : {}) };
 }
 
