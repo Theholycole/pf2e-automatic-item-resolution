@@ -22,9 +22,12 @@ function readWritten(text) {
     const types = [...list[1].matchAll(WRITTEN_ENTRY)].map((match) => ({ label: `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()}`, type: match[1].toLowerCase() }));
     if (types.length < 2) return null;
     const rest = `${text.slice(0, list.index)}${text.slice(list.index + list[0].length)}`;
-    const notes = [...rest.replace(/<[^>]+>/g, " ").matchAll(/[^.]*\bof the same type\b[^.]*\./gi)].map((match) => `${match[0].trim().replace(/\.$/, "")} (by hand).`);
+    // (A critical failure's persistent damage of the picked type, Explosive Missive's "A creature who rolls a critical failure also takes 1d4
+    // persistent damage of the same type": each choice's, on that row — src/compiler/beads.js withDamageChoice.)
+    const critical = /\bA creature who rolls a critical failure also takes (\d+d\d+) persistent damage of the same type\./i.exec(rest.replace(/<[^>]+>/g, " "));
+    const notes = [...rest.replace(/<[^>]+>/g, " ").matchAll(/[^.]*\bof the same type\b[^.]*\./gi)].filter((match) => !critical || match[0].trim() !== critical[0].trim()).map((match) => `${match[0].trim().replace(/\.$/, "")} (by hand).`);
     const untyped = rest.replace(/\bdeals (\d+d\d+(?:\+\d+)?) damage\b/i, "deals @Damage[$1[untyped]] damage").replace(/\s*\balso takes \d+d\d+ persistent damage of the same type\b/i, "");
-    return { html: untyped, types, ...(notes.length ? { notes } : {}) };
+    return { html: untyped, types, ...(critical ? { criticalPersistent: critical[1] } : {}), ...(notes.length ? { notes } : {}) };
 }
 
 // (Or its dragon's, Orb of Dragonkind's "You breathe an elemental blast that deals 25d6 damage (… basic save) in either a cone or a line
@@ -59,7 +62,7 @@ export function withTypeChoices(plan, choice) {
     if (!choice || components.length !== 1) return plan;
     const formula = String(components[0].formula ?? "");
     const typed = (type) => (/\[[\w,]+\]$/.test(formula) ? formula.replace(/\[([\w,]+)\]$/, (whole, inside) => `[${inside.split(",").map((part) => (TYPES.split("|").includes(part) || part === "untyped" ? type : part)).join(",")}]`) : `${formula}[${type}]`);
-    return { ...plan, damageChoices: choice.types.map(({ label, type }) => ({ label, formula: typed(type) })), ...(choice.notes ? { notes: [...(plan.notes ?? []), ...choice.notes], partial: true } : {}) };
+    return { ...plan, damageChoices: choice.types.map(({ label, type }) => ({ label, formula: typed(type), ...(choice.criticalPersistent ? { criticalPersistent: `${choice.criticalPersistent}[persistent,${type}]` } : {}) })), ...(choice.notes ? { notes: [...(plan.notes ?? []), ...choice.notes], partial: true } : {}) };
 }
 
 // Damage of its user's choice of two types, each degree's row giving both, Bloodburn Censer's "the smoke deals your choice of fire or

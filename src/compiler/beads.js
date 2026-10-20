@@ -54,5 +54,11 @@ export function withDamageChoice(plan, index = 0) {
     // (A type picked of those each row gives both of, Bloodburn Censer's fire or poison: that type's own rows, src/compiler/type-choice.js.)
     if (choice.outcomes) return { ...plan, resolution: { ...plan.resolution, outcomes: choice.outcomes } };
     const components = plan.resolution.sharedDamage.components.map((component, at) => (at === 0 ? { ...component, formula: choice.formula } : component));
+    // (And a critical failure's persistent damage of that type, Explosive Missive's: its own component on that row, not doubled.)
+    const critical = choice.criticalPersistent && plan.resolution.outcomes?.criticalFailure?.damage?.mode === "shared" ? plan.resolution.outcomes.criticalFailure.damage : null;
+    if (critical) {
+        const outcomes = { ...plan.resolution.outcomes, criticalFailure: { ...plan.resolution.outcomes.criticalFailure, damage: { ...critical, sourceComponentIds: [...(critical.sourceComponentIds ?? []), "critical-persistent"], componentMultipliers: { ...(critical.componentMultipliers ?? {}), "critical-persistent": 1 } } } };
+        return { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: [...components, { id: "critical-persistent", formula: choice.criticalPersistent, type: null, category: null }] }, outcomes } };
+    }
     return { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components } } };
 }

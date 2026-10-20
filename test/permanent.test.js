@@ -328,7 +328,11 @@ test("consumables read: Serene Smelling Salts, Explosive Missive's written type,
     // "The tenor of what you write … determines the damage type …: acid for a caustic inscription, …": the card's picker.
     const missive = at("Explosive Missive");
     assert.deepEqual([missive.resolution.check.basic, missive.damageChoices.map((choice) => choice.formula)], [true, ["4d6[acid]", "4d6[cold]", "4d6[electricity]", "4d6[fire]", "4d6[sonic]"]]);
-    assert.match(missive.notes.join(" "), /persistent damage of the same type/);
+    // (Its critical failure's 1d4 persistent of the type picked: the choice's own component on that row, not doubled — not a note.)
+    assert.deepEqual([missive.partial, missive.notes ?? [], missive.damageChoices[3].criticalPersistent], [undefined, [], "1d4[persistent,fire]"]);
+    const { withDamageChoice } = await import("../src/compiler/beads.js");
+    const fire = withDamageChoice(missive, 3);
+    assert.deepEqual([fire.resolution.sharedDamage.components.map((component) => component.formula), fire.resolution.outcomes.criticalFailure.damage.componentMultipliers, fire.resolution.outcomes.failure.damage.sourceComponentIds], [["4d6[fire]", "1d4[persistent,fire]"], { "critical-persistent": 1 }, ["0"]]);
     // Thrown to explode, not a Strike: Blinded 1 round and Dazzled 2 ("and then Dazzled for 1 round"); its critical failure's
     // dazzled lasting while it's sickened.
     const pepper = at("Blindpepper Bomb");
