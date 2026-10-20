@@ -475,7 +475,8 @@ test("Gecko Pads' climb Speed ('The pads give you …') and Maelstromic Destabil
     const pads = compileItem(item("Gecko Pads"), { spellEffects });
     assert.deepEqual([pads.item.speeds.map((speed) => [speed.type, speed.duration.value, speed.duration.unit]), pads.partial], [[["climb", 10, "minutes"]], undefined]);
     const destabilizer = compileItem(item("Maelstromic Destabilizer (Lesser)"), { spellEffects });
-    assert.deepEqual([destabilizer.item.resist.map((entry) => [entry.type, entry.value, entry.duration.unit]), destabilizer.partial], [[["spirit", 2, "minutes"]], true]);
+    // (Now its zone, src/compiler/weakened-around.js: the holder's resistance inside it, the others' weakness.)
+    assert.deepEqual([destabilizer.builtin, destabilizer.zone.inside.map((entry) => [entry.who, entry.rules[0].key, entry.rules[0].value]), destabilizer.partial], ["zone", [["own", "Resistance", 2], ["others", "Weakness", 2]], undefined]);
 });
 
 test("a bonus to the triggering save and to the rest against the same affliction for a minute (Fulu of the Stoic Ox, Fulu of the Drunken Monkey)", async () => {

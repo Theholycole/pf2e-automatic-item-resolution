@@ -17,8 +17,8 @@
    "none": 178,
    "resolves": 741,
    "builtin:readied-bonus": 23,
-   "builtin:zone": 115,
-   "partial": 130,
+   "builtin:zone": 118,
+   "partial": 127,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 122,
@@ -188,8 +188,8 @@
   "gadget": {
    "count": 77,
    "results": {
-    "partial": 11,
-    "builtin:zone": 14,
+    "partial": 8,
+    "builtin:zone": 17,
     "none": 8,
     "resolves": 22,
     "note-only": 6,
@@ -394,9 +394,9 @@
   "totals": {
    "cast": 35,
    "none": 239,
-   "item": 634,
+   "item": 631,
    "fortune": 25,
-   "zone": 115,
+   "zone": 118,
    "save": 136,
    "expose": 89,
    "ways": 25,
@@ -475,9 +475,9 @@
    },
    "gadget": {
     "save": 17,
-    "zone": 14,
+    "zone": 17,
     "none": 13,
-    "item": 22,
+    "item": 19,
     "action": 3,
     "counteract": 8
    },
@@ -9907,12 +9907,9 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "partial",
-   "kind": "check",
-   "unread": [
-    "Meanwhile all creatures not immune to spirit damage in a 10-foot emanation gains weakness 2 to spirit damage."
-   ],
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Fungal Walk Musk",
@@ -12598,12 +12595,9 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "partial",
-   "kind": "check",
-   "unread": [
-    "Meanwhile all creatures not immune to spirit damage in a 10-foot emanation gains weakness 5 to spirit damage."
-   ],
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Ruby Capacitor (Greater)",
@@ -29664,12 +29658,9 @@
     "spirit"
    ],
    "mechanisms": [],
-   "result": "partial",
-   "kind": "check",
-   "unread": [
-    "Meanwhile all creatures not immune to spirit damage in a 10-foot emanation gains weakness 10 to spirit damage."
-   ],
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Sightless Tincture",

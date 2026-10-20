@@ -7464,6 +7464,29 @@ export const cases = {
         return { results };
     },
 
+    // Maelstromic Destabilizer (src/compiler/weakened-around.js, ability f25a67d's zone.inside[i].who): its zone around its holder — the holder
+    // resistance 2 to spirit, the creature next to it weakness 2 to spirit.
+    async destabilizerAround(scene) {
+        await clearSquares(scene, [[11, 19], [12, 19]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: holder, token: holderToken } = await creature(scene, "Destabilizer Holder", { type: "character", x: 11, y: 19 });
+        const { actor: other } = await creature(scene, "Destabilized Neighbour", { x: 12, y: 19, alliance: "opposition" });
+        const earlier = new Set(scene.regions.map((region) => region.id));
+        const zone = () => scene.regions.find((region) => !earlier.has(region.id) && region.flags?.[ABILITY]?.zone);
+        const resisted = () => (holder.system.attributes.resistances ?? []).some((entry) => entry.type === "spirit" && Number(entry.value) === 2);
+        const weak = (actor) => (actor.system.attributes.weaknesses ?? []).some((entry) => entry.type === "spirit" && Number(entry.value) === 2);
+        try {
+            await holderToken.object?.control?.();
+            await (await give(holder, "Maelstromic Destabilizer (Lesser)")).consume();
+            await until(() => zone(), "the destabilizer's Region", { timeout: 8000 });
+            await until(() => resisted() && weak(other), "the holder's resistance and the neighbour's weakness", { timeout: 10000 });
+            assert(!weak(holder), "no weakness on the holder");
+            return { holder: holder.system.attributes.resistances.map((entry) => `${entry.type} ${entry.value}`), other: other.system.attributes.weaknesses.map((entry) => `${entry.type} ${entry.value}`) };
+        } finally {
+            await zone()?.delete().catch(() => null);
+        }
+    },
+
     // Golden Silencer (Greater)'s Strike save (its note Effect's note.saveEnds): a critical failure silenced for 1 minute, a note Effect a new
     // Fortitude save at the end of its turns ends.
     async saveEndsSilencer(scene) {

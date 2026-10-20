@@ -10,6 +10,7 @@
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { litAreaPlan } from "./lit-area.js";
+import { weakenedAroundPlan } from "./weakened-around.js";
 import { withHonestPartial, withUntracedRules } from "./honest.js";
 import { withSaveEnds } from "./save-ends.js";
 import { withKindSaves } from "./kind-saves.js";
@@ -346,6 +347,8 @@ function compileOne(given, options = {}) {
     // (A lit candle's or incense's area while it burns, src/compiler/lit-area.js: Candle of Inflamed Passions' penalty, Incense of Distilled
     // Death's fast healing for undead.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = litAreaPlan(plainText(html), base) ?? plan;
+    // (Its holder's resistance and everyone else's weakness around it, src/compiler/weakened-around.js: Maelstromic Destabilizer.)
+    plan = weakenedAroundPlan(plainText(html), base) ?? plan;
     // (A creature it becomes, src/compiler/conjured.js: Beetle Gel, Marvelous Miniature (Horse).)
     plan = conjuredPlan(html, base, item) ?? plan;
     // (Or one whose numbers it gives, src/compiler/conjured.js statedCreaturePlan: a third-party bottled ooze, a canister's zombie.)

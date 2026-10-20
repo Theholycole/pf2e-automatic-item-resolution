@@ -1189,6 +1189,12 @@ test("rows read from plain words (guards.js), a snare's too: Fang Snare's 1 pier
     assert.deepEqual([eruption.plan.partial, (eruption.plan.notes ?? []).some((note) => /\breforms itself\b/.test(note))], [undefined, true]);
 });
 
+test("its holder's resistance and a weakness for everyone else around it (src/compiler/weakened-around.js): Maelstromic Destabilizer's zone for a minute, its rules by who's inside (zone.inside[i].who, ability f25a67d)", () => {
+    const zone = compileItem(item("Maelstromic Destabilizer (Moderate)")).zone;
+    assert.deepEqual([zone.area, zone.centre, zone.lasts.value, zone.lasts.unit], [{ type: "emanation", value: 10 }, "self", 1, "minutes"]);
+    assert.deepEqual(zone.inside, [{ rules: [{ key: "Resistance", type: "spirit", value: 5 }], who: "own" }, { rules: [{ key: "Weakness", type: "spirit", value: 5 }], who: "others" }]);
+});
+
 test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {
     const { readReductions } = await import("../src/compiler/reduce.js");
     assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);
