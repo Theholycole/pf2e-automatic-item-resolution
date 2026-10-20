@@ -22,6 +22,9 @@ const TARGET_TAKES = new RegExp(String.raw`^In addition, (?:the target|it) (?:al
 // (Damage on a failure too, Brutal Finish's "On a failure, you deal damage equal to one weapon damage die": that many of the weapon's dice
 // at the creature it missed, src/live/strike-card.js riderFor.)
 const FAIL_DICE = /^On a failure, you deal damage equal to (one|two|three|\d+) weapon damage (?:die|dice)\.?$/i;
+// (Half its extra damage on a failure, Energizing Lattice's "If your Strike fails, but doesn't critically fail, the target still takes half
+// the force damage": failHalf, that type's extra dice — scripts/strikes.js, the ability module's card at half.)
+const FAIL_HALF = /^If your Strike fails, but doesn't critically fail, the target still takes half the (\w+) damage\.?$/i;
 // "an extra die of weapon damage", "an extra two dice of weapon damage".
 const WEAPON_DICE = /\b(?:an )?extra (?:(one|two|three|four|\d+) )?(?:die|dice) of weapon damage\b/i;
 // "+1 status bonus to this Strike", "with a +1 circumstance bonus to the attack roll".
@@ -107,6 +110,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let splash = null;
     let offGuard = false;
     let failDice = 0;
+    let failHalfType = null;
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
     const striking = Number(item?.system?.runes?.striking) || 0;
@@ -121,6 +125,13 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         // (The splash trait's miss, said again: Drake Rifle's "On a failure, the target and creatures within 5 feet of it still take that
         // splash damage" — the splash card's on a failure, scripts/strikes.js.)
         if (/^On a failure, the target and creatures within 5 feet of it still take that splash damage\.$/i.test(sentence.trim()) && SPLASH.test(body)) continue;
+        // (Its requirement's state ending, Energizing Lattice's glow after the Strike: the requirement is its user's, as each one is.)
+        if (/^The [\w ]+? ceases glowing after the Strike\.$/i.test(sentence.trim())) continue;
+        const halved = FAIL_HALF.exec(sentence.trim());
+        if (halved) {
+            failHalfType = halved[1].toLowerCase();
+            continue;
+        }
         const failing = FAIL_DICE.exec(sentence.trim());
         if (failing) {
             failDice = COUNT[failing[1].toLowerCase()] ?? Number(failing[1]);
@@ -196,5 +207,9 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     // (The rune step in place of the first die, for the item's rune.)
     const step = steps.filter((entry) => striking >= entry.rune).sort((a, b) => b.rune - a.rune)[0];
     if (step && dice.length) dice[0] = { ...dice[0], diceNumber: step.count, dieSize: `d${step.faces}` };
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice) };
+    // (The failure's half: that type's extra dice, read; no such dice, the sentence a note.)
+    const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
+    if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
+    const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf) };
 }

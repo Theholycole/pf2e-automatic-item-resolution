@@ -54,6 +54,7 @@ export function strikeLines(plan) {
         strike.instead?.hit ? `On a hit: ${strike.instead.hit.formula} ${strike.instead.hit.type} damage in place of the weapon's (doubled on a critical hit)` : null,
         strike.instead?.failure ? `On a failure (not a critical failure): ${strike.instead.failure.formula} ${strike.instead.failure.type} damage` : null,
         strike.failDice ? `On a failure (not a critical failure): ${strike.failDice} weapon damage ${strike.failDice === 1 ? "die" : "dice"} as damage` : null,
+        strike.failHalf ? `On a failure (not a critical failure): half of its ${strike.failHalf.formula} ${strike.failHalf.type} damage` : null,
         hit ? `On a hit: ${hit}` : null,
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
         strike.save ? `On a hit: ${saveText(strike.save)} for the target${strike.saveOnly === "void-healing" ? " (one with void healing)" : ""}` : null,
@@ -100,7 +101,8 @@ export function insteadDamagePlan(plan, outcome) {
             kind: "check",
             check: { roll: "automatic", statistic: "automatic" },
             sharedDamage: { rollOnce: true, components: [{ id: "0", formula: entry.formula, type: entry.type, category: null }] },
-            outcomes: { criticalSuccess: none(), success: { damage: { mode: "shared", multiplier: outcome === "criticalSuccess" ? 2 : 1, sourceComponentIds: ["0"] }, effects: [], modifiers: [] }, failure: none(), criticalFailure: none() }
+            // (Half of it, Energizing Lattice's failure: entry.multiplier.)
+            outcomes: { criticalSuccess: none(), success: { damage: { mode: "shared", multiplier: outcome === "criticalSuccess" ? 2 : entry.multiplier ?? 1, sourceComponentIds: ["0"] }, effects: [], modifiers: [] }, failure: none(), criticalFailure: none() }
         },
         directDamage: { formula: entry.formula, type: entry.type, category: null }
     };
@@ -197,6 +199,7 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     if (outcome === "failure" && plan.strike?.instead?.failure) return "failure";
     // (Or the weapon's own dice on a failure: Brutal Finish's.)
     if (outcome === "failure" && plan.strike?.failDice) return "failure";
+    if (outcome === "failure" && plan.strike?.failHalf) return "failure";
     return plan.strike?.missKeeps ? "keep" : "spend";
 }
 

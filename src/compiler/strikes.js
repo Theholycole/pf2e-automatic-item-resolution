@@ -329,6 +329,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.offGuard ? { offGuard: true } : {}),
               // (Weapon dice on a failure: Brutal Finish's.)
               ...(extras.failDice ? { failDice: extras.failDice } : {}),
+              // (Half its extra damage on a failure: Energizing Lattice's.)
+              ...(extras.failHalf ? { failHalf: extras.failHalf } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),

@@ -63,6 +63,8 @@ export async function strikeWithRider(message) {
     if (rider.plan.strike?.splash && ["criticalSuccess", "success", "failure"].includes(context.outcome)) await postStrikeSplash({ message, context, rider });
     if (rider.plan.strike?.instead) return strikeInstead({ message, context, actor, effect, rider, what });
     // (A failure that deals the weapon's own dice, Brutal Finish's: that many of the Strike's weapon's dice, of its type, as damage in place.)
+    // (Half its extra damage on a failure, Energizing Lattice's: the ability module's card at half.)
+    if (what === "failure" && rider.plan.strike?.failHalf) return strikeInstead({ message, context, actor, effect, rider: { ...rider, plan: { ...rider.plan, strike: { ...rider.plan.strike, instead: { hit: null, failure: { ...rider.plan.strike.failHalf, multiplier: 0.5 } } } } }, what });
     if (what === "failure" && rider.plan.strike?.failDice) {
         const weapon = message.item ?? (message.flags?.pf2e?.origin?.uuid ? await fromUuid(message.flags.pf2e.origin.uuid).catch(() => null) : null);
         const die = weapon?.system?.damage?.die;
@@ -175,7 +177,7 @@ async function strikeInstead({ message, context, actor, effect, rider, what }) {
         return;
     }
     const entry = context.outcome === "failure" ? rider.plan.strike.instead.failure : rider.plan.strike.instead.hit;
-    const amount = `${entry.formula} ${entry.type}${context.outcome === "criticalSuccess" ? ", doubled" : ""}`;
+    const amount = `${entry.multiplier === 0.5 ? "half of " : ""}${entry.formula} ${entry.type}${context.outcome === "criticalSuccess" ? ", doubled" : ""}`;
     const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;
     const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;

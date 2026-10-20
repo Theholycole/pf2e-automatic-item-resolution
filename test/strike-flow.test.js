@@ -474,6 +474,22 @@ test("Iron Cudgel (Brutal Finish): a melee Strike with one more weapon die (PF2e
     assert.equal(miss.tokens[0].actor?.id ?? miss.tokens[0].document?.actor?.id, foe.id);
 });
 
+test("Energizing Lattice: a Strike with 6d6 more force damage, and on a failure (not a critical failure) half of that 6d6 force on the ability module's card at the creature missed", async () => {
+    const [lattice] = compileActivations(source("Energizing Lattice"));
+    assert.equal(routeOf(lattice.plan), "strike");
+    assert.deepEqual([lattice.plan.strike.failHalf, lattice.plan.partial, lattice.plan.strike.notes], [{ formula: "6d6", type: "force" }, undefined, []]);
+    assert.ok(strikeLines(lattice.plan).includes("On a failure (not a critical failure): half of its 6d6 force damage"));
+    assert.equal(riderFor(lattice.plan, { outcome: "failure", options: ["item:melee"] }), "failure");
+    const { card } = await readyFrom("Energizing Lattice");
+    assert.match(card.content, /\+6d6 force damage/);
+    const before = foundry.posted.length;
+    await attack("failure");
+    assert.equal(readied().length, 0, "the failure spends it");
+    const [half] = foundry.posted.slice(before);
+    assert.deepEqual([half.plan.resolution.sharedDamage.components[0].formula, half.plan.resolution.sharedDamage.components[0].type, half.plan.resolution.outcomes.success.damage.multiplier], ["6d6", "force", 0.5]);
+    assert.equal(half.tokens[0].actor?.id ?? half.tokens[0].document?.actor?.id, foe.id);
+});
+
 test("Drake Rifles' Drake Shot: a Strike with the rifle itself, its splash of its own type on the damage roll (a failure's splash the splash card's), and its type's rider on a hit; a weapon's rider-only Strike is its own (Growth Gun)", () => {
     const shot = (name) => compileActivations(source(name))[0].plan;
     const hit = (plan) => plan.resolution.outcomes.success;
