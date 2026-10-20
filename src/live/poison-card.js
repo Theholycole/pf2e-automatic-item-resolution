@@ -169,8 +169,9 @@ export const repeatsLater = (text = "") => AGAIN.test(text) || ATTACKER.test(tex
 // later: kept for an action the item gives; repeat and until (world time in seconds): used again until then.
 // own: the drinker's own save (no targets: the user's own token); attacker: set off by a creature attacking the user.
 // attackChoices: a spellgun's attack modifiers its user has, [{ kind, label, modifier }] (scripts/poisons.js).
-export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null, own = false, attacker = false, attackChoices = null }) {
-    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: attacker === "touch" ? "touch" : true } : {}), ...(attackChoices ? { attackChoices, attackChoice: 0 } : {}), results: [] };
+// when: the moment it's used at each time, its words ("the first time each round {user} uses Fly …", src/compiler/round-burst.js).
+export function createExposureCard({ plan, item, user, later = false, repeat = false, until = null, own = false, attacker = false, attackChoices = null, when = null }) {
+    return { kind: "expose", status: "open", plan, item, user, delivery: deliveryOf(plan) ?? null, later, ...(later && repeat ? { repeat: true, until, uses: 0 } : {}), ...(later && when ? { when } : {}), ...(own ? { own: true } : {}), ...(attacker ? { attacker: attacker === "touch" ? "touch" : true } : {}), ...(attackChoices ? { attackChoices, attackChoice: 0 } : {}), results: [] };
 }
 
 // The plan with the check picked: Twisting Twine's Trip in place of its Disarm (plan.checkChoices [{ label, resolution }]).
@@ -222,7 +223,7 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const checked = state.plan?.resolution?.check?.roll === "skill";
     const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
     const used = state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : "";
-    const again = !state.repeat ? "" : state.attacker ? ` It stays open until its time is up${used}.` : ` It can be used again${used} until its time is up, after each recharge.`;
+    const again = !state.repeat ? "" : state.attacker || state.when ? ` It stays open until its time is up${used}.` : ` It can be used again${used} until its time is up, after each recharge.`;
     const hint = !open ? "" : state.step === "then"
         ? `<p class="aar-hint">If the attack hit: target the creature hit and press the button for its ${escape(saveText(state.plan.thenSave))}.</p>`
         : state.own
@@ -231,6 +232,9 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
         ? `<p class="aar-hint">Each time ${escape(state.plan.retaliation.who.replace("{user}", state.user.name))} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : state.attacker
         ? `<p class="aar-hint">Each time a creature ${state.attacker === "touch" ? `touches ${escape(state.user.name)}${state.plan?.retaliation?.adjacentMelee ? ", or hits it with a melee weapon Strike from next to it," : ""}` : `attacks ${escape(state.user.name)}`} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
+        // (Once each round at a moment of its own, Phoenix Flask's feathers: plan.again's when.)
+        : state.later && state.when
+        ? `<p class="aar-hint">Each time, ${escape(state.when.replace("{user}", state.user.name))}: target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : state.later
         ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : checked ? "A check at" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;

@@ -7354,6 +7354,31 @@ export const cases = {
         }
     },
 
+    // Phoenix Flask (src/compiler/round-burst.js): PF2e's Effect on its drinker (its Fly Speed), and the feathers' save card kept open; used at
+    // a creature next to the drinker, the ability module's basic Reflex save card deals it the fire damage, and the card stays open.
+    async phoenixFeathers(scene) {
+        await clearSquares(scene, [[14, 17], [15, 17]]);
+        const { actor: drinker, token: drinkerToken } = await creature(scene, "Phoenix Drinker", { type: "character", x: 14, y: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Feathered Foe", { x: 15, y: 17, alliance: "opposition" });
+        let since = Date.now();
+        await (await give(drinker, "Phoenix Flask")).consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the flask's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => drinker.itemTypes.effect.some((effect) => effect.name === "Effect: Phoenix Flask"), "PF2e's Phoenix Flask Effect", { timeout: 8000 });
+        const later = await messageAfter(since, itemCard("expose"), { what: "the feathers' card" });
+        assert(/first time each round/.test(later.content ?? ""), "its words: once each round, after flying");
+        await drinkerToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(later.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the feathers' save card" });
+        const before = foe.system.attributes.hp.value;
+        await withDie(10, () => rollAndApply(save));
+        await until(() => foe.system.attributes.hp.value < before, "fire damage on the creature next to it", { timeout: 10000 });
+        assert(game.messages.get(later.id).getFlag(NS, "card").status === "open", "the card still open for its minute");
+        return { lost: before - foe.system.attributes.hp.value };
+    },
+
     // Golden Silencer (Greater)'s Strike save (its note Effect's note.saveEnds): a critical failure silenced for 1 minute, a note Effect a new
     // Fortitude save at the end of its turns ends.
     async saveEndsSilencer(scene) {

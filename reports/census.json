@@ -394,10 +394,10 @@
   "totals": {
    "cast": 35,
    "none": 239,
-   "item": 619,
+   "item": 620,
    "fortune": 25,
    "zone": 115,
-   "save": 139,
+   "save": 138,
    "expose": 89,
    "ways": 25,
    "action": 16,
@@ -428,11 +428,11 @@
     "coat": 3
    },
    "potion": {
-    "item": 78,
+    "item": 79,
     "later": 63,
     "none": 26,
     "cast": 9,
-    "save": 3,
+    "save": 2,
     "counteract": 2,
     "zone": 1
    },
@@ -29094,9 +29094,9 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "save",
+   "kind": "effect",
    "gaps": [],
-   "live": "save"
+   "live": "item"
   },
   {
    "name": "Beetle Gel",

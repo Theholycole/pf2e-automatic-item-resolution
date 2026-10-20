@@ -198,6 +198,29 @@ test("Potion of Fire Retaliation: its damage to a creature that touches the drin
     assert.deepEqual([card.flags[MODULE_ID].card.status, card.flags[MODULE_ID].card.uses], ["open", 2], "open for its minute, used twice");
 });
 
+test("Phoenix Flask (src/compiler/round-burst.js): its Effect for the drinker (the Fly Speed), and its feathers' save card kept open for its minute, used once each round after the drinker flies", async () => {
+    const flask = compileItem(source("Phoenix Flask"));
+    assert.deepEqual([routeOf(flask), flask.resolution.kind, flask.resolution.applications[0].label, flask.again.rounds, flask.again.plan.targeting.area, component(flask.again.plan).formula], ["item", "effect", "Effect: Phoenix Flask", 10, { type: "emanation", value: 10 }, "3d4[fire]"]);
+    const drinker = foundry.makeActor({ id: "damage-phoenix", name: "Phoenix", owners: ["player"] });
+    foundry.place(drinker, 300, 17200);
+    const item = foundry.giveItem(drinker, source("Phoenix Flask"));
+    const data = item.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: drinker.id }, actor: drinker, token: drinker.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    const later = foundry.messages.slice(foundry.messages.indexOf(card) + 1).find((entry) => entry.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.ok(later, "the feathers' card");
+    assert.match(later.content, /Each time, the first time each round Phoenix uses Fly \(including to hover in place\), at the end of that movement: target the creatures in its 10-foot emanation/);
+    for (let time = 0; time < 2; time++) {
+        await foundry.socket(SOCKET)({ action: "apply", messageId: later.id, userId: "player", targets: [brute.token.uuid] });
+        await settle();
+    }
+    assert.deepEqual([later.flags[MODULE_ID].card.status, later.flags[MODULE_ID].card.uses], ["open", 2], "open for its minute, used twice");
+});
+
 test("a spellgun against a defense's DC, with conditions and no damage (the module's own wording)", async () => {
     const { spellgunPlan } = await import("../src/compiler/spellguns.js");
     const html = "<p>Activate the spellgun by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's Fortitude DC. This spellgun has a range increment of 30 feet.</p><p><strong>Critical Success</strong> The target is Slowed 1 until the end of your next turn.</p><p><strong>Success</strong> As critical success, except the target is Clumsy instead of slowed.</p>";

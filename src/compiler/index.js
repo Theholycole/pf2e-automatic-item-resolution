@@ -12,6 +12,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { litAreaPlan } from "./lit-area.js";
 import { withHonestPartial, withUntracedRules } from "./honest.js";
 import { withSaveEnds } from "./save-ends.js";
+import { withRoundBurst } from "./round-burst.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
@@ -307,6 +308,9 @@ function compileOne(given, options = {}) {
     const kinded = plan?.resolution?.kind === "save" ? KIND_GATED.exec(plainText(html))?.[0]?.replace(/@Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?/gi, (_all, statistic, dc) => `DC ${dc} ${statistic[0].toUpperCase()}${statistic.slice(1).toLowerCase()}`) : null;
     const linked = kinded ? ownPlan(item, base, options) : null;
     if (linked?.resolution?.kind === "effect") plan = { ...linked, automation: { level: "guided" }, notes: [...(linked.notes ?? []), kinded] };
+    // (A burst its user sets off once each round while its Effect lasts, src/compiler/round-burst.js: Phoenix Flask's feathers — its Effect, the
+    // burst's save card for later.)
+    if (plan?.resolution?.kind === "save") plan = withRoundBurst(plan, plainText(html), ownPlan(item, base, options));
     // (A note alone from the ability compiler gives way to the item's own row when that reads something.)
     if (plan?.noteOnly) {
         const row = rowPlan(item, base);

@@ -581,6 +581,14 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: target.actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
         lines.push(`${recipient.name}: its retaliation card follows`);
     }
+    // (A burst its drinker sets off once each round while its Effect lasts — Phoenix Flask's feathers, src/compiler/round-burst.js: a "later"
+    // save card kept open that long, at the creatures around it each time.)
+    const again = state.plan.again;
+    if (again?.plan && target.actor) {
+        const card = createExposureCard({ plan: again.plan, item: state.item, user: recipient, later: true, repeat: true, until: (Number(game.time.worldTime) || 0) + (Number(again.rounds) || 10) * 6, when: again.when ?? null });
+        await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: target.actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
+        lines.push(`${recipient.name}: its save card for later follows`);
+    }
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const entry of state.plan.item?.ruleEffects ?? []) {
         if (!target.actor) break;
