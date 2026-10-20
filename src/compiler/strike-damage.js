@@ -118,6 +118,9 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         }
         RUNE_STEP.lastIndex = 0;
         if (riderSentence(sentence)) continue;
+        // (The splash trait's miss, said again: Drake Rifle's "On a failure, the target and creatures within 5 feet of it still take that
+        // splash damage" — the splash card's on a failure, scripts/strikes.js.)
+        if (/^On a failure, the target and creatures within 5 feet of it still take that splash damage\.$/i.test(sentence.trim()) && SPLASH.test(body)) continue;
         const failing = FAIL_DICE.exec(sentence.trim());
         if (failing) {
             failDice = COUNT[failing[1].toLowerCase()] ?? Number(failing[1]);

@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 774,
+   "resolves": 778,
    "builtin:cast-spell": 473,
    "none": 530,
-   "partial": 199,
+   "partial": 195,
    "builtin:focus-point": 47,
    "builtin:counteract": 27,
    "builtin:readied-bonus": 47,
@@ -81,9 +81,9 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 174,
+    "resolves": 178,
     "none": 82,
-    "partial": 46,
+    "partial": 42,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "builtin:table": 1,
@@ -2814,7 +2814,7 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -7240,7 +7240,7 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -20140,7 +20140,7 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -28174,7 +28174,7 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },

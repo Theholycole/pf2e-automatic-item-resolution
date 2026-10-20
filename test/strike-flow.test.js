@@ -469,7 +469,7 @@ test("Iron Cudgel (Brutal Finish): a melee Strike with one more weapon die (PF2e
     assert.equal(miss.tokens[0].actor?.id ?? miss.tokens[0].document?.actor?.id, foe.id);
 });
 
-test("Drake Rifles' Drake Shot: a Strike with the rifle itself, its splash of its own type on the damage roll (a failure's splash a note), and its type's rider on a hit; a weapon's rider-only Strike is its own (Growth Gun)", () => {
+test("Drake Rifles' Drake Shot: a Strike with the rifle itself, its splash of its own type on the damage roll (a failure's splash the splash card's), and its type's rider on a hit; a weapon's rider-only Strike is its own (Growth Gun)", () => {
     const shot = (name) => compileActivations(source(name))[0].plan;
     const hit = (plan) => plan.resolution.outcomes.success;
     for (const [type, effects] of [["Acid", [["sickened", 1]]], ["Electricity", [["off-guard", null], ["dazzled", null]]], ["Poison", [["enfeebled", 1], ["clumsy", 1]]], ["Fire", [["prone", null]]]]) {
@@ -477,7 +477,8 @@ test("Drake Rifles' Drake Shot: a Strike with the rifle itself, its splash of it
         assert.equal(routeOf(plan), "strike", type);
         assert.deepEqual([plan.strike.own, plan.strike.range, plan.strike.splash], [true, "ranged", { value: 1, damageType: type.toLowerCase() }], type);
         assert.deepEqual(hit(plan).effects.map((effect) => [effect.slug, effect.value]), effects, type);
-        assert.ok(plan.strike.notes.includes("On a failure, the target and creatures within 5 feet of it still take that splash damage."), type);
+        // (The failure's splash now the splash card's.)
+        assert.ok(!plan.strike.notes.includes("On a failure, the target and creatures within 5 feet of it still take that splash damage."), type);
     }
     assert.deepEqual(hit(shot("Drake Rifle (Fire)")).forcedMovement, { kind: "push", distance: 10 });
     assert.deepEqual(hit(shot("Drake Rifle (Cold)")).modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.duration.value]), [["all-speeds", -10, "status", 1]]);
@@ -648,4 +649,39 @@ test("a critical hit's harder save: Blister Ammunition's \"On a critical hit, in
     };
     assert.equal(await dc("criticalSuccess"), 21);
     assert.equal(await dc("success"), 19);
+});
+
+test("a Strike's splash (Drake Rifle's Drake Shot, \"1 cold splash damage for this Strike\"): the bomb card's splash list — on a failure the target and the creatures within 5 feet, on a hit those creatures alone (PF2e's damage roll gives the target its own); Apply deals it", async () => {
+    const archer = foundry.makeActor({ id: "strike-archer", name: "Archer", owners: ["player"] });
+    const mark = foundry.makeActor({ id: "strike-mark", name: "Mark", hp: 30, max: 30 });
+    const nearby = foundry.makeActor({ id: "strike-nearby", name: "Nearby", hp: 30, max: 30 });
+    foundry.place(archer, 0, 11000);
+    foundry.place(mark, 1000, 11000);
+    foundry.place(nearby, 1100, 11000);
+    const [shot] = compileActivations(source("Drake Rifle (Cold)"));
+    assert.deepEqual([shot.plan.strike.splash, shot.plan.strike.notes, shot.plan.partial], [{ value: 1, damageType: "cold" }, [], undefined]);
+    const rifle = foundry.giveItem(archer, source("Drake Rifle (Cold)"));
+    const ready = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: rifle.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+    };
+    const shoot = async (outcome) => {
+        const count = foundry.messages.length;
+        await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome, options: ["item:ranged", `item:id:${rifle.id}`], target: { actor: mark.uuid, token: mark.token.uuid } }, origin: { uuid: rifle.uuid, type: "weapon" } } }, speaker: { actor: archer.id }, actor: archer, token: archer.token.document }));
+        await settle();
+        return foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "bomb");
+    };
+    await ready();
+    const missed = await shoot("failure");
+    assert.deepEqual(missed.flags[MODULE_ID].card.splashed.map((entry) => [entry.name, entry.include]), [["Mark", true], ["Nearby", true]]);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: missed.id, userId: "player", included: [0, 1] });
+    await settle();
+    assert.deepEqual([mark.healed.map((entry) => entry.damage), nearby.healed.map((entry) => entry.damage)], [["(1[splash])[cold]"], ["(1[splash])[cold]"]]);
+    await ready();
+    const hit = await shoot("success");
+    assert.deepEqual(hit.flags[MODULE_ID].card.splashed.map((entry) => entry.name), ["Nearby"], "the target's own is PF2e's damage roll");
 });

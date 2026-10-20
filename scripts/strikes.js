@@ -8,6 +8,7 @@
 
 import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
+import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, entryOf, startInitiative, stateOf } from "./foundry.js";
 
@@ -56,6 +57,10 @@ export async function strikeWithRider(message) {
     const options = context.options ?? [];
     const what = riderFor(rider.plan, { ranged: options.includes("item:ranged") && !options.includes("item:melee"), outcome: context.outcome, options, weaponId: rider.weaponId ?? null, ammoId: rider.ammoId ?? null });
     if (!what || what === "keep") return;
+    // (Splash for this Strike, the splash trait's — Jistkan War Crossbow's, Drake Rifle's: the creatures within 5 feet of the target take it
+    // on a hit, PF2e's damage roll giving the target its own, and the target too on a failure — the bomb card's splash list, ticked, its
+    // Apply that splash damage.)
+    if (rider.plan.strike?.splash && ["criticalSuccess", "success", "failure"].includes(context.outcome)) await postStrikeSplash({ message, context, rider });
     if (rider.plan.strike?.instead) return strikeInstead({ message, context, actor, effect, rider, what });
     // (A failure that deals the weapon's own dice, Brutal Finish's: that many of the Strike's weapon's dice, of its type, as damage in place.)
     if (what === "failure" && rider.plan.strike?.failDice) {
@@ -194,4 +199,16 @@ async function damageWithRider(message) {
     if (rider.weaponId && !options.includes(`item:id:${rider.weaponId}`)) return;
     if (rider.plan.strike?.unarmed && !options.includes("item:category:unarmed")) return;
     await useOne(actor, effect, rider);
+}
+
+// The bomb card for a Strike's splash: the creatures within 5 feet of its target (and the target, on a failure), the splash its Apply deals.
+async function postStrikeSplash({ message, context, rider }) {
+    const targetUuid = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
+    const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
+    if (!targetToken?.actor) return;
+    const near = creaturesNear(targetToken, 5);
+    if (!near.length && context.outcome !== "failure") return;
+    const splash = rider.plan.strike.splash;
+    const state = createBombCard({ plan: { source: rider.plan.source ?? null }, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: rider.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), outcome: context.outcome, splash: [{ type: splash.damageType, total: splash.value }], near });
+    await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: message.actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
