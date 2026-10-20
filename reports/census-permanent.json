@@ -8,8 +8,8 @@
   "results": {
    "resolves": 787,
    "builtin:cast-spell": 473,
-   "none": 526,
-   "partial": 192,
+   "none": 524,
+   "partial": 194,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 47,
@@ -31,8 +31,8 @@
   "live": {
    "save": 444,
    "cast": 473,
-   "item": 589,
-   "none": 654,
+   "item": 591,
+   "none": 652,
    "focus": 47,
    "counteract": 29,
    "fortune": 58,
@@ -149,8 +149,8 @@
     "builtin:cast-spell": 11,
     "note-only": 13,
     "resolves": 32,
-    "none": 18,
-    "partial": 12,
+    "none": 16,
+    "partial": 14,
     "builtin:modes": 4,
     "builtin:readied-bonus": 4,
     "builtin:no-effect": 2,
@@ -25948,9 +25948,9 @@
    "time": "1",
    "frequency": "at will",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Psalter of the Blessed",
@@ -28064,9 +28064,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Heartstone",

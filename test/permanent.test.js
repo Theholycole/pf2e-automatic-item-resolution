@@ -935,3 +935,10 @@ test("a partial plan without its Effect's opening flavor among its notes (Bloodg
     const kept = { notes: ["A gust swirls around you."], builtin: "no-effect" };
     assert.equal(withoutFlavorNotes(kept, html), kept);
 });
+
+test("Floating Shield: its own AC bonus as a circumstance bonus to its user's AC for its minute, as if raised; what it can't do and its early end notes", () => {
+    const [float] = compileActivations(item("Floating Shield"));
+    assert.deepEqual(float.plan.resolution.outcomes.success.modifiers, [{ selector: "ac", type: "circumstance", value: 1, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
+    assert.equal(float.plan.partial, true);
+    assert.match(float.plan.notes.join(" "), /Interact to grasp it, ending its floating effect early/);
+});

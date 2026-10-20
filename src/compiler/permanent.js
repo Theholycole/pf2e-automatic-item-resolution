@@ -43,6 +43,7 @@ import { withMythicUpgrade } from "./mythic-upgrade.js";
 import { withMark } from "./marked.js";
 import { withAttackRiders } from "./attack-riders.js";
 import { installedPlan, readInstalled } from "./installed.js";
+import { floatingPlan } from "./floating.js";
 import { withAreaTraitNote } from "./area-trait.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
@@ -480,6 +481,8 @@ function compileEach(item, options = {}) {
         const installedRead = readInstalled(plainText(activation.html));
         const installed = installedRead && (!plan || plan.noteOnly || reminderOnly(plan)) ? installedRead : null;
         if (installed) plan = installedPlan(base, installed);
+        // (A shield that guards its user by itself, src/compiler/floating.js: Floating Shield's own AC bonus.)
+        if (!plan || plan.noteOnly) plan = floatingPlan(plainText(activation.html), base, item) ?? plan;
         if (!plan) return { activation, plan: null, index };
         plan = damageMaterial(withTypeChoices(plan, typeChoice), plainText(activation.html));
         // (A skill its user picked when the item was made, named in the item's own text, src/compiler/skill-pick.js: Words of Wisdom's
