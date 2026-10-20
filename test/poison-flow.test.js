@@ -322,6 +322,11 @@ test("a weapon's own poison or curse for its next hit: Alghollthu Lash's coat ca
     const { plainText } = await import("../src/compiler/rows.js");
     const [lionfish] = compileActivations(source("Lionfish Spear"));
     assert.deepEqual([routeOf(lionfish.plan, plainText(lionfish.activation.html)), lionfish.plan.targeting.target, lionfish.plan.resolution.afflictionHandoff.dc], ["save", "the creature hit", 28]);
+    // (Viper Rapier's miss: "affected as if successfully poisoned with cave worm venom (DC 43)" — that venom's stages at DC 43, at the
+    // creature missed.)
+    const [rapier] = compileActivations(source("Viper Rapier"));
+    assert.deepEqual([routeOf(rapier.plan, plainText(rapier.activation.html)), rapier.plan.targeting.target, rapier.plan.resolution.afflictionHandoff.dc, rapier.plan.partial], ["save", "the creature missed", 43, undefined]);
+    assert.deepEqual([rapier.plan.resolution.afflictionHandoff.name, rapier.plan.resolution.afflictionHandoff.traits, rapier.plan.resolution.afflictionHandoff.stages.length], ["Cave Worm Venom", ["injury", "poison"], 3]);
     const [gift] = compileActivations(source("Protector's Final Gift"));
     assert.deepEqual([routeOf(gift.plan, plainText(gift.activation.html)), gift.plan.item.coats, gift.plan.item.coatLasts], ["coat", "self", { value: 1, unit: "minutes" }]);
     const fang = compileItem(source("Viper's Fang"));

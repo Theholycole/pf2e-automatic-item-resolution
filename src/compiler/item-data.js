@@ -244,6 +244,9 @@ export function withItemData(html, item) {
         const dice = Number(item?.ownerLevel) >= 18 ? "two" : "one";
         return `When you activate the cudgel, make a melee Strike with a weapon you're wielding in two hands. The Strike deals ${dice === "two" ? "an extra two dice" : "an extra die"} of weapon damage. On a failure, you deal damage equal to ${dice} weapon damage ${dice === "two" ? "dice" : "die"}. After the Strike, your turn ends.${paragraph}With the Brutal Finish feat, one more weapon damage die on a hit and on a failure (by hand).`;
     });
+    // (Viper Rapier's "The target is affected as if successfully poisoned with cave worm venom (DC 43)": that venom's own stages at that DC,
+    // as PF2e's Cave Worm Venom gives them — the ability module's affliction save card at the creature missed.)
+    text = text.replace(/\bThe target is affected as if successfully poisoned with cave worm venom \(DC (\d+)\)\.<\/p>/i, (all, dc) => `The target is exposed to cave worm venom.</p><p><strong>Saving Throw</strong> @Check[fortitude|dc:${dc}]</p><p><strong>Maximum Duration</strong> 6 rounds</p><p><strong>Stage 1</strong> @Damage[5d6[poison]] damage and @UUID[Compendium.pf2e.conditionitems.Item.MIRkyAjyBeXivMa7]{Enfeebled 2} (1 round)</p><p><strong>Stage 2</strong> @Damage[6d6[poison]] damage and enfeebled 2 (1 round)</p><p><strong>Stage 3</strong> @Damage[8d6[poison]] damage and enfeebled 2 (1 round)</p>`);
     // (Jawbreaker Shield's "If the shield bash hits, the target takes damage and must attempt a DC 31 Fortitude saving throw": the hit's
     // save, as the Strike reader takes it — the bash's own damage PF2e's.)
     text = text.replace(/\bIf the (shield bash|Strike) hits, the target takes damage and must attempt a DC (\d+) (Fortitude|Reflex|Will) saving throw\./i, (all, what, dc, save) => `On a hit, the target attempts a @Check[${save.toLowerCase()}|dc:${dc}] save.`);

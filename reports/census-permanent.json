@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 786,
+   "resolves": 787,
    "builtin:cast-spell": 473,
-   "none": 527,
+   "none": 526,
    "partial": 192,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
@@ -29,10 +29,10 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 443,
+   "save": 444,
    "cast": 473,
    "item": 589,
-   "none": 655,
+   "none": 654,
    "focus": 47,
    "counteract": 29,
    "fortune": 58,
@@ -81,8 +81,8 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 182,
-    "none": 82,
+    "resolves": 183,
+    "none": 81,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "partial": 38,
@@ -22901,9 +22901,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Viper Rapier",
