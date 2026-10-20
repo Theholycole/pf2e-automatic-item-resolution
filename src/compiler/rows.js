@@ -673,7 +673,10 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
         else continue;
         // ("or until you're no longer wielding the weapon, whichever comes first" is the same in practice; ", and when you make a thrown
         // Strike with it, it flies back …" says more.)
-        if (!/,\s*and\b/i.test(sentence.slice((range ?? thrown ?? loses ?? gains).index))) used.add(index);
+        // (But its coming back after a thrown Strike, Dragonbone Arrowhead's ", and when you make a thrown Strike with it, it flies back to your hand
+        // after the Strike completes": the weapon's way home, which stays in its user's inventory — no rule.)
+        const after = sentence.slice((range ?? thrown ?? loses ?? gains).index + (range ?? thrown ?? loses ?? gains)[0].length);
+        if (!/,\s*and\b/i.test(after) || /^[^,]*,\s*and when you make a thrown Strike with it, it flies back to your hand after the Strike completes\.$/i.test(after.trim())) used.add(index);
     }
     return found;
 }

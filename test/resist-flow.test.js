@@ -282,8 +282,8 @@ test("a change to its user's weapons: Magnifying Scope's range increment until t
     const arrowhead = compileItem(source("Dragonbone Arrowhead"));
     assert.deepEqual(arrowhead.item.weapon.map((adjust) => [adjust.property, adjust.value, adjust.definition, adjust.duration.value, adjust.duration.expiry]), [["weapon-traits", "thrown-20", ["item:melee"], 0, "turn-end"]]);
     assert.equal(weaponText(arrowhead.item.weapon[0]), "Its melee weapons gain thrown 20 feet until the end of the turn");
-    // (Its weapon flying back to its hand: the note.)
-    assert.equal(arrowhead.partial, true);
+    // (Its weapon flying back to its hand: the weapon's way home, still in its user's inventory — no rule, not a note.)
+    assert.deepEqual([arrowhead.partial, arrowhead.unread], [undefined, undefined]);
 });
 
 test("extra damage on its user's Strikes for a while: Martial Mayhem Mutagen's precision damage on melee Strikes against off-guard creatures — PF2e's DamageDice (a FlatModifier for a number)", async () => {
