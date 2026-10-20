@@ -12,8 +12,8 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
-import { abilityState, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
+import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText } from "../src/live/card.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, damageRollClass, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -124,6 +124,15 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
 
 // --- The card after PF2e's Use ----------------------------------------------------
 
+// Its user's items of the kind installed in an item (src/compiler/installed.js): each one's level, item bonus (a bomb's, or an elixir's
+// "+N item bonus"), splash damage and quantity.
+function installedOf(actor, installed) {
+    const items = actor?.items?.contents ?? [...(actor?.items ?? [])];
+    return items
+        .filter((entry) => ["consumable", "weapon"].includes(entry.type) && String(entry.name ?? "").toLowerCase().startsWith(installed.name))
+        .map((entry) => ({ id: entry.id, name: entry.name, level: Number(entry.system?.level?.value) || 0, bonus: entry.type === "weapon" ? Number(entry.system?.bonus?.value) || 0 : Number(/\+(\d+) item bonus/.exec(entry.system?.description?.value ?? "")?.[1]) || 0, splash: Number(entry.system?.splashDamage?.value) || 0, quantity: Number(entry.system?.quantity) || 1 }));
+}
+
 // The used item: still on the actor, else as PF2e deleted it (the last dose), else its compendium source.
 async function usedItem(origin, message) {
     const live = origin.uuid ? await fromUuid(origin.uuid).catch(() => null) : null;
@@ -216,6 +225,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         // (A rune it lends a weapon: its user's weapons to pick from.)
         // (Or one it makes its user's best, up to a level: Blade Phantom's Guide.)
         // (Or a whetstone's: Frenzied Quintessence.)
+        // (The alchemical item installed in it, Living Leaf Weave's elixir of life: its user's of that kind.)
+        installed: plan.item?.installed ? installedOf(actor, plan.item.installed) : [],
         weapons: picksWeapon(plan) ? (actor.itemTypes?.weapon ?? []).filter((weapon) => !weapon.isOfType?.("bomb") && weapon.system?.group !== "bomb" && !(plan.item?.proficiency?.maxLevel && Number(weapon.system?.level?.value) > plan.item.proficiency.maxLevel)).map((weapon) => ({ id: weapon.id, name: weapon.name })) : []
     });
     const card = await ChatMessage.create({
@@ -263,7 +274,7 @@ function choicesOf(state, root) {
     if (state.kind === "fortune") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
-    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), recoveryType: Number(root.querySelector("[data-air-field='recoveryType']")?.value ?? state.recoveryType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), runeChoice: Number(root.querySelector("[data-air-field='runeChoice']")?.value ?? state.runeChoice ?? 0), skillPick: Number(root.querySelector("[data-air-field='skillPick']")?.value ?? state.skillPick ?? 0), ...(root.querySelector("[data-air-field='amount']") ? { amount: root.querySelector("[data-air-field='amount']").value } : {}), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), recoveryType: Number(root.querySelector("[data-air-field='recoveryType']")?.value ?? state.recoveryType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), runeChoice: Number(root.querySelector("[data-air-field='runeChoice']")?.value ?? state.runeChoice ?? 0), skillPick: Number(root.querySelector("[data-air-field='skillPick']")?.value ?? state.skillPick ?? 0), installedPick: Number(root.querySelector("[data-air-field='installedPick']")?.value ?? state.installedPick ?? 0), ...(root.querySelector("[data-air-field='amount']") ? { amount: root.querySelector("[data-air-field='amount']").value } : {}), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
 }
 
 const APPLY = {
@@ -386,7 +397,7 @@ async function onRequest(data) {
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null, ...(data.ownRank !== undefined ? { ownRank: data.ownRank === null ? null : String(data.ownRank) } : {}) }
-        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, recoveryType: Number.isInteger(data.recoveryType) ? data.recoveryType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, runeWeapon: Number.isInteger(data.runeWeapon) ? data.runeWeapon : null, runeChoice: Number.isInteger(data.runeChoice) ? data.runeChoice : null, skillPick: Number.isInteger(data.skillPick) ? data.skillPick : null, ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}), targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
+        : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, recoveryType: Number.isInteger(data.recoveryType) ? data.recoveryType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, runeWeapon: Number.isInteger(data.runeWeapon) ? data.runeWeapon : null, runeChoice: Number.isInteger(data.runeChoice) ? data.runeChoice : null, skillPick: Number.isInteger(data.skillPick) ? data.skillPick : null, installedPick: Number.isInteger(data.installedPick) ? data.installedPick : null, ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}), targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
         throw error;
@@ -426,7 +437,7 @@ async function targetedCreatures(uuids) {
 
 const voidHealing = (actor) => Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing);
 
-async function applyCard(message, { drinker = null, ceremony = false, resistType = null, recoveryType = null, reduceChoice = null, runeWeapon = null, runeChoice = null, skillPick = null, amount = null, targets = [] } = {}) {
+async function applyCard(message, { drinker = null, ceremony = false, resistType = null, recoveryType = null, reduceChoice = null, runeWeapon = null, runeChoice = null, skillPick = null, installedPick = null, amount = null, targets = [] } = {}) {
     let state = stateOf(message);
     if (!state || state.status !== "open") return null;
     // (An amount its trigger gave, typed on the card: Bloodknuckles' bleed damage.)
@@ -441,6 +452,16 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     // (The rune picked of several.)
     if (Number.isInteger(runeChoice) && state.plan.item?.rune?.choices?.[runeChoice]) state = { ...state, runeChoice };
     if (state.plan.item?.rune && !state.plan.item.rune.own && !state.weapons?.length) throw new Error(`${state.user.name} has no weapon for ${state.item.name}.`);
+    // (The alchemical item installed in it, as picked: one its user has, enough of them.)
+    if (Number.isInteger(installedPick) && state.installed?.[installedPick]) state = { ...state, installedPick };
+    const installing = state.plan.item?.installed;
+    if (installing) {
+        const entry = state.installed?.[state.installedPick ?? 0];
+        const owner = entry ? await fromUuid(state.user.actorUuid).catch(() => null) : null;
+        const owned = owner?.items?.get?.(entry.id) ?? null;
+        if (!entry || !owned) throw new Error(`${state.user.name} has no ${installing.name} to install in ${state.item.name}.`);
+        if ((Number(owned.system?.quantity) || 1) < installing.count) throw new Error(`${state.item.name} needs ${installing.count} of ${owned.name} installed: ${state.user.name} has ${Number(owned.system?.quantity) || 1}.`);
+    }
     // (A condition it lowers on others: the creatures the presser targets, before anything is applied.)
     const reduce = state.plan.item?.reduce ?? [];
     // (Or its flat check, the creature its user touches: Nettle Balm's.)
@@ -702,6 +723,26 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             await user.actor.createEmbeddedDocuments("Item", [proficiencyEffectSource(loan, { weapon, rank, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
             lines.push(`${state.user.name}: ${proficiencyText(loan, weapon.name)} (rank ${rank})`);
         }
+    }
+    // (The alchemical item installed in it: an Effect with its numbers, its damage to the creatures around, the item used up.)
+    const installed = state.plan.item?.installed;
+    if (installed && user.actor) {
+        const entry = state.installed[state.installedPick ?? 0];
+        const owned = user.actor.items?.get?.(entry.id) ?? null;
+        await user.actor.createEmbeddedDocuments("Item", [installedEffectSource(installed, entry, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        lines.push(`${state.user.name}: ${installedText(installed, entry)}`);
+        if (installed.damage && entry.splash > 0) {
+            const DamageRoll = damageRollClass();
+            const around = user.token ? creaturesNear(user.token, installed.damage.radius) : [];
+            for (const other of around) {
+                const { token, actor } = await creatureOf(other);
+                if (!actor) continue;
+                await actor.applyDamage({ damage: await new DamageRoll(`${entry.splash}[${installed.damage.type}]`).evaluate(), token: token ?? undefined });
+            }
+            lines.push(around.length ? `${entry.splash} ${installed.damage.type} damage to ${around.map((other) => other.name).join(", ")}` : `no other creature within ${installed.damage.radius} feet`);
+        }
+        const quantity = Number(owned?.system?.quantity) || 1;
+        if (owned) await (quantity > installed.count ? owned.update({ "system.quantity": quantity - installed.count }) : owned.delete());
     }
     // (A condition until the end of the user's rage: an Effect granting it, gone when the Rage ends — only while raging.)
     // (Fast healing at half its user's level: that level's, now.)

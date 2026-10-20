@@ -42,6 +42,7 @@ import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
 import { withMark } from "./marked.js";
 import { withAttackRiders } from "./attack-riders.js";
+import { installedPlan, readInstalled } from "./installed.js";
 import { withAreaTraitNote } from "./area-trait.js";
 import { allyAreaRow, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
@@ -472,6 +473,13 @@ function compileEach(item, options = {}) {
         // slot's, each compiled in that rank's words.)
         // (The block as its own description: its opening paragraph tag back, which the split leaves off.)
         plan = withSlotCost(plan, activation.html, base, (words) => compileActivations({ ...item, system: { ...(item.system ?? {}), description: { value: /^\s*<p\b/i.test(words) ? words : `<p>${words}` } } }, options)[0]?.plan ?? null);
+        // (An alchemical item installed in it, its numbers the activation's, src/compiler/installed.js: Living Leaf Weave's elixir of life —
+        // the card's pick of its user's own, used up.)
+        // (Over a reminder alone too — Troll Hide's text on a note Effect, no row of its own.)
+        const reminderOnly = (entry) => !entry?.builtin && Object.values(entry?.resolution?.outcomes ?? {}).every((row) => !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && (row?.damage?.mode ?? "none") === "none" && !row?.forcedMovement);
+        const installedRead = readInstalled(plainText(activation.html));
+        const installed = installedRead && (!plan || plan.noteOnly || reminderOnly(plan)) ? installedRead : null;
+        if (installed) plan = installedPlan(base, installed);
         if (!plan) return { activation, plan: null, index };
         plan = damageMaterial(withTypeChoices(plan, typeChoice), plainText(activation.html));
         // (A skill its user picked when the item was made, named in the item's own text, src/compiler/skill-pick.js: Words of Wisdom's
@@ -508,7 +516,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions, ...(untilRage.fastHealing ? { fastHealing: untilRage.fastHealing } : {}) } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions, ...(untilRage.fastHealing ? { fastHealing: untilRage.fastHealing } : {}) } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}), ...(installed ? { installed: { name: installed.name, count: installed.count, modifiers: installed.modifiers, ...(installed.resistance ? { resistance: installed.resistance } : {}), ...(installed.damage ? { damage: installed.damage } : {}), ...(installed.fastHealing ? { fastHealing: true } : {}), duration: installed.duration } } : {}) }
             }
         };
     });

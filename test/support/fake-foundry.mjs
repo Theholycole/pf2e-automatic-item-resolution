@@ -208,7 +208,18 @@ export function createFakeFoundry() {
                 this.flags[scope] = { ...(this.flags[scope] ?? {}), [key]: structuredClone(value) };
                 return this;
             },
-            toObject: () => ({ ...structuredClone(source), _stats: { compendiumSource: `Compendium.pf2e.equipment-srd.Item.${source._id}` } })
+            toObject: () => ({ ...structuredClone(source), _stats: { compendiumSource: `Compendium.pf2e.equipment-srd.Item.${source._id}` } }),
+            // (An update or delete of its own: its system copied first, so the pack's source stays as it was.)
+            async update(changes) {
+                this.system = structuredClone(this.system);
+                for (const [key, value] of Object.entries(changes)) setProperty(this, key, structuredClone(value));
+                return this;
+            },
+            async delete() {
+                documents.delete(this.uuid);
+                this.deleted = true;
+                return this;
+            }
         });
         return item;
     }

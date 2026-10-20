@@ -21,7 +21,9 @@ export const DRINKER_ID = "drinker";
 export const picksWeapon = (plan) => Boolean((plan?.item?.rune && !plan.item.rune.own) || plan?.item?.proficiency || (plan?.item?.attackRiders?.riders ?? []).some((rider) => rider.weapon));
 
 // weapons: its user's, [{ id, name }], for a rune it lends a weapon (plan.item.rune), picked on the card.
-export function createItemCard({ plan, item, user, drinkers = [], rolled = null, weapons = [] }) {
+// installed: its user's items of the kind installed in it (plan.item.installed), [{ id, name, level, bonus, splash, quantity }], picked on
+// the card.
+export function createItemCard({ plan, item, user, drinkers = [], rolled = null, weapons = [], installed = [] }) {
     const drinker = plan?.item?.recipient === "drinker";
     const choices = drinker ? [user, ...drinkers.filter((entry) => entry.actorUuid !== user.actorUuid || entry.tokenUuid !== user.tokenUuid)] : [];
     return {
@@ -35,6 +37,8 @@ export function createItemCard({ plan, item, user, drinkers = [], rolled = null,
         // (A tea's Tea Ceremony: ticked on the card, false until then; null for any other item.)
         ceremony: plan?.item?.ceremony ? false : null,
         ...(picksWeapon(plan) ? { weapons, runeWeapon: 0 } : {}),
+        // (The alchemical item installed in it: one of its user's, picked.)
+        ...(plan?.item?.installed ? { installed, installedPick: 0 } : {}),
         // (One of several runes, picked: Boughshatter's Decaying, Grievous or Wounding.)
         ...(plan?.item?.rune?.choices?.length ? { runeChoice: 0 } : {}),
         rolled,
@@ -116,6 +120,8 @@ export function previewLines(state) {
     const lines = [];
     // (A weapon its user treats as their best, src/compiler/proficiency-loan.js.)
     if (plan?.item?.proficiency) lines.push(proficiencyText(plan.item.proficiency));
+    // (The alchemical item installed in it, src/compiler/installed.js: what its numbers give, the item used up.)
+    if (plan?.item?.installed) lines.push(installedText(plan.item.installed));
     // (A spell slot it costs, src/compiler/slot-cost.js: spent when it's applied.)
     if (plan?.spend?.spellSlot) lines.push(Number.isInteger(plan.spend.spellSlot.rank) ? `Costs a rank ${plan.spend.spellSlot.rank} spell slot` : `Costs a spell slot of rank ${plan.spend.spellSlot.min} or higher (the lowest left)`);
     // (The conditions it lowers, src/compiler/reduce.js.)
@@ -549,6 +555,11 @@ export function cardHTML(state, { canApply = false } = {}) {
         : !state.weapons.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no weapon for it.</p>` : "")
             : open && canApply ? `<p class="aar-actions">Weapon: <select data-air-field="runeWeapon">${state.weapons.map((weapon, index) => `<option value="${index}"${index === (state.runeWeapon ?? 0) ? " selected" : ""}>${escape(weapon.name)}</option>`).join("")}</select></p>`
                 : Number.isInteger(state.runeWeapon) ? `<p class="aar-actions">Weapon: ${escape(state.weapons[state.runeWeapon]?.name ?? "")}</p>` : "";
+    // (The alchemical item installed in it: one of its user's, picked.)
+    const installedPick = !state.installed ? ""
+        : !state.installed.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no ${escape(state.plan.item.installed.name)} to install.</p>` : "")
+            : open && canApply ? `<p class="aar-actions">Installed: <select data-air-field="installedPick">${state.installed.map((entry, index) => `<option value="${index}"${index === (state.installedPick ?? 0) ? " selected" : ""}>${escape(entry.name)}</option>`).join("")}</select></p>`
+                : Number.isInteger(state.installedPick) ? `<p class="aar-actions">Installed: ${escape(state.installed[state.installedPick]?.name ?? "")}</p>` : "";
     // (A skill its user picked when the item was made, Words of Wisdom's phrase: a picker.)
     const skillPick = state.plan?.item?.skillPick ?? null;
     const skillPicker = !skillPick ? ""
@@ -570,5 +581,33 @@ export function cardHTML(state, { canApply = false } = {}) {
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${amountField}${runePick}${runeChoicePick}${skillPicker}${previewList}${targetHint}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${amountField}${runePick}${runeChoicePick}${installedPick}${skillPicker}${previewList}${targetHint}${results}${controls}</section>`;
+}
+
+// The alchemical item installed in it, in words: "From the elixir of life installed, its item bonus to athletics (grapple), fortitude-dc
+// (grapple, disarm, shove) and reflex-dc (trip), for 3 rounds; the item used up".
+const scopeOf = (modifier) => (modifier.predicate ?? []).flatMap((term) => (typeof term === "string" ? [term] : term.or ?? [])).map((term) => String(term).replace(/^action:/, "").replace(/-/g, " "));
+export function installedText(installed, entry = null) {
+    const bonus = entry ? `+${entry.bonus} item bonus` : "its item bonus";
+    const parts = [
+        installed.modifiers.length ? `${bonus} to ${installed.modifiers.map((modifier) => `${modifier.selector}${scopeOf(modifier).length ? ` (${scopeOf(modifier).join(", ")})` : ""}`).join(", ")}` : null,
+        installed.resistance ? `resistance ${entry ? entry.splash : "equal to its splash damage"} to ${installed.resistance.types.join(", ")}` : null,
+        installed.fastHealing ? `${entry ? entry.level : "its level in"} Hit Points at the start of each turn` : null,
+        installed.damage ? `${entry ? entry.splash : "its splash damage as"} ${installed.damage.type} damage to each other creature within ${installed.damage.radius} feet` : null
+    ].filter(Boolean);
+    const time = installed.duration?.from === "level" ? (entry ? ` for ${entry.level} rounds` : " for its level in rounds") : installed.duration?.mode === "fixed" ? ` for ${timeText(installed.duration)}` : "";
+    const what = entry?.name ?? `the ${installed.name}${installed.count > 1 ? "s" : ""}`;
+    return `From ${what} installed: ${parts.join("; ")}${time}; ${installed.count > 1 ? `${installed.count} of them` : "the item"} used up`;
+}
+
+// Its Effect: PF2e's FlatModifier (item) for each bonus, Resistance, FastHealing — the installed item's numbers.
+export function installedEffectSource(installed, entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const label = item.name ?? "Installed";
+    const rules = [
+        ...(entry.bonus > 0 ? installed.modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: "item", value: entry.bonus, label, ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })) : []),
+        ...(installed.resistance && entry.splash > 0 ? installed.resistance.types.map((type) => ({ key: "Resistance", type, value: entry.splash })) : []),
+        ...(installed.fastHealing && entry.level > 0 ? [{ key: "FastHealing", value: entry.level }] : [])
+    ];
+    const duration = installed.duration?.from === "level" ? { mode: "fixed", value: entry.level, unit: installed.duration.unit, expiry: "turn-start" } : installed.duration;
+    return ownEffectSource({ name: "installed", img: "icons/svg/upgrade.svg", words: installedText(installed, entry), rules, duration, flag: { installed: installed.name }, item, user, worldTime, initiative, moduleId });
 }

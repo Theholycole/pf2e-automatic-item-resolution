@@ -377,6 +377,36 @@ export const cases = {
         return { outcome, temp: user.system.attributes.hp.temp };
     },
 
+    // Living Leaf Weave with an Elixir of Life (Moderate) installed: its +2 item bonus to Athletics to Grapple and to the Fortitude and
+    // Reflex DCs for 3 rounds, the elixir used up; Dread Helm's moderate ampoule: +1 to Intimidation and 2 mental damage to the creature
+    // next to its user.
+    async installedItems(scene) {
+        const { actor: user } = await creature(scene, "Installed Wearer", { type: "character", x: 10, y: 16 });
+        const { actor: foe } = await creature(scene, "Installed Neighbour", { x: 11, y: 16, hp: 40, alliance: "opposition" });
+        const weave = await give(user, "Living Leaf Weave");
+        const elixir = await give(user, "Elixir of Life (Moderate)");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(weave.uuid, 0);
+        let card = await messageAfter(since, itemCard("item"), { what: "the weave's card" });
+        let at = card.getFlag(NS, "card").installed.findIndex((entry) => entry.id === elixir.id);
+        assert(at >= 0, `the elixir offered (${JSON.stringify(card.getFlag(NS, "card").installed)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { installedPick: at });
+        const rules = () => user.itemTypes.effect.filter((effect) => effect.getFlag(NS, "installed")).flatMap((effect) => effect.system.rules ?? []);
+        await until(() => rules().some((rule) => rule.selector === "fortitude-dc" && rule.value === 2), "+2 to the Fortitude DC", { timeout: 8000 });
+        assert(!user.items.get(elixir.id), "the elixir used up");
+        const helm = await give(user, "Dread Helm");
+        const ampoule = await give(user, "Dread Ampoule (Moderate)");
+        const hp = foe.system.attributes.hp.value;
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(helm.uuid, 0);
+        card = await messageAfter(since, itemCard("item"), { what: "the helm's card" });
+        at = card.getFlag(NS, "card").installed.findIndex((entry) => entry.id === ampoule.id);
+        await game.modules.get(NS).api.live.apply(card.id, { installedPick: at });
+        await until(() => foe.system.attributes.hp.value === hp - 2, `2 mental damage on the neighbour (${hp} → ${foe.system.attributes.hp.value})`, { timeout: 8000 });
+        assert(rules().some((rule) => rule.selector === "intimidation" && rule.value === 1), "+1 to Intimidation");
+        return { rules: rules().map((rule) => `${rule.selector} +${rule.value}`), hp: [hp, foe.system.attributes.hp.value] };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });
