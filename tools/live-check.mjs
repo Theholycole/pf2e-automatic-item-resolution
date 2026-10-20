@@ -426,6 +426,71 @@ export const cases = {
         return { potionCard: potionCard.id };
     },
 
+    // Ginger Chew's secondary effect: the ways card's second way, its own card lowering sickened 2 to 1; the ways card stays open.
+    async gingerChewSecondary(scene) {
+        const { actor: user } = await creature(scene, "Chew Chewer", { x: 14, y: 16 });
+        await user.increaseCondition("sickened", { value: 2 });
+        const chew = await give(user, "Ginger Chew");
+        let since = Date.now();
+        await chew.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const card = await messageAfter(since, itemCard("item"), { what: "the secondary effect's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.getCondition("sickened")?.value === 1, `sickened 2 → 1 (${user.getCondition("sickened")?.value})`, { timeout: 8000 });
+        assert(game.messages.get(ways.id).getFlag(NS, "card").status === "open", "the ways card open");
+        return { sickened: user.getCondition("sickened")?.value };
+    },
+
+    // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
+    async grimRing(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });
+        const { token: undeadToken } = await creature(scene, "Grim Undead", { x: 17, y: 16, alliance: "opposition" });
+        await user.increaseCondition("drained", { value: 2 });
+        const ring = await give(user, "Grim Ring");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(ring.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the ring's card" });
+        await userToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [undeadToken.uuid] });
+        const damage = await messageAfter(since, abilitySaveCard, { what: "the 2d6 vitality card" });
+        assert(damage.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage.components[0].formula === "2d6", "its 2d6");
+        await until(() => user.getCondition("drained")?.value === 1, `drained 2 → 1 (${user.getCondition("drained")?.value})`, { timeout: 8000 });
+        return { drained: user.getCondition("drained")?.value };
+    },
+
+    // Floating Shield's Float: +1 circumstance bonus to its user's AC for a minute, the shield not even held.
+    async floatingShield(scene) {
+        const { actor: user } = await creature(scene, "Float Wearer", { type: "character", x: 18, y: 16 });
+        const shield = await give(user, "Floating Shield");
+        const before = user.system.attributes.ac.value;
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the shield's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.system.attributes.ac.value === before + 1, `AC ${before} + 1 (${user.system.attributes.ac.value})`, { timeout: 8000 });
+        return { ac: [before, user.system.attributes.ac.value] };
+    },
+
+    // Viper Rapier's miss: the creature missed gets the ability module's cave worm venom save card at DC 43.
+    async viperRapier(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Viper Duelist", { type: "character", x: 14, y: 18 });
+        const { token: foeToken } = await creature(scene, "Viper Target", { x: 15, y: 18, alliance: "opposition" });
+        const rapier = await give(user, "Viper Rapier");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(rapier.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the rapier's card" });
+        await userToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the venom's save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && Number(check.against.value) === 43, `Fortitude DC 43 (${JSON.stringify(check)})`);
+        return { check };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });
