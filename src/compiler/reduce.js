@@ -52,6 +52,9 @@ const CONDITIONS = "blinded|clumsy|confused|controlled|dazzled|deafened|doomed|d
 const ENDING = new RegExp(String.raw`\bend(?:s|ing)? the ((?:(?:${CONDITIONS}),\s*)*(?:and )?(?:${CONDITIONS})) conditions on yourself and (?:creatures|allies) of your choice within \d+ feet\b`, "i");
 // (Or ended on its user alone: Spleen Bloodstone of Arazni's "The Confused, Controlled, Grabbed, Immobilized, Paralyzed, Petrified, and
 // Restrained conditions, as well as any Speed penalties affecting you, immediately end unless …" — each, "all"; the rest a note.)
+// (Its user's own ended, Invigorating Soap's "It immediately restores 10 Hit Points and removes the Fatigued condition": all of it. Not "until it
+// removes the sickened condition", nor a counteract's "to remove the Slowed condition".)
+const REMOVES_OWN = new RegExp(String.raw`\b(?:and|It(?: immediately)?) removes the (${CONDITIONS}) condition\b`, "i");
 const END_OWN = new RegExp(String.raw`\bThe ((?:(?:${CONDITIONS}|petrified),\s*)*(?:and )?(?:${CONDITIONS}|petrified)) conditions(?:, as well as [^,]+,)? immediately end\b`, "i");
 const triggerOf = (text) => /\bTrigger\b(.*?)(?:\bEffect\b|$)/s.exec(String(text ?? ""))?.[1] ?? "";
 // (Its use only: not a later "Secondary Effect" — Ginger Chew's "Reduce your sickened value by 1" is for when it's used again.)
@@ -89,6 +92,8 @@ export function readReductions(text) {
         add({ slug, by: "all" });
         add({ slug, by: "all", who: "targets", optional: true });
     }
+    const removed = REMOVES_OWN.exec(ownUse(text));
+    if (removed && !/\buntil (?:it|they|you) removes?\b/i.test(ownUse(text).slice(Math.max(0, removed.index - 30), removed.index + removed[0].length))) add({ slug: removed[1].toLowerCase(), by: "all" });
     const ended = END_OWN.exec(ownUse(text));
     if (ended) for (const slug of ended[1].toLowerCase().match(new RegExp(`${CONDITIONS}|petrified`, "g"))) add({ slug, by: "all" });
     for (const sentence of ownUse(text).split(/(?<=[.!?])\s+(?=[A-Z])/)) {

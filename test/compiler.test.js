@@ -1107,3 +1107,9 @@ test("a rule sentence the plan has no trace of (src/compiler/honest.js withUntra
     assert.equal(withUntracedRules(plan, "Effect The target takes 2d6 fire damage and is Frightened 2. Malevolent energy leaks out, barely restrained."), plan);
     assert.equal(withUntracedRules({ ...plan, resolution: { ...plan.resolution, kind: "effect", applications: [{ kind: "native-spell-effect", uuid: "Compendium.pf2e.equipment-effects.Item.x" }] } }, "Effect You become Slowed 1.").partial, undefined);
 });
+
+test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {
+    const { readReductions } = await import("../src/compiler/reduce.js");
+    assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);
+    assert.deepEqual(readReductions("On a critical failure, the creature is blinded for 1 round, sickened 1, and dazzled until it removes the sickened condition."), []);
+});
