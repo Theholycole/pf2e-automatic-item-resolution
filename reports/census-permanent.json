@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 771,
+   "resolves": 774,
    "builtin:cast-spell": 473,
    "none": 530,
-   "partial": 202,
+   "partial": 199,
    "builtin:focus-point": 47,
    "builtin:counteract": 27,
    "builtin:readied-bonus": 47,
@@ -103,8 +103,8 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "partial": 37,
-    "resolves": 44,
+    "partial": 34,
+    "resolves": 47,
     "builtin:pf2e-rules": 24,
     "none": 29,
     "builtin:no-effect": 2,
@@ -26301,7 +26301,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -27358,7 +27358,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -27534,7 +27534,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },

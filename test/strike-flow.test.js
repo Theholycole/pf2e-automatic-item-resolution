@@ -629,3 +629,23 @@ test("a whetstone's riders, the weapon picked on its card: Frenzied Quintessence
     await dealt(sword, zombie, 8);
     assert.deepEqual(duelist.healed.map((entry) => entry.damage), [-4]);
 });
+
+test("a critical hit's harder save: Blister Ammunition's \"On a critical hit, increase the Fortitude DC by 2 (DC 21), and the target is Dazzled for 1 round\" — strike.criticalDC, the save card's DC after a critical hit, 19 after a hit", async () => {
+    const [blister] = compileActivations(source("Blister Ammunition (Lesser)"));
+    assert.deepEqual([blister.plan.strike.criticalDC, blister.plan.strike.save.resolution.check.against.value, blister.plan.strike.notes, blister.plan.partial], [21, 19, [], undefined]);
+    assert.deepEqual(blister.plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), ["dazzled"]);
+    const dc = async (outcome) => {
+        const arrows = foundry.giveItem(fighter, { ...source("Blister Ammunition (Lesser)"), _id: `blister-${outcome}` });
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: arrows.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        const before = foundry.posted.length;
+        await attack(outcome, ["item:ranged", `item:ammo:id:${arrows.id}`]);
+        return foundry.posted.slice(before)[0]?.plan.resolution.check.against.value;
+    };
+    assert.equal(await dc("criticalSuccess"), 21);
+    assert.equal(await dc("success"), 19);
+});

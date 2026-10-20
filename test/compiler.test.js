@@ -636,7 +636,8 @@ test("what a hit does that isn't a condition: its save's note on a failure (Blis
     assert.match(note.text, /^Failed save: begin to itch uncontrollably for 3 rounds\./);
     assert.deepEqual([note.duration.value, note.duration.unit], [3, "rounds"]);
     assert.deepEqual(blister.plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), ["dazzled"]);
-    assert.ok(blister.plan.strike.notes.some((line) => /^On a critical hit, increase the Fortitude DC by 2/.test(line)), "the critical hit's DC a note");
+    // (The critical hit's DC now read: strike.criticalDC.)
+    assert.deepEqual([blister.plan.strike.criticalDC, blister.plan.strike.notes.some((line) => /^On a critical hit, increase the Fortitude DC by 2/.test(line))], [21, false]);
     const [magekiller] = compileActivations(item("Magekiller Bullet"));
     const [curse] = magekiller.plan.resolution.outcomes.success.noteEffects;
     assert.deepEqual([curse.duration.value, curse.duration.unit, /Casts a Spell/.test(curse.text)], [7, "days", true]);

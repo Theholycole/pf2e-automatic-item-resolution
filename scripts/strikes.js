@@ -100,7 +100,9 @@ export async function strikeWithRider(message) {
     }
     const target = entryOf(targetToken.object ?? targetToken, targetToken.actor);
     const lines = await applyRiders({ plan: rider.plan, degree: context.outcome, user: rider.user, target, item: rider.item });
-    const save = rider.plan.strike?.save;
+    // (A critical hit's harder save, Blister Ammunition's: its DC then.)
+    const plain = rider.plan.strike?.save;
+    const save = plain && rider.plan.strike.criticalDC && context.outcome === "criticalSuccess" ? { ...plain, resolution: { ...plain.resolution, check: { ...plain.resolution.check, against: { ...plain.resolution.check.against, value: rider.plan.strike.criticalDC } } } } : plain;
     if (save) {
         const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);

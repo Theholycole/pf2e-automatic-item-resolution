@@ -272,13 +272,20 @@ export function compileStrike(item, base, options = {}) {
     return noted && plan?.strike ? { ...plan, strike: { ...plan.strike, fromNotes: true } } : plan;
 }
 
+const CRITICAL_DC = /^On a critical hit, increase the (Fortitude|Reflex|Will) DC by (\d+) \((?:@Check\[[^\]]*\]|DC) ?(\d+)\)(?:, and the target is (Dazzled|Sickened|Frightened|Off-Guard|Stupefied|Clumsy|Enfeebled|Slowed|Stunned|Blinded|Deafened) for \d+ rounds?)?\.$/i;
+
 function strikePlan({ base, item, strike, riders, save, extras: read, cast = null, follow = null }) {
     // (A Strike with no die size of its own, "an extra die of weapon damage", from an item that isn't the weapon: PF2e's DamageDice with no
     // die size, which takes the weapon's — as PF2e's own Brutal Finish does. Only weapon dice, though: other dice need their size.)
     if (read.dice.some((entry) => !entry.dieSize && !entry.weaponDie)) return null;
     // (With a save on the hit, its own sentence and its degrees are the save card's, not notes: "It takes 4d10 void damage with a
     // DC 25 Fortitude saving throw", "Critical Success The foe is unaffected.")
-    const extras = save ? { ...read, notes: read.notes.filter((note) => !/^(?:Critical Success|Success|Failure|Critical Failure)\b/.test(note) && !/@Check\[(?:fortitude|reflex|will)\b/i.test(note)) } : read;
+    const filtered = save ? { ...read, notes: read.notes.filter((note) => !/^(?:Critical Success|Success|Failure|Critical Failure)\b/.test(note) && !/@Check\[(?:fortitude|reflex|will)\b/i.test(note)) } : read;
+    // (A critical hit's harder save: Blister Ammunition's "On a critical hit, increase the Fortitude DC by 2 (DC 21), and the target is
+    // Dazzled for 1 round" — strike.criticalDC, the save card's DC after a critical hit (scripts/strikes.js); its condition already the
+    // critical row's.)
+    const critical = save ? filtered.notes.map((note) => [note, CRITICAL_DC.exec(String(note).trim())]).find(([, match]) => match && (!match[4] || (riders.criticalSuccess?.effects ?? []).some((effect) => effect.slug === match[4].toLowerCase()))) : null;
+    const extras = critical ? { ...filtered, notes: filtered.notes.filter((note) => note !== critical[0]) } : filtered;
     const extra = extras.read
         ? {
               damage: extras.dice,
@@ -317,7 +324,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
         },
         // (A weapon's own Strike, riders alone or not: Gloaming Arc's "Attempt a melee Strike with the gloaming arc", Growth Gun's "Make a
         // ranged Strike" — only a Strike with it carries them.)
-        strike: { range: strike.range, save: save ? save.plan : null, ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
+        strike: { range: strike.range, save: save ? save.plan : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
         ...(((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length) || follow?.notes?.length ? { partial: true } : {})
     };
 }
