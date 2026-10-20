@@ -26,14 +26,18 @@ export function hitAuraPlan(html, base, item, options = {}) {
     // (The weapon's next Strike, its hit's save — the Strike reader's own plan of these words.)
     const words = `<p><strong>Effect</strong> The next Strike you make with this weapon carries it. On a hit, the target must succeed at a ${save[1]} save or become ${save[2]}.</p>`;
     const strike = compileStrike({ ...item, system: { ...(item?.system ?? {}), description: { value: words } } }, base, options);
-    const saved = strike?.strike?.save;
-    if (!saved?.resolution || saved.resolution.kind !== "save") return null;
+    const read = strike?.strike?.save;
+    if (!read?.resolution || read.resolution.kind !== "save") return null;
+    // (A critical failure's condition for as long as the first lasts, "plus Slowed 1 as long as it's sickened": on that row, the ability
+    // module's condition "while" sickened — the GM ends it with the sickened, as the card says.)
+    const plus = save[3] ? /^(?:@UUID\[[^\]]*\]\{)?(Clumsy|Enfeebled|Slowed|Stupefied|Frightened|Dazzled|Off-Guard) (\d)?\}? as long as it's (\w+)$/i.exec(save[3].trim()) : null;
+    const saved = plus && read.resolution.outcomes?.criticalFailure ? { ...read, resolution: { ...read.resolution, outcomes: { ...read.resolution.outcomes, criticalFailure: { ...read.resolution.outcomes.criticalFailure, effects: [...(read.resolution.outcomes.criticalFailure.effects ?? []), { kind: "condition", slug: plus[1].toLowerCase(), value: plus[2] ? Number(plus[2]) : null, duration: { mode: "while", condition: plus[3].toLowerCase() } }] } } } } : read;
     const radius = Number(emits ? emits[1] : minute[2]);
     const lasts = emits ? { value: Number(emits[2]), unit: UNITS[emits[3].toLowerCase()] } : { value: /^\d+/.test(minute[1]) ? Number(minute[1].split(" ")[0]) : 1, unit: "minutes" };
     const plain = text.replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
     const notes = [
         ...(next[1] ? ["Only a living creature: the GM's call for any other."] : []),
-        ...(save[3] ? [`On a critical failure, it's also ${save[3].replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1")} (by hand).`] : []),
+        ...(save[3] && !plus ? [`On a critical failure, it's also ${save[3].replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1")} (by hand).`] : []),
         ...[/\bA creature that succeeds at its save is temporarily immune[^.]*\./i, /\bWhile within the emanation, [^.]*\./i].map((pattern) => pattern.exec(plain)?.[0]).filter(Boolean)
     ];
     const zone = {
@@ -53,5 +57,5 @@ export function hitAuraPlan(html, base, item, options = {}) {
         modifiers: [],
         notes
     };
-    return { ...strike, automation: { level: "guided" }, strike: { ...strike.strike, zone }, notes: [...(strike.notes ?? []), ...notes], partial: true };
+    return { ...strike, automation: { level: "guided" }, strike: { ...strike.strike, save: saved, zone }, notes: [...(strike.notes ?? []), ...notes], partial: true };
 }
