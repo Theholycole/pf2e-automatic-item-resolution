@@ -111,6 +111,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let offGuard = false;
     let failDice = 0;
     let failHalfType = null;
+    let missRefund = false;
     const requires = [];
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
@@ -135,6 +136,12 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         // against a big rock bullet": that creature's, the card's line too.)
         if (/^(?:The target must be one you can personally detect|There must be a line of effect between you and the target|The target must be within the maximum range of your weapon|Creatures with the [A-Z][\w ]+? reaction can use it against an? [\w' -]+?)\.$/.test(sentence.trim())) {
             requires.push(sentence.trim());
+            continue;
+        }
+        // (A miss that gives its use back, Hydra Head Club's "If your Strike misses, the activation does not count against the hydra head club's
+        // activation frequency": missRefund — scripts/strikes.js takes the use off the item's record.)
+        if (/^If your Strike misses, the activation does not count against the [\w' -]+?'s activation frequency\.$/i.test(sentence.trim())) {
+            missRefund = true;
             continue;
         }
         // (Its requirement's state ending, Energizing Lattice's glow after the Strike: the requirement is its user's, as each one is.)
@@ -223,5 +230,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
     if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
     const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf || requires.length) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf || requires.length || missRefund) };
 }

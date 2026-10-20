@@ -602,6 +602,10 @@ test("healing back from dying without raising Wounded (Magical Medal (Phoenix's 
     assert.match(survivor(null).unread.join(" "), /increases to 5d8\+20 if you are at least 15th level/, "with no owner level, the steps a note");
     const bastion = compileActivations(item("Immortal Bastion"), { spellEffects })[0].plan;
     assert.deepEqual([bastion.item.dropToOne, bastion.resolution.outcomes.success.effects.map((effect) => [effect.kind, effect.amount]), bastion.partial], [true, [["temp-hp", 100]], undefined]);
+    // (Healing from an amount whose sentence says more, Grisly Scythe's "…, and the creature struck becomes Sickened 1 from the agony": the
+    // sentence stays a note, not lost.)
+    const scythe = compileActivations(item("Grisly Scythe"), { spellEffects })[0].plan;
+    assert.ok(scythe.partial && scythe.unread.some((sentence) => /the creature struck becomes Sickened 1/.test(sentence)), JSON.stringify(scythe.unread));
 });
 
 test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 force damage\" at the target, the designated offender's more a note; Swarmeater's Clasp's \"You recover 3d10+8 Hit Points\", the swarm's damage a note", () => {

@@ -29,6 +29,15 @@ export function withUse(record, index, frequency, now) {
     return { ...(record ?? {}), [index]: { period, count: usesNow(record, index, frequency, now) + 1 } };
 }
 
+// The record with one use given back (Hydra Head Club's miss: "the activation does not count against … its activation frequency"), none
+// below 0.
+export function withoutUse(record, index, frequency, now) {
+    const period = periodOf(frequency, now);
+    const count = usesNow(record, index, frequency, now);
+    if (!period || count <= 0) return record ?? {};
+    return { ...(record ?? {}), [index]: { period, count: count - 1 } };
+}
+
 // Whether one more use goes over the frequency.
 export const overLimit = (record, index, frequency, now) => Boolean(frequency?.max) && usesNow(record, index, frequency, now) >= frequency.max;
 

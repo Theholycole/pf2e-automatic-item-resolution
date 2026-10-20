@@ -12,7 +12,7 @@ import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { MODULE_ID, SOCKET, encounterOf, isActiveGM, ownerOf } from "./foundry.js";
 
-const USES = "activationUses";
+export const USES = "activationUses";
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 let compileActivations = null;
@@ -35,7 +35,7 @@ const activationName = (activation, rune = null) => (rune ? `${rune.name}${activ
 export const indexOf = (raw) => (/^rune:/.test(String(raw)) ? String(raw) : Number(raw));
 
 // (An encounter's uses count in the started encounter the item's user is in.)
-const now = (actor = null) => ({ worldTime: game.time.worldTime, combatId: encounterOf(actor)?.combat.id ?? null });
+export const now = (actor = null) => ({ worldTime: game.time.worldTime, combatId: encounterOf(actor)?.combat.id ?? null });
 
 // The activations with a card, of the item as it is now (compiled once per version of its text).
 const compiled = new Map();

@@ -3468,6 +3468,38 @@ export const cases = {
         throw new Error(`no failure in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
     },
 
+    // Hydra Head Club's Reactive Snap: activated (a use on the item's record), then a miss with the club — the use given back.
+    async hydraHeadClub(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Hydra Club Fighter", { type: "character", x: 9, y: 6 });
+        const club = await give(fighter, "Hydra Head Club");
+        await club.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await wait(500);
+        const modifier = (fighter.system.actions ?? []).find((entry) => entry.item?.id === club.id)?.totalModifier ?? 0;
+        const { token: foeToken } = await creature(scene, "Hydra Club Target", { x: 10, y: 6, ac: modifier + 30, alliance: "opposition", hp: 200 });
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        const uses = () => club.getFlag(NS, "activationUses")?.[0]?.count ?? 0;
+        const outcomes = [];
+        for (let attempt = 0; attempt < 4; attempt++) {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(club.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => fighter.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider")) && uses() === 1, `readied, one use recorded (${uses()})`, { timeout: 6000 });
+            const { attack } = await strike(fighter, club);
+            const outcome = attack.flags.pf2e.context.outcome;
+            outcomes.push(outcome);
+            if (!["failure", "criticalFailure"].includes(outcome)) {
+                for (const effect of fighter.itemTypes.effect.filter((entry) => entry.getFlag(NS, "strikeRider"))) await effect.delete().catch(() => null);
+                await club.unsetFlag(NS, "activationUses");
+                continue;
+            }
+            await until(() => uses() === 0 && !fighter.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider")), `the miss gives the use back (${uses()})`, { timeout: 8000 });
+            return { outcomes };
+        }
+        throw new Error(`no miss in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

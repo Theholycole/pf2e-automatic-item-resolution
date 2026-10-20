@@ -67,6 +67,7 @@ export function strikeLines(plan) {
         strike.follow ? `On a hit: its ${strike.follow.action?.name ?? strike.follow.action?.slug ?? "maneuver"} card at the creature hit${strike.follow.action?.damage ? " (with its damage on a success)" : ""}` : null,
         ...(strike.follow?.notes ?? []).map((note) => `Also: ${note}`),
         ...(strike.requires ?? []).map((line) => `Its target: ${line.charAt(0).toLowerCase()}${line.slice(1).replace(/\.$/, "")}`),
+        strike.missRefund ? "On a miss: the activation's use is given back (it doesn't count against its frequency)" : null,
         ...(strike.notes ?? []).map((note) => `Also: ${note}`)
     ].filter(Boolean);
 }

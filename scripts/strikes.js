@@ -10,6 +10,8 @@ import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, itemIdOf, rid
 import { saveText } from "../src/live/poison-card.js";
 import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
+import { USES, now } from "./activations.js";
+import { withoutUse } from "../src/live/activations-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, entryOf, startInitiative, stateOf } from "./foundry.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -41,6 +43,19 @@ export async function applyStrikeCard(message) {
     await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId })]);
     const next = { ...state, status: "applied", results: [`${strikeHint(state.plan, state.user.name)}${old.length ? " (The one readied before is gone.)" : ""}`] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// The activation's use given back on its item's record (scripts/activations.js): true when there was one.
+async function refundUse(rider, actor) {
+    const item = rider.item?.uuid ? await fromUuid(rider.item.uuid).catch(() => null) : null;
+    const index = rider.plan.item?.activation?.index;
+    const frequency = rider.plan.trigger?.frequency ?? rider.plan.item?.activation?.frequency ?? null;
+    if (!item || index === undefined || index === null || !frequency?.max) return false;
+    const record = item.getFlag(MODULE_ID, USES) ?? {};
+    const next = withoutUse(record, index, frequency, now(actor));
+    if (next === record || JSON.stringify(next) === JSON.stringify(record)) return false;
+    await item.setFlag(MODULE_ID, USES, next);
+    return true;
 }
 
 // One Strike of the readied ones used: the Effect gone with the last, else one fewer left.
@@ -89,7 +104,9 @@ export async function strikeWithRider(message) {
     else await useOne(actor, effect, rider);
     const speaker = ChatMessage.getSpeaker({ actor });
     if (what === "spend") {
-        await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike missed; it's spent.</p>` });
+        // (Hydra Head Club's: a miss gives the activation's use back on the item's record.)
+        const refunded = rider.plan.strike?.missRefund ? await refundUse(rider, actor) : false;
+        await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike missed; it's spent.${refunded ? " The activation doesn't count against its frequency: its use is given back." : ""}</p>` });
         return;
     }
     // (A maneuver after the hit, Iron Cube's Trip: its own card, PF2e's action at the creature the Strike hit — still targeted.)

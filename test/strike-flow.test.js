@@ -678,6 +678,32 @@ test("a critical hit's harder save: Blister Ammunition's \"On a critical hit, in
     assert.equal(await dc("success"), 19);
 });
 
+test("Hydra Head Club's Reactive Snap: 1d6 more on the Strike, and a miss gives the activation's use back on the item's record (strike.missRefund); a hit keeps it used", async () => {
+    const [snap] = compileActivations(source("Hydra Head Club"));
+    assert.deepEqual([snap.plan.strike.missRefund, snap.plan.strike.notes, snap.plan.partial], [true, [], undefined]);
+    assert.ok(strikeLines(snap.plan).includes("On a miss: the activation's use is given back (it doesn't count against its frequency)"));
+    const club = foundry.giveItem(fighter, source("Hydra Head Club"));
+    const uses = () => club.flags?.[MODULE_ID]?.activationUses?.[0]?.count ?? 0;
+    const ready = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: club.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+    };
+    await ready();
+    assert.equal(uses(), 1, "used once");
+    // (A Strike with the club itself: its own.)
+    const own = ["item:melee", `item:id:${club.id}`];
+    await attack("failure", own);
+    assert.deepEqual([uses(), readied().length], [0, 0], "the miss gives it back and spends the Strike");
+    await ready();
+    await attack("success", own);
+    await damage(own);
+    assert.equal(uses(), 1, "a hit keeps it used");
+});
+
 test("a critical hit's save only its critical success escapes: Rhino Shot's \"knocked prone unless it critically succeeds at its save\" — strike.criticalWorse, Prone on the save card's success row after a critical hit, not after a hit", async () => {
     const [rhino] = compileActivations(source("Rhino Shot"));
     assert.deepEqual([rhino.plan.strike.criticalWorse, rhino.plan.strike.notes, rhino.plan.partial], [["prone"], [], undefined]);

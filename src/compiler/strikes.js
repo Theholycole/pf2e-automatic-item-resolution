@@ -343,6 +343,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.failHalf ? { failHalf: extras.failHalf } : {}),
               // (What its target must be, a reaction its target may have: the card's lines.)
               ...(extras.requires ? { requires: extras.requires } : {}),
+              // (A miss giving its use back: Hydra Head Club's.)
+              ...(extras.missRefund ? { missRefund: true } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),
