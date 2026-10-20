@@ -3559,6 +3559,64 @@ export const cases = {
         return { rules: rules() };
     },
 
+    // Glamorous Buckler's Dazzling Feint: refused after a failed Feint (its user's latest in the chat), then after a successful one the creature
+    // targeted Dazzled for 1 round.
+    async glamorousFeint(scene) {
+        const { actor: user } = await creature(scene, "Glamour Duelist", { type: "character", x: 6, y: 4 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Glamour Mark", { x: 7, y: 4, alliance: "opposition" });
+        const buckler = await give(user, "Glamorous Buckler");
+        const feint = (outcome) => ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: user }), content: `<p>${PREFIX} Feint (${outcome})</p>`, flags: { pf2e: { context: { type: "skill-check", outcome, options: ["action:feint"] } } } });
+        const use = async () => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(buckler.uuid, 0);
+            return messageAfter(since, itemCard("expose"), { what: "the buckler's card" });
+        };
+        await feint("failure");
+        let card = await use();
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] }).catch((error) => { refused = error.message; });
+        assert(/wasn't a success/.test(refused ?? ""), `refused after a failure (${refused})`);
+        await feint("success");
+        card = await use();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the Dazzled's card" });
+        await applyAbilityCard(save);
+        await until(() => foe.hasCondition("dazzled"), "the mark Dazzled", { timeout: 8000 });
+        return { refused };
+    },
+
+    // Broken Tusk Pendant: the ways card's +2 (the pendant's animal) — its readied bonus's card, then the Effect with +2 item to AC.
+    async brokenTuskWays(scene) {
+        const { actor: user } = await creature(scene, "Tusk Bearer", { type: "character", x: 6, y: 14 });
+        const pendant = await give(user, "Broken Tusk Pendant");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(pendant.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const fortune = await messageAfter(since, itemCard("fortune"), { what: "the bonus card" });
+        await game.modules.get(NS).api.live.apply(fortune.id);
+        const bonus = () => user.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("ac"));
+        await until(() => bonus()?.value === 2, `+2 item to AC (${JSON.stringify(bonus())})`, { timeout: 8000 });
+        return { bonus: bonus() };
+    },
+
+    // Aerekostes's Forward Planning: the fortune Effect lasts to the end of the next turn (1 round, turn end), not a minute.
+    async aerekostesFortune(scene) {
+        const { actor: user } = await creature(scene, "Aerekostes Wielder", { type: "character", x: 4, y: 16, level: 15 });
+        const blade = await give(user, "Aerekostes");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const effect = () => user.itemTypes.effect.find((entry) => (entry.system.rules ?? []).some((rule) => rule.key === "RollTwice"));
+        await until(() => effect(), "the RollTwice Effect", { timeout: 8000 });
+        const duration = effect().system.duration;
+        assert(duration.value === 1 && duration.unit === "rounds" && duration.expiry === "turn-end", `to the end of the next turn (${JSON.stringify(duration)})`);
+        return { duration };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {
