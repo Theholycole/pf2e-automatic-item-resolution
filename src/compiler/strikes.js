@@ -274,6 +274,8 @@ export function compileStrike(item, base, options = {}) {
 
 const CRITICAL_DC = /^On a critical hit, increase the (Fortitude|Reflex|Will) DC by (\d+) \((?:@Check\[[^\]]*\]|DC) ?(\d+)\)(?:, and the target is (Dazzled|Sickened|Frightened|Off-Guard|Stupefied|Clumsy|Enfeebled|Slowed|Stunned|Blinded|Deafened) for \d+ rounds?)?\.$/i;
 
+const AGAINST_KIND = /^Make an? (?:melee |ranged )?Strike with the [\w' -]+? against an? (plant|undead|construct|fiend|dragon|animal|beast|elemental|ooze|fungus|giant|aberration) creature(?: or a creature made primarily of (wood|stone|metal))?\.$/i;
+
 function strikePlan({ base, item, strike, riders, save, extras: read, cast = null, follow = null }) {
     // (A Strike with no die size of its own, "an extra die of weapon damage", from an item that isn't the weapon: PF2e's DamageDice with no
     // die size, which takes the weapon's — as PF2e's own Brutal Finish does. Only weapon dice, though: other dice need their size.)
@@ -285,7 +287,12 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
     // Dazzled for 1 round" — strike.criticalDC, the save card's DC after a critical hit (scripts/strikes.js); its condition already the
     // critical row's.)
     const critical = save ? filtered.notes.map((note) => [note, CRITICAL_DC.exec(String(note).trim())]).find(([, match]) => match && (!match[4] || (riders.criticalSuccess?.effects ?? []).some((effect) => effect.slug === match[4].toLowerCase()))) : null;
-    const extras = critical ? { ...filtered, notes: filtered.notes.filter((note) => note !== critical[0]) } : filtered;
+    const sharper = critical ? { ...filtered, notes: filtered.notes.filter((note) => note !== critical[0]) } : filtered;
+    // (Only against a kind of creature: Carver-cutter's "Make a Strike with the axe against a plant creature or a creature made primarily
+    // of wood" — strike.against, the traits; its extra dice for those targets alone, and its riders only on them (src/live/strike-card.js).)
+    const kind = sharper.notes.map((note) => [note, AGAINST_KIND.exec(String(note).trim())]).find(([, match]) => match);
+    const against = kind ? [kind[1][1].toLowerCase(), ...(kind[1][2] ? [kind[1][2].toLowerCase()] : [])] : null;
+    const extras = kind ? { ...sharper, notes: sharper.notes.filter((note) => note !== kind[0]), dice: sharper.dice.map((entry) => ({ ...entry, predicate: [...(entry.predicate ?? []), { or: against.map((trait) => `target:trait:${trait}`) }] })) } : sharper;
     const extra = extras.read
         ? {
               damage: extras.dice,
@@ -324,7 +331,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
         },
         // (A weapon's own Strike, riders alone or not: Gloaming Arc's "Attempt a melee Strike with the gloaming arc", Growth Gun's "Make a
         // ranged Strike" — only a Strike with it carries them.)
-        strike: { range: strike.range, save: save ? save.plan : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
+        strike: { range: strike.range, save: save ? save.plan : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(against ? { against } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
         ...(((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length) || follow?.notes?.length ? { partial: true } : {})
     };
 }

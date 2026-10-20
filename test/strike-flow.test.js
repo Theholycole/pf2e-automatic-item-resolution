@@ -685,3 +685,13 @@ test("a Strike's splash (Drake Rifle's Drake Shot, \"1 cold splash damage for th
     const hit = await shoot("success");
     assert.deepEqual(hit.flags[MODULE_ID].card.splashed.map((entry) => entry.name), ["Nearby"], "the target's own is PF2e's damage roll");
 });
+
+test("a Strike only against a kind of creature (Carver-cutter's Chop Down, \"against a plant creature or a creature made primarily of wood\"): its extra 2d6 precision for those targets, its Clumsy on them alone; another target's Strike spends it", async () => {
+    const [, chop] = compileActivations(source("Carver-cutter"));
+    assert.deepEqual([chop.plan.strike.against, chop.plan.strike.damage[0].predicate, chop.plan.strike.notes, chop.plan.partial], [["plant", "wood"], [{ or: ["target:trait:plant", "target:trait:wood"] }], [], undefined]);
+    assert.ok(strikeLines(chop.plan).includes("Only against a plant or wood creature (another target spends it)"));
+    // (Not a plant: spent, no riders; a plant: the hit's riders.)
+    assert.equal(riderFor(chop.plan, { outcome: "success", options: ["item:melee", "target:trait:humanoid"] }), "spend");
+    assert.equal(riderFor(chop.plan, { outcome: "success", options: ["item:melee", "target:trait:plant"] }), "hit");
+    assert.equal(riderFor(chop.plan, { outcome: "success", options: ["item:melee", "target:trait:wood"] }), "hit");
+});

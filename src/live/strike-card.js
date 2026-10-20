@@ -36,6 +36,8 @@ export function strikeLines(plan) {
     const critical = rowText(outcomes.criticalSuccess);
     const strike = plan.strike;
     return [
+        // (Only against a kind of creature: "Only against a plant or wood creature".)
+        strike.against?.length ? `Only against a ${strike.against.join(" or ")} creature (another target spends it)` : null,
         strike.attack ? `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll` : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
@@ -186,6 +188,8 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     // ("ammo:id:…", or PF2e's weapon options' "item:ammo:id:…".)
     if (ammoId && options.some((option) => /(?:^|:)ammo:id:/.test(option)) && !options.some((option) => option === `ammo:id:${ammoId}` || option.endsWith(`:ammo:id:${ammoId}`))) return null;
     if (plan.strike?.unarmed && !options.includes("item:category:unarmed")) return null;
+    // (Only against a kind of creature, Carver-cutter's plants: another creature's Strike spends it, no riders.)
+    if (plan.strike?.against?.length && !plan.strike.against.some((trait) => options.includes(`target:trait:${trait}`))) return "spend";
     if (outcome === "success" || outcome === "criticalSuccess") return "hit";
     // (A failure that still deals damage in place of the weapon's: Big Rock Bullet's.)
     if (outcome === "failure" && plan.strike?.instead?.failure) return "failure";
