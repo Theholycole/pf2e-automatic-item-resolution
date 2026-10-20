@@ -417,7 +417,13 @@ test("Big Rock Bullet: its damage in place of the sling's — the hit's on the a
     const [rock] = compileActivations(source("Big Rock Bullet"));
     assert.equal(routeOf(rock.plan), "strike");
     assert.deepEqual(rock.plan.strike.instead, { hit: { formula: "4d6", type: "bludgeoning" }, failure: { formula: "2d6", type: "bludgeoning" } });
-    assert.deepEqual(rock.plan.strike.notes, ["Creatures with the Catch Rock reaction can use it against a big rock bullet."]);
+    // (Catch Rock, its target's reaction: the card's line, not a note.)
+    assert.deepEqual([rock.plan.strike.notes, rock.plan.strike.requires, rock.plan.partial], [[], ["Creatures with the Catch Rock reaction can use it against a big rock bullet."], undefined]);
+    assert.ok(strikeLines(rock.plan).includes("Its target: creatures with the Catch Rock reaction can use it against a big rock bullet"));
+    // (Starshot Arrow's: what its target must be, the card's lines; Sniper's Bead's introduction to the range it reads, said.)
+    const starshot = compileActivations(source("Starshot Arrow (Lesser)"))[0].plan;
+    assert.deepEqual([starshot.strike.requires.length, starshot.strike.notes, starshot.partial], [3, [], undefined]);
+    assert.deepEqual([compileItem(source("Sniper's Bead")).strike.notes, compileItem(source("Sniper's Bead")).partial], [[], undefined]);
     assert.ok(strikeLines(rock.plan).includes("On a failure (not a critical failure): 2d6 bludgeoning damage"));
     assert.deepEqual(strikeRules(rock.plan, { ammoId: "x" }), [], "nothing on PF2e's own damage roll");
     const bullets = foundry.giveItem(fighter, { ...source("Big Rock Bullet"), system: { ...source("Big Rock Bullet").system, quantity: 3 } });

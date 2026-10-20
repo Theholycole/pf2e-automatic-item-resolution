@@ -167,7 +167,11 @@ function insteadPlan(item, base) {
     if (!match) return null;
     // (After the activation's lines, what it does besides: Catch Rock's reaction against it.)
     const body = text.slice(match.index + match[0].length).replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\s*\bCraft Requirements\b.*$/s, "");
-    const notes = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && /\b(?:reactions?|damage|save|bonus|penalty|conditions?|Strikes?)\b/i.test(sentence));
+    // (A reaction its target may have, "Creatures with the Catch Rock reaction can use it against a big rock bullet": that creature's — the card's
+    // line, strike.requires, not a note.)
+    const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    const requires = sentences.filter((sentence) => /^Creatures with the [A-Z][\w ]+? reaction can use it against an? [\w' -]+?\.$/.test(sentence));
+    const notes = sentences.filter((sentence) => !requires.includes(sentence) && /\b(?:reactions?|damage|save|bonus|penalty|conditions?|Strikes?)\b/i.test(sentence));
     const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
     return {
         ...base,
@@ -180,7 +184,7 @@ function insteadPlan(item, base) {
             check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } },
             outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() }
         },
-        strike: { range: "ranged", save: null, ammo: true, instead: { hit: { formula: match[1], type: match[2].toLowerCase() }, failure: { formula: match[3], type: match[4].toLowerCase() } }, uses: 1, until: "turn-end", missKeeps: false, notes },
+        strike: { range: "ranged", save: null, ammo: true, instead: { hit: { formula: match[1], type: match[2].toLowerCase() }, failure: { formula: match[3], type: match[4].toLowerCase() } }, uses: 1, until: "turn-end", missKeeps: false, ...(requires.length ? { requires } : {}), notes },
         ...(notes.length ? { partial: true } : {})
     };
 }
@@ -337,6 +341,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.failDice ? { failDice: extras.failDice } : {}),
               // (Half its extra damage on a failure: Energizing Lattice's.)
               ...(extras.failHalf ? { failHalf: extras.failHalf } : {}),
+              // (What its target must be, a reaction its target may have: the card's lines.)
+              ...(extras.requires ? { requires: extras.requires } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),

@@ -66,6 +66,7 @@ export function strikeLines(plan) {
         // (A maneuver after the hit, Iron Cube's Trip: its own card.)
         strike.follow ? `On a hit: its ${strike.follow.action?.name ?? strike.follow.action?.slug ?? "maneuver"} card at the creature hit${strike.follow.action?.damage ? " (with its damage on a success)" : ""}` : null,
         ...(strike.follow?.notes ?? []).map((note) => `Also: ${note}`),
+        ...(strike.requires ?? []).map((line) => `Its target: ${line.charAt(0).toLowerCase()}${line.slice(1).replace(/\.$/, "")}`),
         ...(strike.notes ?? []).map((note) => `Also: ${note}`)
     ].filter(Boolean);
 }

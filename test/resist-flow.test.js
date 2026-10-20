@@ -351,8 +351,9 @@ test("a shield changing form until activated again (Sapling Shield): a tower shi
     const [sapling] = compileActivations(source("Sapling Shield (Major)"));
     const form = sapling.plan.item.shieldForm;
     assert.equal(routeOf(sapling.plan), "item");
-    assert.equal(shieldFormText(form), "The shield becomes a tower shield (+2 AC, a -5-foot Speed penalty, its Hardness and Bulk 2 higher) until it's activated again");
+    assert.equal(shieldFormText(form), "The shield becomes a tower shield (+2 AC, a -5-foot Speed penalty, its Hardness and Bulk 2 higher; it can Take Cover as a tower shield does: PF2e's Take Cover, greater cover with it raised) until it's activated again");
     const effect = shieldFormEffectSource(form, { item: { name: "Sapling Shield (Major)", uuid: "Actor.a.Item.shield0000000001" } });
     assert.deepEqual([effect.system.rules, effect.system.duration.unit, effect.flags["pf2e-automatic-item-resolution"]], [[{ key: "ItemAlteration", itemId: "shield0000000001", mode: "override", property: "ac-bonus", value: 2 }, { key: "ItemAlteration", itemId: "shield0000000001", mode: "override", property: "speed-penalty", value: -5 }, { key: "ItemAlteration", itemId: "shield0000000001", mode: "add", property: "hardness", value: 2 }, { key: "ItemAlteration", itemId: "shield0000000001", mode: "add", property: "bulk", value: 2 }], "unlimited", { shieldForm: "shield0000000001" }]);
-    assert.deepEqual(sapling.plan.notes, ["It can Take Cover as a tower shield does."]);
+    // (Its Take Cover PF2e's own action and Effect: Cover, the card's line — not a note.)
+    assert.deepEqual([sapling.plan.notes, sapling.plan.partial], [undefined, undefined]);
 });

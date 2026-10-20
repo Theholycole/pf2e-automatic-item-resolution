@@ -111,6 +111,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let offGuard = false;
     let failDice = 0;
     let failHalfType = null;
+    const requires = [];
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
     const striking = Number(item?.system?.runes?.striking) || 0;
@@ -125,6 +126,17 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         // (The splash trait's miss, said again: Drake Rifle's "On a failure, the target and creatures within 5 feet of it still take that
         // splash damage" — the splash card's on a failure, scripts/strikes.js.)
         if (/^On a failure, the target and creatures within 5 feet of it still take that splash damage\.$/i.test(sentence.trim()) && SPLASH.test(body)) continue;
+        // (An introduction to the range rule read after it, Sniper's Bead's "its magic greatly lessens the effect of distance on your triggering
+        // attack" before "You take no range increment penalty …".)
+        if (/^When you activate the [\w' -]+?, its magic greatly lessens the effect of distance on your triggering attack\.$/i.test(sentence.trim()) && /\bno range increment penalty\b/i.test(body)) continue;
+        // (What its target must be, Starshot Arrow's "The target must be one you can personally detect", "There must be a line of effect between
+        // you and the target", "The target must be within the maximum range of your weapon": its user's to choose by, as a requirement is — the
+        // card's lines, strike.requires. And a reaction its target may have, Big Rock Bullet's "Creatures with the Catch Rock reaction can use it
+        // against a big rock bullet": that creature's, the card's line too.)
+        if (/^(?:The target must be one you can personally detect|There must be a line of effect between you and the target|The target must be within the maximum range of your weapon|Creatures with the [A-Z][\w ]+? reaction can use it against an? [\w' -]+?)\.$/.test(sentence.trim())) {
+            requires.push(sentence.trim());
+            continue;
+        }
         // (Its requirement's state ending, Energizing Lattice's glow after the Strike: the requirement is its user's, as each one is.)
         if (/^The [\w ]+? ceases glowing after the Strike\.$/i.test(sentence.trim())) continue;
         const halved = FAIL_HALF.exec(sentence.trim());
@@ -211,5 +223,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
     if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
     const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf || requires.length) };
 }
