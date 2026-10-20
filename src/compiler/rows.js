@@ -74,7 +74,10 @@ export function itemDuration(text) {
 // Healing that brings its creature back from dying without raising Wounded: Magical Medal (Phoenix's Fire)'s "You lose the dying
 // condition and regain 1 Hit Point. Your Wounded value does not increase." — plan.item.keepWounded, the core's recoverFromDying
 // keepWounded in live play.
-export const keepsWounded = (text) => /\b(?:Your|their|its|his|her) Wounded (?:value|condition) does(?:n't| not) increase\b|\bdoes(?:n't| not) increase (?:their|your|its) Wounded (?:value|condition)\b/i.test(String(text ?? ""));
+// (Or never knocked out, Guardian Rose's "you avoid being knocked out and regain 2d8+5 Hit Points": the Dying PF2e gave it at 0 Hit Points ended
+// on the healing, no Wounded for it — unless the text raises it, "and your Wounded condition increases by 1".)
+export const keepsWounded = (text) => /\b(?:Your|their|its|his|her) Wounded (?:value|condition) does(?:n't| not) increase\b|\bdoes(?:n't| not) increase (?:their|your|its) Wounded (?:value|condition)\b/i.test(String(text ?? "")) || (AVOIDS_KNOCKOUT.test(String(text ?? "")) && !/\bWounded condition increases\b/i.test(String(text ?? "")));
+const AVOIDS_KNOCKOUT = /\bWhen you activate (?:it|an? [\w' -]+?|the [\w' -]+?)\s*, you avoid being knocked out and regain\b/i;
 
 // A sentence's own time, else the item's.
 export function durationIn(sentence, fallback) {
@@ -242,7 +245,7 @@ function textHealing(sentences, used = new Set()) {
         if (match && !/\b(?:if|when|whenever|each time|the next time|at the (?:start|end))\b/i.test(lead)) {
             // (What it does "instead" — "you drop to 1 Hit Point instead" — stays on the note for the GM.)
             // (And "you avoid being knocked out", or "and deal the same amount of bludgeoning damage to the swarm": the GM's, on the note.)
-            if (!/\binstead\b|\bavoid being knocked out\b|\band deals? (?:the same|an equal)\b/i.test(sentence)) used.add(index);
+            if (!/\binstead\b|\band deals? (?:the same|an equal)\b/i.test(sentence) && (!/\bavoid being knocked out\b/i.test(sentence) || keepsWounded(sentence))) used.add(index);
             const amount = match.slice(1).find((group) => group !== undefined).replace(/\s+/g, "");
             return { kind: "heal", ...(/d/.test(amount) ? { formula: amount } : { amount: Number(amount) }), ...(other && !self ? { other: true } : {}) };
         }

@@ -446,11 +446,11 @@ test("a Speed granted when the item is activated: Dragonscale Cameo's fly Speed 
     assert.equal(cameo.noteOnly, undefined);
 });
 
-test("Guardian Rose: \"you avoid being knocked out and regain 2d8+5 Hit Points\" — the healing and Enfeebled 1, the rest on the note", () => {
+test("Guardian Rose: \"you avoid being knocked out and regain 2d8+5 Hit Points\" — the healing and Enfeebled 1, the knockout avoided as the healing's end of Dying with no Wounded", () => {
     const rose = compileItem(item("Guardian Rose"));
     const row = rose.resolution.outcomes.success;
     assert.deepEqual(row.effects.map((effect) => effect.kind === "heal" ? `heal ${effect.formula}` : `${effect.slug} ${effect.value}`), ["heal 2d8+5", "enfeebled 1"]);
-    assert.equal(rose.partial, true);
+    assert.deepEqual([rose.partial, rose.item.keepWounded], [undefined, true]);
 });
 
 test("Lockpicker's Oil: its user's status bonus to Thievery checks to Pick a Lock for 1 minute, and the minute's first critical failure on them a failure; anyone else's a note", async () => {

@@ -3850,6 +3850,59 @@ export const cases = {
         return { effects: foe.itemTypes.effect.map((effect) => [effect.name, effect.system.duration?.value, effect.system.duration?.unit]) };
     },
 
+    // Rhino Shot: after PF2e's critical hit, its DC 19 Fortitude save card has Prone on its success row too (only a critical success escapes).
+    async rhinoShotCritical(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Rhino Archer", { type: "character", x: 5, y: 13 });
+        const { token: foeToken } = await creature(scene, "Rhino Target", { x: 6, y: 13, ac: -20, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const outcomes = [];
+        for (let attempt = 0; attempt < 4; attempt++) {
+            const arrows = await give(archer, "Rhino Shot");
+            await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            since = Date.now();
+            const { attack } = await strike(archer, bow);
+            const outcome = attack.flags.pf2e.context.outcome;
+            outcomes.push(outcome);
+            const save = await messageAfter(since, abilitySaveCard, { what: "the shot's save card" });
+            const rows = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.outcomes;
+            const prone = (degree) => (rows[degree]?.effects ?? []).some((effect) => effect.slug === "prone");
+            if (outcome !== "criticalSuccess") {
+                assert(!prone("success") && prone("failure"), `after a hit, the save as written (${outcome})`);
+                continue;
+            }
+            assert(prone("success") && prone("failure") && !prone("criticalSuccess"), `after a critical hit, Prone on the success row (${JSON.stringify(Object.keys(rows).map((degree) => [degree, prone(degree)]))})`);
+            return { outcomes };
+        }
+        throw new Error(`no critical hit in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
+    },
+
+    // Guardian Rose, its user at 0 Hit Points and Dying 1 (PF2e's): the healing, Dying and Unconscious gone, Wounded not raised, Enfeebled 1.
+    async guardianRose(scene) {
+        const { actor: user } = await creature(scene, "Rose Bearer", { type: "character", x: 0, y: 10 });
+        await user.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Hit Points`, type: "effect", system: { rules: [{ key: "FlatModifier", selector: "hp", value: 30 }], duration: { value: -1, unit: "unlimited", expiry: null, sustained: false } } }]);
+        await until(() => user.system.attributes.hp.max >= 30, "30 maximum Hit Points", { timeout: 5000 });
+        await user.update({ "system.attributes.hp.value": 0 });
+        if (!user.hasCondition("dying")) await user.increaseCondition("dying");
+        if (!user.hasCondition("unconscious")) await user.increaseCondition("unconscious");
+        await until(() => user.hasCondition("dying") && user.hasCondition("unconscious"), "dying and unconscious", { timeout: 5000 });
+        const wounded = user.getCondition("wounded")?.value ?? 0;
+        const rose = await give(user, "Guardian Rose");
+        const since = Date.now();
+        await rose.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the rose's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.system.attributes.hp.value >= 7 && !user.hasCondition("dying") && !user.hasCondition("unconscious") && user.hasCondition("enfeebled"), `healed, awake, enfeebled (${user.system.attributes.hp.value} HP; ${user.conditions.map((condition) => condition.slug).join(", ")})`, { timeout: 10000 });
+        assert((user.getCondition("wounded")?.value ?? 0) === wounded, `Wounded not raised (${wounded} → ${user.getCondition("wounded")?.value ?? 0})`);
+        return { hp: user.system.attributes.hp.value, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Magekiller Bullet: on PF2e's hit, its curse a note Effect on the creature hit for a week.
     async magekillerNote(scene) {
         const { actor: archer, token: archerToken } = await creature(scene, "Magekiller Archer", { type: "character", x: 6, y: 9, level: 16 });

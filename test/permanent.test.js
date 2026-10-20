@@ -584,13 +584,19 @@ test("one-off readings: Sky Hammer's Comet Fall a 6th-rank arcane Fireball at DC
     ]);
 });
 
-test("healing back from dying without raising Wounded (Magical Medal (Phoenix's Fire)'s 1 Hit Point; Banner of the Rising Star's 30 for an ally in its aura), and a damage link's save with no \"damage\" word (Black Hole Armor)", () => {
+test("healing back from dying without raising Wounded (Magical Medal (Phoenix's Fire)'s 1 Hit Point; Banner of the Rising Star's 30 for an ally in its aura; Guardian Rose), and a damage link's save with no \"damage\" word (Black Hole Armor)", async () => {
     const medal = compileActivations(item("Magical Medal (Phoenix's Fire)"), { spellEffects })[0].plan;
     assert.deepEqual([medal.resolution.outcomes.success.effects.map((effect) => effect.kind), medal.item.keepWounded, medal.partial], [["heal"], true, undefined]);
     const banner = compileActivations(item("Banner of the Rising Star"), { spellEffects })[0].plan;
     assert.deepEqual([banner.resolution.outcomes.success.effects[0].amount, banner.item.recipient, banner.targeting.range, banner.item.keepWounded], [30, "targets", "30 feet", true]);
     const armor = compileActivations(item("Black Hole Armor"), { spellEffects })[1].plan;
     assert.deepEqual([armor.resolution.kind, armor.resolution.check.statistic, armor.resolution.check.basic, armor.targeting.area], ["save", "reflex", true, { type: "burst", value: 10 }]);
+    // (Never knocked out, Guardian Rose's "you avoid being knocked out and regain 2d8+5 Hit Points": the healing ends the Dying PF2e gave it,
+    // no Wounded for it; not False Death Vial's, whose Wounded increases.)
+    const { compileItem } = await import("../src/compiler/index.js");
+    const rose = compileItem(item("Guardian Rose"));
+    assert.deepEqual([rose.resolution.outcomes.success.effects.map((effect) => effect.kind), rose.item.keepWounded, rose.partial, rose.unread], [["heal", "condition"], true, undefined, undefined]);
+    assert.notEqual(compileItem(item("False Death Vial"))?.item?.keepWounded, true);
 });
 
 test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 force damage\" at the target, the designated offender's more a note; Swarmeater's Clasp's \"You recover 3d10+8 Hit Points\", the swarm's damage a note", () => {

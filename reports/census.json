@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 751,
+   "resolves": 752,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
-   "partial": 120,
+   "partial": 119,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 126,
@@ -96,14 +96,14 @@
     "none": 27,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 57,
+    "resolves": 58,
     "note-only": 7,
     "builtin:no-effect": 8,
     "builtin:reroll": 1,
     "builtin:ways": 2,
     "builtin:counteract": 1,
     "builtin:cast-spell": 9,
-    "partial": 15,
+    "partial": 14,
     "builtin:teleport": 2,
     "builtin:roll-twice": 2
    },
@@ -306,7 +306,7 @@
  "mechanismCoverage": {
   "heal": {
    "count": 43,
-   "resolves": 35,
+   "resolves": 36,
    "gaps": 0,
    "none": 1
   },
@@ -318,7 +318,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 168,
+   "resolves": 169,
    "gaps": 0,
    "none": 7
   },
@@ -360,7 +360,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 60,
+   "resolves": 61,
    "gaps": 0,
    "none": 19
   },
@@ -378,7 +378,7 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 260,
+   "resolves": 261,
    "gaps": 0,
    "none": 22
   },
@@ -11241,11 +11241,9 @@
     "trigger",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "When you activate a guardian rose , you avoid being knocked out and regain 2d8+5 Hit Points."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
