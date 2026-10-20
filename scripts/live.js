@@ -32,6 +32,7 @@ import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
 import { checkSpend, paySpend } from "./spend.js";
+import { readProficiencyRequirement, requirementWarning } from "../src/compiler/requirement.js";
 import { applyTableCard, postTableCard } from "./table.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
@@ -183,6 +184,10 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     }
     // (Its DCs its user's class or spell DC when higher, under the world setting: scripts/item-dcs.js.)
     plan = withUserDCs(plan, actor, plainText(used.data.system?.description?.value), used.data);
+    // (A proficiency its Requirements need that its user lacks — a talisman's "You're an expert in Stealth": a whisper to the GM, not a refusal,
+    // as for an activation used past its frequency; the item's been used already. src/compiler/requirement.js.)
+    const unmet = requirementWarning(actor, readProficiencyRequirement(plainText(used.data.system?.description?.value)), used.data.name);
+    if (unmet) await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p>${escapeHTML(unmet)}</p>` }).catch((error) => console.error(`${MODULE_ID} | requirement warning`, error));
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     // (An item that also counteracts on its drinker — Panacea Fruit heals too: its counteract card beside its own.)
     // (Its cost, a Mythic Point, the main card's alone: src/compiler/spend.js.)

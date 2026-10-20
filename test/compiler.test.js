@@ -1215,6 +1215,21 @@ test("a Craft Requirements paragraph right after result rows is no part of the l
     assert.equal(vaccine.resolution.outcomes.success.modifiers[0].duration.value, 24);
 });
 
+test("a proficiency its Requirements need (src/compiler/requirement.js): Lion Badge's expert in Will saves, a skill or one of two, Perception; not the affixed weapon's; a character below it warned, an NPC not judged", async () => {
+    const { readProficiencyRequirement, requirementWarning } = await import("../src/compiler/requirement.js");
+    const { plainText } = await import("../src/compiler/rows.js");
+    const req = (name) => readProficiencyRequirement(plainText(item(name).system.description.value));
+    assert.deepEqual(req("Lion Badge"), { kind: "save", slugs: ["will"], rank: 2, words: "expert in Will saves" });
+    assert.deepEqual(req("Jade Cat"), { kind: "skill", slugs: ["acrobatics"], rank: 1, words: "trained in Acrobatics" });
+    assert.equal(req("Dupe's Gold Nugget"), null);
+    assert.deepEqual(readProficiencyRequirement("Requirements You're a master in Deception or Diplomacy. Effect You charm them.").slugs, ["deception", "diplomacy"]);
+    const stealthy = { type: "character", name: "Ari", skills: { stealth: { rank: 1 } } };
+    const stealth = { kind: "skill", slugs: ["stealth"], rank: 2, words: "expert in Stealth" };
+    assert.match(requirementWarning(stealthy, stealth, "Ghostshot Wrapping"), /^Ghostshot Wrapping: its Requirements need its user to be expert in Stealth; Ari is trained\. The GM's call\.$/);
+    assert.equal(requirementWarning({ ...stealthy, skills: { stealth: { rank: 3 } } }, stealth, "Ghostshot Wrapping"), null);
+    assert.equal(requirementWarning({ type: "npc", name: "Orc", skills: { stealth: { rank: 0 } } }, stealth, "Ghostshot Wrapping"), null);
+});
+
 test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {
     const { readReductions } = await import("../src/compiler/reduce.js");
     assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);

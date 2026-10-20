@@ -7538,6 +7538,19 @@ export const cases = {
         return { uses: game.messages.get(later.id).getFlag(NS, "card").uses };
     },
 
+    // Lion Badge's "Requirements You are an expert in Will saves" (src/compiler/requirement.js): a bare character, untrained, uses it — its card
+    // as ever, and a whisper to the GM that the requirement isn't met.
+    async requirementWarned(scene) {
+        await clearSquares(scene, [[2, 21]]);
+        const { actor: user } = await creature(scene, "Badge Wearer", { type: "character", x: 2, y: 21 });
+        const since = Date.now();
+        await (await give(user, "Lion Badge")).consume();
+        await messageAfter(since, itemCard("item"), { what: "the badge's card" });
+        const warned = await messageAfter(since, (message) => /its Requirements need its user to be expert in Will saves/.test(message.content ?? ""), { what: "the GM's warning" });
+        assert((warned.whisper ?? []).length > 0, "whispered");
+        return { warning: warned.content };
+    },
+
     // Golden Silencer (Greater)'s Strike save (its note Effect's note.saveEnds): a critical failure silenced for 1 minute, a note Effect a new
     // Fortitude save at the end of its turns ends.
     async saveEndsSilencer(scene) {
