@@ -142,6 +142,30 @@ export function compileActivations(item, options = {}) {
     return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
+// A penalty to attack rolls its nonlethal attacks don't take, Pacifying's "A pacified creature takes a –2 penalty to attack rolls on any attacks
+// that aren't nonlethal" (src/compiler/item-data.js words it "Its nonlethal attacks don't take that penalty"): the penalty predicated on the
+// attack not being nonlethal (PF2e's item:trait:nonlethal), the note gone.
+const NONLETHAL_NOTE = "Its nonlethal attacks don't take that penalty (by hand).";
+function withNonlethalExempt(plan) {
+    if (!plan || !(plan.notes ?? []).includes(NONLETHAL_NOTE)) return plan;
+    const exempt = (row) => (row?.modifiers?.some((modifier) => modifier.selector === "attack-roll" && modifier.value < 0) ? { ...row, modifiers: row.modifiers.map((modifier) => (modifier.selector === "attack-roll" && modifier.value < 0 ? { ...modifier, predicate: [...(modifier.predicate ?? []), { not: "item:trait:nonlethal" }] } : modifier)) } : row);
+    const outcomes = Object.fromEntries(Object.entries(plan.resolution?.outcomes ?? {}).map(([degree, row]) => [degree, exempt(row)]));
+    if (JSON.stringify(outcomes) === JSON.stringify(plan.resolution?.outcomes ?? {})) return plan;
+    const notes = plan.notes.filter((note) => note !== NONLETHAL_NOTE);
+    const left = [...notes, ...(plan.unread ?? []), ...Object.values(outcomes).flatMap((row) => row?.manualInstructions ?? [])];
+    return { ...plan, resolution: { ...plan.resolution, outcomes }, notes, ...(left.length ? {} : { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
+}
+
+// "The fire shield activation recharges" → { index, name } of the other activation whose text names it (Smoldering Armor's "You gain the
+// effects of Fire Shield"), or null.
+function rechargeOf(html, activations, index) {
+    const said = /\bEffect\s+The ([\w' -]+?) activation recharges\.?\s*(?:Craft Requirements\b.*)?$/i.exec(plainText(html));
+    if (!said) return null;
+    const name = said[1].trim();
+    const at = (activations ?? []).findIndex((other, other_index) => other_index !== index && new RegExp(String.raw`\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\b`, "i").test(plainText(other.html)));
+    return at >= 0 ? { index: at, name } : null;
+}
+
 // An activation that makes "an attack …, as described in the rune's other activation" (Swallow-Spike's second): that other
 // activation's own attack, at this activation's time and lines.
 const OTHER_ACTIVATION = /\bas described in the (?:rune's|item's|armor's|weapon's) other activation\.?\s*$/i;
@@ -262,6 +286,9 @@ function compileEach(item, options = {}) {
             traits: [...(item.system?.traits?.value ?? [])],
             activation: { time: activation.time, traits: activation.traits }
         };
+        // (Another of its activations recharged, Smoldering Armor's "The fire shield activation recharges": that one's uses today given back,
+        // item.recharges { index, name } — the activation whose text names it.)
+        const recharge = rechargeOf(activation.html, activations, index);
         // (A Focus Point for its user, src/compiler/focus.js: the item module's own builtin.)
         // (Spellstrike Ammunition's spell cast into it, src/compiler/spellstrike.js: the module's own card.)
         // (A Mythic Point gained only when nothing else is read: Preordained Spear's doomed value lowered is its card, the point a note.)
@@ -417,6 +444,7 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = coveredSquarePlan(activation.html, base, item, options) ?? plan;
         // (Walls it raises, with a save in their space, src/compiler/covered-square.js: Alkenstar Phalanx — over the save read alone.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = raisedWallsPlan(activation.html, base, item, options) ?? plan;
+        if (recharge && (!plan || plan.noteOnly || plan.builtin === "no-effect")) plan = { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } } };
         // (A shield changing form until activated again: Sapling Shield's buckler and tower shield.)
         const shieldForm = shieldFormOf(activation.html);
         if (shieldForm && (!plan || plan.noteOnly || plan.builtin === "no-effect")) plan = { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, shieldForm };
@@ -523,7 +551,7 @@ function compileEach(item, options = {}) {
             }
         }
         // (Not its opening flavor among what it leaves the GM, src/compiler/flavor.js; nor its damage said again, src/compiler/direct-damage.js.)
-        plan = withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce });
+        plan = withNonlethalExempt(withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce }));
 
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, coats, coatLasts, creates, ...kept } = plan;
@@ -541,7 +569,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions, ...(untilRage.fastHealing ? { fastHealing: untilRage.fastHealing } : {}) } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(dropsToOne(plainText(activation.html)) ? { dropToOne: true } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}), ...(installed ? { installed: { name: installed.name, count: installed.count, modifiers: installed.modifiers, ...(installed.resistance ? { resistance: installed.resistance } : {}), ...(installed.damage ? { damage: installed.damage } : {}), ...(installed.fastHealing ? { fastHealing: true } : {}), ...(installed.strength ? { strength: installed.strength } : {}), duration: installed.duration } } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(reduce.length ? { reduce } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions, ...(untilRage.fastHealing ? { fastHealing: untilRage.fastHealing } : {}) } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(dropsToOne(plainText(activation.html)) ? { dropToOne: true } : {}), ...(recharge ? { recharges: recharge } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}), ...(installed ? { installed: { name: installed.name, count: installed.count, modifiers: installed.modifiers, ...(installed.resistance ? { resistance: installed.resistance } : {}), ...(installed.damage ? { damage: installed.damage } : {}), ...(installed.fastHealing ? { fastHealing: true } : {}), ...(installed.strength ? { strength: installed.strength } : {}), duration: installed.duration } } : {}) }
             }
         };
     });

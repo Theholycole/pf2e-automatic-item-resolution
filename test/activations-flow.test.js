@@ -112,3 +112,16 @@ test("Words of Wisdom: the phrase's skill picked on the card — its +1 item bon
     const effect = speaker.itemTypes.effect.find((entry) => entry.flags?.[MODULE_ID]?.skillPick);
     assert.deepEqual(effect?.system.rules.map((rule) => [rule.key, rule.selector]), [["FlatModifier", "deception"], ["AdjustDegreeOfSuccess", "diplomacy"], ["AdjustDegreeOfSuccess", "deception"]]);
 });
+
+test("Smoldering Armor's second activation recharges its first: the fire shield activation's use today given back on the item's record", async () => {
+    const armor = foundry.giveItem(elf, source("Smoldering Armor"));
+    await activate(armor, 0);
+    assert.equal(armor.getFlag(MODULE_ID, "activationUses")[0].count, 1, "Fire Shield used");
+    const posted = await activate(armor, 1);
+    const card = posted.find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.ok(card, "the recharge's item card");
+    assert.match(card.content, /The fire shield activation recharges/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.deepEqual([armor.getFlag(MODULE_ID, "activationUses")[0], armor.getFlag(MODULE_ID, "activationUses")[1]?.count], [undefined, 1], "the first given back, the second counted");
+});

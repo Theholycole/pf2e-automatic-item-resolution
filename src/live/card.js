@@ -147,6 +147,8 @@ export function previewLines(state) {
     for (const healing of plan?.item?.fastHealing ?? []) lines.push(fastHealingText(healing));
     if (plan?.item?.creates) lines.push(createsText(plan.item.creates));
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
+    // (Another of its activations recharged: Smoldering Armor's Fire Shield.)
+    if (plan?.item?.recharges) lines.push(`The ${plan.item.recharges.name} activation recharges (its uses given back)`);
     if (plan?.item?.mark) lines.push(markText(plan.item.mark));
     if (plan?.item?.attackRiders) lines.push(attackRidersText(plan.item.attackRiders.riders));
     if (plan?.item?.lightAura) lines.push(`For each creature in the bright light (${plan.item.lightAura.radius} feet): ${plan.item.lightAura.modifiers.map((modifier) => modifierText({ ...modifier, duration: null })).join(", ")}${forTime(plan.item.lightAura.duration)}`);

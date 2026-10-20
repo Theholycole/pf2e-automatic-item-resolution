@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 814,
+   "resolves": 818,
    "builtin:cast-spell": 475,
-   "none": 522,
+   "none": 518,
    "partial": 166,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
@@ -31,13 +31,13 @@
   "live": {
    "save": 444,
    "cast": 475,
-   "item": 588,
-   "none": 648,
+   "item": 589,
+   "none": 644,
    "focus": 47,
    "counteract": 29,
    "fortune": 58,
    "reroll": 45,
-   "strike": 95,
+   "strike": 98,
    "table": 7,
    "teleport": 8,
    "zone": 26,
@@ -57,9 +57,9 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 472,
+    "resolves": 475,
     "builtin:cast-spell": 347,
-    "none": 359,
+    "none": 356,
     "partial": 82,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
@@ -129,9 +129,9 @@
    "results": {
     "builtin:cast-spell": 33,
     "partial": 12,
-    "resolves": 64,
+    "resolves": 65,
     "builtin:counteract": 1,
-    "none": 19,
+    "none": 18,
     "builtin:zone": 4,
     "note-only": 9,
     "builtin:no-effect": 5,
@@ -15384,9 +15384,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike",
    "rune": true
   },
   {
@@ -17653,9 +17653,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike",
    "rune": true
   },
   {
@@ -23431,9 +23431,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Grub Gloves (Greater)",
@@ -25100,9 +25100,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Aeon Stone (Crescent)",

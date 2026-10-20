@@ -704,6 +704,14 @@ test("Hydra Head Club's Reactive Snap: 1d6 more on the Strike, and a miss gives 
     assert.equal(uses(), 1, "a hit keeps it used");
 });
 
+test("more reach for the Strike: the Extending rune's 60 feet, Tasset of Flexibility's 5 more with a melee weapon (strike.reach, the card's line)", () => {
+    const tasset = compileActivations(source("Tasset of Flexibility"))[0].plan;
+    assert.deepEqual([routeOf(tasset), tasset.strike.reach, tasset.strike.range, tasset.strike.notes, tasset.partial], ["strike", { more: 5 }, "melee", [], undefined]);
+    assert.ok(strikeLines(tasset).includes("Reach 5 feet more for this Strike"));
+    const extending = compileActivations(source("Extending"))[0].plan;
+    assert.deepEqual([extending.strike.reach, extending.strike.notes, extending.partial], [{ feet: 60 }, [], undefined]);
+});
+
 test("a critical hit's save only its critical success escapes: Rhino Shot's \"knocked prone unless it critically succeeds at its save\" — strike.criticalWorse, Prone on the save card's success row after a critical hit, not after a hit", async () => {
     const [rhino] = compileActivations(source("Rhino Shot"));
     assert.deepEqual([rhino.plan.strike.criticalWorse, rhino.plan.strike.notes, rhino.plan.partial], [["prone"], [], undefined]);

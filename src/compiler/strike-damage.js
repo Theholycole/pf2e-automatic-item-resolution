@@ -112,6 +112,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let failDice = 0;
     let failHalfType = null;
     let missRefund = false;
+    let reach = null;
     const requires = [];
     const notes = [];
     // (A rune step: the item's own striking rune picks the dice.)
@@ -138,6 +139,15 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
             requires.push(sentence.trim());
             continue;
         }
+        // (More reach for the Strike, the Extending rune's "You Strike with the weapon, and you have reach 60 feet for the Strike", Tasset of
+        // Flexibility's "Make a Strike with a melee weapon, increasing your reach by 5 feet for that Strike": strike.reach, the card's line —
+        // PF2e's own Strike at a creature that far, which PF2e doesn't measure; its intro "giving you an impossible reach" said by it.)
+        const reaching = /\b(?:you have reach (\d+) feet for the Strike|increasing your reach by (\d+) feet for that Strike)\.?$/i.exec(sentence.trim());
+        if (reaching) {
+            reach = reaching[1] ? { feet: Number(reaching[1]) } : { more: Number(reaching[2]) };
+            continue;
+        }
+        if (/^You extend your weapon, giving you an impossible reach\.$|^The [\w' -]+? helps you stretch farther than you normally could\.$/i.test(sentence.trim())) continue;
         // (A miss that gives its use back, Hydra Head Club's "If your Strike misses, the activation does not count against the hydra head club's
         // activation frequency": missRefund — scripts/strikes.js takes the use off the item's record.)
         if (/^If your Strike misses, the activation does not count against the [\w' -]+?'s activation frequency\.$/i.test(sentence.trim())) {
@@ -230,5 +240,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
     if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
     const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf || requires.length || missRefund) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(reach ? { reach } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf || requires.length || missRefund || reach) };
 }

@@ -68,6 +68,7 @@ export function strikeLines(plan) {
         ...(strike.follow?.notes ?? []).map((note) => `Also: ${note}`),
         ...(strike.requires ?? []).map((line) => `Its target: ${line.charAt(0).toLowerCase()}${line.slice(1).replace(/\.$/, "")}`),
         strike.missRefund ? "On a miss: the activation's use is given back (it doesn't count against its frequency)" : null,
+        strike.reach ? (strike.reach.feet ? `Reach ${strike.reach.feet} feet for this Strike` : `Reach ${strike.reach.more} feet more for this Strike`) : null,
         ...(strike.notes ?? []).map((note) => `Also: ${note}`)
     ].filter(Boolean);
 }

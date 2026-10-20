@@ -604,6 +604,9 @@ test("healing back from dying without raising Wounded (Magical Medal (Phoenix's 
     assert.deepEqual([bastion.item.dropToOne, bastion.resolution.outcomes.success.effects.map((effect) => [effect.kind, effect.amount]), bastion.partial], [true, [["temp-hp", 100]], undefined]);
     // (Healing from an amount whose sentence says more, Grisly Scythe's "…, and the creature struck becomes Sickened 1 from the agony": the
     // sentence stays a note, not lost.)
+    // (Another of its activations recharged, Smoldering Armor's "The fire shield activation recharges": the first one, by its words.)
+    const smoldering = compileActivations(item("Smoldering Armor"), { spellEffects })[1].plan;
+    assert.deepEqual([smoldering.item.recharges, smoldering.partial], [{ index: 0, name: "fire shield" }, undefined]);
     const scythe = compileActivations(item("Grisly Scythe"), { spellEffects })[0].plan;
     assert.ok(scythe.partial && scythe.unread.some((sentence) => /the creature struck becomes Sickened 1/.test(sentence)), JSON.stringify(scythe.unread));
 });

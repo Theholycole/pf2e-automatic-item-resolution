@@ -66,7 +66,8 @@ export function readStrike(text) {
     const words = kind === "you" ? sentence : kind === "next" ? match[2] : match[1];
     const unarmed = kind === "two" ? Boolean(match[1]) : /\bunarmed\b/i.test(words ?? "") && !/\b(?:weapon|melee)\b/i.test(words ?? "");
     return {
-        range: unarmed ? null : rangeOf(words),
+        // (Its range after the word, Tasset of Flexibility's "Make a Strike with a melee weapon".)
+        range: unarmed ? null : rangeOf(words) ?? (kind === "make" && !String(words ?? "").trim() ? /^Strike with an? (melee|ranged) weapon\b/i.exec(sentence.slice(sentence.search(/\bStrike\b/)))?.[1]?.toLowerCase() ?? null : null),
         unarmed,
         after,
         sentence,
@@ -345,6 +346,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.requires ? { requires: extras.requires } : {}),
               // (A miss giving its use back: Hydra Head Club's.)
               ...(extras.missRefund ? { missRefund: true } : {}),
+              // (More reach for it: the Extending rune's, Tasset of Flexibility's.)
+              ...(extras.reach ? { reach: extras.reach } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),

@@ -37,7 +37,7 @@ import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
 import { applyToggleCard, postToggleCard, togglesAfterDamage, togglesAtTurnEnd, togglesOnMove } from "./toggle.js";
-import { activate, indexOf, setUpActivations } from "./activations.js";
+import { USES, activate, indexOf, setUpActivations } from "./activations.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { appliedAnyway, verifyEffectRules } from "../src/compiler/verify-effect.js";
@@ -748,6 +748,17 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             await potion.consume();
             lines.push(`${state.user.name}: ${entry.name} used through the patch (its card follows)`);
         }
+    }
+    // (Another of its activations recharged, Smoldering Armor's Fire Shield: that one's uses given back on the item's record.)
+    const recharges = state.plan.item?.recharges;
+    if (recharges) {
+        const owner = state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
+        const record = owner?.getFlag?.(MODULE_ID, USES) ?? {};
+        if (owner && record[recharges.index]) {
+            const { [recharges.index]: _spent, ...rest } = record;
+            await owner.setFlag(MODULE_ID, USES, rest);
+            lines.push(`${state.item.name}: the ${recharges.name} activation recharges`);
+        } else lines.push(`${state.item.name}: the ${recharges.name} activation hasn't been used, nothing to recharge`);
     }
     // (The alchemical item installed in it: an Effect with its numbers, its damage to the creatures around, the item used up.)
     const installed = state.plan.item?.installed;
