@@ -590,7 +590,8 @@ test("a whetstone's riders, the weapon picked on its card: Frenzied Quintessence
     assert.deepEqual([frenzied.item.attackRiders.duration.value, frenzied.item.attackRiders.duration.unit], [1, "minutes"]);
     assert.equal(attackRidersText(frenzied.item.attackRiders.riders), "On a hit with the weapon picked: you are quickened for 1 round (its extra action only to Stride toward a foe or Strike)");
     // (The extra action's limit is its user's to keep: a note.)
-    assert.deepEqual([frenzied.notes, frenzied.partial, frenzied.noteOnly], [["You can use the additional action only to Stride toward a foe or Strike."], true, undefined]);
+    // (Its limit the rider's own "only", the note gone: src/compiler/honest.js withActionLimit.)
+    assert.deepEqual([frenzied.notes, frenzied.partial, frenzied.noteOnly], [undefined, undefined, undefined]);
     assert.equal(attackRidersText(compileItem(source("Analysis Eye")).item.attackRiders.riders, "Longsword"), "On the first hit with Longsword at each creature: one of its weaknesses or resistances, whispered to the GM to tell you");
     assert.equal(attackRidersText(compileItem(source("Leeching Fangs")).item.attackRiders.riders), "Hit Point damage the weapon picked deals to a living creature heals you half as much");
 

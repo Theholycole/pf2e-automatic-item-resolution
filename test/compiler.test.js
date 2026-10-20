@@ -1195,6 +1195,15 @@ test("its holder's resistance and a weakness for everyone else around it (src/co
     assert.deepEqual(zone.inside, [{ rules: [{ key: "Resistance", type: "spirit", value: 5 }], who: "own" }, { rules: [{ key: "Weakness", type: "spirit", value: 5 }], who: "others" }]);
 });
 
+test("what its Quickened's extra action is only for, a note Effect beside its Quickened (honest.js withActionLimit): Zealous Banner, Energizing Treat, Quickened Standard; Frenzied Quintessence's rider has it already; not Boots of the Blight's Quickened on a save it doesn't play", () => {
+    const [banner] = compileActivations(item("Zealous Banner"));
+    const row = banner.plan.resolution.outcomes.success;
+    assert.deepEqual([banner.plan.partial, row.noteEffects.find((note) => note.label === "Quickened's extra action")?.duration?.value, /only to Strike/.test(row.noteEffects.find((note) => note.label === "Quickened's extra action")?.text)], [undefined, 1, true]);
+    assert.equal(compileItem(item("Energizing Treat")).partial, undefined);
+    assert.equal(compileItem(item("Frenzied Quintessence")).partial, undefined);
+    assert.equal(compileActivations(item("Boots of the Blight"))[0].plan.partial, true);
+});
+
 test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {
     const { readReductions } = await import("../src/compiler/reduce.js");
     assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);

@@ -127,7 +127,8 @@ test("what it gives its user and allies in an area: an automatic row at the crea
     assert.equal(outrightText(lance.plan), "+1 status to attack roll, +1 status to damage");
     const speed = compileActivations(item("Snare of Speed")).find((entry) => entry.activation.name === "Prestissimo").plan;
     assert.deepEqual(speed.resolution.outcomes.success.effects.map((effect) => effect.slug), ["quickened"]);
-    assert.match(speed.notes[0], /only Step and Stride/, "the extra action's limit a note");
+    // (The extra action's limit a note Effect beside the Quickened: src/compiler/honest.js withActionLimit.)
+    assert.match(JSON.stringify(speed.resolution.outcomes.success.noteEffects), /only Step and Stride/, "the extra action's limit a note Effect");
 });
 
 test("activated ammunition whose own PF2e rules do it: a builtin with what they add, the rest of its text a note", async () => {
@@ -166,10 +167,11 @@ test("an Effect's opening flavor left out when it keeps the rest from being read
     assert.deepEqual([ghast.noteOnly ?? false, ghast.strike?.zone?.area?.value], [false, 10]);
 });
 
-test("Bloodline Robe's Quickened on its user's next turn, its limit a note; Life's Last Breath's save written without the word", () => {
+test("Bloodline Robe's Quickened on its user's next turn, its limit a note Effect; Life's Last Breath's save written without the word", () => {
     const robe = compileActivations(item("Bloodline Robe"), { spellEffects })[0].plan;
     assert.deepEqual(robe.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.expiry]), [["quickened", 1, "turn-end"]]);
-    assert.deepEqual(robe.unread, ["You can use the extra action only as part of casting a bloodline spell."]);
+    // (Its limit a note Effect beside the Quickened, for its time: src/compiler/honest.js withActionLimit.)
+    assert.deepEqual([robe.unread, robe.resolution.outcomes.success.noteEffects.find((note) => note.label === "Quickened's extra action")?.text], [undefined, "You can use the extra action only as part of casting a bloodline spell."]);
     const breath = compileActivations(item("Life's Last Breath"), { spellEffects })[1].plan;
     assert.deepEqual([breath.resolution.check.statistic, breath.resolution.check.basic, breath.resolution.sharedDamage.components[0].formula, breath.resolution.outcomes.success.damage.mode], ["fortitude", false, "4d6[void]", "none"]);
     assert.match(breath.notes.join(" "), /^You gain an equal amount of temporary Hit Points that last 1 minute \(the damage dealt\): add them by hand\.$/);
@@ -354,9 +356,9 @@ test("quickened with its action's use a note, a banner's ally, a successful Fein
     // "You become Quickened for 1 minute or until you leave the vehicle, …, and can use the extra action to … or, if …": Quickened.
     const mien = at("Mariner’s Mien (Lesser)");
     assert.deepEqual([mien.resolution.outcomes.success.effects.map((effect) => effect.slug), mien.partial], [["quickened"], true]);
-    // "An ally within the banner's aura becomes Quickened for 1 round": the targeted ally, its action's use a note.
+    // "An ally within the banner's aura becomes Quickened for 1 round": the targeted ally, its action's use a note Effect beside it.
     const banner = at("Zealous Banner");
-    assert.deepEqual([banner.item.recipient, banner.resolution.outcomes.success.effects[0].slug, banner.partial], ["targets", "quickened", true]);
+    assert.deepEqual([banner.item.recipient, banner.resolution.outcomes.success.effects[0].slug, banner.partial], ["targets", "quickened", undefined]);
     // "On a successful Feint, the target is Dazzled for 1 round": the target's, only after the Feint succeeds (plan.gate: Apply checks it).
     const buckler = at("Glamorous Buckler");
     assert.deepEqual([buckler.resolution.outcomes.success.effects[0].slug, buckler.gate, buckler.notes], ["dazzled", { action: "feint" }, []]);
@@ -731,13 +733,13 @@ test("effects its user picks one of, in a sentence (Heartripper Blade): the ways
     assert.match(siphon.plan.notes[0], /^Or: reduce the stage of one toxin or disease .* \(by hand\)\.$/);
 });
 
-test("conditions that end on its user (Spleen Bloodstone of Arazni's Break Bonds: each one to 0, its Speed penalties and exception a note); a portion rubbed in (Tallowheart Mass: Quickened for 1 minute, its extra action's limit a note)", () => {
+test("conditions that end on its user (Spleen Bloodstone of Arazni's Break Bonds: each one to 0, its Speed penalties and exception a note); a portion rubbed in (Tallowheart Mass: Quickened for 1 minute, its extra action's limit a note Effect)", () => {
     const [, bonds] = compileActivations(item("Spleen Bloodstone of Arazni"));
     assert.deepEqual(bonds.plan.item.reduce.map((entry) => `${entry.slug}:${entry.by}`), ["confused:all", "controlled:all", "grabbed:all", "immobilized:all", "paralyzed:all", "petrified:all", "restrained:all"]);
     assert.match(bonds.plan.notes[0], /as well as any Speed penalties affecting you, immediately end unless/);
     const [rubbed] = compileActivations(item("Tallowheart Mass"));
     assert.deepEqual(rubbed.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.unit]), [["quickened", 1, "minutes"]]);
-    assert.deepEqual(rubbed.plan.notes, ["You can use the extra action each round only for Strike actions made with weapons you wield in your hands."]);
+    assert.deepEqual([rubbed.plan.notes, rubbed.plan.resolution.outcomes.success.noteEffects.find((note) => note.label === "Quickened's extra action")?.text], [undefined, "You can use the extra action each round only for Strike actions made with weapons you wield in your hands."]);
 });
 
 test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spur, Mercurial Mantle, Gloaming Shard): the teleport card's range, from its user or the creature targeted; not within some feet of another thing", async () => {
@@ -770,7 +772,7 @@ test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spu
     assert.equal(teleportText(compileActivations(item("Dimension Shot"))[0].plan.teleport), "To a space adjacent to the creature targeted");
 });
 
-test("allies in an area put in a condition, read without an Effect heading (a third-party scepter: its user and the allies within 30 feet Quickened for 1 minute, the extra action's limit a note)", async () => {
+test("allies in an area put in a condition, read without an Effect heading (a third-party scepter: its user and the allies within 30 feet Quickened for 1 minute, the extra action's limit a note Effect)", async () => {
     const { routeOf } = await import("../src/live/route.js");
     const { readDocuments: read } = await import("../../pf2e-automatic-ability-resolution/tools/leveldb.mjs");
     const scepter = read(`${process.env.HOME}/.local/share/FoundryVTT/Data/modules/pf2e-team-plus-magic/packs/items`).find((doc) => doc.collection === "items" && doc.name === "Scepter of Quickening");
@@ -778,7 +780,8 @@ test("allies in an area put in a condition, read without an Effect heading (a th
     const [, hasten] = compileActivations(scepter);
     assert.deepEqual([routeOf(hasten.plan), hasten.plan.allyArea], ["save", true]);
     assert.deepEqual(hasten.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.unit]), [["quickened", 1, "minutes"]]);
-    assert.equal(hasten.plan.notes.length, 1);
+    // (The extra action's limit a note Effect beside the Quickened, src/compiler/honest.js withActionLimit.)
+    assert.deepEqual([hasten.plan.notes, hasten.plan.resolution.outcomes.success.noteEffects.some((note) => note.label === "Quickened's extra action")], [undefined, true]);
 });
 
 test("a ray of stored energy at its user's spell attack (a third-party power ring's Release Power): 5d4 doubled on a critical hit, its energy type picked on the card", async () => {

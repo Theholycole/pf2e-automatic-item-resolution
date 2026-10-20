@@ -99,6 +99,38 @@ function withoutStaleReminder(plan) {
     return { ...plan, resolution: { ...plan.resolution, outcomes: next } };
 }
 
+// What its Quickened's extra action is only for — Zealous Banner's "can use the additional action only to Strike", Energizing Treat's "It can use the
+// extra action each round only for Strike, Stride, and Support actions" — a behaviour rule beside the condition the plan really gives: a note
+// Effect beside its Quickened, for its time (the user's note-Effect rule), not a note left to the GM. Only when the plan's Quickened is its
+// own; Boots of the Blight's, given only on a successful save it doesn't play, stays a note.
+const ACTION_LIMIT = /\b(?:can|may) use the (?:extra|additional) action(?: each round)? (?:only|for only)\b|\bextra action (?:can be used )?only\b/i;
+// (Its note or unread sentence: Zealous Banner's is unread. A Quickened its attack rider gives with the limit already — Frenzied Quintessence's
+// rider.self.only — needs no more.)
+export function withActionLimit(given) {
+    const limits = [...(given?.notes ?? []), ...(given?.unread ?? [])].filter((note) => ACTION_LIMIT.test(said(note)));
+    if (!limits.length) return given;
+    const plan = JSON.parse(JSON.stringify(given));
+    const row = rowsOf(plan).find((entry) => (entry.effects ?? []).some((effect) => effect?.kind === "condition" && effect.slug === "quickened"));
+    const rider = (plan.item?.attackRiders?.riders ?? []).some((entry) => entry.self?.slug === "quickened" && entry.self.only);
+    if (!row && !rider) return given;
+    if (row) {
+        const quickened = row.effects.find((effect) => effect.slug === "quickened");
+        row.noteEffects = [...(row.noteEffects ?? []), { label: "Quickened's extra action", text: limits.map(said).join(" "), duration: quickened.duration ?? null }];
+    }
+    for (const key of ["notes", "unread"]) {
+        if (!Array.isArray(plan[key])) continue;
+        const kept = plan[key].filter((note) => !ACTION_LIMIT.test(said(note)));
+        if (kept.length) plan[key] = kept;
+        else delete plan[key];
+    }
+    const left = [...(plan.notes ?? []), ...(plan.unread ?? []), ...rowsOf(plan).flatMap((entry) => entry.manualInstructions ?? [])];
+    if (plan.partial && !left.length) {
+        delete plan.partial;
+        plan.automation = { ...(plan.automation ?? {}), level: "automatic" };
+    }
+    return plan;
+}
+
 // A rule sentence the plan shows no trace of (2026-10-20, the dropped-rule audit): one with a mechanical token — dice, a DC, a distance, a
 // condition, persistent damage, a resistance or weakness — none of which is anywhere in the plan (Stampede Medallion's "On a critical failure,
 // the foe is also knocked Prone" beside a basic save that had no Prone). A note, the plan partial: the card says it, the census counts it.
@@ -172,7 +204,8 @@ function timedOf(plan) {
         if (Array.isArray(node)) return node.forEach(walk);
         if (!node || typeof node !== "object") return;
         const unit = String(node.duration?.unit ?? "").replace(/s$/, "");
-        if (node.kind === "condition" && node.slug && ROUNDS[unit] && Number.isFinite(Number(node.duration?.value))) found.add(`${node.slug}:${Number(node.duration.value) * ROUNDS[unit]}`);
+        // (An attack rider's own condition has no kind: Frenzied Quintessence's rider.self, Quickened for 1 round.)
+        if ((node.kind === "condition" || (!node.kind && typeof node.slug === "string")) && node.slug && ROUNDS[unit] && Number.isFinite(Number(node.duration?.value))) found.add(`${node.slug}:${Number(node.duration.value) * ROUNDS[unit]}`);
         Object.values(node).forEach(walk);
     };
     walk(plan);
