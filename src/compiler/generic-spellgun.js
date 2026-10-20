@@ -260,10 +260,10 @@ export function descriptionFor(spell, rank, plan) {
     const dice = (plan?.resolution?.sharedDamage?.components ?? []).map((component) => `${component.formula}${/\[/.test(component.formula) ? "" : `${component.category ? ` ${component.category}` : ""}${component.type && component.type !== "untyped" ? ` ${component.type}` : ""}`}`).join(" plus ");
     return [
         `<p><strong>Activate</strong> <span class="action-glyph">2</span> Strike</p>`,
-        `<hr />`,
+        `<hr>`,
         `<p>This spellgun is loaded with ${link} at rank ${rank}. You Activate it by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's AC. It has a range increment of ${RANGE}. A hit affects only the target, ${mapping === "attack" ? "as the spell's hit does" : mapping === "save" ? "as if it had failed its save against the spell" : "with the spell's damage"}; then the spellgun crumbles.${/\b(?:to|or)\b/.test(String(spell.system?.time?.value ?? "")) ? ` It's the spell as cast with ${ACTIONS} actions${plan?.spellgun?.missiles ? `: all ${plan.spellgun.missiles} of its shards hit the target, their damage combined` : ""}.` : ""}</p>`,
         ...(dice ? [`<p><strong>Damage</strong> ${dice}</p>`] : []),
-        `<hr />`,
+        `<hr>`,
         `<p><strong>Critical Success</strong> ${critical}</p>`,
         `<p><strong>Success</strong> ${success}</p>`,
         ...(plan?.notes?.length ? [`<p>${plan.notes.join(" ")}</p>`] : [])
@@ -276,7 +276,8 @@ export function loadedUpdate(spell, rank, plan) {
         name: nameFor(spell, rank),
         "system.level.value": Math.max(1, 2 * rank - 1),
         "system.price.value": { pp: 0, gp: PRICES[rank] ?? PRICES[1], sp: 0, cp: 0 },
-        "system.traits.value": plan.traits,
+        // (Sorted, and the description's HTML as Foundry keeps it, so two of the same spellgun stack.)
+        "system.traits.value": [...plan.traits].sort(),
         "system.traits.rarity": spell.system?.traits?.rarity ?? "common",
         "system.description.value": descriptionFor(spell, rank, plan),
         // (Its slug from its new name, as PF2e makes one.)

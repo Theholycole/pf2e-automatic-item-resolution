@@ -115,6 +115,15 @@ async function ownItem(actor, file) {
     return item;
 }
 
+// A spell from PF2e's pack dropped on an element, as a drag from the compendium does.
+async function dropSpell(element, name) {
+    const entry = (await game.packs.get("pf2e.spells-srd").getIndex()).find((row) => row.name === name);
+    assert(entry && element, `${name} dropped`);
+    const transfer = new DataTransfer();
+    transfer.setData("text/plain", JSON.stringify({ type: "Item", uuid: `Compendium.pf2e.spells-srd.Item.${entry._id}` }));
+    element.dispatchEvent(new DragEvent("drop", { dataTransfer: transfer, bubbles: true, cancelable: true }));
+}
+
 // A DialogV2 open with that title (polls).
 async function dialogTitled(title, { timeout = 8000 } = {}) {
     const end = Date.now() + timeout;
@@ -1699,6 +1708,90 @@ export const cases = {
         dialog = await dialogTitled(`Load ${gunner.items.get(id).name}`);
         dialog.element.querySelector('button[data-action="later"]').click();
         return { told: told.id, back: Boolean(gunner.items.get(id)) };
+    },
+
+    // A spell dropped on a character sheet's inventory (the user's request, 2026-10-20): PF2e's maker of scrolls and wands offers a
+    // spellgun too. Fireball at rank 5 is a loaded Fireball Spellgun (Rank 5), twice a stack of 2; Ray of Frost, a cantrip, asks its rank
+    // (the character's cantrip rank first); Invisibility, which a hit can't carry, makes nothing. None holds PF2e's spell.
+    async spellgunFromMaker(scene) {
+        await clearSquares(scene, [[10, 21]]);
+        const { actor } = await creature(scene, "Spellgun Maker", { type: "character", level: 5, x: 10, y: 21 });
+        await actor.sheet.render(true);
+        await until(() => actor.sheet.rendered, "the sheet open");
+        actor.sheet._tabs?.[0]?.activate?.("inventory");
+        await wait(300);
+        const make = async (name, kind, rank) => {
+            const root = actor.sheet.element?.[0] ?? actor.sheet.element;
+            await dropSpell(root.querySelector('.tab[data-tab="inventory"]'), name);
+            let maker = null;
+            await until(() => (maker = [...foundry.applications.instances.values()].find((app) => app.rendered && app.constructor.name === "SpellcastingItemCreator")), `PF2e's maker for ${name}`);
+            const type = maker.element.querySelector("select[name=type]");
+            assert([...type.options].some((option) => option.value === kind), `a spellgun offered for ${name} (${[...type.options].map((option) => option.value)})`);
+            type.value = kind;
+            type.dispatchEvent(new Event("change", { bubbles: true }));
+            await wait(200);
+            const ranks = maker.element.querySelector("select[name=rank]");
+            if (rank && ranks) {
+                ranks.value = String(rank);
+                ranks.dispatchEvent(new Event("change", { bubbles: true }));
+                await wait(200);
+            }
+            maker.element.querySelector('button[type="submit"]').click();
+        };
+        const guns = () => actor.items.filter((item) => item.getFlag(NS, "genericSpellgun") || item.system?.spell);
+        await make("Fireball", "spellgun", 5);
+        await until(() => actor.items.some((item) => item.name === "Fireball Spellgun (Rank 5)"), "the Fireball spellgun");
+        await make("Fireball", "spellgun", 5);
+        await until(() => actor.items.find((item) => item.name === "Fireball Spellgun (Rank 5)")?.quantity === 2, "a stack of 2");
+        await make("Ray of Frost", "spellgunCantrip");
+        const asked = await dialogTitled("Ray of Frost Spellgun");
+        const usual = asked.element.querySelector("[name=rank]").value;
+        assert(usual === "3", `a level 5 character's cantrip rank first (${usual})`);
+        asked.element.querySelector("[name=rank]").value = "4";
+        asked.element.querySelector('button[data-action="make"]').click();
+        await until(() => actor.items.some((item) => item.name === "Ray of Frost Spellgun (Rank 4)"), "the Ray of Frost spellgun");
+        await make("Invisibility", "spellgun", 2);
+        await wait(2500);
+        const made = guns().map((item) => ({ name: item.name, quantity: item.quantity, level: item.level, rank: item.getFlag(NS, "genericSpellgun")?.rank, spell: Boolean(item.system?.spell) }));
+        assert(made.length === 2 && made.every((gun) => !gun.spell && gun.rank), `two loaded spellguns, none holding PF2e's spell (${JSON.stringify(made)})`);
+        assert(made.find((gun) => gun.name.startsWith("Fireball")).level === 9, "a rank-5 scroll's level");
+        await actor.sheet.close();
+        return { made };
+    },
+
+    // A spell dropped on a Generic Spellgun's row in an inventory opens its picker with that spell (not PF2e's maker); loaded with Acid Grip
+    // at rank 4, Fear dropped on its sheet makes it Fear's spellgun, with nothing of Acid Grip left in its plan.
+    async spellDroppedOnSpellgun(scene) {
+        await clearSquares(scene, [[12, 21]]);
+        const { actor } = await creature(scene, "Spellgun Dropper", { type: "character", x: 12, y: 21 });
+        const gun = await ownItem(actor, "generic-spellgun.json");
+        (await dialogTitled(`Load ${gun.name}`)).element.querySelector('button[data-action="later"]').click();
+        await actor.sheet.render(true);
+        await until(() => actor.sheet.rendered, "the sheet open");
+        actor.sheet._tabs?.[0]?.activate?.("inventory");
+        await wait(300);
+        let row = null;
+        await until(() => (row = (actor.sheet.element?.[0] ?? actor.sheet.element)?.querySelector(`.tab[data-tab="inventory"] [data-item-id="${gun.id}"]`)), "its row");
+        await dropSpell(row.querySelector(".item-name") ?? row, "Acid Grip");
+        let dialog = await dialogTitled(`Load ${gun.name}`);
+        assert(dialog.element.querySelector("[name=spell]").value === "Acid Grip", "the spell dropped, in the picker");
+        assert(dialog.element.querySelector("[name=rank]").value === "2", "at its own rank first");
+        assert(![...foundry.applications.instances.values()].some((app) => app.rendered && app.constructor.name === "SpellcastingItemCreator"), "PF2e's maker not opened too");
+        dialog.element.querySelector("[name=rank]").value = "4";
+        dialog.element.querySelector('button[data-action="load"]').click();
+        await until(() => gun.name === "Acid Grip Spellgun (Rank 4)", "loaded with Acid Grip");
+        await actor.sheet.close();
+        await gun.sheet.render(true);
+        await until(() => gun.sheet.rendered, "its sheet open");
+        await dropSpell(gun.sheet.element?.[0] ?? gun.sheet.element, "Fear");
+        dialog = await dialogTitled(`Load ${gun.name}`);
+        assert(/It holds Acid Grip now/.test(dialog.element.textContent), "the spell it holds, said");
+        dialog.element.querySelector('button[data-action="load"]').click();
+        await until(() => gun.name === "Fear Spellgun (Rank 1)", "Fear's spellgun");
+        const stored = JSON.stringify(gun.getFlag(NS, "genericSpellgun"));
+        assert(!/Acid Grip|acid/i.test(stored) && /frightened/.test(stored), "nothing of Acid Grip left");
+        await gun.sheet.close();
+        return { name: gun.name };
     },
 
     // The gun staff: put into an inventory, it asks for its firearm and staff; an Arquebus and a Staff of Fire picked, it becomes

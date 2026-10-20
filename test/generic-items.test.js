@@ -121,6 +121,24 @@ test("the spell's references to its rank are the rank loaded: the card works onc
     assert.deepEqual([withRankResolved(null, 3), withRankResolved({ a: "@item.rank" }, undefined).a, withRankResolved({ a: ["@item.levels"] }, 2).a], [null, "@item.rank", ["@item.levels"]]);
 });
 
+test("PF2e's maker of scrolls and wands: the spellgun it's making is its spell's, at the rank picked there", async () => {
+    const { fromMaker } = await import("../scripts/generic-items.js");
+    const fireball = { name: "Fireball", type: "spell" };
+    const frost = { name: "Ray of Frost", type: "spell" };
+    const makers = new Map([["Actor.a", { spell: fireball }], ["Actor.c", { spell: frost }]]);
+    const pending = ownSource("generic-spellgun.json");
+    const made = (actor, data) => fromMaker({ parent: { uuid: actor } }, { ...pending, ...data, system: { ...pending.system, ...data.system } }, makers);
+    // (PF2e's name for it, and the spell it holds, heightened.)
+    assert.deepEqual(made("Actor.a", { name: "spellgun of Fireball (Rank 5)", system: { spell: { name: "Fireball", system: { location: { heightenedLevel: 5 } } } } }), { spell: fireball, rank: 5, mystified: false });
+    assert.equal(made("Actor.a", { name: "spellgun of Fireball (Rank 5)", system: { spell: { name: "Fireball", system: { location: { heightenedLevel: 5 } } }, identification: { status: "unidentified" } } }).mystified, true);
+    // A cantrip's holds none: its rank is asked after.
+    assert.deepEqual(made("Actor.c", { name: "spellgunCantrip of Ray of Frost (Rank 1)", system: {} }), { spell: frost, rank: null, mystified: false });
+    // A Generic Spellgun put in the inventory while the maker's open isn't it, nor one loaded, nor another actor's.
+    assert.equal(made("Actor.a", { system: {} }), null);
+    assert.equal(made("Actor.a", { name: "spellgun of Fireball (Rank 5)", flags: { [MODULE_ID]: { [GENERIC_SPELLGUN]: { spell: { name: "Fireball" } } } }, system: {} }), null);
+    assert.equal(made("Actor.b", { name: "spellgun of Fireball (Rank 5)", system: {} }), null);
+});
+
 test("live: a loaded generic spellgun's card offers its user's attacks; an unloaded one used comes back", async () => {
     gunner.spellcasting = { contents: [{ statistic: { check: { mod: 12 } } }] };
     gunner.system.actions = [{ item: { group: "firearm" }, totalModifier: 10 }];

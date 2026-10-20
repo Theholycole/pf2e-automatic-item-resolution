@@ -4,7 +4,7 @@ A Foundry VTT module (id `pf2e-automatic-item-resolution`) that automates Pathfi
 
 Spell-casting items (scrolls, wands, staves, catalysts, spellhearts) belong to PF2e Automatic Spell Resolution.
 
-**Status (2026-10-20): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 325 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
+**Status (2026-10-20): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 327 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
 
 ## Install
 
@@ -69,7 +69,7 @@ The census counts what's played: 1,132 of the 1,486 consumables this module hand
 
 The module's compendium, **PF2e Automatic Item Resolution**, has two items that ask what they are when they first go into a creature's inventory. The picker opens for whoever put the item there. Close it without picking, and the item's sheet has a button to open it again.
 
-- **Generic Spellgun:** pick a spell (type its name, or drop one onto the picker) and a rank, from the spell's own rank to 10. It becomes that spell's spellgun, such as "Fireball Spellgun (Rank 5)", at a scroll's level and price for that rank. It works like PF2e's spellguns: pick your spell attack or firearm attack on the card, target one creature within its 30-foot range increment, and the ability module's card rolls the attack against its AC.
+- **Generic Spellgun:** pick a spell (type its name, or drop one onto the picker) and a rank, from the spell's own rank to 10. It becomes that spell's spellgun, such as "Fireball Spellgun (Rank 5)", at a scroll's level and price for that rank. It works like PF2e's spellguns: pick your spell attack or firearm attack on the card, target one creature within its 30-foot range increment, and the ability module's card rolls the attack against its AC. You can also drop a spell on a character sheet's Inventory: PF2e's scroll and wand maker offers a Spellgun too, made already loaded at the rank you pick there (a cantrip asks its rank after). Dropping a spell on a Generic Spellgun, on its sheet or its row in the inventory, opens its picker with that spell.
   - A hit affects the target as if it had failed its save against the spell, and a critical hit as if it had critically failed. Fear's hit leaves it frightened 2; Fear's critical hit, frightened 3 and fleeing.
   - For a spell that makes a spell attack (Ray of Frost), the spell's own hit and critical hit apply.
   - A spellgun's Activate is 2 actions, so the spell is cast as with 2 actions: Disorienting Flash's 2d10, Heal's 30-foot version, and Force Barrage's 2 shards (4 at rank 3), all at the target with their damage combined.
