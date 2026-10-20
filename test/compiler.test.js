@@ -1062,8 +1062,12 @@ test("Admonishing Band's Warning Shot: PF2e's Demoralize with the item, its rang
     assert.match(plan.action.after, /^The foe can be as far as the firearm's maximum range, and the check takes no penalty for a foe that doesn't share a language with you\. If you already have the Warning Shot feat\b/);
 });
 
-test("Devil's Breath Incense isn't one save at the drinker: its burning time, the creatures who come near later, its immunity after the save and its other use (inhaling it) are notes, the plan partial", () => {
+test("Devil's Breath Incense isn't one save at the drinker: the ability module's zone placed beside its user for its 10 minutes of burning, its Fortitude save at a creature in it as it's lit, coming in or starting a turn there, the hour's immunity held to; its other use (inhaling it) a note", () => {
     const incense = compileItem(item("Devil's Breath Incense"));
-    assert.equal(incense.partial, true);
-    assert.ok(incense.notes.some((note) => /burns for 10 minutes/.test(note)) && incense.notes.some((note) => /lean over the stick/.test(note)) && incense.notes.some((note) => /temporarily immune to the incense for 1 hour/.test(note)), incense.notes.join(" / "));
+    assert.deepEqual([incense.builtin, incense.zone.area, incense.zone.centre, incense.zone.lasts.value, incense.zone.lasts.unit], ["zone", { type: "burst", value: 10 }, "placed", 10, "minutes"]);
+    const [save] = incense.zone.saves;
+    assert.deepEqual([save.when, save.plan.resolution.check.statistic, save.plan.resolution.check.against.value, save.plan.trigger.immunity.slug, save.plan.trigger.immunity.duration, save.plan.trigger.immunity.degrees.length], [["initial", "enter", "start"], "fortitude", 23, "devils-breath-incense", { value: 1, unit: "hours" }, 4]);
+    assert.ok(incense.zone.notes.some((note) => /lean over the stick/.test(note)) && !incense.zone.notes.some((note) => /temporarily immune/.test(note)), incense.zone.notes.join(" / "));
+    // (A lit candle's zone with no time of its own: its burning time, Thawing Candle's 10 minutes.)
+    assert.deepEqual(compileItem(item("Thawing Candle")).zone.lasts, { mode: "fixed", value: 10, unit: "minutes", expiry: "turn-start", anchor: "effect-start" });
 });

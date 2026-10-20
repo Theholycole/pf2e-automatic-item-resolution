@@ -128,18 +128,58 @@ export { asAbility } from "./ability-shape.js";
 // (Each save against its owner's DC as the core's { dc: "owner" }: src/compiler/item-data.js.)
 // (A third-party module's own Effect its text doesn't bear out: the text read instead, when that reads to more than a note,
 // src/compiler/unverified-links.js.)
-// What a save at the creatures near something burning leaves unread, Devil's Breath Incense's: its burning time, the creatures who come near
-// later, its immunity after the save and its other use (an adjacent creature inhaling it) — notes, the plan partial. (It was counted resolved
-// as one save; found 2026-10-20.)
+// Something burning that the creatures near it save against, Devil's Breath Incense's "burns for 10 minutes. … A creature within 10 feet of a
+// stick of burning devil's breath incense must succeed at a … save" (Fortitude; on a failure, Sickened 1, on a critical one 2), and "after
+// which they're temporarily immune to the incense for 1 hour" (2026-10-20, once immunity was held to): the ability module's zone, placed
+// beside its user, for its burning time — its save at a creature in it as it's lit, coming in or starting a turn there, and the immunity
+// (src/compiler/immunity.js) keeps it to one save each. Its other use, inhaling it, is a note. (It was counted resolved as one save at its
+// user, found 2026-10-20.)
 const BURNING = /\bA creature within (\d+) feet of a stick of burning [\w' -]+? must succeed\b/i;
-function withBurningLeft(plan, text) {
+const BURNS_FOR = /\bburns for (\d+) (minute|hour|round)s?\b/i;
+function burningZone(plan, text) {
     const plain = String(text ?? "");
-    if (!plan || plan.resolution?.kind !== "save" || !BURNING.test(plain)) return plan;
+    const near = BURNING.exec(plain);
+    const burns = BURNS_FOR.exec(plain);
+    if (!plan || plan.resolution?.kind !== "save" || !near || !burns) return plan;
     const sentences = plain.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
-    const left = sentences.filter((sentence) => /\bburns for \d+\b|\btemporarily immune\b|\blean over the stick\b|\bcounteract\b|\bexhales?\b/i.test(sentence) && !/^This \d+-inch/i.test(sentence));
-    if (!left.length) return plan;
     const readable = (sentence) => sentence.replace(/@Check\[(\w+)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?/gi, (all, statistic, dc) => `DC ${dc} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)}`);
-    return { ...plan, notes: [...(plan.notes ?? []), ...left.map((sentence) => readable(sentence))], partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };
+    // (Its other use and what follows from it: notes.)
+    const notes = sentences.filter((sentence) => /\blean over the stick\b|\bcounteract\b|\bexhales?\b|\bSickened 3\b|\bautomatically succeeds at removing\b/i.test(sentence)).map(readable);
+    const save = { ...plan, trigger: { event: "zone" }, targeting: { target: "a creature in the area", range: null, area: null } };
+    delete save.notes;
+    delete save.partial;
+    delete save.item;
+    const { resolution, targeting, trigger, notes: _notes, partial: _partial, automation: _automation, ...base } = plan;
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "burst", value: Number(near[1]) },
+            centre: "placed",
+            range: 5,
+            lasts: { mode: "fixed", value: Number(burns[1]), unit: `${burns[2].toLowerCase()}s`, expiry: "turn-start", anchor: "effect-start" },
+            untilReused: false,
+            concealed: false,
+            terrain: [],
+            others: false,
+            hazard: null,
+            saves: [{ when: ["initial", "enter", "start"], plan: { ...save, automation: { level: "automatic" } } }],
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes
+        }
+    };
+}
+
+// A lit candle's area with no time of its own, Thawing Candle's "Once lit, the candle burns for 10 minutes": its zone lasts that long (it had
+// none, so never ended), the sentence no longer a note — nor "If extinguished, it can't be relit", the zone's End.
+function withBurnTime(plan, text) {
+    const burns = BURNS_FOR.exec(String(text ?? ""));
+    if (plan?.builtin !== "zone" || !plan.zone || plan.zone.lasts || !burns) return plan;
+    const notes = (plan.zone.notes ?? []).filter((note) => !/^Once lit, [\w ]+? burns for \d+ (?:minute|hour|round)s?\.$/i.test(String(note).trim()) && !/^If extinguished, it can't be relit\.$/i.test(String(note).trim()));
+    return { ...plan, zone: { ...plan.zone, lasts: { mode: "fixed", value: Number(burns[1]), unit: `${burns[2].toLowerCase()}s`, expiry: "turn-start", anchor: "effect-start" }, notes } };
 }
 
 export function compileItem(given, options = {}) {
@@ -151,7 +191,7 @@ export function compileItem(given, options = {}) {
     // (Not its opening flavor among what a partial plan leaves the GM, src/compiler/flavor.js.)
     // (And a use after the first, a candy's "Secondary Effect": the ways card's second button, src/compiler/secondary.js.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
-    return withImmunity(withBurningLeft(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text), given?.system?.description?.value, { name: given?.name });
+    return withImmunity(withBurnTime(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text), text), given?.system?.description?.value, { name: given?.name });
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

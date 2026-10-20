@@ -17,8 +17,8 @@
    "none": 178,
    "resolves": 759,
    "builtin:readied-bonus": 23,
-   "builtin:zone": 111,
-   "partial": 112,
+   "builtin:zone": 112,
+   "partial": 111,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 126,
@@ -35,10 +35,10 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 14,
-    "builtin:zone": 22,
+    "builtin:zone": 23,
     "resolves": 207,
     "builtin:ways": 18,
-    "partial": 59,
+    "partial": 58,
     "note-only": 62,
     "builtin:readied-bonus": 8,
     "none": 95,
@@ -395,8 +395,8 @@
    "none": 239,
    "item": 622,
    "fortune": 25,
-   "zone": 111,
-   "save": 140,
+   "zone": 112,
+   "save": 139,
    "expose": 89,
    "ways": 25,
    "action": 16,
@@ -411,10 +411,10 @@
   "byCategory": {
    "other": {
     "cast": 14,
-    "zone": 22,
+    "zone": 23,
     "none": 116,
     "ways": 18,
-    "save": 89,
+    "save": 88,
     "item": 214,
     "fortune": 8,
     "teleport": 4,
@@ -3537,9 +3537,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Static Snare",
