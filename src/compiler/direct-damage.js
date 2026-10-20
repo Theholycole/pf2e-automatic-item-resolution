@@ -252,3 +252,34 @@ export function energyChoicePlan(text, base, whole = text) {
     const plan = directDamagePlan(`The attacking creature takes ${match[1]} ${types[0]} damage.`, base);
     return plan ? { ...plan, damageChoices: types.map((type) => ({ label: type.replace(/^\w/, (letter) => letter.toUpperCase()), formula: `${match[1]}[${type}]` })) } : null;
 }
+
+// A partial plan without the notes that only say again the damage it deals: Clear Cutter's Axe's "The clear cutter's axe deals an additional
+// 1d10 persistent fire damage to the plant" beside that very damage, its row's "by hand" line too — and no longer partial when that was
+// all it left. Only a sentence that says nothing else: its dice and type the plan's own. Pure.
+export function withoutDamageRestated(plan) {
+    const components = plan?.partial ? plan.resolution?.sharedDamage?.components ?? [] : [];
+    if (!components.length) return plan;
+    const said = (entry) => {
+        const sentence = String(typeof entry === "string" ? entry : entry?.text ?? "").replace(/^\{target\}:\s*/, "").replace(/\s*\(by hand\)\.?$/, "").trim();
+        const match = TAKES.exec(sentence) ?? DEALS_TO.exec(sentence);
+        if (!match) return false;
+        // (Its subject before it at most, "The clear cutter's axe", and nothing after.)
+        const before = sentence.slice(0, match.index).trim();
+        const after = sentence.slice(match.index + match[0].length).trim();
+        if (!(before === "" || /^(?:The|Your) [\w' -]+$/i.test(before)) || !/^\.?$/.test(after)) return false;
+        const [, dice, persistent, type] = match;
+        return components.some((component) => String(component.formula).replace(/\s+/g, "") === dice.replace(/\s+/g, "") && (component.type ?? null) === (type ? type.toLowerCase() : null) && (component.category === "persistent") === Boolean(persistent));
+    };
+    const kept = (list) => (Array.isArray(list) ? list.filter((entry) => !said(entry)) : list);
+    const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes ?? {}).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: kept(row.manualInstructions) } : row]));
+    const next = { ...plan, ...(plan.notes ? { notes: kept(plan.notes) } : {}), ...(plan.unread ? { unread: kept(plan.unread) } : {}), resolution: { ...plan.resolution, outcomes } };
+    if (JSON.stringify(next) === JSON.stringify(plan)) return plan;
+    const left = [...(next.notes ?? []), ...(next.unread ?? []), ...Object.values(outcomes).flatMap((row) => row?.manualInstructions ?? [])];
+    if (Array.isArray(next.notes) && !next.notes.length) delete next.notes;
+    if (Array.isArray(next.unread) && !next.unread.length) delete next.unread;
+    if (!left.length) {
+        delete next.partial;
+        if (next.automation?.level === "guided") next.automation = { ...next.automation, level: "automatic" };
+    }
+    return next;
+}

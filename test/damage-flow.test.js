@@ -38,6 +38,9 @@ test("the reading: outright damage to the creature it names, its conditions, and
     assert.deepEqual(kortos.directDamage, { formula: "2d8", type: "force", category: null });
     // "… deals an additional 1d10 persistent fire damage to the plant."
     assert.equal(compileActivations(source("Clear Cutter's Axe")).find((entry) => entry.plan?.directDamage).plan.directDamage.category, "persistent");
+    // (Its sentence said again as a note and a "by hand" line beside that very damage: gone, not partial.)
+    const axe = compileActivations(source("Clear Cutter's Axe"))[0].plan;
+    assert.deepEqual([axe.partial, axe.notes, axe.resolution.outcomes.success.manualInstructions], [undefined, undefined, []]);
     // A talisman: "the creature you damaged takes 1d6 bleed damage and is off-guard until …": bleed persistent, off-guard too.
     const knot = compileItem(source("Murderer's Knot"));
     assert.deepEqual([knot.directDamage.category, knot.directDamage.type], ["persistent", "bleed"]);

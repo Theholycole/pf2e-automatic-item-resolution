@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 788,
+   "resolves": 789,
    "builtin:cast-spell": 473,
    "none": 524,
-   "partial": 193,
+   "partial": 192,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 47,
@@ -81,11 +81,11 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 183,
+    "resolves": 184,
     "none": 81,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
-    "partial": 38,
+    "partial": 37,
     "builtin:table": 1,
     "builtin:modes": 12,
     "note-only": 12,
@@ -12351,7 +12351,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "save"
   },

@@ -32,7 +32,7 @@ import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readProficiencyLoan } from "./proficiency-loan.js";
 import { readPatch } from "./patch.js";
 import { withSecondary } from "./secondary.js";
-import { directDamageOver, directDamagePlan, retaliationPlan } from "./direct-damage.js";
+import { directDamageOver, directDamagePlan, retaliationPlan, withoutDamageRestated } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
@@ -135,7 +135,7 @@ export function compileItem(given, options = {}) {
     const text = plainText(given?.system?.description?.value);
     // (Not its opening flavor among what a partial plan leaves the GM, src/compiler/flavor.js.)
     // (And a use after the first, a candy's "Secondary Effect": the ways card's second button, src/compiler/secondary.js.)
-    return withSecondary(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given, options, (use) => compileItem(use, options));
+    return withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options));
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

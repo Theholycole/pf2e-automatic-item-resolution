@@ -13,7 +13,7 @@ import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
-import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan, retaliationPlan } from "./direct-damage.js";
+import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan, retaliationPlan, withoutDamageRestated } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
 import { beadsPlan } from "./beads.js";
@@ -500,8 +500,8 @@ function compileEach(item, options = {}) {
                 delete plan.unread;
             }
         }
-        // (Not its opening flavor among what it leaves the GM, src/compiler/flavor.js.)
-        plan = withoutFlavorNotes(plan, activation.html);
+        // (Not its opening flavor among what it leaves the GM, src/compiler/flavor.js; nor its damage said again, src/compiler/direct-damage.js.)
+        plan = withoutDamageRestated(withoutFlavorNotes(plan, activation.html));
 
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, coats, coatLasts, creates, ...kept } = plan;
