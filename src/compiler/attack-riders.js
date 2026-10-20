@@ -22,7 +22,7 @@ const OWN_BASH = new RegExp(String.raw`\bSuccessful shield bash Strikes made wit
 
 // (A whetstone's weapon, the one its user picks on the card — rider.weapon: Frenzied Quintessence's "After a successful Strike with a
 // weapon enhanced by frenzied quintessence, you are Quickened for 1 round. You can use the additional action only to Stride toward a foe
-// or Strike." (its user Quickened on each hit, the action's limits theirs to keep), Analysis Eye's "The first time you succeed at a Strike
+// or Strike." (its user Quickened on each hit, the action's limit a note), Analysis Eye's "The first time you succeed at a Strike
 // against a given creature with a weapon under the effect of an analysis eye, as a free action, you learn one weakness or resistance of
 // that creature; if the creature has multiple weaknesses or resistances, the GM selects which one you learn." (once a creature: its
 // weaknesses and resistances whispered to the GM, who tells one), Leeching Fangs' "Whenever you deal Hit Point damage to a living
@@ -42,7 +42,10 @@ export function readAttackRiders(html) {
     const quickened = QUICKENED.exec(text);
     if (quickened) {
         riders.push({ on: ["success", "criticalSuccess"], weapon: true, self: { slug: "quickened", value: null, duration: END, only: quickened[1] ?? null } });
-        said.push(...quickened[0].split(/(?<=\.)\s+(?=[A-Z])/));
+        // (The extra action's limit is its user's to keep: a note, as Quickened Standard's.)
+        const [first, ...limit] = quickened[0].split(/(?<=\.)\s+(?=[A-Z])/);
+        said.push(first);
+        extra.push(...limit);
     }
     const learn = LEARN.exec(text);
     if (learn) {
@@ -119,5 +122,5 @@ export function withAttackRiders(plan, html) {
     const whetstone = read.riders.some((rider) => rider.weapon) ? { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } : null;
     const duration = [...(success.modifiers ?? []), ...(success.effects ?? [])].map((entry) => entry.duration).find((time) => time?.mode === "fixed")
         ?? (lasting ? { mode: "fixed", value: Number(lasting[1]), unit: /^min/i.test(lasting[2]) ? "minutes" : /^hour/i.test(lasting[2]) ? "hours" : "rounds", expiry: "turn-start", anchor: "effect-start" } : whetstone);
-    return { ...plan, item: { ...plan.item, attackRiders: { riders: read.riders, duration } }, ...(plan.unread ? { unread } : {}), ...(plan.notes || notes.length ? { notes: notes.length ? notes : undefined } : {}), ...(plan.partial && !unread.length && !notes.length ? { partial: undefined } : {}) };
+    return { ...plan, item: { ...plan.item, attackRiders: { riders: read.riders, duration } }, ...(plan.unread ? { unread } : {}), ...(plan.notes || notes.length ? { notes: notes.length ? notes : undefined } : {}), ...(plan.partial && !unread.length && !notes.length ? { partial: undefined } : {}), ...(read.notes?.length ? { partial: true } : {}) };
 }

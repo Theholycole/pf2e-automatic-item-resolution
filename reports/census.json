@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-19",
+ "generated": "2026-10-20",
  "system": "~/.local/share/FoundryVTT/Data/systems/pf2e/packs",
  "totals": {
   "consumables": 1724,
@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 184,
-   "resolves": 757,
+   "resolves": 756,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
-   "partial": 125,
+   "partial": 126,
    "builtin:item-action": 16,
    "note-only": 126,
    "builtin:conjure": 7,
@@ -36,8 +36,8 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 22,
-    "resolves": 216,
-    "partial": 61,
+    "resolves": 215,
+    "partial": 62,
     "note-only": 62,
     "builtin:readied-bonus": 8,
     "builtin:ways": 4,
@@ -378,13 +378,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 264,
+   "resolves": 263,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 607,
+   "resolves": 606,
    "gaps": 0,
    "none": 13
   }
@@ -27252,9 +27252,8 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
-   "gaps": [],
    "live": "item"
   },
   {

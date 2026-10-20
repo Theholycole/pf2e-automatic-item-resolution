@@ -1,15 +1,15 @@
 {
- "generated": "2026-10-19",
+ "generated": "2026-10-20",
  "totals": {
   "items": 2679,
   "staves": 560,
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 772,
+   "resolves": 771,
    "builtin:cast-spell": 473,
    "none": 530,
-   "partial": 201,
+   "partial": 202,
    "builtin:focus-point": 47,
    "builtin:counteract": 27,
    "builtin:readied-bonus": 47,
@@ -148,9 +148,9 @@
    "results": {
     "builtin:cast-spell": 11,
     "note-only": 13,
-    "resolves": 33,
+    "resolves": 32,
     "none": 18,
-    "partial": 11,
+    "partial": 12,
     "builtin:modes": 4,
     "builtin:readied-bonus": 4,
     "builtin:no-effect": 2,
@@ -13576,7 +13576,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "effect",
    "live": "item"
   },
