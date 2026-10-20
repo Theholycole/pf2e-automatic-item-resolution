@@ -25,6 +25,10 @@ const NOT_YOURS = /\b(?:each|every|all) (?:other )?(?:all(?:y|ies)|creatures?)\b
 const OWN_TYPE = /\battempt a new flat check to remove persistent damage the (?:powder|salve|remedy) works against\b/i;
 const POPULAR = new RegExp(String.raw`\bthe most popular being ((?:${TYPE}) [\w ]+?(?:, (?:and )?(?:${TYPE}) [\w ]+?)*)\.`, "i");
 
+// (And its lower DC lasting a while, Soothing Powder (Greater)'s "the powder persists for 1 minute, lowering the DCs of flat checks against that
+// type of persistent damage": { lasting: { value, unit } }, a note Effect on the creature for that time.)
+const PERSISTS = /\bthe (?:powder|salve|remedy) persists for (\d+|one|a) (minute|round)s?, lowering the DCs of flat checks against that type of persistent damage\b/i;
+
 // (Or ended outright, no check, Hollow Robes' "All persistent damage you're currently taking ends": every type, { ends: true }.)
 const ENDS = /\bAll persistent damage you're currently taking ends\b/i;
 
@@ -40,7 +44,8 @@ export function readRecovery(text) {
     if (OWN_TYPE.test(plain)) {
         const listed = [...(POPULAR.exec(plain)?.[1] ?? "").matchAll(new RegExp(String.raw`\b(${TYPE})\b`, "gi"))].map(([type]) => type.toLowerCase());
         const lowered = LOWER_TO.exec(plain);
-        return { types: [...new Set(listed.length ? listed : TYPES)], dc: lowered ? Number(lowered[1] ?? lowered[2]) : 10, choose: true };
+        const persists = PERSISTS.exec(plain);
+        return { types: [...new Set(listed.length ? listed : TYPES)], dc: lowered ? Number(lowered[1] ?? lowered[2]) : 10, choose: true, ...(persists ? { lasting: { value: /^\d+$/.test(persists[1]) ? Number(persists[1]) : 1, unit: `${persists[2].toLowerCase()}s` } } : {}) };
     }
     const sentences = plain.split(/(?<=[.!?])\s+(?=[A-Z@])/);
     for (const sentence of sentences) {
@@ -61,21 +66,24 @@ export function recoveryNotes(text) {
     return String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z@])/).map((sentence) => sentence.trim())
         // (The check's own sentence too when it says more: Searing Suture's "The target creature takes 1d6 fire damage and can
         // immediately attempt …", Quenching Potion's "…, and attempt a new saving throw against any poison affecting you".)
-        .filter((sentence) => sentence && !ENDS.test(sentence) && RULE_WORDS.test(CHECK.test(sentence) ? sentence.replace(CHECK, "").replace(/\bflat check\b|\bpersistent (?:\w+ )?damage\b/gi, "").replace(LOWER_TO, "") : sentence) && !(LOWER.test(sentence) && !CHECK.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
+        // (Not the check read by its powder's own type, nor the list of its types: Soothing Powder's, the card's picker.)
+        .filter((sentence) => sentence && !ENDS.test(sentence) && !OWN_TYPE.test(sentence) && !POPULAR.test(sentence) && !PERSISTS.test(sentence) && RULE_WORDS.test(CHECK.test(sentence) ? sentence.replace(CHECK, "").replace(/\bflat check\b|\bpersistent (?:\w+ )?damage\b/gi, "").replace(LOWER_TO, "") : sentence) && !(LOWER.test(sentence) && !CHECK.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
 }
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 
 // A plan for an item whose only reading is the check: the item card's (an automatic row with nothing in it, its recovery on
 // plan.item). notes: what else the text says.
-export function recoveryPlan(base, notes = []) {
+// recovery: its reading, for a lower DC that lasts (a note Effect on the creature for that time).
+export function recoveryPlan(base, notes = [], recovery = null) {
+    const lasting = recovery?.lasting ? { label: "Lower flat-check DC", text: `Flat checks against the chosen type of persistent damage are DC ${recovery.dc ?? 10} (particularly effective assistance).`, duration: { mode: "fixed", value: recovery.lasting.value, unit: recovery.lasting.unit, expiry: "turn-start", anchor: "effect-start" } } : null;
     return {
         ...base,
         modelVersion: MODEL_VERSION,
         automation: { level: notes.length ? "guided" : "automatic" },
         targeting: { target: null, range: null, area: null },
         trigger: { event: "use" },
-        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: { ...none(), ...(lasting ? { noteEffects: [lasting] } : {}) }, failure: none(), criticalFailure: none() } },
         ...(notes.length ? { notes, partial: true } : {})
     };
 }

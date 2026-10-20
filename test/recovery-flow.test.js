@@ -62,6 +62,9 @@ test("the reading: the types and the DC, and what else it says", () => {
     // The type the powder's own (Soothing Powder): the card's picker. Not one for others.
     assert.deepEqual(compileItem(source("Soothing Powder (Lesser)")).item.recovery, { types: ["bleed", "poison", "fire", "acid"], dc: 10, choose: true });
     assert.equal(recoveryText(compileItem(source("Soothing Powder (Greater)")).item.recovery), "A flat check (DC 10) to end persistent damage of its type (picked below)");
+    // (Their list of types and own-type check aren't GM work; the Greater's DC 10 lasting a minute, a note Effect for that minute.)
+    const [lesser, greater] = ["Soothing Powder (Lesser)", "Soothing Powder (Greater)"].map((name) => compileItem(source(name)));
+    assert.deepEqual([lesser.partial, lesser.notes, greater.partial, greater.resolution.outcomes.success.noteEffects.map((note) => [note.label, note.duration.value, note.duration.unit])], [undefined, undefined, undefined, [["Lower flat-check DC", 1, "minutes"]]]);
     assert.equal(readRecovery("Each creature in the emanation can immediately attempt a flat check to end any persistent fire damage."), null);
 });
 

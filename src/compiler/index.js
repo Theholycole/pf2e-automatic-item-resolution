@@ -396,8 +396,9 @@ function compileOne(given, options = {}) {
     // (A flat check to end persistent damage at once, src/compiler/recovery.js: Quenching Potion; with a note alone, the note
     // is the rest of it.)
     const recovery = readRecovery(plainText(item?.system?.description?.value));
-    if (recovery && !plan) plan = recoveryPlan(base, recoveryNotes(plainText(item?.system?.description?.value)));
-    else if (recovery && plan.noteOnly) plan = { ...withoutNoteOnly(plan), partial: true };
+    if (recovery && !plan) plan = recoveryPlan(base, recoveryNotes(plainText(item?.system?.description?.value)), recovery);
+    // (Its note the whole text, when the recovery reads all of it — Soothing Powder (Greater)'s lasting lower DC too: the recovery's plan.)
+    else if (recovery && plan.noteOnly) plan = recoveryNotes(plainText(item?.system?.description?.value)).length ? { ...withoutNoteOnly(plan), partial: true } : recoveryPlan(base, [], recovery);
     // (Restored to its maximum Hit Points and rid of afflictions, src/compiler/restore.js: Elixir of Rejuvenation; with a note alone,
     // the note is the rest of it.)
     if (readRestore(plainText(item?.system?.description?.value))) plan = !plan ? restorePlan(base, restoreNotes(plainText(item?.system?.description?.value))) : plan.noteOnly ? { ...withoutNoteOnly(plan), partial: true } : plan;
