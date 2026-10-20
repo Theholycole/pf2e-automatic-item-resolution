@@ -6907,6 +6907,183 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await area()?.delete().catch(() => null);
         }
+    },
+
+    // Hydra Spear's Hydra Swipe (src/compiler/volley.js): up to three melee Strikes, each at a different creature — a second Strike at the
+    // creature already struck isn't one of them and spends none; one at another creature spends the next.
+    async volleyDifferent(scene) {
+        await clearSquares(scene, [[12, 12], [13, 12], [13, 13]]);
+        const { actor: spearman, token: spearToken } = await creature(scene, "Hydra Spearman", { type: "character", x: 12, y: 12 });
+        const { token: firstToken } = await creature(scene, "Hydra First", { x: 13, y: 12, ac: 1, alliance: "opposition", hp: 200 });
+        const { token: secondToken } = await creature(scene, "Hydra Second", { x: 13, y: 13, ac: 1, alliance: "opposition", hp: 200 });
+        const spear = await give(spearman, "Hydra Spear");
+        await spear.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        await until(() => spearToken.object && firstToken.object && secondToken.object, "the tokens drawn", { timeout: 5000 });
+        await spearToken.object?.control?.();
+        const readied = () => spearman.itemTypes.effect.find((effect) => effect.flags?.[NS]?.strikeRider);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(spear.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        assert(/Up to 3 Strikes/.test(card.content) && /Each at a different creature within 20 feet/.test(card.content), "its lines");
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => readied()?.flags[NS].strikeRider.uses === 3, "three readied", { timeout: 8000 });
+        await target(firstToken);
+        await strike(spearman, spear);
+        await until(() => readied()?.flags[NS].strikeRider.uses === 2, "one spent", { timeout: 8000 });
+        since = Date.now();
+        await strike(spearman, spear);
+        const again = await messageAfter(since, (message) => /already struck by it/.test(message.content ?? ""), { what: "the line for the creature already struck" });
+        assert(readied()?.flags[NS].strikeRider.uses === 2, `none spent (${readied()?.flags[NS].strikeRider.uses})`);
+        await target(secondToken);
+        await strike(spearman, spear);
+        await until(() => readied()?.flags[NS].strikeRider.uses === 1, "the next spent at the second creature", { timeout: 8000 });
+        return { again: again.content.replace(/<[^>]+>/g, "") };
+    },
+
+    // Minotaur Chair: an attack at every foe in the line — Apply with those targeted readies one Strike at each; a Strike at another isn't one
+    // of them; the last spends it.
+    async volleyEachTargeted(scene) {
+        await clearSquares(scene, [[12, 15], [13, 15], [14, 15], [13, 16]]);
+        const { actor: rider, token: riderToken } = await creature(scene, "Chair Rider", { type: "character", x: 12, y: 15 });
+        const { token: oneToken } = await creature(scene, "Chair Foe One", { x: 13, y: 15, ac: 1, alliance: "opposition", hp: 200 });
+        const { token: twoToken } = await creature(scene, "Chair Foe Two", { x: 14, y: 15, ac: 1, alliance: "opposition", hp: 200 });
+        const { token: otherToken } = await creature(scene, "Chair Bystander", { x: 13, y: 16, ac: 1, alliance: "opposition", hp: 200 });
+        const chair = await give(rider, "Minotaur Chair");
+        const sword = await give(rider, "Longsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await until(() => riderToken.object && oneToken.object && twoToken.object && otherToken.object, "the tokens drawn", { timeout: 5000 });
+        await riderToken.object?.control?.();
+        const readied = () => rider.itemTypes.effect.find((effect) => effect.flags?.[NS]?.strikeRider);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(chair.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        let refused = null;
+        try {
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        } catch (error) {
+            refused = error.message;
+        }
+        assert(/^Target each enemy/.test(refused ?? ""), `refused with none targeted (${refused})`);
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [oneToken.uuid, twoToken.uuid] });
+        await until(() => readied()?.flags[NS].strikeRider.uses === 2, "one at each of the two", { timeout: 8000 });
+        await target(oneToken);
+        await strike(rider, sword);
+        await until(() => readied()?.flags[NS].strikeRider.uses === 1, "one spent", { timeout: 8000 });
+        await target(otherToken);
+        since = Date.now();
+        await strike(rider, sword);
+        await messageAfter(since, (message) => /isn't one of those targeted for it/.test(message.content ?? ""), { what: "the line for a creature not targeted" });
+        await target(twoToken);
+        await strike(rider, sword);
+        await until(() => !readied(), "all spent", { timeout: 8000 });
+        return { refused };
+    },
+
+    // Caress of the Great Serpent's Serpent's Kiss: each Strike made of the eight deals its user 1d6 piercing, hit or miss; −2 to each.
+    async volleySelfDamage(scene) {
+        await clearSquares(scene, [[15, 12], [16, 12]]);
+        const { actor: wielder, token: wielderToken } = await creature(scene, "Urumi Wielder", { type: "character", x: 15, y: 12, level: 18 });
+        const { token: foeToken } = await creature(scene, "Urumi Foe", { x: 16, y: 12, ac: 1, alliance: "opposition", hp: 400 });
+        const urumi = await give(wielder, "Caress of the Great Serpent");
+        await urumi.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await until(() => wielderToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await wielderToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(urumi.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(800);
+        // (A bare character has no Hit Points, and PF2e then takes no damage: 50 for it, PF2e's FlatModifier on "hp".)
+        await wielder.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Hit Points`, type: "effect", system: { rules: [{ key: "FlatModifier", selector: "hp", value: 50 }], duration: { value: -1, unit: "unlimited", expiry: null, sustained: false } } }]);
+        await wait(300);
+        await wielder.update({ "system.attributes.hp.value": 50 });
+        const hp = () => Number(wielder.system.attributes.hp.value) || 0;
+        const before = hp();
+        await target(foeToken);
+        const { attack } = await strike(wielder, urumi);
+        const penalty = (attack.flags.pf2e.modifiers ?? []).find((modifier) => modifier.modifier === -2 && modifier.enabled !== false);
+        assert(penalty, `−2 on the Strike (${JSON.stringify((attack.flags.pf2e.modifiers ?? []).map((modifier) => [modifier.label, modifier.modifier]))})`);
+        await until(() => hp() < before && hp() >= before - 6, "1d6 piercing on its user", { timeout: 8000 });
+        return { lost: before - hp() };
+    },
+
+    // Devil's Breath Incense (burningZone): the ability module's 10-foot zone placed next to its user for 10 minutes; a creature in it as it's
+    // lit gets the DC 23 Fortitude save card, and once that's applied it's immune for an hour — out and back in, no card.
+    async incenseZone(scene) {
+        await clearSquares(scene, [[2, 12], [3, 12], [7, 12]]);
+        const { actor: user, token: userToken } = await creature(scene, "Incense Burner", { type: "character", x: 2, y: 12 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Incense Neighbour", { x: 3, y: 12, alliance: "opposition", save: -30 });
+        const incense = await give(user, "Devil's Breath Incense");
+        await until(() => userToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const placing = canvas.regions.placeRegion;
+        // (Its area centred on the neighbour's square.)
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [{ ...data, shapes: (data.shapes ?? []).map((shape) => ({ ...shape, x: foeToken.x + canvas.grid.size / 2, y: foeToken.y + canvas.grid.size / 2 })) }]))[0];
+        const area = () => scene.regions.find((region) => region.flags?.[ABILITY]?.zone && /Devil's Breath/.test(region.name));
+        const forFoe = (message) => abilitySaveCard(message) && (message.flags[ABILITY].card.targets ?? []).some((entry) => entry.actorUuid === foe.uuid);
+        const immune = () => foe.itemTypes.effect.filter((effect) => effect.flags?.[ABILITY]?.immunity?.slug === "devils-breath-incense");
+        try {
+            let since = Date.now();
+            await incense.consume();
+            await until(() => area(), "the incense's Region", { timeout: 8000 });
+            const lasts = area().flags[ABILITY].zone.zone.lasts;
+            assert(lasts?.value === 10 && lasts.unit === "minutes", `10 minutes (${JSON.stringify(lasts)})`);
+            const card = await messageAfter(since, forFoe, { what: "the neighbour's save card", timeout: 10000 });
+            assert(card.flags[ABILITY].card.plan.resolution.check.against.value === 23, "DC 23 Fortitude");
+            await rollAndApply(card);
+            await until(() => immune().length === 1 && foe.itemTypes.condition.some((condition) => condition.slug === "sickened"), "Sickened and the hour's immunity", { timeout: 10000 });
+            await foeToken.update({ x: 7 * canvas.grid.size });
+            await wait(800);
+            since = Date.now();
+            await foeToken.update({ x: 3 * canvas.grid.size });
+            await wait(2500);
+            const later = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && forFoe(message));
+            assert(later.length === 0, `no second card (${later.length})`);
+            return { sickened: foe.itemTypes.condition.find((condition) => condition.slug === "sickened")?.value };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await area()?.delete().catch(() => null);
+        }
+    },
+
+    // Lit candles and incense (src/compiler/lit-area.js; ability c4b48ed): Candle of Inflamed Passions' −1 status to saves against emotion
+    // effects for a creature inside (PF2e's "item:trait:emotion"); Incense of Distilled Death's fast healing 4 for an undead inside, not a
+    // living one; Candle of Truth's Will save for its own user too.
+    async litAreas(scene) {
+        await clearSquares(scene, [[8, 18], [9, 18], [12, 18], [13, 18], [16, 18]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: lighter, token: lighterToken } = await creature(scene, "Candle Lighter", { type: "character", x: 8, y: 18 });
+        const { actor: guest, token: guestToken } = await creature(scene, "Candle Guest", { x: 9, y: 18 });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Incense Ghoul", { x: 12, y: 18, alliance: "opposition" });
+        const { actor: living, token: livingToken } = await creature(scene, "Incense Living", { x: 13, y: 18, alliance: "opposition" });
+        await undead.update({ "system.traits.value": ["undead"] });
+        await until(() => lighterToken.object && guestToken.object && undeadToken.object && livingToken.object, "the tokens drawn", { timeout: 5000 });
+        await lighterToken.object?.control?.();
+        const zoneOf = (name) => scene.regions.find((region) => region.flags?.[ABILITY]?.zone && region.name.includes(name));
+        const inside = (actor) => actor.itemTypes.effect.filter((effect) => / inside/.test(effect.name)).flatMap((effect) => effect.system.rules ?? []);
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [{ ...data, shapes: (data.shapes ?? []).map((shape) => ({ ...shape, x: undeadToken.x + canvas.grid.size, y: undeadToken.y + canvas.grid.size / 2 })) }]))[0];
+        try {
+            await (await give(lighter, "Candle of Inflamed Passions")).consume();
+            await until(() => zoneOf("Inflamed Passions"), "the candle's Region", { timeout: 8000 });
+            await until(() => inside(guest).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("saving-throw") && rule.value === -1 && (rule.predicate ?? []).includes("item:trait:emotion")), "−1 to saves against emotion effects on the guest", { timeout: 8000 });
+            await zoneOf("Inflamed Passions").delete();
+            await (await give(lighter, "Incense of Distilled Death")).consume();
+            await until(() => zoneOf("Distilled Death"), "the incense's Region", { timeout: 8000 });
+            await until(() => inside(undead).some((rule) => rule.key === "FastHealing" && rule.value === 4), "fast healing 4 on the undead", { timeout: 8000 });
+            assert(!inside(living).some((rule) => rule.key === "FastHealing"), "none on the living creature");
+            await zoneOf("Distilled Death").delete();
+            const since = Date.now();
+            await (await give(lighter, "Candle of Truth")).consume();
+            await until(() => zoneOf("Candle of Truth"), "the candle's Region", { timeout: 8000 });
+            const own = await messageAfter(since, (message) => abilitySaveCard(message) && (message.flags[ABILITY].card.targets ?? []).some((entry) => entry.actorUuid === lighter.uuid), { what: "its user's own save card", timeout: 10000 });
+            assert(own.flags[ABILITY].card.plan.resolution.check.against.value === 26, "the DC 26 Will save");
+            return { lie: inside(guest).find((rule) => [].concat(rule.selector).includes("deception"))?.value ?? null };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            for (const name of ["Inflamed Passions", "Distilled Death", "Candle of Truth"]) await zoneOf(name)?.delete().catch(() => null);
+        }
     }
 };
 

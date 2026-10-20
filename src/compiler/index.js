@@ -9,6 +9,7 @@
 // handlesItem() leaves them out.
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
+import { litAreaPlan } from "./lit-area.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
@@ -319,6 +320,9 @@ function compileOne(given, options = {}) {
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = dragonWaysPlan(html, base, item, options) ?? plan;
     // (A short teleport for its user, src/compiler/teleport.js: Mad Mammoth's Juke, Golden Spur.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(html, base, item?.system?.description?.value) ?? plan;
+    // (A lit candle's or incense's area while it burns, src/compiler/lit-area.js: Candle of Inflamed Passions' penalty, Incense of Distilled
+    // Death's fast healing for undead.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = litAreaPlan(plainText(html), base) ?? plan;
     // (A creature it becomes, src/compiler/conjured.js: Beetle Gel, Marvelous Miniature (Horse).)
     plan = conjuredPlan(html, base, item) ?? plan;
     // (Or one whose numbers it gives, src/compiler/conjured.js statedCreaturePlan: a third-party bottled ooze, a canister's zombie.)

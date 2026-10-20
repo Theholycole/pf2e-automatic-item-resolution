@@ -1071,3 +1071,15 @@ test("Devil's Breath Incense isn't one save at the drinker: the ability module's
     // (A lit candle's zone with no time of its own: its burning time, Thawing Candle's 10 minutes.)
     assert.deepEqual(compileItem(item("Thawing Candle")).zone.lasts, { mode: "fixed", value: 10, unit: "minutes", expiry: "turn-start", anchor: "effect-start" });
 });
+
+test("a lit candle's or incense's area while it burns (src/compiler/lit-area.js, the ability module's zone): its penalties inside with PF2e's predicates, fast healing for undead inside, a save its maker attempts too", () => {
+    const passions = compileItem(item("Candle of Inflamed Passions"));
+    assert.deepEqual([passions.builtin, passions.zone.area, passions.zone.centre, passions.zone.lasts.value, passions.zone.modifiers], ["zone", { type: "emanation", value: 10 }, "self", 10, [{ selector: "saving-throw", value: -1, type: "status", predicate: ["item:trait:emotion"] }]]);
+    const death = compileItem(item("Incense of Distilled Death"));
+    assert.deepEqual([death.zone.centre, death.zone.lasts.value, death.zone.lasts.unit, death.zone.inside, death.zone.notes], ["placed", 1, "minutes", [{ rules: [{ key: "FastHealing", value: 4 }], only: { traits: ["undead"] } }], []]);
+    const truth = compileItem(item("Candle of Truth"));
+    const [save] = truth.zone.saves;
+    assert.deepEqual([truth.zone.modifiers[0].predicate, save.when, save.own, save.plan.resolution.check.statistic, save.plan.resolution.check.against.value], [["action:lie"], ["initial", "enter"], true, "will", 26]);
+    assert.match(save.plan.resolution.outcomes.failure.manualInstructions[0], /unable to tell any deliberate lies/);
+    assert.equal(truth.zone.notes.length, 1, "first entering only, the GM's");
+});

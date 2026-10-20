@@ -17,11 +17,11 @@
    "none": 178,
    "resolves": 759,
    "builtin:readied-bonus": 23,
-   "builtin:zone": 112,
+   "builtin:zone": 115,
    "partial": 111,
    "builtin:ways": 25,
    "builtin:item-action": 16,
-   "note-only": 126,
+   "note-only": 123,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
    "builtin:no-effect": 50,
@@ -35,11 +35,11 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 14,
-    "builtin:zone": 23,
+    "builtin:zone": 26,
     "resolves": 207,
     "builtin:ways": 18,
     "partial": 58,
-    "note-only": 62,
+    "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 95,
     "builtin:no-effect": 12,
@@ -393,9 +393,9 @@
   "totals": {
    "cast": 35,
    "none": 239,
-   "item": 622,
+   "item": 619,
    "fortune": 25,
-   "zone": 112,
+   "zone": 115,
    "save": 139,
    "expose": 89,
    "ways": 25,
@@ -411,11 +411,11 @@
   "byCategory": {
    "other": {
     "cast": 14,
-    "zone": 23,
+    "zone": 26,
     "none": 116,
     "ways": 18,
     "save": 88,
-    "item": 214,
+    "item": 211,
     "fortune": 8,
     "teleport": 4,
     "counteract": 9,
@@ -2743,9 +2743,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Camouflage Dye (Greater)",
@@ -3487,9 +3487,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Surging Serum (Greater)",
@@ -18541,9 +18541,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Cytillesh Oil",
