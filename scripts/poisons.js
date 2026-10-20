@@ -192,15 +192,18 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     if (postCard && actor) {
         // (A rider only for some creatures, Moonlit Spellgun's Enfeebled at one silver gets past: their card has it, src/live/if-target.js.)
         const played = withAttackChoice(scaledPlan(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state.scaledAmount), state);
+        const carded = [];
         for (const group of targetGroups(played, tokens)) {
             // (A kind immune to it, Lamentation of the Faithless's unholy creatures: no card for them, src/compiler/kind-saves.js.)
             if (!group.plan) {
                 lines.push(`${group.tokens.map((token) => token.name ?? token.actor?.name).join(", ")}: immune to ${state.item.name} (by kind).`);
                 continue;
             }
+            carded.push(...group.tokens);
             await postCard({ plan: group.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: group.tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         }
-        lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
+        const cardedNames = carded.map((token) => token.name ?? token.actor?.name).join(", ");
+        if (carded.length) lines.push(state.delivery ? `${cardedNames}: exposed to ${state.item.name} (its save card follows).` : `${cardedNames}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
     // (Saves for the creatures around the one it's at, of that creature's side — src/compiler/hit-around.js aroundAllies, a third-party blade's
     // judgment: each save card at them.)

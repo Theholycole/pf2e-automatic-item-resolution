@@ -7405,6 +7405,65 @@ export const cases = {
         return { lost: before - foe.system.attributes.hp.value };
     },
 
+    // Horn of the Archon's Archon's Note (plan.again after a save card): its allies' +1 status bonus to attack rolls and saves, at the ally
+    // targeted; then its enemies' Fortitude save card, at the foe: a critical failure, Stunned 2.
+    async hornAlliesThenSave(scene) {
+        await clearSquares(scene, [[2, 19], [3, 19], [4, 19]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user, token: userToken } = await creature(scene, "Archon Herald", { type: "character", x: 2, y: 19 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Archon Ally", { x: 3, y: 19 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Archon Foe", { x: 4, y: 19, alliance: "opposition", save: -30, level: 12 });
+        const horn = await give(user, "Horn of the Archon");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(horn.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the allies' card" });
+        await userToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        const allies = await messageAfter(since, abilitySaveCard, { what: "the allies' card from the ability module" });
+        await applyAbilityCard(allies);
+        const rules = () => ally.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).filter((rule) => rule.key === "FlatModifier" && Number(rule.value) === 1 && rule.type === "status");
+        await until(() => rules().length >= 2, "the ally's +1 status bonuses", { timeout: 10000 });
+        const save = await messageAfter(since, (message) => itemCard("expose")(message) && message.id !== card.id, { what: "the enemies' save card", timeout: 10000 });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(save.id, { targets: [foeToken.uuid] });
+        const foeCard = await messageAfter(since, abilitySaveCard, { what: "the foe's save card" });
+        await withDie(10, () => rollAndApply(foeCard));
+        await until(() => (foe.getCondition("stunned")?.value ?? 0) === 2, "Stunned 2 on the foe", { timeout: 10000 });
+        return { selectors: rules().map((rule) => [].concat(rule.selector).join(",")), stunned: foe.getCondition("stunned")?.value };
+    },
+
+    // Lamentation of the Faithless's Lo and Behold (src/compiler/kind-saves.js): its save card for a holy creature at -2 status, another for a
+    // plain one with none, and no card for an unholy one (immune), a line instead.
+    async lamentationKinds(scene) {
+        await clearSquares(scene, [[6, 19], [7, 19], [8, 19], [9, 19]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user, token: userToken } = await creature(scene, "Lament Bearer", { type: "character", x: 6, y: 19 });
+        const { actor: holy, token: holyToken } = await creature(scene, "Lament Holy", { x: 7, y: 19, alliance: "opposition" });
+        const { actor: unholy, token: unholyToken } = await creature(scene, "Lament Unholy", { x: 8, y: 19, alliance: "opposition" });
+        const { actor: plain, token: plainToken } = await creature(scene, "Lament Plain", { x: 9, y: 19, alliance: "opposition" });
+        await holy.update({ "system.traits.value": ["holy"] });
+        await unholy.update({ "system.traits.value": ["unholy"] });
+        const blade = await give(user, "Lamentation of the Faithless");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the blade's card" });
+        await userToken.object?.control?.();
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [holyToken.uuid, unholyToken.uuid, plainToken.uuid] });
+        await until(() => game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).length >= 2, "two save cards", { timeout: 10000 });
+        await wait(1000);
+        const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).map((message) => message.flags[ABILITY].card);
+        const forActor = (actor) => cards.find((state) => (state.targets ?? []).some((target) => target.actorUuid === actor.uuid));
+        assert(cards.length === 2, `two cards (${cards.length})`);
+        assert(Number(forActor(holy)?.check?.bonus?.value) === -2 && forActor(holy).check.bonus.type === "status", `the holy creature's -2 status (${JSON.stringify(forActor(holy)?.check)})`);
+        assert(!forActor(plain)?.check?.bonus, `none for the plain one (${JSON.stringify(forActor(plain)?.check)})`);
+        assert(!forActor(unholy), "no card for the unholy one");
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(results.some((line) => /Lament Unholy: immune/.test(line)) && !results.some((line) => /Lament Unholy\b[^:]*: [^:]*card follows/.test(line)), `its line, and no card line for it (${JSON.stringify(results)})`);
+        return { results };
+    },
+
     // Golden Silencer (Greater)'s Strike save (its note Effect's note.saveEnds): a critical failure silenced for 1 minute, a note Effect a new
     // Fortitude save at the end of its turns ends.
     async saveEndsSilencer(scene) {
