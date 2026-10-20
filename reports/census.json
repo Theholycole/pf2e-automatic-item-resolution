@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 184,
-   "resolves": 756,
+   "resolves": 760,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
-   "partial": 126,
+   "partial": 122,
    "builtin:item-action": 16,
    "note-only": 126,
    "builtin:conjure": 7,
@@ -211,8 +211,8 @@
   "mutagen": {
    "count": 68,
    "results": {
-    "resolves": 60,
-    "partial": 8
+    "resolves": 64,
+    "partial": 4
    },
    "mechanisms": {
     "linked-effect": 60,
@@ -378,13 +378,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 263,
+   "resolves": 267,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 606,
+   "resolves": 610,
    "gaps": 0,
    "none": 13
   }
@@ -1638,11 +1638,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Your senses sharpen and your mind floods with tactical opportunities, overwhelming your foes - though the rush of possibilities can overwhelm you instead."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -2666,11 +2664,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Your senses sharpen and your mind floods with tactical opportunities, overwhelming your foes - though the rush of possibilities can overwhelm you instead."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -5308,11 +5304,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Your senses sharpen and your mind floods with tactical opportunities, overwhelming your foes - though the rush of possibilities can overwhelm you instead."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -5900,11 +5894,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Your senses sharpen and your mind floods with tactical opportunities, overwhelming your foes - though the rush of possibilities can overwhelm you instead."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {

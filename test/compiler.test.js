@@ -387,7 +387,7 @@ test("action scopes in lower case, the last item's only; X-based checks; a sente
         ["will", -2, null], ["int-based", -2, null], ["perception", -2, ["action:sense-motive"]]
     ]);
     assert.deepEqual(plan.item.strikeDamage.map((entry) => [entry.value, entry.category, entry.predicate]), [[1, "precision", ["item:melee", "target:condition:off-guard"]]]);
-    assert.ok(!plan.unread.some((sentence) => /1 additional precision damage to Off-Guard creatures/.test(sentence)), "the Strikes' extra damage read, not on the note");
+    assert.ok(!(plan.unread ?? []).some((sentence) => /1 additional precision damage to Off-Guard creatures/.test(sentence)), "the Strikes' extra damage read, not on the note");
 });
 
 test("of several linked Effects, the item's own (its name, or the wearer's); the others a note; not per degree, for allies, or unnamed", () => {
@@ -990,6 +990,8 @@ test("what each melee attack roll sets off while Martial Mayhem Mutagen lasts: a
     const { riders, duration } = lesser.item.attackRiders;
     assert.deepEqual([riders.map((rider) => [rider.on.join("/"), rider.offGuard ? "offGuard" : rider.target ? `target ${rider.target.slug}` : `self ${rider.self.slug} ${rider.self.value}`]), `${duration.value} ${duration.unit}`], [[["success/criticalSuccess", "offGuard"], ["failure/criticalFailure", "self clumsy 1"]], "1 minutes"]);
     assert.ok(!(lesser.unread ?? []).some((sentence) => /melee attack roll/.test(sentence)), "not notes too");
+    // (Its opening paragraph, before its Benefit, is flavor: nothing left, not partial.)
+    assert.deepEqual([lesser.unread, lesser.partial], [undefined, undefined]);
     assert.equal(attackRidersText(riders), "On a melee hit: the target off-guard to your next attack before your next turn; On a melee miss: you are clumsy 1, till your next turn ends");
     const major = compileItem(item("Martial Mayhem Mutagen (Major)")).item.attackRiders.riders;
     assert.deepEqual(major.filter((rider) => rider.target).map((rider) => [rider.on, rider.target.slug, rider.target.value]), [[["criticalSuccess"], "clumsy", 1]]);

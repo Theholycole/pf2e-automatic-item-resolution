@@ -238,8 +238,9 @@ test("extra damage on its user's Strikes for a while: Martial Mayhem Mutagen's p
     assert.deepEqual(strikeDamageEffectSource(extra, { item: { name: "Martial Mayhem Mutagen (Moderate)" } }).system.rules, [{ key: "DamageDice", selector: "strike-damage", category: "precision", predicate: ["item:melee", "target:condition:off-guard"], label: "Martial Mayhem Mutagen (Moderate)", diceNumber: 1, dieSize: "d4" }]);
     const lesser = compileItem(source("Martial Mayhem Mutagen (Lesser)")).item.strikeDamage[0];
     assert.deepEqual(strikeDamageEffectSource(lesser, { item: { name: "Lesser" } }).system.rules[0], { key: "FlatModifier", selector: "strike-damage", damageCategory: "precision", predicate: ["item:melee", "target:condition:off-guard"], label: "Lesser", value: 1 });
-    // (Its other words — the off-guard after a hit, the drawback's Clumsy after a miss — the note's.)
-    assert.equal(moderate.partial, true);
+    // (Its other words — the off-guard after a hit, the drawback's Clumsy after a miss — its attack riders; its opening paragraph flavor:
+    // nothing left.)
+    assert.equal(moderate.partial, undefined);
 });
 
 test("an unarmed attack its user gains, PF2e's Strike rule: Ring of the Tiger's agile claw (1d6 slashing) until the end of the turn, Tentacle Potion (Greater)'s 1d6 bludgeoning sweep limb for its 24 hours; Chain of Command's own weapon gaining nonlethal for 1 minute", async () => {

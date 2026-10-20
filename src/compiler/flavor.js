@@ -22,8 +22,16 @@ export function withoutFlavor(html) {
 }
 
 // That flavor sentence as the plan's notes give it, plain ("A gust swirls around you."), or null.
+// (A mutagen's opening paragraph too, before its Benefit: Martial Mayhem Mutagen's "Your senses sharpen and your mind floods with
+// tactical opportunities, …" — a paragraph of its own, without a heading, link, number or rule word.)
 export function flavorSentence(html) {
     const text = String(html ?? "");
+    if (!/<strong>\s*Effect\s*<\/strong>/i.test(text) && /<strong>\s*Benefit\s*<\/strong>/i.test(text)) {
+        const opening = /<hr\s*\/?>\s*<p>((?:(?!<\/p>)[\s\S])*)<\/p>/i.exec(text)?.[1] ?? null;
+        if (!opening || /<strong>|@|\d/.test(opening)) return null;
+        const plain = opening.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+        return RULE_WORDS.test(plain) ? null : plain;
+    }
     if (withoutFlavor(text) === text) return null;
     const effect = /<strong>\s*Effect\s*<\/strong>\s*/i.exec(text);
     const rest = text.slice(effect.index + effect[0].length);
@@ -37,7 +45,9 @@ export function flavorSentence(html) {
 export function withoutFlavorNotes(plan, html) {
     const flavor = plan?.partial ? flavorSentence(html) : null;
     if (!plan || !flavor) return plan;
-    const said = (entry) => String(entry ?? "").replace(/^\{target\}:\s*/, "").replace(/\s*\(by hand\)\.?$/, "").replace(/\s+/g, " ").trim().replace(/\.?$/, ".") === flavor.replace(/\.?$/, ".");
+    // (A dash as the notes write it, " - ", or as the text does, "—".)
+    const dashes = (words) => String(words).replace(/\s*[—–]\s*|\s+-\s+/g, " - ");
+    const said = (entry) => dashes(String(entry ?? "").replace(/^\{target\}:\s*/, "").replace(/\s*\(by hand\)\.?$/, "").replace(/\s+/g, " ").trim().replace(/\.?$/, ".")) === dashes(flavor.replace(/\.?$/, "."));
     const kept = (list) => (Array.isArray(list) ? list.filter((entry) => !said(entry)) : list);
     const outcomes = plan.resolution?.outcomes ? Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: kept(row.manualInstructions) } : row])) : null;
     const next = {
