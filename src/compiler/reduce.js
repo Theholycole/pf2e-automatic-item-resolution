@@ -116,8 +116,15 @@ const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds:
 
 // A plan for an item whose only reading is the reduction: the item card's (an automatic row with nothing in it, its
 // reduce on plan.item). notes: what else the text says.
-export function reductionPlan(base, reduce, notes = []) {
+export function reductionPlan(base, reduce, given = []) {
+    // (Not knocked prone again for the turn after standing, Copper Penny's "you Stand and can't be knocked prone again on the current turn": PF2e's
+    // Immunity to prone on its user to the end of the turn — item.ruleEffects, the item card's Effect.)
+    const STAND_AND_STAY = /^When you Activate (?:it|the [\w' -]+?), you Stand and can't be knocked prone again on the current turn\.$/i;
+    const stays = given.some((note) => STAND_AND_STAY.test(String(note).trim())) && reduce.some((entry) => entry.slug === "prone" && !entry.who);
+    const notes = stays ? given.filter((note) => !STAND_AND_STAY.test(String(note).trim())) : given;
+    const ruleEffects = stays ? [{ name: "not knocked prone", words: "Can't be knocked Prone again this turn", rules: [{ key: "Immunity", type: "prone" }], duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } }] : null;
     return {
+        ...(ruleEffects ? { ruleEffects } : {}),
         ...base,
         modelVersion: MODEL_VERSION,
         automation: { level: notes.length ? "guided" : "automatic" },

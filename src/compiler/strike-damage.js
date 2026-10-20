@@ -128,6 +128,8 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         // (The splash trait's miss, said again: Drake Rifle's "On a failure, the target and creatures within 5 feet of it still take that
         // splash damage" — the splash card's on a failure, scripts/strikes.js.)
         if (/^On a failure, the target and creatures within 5 feet of it still take that splash damage\.$/i.test(sentence.trim()) && SPLASH.test(body)) continue;
+        // (PF2e's own rule said again, Sniper's Bead (Major)'s "As normal, you still can't hit a target more than six range increments away".)
+        if (/^As normal, you still can't hit a target more than six range increments away\.$/i.test(sentence.trim())) continue;
         // (An introduction to the range rule read after it, Sniper's Bead's "its magic greatly lessens the effect of distance on your triggering
         // attack" before "You take no range increment penalty …".)
         if (/^When you activate the [\w' -]+?, its magic greatly lessens the effect of distance on your triggering attack\.$/i.test(sentence.trim()) && /\bno range increment penalty\b/i.test(body)) continue;

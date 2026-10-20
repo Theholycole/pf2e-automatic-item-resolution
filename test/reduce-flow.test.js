@@ -261,9 +261,15 @@ test("Cayden's Tankard live: a condition with no value (grabbed) ended on its us
     assert.equal(results.some((line) => /nothing to lower/.test(line)), false);
 });
 
-test("Copper Penny stands its user up (prone ended), the rest a note; Possum's Play drops its user Prone", () => {
+test("Copper Penny stands its user up (prone ended) and keeps it from being knocked prone again this turn (PF2e's Immunity to prone to the turn's end); Possum's Play drops its user Prone", async () => {
     const penny = compileItem(source("Copper Penny"));
-    assert.deepEqual([penny.item.reduce, penny.notes], [[{ slug: "prone", by: "all" }], ["When you Activate it, you Stand and can't be knocked prone again on the current turn."]]);
+    assert.deepEqual([penny.item.reduce, penny.item.ruleEffects.map((entry) => [entry.rules, entry.duration.value, entry.duration.expiry]), penny.notes, penny.partial], [[{ slug: "prone", by: "all" }], [[[{ key: "Immunity", type: "prone" }], 0, "turn-end"]], undefined, undefined]);
+    // Live: Apply stands its user up and gives the Effect.
+    await scout.increaseCondition("prone");
+    const card = await use(foundry.giveItem(scout, source("Copper Penny")));
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+    await settle();
+    assert.deepEqual([scout.hasCondition("prone"), scout.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "Immunity" && rule.type === "prone"))], [false, true]);
     const possum = compileItem(source("Possum's Play"));
     assert.deepEqual(possum.resolution.outcomes.success.effects, [{ kind: "condition", slug: "prone", value: null, duration: null }]);
     assert.ok(possum.unread.some((sentence) => /nonlethal trait/.test(sentence)));
