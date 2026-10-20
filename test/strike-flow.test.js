@@ -704,6 +704,26 @@ test("Hydra Head Club's Reactive Snap: 1d6 more on the Strike, and a miss gives 
     assert.equal(uses(), 1, "a hit keeps it used");
 });
 
+test("a critical hit's penalty to the save: Blindpepper Bolt's -2 circumstance to its Fortitude save after a critical hit (strike.criticalSaveBonus, the core's own save bonus), none after a hit", async () => {
+    const [bolt] = compileActivations(source("Blindpepper Bolt"));
+    assert.deepEqual(bolt.plan.strike.criticalSaveBonus, { value: -2, type: "circumstance" });
+    assert.ok(strikeLines(bolt.plan).includes("After a critical hit, -2 circumstance to that save"));
+    const bonus = async (outcome) => {
+        const bolts = foundry.giveItem(fighter, { ...source("Blindpepper Bolt"), _id: `pepper-${outcome}` });
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: bolts.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        const before = foundry.posted.length;
+        await attack(outcome, ["item:ranged", `item:ammo:id:${bolts.id}`]);
+        return foundry.posted.slice(before)[0]?.plan.resolution.check.bonus ?? null;
+    };
+    assert.deepEqual(await bonus("criticalSuccess"), { value: -2, type: "circumstance" });
+    assert.equal(await bonus("success"), null);
+});
+
 test("more reach for the Strike: the Extending rune's 60 feet, Tasset of Flexibility's 5 more with a melee weapon (strike.reach, the card's line)", () => {
     const tasset = compileActivations(source("Tasset of Flexibility"))[0].plan;
     assert.deepEqual([routeOf(tasset), tasset.strike.reach, tasset.strike.range, tasset.strike.notes, tasset.partial], ["strike", { more: 5 }, "melee", [], undefined]);

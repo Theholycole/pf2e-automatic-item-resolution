@@ -135,7 +135,9 @@ export async function strikeWithRider(message) {
     const plain = rider.plan.strike?.save;
     const harder = plain && rider.plan.strike.criticalDC && context.outcome === "criticalSuccess" ? { ...plain, resolution: { ...plain.resolution, check: { ...plain.resolution.check, against: { ...plain.resolution.check.against, value: rider.plan.strike.criticalDC } } } } : plain;
     // (After a critical hit only its critical success escapes, Rhino Shot's: the failure's conditions on the success row too.)
-    const worse = harder && (rider.plan.strike.criticalWorse ?? []).length && context.outcome === "criticalSuccess" ? criticalWorse(harder, rider.plan.strike.criticalWorse) : harder;
+    const worsened = harder && (rider.plan.strike.criticalWorse ?? []).length && context.outcome === "criticalSuccess" ? criticalWorse(harder, rider.plan.strike.criticalWorse) : harder;
+    // (After a critical hit, a penalty to the save, Blindpepper Bolt's: the core's own save bonus.)
+    const worse = worsened && rider.plan.strike.criticalSaveBonus && context.outcome === "criticalSuccess" ? { ...worsened, resolution: { ...worsened.resolution, check: { ...worsened.resolution.check, bonus: rider.plan.strike.criticalSaveBonus } } } : worsened;
     // (The save only for a creature its damage harms, Gravebane Ammunition's void healing: no card for another.)
     const fits = !rider.plan.strike?.saveOnly || voidHealed(targetToken.actor);
     if (worse && !fits) lines.push(`${target.name} hasn't void healing: no save.`);

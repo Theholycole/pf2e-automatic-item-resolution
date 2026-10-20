@@ -59,6 +59,7 @@ export function strikeLines(plan) {
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
         strike.save ? `On a hit: ${saveText(strike.save)} for the target${strike.saveOnly === "void-healing" ? " (one with void healing)" : ""}` : null,
         strike.save && strike.criticalDC ? `After a critical hit, its DC is ${strike.criticalDC}` : null,
+        strike.save && strike.criticalSaveBonus ? `After a critical hit, ${strike.criticalSaveBonus.value} ${strike.criticalSaveBonus.type} to that save` : null,
         strike.save && (strike.criticalWorse ?? []).length ? `After a critical hit, ${strike.criticalWorse.join(" and ")} on the save's success too (only its critical success escapes)` : null,
         ...(strike.around ?? []).map((entry) => `On a hit: ${saveText(entry.plan)} for the creatures within ${entry.radius} feet of the target${entry.includeTarget ? " and the target" : ""}`),
         strike.zone ? `On a hit: a ${strike.zone.area.value}-foot aura on the target for ${strike.zone.lasts?.value ?? "?"} ${strike.zone.lasts?.unit ?? ""}, the same save for the others in it` : null,
