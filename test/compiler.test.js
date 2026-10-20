@@ -1228,6 +1228,12 @@ test("a proficiency its Requirements need (src/compiler/requirement.js): Lion Ba
     assert.match(requirementWarning(stealthy, stealth, "Ghostshot Wrapping"), /^Ghostshot Wrapping: its Requirements need its user to be expert in Stealth; Ari is trained\. The GM's call\.$/);
     assert.equal(requirementWarning({ ...stealthy, skills: { stealth: { rank: 3 } } }, stealth, "Ghostshot Wrapping"), null);
     assert.equal(requirementWarning({ type: "npc", name: "Orc", skills: { stealth: { rank: 0 } } }, stealth, "Ghostshot Wrapping"), null);
+    // (A class: Accompaniment Cloak's bard; a fighter warned, a bard and a classless character not.)
+    const bard = req("Accompaniment Cloak");
+    assert.deepEqual([bard.kind, bard.slugs], ["class", ["bard"]]);
+    assert.match(requirementWarning({ type: "character", name: "Ari", class: { slug: "fighter" } }, bard, "Accompaniment Cloak"), /need its user to be a bard; Ari is a fighter\./);
+    assert.equal(requirementWarning({ type: "character", name: "Ari", class: { slug: "bard" } }, bard, "Accompaniment Cloak"), null);
+    assert.equal(requirementWarning({ type: "character", name: "Ari", class: null }, bard, "Accompaniment Cloak"), null);
 });
 
 test("an activation only after a hit with the weapon (src/compiler/strike-gate.js): Alghollthu Whip's Strike, Grapple or Trip, Obsidian Edge's ranged Strike, Rending Gauntlets' two unarmed hits on one creature; not Scizore of the Crab's \"or you have a creature Grabbed\"", async () => {
