@@ -392,7 +392,8 @@ export const cases = {
         assert(at >= 0, `the elixir offered (${JSON.stringify(card.getFlag(NS, "card").installed)})`);
         await game.modules.get(NS).api.live.apply(card.id, { installedPick: at });
         const rules = () => user.itemTypes.effect.filter((effect) => effect.getFlag(NS, "installed")).flatMap((effect) => effect.system.rules ?? []);
-        await until(() => rules().some((rule) => rule.selector === "fortitude-dc" && rule.value === 2), "+2 to the Fortitude DC", { timeout: 8000 });
+        // (PF2e keeps a selector as a list.)
+        await until(() => rules().some((rule) => [].concat(rule.selector).includes("fortitude-dc") && rule.value === 2), "+2 to the Fortitude DC", { timeout: 8000 });
         assert(!user.items.get(elixir.id), "the elixir used up");
         const helm = await give(user, "Dread Helm");
         const ampoule = await give(user, "Dread Ampoule (Moderate)");
@@ -403,8 +404,8 @@ export const cases = {
         at = card.getFlag(NS, "card").installed.findIndex((entry) => entry.id === ampoule.id);
         await game.modules.get(NS).api.live.apply(card.id, { installedPick: at });
         await until(() => foe.system.attributes.hp.value === hp - 2, `2 mental damage on the neighbour (${hp} → ${foe.system.attributes.hp.value})`, { timeout: 8000 });
-        assert(rules().some((rule) => rule.selector === "intimidation" && rule.value === 1), "+1 to Intimidation");
-        return { rules: rules().map((rule) => `${rule.selector} +${rule.value}`), hp: [hp, foe.system.attributes.hp.value] };
+        assert(rules().some((rule) => [].concat(rule.selector).includes("intimidation") && rule.value === 1), "+1 to Intimidation");
+        return { rules: rules().map((rule) => `${[].concat(rule.selector).join(",")} +${rule.value}`), hp: [hp, foe.system.attributes.hp.value] };
     },
 
     // Potion Patch (Lesser): a Healing Potion (Lesser) of its user's picked and used through it — PF2e's own use, so the potion's own card
@@ -2324,9 +2325,12 @@ export const cases = {
             await combat.startCombat();
             await wait(500);
             let since = Date.now();
+            // (Its own Region: not one an earlier case left in the scene.)
+            const earlier = new Set(scene.regions.map((region) => region.id));
+            const fresh = () => scene.regions.find((region) => !earlier.has(region.id) && region.flags?.["pf2e-automatic-ability-resolution"]?.zone);
             await game.modules.get(NS).api.live.activate(shield.uuid, 0);
-            await until(() => scene.regions.some((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone), "the aura's Region", { timeout: 8000 });
-            const region = scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone);
+            await until(() => fresh(), "the aura's Region", { timeout: 8000 });
+            const region = fresh();
             const attached = region.attachment?.token?.id ?? region.attachment?.token ?? null;
             assert(attached === holderToken.id, `attached to the holder's token (${attached})`);
             await combat.nextTurn();
