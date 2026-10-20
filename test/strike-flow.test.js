@@ -695,3 +695,31 @@ test("a Strike only against a kind of creature (Carver-cutter's Chop Down, \"aga
     assert.equal(riderFor(chop.plan, { outcome: "success", options: ["item:melee", "target:trait:plant"] }), "hit");
     assert.equal(riderFor(chop.plan, { outcome: "success", options: ["item:melee", "target:trait:wood"] }), "hit");
 });
+
+test("Gravebane Ammunition: its hit's Fortitude save only for a creature with void healing (its vitality damage PF2e's own rule, said on the card, not a note)", async () => {
+    const [shot] = compileActivations(source("Gravebane Ammunition"));
+    assert.deepEqual([routeOf(shot.plan), shot.plan.strike.saveOnly, shot.plan.strike.ownRules, shot.plan.strike.notes, shot.plan.partial, shot.plan.strike.damage ?? []], ["strike", "void-healing", ["an additional 1d10 vitality damage to creatures with void healing"], [], undefined, []]);
+    assert.ok(strikeLines(shot.plan).includes("PF2e's own rules add an additional 1d10 vitality damage to creatures with void healing"));
+    const archer = foundry.makeActor({ id: "strike-gravebane", name: "Gravebane Archer", owners: ["player"] });
+    const living = foundry.makeActor({ id: "strike-living", name: "Living" });
+    const ghoul = foundry.makeActor({ id: "strike-ghoulish", name: "Ghoulish", undead: true });
+    foundry.place(archer, 0, 11500);
+    foundry.place(living, 1000, 11500);
+    foundry.place(ghoul, 2000, 11500);
+    const shoot = async (target) => {
+        const ammo = foundry.giveItem(archer, { ...source("Gravebane Ammunition"), _id: `gravebane-${target.id}` });
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: ammo.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        const before = foundry.posted.length;
+        await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome: "success", options: ["item:ranged", `item:ammo:id:${ammo.id}`], target: { actor: target.uuid, token: target.token.uuid } } } }, speaker: { actor: archer.id }, actor: archer, token: archer.token.document }));
+        await settle();
+        return foundry.posted.slice(before);
+    };
+    assert.equal((await shoot(living)).length, 0, "a living creature: no save");
+    const [save] = await shoot(ghoul);
+    assert.equal(save?.plan.resolution.check.against.value, 19);
+});

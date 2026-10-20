@@ -138,10 +138,10 @@ test("activated ammunition whose own PF2e rules do it: a builtin with what they 
     assert.equal(acid.plan.partial, undefined);
     const [magnetic] = compileActivations(item("Magnetic Shot (Lesser)"));
     assert.match(magnetic.plan.notes[0], /the deadly-d8 trait, two more weapon damage dice and a \+1 circumstance bonus to its attack roll against metal targets/);
-    // Gravebane Ammunition's save stays the GM's: partial.
+    // Gravebane Ammunition's save, now read: the readied Strike's save for a creature with void healing (test/strike-flow.test.js), its damage
+    // still PF2e's own rule.
     const [gravebane] = compileActivations(item("Gravebane Ammunition"));
-    assert.deepEqual([gravebane.plan.partial, gravebane.plan.notes.length], [true, 2]);
-    assert.match(gravebane.plan.notes[1], /Enfeebled 1/);
+    assert.deepEqual([gravebane.plan.builtin, gravebane.plan.strike.saveOnly, gravebane.plan.partial], [undefined, "void-healing", undefined]);
     // No card of its own: PF2e applies an ammunition's rules to the Strike that uses it.
     assert.equal(routeOf(acid.plan), null);
 });

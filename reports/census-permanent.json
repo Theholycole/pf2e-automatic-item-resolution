@@ -6,7 +6,7 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 791,
+   "resolves": 793,
    "builtin:cast-spell": 473,
    "none": 524,
    "partial": 190,
@@ -18,7 +18,7 @@
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 8,
-   "builtin:pf2e-rules": 26,
+   "builtin:pf2e-rules": 24,
    "builtin:zone": 23,
    "builtin:modes": 33,
    "builtin:ways": 19,
@@ -32,12 +32,12 @@
    "save": 444,
    "cast": 473,
    "item": 591,
-   "none": 652,
+   "none": 650,
    "focus": 47,
    "counteract": 29,
    "fortune": 58,
    "reroll": 45,
-   "strike": 93,
+   "strike": 95,
    "table": 7,
    "teleport": 8,
    "zone": 23,
@@ -104,8 +104,8 @@
    "activations": 153,
    "results": {
     "partial": 34,
-    "resolves": 47,
-    "builtin:pf2e-rules": 24,
+    "resolves": 49,
+    "builtin:pf2e-rules": 22,
     "none": 29,
     "builtin:no-effect": 2,
     "note-only": 3,
@@ -9762,9 +9762,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:pf2e-rules",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Ash Gown (Greater)",
@@ -19345,9 +19345,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:pf2e-rules",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Bloodknuckles",

@@ -107,7 +107,11 @@ export async function strikeWithRider(message) {
     const lines = await applyRiders({ plan: rider.plan, degree: context.outcome, user: rider.user, target, item: rider.item });
     // (A critical hit's harder save, Blister Ammunition's: its DC then.)
     const plain = rider.plan.strike?.save;
-    const save = plain && rider.plan.strike.criticalDC && context.outcome === "criticalSuccess" ? { ...plain, resolution: { ...plain.resolution, check: { ...plain.resolution.check, against: { ...plain.resolution.check.against, value: rider.plan.strike.criticalDC } } } } : plain;
+    const harder = plain && rider.plan.strike.criticalDC && context.outcome === "criticalSuccess" ? { ...plain, resolution: { ...plain.resolution, check: { ...plain.resolution.check, against: { ...plain.resolution.check.against, value: rider.plan.strike.criticalDC } } } } : plain;
+    // (The save only for a creature its damage harms, Gravebane Ammunition's void healing: no card for another.)
+    const fits = !rider.plan.strike?.saveOnly || voidHealed(targetToken.actor);
+    if (harder && !fits) lines.push(`${target.name} hasn't void healing: no save.`);
+    const save = fits ? harder : null;
     if (save) {
         const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
@@ -211,4 +215,10 @@ async function postStrikeSplash({ message, context, rider }) {
     const splash = rider.plan.strike.splash;
     const state = createBombCard({ plan: { source: rider.plan.source ?? null }, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: rider.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), outcome: context.outcome, splash: [{ type: splash.damageType, total: splash.value }], near });
     await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: message.actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
+}
+
+// Whether vitality damage harms the creature: void healing, or the undead trait.
+function voidHealed(actor) {
+    const traits = new Set([...(actor?.traits ?? actor?.system?.traits?.value ?? [])]);
+    return Boolean(actor?.attributes?.hp?.negativeHealing ?? actor?.system?.attributes?.hp?.negativeHealing) || traits.has("undead");
 }

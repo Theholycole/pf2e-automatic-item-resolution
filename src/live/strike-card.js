@@ -38,6 +38,8 @@ export function strikeLines(plan) {
     return [
         // (Only against a kind of creature: "Only against a plant or wood creature".)
         strike.against?.length ? `Only against a ${strike.against.join(" or ")} creature (another target spends it)` : null,
+        // (Damage its own PF2e rules add, Gravebane Ammunition's: said, PF2e's to roll.)
+        ...(strike.ownRules ?? []).map((words) => `PF2e's own rules add ${words}`),
         strike.attack ? `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll` : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
@@ -54,7 +56,7 @@ export function strikeLines(plan) {
         strike.failDice ? `On a failure (not a critical failure): ${strike.failDice} weapon damage ${strike.failDice === 1 ? "die" : "dice"} as damage` : null,
         hit ? `On a hit: ${hit}` : null,
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
-        strike.save ? `On a hit: ${saveText(strike.save)} for the target` : null,
+        strike.save ? `On a hit: ${saveText(strike.save)} for the target${strike.saveOnly === "void-healing" ? " (one with void healing)" : ""}` : null,
         ...(strike.around ?? []).map((entry) => `On a hit: ${saveText(entry.plan)} for the creatures within ${entry.radius} feet of the target${entry.includeTarget ? " and the target" : ""}`),
         strike.zone ? `On a hit: a ${strike.zone.area.value}-foot aura on the target for ${strike.zone.lasts?.value ?? "?"} ${strike.zone.lasts?.unit ?? ""}, the same save for the others in it` : null,
         strike.cast ? `On a hit: ${strike.cast.name}${strike.cast.rank ? ` (rank ${strike.cast.rank}` : ""}${strike.cast.dc ? `${strike.cast.rank ? ", " : " ("}DC ${strike.cast.dc}` : ""}${strike.cast.rank || strike.cast.dc ? ")" : ""} cast at the target${strike.cast.saveFirst ? ` if it fails a DC ${strike.cast.saveFirst.dc} ${strike.cast.saveFirst.statistic} save` : ""}${strike.cast.attackFromHit ? ", the hit for its attack roll" : ""}` : null,

@@ -267,9 +267,31 @@ export function compileStrike(item, base, options = {}) {
     // (The maneuver after it: its own card, not the Strike's riders — Iron Cube's "If this knocks the target Prone" isn't the hit's.)
     const empty = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
     if (follow) return strikePlan({ base, item, strike, riders: { success: empty(), criticalSuccess: empty() }, save, extras: { ...extras, notes: extras.notes.filter((note) => !(follow.notes ?? []).includes(note) && !FOLLOW.test(note) && !/^If this knocks the target Prone\b/i.test(note)) }, cast, follow });
-    const plan = strikePlan({ base, item, strike, riders, save, extras, cast });
+    const plan = withOwnRuleDamage(withSaveOnly(strikePlan({ base, item, strike, riders, save, extras, cast }), text), item);
     // (A plan of hit notes alone: below any other reading, src/compiler/strikes.js strikeOver.)
     return noted && plan?.strike ? { ...plan, strike: { ...plan.strike, fromNotes: true } } : plan;
+}
+
+// (The save only for the creatures its damage harms: Gravebane Ammunition's "On a hit, a target with void healing must succeed at …" (its
+// own words, src/compiler/item-data.js) — strike.saveOnly "void-healing", the creature hit checked before its save card (scripts/strikes.js).)
+function withSaveOnly(plan, text) {
+    if (!plan?.strike?.save || !/\bOn a hit, a target with void healing must succeed at\b/i.test(String(text ?? ""))) return plan;
+    return { ...plan, strike: { ...plan.strike, saveOnly: "void-healing" } };
+}
+
+// (Damage its own PF2e rules add to the Strike that fires it, said in its words: Gravebane Ammunition's "the attack deals an additional 1d10
+// vitality damage to creatures with void healing" — PF2e's DamageDice on its own Strike rolls it, so the sentence is the card's line, not a
+// note: strike.ownRules.)
+function withOwnRuleDamage(plan, item) {
+    const notes = plan?.strike?.notes ?? [];
+    if (!isAmmo(item) || !notes.length) return plan;
+    const rules = (item?.system?.rules ?? []).filter((rule) => rule?.key === "DamageDice" && rule.dieSize);
+    const own = (note) => rules.find((rule) => new RegExp(String.raw`\b(?:deals )?an additional ${rule.diceNumber ?? 1}${rule.dieSize} ${rule.damageType ?? "\\w+"} damage\b`, "i").test(String(note)));
+    const said = notes.filter((note) => /^On a hit, the attack deals an additional \d+d\d+ \w+ damage(?: to creatures with [\w ]+)?\.$/i.test(String(note).trim()) && own(note));
+    if (!said.length) return plan;
+    const left = notes.filter((note) => !said.includes(note));
+    const leftAll = [...left, ...(plan.notes ?? []), ...(plan.unread ?? [])];
+    return { ...plan, strike: { ...plan.strike, notes: left, ownRules: said.map((note) => String(note).trim().replace(/^On a hit, the attack deals /i, "").replace(/\.$/, "")) }, ...(plan.partial && !leftAll.length ? { partial: undefined, automation: { level: "automatic" } } : {}) };
 }
 
 const CRITICAL_DC = /^On a critical hit, increase the (Fortitude|Reflex|Will) DC by (\d+) \((?:@Check\[[^\]]*\]|DC) ?(\d+)\)(?:, and the target is (Dazzled|Sickened|Frightened|Off-Guard|Stupefied|Clumsy|Enfeebled|Slowed|Stunned|Blinded|Deafened) for \d+ rounds?)?\.$/i;
