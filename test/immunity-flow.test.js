@@ -61,6 +61,15 @@ test("where a plan holds to it: a save's trigger.immunity (the ability module's 
     assert.ok(cloak.plan.notes.some((note) => /temporarily immune to the sickness from the smoke/.test(note)));
     // (Its immunity a part of it, or starting once its effect ends: notes, partial.)
     assert.equal(compileItem(source("Starsong Nectar")).partial, true);
+    // (The same immunity said again in another degree's paragraph joins it: Pheromone Flare's critical success, and its failure's "After this,
+    // it becomes temporarily immune for 24 hours" with the critical failure that's "As failure"; not its success, a new save every 10 minutes.)
+    const flare = compileItem(source("Pheromone Flare (Lesser)"));
+    assert.deepEqual([flare.zone.saves[0].plan.trigger.immunity.degrees, flare.partial], [["criticalSuccess", "failure", "criticalFailure"], undefined]);
+    // (Not one to the item: Mindrender Baton's "temporarily immune to that character's attempts to remove the effect" — the ability compiler's
+    // own reading of it taken off, a note.)
+    const [, command] = compileActivations(source("Mindrender Baton"));
+    assert.deepEqual([command.plan.trigger.immunity, command.plan.partial], [undefined, true]);
+    assert.ok(command.plan.notes.some((note) => /^Another character can attempt a DC 32 Diplomacy/.test(note)));
 });
 
 async function use(holder, name) {
