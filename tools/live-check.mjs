@@ -1124,14 +1124,15 @@ export const cases = {
         return { selection: rule.selection, speed: [before, after], results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
-    // Iron Wine: of its two linked Effects, its own (Effect: Iron Wine), the weakness one on the note.
+    // Iron Wine: of its two linked Effects, its own (Effect: Iron Wine) on a first cup; the weakness one is for a second cup in a day (plan.dose,
+    // secondDoseAndSoap), not a note.
     async ironWine(scene) {
         const { actor: drinker } = await creature(scene, "Wine Drinker", { x: 12, y: 18 });
         const wine = await give(drinker, "Iron Wine");
         const since = Date.now();
         await wine.consume();
         const card = await messageAfter(since, itemCard("item"));
-        assert(/Iron Wine Weakness is linked too/.test(card.content), "the other link on the note");
+        assert(!/Iron Wine Weakness is linked too/.test(card.content), "no note of the other link");
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
         await wait(800);
         const names = drinker.itemTypes.effect.map((effect) => effect.name);
@@ -7116,8 +7117,74 @@ export const cases = {
             await wait(2500);
         }
         assert(enfeebled(weak) && dazzled(weak), "the werewolf Enfeebled and Dazzled");
+        // (Its own card applied after the werewolf's: waited for.)
+        await until(() => dazzled(plain), "the bandit Dazzled", { timeout: 10000 });
         assert(dazzled(plain) && !enfeebled(plain), `the bandit Dazzled, not Enfeebled (${plain.itemTypes.condition.map((condition) => condition.slug).join(", ")})`);
         return { werewolf: weak.itemTypes.condition.map((condition) => condition.slug) };
+    },
+
+    // Bane Oil (fiend picked) on a longsword: its 1d6 on a Strike's damage against a fiend (PF2e's DamageDice, target:trait:fiend), not
+    // against a creature without the trait.
+    async baneOilFiend(scene) {
+        await clearSquares(scene, [[2, 16], [3, 16], [3, 17]]);
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Bane Fighter", { type: "character", x: 2, y: 16 });
+        const { actor: fiend, token: fiendToken } = await creature(scene, "Bane Fiend", { x: 3, y: 16, ac: 1, hp: 300, alliance: "opposition" });
+        const { token: plainToken } = await creature(scene, "Bane Bandit", { x: 3, y: 17, ac: 1, hp: 300, alliance: "opposition" });
+        await fiend.update({ "system.traits.value": ["fiend"] });
+        const sword = await give(fighter, "Longsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await until(() => fighterToken.object && fiendToken.object && plainToken.object, "the tokens drawn", { timeout: 5000 });
+        await fighterToken.object?.control?.();
+        const oil = await give(fighter, "Bane Oil");
+        const since = Date.now();
+        await oil.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the oil's card" });
+        const state = card.getFlag(NS, "card");
+        const weapon = (state.weapons ?? []).findIndex((entry) => entry.id === sword.id);
+        const choice = state.plan.item.rune.choices.findIndex((entry) => entry.traits.includes("fiend"));
+        await game.modules.get(NS).api.live.apply(card.id, { runeWeapon: weapon, runeChoice: choice });
+        const bane = () => fighter.itemTypes.effect.find((effect) => effect.flags?.[NS]?.rune === "bane");
+        await until(() => bane(), "the Bane Effect", { timeout: 8000 });
+        const damageAt = async (token) => {
+            await target(token);
+            const action = (fighter.system.actions ?? []).find((entry) => entry.item?.id === sword.id);
+            const at = Date.now();
+            await action.damage({ event: shift() });
+            const message = await messageAfter(at, (entry) => entry.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
+            return message.rolls[0]?.formula ?? "";
+        };
+        const atFiend = await damageAt(fiendToken);
+        const atBandit = await damageAt(plainToken);
+        assert(/\b1d6\b/.test(atFiend) && !/\b1d6\b/.test(atBandit), `1d6 against the fiend only (${atFiend} / ${atBandit})`);
+        return { atFiend, atBandit };
+    },
+
+    // Iron Wine twice in a day (plan.dose): the second cup gives PF2e's Iron Wine Weakness too; Invigorating Soap ends its user's Fatigued.
+    async secondDoseAndSoap(scene) {
+        await clearSquares(scene, [[6, 16]]);
+        const { actor: drinker } = await creature(scene, "Wine Drinker", { type: "character", x: 6, y: 16 });
+        const cup = async () => {
+            const wine = await give(drinker, "Iron Wine");
+            const since = Date.now();
+            await wine.consume();
+            const card = await messageAfter(since, itemCard("item"), { what: "the wine's card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(800);
+            return card;
+        };
+        const weakness = () => drinker.itemTypes.effect.filter((effect) => /Iron Wine Weakness/.test(effect.name));
+        await cup();
+        assert(weakness().length === 0, "not on the first cup");
+        const second = await cup();
+        await until(() => weakness().length === 1, "the Weakness on the second cup", { timeout: 8000 });
+        await drinker.increaseCondition("fatigued");
+        const soap = await give(drinker, "Invigorating Soap");
+        const since = Date.now();
+        await soap.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the soap's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => !drinker.hasCondition("fatigued"), "Fatigued ended", { timeout: 8000 });
+        return { second: game.messages.get(second.id).getFlag(NS, "card").results };
     }
 };
 

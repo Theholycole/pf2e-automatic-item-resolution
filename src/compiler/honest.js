@@ -5,6 +5,8 @@
 // as done; only the whole text's reminder beside a part read (src/compiler/rows.js noteRow) goes with partial, and once later readings leave
 // nothing unread it's stale and gone. Plan-level notes are the readers' own choice (a card's line, or partial already). Pure.
 
+import { RUNE_STEP_SENTENCE } from "./rune-steps.js";
+
 const NO_OP = /^(?:\{target\}(?: \([^)]*\))?:\s*)?(?:The (?:target|creature|animal|foe|undead|possessing creature)(?: creature)? (?:is unaffected|can act normally|takes no (?:additional )?damage)|(?:Its|The) (?:effect|oil|dust) (?:ends|becomes inert)[^.]*)\.?\s*$/i;
 // (Lines the card's own results already are: "takes half damage and no other effects", Hauling's direction line, an item's own recharge.)
 const CARD_LINE = /\btakes half damage and no other effects\b|^The direction is its user's choice: the card moves it\b|\breappears on the [\w ]+? after 24 hours\.$/i;
@@ -129,7 +131,8 @@ export function withUntracedRules(plan, text) {
     const body = (/\bEffect\b/.test(plain) ? plain.replace(/^.*?\bEffect\b\s*/s, "") : plain.replace(/^.*?\bActivate\b[^.]*?\)\s*/s, "")).replace(/\s*\bCraft Requirements\b.*$/s, "");
     const trace = traceOf(plan);
     const untraced = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => {
-        if (!sentence || SKIP.test(sentence)) return false;
+        // (A step by the weapon's striking rune: its rune decides it, src/compiler/rune-steps.js.)
+        if (!sentence || SKIP.test(sentence) || RUNE_STEP_SENTENCE.test(sentence)) return false;
         const tokens = tokensOf(sentence);
         return tokens.length > 0 && !tokens.some((token) => (token.dice ? trace.dice.has(token.dice.toLowerCase()) : token.number !== undefined ? trace.numbers.has(token.number) : trace.json.includes(token.word)));
     });
