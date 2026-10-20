@@ -134,12 +134,18 @@ const ROUNDS = { round: 1, minute: 10, hour: 600 };
 // save plan alone had dropped.)
 const TYPED = /\b(?:gains?|have|has|gets?|takes?|grants? (?:you|it|them|the target)|receives?) an? ([+\-–−]?)(\d+) (item|status|circumstance) (bonus|penalty)\b/gi;
 const SPEED_RULE = /\b(fly|swim|climb|burrow) Speed (?:of|equal to) (\d+) feet\b/gi;
+// (A resistance or weakness of a number — "you gain resistance 10 to poison" — traced only by that number of that kind; temporary Hit Points
+// of a number only by that number.)
+const RESIST_RULE = /\b(?:gains?|have|has|gets?|grants? (?:you|it|them)) (resistance|weakness) (\d+) (?:to|against) (?!the\b|that\b|one\b|all\b)([a-z]+)\b/gi;
+const TEMP_RULE = /\b(?:gains?|have|has|get|grants? (?:you|it|them)) (\d+) temporary Hit Points\b/gi;
 function mustOf(sentence) {
     return [
         ...[...sentence.matchAll(TIMED_CONDITION)].map((match) => ({ slug: match[1].toLowerCase(), rounds: (COUNT[match[2].toLowerCase()] ?? Number(match[2])) * ROUNDS[match[3].toLowerCase()] })),
         ...(RECURRING.test(sentence) ? [{ recurring: true }] : []),
         ...[...sentence.matchAll(TYPED)].map((match) => ({ modifier: (match[4].toLowerCase() === "penalty" || /[\-–−]/.test(match[1]) ? -1 : 1) * Number(match[2]), type: match[3].toLowerCase() })),
-        ...[...sentence.matchAll(SPEED_RULE)].map((match) => ({ speed: match[1].toLowerCase(), value: Number(match[2]) }))
+        ...[...sentence.matchAll(SPEED_RULE)].map((match) => ({ speed: match[1].toLowerCase(), value: Number(match[2]) })),
+        ...[...sentence.matchAll(RESIST_RULE)].map((match) => ({ resist: match[1].toLowerCase(), value: Number(match[2]), of: match[3].toLowerCase() })),
+        ...[...sentence.matchAll(TEMP_RULE)].map((match) => ({ temp: Number(match[1]) }))
     ];
 }
 // The plan's typed modifiers ("type:value") and Speeds ("kind:value"), wherever it holds them: row modifiers, a readied bonus, an Effect's
@@ -213,7 +219,7 @@ export function withUntracedRules(plan, text) {
         if (afflicted && /\bStage \d\b/.test(sentence)) return false;
         // (Said on a note or a line of the plan already: traced.)
         if (spoken.includes(sentence.toLowerCase().slice(0, 60))) return false;
-        if (mustOf(sentence).some((token) => (token.recurring ? !trace.json.includes('"saveends"') : token.modifier !== undefined ? !held.has(`${token.type}:${token.modifier}`) : token.speed ? !held.has(`${token.speed}:${token.value}`) : !timed.has(`${token.slug}:${token.rounds}`)))) return true;
+        if (mustOf(sentence).some((token) => (token.recurring ? !trace.json.includes('"saveends"') : token.modifier !== undefined ? !held.has(`${token.type}:${token.modifier}`) : token.speed ? !held.has(`${token.speed}:${token.value}`) : token.resist ? !held.has(`${token.of}:${token.value}`) : token.temp !== undefined ? !trace.numbers.has(token.temp) || !/temp/.test(trace.json) : !timed.has(`${token.slug}:${token.rounds}`)))) return true;
         const tokens = tokensOf(sentence);
         return tokens.length > 0 && !tokens.some((token) => (token.dice ? trace.dice.has(token.dice.toLowerCase()) : token.number !== undefined ? trace.numbers.has(token.number) : trace.json.includes(token.word)));
     });

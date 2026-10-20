@@ -1138,6 +1138,10 @@ test("a condition for a time and a save again at its turns are each traced on th
     assert.equal(withUntracedRules(boosted, bonus), boosted);
     assert.equal(withUntracedRules(boosted, "Effect The resonant power grants you a +1 circumstance bonus to initiative rolls."), boosted);
     assert.equal(compileItem(item("Golden Liberator's Feather")).partial, true);
+    // (A resistance of a number and kind, and temporary Hit Points of a number: Death Tusk Helm's 5 its save plan doesn't hold.)
+    assert.ok(compileActivations(item("Death Tusk Helm"))[0].plan.notes.some((note) => /\b5 temporary Hit Points\b/.test(note)));
+    const resisted = { resolution: { kind: "check", outcomes: { success: { effects: [], modifiers: [{ selector: "ac", type: "status", value: 1 }], resist: [{ type: "fire", value: 3 }] } } } };
+    assert.equal(withUntracedRules(resisted, "Effect You gain resistance 7 to sonic for a while.").partial, true);
 });
 
 test("a new save at its turns (src/compiler/save-ends.js, the ability's duration.saveEnds and note.saveEnds): Tusk and Fang Chain's ends its critical failure's confusion, Spirit-Sealing Fulu (Greater)'s takes a round off, Golden Silencer (Greater)'s note Effect, Gearbinder Oil's escalating slowed for 6 rounds behind a GM gate, Dreaming Round's from its failing rows with its fatigued; Jawbreaker Shield's broken jaw a note Effect a save ends", async () => {
