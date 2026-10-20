@@ -673,7 +673,7 @@ test("a save's degrees in sentences (Gearblade: DC 36 Reflex, 3d12 bludgeoning o
     assert.equal(opus.plan.resolution.check.statistic, "deception");
 });
 
-test("an artifact's Destruction isn't its activation's (Spleen Bloodstone of Arazni's explosion, Orb of Dragonkind's 90 feet); the orb's breath a basic Reflex save, its dragon's damage type picked on the card; Pacifying's save a –2 attack penalty for 1 minute, its nonlethal exception a note", () => {
+test("an artifact's Destruction isn't its activation's (Spleen Bloodstone of Arazni's explosion, Orb of Dragonkind's 90 feet); the orb's breath a basic Reflex save, its dragon's damage type picked on the card; Pacifying's save a –2 attack penalty for 1 minute, not on its nonlethal attacks", () => {
     const [, breath] = compileActivations(item("Orb of Dragonkind"), { spellEffects });
     assert.deepEqual([breath.plan.resolution.check.statistic, breath.plan.resolution.check.basic, breath.plan.resolution.check.against.value, breath.plan.targeting.range, breath.plan.targeting.area], ["reflex", true, 40, null, { type: "cone", value: 60 }]);
     assert.deepEqual(breath.plan.damageChoices.slice(0, 3).map((choice) => [choice.label, choice.formula]), [["Acid", "25d6[acid]"], ["Cold", "25d6[cold]"], ["Electricity", "25d6[electricity]"]]);
@@ -682,7 +682,8 @@ test("an artifact's Destruction isn't its activation's (Spleen Bloodstone of Ara
     assert.ok(spleen.every((entry) => !/explodes/i.test(JSON.stringify(entry.plan ?? {}))), "its Destruction's explosion read nowhere");
     const [pacifying] = compileActivations(item("Pacifying"), { spellEffects });
     assert.deepEqual([pacifying.plan.resolution.check.statistic, pacifying.plan.resolution.outcomes.failure.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.value, modifier.duration.unit])], ["will", [["attack-roll", -2, 1, "minutes"]]]);
-    assert.deepEqual(pacifying.plan.notes, ["Its nonlethal attacks don't take that penalty (by hand)."]);
+    // (Its nonlethal attacks exempt: the penalty predicated on the attack not being nonlethal, PF2e's item:trait:nonlethal — no note.)
+    assert.deepEqual([pacifying.plan.resolution.outcomes.failure.modifiers[0].predicate, pacifying.plan.notes, pacifying.plan.partial], [[{ not: "item:trait:nonlethal" }], [], undefined]);
 });
 
 test("more one-offs: Aerekostes's next attack rolled twice, Anointed Waterskin's Bless, Mirror Robe's Create a Diversion at +9, Beekeeper's Smoker's concealing square, Deravon's Helm's save or Prone, Smoldering Armor's Fire Shield, Stone of Unrivaled Skill's +3 to any skill picked", async () => {
