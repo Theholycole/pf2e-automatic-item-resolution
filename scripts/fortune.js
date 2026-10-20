@@ -8,6 +8,8 @@
 import { MODULE_KEY, createFortuneCard, fortuneCardHTML, fortuneEffectSource, isForTarget, readiedWords } from "../src/live/fortune-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, damageRollClass, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
 
+const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+
 export async function postFortuneCard({ message, plan, used, actor, token }) {
     const state = createFortuneCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: entryOf(token, actor) });
     return ChatMessage.create({ content: fortuneCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
@@ -74,6 +76,17 @@ export async function fortuneRolled(message) {
         return !predicates.length || predicates.some((rule) => fits(rule.predicate));
     });
     if (spent.length) await actor.deleteEmbeddedDocuments("Item", spent.map((effect) => effect.id)).catch(() => null);
+    // (A critical success at that roll gives more: Champion's Laurels' temporary Hit Points — the ability module's, with their time.)
+    for (const effect of context.outcome === "criticalSuccess" ? spent : []) {
+        const flag = effect.flags[MODULE_ID][MODULE_KEY];
+        if (!flag.onCritical?.tempHP) continue;
+        const ability = game.modules.get(ABILITY_ID)?.api?.live;
+        const name = escape(flag.item?.name ?? "Item");
+        const token = message.token ?? actor.getActiveTokens?.(true, true)?.[0] ?? null;
+        const state = { plan: {}, ability: { name: flag.item?.name ?? "Item", uuid: flag.item?.uuid ?? null, slug: String(flag.item?.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item" }, source: { actorUuid: actor.uuid, tokenUuid: token?.uuid ?? null, name: actor.name }, targets: [] };
+        const line = ability?.applyChange ? await ability.applyChange({ op: "tempHp", target: "source", amount: flag.onCritical.tempHP, duration: flag.onCritical.duration }, state) : null;
+        await ChatMessage.create({ content: `<p><strong>${name}</strong>: a critical success — ${escape(line ?? `${actor.name}: ${flag.onCritical.tempHP} temporary Hit Points${ability?.applyChange ? "" : " (by hand: the ability module isn't active)"}`)}.</p>`, speaker: ChatMessage.getSpeaker({ actor }) });
+    }
 }
 
 // (Only against what triggered it, an Effect's flag against { damage, save, onAttack? }: the next attack roll or check at its creature
@@ -114,21 +127,21 @@ export async function againstRolled(message) {
 
 async function onAttackResult(onAttack, { hit, attacker, attackerToken, guarded, item }) {
     if (!attacker) return;
-    const name = String(item?.name ?? "Item").replace(/[&<>"']/g, "");
+    const name = escape(item?.name ?? "Item");
     if (!hit && onAttack.miss) {
         const ability = game.modules.get(ABILITY_ID)?.api?.live;
         const token = attackerToken ?? attacker.getActiveTokens?.(true, true)?.[0] ?? null;
-        const state = { plan: {}, ability: { name, uuid: item?.uuid ?? null, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item" }, source: { actorUuid: guarded.uuid, tokenUuid: guarded.getActiveTokens?.(true, true)?.[0]?.uuid ?? null, name: guarded.name }, targets: [{ id: "t0", actorUuid: attacker.uuid, tokenUuid: token?.uuid ?? null, name: token?.name ?? attacker.name }] };
+        const state = { plan: {}, ability: { name: item?.name ?? "Item", uuid: item?.uuid ?? null, slug: String(item?.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item" }, source: { actorUuid: guarded.uuid, tokenUuid: guarded.getActiveTokens?.(true, true)?.[0]?.uuid ?? null, name: guarded.name }, targets: [{ id: "t0", actorUuid: attacker.uuid, tokenUuid: token?.uuid ?? null, name: token?.name ?? attacker.name }] };
         const condition = onAttack.miss.condition;
         const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: condition.slug, value: condition.value, target: "t0", duration: condition.duration }, state) : null;
-        await ChatMessage.create({ content: `<p><strong>${name}</strong>: the attack missed — ${line ?? `${attacker.name} ${condition.slug}${condition.value ? ` ${condition.value}` : ""} for ${condition.duration.value} round${condition.duration.value === 1 ? "" : "s"}${ability?.applyChange ? "" : " (by hand: the ability module isn't active)"}`}.</p>`, speaker: ChatMessage.getSpeaker({ actor: guarded }) });
+        await ChatMessage.create({ content: `<p><strong>${name}</strong>: the attack missed — ${escape(line ?? `${attacker.name} ${condition.slug}${condition.value ? ` ${condition.value}` : ""} for ${condition.duration.value} round${condition.duration.value === 1 ? "" : "s"}${ability?.applyChange ? "" : " (by hand: the ability module isn't active)"}`)}.</p>`, speaker: ChatMessage.getSpeaker({ actor: guarded }) });
     }
     if (hit && onAttack.hit) {
         const DamageRoll = damageRollClass();
         if (!DamageRoll) return;
         const damage = onAttack.hit.damage;
         const roll = await new DamageRoll(`(${damage.formula})[${damage.type}]`).evaluate();
-        await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: guarded }), flavor: `<strong>${name}</strong>: the attack still hit — ${damage.formula} ${damage.type} damage to ${attacker.name}` });
+        await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: guarded }), flavor: `<strong>${name}</strong>: the attack still hit — ${damage.formula} ${damage.type} damage to ${escape(attacker.name)}` });
         await attacker.applyDamage({ damage: roll, token: attackerToken ?? attacker.getActiveTokens?.(true, true)?.[0] ?? undefined });
     }
 }

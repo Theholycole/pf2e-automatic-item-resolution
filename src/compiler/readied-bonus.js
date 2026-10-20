@@ -271,6 +271,7 @@ export function readDegreeAdjust(text, { trigger = null } = {}) {
 }
 
 // The builtin: { builtin: "readied-bonus", bonus: { modifiers, resistance, duration, spend, degree? }, notes }.
+const CRITICAL_TEMP = /^If you critically succeed at the (?:check|roll|save|saving throw|triggering check), you gain (\d+) temporary Hit Points that last (?:for )?(\d+) (minutes?|rounds?|hours?)\.$/i;
 const MISS_CONDITION = /^If the (?:attack|Strike) misses, [^.]*?\bwho becomes (Dazzled|Frightened|Off-Guard|Sickened|Stupefied|Clumsy|Enfeebled|Blinded|Deafened|Stunned|Slowed)(?: (\d+))? for (\d+) rounds?\.$/i;
 const HIT_DAMAGE = /^If the (?:attack|Strike) still hits, [^.]*?\bdealing (\d+d\d+(?:\+\d+)?) (acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void) damage to the attacker\.$/i;
 
@@ -300,7 +301,14 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
         if (hit) onAttack.hit = { note, damage: { formula: hit[1], type: hit[2].toLowerCase() } };
     }
     if (onAttack.miss || onAttack.hit) bonus.onAttack = Object.fromEntries(Object.entries(onAttack).map(([key, { note, ...rest }]) => [key, rest]));
-    const read_ = new Set(Object.values(onAttack).map((entry) => entry.note));
+    // (What a critical success at the roll it's for gives too: Champion's Laurels' "If you critically succeed at the check, you gain 2
+    // temporary Hit Points that last for 1 minute" — bonus.onCritical, given when that roll spends it.)
+    const critical = bonus.spend?.length ? (read_notes ?? []).map((note) => [note, CRITICAL_TEMP.exec(String(note).trim())]).find(([, match]) => match) : null;
+    if (critical) {
+        const [, value, count, unit] = critical[1];
+        bonus.onCritical = { tempHP: Number(value), duration: { mode: "fixed", value: Number(count), unit: /^min/i.test(unit) ? "minutes" : /^hour/i.test(unit) ? "hours" : "rounds", expiry: "turn-start", anchor: "effect-start" } };
+    }
+    const read_ = new Set([...Object.values(onAttack).map((entry) => entry.note), ...(critical ? [critical[0]] : [])]);
     const notes = (read_notes ?? []).filter((note) => !read_.has(note) && !(only.length && /^\(This applies only to (?:any )?(?:the )?damage the (?:effect|attack) deals\.\)$/i.test(String(note).trim())) && (!ONLY.test(note) || /\bor an? \+\d|\bif\b|\bunless\b|\binstead\b/i.test(note.replace(ONLY, ""))));
     // (Another creature's: the one the presser targets, within the distance its trigger names.)
     const within = /\bwithin (\d+) feet\b/i.exec(trigger ?? triggerOf(String(text ?? "")) ?? "")?.[1];

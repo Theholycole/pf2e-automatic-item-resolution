@@ -52,7 +52,9 @@ export function readiedWords(plan) {
     // (What the triggering attack's result does to the attacker: "if it misses, the attacker dazzled for 1 round".)
     const miss = bonus.onAttack?.miss?.condition;
     const hit = bonus.onAttack?.hit?.damage;
-    const riders = [miss ? `if it misses, the attacker ${miss.slug}${miss.value ? ` ${miss.value}` : ""} for ${miss.duration.value} round${miss.duration.value === 1 ? "" : "s"}` : null, hit ? `if it hits, ${hit.formula} ${hit.type} damage to the attacker` : null].filter(Boolean);
+    // (And what a critical success at that roll gives: "on a critical success, 2 temporary Hit Points for 1 minute".)
+    const critical = bonus.onCritical;
+    const riders = [miss ? `if it misses, the attacker ${miss.slug}${miss.value ? ` ${miss.value}` : ""} for ${miss.duration.value} round${miss.duration.value === 1 ? "" : "s"}` : null, hit ? `if it hits, ${hit.formula} ${hit.type} damage to the attacker` : null, critical ? `on a critical success, ${critical.tempHP} temporary Hit Points for ${critical.duration.value} ${critical.duration.value === 1 ? critical.duration.unit.replace(/s$/, "") : critical.duration.unit}` : null].filter(Boolean);
     return `${bonusWords(bonus)}, ${until}${riders.length ? `; ${riders.join("; ")}` : ""}`;
 }
 
@@ -91,7 +93,7 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
         img: img ?? (fortune ? "icons/svg/d20-highlight.svg" : "icons/svg/upgrade.svg"),
         // (Only against what triggered it: what spends it — with resistance or immunity, the damage still to come after a hit; with a
         // bonus to saves, its creature's save.)
-        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
         system: {
             description: { value: `<p>${escape(readiedWords(plan))}.${(plan.notes ?? []).length ? ` ${escape(plan.notes.join(" "))}` : ""}</p>` },
             duration: { ...duration, sustained: false },

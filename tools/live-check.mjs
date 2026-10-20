@@ -354,6 +354,29 @@ export const cases = {
         return { watches: watches().map((effect) => effect.name), learned: learned.content, healed: healed.content, hp: [before, user.system.attributes.hp.value, user.system.attributes.hp.max] };
     },
 
+    // Champion's Laurels (Amateur): +1 status to the triggering Athletics check; its critical success (DC -20) gives 2 temporary Hit Points for
+    // 1 minute, and that check spends the Effect.
+    async laurelsCritical(scene) {
+        const { actor: user } = await creature(scene, "Laurel Athlete", { type: "character", x: 8, y: 16 });
+        let outcome = null;
+        for (let tries = 0; tries < 3 && outcome !== "criticalSuccess"; tries++) {
+            const laurels = await give(user, "Champion's Laurels (Amateur)");
+            let since = Date.now();
+            await laurels.consume();
+            const card = await messageAfter(since, itemCard("fortune"), { what: "the laurels' card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => user.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")?.onCritical), "the bonus Effect", { timeout: 8000 });
+            since = Date.now();
+            await user.skills.athletics.roll({ dc: { value: -20 }, skipDialog: true });
+            const check = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "skill-check", { what: "the Athletics check" });
+            outcome = check.flags.pf2e.context.outcome;
+            await until(() => !user.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")), "the Effect spent by the check", { timeout: 8000 });
+        }
+        assert(outcome === "criticalSuccess", `a critical success (DC -20): ${outcome}`);
+        await until(() => user.system.attributes.hp.temp === 2, `2 temporary Hit Points (${user.system.attributes.hp.temp})`, { timeout: 8000 });
+        return { outcome, temp: user.system.attributes.hp.temp };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });

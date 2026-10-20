@@ -367,3 +367,36 @@ test("only against what triggered it (bonus.against): the attack at its creature
     await post({ context: { type: "saving-throw", domains: ["will", "saving-throw"] } }, guard);
     assert.equal(mine().length, 0);
 });
+
+test("Champion's Laurels: +1 status to the triggering Acrobatics or Athletics check, and on its critical success 2 temporary Hit Points for 1 minute (the ability module's) — given when that roll spends it, not on a success", async () => {
+    const athlete = foundry.makeActor({ id: "fortune-athlete", name: "Athlete", owners: ["player"] });
+    foundry.place(athlete, 0, 16800);
+    const laurels = compileItem(source("Champion's Laurels (Amateur)"));
+    assert.deepEqual([laurels.bonus.onCritical.tempHP, laurels.bonus.onCritical.duration.value, laurels.bonus.onCritical.duration.unit, laurels.notes, laurels.partial], [2, 1, "minutes", [], undefined]);
+    const use = async () => {
+        const item = foundry.giveItem(athlete, source("Champion's Laurels (Amateur)"));
+        const data = item.toObject();
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: athlete.id }, actor: athlete, token: athlete.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return card;
+    };
+    const check = async (outcome) => {
+        await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { context: { type: "skill-check", outcome, domains: ["athletics", "skill-check"], options: [] } } }, speaker: { actor: athlete.id }, actor: athlete, token: athlete.token.document }));
+        await settle();
+    };
+    const card = await use();
+    assert.match(card.content, /on a critical success, 2 temporary Hit Points for 1 minute/);
+    const before = foundry.applied.length;
+    await check("success");
+    assert.equal(foundry.applied.length, before, "a success: no temporary Hit Points");
+    assert.equal(athlete.itemTypes.effect.some((effect) => effect.flags?.[MODULE_ID]?.rollTwice), false, "spent");
+    await use();
+    await check("criticalSuccess");
+    const [given] = foundry.applied.slice(before);
+    assert.deepEqual([given.change.op, given.change.target, given.change.amount, given.change.duration.unit, given.state.source.name], ["tempHp", "source", 2, "minutes", "Athlete"]);
+    assert.match(foundry.messages.at(-1).content, /Champion&#39;s Laurels \(Amateur\)<\/strong>: a critical success — ability applied tempHp/);
+});
