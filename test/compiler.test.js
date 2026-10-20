@@ -1204,6 +1204,14 @@ test("what its Quickened's extra action is only for, a note Effect beside its Qu
     assert.equal(compileActivations(item("Boots of the Blight"))[0].plan.partial, true);
 });
 
+test("a Craft Requirements paragraph right after result rows is no part of the last row (item-data.js): Whirlwind Vial's critical failure pushed 20 feet and Prone, nothing by hand; Vaccine's Duration after it still read", () => {
+    const vial = compileItem(item("Whirlwind Vial"));
+    const row = vial.resolution.outcomes.criticalFailure;
+    assert.deepEqual([row.forcedMovement?.distance, row.effects.map((effect) => effect.slug), row.manualInstructions, vial.partial], [20, ["prone"], undefined, undefined]);
+    const vaccine = compileItem(item("Vaccine (Lesser)"));
+    assert.equal(vaccine.resolution.outcomes.success.modifiers[0].duration.value, 24);
+});
+
 test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {
     const { readReductions } = await import("../src/compiler/reduce.js");
     assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);

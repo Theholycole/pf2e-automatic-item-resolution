@@ -41,6 +41,10 @@ export const isBareFigurine = (item, html = item?.system?.description?.value) =>
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
+    // (Its Craft Requirements paragraph right after result rows, how it's made, not what it does: off, or the ability compiler reads it into the
+    // last row — Whirlwind Vial's critical failure "… knocked Prone. Craft Requirements Supply magical residue …", a line by hand. Only that
+    // paragraph — what follows it is the item's, Dragonplate's table, Vaccine's Duration — and only after rows: elsewhere it's left as it was.)
+    text = text.replace(/(<strong>\s*(?:Critical )?(?:Success|Failure)\s*<\/strong>(?:(?!<strong>\s*Craft Requirements)[\s\S])*?<\/p>\s*)(?:<hr\s*\/?>\s*)?<p>\s*<strong>\s*Craft Requirements\s*<\/strong>[\s\S]*?<\/p>/gi, "$1");
     if (isBareFigurine(item, text)) text = `${FIGURINE_BLOCK}${text}`;
     // (A save at its wielder's better DC, Meloth's Lifedrinker's "takes @Damage[6d6[mental]] damage with a Will save; the DC is equal
     // to the wielder's class or spell DC, whichever is higher": its owner's class-or-spell DC, a basic save, as PF2e writes it.)
