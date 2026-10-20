@@ -39,7 +39,9 @@ const DEGREE_ROW = /^(?:Critical )?(?:Success|Failure)\b/;
 const EITHER = /\b(?:on|to) yourself or (?:an?|another|one) /i;
 // (The condition its Trigger names: Deathless's "Trigger You gain the Doomed or Wounded condition … You reduce the value of the
 // triggering condition by 1" — the one of them its user gained, the card's picker.)
-const TRIGGERING = /\breduc(?:e|es|ing) the value of the triggering condition by (\d|one|two|three)\b/i;
+// (Or Energizing Pill's secondary effect, "Trigger You would become Clumsy, Drained, … Effect Reduce the value of the condition you just
+// gained by 1; if this reduces the value to 0, you don't gain the triggering condition".)
+const TRIGGERING = /\breduc(?:e|es|ing) the value of (?:the triggering condition|the condition you just gained) by (\d|one|two|three)\b/i;
 // (Ended outright, on its user and the creatures it picks: Cayden's Tankard's "ending the controlled, Grabbed, Immobilized,
 // Paralyzed, Restrained, and slowed conditions on yourself and creatures of your choice within 120 feet of you" — each, "all".)
 const CONDITIONS = "blinded|clumsy|confused|controlled|dazzled|deafened|doomed|drained|enfeebled|fascinated|fatigued|fleeing|frightened|grabbed|immobilized|off-guard|paralyzed|prone|restrained|sickened|slowed|stunned|stupefied|wounded";
@@ -124,7 +126,7 @@ export function reductionPlan(base, reduce, notes = []) {
 // What else the text says that a card should show (rules, not its flavor): its other sentences with rule words.
 export function reductionNotes(text) {
     // (A copy without the global flag: the shared one keeps its place between calls.)
-    const patterns = [REDUCE, LIST, TO_ZERO, OTHERS].map((pattern) => new RegExp(pattern.source, "i"));
+    const patterns = [REDUCE, LIST, TO_ZERO, OTHERS, TRIGGERING].map((pattern) => new RegExp(pattern.source, "i"));
     const reduces = { test: (sentence) => patterns.some((pattern) => pattern.test(sentence)) };
     // (The reduction's own sentence too when it says more: "…, and you regain 1 Mythic Point".)
     return ownUse(text).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && (reduces.test(sentence) ? /\band (?:you )?(?:regain|gain|become|are|take|can)\b/i.test(sentence) : RULE_WORDS.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));

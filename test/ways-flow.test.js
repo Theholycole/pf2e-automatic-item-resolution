@@ -133,6 +133,9 @@ test("a candy's Secondary Effect, a use after the first: Ginger Chew's ways card
     assert.deepEqual(chew.ways[1].plan.item.reduce, [{ slug: "sickened", by: 1 }]);
     assert.deepEqual(compileItem(source("Crackling Bubble Gum (Lesser)")).ways.map((way) => routeOf(way.plan)), ["item", "save"]);
     assert.deepEqual(compileItem(source("Cinnamon Seers")).ways.map((way) => routeOf(way.plan)), ["item", "reroll"]);
+    // (Energizing Pill's reaction: the condition just gained, of its Trigger's, lowered by 1 — the card's picker, no note.)
+    const pill = compileItem(source("Energizing Pill"));
+    assert.deepEqual([pill.partial, pill.ways[1].plan.item.reduce, pill.ways[1].plan.notes], [undefined, [{ choose: ["clumsy", "drained", "enfeebled", "frightened", "sickened", "slowed", "stupefied"], by: 1 }], undefined]);
     const drop = compileItem(source("Scholar's Drop"));
     assert.equal(drop.builtin, undefined);
     assert.match(drop.notes.at(-1), /^Secondary effect: Requirements You're fatigued/);
