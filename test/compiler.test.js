@@ -590,7 +590,9 @@ test("activations: a choice of jumps (Blast Boots), temporary Hit Points from th
     assert.equal(compileActivations(item("Soulpiercer"))[0].plan?.item?.weapon, undefined);
     const vision = compileActivations(item("Meloth's Lifedrinker (Level 7)"))[1].plan;
     assert.deepEqual([vision.resolution.check.statistic, vision.resolution.check.basic, vision.resolution.check.against], ["will", true, { dc: "owner", statistic: "class-spell" }]);
-    assert.match(vision.notes.at(-1), /^If the target is reduced to 0 HP by this effect/);
+    assert.ok(vision.notes.some((note) => /^If the target is reduced to 0 HP by this effect/.test(note)), vision.notes.join(" / "));
+    // (Its rows' Frightened, beside a "basic" save the ability compiler reads for its damage alone: notes now, src/compiler/honest.js.)
+    assert.ok(vision.notes.some((note) => /^Success The target takes half damage and is Frightened 1\.$/.test(note)) && vision.partial === true);
     const [holy] = compileActivations(item("Holy"));
     assert.deepEqual(holy.plan.item.levelTemp, [{ multiplier: 2, heal: true, duration: null }]);
     assert.equal(levelTempText(holy.plan.item.levelTemp[0]), "Hit Points regained equal to twice the level of the creature targeted");
@@ -1095,4 +1097,13 @@ test("resolved only when the card does all of it (src/compiler/honest.js): a GM 
     assert.equal(compileItem(item("Gearbinder Oil (Lesser)")).partial, true);
     assert.deepEqual(leftToTheGM({ manualInstructions: ["{target} (critical success): The creature is unaffected."] }), []);
     assert.deepEqual(leftToTheGM({ effects: [{ kind: "condition", slug: "clumsy", value: 1 }], manualInstructions: ["{target} (failure, the rest by hand): The target is Clumsy 1 and can't use reactions until the beginning of your next turn."] }), []);
+});
+
+test("a rule sentence the plan has no trace of (src/compiler/honest.js withUntracedRules): Stampede Medallion's \"On a critical failure, the foe is also knocked Prone\" a note, the plan partial; not a sentence of flavor, nor one whose numbers are in the plan, nor one of PF2e's own linked Effect", async () => {
+    const { withUntracedRules } = await import("../src/compiler/honest.js");
+    const [tide] = compileActivations(item("Stampede Medallion"));
+    assert.deepEqual([tide.plan.partial, tide.plan.notes.includes("On a critical failure, the foe is also knocked Prone.")], [true, true]);
+    const plan = { resolution: { kind: "save", outcomes: { failure: { damage: { mode: "shared", multiplier: 1 }, effects: [{ kind: "condition", slug: "frightened", value: 2 }] } }, sharedDamage: { components: [{ formula: "2d6[fire]" }] } } };
+    assert.equal(withUntracedRules(plan, "Effect The target takes 2d6 fire damage and is Frightened 2. Malevolent energy leaks out, barely restrained."), plan);
+    assert.equal(withUntracedRules({ ...plan, resolution: { ...plan.resolution, kind: "effect", applications: [{ kind: "native-spell-effect", uuid: "Compendium.pf2e.equipment-effects.Item.x" }] } }, "Effect You become Slowed 1.").partial, undefined);
 });

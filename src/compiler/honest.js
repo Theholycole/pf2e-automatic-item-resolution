@@ -91,3 +91,48 @@ function withoutStaleReminder(plan) {
     const next = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => [degree, row?.noteEffects ? { ...row, noteEffects: row.noteEffects.filter((entry) => !entry?.reminder) } : row]));
     return { ...plan, resolution: { ...plan.resolution, outcomes: next } };
 }
+
+// A rule sentence the plan shows no trace of (2026-10-20, the dropped-rule audit): one with a mechanical token — dice, a DC, a distance, a
+// condition, persistent damage, a resistance or weakness — none of which is anywhere in the plan (Stampede Medallion's "On a critical failure,
+// the foe is also knocked Prone" beside a basic save that had no Prone). A note, the plan partial: the card says it, the census counts it.
+// text: the plain text it was read from (the item's, or the activation's).
+const CONDITIONS = "frightened|sickened|stunned|slowed|prone|off-guard|dazzled|blinded|deafened|clumsy|enfeebled|drained|fatigued|immobilized|grabbed|restrained|quickened|fleeing|confused|paralyzed|petrified|stupefied|doomed|persistent|resistance|weakness";
+const SKIP = /^(?:This|These|Activate|Frequency|Trigger|Requirements|Craft Requirements|Usage|Access|Saving Throw|Onset|Maximum Duration|Stage \d|Effect:|Hardness)\b/;
+// (A condition as a rule — "becomes Frightened 1", "is also knocked Prone", "Slowed 1" — not a word of flavor, "barely restrained contempt";
+// persistent damage, a resistance or weakness with its number.)
+const CONDITION_RULE = new RegExp(String.raw`\b(?:becomes?|is|are|be|knocked|falls?|gains?|remains?|also)\s+(?:\w+\s+)?(${CONDITIONS.replace(/\|persistent\|resistance\|weakness$/, "")})\b|\b(${CONDITIONS.replace(/\|persistent\|resistance\|weakness$/, "")}) \d\b`, "gi");
+// (Persistent damage something takes or deals, not what a sense detects, "creatures who are taking persistent bleed damage".)
+const AMOUNT_RULE = /\b\d+(?:d\d+)? persistent\b|\b(?:takes?|deals?)\b[^.]{0,40}?\bpersistent \w+ damage\b|\b(?:resistance|weakness) (?:\d+|to)\b/gi;
+function tokensOf(sentence) {
+    return [
+        ...(sentence.match(/\b\d+d\d+\b/g) ?? []).map((dice) => ({ dice })),
+        ...[...sentence.matchAll(/\bDC (\d+)\b/g)].map((match) => ({ number: Number(match[1]) })),
+        ...[...sentence.matchAll(/\b(\d+)-foot\b/g)].map((match) => ({ number: Number(match[1]) })),
+        ...[...sentence.matchAll(CONDITION_RULE)].map((match) => ({ word: (match[1] ?? match[2]).toLowerCase() })),
+        ...[...sentence.matchAll(AMOUNT_RULE)].map((match) => ({ word: /persistent/i.test(match[0]) ? "persistent" : /resistance/i.test(match[0]) ? "resist" : "weakness" }))
+    ];
+}
+function traceOf(plan) {
+    const json = JSON.stringify(plan).toLowerCase();
+    const dice = new Set([...(json.match(/\b\d+d\d+\b/g) ?? [])]);
+    for (const match of json.matchAll(/"dicenumber":(\d+),(?:[^{}]*?)"diesize":"(d\d+)"/g)) dice.add(`${match[1]}${match[2]}`);
+    // (Any number in it, a string's "90-foot line" too.)
+    const numbers = new Set([...json.matchAll(/\d+/g)].map((match) => Number(match[0])));
+    return { json, dice, numbers };
+}
+export function withUntracedRules(plan, text) {
+    if (!plan || plan.partial || plan.noteOnly || plan.builtin) return plan;
+    // (Not one that gives PF2e's own Effect, or a PF2e spell's: its rules are that Effect's, which the plan doesn't spell out.)
+    if (/"native-spell-effect"|Compendium\.pf2e\.[a-z-]*effects\.Item\./.test(JSON.stringify(plan))) return plan;
+    // (From its Effect on, else after its Activate line's traits.)
+    const plain = String(text ?? "");
+    const body = (/\bEffect\b/.test(plain) ? plain.replace(/^.*?\bEffect\b\s*/s, "") : plain.replace(/^.*?\bActivate\b[^.]*?\)\s*/s, "")).replace(/\s*\bCraft Requirements\b.*$/s, "");
+    const trace = traceOf(plan);
+    const untraced = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => {
+        if (!sentence || SKIP.test(sentence)) return false;
+        const tokens = tokensOf(sentence);
+        return tokens.length > 0 && !tokens.some((token) => (token.dice ? trace.dice.has(token.dice.toLowerCase()) : token.number !== undefined ? trace.numbers.has(token.number) : trace.json.includes(token.word)));
+    });
+    if (!untraced.length) return plan;
+    return { ...plan, notes: [...(plan.notes ?? []), ...untraced], partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };
+}

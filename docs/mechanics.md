@@ -487,4 +487,6 @@ These mechanics have no table yet. An item gets one when its text uses the same 
 
   - A behaviour rule or the GM's call with its own time, and no numbers or conditions, becomes a note Effect on the creature for that time instead of a GM line (Floppy Rag Doll's "can't use reactions until the end your turn"). Its time is the line's own, else the item's.
 
+  - A rule sentence the plan has no trace of (`withUntracedRules`) is a note, and the plan partial. That's one with dice, a DC, a distance, a condition as a rule ("is also knocked Prone"), persistent damage taken or dealt, or a resistance or weakness, none of which the plan carries. Stampede Medallion's Prone on a critical failure beside its basic save was dropped like that before. A plan that gives PF2e's own Effect is left out, since its rules are that Effect's.
+
   The whole text's reminder, added beside a row that reads only part of the text, is dropped once later readings leave nothing unread. Before this, those plans counted resolved: the censuses went from 768 to 749 resolved consumables and from 826 to 779 resolved permanent activations.
