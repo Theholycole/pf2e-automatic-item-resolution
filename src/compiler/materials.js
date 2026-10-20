@@ -20,3 +20,23 @@ export function damageMaterial(plan, text) {
         ...(plan.damageChoices?.length ? { damageChoices: plan.damageChoices.map((choice) => ({ ...choice, formula: withFlavor(choice.formula, material) })) } : {})
     };
 }
+
+// A rider only for a creature the material gets past (2026-10-20): Moonlit Spellgun's "Critical Success … If it has a weakness to silver or a
+// resistance that can be bypassed by silver, it's also Enfeebled 1 for 1 minute" — plan.ifTarget [{ material, degree, effects }]: the attack
+// card gives those creatures the plan with the rider (scripts/poisons.js, src/live/if-target.js), the rest the plain one. Its note no longer.
+const IF_MATERIAL = /^(Critical success|Success): If it has a weakness to (silver|cold iron|adamantine) or a resistance that can be bypassed by \2, it's also ([A-Z]?[a-z]+) (\d+) for (\d+|one|a|an) (round|minute)s?\.$/i;
+const UNITS = { round: "rounds", minute: "minutes" };
+export function withMaterialRider(plan) {
+    const notes = plan?.notes ?? [];
+    const found = notes.map((note) => [note, IF_MATERIAL.exec(String(note).trim())]).filter(([, match]) => match);
+    if (!found.length || plan.resolution?.check?.against?.statistic !== "ac") return plan;
+    const ifTarget = found.map(([, match]) => ({
+        material: MATERIAL[match[2].toLowerCase()],
+        degree: /^critical/i.test(match[1]) ? "criticalSuccess" : "success",
+        effects: [{ kind: "condition", slug: match[3].toLowerCase(), value: Number(match[4]), duration: { mode: "fixed", value: /^\d+$/.test(match[5]) ? Number(match[5]) : 1, unit: UNITS[match[6].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } }]
+    }));
+    const left = notes.filter((note) => !found.some(([said]) => said === note));
+    const { partial, ...rest } = plan;
+    const done = left.length === 0 && !(plan.unread ?? []).length;
+    return { ...(done ? rest : plan), ifTarget, notes: left.length ? left : undefined, ...(done ? { automation: { ...(plan.automation ?? {}), level: "automatic" } } : {}) };
+}

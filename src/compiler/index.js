@@ -50,7 +50,7 @@ import { conjuredPlan, statedCreaturePlan } from "./conjured.js";
 import { GENERIC_SPELLGUN, MODULE_ID, loadedPlan } from "./generic-spellgun.js";
 import { saveOrPlan } from "./save-or.js";
 import { withoutFlavor, withoutFlavorNotes } from "./flavor.js";
-import { damageMaterial } from "./materials.js";
+import { damageMaterial, withMaterialRider } from "./materials.js";
 import { waysPlan } from "./ways.js";
 import { elementWaysPlan, dragonWaysPlan } from "./bane.js";
 import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
@@ -410,7 +410,7 @@ function compileOne(given, options = {}) {
     // (Its notes without the Activate line, the crafting or a Destruction line: src/compiler/notes.js.)
     if (Array.isArray(rest.notes)) rest.notes = cleanNotes(rest.notes);
     if (Array.isArray(rest.strike?.notes)) rest.strike = { ...rest.strike, notes: cleanNotes(rest.strike.notes) };
-    return withDegreeEffects(damageMaterial(withTypeChoices(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), typeChoice), plainText(item?.system?.description?.value)), item?.system?.description?.value, options.itemEffects);
+    return withDegreeEffects(withMaterialRider(damageMaterial(withTypeChoices(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), typeChoice), plainText(item?.system?.description?.value))), item?.system?.description?.value, options.itemEffects);
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success

@@ -275,6 +275,20 @@ test("damage the text treats as silver: the material in its formulas, for PF2e's
     assert.equal(damageMaterial({ resolution: { sharedDamage: { components: [{ id: "0", formula: "(2d6)[healing]" }] } } }, "This is treated as silver.").resolution.sharedDamage.components[0].formula, "(2d6)[healing]");
 });
 
+test("a rider only for a creature silver gets past (Moonlit Spellgun's critical success, Enfeebled 1 for a minute): plan.ifTarget, its card's plan for those creatures only — a weakness to silver, or a resistance with silver its exception", async () => {
+    const { materialGetsPast, planFor, targetGroups } = await import("../src/live/if-target.js");
+    const moonlit = compileItem(source("Moonlit Spellgun (Lesser)"));
+    assert.deepEqual([moonlit.ifTarget.map((entry) => [entry.material, entry.degree, entry.effects[0].slug, entry.effects[0].value, entry.effects[0].duration.value]), moonlit.partial, moonlit.notes], [[["silver", "criticalSuccess", "enfeebled", 1, 1]], undefined, undefined]);
+    const weak = { name: "Werewolf", attributes: { weaknesses: [{ type: "silver", value: 5 }], resistances: [] } };
+    const resisting = { name: "Devil", attributes: { weaknesses: [], resistances: [{ type: "physical", value: 5, exceptions: ["silver"] }] } };
+    const plain = { name: "Bandit", attributes: { weaknesses: [{ type: "cold-iron", value: 5 }], resistances: [] } };
+    assert.deepEqual([weak, resisting, plain].map((actor) => materialGetsPast(actor, "silver")), [true, true, false]);
+    assert.deepEqual(planFor(moonlit, weak).resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), ["dazzled", "enfeebled"]);
+    assert.equal(planFor(moonlit, plain), moonlit);
+    const groups = targetGroups(moonlit, [{ name: "W", actor: weak }, { name: "B", actor: plain }, { name: "D", actor: resisting }]);
+    assert.deepEqual(groups.map((group) => [group.tokens.map((token) => token.name).join(""), group.plan.resolution.outcomes.criticalSuccess.effects.length]), [["WD", 2], ["B", 1]]);
+});
+
 test("an activation's retaliation: Numerian Steel Breastplate's 1d10 electricity for a minute at whoever touches its wearer or hits it from next to it, the card kept open; Instinct Crown (Dragon)'s 2d6 of its dragon's type (picked) until the rage ends", () => {
     const [field] = compileActivations(source("Numerian Steel Breastplate"));
     assert.equal(routeOf(field.plan), "later");

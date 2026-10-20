@@ -9,6 +9,7 @@ import { withDamageChoice } from "../src/compiler/beads.js";
 import { scaledPlan } from "../src/compiler/scaled.js";
 import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, lowerCondition, spaceOf, stateOf } from "./foundry.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
+import { targetGroups } from "../src/live/if-target.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
 export async function postPoisonCard({ message, plan, used, actor, token }) {
@@ -184,7 +185,9 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         if (penalty) lines.push(`${tokens[0].name ?? tokens[0].actor?.name} ${feet} feet away: ${words.join(", ")}.`);
     }
     if (postCard && actor) {
-        await postCard({ plan: withAttackChoice(scaledPlan(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state.scaledAmount), state), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
+        // (A rider only for some creatures, Moonlit Spellgun's Enfeebled at one silver gets past: their card has it, src/live/if-target.js.)
+        const played = withAttackChoice(scaledPlan(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state.scaledAmount), state);
+        for (const group of targetGroups(played, tokens)) await postCard({ plan: group.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: group.tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (its save card follows).` : `${names}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);
     } else lines.push(state.delivery ? `${names}: exposed to ${state.item.name} (${saveText(state.plan)}; roll it and apply the stage by hand).` : `${names}: ${saveText(state.plan)} against ${state.item.name} (roll it and apply the result by hand).`);
     // (Saves for the creatures around the one it's at, of that creature's side — src/compiler/hit-around.js aroundAllies, a third-party blade's

@@ -61,7 +61,7 @@ import { perceptionCheckPlan } from "./perception-check.js";
 import { DRAGON_TYPES, readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
 import { pickedSentence, skillPickOf } from "./skill-pick.js";
-import { damageMaterial } from "./materials.js";
+import { damageMaterial, withMaterialRider } from "./materials.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 
@@ -551,7 +551,7 @@ function compileEach(item, options = {}) {
         // (A shield that guards its user by itself, src/compiler/floating.js: Floating Shield's own AC bonus.)
         if (!plan || plan.noteOnly) plan = floatingPlan(plainText(activation.html), base, item) ?? plan;
         if (!plan) return { activation, plan: null, index };
-        plan = damageMaterial(withTypeChoices(plan, typeChoice), plainText(activation.html));
+        plan = withMaterialRider(damageMaterial(withTypeChoices(plan, typeChoice), plainText(activation.html)));
         // (A skill its user picked when the item was made, named in the item's own text, src/compiler/skill-pick.js: Words of Wisdom's
         // phrase — the card's picker; what it reads off the unread list, and the plan whole again when that was all.)
         const skillPick = skillPickOf(plainText(html), plainText(activation.html), plan);

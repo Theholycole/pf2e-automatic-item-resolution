@@ -475,3 +475,4 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - Its rules for the creatures with a trait go in `zone.inside`.
   - Its save is its maker's too (`zone.saves[i].own`).
   - What a failed Candle of Truth save does (no deliberate lies while within 10 feet) is the GM's line, and that it's only on first entering is a note.
+- **A rider only for a creature a material gets past** (`plan.ifTarget`, src/compiler/materials.js `withMaterialRider`, src/live/if-target.js; 2026-10-20). Moonlit Spellgun's critical success: "If it has a weakness to silver or a resistance that can be bypassed by silver, it's also Enfeebled 1 for 1 minute". The attack card posts the ability module's card with that rider to the creatures it fits (a weakness to the material, or a resistance with it among its exceptions), and the plain plan to the rest.
