@@ -213,9 +213,14 @@ test("resistance to a type it makes its user choose: the card's picker, the type
     assert.deepEqual(potion.item.resist.map((entry) => [entry.type, entry.choose, entry.value, entry.duration.value]), [[null, ["acid", "cold", "electricity", "fire", "sonic"], 5, 1]]);
     assert.equal(potion.partial, undefined, "the list's own sentence is read with it");
     // "attuned to one of four energy types (acid, cold, electricity, or fire) … resistance 5 to the attuned energy type and reduces the DC …":
-    // the DC on the note; "applied to up to 5 willing creatures", each one targeted.
+    // the DC 2 lower for that type's persistent damage (PF2e's ItemAlteration on it); "applied to up to 5 willing creatures", each one
+    // targeted.
     const ointment = compileItem(source("Energy Ointment (Lesser)"));
-    assert.deepEqual([ointment.item.resist[0].choose, ointment.item.recipient, ointment.targeting.target, ointment.partial], [["acid", "cold", "electricity", "fire"], "targets", "up to 5 creatures", true]);
+    assert.deepEqual([ointment.item.resist[0].choose, ointment.item.resist[0].recoveryDC, ointment.item.recipient, ointment.targeting.target, ointment.partial], [["acid", "cold", "electricity", "fire"], 2, "targets", "up to 5 creatures", undefined]);
+    const { chosenResistances } = await import("../src/live/card.js");
+    const cold = chosenResistances(ointment.item.resist, 1);
+    assert.deepEqual(resistanceEffectSource(cold, { item: { name: "Energy Ointment (Lesser)" } }).system.rules, [{ key: "Resistance", type: "cold", value: 5 }, { key: "ItemAlteration", itemType: "condition", property: "pd-recovery-dc", mode: "subtract", value: 2, predicate: ["item:damage:type:cold"] }]);
+    assert.equal(resistanceText(cold), "Resistance 5 to cold, and the flat check to end persistent cold damage 2 easier for 1 hour");
     // "Choose acid, cold, electricity, or fire. The robe grants resistance 15 to the chosen damage type": until its next use.
     const [robe] = compileActivations(source("Chromatic Robe"));
     assert.deepEqual([robe.plan.item.resist[0].value, robe.plan.item.resist[0].duration], [15, null]);

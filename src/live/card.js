@@ -239,7 +239,8 @@ export function resistanceText(resist) {
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration;
     // (A turn's end or start: "until the end of the turn".)
     const time = !duration ? "" : duration.anchor === "source-turn" ? ` until the ${duration.expiry === "turn-end" ? "end" : "start"} of the ${duration.value ? "next " : ""}turn` : ` for ${timeText(duration)}`;
-    return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${time}`;
+    const lower = resist.find((entry) => entry.recoveryDC);
+    return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${lower ? `, and the flat check to end persistent ${lower.type ?? "damage of that type"}${lower.type ? " damage" : ""} ${lower.recoveryDC} easier` : ""}${time}`;
 }
 
 // A Speed in words: "A fly Speed equal to your land Speed until the end of the next turn", "A swim Speed of 30 feet".
@@ -325,9 +326,12 @@ export const chosenResistances = (resist, index = 0) => resist.map((entry) => (e
 // One resistance as PF2e's rule; damage from some creatures as its custom type, the damage's types and its source's traits.
 // (Or immunity, Dragonclaw Scutcheon's "immunity to all damage of that type": PF2e's Immunity rule.)
 const resistanceRule = ({ type, value, from = [], damage = [], label, immune = false, exceptions = [], doubleVs = [] }) => (immune ? { key: "Immunity", type } : exceptions.length || doubleVs.length ? { key: "Resistance", type, value, ...(exceptions.length ? { exceptions } : {}), ...(doubleVs.length ? { doubleVs } : {}) } : type === "custom" ? { key: "Resistance", type: "custom", definition: [...(damage.length ? [{ or: damage.map((kind) => `damage:type:${kind}`) }] : []), { or: from.map((trait) => `origin:trait:${trait}`) }], label, value } : { key: "Resistance", type, value });
+// (A lower DC for the flat check to end persistent damage of that type, Energy Ointment's: PF2e's ItemAlteration on its persistent-damage
+// conditions, as PF2e's own Horned Lion Amulet Effect does.)
+const recoveryRule = ({ type, recoveryDC }) => (recoveryDC && type ? [{ key: "ItemAlteration", itemType: "condition", property: "pd-recovery-dc", mode: "subtract", value: recoveryDC, predicate: [`item:damage:type:${type}`] }] : []);
 export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const duration = resist.find((entry) => entry.duration?.mode === "fixed")?.duration ?? null;
-    return ownEffectSource({ name: "resistance", img: "icons/svg/shield.svg", words: resistanceText(resist), rules: resist.map(resistanceRule), duration, flag: { resist: true }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: "resistance", img: "icons/svg/shield.svg", words: resistanceText(resist), rules: [...resist.map(resistanceRule), ...resist.flatMap(recoveryRule)], duration, flag: { resist: true }, item, user, worldTime, initiative, moduleId });
 }
 
 // A vision in words: "Darkvision until the start of the next turn", "Greater darkvision".

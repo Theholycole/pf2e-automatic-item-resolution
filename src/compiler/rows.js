@@ -559,12 +559,15 @@ function chosenResistance(sentences, duration, used) {
     for (const [index, sentence] of sentences.entries()) {
         const match = CHOSEN.exec(sentence);
         if (!match || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation)\b/i.test(sentence)) continue;
-        // (Anything else in it — Energy Ointment's flat check DC — stays a note.)
-        if (!/\band (?:reduces|lowers|you)\b/i.test(sentence.slice(match.index + match[0].length))) used.add(index);
+        // (Anything else in it stays a note — but Energy Ointment's "and reduces the DC for the flat check to end persistent damage of the
+        // attuned energy type by 3", read: recoveryDC, PF2e's ItemAlteration on the persistent damage of the type picked.)
+        const after = sentence.slice(match.index + match[0].length);
+        const lower = /^ and reduces the DC for the flat check to end persistent damage of the (?:attuned energy|chosen damage) type by (\d+)\.?$/i.exec(after.trim() ? ` ${after.trim()}` : "");
+        if (!/\band (?:reduces|lowers|you)\b/i.test(after) || lower) used.add(index);
         // (The list's own sentence, "Each potion … is created to defend against acid, cold, … damage", is read with it.)
         const listed = sentences.findIndex((other) => TYPE_LIST.test(other));
         if (listed >= 0 && listed !== index && !/\b(?:Each time|whenever|instead|but no)\b/i.test(sentences[listed])) used.add(listed);
-        return [{ type: null, choose, value: Number(match[1] ?? match[2]), duration: durationIn(sentence, duration) }];
+        return [{ type: null, choose, value: Number(match[1] ?? match[2]), ...(lower ? { recoveryDC: Number(lower[1]) } : {}), duration: durationIn(sentence, duration) }];
     }
     return [];
 }
@@ -915,7 +918,7 @@ export function ownRow(item, { healing = true } = {}) {
     const restated = (sentence) => modifiers.length > 0 && /\ban? (?:item |status |circumstance )?bonus\b/i.test(sentence) && !/[+\-–]\d|\d+d\d+|\bDC\b/.test(sentence);
     // ("allowing you to move with greater speed": flavor, not a Speed.)
     // (Nor when it may be used, "You can use this action while Unconscious".)
-    const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always|The resonant power)\b/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
+    const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always|The resonant power)\b/i.test(sentence) && !/^\s*This [\w ]+? can be applied to up to (?:\d+|two|three|four|five|six) willing creatures(?: to protect them from dangerous energies)?\.$/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     if (secondary) unread.push(secondary);
     return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(attacks.length ? { attacks } : {}), ...(fastHealing.length ? { fastHealing } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(other ? { other } : {}) };
 }

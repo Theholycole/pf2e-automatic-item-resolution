@@ -138,6 +138,13 @@ test("a better degree for the triggering roll: PF2e's AdjustDegreeOfSuccess, spe
     const opal = compileItem(source("Mesmerizing Opal"));
     assert.deepEqual(opal.bonus.degree, { selector: "deception", adjustment: { success: "one-degree-better", criticalFailure: "one-degree-better" }, predicate: [{ or: ["action:feint"] }] });
     assert.match(readiedWords(opal), /a success becomes a critical success, a critical failure becomes a failure/);
+    // (A higher resistance against some sources, Warding Tattoo (Fiend)'s and (Trail)'s "becomes resistance 5": a second Resistance rule
+    // predicated as PF2e's own for the tattoo.)
+    const fiend = compileActivations(source("Warding Tattoo (Fiend)"))[0].plan;
+    assert.deepEqual([readiedRules(fiend).filter((rule) => rule.key === "Resistance"), fiend.partial], [[{ key: "Resistance", type: "all-damage", value: 2 }, { key: "Resistance", type: "all-damage", value: 5, predicate: ["origin:trait:fiend"] }], undefined]);
+    assert.match(readiedWords(fiend), /resistance 2 to damage \(5 to damage from fiends and magical attacks by fiends\)/);
+    const trail = compileActivations(source("Warding Tattoo (Trail)"))[0].plan;
+    assert.deepEqual(readiedRules(trail).at(-1).predicate, [{ or: ["origin:trait:environmental", "origin:trait:terrain"] }]);
     // (The Feint itself its user's own PF2e roll: the card's line, not a note.)
     assert.deepEqual([opal.then, opal.notes, opal.partial], ["Attempt a Deception check to Feint (PF2e's own, its degree improved)", [], undefined]);
 });

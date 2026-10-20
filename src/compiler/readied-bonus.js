@@ -312,7 +312,13 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
         const [, value, count, unit] = critical[1];
         bonus.onCritical = { tempHP: Number(value), duration: { mode: "fixed", value: Number(count), unit: /^min/i.test(unit) ? "minutes" : /^hour/i.test(unit) ? "hours" : "rounds", expiry: "turn-start", anchor: "effect-start" } };
     }
-    const read_ = new Set([...Object.values(onAttack).map((entry) => entry.note), ...(critical ? [critical[0]] : [])]);
+    // (A higher resistance against some sources, a warding tattoo's "Your resistance to damage from fiends and magical attacks by fiends becomes
+    // resistance 5": a second Resistance rule on the Effect, predicated as PF2e's own rules for the tattoo are — origin:trait:fiend; hazardous
+    // terrain and environmental hazards, origin:trait:environmental or terrain.)
+    const SOURCES = [[/^fiends and magical attacks by fiends$/i, ["origin:trait:fiend"]], [/^hazardous terrain and environmental hazards$/i, [{ or: ["origin:trait:environmental", "origin:trait:terrain"] }]]];
+    const higher = bonus.resistance ? (read_notes ?? []).map((note) => [note, /^Your resistance to damage from (.+?) becomes resistance (\d+)\.$/i.exec(String(note).trim())]).find(([, match]) => match && SOURCES.some(([words]) => words.test(match[1]))) : null;
+    if (higher) bonus.resistanceAlso = [{ type: bonus.resistance.type, value: Number(higher[1][2]), predicate: SOURCES.find(([words]) => words.test(higher[1][1]))[1], from: higher[1][1] }];
+    const read_ = new Set([...Object.values(onAttack).map((entry) => entry.note), ...(critical ? [critical[0]] : []), ...(higher ? [higher[0]] : [])]);
     const notes = (read_notes ?? []).filter((note) => !read_.has(note) && !(only.length && /^\(This applies only to (?:any )?(?:the )?damage the (?:effect|attack) deals\.\)$/i.test(String(note).trim())) && (!ONLY.test(note) || /\bor an? \+\d|\bif\b|\bunless\b|\binstead\b/i.test(note.replace(ONLY, ""))));
     // (Another creature's: the one the presser targets, within the distance its trigger names.)
     const within = /\bwithin (\d+) feet\b/i.exec(trigger ?? triggerOf(String(text ?? "")) ?? "")?.[1];

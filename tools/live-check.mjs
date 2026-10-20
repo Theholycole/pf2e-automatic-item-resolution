@@ -3500,6 +3500,19 @@ export const cases = {
         throw new Error(`no miss in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
     },
 
+    // Warding Tattoo (Fiend)'s Inked Safeguard: the readied Effect with resistance 2 and, against fiends, 5 (PF2e's own predicate).
+    async wardingTattoo(scene) {
+        const { actor: user } = await creature(scene, "Tattoo Bearer", { type: "character", x: 1, y: 0 });
+        const tattoo = await give(user, "Warding Tattoo (Fiend)");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(tattoo.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the tattoo's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const resistances = () => user.itemTypes.effect.flatMap((effect) => (effect.system.rules ?? []).filter((rule) => rule.key === "Resistance").map((rule) => [rule.value, JSON.stringify(rule.predicate ?? null)]));
+        await until(() => resistances().some(([value, predicate]) => value === 5 && /origin:trait:fiend/.test(predicate)) && resistances().some(([value]) => value === 2), `resistance 2 and 5 against fiends (${JSON.stringify(resistances())})`, { timeout: 8000 });
+        return { resistances: resistances() };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

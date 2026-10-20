@@ -33,7 +33,7 @@ export function bonusWords(bonus) {
     const degree = bonus.degree ? `${nameOf(bonus.degree.selector)}${actionWords(bonus.degree.predicate) ? ` (${actionWords(bonus.degree.predicate)})` : ""}: ${[...new Set(Object.entries(bonus.degree.adjustment).map(([key, value]) => DEGREE_WORDS[value === "to-success" ? "to-success" : key]))].join(", ")}` : null;
     // ("resistance 5 to physical damage", "resistance 5 to mental, poison or spirit damage" — the one that hit.)
     const types = [].concat(bonus.resistance?.type ?? []).filter((type) => type !== "all-damage");
-    const resistance = bonus.resistance ? `resistance ${bonus.resistance.value} to ${types.length ? `${types.length > 1 ? `${types.slice(0, -1).join(", ")} or ${types.at(-1)}` : types[0]} damage` : "damage"}` : null;
+    const resistance = bonus.resistance ? `resistance ${bonus.resistance.value} to ${types.length ? `${types.length > 1 ? `${types.slice(0, -1).join(", ")} or ${types.at(-1)}` : types[0]} damage` : "damage"}${(bonus.resistanceAlso ?? []).map((entry) => ` (${entry.value} to damage from ${entry.from})`).join("")}` : null;
     // ("immunity to physical damage": none of it.)
     const immunity = bonus.immunity ? `immunity to ${bonus.immunity.type} damage` : null;
     // ("against mental effects": a trait predicate, Psychic Warding Bracelet's.)
@@ -75,6 +75,8 @@ export function readiedRules(plan) {
     return [
         ...plan.bonus.modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: modifier.type, value: modifier.value, ...(label ? { label } : {}), ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })),
         ...(plan.bonus.resistance ? [{ key: "Resistance", type: plan.bonus.resistance.type, value: plan.bonus.resistance.value }] : []),
+        // (A higher one against some sources, a warding tattoo's against fiends: its own Resistance, predicated.)
+        ...(plan.bonus.resistanceAlso ?? []).map((entry) => ({ key: "Resistance", type: entry.type, value: entry.value, predicate: entry.predicate })),
         ...(plan.bonus.immunity ? [{ key: "Immunity", type: plan.bonus.immunity.type }] : []),
         ...(plan.bonus.degree ? [{ key: "AdjustDegreeOfSuccess", selector: plan.bonus.degree.selector, adjustment: plan.bonus.degree.adjustment, ...(label ? { label } : {}), ...(plan.bonus.degree.predicate ? { predicate: plan.bonus.degree.predicate } : {}) }] : [])
     ];
