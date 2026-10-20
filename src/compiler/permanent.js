@@ -64,6 +64,7 @@ import { pickedSentence, skillPickOf } from "./skill-pick.js";
 import { damageMaterial, withMaterialRider } from "./materials.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
+import { withHonestPartial } from "./honest.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
@@ -141,7 +142,8 @@ export function compileActivations(item, options = {}) {
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withHonestPartial(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name })) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // Only after its user's action succeeds, Glamorous Buckler's "On a successful Feint, the target is Dazzled for 1 round" (src/compiler/item-data.js

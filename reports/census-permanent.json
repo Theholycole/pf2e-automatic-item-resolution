@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 826,
+   "resolves": 779,
    "builtin:cast-spell": 475,
+   "partial": 216,
    "none": 509,
-   "partial": 169,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
@@ -57,10 +57,10 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 476,
+    "resolves": 454,
     "builtin:cast-spell": 347,
     "none": 355,
-    "partial": 83,
+    "partial": 105,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
     "builtin:readied-bonus": 32,
@@ -81,11 +81,11 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 191,
+    "resolves": 177,
+    "partial": 51,
     "none": 75,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
-    "partial": 37,
     "builtin:table": 1,
     "builtin:modes": 12,
     "note-only": 11,
@@ -103,8 +103,8 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "partial": 29,
-    "resolves": 54,
+    "partial": 33,
+    "resolves": 50,
     "builtin:pf2e-rules": 22,
     "none": 29,
     "builtin:no-effect": 2,
@@ -128,8 +128,8 @@
    "activations": 163,
    "results": {
     "builtin:cast-spell": 33,
-    "partial": 12,
-    "resolves": 65,
+    "partial": 16,
+    "resolves": 61,
     "builtin:counteract": 1,
     "none": 18,
     "builtin:zone": 4,
@@ -148,12 +148,12 @@
    "results": {
     "builtin:cast-spell": 11,
     "note-only": 13,
-    "resolves": 40,
+    "resolves": 37,
     "none": 14,
     "builtin:modes": 4,
     "builtin:readied-bonus": 4,
     "builtin:no-effect": 2,
-    "partial": 8,
+    "partial": 11,
     "builtin:counteract": 1,
     "builtin:zone": 1,
     "builtin:ways": 1,
@@ -202,7 +202,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -488,7 +488,7 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -884,7 +884,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -939,7 +939,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -2626,7 +2626,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -3257,7 +3257,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -3400,7 +3400,7 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -4007,7 +4007,7 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -5241,7 +5241,7 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -5750,7 +5750,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -6103,7 +6103,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -6147,7 +6147,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -7009,7 +7009,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -7372,7 +7372,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -7438,7 +7438,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -8220,7 +8220,7 @@
    "time": "1 minute",
    "frequency": "once every 10 minutes",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -10478,7 +10478,7 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -11800,7 +11800,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -11900,7 +11900,7 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -12483,7 +12483,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "strike"
   },
@@ -13123,7 +13123,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -13257,7 +13257,7 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -13356,7 +13356,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -14139,7 +14139,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -14656,7 +14656,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -14810,7 +14810,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -14976,7 +14976,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -15517,7 +15517,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -15847,7 +15847,7 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -16045,7 +16045,7 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -16650,7 +16650,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -16827,7 +16827,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -17499,7 +17499,7 @@
    "time": "reaction",
    "frequency": "once per 10 minutes",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -18372,7 +18372,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -18615,7 +18615,7 @@
    "time": "reaction",
    "frequency": "once per 10 minutes",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -18837,7 +18837,7 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -18914,7 +18914,7 @@
    "time": "1",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -19555,7 +19555,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -21994,7 +21994,7 @@
    "time": "1",
    "frequency": "Once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -22148,7 +22148,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -23783,7 +23783,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -24307,7 +24307,7 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -24824,7 +24824,7 @@
    "time": "3",
    "frequency": "once per week",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -25705,7 +25705,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -26620,7 +26620,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -27655,7 +27655,7 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },
@@ -27777,7 +27777,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "check",
    "live": "save"
   },

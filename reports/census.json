@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 768,
+   "resolves": 749,
    "builtin:readied-bonus": 23,
    "builtin:zone": 115,
-   "partial": 103,
+   "partial": 122,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 122,
@@ -36,9 +36,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 26,
-    "resolves": 215,
+    "resolves": 202,
     "builtin:ways": 18,
-    "partial": 50,
+    "partial": 63,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 95,
@@ -96,14 +96,14 @@
     "none": 27,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 63,
+    "resolves": 62,
     "note-only": 7,
     "builtin:no-effect": 8,
     "builtin:reroll": 1,
     "builtin:ways": 2,
     "builtin:counteract": 1,
     "builtin:cast-spell": 9,
-    "partial": 9,
+    "partial": 10,
     "builtin:teleport": 2,
     "builtin:roll-twice": 2
    },
@@ -149,9 +149,10 @@
   "poison": {
    "count": 115,
    "results": {
-    "resolves": 110,
+    "resolves": 109,
     "builtin:ways": 3,
     "builtin:zone": 1,
+    "partial": 1,
     "note-only": 1
    },
    "mechanisms": {
@@ -187,10 +188,10 @@
   "gadget": {
    "count": 77,
    "results": {
-    "partial": 4,
+    "partial": 8,
     "builtin:zone": 14,
     "none": 8,
-    "resolves": 29,
+    "resolves": 25,
     "note-only": 6,
     "builtin:item-action": 3,
     "builtin:no-effect": 5,
@@ -318,7 +319,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 174,
+   "resolves": 172,
    "gaps": 0,
    "none": 7
   },
@@ -330,13 +331,13 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 322,
+   "resolves": 304,
    "gaps": 0,
    "none": 21
   },
   "affliction": {
    "count": 144,
-   "resolves": 139,
+   "resolves": 138,
    "gaps": 0,
    "none": 3
   },
@@ -348,19 +349,19 @@
   },
   "strike": {
    "count": 31,
-   "resolves": 22,
+   "resolves": 19,
    "gaps": 0,
    "none": 1
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 60,
+   "resolves": 58,
    "gaps": 0,
    "none": 0
   },
   "trigger": {
    "count": 156,
-   "resolves": 65,
+   "resolves": 64,
    "gaps": 0,
    "none": 19
   },
@@ -372,19 +373,19 @@
   },
   "area": {
    "count": 44,
-   "resolves": 15,
+   "resolves": 12,
    "gaps": 0,
    "none": 5
   },
   "condition": {
    "count": 433,
-   "resolves": 265,
+   "resolves": 258,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 607,
+   "resolves": 599,
    "gaps": 0,
    "none": 13
   }
@@ -5566,9 +5567,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -8781,9 +8781,8 @@
     "area",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": null
   },
   {
@@ -9010,9 +9009,8 @@
     "area",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": null
   },
   {
@@ -10723,9 +10721,8 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -12370,9 +12367,8 @@
     "fixed-dc",
     "strike"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -12501,9 +12497,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -15380,9 +15375,8 @@
     "on-weapon",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -15907,9 +15901,8 @@
     "fixed-dc",
     "strike"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -17060,9 +17053,8 @@
     "fixed-dc",
     "strike"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -18359,9 +18351,8 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -18410,9 +18401,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -19043,9 +19033,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -20623,9 +20612,8 @@
     "area",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": null
   },
   {
@@ -22944,9 +22932,8 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -24069,9 +24056,8 @@
     "trigger",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -24861,9 +24847,8 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -28482,9 +28467,8 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -28972,9 +28956,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -29994,9 +29977,8 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {

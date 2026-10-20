@@ -953,5 +953,6 @@ export function noteRow(item) {
     if (!duration) return null;
     const body = text.replace(ACTIVATE_LINE, "").trim();
     // (The ability module names a note Effect "<item>: <label>", "note" without one.)
-    return { noteEffects: [{ text: body, duration }] };
+    // (reminder: the whole text's, beside a row that reads only part of it — gone once later readings leave nothing unread, src/compiler/honest.js.)
+    return { noteEffects: [{ text: body, duration, reminder: true }] };
 }
