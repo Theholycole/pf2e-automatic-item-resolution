@@ -7084,6 +7084,40 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             for (const name of ["Inflamed Passions", "Distilled Death", "Candle of Truth"]) await zoneOf(name)?.delete().catch(() => null);
         }
+    },
+
+    // Moonlit Spellgun's critical success at two creatures (plan.ifTarget): Enfeebled 1 on the one weak to silver, not on the other — one
+    // ability card for each (AC -30: a critical hit but for a natural 1).
+    async moonlitEnfeebled(scene) {
+        await clearSquares(scene, [[14, 16], [16, 16], [16, 17]]);
+        const { actor: gunner, token: gunnerToken } = await creature(scene, "Moon Gunner", { type: "character", x: 14, y: 16 });
+        const { actor: weak, token: weakToken } = await creature(scene, "Moon Werewolf", { x: 16, y: 16, ac: -30, hp: 300, alliance: "opposition" });
+        const { actor: plain, token: plainToken } = await creature(scene, "Moon Bandit", { x: 16, y: 17, ac: -30, hp: 300, alliance: "opposition" });
+        await weak.update({ "system.attributes.weaknesses": [{ type: "silver", value: 5 }] });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await until(() => gunnerToken.object && weakToken.object && plainToken.object, "the tokens drawn", { timeout: 5000 });
+        await gunnerToken.object?.control?.();
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const enfeebled = (actor) => actor.itemTypes.condition.some((condition) => condition.slug === "enfeebled");
+        const dazzled = (actor) => actor.itemTypes.condition.some((condition) => condition.slug === "dazzled");
+        for (let tries = 0; tries < 3 && !enfeebled(weak); tries++) {
+            const gun = await give(gunner, "Moonlit Spellgun (Lesser)");
+            await wait(400);
+            let since = Date.now();
+            await gun.consume();
+            const card = await messageAfter(since, itemCard("expose"), { what: "the spellgun's card" });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [weakToken.uuid, plainToken.uuid], attackChoice: 0, damageChoice: 0 });
+            await wait(1500);
+            const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message));
+            assert(cards.length === 2, `one card each (${cards.length})`);
+            for (const entry of cards) await rollAndApply(entry);
+            await wait(2500);
+        }
+        assert(enfeebled(weak) && dazzled(weak), "the werewolf Enfeebled and Dazzled");
+        assert(dazzled(plain) && !enfeebled(plain), `the bandit Dazzled, not Enfeebled (${plain.itemTypes.condition.map((condition) => condition.slug).join(", ")})`);
+        return { werewolf: weak.itemTypes.condition.map((condition) => condition.slug) };
     }
 };
 
