@@ -504,4 +504,9 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - set off by an attacker: Vermin Repellent Agent's arthropods, for its 4 hours; Draft of Stellar Radiance's "Any creature that targets you", for its minute, with its 24-hour immunity;
   - its drinker's own save: Matsuki's Medicinal Wine's, beside its bonus against diseases and poisons.
 
-  Blight Breath's resistance lasts "for as long as you hold your breath", so the exhale's card ends its Effect. A spell the item grants as another activation isn't one of these Effects (Roaring Potion's Bullhorn).
+  - an activation whose words give its user the Effect: Final Scalecloak's Embody the Storm, then its attackers' card for the minute (its "If a foe attempts to Strike you" read as an attacker); Kraken's Guard's grapple bonus, then its cone's card; Morning Glow's light, then the demons' save.
+
+  Blight Breath's resistance lasts "for as long as you hold your breath", so the exhale's card ends its Effect. These stay as they were:
+  - a spell the item grants as another activation (Roaring Potion's Bullhorn);
+  - an Effect that is a result's or another creature's (Crackling Bubble Gum's failure, Sinuous Recorder's Speed penalty, Bewitching Bloom's ally);
+  - a save at a creature's turn, which is a zone's (Arctic Worm Chitin Shield, Mamlambo Scale).

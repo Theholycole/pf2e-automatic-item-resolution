@@ -29,9 +29,9 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 443,
+   "save": 441,
    "cast": 475,
-   "item": 589,
+   "item": 592,
    "none": 635,
    "focus": 47,
    "counteract": 29,
@@ -46,7 +46,7 @@
    "conjure": 13,
    "action": 23,
    "coat": 4,
-   "later": 5,
+   "later": 4,
    "spellstrike": 9,
    "take": 1
   },
@@ -3113,8 +3113,8 @@
    "frequency": "once per hour",
    "trigger": false,
    "result": "resolves",
-   "kind": "save",
-   "live": "save"
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Reaper's Lancet",
@@ -9191,8 +9191,8 @@
    "frequency": "once per hour",
    "trigger": false,
    "result": "resolves",
-   "kind": "save",
-   "live": "save"
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Keep Stone Amulet",
@@ -19324,8 +19324,8 @@
    "frequency": "once per hour",
    "trigger": false,
    "result": "resolves",
-   "kind": "save",
-   "live": "later"
+   "kind": "effect",
+   "live": "item"
   },
   {
    "name": "Mitigation Mail (Major)",

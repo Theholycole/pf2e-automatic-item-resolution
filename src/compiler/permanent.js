@@ -66,6 +66,7 @@ import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readUntilRage, untilRagePlan } from "./rage-time.js";
 import { withHonestPartial, withUntracedRules } from "./honest.js";
 import { withSaveEnds } from "./save-ends.js";
+import { withEffectThenCard } from "./effect-then-card.js";
 import { withRuneSteps } from "./rune-steps.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
@@ -351,6 +352,8 @@ function compileEach(item, options = {}) {
             if (castMentionOnly(read, activation.html)) read = null;
             const own = read?.builtin === "no-effect" ? ownPlan(part, base, options) : null;
             plan = own ?? (read ? fitPlan(part, read, base, options) : ownPlan(part, base, options));
+            // (Its user's own Effect beside a save for others, src/compiler/effect-then-card.js: Final Scalecloak's nimbus, then its attackers' card.)
+            if (plan?.resolution?.kind === "save") plan = withEffectThenCard(plan, plainText(activation.html), ownPlan(part, base, options), part, { activation: true });
         }
         // (A note alone from the ability compiler gives way to the item's own row when that reads something: Silkspinner's Shield's
         // climb Speed.)

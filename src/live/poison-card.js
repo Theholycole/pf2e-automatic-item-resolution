@@ -122,7 +122,8 @@ export const isExposurePoison = (plan) => Boolean(EXPOSED_BY[deliveryOf(plan)]) 
 // Any other item whose save comes on its Use, at creatures other than its user ("Spark Wafer … 5-foot burst", Pyronite,
 // a flare beacon): the same card, for the creatures the presser targets. Not one that gives an action or a time to use
 // later ("grants you the Energy Breath action for 1 hour", "you can use a 2-action activity to exhale"), nor an aura or a snare.
-const LATER = /\b(?:(?:grants? you|you (?:also )?gain) (?:the|a|an) [\w' -]+? (?:action|activity|reaction|ability)|gives? you access to (?:[\w-]+ ){0,3}activations?|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel|unleash) (?!the higher\b)|gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|(?<=[(,]\s*)aura(?=\s*[,)]))/i;
+// (Not "you can use it to Grapple a creature", Kraken's Guard's shield after its cone: a use of the shield, not the save for later.)
+const LATER = /\b(?:(?:grants? you|you (?:also )?gain) (?:the|a|an) [\w' -]+? (?:action|activity|reaction|ability)|gives? you access to (?:[\w-]+ ){0,3}activations?|while you(?:'re| are) chewing|you can (?:use|exhale|breathe|spit|release|expel|unleash) (?!the higher\b|it to (?:Grapple|Shove|Trip)\b)|gain (?:a|an) [\d-]+-foot aura|(?:once|twice) (?:during|within|before)|(?<=[(,]\s*)aura(?=\s*[,)]))/i;
 // (An item with no Activate line — "You can toss sneezing powder at an adjacent creature", a fulu "Upon affixing" — reads as
 // passive; it's still used. Not a save something else sets off: a turn in the area, entering a square, passing a door,
 // reading the words, each Stride.)
@@ -143,8 +144,8 @@ const useSave = (plan, text) => savedOnUse(plan) && !TRIGGERED.test(saveSentence
 // (Set off by a creature attacking its user while it lasts — Oil of Repulsion's "For 1 minute after you apply this oil to
 // armor, any creature that hits you with a melee Strike must attempt …", Vermin Repellent Agent's "… when attempting to attack
 // you": a card kept open for the item's time, used each time.)
-// (Or "targets you with an attack or an ability", Draft of Stellar Radiance's.)
-export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|Strikes|damages|grapples|swallows|touches|targets) you\b|\bwhen attempting to attack you\b/i;
+// (Or "targets you with an attack or an ability", Draft of Stellar Radiance's; "If a foe attempts to Strike you", Final Scalecloak's.)
+export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|Strikes|damages|grapples|swallows|touches|targets) you\b|\bwhen attempting to attack you\b|\bif a foe attempts to Strike you\b/i;
 // (The drinker's own save: Truth Potion's "Upon drinking the potion, attempt a @Check[will|dc:19] save", Matsuki's Medicinal
 // Wine's "When you drink a dose of this wine you must succeed at a @Check…", Energy Toxin Bottle's "You drink from the bottle
 // and must succeed at a @Check…".)

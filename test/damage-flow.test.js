@@ -231,6 +231,13 @@ test("its user's own Effect, then the save card it had (src/compiler/effect-then
     assert.deepEqual(shape(plans["Draft of Stellar Radiance"]), ["item", "effect", "Effect: Draft of Stellar Radiance", { later: true, repeat: true, attacker: true }]);
     // (A bomb isn't one: its save is its splash's.)
     assert.equal(plans["Blight Bomb (Lesser)"]?.again, undefined);
+    // (An activation whose words give its user the Effect: Final Scalecloak's nimbus, then its attackers' card for the minute; Kraken's Guard's
+    // grapple bonus, then its cone's card at once. Not another creature's or a result's Effect, nor a zone's save.)
+    const activation = (name, index) => compileActivations(source(name))[index].plan;
+    assert.deepEqual(shape(activation("Final Scalecloak", 1)), ["item", "effect", "Effect: Embody the Storm", { later: true, repeat: true, attacker: true }]);
+    assert.deepEqual(shape(activation("Kraken's Guard", 0)), ["item", "effect", "Effect: Kraken's Guard", { later: false }]);
+    for (const [name, index] of [["Bewitching Bloom (Magnolia)", 0], ["Sinuous Recorder", 0], ["Arctic Worm Chitin Shield", 0], ["Mamlambo Scale", 0]]) assert.equal(activation(name, index)?.again, undefined, name);
+    assert.ok(!(compileItem(source("Crackling Bubble Gum (Lesser)")).ways ?? []).some((way) => way.plan?.again), "a candy's pop: its Effect is the failure's");
     const drinker = foundry.makeActor({ id: "damage-breather", name: "Breather", owners: ["player"] });
     foundry.place(drinker, 300, 17400);
     for (const name of ["Frost Breath", "Vermin Repellent Agent (Lesser)", "Matsuki's Medicinal Wine"]) {
