@@ -89,6 +89,8 @@ test("the reading: a bonus for a moment — the roll that triggered it, or the t
     // circumstance bonus to AC against the triggering attack", Dragon Turtle Plate's "to gain a +1 …", Bismuth Armor's miss a note.
     const branch = compileActivations(source("Deflecting Branch"))[0].plan;
     assert.deepEqual([branch.builtin, routeOf(branch), branch.bonus.modifiers, branch.bonus.duration.expiry], ["readied-bonus", "fortune", [{ selector: "ac", type: "circumstance", value: 4 }], "turn-end"]);
+    // ("If the attack misses, you have knocked it away": the state its other activation's trigger names — not a note.)
+    assert.deepEqual([branch.notes, branch.partial], [[], undefined]);
     assert.equal(compileActivations(source("Dragon Turtle Plate"))[0].plan.bonus.modifiers[0].value, 1);
     // (Its miss now the attacker's Dazzled, bonus.onAttack.)
     assert.deepEqual(compileActivations(source("Bismuth Armor"))[0].plan.bonus.onAttack, { miss: { condition: { slug: "dazzled", value: null, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "effect-start" } } } });

@@ -159,3 +159,21 @@ test("a candy's Secondary Effect, a use after the first: Ginger Chew's ways card
     assert.equal(sick.conditions.get("sickened"), 1);
     assert.equal(card.flags[MODULE_ID].card.status, "open", "the ways card stays open");
 });
+
+test("Broken Tusk Pendant: +1 item to AC against the triggering attack, or +2 when the attacker is the pendant's animal — the ways card's two buttons, each the readied bonus's card", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [{ plan: pendant }] = compileActivations(source("Broken Tusk Pendant"));
+    assert.deepEqual([routeOf(pendant), pendant.ways.map((way) => [way.plan.builtin, way.plan.bonus.modifiers[0].value, way.plan.bonus.against]), pendant.partial], ["ways", [["readied-bonus", 1, true], ["readied-bonus", 2, true]], undefined]);
+    const item = foundry.giveItem(fighter, source("Broken Tusk Pendant"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: item.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "ways");
+    assert.ok(card, "the ways card");
+    const before = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, choice: 1, userId: "player" });
+    await settle();
+    const fortune = foundry.messages.slice(before).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "fortune");
+    assert.ok(fortune, "the bonus's card");
+    assert.equal(fortune.flags[MODULE_ID].card.plan.bonus.modifiers[0].value, 2);
+});

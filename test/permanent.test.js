@@ -689,6 +689,9 @@ test("an artifact's Destruction isn't its activation's (Spleen Bloodstone of Ara
 test("more one-offs: Aerekostes's next attack rolled twice, Anointed Waterskin's Bless, Mirror Robe's Create a Diversion at +9, Beekeeper's Smoker's concealing square, Deravon's Helm's save or Prone, Smoldering Armor's Fire Shield, Stone of Unrivaled Skill's +3 to any skill picked", async () => {
     const [forward] = compileActivations(item("Aerekostes"), { spellEffects });
     assert.deepEqual([forward.plan.builtin, forward.plan.rollTwice.selector, forward.plan.rollTwice.keep], ["roll-twice", "attack-roll", "higher"]);
+    // (Its time, "before the end of your next turn": the fortune Effect's, to the end of the next turn — not a note.)
+    const { fortuneEffectSource } = await import("../src/live/fortune-card.js");
+    assert.deepEqual([forward.plan.notes, forward.plan.partial, fortuneEffectSource({ state: { plan: forward.plan, item: { name: "Aerekostes" }, user: {} }, moduleId: "x" }).system.duration], [[], undefined, { value: 1, unit: "rounds", expiry: "turn-end", sustained: false }]);
     const [, , sip] = compileActivations(item("Anointed Waterskin"), { spellEffects });
     assert.equal(sip.plan.resolution.applications[0].label, "Spell Effect: Bless");
     const { compileBasicActions, BASIC_ACTIONS } = await import("../../pf2e-automatic-ability-resolution/src/compiler/index.js");

@@ -325,7 +325,28 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // (Another creature's: the one the presser targets, within the distance its trigger names.)
     const within = /\bwithin (\d+) feet\b/i.exec(trigger ?? triggerOf(String(text ?? "")) ?? "")?.[1];
     const targeting = bonus.recipient === "target" ? { target: "1 creature", range: within ? `${within} feet` : null, area: null } : { target: "the user", range: null, area: null };
-    return { ...base, builtin: "readied-bonus", automation: { level: notes.length ? "guided" : "automatic" }, targeting, trigger: { event: "use" }, bonus, ...(checkFor ? { then: `${checkFor.replace(/^When you activate it, a/i, "A").replace(/\.$/, "")} (PF2e's own, its degree improved)` } : {}), notes, ...(notes.length ? { partial: true } : {}) };
+    // (A higher bonus against one kind of attacker, Broken Tusk Pendant's "You gain a +1 item bonus to AC against the triggering attack, or a +2
+    // item bonus if the animal is the specific kind depicted by the pendant": the ways card's two buttons, its user's pick — the pendant's
+    // animal known to them.)
+    const ANIMAL = /^Only against what triggered it: You gain an? \+(\d+) (item|circumstance|status) bonus to AC against the triggering attack, or an? \+(\d+) \2 bonus if the animal is the specific kind depicted by the pendant\.$/i;
+    const animal = notes.map((note) => ANIMAL.exec(String(note).trim())).find(Boolean);
+    const kept = animal ? notes.filter((note) => !ANIMAL.test(String(note).trim())) : notes;
+    const plan = { ...base, builtin: "readied-bonus", automation: { level: kept.length ? "guided" : "automatic" }, targeting, trigger: { event: "use" }, bonus, ...(checkFor ? { then: `${checkFor.replace(/^When you activate it, a/i, "A").replace(/\.$/, "")} (PF2e's own, its degree improved)` } : {}), notes: kept, ...(kept.length ? { partial: true } : {}) };
+    if (!animal || bonus.modifiers.length !== 1 || bonus.modifiers[0].selector !== "ac") return plan;
+    const valued = (value) => ({ ...plan, bonus: { ...bonus, modifiers: [{ ...bonus.modifiers[0], value }] } });
+    return {
+        ...base,
+        builtin: "ways",
+        automation: plan.automation,
+        targeting: { target: null, range: null, area: null },
+        trigger: { event: "use", ...(base?.trigger?.frequency ? { frequency: base.trigger.frequency } : {}) },
+        ways: [
+            { name: `+${animal[1]} ${animal[2].toLowerCase()} to AC against the attack`, html: "", plan: valued(Number(animal[1])) },
+            { name: `+${animal[3]} ${animal[2].toLowerCase()} to AC: the attacker is the pendant's animal`, html: "", plan: valued(Number(animal[3])) }
+        ],
+        once: true,
+        ...(kept.length ? { notes: kept, partial: true } : {})
+    };
 }
 
 // The plan to keep: the bonus over nothing, a note alone or the GM's fallback — and over the ability compiler's "ac-reaction", which
