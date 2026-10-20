@@ -45,7 +45,7 @@
         "reason": "An item's saves, afflictions and effects are read by the ability module's compiler.",
         "manifest": "https://github.com/Theholycole/pf2e-automatic-ability-resolution/releases/latest/download/module.json",
         "compatibility": {
-          "minimum": "0.8.5"
+          "minimum": "0.9.0"
         }
       }
     ],
