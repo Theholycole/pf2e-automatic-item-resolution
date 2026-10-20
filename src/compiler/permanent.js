@@ -552,14 +552,15 @@ function ownConditionsAside(plan, text) {
 // A shield that changes into another kind until it's activated again, Sapling Shield's "The buckler becomes a tower shield, gaining the
 // corresponding AC bonus, Speed penalty, and ability to Take Cover. It keeps the same Hit Points and Broken Threshold, but its Hardness and
 // Bulk increase by 2 in this form": plan.item.shieldForm — live play gives its user an Effect with PF2e's ItemAlteration on that shield (a
-// tower shield's +2 AC and –5-foot Speed), and activating it again takes the Effect off. Its Hardness and Bulk are the GM's.
+// tower shield's +2 AC and –5-foot Speed, its Hardness and Bulk 2 higher), and activating it again takes the Effect off. Its Take Cover as a
+// tower shield is a note.
 const TOWER = /\bThe buckler becomes a tower shield, gaining the corresponding AC bonus, Speed penalty, and ability to (?:@UUID\[[^\]]*\]\{)?Take Cover\b/i;
 function shieldFormOf(html) {
     const text = String(html ?? "");
     if (!TOWER.test(text)) return null;
     const plain = text.replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
     const harder = /\bits Hardness and Bulk increase by (\d+) in this form\b/i.exec(plain)?.[1];
-    return { name: "tower shield", acBonus: 2, speedPenalty: -5, toggle: true, notes: [...(harder ? [`In this form its Hardness and Bulk are ${harder} higher (by hand).`] : []), "It can Take Cover as a tower shield does."] };
+    return { name: "tower shield", acBonus: 2, speedPenalty: -5, ...(harder ? { harder: Number(harder) } : {}), toggle: true, notes: ["It can Take Cover as a tower shield does."] };
 }
 
 // The sentences of the text that end "(by hand)." — the GM's lines a reworded text gives (src/compiler/item-data.js) — on the plan's notes.

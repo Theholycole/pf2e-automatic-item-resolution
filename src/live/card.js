@@ -446,12 +446,13 @@ export function fastHealingEffectSource(healing, { item = {}, user = {}, worldTi
 }
 
 // A shield's other form in words: "The shield becomes a tower shield (+2 AC, a –5-foot Speed penalty) until it's activated again".
-export const shieldFormText = (form) => `The shield becomes a ${form.name} (+${form.acBonus} AC, a ${form.speedPenalty}-foot Speed penalty) until it's activated again`;
+export const shieldFormText = (form) => `The shield becomes a ${form.name} (+${form.acBonus} AC, a ${form.speedPenalty}-foot Speed penalty${form.harder ? `, its Hardness and Bulk ${form.harder} higher` : ""}) until it's activated again`;
 
 // Its Effect: PF2e's ItemAlteration on that shield, by its id on its user.
 export function shieldFormEffectSource(form, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const shieldId = /\.Item\.([A-Za-z0-9]+)$/.exec(String(item.uuid ?? ""))?.[1] ?? null;
-    const rules = [{ key: "ItemAlteration", itemId: shieldId, mode: "override", property: "ac-bonus", value: form.acBonus }, { key: "ItemAlteration", itemId: shieldId, mode: "override", property: "speed-penalty", value: form.speedPenalty }];
+    // (Its Hardness and Bulk higher in this form, Sapling Shield's 2: PF2e's ItemAlteration on them too.)
+    const rules = [{ key: "ItemAlteration", itemId: shieldId, mode: "override", property: "ac-bonus", value: form.acBonus }, { key: "ItemAlteration", itemId: shieldId, mode: "override", property: "speed-penalty", value: form.speedPenalty }, ...(form.harder ? [{ key: "ItemAlteration", itemId: shieldId, mode: "add", property: "hardness", value: form.harder }, { key: "ItemAlteration", itemId: shieldId, mode: "add", property: "bulk", value: form.harder }] : [])];
     return ownEffectSource({ name: form.name, img: "icons/svg/shield.svg", words: shieldFormText(form), rules, duration: null, flag: { shieldForm: shieldId }, item, user, worldTime, initiative, moduleId });
 }
 

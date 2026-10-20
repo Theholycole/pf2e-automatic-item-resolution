@@ -346,13 +346,13 @@ test("resistance to all damage but some (Silhouette Cloak): PF2e's Resistance wi
     assert.equal(resistanceText(stride.plan.item.resist), "Resistance 10 to all damage except force, spirit and ghost touch, double against non magical until the end of the turn");
 });
 
-test("a shield changing form until activated again (Sapling Shield): a tower shield's +2 AC and –5-foot Speed by PF2e's ItemAlteration on that shield, its Hardness and Bulk a note", async () => {
+test("a shield changing form until activated again (Sapling Shield): a tower shield's +2 AC and –5-foot Speed, its Hardness and Bulk 2 higher, by PF2e's ItemAlteration on that shield; Take Cover a note", async () => {
     const { shieldFormEffectSource, shieldFormText } = await import("../src/live/card.js");
     const [sapling] = compileActivations(source("Sapling Shield (Major)"));
     const form = sapling.plan.item.shieldForm;
     assert.equal(routeOf(sapling.plan), "item");
-    assert.equal(shieldFormText(form), "The shield becomes a tower shield (+2 AC, a -5-foot Speed penalty) until it's activated again");
+    assert.equal(shieldFormText(form), "The shield becomes a tower shield (+2 AC, a -5-foot Speed penalty, its Hardness and Bulk 2 higher) until it's activated again");
     const effect = shieldFormEffectSource(form, { item: { name: "Sapling Shield (Major)", uuid: "Actor.a.Item.shield0000000001" } });
-    assert.deepEqual([effect.system.rules, effect.system.duration.unit, effect.flags["pf2e-automatic-item-resolution"]], [[{ key: "ItemAlteration", itemId: "shield0000000001", mode: "override", property: "ac-bonus", value: 2 }, { key: "ItemAlteration", itemId: "shield0000000001", mode: "override", property: "speed-penalty", value: -5 }], "unlimited", { shieldForm: "shield0000000001" }]);
-    assert.ok(sapling.plan.notes.includes("In this form its Hardness and Bulk are 2 higher (by hand)."));
+    assert.deepEqual([effect.system.rules, effect.system.duration.unit, effect.flags["pf2e-automatic-item-resolution"]], [[{ key: "ItemAlteration", itemId: "shield0000000001", mode: "override", property: "ac-bonus", value: 2 }, { key: "ItemAlteration", itemId: "shield0000000001", mode: "override", property: "speed-penalty", value: -5 }, { key: "ItemAlteration", itemId: "shield0000000001", mode: "add", property: "hardness", value: 2 }, { key: "ItemAlteration", itemId: "shield0000000001", mode: "add", property: "bulk", value: 2 }], "unlimited", { shieldForm: "shield0000000001" }]);
+    assert.deepEqual(sapling.plan.notes, ["It can Take Cover as a tower shield does."]);
 });

@@ -4919,11 +4919,15 @@ export const cases = {
             const card = await messageAfter(since, itemCard("item"), { what: "the shield's card" });
             await game.modules.get(NS).api.live.apply(card.id);
         };
+        const hardness = () => user.items.get(shield.id)?.system?.hardness;
+        const hard = hardness();
         await press();
         await until(() => ac() === 2 && user.items.get(shield.id)?.system?.speedPenalty === -5, `a tower shield's +2 AC and –5 Speed (now ${ac()}, ${user.items.get(shield.id)?.system?.speedPenalty})`, { timeout: 8000 });
+        // (Its Hardness 2 higher in this form, PF2e's ItemAlteration.)
+        await until(() => hardness() === hard + 2, `Hardness ${hard} + 2 (now ${hardness()})`, { timeout: 8000 });
         await press();
-        await until(() => ac() === before, `back to a buckler's +${before} (now ${ac()})`, { timeout: 8000 });
-        return { before, tower: 2 };
+        await until(() => ac() === before && hardness() === hard, `back to a buckler's +${before} and Hardness ${hard} (now ${ac()}, ${hardness()})`, { timeout: 8000 });
+        return { before, tower: 2, hardness: [hard, hard + 2] };
     },
 
     // Holy Water: PF2e's Strike; its splash card ticks only the creature beside the target with the unholy trait, which alone takes it.
