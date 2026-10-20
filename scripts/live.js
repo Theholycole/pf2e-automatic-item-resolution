@@ -733,13 +733,16 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (A rune it lends a weapon: Burial Oil's Vitalizing — an Effect with PF2e's AdjustStrike on that weapon.)
     const lent = state.plan.item?.rune;
     const picked = lent?.choices?.length ? lent.choices[state.runeChoice ?? 0] ?? lent.choices[0] : null;
-    const rune = picked ? { ...lent, key: picked.key, name: picked.name, picked: true } : lent;
+    const rune = picked ? { ...lent, key: picked.key, name: picked.name, ...(picked.traits ? { traits: picked.traits } : {}), picked: true } : lent;
     if (rune && user.actor) {
         // (The item itself: its name without its activation's, "Boughshatter: Absorb Corruption" → "Boughshatter".)
         const weapon = rune.own ? { id: state.item.uuid?.split(".Item.").at(-1) ?? null, name: String(state.item.name).replace(/: .*$/, "") } : state.weapons[state.runeWeapon ?? 0];
         const key = runeKeyOf(rune);
         if (!key) lines.push(`${state.item.name}: PF2e has no ${rune.name} rune; apply it by hand.`);
         else if (weapon?.id) {
+            // (A new coat in place of the last, Bane Oil's "Any new application of this oil supersedes any previous one": that weapon's earlier one gone.)
+            const earlier = rune.supersedes ? (user.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.rune === key && effect.flags[MODULE_ID].weaponId === weapon.id).map((effect) => effect.id) : [];
+            if (earlier.length) await user.actor.deleteEmbeddedDocuments("Item", earlier);
             await user.actor.createEmbeddedDocuments("Item", [runeEffectSource(rune, { key, weapon, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
             lines.push(`${state.user.name}: ${runeText(rune, weapon.name)}`);
         }

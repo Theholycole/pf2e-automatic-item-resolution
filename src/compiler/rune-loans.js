@@ -26,6 +26,10 @@ const COUNT = { one: 1, a: 1, an: 1 };
 const RENAMED = { vitalizing: "disrupting", "greater vitalizing": "greater-disrupting", quickstrike: "speed" };
 export const runeKey = (name) => RENAMED[String(name).toLowerCase()] ?? String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+// The Bane rune's types (PF2e's rune text: "aberration, animal, beast, celestial, construct, dragon, elemental, fey, fiend, giant, monitor,
+// ooze, or both fungus and plant").
+const BANE_TYPES = [["aberration"], ["animal"], ["beast"], ["celestial"], ["construct"], ["dragon"], ["elemental"], ["fey"], ["fiend"], ["giant"], ["monitor"], ["ooze"], ["fungus", "plant"]];
+
 // Items whose words the reader doesn't take, by slug: { name, duration, own }.
 export const EXTRA = Object.freeze({});
 
@@ -35,6 +39,13 @@ export function readRuneLoan(text, item = null) {
     if (extra) return { key: runeKey(extra.name), name: extra.name, duration: extra.duration ?? null, own: Boolean(extra.own) };
     if (/@UUID\[[^\]]*\]\{Effect:/i.test(String(item?.system?.description?.value ?? ""))) return null;
     for (const sentence of String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/)) {
+        // (A Bane rune "of one type", Bane Oil's: its user picks the type, each a choice with its traits — the Effect's 1d6 of the weapon's own
+        // damage type against a creature with them, src/live/card.js runeEffectSource, as PF2e's Bane rune has no rules of its own.)
+        const bane = /\bbenefit of one type of Bane rune for (\d+|one|a|an) (round|rounds|minute|minutes|hour|hours)\b/i.exec(sentence);
+        if (bane && !PASSIVE.test(sentence)) {
+            const choices = BANE_TYPES.map((traits) => ({ key: "bane", name: `Bane (${traits.join(" and ")})`, traits }));
+            return { key: "bane", name: "Bane", choices, duration: { mode: "fixed", value: COUNT[bane[1].toLowerCase()] ?? Number(bane[1]), unit: UNITS[bane[2].toLowerCase()], expiry: "turn-start" }, own: false, supersedes: true };
+        }
         const either = EITHER.exec(sentence);
         if (either && !PASSIVE.test(sentence)) {
             const time = FOR_TIME.exec(sentence) ?? FOR_TIME.exec(String(text));

@@ -95,3 +95,30 @@ test("Blade Phantom's Guide: the weapon picked (up to level 11) at its user's hi
     assert.deepEqual(effect.system.rules, [{ key: "MartialProficiency", slug: `blade-phantom-s-guide-${whip.id}`, label: "Blade Phantom's Guide", definition: [`item:id:${whip.id}`], value: 3 }]);
     assert.match(card.content, /Scholar: Whip at your highest weapon proficiency for 1 minute \(rank 3\)/);
 });
+
+test("Bane Oil: a Bane rune of the type picked on the weapon picked, for 1 minute — 1d6 more of the weapon's own damage type against a creature with that type's traits (PF2e's DamageDice; its Bane rune has no rules); a new coat replaces the last", async () => {
+    const oil = compileItem(source("Bane Oil"));
+    assert.deepEqual([oil.item.rune.key, oil.item.rune.choices.length, oil.item.rune.choices.at(-1).traits, oil.item.rune.duration.value, oil.partial], ["bane", 13, ["fungus", "plant"], 1, undefined]);
+    const spear = foundry.giveItem(fighter, source("Spear"));
+    fighter.weapons.length = 0;
+    fighter.weapons.push(spear);
+    const coat = async (type) => {
+        const bottle = foundry.giveItem(fighter, source("Bane Oil"));
+        const data = bottle.toObject();
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: bottle.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: fighter.id }, actor: fighter, token: fighter.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", runeWeapon: 0, runeChoice: oil.item.rune.choices.findIndex((choice) => choice.traits.includes(type)) });
+        await settle();
+        return card;
+    };
+    const first = await coat("fiend");
+    assert.match(first.content, /Fighter: Gives Spear the Bane \(fiend\) rune for 1 minute/);
+    const { runeText } = await import("../src/live/card.js");
+    assert.equal(runeText(oil.item.rune), "Gives the weapon picked the Bane rune of the type picked for 1 minute");
+    const banes = () => fighter.itemTypes.effect.filter((entry) => entry.flags?.[MODULE_ID]?.rune === "bane");
+    assert.deepEqual(banes().map((entry) => entry.system.rules[0]), [{ key: "DamageDice", selector: `${spear.id}-damage`, slug: "bane-oil", label: "Bane (fiend)", diceNumber: 1, dieSize: "d6", predicate: [{ or: ["target:trait:fiend"] }] }]);
+    await coat("plant");
+    assert.deepEqual(banes().map((entry) => entry.system.rules[0].predicate), [[{ or: ["target:trait:fungus", "target:trait:plant"] }]], "the new coat in place of the last");
+});

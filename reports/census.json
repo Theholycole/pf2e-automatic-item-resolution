@@ -15,13 +15,13 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 767,
+   "resolves": 768,
    "builtin:readied-bonus": 23,
    "builtin:zone": 115,
    "partial": 103,
    "builtin:ways": 25,
    "builtin:item-action": 16,
-   "note-only": 123,
+   "note-only": 122,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
    "builtin:no-effect": 50,
@@ -228,10 +228,10 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 28,
+    "resolves": 29,
     "builtin:conjure": 6,
     "builtin:no-effect": 6,
-    "note-only": 10,
+    "note-only": 9,
     "partial": 7,
     "none": 5,
     "builtin:cast-spell": 2,
@@ -354,7 +354,7 @@
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 59,
+   "resolves": 60,
    "gaps": 0,
    "none": 0
   },
@@ -384,7 +384,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 606,
+   "resolves": 607,
    "gaps": 0,
    "none": 13
   }
@@ -7951,8 +7951,9 @@
     "on-weapon",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

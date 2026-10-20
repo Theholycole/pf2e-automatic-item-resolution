@@ -296,7 +296,9 @@ function ownEffectSource({ name, img, words, rules, duration, flag, item, user, 
 // Wounding rune (picked)" until it's picked.
 export function runeText(rune, weaponName = null) {
     const time = rune.duration?.mode === "fixed" ? (rune.duration.value === 0 ? " until the end of the turn" : ` for ${timeText(rune.duration)}`) : "";
-    const name = rune.choices?.length && !rune.picked ? `${rune.choices.slice(0, -1).map((choice) => choice.name).join(", ")} or ${rune.choices.at(-1).name} rune (picked)` : `${rune.name} rune`;
+    // (One rune of several types, Bane Oil's: "the Bane rune of the type picked".)
+    const typed = rune.choices?.length && rune.choices.every((choice) => choice.traits?.length);
+    const name = typed && !rune.picked ? `${rune.name} rune of the type picked` : rune.choices?.length && !rune.picked ? `${rune.choices.slice(0, -1).map((choice) => choice.name).join(", ")} or ${rune.choices.at(-1).name} rune (picked)` : `${rune.name} rune`;
     return `Gives ${weaponName ?? (rune.own ? "its weapon" : "the weapon picked")} the ${name}${time}`;
 }
 
@@ -312,7 +314,12 @@ export function proficiencyEffectSource(loan, { weapon, rank, item = {}, user = 
 }
 
 export function runeEffectSource(rune, { key = rune.key, weapon, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    return ownEffectSource({ name: `${rune.name} (${weapon.name})`, img: "icons/svg/sword.svg", words: runeText(rune, weapon.name), rules: [{ key: "AdjustStrike", mode: "add", property: "property-runes", value: key, definition: [`item:id:${weapon.id}`] }], duration: rune.duration, flag: { rune: key, weaponId: weapon.id }, item, user, worldTime, initiative, moduleId });
+    // (A Bane rune of a type, Bane Oil's: 1d6 more of the weapon's own damage type against a creature with the type's traits — PF2e's DamageDice
+    // on that weapon's damage, as PF2e's own Bane rune has no rules.)
+    const rules = rune.traits?.length
+        ? [{ key: "DamageDice", selector: `${weapon.id}-damage`, slug: "bane-oil", label: rune.name, diceNumber: 1, dieSize: "d6", predicate: [{ or: rune.traits.map((trait) => `target:trait:${trait}`) }] }]
+        : [{ key: "AdjustStrike", mode: "add", property: "property-runes", value: key, definition: [`item:id:${weapon.id}`] }];
+    return ownEffectSource({ name: `${rune.name} (${weapon.name})`, img: "icons/svg/sword.svg", words: runeText(rune, weapon.name), rules, duration: rune.duration, flag: { rune: key, weaponId: weapon.id }, item, user, worldTime, initiative, moduleId });
 }
 
 // Conditions until the end of the rage, in words: "Quickened until the end of the rage".
