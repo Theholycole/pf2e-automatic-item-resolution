@@ -519,3 +519,43 @@ export function spotlightPlan(html, base) {
         partial: true
     };
 }
+
+// An emanation around its user whose creatures get a bonus while they're in it: Paradise Light's Sanctum, "You conjure a shard of Nirvana in a
+// 30 foot emanation, temporarily altering the landscape into an soothing meadow for 1 minute. Creatures in the area gain a +1 item bonus to Will
+// saves and Wisdom-based skill checks, and have fast healing 2." The ability module's zone on its user's token, its modifiers for each creature
+// inside; the fast healing inside and the rest, notes.
+const CONJURED_AREA = /\bYou conjure [^.]*? in an? (\d+)[- ]foot emanation\b[^.]*? for (\d+) (minutes?|rounds?)\./i;
+const IN_AREA = /\bCreatures in the area gain (an? \+\d+ (?:item|status|circumstance) bonus to [^.,]+?)(?:, and have fast healing (\d+))?\./i;
+export function emanationBonusPlan(html, base) {
+    const plain = String(html ?? "").replace(/<[^>]+>/g, " ").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\s+/g, " ");
+    const area = CONJURED_AREA.exec(plain);
+    const inside = IN_AREA.exec(plain);
+    if (!area || !inside) return null;
+    const unit = /^min/i.test(area[3]) ? "minutes" : "rounds";
+    const modifiers = (allyAreaRow(`You and allies within 5 feet of you gain ${inside[1]} for ${area[2]} ${unit}.`)?.row?.modifiers ?? []).map(({ duration, ...modifier }) => modifier);
+    if (!modifiers.length) return null;
+    const rest = plain.slice(inside.index + inside[0].length).split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => /\b(?:save|DC|damage|bonus|penalty|actions?|hostile)\b/i.test(sentence));
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        zone: {
+            area: { type: "emanation", value: Number(area[1]) },
+            centre: "self",
+            range: null,
+            lasts: { mode: "fixed", value: Number(area[2]), unit, expiry: "turn-start", anchor: "effect-start" },
+            untilReused: false,
+            concealed: false,
+            terrain: [],
+            others: false,
+            hazard: null,
+            saves: [],
+            damage: [],
+            effect: null,
+            modifiers,
+            notes: [...(inside[2] ? [`Each creature in it also has fast healing ${inside[2]} while it's there (by hand).`] : []), ...rest]
+        },
+        notes: undefined,
+        partial: true
+    };
+}

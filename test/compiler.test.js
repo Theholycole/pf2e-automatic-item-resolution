@@ -928,7 +928,10 @@ test("area buffs for the creatures targeted (Inspiring Spotlight's a zone) and o
     // (Inspiring Spotlight's burst: the ability module's zone, placed within 240 feet, its bonus for each creature inside.)
     const spot = plan("Inspiring Spotlight (Mounted)");
     assert.deepEqual([spot.builtin, spot.zone.area, spot.zone.centre, spot.zone.range, spot.zone.modifiers], ["zone", { type: "burst", value: 5 }, "placed", 240, [{ selector: "saving-throw", value: 2, type: "item" }, { selector: "cha-based", value: 2, type: "item" }]]);
-    assert.deepEqual(mods("Paradise Light"), [["will", 1, "null"], ["wis-based", 1, "null"]]);
+    // (Paradise Light's meadow: the zone on its user, its bonus for each creature inside; its fast healing and the hostile-action save, notes.)
+    const meadow = plan("Paradise Light");
+    assert.deepEqual([meadow.builtin, meadow.zone.area, meadow.zone.centre, meadow.zone.modifiers], ["zone", { type: "emanation", value: 30 }, "self", [{ selector: "will", value: 1, type: "item" }, { selector: "wis-based", value: 1, type: "item" }]]);
+    assert.match(meadow.zone.notes[0], /fast healing 2/);
     assert.deepEqual([plan("Undead Compendium").item.recipient, mods("Undead Compendium")], ["targets", [["attack-roll", 2, JSON.stringify(["target:trait:undead"])], ["saving-throw", 2, JSON.stringify(["origin:trait:undead"])]]]);
     assert.deepEqual(mods("Rhyton of the Radiant Ifrit").map(([selector]) => selector), ["deception", "diplomacy", "intimidation"]);
     const mask = plan("Mask of Shifting Monstrosity").resolution.outcomes.success.modifiers[0];

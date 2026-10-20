@@ -55,7 +55,7 @@ import { withoutFlavor, withoutFlavorNotes, withoutLater } from "./flavor.js";
 import { withSlotCost } from "./slot-cost.js";
 import { effectStrikePlan } from "./effect-strike.js";
 import { choiceOptionPlan, optionPlan } from "./option-on.js";
-import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan, spotlightPlan } from "./covered-square.js";
+import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan, spotlightPlan, emanationBonusPlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
 import { DRAGON_TYPES, readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { readCounteract } from "./counteract.js";
@@ -489,7 +489,7 @@ function compileEach(item, options = {}) {
         if (installed) plan = installedPlan(base, installed);
         // (A placed burst of light whose creatures get a bonus inside, src/compiler/covered-square.js: Inspiring Spotlight — over any other
         // reading, the zone's.)
-        plan = spotlightPlan(activation.html, base) ?? plan;
+        plan = spotlightPlan(activation.html, base) ?? emanationBonusPlan(activation.html, base) ?? plan;
         // (A shield that guards its user by itself, src/compiler/floating.js: Floating Shield's own AC bonus.)
         if (!plan || plan.noteOnly) plan = floatingPlan(plainText(activation.html), base, item) ?? plan;
         if (!plan) return { activation, plan: null, index };
