@@ -491,6 +491,24 @@ export const cases = {
         return { check };
     },
 
+    // Powered Full Plate with a Bottled Lightning (Moderate) installed: +1 item to Athletics to Shove, and the armor's Strength requirement
+    // 1 lower (PF2e's ItemAlteration), the bomb used up.
+    async poweredPlate(scene) {
+        const { actor: user } = await creature(scene, "Plate Wearer", { type: "character", x: 18, y: 18 });
+        const plate = await give(user, "Powered Full Plate");
+        const bomb = await give(user, "Bottled Lightning (Moderate)");
+        const strength = () => user.items.get(plate.id)?.system?.strength;
+        const before = strength();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(plate.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the plate's card" });
+        const at = card.getFlag(NS, "card").installed.findIndex((entry) => entry.id === bomb.id);
+        await game.modules.get(NS).api.live.apply(card.id, { installedPick: at });
+        await until(() => strength() === before - 1, `Strength requirement ${before} − 1 (now ${strength()})`, { timeout: 8000 });
+        assert(!user.items.get(bomb.id), "the bottled lightning used up");
+        return { strength: [before, strength()] };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });
