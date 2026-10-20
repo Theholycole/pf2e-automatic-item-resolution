@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 759,
+   "resolves": 751,
    "builtin:cast-spell": 475,
-   "partial": 236,
+   "partial": 244,
    "none": 509,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
@@ -57,10 +57,10 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 443,
+    "resolves": 438,
     "builtin:cast-spell": 347,
     "none": 355,
-    "partial": 116,
+    "partial": 121,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
     "builtin:readied-bonus": 32,
@@ -81,8 +81,8 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 171,
-    "partial": 57,
+    "resolves": 168,
+    "partial": 60,
     "none": 75,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
@@ -13885,7 +13885,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -13962,7 +13962,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -15946,7 +15946,7 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -18960,7 +18960,7 @@
    "frequency": "once per day",
    "trigger": false,
    "result": "resolves",
-   "kind": "save",
+   "kind": "check",
    "live": "save"
   },
   {
@@ -23143,7 +23143,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -23851,7 +23851,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -25584,7 +25584,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -26080,7 +26080,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },
@@ -26279,7 +26279,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
    "live": "save"
   },

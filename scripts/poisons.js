@@ -236,6 +236,13 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const after = afterExposure(state, lines, game.time.worldTime);
     // (A save its hit then calls for: the card stays open for that second step.)
     const next = state.plan?.thenSave ? { ...after, status: "open", step: "then" } : after;
+    // (The card after it — plan.again: Horn of the Archon's enemies' save after its allies' bonus — once it closes.)
+    const again = state.plan?.again;
+    if (again?.plan && next.status === "applied") {
+        const card = createExposureCard({ plan: again.plan, item: state.item, user: state.user, later: Boolean(again.later), own: Boolean(again.own), attacker: again.attacker ?? false });
+        await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: message.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
+        next.results = [...(next.results ?? []), `${saveText(again.plan)}: its card follows.`].slice(-6);
+    }
     return message.update({ content: exposureCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 

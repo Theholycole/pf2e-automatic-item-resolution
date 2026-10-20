@@ -272,6 +272,26 @@ test("its user's own Effect, then the save card it had (src/compiler/effect-then
     assert.equal(resisting(), 0, "gone with the exhale");
 });
 
+test("Horn of the Archon's Archon's Note: its allies' +1 status bonus to attack rolls and saves for 1 round at the allies targeted, then its enemies' Fortitude save card (plan.again)", async () => {
+    const [note] = compileActivations(source("Horn of the Archon"));
+    assert.deepEqual([routeOf(note.plan), note.plan.allyArea, note.plan.resolution.outcomes.success.modifiers.map((modifier) => `${modifier.selector} ${modifier.value} ${modifier.type}`), note.plan.again.plan.resolution.check.statistic, note.plan.partial], ["save", true, ["attack-roll 1 status", "saving-throw 1 status"], "fortitude", undefined]);
+    const herald = foundry.makeActor({ id: "damage-herald", name: "Herald", owners: ["player"] });
+    foundry.place(herald, 300, 17800);
+    const horn = foundry.giveItem(herald, source("Horn of the Archon"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: horn.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.ok(card, "the allies' card");
+    const posted = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [warden.token.uuid] });
+    await settle();
+    assert.deepEqual(foundry.posted.slice(posted).map((entry) => entry.plan.resolution.check.roll), ["automatic"], "the allies' bonus");
+    const save = foundry.messages.slice(foundry.messages.indexOf(card) + 1).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.ok(save, "the enemies' save card");
+    assert.equal(save.flags[MODULE_ID].card.plan.resolution.check.statistic, "fortitude");
+});
+
 test("a spellgun against a defense's DC, with conditions and no damage (the module's own wording)", async () => {
     const { spellgunPlan } = await import("../src/compiler/spellguns.js");
     const html = "<p>Activate the spellgun by aiming it at one creature and making your choice of a spell attack roll or a firearm attack roll against the target's Fortitude DC. This spellgun has a range increment of 30 feet.</p><p><strong>Critical Success</strong> The target is Slowed 1 until the end of your next turn.</p><p><strong>Success</strong> As critical success, except the target is Clumsy instead of slowed.</p>";

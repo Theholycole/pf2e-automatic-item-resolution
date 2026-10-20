@@ -104,7 +104,9 @@ function withoutStaleReminder(plan) {
 // the foe is also knocked Prone" beside a basic save that had no Prone). A note, the plan partial: the card says it, the census counts it.
 // text: the plain text it was read from (the item's, or the activation's).
 const CONDITIONS = "frightened|sickened|stunned|slowed|prone|off-guard|dazzled|blinded|deafened|clumsy|enfeebled|drained|fatigued|immobilized|grabbed|restrained|quickened|fleeing|confused|paralyzed|petrified|stupefied|doomed|persistent|resistance|weakness";
-const SKIP = /^(?:This|These|Activate|Frequency|Trigger|Requirements|Craft Requirements|Usage|Access|Saving Throw|Onset|Maximum Duration|Stage \d|Effect:|Hardness)\b/;
+// (A wayfinder's resonant power, "The resonant power grants you a +1 circumstance bonus to initiative rolls", is the aeon stone's passive, not
+// its activation's.)
+const SKIP = /^(?:This|These|Activate|Frequency|Trigger|Requirements|Craft Requirements|Usage|Access|Saving Throw|Onset|Maximum Duration|Stage \d|Effect:|Hardness|The resonant power|Its resonant power)\b/;
 // (A condition as a rule — "becomes Frightened 1", "is also knocked Prone", "Slowed 1" — not a word of flavor, "barely restrained contempt";
 // persistent damage, a resistance or weakness with its number.)
 const CONDITION_RULE = new RegExp(String.raw`\b(?:becomes?|is|are|be|knocked|falls?|gains?|remains?|also)\s+(?:\w+\s+)?(${CONDITIONS.replace(/\|persistent\|resistance\|weakness$/, "")})\b|\b(${CONDITIONS.replace(/\|persistent\|resistance\|weakness$/, "")}) \d\b`, "gi");
@@ -127,11 +129,35 @@ const AGAIN_SAVE = String.raw`\b(?:new|repeat the|attempts? an?|another) (?:[\w@
 const AT_TURNS = String.raw`\b(?:(?:end|start|beginning) of (?:each of |any of )?(?:its|their) (?:next )?turns?|each round|every round|end of any round)\b`;
 const RECURRING = new RegExp(String.raw`${AGAIN_SAVE}[^.]*?${AT_TURNS}|${AT_TURNS}[^.]*?${AGAIN_SAVE}`, "i");
 const ROUNDS = { round: 1, minute: 10, hour: 600 };
+// (A typed bonus or penalty the creature gets — "you have a +1 item bonus to saving throws", "takes a –2 status penalty" — traced only by a
+// modifier of that value and type; a Speed of a kind — "you gain a Fly Speed of 40 feet" — only by that Speed: Phoenix Flask's, which a
+// save plan alone had dropped.)
+const TYPED = /\b(?:gains?|have|has|gets?|takes?|grants? (?:you|it|them|the target)|receives?) an? ([+\-–−]?)(\d+) (item|status|circumstance) (bonus|penalty)\b/gi;
+const SPEED_RULE = /\b(fly|swim|climb|burrow) Speed (?:of|equal to) (\d+) feet\b/gi;
 function mustOf(sentence) {
     return [
         ...[...sentence.matchAll(TIMED_CONDITION)].map((match) => ({ slug: match[1].toLowerCase(), rounds: (COUNT[match[2].toLowerCase()] ?? Number(match[2])) * ROUNDS[match[3].toLowerCase()] })),
-        ...(RECURRING.test(sentence) ? [{ recurring: true }] : [])
+        ...(RECURRING.test(sentence) ? [{ recurring: true }] : []),
+        ...[...sentence.matchAll(TYPED)].map((match) => ({ modifier: (match[4].toLowerCase() === "penalty" || /[\-–−]/.test(match[1]) ? -1 : 1) * Number(match[2]), type: match[3].toLowerCase() })),
+        ...[...sentence.matchAll(SPEED_RULE)].map((match) => ({ speed: match[1].toLowerCase(), value: Number(match[2]) }))
     ];
+}
+// The plan's typed modifiers ("type:value") and Speeds ("kind:value"), wherever it holds them: row modifiers, a readied bonus, an Effect's
+// rules (FlatModifier, BaseSpeed).
+function heldOf(plan) {
+    const found = new Set();
+    const walk = (node) => {
+        if (Array.isArray(node)) return node.forEach(walk);
+        if (!node || typeof node !== "object") return;
+        const value = Number(node.value);
+        if (Number.isFinite(value) && typeof node.type === "string") found.add(`${node.type.toLowerCase()}:${value}`);
+        if (node.key === "BaseSpeed" && Number.isFinite(value)) found.add(`${String([].concat(node.selector ?? "")[0]).replace(/-speed$/, "")}:${value}`);
+        // (A Speed as a formula, the Winged rune's "min(25,@actor.system.movement.speeds.land.value)": its numbers.)
+        if (typeof node.type === "string" && /^(?:fly|swim|climb|burrow)$/i.test(node.type)) for (const number of String(node.value ?? "").match(/\d+/g) ?? []) found.add(`${node.type.toLowerCase()}:${Number(number)}`);
+        Object.values(node).forEach(walk);
+    };
+    walk(plan);
+    return found;
 }
 // The conditions the plan gives for a time, as "slug:rounds".
 function timedOf(plan) {
@@ -178,12 +204,16 @@ export function withUntracedRules(plan, text) {
     const trace = traceOf(plan);
     const timed = timedOf(plan);
     const spoken = saidOf(plan);
+    const held = heldOf(plan);
+    const afflicted = trace.json.includes('"afflictionhandoff"');
     const untraced = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => {
         // (A step by the weapon's striking rune: its rune decides it, src/compiler/rune-steps.js.)
         if (!sentence || SKIP.test(sentence) || RUNE_STEP_SENTENCE.test(sentence)) return false;
+        // (An affliction's stages are its own, played from the item's text by Pseudo Afflictions: a drug's stage bonuses.)
+        if (afflicted && /\bStage \d\b/.test(sentence)) return false;
         // (Said on a note or a line of the plan already: traced.)
         if (spoken.includes(sentence.toLowerCase().slice(0, 60))) return false;
-        if (mustOf(sentence).some((token) => (token.recurring ? !trace.json.includes('"saveends"') : !timed.has(`${token.slug}:${token.rounds}`)))) return true;
+        if (mustOf(sentence).some((token) => (token.recurring ? !trace.json.includes('"saveends"') : token.modifier !== undefined ? !held.has(`${token.type}:${token.modifier}`) : token.speed ? !held.has(`${token.speed}:${token.value}`) : !timed.has(`${token.slug}:${token.rounds}`)))) return true;
         const tokens = tokensOf(sentence);
         return tokens.length > 0 && !tokens.some((token) => (token.dice ? trace.dice.has(token.dice.toLowerCase()) : token.number !== undefined ? trace.numbers.has(token.number) : trace.json.includes(token.word)));
     });

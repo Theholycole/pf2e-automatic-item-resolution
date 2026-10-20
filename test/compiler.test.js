@@ -1130,6 +1130,14 @@ test("a condition for a time and a save again at its turns are each traced on th
     assert.equal(withUntracedRules(plan, again).partial, true);
     const played = { resolution: { kind: "save", outcomes: { failure: { effects: [{ kind: "condition", slug: "slowed", value: 1, duration: { mode: "fixed", value: 1, unit: "minutes", saveEnds: { save: "will", dc: null } } }] } } } };
     assert.equal(withUntracedRules(played, again), played);
+    // (A typed bonus and a Speed of a kind: traced only by that modifier or Speed — Golden Liberator's Feather's fly Speed and AC bonus, which its
+    // save plan doesn't hold; not a wayfinder's resonant power.)
+    const bonus = "Effect Its wearer gains a +3 status bonus to Stealth checks while it glows.";
+    assert.equal(withUntracedRules(plan, bonus).partial, true);
+    const boosted = { resolution: { kind: "check", outcomes: { success: { effects: [], modifiers: [{ selector: "stealth", value: 3, type: "status" }] } } } };
+    assert.equal(withUntracedRules(boosted, bonus), boosted);
+    assert.equal(withUntracedRules(boosted, "Effect The resonant power grants you a +1 circumstance bonus to initiative rolls."), boosted);
+    assert.equal(compileItem(item("Golden Liberator's Feather")).partial, true);
 });
 
 test("a new save at its turns (src/compiler/save-ends.js, the ability's duration.saveEnds and note.saveEnds): Tusk and Fang Chain's ends its critical failure's confusion, Spirit-Sealing Fulu (Greater)'s takes a round off, Golden Silencer (Greater)'s note Effect, Gearbinder Oil's escalating slowed for 6 rounds behind a GM gate, Dreaming Round's from its failing rows with its fatigued; Jawbreaker Shield's broken jaw a note Effect a save ends", async () => {

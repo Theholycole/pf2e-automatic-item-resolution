@@ -415,6 +415,13 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = energyChoicePlan(plainText(activation.html), base, plainText(html)) ?? plan;
         // (What it gives its user and allies in an area, src/compiler/rows.js: Knight Captain's Lance.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = allyAreaPlan(plainText(activation.html), base, allyAreaRow(plainText(activation.html))) ?? plan;
+        // (Its allies' bonus beside its enemies' save — Horn of the Archon's "Allies in the area gain a +1 status bonus to attack rolls and saving
+        // throws for 1 round" — the allies' card first, then the save's: plan.again.)
+        // ("In the area" is the save's own emanation; the save's sentences, the allies' notes, are the save card's.)
+        const sharedArea = plan?.resolution?.kind === "save" && !plan.builtin && !plan.again && plan.targeting?.area?.type === "emanation" ? plan.targeting.area.value : null;
+        const alliesRow = sharedArea ? allyAreaRow(plainText(activation.html).replace(/\bAllies in the area (gain|receive)\b/, `Allies within a ${sharedArea}-foot emanation $1`)) : null;
+        const SAVE_WORDS = /\b(?:saving throw|save|Critical Success|Success|Failure|Critical Failure|immune|Enemies|enemies)\b/;
+        if (alliesRow && alliesRow.notes.every((note) => SAVE_WORDS.test(note))) plan = { ...allyAreaPlan(plainText(activation.html), base, { ...alliesRow, notes: [] }), again: { plan, later: false } };
         // (An Effect behind a check the text opens with: only on its success, a note.)
         plan = checkGated(plan, plainText(activation.html));
         // (A condition it lowers on its user, src/compiler/reduce.js: Coin of Comfort; a plan of its own when it's all.)

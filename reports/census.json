@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 743,
+   "resolves": 738,
    "builtin:readied-bonus": 23,
    "builtin:zone": 115,
-   "partial": 128,
+   "partial": 133,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 122,
@@ -36,9 +36,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 26,
-    "resolves": 201,
+    "partial": 69,
     "builtin:ways": 18,
-    "partial": 64,
+    "resolves": 196,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 95,
@@ -319,7 +319,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 166,
+   "resolves": 165,
    "gaps": 0,
    "none": 7
   },
@@ -331,13 +331,13 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 299,
+   "resolves": 294,
    "gaps": 0,
    "none": 21
   },
   "affliction": {
    "count": 144,
-   "resolves": 134,
+   "resolves": 133,
    "gaps": 0,
    "none": 3
   },
@@ -355,7 +355,7 @@
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 57,
+   "resolves": 56,
    "gaps": 0,
    "none": 0
   },
@@ -379,13 +379,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 255,
+   "resolves": 251,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 592,
+   "resolves": 591,
    "gaps": 0,
    "none": 13
   }
@@ -695,9 +695,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": null
   },
   {
@@ -14017,9 +14016,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": null
   },
   {
@@ -21961,9 +21959,8 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "coat"
   },
   {
@@ -26731,9 +26728,8 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -27618,9 +27614,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": null
   },
   {
