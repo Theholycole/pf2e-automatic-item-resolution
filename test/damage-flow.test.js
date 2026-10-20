@@ -306,6 +306,12 @@ test("a save harder for some creatures or not for them (src/compiler/kind-saves.
     assert.deepEqual(groups.map((group) => [group.plan === null ? "immune" : group.plan === lament.plan ? "plain" : group.plan.resolution.check.bonus.value, group.tokens.map((token) => token.name)]), [[-2, ["Angel", "Priest"]], ["immune", ["Fiend"]], ["plain", ["Guard"]]]);
     const [lantern] = compileActivations(source("Anglerfish Lantern"));
     assert.deepEqual(planFor(lantern.plan, { system: { traits: { value: ["water", "elemental"] } } }).resolution.check.bonus, { value: -2, type: "circumstance" });
+    // (Slumber Arrow: only a living creature saves, its failure a Speed penalty and its critical failure Slowed 1 beside it, src/compiler/guards.js.)
+    const [arrow] = compileActivations(source("Slumber Arrow"));
+    assert.equal(planFor(arrow.plan, { system: { traits: { value: ["undead", "zombie"] } } }), null);
+    assert.equal(planFor(arrow.plan, plain), arrow.plan);
+    const rows = arrow.plan.resolution.outcomes;
+    assert.deepEqual([rows.failure.effects, rows.failure.modifiers.map((modifier) => [modifier.selector, modifier.value]), rows.criticalFailure.effects.map((effect) => [effect.slug, effect.value]), arrow.plan.partial], [[], [["all-speeds", -5]], [["slowed", 1]], undefined]);
     const [daybreak] = compileActivations(source("Daybreak Ammunition"));
     assert.deepEqual(planFor(daybreak.plan, { system: { perception: { senses: [{ type: "darkvision" }] } } }).resolution.check.bonus, { value: -2, type: "circumstance" });
     // (Live: one card per group; none for the immune, a line instead.)

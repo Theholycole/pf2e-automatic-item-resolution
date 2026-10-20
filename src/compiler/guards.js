@@ -53,7 +53,22 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return itsNextTurn(lineDamage(nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text)), text);
+    return failureThenAlso(itsNextTurn(lineDamage(nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text)), text), text);
+}
+
+// A failure's Speed penalty with a critical failure's condition beside it — Slumber Arrow's "On a failure, it takes a -5-foot status penalty
+// to its Speeds for 1 round, and is also Slowed 1 for 1 round on a critical failure" — which the ability compiler reads as Slowed on both:
+// the failure's penalty, the critical failure's penalty and condition.
+const FAILURE_THEN_ALSO = /\bOn a failure, it takes an? [-–−](\d+)-foot (status|circumstance) penalty to its Speeds for (\d+|one|an?) (rounds?|minutes?), and is also (\w+)(?: (\d))? for (\d+|one|an?) (rounds?|minutes?) on a critical failure\./i;
+function failureThenAlso(plan, text) {
+    const match = FAILURE_THEN_ALSO.exec(String(text ?? ""));
+    if (!match || plan?.resolution?.kind !== "save" || !plan.resolution.outcomes?.failure || !plan.resolution.outcomes?.criticalFailure) return plan;
+    const time = (count, unit) => ({ mode: "fixed", value: /^\d+$/.test(count) ? Number(count) : 1, unit: /^round/i.test(unit) ? "rounds" : "minutes", expiry: "turn-start", anchor: "effect-start" });
+    const penalty = { selector: "all-speeds", value: -Number(match[1]), type: match[2].toLowerCase(), duration: time(match[3], match[4]) };
+    const condition = { kind: "condition", slug: match[5].toLowerCase(), value: match[6] ? Number(match[6]) : null, duration: time(match[7], match[8]) };
+    const { failure, criticalFailure } = plan.resolution.outcomes;
+    const strip = (row) => (row.effects ?? []).filter((effect) => !(effect?.kind === "condition" && effect.slug === condition.slug));
+    return { ...plan, resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, failure: { ...failure, effects: strip(failure), modifiers: [...(failure.modifiers ?? []), penalty] }, criticalFailure: { ...criticalFailure, effects: [...strip(criticalFailure), condition], modifiers: [...(criticalFailure.modifiers ?? []), { ...penalty }] } } } };
 }
 
 // "Until the end of its next turn" in an item's row is the creature's own turn — Thunder Snare's "The target is deafened until the end of its

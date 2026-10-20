@@ -132,7 +132,7 @@ const ROUNDS = { round: 1, minute: 10, hour: 600 };
 // (A typed bonus or penalty the creature gets — "you have a +1 item bonus to saving throws", "takes a –2 status penalty" — traced only by a
 // modifier of that value and type; a Speed of a kind — "you gain a Fly Speed of 40 feet" — only by that Speed: Phoenix Flask's, which a
 // save plan alone had dropped.)
-const TYPED = /\b(?:gains?|have|has|gets?|takes?|grants? (?:you|it|them|the target)|receives?) an? ([+\-–−]?)(\d+) (item|status|circumstance) (bonus|penalty)\b/gi;
+const TYPED = /\b(?:gains?|have|has|gets?|takes?|grants? (?:you|it|them|the target)|receives?) an? ([+\-–−]?)(\d+)(?:-foot)? (item|status|circumstance) (bonus|penalty)\b/gi;
 const SPEED_RULE = /\b(fly|swim|climb|burrow) Speed (?:of|equal to) (\d+) feet\b/gi;
 // (A resistance or weakness of a number — "you gain resistance 10 to poison" — traced only by that number of that kind; temporary Hit Points
 // of a number only by that number.)
