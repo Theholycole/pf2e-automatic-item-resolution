@@ -58,6 +58,10 @@ test("the reading: several conditions, one of several, to 0, and another creatur
     // Each of a list (Sun Orchid Poultice), one of several (Golden-Souled Yang Na), to 0 (Unending Youth), "by up to 2".
     assert.deepEqual(compileItem(source("Sun Orchid Poultice")).item.reduce.map((entry) => [entry.slug, entry.by]), [["clumsy", 2], ["drained", 2], ["enfeebled", 2]]);
     assert.deepEqual(compileActivations(source("Golden-Souled Yang Na"))[0].plan.item.reduce, [{ choose: ["clumsy", "enfeebled", "frightened", "stupefied"], by: 1 }]);
+    // Each one held, beside its healing (Flickering Aeon Stone's Enter Stasis): read whole, the plan no longer partial (its resonant power the
+    // wayfinder's).
+    const stasis = compileActivations(source("Aeon Stone (Flickering)"))[1].plan;
+    assert.deepEqual([stasis.item.reduce.map((entry) => [entry.slug, entry.by]), stasis.resolution.outcomes.success.effects.map((effect) => effect.formula), stasis.partial, stasis.unread], [[["clumsy", 1], ["drained", 1], ["enfeebled", 1], ["stupefied", 1]], ["2d10+8"], undefined, undefined]);
     assert.deepEqual(compileActivations(source("Unending Youth"))[0].plan.item.reduce, [{ slug: "doomed", by: "all" }]);
     assert.deepEqual(readReductions("You gain a +2 status bonus to saves against void effects for 10 minutes and reduce your wounded condition by up to 2."), [{ slug: "wounded", by: 2 }]);
 });

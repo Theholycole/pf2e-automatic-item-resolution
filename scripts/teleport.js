@@ -5,7 +5,7 @@
 
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { createTeleportCard, teleportCardHTML, teleportRange } from "../src/live/teleport-card.js";
-import { FLAG, MODULE_ID, entryOf, spaceOf, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, damageRollClass, entryOf, spaceOf, stateOf } from "./foundry.js";
 
 const landSpeed = (actor) => Number(actor?.system?.attributes?.speed?.total ?? actor?.system?.attributes?.speed?.value) || null;
 
@@ -62,8 +62,37 @@ export function spaceProblem(token, at, { from = null, range = null } = {}) {
     return null;
 }
 
-// On the active GM's client: { destination: { x, y }, targets: [token uuids] } → the token moved, the card applied.
-export async function applyTeleportCard(message, { destination = null, targets = [] } = {}) {
+// The creatures (token documents) whose spaces the line from the centre of the token's old space to the centre of its new one crosses: not
+// its own, nor a hidden one.
+export function creaturesOnLine(token, start, end) {
+    const size = canvas.grid.size;
+    const half = { x: ((Number(token.width) || 1) * size) / 2, y: ((Number(token.height) || 1) * size) / 2 };
+    const a = { x: start.x + half.x, y: start.y + half.y };
+    const b = { x: end.x + half.x, y: end.y + half.y };
+    // (A segment against a rectangle, a hair inside its edges so a line along a border doesn't take both sides: Liang–Barsky.)
+    const crosses = (left, top, right, bottom) => {
+        let low = 0;
+        let high = 1;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        for (const [p, q] of [[-dx, a.x - left], [dx, right - a.x], [-dy, a.y - top], [dy, bottom - a.y]]) {
+            if (p === 0) {
+                if (q < 0) return false;
+                continue;
+            }
+            const t = q / p;
+            if (p < 0) low = Math.max(low, t);
+            else high = Math.min(high, t);
+            if (low > high) return false;
+        }
+        return true;
+    };
+    return canvas.scene.tokens.filter((other) => other.id !== token.id && !other.hidden && other.actor?.isOfType?.("creature") && crosses(other.x + 1, other.y + 1, other.x + (Number(other.width) || 1) * size - 1, other.y + (Number(other.height) || 1) * size - 1));
+}
+
+// On the active GM's client: { destination: { x, y }, targets: [token uuids], critical } → the token moved, the card applied.
+// critical: the triggering save was a critical success (the farther range, Dweomerveil's).
+export async function applyTeleportCard(message, { destination = null, targets = [], critical = false } = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "teleport" || state.status !== "open") return null;
     if (!destination || !Number.isFinite(Number(destination.x)) || !Number.isFinite(Number(destination.y))) throw new Error("Pick the space first.");
@@ -73,12 +102,24 @@ export async function applyTeleportCard(message, { destination = null, targets =
     // (Measured from the creature targeted, Golden Spur's "within 10 feet of the target"; else from where its user stands.)
     const aimed = teleport.from === "target" ? (await Promise.all((targets ?? []).map((uuid) => fromUuid(uuid).catch(() => null)))).find((other) => other && other.uuid !== token.uuid) ?? null : null;
     if (teleport.from === "target" && !aimed) throw new Error("Target the creature first, then press Pick.");
-    const range = teleportRange(teleport, { speed: state.speed });
+    const range = critical && teleport.critical ? teleport.critical.within : teleportRange(teleport, { speed: state.speed });
     const at = { x: Number(destination.x), y: Number(destination.y) };
     const problem = spaceProblem(token, at, { from: aimed ?? token, range });
     if (problem) throw new Error(`${state.item.name}: ${problem}.`);
+    const start = { x: Number(token.x), y: Number(token.y) };
     await token.update({ x: at.x, y: at.y }, { teleport: true, animate: false, [MODULE_ID]: { teleported: true } });
-    const line = `${state.user.name} teleports${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`;
-    const next = { ...state, status: "applied", results: [line] };
+    const results = [`${state.user.name} teleports${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`];
+    // (Damage along the way, Quartz-Coil Rail Transport's: its user and each creature the line between its two spaces crosses.)
+    if (teleport.line) {
+        const struck = [token, ...creaturesOnLine(token, start, at)];
+        const DamageRoll = damageRollClass();
+        for (const other of struck) {
+            const actor = other.actor;
+            if (!actor) continue;
+            await actor.applyDamage({ damage: await new DamageRoll(`${teleport.line.formula}[${teleport.line.type}]`).evaluate(), token: other });
+        }
+        results.push(`${teleport.line.formula} ${teleport.line.type} damage to ${struck.map((other) => other.name).join(", ")}.`);
+    }
+    const next = { ...state, status: "applied", results };
     return message.update({ content: teleportCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

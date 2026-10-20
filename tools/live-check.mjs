@@ -3426,6 +3426,48 @@ export const cases = {
         throw new Error(`no failure in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
     },
 
+    // Energizing Lattice's release: the readied Strike's failure (not a critical failure) posts half of its 6d6 force on the ability module's
+    // card at the creature missed, and the foe loses that much.
+    async energizingLattice(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Lattice Fighter", { type: "character", x: 14, y: 3 });
+        const axe = await give(fighter, "Greataxe");
+        await axe.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        await wait(500);
+        const modifier = (fighter.system.actions ?? []).find((entry) => entry.item?.id === axe.id)?.totalModifier ?? 0;
+        const { actor: foe, token: foeToken } = await creature(scene, "Lattice Target", { x: 15, y: 3, ac: modifier + 13, alliance: "opposition", hp: 200 });
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        const lattice = await give(fighter, "Energizing Lattice");
+        const outcomes = [];
+        for (let attempt = 0; attempt < 8; attempt++) {
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(lattice.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => fighter.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider")), "the readied Strike", { timeout: 6000 });
+            since = Date.now();
+            const { attack } = await strike(fighter, axe);
+            const outcome = attack.flags.pf2e.context.outcome;
+            outcomes.push(outcome);
+            if (outcome !== "failure") {
+                for (const effect of fighter.itemTypes.effect.filter((entry) => entry.getFlag(NS, "strikeRider"))) await effect.delete().catch(() => null);
+                continue;
+            }
+            const damage = await messageAfter(since, abilitySaveCard, { what: "the failure's half damage card" });
+            const plan = damage.flags["pf2e-automatic-ability-resolution"].card.plan;
+            const component = plan.resolution.sharedDamage.components[0];
+            assert(component.formula === "6d6" && component.type === "force" && plan.resolution.outcomes.success.damage.multiplier === 0.5, `half of 6d6 force (${JSON.stringify(component)}, ${plan.resolution.outcomes.success.damage.multiplier})`);
+            const before = foe.system.attributes.hp.value;
+            await applyAbilityCard(damage);
+            await until(() => foe.system.attributes.hp.value < before, "the half damage on the foe", { timeout: 10000 });
+            const lost = before - foe.system.attributes.hp.value;
+            assert(lost >= 3 && lost <= 18, `half of 6d6 (${lost})`);
+            assert(!fighter.itemTypes.effect.some((effect) => effect.getFlag(NS, "strikeRider")), "the readied Strike spent");
+            return { outcomes, lost };
+        }
+        throw new Error(`no failure in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {
@@ -5062,8 +5104,10 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
-    // Dweomerveil's Dimension Leap: a space 40 feet off refused, then one 20 feet off — the token there at once.
+    // Dweomerveil's Dimension Leap: a space 40 feet off refused, then the same space after a critical success (within 45 feet) — the token
+    // there at once.
     async dweomerLeap(scene) {
+        await clearSquares(scene, [[0, 2], [8, 2]]);
         const { actor: user, token } = await creature(scene, "Dweomer Leaper", { type: "character", x: 0, y: 2 });
         const veil = await give(user, "Dweomerveil");
         const since = Date.now();
@@ -5073,15 +5117,18 @@ export const cases = {
         let refused = null;
         await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 8 * size, y: 2 * size } }).catch((error) => { refused = error.message; });
         assert(/40 feet away/.test(refused ?? ""), `40 feet refused (${refused})`);
-        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 4 * size, y: 2 * size } });
-        await until(() => token.x === 4 * size && token.y === 2 * size, `the token at (4, 2) (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 8 * size, y: 2 * size }, critical: true });
+        await until(() => token.x === 8 * size && token.y === 2 * size, `the token at (8, 2) (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
-    // Quartz-Coil Rail Transport (Lesser), a consumable: up to 20 feet — 25 feet off refused, then 20 feet off, the token there at once.
+    // Quartz-Coil Rail Transport (Lesser), a consumable: up to 20 feet — 25 feet off refused, then 20 feet off, the token there at once; 2
+    // electricity damage to its user and the creature on the line between, not to the one beside it.
     async quartzCoil(scene) {
-        await clearSquares(scene, [[0, 4], [4, 4], [5, 4]]);
+        await clearSquares(scene, [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [2, 5]]);
         const { actor: user, token } = await creature(scene, "Coil Rider", { type: "character", x: 0, y: 4 });
+        const { actor: between } = await creature(scene, "Coil Bystander", { x: 2, y: 4 });
+        const { actor: beside } = await creature(scene, "Coil Onlooker", { x: 2, y: 5 });
         const coil = await give(user, "Quartz-Coil Rail Transport (Lesser)");
         const since = Date.now();
         await coil.consume();
@@ -5092,7 +5139,11 @@ export const cases = {
         assert(/25 feet away/.test(refused ?? ""), `25 feet refused (${refused})`);
         await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 4 * size, y: 4 * size } });
         await until(() => token.x === 4 * size && token.y === 4 * size, `the token at (4, 4) (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
-        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+        await until(() => between.system.attributes.hp.value === 48, `the bystander on the line took 2 (${between.system.attributes.hp.value})`, { timeout: 8000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(beside.system.attributes.hp.value === 50, `the onlooker off the line untouched (${beside.system.attributes.hp.value})`);
+        assert(results.some((line) => /^2 electricity damage to .*Coil Rider.*Coil Bystander/.test(line)), results.join(" / "));
+        return { results };
     },
 
     // Dimension Shot: a space adjacent to the creature hit (targeted) — one two squares off it refused, then one beside it, the token there.

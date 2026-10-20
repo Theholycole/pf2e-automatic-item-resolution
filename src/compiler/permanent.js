@@ -374,6 +374,19 @@ function compileEach(item, options = {}) {
             const { noteOnly, ...rest } = plan;
             plan = { ...rest, partial: true };
         }
+        // (Its own sentence no longer what the plan leaves, beside its healing: Flickering Aeon Stone's "If you have the clumsy, …
+        // condition, the value of each of these conditions is reduced by 1" — read whole, it saying nothing more.)
+        if (reduce.length && plan?.partial) {
+            const lowered = (sentence) => {
+                const read = readReductions(String(sentence));
+                // (Not one with a clause of its own besides, Grim Ring's "…, and the undead that caused the condition takes 2d6 vitality damage".)
+                return read.length > 0 && read.every((entry) => reduce.some((own) => JSON.stringify(own) === JSON.stringify(entry))) && !reductionNotes(`Effect ${sentence}`).length && !/,\s*and\b|\bdamage\b/i.test(String(sentence));
+            };
+            const unread = (plan.unread ?? []).filter((sentence) => !lowered(sentence));
+            const notes = (plan.notes ?? []).filter((sentence) => !lowered(sentence));
+            const manual = Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length);
+            if (unread.length !== (plan.unread ?? []).length || notes.length !== (plan.notes ?? []).length) plan = { ...plan, ...(plan.unread ? { unread: unread.length ? unread : undefined } : {}), ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}), ...(!unread.length && !notes.length && !manual ? { partial: undefined, ...(plan.automation?.level === "guided" ? { automation: { ...plan.automation, level: "automatic" } } : {}) } : {}) };
+        }
         // (A bead that detonates as a Fireball of the dice it says, src/compiler/beads.js: Necklace of Fireballs.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = beadsPlan(item?.system?.description?.value, base) ?? plan;
         // (A flat check to end persistent damage at once, src/compiler/recovery.js: Ring of Torag.)

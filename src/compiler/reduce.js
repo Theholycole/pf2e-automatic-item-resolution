@@ -23,6 +23,9 @@ const BY = String.raw`(?:by (?:up to )?(\d|one|two|three)|to (0))\b`;
 const REDUCE = new RegExp(String.raw`\b(?:(?:you )?reduc(?:e|es|ing) (?:the values? of )?your (${NAMES})(?: conditions?| values?)?(?: values?)?|your (${NAMES}) (?:value|condition) decreases|the value of your (${NAMES}) condition is (?:decreased|reduced)) by (?:up to )?(\d|one|two|three)\b`, "gi");
 // (Its user's several: "your clumsy, drained, and enfeebled condition values by 2" — each; "… or stupefied condition by 1" — one.)
 const LIST = new RegExp(String.raw`\breduc(?:e|es|ing) (?:the values? of )?your ((?:${NAMES})(?:\s*,\s*(?:(?:and|or) )?(?:${NAMES}))*\s*,?\s*(and|or) (?:${NAMES})) (?:conditions?|values?)(?: values?)? ${BY}`, "gi");
+// (Each one its user has, Flickering Aeon Stone's "If you have the clumsy, drained, enfeebled, or stupefied condition, the value of each
+// of these conditions is reduced by 1": each.)
+const EACH_HELD = new RegExp(String.raw`^If you have the ((?:${NAMES})(?:\s*,\s*(?:(?:and|or) )?(?:${NAMES}))*\s*,?\s*(?:and|or) (?:${NAMES})) conditions?, the value of each of these conditions is (?:reduced|decreased) by (\d|one|two|three)\.$`, "i");
 // (To 0: Unending Youth's "Reduce your doomed value to 0".)
 const TO_ZERO = new RegExp(String.raw`\breduc(?:e|es|ing) (?:the value of )?your (${NAMES})(?: condition| value)?(?: value)? to 0\b`, "gi");
 // (Another's: "Reduce the ally's frightened condition by 1", "Reduce that creature's frightened value by 1", "that target
@@ -89,6 +92,8 @@ export function readReductions(text) {
     const ended = END_OWN.exec(ownUse(text));
     if (ended) for (const slug of ended[1].toLowerCase().match(new RegExp(`${CONDITIONS}|petrified`, "g"))) add({ slug, by: "all" });
     for (const sentence of ownUse(text).split(/(?<=[.!?])\s+(?=[A-Z])/)) {
+        const held = EACH_HELD.exec(sentence.trim());
+        if (held) for (const [slug] of held[1].toLowerCase().matchAll(new RegExp(NAMES, "g"))) add({ slug, by: amount(held[2]) });
         if (TIMED.test(sentence) || DEGREE_ROW.test(sentence.trim())) continue;
         const area = AREA.test(sentence);
         const who = area ? { who: "targets" } : {};
@@ -127,7 +132,7 @@ export function reductionPlan(base, reduce, notes = []) {
 // What else the text says that a card should show (rules, not its flavor): its other sentences with rule words.
 export function reductionNotes(text) {
     // (A copy without the global flag: the shared one keeps its place between calls.)
-    const patterns = [REDUCE, LIST, TO_ZERO, OTHERS, TRIGGERING].map((pattern) => new RegExp(pattern.source, "i"));
+    const patterns = [REDUCE, LIST, TO_ZERO, OTHERS, TRIGGERING, EACH_HELD].map((pattern) => new RegExp(pattern.source, "i"));
     const reduces = { test: (sentence) => patterns.some((pattern) => pattern.test(sentence)) };
     // (The reduction's own sentence too when it says more: "…, and you regain 1 Mythic Point".)
     return ownUse(text).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && (reduces.test(sentence) ? /\band (?:you )?(?:regain|gain|become|are|take|can)\b/i.test(sentence) : RULE_WORDS.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));

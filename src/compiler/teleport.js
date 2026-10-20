@@ -1,7 +1,8 @@
 // An item that teleports its user a short way on the battle map: Mad Mammoth's Juke's "You teleport to an unoccupied space within 200
 // feet that you can see", Golden Spur's "You teleport to a space you can see within 10 feet of the target", Mercurial Mantle's "Teleport up
 // to double your Speed to a location you can see", Gloaming Shard's "teleport to a space adjacent to the target of your Strike". The plan is
-// the item module's builtin "teleport": { within (feet) | speedTimes, from: "self" | "target" }. Live play (scripts/teleport.js) has the
+// the item module's builtin "teleport": { within (feet) | speedTimes, from: "self" | "target", critical?: { within }, alone?: { used },
+// line?: { formula, type } }. Live play (scripts/teleport.js) has the
 // presser click the space on their own canvas; the active GM's client checks it's on the map, unoccupied and in range, and moves the token
 // there at once (Foundry's teleport, no animation). The text's other rule sentences are notes. Pure.
 
@@ -23,6 +24,17 @@ const ADJACENT = /\bteleport to a space adjacent to the target of your Strike\b/
 const BESIDE_HIT = /\bIf you hit a creature, you can teleport to an unoccupied space adjacent to that creature\b/i;
 // "You shoot an arrow at an open space on a surface within 500 feet … You teleport to that location".
 const SHOT = /\bat an open space on a surface within (\d+) feet\b[^.]*\.\s*You teleport to that location\b/i;
+// (Farther after the triggering save's critical success, Dweomerveil's "If you critically succeeded at the triggering save, you can instead
+// teleport within 45 feet": teleport.critical, the card's tick.)
+const CRITICAL = /^If you critically succeeded at the triggering save, you can instead teleport within (\d+) feet\.$/i;
+// (Its user alone, with what they wear and hold: "If this would bring another creature with you—even if you're carrying it in an
+// extradimensional container—the teleportation fails", Master Magus Ring's "… the activation fails and is used", Mad Mammoth's Juke's "You
+// can't bring any other creature with you, even in an extradimensional space". The card moves its user's token alone; whether one rides
+// along hidden is its user's to say before Pick, as a requirement is — teleport.alone, the card's line.)
+const ALONE = /^(?:If this would bring another creature with you\s*[—–-]\s*even if you're carrying it in an extradimensional container\s*[—–-]\s*the (?:teleportation|activation) fails( and is used)?|You can't bring any other creature with you, even in an extradimensional space)\.$/i;
+// (Damage along the way, Quartz-Coil Rail Transport's "You and all creatures in a line between your original location and your destination take
+// 4 electricity damage": teleport.line, dealt by the card once the token's moved.)
+const LINE = /^You and all creatures in a line between your original location and your destination take (\d+(?:d\d+)?(?:\+\d+)?) (acid|cold|electricity|fire|force|sonic|vitality|void|bludgeoning|piercing|slashing|mental|poison|spirit) damage\.$/i;
 // (Its other rule sentences: not its flavor.)
 const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|reaction|spell|creature|line of effect|If|must)\b/;
 
@@ -57,9 +69,12 @@ export function teleportPlan(html, base, whole = null) {
     const before = whole ? String(whole).replace(/<[^>]+>/g, " ").split(read.match[0])[0] : body.slice(0, read.match.index);
     if (/\bStage 1\b|\bhave access to the following activation\b/i.test(before)) return null;
     const sentences = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
-    const own = (sentence) => sentence.includes(read.match[0]) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence));
+    const critical = sentences.map((sentence) => CRITICAL.exec(sentence)).find(Boolean);
+    const alone = sentences.map((sentence) => ALONE.exec(sentence)).find(Boolean);
+    const line = sentences.map((sentence) => LINE.exec(sentence)).find(Boolean);
+    const own = (sentence) => sentence.includes(read.match[0]) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence);
     const notes = sentences.filter((sentence) => !own(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
-    const teleport = { within: read.within, speedTimes: read.speedTimes, from: read.from };
+    const teleport = { within: read.within, speedTimes: read.speedTimes, from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}) };
     return {
         ...base,
         builtin: "teleport",

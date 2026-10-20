@@ -714,8 +714,15 @@ test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spu
     const { routeOf } = await import("../src/live/route.js");
     const { teleportText } = await import("../src/live/teleport-card.js");
     const [leap] = compileActivations(item("Dweomerveil"));
-    assert.deepEqual([routeOf(leap.plan), leap.plan.teleport], ["teleport", { within: 30, speedTimes: null, from: "self" }]);
-    assert.match(leap.plan.notes[0], /^If you critically succeeded at the triggering save, you can instead teleport within 45 feet\.$/);
+    // (Farther after a critical success: the card's tick.)
+    assert.deepEqual([routeOf(leap.plan), leap.plan.teleport, leap.plan.partial, leap.plan.notes], ["teleport", { within: 30, speedTimes: null, from: "self", critical: { within: 45 } }, undefined, undefined]);
+    const { teleportLines, teleportCardHTML, createTeleportCard } = await import("../src/live/teleport-card.js");
+    assert.deepEqual(teleportLines(leap.plan.teleport), ["Within 45 feet instead if the triggering save was a critical success (tick it before Pick)"]);
+    assert.match(teleportCardHTML(createTeleportCard({ plan: leap.plan, item: { name: "Dweomerveil" }, user: { name: "Leaper" } }), { canApply: true }), /data-air-field="critical"/);
+    // (Its user alone, Mad Mammoth's Juke's "can't bring any other creature": the card's line, not a note.)
+    const juke = compileItem(item("Mad Mammoth's Juke"));
+    assert.deepEqual([juke.teleport.alone, juke.partial], [{ used: false }, undefined]);
+    assert.equal(compileActivations(item("Master Magus Ring"))[1].plan.teleport.alone.used, true, "the activation fails and is used");
     assert.equal(teleportText(compileItem(item("Mad Mammoth's Juke")).teleport), "Up to 200 feet");
     assert.equal(teleportText(compileItem(item("Golden Spur")).teleport), "Within 10 feet of the creature targeted");
     const [, twirl] = compileActivations(item("Mercurial Mantle"));
@@ -724,11 +731,11 @@ test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spu
     assert.notEqual(compileActivations(item("Spear of the Destroyer's Flame"))[0].plan?.builtin, "teleport");
     // ("within a range equal to your Speed", Master Magus Ring: once its Speed.)
     assert.equal(teleportText(compileActivations(item("Master Magus Ring"))[1].plan.teleport, { speed: 30 }), "Up to its user's Speed (30 feet)");
-    // (Quartz-Coil Rail Transport's "transport yourself … up to 40 feet away", its line damage a note in words; Dimension Shot's space beside the
-    // creature hit.)
+    // (Quartz-Coil Rail Transport's "transport yourself … up to 40 feet away", its 4 electricity to its user and the creatures on the line between
+    // the card's; Dimension Shot's space beside the creature hit.)
     const coil = compileItem(item("Quartz-Coil Rail Transport (Moderate)"));
-    assert.deepEqual([routeOf(coil), coil.teleport.within], ["teleport", 40]);
-    assert.ok(coil.notes.some((note) => /take 4 electricity damage\.$/.test(note)), coil.notes.join(" / "));
+    assert.deepEqual([routeOf(coil), coil.teleport.within, coil.teleport.line, coil.partial, coil.notes], ["teleport", 40, { formula: "4", type: "electricity" }, undefined, undefined]);
+    assert.ok(teleportLines(coil.teleport).includes("4 electricity damage to its user and each creature in the line between where it was and where it lands"));
     assert.equal(teleportText(compileActivations(item("Dimension Shot"))[0].plan.teleport), "To a space adjacent to the creature targeted");
 });
 
