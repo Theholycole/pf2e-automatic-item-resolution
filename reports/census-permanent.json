@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 778,
+   "resolves": 780,
    "builtin:cast-spell": 473,
    "none": 530,
-   "partial": 195,
+   "partial": 193,
    "builtin:focus-point": 47,
    "builtin:counteract": 27,
    "builtin:readied-bonus": 47,
@@ -57,10 +57,10 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 462,
+    "resolves": 464,
     "builtin:cast-spell": 345,
     "none": 363,
-    "partial": 94,
+    "partial": 92,
     "builtin:focus-point": 45,
     "builtin:counteract": 23,
     "builtin:readied-bonus": 33,
@@ -14161,7 +14161,7 @@
    "time": "1",
    "frequency": "any number of times per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -24747,7 +24747,7 @@
    "time": "1",
    "frequency": "any number of times per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },

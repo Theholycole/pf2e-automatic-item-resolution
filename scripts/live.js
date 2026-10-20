@@ -54,6 +54,12 @@ const deleted = new Map();
 export function setUpLivePlay({ compileItem, compileActivations = null, claims = null, runeRiders = null }) {
     compile = compileItem;
     setUpActivations({ compileActivations, postCardFor });
+    // (An item no longer invested: what lasted only while it was, Obsidian Goggles' darkvision, ends.)
+    Hooks.on("updateItem", (item, changes) => {
+        if (!isActiveGM() || changes?.system?.equipped?.invested !== false || !item.actor) return;
+        const ids = (item.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.untilUninvested === item.id).map((effect) => effect.id);
+        if (ids.length) item.actor.deleteEmbeddedDocuments("Item", ids).catch((error) => console.error(`${MODULE_ID} | uninvested`, error));
+    });
     Hooks.on("deleteItem", (item) => {
         rememberDeletedBomb(item);
         // (A Rage ends: what the item gave until then goes with it — Barbarians+ crowns' quickened.)
@@ -536,6 +542,13 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (A vision: Obsidian Goggles' darkvision — an Effect with PF2e's Sense rule.)
     for (const sense of state.plan.item?.senses ?? []) {
         if (!target.actor) break;
+        // (One its user ends, Obsidian Goggles': the item's next activation deactivates it — its Effect gone, no new one.)
+        const on = sense.toggle ? (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.sense === sense.selector && effect.flags[MODULE_ID].from === state.item.name) : [];
+        if (on.length) {
+            await target.actor.deleteEmbeddedDocuments("Item", on.map((effect) => effect.id));
+            lines.push(`${recipient.name}: ${state.item.name}'s ${senseText({ selector: sense.selector }).toLowerCase()} deactivated`);
+            continue;
+        }
         await target.actor.createEmbeddedDocuments("Item", [senseEffectSource(sense, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${senseText(sense)}`);
     }

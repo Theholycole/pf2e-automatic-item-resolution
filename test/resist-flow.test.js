@@ -103,10 +103,11 @@ test("a Speed of a new kind: PF2e's BaseSpeed on the land Speed or a number, for
     assert.deepEqual([effect.system.duration.value, effect.system.duration.unit, effect.system.duration.expiry], [1, "rounds", "turn-end"]);
 });
 
-test("a vision: PF2e's Sense rule, its own end on the note", () => {
+test("a vision: PF2e's Sense rule, another way it ends on the note", () => {
     // "you gain darkvision until you deactivate it as an Interact action or the item is no longer invested by you, whichever comes first".
     const [goggles] = compileActivations(source("Obsidian Goggles (Greater)"));
-    assert.deepEqual([goggles.plan.item.senses, goggles.plan.partial], [[{ selector: "darkvision", duration: null }], true]);
+    // (Its own end now read: toggled by its next activation, ended by uninvesting.)
+    assert.deepEqual([goggles.plan.item.senses, goggles.plan.partial], [[{ selector: "darkvision", duration: null, toggle: true, invested: true }], undefined]);
     // "You gain greater darkvision until the beginning of your next turn, as long as you continue to look through the scope".
     const [scope] = compileActivations(source("Darkvision Scope (Greater)"));
     assert.deepEqual([scope.plan.item.senses[0].selector, scope.plan.item.senses[0].duration.expiry], ["greater-darkvision", "turn-start"]);
@@ -173,6 +174,34 @@ test("Candlecap: its Apply lights its user's token, its next activation's Apply 
     const out = await press();
     assert.equal(lights().length, 0);
     assert.match(out.content, /Monk: Candlecap&#39;s light put out/);
+});
+
+test("Obsidian Goggles (Greater): darkvision until deactivated — its next activation's Apply ends it — or until the goggles are no longer invested", async () => {
+    const plan = compileActivations(source("Obsidian Goggles (Greater)"))[0].plan;
+    assert.deepEqual([plan.item.senses, plan.partial, plan.notes ?? []], [[{ selector: "darkvision", duration: null, toggle: true, invested: true }], undefined, []]);
+    const goggles = foundry.giveItem(monk, source("Obsidian Goggles (Greater)"));
+    const press = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: goggles.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return card;
+    };
+    const sight = () => monk.itemTypes.effect.filter((entry) => entry.flags?.[MODULE_ID]?.sense === "darkvision");
+    const on = await press();
+    assert.match(on.content, /Monk: Darkvision until deactivated \(its next activation\) or no longer invested/);
+    assert.deepEqual(sight().map((effect) => [effect.system.duration.unit, effect.flags[MODULE_ID].untilUninvested]), [["unlimited", goggles.id]]);
+    const off = await press();
+    assert.equal(sight().length, 0);
+    assert.match(off.content, /Monk: Obsidian Goggles \(Greater\)[^<]*darkvision deactivated/);
+    // (On again, then the goggles uninvested: gone.)
+    await press();
+    assert.equal(sight().length, 1);
+    await foundry.call("updateItem", goggles, { system: { equipped: { invested: false } } });
+    await settle();
+    assert.equal(sight().length, 0);
 });
 
 test("resistance to a type it makes its user choose: the card's picker, the type picked on Apply", async () => {

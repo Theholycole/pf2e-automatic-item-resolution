@@ -726,8 +726,12 @@ function sensesOf(sentences, duration, used = new Set()) {
             if (found.some((entry) => entry.selector === selector)) continue;
             const until = UNTIL_NEXT_TURN.exec(sentence);
             const time = until ? { mode: "fixed", value: 1, unit: "rounds", expiry: /\bend\b/i.test(until[0]) ? "turn-end" : "turn-start", anchor: "source-turn" } : /\buntil you (?:deactivate|Dismiss)\b/i.test(sentence) ? null : durationIn(sentence, duration);
-            if (!/\bas long as\b|\bwhichever comes first\b|\bor (?:until|the item)\b/i.test(sentence)) used.add(index);
-            found.push({ selector, duration: time });
+            // (Until its user ends it, or until the item isn't invested: Obsidian Goggles' "until you deactivate it as an Interact action or
+            // the item is no longer invested by you, whichever comes first" — toggle, the item's next activation ends it, and invested, its
+            // uninvesting does (scripts/live.js).)
+            const deactivate = /\buntil you deactivate it(?: as an Interact action)?(?: or the item is no longer invested by you, whichever comes first)?[.,]?$/i.exec(sentence.trim());
+            if (deactivate || !/\bas long as\b|\bwhichever comes first\b|\bor (?:until|the item)\b/i.test(sentence)) used.add(index);
+            found.push({ selector, duration: time, ...(deactivate ? { toggle: true, ...(/\bno longer invested\b/i.test(deactivate[0]) ? { invested: true } : {}) } : {}) });
         }
     }
     // (Other senses with their acuity and range: Nosoi Charm's "You gain lifesense as an imprecise sense with a range of 30 feet for 1
