@@ -41,7 +41,8 @@ const EITHER = /\b(?:on|to) yourself or (?:an?|another|one) /i;
 // triggering condition by 1" — the one of them its user gained, the card's picker.)
 // (Or Energizing Pill's secondary effect, "Trigger You would become Clumsy, Drained, … Effect Reduce the value of the condition you just
 // gained by 1; if this reduces the value to 0, you don't gain the triggering condition".)
-const TRIGGERING = /\breduc(?:e|es|ing) the value of (?:the triggering condition|the condition you just gained) by (\d|one|two|three)\b/i;
+// (Or named, Grim Ring's "Reduce the value of the drained condition you gain by 1".)
+const TRIGGERING = /\breduc(?:e|es|ing) the value of (?:the triggering condition|the condition you just gained|the (clumsy|doomed|drained|enfeebled|frightened|sickened|slowed|stunned|stupefied|wounded) condition you gain) by (\d|one|two|three)\b/i;
 // (Ended outright, on its user and the creatures it picks: Cayden's Tankard's "ending the controlled, Grabbed, Immobilized,
 // Paralyzed, Restrained, and slowed conditions on yourself and creatures of your choice within 120 feet of you" — each, "all".)
 const CONDITIONS = "blinded|clumsy|confused|controlled|dazzled|deafened|doomed|drained|enfeebled|fascinated|fatigued|fleeing|frightened|grabbed|immobilized|off-guard|paralyzed|prone|restrained|sickened|slowed|stunned|stupefied|wounded";
@@ -65,8 +66,8 @@ export function readReductions(text) {
     const either = EITHER.test(ownUse(text));
     const triggering = TRIGGERING.exec(ownUse(text));
     if (triggering) {
-        const slugs = [...new Set([...triggerOf(text).toLowerCase().matchAll(new RegExp(String.raw`\b(${NAMES})\b`, "g"))].map((match) => match[1]))];
-        const by = amount(triggering[1]);
+        const slugs = triggering[1] ? [triggering[1].toLowerCase()] : [...new Set([...triggerOf(text).toLowerCase().matchAll(new RegExp(String.raw`\b(${NAMES})\b`, "g"))].map((match) => match[1]))];
+        const by = amount(triggering[2]);
         if (slugs.length === 1) add({ slug: slugs[0], by });
         else if (slugs.length > 1) add({ choose: slugs, by });
     }

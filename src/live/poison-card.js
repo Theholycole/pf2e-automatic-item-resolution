@@ -212,7 +212,9 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.step === "then" ? "Its save: my targets" : state.own ? "Roll the save" : state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     // (Saves for the creatures around the one targeted, src/compiler/hit-around.js aroundAllies: said before Apply.)
-    const aroundLines = (state.plan?.around ?? []).map((entry) => `Then ${saveText(entry.plan)} for ${entry.allies ? "its allies" : "the creatures"} within ${entry.radius} feet of it.`);
+    // (And a condition its user lowers beside it, Grim Ring's drained.)
+    const ownLowered = state.plan?.allyArea ? [] : (state.plan?.item?.reduce ?? []).filter((one) => !one.who && one.slug).map((one) => `${state.user.name}: ${one.slug} lowered by ${one.by === "all" ? "all of it" : one.by}.`);
+    const aroundLines = [...(state.plan?.around ?? []).map((entry) => `Then ${saveText(entry.plan)} for ${entry.allies ? "its allies" : "the creatures"} within ${entry.radius} feet of it.`), ...ownLowered];
     const notes = open && [...aroundLines, ...(state.plan?.notes ?? [])].length ? `<ul class="aar-notes">${[...aroundLines, ...(state.plan?.notes ?? [])].map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     // (A check to pick — Twisting Twine's Disarm or Trip: a picker.)
     const checkPick = open && canApply && (state.plan?.checkChoices?.length ?? 0) > 1

@@ -282,3 +282,24 @@ test("an activation's retaliation: Numerian Steel Breastplate's 1d10 electricity
     assert.deepEqual([routeOf(dragon), dragon.retaliation.rounds, dragon.damageChoices.map((choice) => choice.formula).slice(0, 3)], ["later", 10, ["2d6[acid]", "2d6[cold]", "2d6[electricity]"]]);
     assert.deepEqual(dragon.notes, ["It lasts until the end of your rage: close the card then."]);
 });
+
+test("Grim Ring: drained gained from an undead lowered by 1 on its user, and the undead targeted takes 2d6 vitality — both, one card; its sentence no longer a note", async () => {
+    const ring = compileActivations(source("Grim Ring"))[0].plan;
+    assert.deepEqual([ring.item.reduce, ring.resolution.sharedDamage.components[0].formula, ring.partial, ring.notes], [[{ slug: "drained", by: 1 }], "2d6", undefined, undefined]);
+    const wearer = foundry.makeActor({ id: "damage-grim", name: "Grim Wearer", owners: ["player"], conditions: ["drained"] });
+    const ghoul = foundry.makeActor({ id: "damage-ghoul", name: "Ghoul", undead: true });
+    foundry.place(wearer, 0, 17400);
+    foundry.place(ghoul, 100, 17400);
+    wearer.conditions.set("drained", 2);
+    const item = foundry.giveItem(wearer, source("Grim Ring"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: item.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    assert.match(card.content, /Grim Wearer: drained lowered by 1\./);
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ghoul.token.uuid], userId: "player" });
+    await settle();
+    assert.equal(foundry.posted.slice(before)[0]?.plan.resolution.sharedDamage.components[0].formula, "2d6");
+    assert.equal(wearer.conditions.get("drained"), 1);
+});

@@ -8,6 +8,8 @@
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { riderRow } from "./bombs.js";
 
+import { readReductions } from "./reduce.js";
+
 const TYPES = "acid|bludgeoning|cold|electricity|fire|force|mental|piercing|poison|slashing|sonic|spirit|vitality|void|bleed|untyped";
 // (Or a number: Wolf Fang's damage of its user's Strength modifier, src/compiler/item-data.js withOwnerNumbers.)
 const DICE = String.raw`(\d+d\d+(?:\s*\+\s*\d+)?|\d+)`;
@@ -256,20 +258,23 @@ export function energyChoicePlan(text, base, whole = text) {
 // A partial plan without the notes that only say again the damage it deals: Clear Cutter's Axe's "The clear cutter's axe deals an additional
 // 1d10 persistent fire damage to the plant" beside that very damage, its row's "by hand" line too — and no longer partial when that was
 // all it left. Only a sentence that says nothing else: its dice and type the plan's own. Pure.
-export function withoutDamageRestated(plan) {
+// (A sentence of two such clauses too, the other a condition the plan lowers: Grim Ring's "Reduce the value of the drained condition you gain
+// by 1, and the undead that caused the condition takes 2d6 vitality damage".)
+// (reduce: the conditions it lowers, when they aren't on the plan's item yet — an activation's, src/compiler/permanent.js.)
+export function withoutDamageRestated(plan, { reduce = null } = {}) {
     const components = plan?.partial ? plan.resolution?.sharedDamage?.components ?? [] : [];
     if (!components.length) return plan;
+    const lowered = (clause) => {
+        const read = readReductions(clause);
+        return read.length > 0 && read.every((entry) => (reduce ?? plan.item?.reduce ?? []).some((own) => JSON.stringify(own) === JSON.stringify(entry)));
+    };
     const said = (entry) => {
         const sentence = String(typeof entry === "string" ? entry : entry?.text ?? "").replace(/^\{target\}:\s*/, "").replace(/\s*\(by hand\)\.?$/, "").trim();
-        const match = TAKES.exec(sentence) ?? DEALS_TO.exec(sentence);
-        if (!match) return false;
-        // (Its subject before it at most, "The clear cutter's axe", and nothing after.)
-        const before = sentence.slice(0, match.index).trim();
-        const after = sentence.slice(match.index + match[0].length).trim();
-        if (!(before === "" || /^(?:The|Your) [\w' -]+$/i.test(before)) || !/^\.?$/.test(after)) return false;
-        const [, dice, persistent, type] = match;
-        return components.some((component) => String(component.formula).replace(/\s+/g, "") === dice.replace(/\s+/g, "") && (component.type ?? null) === (type ? type.toLowerCase() : null) && (component.category === "persistent") === Boolean(persistent));
+        const clauses = sentence.split(/,\s+and\s+/);
+        if (clauses.length === 2 && lowered(`${clauses[0]}.`)) return damageSaid(`${clauses[1].charAt(0).toUpperCase()}${clauses[1].slice(1)}`, components);
+        return damageSaid(sentence, components);
     };
+
     const kept = (list) => (Array.isArray(list) ? list.filter((entry) => !said(entry)) : list);
     const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes ?? {}).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: kept(row.manualInstructions) } : row]));
     const next = { ...plan, ...(plan.notes ? { notes: kept(plan.notes) } : {}), ...(plan.unread ? { unread: kept(plan.unread) } : {}), resolution: { ...plan.resolution, outcomes } };
@@ -282,4 +287,15 @@ export function withoutDamageRestated(plan) {
         if (next.automation?.level === "guided") next.automation = { ...next.automation, level: "automatic" };
     }
     return next;
+}
+
+// Whether the sentence only deals the damage of one of the components: its subject before it at most ("The clear cutter's axe"), nothing after.
+function damageSaid(sentence, components) {
+    const match = TAKES.exec(sentence) ?? DEALS_TO.exec(sentence);
+    if (!match) return false;
+    const before = sentence.slice(0, match.index).trim();
+    const after = sentence.slice(match.index + match[0].length).trim();
+    if (!(before === "" || /^(?:The|Your) [\w' -]+$/i.test(before)) || !/^\.?$/.test(after)) return false;
+    const [, dice, persistent, type] = match;
+    return components.some((component) => String(component.formula).replace(/\s+/g, "") === dice.replace(/\s+/g, "") && (component.type ?? null) === (type ? type.toLowerCase() : null) && (component.category === "persistent") === Boolean(persistent));
 }

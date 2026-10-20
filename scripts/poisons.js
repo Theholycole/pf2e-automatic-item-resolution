@@ -192,6 +192,13 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
             if (!/: nothing to lower\.$/.test(line)) lines.push(line);
         }
     }
+    // (A condition it lowers on its user beside what it does to the creature targeted: Grim Ring's drained, gained from an undead, lowered by
+    // 1 as the undead takes its damage — named ones, its user's own.)
+    const own = (state.plan?.item?.reduce ?? []).filter((one) => !one.who && one.slug);
+    if (own.length && !state.plan?.allyArea) {
+        const user = state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : null;
+        for (const entry of own) if (user) lines.push(await lowerCondition(user, state.user.name, entry.slug, entry.by));
+    }
     const after = afterExposure(state, lines, game.time.worldTime);
     // (A save its hit then calls for: the card stays open for that second step.)
     const next = state.plan?.thenSave ? { ...after, status: "open", step: "then" } : after;

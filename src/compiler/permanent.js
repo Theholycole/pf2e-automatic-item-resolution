@@ -501,7 +501,7 @@ function compileEach(item, options = {}) {
             }
         }
         // (Not its opening flavor among what it leaves the GM, src/compiler/flavor.js; nor its damage said again, src/compiler/direct-damage.js.)
-        plan = withoutDamageRestated(withoutFlavorNotes(plan, activation.html));
+        plan = withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce });
 
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, coats, coatLasts, creates, ...kept } = plan;
