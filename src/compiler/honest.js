@@ -117,6 +117,47 @@ function tokensOf(sentence) {
         ...[...sentence.matchAll(AMOUNT_RULE)].map((match) => ({ word: /persistent/i.test(match[0]) ? "persistent" : /resistance/i.test(match[0]) ? "resist" : "weakness" }))
     ];
 }
+// (A condition for a time — "or be Paralyzed for 1 round. On a critical failure, the undead is paralyzed for 4 rounds" — traced only by an
+// effect of that condition for that time; a save again at its turns — "can attempt a new Will save at the end of each of its turns" — only
+// by a recurring save in the plan. Each must be traced, whatever else of its sentence the plan has: a sentence with one that isn't is a note.)
+const TIMED_CONDITION = new RegExp(String.raw`\b(?:is|are|be|becomes?)\s+(?:also\s+)?(?:\w+\s+)?(${CONDITIONS.replace(/\|persistent\|resistance\|weakness$/, "")})(?:\s+\d)?\s+for\s+(\d+|one|an?)\s+(round|minute|hour)s?\b`, "gi");
+const AGAIN_SAVE = String.raw`\b(?:new|repeat the|attempts? an?|another) (?:[\w@\[\]|:,-]+ ){0,3}?sav(?:e|ing throw)\b`;
+const AT_TURNS = String.raw`\b(?:(?:end|start|beginning) of (?:each of |any of )?(?:its|their) (?:next )?turns?|each round|every round|end of any round)\b`;
+const RECURRING = new RegExp(String.raw`${AGAIN_SAVE}[^.]*?${AT_TURNS}|${AT_TURNS}[^.]*?${AGAIN_SAVE}`, "i");
+const ROUNDS = { round: 1, minute: 10, hour: 600 };
+function mustOf(sentence) {
+    return [
+        ...[...sentence.matchAll(TIMED_CONDITION)].map((match) => ({ slug: match[1].toLowerCase(), rounds: (COUNT[match[2].toLowerCase()] ?? Number(match[2])) * ROUNDS[match[3].toLowerCase()] })),
+        ...(RECURRING.test(sentence) ? [{ recurring: true }] : [])
+    ];
+}
+// The conditions the plan gives for a time, as "slug:rounds".
+function timedOf(plan) {
+    const found = new Set();
+    const walk = (node) => {
+        if (Array.isArray(node)) return node.forEach(walk);
+        if (!node || typeof node !== "object") return;
+        const unit = String(node.duration?.unit ?? "").replace(/s$/, "");
+        if (node.kind === "condition" && node.slug && ROUNDS[unit] && Number.isFinite(Number(node.duration?.value))) found.add(`${node.slug}:${Number(node.duration.value) * ROUNDS[unit]}`);
+        Object.values(node).forEach(walk);
+    };
+    walk(plan);
+    return found;
+}
+// What the plan's notes, note Effects and GM lines say, lowercased.
+function saidOf(plan) {
+    const texts = [];
+    const walk = (node, key = null) => {
+        if (typeof node === "string") {
+            if (["notes", "manualInstructions", "unread", "text"].includes(key)) texts.push(node);
+            return;
+        }
+        if (Array.isArray(node)) return node.forEach((entry) => walk(entry, key));
+        if (node && typeof node === "object") for (const [name, value] of Object.entries(node)) walk(value, name);
+    };
+    walk(plan);
+    return texts.join("\n").toLowerCase();
+}
 function traceOf(plan) {
     const json = JSON.stringify(plan).toLowerCase();
     const dice = new Set([...(json.match(/\b\d+d\d+\b/g) ?? [])]);
@@ -133,9 +174,14 @@ export function withUntracedRules(plan, text) {
     const plain = String(text ?? "");
     const body = (/\bEffect\b/.test(plain) ? plain.replace(/^.*?\bEffect\b\s*/s, "") : plain.replace(/^.*?\bActivate\b[^.]*?\)\s*/s, "")).replace(/\s*\bCraft Requirements\b.*$/s, "");
     const trace = traceOf(plan);
+    const timed = timedOf(plan);
+    const spoken = saidOf(plan);
     const untraced = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => {
         // (A step by the weapon's striking rune: its rune decides it, src/compiler/rune-steps.js.)
         if (!sentence || SKIP.test(sentence) || RUNE_STEP_SENTENCE.test(sentence)) return false;
+        // (Said on a note or a line of the plan already: traced.)
+        if (spoken.includes(sentence.toLowerCase().slice(0, 60))) return false;
+        if (mustOf(sentence).some((token) => (token.recurring ? !trace.json.includes('"recurring"') : !timed.has(`${token.slug}:${token.rounds}`)))) return true;
         const tokens = tokensOf(sentence);
         return tokens.length > 0 && !tokens.some((token) => (token.dice ? trace.dice.has(token.dice.toLowerCase()) : token.number !== undefined ? trace.numbers.has(token.number) : trace.json.includes(token.word)));
     });

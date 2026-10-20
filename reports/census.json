@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 743,
+   "resolves": 738,
    "builtin:readied-bonus": 23,
    "builtin:zone": 115,
-   "partial": 128,
+   "partial": 133,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 122,
@@ -36,9 +36,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 26,
-    "resolves": 201,
+    "resolves": 198,
     "builtin:ways": 18,
-    "partial": 64,
+    "partial": 67,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 95,
@@ -96,14 +96,14 @@
     "none": 27,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 63,
+    "resolves": 62,
     "note-only": 7,
     "builtin:no-effect": 8,
     "builtin:reroll": 1,
     "builtin:ways": 2,
     "builtin:counteract": 1,
     "builtin:cast-spell": 9,
-    "partial": 9,
+    "partial": 10,
     "builtin:teleport": 2,
     "builtin:roll-twice": 2
    },
@@ -256,9 +256,9 @@
    "results": {
     "builtin:readied-bonus": 2,
     "none": 12,
-    "partial": 2,
+    "partial": 3,
     "note-only": 7,
-    "resolves": 20,
+    "resolves": 19,
     "builtin:reroll": 2,
     "builtin:cast-spell": 1
    },
@@ -331,7 +331,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 299,
+   "resolves": 294,
    "gaps": 0,
    "none": 21
   },
@@ -361,7 +361,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 65,
+   "resolves": 64,
    "gaps": 0,
    "none": 19
   },
@@ -379,13 +379,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 255,
+   "resolves": 250,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 592,
+   "resolves": 590,
    "gaps": 0,
    "none": 13
   }
@@ -5562,9 +5562,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -11858,9 +11857,8 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -12495,9 +12493,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -19965,9 +19962,8 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {
@@ -28949,9 +28945,8 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "save",
-   "gaps": [],
    "live": "save"
   },
   {

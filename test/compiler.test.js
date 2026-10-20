@@ -1112,6 +1112,27 @@ test("a rule sentence the plan has no trace of (src/compiler/honest.js withUntra
     assert.equal(withUntracedRules({ ...plan, resolution: { ...plan.resolution, kind: "effect", applications: [{ kind: "native-spell-effect", uuid: "Compendium.pf2e.equipment-effects.Item.x" }] } }, "Effect You become Slowed 1.").partial, undefined);
 });
 
+test("a condition for a time and a save again at its turns are each traced on their own (honest.js): Spirit-Sealing Fulu (Greater)'s critical failure for 4 rounds its row's time, its new save each turn a note; Gearbinder Oil's save each round a note; Tusk and Fang Chain's next action a note Effect, its critical failure's lost flat check another", async () => {
+    const { withUntracedRules } = await import("../src/compiler/honest.js");
+    const fulu = compileItem(item("Spirit-Sealing Fulu (Greater)"));
+    assert.deepEqual([fulu.resolution.outcomes.failure.effects[0].duration.value, fulu.resolution.outcomes.criticalFailure.effects[0].duration.value], [1, 4]);
+    assert.equal(fulu.partial, true);
+    assert.ok(fulu.notes.some((note) => /^At the end of each of its turns, it can attempt a new Will save\b/.test(note)));
+    assert.ok(!fulu.notes.some((note) => /\bparalyzed for 4 rounds\b/.test(note)));
+    const oil = compileItem(item("Gearbinder Oil (Lesser)"));
+    assert.equal(oil.partial, true);
+    assert.ok(oil.notes.some((note) => /\bat the end of any round during which\b/.test(note)));
+    const chain = compileItem(item("Tusk and Fang Chain"));
+    assert.deepEqual([chain.resolution.outcomes.success.effects, chain.resolution.outcomes.success.noteEffects[0].label, chain.resolution.outcomes.success.noteEffects[0].duration.anchor], [[], "Confused on its next action", "target-turn"]);
+    assert.deepEqual(chain.resolution.outcomes.criticalFailure.noteEffects.map((note) => note.label), ["No flat check"]);
+    // (Both a condition's time in the plan and the sentence on a note: traced.)
+    const plan = { resolution: { kind: "save", outcomes: { failure: { effects: [{ kind: "condition", slug: "slowed", value: 1, duration: { mode: "fixed", value: 1, unit: "minutes" } }] } } } };
+    assert.equal(withUntracedRules(plan, "Effect The target must attempt a save or be slowed 1 for 10 rounds."), plan);
+    assert.equal(withUntracedRules(plan, "Effect The target must attempt a save or be slowed 1 for 2 minutes.").partial, true);
+    const noted = { ...plan, notes: ["It can attempt a new Will save at the end of each of its turns."] };
+    assert.equal(withUntracedRules(noted, "Effect It can attempt a new Will save at the end of each of its turns."), noted);
+});
+
 test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {
     const { readReductions } = await import("../src/compiler/reduce.js");
     assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);

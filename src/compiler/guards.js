@@ -53,7 +53,43 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text);
+    return nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text);
+}
+
+// A condition for its next action only — Tusk and Fang Chain's "Success The creature is Confused on its next action." — which the
+// ability compiler reads as that condition with no end: PF2e can't count one action, so a note Effect until the end of its next turn says it.
+const NEXT_ACTION = /\b(Critical Success|Success|Failure|Critical Failure) The (?:creature|target) is (\w+) on its next action\./;
+// (Its critical failure's "doesn't receive a flat check to end its confusion if it takes damage": a note Effect for that confusion's time.)
+const NO_FLAT_CHECK = /\b(Critical Failure|Failure) [^.]*\bconfused\b[^.]*\band the creature doesn't receive a flat check to end its confusion if it takes damage\./i;
+function nextActionOnly(given, text) {
+    let plan = given;
+    const flat = plan?.resolution?.kind === "save" ? NO_FLAT_CHECK.exec(String(text ?? "")) : null;
+    if (flat) plan = eachRow(plan, (row, key) => {
+        const confused = key === DEGREE_KEYS[flat[1].replace(/\b\w/g, (letter) => letter.toUpperCase())] ? (row?.effects ?? []).find((effect) => effect?.kind === "condition" && effect.slug === "confused") : null;
+        return confused && !(row.noteEffects ?? []).some((note) => note.label === "No flat check") ? { ...row, noteEffects: [...(row.noteEffects ?? []), { label: "No flat check", text: "No flat check to end this confusion when it takes damage.", duration: confused.duration ?? null }] } : row;
+    });
+    const match = NEXT_ACTION.exec(String(text ?? ""));
+    if (!match || plan?.resolution?.kind !== "save") return plan;
+    const degree = DEGREE_KEYS[match[1]];
+    const slug = match[2].toLowerCase();
+    const lasting = (effect) => effect?.kind === "condition" && effect.slug === slug && !effect.duration;
+    return eachRow(plan, (row, key) => (key === degree && (row?.effects ?? []).some(lasting)
+        ? { ...row, effects: row.effects.filter((effect) => !lasting(effect)), noteEffects: [...(row.noteEffects ?? []), { label: `${match[2]} on its next action`, text: `${match[2]} for its next action only.`, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } }] }
+        : row));
+}
+
+// A critical failure's own time for its condition — Spirit-Sealing Fulu (Greater)'s "save or be Paralyzed for 1 round. On a critical
+// failure, the undead is paralyzed for 4 rounds." — which the ability compiler leaves at the failure's time: that row's.
+const TIMED_SLUGS = "blinded|clumsy|confused|dazzled|deafened|enfeebled|fascinated|fleeing|frightened|immobilized|off-guard|paralyzed|sickened|slowed|stunned|stupefied";
+const CRITICAL_TIME = new RegExp(String.raw`\bOn a critical failure, (?:the|it|that) [\w' -]*?\b(?:is|becomes)(?: instead)? (${TIMED_SLUGS})(?: (\d))? for (\d+|one|an?) (round|minute|hour)s?\.`, "i");
+function criticalTime(plan, text) {
+    const match = CRITICAL_TIME.exec(String(text ?? ""));
+    if (!match || plan?.resolution?.kind !== "save") return plan;
+    const slug = match[1].toLowerCase();
+    const value = /^\d+$/.test(match[3]) ? Number(match[3]) : 1;
+    const unit = `${match[4].toLowerCase()}s`;
+    const timed = (effect) => effect?.kind === "condition" && effect.slug === slug && (!match[2] || Number(effect.value) === Number(match[2])) && effect.duration?.mode === "fixed" && (Number(effect.duration.value) !== value || effect.duration.unit !== unit);
+    return eachRow(plan, (row, degree) => (degree === "criticalFailure" && (row?.effects ?? []).some(timed) ? { ...row, effects: row.effects.map((effect) => (timed(effect) ? { ...effect, duration: { ...effect.duration, value, unit } } : effect)) } : row));
 }
 
 // A condition its creature can't lower below a value for a while — the core's conditionFloor, played by the ability module (its floor
