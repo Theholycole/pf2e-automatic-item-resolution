@@ -126,3 +126,33 @@ test("a spell slot an activation costs (the module's own wording): the lowest sl
     assert.ok(foundry.notifications.slice(errors).some((text) => /Slot Caster has no spell slot of rank 2 or higher left/.test(text)));
     assert.equal(pressed.card.flags[MODULE_ID].card.status, "open", "nothing applied");
 });
+
+test("a candy's Secondary Effect, a use after the first: Ginger Chew's ways card — its use (PF2e's Effect) and, later, its secondary effect's own card, sickened lowered by 1; Crackling Bubble Gum's pop, Cinnamon Seers' reroll; one with nothing a card plays stays a note (Scholar's Drop)", async () => {
+    const chew = compileItem(source("Ginger Chew"));
+    assert.deepEqual([routeOf(chew), chew.ways.map((way) => [way.name, routeOf(way.plan)])], ["ways", [["Its use", "item"], ["Its secondary effect", "item"]]]);
+    assert.deepEqual(chew.ways[1].plan.item.reduce, [{ slug: "sickened", by: 1 }]);
+    assert.deepEqual(compileItem(source("Crackling Bubble Gum (Lesser)")).ways.map((way) => routeOf(way.plan)), ["item", "save"]);
+    assert.deepEqual(compileItem(source("Cinnamon Seers")).ways.map((way) => routeOf(way.plan)), ["item", "reroll"]);
+    const drop = compileItem(source("Scholar's Drop"));
+    assert.equal(drop.builtin, undefined);
+    assert.match(drop.notes.at(-1), /^Secondary effect: Requirements You're fatigued/);
+    const sick = foundry.makeActor({ id: "ways-sick", name: "Queasy", owners: ["player"], conditions: ["sickened"] });
+    foundry.place(sick, 0, 29500);
+    sick.conditions.set("sickened", 2);
+    const item = foundry.giveItem(sick, source("Ginger Chew"));
+    const data = item.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: sick.id }, actor: sick, token: sick.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    assert.equal(card.flags[MODULE_ID].card.kind, "ways");
+    const before = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, choice: 1, userId: "player" });
+    await settle();
+    const second = foundry.messages.slice(before).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.ok(second, "the secondary effect's card");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: second.id, userId: "player" });
+    await settle();
+    assert.equal(sick.conditions.get("sickened"), 1);
+    assert.equal(card.flags[MODULE_ID].card.status, "open", "the ways card stays open");
+});

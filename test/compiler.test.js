@@ -531,7 +531,8 @@ test("third-party wordings: a balm's flat check for the creature touched during 
     assert.deepEqual([beast.resolution.sharedDamage.components[0].formula, beast.resolution.outcomes.criticalSuccess.damage.sourceComponentIds, beast.resolution.outcomes.success.damage.mode], ["1d8", ["critical"], "none"]);
     const candy = compileItem(standIn("Stand-in Jerky", "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><p>While you're chewing this jerky, for up to 5 minutes, you have a +2 item bonus to your damage rolls with melee weapons.</p><p><strong>Secondary Effect</strong> Swallow it to feel full.</p>"));
     assert.deepEqual(candy.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.value, modifier.duration.unit]), [["strike-damage", 2, "item", ["item:melee"], 5, "minutes"]]);
-    assert.deepEqual(candy.unread, ["Secondary Effect Swallow it to feel full."]);
+    // (Its second use, one that reads nothing a card plays: the use's note, src/compiler/secondary.js.)
+    assert.deepEqual([candy.unread, candy.notes, candy.partial], [undefined, ["Secondary effect: Swallow it to feel full."], true]);
 });
 
 test("third-party wordings: a released creature's Strikes along its Strides at different creatures, ammunition's gas on a hit, a grass that ends its user's Prone", async () => {

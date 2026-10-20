@@ -281,9 +281,10 @@ test("a row's damage by its type, drained without the time beside it, a degree's
     // Enact Justice's Effect lasts until it's removed, the row 1 minute: left to the GM. Bubble gum's lasts the row's 1 minute.
     const cape = compileActivations(item("Cape of Justice"), { spellEffects, itemEffects })[1].plan;
     assert.equal(cape.resolution.outcomes.failure.nativeEffects, undefined);
-    const gum = compileItem(item("Crackling Bubble Gum (Lesser)"), { spellEffects, itemEffects });
+    // (Its pop is its secondary effect: the ways card's second way, src/compiler/secondary.js.)
+    const gum = compileItem(item("Crackling Bubble Gum (Lesser)"), { spellEffects, itemEffects }).ways[1].plan;
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => gum.resolution.outcomes[degree].nativeEffects?.[0]?.label), ["Effect: Crackling Bubble Gum (Failure)", "Effect: Crackling Bubble Gum (Failure)"]);
-    assert.equal(compileItem(item("Crackling Bubble Gum (Lesser)"), { spellEffects }).resolution.outcomes.failure.nativeEffects, undefined, "no durations known: only an Effect whose row has no time");
+    assert.equal(compileItem(item("Crackling Bubble Gum (Lesser)"), { spellEffects }).ways[1].plan.resolution.outcomes.failure.nativeEffects, undefined, "no durations known: only an Effect whose row has no time");
 });
 
 test("temporary Hit Points, a penalty, a resistance and later words: Razmiri Wayfinder, Bangles of Crowns, Aeon Stone (Olivine Pendeloque), Words of Wisdom, Safeguarding, Thunder Mail", () => {

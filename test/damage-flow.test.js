@@ -262,7 +262,8 @@ test("damage the text treats as silver: the material in its formulas, for PF2e's
     const { damageMaterial } = await import("../src/compiler/materials.js");
     const moonlit = compileItem(source("Moonlit Spellgun (Lesser)"));
     assert.deepEqual(moonlit.damageChoices.map((choice) => choice.formula), ["3d8[fire,silver]", "3d6[fire,silver]"]);
-    assert.equal(component(compileItem(source("Silver Crescent (Lesser)"))).formula, "4d6[vitality,silver]");
+    // (Its ray is its secondary effect: the ways card's second way, src/compiler/secondary.js.)
+    assert.equal(component(compileItem(source("Silver Crescent (Lesser)")).ways[1].plan).formula, "4d6[vitality,silver]");
     assert.equal(compileActivations(source("Fiendsbane Shield"))[0].plan.resolution.sharedDamage.components[0].formula, "3d6[slashing,silver]");
     // (Not without the words; healing stays healing.)
     const plan = { resolution: { sharedDamage: { components: [{ id: "0", formula: "2d6[fire]" }] } } };

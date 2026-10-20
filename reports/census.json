@@ -15,14 +15,14 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 763,
+   "resolves": 749,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
-   "partial": 122,
+   "partial": 123,
+   "builtin:ways": 24,
    "builtin:item-action": 16,
    "note-only": 126,
    "builtin:conjure": 7,
-   "builtin:ways": 11,
    "builtin:counteract": 33,
    "builtin:no-effect": 50,
    "builtin:teleport": 6,
@@ -36,11 +36,11 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 22,
-    "resolves": 218,
-    "partial": 62,
+    "resolves": 204,
+    "builtin:ways": 17,
+    "partial": 63,
     "note-only": 62,
     "builtin:readied-bonus": 8,
-    "builtin:ways": 4,
     "none": 95,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
@@ -318,19 +318,19 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 176,
+   "resolves": 166,
    "gaps": 0,
    "none": 7
   },
   "linked-effect": {
    "count": 393,
-   "resolves": 378,
+   "resolves": 364,
    "gaps": 0,
    "none": 0
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 335,
+   "resolves": 324,
    "gaps": 0,
    "none": 21
   },
@@ -360,7 +360,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 63,
+   "resolves": 60,
    "gaps": 0,
    "none": 19
   },
@@ -372,19 +372,19 @@
   },
   "area": {
    "count": 44,
-   "resolves": 18,
+   "resolves": 15,
    "gaps": 0,
    "none": 5
   },
   "condition": {
    "count": 433,
-   "resolves": 267,
+   "resolves": 259,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 610,
+   "resolves": 596,
    "gaps": 0,
    "none": 13
   }
@@ -393,16 +393,16 @@
   "totals": {
    "cast": 35,
    "none": 239,
-   "item": 625,
+   "item": 623,
    "fortune": 25,
    "zone": 111,
-   "save": 147,
+   "save": 140,
    "expose": 89,
-   "later": 80,
+   "ways": 24,
    "action": 16,
    "conjure": 7,
-   "ways": 11,
    "counteract": 33,
+   "later": 76,
    "teleport": 6,
    "reroll": 3,
    "coat": 46,
@@ -413,13 +413,13 @@
     "cast": 14,
     "zone": 22,
     "none": 116,
-    "later": 11,
-    "save": 96,
-    "item": 217,
+    "ways": 17,
+    "save": 89,
+    "item": 215,
     "fortune": 8,
-    "ways": 4,
     "teleport": 4,
     "counteract": 9,
+    "later": 7,
     "strike": 3,
     "expose": 3,
     "action": 1,
@@ -824,10 +824,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Onyx Panther",
@@ -1982,10 +1981,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Bloodhound Mask (Greater)",
@@ -6306,10 +6304,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Fury Cocktail (Lesser)",
@@ -7234,10 +7231,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Vulture's Wing",
@@ -8520,10 +8516,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Bottled Screams",
@@ -9235,10 +9230,9 @@
     "trigger",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "effect",
-   "gaps": [],
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Three Bird Pinion",
@@ -13013,10 +13007,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Golden Silencer (Greater)",
@@ -14370,9 +14363,6 @@
    ],
    "result": "partial",
    "kind": "check",
-   "unread": [
-    "Secondary Effect Requirements You're fatigued. Effect Ignore the effects of the fatigued condition for 10 minutes. The drop's other effects end for you, and when the 10 minutes are up, you're temporarily immune to scholar's drops for 1 hour. If you use this effect three times in a single day, you become temporarily immune to scholar's drops entirely until you get a full night's rest."
-   ],
    "live": "item"
   },
   {
@@ -17049,10 +17039,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Antidote (Greater)",
@@ -17147,10 +17136,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Condensed Mana",
@@ -20747,10 +20735,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Colorful Coating (Violet)",
@@ -26801,10 +26788,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "later"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Nap Gas Dispenser",
@@ -27836,9 +27822,8 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
+   "result": "partial",
    "kind": "effect",
-   "gaps": [],
    "live": "item"
   },
   {
@@ -27940,10 +27925,9 @@
     "linked-effect",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "effect",
-   "gaps": [],
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Elixir of the Peaks (Greater)",
@@ -30539,10 +30523,9 @@
     "condition",
     "duration"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Anointing Oil (Greater)",
