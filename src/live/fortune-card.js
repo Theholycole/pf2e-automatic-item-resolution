@@ -112,5 +112,7 @@ export function fortuneCardHTML(state, { canApply = false } = {}) {
     const other = isForTarget(state.plan);
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${fortune ? "Roll it twice" : other ? "Give it to the creature targeted" : "Gain the bonus"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
     const whose = other ? `For the creature targeted${state.plan.targeting?.range ? ` (within ${state.plan.targeting.range})` : ""}: ` : `${state.user.name}'s `;
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${fortune ? "Fortune" : "Bonus"}</span></header><p class="aar-actions">${escape(whose)}${escape(readiedWords(state.plan))}.</p>${notes}${results}${controls}</section>`;
+    // (The roll it's for, its user's own: Mesmerizing Opal's Feint — said, then.)
+    const then = open && state.plan.then ? `<p class="aar-hint">Then: ${escape(state.plan.then)}.</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${fortune ? "Fortune" : "Bonus"}</span></header><p class="aar-actions">${escape(whose)}${escape(readiedWords(state.plan))}.</p>${then}${notes}${results}${controls}</section>`;
 }

@@ -199,7 +199,8 @@ function amountTempOf(sentence, index, sentences, duration, used) {
     if (/^\s*(?:If|When|Whenever|Each time)\b/i.test(own)) return null;
     const match = AMOUNT_TEMP.exec(own);
     if (!match) return null;
-    used.add(index);
+    // (Not a sentence that says more after it, Grisly Scythe's "…, and the creature struck becomes Sickened 1 from the agony": that stays.)
+    if (!/,\s*and\b/i.test(own.slice(match.index + match[0].length))) used.add(index);
     const heal = !/^temporary/i.test(match[2]);
     const later = heal ? null : sentences.slice(index + 1, index + 3).find((next) => /\b(?:temporary )?Hit Points (?:remain|last)\b|\blose any remaining temporary Hit Points after\b/i.test(next));
     if (later) used.add(sentences.indexOf(later));
@@ -757,6 +758,10 @@ function sensesOf(sentences, duration, used = new Set()) {
             // (Its range in the sentence, or a sentence of its own after: "Blood sight has a range of 60 feet".)
             const said = /\b(?:with a range of|at a range of|a range of|out to(?: a range of)?|to a range of)\s*(\d+) feet\b|\((\d+) feet\)/i.exec(rest);
             const next = said ? null : sentences.slice(index + 1, index + 3).find((later) => new RegExp(String.raw`\b${match[2]}\b[^.]*\bhas a range of (\d+) feet\b`, "i").test(later));
+            // (That sentence read too when it says only the range and what the sense detects, Blood Sight Elixir's "Blood sight has a range of 60
+            // feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded
+            // conditions": the sense's own meaning, which its Sense rule carries to the GM's table as any sense does.)
+            if (next && new RegExp(String.raw`^${match[2]} has a range of \d+ feet(?: and allows you to detect [^.]+)?\.$`, "i").test(next.trim())) used.add(sentences.indexOf(next));
             const range = Number(said?.[1] ?? said?.[2] ?? (next ? /\brange of (\d+) feet\b/i.exec(next)[1] : NaN));
             const lasting = /\bwith a duration of ((?:\d+|one|an?) (?:rounds?|minutes?|hours?))\b/i.exec(rest);
             const time = lasting ? durationIn(`for ${lasting[1]}`, null) : durationIn(sentence, duration);

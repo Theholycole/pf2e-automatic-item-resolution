@@ -282,6 +282,10 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     if (degree) read.degree = degree;
     // (The degree's own sentences, read now, aren't notes too.)
     if (degree) read.notes = (read.notes ?? []).filter((note) => !UPGRADES.some(([pattern]) => pattern.test(note)) && !/^If you roll a critical failure, you get a failure instead\.$/i.test(String(note).trim()));
+    // (The check it's for, its user's own PF2e roll: Mesmerizing Opal's "When you activate it, attempt a Deception check to Feint", the degree
+    // predicated on that action — the card's line, plan.then.)
+    const checkFor = degree ? (read.notes ?? []).find((note) => { const named = /^When you activate it, attempt an? (\w+) check to (\w+(?: \w+)?)\.$/i.exec(String(note).trim()); return named && named[1].toLowerCase() === String(degree.selector) && JSON.stringify(degree.predicate ?? []).includes(`action:${named[2].toLowerCase().replace(/ /g, "-")}`); }) : null;
+    if (checkFor) read.notes = read.notes.filter((note) => note !== checkFor);
     const { notes: read_notes, ...bonus } = read;
     // (Only against what triggered it: that attack, check, save or damage alone — bonus.against, the Effect spent by it
     // (scripts/fortune.js), its turn's end still the latest. The note goes, unless its sentence says more than the bonus: Broken Tusk
@@ -313,7 +317,7 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // (Another creature's: the one the presser targets, within the distance its trigger names.)
     const within = /\bwithin (\d+) feet\b/i.exec(trigger ?? triggerOf(String(text ?? "")) ?? "")?.[1];
     const targeting = bonus.recipient === "target" ? { target: "1 creature", range: within ? `${within} feet` : null, area: null } : { target: "the user", range: null, area: null };
-    return { ...base, builtin: "readied-bonus", automation: { level: notes.length ? "guided" : "automatic" }, targeting, trigger: { event: "use" }, bonus, notes, ...(notes.length ? { partial: true } : {}) };
+    return { ...base, builtin: "readied-bonus", automation: { level: notes.length ? "guided" : "automatic" }, targeting, trigger: { event: "use" }, bonus, ...(checkFor ? { then: `${checkFor.replace(/^When you activate it, a/i, "A").replace(/\.$/, "")} (PF2e's own, its degree improved)` } : {}), notes, ...(notes.length ? { partial: true } : {}) };
 }
 
 // The plan to keep: the bonus over nothing, a note alone or the GM's fallback — and over the ability compiler's "ac-reaction", which

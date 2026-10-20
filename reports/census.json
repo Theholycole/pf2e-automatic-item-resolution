@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 754,
+   "resolves": 758,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
-   "partial": 117,
+   "partial": 113,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 126,
@@ -96,14 +96,14 @@
     "none": 27,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 60,
+    "resolves": 61,
     "note-only": 7,
     "builtin:no-effect": 8,
     "builtin:reroll": 1,
     "builtin:ways": 2,
     "builtin:counteract": 1,
     "builtin:cast-spell": 9,
-    "partial": 12,
+    "partial": 11,
     "builtin:teleport": 2,
     "builtin:roll-twice": 2
    },
@@ -125,10 +125,10 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 86,
+    "resolves": 89,
     "none": 5,
     "builtin:counteract": 11,
-    "partial": 19,
+    "partial": 16,
     "builtin:no-effect": 9,
     "note-only": 16,
     "builtin:ways": 1,
@@ -348,7 +348,7 @@
   },
   "strike": {
    "count": 31,
-   "resolves": 16,
+   "resolves": 17,
    "gaps": 0,
    "none": 1
   },
@@ -378,13 +378,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 261,
+   "resolves": 262,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 596,
+   "resolves": 599,
    "gaps": 0,
    "none": 13
   }
@@ -7559,7 +7559,6 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "Blood sight has a range of 60 feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded conditions.",
     "Your blood sight is especially accurate, allowing you to also detect creatures whose Hit Points are currently at half or less of their maximum.",
     "When you detect a creature with blood sight, you get a vague approximation of the value of the creature's bleed damage, dying condition, or wounded condition.",
     "This approximation can be noticed as \"excessive bleeding,\" a creature being \"near death,\" or some other general sense that doesn't give the exact value."
@@ -11119,11 +11118,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Blood sight has a range of 60 feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded conditions."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -12879,11 +12876,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Blood sight has a range of 60 feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded conditions."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -23547,11 +23542,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Blood sight has a range of 60 feet and allows you to detect living creatures who are taking persistent bleed damage or who have the dying or wounded conditions."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -27840,8 +27833,9 @@
     "strike",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "save"
   },
   {

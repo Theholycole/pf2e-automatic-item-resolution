@@ -102,7 +102,9 @@ export function readOutrightConditions(text) {
         const row = riderRow(`${/^takes$/i.test(match[1]) ? "takes" : "is"} ${match[2]}`);
         if (!row.effects.length && !row.modifiers.length) continue;
         // (Not its Activate line, nor a sentence with no rule in it: a talisman's has no "Effect" to start from.)
-        return { effects: row.effects, modifiers: row.modifiers, notes: sentences.filter((other, at) => at !== index && !STATS.test(other) && !/^Activate\b/.test(other) && RULE_WORDS.test(other)) };
+        // (The Strike its user then makes, Gallows Tooth's: PF2e's own, with the creature already off-guard to it — the card's line, plan.then.)
+        const then = before ? sentences.find((other) => /^When you activate this talisman, you then make a melee Strike against it\.$/i.test(other)) : null;
+        return { effects: row.effects, modifiers: row.modifiers, ...(then ? { then: "Make a melee Strike against it (PF2e's own)" } : {}), notes: sentences.filter((other, at) => at !== index && other !== then && !STATS.test(other) && !/^Activate\b/.test(other) && RULE_WORDS.test(other)) };
     }
     return null;
 }
@@ -123,6 +125,7 @@ export function directDamagePlan(text, base, { item = null } = {}) {
             targeting: { target: "1 creature", range: null, area: null },
             trigger: { event: "use" },
             resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: { damage: none().damage, effects: conditions.effects, modifiers: conditions.modifiers, ...(conditions.notes.length ? { manualInstructions: conditions.notes.map((note) => `{target}: ${note}`) } : {}) }, failure: none(), criticalFailure: none() } },
+            ...(conditions.then ? { then: conditions.then } : {}),
             notes: conditions.notes,
             ...(conditions.notes.length ? { partial: true } : {})
         };

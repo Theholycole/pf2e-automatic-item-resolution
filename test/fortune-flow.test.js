@@ -138,6 +138,8 @@ test("a better degree for the triggering roll: PF2e's AdjustDegreeOfSuccess, spe
     const opal = compileItem(source("Mesmerizing Opal"));
     assert.deepEqual(opal.bonus.degree, { selector: "deception", adjustment: { success: "one-degree-better", criticalFailure: "one-degree-better" }, predicate: [{ or: ["action:feint"] }] });
     assert.match(readiedWords(opal), /a success becomes a critical success, a critical failure becomes a failure/);
+    // (The Feint itself its user's own PF2e roll: the card's line, not a note.)
+    assert.deepEqual([opal.then, opal.notes, opal.partial], ["Attempt a Deception check to Feint (PF2e's own, its degree improved)", [], undefined]);
 });
 
 

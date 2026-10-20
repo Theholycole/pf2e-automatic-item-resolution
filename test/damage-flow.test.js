@@ -239,7 +239,8 @@ test("conditions on the creatures targeted: Gallows Tooth's off-guard before its
     const effects = (plan) => plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration?.expiry]);
     const gallows = compileItem(source("Gallows Tooth"));
     assert.deepEqual([routeOf(gallows), effects(gallows)], ["save", [["off-guard", "turn-end"]]]);
-    assert.match(gallows.notes.join(" "), /make a melee Strike against it/);
+    // (The Strike itself its user's own PF2e roll, the creature off-guard to it already: the card's line, not a note.)
+    assert.deepEqual([gallows.then, gallows.notes, gallows.partial], ["Make a melee Strike against it (PF2e's own)", [], undefined]);
     const jade = compileItem(source("Jade Bauble"));
     assert.deepEqual([routeOf(jade), effects(jade), jade.notes ?? []], ["save", [["off-guard", "turn-start"]], []]);
     const treat = compileItem(source("Energizing Treat"));
