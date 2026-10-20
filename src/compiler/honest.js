@@ -29,11 +29,57 @@ export function leftToTheGM(row) {
     return (row?.manualInstructions ?? []).map(said).filter((line) => line && !NO_OP.test(line) && !CARD_LINE.test(line.replace(/^\{target\}(?: \([^)]*\))?:\s*/, "")) && !(applies(row) && BEHAVIOUR.test(line) && /\bthe rest by hand\b/i.test(line)));
 }
 
-// The plan, partial when a row leaves the GM something to carry out.
-export function withHonestPartial(given) {
+// A behaviour rule or the GM's call with a time of its own — Floppy Rag Doll's "can't use reactions until the end your turn", Truth Potion's "must
+// tell the truth", Animal Pheromones' attitude — as a note Effect on the creature for that time (the user's note-Effect rule, 2026-09-26), not a
+// GM line: its time the line's own, else the item's (time: its text's). Not one with numbers or conditions the card should apply, nor one with
+// two times.
+const BEHAVIOUR_NOTE = /\bcan't use reactions\b|\bmust tell the truth\b|\bunable to tell any deliberate lies\b|\battitude\b[^.]*\bimproves\b|\battitude increases\b|\bbecomes (?:friendly|helpful)\b|\bcan't use hostile actions\b|\bignores other creatures\b|\bdoesn't disbelieve\b|\bbelieves you're\b|\bdoesn't act against you\b/i;
+const MECHANICAL = /\b\d+d\d+\b|[+\-–]\d+\b|\bDC \d+\b|\b(?:frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|dies|damage)\b/i;
+const TURN_TIMES = [
+    [/\buntil the end (?:of )?your turn\b/i, { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }],
+    [/\buntil the end of your next turn\b/i, { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }],
+    [/\buntil the end of its (?:next )?turn\b/i, { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" }],
+    [/\buntil the (?:start|beginning) of your next turn\b/i, { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "source-turn" }]
+];
+const FOR_TIME = /\b(?:for|persists for|lasts) (\d+|one|an?) (round|minute|hour)s?\b/gi;
+const COUNT = { one: 1, a: 1, an: 1 };
+function timeOf(line) {
+    const turns = TURN_TIMES.filter(([pattern]) => pattern.test(line));
+    const times = [...line.matchAll(FOR_TIME)];
+    if (turns.length + times.length !== 1) return turns.length + times.length ? undefined : null;
+    if (turns.length) return { ...turns[0][1] };
+    const [, count, unit] = times[0];
+    return { mode: "fixed", value: COUNT[count.toLowerCase()] ?? Number(count), unit: `${unit.toLowerCase()}s`, expiry: "turn-start", anchor: "effect-start" };
+}
+function withBehaviourNotes(plan, time) {
+    const outcomes = plan.resolution?.outcomes;
+    if (!outcomes) return plan;
+    let changed = false;
+    const next = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => {
+        const lines = row?.manualInstructions ?? [];
+        if (!lines.length) return [degree, row];
+        const kept = [];
+        const notes = [];
+        for (const entry of lines) {
+            const line = said(entry).replace(/^\{target\}(?: \([^)]*\))?:\s*/, "").replace(/\s*\(by hand\)\.?$/, "");
+            const own = timeOf(line);
+            const duration = own === undefined ? undefined : own ?? time ?? undefined;
+            if (BEHAVIOUR_NOTE.test(line) && !MECHANICAL.test(line) && duration) notes.push({ text: line, duration });
+            else kept.push(entry);
+        }
+        if (!notes.length) return [degree, row];
+        changed = true;
+        const { manualInstructions, ...rest } = row;
+        return [degree, { ...rest, ...(kept.length ? { manualInstructions: kept } : {}), noteEffects: [...(row.noteEffects ?? []), ...notes] }];
+    }));
+    return changed ? { ...plan, resolution: { ...plan.resolution, outcomes: next } } : plan;
+}
+
+// The plan, partial when a row leaves the GM something to carry out. time: the item's own, for a behaviour note's time when its line has none.
+export function withHonestPartial(given, time = null) {
     if (!given || given.partial || given.noteOnly || given.builtin === "no-effect") return given;
-    // (Its whole text's reminder, once later readings left nothing unread: stale, gone.)
-    const plan = withoutStaleReminder(given);
+    // (Its whole text's reminder, once later readings left nothing unread: stale, gone. Its behaviour lines, note Effects.)
+    const plan = withBehaviourNotes(withoutStaleReminder(given), time);
     const left = rowsOf(plan).flatMap(leftToTheGM);
     if (!left.length) return plan;
     return { ...plan, partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };

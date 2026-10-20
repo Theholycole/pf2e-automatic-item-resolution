@@ -1085,3 +1085,14 @@ test("a lit candle's or incense's area while it burns (src/compiler/lit-area.js,
     assert.match(save.plan.resolution.outcomes.failure.manualInstructions[0], /unable to tell any deliberate lies/);
     assert.equal(truth.zone.notes.length, 1, "first entering only, the GM's");
 });
+
+test("resolved only when the card does all of it (src/compiler/honest.js): a GM line left to the GM makes the plan partial; a behaviour rule with its own time becomes a note Effect for that time; a line that does nothing doesn't count", async () => {
+    const { leftToTheGM } = await import("../src/compiler/honest.js");
+    // (Floppy Rag Doll's success: "can't use reactions until the end your turn" — a note Effect until the end of its user's turn, the plan resolved.)
+    const [doll] = compileActivations(item("Floppy Rag Doll"));
+    assert.deepEqual([doll.plan.partial, doll.plan.resolution.outcomes.success.manualInstructions, doll.plan.resolution.outcomes.success.noteEffects?.[0]?.duration], [undefined, undefined, { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }]);
+    // (Gearbinder Oil's success, its slowed lowered: the GM's, partial.)
+    assert.equal(compileItem(item("Gearbinder Oil (Lesser)")).partial, true);
+    assert.deepEqual(leftToTheGM({ manualInstructions: ["{target} (critical success): The creature is unaffected."] }), []);
+    assert.deepEqual(leftToTheGM({ effects: [{ kind: "condition", slug: "clumsy", value: 1 }], manualInstructions: ["{target} (failure, the rest by hand): The target is Clumsy 1 and can't use reactions until the beginning of your next turn."] }), []);
+});

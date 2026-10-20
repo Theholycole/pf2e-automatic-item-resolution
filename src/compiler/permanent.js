@@ -46,7 +46,7 @@ import { withAttackRiders } from "./attack-riders.js";
 import { installedPlan, readInstalled } from "./installed.js";
 import { floatingPlan } from "./floating.js";
 import { withAreaTraitNote } from "./area-trait.js";
-import { allyAreaRow, dropsToOne, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
+import { allyAreaRow, dropsToOne, keepsWounded, noteRow, ownRow, plainText, itemDuration } from "./rows.js";
 import { pf2eRulesPlan } from "./pf2e-rules.js";
 import { degreeSentencesPlan, failureNotesPlan, saveOrPlan } from "./save-or.js";
 import { spellstrikePlan } from "./spellstrike.js";
@@ -143,7 +143,7 @@ export function compileActivations(item, options = {}) {
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withHonestPartial(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name })) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withHonestPartial(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), itemDuration(plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // Only after its user's action succeeds, Glamorous Buckler's "On a successful Feint, the target is Dazzled for 1 round" (src/compiler/item-data.js

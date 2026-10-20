@@ -485,4 +485,6 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - a behaviour rule beside something the row really applies (the user's rule for spells, 2026-09-26);
   - a note Effect that carries what can't be automated (the user's note-Effect rule).
 
+  - A behaviour rule or the GM's call with its own time, and no numbers or conditions, becomes a note Effect on the creature for that time instead of a GM line (Floppy Rag Doll's "can't use reactions until the end your turn"). Its time is the line's own, else the item's.
+
   The whole text's reminder, added beside a row that reads only part of the text, is dropped once later readings leave nothing unread. Before this, those plans counted resolved: the censuses went from 768 to 749 resolved consumables and from 826 to 779 resolved permanent activations.

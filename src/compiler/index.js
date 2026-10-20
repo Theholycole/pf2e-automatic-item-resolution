@@ -15,7 +15,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
 import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf, withStatedHealing } from "./consumables.js";
-import { allyAreaRow, dropsToOne, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
+import { allyAreaRow, dropsToOne, itemDuration, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { belchedCloudPlan, bubbleCloudPlan, coatedSquarePlan, exhaledSquarePlan, placedChimePlan } from "./covered-square.js";
@@ -197,7 +197,7 @@ export function compileItem(given, options = {}) {
     // (And a use after the first, a candy's "Secondary Effect": the ways card's second button, src/compiler/secondary.js.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
-    return withHonestPartial(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }));
+    return withHonestPartial(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), itemDuration(text));
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
