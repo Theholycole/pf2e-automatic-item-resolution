@@ -11,11 +11,20 @@ import * as dying from "../../../pf2e-resolution-core/scripts/dying-recovery.js"
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 
+// (As Foundry's update: "a.b.-=c" deletes c.)
 const setProperty = (object, key, value) => {
     const parts = key.split(".");
     let at = object;
     for (const part of parts.slice(0, -1)) at = at[part] ??= {};
-    at[parts.at(-1)] = value;
+    const last = parts.at(-1);
+    if (last.startsWith("-=")) delete at[last.slice(2)];
+    else at[last] = value;
+};
+// (As Foundry's setFlag, an update that merges: an object's keys are added to the flag's, none removed.)
+const mergeInto = (target, value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value) || !target || typeof target !== "object" || Array.isArray(target)) return value;
+    for (const [key, inner] of Object.entries(value)) target[key] = mergeInto(target[key], inner);
+    return target;
 };
 
 export function createFakeFoundry() {
@@ -205,7 +214,8 @@ export function createFakeFoundry() {
                 return this.flags?.[scope]?.[key];
             },
             async setFlag(scope, key, value) {
-                this.flags[scope] = { ...(this.flags[scope] ?? {}), [key]: structuredClone(value) };
+                this.flags[scope] ??= {};
+                this.flags[scope][key] = mergeInto(this.flags[scope][key], structuredClone(value));
                 return this;
             },
             toObject: () => ({ ...structuredClone(source), _stats: { compendiumSource: `Compendium.pf2e.equipment-srd.Item.${source._id}` } }),

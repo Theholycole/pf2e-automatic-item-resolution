@@ -3513,6 +3513,52 @@ export const cases = {
         return { resistances: resistances() };
     },
 
+    // Mirrorblade's Mirage Guard: an Effect for 10 minutes with PF2e's flanking.offGuardable false on its user (as PF2e's Deny Advantage sets
+    // it), read back from the actor's data.
+    async mirrorbladeFlank(scene) {
+        const { actor: user } = await creature(scene, "Mirror Duelist", { type: "character", x: 4, y: 0 });
+        const blade = await give(user, "Mirrorblade");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the blade's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.system.attributes.flanking?.offGuardable === false, `flanking.offGuardable false (${JSON.stringify(user.system.attributes.flanking)})`, { timeout: 8000 });
+        const effect = user.itemTypes.effect.find((entry) => entry.getFlag(NS, "ruleEffect"));
+        assert(effect?.system.duration.value === 10 && effect.system.duration.unit === "minutes", `10 minutes (${JSON.stringify(effect?.system.duration)})`);
+        return { flanking: user.system.attributes.flanking };
+    },
+
+    // Smoldering Armor: its Fire Shield activation used (on the item's record), then its second activation's card recharges it.
+    async smolderingRecharge(scene) {
+        const { actor: user } = await creature(scene, "Smoldering Wearer", { type: "character", x: 7, y: 0 });
+        const armor = await give(user, "Smoldering Armor");
+        const uses = (index) => armor.getFlag(NS, "activationUses")?.[index]?.count ?? 0;
+        await game.modules.get(NS).api.live.activate(armor.uuid, 0);
+        await until(() => uses(0) === 1, `Fire Shield used once (${uses(0)})`, { timeout: 6000 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(armor.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the recharge card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => uses(0) === 0, `Fire Shield recharged (${uses(0)})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Energy Ointment (Lesser), cold picked, on the creature targeted: resistance 5 to cold and the flat check to end its persistent cold
+    // damage 2 lower (PF2e's ItemAlteration pd-recovery-dc on its persistent-damage conditions).
+    async energyOintment(scene) {
+        const { actor: user } = await creature(scene, "Ointment Applier", { type: "character", x: 1, y: 1 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Ointment Wearer", { type: "character", x: 2, y: 1 });
+        const ointment = await give(user, "Energy Ointment (Lesser)");
+        const since = Date.now();
+        await ointment.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the ointment's card" });
+        const choose = card.getFlag(NS, "card").plan.item.resist[0].choose;
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid], resistType: choose.indexOf("cold") });
+        const rules = () => ally.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []);
+        await until(() => rules().some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes("cold") && rule.value === 5) && rules().some((rule) => rule.key === "ItemAlteration" && rule.property === "pd-recovery-dc" && rule.value === 2 && JSON.stringify(rule.predicate) === JSON.stringify(["item:damage:type:cold"])), `resistance and the lower DC (${JSON.stringify(rules())})`, { timeout: 8000 });
+        return { rules: rules() };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

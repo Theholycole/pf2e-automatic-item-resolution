@@ -166,6 +166,14 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         const done = { ...state, status: "applied", step: null, results: [...state.results, ...lines].slice(-6) };
         return message.update({ content: exposureCardHTML(done, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: done });
     }
+    // (Only after its user's action succeeds, Glamorous Buckler's Feint: its latest roll of that action in the recent chat, a success.)
+    if (state.plan?.gate?.action && state.step !== "then") {
+        const option = `action:${state.plan.gate.action}`;
+        const latest = (game.messages?.contents ?? []).slice(-40).reverse().find((entry) => (entry.actor?.uuid ?? (entry.speaker?.actor ? `Actor.${entry.speaker.actor}` : null)) === state.user.actorUuid && (entry.flags?.pf2e?.context?.options ?? []).includes(option) && entry.flags?.pf2e?.context?.outcome);
+        if (!latest) throw new Error(`No ${state.plan.gate.action.replace(/-/g, " ")} roll by ${state.user.name} in the recent chat.`);
+        if (!["success", "criticalSuccess"].includes(latest.flags.pf2e.context.outcome)) throw new Error(`${state.user.name}'s ${state.plan.gate.action.replace(/-/g, " ")} wasn't a success: it doesn't apply.`);
+        lines.push(`After ${state.user.name}'s successful ${state.plan.gate.action.replace(/-/g, " ")}.`);
+    }
     // (Its target's distance, a thrown item's own attack: range increments past the first, Rod of Razors' volley — src/compiler/thrown.js.)
     if ((state.plan?.ownCheck?.volley || state.plan?.ownCheck?.increment || state.plan?.ownCheck?.within) && state.step !== "then" && sourceToken && tokens[0]) {
         const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };

@@ -142,6 +142,21 @@ export function compileActivations(item, options = {}) {
     return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
+// Only after its user's action succeeds, Glamorous Buckler's "On a successful Feint, the target is Dazzled for 1 round" (src/compiler/item-data.js
+// words it "This applies only after a successful Feint check"): plan.gate { action } — the card applies it only when its user's latest roll of
+// that action in the chat was a success (scripts/poisons.js), the note gone.
+const GATE = /^This applies only after a successful ([A-Z][\w ]+?) check\.$/;
+function withActionGate(plan) {
+    const note = (plan?.notes ?? []).find((entry) => GATE.test(String(entry)));
+    if (!note) return plan;
+    const action = GATE.exec(note)[1].toLowerCase().replace(/\s+/g, "-");
+    const outcomes = Object.fromEntries(Object.entries(plan.resolution?.outcomes ?? {}).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: row.manualInstructions.filter((line) => !String(typeof line === "string" ? line : line?.text).includes(note)) } : row]));
+    for (const row of Object.values(outcomes)) if (row?.manualInstructions && !row.manualInstructions.length) delete row.manualInstructions;
+    const notes = plan.notes.filter((entry) => entry !== note);
+    const left = [...notes, ...(plan.unread ?? []), ...Object.values(outcomes).flatMap((row) => row?.manualInstructions ?? [])];
+    return { ...plan, gate: { action }, resolution: { ...plan.resolution, outcomes }, notes, ...(left.length ? {} : { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
+}
+
 // A penalty to attack rolls its nonlethal attacks don't take, Pacifying's "A pacified creature takes a –2 penalty to attack rolls on any attacks
 // that aren't nonlethal" (src/compiler/item-data.js words it "Its nonlethal attacks don't take that penalty"): the penalty predicated on the
 // attack not being nonlethal (PF2e's item:trait:nonlethal), the note gone.
@@ -551,7 +566,7 @@ function compileEach(item, options = {}) {
             }
         }
         // (Not its opening flavor among what it leaves the GM, src/compiler/flavor.js; nor its damage said again, src/compiler/direct-damage.js.)
-        plan = withNonlethalExempt(withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce }));
+        plan = withActionGate(withNonlethalExempt(withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce })));
 
         const frequency = activation.frequency?.max ? activation.frequency : null;
         const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, ruleEffects, coats, coatLasts, creates, ...kept } = plan;

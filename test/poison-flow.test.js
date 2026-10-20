@@ -487,3 +487,37 @@ test("Doom Switch's Bragging Rights: its user's simple melee attack (Strength, s
     const [attack] = foundry.posted.slice(before);
     assert.deepEqual([attack.plan.resolution.check.modifier, attack.plan.resolution.outcomes.failure.nativeEffects[0].uuid], [9, "Compendium.pf2e.equipment-effects.Item.PJUNqF2k9x8IiZhb"]);
 });
+
+test("only after its user's successful Feint (Glamorous Buckler's Dazzling Feint): Apply finds its user's latest Feint in the chat — a failure refused, a success Dazzles the target", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const [feint] = compileActivations(source("Glamorous Buckler"));
+    assert.deepEqual([feint.plan.gate, feint.plan.notes, feint.plan.partial], [{ action: "feint" }, [], undefined]);
+    const duelist = foundry.makeActor({ id: "poison-duelist", name: "Duelist", owners: ["player"] });
+    foundry.place(duelist, 0, 4800);
+    const buckler = foundry.giveItem(duelist, source("Glamorous Buckler"));
+    const feintRoll = async (outcome) => {
+        const roll = foundry.makeMessage({ flags: { pf2e: { context: { type: "skill-check", outcome, options: ["action:feint"] } } }, speaker: { actor: duelist.id }, actor: duelist, token: duelist.token.document });
+        await foundry.call("createChatMessage", roll);
+        await settle();
+    };
+    const useIt = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: buckler.uuid, activation: 0, userId: "player" });
+        await settle();
+        return foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "expose");
+    };
+    await feintRoll("failure");
+    let card = await useIt();
+    const errors = foundry.notifications.length;
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" }).catch(() => null);
+    await settle();
+    assert.ok(foundry.notifications.slice(errors).some((text) => /Duelist's feint wasn't a success/.test(text)), foundry.notifications.slice(errors).join(" / "));
+    assert.equal(foundry.posted.length, before, "nothing applied");
+    await feintRoll("success");
+    card = await useIt();
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
+    await settle();
+    const [posted] = foundry.posted.slice(before);
+    assert.deepEqual(posted?.plan.resolution.outcomes.success.effects.map((effect) => effect.slug), ["dazzled"]);
+});

@@ -761,8 +761,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const owner = state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
         const record = owner?.getFlag?.(MODULE_ID, USES) ?? {};
         if (owner && record[recharges.index]) {
-            const { [recharges.index]: _spent, ...rest } = record;
-            await owner.setFlag(MODULE_ID, USES, rest);
+            // (Foundry merges a flag's object, so the key is deleted by name.)
+            await owner.update({ [`flags.${MODULE_ID}.${USES}.-=${recharges.index}`]: null });
             lines.push(`${state.item.name}: the ${recharges.name} activation recharges`);
         } else lines.push(`${state.item.name}: the ${recharges.name} activation hasn't been used, nothing to recharge`);
     }
