@@ -509,6 +509,26 @@ export const cases = {
         return { strength: [before, strength()] };
     },
 
+    // Paradise Light's Sanctum: the 30-foot meadow on its user's token (the ability module's zone), +1 item to Will saves for a creature
+    // that steps into it.
+    async paradiseMeadow(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Meadow Holder", { type: "character", x: 20, y: 20 });
+        const { actor: friend, token: friendToken } = await creature(scene, "Meadow Friend", { x: 28, y: 20 });
+        const light = await give(user, "Paradise Light");
+        const earlier = new Set(scene.regions.map((region) => region.id));
+        const meadow = () => scene.regions.find((region) => !earlier.has(region.id) && region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Paradise Light/.test(region.name));
+        try {
+            await game.modules.get(NS).api.live.activate(light.uuid, 0);
+            await until(() => meadow(), "the meadow's Region", { timeout: 8000 });
+            await friendToken.update({ x: 2200, y: 2000 });
+            const calm = () => friend.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("will") && rule.value === 1));
+            await until(calm, "+1 item to Will saves inside the meadow", { timeout: 10000 });
+            return { region: meadow()?.name };
+        } finally {
+            await meadow()?.delete().catch(() => null);
+        }
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });
