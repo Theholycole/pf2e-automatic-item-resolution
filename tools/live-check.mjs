@@ -407,6 +407,24 @@ export const cases = {
         return { rules: rules().map((rule) => `${rule.selector} +${rule.value}`), hp: [hp, foe.system.attributes.hp.value] };
     },
 
+    // Potion Patch (Lesser): a Healing Potion (Lesser) of its user's picked and used through it — PF2e's own use, so the potion's own card
+    // follows and the potion is gone.
+    async potionPatch(scene) {
+        const { actor: user } = await creature(scene, "Patch Drinker", { type: "character", x: 12, y: 16 });
+        const patch = await give(user, "Potion Patch (Lesser)");
+        const potion = await give(user, "Healing Potion (Lesser)");
+        let since = Date.now();
+        await patch.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the patch's card" });
+        const at = card.getFlag(NS, "card").potions.findIndex((entry) => entry.id === potion.id);
+        assert(at >= 0, `the potion offered (${JSON.stringify(card.getFlag(NS, "card").potions)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { potionPick: at });
+        const potionCard = await messageAfter(since, (message) => message.getFlag(NS, "card")?.item?.name === "Healing Potion (Lesser)", { what: "the potion's own card" });
+        await until(() => !user.items.get(potion.id), "the potion used up", { timeout: 8000 });
+        return { potionCard: potionCard.id };
+    },
+
     // Black adder venom on a shortsword: its next hit posts the poison's save card (the ability module's) and spends it.
     async poisonCoatAndHit(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Poisoner", { type: "character", x: 2, y: 9 });
@@ -3285,7 +3303,8 @@ export const cases = {
             const outcome = attack.flags.pf2e.context.outcome;
             outcomes.push(outcome);
             if (outcome !== "failure") {
-                for (const effect of fighter.itemTypes.effect.filter((entry) => entry.getFlag(NS, "strikeRider"))) await effect.delete();
+                // (The hit spends it too, on the GM's hook: whichever comes first.)
+                for (const effect of fighter.itemTypes.effect.filter((entry) => entry.getFlag(NS, "strikeRider"))) await effect.delete().catch(() => null);
                 continue;
             }
             const damage = await messageAfter(since, abilitySaveCard, { what: "the failure's damage card" });

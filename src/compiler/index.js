@@ -30,6 +30,7 @@ import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { spellgunPlan } from "./spellguns.js";
 import { readRuneLoan, runeLoanPlan } from "./rune-loans.js";
 import { readProficiencyLoan } from "./proficiency-loan.js";
+import { readPatch } from "./patch.js";
 import { directDamageOver, directDamagePlan, retaliationPlan } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
@@ -320,6 +321,8 @@ function compileOne(given, options = {}) {
     if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     // (A weapon its user treats as their best for a while, src/compiler/proficiency-loan.js: Blade Phantom's Guide — the item card's too.)
     if (readProficiencyLoan(plainText(item?.system?.description?.value)) && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
+    // (A potion it holds, used through it, src/compiler/patch.js: Potion Patch — the item card's pick of its user's potions.)
+    if (readPatch(plainText(item?.system?.description?.value)) && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
     // (What a whetstone's weapon sets off while it lasts, src/compiler/attack-riders.js: Frenzied Quintessence's Quickened after each hit —
     // the item card's weapon picker, then its watch Effect.)
     if ((readAttackRiders(item?.system?.description?.value)?.riders ?? []).some((rider) => rider.weapon) && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
@@ -447,6 +450,7 @@ function itemInfo(item) {
         // (A property rune it lends a weapon: the item card's, src/compiler/rune-loans.js.)
         ...(readRuneLoan(plainText(item?.system?.description?.value), item) ? { rune: readRuneLoan(plainText(item?.system?.description?.value), item) } : {}),
         ...(readProficiencyLoan(plainText(item?.system?.description?.value)) ? { proficiency: readProficiencyLoan(plainText(item?.system?.description?.value)) } : {}),
+        ...(readPatch(plainText(item?.system?.description?.value)) ? { patch: readPatch(plainText(item?.system?.description?.value)) } : {}),
         // (Restored to its maximum Hit Points, its afflictions removed: the item card's, src/compiler/restore.js.)
         ...(readRestore(plainText(item?.system?.description?.value)) ? { restore: readRestore(plainText(item?.system?.description?.value)) } : {}),
         // (Back from dying without raising Wounded, src/compiler/rows.js.)

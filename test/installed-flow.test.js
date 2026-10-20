@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
+import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { installedText } from "../src/live/card.js";
 import { routeOf } from "../src/live/route.js";
@@ -84,4 +85,33 @@ test("Dread Helm: +1 to Intimidation from a moderate ampoule, and its 2 mental s
     const regrowth = wearer.itemTypes.effect.find((entry) => entry.flags?.[MODULE_ID]?.installed === "elixir of life" && (entry.system.rules ?? []).some((rule) => rule.key === "FastHealing"));
     assert.deepEqual([regrowth.system.rules, regrowth.system.duration.value], [[{ key: "FastHealing", value: 5 }], 8]);
     assert.equal(elixirs.system.quantity, 1, "two of the three used");
+});
+
+test("Potion Patch: one of its user's potions up to its level, picked, used through it (PF2e's own use: its card follows); none, refused", async () => {
+    assert.deepEqual([compileItem(source("Potion Patch (Lesser)")).item.patch, compileItem(source("Potion Patch (Greater)")).item.patch], [{ maxLevel: 10 }, { maxLevel: null }]);
+    const drinker = foundry.makeActor({ id: "installed-drinker", name: "Drinker", owners: ["player"] });
+    foundry.place(drinker, 1000, 28000);
+    const apply = async () => {
+        const patch = foundry.giveItem(drinker, source("Potion Patch (Lesser)"));
+        const data = patch.toObject();
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: patch.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: drinker.id }, actor: drinker, token: drinker.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", potionPick: 0 });
+        await settle();
+        return card;
+    };
+    const errors = foundry.notifications.length;
+    await apply();
+    assert.ok(foundry.notifications.slice(errors).some((text) => /Drinker has no potion for Potion Patch \(Lesser\) \(level 10 or lower\)/.test(text)));
+    // (A potion of level 18 can't go in a lesser patch; one of level 3 can.)
+    foundry.giveItem(drinker, source("Healing Potion (Major)"));
+    const healing = foundry.giveItem(drinker, source("Healing Potion (Lesser)"));
+    const used = [];
+    healing.consume = async () => used.push(healing.id);
+    const card = await apply();
+    assert.deepEqual(card.flags[MODULE_ID].card.potions.map((entry) => entry.name), ["Healing Potion (Lesser)"]);
+    assert.deepEqual(used, [healing.id]);
+    assert.match(card.content, /Drinker: Healing Potion \(Lesser\) used through the patch/);
 });

@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 184,
-   "resolves": 760,
+   "none": 181,
+   "resolves": 763,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
    "partial": 122,
@@ -36,12 +36,12 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 22,
-    "resolves": 215,
+    "resolves": 218,
     "partial": 62,
     "note-only": 62,
     "builtin:readied-bonus": 8,
     "builtin:ways": 4,
-    "none": 101,
+    "none": 98,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 6,
@@ -392,8 +392,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 245,
-   "item": 622,
+   "none": 242,
+   "item": 625,
    "fortune": 25,
    "zone": 111,
    "save": 147,
@@ -412,10 +412,10 @@
    "other": {
     "cast": 14,
     "zone": 22,
-    "none": 122,
+    "none": 119,
     "later": 11,
     "save": 96,
-    "item": 214,
+    "item": 217,
     "fortune": 8,
     "ways": 4,
     "teleport": 4,
@@ -512,7 +512,7 @@
    }
   },
   "noCard": {
-   "no-plan": 184,
+   "no-plan": 181,
    "triggered": 11,
    "gm": 50
   }
@@ -16095,7 +16095,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Lastwall Soup (Improved)",
@@ -21796,7 +21799,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Chromatic Burst (4th-rank)",
@@ -25680,7 +25686,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Chopping Evisceration Snare",

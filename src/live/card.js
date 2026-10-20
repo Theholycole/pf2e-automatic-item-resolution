@@ -23,7 +23,8 @@ export const picksWeapon = (plan) => Boolean((plan?.item?.rune && !plan.item.run
 // weapons: its user's, [{ id, name }], for a rune it lends a weapon (plan.item.rune), picked on the card.
 // installed: its user's items of the kind installed in it (plan.item.installed), [{ id, name, level, bonus, splash, quantity }], picked on
 // the card.
-export function createItemCard({ plan, item, user, drinkers = [], rolled = null, weapons = [], installed = [] }) {
+// potions: its user's, [{ id, name, level }], for a potion it holds (plan.item.patch), picked on the card.
+export function createItemCard({ plan, item, user, drinkers = [], rolled = null, weapons = [], installed = [], potions = [] }) {
     const drinker = plan?.item?.recipient === "drinker";
     const choices = drinker ? [user, ...drinkers.filter((entry) => entry.actorUuid !== user.actorUuid || entry.tokenUuid !== user.tokenUuid)] : [];
     return {
@@ -39,6 +40,8 @@ export function createItemCard({ plan, item, user, drinkers = [], rolled = null,
         ...(picksWeapon(plan) ? { weapons, runeWeapon: 0 } : {}),
         // (The alchemical item installed in it: one of its user's, picked.)
         ...(plan?.item?.installed ? { installed, installedPick: 0 } : {}),
+        // (A potion it holds, Potion Patch's: one of its user's, picked.)
+        ...(plan?.item?.patch ? { potions, potionPick: 0 } : {}),
         // (One of several runes, picked: Boughshatter's Decaying, Grievous or Wounding.)
         ...(plan?.item?.rune?.choices?.length ? { runeChoice: 0 } : {}),
         rolled,
@@ -120,6 +123,8 @@ export function previewLines(state) {
     const lines = [];
     // (A weapon its user treats as their best, src/compiler/proficiency-loan.js.)
     if (plan?.item?.proficiency) lines.push(proficiencyText(plan.item.proficiency));
+    // (A potion it holds, src/compiler/patch.js: used through it.)
+    if (plan?.item?.patch) lines.push(`Uses one of your potions${plan.item.patch.maxLevel ? ` (level ${plan.item.patch.maxLevel} or lower)` : ""} through it: the potion's own card follows`);
     // (The alchemical item installed in it, src/compiler/installed.js: what its numbers give, the item used up.)
     if (plan?.item?.installed) lines.push(installedText(plan.item.installed));
     // (A spell slot it costs, src/compiler/slot-cost.js: spent when it's applied.)
@@ -560,6 +565,11 @@ export function cardHTML(state, { canApply = false } = {}) {
         : !state.installed.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no ${escape(state.plan.item.installed.name)} to install.</p>` : "")
             : open && canApply ? `<p class="aar-actions">Installed: <select data-air-field="installedPick">${state.installed.map((entry, index) => `<option value="${index}"${index === (state.installedPick ?? 0) ? " selected" : ""}>${escape(entry.name)}</option>`).join("")}</select></p>`
                 : Number.isInteger(state.installedPick) ? `<p class="aar-actions">Installed: ${escape(state.installed[state.installedPick]?.name ?? "")}</p>` : "";
+    // (A potion it holds: one of its user's, picked.)
+    const potionPick = !state.potions ? ""
+        : !state.potions.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no potion it can hold.</p>` : "")
+            : open && canApply ? `<p class="aar-actions">Potion: <select data-air-field="potionPick">${state.potions.map((entry, index) => `<option value="${index}"${index === (state.potionPick ?? 0) ? " selected" : ""}>${escape(entry.name)}</option>`).join("")}</select></p>`
+                : Number.isInteger(state.potionPick) ? `<p class="aar-actions">Potion: ${escape(state.potions[state.potionPick]?.name ?? "")}</p>` : "";
     // (A skill its user picked when the item was made, Words of Wisdom's phrase: a picker.)
     const skillPick = state.plan?.item?.skillPick ?? null;
     const skillPicker = !skillPick ? ""
@@ -581,7 +591,7 @@ export function cardHTML(state, { canApply = false } = {}) {
     const previewList = preview.length ? `<ul class="aar-notes">${preview.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to apply it.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${amountField}${runePick}${runeChoicePick}${installedPick}${skillPicker}${previewList}${targetHint}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${drinker}${ceremony}${resistPick}${recoveryPick}${reducePick}${amountField}${runePick}${runeChoicePick}${installedPick}${potionPick}${skillPicker}${previewList}${targetHint}${results}${controls}</section>`;
 }
 
 // The alchemical item installed in it, in words: "From the elixir of life installed, its item bonus to athletics (grapple), fortitude-dc
