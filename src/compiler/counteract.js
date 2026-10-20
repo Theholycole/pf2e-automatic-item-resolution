@@ -10,7 +10,13 @@ import { plainText } from "./rows.js";
 const CONDITIONS = ["blinded", "clumsy", "confused", "controlled", "dazzled", "deafened", "doomed", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "grabbed", "immobilized", "paralyzed", "petrified", "restrained", "sickened", "slowed", "stunned", "stupefied"];
 const CONDITION_WORDS = { paralysis: "paralyzed", petrification: "petrified" };
 const ORDINAL = String.raw`(\d+)(?:st|nd|rd|th)?`;
-const FREE = /\bcounteract (the triggering spell|the triggering illusion|the fire|the effect or item|the spell|the darkness|that effect|the effect(?= with a counteract modifier))\b|\bto end (a magical darkness effect)\b/i;
+// (And Bloodstone Doll's "Attempt a counteract check against the triggering spell", The Locksmith's "the triggering affliction", The
+// Theater's "attempts to counter the misfortune effect".)
+const FREE = /\b(?:counteract|counteract check against|counter) (the triggering spell|the triggering illusion|the triggering affliction|the misfortune effect|the fire|the effect or item|the spell|the darkness|that effect|the effect(?= with a counteract modifier))\b|\bto end (a magical darkness effect)\b/i;
+// (Its user's numbers: "a counteract modifier of your Class DC – 10", "a counteract rank equal to your level divided by 2 (rounded up)", "using
+// half your level (rounded up) as the counteract rank" — counteract.fromUser, the card's from its user's class DC and level.)
+const CLASS_DC_MODIFIER = /\bcounteract (?:check )?modifier (?:of|equal to) your class DC\s*[–-]\s*10\b/i;
+const HALF_LEVEL_RANK = /\bcounteract rank equal to your level divided by 2 \(rounded up\)|\busing half your level \(rounded up\) as the counteract rank\b/i;
 
 // (Determination's benefit, Flame Navette's "you gain the benefit of the fighter's Determination class feat, with a counteract rank of 8
 // and a counteract modifier of +22": the feat's own choice on its user — one nonpermanent condition ends outright, or one spell or magical
@@ -44,7 +50,7 @@ export function readCounteract(html, { level = 0 } = {}) {
     }
     // (The sentence that counteracts, and the next one, where the rank or modifier is often given.)
     const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z(])/);
-    const at = sentences.findIndex((sentence) => /\b(?:attempts? (?:a counteract check|to counteract)|to counteract ailments|the salve attempts to counteract)\b|\bcounteract modifier (?:is|of) \+\d+/i.test(sentence));
+    const at = sentences.findIndex((sentence) => /\b(?:attempts? (?:a counteract check|to counteract|to counter the misfortune)|to counteract ailments|the salve attempts to counteract)\b|\bcounteract modifier (?:is|of) \+\d+/i.test(sentence));
     if (at < 0) return null;
     const said = sentences.slice(at, at + 3).join(" ");
     // (Or a spell on a creature nearby, Etheric Essence Disruptor's "attempt to counteract an active divine or occult spell within 30
@@ -63,18 +69,23 @@ export function readCounteract(html, { level = 0 } = {}) {
     const free = FREE.exec(said);
     if (free && !/\bcan't be counteracted\b/i.test(said)) {
         const modifierOf = /\+(\d+) counteract modifier\b|\bcounteract (?:check )?modifier (?:of |is )?\+(\d+)|\bcounteract (?:check )?modifier (?:of |is )?1d20\s*\+\s*(\d+)/i.exec(said);
-        if (!modifierOf) return null;
+        const fromUser = { ...(CLASS_DC_MODIFIER.test(said) ? { modifier: "class-dc" } : {}), ...(HALF_LEVEL_RANK.test(said) ? { rank: "half-level" } : {}) };
+        if (!modifierOf && !fromUser.modifier) return null;
         const stated = new RegExp(String.raw`\bcounteract rank (?:of |is )?${ORDINAL}\b|\ban? ${ORDINAL}-rank (?:Dispel Magic|counteract)\b`, "i").exec(said);
         const stored = /\busing the rank of the spell stored in\b/i.test(said);
-        const rank = stated ? Number(stated[1] ?? stated[2]) : stored ? null : Math.max(1, Math.ceil(Number(level) / 2));
+        const rank = fromUser.rank ? null : stated ? Number(stated[1] ?? stated[2]) : stored ? null : Math.max(1, Math.ceil(Number(level) / 2));
         // (Twilight Lantern's "the effect", a darkness effect it targets; Crimson Tome's "that effect", one restoring the slain to life.)
-        const name = { "the triggering spell": "the triggering spell", "the triggering illusion": "the triggering illusion", "the fire": "the magical fire", "the effect or item": "the magical effect or item", "the spell": "the spell", "the darkness": "the magical darkness", "a magical darkness effect": "the magical darkness", "that effect": "the effect", "the effect": /\bdarkness effect\b/i.test(`${sentences[at - 1] ?? ""} ${said}`) ? "the darkness effect" : "the effect" }[(free[1] ?? free[2]).toLowerCase()];
+        const name = { "the triggering spell": "the triggering spell", "the triggering illusion": "the triggering illusion", "the triggering affliction": "the triggering affliction", "the misfortune effect": "the misfortune effect", "the fire": "the magical fire", "the effect or item": "the magical effect or item", "the spell": "the spell", "the darkness": "the magical darkness", "a magical darkness effect": "the magical darkness", "that effect": "the effect", "the effect": /\bdarkness effect\b/i.test(`${sentences[at - 1] ?? ""} ${said}`) ? "the darkness effect" : "the effect" }[(free[1] ?? free[2]).toLowerCase()];
         const after = sentences.slice(at + 1, at + 3).filter((sentence) => /\b(?:If it fails|If the spell is successfully counteracted|Regardless of the result|Once you do|This expends|If you succeed)\b/i.test(sentence));
+        // (What a counteracted spell does then, the GM's: Bloodstone Doll's "If the spell would be counteracted, the bloodstone doll instead
+        // influences the summoned creature. You gain control of …" — that sentence and those after it, notes.)
+        const would = sentences.findIndex((sentence, index) => index > at && /^If the spell would be counteracted\b/i.test(sentence.trim()));
+        if (would > 0) after.push(...sentences.slice(would).map((sentence) => sentence.trim()).filter(Boolean));
         // (What each degree does beside ending it, Herald's Ring's "Critical Success All of the damage is reflected back on its source", the
         // GM's by the result the card reports.)
         const degrees = sentences.slice(at + 1).map((sentence) => /^(Critical Success|Success|Failure|Critical Failure) (.+)$/.exec(sentence.trim())).filter(Boolean).map(([, degree, what]) => `${degree.charAt(0)}${degree.slice(1).toLowerCase()}: ${what.replace(/\.$/, "")} (by hand).`);
         after.push(...degrees);
-        return { modifier: Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]), rank, conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...after] };
+        return { modifier: modifierOf ? Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]) : null, rank, ...(Object.keys(fromUser).length ? { fromUser } : {}), conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...after] };
     }
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)
     if (!near && !adjacent && !listed && !/\b(?:on you|affecting you|afflicting you|you are currently suffering|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;

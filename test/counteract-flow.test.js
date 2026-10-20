@@ -215,3 +215,24 @@ test("Flame Navette (Determination): one condition on its user ends outright, no
     assert.equal(scared.hasCondition("frightened"), false);
     assert.match(card.content, /Frightened 1: ended\./);
 });
+
+test("counteracts at a triggering spell or affliction in more words: Bloodstone Doll's \"counteract check against the triggering spell\" (+9, rank 2; its control of the summoned creature the GM's), The Theater and The Locksmith at their user's numbers — half its level, rounded up, its class DC − 10", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const doll = compileItem(source("Bloodstone Doll (Minor)"));
+    assert.deepEqual([routeOf(doll), doll.item.counteract.modifier, doll.item.counteract.rank, doll.item.counteract.free.name], ["counteract", 9, 2, "the triggering spell"]);
+    assert.match(doll.item.counteract.notes.join(" "), /You gain control of the summoned creature/);
+    const [theater] = compileActivations(source("The Theater"));
+    assert.deepEqual([theater.plan.item.counteract.free.name, theater.plan.item.counteract.fromUser], ["the misfortune effect", { modifier: "class-dc", rank: "half-level" }]);
+    const [locksmith] = compileActivations(source("The Locksmith"));
+    assert.equal(locksmith.plan.item.counteract.free.name, "the triggering affliction");
+    // (Its user at level 9, class DC 27: rank 5, +17.)
+    const champion = foundry.makeActor({ id: "counter-champion", name: "Champion", owners: ["player"] });
+    foundry.place(champion, 0, 29000);
+    champion.level = 9;
+    champion.classDC = { mod: 17, dc: { value: 27 } };
+    const card = foundry.giveItem(champion, source("The Theater"));
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: card.uuid, activation: 0, userId: "player" });
+    await settle();
+    const state = foundry.messages.at(-1).flags[MODULE_ID].card;
+    assert.deepEqual([state.kind, state.counteract.rank, state.counteract.modifier, state.rows.map((row) => row.name)], ["counteract", 5, 17, ["the misfortune effect"]]);
+});

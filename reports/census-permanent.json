@@ -8,10 +8,10 @@
   "results": {
    "resolves": 786,
    "builtin:cast-spell": 473,
-   "none": 529,
+   "none": 527,
    "partial": 192,
    "builtin:focus-point": 47,
-   "builtin:counteract": 27,
+   "builtin:counteract": 29,
    "builtin:readied-bonus": 47,
    "builtin:no-effect": 100,
    "note-only": 158,
@@ -32,9 +32,9 @@
    "save": 443,
    "cast": 473,
    "item": 589,
-   "none": 657,
+   "none": 655,
    "focus": 47,
-   "counteract": 27,
+   "counteract": 29,
    "fortune": 58,
    "reroll": 45,
    "strike": 93,
@@ -59,10 +59,10 @@
    "results": {
     "resolves": 465,
     "builtin:cast-spell": 345,
-    "none": 363,
+    "none": 361,
     "partial": 92,
     "builtin:focus-point": 45,
-    "builtin:counteract": 23,
+    "builtin:counteract": 25,
     "builtin:readied-bonus": 33,
     "builtin:no-effect": 81,
     "note-only": 116,
@@ -12813,9 +12813,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Collar of the Shifting Spider",
@@ -27821,9 +27821,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Chaplain's Cudgel",

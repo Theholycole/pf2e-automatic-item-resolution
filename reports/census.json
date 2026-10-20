@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 181,
+   "none": 178,
    "resolves": 763,
    "builtin:readied-bonus": 23,
    "builtin:zone": 111,
@@ -23,7 +23,7 @@
    "note-only": 126,
    "builtin:conjure": 7,
    "builtin:ways": 11,
-   "builtin:counteract": 30,
+   "builtin:counteract": 33,
    "builtin:no-effect": 50,
    "builtin:teleport": 6,
    "builtin:reroll": 3,
@@ -41,10 +41,10 @@
     "note-only": 62,
     "builtin:readied-bonus": 8,
     "builtin:ways": 4,
-    "none": 98,
+    "none": 95,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
-    "builtin:counteract": 6,
+    "builtin:counteract": 9,
     "builtin:item-action": 1,
     "builtin:conjure": 1
    },
@@ -362,13 +362,13 @@
    "count": 156,
    "resolves": 63,
    "gaps": 0,
-   "none": 22
+   "none": 19
   },
   "counteract": {
    "count": 79,
    "resolves": 18,
    "gaps": 0,
-   "none": 11
+   "none": 8
   },
   "area": {
    "count": 44,
@@ -392,7 +392,7 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 242,
+   "none": 239,
    "item": 625,
    "fortune": 25,
    "zone": 111,
@@ -402,7 +402,7 @@
    "action": 16,
    "conjure": 7,
    "ways": 11,
-   "counteract": 30,
+   "counteract": 33,
    "teleport": 6,
    "reroll": 3,
    "coat": 46,
@@ -412,14 +412,14 @@
    "other": {
     "cast": 14,
     "zone": 22,
-    "none": 119,
+    "none": 116,
     "later": 11,
     "save": 96,
     "item": 217,
     "fortune": 8,
     "ways": 4,
     "teleport": 4,
-    "counteract": 6,
+    "counteract": 9,
     "strike": 3,
     "expose": 3,
     "action": 1,
@@ -512,7 +512,7 @@
    }
   },
   "noCard": {
-   "no-plan": 181,
+   "no-plan": 178,
    "triggered": 11,
    "gm": 50
   }
@@ -2716,7 +2716,9 @@
     "trigger",
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Flame Navette",
@@ -14783,7 +14785,9 @@
     "trigger",
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Wind-Up Cart",
@@ -18535,7 +18539,9 @@
     "trigger",
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Ablative Shield Plating (Moderate)",

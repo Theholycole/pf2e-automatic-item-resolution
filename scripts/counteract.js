@@ -7,8 +7,16 @@ import { DEGREE_WORDS, counteractCandidates, counteractCardHTML, counteractResul
 import { FLAG, MODULE_ID, afflictionsOf, creatureOf, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
 export async function postCounteractCard({ message, plan, used, actor, token }) {
-    const counteract = plan.item?.counteract;
-    if (!counteract) return null;
+    const given = plan.item?.counteract;
+    if (!given) return null;
+    // (Its user's numbers, The Theater's and The Locksmith's: half their level, rounded up, as its rank; their class DC − 10 as its modifier
+    // — the best of their class DCs, else the GM's note.)
+    const classMod = Math.max(...[actor?.classDC?.mod, ...Object.values(actor?.classDCs ?? {}).map((entry) => entry?.mod), Number(actor?.system?.attributes?.classDC?.value) - 10].map(Number).filter(Number.isFinite));
+    const counteract = given.fromUser ? {
+        ...given,
+        ...(given.fromUser.rank === "half-level" ? { rank: Math.max(1, Math.ceil((Number(actor?.level) || 0) / 2)) } : {}),
+        ...(given.fromUser.modifier === "class-dc" ? (Number.isFinite(classMod) ? { modifier: classMod } : { modifier: 0, notes: [...(given.notes ?? []), `${actor?.name ?? "Its user"} has no class DC: its modifier is their class DC − 10 (by hand).`] }) : {})
+    } : given;
     // (A spell on a creature within some distance: every creature there, foe or friend, for the GM to pick.)
     // (Its user's own, Determination's: no one else to pick.)
     const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: counteract.self ? [] : creaturesNear(token, counteract.within ?? 5) });
