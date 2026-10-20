@@ -325,6 +325,17 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // (Another creature's: the one the presser targets, within the distance its trigger names.)
     const within = /\bwithin (\d+) feet\b/i.exec(trigger ?? triggerOf(String(text ?? "")) ?? "")?.[1];
     const targeting = bonus.recipient === "target" ? { target: "1 creature", range: within ? `${within} feet` : null, area: null } : { target: "the user", range: null, area: null };
+    // (A higher bonus at one kind of creature, Conrasu Coin (Arbiter)'s "you gain a +2 circumstance bonus on the Diplomacy check, which increases
+    // to a +3 circumstance bonus to make-an-impression on a creature with the aeon trait": a second modifier of the same type predicated on the
+    // target's trait — PF2e keeps the higher of the two.)
+    const TRAIT_MORE = /^When you activate the [\w' -]+?, you gain an? \+(\d+) (circumstance|item|status) bonus on the (\w+) check, which increases to an? \+(\d+) \2 bonus to [\w -]+? on a creature with the (\w+) trait\.$/i;
+    const traitMore = (notes ?? []).map((note) => [note, TRAIT_MORE.exec(String(note).trim())]).find(([, match]) => match && bonus.modifiers.some((modifier) => modifier.selector === match[3].toLowerCase() && modifier.value === Number(match[1])));
+    if (traitMore) {
+        const [note, match] = traitMore;
+        const base_modifier = bonus.modifiers.find((modifier) => modifier.selector === match[3].toLowerCase());
+        bonus.modifiers = [...bonus.modifiers, { ...base_modifier, value: Number(match[4]), predicate: [...(base_modifier.predicate ?? []), `target:trait:${match[5].toLowerCase()}`] }];
+        notes.splice(notes.indexOf(note), 1);
+    }
     // (A higher bonus against one kind of attacker, Broken Tusk Pendant's "You gain a +1 item bonus to AC against the triggering attack, or a +2
     // item bonus if the animal is the specific kind depicted by the pendant": the ways card's two buttons, its user's pick — the pendant's
     // animal known to them.)

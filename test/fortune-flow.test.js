@@ -249,8 +249,13 @@ test("Ring of Torag: resistance 5 against fire and +1 to AC and saves, together,
     assert.deepEqual(ring.bonus.modifiers.map((modifier) => `${modifier.selector} +${modifier.value} ${modifier.type}`), ["ac +1 status", "saving-throw +1 status"]);
     assert.deepEqual(ring.bonus.resistance, { type: "fire", value: 5 });
     assert.deepEqual([ring.bonus.against, ring.notes], [true, []]);
-    // (A sentence saying more than the bonus stays: Broken Tusk Pendant's "… or a +2 item bonus if the animal is the specific kind …".)
-    assert.match(compileActivations(source("Broken Tusk Pendant"))[0].plan.notes[0], /^Only against what triggered it: .*\bor a \+2 item bonus if\b/);
+    // (A sentence saying more than the bonus is read for it: Broken Tusk Pendant's "… or a +2 item bonus if the animal is the specific kind …" —
+    // the ways card's two buttons, test/ways-flow.test.js.)
+    assert.equal(compileActivations(source("Broken Tusk Pendant"))[0].plan.builtin, "ways");
+    // (A higher one at a kind of creature, Conrasu Coin (Arbiter)'s +3 against an aeon: a second modifier on the target's trait, PF2e keeping the
+    // higher circumstance bonus.)
+    const coin = compileItem(source("Conrasu Coin (Arbiter)"));
+    assert.deepEqual([readiedRules(coin).map((rule) => [rule.selector, rule.value, rule.predicate ?? null]), coin.notes, coin.partial], [[["diplomacy", 2, null], ["diplomacy", 3, ["target:trait:aeon"]]], [], undefined]);
 });
 
 test("moment bonuses in more words: Pyrefeather Cloak's type-first resistance, Curious Teardrop's \"You receive\", Calamity's Bane Tattoo's any check, Crown of the Fire Eater's raised resistance", async () => {
