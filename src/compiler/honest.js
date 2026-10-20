@@ -8,6 +8,9 @@
 import { RUNE_STEP_SENTENCE } from "./rune-steps.js";
 
 const NO_OP = /^(?:\{target\}(?: \([^)]*\))?:\s*)?(?:The (?:target|creature|animal|foe|undead|possessing creature)(?: creature)? (?:is unaffected|can act normally|takes no (?:additional )?damage)|(?:Its|The) (?:effect|oil|dust) (?:ends|becomes inert)[^.]*)\.?\s*$/i;
+// (An unaffected creature's awareness, the GM's flavor and no rule: "The creature is unaffected and realizes you tried to steal its memories",
+// "The animal is unaffected. It doesn't necessarily become aware of the pheromones, …", "The potion does not affect you".)
+const UNAFFECTED_AWARE = /^(?:\{target\}(?: \([^)]*\))?:\s*)?(?:The (?:target|creature|animal|foe|undead)(?: creature)? is unaffected(?:\.(?=\s+It doesn't necessarily become aware\b)|\b[^.]*?\b(?:realizes?|aware|thinks|suspicious|unaware)\b[^.]*\.)(?:\s+It doesn't necessarily become aware\b.*)?|The (?:potion|elixir|oil) does not affect you\.)\s*$/i;
 // (Lines the card's own results already are: "takes half damage and no other effects", Hauling's direction line, an item's own recharge.)
 const CARD_LINE = /\btakes half damage and no other effects\b|^The direction is its user's choice: the card moves it\b|\breappears on the [\w ]+? after 24 hours\.$/i;
 const BEHAVIOUR = /\bcan't use (?:reactions|hostile actions)\b|\bmust (?:spend|use) (?:at least )?(?:one of )?its (?:first )?actions?\b|\bcan't treat any creature as (?:its|an) ally\b|\bdoesn't act against you\b|\bignores other creatures\b/i;
@@ -28,7 +31,7 @@ function rowsOf(node, found = [], seen = new Set()) {
 
 // What of a row the GM must still carry out: its GM lines that aren't nothing or a behaviour rule beside a real result.
 export function leftToTheGM(row) {
-    return (row?.manualInstructions ?? []).map(said).filter((line) => line && !NO_OP.test(line) && !CARD_LINE.test(line.replace(/^\{target\}(?: \([^)]*\))?:\s*/, "")) && !(applies(row) && BEHAVIOUR.test(line) && /\bthe rest by hand\b/i.test(line)));
+    return (row?.manualInstructions ?? []).map(said).filter((line) => line && !NO_OP.test(line) && !UNAFFECTED_AWARE.test(line) && !CARD_LINE.test(line.replace(/^\{target\}(?: \([^)]*\))?:\s*/, "")) && !(applies(row) && BEHAVIOUR.test(line) && /\bthe rest by hand\b/i.test(line)));
 }
 
 // A behaviour rule or the GM's call with a time of its own — Floppy Rag Doll's "can't use reactions until the end your turn", Truth Potion's "must
