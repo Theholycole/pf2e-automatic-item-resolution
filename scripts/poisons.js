@@ -3,11 +3,12 @@
 // card on the target (the ability module's api.live.postCard, the affliction
 // handed to Pseudo Afflictions as for monster venom); a critical miss wastes it.
 
-import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, coatableWeapons, repeatsLater, saveText, withAttackChoice, withCheckChoice } from "../src/live/poison-card.js";
+import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, distancePenalty, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, coatableWeapons, repeatsLater, saveText, withAttackChoice, withCheckChoice } from "../src/live/poison-card.js";
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
 import { scaledPlan } from "../src/compiler/scaled.js";
-import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, lowerCondition, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, lowerCondition, spaceOf, stateOf } from "./foundry.js";
+import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
 export async function postPoisonCard({ message, plan, used, actor, token }) {
@@ -164,6 +165,15 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         } else lines.push(`${names}: ${saveText(state.plan.thenSave)} (roll it by hand).`);
         const done = { ...state, status: "applied", step: null, results: [...state.results, ...lines].slice(-6) };
         return message.update({ content: exposureCardHTML(done, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: done });
+    }
+    // (Its target's distance, a thrown item's own attack: range increments past the first, Rod of Razors' volley — src/compiler/thrown.js.)
+    if ((state.plan?.ownCheck?.volley || state.plan?.ownCheck?.increment || state.plan?.ownCheck?.within) && state.step !== "then" && sourceToken && tokens[0]) {
+        const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };
+        const feet = distanceFeet(spaceOf(sourceToken.object ?? sourceToken), spaceOf(tokens[0].object ?? tokens[0]), grid);
+        const { out, penalty = 0, words = [] } = distancePenalty(state.plan.ownCheck, feet);
+        if (out) throw new Error(`${state.item.name}: ${out}.`);
+        state = { ...state, attackPenalty: penalty };
+        if (penalty) lines.push(`${tokens[0].name ?? tokens[0].actor?.name} ${feet} feet away: ${words.join(", ")}.`);
     }
     if (postCard && actor) {
         await postCard({ plan: withAttackChoice(scaledPlan(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state.scaledAmount), state), item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });

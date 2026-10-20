@@ -295,6 +295,10 @@ function withOwnRuleDamage(plan, item) {
 }
 
 const CRITICAL_DC = /^On a critical hit, increase the (Fortitude|Reflex|Will) DC by (\d+) \((?:@Check\[[^\]]*\]|DC) ?(\d+)\)(?:, and the target is (Dazzled|Sickened|Frightened|Off-Guard|Stupefied|Clumsy|Enfeebled|Slowed|Stunned|Blinded|Deafened) for \d+ rounds?)?\.$/i;
+// (A critical hit's save that only its critical success escapes, Rhino Shot's "If the hit with the rhino shot was a critical success, the
+// target is knocked prone unless it critically succeeds at its save": strike.criticalWorse, the conditions the save's success then gets
+// too — its failure's (scripts/strikes.js).)
+const CRITICAL_WORSE = /^If the hit with the [\w' -]+? was a critical success, the target is (?:knocked )?(prone|\w+) unless it critically succeeds at its save\.$/i;
 
 const AGAINST_KIND = /^Make an? (?:melee |ranged )?Strike with the [\w' -]+? against an? (plant|undead|construct|fiend|dragon|animal|beast|elemental|ooze|fungus|giant|aberration) creature(?: or a creature made primarily of (wood|stone|metal))?\.$/i;
 
@@ -309,7 +313,9 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
     // Dazzled for 1 round" — strike.criticalDC, the save card's DC after a critical hit (scripts/strikes.js); its condition already the
     // critical row's.)
     const critical = save ? filtered.notes.map((note) => [note, CRITICAL_DC.exec(String(note).trim())]).find(([, match]) => match && (!match[4] || (riders.criticalSuccess?.effects ?? []).some((effect) => effect.slug === match[4].toLowerCase()))) : null;
-    const sharper = critical ? { ...filtered, notes: filtered.notes.filter((note) => note !== critical[0]) } : filtered;
+    const sharpest = critical ? { ...filtered, notes: filtered.notes.filter((note) => note !== critical[0]) } : filtered;
+    const worse = save ? sharpest.notes.map((note) => [note, CRITICAL_WORSE.exec(String(note).trim())]).find(([, match]) => match && (save.plan.resolution?.outcomes?.failure?.effects ?? []).some((effect) => effect.slug === match[1].toLowerCase())) : null;
+    const sharper = worse ? { ...sharpest, notes: sharpest.notes.filter((note) => note !== worse[0]) } : sharpest;
     // (Only against a kind of creature: Carver-cutter's "Make a Strike with the axe against a plant creature or a creature made primarily
     // of wood" — strike.against, the traits; its extra dice for those targets alone, and its riders only on them (src/live/strike-card.js).)
     const kind = sharper.notes.map((note) => [note, AGAINST_KIND.exec(String(note).trim())]).find(([, match]) => match);
@@ -355,7 +361,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
         },
         // (A weapon's own Strike, riders alone or not: Gloaming Arc's "Attempt a melee Strike with the gloaming arc", Growth Gun's "Make a
         // ranged Strike" — only a Strike with it carries them.)
-        strike: { range: strike.range, save: save ? save.plan : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(against ? { against } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
+        strike: { range: strike.range, save: save ? save.plan : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(worse ? { criticalWorse: [worse[1][1].toLowerCase()] } : {}), ...(against ? { against } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
         ...(((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length) || follow?.notes?.length ? { partial: true } : {})
     };
 }

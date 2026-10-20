@@ -4549,6 +4549,32 @@ export const cases = {
         return { thrown, save: `${check.statistic} ${check.against.value}` };
     },
 
+    // Rod of Razors' flechette at a creature 5 feet off: its user's thrown attack –2 for volley 30 feet, against AC, its 3d8 adamantine
+    // piercing and, on a critical hit only, the deadly d10 undoubled.
+    async rodOfRazors(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Razor Shooter", { type: "character", x: 7, y: 11 });
+        const { token: foeToken } = await creature(scene, "Razor Target", { x: 8, y: 11, alliance: "opposition" });
+        const rod = await give(user, "Rod of Razors");
+        await until(() => userToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(rod.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the rod's card" });
+        const choices = card.getFlag(NS, "card").attackChoices ?? [];
+        const thrown = choices.find((choice) => choice.kind === "thrown") ?? choices[0];
+        assert(thrown, `an attack offered (${JSON.stringify(choices)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], attackChoice: choices.indexOf(thrown) });
+        const attack = await messageAfter(since, abilitySaveCard, { what: "the ability module's attack card" });
+        const plan = attack.flags["pf2e-automatic-ability-resolution"].card.plan;
+        assert(plan.resolution.check.modifier === thrown.modifier - 2, `volley's –2 (${plan.resolution.check.modifier} from ${thrown.modifier})`);
+        const formulas = plan.resolution.sharedDamage.components.map((component) => component.formula);
+        assert(formulas.join() === "3d8[piercing,adamantine],1d10[piercing,adamantine]", formulas.join(" / "));
+        const critical = plan.resolution.outcomes.criticalSuccess.damage;
+        assert(critical.componentMultipliers?.deadly === 1 && plan.resolution.outcomes.success.damage.sourceComponentIds.join() === "0", JSON.stringify(critical));
+        assert(game.messages.get(card.id).getFlag(NS, "card").results.some((line) => /5 feet away: –2 volley within 30 feet/.test(line)), "the card says so");
+        return { modifier: plan.resolution.check.modifier, formulas };
+    },
+
     // Spring-Loaded Net Launcher: an unattached Net thrown farther — its user's simple thrown attack against the target's AC, Off-Guard and
     // Immobilized on its critical success.
     async netLauncher(scene) {

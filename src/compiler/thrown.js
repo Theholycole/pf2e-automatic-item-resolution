@@ -76,8 +76,18 @@ export function thrownPlan(html, base, item, options = {}) {
     const rows = riderRow(ordinary.replace(/^.*?\b(?:which|it)\s+(becomes|is)\b/i, "The target $1"));
     const critRows = critical ? riderRow(`The target is ${critical.replace(/^it's also\s*/i, "").replace(/\.$/, "")}.`) : null;
     const then = thenSaveOf(sentences, at, item, options);
-    const component = damage ? { id: "0", formula: damage.formula, type: damage.type, category: damage.category } : null;
-    const hit = (multiplier, extra = []) => ({ damage: component ? { mode: "shared", multiplier, sourceComponentIds: ["0"] } : { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [...(rows.effects ?? []), ...extra], modifiers: [...(rows.modifiers ?? [])] });
+    // (Of a precious material, Rod of Razors' "The flechette is an adamantine weapon": the material in its damage's flavor, which PF2e's damage
+    // roll and the core read for a weakness or resistance to it.)
+    const material = /\bThe [\w' -]+? is an? (adamantine|silver|cold iron) weapon\b/i.exec(text)?.[1]?.toLowerCase().replace(" ", "-") ?? null;
+    const flavored = (formula, type, category) => (material ? `${formula}[${[category, type, material].filter(Boolean).join(",")}]` : formula);
+    const component = damage ? { id: "0", formula: flavored(damage.formula, damage.type, damage.category), type: damage.type, category: damage.category } : null;
+    // (Its weapon traits, Rod of Razors' "the deadly d10 and volley 30 feet traits": deadly, one die more on a critical hit, not doubled — a
+    // component of its own on that row alone; volley, –2 to the attack at a target within that distance, taken off on Apply.)
+    const deadly = component ? /\bdeadly (d\d+)\b/i.exec(text)?.[1] ?? null : null;
+    const volley = Number(/\bvolley (\d+) feet\b/i.exec(text)?.[1]) || null;
+    const adjacent = /\binto an adjacent space\b/i.test(text);
+    const deadlyComponent = deadly ? { id: "deadly", formula: flavored(`1${deadly}`, component.type, null), type: component.type, category: null } : null;
+    const hit = (multiplier, extra = []) => ({ damage: component ? { mode: "shared", multiplier, sourceComponentIds: ["0", ...(deadly && multiplier === 2 ? ["deadly"] : [])], ...(deadly && multiplier === 2 ? { componentMultipliers: { deadly: 1 } } : {}) } : { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [...(rows.effects ?? []), ...extra], modifiers: [...(rows.modifiers ?? [])] });
     if (!component && !(rows.effects ?? []).length && !(rows.modifiers ?? []).length) return null;
     const used = new Set([at, ...(then?.used ?? []), ...(later >= 0 && later !== null ? [at + 1 + later] : [])]);
     const notes = [
@@ -85,25 +95,26 @@ export function thrownPlan(html, base, item, options = {}) {
         ...(/\bsplash damage\b/i.test(hitSentence) ? [`Its splash: ${/(\d+ \w+ splash damage[^.]*)/i.exec(hitSentence)?.[1] ?? "splash damage"} to each creature within 5 feet of the target (by hand).`] : []),
         ...(/^On a hit against an? (\w+)\b/i.test(hitSentence) ? [`Only against an ${/^On a hit against an? (\w+)\b/i.exec(hitSentence)[1]}.`] : []),
         ...(later >= 0 && later !== null ? [`Its damage only when ${/^If ([^,]+),/i.exec(sentences[at + 1 + later])[1]}.`] : []),
-        ...(/\bdeadly (d\d+)\b/i.test(text) ? [`Deadly ${/\bdeadly (d\d+)\b/i.exec(text)[1]}: a critical hit adds that die of damage (by hand).`] : []),
-        ...(/\bvolley (\d+) feet\b/i.test(text) ? [`Volley ${/\bvolley (\d+) feet\b/i.exec(text)[1]} feet: –2 to the attack against a target that close (by hand).`] : []),
+        ...(/\bdeadly (d\d+)\b/i.test(text) && !deadly ? [`Deadly ${/\bdeadly (d\d+)\b/i.exec(text)[1]}: a critical hit adds that die of damage (by hand).`] : []),
         ...sentences.filter((sentence, index) => !used.has(index) && /\b(?:damage|splash|flat check|@Check|DC|Escape|undead|attack|can't|counteract|deadly|volley)\b/i.test(sentence) && !THROWN.test(sentence)).map(readable)
     ];
     return {
         ...base,
         modelVersion: MODEL_VERSION,
-        automation: { level: "guided" },
+        automation: { level: notes.length ? "guided" : "automatic" },
         targeting: { target: "1 creature", range: range ? `${range[1] ?? range[2] ?? range[3]} feet` : null, area: null },
         trigger: { event: "use" },
-        ownCheck: { kind: "attack", modifier: null, choose: ["thrown"] },
+        // (Its range a range increment, as a weapon's is: –2 for each increment past the first, out to six — taken off on Apply; "throw it at a
+        // creature within 20 feet", Halcyon Heart's, a limit with no penalty.)
+        // (Lady's Chalice's "splashes … into an adjacent space": 5 feet, whatever its range.)
+        ownCheck: { kind: "attack", modifier: null, choose: ["thrown"], ...(adjacent ? { within: 5 } : range && (range[1] ?? range[2]) ? { increment: Number(range[1] ?? range[2]) } : {}), ...(!adjacent && range?.[3] ? { within: Number(range[3]) } : {}), ...(volley ? { volley } : {}), ...(deadly ? { deadly } : {}) },
         resolution: {
             kind: "check",
             check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: null },
-            ...(component ? { sharedDamage: { rollOnce: true, components: [component] } } : {}),
+            ...(component ? { sharedDamage: { rollOnce: true, components: [component, ...(deadlyComponent ? [deadlyComponent] : [])] } } : {}),
             outcomes: { criticalSuccess: hit(2, critRows?.effects ?? []), success: hit(1), failure: none(), criticalFailure: none() }
         },
         ...(then ? { thenSave: then.plan } : {}),
-        notes,
-        partial: true
+        ...(notes.length ? { notes, partial: true } : {})
     };
 }

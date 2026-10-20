@@ -305,7 +305,9 @@ test("an item thrown as a Strike that PF2e can't roll (Sack of Rotten Fruit): it
     await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
     await settle();
     const [attack] = foundry.posted.slice(before);
-    assert.deepEqual([attack.plan.resolution.check.statistic, attack.plan.resolution.check.modifier, attack.plan.resolution.sharedDamage.components[0].formula], ["thrown attack", 10, "1d4"]);
+    // (The ogre 30 feet off, one past the sack's 20-foot range increment: –2.)
+    assert.deepEqual([attack.plan.resolution.check.statistic, attack.plan.resolution.check.modifier, attack.plan.resolution.sharedDamage.components[0].formula], ["thrown attack (–2 for distance)", 8, "1d4"]);
+    assert.match(card.content, /Ogre 30 feet away: –2 for 1 range increment past the first/);
     assert.deepEqual([card.flags[MODULE_ID].card.status, card.flags[MODULE_ID].card.step], ["open", "then"], "open for the save its hit calls for");
     assert.match(card.content, /Its save: my targets/);
     await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });

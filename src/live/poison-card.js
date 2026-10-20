@@ -180,10 +180,33 @@ export function withCheckChoice(plan, index = 0) {
 }
 
 // The plan with the attack modifier picked: a spellgun's check at its user's spell or firearm attack modifier.
+// (state.attackPenalty: what its target's distance takes off — range increments past the first, a volley's –2 — src/compiler/thrown.js.)
 export function withAttackChoice(plan, state) {
     const choice = state?.attackChoices?.[state.attackChoice ?? 0];
     if (!plan?.ownCheck?.choose || !choice) return plan;
-    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, statistic: `${choice.kind} attack`, modifier: choice.modifier } } };
+    const penalty = Number(state.attackPenalty) || 0;
+    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, statistic: `${choice.kind} attack${penalty ? ` (–${penalty} for distance)` : ""}`, modifier: choice.modifier - penalty } } };
+}
+
+// The attack's penalty for its target's distance in feet → { penalty, words } or { out } past six range increments.
+export function distancePenalty(ownCheck, feet) {
+    const increment = Number(ownCheck?.increment) || null;
+    if (increment && feet > increment * 6) return { out: `that target is ${feet} feet away, past six range increments of ${increment} feet` };
+    if (ownCheck?.within && feet > ownCheck.within) return { out: `that target is ${feet} feet away (it reaches ${ownCheck.within})` };
+    const steps = increment && feet > increment ? Math.ceil(feet / increment) - 1 : 0;
+    const volley = ownCheck?.volley && feet <= ownCheck.volley ? 2 : 0;
+    const words = [steps ? `–${2 * steps} for ${steps} range increment${steps === 1 ? "" : "s"} past the first` : null, volley ? `–2 volley within ${ownCheck.volley} feet` : null].filter(Boolean);
+    return { penalty: 2 * steps + volley, words };
+}
+
+// Its weapon traits' lines (src/compiler/thrown.js): deadly, volley.
+export function traitLines(plan) {
+    return [
+        plan?.ownCheck?.deadly ? `Deadly ${plan.ownCheck.deadly}: 1${plan.ownCheck.deadly} more on a critical hit (not doubled)` : null,
+        plan?.ownCheck?.volley ? `Volley ${plan.ownCheck.volley} feet: –2 to the attack at a target within ${plan.ownCheck.volley} feet (taken off on Apply)` : null,
+        plan?.ownCheck?.increment ? `Range increment ${plan.ownCheck.increment} feet: –2 for each past the first, out to ${plan.ownCheck.increment * 6} feet (taken off on Apply)` : null,
+        plan?.ownCheck?.within ? `At a creature within ${plan.ownCheck.within} feet` : null
+    ].filter(Boolean);
 }
 
 // After a use: still open for a repeatable later card within its time, else done.
@@ -214,7 +237,7 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     // (Saves for the creatures around the one targeted, src/compiler/hit-around.js aroundAllies: said before Apply.)
     // (And a condition its user lowers beside it, Grim Ring's drained.)
     const ownLowered = state.plan?.allyArea ? [] : (state.plan?.item?.reduce ?? []).filter((one) => !one.who && one.slug).map((one) => `${state.user.name}: ${one.slug} lowered by ${one.by === "all" ? "all of it" : one.by}.`);
-    const aroundLines = [...(state.plan?.around ?? []).map((entry) => `Then ${saveText(entry.plan)} for ${entry.allies ? "its allies" : "the creatures"} within ${entry.radius} feet of it.`), ...ownLowered];
+    const aroundLines = [...(state.plan?.around ?? []).map((entry) => `Then ${saveText(entry.plan)} for ${entry.allies ? "its allies" : "the creatures"} within ${entry.radius} feet of it.`), ...ownLowered, ...(state.step === "then" ? [] : traitLines(state.plan))];
     const notes = open && [...aroundLines, ...(state.plan?.notes ?? [])].length ? `<ul class="aar-notes">${[...aroundLines, ...(state.plan?.notes ?? [])].map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     // (A check to pick — Twisting Twine's Disarm or Trip: a picker.)
     const checkPick = open && canApply && (state.plan?.checkChoices?.length ?? 0) > 1

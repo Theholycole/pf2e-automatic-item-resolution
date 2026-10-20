@@ -672,6 +672,27 @@ test("a critical hit's harder save: Blister Ammunition's \"On a critical hit, in
     assert.equal(await dc("success"), 19);
 });
 
+test("a critical hit's save only its critical success escapes: Rhino Shot's \"knocked prone unless it critically succeeds at its save\" — strike.criticalWorse, Prone on the save card's success row after a critical hit, not after a hit", async () => {
+    const [rhino] = compileActivations(source("Rhino Shot"));
+    assert.deepEqual([rhino.plan.strike.criticalWorse, rhino.plan.strike.notes, rhino.plan.partial], [["prone"], [], undefined]);
+    assert.ok(strikeLines(rhino.plan).includes("After a critical hit, prone on the save's success too (only its critical success escapes)"));
+    const rows = async (outcome) => {
+        const arrows = foundry.giveItem(fighter, { ...source("Rhino Shot"), _id: `rhino-${outcome}` });
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: arrows.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        const before = foundry.posted.length;
+        await attack(outcome, ["item:ranged", `item:ammo:id:${arrows.id}`]);
+        const outcomes = foundry.posted.slice(before)[0]?.plan.resolution.outcomes;
+        return ["criticalSuccess", "success", "failure"].map((degree) => outcomes[degree].effects.map((effect) => effect.slug));
+    };
+    assert.deepEqual(await rows("criticalSuccess"), [[], ["prone"], ["prone"]]);
+    assert.deepEqual(await rows("success"), [[], [], ["prone"]]);
+});
+
 test("a Strike's splash (Drake Rifle's Drake Shot, \"1 cold splash damage for this Strike\"): the bomb card's splash list — on a failure the target and the creatures within 5 feet, on a hit those creatures alone (PF2e's damage roll gives the target its own); Apply deals it", async () => {
     const archer = foundry.makeActor({ id: "strike-archer", name: "Archer", owners: ["player"] });
     const mark = foundry.makeActor({ id: "strike-mark", name: "Mark", hp: 30, max: 30 });

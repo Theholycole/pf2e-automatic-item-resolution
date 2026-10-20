@@ -16,6 +16,13 @@ const SPELL_ID = "pf2e-automatic-resolution";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
+// The save with the failure's conditions of those slugs on its success row too (Rhino Shot's critical hit). Pure.
+export function criticalWorse(save, slugs) {
+    const outcomes = save.resolution.outcomes;
+    const taken = (outcomes.failure?.effects ?? []).filter((effect) => slugs.includes(effect.slug));
+    return { ...save, resolution: { ...save.resolution, outcomes: { ...outcomes, success: { ...outcomes.success, effects: [...(outcomes.success?.effects ?? []), ...taken] } } } };
+}
+
 export async function postStrikeCard({ message, plan, used, actor, token }) {
     const state = createStrikeCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: entryOf(token, actor) });
     return ChatMessage.create({ content: strikeCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
@@ -110,10 +117,12 @@ export async function strikeWithRider(message) {
     // (A critical hit's harder save, Blister Ammunition's: its DC then.)
     const plain = rider.plan.strike?.save;
     const harder = plain && rider.plan.strike.criticalDC && context.outcome === "criticalSuccess" ? { ...plain, resolution: { ...plain.resolution, check: { ...plain.resolution.check, against: { ...plain.resolution.check.against, value: rider.plan.strike.criticalDC } } } } : plain;
+    // (After a critical hit only its critical success escapes, Rhino Shot's: the failure's conditions on the success row too.)
+    const worse = harder && (rider.plan.strike.criticalWorse ?? []).length && context.outcome === "criticalSuccess" ? criticalWorse(harder, rider.plan.strike.criticalWorse) : harder;
     // (The save only for a creature its damage harms, Gravebane Ammunition's void healing: no card for another.)
     const fits = !rider.plan.strike?.saveOnly || voidHealed(targetToken.actor);
-    if (harder && !fits) lines.push(`${target.name} hasn't void healing: no save.`);
-    const save = fits ? harder : null;
+    if (worse && !fits) lines.push(`${target.name} hasn't void healing: no save.`);
+    const save = fits ? worse : null;
     if (save) {
         const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);

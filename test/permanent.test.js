@@ -622,7 +622,7 @@ test("its user's bonus with a creature named stays on the item card (Spectacles 
     assert.equal(routeOf(compileActivations(item("North Wind's Night Verse"), { spellEffects })[0].plan), "save");
 });
 
-test("an item thrown as a Strike PF2e can't roll: its user's thrown attack against AC, a hit's damage and conditions (Lady's Chalice's 2d6 spirit, Halcyon Heart's net, Rod of Razors' flechettes); its splash, deadly and volley notes", () => {
+test("an item thrown as a Strike PF2e can't roll: its user's thrown attack against AC, a hit's damage and conditions (Lady's Chalice's 2d6 spirit, Halcyon Heart's net, Rod of Razors' flechettes); its splash a note; deadly, volley and range increments read", async () => {
     const [, chalice] = compileActivations(item("Lady's Chalice"), { spellEffects });
     assert.deepEqual([chalice.plan.ownCheck.choose, chalice.plan.resolution.check.against.statistic, chalice.plan.resolution.sharedDamage.components[0].formula, chalice.plan.resolution.sharedDamage.components[0].type, chalice.plan.targeting.range], [["thrown"], "ac", "2d6", "spirit", "5 feet"]);
     assert.match(chalice.plan.notes.join(" "), /Its splash: 2 spirit splash damage/);
@@ -630,8 +630,15 @@ test("an item thrown as a Strike PF2e can't roll: its user's thrown attack again
     assert.deepEqual([net.plan.resolution.outcomes.success.effects.map((effect) => effect.slug), net.plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value])], [["off-guard"], ["off-guard", "immobilized"], [["all-speeds", -10]]]);
     assert.match(net.plan.notes.join(" "), /The Escape DC is 44, and the net has a counteract rank of 9 and a counteract modifier of \+38\./);
     const [razors] = compileActivations(item("Rod of Razors"), { spellEffects });
-    assert.deepEqual([razors.plan.resolution.sharedDamage.components[0].formula, razors.plan.targeting.range, razors.plan.resolution.outcomes.criticalSuccess.damage.multiplier], ["3d8", "100 feet", 2]);
-    assert.ok(razors.plan.notes.some((note) => /^Deadly d10/.test(note)) && razors.plan.notes.some((note) => /^Volley 30 feet/.test(note)));
+    // (Its deadly d10 a component of the critical hit's alone, not doubled; its adamantine in the damage's flavor; volley and its range increment
+    // the attack's penalty for distance.)
+    assert.deepEqual([razors.plan.resolution.sharedDamage.components.map((component) => component.formula), razors.plan.targeting.range, razors.plan.resolution.outcomes.criticalSuccess.damage, razors.plan.resolution.outcomes.success.damage.sourceComponentIds, razors.plan.ownCheck, razors.plan.partial], [["3d8[piercing,adamantine]", "1d10[piercing,adamantine]"], "100 feet", { mode: "shared", multiplier: 2, sourceComponentIds: ["0", "deadly"], componentMultipliers: { deadly: 1 } }, ["0"], { kind: "attack", modifier: null, choose: ["thrown"], increment: 100, volley: 30, deadly: "d10" }, undefined]);
+    const { distancePenalty, withAttackChoice } = await import("../src/live/poison-card.js");
+    assert.deepEqual([distancePenalty(razors.plan.ownCheck, 25).penalty, distancePenalty(razors.plan.ownCheck, 60).penalty, distancePenalty(razors.plan.ownCheck, 150).penalty, Boolean(distancePenalty(razors.plan.ownCheck, 650).out)], [2, 0, 2, true]);
+    assert.equal(withAttackChoice(razors.plan, { attackChoices: [{ kind: "thrown", modifier: 9 }], attackPenalty: 2 }).resolution.check.modifier, 7);
+    // (Sack of Rotten Fruit's 20-foot range increment: –4 at 50 feet.)
+    const sack = (await import("../src/compiler/index.js")).compileItem(item("Sack of Rotten Fruit"));
+    assert.deepEqual([sack.ownCheck.increment, distancePenalty(sack.ownCheck, 50).penalty, sack.partial], [20, 4, undefined]);
 });
 
 test("a save's degrees in sentences (Gearblade: DC 36 Reflex, 3d12 bludgeoning on a failure, 6d12 on a critical failure, the limb a line for the GM); damage as many as the weapon's dice (Scizore of the Crab); a plain skill check against the triggering creature's DC (Shadowmist Cape's Stealth, Storyteller's Opus's Deception)", () => {
