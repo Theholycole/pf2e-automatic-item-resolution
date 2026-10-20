@@ -510,3 +510,8 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - a spell the item grants as another activation (Roaring Potion's Bullhorn);
   - an Effect that is a result's or another creature's (Crackling Bubble Gum's failure, Sinuous Recorder's Speed penalty, Bewitching Bloom's ally);
   - a save at a creature's turn, which is a zone's (Arctic Worm Chitin Shield, Mamlambo Scale).
+- **Rows read from plain words** (`src/compiler/guards.js`, 2026-10-20). A snare's save rows now go through the same guards as an item's.
+  - A row's damage in plain words is that row's damage. Fang Snare's "takes 1 piercing damage and 2d8 poison damage"; Thunder Snare's "As success, and the target also takes 1 sonic damage", which also gets the success's Deafened.
+  - "Until the end of its next turn" in an item's row counts on the creature's own turns, not its user's (Thunder, Trip and Rending Snare, Heart of Sarnax, Wintershot).
+  - A time in a sentence goes to the conditions named before it, or to all of them when it opens the sentence. Stunned with a value is never timed: Stunning Snare's "Off-Guard for 1 round and Stunned 1", Pyronite, Titan's Grasp. Liar's Bangle's "For the next minute, it is Stupefied 1" keeps its minute.
+  - An item that comes back by itself after a while is a card line, not GM work: Eternal Eruption's "reforms itself in a container on your person".

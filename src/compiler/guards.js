@@ -53,7 +53,56 @@ export function guardValues(plan) {
 const TARGET_THEN_OTHERS = /\b(?:Your|The) target takes\b[^.]*\.\s*(?:All|Each|Any)\b[^.]*\b(?:allies|other creatures|creatures)\b[^.]*\b(?:save|saving throw)\b/i;
 export function guardText(plan, text) {
     if (plan?.resolution?.kind === "save" && plan.resolution.check?.roll === "save" && TARGET_THEN_OTHERS.test(String(text ?? ""))) return null;
-    return nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text);
+    return itsNextTurn(lineDamage(nextActionOnly(criticalTime(conditionFloors(sentenceTimes(asRowCopies(conditionalOnly(delayedConditions(whoTargeted(manualPenalties(untilRemoved(droppedRows(asFailureBut(lastingConditions(saveExtras(alreadyGated(equalTempHP(traitGated(plan, text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text), text)), text);
+}
+
+// "Until the end of its next turn" in an item's row is the creature's own turn — Thunder Snare's "The target is deafened until the end of its
+// next turn" — where the ability compiler, reading as for a monster ("its" the monster), counts it on its user's turns: the creature's.
+const ITS_TURN = /\b(?:is|are|becomes?) [^.]*?\buntil the (end|start) of its next turn\b/i;
+function itsNextTurn(plan, text) {
+    if (plan?.resolution?.kind !== "save" || !plan.resolution.outcomes) return plan;
+    const words = degreeWords(text);
+    // (A row "As success, …" says it in the words of the row it copies: Thunder Snare's failure.)
+    const own = (degree) => String(words[degree] ?? "");
+    const wordsOf = (degree) => (ITS_TURN.test(own(degree)) ? own(degree) : own(DEGREE_KEYS[/^As (success|failure)\b/i.exec(own(degree))?.[1]?.replace(/^\w/, (letter) => letter.toUpperCase())] ?? ""));
+    return eachRow(plan, (row, degree) => {
+        const said = ITS_TURN.exec(wordsOf(degree));
+        if (!said || /\byour next turn\b/i.test(said[0])) return row;
+        const expiry = said[1].toLowerCase() === "end" ? "turn-end" : "turn-start";
+        const own = (effect) => effect?.kind === "condition" && effect.duration?.anchor === "source-turn" && effect.duration.expiry === expiry && Number(effect.duration.value) === 1 && new RegExp(String.raw`\b${effect.slug}\b`, "i").test(said[0]);
+        if (!(row?.effects ?? []).some(own)) return row;
+        return { ...row, effects: row.effects.map((effect) => (own(effect) ? { ...effect, duration: { ...effect.duration, anchor: "target-turn" } } : effect)) };
+    });
+}
+
+// Damage a row's GM line says in plain words — Fang Snare's "Failure The target takes 1 piercing damage and 2d8 poison damage", Thunder
+// Snare's "As success, and the target also takes 1 sonic damage" — which the ability compiler leaves by hand: that row's damage (the earlier
+// row's effects too), the line gone.
+const AMOUNT = String.raw`(\d+(?:d\d+)?)( persistent)? ([a-z]+) damage`;
+const ONLY_DAMAGE = new RegExp(String.raw`^\{target\} \([^)]*\): The (?:target|creature) takes ${AMOUNT}((?:,? and ${AMOUNT.replace(/\((?!\?)/g, "(?:")})*)\.$`);
+const AS_ROW_AND = new RegExp(String.raw`^\{target\} \([^)]*\): As (success|failure), and the (?:target|creature) also takes ${AMOUNT}\.(?: Craft Requirements [^(]*?)?(?: \((?:success|failure): [^)]*\))?$`);
+const formulaOf = (amount, persistent, type) => ({ formula: `${amount}[${persistent ? "persistent," : ""}${type.toLowerCase()}]` });
+function lineDamage(plan) {
+    if (plan?.resolution?.kind !== "save" || !plan.resolution.outcomes) return plan;
+    const outcomes = plan.resolution.outcomes;
+    return eachRow(plan, (row) => {
+        if (!row?.manualInstructions?.length || (row.damage?.mode && row.damage.mode !== "none")) return row;
+        for (const [index, line] of row.manualInstructions.entries()) {
+            const only = ONLY_DAMAGE.exec(line);
+            const also = only ? null : AS_ROW_AND.exec(line);
+            if (!only && !also) continue;
+            const formulas = only
+                ? [formulaOf(only[1], only[2], only[3]), ...[...String(only[4] ?? "").matchAll(new RegExp(AMOUNT, "g"))].map((match) => formulaOf(match[1], match[2], match[3]))]
+                : [formulaOf(also[2], also[3], also[4])];
+            const earlier = also ? outcomes[also[1] === "success" ? "success" : "failure"] : null;
+            const lines = row.manualInstructions.filter((_, other) => other !== index);
+            const { manualInstructions, ...rest } = row;
+            // (The earlier row's effects it doesn't have already: another guard may have copied them, src/compiler/guards.js asRowCopies.)
+            const copied = (earlier?.effects ?? []).filter((effect) => !(row.effects ?? []).some((own) => own.kind === effect.kind && own.slug === effect.slug)).map((effect) => ({ ...effect }));
+            return { ...rest, ...(lines.length ? { manualInstructions: lines } : {}), ...(copied.length ? { effects: [...(row.effects ?? []), ...copied] } : {}), damage: { mode: "formulas", formulas, rollScope: "outcome" } };
+        }
+        return row;
+    });
 }
 
 // A condition for its next action only — Tusk and Fang Chain's "Success The creature is Confused on its next action." — which the
@@ -162,10 +211,14 @@ function sentenceTimes(plan, text) {
         const sentences = String(words[degree] ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/);
         let changed = false;
         const effects = (row?.effects ?? []).map((effect) => {
-            if (effect?.kind !== "condition" || effect.duration || ["drained", "doomed", "wounded", "prone", "dying", "unconscious"].includes(effect.slug)) return effect;
-            const sentence = sentences.find((other) => new RegExp(String.raw`\b${effect.slug}\b`, "i").test(other) && !/\buntil\b/i.test(other));
+            // (Stunned with a value is spent by actions, never timed: Stunning Snare's "Off-Guard for 1 round and Stunned 1".)
+            if (effect?.kind !== "condition" || effect.duration || ["drained", "doomed", "wounded", "prone", "dying", "unconscious"].includes(effect.slug) || (effect.slug === "stunned" && Number.isFinite(Number(effect.value)) && effect.value !== null)) return effect;
+            const named = new RegExp(String.raw`\b${effect.slug}\b`, "i");
+            const sentence = sentences.find((other) => named.test(other) && !/\buntil\b/i.test(other));
             const time = sentence ? SENTENCE_TIME.exec(sentence) : null;
-            if (!time) return effect;
+            // (The time is for the conditions named before it: "Off-Guard for 1 round and Stunned 1" times only the off-guard; one that opens
+            // its sentence is for all of it, Liar's Bangle's "For the next minute, it is Stupefied 1".)
+            if (!time || (time.index > 0 && sentence.search(named) > time.index)) return effect;
             changed = true;
             const count = /^\d+/.test(time[1] ?? "") ? Number.parseInt(time[1], 10) : 1;
             return { ...effect, duration: { mode: "fixed", value: count, unit: TIME_UNITS[time[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } };

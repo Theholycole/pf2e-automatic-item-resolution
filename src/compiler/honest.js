@@ -12,7 +12,9 @@ const NO_OP = /^(?:\{target\}(?: \([^)]*\))?:\s*)?(?:The (?:target|creature|anim
 // "The animal is unaffected. It doesn't necessarily become aware of the pheromones, …", "The potion does not affect you".)
 const UNAFFECTED_AWARE = /^(?:\{target\}(?: \([^)]*\))?:\s*)?(?:The (?:target|creature|animal|foe|undead)(?: creature)? is unaffected(?:\.(?=\s+It doesn't necessarily become aware\b)|\b[^.]*?\b(?:realizes?|aware|thinks|suspicious|unaware)\b[^.]*\.)(?:\s+It doesn't necessarily become aware\b.*)?|The (?:potion|elixir|oil) does not affect you\.)\s*$/i;
 // (Lines the card's own results already are: "takes half damage and no other effects", Hauling's direction line, an item's own recharge.)
-const CARD_LINE = /\btakes half damage and no other effects\b|^The direction is its user's choice: the card moves it\b|\breappears on the [\w ]+? after 24 hours\.$/i;
+// (An item that comes back by itself after a while — "reappears on the … after 24 hours", Eternal Eruption's "After 2d4 hours, the eternal
+// eruption reforms itself in a container on your person" — is the card's line: nothing for the GM to do.)
+const CARD_LINE = /\btakes half damage and no other effects\b|^The direction is its user's choice: the card moves it\b|\breappears on the [\w ]+? after 24 hours\.$|\breforms itself in a container on your person\b/i;
 const BEHAVIOUR = /\bcan't use (?:reactions|hostile actions)\b|\bmust (?:spend|use) (?:at least )?(?:one of )?its (?:first )?actions?\b|\bcan't treat any creature as (?:its|an) ally\b|\bdoesn't act against you\b|\bignores other creatures\b/i;
 const DEGREES = ["criticalSuccess", "success", "failure", "criticalFailure"];
 
@@ -186,5 +188,8 @@ export function withUntracedRules(plan, text) {
         return tokens.length > 0 && !tokens.some((token) => (token.dice ? trace.dice.has(token.dice.toLowerCase()) : token.number !== undefined ? trace.numbers.has(token.number) : trace.json.includes(token.word)));
     });
     if (!untraced.length) return plan;
+    // (A card line among them — Eternal Eruption's coming back by itself — is said on the card, the plan not partial for it.)
+    const rules = untraced.filter((sentence) => !CARD_LINE.test(sentence));
+    if (!rules.length) return { ...plan, notes: [...(plan.notes ?? []), ...untraced] };
     return { ...plan, notes: [...(plan.notes ?? []), ...untraced], partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };
 }

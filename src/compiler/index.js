@@ -240,6 +240,13 @@ function chosenParagraphsPlan(given, item, base, options) {
     return { ...base, builtin: "ways", automation: { level: intro.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true, item: itemInfo(item), ...(intro.length ? { notes: intro.map((sentence) => `${sentence.trim()} Its area is there: target the creatures in it.`), partial: true } : {}) };
 }
 
+// A zone with its saves' plans guarded as an item's plan is (a snare's).
+function guardedSaves(zonePlan, text) {
+    const saves = zonePlan?.zone?.saves;
+    if (!saves?.length) return zonePlan;
+    return { ...zonePlan, zone: { ...zonePlan.zone, saves: saves.map((save) => (save.plan ? { ...save, plan: guardText(save.plan, text) ?? save.plan } : save)) } };
+}
+
 function compileOne(given, options = {}) {
     if (!handlesItem(given, options)) return null;
     // (The generic spellgun: the plan of the spell loaded into it, src/compiler/generic-spellgun.js; none until one is.)
@@ -281,7 +288,8 @@ function compileOne(given, options = {}) {
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     const snare = snareZone(item, read);
     // (Its condition for as long as a persistent damage lasts: Freezing Embrace Snare's clumsy.)
-    if (snare) return withWhilePersistent({ ...snare, item: itemInfo(item) }, plainText(item?.system?.description?.value));
+    // (Its save's rows guarded as an item's are, src/compiler/guards.js: Fang Snare's damage in plain words.)
+    if (snare) return withWhilePersistent({ ...guardedSaves(snare, plainText(item?.system?.description?.value)), item: itemInfo(item) }, plainText(item?.system?.description?.value));
     // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Noisome Garum's stench.)
     const aura = auraZonePlan(html, base, item.name);
     if (aura) return { ...aura, item: itemInfo(item) };

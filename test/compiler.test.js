@@ -1155,6 +1155,22 @@ test("a new save at its turns (src/compiler/save-ends.js, the ability's duration
     assert.deepEqual([broken.noteEffects[0].label, broken.noteEffects[0].saveEnds, broken.manualInstructions], ["Can't Strike with its mouth", { save: "fortitude", dc: null, mode: "end" }, ["{target} (critical failure): You break the target's jaw. As failure."]]);
 });
 
+test("rows read from plain words (guards.js), a snare's too: Fang Snare's 1 piercing and 2d8 poison damage, Thunder Snare's \"As success, and the target also takes 1 sonic damage\" with the success's deafened, on the creature's own turns; a time only for the conditions before it (Stunning Snare's and Pyronite's Stunned 1 untimed) unless it opens its sentence (Liar's Bangle); Eternal Eruption's coming back by itself a card line, not partial", () => {
+    const save = (name) => compileItem(item(name)).zone.saves[0].plan.resolution.outcomes;
+    const fang = save("Fang Snare");
+    assert.deepEqual([fang.failure.damage.formulas, fang.criticalFailure.damage.formulas, fang.failure.manualInstructions], [[{ formula: "1[piercing]" }, { formula: "2d8[poison]" }], [{ formula: "2[piercing]" }, { formula: "4d8[poison]" }], undefined]);
+    const thunder = save("Thunder Snare");
+    assert.deepEqual([thunder.failure.damage.formulas, thunder.failure.effects.map((effect) => [effect.slug, effect.duration.anchor]), thunder.success.effects[0].duration.anchor], [[{ formula: "1[sonic]" }], [["deafened", "target-turn"]], "target-turn"]);
+    const stunning = save("Stunning Snare");
+    assert.deepEqual(["success", "failure"].map((degree) => stunning[degree].effects.find((effect) => effect.slug === "stunned").duration), [null, null]);
+    assert.equal(stunning.success.effects.find((effect) => effect.slug === "off-guard").duration.value, 1);
+    assert.equal(compileItem(item("Pyronite")).resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "stunned").duration, null);
+    const [bangle] = compileActivations(item("Liar's Bangle"));
+    assert.deepEqual(bangle.plan.resolution.outcomes.failure.effects[0].duration?.unit, "minutes");
+    const [eruption] = compileActivations(item("Eternal Eruption"));
+    assert.deepEqual([eruption.plan.partial, (eruption.plan.notes ?? []).some((note) => /\breforms itself\b/.test(note))], [undefined, true]);
+});
+
 test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Points and removes the Fatigued condition\" (all of it, beside the healing); not \"dazzled until it removes the sickened condition\"", async () => {
     const { readReductions } = await import("../src/compiler/reduce.js");
     assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);
