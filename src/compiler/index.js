@@ -127,6 +127,20 @@ export { asAbility } from "./ability-shape.js";
 // (Each save against its owner's DC as the core's { dc: "owner" }: src/compiler/item-data.js.)
 // (A third-party module's own Effect its text doesn't bear out: the text read instead, when that reads to more than a note,
 // src/compiler/unverified-links.js.)
+// What a save at the creatures near something burning leaves unread, Devil's Breath Incense's: its burning time, the creatures who come near
+// later, its immunity after the save and its other use (an adjacent creature inhaling it) — notes, the plan partial. (It was counted resolved
+// as one save; found 2026-10-20.)
+const BURNING = /\bA creature within (\d+) feet of a stick of burning [\w' -]+? must succeed\b/i;
+function withBurningLeft(plan, text) {
+    const plain = String(text ?? "");
+    if (!plan || plan.resolution?.kind !== "save" || !BURNING.test(plain)) return plan;
+    const sentences = plain.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
+    const left = sentences.filter((sentence) => /\bburns for \d+\b|\btemporarily immune\b|\blean over the stick\b|\bcounteract\b|\bexhales?\b/i.test(sentence) && !/^This \d+-inch/i.test(sentence));
+    if (!left.length) return plan;
+    const readable = (sentence) => sentence.replace(/@Check\[(\w+)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?/gi, (all, statistic, dc) => `DC ${dc} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)}`);
+    return { ...plan, notes: [...(plan.notes ?? []), ...left.map((sentence) => readable(sentence))], partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };
+}
+
 export function compileItem(given, options = {}) {
     const unlinked = withoutUnverifiedLinks(given, options);
     const instead = unlinked ? overUnverified(compileOne(unlinked.item, options), unlinked.dropped, given?.system?.description?.value) : null;
@@ -135,7 +149,7 @@ export function compileItem(given, options = {}) {
     const text = plainText(given?.system?.description?.value);
     // (Not its opening flavor among what a partial plan leaves the GM, src/compiler/flavor.js.)
     // (And a use after the first, a candy's "Secondary Effect": the ways card's second button, src/compiler/secondary.js.)
-    return withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options));
+    return withBurningLeft(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

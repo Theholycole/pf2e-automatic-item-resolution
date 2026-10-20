@@ -1061,3 +1061,9 @@ test("Admonishing Band's Warning Shot: PF2e's Demoralize with the item, its rang
     assert.deepEqual([plan.builtin, plan.action.slug, plan.action.targeted], ["item-action", "demoralize", true]);
     assert.match(plan.action.after, /^The foe can be as far as the firearm's maximum range, and the check takes no penalty for a foe that doesn't share a language with you\. If you already have the Warning Shot feat\b/);
 });
+
+test("Devil's Breath Incense isn't one save at the drinker: its burning time, the creatures who come near later, its immunity after the save and its other use (inhaling it) are notes, the plan partial", () => {
+    const incense = compileItem(item("Devil's Breath Incense"));
+    assert.equal(incense.partial, true);
+    assert.ok(incense.notes.some((note) => /burns for 10 minutes/.test(note)) && incense.notes.some((note) => /lean over the stick/.test(note)) && incense.notes.some((note) => /temporarily immune to the incense for 1 hour/.test(note)), incense.notes.join(" / "));
+});
