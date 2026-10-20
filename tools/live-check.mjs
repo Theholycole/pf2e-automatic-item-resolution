@@ -3617,6 +3617,54 @@ export const cases = {
         return { duration };
     },
 
+    // Copper Penny: its user prone stands up, and has PF2e's Immunity to prone to the end of the turn.
+    async copperPenny(scene) {
+        const { actor: user } = await creature(scene, "Penny Holder", { type: "character", x: 7, y: 7 });
+        await user.increaseCondition("prone");
+        await until(() => user.hasCondition("prone"), "prone", { timeout: 5000 });
+        const penny = await give(user, "Copper Penny");
+        const since = Date.now();
+        await penny.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the penny's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const immune = () => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "Immunity" && [].concat(rule.type).includes("prone")));
+        await until(() => !user.hasCondition("prone") && immune(), `standing, immune to prone (${user.conditions.map((condition) => condition.slug).join(", ")})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Blindpepper Bolt: after PF2e's critical hit, its DC 17 Fortitude save card carries -2 circumstance (the core's save bonus).
+    async blindpepperCritical(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Pepper Archer", { type: "character", x: 8, y: 8 });
+        const { token: foeToken } = await creature(scene, "Pepper Target", { x: 9, y: 8, ac: -20, alliance: "opposition" });
+        // (A shortbow, the bolts as its arrows: a crossbow wants reloading first, which isn't what's checked here.)
+        const bow = await give(archer, "Shortbow");
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const outcomes = [];
+        for (let attempt = 0; attempt < 4; attempt++) {
+            const bolts = await give(archer, "Blindpepper Bolt");
+            await bolts.update({ "system.baseItem": "arrows" });
+            await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": bolts.id });
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(bolts.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            since = Date.now();
+            const { attack } = await strike(archer, bow);
+            outcomes.push(attack.flags.pf2e.context.outcome);
+            const save = await messageAfter(since, abilitySaveCard, { what: "the bolt's save card" });
+            const bonus = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check.bonus ?? null;
+            if (outcomes.at(-1) !== "criticalSuccess") {
+                assert(!bonus, `no penalty after a hit (${JSON.stringify(bonus)})`);
+                continue;
+            }
+            assert(bonus?.value === -2 && bonus.type === "circumstance", `-2 circumstance after a critical hit (${JSON.stringify(bonus)})`);
+            return { outcomes, bonus };
+        }
+        throw new Error(`no critical hit in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {
