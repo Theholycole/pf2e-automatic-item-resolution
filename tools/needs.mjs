@@ -19,7 +19,7 @@ import { isBomb } from "../src/compiler/bombs.js";
 import { compileActivations, handlesPermanent } from "../src/compiler/permanent.js";
 import { leftToTheGM } from "../src/compiler/honest.js";
 import { plainText } from "../src/compiler/rows.js";
-import { NEEDS, needsOf } from "./needs-rules.mjs";
+import { NEEDS, needsOf, workOf } from "./needs-rules.mjs";
 
 const withOwner = (item) => ({ ...item, ownerLevel: Number(item?.system?.level?.value) || 1, ownerAbilities: { str: 4, dex: 3, con: 2, int: 1, wis: 1, cha: 1 }, ownerFeats: [] });
 
@@ -76,7 +76,13 @@ function leftovers(plan) {
 // Every unfinished entry of a pack's documents → [{ name, kind, activation?, result, needs }].
 function entriesOf(docs, base = {}) {
     const entries = [];
-    const add = (entry) => entries.push({ ...base, ...entry, needs: needsOf(entry) });
+    // (Its needs, the main one first, and the words that showed its main need: the work within it, tools/needs-rules.mjs workOf.)
+    const add = (entry) => {
+        const full = { ...base, ...entry };
+        const needs = needsOf(full);
+        const work = workOf(full, needs[0]);
+        entries.push({ ...full, needs, work: work?.key ?? null, phrase: work?.phrase ?? null });
+    };
     for (const item of docs) {
         try {
             if (isBomb(item)) continue;
@@ -139,7 +145,7 @@ for (const module of listing(modulesDirectory)) {
 
 // --- Reports ---
 
-const brief = (entry) => ({ name: entry.name, kind: entry.kind, ...(entry.activation ? { activation: entry.activation } : {}), ...(entry.module ? { module: entry.module } : {}), result: entry.result, main: entry.needs[0], needs: entry.needs });
+const brief = (entry) => ({ name: entry.name, kind: entry.kind, ...(entry.activation ? { activation: entry.activation } : {}), ...(entry.module ? { module: entry.module } : {}), result: entry.result, main: entry.needs[0], ...(entry.phrase ? { work: entry.phrase } : {}), needs: entry.needs });
 const tally = (list, key) => list.reduce((counts, entry) => ({ ...counts, [key(entry)]: (counts[key(entry)] ?? 0) + 1 }), {});
 const NO_RULES = { id: "no-rules", title: "Nothing to automate", needs: "No rule a card could play: food, refills, ingredients, flavor.", where: "none" };
 const ALL = [...NEEDS, NO_RULES];
@@ -169,6 +175,33 @@ function whoCan(list) {
     ];
 }
 
+// The work within each main need: its entries grouped by the words that showed it, the most-used wording naming the group; "only": the
+// entries this need alone keeps from being done (done once its work is).
+function workGroups(list) {
+    const groups = new Map();
+    for (const entry of list) {
+        const key = `${entry.needs[0]}|${entry.work ?? ""}`;
+        const group = groups.get(key) ?? { need: entry.needs[0], work: entry.work, phrases: new Map(), entries: [], only: 0 };
+        group.entries.push(entry);
+        if (entry.needs.length === 1 && entry.needs[0] !== "no-rules") group.only++;
+        if (entry.phrase) group.phrases.set(entry.phrase, (group.phrases.get(entry.phrase) ?? 0) + 1);
+        groups.set(key, group);
+    }
+    for (const group of groups.values()) group.phrase = [...group.phrases].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    return [...groups.values()].sort((a, b) => b.entries.length - a.entries.length || b.only - a.only);
+}
+const groups = workGroups(pf2e);
+const needOf = (id) => ALL.find((need) => need.id === id);
+const onlyOf = (list) => list.filter((entry) => entry.needs.length === 1 && entry.needs[0] !== "no-rules").length;
+
+// Besides the items' own text: work this index can't read from the items, kept here by hand (dated).
+const BESIDES = [
+    "**The simulator** plays the items' plans through the core. Its code (PF2e Combat Simulator 0.18.0) reads none of these newer plan fields: `placed` (a creature moved to a space its user picks), `alsoRetaliation`, the around saves' `moveFrom`, `ifTarget` (results by creature kind), `userEffects`, `item.regain`, `item.placedLight`, `item.move`. That work is the auto-combat session's, asked when it's wanted. *(2026-10-25)*",
+    "**The ability module's minimum** in module.json is 0.9.0; ability 0.9.2 is needed for pushes measured from the creature a Strike hits and for creatures moved to a space their user picks. Without it, those fall back to the GM's notes. Raising the minimum is your call at a release. *(2026-10-25)*",
+    "**The spell module's items** (scrolls, wands, staves, spellhearts, and the casts and item spellshapes it claims) are its own work, not in this index: docs/census.md counts them.",
+    "**Live checks** (`tools/live-check.mjs`, 350 cases, all passing on 2026-10-25): the pieces built last without a case of their own are Emergency Escape Shield's teleport, Panacea Fruit's counteract sentence and Transposition Ammunition (Greater)'s creatures along (a note). *(2026-10-25)*"
+];
+
 const lines = [
     "# What the items still need",
     "",
@@ -184,6 +217,34 @@ const lines = [
     "| Need | Main need of (PF2e) | Any need of (PF2e) | Modules' items (main) | Where the work lies |",
     "|---|---:|---:|---:|---|",
     ...ALL.map((need) => `| [${need.title}](#${need.id}) | ${pf2eTotals.main[need.id] ?? 0} | ${pf2eTotals.any[need.id] ?? 0} | ${thirdTotals.main[need.id] ?? 0} | ${need.where} |`),
+    "",
+    "## The worklist",
+    "",
+    "What to build, biggest first: each need with the PF2e entries whose main need it is, how many it alone keeps from being done (*done by it alone*: no other need), and its biggest groups by the words that show it (each need's section has them all). The modules' items are counted apart.",
+    "",
+    "| Need | Entries | Done by it alone | Modules' items | Where | Its biggest groups |",
+    "|---|---:|---:|---:|---|---|",
+    ...ALL.filter((need) => need.id !== "no-rules" && pf2eTotals.main[need.id]).sort((a, b) => (pf2eTotals.main[b.id] ?? 0) - (pf2eTotals.main[a.id] ?? 0)).map((need) => {
+        const own = groups.filter((group) => group.need === need.id && group.entries.length >= 2).slice(0, 4).map((group) => `${group.phrase ? `"${group.phrase}"` : "its own text"} ${group.entries.length}`);
+        return `| [${need.title}](#${need.id}) | ${pf2eTotals.main[need.id] ?? 0} | ${onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id))} | ${thirdTotals.main[need.id] ?? 0} | ${need.where} | ${own.join(", ") || "—"} |`;
+    }),
+    "",
+    `Done by one need alone, all needs together: ${onlyOf(pf2e)} of the ${pf2e.length} PF2e entries; the rest need two or more.`,
+    "",
+    "## Your decisions",
+    "",
+    "The needs whose work starts with a ruling of yours: what a card should do when the item's text gives no game numbers to apply. The spells' rules already decided some of these (information whispered to the GM and the caster, disbelief played as control, out-of-combat consumables left as they are); applying them to items would count those entries done.",
+    "",
+    "| Need | PF2e entries (main) | Done by it alone | The question |",
+    "|---|---:|---:|---|",
+    ...ALL.filter((need) => need.where.includes("your decision")).map((need) => `| [${need.title}](#${need.id}) | ${pf2eTotals.main[need.id] ?? 0} | ${onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id))} | ${need.question ?? need.needs} |`),
+    "",
+    `Answered, these would finish up to ${ALL.filter((need) => need.where.includes("your decision")).reduce((sum, need) => sum + onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id)), 0)} PF2e entries outright (the ones with no other need); the rest also need building.`,
+    "",
+    "## Besides the items",
+    "",
+    ...BESIDES.map((line) => `- ${line}`),
+    ...(pf2e.some((entry) => entry.result === "gaps" || entry.result === "error") ? ["", `Entries the core can't resolve (gaps) or that failed to compile: ${pf2e.filter((entry) => ["gaps", "error"].includes(entry.result)).map(label).join(", ")}.`] : ["", "No entry has core gaps or a compile error."]),
     "",
     "## Where the work lies",
     "",
@@ -203,20 +264,27 @@ const lines = [
     "",
     "## By need",
     "",
-    "Each need: what would make it work, then the PF2e entries whose main need it is (the result now, then their other needs).",
+    "Each need: what would make it work, then the PF2e entries whose main need it is, grouped by the words that show it (the result now, then their other needs; *only this need* marks the entries it alone keeps from being done).",
     ""
 ];
 for (const need of ALL) {
     const main = pf2e.filter((entry) => entry.needs[0] === need.id).sort((a, b) => label(a).localeCompare(label(b)));
     lines.push(`<a id="${need.id}"></a>`, `### ${need.title}`, "", `${need.needs} *Where: ${need.where}.*`, "", `${main.length} entries${thirdTotals.main[need.id] ? ` (and ${thirdTotals.main[need.id]} of the modules' items)` : ""}.`, "");
-    for (const kind of ["consumable", "activation"]) {
-        const list = main.filter((entry) => entry.kind === kind);
-        if (!list.length) continue;
-        lines.push(`**${kind === "consumable" ? "Consumables" : "Activations"}**`, "");
-        for (const entry of list) {
-            const others = entry.needs.slice(1).map((id) => ALL.find((candidate) => candidate.id === id)?.title.toLowerCase() ?? id);
-            lines.push(`- ${label(entry)}: ${RESULT_WORD[entry.result] ?? entry.result}${others.length ? `; also ${others.join(", ")}` : ""}`);
-        }
+    const line = (entry, withPhrase = false) => {
+        const others = entry.needs.slice(1).map((id) => ALL.find((candidate) => candidate.id === id)?.title.toLowerCase() ?? id);
+        return `- ${label(entry)}${withPhrase && entry.phrase ? ` ("${entry.phrase}")` : ""}: ${RESULT_WORD[entry.result] ?? entry.result}${others.length ? `; also ${others.join(", ")}` : entry.needs[0] !== "no-rules" ? "; *only this need*" : ""}`;
+    };
+    const own = workGroups(main);
+    const big = own.filter((group) => group.entries.length >= 2);
+    const small = own.filter((group) => group.entries.length < 2).flatMap((group) => group.entries).sort((a, b) => label(a).localeCompare(label(b)));
+    for (const group of big) {
+        lines.push(`**${group.phrase ? `"${group.phrase}"` : "Its own text"}**: ${group.entries.length} (${group.only} only this need)`, "");
+        for (const entry of group.entries.sort((a, b) => label(a).localeCompare(label(b)))) lines.push(line(entry));
+        lines.push("");
+    }
+    if (small.length) {
+        lines.push(`**${big.length ? "Other wordings" : "Its entries"}**: ${small.length} (${onlyOf(small)} only this need)`, "");
+        for (const entry of small) lines.push(line(entry, true));
         lines.push("");
     }
 }

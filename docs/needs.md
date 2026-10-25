@@ -49,6 +49,74 @@ How an item is sorted: the words its card leaves over (its notes, unread sentenc
 | [Out of combat and the environment](#out-of-combat) | 39 | 435 | 5 | your decision |
 | [Nothing to automate](#no-rules) | 37 | 37 | 18 | none |
 
+## The worklist
+
+What to build, biggest first: each need with the PF2e entries whose main need it is, how many it alone keeps from being done (*done by it alone*: no other need), and its biggest groups by the words that show it (each need's section has them all). The modules' items are counted apart.
+
+| Need | Entries | Done by it alone | Modules' items | Where | Its biggest groups |
+|---|---:|---:|---:|---|---|
+| [Objects and the item itself](#objects) | 121 | 62 | 2 | item live play | "objects" 14, "extradimensional" 11, "crumbles" 8, "don" 7 |
+| [Light, darkness, smoke, terrain and walls](#areas) | 120 | 23 | 15 | ability module + item live play | "wall" 21, "radius" 20, "difficult terrain" 19, "cube" 10 |
+| [Changes to a Strike](#strike) | 113 | 15 | 14 | item reader + item live play | "attack roll" 14, "strike" 13, "on a hit" 12, "melee strike" 7 |
+| [Triggers](#triggers) | 97 | 14 | 1 | item live play | "Trigger: you hit a …" 4, "Trigger: the triggering strike …" 3, "Trigger: you gain an …" 3, "Trigger: attempt a counteract …" 3 |
+| [Moving creatures and the user](#moving) | 95 | 13 | 12 | item live play | "teleportation" 31, "high jump" 10, "move" 6, "falls to the ground" 5 |
+| [Sustained, repeating and later effects](#lasting) | 68 | 17 | 7 | item live play | "until you" 13, "sustain" 9, "dismiss" 9, "later" 8 |
+| [Creatures it makes or controls](#creatures) | 57 | 10 | 10 | ability module + item live play | "summon" 8, "conjured" 8, "companion" 7, "spirit of" 5 |
+| [Hidden, undetected, invisible, cover](#visibility) | 57 | 7 | 2 | core + item live play | "hide" 10, "standard cover" 9, "undetected" 7, "you're concealed" 4 |
+| [Afflictions and persistent damage](#afflictions) | 56 | 7 | 4 | ability module + item live play | "poison" 14, "curse" 6, "cursed" 5, "disease" 5 |
+| [Illusions and disbelief](#illusions) | 47 | 2 | 0 | your decision + item live play | "illusion" 17, "illusory" 12, "disguise" 10, "disguised" 5 |
+| [Spells and the user's resources](#spells) | 45 | 24 | 0 | spell module + item live play | "ritual" 12, "stored spell" 7, "cantrip" 6, "mythic point" 5 |
+| [Choices on the card](#choice) | 43 | 7 | 6 | item live play | "of your choice" 17, "choose a" 6, "decide" 5, "choose" 4 |
+| [Out of combat and the environment](#out-of-combat) | 39 | 39 | 5 | your decision | "24 hours" 8, "1 hour" 7, "crafting" 5, "daily preparations" 3 |
+| [Information](#information) | 38 | 17 | 7 | your decision + item live play | "knows" 6, "recall knowledge" 5, "location" 5, "detect" 4 |
+| [Messages, speech and sound](#speech) | 36 | 26 | 1 | your decision | "words" 12, "voice" 8, "sounds" 7, "speak" 4 |
+| [Actions and feats for the user](#actions) | 32 | 10 | 1 | item live play | "grapple" 4, "force open" 3, "shield block" 3, "administer first aid" 3 |
+| [Dying, unconscious and death](#dying) | 31 | 3 | 2 | core + item live play | "dead" 11, "dies" 4, "death" 4, "doomed" 3 |
+| [Plain results the reader doesn't parse yet](#reader) | 29 | 15 | 11 | item reader | "enfeebled" 5, "temporary hit points" 2, "1d6" 2, "fatigued" 2 |
+| [Immunities and resistances by situation](#immunity) | 27 | 2 | 3 | item reader | "immune" 18, "weakness to" 2 |
+| [Several creatures at once](#several) | 26 | 10 | 0 | item live play | "creatures within" 7, "ally" 7, "each creature" 4, "each enemy" 3 |
+| [Speeds](#speeds) | 25 | 1 | 0 | item reader | "speed of 45 feet" 6, "fly speed" 4, "water walk" 3, "hovering" 2 |
+| [Forms and size](#forms) | 24 | 0 | 0 | item reader | "transform into" 6, "polymorph" 5, "takes the shape" 3, "increases in size" 3 |
+| [Senses](#senses) | 23 | 0 | 3 | item reader | "scent" 6, "lifesense" 4, "truesight" 4, "tremorsense" 2 |
+| [Ships and vehicles](#vehicles) | 20 | 4 | 2 | item live play | "boat" 7, "ship" 6, "vehicle" 4, "wagon" 2 |
+| [Bonuses only in some situations](#situational) | 20 | 2 | 1 | item reader | "bonus is only against" 4, "bonus is only to" 3, "bonus to saves against" 2 |
+| [Counteracting and ending effects](#counteract) | 17 | 9 | 0 | item live play | "counteract" 12, "end the effect" 3 |
+| [Minds, attitudes and behaviour](#mind) | 14 | 9 | 2 | your decision | "emotions" 3, "dominate" 2, "attitude" 2, "memory" 2 |
+| [Use limits of its own](#cooldown) | 13 | 3 | 0 | item reader | "can't be activated again" 5, "can be activated again" 3, "can't be used again" 2, "can't activate it again" 2 |
+| [Results for some creatures only](#by-kind) | 8 | 1 | 0 | item reader | "only a living creature" 2 |
+| [Numbers the text doesn't give](#missing-number) | 7 | 0 | 0 | your decision | "unless the gm determines otherwise" 5, "doesn't say how much" 2 |
+| [Fortune and rerolls on a later roll](#fortune) | 7 | 1 | 1 | item reader | "reroll" 3, "roll twice" 2 |
+| [Numbers from another roll](#from-events) | 7 | 3 | 0 | item live play | "hit points equal to the" 2 |
+| [Creatures taken out of play](#removed) | 4 | 0 | 0 | item live play | "shunted" 2, "into the future" 2 |
+| [Damage back at attackers](#retaliation) | 3 | 0 | 0 | item live play | "any creature that touches you" 2 |
+| [A second linked Effect](#linked-effect) | 1 | 1 | 0 | item reader | — |
+
+Done by one need alone, all needs together: 357 of the 1407 PF2e entries; the rest need two or more.
+
+## Your decisions
+
+The needs whose work starts with a ruling of yours: what a card should do when the item's text gives no game numbers to apply. The spells' rules already decided some of these (information whispered to the GM and the caster, disbelief played as control, out-of-combat consumables left as they are); applying them to items would count those entries done.
+
+| Need | PF2e entries (main) | Done by it alone | The question |
+|---|---:|---:|---|
+| [Numbers the text doesn't give](#missing-number) | 7 | 0 | When the text leaves a number to the GM ("unless the GM determines otherwise"), should the card apply the number the text gives by default and say the GM may change it, or stay the GM's? |
+| [Illusions and disbelief](#illusions) | 47 | 2 | Play an item's illusion as the spells' are (disbelief as control: the card's check and who has seen through it), counted done? |
+| [Minds, attitudes and behaviour](#mind) | 14 | 9 | Attitude, truthfulness, memory and compelled behaviour: a note Effect for its time, counted done (as behaviour rules beside a real result are), or the GM's? |
+| [Information](#information) | 38 | 17 | Apply the spells' rule (an information card whispered to the GM and the user) to items, counted done? |
+| [Messages, speech and sound](#speech) | 36 | 26 | Messages, languages, telepathy and sounds: a chat message or note Effect, counted done? |
+| [Out of combat and the environment](#out-of-combat) | 39 | 39 | Out-of-combat consumables stay as they are (your rule): count them done, or keep them on this list? |
+
+Answered, these would finish up to 93 PF2e entries outright (the ones with no other need); the rest also need building.
+
+## Besides the items
+
+- **The simulator** plays the items' plans through the core. Its code (PF2e Combat Simulator 0.18.0) reads none of these newer plan fields: `placed` (a creature moved to a space its user picks), `alsoRetaliation`, the around saves' `moveFrom`, `ifTarget` (results by creature kind), `userEffects`, `item.regain`, `item.placedLight`, `item.move`. That work is the auto-combat session's, asked when it's wanted. *(2026-10-25)*
+- **The ability module's minimum** in module.json is 0.9.0; ability 0.9.2 is needed for pushes measured from the creature a Strike hits and for creatures moved to a space their user picks. Without it, those fall back to the GM's notes. Raising the minimum is your call at a release. *(2026-10-25)*
+- **The spell module's items** (scrolls, wands, staves, spellhearts, and the casts and item spellshapes it claims) are its own work, not in this index: docs/census.md counts them.
+- **Live checks** (`tools/live-check.mjs`, 350 cases, all passing on 2026-10-25): the pieces built last without a case of their own are Emergency Escape Shield's teleport, Panacea Fruit's counteract sentence and Transposition Ammunition (Greater)'s creatures along (a note). *(2026-10-25)*
+
+No entry has core gaps or a compile error.
+
 ## Where the work lies
 
 By the first place each main need's work lies: the item module's reader (src/compiler, new readings), its live play (scripts, cards and hooks), the ability module or the core (asked of their session), the spell module, or a decision of yours.
@@ -77,7 +145,7 @@ By every need an entry has (not only its main one):
 
 ## By need
 
-Each need: what would make it work, then the PF2e entries whose main need it is (the result now, then their other needs).
+Each need: what would make it work, then the PF2e entries whose main need it is, grouped by the words that show it (the result now, then their other needs; *only this need* marks the entries it alone keeps from being done).
 
 <a id="creatures"></a>
 ### Creatures it makes or controls
@@ -86,68 +154,101 @@ A creature on the map: summoned, conjured or animated, a companion's or familiar
 
 57 entries (and 10 of the modules' items).
 
-**Consumables**
+**"summon"**: 8 (3 only this need)
 
-- Bargainer's Instrument: nothing read; also spells and the user's resources, choices on the card, messages, speech and sound, out of combat and the environment
-- Cloning Potion: note only; also spells and the user's resources, immunities and resistances by situation, sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet, messages, speech and sound, out of combat and the environment
-- Cooperative Waffles: nothing read; also sustained, repeating and later effects, out of combat and the environment
-- Cooperative Waffles (Greater): nothing read; also sustained, repeating and later effects, out of combat and the environment
-- Dust of Corpse Animation: note only; also choices on the card, objects and the item itself
-- Dust of Corpse Animation (Greater): note only; also choices on the card, objects and the item itself
-- Familiar Morsel: the GM's; also out of combat and the environment
-- Galvasphere: note only; also choices on the card, objects and the item itself
-- Mourner's Dawnlight Fulu: nothing read; also information
-- Oil of Dynamism: note only; also objects and the item itself
-- Oil of Dynamism (Greater): note only; also objects and the item itself
-- Serpent Oil (Moderate): note only; also objects and the item itself
-- Spiritual Warhorn (Greater): partial
-- Spiritual Warhorn (Lesser): partial
-- Spiritual Warhorn (Major): partial
-- Spiritual Warhorn (Moderate): partial
-- Void Fragment: note only; also speeds, moving creatures and the user, light, darkness, smoke, terrain and walls, numbers from another roll, afflictions and persistent damage, dying, unconscious and death, spells and the user's resources, counteracting and ending effects, immunities and resistances by situation, range, reach and areas made larger, plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, messages, speech and sound, out of combat and the environment
-
-**Activations**
-
-- Alicorn Lance: nothing read; also moving creatures and the user, changes to a strike
-- Barding Saddle (Ready for Battle): nothing read; also moving creatures and the user, objects and the item itself
 - Bleachguard Doll: nothing read; also dying, unconscious and death, spells and the user's resources, objects and the item itself
-- Bound Guardian: nothing read
-- Cavern's Heart: nothing read; also moving creatures and the user, light, darkness, smoke, terrain and walls, sustained, repeating and later effects
-- Collar of Empathy (Empathic Link): nothing read; also sustained, repeating and later effects, objects and the item itself, messages, speech and sound
-- Cordelia's Construct Key: note only; also changes to a strike, out of combat and the environment
-- Cordelia's Greater Construct Key: note only; also changes to a strike, out of combat and the environment
+- Bound Guardian: nothing read; *only this need*
 - Cresset of Grisly Interrogation: note only; also sustained, repeating and later effects, minds, attitudes and behaviour, out of combat and the environment
-- Doctrine of Blissful Eternity: nothing read; also triggers, dying, unconscious and death, spells and the user's resources, plain results the reader doesn't parse yet
-- Fauna Guardian: nothing read
-- Grail of Twisted Desires: nothing read; also choices on the card, plain results the reader doesn't parse yet, information
-- Harrow Spellcards: nothing read; also fortune and rerolls on a later roll, triggers, sustained, repeating and later effects, plain results the reader doesn't parse yet, information, out of combat and the environment
-- Heedless Spurs: partial; also moving creatures and the user, afflictions and persistent damage
+- Fauna Guardian: nothing read; *only this need*
 - Horns of Naraga: the GM's; also actions and feats for the user, sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Hosteling Statuette: nothing read; also objects and the item itself, plain results the reader doesn't parse yet
-- Hosteling Statuette: the GM's
-- Hunter's Dawn: nothing read; also changes to a strike, objects and the item itself, plain results the reader doesn't parse yet
-- Kotodama Bells (Awaken the Soul): note only; also speeds, objects and the item itself, information, messages, speech and sound, out of combat and the environment
-- Motivating Treat Bag (Rustle the Bag): nothing read
-- Motivating Treat Bag (Toss a Treat): nothing read; also triggers, changes to a strike, actions and feats for the user, afflictions and persistent damage, plain results the reader doesn't parse yet
-- Needle of Undeath (Speak with Undead): nothing read
-- Oculus of Abaddon: nothing read; also spells and the user's resources, information
-- Oculus of Abaddon: nothing read; also sustained, repeating and later effects
-- Ouroboros Buckles: partial; also senses, speeds, immunities and resistances by situation
-- Palanquin of Night: the GM's; also creatures taken out of play, use limits of its own, moving creatures and the user, objects and the item itself, out of combat and the environment
+- Needle of Undeath (Speak with Undead): nothing read; *only this need*
 - Sandalwood Fan (Cloud of Leaves): note only; also hidden, undetected, invisible, cover, several creatures at once, information
-- Shadewither Key (Umbral Double): note only; also objects and the item itself
-- Spangled Rider's Suit: nothing read; also moving creatures and the user, triggers
-- Swarmform Collar: note only; also forms and size, dying, unconscious and death, objects and the item itself, plain results the reader doesn't parse yet
+- Viper Arrow: nothing read; also afflictions and persistent damage, sustained, repeating and later effects
+
+**"conjured"**: 8 (1 only this need)
+
+- Hunter's Dawn: nothing read; also changes to a strike, objects and the item itself, plain results the reader doesn't parse yet
 - Testudo Shield (Greater) (Tortoise Form): the GM's; also light, darkness, smoke, terrain and walls, changes to a strike, immunities and resistances by situation, objects and the item itself
 - Testudo Shield (Tortoise Form): the GM's; also light, darkness, smoke, terrain and walls, changes to a strike, immunities and resistances by situation, objects and the item itself
-- The Hollow Star: nothing read
-- Viper Arrow: nothing read; also afflictions and persistent damage, sustained, repeating and later effects
-- Waverider Barding: partial; also speeds, moving creatures and the user
+- The Hollow Star: nothing read; *only this need*
 - Weapon Shot (Greater): nothing read; also changes to a strike
 - Weapon Shot (Lesser): nothing read; also changes to a strike
 - Weapon Shot (Major): nothing read; also changes to a strike
 - Weapon Shot (Moderate): nothing read; also changes to a strike
+
+**"companion"**: 7 (2 only this need)
+
+- Hosteling Statuette: nothing read; also objects and the item itself, plain results the reader doesn't parse yet
+- Hosteling Statuette: the GM's; *only this need*
+- Motivating Treat Bag (Rustle the Bag): nothing read; *only this need*
+- Motivating Treat Bag (Toss a Treat): nothing read; also triggers, changes to a strike, actions and feats for the user, afflictions and persistent damage, plain results the reader doesn't parse yet
+- Swarmform Collar: note only; also forms and size, dying, unconscious and death, objects and the item itself, plain results the reader doesn't parse yet
+- Waverider Barding: partial; also speeds, moving creatures and the user
 - Whistle of Calling: nothing read; also moving creatures and the user
+
+**"spirit of"**: 5 (0 only this need)
+
+- Alicorn Lance: nothing read; also moving creatures and the user, changes to a strike
+- Cavern's Heart: nothing read; also moving creatures and the user, light, darkness, smoke, terrain and walls, sustained, repeating and later effects
+- Cooperative Waffles: nothing read; also sustained, repeating and later effects, out of combat and the environment
+- Cooperative Waffles (Greater): nothing read; also sustained, repeating and later effects, out of combat and the environment
+- Harrow Spellcards: nothing read; also fortune and rerolls on a later roll, triggers, sustained, repeating and later effects, plain results the reader doesn't parse yet, information, out of combat and the environment
+
+**"warriors"**: 4 (4 only this need)
+
+- Spiritual Warhorn (Greater): partial; *only this need*
+- Spiritual Warhorn (Lesser): partial; *only this need*
+- Spiritual Warhorn (Major): partial; *only this need*
+- Spiritual Warhorn (Moderate): partial; *only this need*
+
+**"animated object"**: 4 (0 only this need)
+
+- Cordelia's Construct Key: note only; also changes to a strike, out of combat and the environment
+- Cordelia's Greater Construct Key: note only; also changes to a strike, out of combat and the environment
+- Oil of Dynamism: note only; also objects and the item itself
+- Oil of Dynamism (Greater): note only; also objects and the item itself
+
+**"mount"**: 3 (0 only this need)
+
+- Barding Saddle (Ready for Battle): nothing read; also moving creatures and the user, objects and the item itself
+- Heedless Spurs: partial; also moving creatures and the user, afflictions and persistent damage
+- Spangled Rider's Suit: nothing read; also moving creatures and the user, triggers
+
+**"conjure"**: 3 (0 only this need)
+
+- Bargainer's Instrument: nothing read; also spells and the user's resources, choices on the card, messages, speech and sound, out of combat and the environment
+- Grail of Twisted Desires: nothing read; also choices on the card, plain results the reader doesn't parse yet, information
+- Oculus of Abaddon: nothing read; also spells and the user's resources, information
+
+**"minion"**: 3 (0 only this need)
+
+- Cloning Potion: note only; also spells and the user's resources, immunities and resistances by situation, sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet, messages, speech and sound, out of combat and the environment
+- Doctrine of Blissful Eternity: nothing read; also triggers, dying, unconscious and death, spells and the user's resources, plain results the reader doesn't parse yet
+- Serpent Oil (Moderate): note only; also objects and the item itself
+
+**"familiar"**: 3 (0 only this need)
+
+- Familiar Morsel: the GM's; also out of combat and the environment
+- Mourner's Dawnlight Fulu: nothing read; also information
+- Oculus of Abaddon: nothing read; also sustained, repeating and later effects
+
+**"animate a"**: 2 (0 only this need)
+
+- Dust of Corpse Animation: note only; also choices on the card, objects and the item itself
+- Dust of Corpse Animation (Greater): note only; also choices on the card, objects and the item itself
+
+**"servant"**: 2 (0 only this need)
+
+- Palanquin of Night: the GM's; also creatures taken out of play, use limits of its own, moving creatures and the user, objects and the item itself, out of combat and the environment
+- Void Fragment: note only; also speeds, moving creatures and the user, light, darkness, smoke, terrain and walls, numbers from another roll, afflictions and persistent damage, dying, unconscious and death, spells and the user's resources, counteracting and ending effects, immunities and resistances by situation, range, reach and areas made larger, plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, messages, speech and sound, out of combat and the environment
+
+**Other wordings**: 5 (0 only this need)
+
+- Collar of Empathy (Empathic Link) ("animal companion"): nothing read; also sustained, repeating and later effects, objects and the item itself, messages, speech and sound
+- Galvasphere ("animates a"): note only; also choices on the card, objects and the item itself
+- Kotodama Bells (Awaken the Soul) ("animates the"): note only; also speeds, objects and the item itself, information, messages, speech and sound, out of combat and the environment
+- Ouroboros Buckles ("swarm of"): partial; also senses, speeds, immunities and resistances by situation
+- Shadewither Key (Umbral Double) ("umbral double"): note only; also objects and the item itself
 
 <a id="forms"></a>
 ### Forms and size
@@ -156,35 +257,47 @@ A battle form, polymorph or change of size: PF2e's BattleForm and CreatureSize r
 
 24 entries.
 
-**Consumables**
+**"transform into"**: 6 (0 only this need)
 
+- Bestiary of Metamorphosis (Shifting Form): nothing read; also objects and the item itself
 - Bloodhammer Reserve: nothing read; also fortune and rerolls on a later roll, sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet
 - Bloodhammer Reserve Black Label: nothing read; also sustained, repeating and later effects, choices on the card, plain results the reader doesn't parse yet
 - Bloodhammer Reserve Select: nothing read; also sustained, repeating and later effects, choices on the card, plain results the reader doesn't parse yet
-- Elder Seed: nothing read; also senses, light, darkness, smoke, terrain and walls, numbers from another roll, afflictions and persistent damage, immunities and resistances by situation, plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, messages, speech and sound, out of combat and the environment
-- Euphorium: note only; also spells and the user's resources, choices on the card, out of combat and the environment
+- Fanged: nothing read; also sustained, repeating and later effects, objects and the item itself
+- Rebirth Potion: nothing read; also counteracting and ending effects, plain results the reader doesn't parse yet, out of combat and the environment
+
+**"polymorph"**: 5 (0 only this need)
+
+- Awakened Silver Shot: partial; also changes to a strike, counteracting and ending effects, objects and the item itself, plain results the reader doesn't parse yet
+- Mask of Shifting Monstrosity (Monstrosity Meld): partial; also illusions and disbelief, bonuses only in some situations, out of combat and the environment
+- Philosopher's Extractor (Essence Transmogrification): note only; also senses, immunities and resistances by situation, several creatures at once, minds, attitudes and behaviour, out of combat and the environment
+- Scope of Truth (Reveal All): the GM's; also illusions and disbelief, counteracting and ending effects, objects and the item itself
+- Spectacles of Discernment (Reveal the Truth): the GM's; also illusions and disbelief, counteracting and ending effects, information, messages, speech and sound, out of combat and the environment
+
+**"takes the shape"**: 3 (0 only this need)
+
+- Aquarium Lamp: note only; also light, darkness, smoke, terrain and walls, information, out of combat and the environment
+- Sentry Fulu: note only; also speeds, several creatures at once, information, messages, speech and sound, out of combat and the environment
+- Shifting (Shift Weapon): nothing read; also objects and the item itself
+
+**"increases in size"**: 3 (0 only this need)
+
 - Implosion Dust (Greater): partial; also changes to a strike
 - Implosion Dust (Lesser): partial; also changes to a strike
 - Implosion Dust (Moderate): partial; also changes to a strike
-- Infiltrator's Elixir: partial; also illusions and disbelief, bonuses only in some situations
+
+**"takes the form"**: 2 (0 only this need)
+
+- Euphorium: note only; also spells and the user's resources, choices on the card, out of combat and the environment
 - Look-Me-Not: partial; also actions and feats for the user
-- Rebirth Potion: nothing read; also counteracting and ending effects, plain results the reader doesn't parse yet, out of combat and the environment
-- Sentry Fulu: note only; also speeds, several creatures at once, information, messages, speech and sound, out of combat and the environment
 
-**Activations**
+**Other wordings**: 5 (0 only this need)
 
-- Aquarium Lamp: note only; also light, darkness, smoke, terrain and walls, information, out of combat and the environment
-- Awakened Silver Shot: partial; also changes to a strike, counteracting and ending effects, objects and the item itself, plain results the reader doesn't parse yet
-- Bestiary of Metamorphosis (Shifting Form): nothing read; also objects and the item itself
-- Cloak of the False Foe (Cryptid Shape): note only; also out of combat and the environment
-- Fanged: nothing read; also sustained, repeating and later effects, objects and the item itself
-- Mask of Shifting Monstrosity (Monstrosity Meld): partial; also illusions and disbelief, bonuses only in some situations, out of combat and the environment
-- Miniaturization Module (Miraculous Escape): nothing read; also moving creatures and the user, triggers
-- Philosopher's Extractor (Essence Transmogrification): note only; also senses, immunities and resistances by situation, several creatures at once, minds, attitudes and behaviour, out of combat and the environment
-- Scope of Truth (Reveal All): the GM's; also illusions and disbelief, counteracting and ending effects, objects and the item itself
-- Shifting (Shift Weapon): nothing read; also objects and the item itself
-- Spectacles of Discernment (Reveal the Truth): the GM's; also illusions and disbelief, counteracting and ending effects, information, messages, speech and sound, out of combat and the environment
-- Void Shackles (Affix Shackle): nothing read; also objects and the item itself
+- Cloak of the False Foe (Cryptid Shape) ("turn into"): note only; also out of combat and the environment
+- Elder Seed ("enlarge"): nothing read; also senses, light, darkness, smoke, terrain and walls, numbers from another roll, afflictions and persistent damage, immunities and resistances by situation, plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, messages, speech and sound, out of combat and the environment
+- Infiltrator's Elixir ("take the shape"): partial; also illusions and disbelief, bonuses only in some situations
+- Miniaturization Module (Miraculous Escape) ("become tiny"): nothing read; also moving creatures and the user, triggers
+- Void Shackles (Affix Shackle) ("grow in size"): nothing read; also objects and the item itself
 
 <a id="removed"></a>
 ### Creatures taken out of play
@@ -193,12 +306,12 @@ A creature sent away for a time (into the future, to another place, frozen) and 
 
 4 entries.
 
-**Consumables**
+**"shunted"**: 2 (0 only this need)
 
 - Ghostly Portal Paint: note only; also light, darkness, smoke, terrain and walls, objects and the item itself
 - Time Shield Potion: note only; also immunities and resistances by situation, objects and the item itself, plain results the reader doesn't parse yet
 
-**Activations**
+**"into the future"**: 2 (0 only this need)
 
 - The Carnival: nothing read; also several creatures at once, out of combat and the environment
 - Timeflaying Blade (Flay Time): partial; also plain results the reader doesn't parse yet
@@ -206,18 +319,18 @@ A creature sent away for a time (into the future, to another place, frozen) and 
 <a id="retaliation"></a>
 ### Damage back at attackers
 
-Damage or a condition for each creature that hits, touches or attacks the user while it lasts: a hook on the attacks against the user that posts the result (the module's retaliate is built for one item). *Where: item live play.*
+Damage or a condition for each creature that hits, touches or attacks the user while it lasts. The module's retaliation card (kept open for the item's time: plan.retaliation, and plan.alsoRetaliation beside another card) plays damage in the wordings it reads; the rest need their wording read, or a condition or save on each hit. *Where: item live play.*
 
 3 entries.
 
-**Consumables**
-
-- Phoenix Cinder: note only; also changes to a strike, numbers from another roll, afflictions and persistent damage, dying, unconscious and death, immunities and resistances by situation, bonuses only in some situations, sustained, repeating and later effects, plain results the reader doesn't parse yet, information, out of combat and the environment
-
-**Activations**
+**"any creature that touches you"**: 2 (0 only this need)
 
 - Armorskin Robes of Fire (Elemental Sheath): partial; also immunities and resistances by situation, plain results the reader doesn't parse yet
 - Prismatic Plate: the GM's; also light, darkness, smoke, terrain and walls, counteracting and ending effects, sustained, repeating and later effects, choices on the card
+
+**Other wordings**: 1 (0 only this need)
+
+- Phoenix Cinder ("creatures that hit you"): note only; also changes to a strike, numbers from another roll, afflictions and persistent damage, dying, unconscious and death, immunities and resistances by situation, bonuses only in some situations, sustained, repeating and later effects, plain results the reader doesn't parse yet, information, out of combat and the environment
 
 <a id="by-kind"></a>
 ### Results for some creatures only
@@ -226,19 +339,19 @@ A result or save only for creatures of a kind (a trait, living creatures, a size
 
 8 entries.
 
-**Consumables**
+**"only a living creature"**: 2 (1 only this need)
 
-- Life Salt: partial; also afflictions and persistent damage, bonuses only in some situations
-
-**Activations**
-
-- Clockwork Sun (Set Cycle): partial; also plain results the reader doesn't parse yet
 - Ghast Stiletto: partial; also afflictions and persistent damage, bonuses only in some situations
-- Ghoul Stiletto: partial
-- Guise of the Smirking Devil (Greater) (Hideous Wail): partial; also numbers the text doesn't give, plain results the reader doesn't parse yet
-- Holy Steam Ball: nothing read; also light, darkness, smoke, terrain and walls, bonuses only in some situations, objects and the item itself, information, messages, speech and sound
-- Horn of the Sun Aurochs: partial; also plain results the reader doesn't parse yet
-- Smogger: partial; also out of combat and the environment
+- Ghoul Stiletto: partial; *only this need*
+
+**Other wordings**: 6 (0 only this need)
+
+- Clockwork Sun (Set Cycle) ("that are vulnerable to"): partial; also plain results the reader doesn't parse yet
+- Guise of the Smirking Devil (Greater) (Hideous Wail) ("only living creatures"): partial; also numbers the text doesn't give, plain results the reader doesn't parse yet
+- Holy Steam Ball ("that are weak to"): nothing read; also light, darkness, smoke, terrain and walls, bonuses only in some situations, objects and the item itself, information, messages, speech and sound
+- Horn of the Sun Aurochs ("that are specifically vulnerable to"): partial; also plain results the reader doesn't parse yet
+- Life Salt ("only against an undead"): partial; also afflictions and persistent damage, bonuses only in some situations
+- Smogger ("must breathe"): partial; also out of combat and the environment
 
 <a id="missing-number"></a>
 ### Numbers the text doesn't give
@@ -247,14 +360,17 @@ A condition value, amount or DC the item's text leaves out (the GM sets it): the
 
 7 entries.
 
-**Activations**
+**"unless the gm determines otherwise"**: 5 (0 only this need)
 
 - Conduit Shot (Greater): partial; also light, darkness, smoke, terrain and walls, changes to a strike
 - Conduit Shot (Lesser): partial; also light, darkness, smoke, terrain and walls, changes to a strike
 - Conduit Shot (Moderate): partial; also light, darkness, smoke, terrain and walls, changes to a strike
-- Flawed Orb of Gold Dragonkind: partial; also objects and the item itself, plain results the reader doesn't parse yet
 - Lightning Rod Shot: partial; also moving creatures and the user, changes to a strike, objects and the item itself
 - Spell Echo Shot: partial; also changes to a strike
+
+**"doesn't say how much"**: 2 (0 only this need)
+
+- Flawed Orb of Gold Dragonkind: partial; also objects and the item itself, plain results the reader doesn't parse yet
 - The Desert: partial; also plain results the reader doesn't parse yet
 
 <a id="cooldown"></a>
@@ -264,24 +380,33 @@ A limit the item puts on itself beyond its frequency (can't be activated again f
 
 13 entries.
 
-**Consumables**
-
-- Last Word Stone: nothing read; also dying, unconscious and death, sustained, repeating and later effects, objects and the item itself, minds, attitudes and behaviour, information, messages, speech and sound
-- Skull Bomb: partial; also plain results the reader doesn't parse yet
-
-**Activations**
+**"can't be activated again"**: 5 (0 only this need)
 
 - Flying Broomstick (Lift Off): note only; also speeds, moving creatures and the user, sustained, repeating and later effects, objects and the item itself, information, out of combat and the environment
 - Ice Forge (Expand Forge): the GM's; also light, darkness, smoke, terrain and walls, information, out of combat and the environment
 - Instant Fortress: note only; also hidden, undetected, invisible, cover, light, darkness, smoke, terrain and walls, actions and feats for the user, objects and the item itself, out of combat and the environment
 - Magnetic Shield: note only; also actions and feats for the user, bonuses only in some situations, objects and the item itself
-- Oathbow: partial; also changes to a strike, bonuses only in some situations, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
-- Retrieval Belt (Greater) (Retrieve Item): note only
-- Retrieval Belt (Major) (Retrieve Item): note only
-- Retrieval Belt (Retrieve Item): note only
 - Rod of Cancellation: the GM's; also counteracting and ending effects, choices on the card, plain results the reader doesn't parse yet
-- Vine Whip: note only; also changes to a strike, sustained, repeating and later effects
+
+**"can be activated again"**: 3 (3 only this need)
+
+- Retrieval Belt (Greater) (Retrieve Item): note only; *only this need*
+- Retrieval Belt (Major) (Retrieve Item): note only; *only this need*
+- Retrieval Belt (Retrieve Item): note only; *only this need*
+
+**"can't be used again"**: 2 (0 only this need)
+
+- Last Word Stone: nothing read; also dying, unconscious and death, sustained, repeating and later effects, objects and the item itself, minds, attitudes and behaviour, information, messages, speech and sound
+- Skull Bomb: partial; also plain results the reader doesn't parse yet
+
+**"can't activate it again"**: 2 (0 only this need)
+
+- Oathbow: partial; also changes to a strike, bonuses only in some situations, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
 - Winder's Ring: nothing read; also sustained, repeating and later effects, out of combat and the environment
+
+**Other wordings**: 1 (0 only this need)
+
+- Vine Whip ("can't activate the item again"): note only; also changes to a strike, sustained, repeating and later effects
 
 <a id="visibility"></a>
 ### Hidden, undetected, invisible, cover
@@ -290,68 +415,98 @@ States one creature has to another: hidden, undetected, unnoticed, concealed, in
 
 57 entries (and 2 of the modules' items).
 
-**Consumables**
+**"hide"**: 10 (2 only this need)
 
 - Aroma Concealer: partial; also senses, bonuses only in some situations, out of combat and the environment
-- Camouflage Dye (Greater): note only
-- Camouflage Dye (Lesser): note only
+- Camouflage Dye (Greater): note only; *only this need*
+- Camouflage Dye (Lesser): note only; *only this need*
+- Camouflaging Chromatophores (Greater) (Background Adaptation): note only; also moving creatures and the user
+- Camouflaging Chromatophores (Lesser) (Background Adaptation): note only; also moving creatures and the user
 - Chameleon Suit: note only; also moving creatures and the user, information
 - Chameleon Suit (Greater): note only; also moving creatures and the user, information
 - Chameleon Suit (Major): note only; also moving creatures and the user, information, out of combat and the environment
+- Paradigm Cube (Change Paradigm): note only; also illusions and disbelief, light, darkness, smoke, terrain and walls, changes to a strike, actions and feats for the user, afflictions and persistent damage, spells and the user's resources, counteracting and ending effects, sustained, repeating and later effects, choices on the card, several creatures at once, plain results the reader doesn't parse yet, minds, attitudes and behaviour, information
+- Parchment of Secrets: nothing read; also illusions and disbelief, choices on the card, information, messages, speech and sound
+
+**"standard cover"**: 9 (1 only this need)
+
 - Effortless Garden: nothing read; also light, darkness, smoke, terrain and walls, spells and the user's resources, sustained, repeating and later effects, choices on the card, out of combat and the environment
 - Feather Token (Holly Bush): nothing read; also afflictions and persistent damage, dying, unconscious and death, objects and the item itself, plain results the reader doesn't parse yet
-- Ghostshot Wrapping: nothing read; also triggers, changes to a strike, objects and the item itself, information, messages, speech and sound
-- Glimmering Missive: note only; also out of combat and the environment
-- Goblin-Eye Orb: nothing read; also triggers, changes to a strike, objects and the item itself
-- Hunter's Bane: the GM's; also triggers, information
+- Feather Token (Holly Bush) (Ammunition): nothing read; also changes to a strike, afflictions and persistent damage, dying, unconscious and death, objects and the item itself, plain results the reader doesn't parse yet
 - Impact Foam Chassis (Greater): nothing read; also moving creatures and the user, numbers from another roll, dying, unconscious and death, sustained, repeating and later effects, plain results the reader doesn't parse yet
 - Impact Foam Chassis (Lesser): nothing read; also moving creatures and the user, numbers from another roll, dying, unconscious and death, sustained, repeating and later effects, plain results the reader doesn't parse yet
 - Impact Foam Chassis (Major): nothing read; also moving creatures and the user, numbers from another roll, dying, unconscious and death, sustained, repeating and later effects, plain results the reader doesn't parse yet
 - Impact Foam Chassis (Moderate): nothing read; also moving creatures and the user, numbers from another roll, dying, unconscious and death, sustained, repeating and later effects, plain results the reader doesn't parse yet
-- Ixamè's Eye: note only; also light, darkness, smoke, terrain and walls
-- Lover's Ink: nothing read; also information, messages, speech and sound
-- Moonlit Ink: note only; also information, messages, speech and sound
+- Pinpoint Arrowhead: nothing read; also changes to a strike
+- Siege Shield (Plant Cover): nothing read; *only this need*
+
+**"undetected"**: 7 (0 only this need)
+
+- Ghostshot Wrapping: nothing read; also triggers, changes to a strike, objects and the item itself, information, messages, speech and sound
+- Mirror Robe: the GM's; also choices on the card, several creatures at once, plain results the reader doesn't parse yet, information
 - Octopus Bottle: the GM's; also light, darkness, smoke, terrain and walls, changes to a strike, out of combat and the environment
 - Oil of Revelation: note only; also light, darkness, smoke, terrain and walls, out of combat and the environment
-- Olfactory Obfuscator (Greater): note only; also senses, objects and the item itself, information, out of combat and the environment
-- Olfactory Obfuscator (Lesser): note only; also senses, objects and the item itself, information
-- Parchment of Secrets: nothing read; also illusions and disbelief, choices on the card, information, messages, speech and sound
-- Phantom Roll: partial; also bonuses only in some situations, out of combat and the environment
-- Pinpoint Arrowhead: nothing read; also changes to a strike
-- Powder: nothing read
 - Revealing Mist (Greater): note only; also light, darkness, smoke, terrain and walls, information
 - Revealing Mist (Lesser): note only; also light, darkness, smoke, terrain and walls, information
+- Stage Magician's Cloak (Now You See Me...): partial; also light, darkness, smoke, terrain and walls, plain results the reader doesn't parse yet
+
+**"concealed"**: 4 (0 only this need)
+
+- Glimmering Missive: note only; also out of combat and the environment
+- Olfactory Obfuscator (Greater): note only; also senses, objects and the item itself, information, out of combat and the environment
+- Olfactory Obfuscator (Lesser): note only; also senses, objects and the item itself, information
+- Soulspark Candle: nothing read; also dying, unconscious and death, sustained, repeating and later effects
+
+**"you're concealed"**: 4 (0 only this need)
+
 - Sprite Apple (Chartreuse): partial; also light, darkness, smoke, terrain and walls, bonuses only in some situations
 - Sprite Apple (Golden): partial; also light, darkness, smoke, terrain and walls, bonuses only in some situations
 - Sprite Apple (Pink): partial; also light, darkness, smoke, terrain and walls
 - Sprite Apple (Teal): partial; also light, darkness, smoke, terrain and walls, bonuses only in some situations
 
-**Activations**
+**"lesser cover"**: 3 (3 only this need)
 
-- Ally's Kerchief (Identify Allies): nothing read; also triggers, several creatures at once
-- Camouflaging Chromatophores (Greater) (Background Adaptation): note only; also moving creatures and the user
-- Camouflaging Chromatophores (Lesser) (Background Adaptation): note only; also moving creatures and the user
-- Detector Stone: nothing read; also illusions and disbelief, information
-- Feather Token (Holly Bush) (Ammunition): nothing read; also changes to a strike, afflictions and persistent damage, dying, unconscious and death, objects and the item itself, plain results the reader doesn't parse yet
-- Globe of Shrouds (Light Incense): nothing read; also light, darkness, smoke, terrain and walls, sustained, repeating and later effects, several creatures at once
-- Golden-Cased Bullet (Greater): nothing read
-- Golden-Cased Bullet (Major): nothing read
-- Golden-Cased Bullet (Standard): nothing read
-- Graymist: partial; also out of combat and the environment
+- Golden-Cased Bullet (Greater): nothing read; *only this need*
+- Golden-Cased Bullet (Major): nothing read; *only this need*
+- Golden-Cased Bullet (Standard): nothing read; *only this need*
+
+**"concealment"**: 3 (0 only this need)
+
 - Guiding Starknife (Points of Light): partial; also objects and the item itself, plain results the reader doesn't parse yet
-- Mirror Robe: the GM's; also choices on the card, several creatures at once, plain results the reader doesn't parse yet, information
-- Mirrorblade (Scryshield): note only; also sustained, repeating and later effects, information, out of combat and the environment
-- Paradigm Cube (Change Paradigm): note only; also illusions and disbelief, light, darkness, smoke, terrain and walls, changes to a strike, actions and feats for the user, afflictions and persistent damage, spells and the user's resources, counteracting and ending effects, sustained, repeating and later effects, choices on the card, several creatures at once, plain results the reader doesn't parse yet, minds, attitudes and behaviour, information
-- Shadowmist Cape: partial; also out of combat and the environment
-- Siege Shield (Plant Cover): nothing read
-- Silent Bell (Ring in the Quiet): note only; also light, darkness, smoke, terrain and walls, messages, speech and sound
-- Soulspark Candle: nothing read; also dying, unconscious and death, sustained, repeating and later effects
-- Stage Magician's Cloak (Now You See Me...): partial; also light, darkness, smoke, terrain and walls, plain results the reader doesn't parse yet
-- Starless Scope: partial; also bonuses only in some situations, objects and the item itself, information, out of combat and the environment
 - Tlil Mask: note only; also light, darkness, smoke, terrain and walls, dying, unconscious and death
 - Tlil Mask (Greater): note only; also light, darkness, smoke, terrain and walls, dying, unconscious and death
-- Toshigami Blossom: nothing read; also light, darkness, smoke, terrain and walls, changes to a strike, several creatures at once, plain results the reader doesn't parse yet
+
+**"invisibility"**: 2 (1 only this need)
+
+- Moonlit Ink: note only; also information, messages, speech and sound
+- Powder: nothing read; *only this need*
+
+**"invisible to"**: 2 (0 only this need)
+
+- Ally's Kerchief (Identify Allies): nothing read; also triggers, several creatures at once
+- Mirrorblade (Scryshield): note only; also sustained, repeating and later effects, information, out of combat and the environment
+
+**"you're hidden"**: 2 (0 only this need)
+
+- Graymist: partial; also out of combat and the environment
+- Shadowmist Cape: partial; also out of combat and the environment
+
+**"invisible"**: 2 (0 only this need)
+
+- Silent Bell (Ring in the Quiet): note only; also light, darkness, smoke, terrain and walls, messages, speech and sound
 - Twilight Tattoo (Fade): note only; also sustained, repeating and later effects, information, out of combat and the environment
+
+**Other wordings**: 9 (0 only this need)
+
+- Detector Stone ("hidden from"): nothing read; also illusions and disbelief, information
+- Globe of Shrouds (Light Incense) ("remains concealed"): nothing read; also light, darkness, smoke, terrain and walls, sustained, repeating and later effects, several creatures at once
+- Goblin-Eye Orb ("hidden to"): nothing read; also triggers, changes to a strike, objects and the item itself
+- Hunter's Bane ("hidden or undetected"): the GM's; also triggers, information
+- Ixamè's Eye ("concealed to"): note only; also light, darkness, smoke, terrain and walls
+- Lover's Ink ("hidden"): nothing read; also information, messages, speech and sound
+- Phantom Roll ("avoid notice"): partial; also bonuses only in some situations, out of combat and the environment
+- Starless Scope ("it's invisible"): partial; also bonuses only in some situations, objects and the item itself, information, out of combat and the environment
+- Toshigami Blossom ("become concealed"): nothing read; also light, darkness, smoke, terrain and walls, changes to a strike, several creatures at once, plain results the reader doesn't parse yet
 
 <a id="senses"></a>
 ### Senses
@@ -360,34 +515,49 @@ A sense for a time (darkvision, low-light vision, scent, tremorsense, echolocati
 
 23 entries (and 3 of the modules' items).
 
-**Consumables**
+**"scent"**: 6 (0 only this need)
 
 - Appetizing Flavor Snare: note only; also light, darkness, smoke, terrain and walls, out of combat and the environment
-- Blood Sight Elixir (Major): partial; also afflictions and persistent damage, dying, unconscious and death, information, out of combat and the environment
-- Heartblood Ring: nothing read; also light, darkness, smoke, terrain and walls, numbers from another roll, afflictions and persistent damage, dying, unconscious and death, counteracting and ending effects, immunities and resistances by situation, bonuses only in some situations, sustained, repeating and later effects, plain results the reader doesn't parse yet, information, out of combat and the environment
+- Hellhusk Shroud (Horned Husk): nothing read; also illusions and disbelief, bonuses only in some situations, minds, attitudes and behaviour
 - Netherwalk Incense: nothing read; also light, darkness, smoke, terrain and walls, sustained, repeating and later effects, several creatures at once, out of combat and the environment
 - Ration Tonic: nothing read; also out of combat and the environment
 - Ration Tonic (Greater): nothing read; also out of combat and the environment
 - Sage's Bloom: the GM's; also triggers, information
-- Thumper Snare: nothing read; also information
 
-**Activations**
+**"truesight"**: 4 (0 only this need)
 
-- Corpseward Pendant: note only; also changes to a strike, immunities and resistances by situation, minds, attitudes and behaviour, information, out of combat and the environment
-- Dragon's Eye Charm: nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour
-- Hellhusk Shroud (Hellish Senses): note only; also sustained, repeating and later effects, messages, speech and sound
-- Hellhusk Shroud (Horned Husk): nothing read; also illusions and disbelief, bonuses only in some situations, minds, attitudes and behaviour
-- Hollow Robes (Empty Robes): partial; also information
-- Horn of the Aoyin (Cannibal Call): note only; also immunities and resistances by situation, bonuses only in some situations, plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, messages, speech and sound, out of combat and the environment
 - Raiment (Costume Change): nothing read; also illusions and disbelief, objects and the item itself
-- Rattling Bolt: partial; also changes to a strike
-- Rattling Bolt (Greater): partial; also changes to a strike
 - Sihedron Ring (Costume Change): nothing read; also illusions and disbelief
 - Sihedron Ring (Greater) (Costume Change): nothing read; also illusions and disbelief
-- Sinister Knight: the GM's; also illusions and disbelief, counteracting and ending effects, sustained, repeating and later effects, information
 - Skirmisher's Coat (Costume Change): nothing read; also illusions and disbelief
-- Spectral Opera Glasses: note only; also objects and the item itself, out of combat and the environment
+
+**"lifesense"**: 4 (0 only this need)
+
+- Rattling Bolt: partial; also changes to a strike
+- Rattling Bolt (Greater): partial; also changes to a strike
+- Sinister Knight: the GM's; also illusions and disbelief, counteracting and ending effects, sustained, repeating and later effects, information
 - The Silent Hag: nothing read; also dying, unconscious and death, sustained, repeating and later effects, choices on the card, plain results the reader doesn't parse yet, messages, speech and sound, out of combat and the environment
+
+**"tremorsense"**: 2 (0 only this need)
+
+- Corpseward Pendant: note only; also changes to a strike, immunities and resistances by situation, minds, attitudes and behaviour, information, out of combat and the environment
+- Thumper Snare: nothing read; also information
+
+**"imprecise sense"**: 2 (0 only this need)
+
+- Hellhusk Shroud (Hellish Senses): note only; also sustained, repeating and later effects, messages, speech and sound
+- Horn of the Aoyin (Cannibal Call): note only; also immunities and resistances by situation, bonuses only in some situations, plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, messages, speech and sound, out of combat and the environment
+
+**"see invisible"**: 2 (0 only this need)
+
+- Hollow Robes (Empty Robes): partial; also information
+- Spectral Opera Glasses: note only; also objects and the item itself, out of combat and the environment
+
+**Other wordings**: 3 (0 only this need)
+
+- Blood Sight Elixir (Major) ("precise sense"): partial; also afflictions and persistent damage, dying, unconscious and death, information, out of combat and the environment
+- Dragon's Eye Charm ("darkvision"): nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour
+- Heartblood Ring ("low-light vision"): nothing read; also light, darkness, smoke, terrain and walls, numbers from another roll, afflictions and persistent damage, dying, unconscious and death, counteracting and ending effects, immunities and resistances by situation, bonuses only in some situations, sustained, repeating and later effects, plain results the reader doesn't parse yet, information, out of combat and the environment
 
 <a id="speeds"></a>
 ### Speeds
@@ -396,36 +566,54 @@ A Speed of a kind (fly, swim, climb, burrow) or a Speed set or raised beyond a p
 
 25 entries.
 
-**Consumables**
+**"speed of 45 feet"**: 6 (0 only this need)
 
-- Clockwork Chirper: nothing read; also light, darkness, smoke, terrain and walls, immunities and resistances by situation, objects and the item itself, messages, speech and sound, out of combat and the environment
-- Dupe's Gold Nugget: the GM's; also triggers, changes to a strike, bonuses only in some situations, sustained, repeating and later effects, objects and the item itself
-- Effervescent Decoction: note only; also immunities and resistances by situation, objects and the item itself, out of combat and the environment
-- Feather Token (Balloon): note only; also several creatures at once, out of combat and the environment
-- Golden Liberator's Feather: partial; also bonuses only in some situations
 - Heartening Missive (Bull): partial; also objects and the item itself, information, messages, speech and sound, out of combat and the environment
 - Heartening Missive (Butterfly): note only; also fortune and rerolls on a later roll, immunities and resistances by situation, objects and the item itself, information, messages, speech and sound, out of combat and the environment
 - Heartening Missive (Rabbit): partial; also objects and the item itself, information, messages, speech and sound, out of combat and the environment
 - Heartening Missive (Turtle): partial; also objects and the item itself, information, messages, speech and sound, out of combat and the environment
-- Hovering Potion: note only
 - Messenger Missive: nothing read; also objects and the item itself, information, out of combat and the environment
 - Messenger Missive (Multiple): nothing read; also objects and the item itself, information, messages, speech and sound, out of combat and the environment
-- Shortbread Spy: nothing read; also moving creatures and the user, sustained, repeating and later effects, out of combat and the environment
-- Three Bird Pinion: note only; also light, darkness, smoke, terrain and walls
-- Tracking Fulu: nothing read; also out of combat and the environment
-- Wind-Up Cart: nothing read; also ships and vehicles, dying, unconscious and death, sustained, repeating and later effects, objects and the item itself
 
-**Activations**
+**"fly speed"**: 4 (0 only this need)
 
 - Animated (Set Free): note only; also moving creatures and the user, changes to a strike, sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet
-- Balloon Padding (Inflate): the GM's; also moving creatures and the user, objects and the item itself
+- Clockwork Chirper: nothing read; also light, darkness, smoke, terrain and walls, immunities and resistances by situation, objects and the item itself, messages, speech and sound, out of combat and the environment
+- Dragonaut's Wingsuit (Drake's Glide): nothing read; also objects and the item itself
+- Golden Liberator's Feather: partial; also bonuses only in some situations
+
+**"water walk"**: 3 (0 only this need)
+
 - Boots of Free Running (Greater): note only; also moving creatures and the user, light, darkness, smoke, terrain and walls, sustained, repeating and later effects
 - Boots of Free Running (Lesser): note only; also moving creatures and the user, light, darkness, smoke, terrain and walls, sustained, repeating and later effects
 - Boots of Free Running (Moderate): note only; also moving creatures and the user, light, darkness, smoke, terrain and walls, sustained, repeating and later effects
+
+**"hovering"**: 2 (1 only this need)
+
+- Balloon Padding (Inflate): the GM's; also moving creatures and the user, objects and the item itself
+- Hovering Potion: note only; *only this need*
+
+**"swim speed"**: 2 (0 only this need)
+
 - Clockwork Diving Suit: nothing read; also light, darkness, smoke, terrain and walls, information
-- Dragonaut's Wingsuit (Drake's Glide): nothing read; also objects and the item itself
-- Feather Token (Swan Boat) (Ammunition): nothing read; also ships and vehicles, changes to a strike, objects and the item itself, out of combat and the environment
 - Kraken Figurehead (Grab Them!): nothing read; also ships and vehicles
+
+**"levitate"**: 2 (0 only this need)
+
+- Effervescent Decoction: note only; also immunities and resistances by situation, objects and the item itself, out of combat and the environment
+- Three Bird Pinion: note only; also light, darkness, smoke, terrain and walls
+
+**"speed of 30 feet"**: 2 (0 only this need)
+
+- Tracking Fulu: nothing read; also out of combat and the environment
+- Wind-Up Cart: nothing read; also ships and vehicles, dying, unconscious and death, sustained, repeating and later effects, objects and the item itself
+
+**Other wordings**: 4 (0 only this need)
+
+- Dupe's Gold Nugget ("speed of 5 feet"): the GM's; also triggers, changes to a strike, bonuses only in some situations, sustained, repeating and later effects, objects and the item itself
+- Feather Token (Balloon) ("speed of 20 feet"): note only; also several creatures at once, out of combat and the environment
+- Feather Token (Swan Boat) (Ammunition) ("speed of 50 feet"): nothing read; also ships and vehicles, changes to a strike, objects and the item itself, out of combat and the environment
+- Shortbread Spy ("speed of 15 feet"): nothing read; also moving creatures and the user, sustained, repeating and later effects, out of combat and the environment
 
 <a id="fortune"></a>
 ### Fortune and rerolls on a later roll
@@ -434,18 +622,21 @@ Rolling twice or rerolling a later roll that the item names only by kind (your n
 
 7 entries (and 1 of the modules' items).
 
-**Consumables**
+**"reroll"**: 3 (0 only this need)
 
 - Beckoning Cat Amulet: nothing read; also triggers, several creatures at once
-- Incense Bundle of Annual Blessings: nothing read; also out of combat and the environment
+- Old Tillimaquin (Luck of the Mascot): nothing read; also out of combat and the environment
+- Silvanshee Collar (Awww!): the GM's; also triggers, choices on the card
 
-**Activations**
+**"roll twice"**: 2 (1 only this need)
 
 - Halcyon Heart: partial; also moving creatures and the user, counteracting and ending effects, sustained, repeating and later effects, out of combat and the environment
-- Old Tillimaquin (Luck of the Mascot): nothing read; also out of combat and the environment
-- Perfected Robes: nothing read
-- Silvanshee Collar (Awww!): the GM's; also triggers, choices on the card
-- The Dance: nothing read; also triggers, choices on the card
+- Perfected Robes: nothing read; *only this need*
+
+**Other wordings**: 2 (0 only this need)
+
+- Incense Bundle of Annual Blessings ("misfortune"): nothing read; also out of combat and the environment
+- The Dance ("fortune effect"): nothing read; also triggers, choices on the card
 
 <a id="illusions"></a>
 ### Illusions and disbelief
@@ -454,58 +645,67 @@ An illusion and the check to disbelieve it: the user's rule for spells (disbelie
 
 47 entries.
 
-**Consumables**
+**"illusion"**: 17 (0 only this need)
 
+- Arclord Eye (Open the Eye): the GM's; also information
 - Camp Shroud (Greater): nothing read; also light, darkness, smoke, terrain and walls, counteracting and ending effects, objects and the item itself, information, messages, speech and sound, out of combat and the environment
 - Camp Shroud (Lesser): nothing read; also light, darkness, smoke, terrain and walls, counteracting and ending effects, objects and the item itself, information, messages, speech and sound, out of combat and the environment
 - Camp Shroud (Major): nothing read; also light, darkness, smoke, terrain and walls, counteracting and ending effects, objects and the item itself, information, messages, speech and sound, out of combat and the environment
 - Camp Shroud (Minor): nothing read; also light, darkness, smoke, terrain and walls, counteracting and ending effects, objects and the item itself, information, messages, speech and sound, out of combat and the environment
 - Camp Shroud (Moderate): nothing read; also light, darkness, smoke, terrain and walls, counteracting and ending effects, objects and the item itself, information, messages, speech and sound, out of combat and the environment
-- Dust of Appearance: the GM's; also information
-- Emergency Disguise: nothing read; also changes to a strike, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
-- Foe-Sensing Rod: note only; also out of combat and the environment
-- Hagbane Biscuit: partial; also bonuses only in some situations, plain results the reader doesn't parse yet, information
-- Illusory Program: nothing read; also out of combat and the environment
-- Possum's Play: partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
-- Possum's Play (Greater): partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
-- Possum's Play (Major): partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
-- Potion of Disguise (Greater): partial; also bonuses only in some situations, plain results the reader doesn't parse yet, out of combat and the environment
-- Potion of Disguise (Lesser): partial; also bonuses only in some situations, plain results the reader doesn't parse yet, out of combat and the environment
-- Potion of Disguise (Moderate): partial; also bonuses only in some situations, plain results the reader doesn't parse yet, out of combat and the environment
-- Talespinner's Lyre: nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour, information, messages, speech and sound
-- Tentacle Potion (Lesser): nothing read; also sustained, repeating and later effects, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
-- Tentacle Potion (Moderate): nothing read; also sustained, repeating and later effects, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
-- Undead Detection Dye: nothing read; also objects and the item itself, information, out of combat and the environment
-- Wooden Nickel: note only; also choices on the card, objects and the item itself, information, out of combat and the environment
-
-**Activations**
-
-- Arclord Eye (Open the Eye): the GM's; also information
 - Clarity Goggles (Greater): note only; also counteracting and ending effects
 - Clarity Goggles (Lesser): note only; also counteracting and ending effects
 - Clarity Goggles (Moderate): note only; also counteracting and ending effects
-- Clockwork Disguise (Deploy Disguise): nothing read
-- Deck of Mischief (Card Trick): nothing read; also information
-- Dreamer's Butterfly (Wake the Dream): note only; also dying, unconscious and death, several creatures at once, information, out of combat and the environment
 - Essence Forge (Greater) (Craft an Item): nothing read; also sustained, repeating and later effects, choices on the card, minds, attitudes and behaviour, out of combat and the environment
 - Essence Forge (Lesser) (Craft an Item): nothing read; also sustained, repeating and later effects, choices on the card, minds, attitudes and behaviour, out of combat and the environment
 - Essence Forge (Moderate) (Craft an Item): nothing read; also sustained, repeating and later effects, choices on the card, minds, attitudes and behaviour, out of combat and the environment
-- Glasses of Sociability (Have We Met?): nothing read; also objects and the item itself, minds, attitudes and behaviour, information
-- Hand-Hewed Face (Fresh Face): nothing read; also information
-- Herd Mask: the GM's; also objects and the item itself
+- Possum's Play: partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
+- Possum's Play (Greater): partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
+- Possum's Play (Major): partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
+- Talespinner's Lyre: nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour, information, messages, speech and sound
+- Veiled Figurehead (Veil!): note only; also ships and vehicles, sustained, repeating and later effects, information, out of combat and the environment
+
+**"illusory"**: 12 (0 only this need)
+
+- Dreamer's Butterfly (Wake the Dream): note only; also dying, unconscious and death, several creatures at once, information, out of combat and the environment
+- Dust of Appearance: the GM's; also information
 - Hollow Robes (Hollow Target): partial; also triggers, changes to a strike
 - Illusory Backdrop (Set the Scene): note only; also objects and the item itself, out of combat and the environment
-- Misdirecting Haversack: nothing read; also counteracting and ending effects, sustained, repeating and later effects, information, out of combat and the environment
+- Illusory Program: nothing read; also out of combat and the environment
 - Pocket Gala: nothing read; also sustained, repeating and later effects, objects and the item itself, messages, speech and sound, out of combat and the environment
 - Pocket Stage (Play with Dolls): nothing read; also afflictions and persistent damage, choices on the card, information
 - Secret-Keeper's Mask (Gray Master): the GM's; also triggers, messages, speech and sound
-- Storyteller's Opus (Hoodwink): partial
 - Tales in Timber (Greater) (Statue Disguise): note only; also sustained, repeating and later effects, messages, speech and sound, out of combat and the environment
 - Tales in Timber (Major) (Statue Disguise): note only; also sustained, repeating and later effects, messages, speech and sound, out of combat and the environment
 - Tales in Timber (Statue Disguise): note only; also sustained, repeating and later effects, messages, speech and sound, out of combat and the environment
 - The Deck of Destiny: nothing read; also sustained, repeating and later effects, out of combat and the environment
+
+**"disguise"**: 10 (1 only this need)
+
+- Clockwork Disguise (Deploy Disguise): nothing read; *only this need*
+- Emergency Disguise: nothing read; also changes to a strike, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
+- Glasses of Sociability (Have We Met?): nothing read; also objects and the item itself, minds, attitudes and behaviour, information
+- Hagbane Biscuit: partial; also bonuses only in some situations, plain results the reader doesn't parse yet, information
+- Hand-Hewed Face (Fresh Face): nothing read; also information
+- Potion of Disguise (Greater): partial; also bonuses only in some situations, plain results the reader doesn't parse yet, out of combat and the environment
+- Potion of Disguise (Lesser): partial; also bonuses only in some situations, plain results the reader doesn't parse yet, out of combat and the environment
+- Potion of Disguise (Moderate): partial; also bonuses only in some situations, plain results the reader doesn't parse yet, out of combat and the environment
+- Tentacle Potion (Lesser): nothing read; also sustained, repeating and later effects, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
+- Tentacle Potion (Moderate): nothing read; also sustained, repeating and later effects, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
+
+**"disguised"**: 5 (0 only this need)
+
+- Foe-Sensing Rod: note only; also out of combat and the environment
+- Herd Mask: the GM's; also objects and the item itself
+- Misdirecting Haversack: nothing read; also counteracting and ending effects, sustained, repeating and later effects, information, out of combat and the environment
 - Trustworthy Round: nothing read; also numbers from another roll, objects and the item itself, information
-- Veiled Figurehead (Veil!): note only; also ships and vehicles, sustained, repeating and later effects, information, out of combat and the environment
+- Undead Detection Dye: nothing read; also objects and the item itself, information, out of combat and the environment
+
+**"disbelieve"**: 3 (1 only this need)
+
+- Deck of Mischief (Card Trick): nothing read; also information
+- Storyteller's Opus (Hoodwink): partial; *only this need*
+- Wooden Nickel: note only; also choices on the card, objects and the item itself, information, out of combat and the environment
 
 <a id="vehicles"></a>
 ### Ships and vehicles
@@ -514,31 +714,40 @@ A ship or vehicle's own statistics and movement (its hull, its heading, its crew
 
 20 entries (and 2 of the modules' items).
 
-**Consumables**
+**"boat"**: 7 (0 only this need)
 
 - Feather Token (Anchor): nothing read; also counteracting and ending effects, objects and the item itself, out of combat and the environment
-- Feather Token (Fan): note only; also out of combat and the environment
+- Folding Boat: nothing read; also several creatures at once, objects and the item itself
+- Folding Boat (Greater): nothing read; also several creatures at once, objects and the item itself
 - Marvelous Miniature (Boat): nothing read; also out of combat and the environment
 - Marvelous Miniature (Campfire): the GM's; also out of combat and the environment
 - Marvelous Miniature (Chest): nothing read; also objects and the item itself, out of combat and the environment
 - Marvelous Miniature (Ladder): nothing read; also out of combat and the environment
 
-**Activations**
+**"ship"**: 6 (4 only this need)
 
-- Aboutface Figurehead (About Face!): nothing read
-- Anglerfish Lantern (Submersible) (Dive!): note only; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Folding Boat: nothing read; also several creatures at once, objects and the item itself
-- Folding Boat (Greater): nothing read; also several creatures at once, objects and the item itself
-- Hongbao of Many Things: nothing read; also sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet, messages, speech and sound
-- Kraken Figurehead (Lash Out!): note only
-- Kraken Figurehead (Wracking) (Grab Them!): partial
-- Kraken Figurehead (Wracking) (Lash Out!): note only
+- Aboutface Figurehead (About Face!): nothing read; *only this need*
+- Kraken Figurehead (Lash Out!): note only; *only this need*
+- Kraken Figurehead (Wracking) (Grab Them!): partial; *only this need*
+- Kraken Figurehead (Wracking) (Lash Out!): note only; *only this need*
 - Mariner's Astrolabe (Calculate): nothing read; also dying, unconscious and death, information
+- Violin of the Waves: note only; also messages, speech and sound, out of combat and the environment
+
+**"vehicle"**: 4 (0 only this need)
+
+- Anglerfish Lantern (Submersible) (Dive!): note only; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
 - Mariner’s Mien (Greater) (Set the Course): partial; also sustained, repeating and later effects, plain results the reader doesn't parse yet
 - Mariner’s Mien (Lesser) (Set the Course): partial; also sustained, repeating and later effects, plain results the reader doesn't parse yet
-- Marvelous Calliope: nothing read; also actions and feats for the user, objects and the item itself, messages, speech and sound
-- Violin of the Waves: note only; also messages, speech and sound, out of combat and the environment
 - Wind At Your Back: note only; also out of combat and the environment
+
+**"wagon"**: 2 (0 only this need)
+
+- Hongbao of Many Things: nothing read; also sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet, messages, speech and sound
+- Marvelous Calliope: nothing read; also actions and feats for the user, objects and the item itself, messages, speech and sound
+
+**Other wordings**: 1 (0 only this need)
+
+- Feather Token (Fan) ("sail"): note only; also out of combat and the environment
 
 <a id="linked-effect"></a>
 ### A second linked Effect
@@ -547,117 +756,159 @@ A second PF2e Effect the text links, applied only when the text says (another st
 
 1 entries.
 
-**Consumables**
+**Its entries**: 1 (1 only this need)
 
-- Aurochs Jerky: partial
+- Aurochs Jerky ("linked too"): partial; *only this need*
 
 <a id="moving"></a>
 ### Moving creatures and the user
 
-The user or a target moved on the map: a Step, Stride, Leap, jump, fall, teleport or a pull along a path the card can't place today. Needs the move offered on the card (a target square, a token moved), or PF2e's own action for it. *Where: item live play.*
+The user or a target moved on the map. The move card (the teleport card) already moves its user (a Stride, Step, Leap or teleport within a range) and a creature to a space its user picks (ability 0.9.2's hook); what's left: objects brought to hand, falls and their damage, jumps (High Jump, Long Jump), several creatures moved at once, travel off the map, and moves tied to another event. *Where: item live play.*
 
 95 entries (and 12 of the modules' items).
 
-**Consumables**
+**"teleportation"**: 31 (3 only this need)
 
-- Colorful Coating (Red): note only; also light, darkness, smoke, terrain and walls, numbers from another roll
-- Demon-Hunting Bands: nothing read; also triggers, immunities and resistances by situation, information
+- Beloved's Bracelets (Grant Mythic Power): nothing read; also dying, unconscious and death, spells and the user's resources, choices on the card, information
+- Blackaxe (Owner's Reclamation): nothing read; also information
+- Blink Blade: nothing read; also light, darkness, smoke, terrain and walls, triggers
+- Bring Me Near: nothing read; also several creatures at once
+- Called: the GM's; *only this need*
+- Cipher of Elemental Planes (Align to Plane): the GM's; also information, messages, speech and sound, out of combat and the environment
+- Compass of Transpositional Awareness (Track Teleportation): nothing read; also counteracting and ending effects, information
+- Compass of Transpositional Awareness (Triangulate): note only; *only this need*
+- Cube of Recall: nothing read; also light, darkness, smoke, terrain and walls, information, messages, speech and sound
 - Dimensional Cleavestone: note only; also changes to a strike, choices on the card, objects and the item itself
+- Dream Hunter's Lodge (Oneiric Expedition): nothing read; also spells and the user's resources, out of combat and the environment
+- Guiding Star Orb (Embed Location): nothing read; also sustained, repeating and later effects, information, out of combat and the environment
+- Guiding Star Orb (Heroic) (Embed Location): nothing read; also sustained, repeating and later effects, information, out of combat and the environment
+- Headbands of Translocation: the GM's; also information
+- Homeward Wayfinder: nothing read; also objects and the item itself
+- Jahan Waystone: nothing read; also light, darkness, smoke, terrain and walls, immunities and resistances by situation
+- Lady's Knife: the GM's; also several creatures at once, information
+- Magnet Coin: the GM's; also plain results the reader doesn't parse yet, out of combat and the environment
+- Paired: nothing read; also objects and the item itself
+- Paired (Greater): the GM's; also objects and the item itself
+- Paired (Major): nothing read; also objects and the item itself
+- Planar Tunnel: note only; also light, darkness, smoke, terrain and walls, bonuses only in some situations, several creatures at once, objects and the item itself, information, out of combat and the environment
+- Pocket Watch of Stethelos (Step Between the Ticks): nothing read; also messages, speech and sound, out of combat and the environment
+- Retrieval Prism: nothing read; also objects and the item itself
+- Retrieval Prism (Greater): nothing read; also objects and the item itself
+- Runescribed Disk: nothing read; also triggers
+- Starshot Arrow (Greater): partial; also information, out of combat and the environment
+- The Crows: partial; *only this need*
+- Tidal Fishhook: nothing read; also changes to a strike, actions and feats for the user, out of combat and the environment
+- Whistle of Calling: the GM's; also dying, unconscious and death
+- Witchwyrd Beacon: nothing read; also information, out of combat and the environment
+
+**"high jump"**: 10 (0 only this need)
+
 - Dragonfly Fulu: partial; also triggers
 - Elixir of the Peaks (Greater): partial; also bonuses only in some situations, out of combat and the environment
 - Elixir of the Peaks (Lesser): partial; also bonuses only in some situations, out of combat and the environment
 - Elixir of the Peaks (Major): partial; also bonuses only in some situations, out of combat and the environment
 - Elixir of the Peaks (Moderate): partial; also bonuses only in some situations, out of combat and the environment
-- Emerald Grasshopper: nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Emerald Grasshopper (Greater): nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Feather Step Stone: nothing read; also light, darkness, smoke, terrain and walls, triggers
-- Feather Token (Whip): nothing read; also actions and feats for the user, objects and the item itself
-- Firefoot Popcorn: note only; also light, darkness, smoke, terrain and walls, sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet, messages, speech and sound
 - Gadget Skates: nothing read; also sustained, repeating and later effects, choices on the card, information
-- Gravity Inverter: note only; also light, darkness, smoke, terrain and walls, numbers from another roll, immunities and resistances by situation, objects and the item itself, plain results the reader doesn't parse yet
-- Hippogriff in a Jar: nothing read; also objects and the item itself, plain results the reader doesn't parse yet
-- Immovable Potion: partial; also sustained, repeating and later effects, plain results the reader doesn't parse yet
-- Invisible Net: nothing read; also numbers from another roll
+- Kinburi's Sandals of Bounding (Light-Footed Bound): nothing read; also light, darkness, smoke, terrain and walls, objects and the item itself
 - Leaper's Elixir (Greater): note only; also objects and the item itself
 - Leaper's Elixir (Lesser): note only; also objects and the item itself
-- Nap Gas Dispenser: partial; also dying, unconscious and death, plain results the reader doesn't parse yet
+- Twining Staff (Form Staff): nothing read; also actions and feats for the user, objects and the item itself, plain results the reader doesn't parse yet
+
+**"move"**: 6 (1 only this need)
+
 - Oil of Skating: partial; also light, darkness, smoke, terrain and walls, out of combat and the environment
-- Retrieval Prism: nothing read; also objects and the item itself
-- Retrieval Prism (Greater): nothing read; also objects and the item itself
-- Runescribed Disk: nothing read; also triggers
-- Sargassum Phial: note only; also several creatures at once, objects and the item itself, plain results the reader doesn't parse yet, minds, attitudes and behaviour
-- Sure-Step Potion: partial; also light, darkness, smoke, terrain and walls, plain results the reader doesn't parse yet, out of combat and the environment
-- Worm Vial: partial
-
-**Activations**
-
-- Anchor Spear: nothing read; also light, darkness, smoke, terrain and walls, triggers, plain results the reader doesn't parse yet
-- Beloved's Bracelets (Grant Mythic Power): nothing read; also dying, unconscious and death, spells and the user's resources, choices on the card, information
-- Blackaxe (Owner's Reclamation): nothing read; also information
-- Blast Lance: partial; also out of combat and the environment
-- Blast Lance (Greater): partial; also out of combat and the environment
-- Blink Blade: nothing read; also light, darkness, smoke, terrain and walls, triggers
-- Bola Shot: nothing read; also changes to a strike, plain results the reader doesn't parse yet
-- Bomber's Saddle: nothing read; also changes to a strike
-- Bring Me Near: nothing read; also several creatures at once
-- Called: the GM's
-- Cipher of Elemental Planes (Align to Plane): the GM's; also information, messages, speech and sound, out of combat and the environment
-- Compass of Transpositional Awareness (Track Teleportation): nothing read; also counteracting and ending effects, information
-- Compass of Transpositional Awareness (Triangulate): note only
-- Cube of Recall: nothing read; also light, darkness, smoke, terrain and walls, information, messages, speech and sound
-- Deck of Harrowed Tales: nothing read
-- Drake Rifle (Fire) (Drake Shot): partial; also plain results the reader doesn't parse yet
-- Dream Hunter's Lodge (Oneiric Expedition): nothing read; also spells and the user's resources, out of combat and the environment
-- Eagle Wing (Soar): the GM's
-- Fire-Jump Ring (Fire Jump): nothing read
-- Frog Chair (Frog Hop): note only
-- Gliding: the GM's
-- Guangu of the Steppe (The Hammer of Hooves): note only; also bonuses only in some situations, several creatures at once
-- Guiding Star Orb (Embed Location): nothing read; also sustained, repeating and later effects, information, out of combat and the environment
-- Guiding Star Orb (Heroic) (Embed Location): nothing read; also sustained, repeating and later effects, information, out of combat and the environment
-- Headbands of Translocation: the GM's; also information
-- Homeward Wayfinder: nothing read; also objects and the item itself
-- Immovable Arm: nothing read; also actions and feats for the user, information, out of combat and the environment
-- Invisible Chain Shirt (Obscured Approach): partial; also sustained, repeating and later effects
-- Jahan Waystone: nothing read; also light, darkness, smoke, terrain and walls, immunities and resistances by situation
-- Kinburi's Sandals of Bounding (Light-Footed Bound): nothing read; also light, darkness, smoke, terrain and walls, objects and the item itself
-- Lady's Knife: the GM's; also several creatures at once, information
-- Little Love: nothing read; also triggers
-- Maestro's Chair: nothing read; also spells and the user's resources, sustained, repeating and later effects
-- Magnet Coin: the GM's; also plain results the reader doesn't parse yet, out of combat and the environment
-- Magnetizing: nothing read; also light, darkness, smoke, terrain and walls
-- Maw of Hungry Shadows: partial; also plain results the reader doesn't parse yet, out of combat and the environment
-- Mercurial Mantle (Cunning Dodge): partial; also triggers, changes to a strike, plain results the reader doesn't parse yet
-- Mountain to the Sky: nothing read; also out of combat and the environment
 - Ouroboros Flail (Chained Grasp): partial; also plain results the reader doesn't parse yet
 - Ouroboros Flail (Greater) (Chained Grasp): partial; also plain results the reader doesn't parse yet
 - Ouroboros Flail (Major) (Chained Grasp): partial; also plain results the reader doesn't parse yet
-- Paired: nothing read; also objects and the item itself
-- Paired (Greater): the GM's; also objects and the item itself
-- Paired (Major): nothing read; also objects and the item itself
-- Parachute Mail (Deploy Parachute): nothing read; also triggers, numbers from another roll
-- Planar Tunnel: note only; also light, darkness, smoke, terrain and walls, bonuses only in some situations, several creatures at once, objects and the item itself, information, out of combat and the environment
-- Pocket Watch of Stethelos (Step Between the Ticks): nothing read; also messages, speech and sound, out of combat and the environment
-- Predictable Silver Piece (Cheat Fate): nothing read
-- Purloining Cloak: partial; also triggers, changes to a strike, plain results the reader doesn't parse yet
-- Sandals of the Stag: nothing read; also triggers
-- Scizore of the Crab: partial
-- Spear of the Destroyer's Flame: note only; also choices on the card, information, out of combat and the environment
-- Sphere of Annihilation: nothing read; also sustained, repeating and later effects
+- Scizore of the Crab: partial; *only this need*
 - Splendid Floodlight: nothing read; also light, darkness, smoke, terrain and walls, counteracting and ending effects, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
-- Starshot Arrow (Greater): partial; also information, out of combat and the environment
-- Stepping Stone Shot: nothing read; also changes to a strike, objects and the item itself
-- Stepping Stone Shot (Greater): nothing read; also changes to a strike, objects and the item itself
-- Swiftmount Saddle: nothing read
-- The Cricket: nothing read
-- The Crows: partial
-- Tidal Fishhook: nothing read; also changes to a strike, actions and feats for the user, out of combat and the environment
-- Twining Staff (Form Staff): nothing read; also actions and feats for the user, objects and the item itself, plain results the reader doesn't parse yet
-- Viper Rapier: nothing read; also triggers
+
+**"falls to the ground"**: 5 (1 only this need)
+
+- Anchor Spear: nothing read; also light, darkness, smoke, terrain and walls, triggers, plain results the reader doesn't parse yet
+- Bomber's Saddle: nothing read; also changes to a strike
+- Predictable Silver Piece (Cheat Fate): nothing read; *only this need*
 - Warding Escutcheon: note only; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
 - Warding Escutcheon (Greater): note only; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Whistle of Calling: the GM's; also dying, unconscious and death
-- Witchwyrd Beacon: nothing read; also information, out of combat and the environment
+
+**"stride"**: 4 (1 only this need)
+
+- Demon-Hunting Bands: nothing read; also triggers, immunities and resistances by situation, information
+- Feather Step Stone: nothing read; also light, darkness, smoke, terrain and walls, triggers
+- Fire-Jump Ring (Fire Jump): nothing read; *only this need*
+- Invisible Chain Shirt (Obscured Approach): partial; also sustained, repeating and later effects
+
+**"stride up to"**: 4 (1 only this need)
+
+- Maestro's Chair: nothing read; also spells and the user's resources, sustained, repeating and later effects
+- Stepping Stone Shot: nothing read; also changes to a strike, objects and the item itself
+- Stepping Stone Shot (Greater): nothing read; also changes to a strike, objects and the item itself
+- The Cricket: nothing read; *only this need*
+
+**"falls prone"**: 4 (0 only this need)
+
+- Bola Shot: nothing read; also changes to a strike, plain results the reader doesn't parse yet
+- Drake Rifle (Fire) (Drake Shot): partial; also plain results the reader doesn't parse yet
+- Nap Gas Dispenser: partial; also dying, unconscious and death, plain results the reader doesn't parse yet
+- Sargassum Phial: note only; also several creatures at once, objects and the item itself, plain results the reader doesn't parse yet, minds, attitudes and behaviour
+
+**"jump"**: 4 (0 only this need)
+
+- Emerald Grasshopper: nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
+- Emerald Grasshopper (Greater): nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
+- Feather Token (Whip): nothing read; also actions and feats for the user, objects and the item itself
+- Sandals of the Stag: nothing read; also triggers
+
+**"mount"**: 3 (1 only this need)
+
+- Guangu of the Steppe (The Hammer of Hooves): note only; also bonuses only in some situations, several creatures at once
+- Hippogriff in a Jar: nothing read; also objects and the item itself, plain results the reader doesn't parse yet
+- Swiftmount Saddle: nothing read; *only this need*
+
+**"falling damage"**: 3 (0 only this need)
+
+- Colorful Coating (Red): note only; also light, darkness, smoke, terrain and walls, numbers from another roll
+- Invisible Net: nothing read; also numbers from another roll
+- Parachute Mail (Deploy Parachute): nothing read; also triggers, numbers from another roll
+
+**"move you"**: 3 (0 only this need)
+
+- Immovable Arm: nothing read; also actions and feats for the user, information, out of combat and the environment
+- Immovable Potion: partial; also sustained, repeating and later effects, plain results the reader doesn't parse yet
+- Spear of the Destroyer's Flame: note only; also choices on the card, information, out of combat and the environment
+
+**"step"**: 3 (0 only this need)
+
+- Mercurial Mantle (Cunning Dodge): partial; also triggers, changes to a strike, plain results the reader doesn't parse yet
+- Purloining Cloak: partial; also triggers, changes to a strike, plain results the reader doesn't parse yet
+- Viper Rapier: nothing read; also triggers
+
+**"glide"**: 2 (2 only this need)
+
+- Eagle Wing (Soar): the GM's; *only this need*
+- Gliding: the GM's; *only this need*
+
+**"leap"**: 2 (1 only this need)
+
+- Frog Chair (Frog Hop): note only; *only this need*
+- Little Love: nothing read; also triggers
+
+**"pushed back"**: 2 (0 only this need)
+
+- Blast Lance: partial; also out of combat and the environment
+- Blast Lance (Greater): partial; also out of combat and the environment
+
+**Other wordings**: 9 (2 only this need)
+
+- Deck of Harrowed Tales ("plane other than"): nothing read; *only this need*
+- Firefoot Popcorn ("can leap"): note only; also light, darkness, smoke, terrain and walls, sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet, messages, speech and sound
+- Gravity Inverter ("float up"): note only; also light, darkness, smoke, terrain and walls, numbers from another roll, immunities and resistances by situation, objects and the item itself, plain results the reader doesn't parse yet
+- Magnetizing ("move away"): nothing read; also light, darkness, smoke, terrain and walls
+- Maw of Hungry Shadows ("pull the creature"): partial; also plain results the reader doesn't parse yet, out of combat and the environment
+- Mountain to the Sky ("climb"): nothing read; also out of combat and the environment
+- Sphere of Annihilation ("move up to"): nothing read; also sustained, repeating and later effects
+- Sure-Step Potion ("can step"): partial; also light, darkness, smoke, terrain and walls, plain results the reader doesn't parse yet, out of combat and the environment
+- Worm Vial ("20-foot fall"): partial; *only this need*
 
 <a id="areas"></a>
 ### Light, darkness, smoke, terrain and walls
@@ -666,131 +917,167 @@ A lasting area that changes the map: light or darkness, smoke or fog that concea
 
 120 entries (and 15 of the modules' items).
 
-**Consumables**
+**"wall"**: 21 (0 only this need)
 
-- Alarm Snare: nothing read; also objects and the item itself, messages, speech and sound
-- Azure Worm Repellent: note only; also out of combat and the environment
-- Barricade Stone (Cube): nothing read; also objects and the item itself
-- Blooming Lotus Seed Pod: note only; also immunities and resistances by situation, several creatures at once, out of combat and the environment
-- Bottled Night: note only
-- Caltrop Snare: nothing read; also choices on the card
-- Candle of Revealing: note only; also range, reach and areas made larger, objects and the item itself, information
 - Colorful Coating (Blue): note only; also actions and feats for the user, objects and the item itself
-- Colorful Coating (Yellow): note only
-- Crimson Worm Repellent: note only; also out of combat and the environment
-- Echo Token: nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour, information
-- Effervescent Ampoule: nothing read; also information, out of combat and the environment
+- Cowl of Keys: nothing read; also objects and the item itself
+- Dream Hunter's Lodge (Expand Lodge): nothing read; also sustained, repeating and later effects, information, out of combat and the environment
+- Earthsight Box (Replicate Earth): nothing read; also sustained, repeating and later effects, information
+- Explorer's Yurt (Unroll): nothing read; also objects and the item itself, out of combat and the environment
 - Flame of The Radiant Spark: nothing read; also dying, unconscious and death
-- Flare Snare: nothing read
-- Flask of Elemental Earth: partial; also afflictions and persistent damage, plain results the reader doesn't parse yet, out of combat and the environment
 - Fulu of Fire Suppression: note only; also counteracting and ending effects, sustained, repeating and later effects, minds, attitudes and behaviour, out of combat and the environment
 - Fulu of Flood Suppression: note only; also counteracting and ending effects, sustained, repeating and later effects, out of combat and the environment
-- Healing Vapor (Greater): partial; also afflictions and persistent damage, bonuses only in some situations, several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
-- Healing Vapor (Lesser): partial; also afflictions and persistent damage, bonuses only in some situations, several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
-- Healing Vapor (Major): partial; also afflictions and persistent damage, bonuses only in some situations, several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
-- Healing Vapor (Moderate): partial; also afflictions and persistent damage, bonuses only in some situations, several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
-- Jade Cat: note only; also triggers, plain results the reader doesn't parse yet
-- Kimanéz Luminescent Toadstool: note only; also out of combat and the environment
-- Kraken Bottle: partial
-- Limning Gem: nothing read; also changes to a strike
+- Insistent Door Knocker: nothing read; also objects and the item itself
+- Insistent Door Knocker (Greater): nothing read; also objects and the item itself
+- Insistent Door Knocker (Major): nothing read; also objects and the item itself
+- Limestone Shield (Limestone Wall): note only; also changes to a strike, immunities and resistances by situation, sustained, repeating and later effects, objects and the item itself
 - Mutator Onyx: the GM's; also objects and the item itself
-- Popdust: nothing read
-- Prismatic Dust: the GM's; also out of combat and the environment
 - Privacy Ward Fulu (Chamber): nothing read; also bonuses only in some situations, several creatures at once, objects and the item itself, out of combat and the environment
 - Privacy Ward Fulu (Hallway): nothing read; also bonuses only in some situations, several creatures at once, objects and the item itself, out of combat and the environment
 - Privacy Ward Fulu (Room): nothing read; also bonuses only in some situations, several creatures at once, objects and the item itself, out of combat and the environment
+- Private Workshop: nothing read; also objects and the item itself, out of combat and the environment
+- Rampart Shield: nothing read; also changes to a strike, immunities and resistances by situation, sustained, repeating and later effects, objects and the item itself, out of combat and the environment
+- Sandcastle (Shape the Castle): nothing read; also choices on the card, objects and the item itself
+- Shadow Manse: note only; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
+- What Doors We Open (Open the Door Within): nothing read; also objects and the item itself, information
+
+**"radius"**: 20 (6 only this need)
+
+- Aroden's Hearthstone: nothing read; also range, reach and areas made larger, out of combat and the environment
+- Azure Worm Repellent: note only; also out of combat and the environment
+- Blooming Lotus Seed Pod: note only; also immunities and resistances by situation, several creatures at once, out of combat and the environment
+- Bottled Night: note only; *only this need*
+- Candle of Revealing: note only; also range, reach and areas made larger, objects and the item itself, information
+- Crimson Worm Repellent: note only; also out of combat and the environment
+- Detector Stone: nothing read; also information
+- Doomsday Door (Open Door): nothing read; also dying, unconscious and death, spells and the user's resources, objects and the item itself, information, out of combat and the environment
+- Godsbreath Bow: partial; also changes to a strike, plain results the reader doesn't parse yet, out of combat and the environment
+- Magnetite Scope (Expansion): nothing read; also changes to a strike
+- Magnetite Scope (Greater) (Expansion): nothing read; also changes to a strike
 - Purple Worm Repellent: note only; also out of combat and the environment
-- Ruby String: nothing read; also spells and the user's resources, out of combat and the environment
-- Setup Snare: nothing read; also choices on the card, plain results the reader doesn't parse yet
 - Shaping Sweet: note only; also sustained, repeating and later effects, messages, speech and sound, out of combat and the environment
-- Slippery Ribbon: nothing read; also triggers, objects and the item itself
-- Spark Wafer: partial
+- Spellcutter: nothing read; *only this need*
+- Twilight Lantern (Greater): nothing read; *only this need*
+- Twilight Lantern (Lesser): nothing read; *only this need*
+- Twilight Lantern (Major): nothing read; *only this need*
+- Twilight Lantern (Moderate): nothing read; *only this need*
+- Wintershot (Heroic) (Signal Flare): nothing read; also changes to a strike, counteracting and ending effects
+- Wintershot (Signal Flare): nothing read; also changes to a strike, counteracting and ending effects, choices on the card
+
+**"difficult terrain"**: 19 (5 only this need)
+
+- Boots of the Blight (Fungal Stride): note only; also immunities and resistances by situation
+- Colorful Coating (Yellow): note only; *only this need*
+- Doomsweeper (Clear the Way): the GM's; also counteracting and ending effects, objects and the item itself, information
+- Fleshgem (Earthspeaker): the GM's; also plain results the reader doesn't parse yet
+- Frostwalker Pattern: nothing read; also objects and the item itself
+- Jade Cat: note only; also triggers, plain results the reader doesn't parse yet
+- Jar of Shifting Sands (Spill Sand): note only; *only this need*
+- Sidestepping (Phase Through): nothing read; also plain results the reader doesn't parse yet
+- Slithermaw's Bane (Heroic) (Terrain Adaptation): nothing read; also bonuses only in some situations, sustained, repeating and later effects, out of combat and the environment
+- Slithermaw's Bane (Terrain Adaptation): nothing read; also bonuses only in some situations, out of combat and the environment
 - Swamp Lily Quilt: nothing read; also spells and the user's resources, out of combat and the environment
-- Warning Snare: nothing read; also information, messages, speech and sound, out of combat and the environment
+- The Big Sky: note only; also several creatures at once
+- The Eye of the Slumberer (Vortex): the GM's; also sustained, repeating and later effects, objects and the item itself
+- Thundercrasher: nothing read; also sustained, repeating and later effects
+- Underbrush Cloak (One with the Woods): note only; *only this need*
 - Winterstep Elixir (Greater): note only; also out of combat and the environment
-- Winterstep Elixir (Lesser): note only
-- Winterstep Elixir (Minor): note only
+- Winterstep Elixir (Lesser): note only; *only this need*
+- Winterstep Elixir (Minor): note only; *only this need*
 - Winterstep Elixir (Moderate): note only; also out of combat and the environment
 
-**Activations**
+**"cube"**: 10 (0 only this need)
 
-- Alchemical Atomizer: nothing read
-- Aroden's Hearthstone: nothing read; also range, reach and areas made larger, out of combat and the environment
-- Blade of Fallen Stars: partial
-- Boots of the Blight (Fungal Stride): note only; also immunities and resistances by situation
-- Boughshatter (Absorb Corruption): partial
-- Cowl of Keys: nothing read; also objects and the item itself
+- Barricade Stone (Cube): nothing read; also objects and the item itself
 - Cube of Force: nothing read; also counteracting and ending effects, sustained, repeating and later effects, objects and the item itself
 - Cube of Nex: nothing read; also sustained, repeating and later effects, objects and the item itself
 - Cube of Nex: nothing read; also counteracting and ending effects, sustained, repeating and later effects, objects and the item itself
 - Cube of Recall: nothing read; also choices on the card, information
-- Detector Stone: nothing read; also information
-- Diver's Gloves (Greater): nothing read; also triggers
-- Diver's Gloves (Lesser): nothing read; also triggers
-- Diver's Gloves (Moderate): nothing read; also triggers
-- Doomsday Door (Open Door): nothing read; also dying, unconscious and death, spells and the user's resources, objects and the item itself, information, out of combat and the environment
-- Doomsweeper (Clear the Way): the GM's; also counteracting and ending effects, objects and the item itself, information
-- Dream Hunter's Lodge (Expand Lodge): nothing read; also sustained, repeating and later effects, information, out of combat and the environment
-- Earthsight Box (Replicate Earth): nothing read; also sustained, repeating and later effects, information
+- Lesser Cube of Nex: nothing read; also counteracting and ending effects, sustained, repeating and later effects, objects and the item itself
+- Ruby String: nothing read; also spells and the user's resources, out of combat and the environment
+- Rusting Ammunition (Greater): partial; also afflictions and persistent damage, objects and the item itself, out of combat and the environment
+- Rusting Ammunition (Moderate): partial; also afflictions and persistent damage, objects and the item itself, out of combat and the environment
+- Shoony Shovel: nothing read; also information
+
+**"bright light"**: 7 (1 only this need)
+
 - Exploration Lens (Detecting): nothing read; also objects and the item itself, information, out of combat and the environment
 - Exploration Lens (Searching): nothing read; also bonuses only in some situations, objects and the item itself, out of combat and the environment
-- Explorer's Yurt (Unroll): nothing read; also objects and the item itself, out of combat and the environment
-- Fleshgem (Earthspeaker): the GM's; also plain results the reader doesn't parse yet
-- Frostwalker Pattern: nothing read; also objects and the item itself
 - Ghost Lantern: note only; also bonuses only in some situations, choices on the card, objects and the item itself
-- Godsbreath Bow: partial; also changes to a strike, plain results the reader doesn't parse yet, out of combat and the environment
-- Golden Goose (Golden Goose): nothing read; also sustained, repeating and later effects, plain results the reader doesn't parse yet
-- Goz Mask: note only; also changes to a strike
-- Goz Mask (Greater): note only; also changes to a strike
-- Insistent Door Knocker: nothing read; also objects and the item itself
-- Insistent Door Knocker (Greater): nothing read; also objects and the item itself
-- Insistent Door Knocker (Major): nothing read; also objects and the item itself
-- Jar of Shifting Sands (Spill Sand): note only
-- Kizidhar's Shield (Secure Site): note only; also several creatures at once, messages, speech and sound, out of combat and the environment
+- Prismatic Dust: the GM's; also out of combat and the environment
+- Sighting Shot: nothing read; *only this need*
+- Strand of the Seven Births (Hero-God's Whisper): partial; also bonuses only in some situations, several creatures at once, plain results the reader doesn't parse yet, messages, speech and sound
+- The Eclipse: nothing read; also triggers, sustained, repeating and later effects
+
+**"mist"**: 6 (0 only this need)
+
+- Echo Token: nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour, information
+- Healing Vapor (Greater): partial; also afflictions and persistent damage, bonuses only in some situations, several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
+- Healing Vapor (Lesser): partial; also afflictions and persistent damage, bonuses only in some situations, several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
+- Healing Vapor (Major): partial; also afflictions and persistent damage, bonuses only in some situations, several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
+- Healing Vapor (Moderate): partial; also afflictions and persistent damage, bonuses only in some situations, several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
 - Lambent Perfume (Light Incense): note only; also afflictions and persistent damage, immunities and resistances by situation, sustained, repeating and later effects, out of combat and the environment
-- Lance of Sun's Radiance (Banish Darkness): the GM's; also objects and the item itself, out of combat and the environment
-- Lesser Cube of Nex: nothing read; also counteracting and ending effects, sustained, repeating and later effects, objects and the item itself
-- Limestone Shield (Limestone Wall): note only; also changes to a strike, immunities and resistances by situation, sustained, repeating and later effects, objects and the item itself
-- Magnetite Scope (Expansion): nothing read; also changes to a strike
-- Magnetite Scope (Greater) (Expansion): nothing read; also changes to a strike
-- Mantle of Far Horizons (Gaze upon the Horizon): note only; also sustained, repeating and later effects, out of combat and the environment
+
+**"smoke"**: 5 (0 only this need)
+
+- Golden Goose (Golden Goose): nothing read; also sustained, repeating and later effects, plain results the reader doesn't parse yet
 - Meloth's Lifedrinker (Level 7) (Lifedrink): partial; also changes to a strike, objects and the item itself
 - Nightmare's Lament (Fuming Cloak): partial; also immunities and resistances by situation, plain results the reader doesn't parse yet
 - Pipe of Dancing Smoke: nothing read; also choices on the card, information, out of combat and the environment
 - Preserving Shot: nothing read; also out of combat and the environment
-- Private Workshop: nothing read; also objects and the item itself, out of combat and the environment
-- Rampart Shield: nothing read; also changes to a strike, immunities and resistances by situation, sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Ring of Fair Assessment (Fair Assessment): the GM's; also choices on the card, information
-- Rusting Ammunition (Greater): partial; also afflictions and persistent damage, objects and the item itself, out of combat and the environment
-- Rusting Ammunition (Moderate): partial; also afflictions and persistent damage, objects and the item itself, out of combat and the environment
-- Sandcastle (Shape the Castle): nothing read; also choices on the card, objects and the item itself
+
+**"trip wire"**: 4 (1 only this need)
+
+- Alarm Snare: nothing read; also objects and the item itself, messages, speech and sound
+- Caltrop Snare: nothing read; also choices on the card
+- Flare Snare: nothing read; *only this need*
+- Warning Snare: nothing read; also information, messages, speech and sound, out of combat and the environment
+
+**"fog"**: 4 (0 only this need)
+
+- Goz Mask: note only; also changes to a strike
+- Goz Mask (Greater): note only; also changes to a strike
+- Mantle of Far Horizons (Gaze upon the Horizon): note only; also sustained, repeating and later effects, out of combat and the environment
 - Sawtooth Reaper (Bloodmist Whirl): partial; also changes to a strike, actions and feats for the user, sustained, repeating and later effects, objects and the item itself
-- Shadow Manse: note only; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Shadowpiercer (Absorb Shadows): partial; also counteracting and ending effects, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
-- Shoony Shovel: nothing read; also information
-- Sidestepping (Phase Through): nothing read; also plain results the reader doesn't parse yet
-- Sighting Shot: nothing read
-- Slithermaw's Bane (Heroic) (Terrain Adaptation): nothing read; also bonuses only in some situations, sustained, repeating and later effects, out of combat and the environment
-- Slithermaw's Bane (Terrain Adaptation): nothing read; also bonuses only in some situations, out of combat and the environment
-- Soulspark Candle: nothing read
-- Spectacles of Piercing Sight: note only
-- Spellcutter: nothing read
-- Spider Chair (Web Swing): nothing read; also information
-- Strand of the Seven Births (Hero-God's Whisper): partial; also bonuses only in some situations, several creatures at once, plain results the reader doesn't parse yet, messages, speech and sound
-- Sun Slayer (Sunset): note only
-- The Big Sky: note only; also several creatures at once
-- The Eclipse: nothing read; also triggers, sustained, repeating and later effects
-- The Eye of the Slumberer (Vortex): the GM's; also sustained, repeating and later effects, objects and the item itself
-- Thundercrasher: nothing read; also sustained, repeating and later effects
-- Twilight Lantern (Greater): nothing read
-- Twilight Lantern (Lesser): nothing read
-- Twilight Lantern (Major): nothing read
-- Twilight Lantern (Moderate): nothing read
-- Underbrush Cloak (One with the Woods): note only
-- Undertaker's Manifest: note only
-- What Doors We Open (Open the Door Within): nothing read; also objects and the item itself, information
-- Wintershot (Heroic) (Signal Flare): nothing read; also changes to a strike, counteracting and ending effects
-- Wintershot (Signal Flare): nothing read; also changes to a strike, counteracting and ending effects, choices on the card
+
+**"dim light"**: 3 (1 only this need)
+
+- Kimanéz Luminescent Toadstool: note only; also out of combat and the environment
+- Limning Gem: nothing read; also changes to a strike
+- Sun Slayer (Sunset): note only; *only this need*
+
+**"barrier"**: 3 (0 only this need)
+
+- Diver's Gloves (Greater): nothing read; also triggers
+- Diver's Gloves (Lesser): nothing read; also triggers
+- Diver's Gloves (Moderate): nothing read; also triggers
+
+**"cloud of"**: 2 (2 only this need)
+
+- Kraken Bottle: partial; *only this need*
+- Undertaker's Manifest: note only; *only this need*
+
+**"sheet of"**: 2 (1 only this need)
+
+- Ring of Fair Assessment (Fair Assessment): the GM's; also choices on the card, information
+- Spectacles of Piercing Sight: note only; *only this need*
+
+**Other wordings**: 14 (6 only this need)
+
+- Alchemical Atomizer ("forms a cloud"): nothing read; *only this need*
+- Blade of Fallen Stars ("emanation centered"): partial; *only this need*
+- Boughshatter (Absorb Corruption) ("light in a 20-foot"): partial; *only this need*
+- Effervescent Ampoule ("pressure plate"): nothing read; also information, out of combat and the environment
+- Flask of Elemental Earth ("hazardous terrain"): partial; also afflictions and persistent damage, plain results the reader doesn't parse yet, out of combat and the environment
+- Kizidhar's Shield (Secure Site) ("wall of"): note only; also several creatures at once, messages, speech and sound, out of combat and the environment
+- Lance of Sun's Radiance (Banish Darkness) ("shed light"): the GM's; also objects and the item itself, out of combat and the environment
+- Popdust ("first creature that applies"): nothing read; *only this need*
+- Setup Snare ("enters the square"): nothing read; also choices on the card, plain results the reader doesn't parse yet
+- Shadowpiercer (Absorb Shadows) ("darkness"): partial; also counteracting and ending effects, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
+- Slippery Ribbon ("slippery"): nothing read; also triggers, objects and the item itself
+- Soulspark Candle ("light the candle"): nothing read; *only this need*
+- Spark Wafer ("column of"): partial; *only this need*
+- Spider Chair (Web Swing) ("web"): nothing read; also information
 
 <a id="triggers"></a>
 ### Triggers
@@ -799,108 +1086,144 @@ A card offered when its trigger happens (an attack against the user, a Strike, a
 
 97 entries (and 1 of the modules' items).
 
-**Consumables**
+**"Trigger: you hit a …"**: 4 (0 only this need)
 
 - Chain of Stars: nothing read; also changes to a strike, several creatures at once, objects and the item itself
-- Emergency Eye: nothing read; also plain results the reader doesn't parse yet, out of combat and the environment
-- Exuviae Powder: note only; also dying, unconscious and death, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
-- Fortifying Pebble: nothing read; also objects and the item itself, plain results the reader doesn't parse yet
-- Fulu of the Drunken Monkey: partial; also afflictions and persistent damage, bonuses only in some situations
 - Golden Branding Iron: nothing read; also changes to a strike, several creatures at once, information
 - Golden Branding Iron (Greater): nothing read; also changes to a strike, several creatures at once, information
 - Golden Branding Iron (Major): nothing read; also changes to a strike, several creatures at once, information
-- Inventor's Fulu: nothing read; also minds, attitudes and behaviour, out of combat and the environment
-- Key of Unwinding: note only; also changes to a strike, actions and feats for the user, spells and the user's resources, several creatures at once, plain results the reader doesn't parse yet
-- Liquid Gold: nothing read; also objects and the item itself
-- Liquid Gold (Greater): nothing read; also objects and the item itself
-- Mending Lattice: nothing read; also objects and the item itself, out of combat and the environment
-- Murderer's Knot: partial; also afflictions and persistent damage, plain results the reader doesn't parse yet
-- Navigator's Feather: note only; also out of combat and the environment
-- Oily Button: nothing read; also actions and feats for the user
-- Persistent Lodestone: nothing read; also changes to a strike, objects and the item itself
-- Pyrefeather Token: partial; also numbers from another roll, dying, unconscious and death, plain results the reader doesn't parse yet
-- Reflecting Shard: the GM's; also counteracting and ending effects
-- Reflecting Shard (Greater): the GM's; also counteracting and ending effects
-- Spellslasher: the GM's; also counteracting and ending effects
 
-**Activations**
+**"Trigger: you gain an …"**: 3 (0 only this need)
 
-- Aeon Stone (Olivine Pendeloque) (Still Earth): partial; also changes to a strike, counteracting and ending effects
-- Aerial Cloak (Fall Gently): nothing read; also choices on the card
 - Ancestral Embrace: nothing read; also sustained, repeating and later effects, out of combat and the environment
-- Ancestral Embrace: the GM's; also spells and the user's resources, objects and the item itself, out of combat and the environment
-- Ancestral Geometry: nothing read
+- Helm Of Zeal (Divine Fervor): nothing read; also actions and feats for the user, objects and the item itself
+- Helm Of Zeal (Greater) (Divine Fervor): nothing read; also actions and feats for the user, objects and the item itself
+
+**"Trigger: the triggering strike …"**: 3 (0 only this need)
+
 - Arrow-Catching Shield: nothing read; also changes to a strike, actions and feats for the user
-- Auspicious Scepter (Fortunate Strike): nothing read; also changes to a strike
-- Banner of Common Cause (Pass the Banner): nothing read
-- Beguiling Crown: note only; also changes to a strike
-- Belimarius's Invidious Halberd (Absorb Arcana): note only; also changes to a strike, spells and the user's resources, plain results the reader doesn't parse yet
-- Belt of Giant Strength: nothing read
 - Black Hole Armor: nothing read; also changes to a strike
-- Blood-Drinker (Drink Blood): partial; also plain results the reader doesn't parse yet
-- Briar: nothing read; also dying, unconscious and death
-- Cayden's Tankard: nothing read; also counteracting and ending effects
-- Choral Toga (Elysium's Gasp): note only; also afflictions and persistent damage, immunities and resistances by situation
-- Collar of the Shifting Spider: nothing read
-- Conflagration Club (Absorb Arcana): nothing read; also spells and the user's resources, choices on the card
-- Deflecting Branch: nothing read; also numbers from another roll
-- Devil's Trident: nothing read; also afflictions and persistent damage
-- Dragonaut's Wingsuit (Descend): note only
-- Drumish Pearl Token (Subversive Friendship): nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour
-- Empty Hand Marking (Reproach): the GM's; also plain results the reader doesn't parse yet, out of combat and the environment
-- Faultline Hammer (Create Faultline): nothing read; also changes to a strike
-- Festrem Mortu: partial; also afflictions and persistent damage, out of combat and the environment
+- Lodestone Shield (Attract Projectile): nothing read; also changes to a strike, actions and feats for the user
+
+**"Trigger: attempt a counteract …"**: 3 (0 only this need)
+
 - Flowing Water (Greater) (Embody the Truce): the GM's; also counteracting and ending effects
 - Flowing Water (Lesser) (Embody the Truce): the GM's; also counteracting and ending effects
 - Flowing Water (Moderate) (Embody the Truce): the GM's; also counteracting and ending effects
-- Helm Of Zeal (Divine Fervor): nothing read; also actions and feats for the user, objects and the item itself
-- Helm Of Zeal (Greater) (Divine Fervor): nothing read; also actions and feats for the user, objects and the item itself
-- Hunter's Dawn: nothing read; also dying, unconscious and death, spells and the user's resources, counteracting and ending effects, information
-- Immortal Bastion: nothing read; also dying, unconscious and death, sustained, repeating and later effects
-- Kaldemash's Lament: nothing read; also sustained, repeating and later effects
-- Laurel of the Empath: nothing read
-- Lion's Call (Echo the Call): the GM's; also information, messages, speech and sound
-- Locket of Love Left Behind (True Love's Power): the GM's; also dying, unconscious and death, sustained, repeating and later effects, out of combat and the environment
-- Lodestone Shield (Attract Projectile): nothing read; also changes to a strike, actions and feats for the user
-- Lost Ember (Fix Focus): nothing read; also counteracting and ending effects, choices on the card, plain results the reader doesn't parse yet
-- Martyr's Shield (Hellbreakers) (Self Sacrifice): nothing read; also actions and feats for the user, several creatures at once, objects and the item itself
-- Name Pendant (Alert Superior Officer): nothing read; also several creatures at once
-- Radiant Spark: the GM's; also spells and the user's resources, objects and the item itself, out of combat and the environment
-- Reaper's Lancet: nothing read; also afflictions and persistent damage
-- Reaper's Toll (Reaper's Claim): partial; also changes to a strike, numbers from another roll, dying, unconscious and death, plain results the reader doesn't parse yet
-- Redeemer's Pistol: nothing read; also afflictions and persistent damage, immunities and resistances by situation, choices on the card, plain results the reader doesn't parse yet, information
+
+**"Trigger: the troop under …"**: 2 (2 only this need)
+
+- Warmaster's Baton (Greater) (Rally Forth): nothing read; *only this need*
+- Warmaster's Baton (Rally Forth): nothing read; *only this need*
+
+**"triggering action"**: 2 (1 only this need)
+
+- Stifling Shield (Silence Falls): partial; *only this need*
+- Whispering Veil (Unforeseen Alert): nothing read; also messages, speech and sound
+
+**"Trigger: you roll for …"**: 2 (0 only this need)
+
+- Liquid Gold: nothing read; also objects and the item itself
+- Liquid Gold (Greater): nothing read; also objects and the item itself
+
+**"Trigger: you succeed at …"**: 2 (0 only this need)
+
+- Oily Button: nothing read; also actions and feats for the user
+- Pyrefeather Token: partial; also numbers from another roll, dying, unconscious and death, plain results the reader doesn't parse yet
+
+**"Trigger: you are targeted …"**: 2 (0 only this need)
+
+- Reflecting Shard: the GM's; also counteracting and ending effects
+- Reflecting Shard (Greater): the GM's; also counteracting and ending effects
+
+**"Trigger: flakes of acid …"**: 2 (0 only this need)
+
 - Rustbringer (Greater) (Rusting Disarm): nothing read; also objects and the item itself, plain results the reader doesn't parse yet
 - Rustbringer (Rusting Disarm): nothing read; also objects and the item itself, plain results the reader doesn't parse yet
+
+**"Trigger: the sanguine klar …"**: 2 (0 only this need)
+
 - Sanguine Klar: nothing read; also numbers from another roll, objects and the item itself
 - Sanguine Klar (Greater): nothing read; also numbers from another roll, objects and the item itself
-- Scale of Igroon: nothing read; also choices on the card, out of combat and the environment
-- Secret-Keeper's Mask (Father Skinsaw): note only; also afflictions and persistent damage, bonuses only in some situations
-- Sensei's Parasol (Defensive Redirection): nothing read; also changes to a strike, numbers from another roll
-- Shadowpiercer (Rebuff Gloom): the GM's; also spells and the user's resources, counteracting and ending effects, plain results the reader doesn't parse yet
-- Shield of Snakes (Snap Up): nothing read
-- Sorshen's Sinuous Guisarme (Arcane Shift): nothing read; also changes to a strike, spells and the user's resources, objects and the item itself
-- Spell Bastion: nothing read; also spells and the user's resources
-- Spell Duelist's Siphon: the GM's; also spells and the user's resources, counteracting and ending effects
-- Spellbook of Redundant Enchantment (Retain Incantation): nothing read
-- Starless Scope: nothing read; also changes to a strike, spells and the user's resources, objects and the item itself
-- Stifling Shield (Silence Falls): partial
+
+**"Trigger: you try to …"**: 2 (0 only this need)
+
 - Storm Flash (Divert Lightning): nothing read; also changes to a strike, choices on the card
 - Storm Flash (Greater) (Divert Lightning): nothing read; also changes to a strike, choices on the card
-- Suit of Armoire: nothing read
-- The Hollow Star: nothing read; also changes to a strike, objects and the item itself, messages, speech and sound
-- The Juggler: nothing read
-- The Publican: nothing read; also minds, attitudes and behaviour
-- Tumbler's Belt (Land With Grace): nothing read
-- Turnabout Shield: nothing read; also changes to a strike, numbers from another roll
-- Undead Scourge (Sever from the Void): note only; also counteracting and ending effects
-- Urn of Ashes (Doom the Urn): nothing read; also dying, unconscious and death, objects and the item itself, out of combat and the environment
-- Uzunjati Storytelling Amulet (Enamoring Story): the GM's; also minds, attitudes and behaviour
+
+**"Trigger: you direct the …"**: 2 (0 only this need)
+
 - Victory Plate: nothing read; also choices on the card
 - Victory Plate (Greater): nothing read; also choices on the card
-- Warmaster's Baton (Greater) (Rally Forth): nothing read
-- Warmaster's Baton (Rally Forth): nothing read
-- Whisperer of Souls: nothing read; also changes to a strike, choices on the card
-- Whispering Veil (Unforeseen Alert): nothing read; also messages, speech and sound
+
+**Other wordings**: 66 (11 only this need)
+
+- Aeon Stone (Olivine Pendeloque) (Still Earth) ("Trigger: you become confused …"): partial; also changes to a strike, counteracting and ending effects
+- Aerial Cloak (Fall Gently) ("Trigger: the cloak catches …"): nothing read; also choices on the card
+- Ancestral Embrace ("Trigger: ancestral embrace reduces …"): the GM's; also spells and the user's resources, objects and the item itself, out of combat and the environment
+- Ancestral Geometry ("Trigger: replace the roll …"): nothing read; *only this need*
+- Auspicious Scepter (Fortunate Strike) ("Trigger: your luck magic …"): nothing read; also changes to a strike
+- Banner of Common Cause (Pass the Banner) ("Trigger: a member of …"): nothing read; *only this need*
+- Beguiling Crown ("Trigger: the creature must …"): note only; also changes to a strike
+- Belimarius's Invidious Halberd (Absorb Arcana) ("Trigger: the halberd attempts …"): note only; also changes to a strike, spells and the user's resources, plain results the reader doesn't parse yet
+- Belt of Giant Strength ("Trigger: attempt an athletics …"): nothing read; *only this need*
+- Blood-Drinker (Drink Blood) ("Trigger: you reduce a …"): partial; also plain results the reader doesn't parse yet
+- Briar ("Trigger: briar resurrects its …"): nothing read; also dying, unconscious and death
+- Cayden's Tankard ("Trigger: calmly swigging a …"): nothing read; also counteracting and ending effects
+- Choral Toga (Elysium's Gasp) ("Trigger: purifying gusts of …"): note only; also afflictions and persistent damage, immunities and resistances by situation
+- Collar of the Shifting Spider ("Trigger: the metal points …"): nothing read; *only this need*
+- Conflagration Club (Absorb Arcana) ("Trigger: you mentally align …"): nothing read; also spells and the user's resources, choices on the card
+- Deflecting Branch ("Trigger: you swing the …"): nothing read; also numbers from another roll
+- Devil's Trident ("Trigger: the target must …"): nothing read; also afflictions and persistent damage
+- Dragonaut's Wingsuit (Descend) ("Trigger: your fall slows …"): note only; *only this need*
+- Drumish Pearl Token (Subversive Friendship) ("Trigger: you automatically increase …"): nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour
+- Emergency Eye ("Trigger: you become blinded …"): nothing read; also plain results the reader doesn't parse yet, out of combat and the environment
+- Empty Hand Marking (Reproach) ("Trigger: the maximum duration …"): the GM's; also plain results the reader doesn't parse yet, out of combat and the environment
+- Exuviae Powder ("Trigger: you would be …"): note only; also dying, unconscious and death, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
+- Faultline Hammer (Create Faultline) ("Trigger: until the end …"): nothing read; also changes to a strike
+- Festrem Mortu ("Trigger: your last action …"): partial; also afflictions and persistent damage, out of combat and the environment
+- Fortifying Pebble ("Trigger: the affixed object …"): nothing read; also objects and the item itself, plain results the reader doesn't parse yet
+- Fulu of the Drunken Monkey ("Trigger: you attempt a …"): partial; also afflictions and persistent damage, bonuses only in some situations
+- Hunter's Dawn ("Trigger: the target is …"): nothing read; also dying, unconscious and death, spells and the user's resources, counteracting and ending effects, information
+- Immortal Bastion ("Trigger: you avoid gaining …"): nothing read; also dying, unconscious and death, sustained, repeating and later effects
+- Inventor's Fulu ("Trigger: you critically fail …"): nothing read; also minds, attitudes and behaviour, out of combat and the environment
+- Kaldemash's Lament ("Trigger: you adjust the …"): nothing read; also sustained, repeating and later effects
+- Key of Unwinding ("Trigger: you or an …"): note only; also changes to a strike, actions and feats for the user, spells and the user's resources, several creatures at once, plain results the reader doesn't parse yet
+- Laurel of the Empath ("Trigger: you take half …"): nothing read; *only this need*
+- Lion's Call (Echo the Call) ("Trigger: you immediately learn …"): the GM's; also information, messages, speech and sound
+- Locket of Love Left Behind (True Love's Power) ("Trigger: your love pulls …"): the GM's; also dying, unconscious and death, sustained, repeating and later effects, out of combat and the environment
+- Lost Ember (Fix Focus) ("Trigger: a speck of …"): nothing read; also counteracting and ending effects, choices on the card, plain results the reader doesn't parse yet
+- Martyr's Shield (Hellbreakers) (Self Sacrifice) ("Trigger: when you activate …"): nothing read; also actions and feats for the user, several creatures at once, objects and the item itself
+- Mending Lattice ("Trigger: the affixed item …"): nothing read; also objects and the item itself, out of combat and the environment
+- Murderer's Knot ("Trigger: you damage an …"): partial; also afflictions and persistent damage, plain results the reader doesn't parse yet
+- Name Pendant (Alert Superior Officer) ("Trigger: the pendent alerts …"): nothing read; also several creatures at once
+- Navigator's Feather ("Trigger: you would roll …"): note only; also out of combat and the environment
+- Persistent Lodestone ("Trigger: you miss on …"): nothing read; also changes to a strike, objects and the item itself
+- Radiant Spark ("Trigger: the radiant spark …"): the GM's; also spells and the user's resources, objects and the item itself, out of combat and the environment
+- Reaper's Lancet ("Trigger: you poison the …"): nothing read; also afflictions and persistent damage
+- Reaper's Toll (Reaper's Claim) ("Trigger: a creature within …"): partial; also changes to a strike, numbers from another roll, dying, unconscious and death, plain results the reader doesn't parse yet
+- Redeemer's Pistol ("Trigger: the protective spirit …"): nothing read; also afflictions and persistent damage, immunities and resistances by situation, choices on the card, plain results the reader doesn't parse yet, information
+- Scale of Igroon ("Trigger: you reflect the …"): nothing read; also choices on the card, out of combat and the environment
+- Secret-Keeper's Mask (Father Skinsaw) ("Trigger: the bleeding wound …"): note only; also afflictions and persistent damage, bonuses only in some situations
+- Sensei's Parasol (Defensive Redirection) ("Trigger: you redirect the …"): nothing read; also changes to a strike, numbers from another roll
+- Shadowpiercer (Rebuff Gloom) ("Trigger: spend a mythic …"): the GM's; also spells and the user's resources, counteracting and ending effects, plain results the reader doesn't parse yet
+- Shield of Snakes (Snap Up) ("Trigger: the shield of …"): nothing read; *only this need*
+- Sorshen's Sinuous Guisarme (Arcane Shift) ("Trigger: the guisarme transforms …"): nothing read; also changes to a strike, spells and the user's resources, objects and the item itself
+- Spell Bastion ("Trigger: you unleash the …"): nothing read; also spells and the user's resources
+- Spell Duelist's Siphon ("Trigger: the grimoire attempts …"): the GM's; also spells and the user's resources, counteracting and ending effects
+- Spellbook of Redundant Enchantment (Retain Incantation) ("Trigger: you quickly divert …"): nothing read; *only this need*
+- Spellslasher ("Trigger: you are the …"): the GM's; also counteracting and ending effects
+- Starless Scope ("Trigger: you attempt to …"): nothing read; also changes to a strike, spells and the user's resources, objects and the item itself
+- Suit of Armoire ("triggering attack"): nothing read; *only this need*
+- The Hollow Star ("Trigger: you speak in …"): nothing read; also changes to a strike, objects and the item itself, messages, speech and sound
+- The Juggler ("Trigger: you grab the …"): nothing read; *only this need*
+- The Publican ("Trigger: you improve the …"): nothing read; also minds, attitudes and behaviour
+- Tumbler's Belt (Land With Grace) ("Trigger: treat your fall …"): nothing read; *only this need*
+- Turnabout Shield ("Trigger: the ammunition enters …"): nothing read; also changes to a strike, numbers from another roll
+- Undead Scourge (Sever from the Void) ("Trigger: you disrupt the …"): note only; also counteracting and ending effects
+- Urn of Ashes (Doom the Urn) ("Trigger: the ashes in …"): nothing read; also dying, unconscious and death, objects and the item itself, out of combat and the environment
+- Uzunjati Storytelling Amulet (Enamoring Story) ("Trigger: the perfect anecdote …"): the GM's; also minds, attitudes and behaviour
+- Whisperer of Souls ("Trigger: you choose whether …"): nothing read; also changes to a strike, choices on the card
 
 <a id="strike"></a>
 ### Changes to a Strike
@@ -909,124 +1232,169 @@ A change to the triggering or the next Strike (damage added on a hit, ignoring c
 
 113 entries (and 14 of the modules' items).
 
-**Consumables**
-
-- Condensed Mana: nothing read; also several creatures at once, plain results the reader doesn't parse yet, messages, speech and sound
-- Electromuscular Stimulator: note only; also afflictions and persistent damage, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
-- Iron Cube: partial; also actions and feats for the user
-- Iron Cudgel: partial
-- Iron Equalizer: nothing read; also actions and feats for the user
-- Moonkeep Lily: nothing read; also afflictions and persistent damage, counteracting and ending effects, objects and the item itself, out of combat and the environment
-- Necrobinding Serum: partial; also bonuses only in some situations, out of combat and the environment
-- Octopus Potion (Greater): partial; also actions and feats for the user, numbers from another roll, sustained, repeating and later effects, plain results the reader doesn't parse yet, messages, speech and sound
-- Octopus Potion (Lesser): partial; also actions and feats for the user, numbers from another roll, sustained, repeating and later effects, plain results the reader doesn't parse yet, messages, speech and sound
-- Octopus Potion (Moderate): partial; also actions and feats for the user, numbers from another roll, sustained, repeating and later effects, plain results the reader doesn't parse yet, messages, speech and sound
-- Portable Seal (Lesser): partial; also immunities and resistances by situation
-- Portable Seal (Major): partial; also immunities and resistances by situation
-- Portable Seal (Moderate): partial; also immunities and resistances by situation
-- Potion of Grounding: note only; also several creatures at once
-- Reactive Flash: nothing read; also plain results the reader doesn't parse yet
-- Windstep Sheath: nothing read; also actions and feats for the user
-
-**Activations**
+**"attack roll"**: 14 (1 only this need)
 
 - Animate Dreamer (Unleash Spell): the GM's; also spells and the user's resources
-- Ankylostar: the GM's; also actions and feats for the user, several creatures at once
-- Antler Arrow: partial
-- Arcing Hand Crossbow (Curve Bolt): partial
-- Awakened Cold Iron Shot: partial; also counteracting and ending effects, objects and the item itself, plain results the reader doesn't parse yet
-- Beacon Shot: partial
-- Bomber's Saddle: nothing read; also objects and the item itself
-- Boots of the Secret Blade (Draw Secret Blade): nothing read; also sustained, repeating and later effects
-- Boots of the Secret Blade (Greater) (Draw Secret Blade): nothing read; also sustained, repeating and later effects
-- Boots of the Secret Blade (Major) (Draw Secret Blade): nothing read; also sustained, repeating and later effects
-- Boughshatter (Splintering Strike): partial; also plain results the reader doesn't parse yet
-- Burrowing Bolt: nothing read; also objects and the item itself, messages, speech and sound
-- Burrowing Bolt (Greater): nothing read; also objects and the item itself, messages, speech and sound
-- Cauthooj Bagpipes (Throw Song): partial; also numbers from another roll, choices on the card
-- Chainbreaker (Greater) (Liberating Strike): nothing read; also several creatures at once, plain results the reader doesn't parse yet
-- Chainbreaker (Liberating Strike): nothing read; also several creatures at once, plain results the reader doesn't parse yet
-- Chaplain's Cudgel (Bow to a Higher Power): nothing read; also information
-- Chime of Opening: nothing read; also objects and the item itself, plain results the reader doesn't parse yet
-- Coldstar Pistols: partial
-- Corpsecaller Round: partial; also dying, unconscious and death, spells and the user's resources, objects and the item itself, out of combat and the environment
+- Coldstar Pistols: partial; *only this need*
 - Crimson Fulcrum Lens: nothing read; also objects and the item itself
 - Cunning: nothing read; also objects and the item itself, information
-- Dagger of Eternal Sleep: nothing read; also dying, unconscious and death, immunities and resistances by situation, sustained, repeating and later effects, out of combat and the environment
 - Decanter of Endless Water: nothing read; also sustained, repeating and later effects, messages, speech and sound
 - Emerald Fulcrum Lens: nothing read; also objects and the item itself
 - Extinguishing Ball: note only; also afflictions and persistent damage, messages, speech and sound, out of combat and the environment
-- Fairy Bullet: partial; also choices on the card, objects and the item itself, information
-- Falconsight Eye: note only; also plain results the reader doesn't parse yet, information
-- Fate Shot: nothing read; also plain results the reader doesn't parse yet
-- Feather Token (Chest) (Ammunition): nothing read; also objects and the item itself
-- Feather Token (Ladder) (Ammunition): nothing read
-- Feather Token (Tree) (Ammunition): nothing read; also objects and the item itself
-- Flashblade (Greater) (Prepare Flash): nothing read
-- Flashblade (Major) (Prepare Flash): nothing read
-- Flashblade (Prepare Flash): nothing read
-- Gyroscopic Stabilizer: the GM's; also dying, unconscious and death
-- Hex Blaster: partial; also afflictions and persistent damage, dying, unconscious and death, plain results the reader doesn't parse yet, out of combat and the environment
-- Highhelm War Shield (Greater): partial; also afflictions and persistent damage, sustained, repeating and later effects
-- Highhelm War Shield (Lesser): partial; also afflictions and persistent damage, sustained, repeating and later effects
-- Highhelm War Shield (Moderate): partial; also afflictions and persistent damage, sustained, repeating and later effects
-- Hippopotamus Klar (Engulfing Jaws): partial; also several creatures at once
-- Horned Hand Rests: partial; also plain results the reader doesn't parse yet
-- Horned Hand Rests (Greater): partial; also plain results the reader doesn't parse yet
-- Impossible: nothing read
-- Jawbreaker Shield: partial; also plain results the reader doesn't parse yet, out of combat and the environment
-- Kaldemash's Lament: note only; also sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet
-- Magekiller Bullet: partial; also afflictions and persistent damage, counteracting and ending effects, plain results the reader doesn't parse yet, out of combat and the environment
-- Mamlambo Scale (Luminous Lure): partial; also sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
+- Necrobinding Serum: partial; also bonuses only in some situations, out of combat and the environment
+- Ochre Fulcrum Lens: nothing read; also objects and the item itself
+- Phoenix Necklace: nothing read; also sustained, repeating and later effects
+- Sanguine Ammunition: note only; also afflictions and persistent damage, bonuses only in some situations
+- Stonethroat Ammunition: partial; also plain results the reader doesn't parse yet, out of combat and the environment
+- Tome of Scintillating Sleet: note only; also plain results the reader doesn't parse yet
+- Undead Compendium: partial; also bonuses only in some situations, several creatures at once
+
+**"strike"**: 13 (1 only this need)
+
+- Ankylostar: the GM's; also actions and feats for the user, several creatures at once
+- Cauthooj Bagpipes (Throw Song): partial; also numbers from another roll, choices on the card
+- Chainbreaker (Greater) (Liberating Strike): nothing read; also several creatures at once, plain results the reader doesn't parse yet
+- Chainbreaker (Liberating Strike): nothing read; also several creatures at once, plain results the reader doesn't parse yet
+- Iron Cudgel: partial; *only this need*
 - Mantis Embrace (Crushing Embrace): partial; also dying, unconscious and death, objects and the item itself, plain results the reader doesn't parse yet
 - Mantis Embrace (Greater) (Crushing Embrace): partial; also dying, unconscious and death, objects and the item itself, plain results the reader doesn't parse yet
-- Mindlock Shot: nothing read; also choices on the card
-- Minotaur Chair: partial; also plain results the reader doesn't parse yet
-- Morphing Weapon: nothing read; also actions and feats for the user, range, reach and areas made larger, choices on the card
-- Ochre Fulcrum Lens: nothing read; also objects and the item itself
-- Ouroboros Flail (Greater) (Infinite Links): nothing read; also objects and the item itself
-- Ouroboros Flail (Infinite Links): nothing read; also objects and the item itself
-- Ouroboros Flail (Major) (Infinite Links): nothing read; also objects and the item itself
-- Phoenix Necklace: nothing read; also sustained, repeating and later effects
-- Piereta: nothing read
-- Reaper's Grasp (Soul Shot): nothing read; also choices on the card
-- Retribution (Vengeful Slice): nothing read
 - Ring of the Tiger: partial; also plain results the reader doesn't parse yet
-- Ring of the Tiger (Greater): partial; also objects and the item itself
-- Sanguine Ammunition: note only; also afflictions and persistent damage, bonuses only in some situations
-- Scouting Arrow: nothing read; also objects and the item itself, information
-- Serpent's Lash (Slither Strike): partial
+- Singing Bowl of the Versatile Stance: nothing read; also actions and feats for the user
+- Spiritsight Crossbow (Ethereal Shot): nothing read; also objects and the item itself, out of combat and the environment
+- Venom Lash (Envenom): partial; also afflictions and persistent damage, plain results the reader doesn't parse yet
+- Whip of Compliance: nothing read; also minds, attitudes and behaviour
+- Windstep Sheath: nothing read; also actions and feats for the user
+
+**"on a hit"**: 12 (2 only this need)
+
+- Antler Arrow: partial; *only this need*
+- Awakened Cold Iron Shot: partial; also counteracting and ending effects, objects and the item itself, plain results the reader doesn't parse yet
+- Beacon Shot: partial; *only this need*
+- Corpsecaller Round: partial; also dying, unconscious and death, spells and the user's resources, objects and the item itself, out of combat and the environment
+- Magekiller Bullet: partial; also afflictions and persistent damage, counteracting and ending effects, plain results the reader doesn't parse yet, out of combat and the environment
 - Shatterpoint Ammunition: partial; also objects and the item itself
 - Shatterpoint Ammunition (Greater): partial; also objects and the item itself
 - Shatterpoint Ammunition (Major): partial; also objects and the item itself
-- Shuln Fang Katar (Piercing Critical): nothing read; also numbers from another roll, objects and the item itself
-- Silhouette Cloak: partial; also immunities and resistances by situation, objects and the item itself
-- Silhouette Cloak: partial; also immunities and resistances by situation, objects and the item itself
-- Singing Bowl of the Versatile Stance: nothing read; also actions and feats for the user
-- Skirmisher's Coat (Unexpected Armament): the GM's; also choices on the card, objects and the item itself, out of combat and the environment
-- Soulfeeding Mask (Devour Soul): partial; also sustained, repeating and later effects, plain results the reader doesn't parse yet
-- Soulpiercer (Extend): nothing read
-- Spell Reservoir (Channeled Release): nothing read; also spells and the user's resources
-- Spined Shield: nothing read
-- Spiritsight Crossbow (Ethereal Shot): nothing read; also objects and the item itself, out of combat and the environment
 - Splintering Spear (Greater) (Shatter): partial; also afflictions and persistent damage
 - Splintering Spear (Major) (Shatter): partial; also afflictions and persistent damage
 - Splintering Spear (Shatter): partial; also afflictions and persistent damage
-- Splithead Bow (Five-Headed Arrow): nothing read; also out of combat and the environment
-- Stonethroat Ammunition: partial; also plain results the reader doesn't parse yet, out of combat and the environment
-- Swallow-Spike: partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
-- Swallow-Spike: partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
-- Swallow-Spike (Greater): partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
-- Swallow-Spike (Greater): partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
-- Swallow-Spike (Major): partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
-- Swallow-Spike (Major): partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
-- The Uprising: note only; also sustained, repeating and later effects, choices on the card, plain results the reader doesn't parse yet
-- Tome of Scintillating Sleet: note only; also plain results the reader doesn't parse yet
-- Undead Compendium: partial; also bonuses only in some situations, several creatures at once
-- Venom Lash (Envenom): partial; also afflictions and persistent damage, plain results the reader doesn't parse yet
-- Void Sickle (Light Harvest): partial; also plain results the reader doesn't parse yet
-- Whip of Compliance: nothing read; also minds, attitudes and behaviour
 - Wormhole Shot: partial; also actions and feats for the user
+
+**"melee strike"**: 7 (3 only this need)
+
+- Boots of the Secret Blade (Draw Secret Blade): nothing read; also sustained, repeating and later effects
+- Boots of the Secret Blade (Greater) (Draw Secret Blade): nothing read; also sustained, repeating and later effects
+- Boots of the Secret Blade (Major) (Draw Secret Blade): nothing read; also sustained, repeating and later effects
+- Flashblade (Greater) (Prepare Flash): nothing read; *only this need*
+- Flashblade (Major) (Prepare Flash): nothing read; *only this need*
+- Flashblade (Prepare Flash): nothing read; *only this need*
+- Void Sickle (Light Harvest): partial; also plain results the reader doesn't parse yet
+
+**"attack deals"**: 6 (0 only this need)
+
+- Swallow-Spike: partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
+- Swallow-Spike: partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
+- Swallow-Spike (Greater): partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
+- Swallow-Spike (Greater): partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
+- Swallow-Spike (Major): partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
+- Swallow-Spike (Major): partial; also numbers from another roll, bonuses only in some situations, plain results the reader doesn't parse yet
+
+**"make a strike"**: 5 (2 only this need)
+
+- Impossible: nothing read; *only this need*
+- Kaldemash's Lament: note only; also sustained, repeating and later effects, objects and the item itself, plain results the reader doesn't parse yet
+- Mamlambo Scale (Luminous Lure): partial; also sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
+- Retribution (Vengeful Slice): nothing read; *only this need*
+- Spell Reservoir (Channeled Release): nothing read; also spells and the user's resources
+
+**"and strike"**: 5 (0 only this need)
+
+- Chime of Opening: nothing read; also objects and the item itself, plain results the reader doesn't parse yet
+- Dagger of Eternal Sleep: nothing read; also dying, unconscious and death, immunities and resistances by situation, sustained, repeating and later effects, out of combat and the environment
+- Ouroboros Flail (Greater) (Infinite Links): nothing read; also objects and the item itself
+- Ouroboros Flail (Infinite Links): nothing read; also objects and the item itself
+- Ouroboros Flail (Major) (Infinite Links): nothing read; also objects and the item itself
+
+**"or strike"**: 5 (0 only this need)
+
+- Electromuscular Stimulator: note only; also afflictions and persistent damage, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
+- Mindlock Shot: nothing read; also choices on the card
+- Portable Seal (Lesser): partial; also immunities and resistances by situation
+- Portable Seal (Major): partial; also immunities and resistances by situation
+- Portable Seal (Moderate): partial; also immunities and resistances by situation
+
+**"damage dice"**: 5 (0 only this need)
+
+- Fate Shot: nothing read; also plain results the reader doesn't parse yet
+- Highhelm War Shield (Greater): partial; also afflictions and persistent damage, sustained, repeating and later effects
+- Highhelm War Shield (Lesser): partial; also afflictions and persistent damage, sustained, repeating and later effects
+- Highhelm War Shield (Moderate): partial; also afflictions and persistent damage, sustained, repeating and later effects
+- Iron Cube: partial; also actions and feats for the user
+
+**"activate strike"**: 4 (1 only this need)
+
+- Condensed Mana: nothing read; also several creatures at once, plain results the reader doesn't parse yet, messages, speech and sound
+- Feather Token (Chest) (Ammunition): nothing read; also objects and the item itself
+- Feather Token (Ladder) (Ammunition): nothing read; *only this need*
+- Feather Token (Tree) (Ammunition): nothing read; also objects and the item itself
+
+**"range increment"**: 4 (0 only this need)
+
+- Burrowing Bolt: nothing read; also objects and the item itself, messages, speech and sound
+- Burrowing Bolt (Greater): nothing read; also objects and the item itself, messages, speech and sound
+- Falconsight Eye: note only; also plain results the reader doesn't parse yet, information
+- Scouting Arrow: nothing read; also objects and the item itself, information
+
+**"next strike"**: 4 (0 only this need)
+
+- Chaplain's Cudgel (Bow to a Higher Power): nothing read; also information
+- Horned Hand Rests: partial; also plain results the reader doesn't parse yet
+- Horned Hand Rests (Greater): partial; also plain results the reader doesn't parse yet
+- Reaper's Grasp (Soul Shot): nothing read; also choices on the card
+
+**"strikes with"**: 3 (1 only this need)
+
+- Silhouette Cloak: partial; also immunities and resistances by situation, objects and the item itself
+- Silhouette Cloak: partial; also immunities and resistances by situation, objects and the item itself
+- Soulpiercer (Extend): nothing read; *only this need*
+
+**"multiple attack penalty"**: 3 (0 only this need)
+
+- Octopus Potion (Greater): partial; also actions and feats for the user, numbers from another roll, sustained, repeating and later effects, plain results the reader doesn't parse yet, messages, speech and sound
+- Octopus Potion (Lesser): partial; also actions and feats for the user, numbers from another roll, sustained, repeating and later effects, plain results the reader doesn't parse yet, messages, speech and sound
+- Octopus Potion (Moderate): partial; also actions and feats for the user, numbers from another roll, sustained, repeating and later effects, plain results the reader doesn't parse yet, messages, speech and sound
+
+**"this strike"**: 2 (0 only this need)
+
+- Boughshatter (Splintering Strike): partial; also plain results the reader doesn't parse yet
+- Hex Blaster: partial; also afflictions and persistent damage, dying, unconscious and death, plain results the reader doesn't parse yet, out of combat and the environment
+
+**"damage die"**: 2 (0 only this need)
+
+- Gyroscopic Stabilizer: the GM's; also dying, unconscious and death
+- Ring of the Tiger (Greater): partial; also objects and the item itself
+
+**Other wordings**: 19 (4 only this need)
+
+- Arcing Hand Crossbow (Curve Bolt) ("ignores the target's cover"): partial; *only this need*
+- Bomber's Saddle ("ranged strike"): nothing read; also objects and the item itself
+- Fairy Bullet ("associated strike"): partial; also choices on the card, objects and the item itself, information
+- Hippopotamus Klar (Engulfing Jaws) ("make a melee strike"): partial; also several creatures at once
+- Iron Equalizer ("certain strike"): nothing read; also actions and feats for the user
+- Jawbreaker Shield ("damage rolls"): partial; also plain results the reader doesn't parse yet, out of combat and the environment
+- Minotaur Chair ("attack gains"): partial; also plain results the reader doesn't parse yet
+- Moonkeep Lily ("jaws strike"): nothing read; also afflictions and persistent damage, counteracting and ending effects, objects and the item itself, out of combat and the environment
+- Morphing Weapon ("strike with"): nothing read; also actions and feats for the user, range, reach and areas made larger, choices on the card
+- Piereta ("retributive strike"): nothing read; *only this need*
+- Potion of Grounding ("to strike"): note only; also several creatures at once
+- Reactive Flash ("reactive strike"): nothing read; also plain results the reader doesn't parse yet
+- Serpent's Lash (Slither Strike) ("on a critical hit"): partial; *only this need*
+- Shuln Fang Katar (Piercing Critical) ("critical hit"): nothing read; also numbers from another roll, objects and the item itself
+- Skirmisher's Coat (Unexpected Armament) ("martial melee weapon"): the GM's; also choices on the card, objects and the item itself, out of combat and the environment
+- Soulfeeding Mask (Devour Soul) ("for strike"): partial; also sustained, repeating and later effects, plain results the reader doesn't parse yet
+- Spined Shield ("uses the spikes' statistics"): nothing read; *only this need*
+- Splithead Bow (Five-Headed Arrow) ("powerful strike"): nothing read; also out of combat and the environment
+- The Uprising ("unarmed strike"): note only; also sustained, repeating and later effects, choices on the card, plain results the reader doesn't parse yet
 
 <a id="actions"></a>
 ### Actions and feats for the user
@@ -1035,43 +1403,67 @@ The user takes an action or uses a feat through the item (Certain Strike, a Shov
 
 32 entries (and 1 of the modules' items).
 
-**Consumables**
+**"grapple"**: 4 (0 only this need)
 
-- Artevil Suspension: nothing read; also afflictions and persistent damage, plain results the reader doesn't parse yet
 - Bottled Roc: nothing read; also several creatures at once, plain results the reader doesn't parse yet
-- Lady's Blessing Oil: nothing read; also dying, unconscious and death
 - Magnetic Suit: note only; also bonuses only in some situations, choices on the card, several creatures at once, objects and the item itself
 - Magnetic Suit (Greater): note only; also bonuses only in some situations, choices on the card, several creatures at once, objects and the item itself
 - Magnetic Suit (Major): note only; also bonuses only in some situations, choices on the card, several creatures at once, objects and the item itself
+
+**"shield block"**: 3 (2 only this need)
+
+- Floating Shield (Float): partial; *only this need*
+- Floating Shield (Greater) (Float): partial; *only this need*
+- Imposing Shield (Terrifying Block): partial; also plain results the reader doesn't parse yet
+
+**"force open"**: 3 (2 only this need)
+
+- Immovable: partial; *only this need*
+- Immovable Rod: nothing read; *only this need*
 - Philosopher's Stone: the GM's; also information, out of combat and the environment
+
+**"administer first aid"**: 3 (0 only this need)
+
+- Lady's Blessing Oil: nothing read; also dying, unconscious and death
 - Vital Earth: note only; also out of combat and the environment
 - Yarrow-Root Bandage: nothing read; also dying, unconscious and death
 
-**Activations**
+**"can use an interact action"**: 3 (0 only this need)
 
-- Anima Robe (Heroic) (Billowing Distraction): nothing read
-- Bastion of the Inheritor: note only
-- Battle Medic's Baton: note only; also immunities and resistances by situation, out of combat and the environment
-- Cape of Justice (Force Shuriken): partial; also plain results the reader doesn't parse yet
-- Clockwork Shield: note only; also sustained, repeating and later effects
-- Clockwork Shield (Greater): note only; also sustained, repeating and later effects
-- Floating Shield (Float): partial
-- Floating Shield (Greater) (Float): partial
-- Gunner's Bandolier: nothing read; also objects and the item itself
-- Immovable: partial
-- Immovable Rod: nothing read
-- Imposing Shield (Terrifying Block): partial; also plain results the reader doesn't parse yet
-- Instrument Harness (Ready to Play): nothing read
-- Mat of Resilience (Greater) (Sturdy Foundation): nothing read; also dying, unconscious and death, plain results the reader doesn't parse yet
-- Mat of Resilience (Sturdy Foundation): nothing read; also dying, unconscious and death, plain results the reader doesn't parse yet
 - Rope of Climbing (Greater): note only; also choices on the card, objects and the item itself
 - Rope of Climbing (Lesser): note only; also choices on the card, objects and the item itself
 - Rope of Climbing (Moderate): note only; also choices on the card, objects and the item itself
-- Self-Emptying Pocket (Beguiling Presence): partial
-- Spectacles of Inquiry: partial
-- Taljjae's Mask (The Nobleman): nothing read; also objects and the item itself
-- Venomed Tongue: partial; also afflictions and persistent damage, choices on the card, plain results the reader doesn't parse yet, minds, attitudes and behaviour
-- White Cleome's Eye: partial
+
+**"as part of the action"**: 2 (2 only this need)
+
+- Spectacles of Inquiry: partial; *only this need*
+- White Cleome's Eye: partial; *only this need*
+
+**"interact to draw"**: 2 (1 only this need)
+
+- Gunner's Bandolier: nothing read; also objects and the item itself
+- Instrument Harness (Ready to Play): nothing read; *only this need*
+
+**"extra reaction"**: 2 (0 only this need)
+
+- Clockwork Shield: note only; also sustained, repeating and later effects
+- Clockwork Shield (Greater): note only; also sustained, repeating and later effects
+
+**"stance"**: 2 (0 only this need)
+
+- Mat of Resilience (Greater) (Sturdy Foundation): nothing read; also dying, unconscious and death, plain results the reader doesn't parse yet
+- Mat of Resilience (Sturdy Foundation): nothing read; also dying, unconscious and death, plain results the reader doesn't parse yet
+
+**Other wordings**: 8 (3 only this need)
+
+- Anima Robe (Heroic) (Billowing Distraction) ("feint"): nothing read; *only this need*
+- Artevil Suspension ("as part of the same activity"): nothing read; also afflictions and persistent damage, plain results the reader doesn't parse yet
+- Bastion of the Inheritor ("additional action"): note only; *only this need*
+- Battle Medic's Baton ("battle medicine"): note only; also immunities and resistances by situation, out of combat and the environment
+- Cape of Justice (Force Shuriken) ("demoralize"): partial; also plain results the reader doesn't parse yet
+- Self-Emptying Pocket (Beguiling Presence) ("as though by a successful"): partial; *only this need*
+- Taljjae's Mask (The Nobleman) ("disarm"): nothing read; also objects and the item itself
+- Venomed Tongue ("create a diversion"): partial; also afflictions and persistent damage, choices on the card, plain results the reader doesn't parse yet, minds, attitudes and behaviour
 
 <a id="from-events"></a>
 ### Numbers from another roll
@@ -1080,18 +1472,18 @@ Damage, healing or a DC worked out from another event: equal to the damage dealt
 
 7 entries.
 
-**Consumables**
+**"hit points equal to the"**: 2 (0 only this need)
 
 - Cindergrass Poultice: partial; also immunities and resistances by situation, plain results the reader doesn't parse yet, out of combat and the environment
-- Eldritch Flare: partial; also afflictions and persistent damage, immunities and resistances by situation
-
-**Activations**
-
 - Doom Switch (Bragging Rights): partial; also plain results the reader doesn't parse yet
-- Freedom's Flame (Holy Retribution): partial
-- Grisly Scythe: partial; also plain results the reader doesn't parse yet
-- Horns of Naraga: partial
-- Ooze Skin: partial
+
+**Other wordings**: 5 (3 only this need)
+
+- Eldritch Flare ("half its damage"): partial; also afflictions and persistent damage, immunities and resistances by situation
+- Freedom's Flame (Holy Retribution) ("triggered again"): partial; *only this need*
+- Grisly Scythe ("regain a number of hit points equal"): partial; also plain results the reader doesn't parse yet
+- Horns of Naraga ("regain hit points equal"): partial; *only this need*
+- Ooze Skin ("damage equal to the"): partial; *only this need*
 
 <a id="afflictions"></a>
 ### Afflictions and persistent damage
@@ -1100,67 +1492,91 @@ Suppressing, delaying or ending a poison, disease, curse or addiction, an extra 
 
 56 entries (and 4 of the modules' items).
 
-**Consumables**
+**"poison"**: 14 (2 only this need)
+
+- Antivenom Potion: partial; *only this need*
+- Coating: note only; also objects and the item itself
+- Gas Mask of Clean Air (Breathe Clean): note only; also immunities and resistances by situation, out of combat and the environment
+- Mantle of Amazing Health: note only; also counteracting and ending effects, immunities and resistances by situation, out of combat and the environment
+- Origin Unguent: nothing read; also objects and the item itself
+- Poracha Fulu: nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
+- Quenching Potion: partial; *only this need*
+- Razmiri Wayfinder: the GM's; also counteracting and ending effects, out of combat and the environment
+- Secret-Keeper's Mask (Blackfingers): the GM's; also objects and the item itself, information
+- Silver Snake Cane (Silver Snake Serum): nothing read; also choices on the card
+- Silver Snake Cane (Silver Snake Sword): note only; also sustained, repeating and later effects, objects and the item itself
+- Taster's Folly: partial; also counteracting and ending effects, information
+- The Unicorn: the GM's; also dying, unconscious and death, objects and the item itself, messages, speech and sound
+- Unending Itch: note only; also plain results the reader doesn't parse yet, information
+
+**"curse"**: 6 (1 only this need)
+
+- Gift of the Poisoned Heart: nothing read; also dying, unconscious and death, spells and the user's resources, minds, attitudes and behaviour
+- Moonkeep Hyacinth: nothing read; also counteracting and ending effects, objects and the item itself
+- Moonkeep Orchid: note only; also counteracting and ending effects, objects and the item itself, out of combat and the environment
+- Rose of Loves Lost: nothing read; also dying, unconscious and death, minds, attitudes and behaviour, information, out of combat and the environment
+- Soulheart (Angelic) (Defy Charg): nothing read; *only this need*
+- The Liar: nothing read; also immunities and resistances by situation, sustained, repeating and later effects
+
+**"addiction"**: 5 (0 only this need)
 
 - Addiction Suppressant (Greater): note only; also counteracting and ending effects, out of combat and the environment
 - Addiction Suppressant (Lesser): note only; also counteracting and ending effects, out of combat and the environment
 - Addiction Suppressant (Major): note only; also counteracting and ending effects, out of combat and the environment
 - Addiction Suppressant (Moderate): note only; also counteracting and ending effects, out of combat and the environment
-- Affliction Suppressant (Major): partial; also bonuses only in some situations
-- Alkenstar Ice Wine: nothing read; also immunities and resistances by situation
-- Antivenom Potion: partial
-- Cinnamon Nostalgia Bun: partial
-- Gift of the Poisoned Heart: nothing read; also dying, unconscious and death, spells and the user's resources, minds, attitudes and behaviour
-- Moonkeep Hyacinth: nothing read; also counteracting and ending effects, objects and the item itself
-- Moonkeep Orchid: note only; also counteracting and ending effects, objects and the item itself, out of combat and the environment
-- Origin Unguent: nothing read; also objects and the item itself
 - Philter of Empty Dreams: note only; also counteracting and ending effects, bonuses only in some situations, out of combat and the environment
-- Poracha Fulu: nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Quenching Potion: partial
-- Rose of Loves Lost: nothing read; also dying, unconscious and death, minds, attitudes and behaviour, information, out of combat and the environment
-- Searing Suture (Greater): partial; also plain results the reader doesn't parse yet
-- Searing Suture (Lesser): partial; also plain results the reader doesn't parse yet
+
+**"affliction"**: 5 (0 only this need)
+
+- Affliction Suppressant (Major): partial; also bonuses only in some situations
+- Gaze of the Mantis (Target Sense): the GM's; also information, out of combat and the environment
+- Gingerbread House: nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
+- Golden Gloves (Heaven's Wings): partial; also counteracting and ending effects, choices on the card
 - Snake Oil: note only; also dying, unconscious and death, information
+
+**"cursed"**: 5 (0 only this need)
+
+- Soulheart (Bolster Maiserene Phantom): nothing read; also sustained, repeating and later effects
+- Soulheart (Greater) (Bolster Maiserene Phantom): nothing read; also sustained, repeating and later effects
+- Soulheart (Major) (Bolster Maiserene Phantom): nothing read; also sustained, repeating and later effects
 - Sun Orchid Elixir: nothing read; also minds, attitudes and behaviour, out of combat and the environment
-- Tarantula Ampoule: partial
-- Taster's Folly: partial; also counteracting and ending effects, information
-- Unending Itch: note only; also plain results the reader doesn't parse yet, information
+- Tablet of Chained Souls (Spirit Carving): nothing read; also messages, speech and sound, out of combat and the environment
+
+**"disease"**: 5 (0 only this need)
+
 - Vaccine (Greater): partial; also immunities and resistances by situation, bonuses only in some situations, out of combat and the environment
 - Vaccine (Lesser): partial; also immunities and resistances by situation, bonuses only in some situations, out of combat and the environment
 - Vaccine (Major): partial; also immunities and resistances by situation, bonuses only in some situations
 - Vaccine (Minor): partial; also immunities and resistances by situation, bonuses only in some situations, out of combat and the environment
 - Vaccine (Moderate): partial; also immunities and resistances by situation, bonuses only in some situations, out of combat and the environment
-- Verdant Poultice: nothing read
 
-**Activations**
+**"persistent bleed damage"**: 4 (1 only this need)
+
+- Bloodgorger Scythe (Root in Blood): partial; *only this need*
+- Searing Suture (Greater): partial; also plain results the reader doesn't parse yet
+- Searing Suture (Lesser): partial; also plain results the reader doesn't parse yet
+- Shot of the First Vault (Reload Order): nothing read; also several creatures at once, objects and the item itself
+
+**"persistent damage"**: 2 (1 only this need)
+
+- Verdant Poultice: nothing read; *only this need*
+- Wasp Guard: partial; also several creatures at once
+
+**"persistent fire damage"**: 2 (0 only this need)
 
 - Alchemist's Flamethrower: partial; also plain results the reader doesn't parse yet
-- Bloodgorger Scythe (Root in Blood): partial
-- Calamity Glass (Mirror, Mirror): nothing read; also out of combat and the environment
-- Choral Toga (Elysium's Breath): note only; also immunities and resistances by situation, out of combat and the environment
-- Coating: note only; also objects and the item itself
-- Corrosive Ammunition: nothing read; also objects and the item itself, plain results the reader doesn't parse yet
-- Gas Mask of Clean Air (Breathe Clean): note only; also immunities and resistances by situation, out of combat and the environment
-- Gaze of the Mantis (Target Sense): the GM's; also information, out of combat and the environment
-- Gingerbread House: nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Golden Gloves (Heaven's Wings): partial; also counteracting and ending effects, choices on the card
-- Locust Leather (Poison Fumes): partial; also plain results the reader doesn't parse yet
-- Mantle of Amazing Health: note only; also counteracting and ending effects, immunities and resistances by situation, out of combat and the environment
-- Oracular Crown: partial; also plain results the reader doesn't parse yet
-- Razmiri Wayfinder: the GM's; also counteracting and ending effects, out of combat and the environment
-- Secret-Keeper's Mask (Blackfingers): the GM's; also objects and the item itself, information
-- Shot of the First Vault (Reload Order): nothing read; also several creatures at once, objects and the item itself
-- Silver Snake Cane (Silver Snake Serum): nothing read; also choices on the card
-- Silver Snake Cane (Silver Snake Sword): note only; also sustained, repeating and later effects, objects and the item itself
-- Soulheart (Angelic) (Defy Charg): nothing read
-- Soulheart (Bolster Maiserene Phantom): nothing read; also sustained, repeating and later effects
-- Soulheart (Greater) (Bolster Maiserene Phantom): nothing read; also sustained, repeating and later effects
-- Soulheart (Major) (Bolster Maiserene Phantom): nothing read; also sustained, repeating and later effects
 - Sweet Hag's Eye (Meltaway Mint): partial; also plain results the reader doesn't parse yet
-- Tablet of Chained Souls (Spirit Carving): nothing read; also messages, speech and sound, out of combat and the environment
-- The Liar: nothing read; also immunities and resistances by situation, sustained, repeating and later effects
-- The Unicorn: the GM's; also dying, unconscious and death, objects and the item itself, messages, speech and sound
-- Wasp Guard: partial; also several creatures at once
+
+**Other wordings**: 8 (2 only this need)
+
+- Alkenstar Ice Wine ("drug"): nothing read; also immunities and resistances by situation
+- Calamity Glass (Mirror, Mirror) ("poisonous"): nothing read; also out of combat and the environment
+- Choral Toga (Elysium's Breath) ("diseases"): note only; also immunities and resistances by situation, out of combat and the environment
+- Cinnamon Nostalgia Bun ("persistent mental damage"): partial; *only this need*
+- Corrosive Ammunition ("persistent acid damage"): nothing read; also objects and the item itself, plain results the reader doesn't parse yet
+- Locust Leather (Poison Fumes) ("persistent poison damage"): partial; also plain results the reader doesn't parse yet
+- Oracular Crown ("cursebound"): partial; also plain results the reader doesn't parse yet
+- Tarantula Ampoule ("stages"): partial; *only this need*
 
 <a id="dying"></a>
 ### Dying, unconscious and death
@@ -1169,42 +1585,57 @@ Dying, wounded, doomed, stabilizing, falling unconscious, returning to life: the
 
 31 entries (and 2 of the modules' items).
 
-**Consumables**
+**"dead"**: 11 (0 only this need)
 
-- Ambrosia of Undying Hope: note only; also immunities and resistances by situation, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
 - Anointing Oil (Greater): note only; also objects and the item itself, plain results the reader doesn't parse yet, out of combat and the environment
-- Barricade Stone (Cylinder): nothing read; also objects and the item itself, plain results the reader doesn't parse yet
-- Body Recovery Kit: nothing read; also out of combat and the environment
+- Boots of the Dead (One of You): nothing read; also choices on the card, plain results the reader doesn't parse yet
 - Clockwork Rejuvenator: note only; also sustained, repeating and later effects
+- Cresset of Grisly Interrogation: nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
 - Elixir of Rejuvenation: partial; also spells and the user's resources
+- Memory Palace: note only; also sustained, repeating and later effects, choices on the card, objects and the item itself, minds, attitudes and behaviour, information, out of combat and the environment
+- Passage Pane: the GM's; also sustained, repeating and later effects, objects and the item itself, information, out of combat and the environment
 - Potion of Annulment (Greater): the GM's; also spells and the user's resources, counteracting and ending effects, information
 - Potion of Annulment (Lesser): the GM's; also spells and the user's resources, counteracting and ending effects, information
 - Potion of Annulment (Moderate): the GM's; also spells and the user's resources, counteracting and ending effects, information
-- Potion of Passing Fancy: note only; also out of combat and the environment
-- Reaper's Spellgun: partial; also plain results the reader doesn't parse yet
-- Restful Salve: nothing read; also objects and the item itself, out of combat and the environment
-- Silver Tripod: note only; also sustained, repeating and later effects, information
+- Soulheart (Pure) (Restore Life): note only; also spells and the user's resources
 
-**Activations**
+**"dies"**: 4 (1 only this need)
+
+- Mindsponge (Absorb Memories): nothing read; also sustained, repeating and later effects, several creatures at once, objects and the item itself, minds, attitudes and behaviour
+- Radiant Spark: partial; *only this need*
+- Reaper's Spellgun: partial; also plain results the reader doesn't parse yet
+- Witchwyrd Beacon: note only; also counteracting and ending effects, sustained, repeating and later effects, several creatures at once
+
+**"death"**: 4 (0 only this need)
 
 - Banner of the Rising Star (Rise Up): partial; also several creatures at once, plain results the reader doesn't parse yet
-- Bewitching Bloom (Cherry Blossom): note only; also choices on the card, several creatures at once
-- Boots of the Dead (One of You): nothing read; also choices on the card, plain results the reader doesn't parse yet
-- Cresset of Grisly Interrogation: nothing read; also sustained, repeating and later effects, objects and the item itself, out of combat and the environment
-- Death Tusk Helm (Boar's Last Stand): partial; also plain results the reader doesn't parse yet
-- Doomsday Door (Attune Door): nothing read; also spells and the user's resources, objects and the item itself, information
-- Dreaming Round: partial; also sustained, repeating and later effects, messages, speech and sound, out of combat and the environment
-- Memory Palace: note only; also sustained, repeating and later effects, choices on the card, objects and the item itself, minds, attitudes and behaviour, information, out of combat and the environment
-- Mindsponge (Absorb Memories): nothing read; also sustained, repeating and later effects, several creatures at once, objects and the item itself, minds, attitudes and behaviour
-- Passage Pane: the GM's; also sustained, repeating and later effects, objects and the item itself, information, out of combat and the environment
-- Radiant Spark: partial
 - Ring Of Recalcitrant Wishes: the GM's; also plain results the reader doesn't parse yet, out of combat and the environment
-- Shadowed Scale, the Jungle Secret: nothing read
-- Soulheart (Pure) (Restore Life): note only; also spells and the user's resources
-- Spider Lily Tattoo (Reveal Tattoo): nothing read
 - The Deck of Destiny: nothing read; also spells and the user's resources
 - The Whispering Reeds: nothing read; also bonuses only in some situations, information
-- Witchwyrd Beacon: note only; also counteracting and ending effects, sustained, repeating and later effects, several creatures at once
+
+**"doomed"**: 3 (1 only this need)
+
+- Death Tusk Helm (Boar's Last Stand): partial; also plain results the reader doesn't parse yet
+- Doomsday Door (Attune Door): nothing read; also spells and the user's resources, objects and the item itself, information
+- Spider Lily Tattoo (Reveal Tattoo): nothing read; *only this need*
+
+**"dying"**: 3 (0 only this need)
+
+- Ambrosia of Undying Hope: note only; also immunities and resistances by situation, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
+- Bewitching Bloom (Cherry Blossom): note only; also choices on the card, several creatures at once
+- Restful Salve: nothing read; also objects and the item itself, out of combat and the environment
+
+**"stabilizes"**: 2 (0 only this need)
+
+- Potion of Passing Fancy: note only; also out of combat and the environment
+- Silver Tripod: note only; also sustained, repeating and later effects, information
+
+**Other wordings**: 4 (1 only this need)
+
+- Barricade Stone (Cylinder) ("wounded"): nothing read; also objects and the item itself, plain results the reader doesn't parse yet
+- Body Recovery Kit ("raise dead"): nothing read; also out of combat and the environment
+- Dreaming Round ("unconscious"): partial; also sustained, repeating and later effects, messages, speech and sound, out of combat and the environment
+- Shadowed Scale, the Jungle Secret ("returned to life"): nothing read; *only this need*
 
 <a id="spells"></a>
 ### Spells and the user's resources
@@ -1213,56 +1644,77 @@ A spell slot, Focus Point, staff charge, stored spell, cantrip, counterspell, ri
 
 45 entries.
 
-**Consumables**
+**"ritual"**: 12 (3 only this need)
 
-- Candle of Invocation: the GM's; also information, out of combat and the environment
+- Detect Anathema Fulu: nothing read; also sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
+- Laurel of the Empath: nothing read; also out of combat and the environment
+- Mind-Swap Potion: the GM's; also sustained, repeating and later effects, out of combat and the environment
+- Ring of Maniacal Devices (Fireball Trap): nothing read; *only this need*
+- Ring of Maniacal Devices (Greater) (Fireball Trap): nothing read; *only this need*
+- Sky-Piercing Bow: nothing read; also out of combat and the environment
+- Soulspark Candle: the GM's; *only this need*
+- Stone Circle: the GM's; also objects and the item itself, out of combat and the environment
+- Stone Circle (Greater): the GM's; also objects and the item itself, out of combat and the environment
+- The Owl: nothing read; also out of combat and the environment
+- Void Mirror: nothing read; also plain results the reader doesn't parse yet, information, messages, speech and sound
+- Void Mirror: nothing read; also plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, out of combat and the environment
+
+**"stored spell"**: 7 (7 only this need)
+
+- Furnace of Endings: nothing read; *only this need*
+- Furnace of Endings (Greater): nothing read; *only this need*
+- Furnace of Endings (Major): nothing read; *only this need*
+- Ring of Counterspells: nothing read; *only this need*
+- Spell Bastion: nothing read; *only this need*
+- Spell Bastion: nothing read; *only this need*
+- Spell Reservoir (Safe Release): nothing read; *only this need*
+
+**"cantrip"**: 6 (4 only this need)
+
+- Archaic Wayfinder: nothing read; *only this need*
+- Bleachguard Doll: nothing read; *only this need*
 - Cantrip Deck (5-pack): nothing read; also choices on the card, objects and the item itself
 - Cantrip Deck (Full Pack): nothing read; also choices on the card, objects and the item itself
-- Detect Anathema Fulu: nothing read; also sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
-- Mind-Swap Potion: the GM's; also sustained, repeating and later effects, out of combat and the environment
-- Moritype: partial
-- Moritype (Greater): partial
+- Limitless Power (Unleash Power): nothing read; *only this need*
+- Tengu Feather Fan (Wave Fan): nothing read; *only this need*
+
+**"mythic point"**: 5 (3 only this need)
+
+- Chromatic Robe (Align Energy): partial; *only this need*
+- Chromatic Robe (Greater) (Align Energy): partial; *only this need*
+- Freedom's Flame (Break Free): nothing read; *only this need*
+- Runic Skullcap (Rewards of Rule): nothing read; also sustained, repeating and later effects
+- Spindle Key (Breach): the GM's; also objects and the item itself
+
+**"to cast a spell"**: 4 (3 only this need)
+
+- Blessed Lantern Flail (Purge Unholy Magic): partial; *only this need*
+- Horn of Rust: nothing read; also information
+- Moritype: partial; *only this need*
+- Moritype (Greater): partial; *only this need*
+
+**"spell slots"**: 3 (1 only this need)
+
+- Candle of Invocation: the GM's; also information, out of combat and the environment
+- Hallajin Key: nothing read; also several creatures at once, out of combat and the environment
+- Telekinetic Converters (Mind Over Matter): nothing read; *only this need*
+
+**"prepared the staff"**: 3 (0 only this need)
+
 - Ruby Capacitor: nothing read; also objects and the item itself
 - Ruby Capacitor (Greater): nothing read; also objects and the item itself
 - Ruby Capacitor (Major): nothing read; also objects and the item itself
 
-**Activations**
+**"cast the spell"**: 2 (1 only this need)
 
-- Alchemist's Haversack: nothing read
-- Archaic Wayfinder: nothing read
-- Bleachguard Doll: nothing read
-- Blessed Lantern Flail (Purge Unholy Magic): partial
-- Calligraphic Illumination (Inscribed Insight): nothing read; also information, messages, speech and sound
-- Chromatic Robe (Align Energy): partial
-- Chromatic Robe (Greater) (Align Energy): partial
-- Freedom's Flame (Break Free): nothing read
-- Furnace of Endings: nothing read
-- Furnace of Endings (Greater): nothing read
-- Furnace of Endings (Major): nothing read
-- Hallajin Key: nothing read; also several creatures at once, out of combat and the environment
-- Horn of Rust: nothing read; also information
-- Laurel of the Empath: nothing read; also out of combat and the environment
-- Limitless Power (Unleash Power): nothing read
 - Mage's Hat (Greater) (Hat Spell): nothing read; also objects and the item itself
-- Red Hand's Satchel: nothing read
-- Ring of Counterspells: nothing read
-- Ring of Maniacal Devices (Fireball Trap): nothing read
-- Ring of Maniacal Devices (Greater) (Fireball Trap): nothing read
-- Runic Skullcap (Rewards of Rule): nothing read; also sustained, repeating and later effects
-- Sky-Piercing Bow: nothing read; also out of combat and the environment
-- Soulspark Candle: the GM's
-- Spell Bastion: nothing read
-- Spell Bastion: nothing read
-- Spell Reservoir (Safe Release): nothing read
-- Spindle Key (Breach): the GM's; also objects and the item itself
-- Stone Circle: the GM's; also objects and the item itself, out of combat and the environment
-- Stone Circle (Greater): the GM's; also objects and the item itself, out of combat and the environment
-- Telekinetic Converters (Mind Over Matter): nothing read
-- Tengu Feather Fan (Wave Fan): nothing read
-- The Owl: nothing read; also out of combat and the environment
-- Void Mirror: nothing read; also plain results the reader doesn't parse yet, information, messages, speech and sound
-- Void Mirror: nothing read; also plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, out of combat and the environment
-- Wandmender (Recharge Wand): nothing read
+- Wandmender (Recharge Wand): nothing read; *only this need*
+
+**Other wordings**: 3 (2 only this need)
+
+- Alchemist's Haversack ("versatile vial"): nothing read; *only this need*
+- Calligraphic Illumination (Inscribed Insight) ("prepared spell"): nothing read; also information, messages, speech and sound
+- Red Hand's Satchel ("infused reagents"): nothing read; *only this need*
 
 <a id="counteract"></a>
 ### Counteracting and ending effects
@@ -1271,28 +1723,31 @@ Counteracting, suppressing or ending a magical effect, spell or item: a countera
 
 17 entries.
 
-**Consumables**
+**"counteract"**: 12 (8 only this need)
 
-- Absolute Solvent (Greater): the GM's
-- Absolute Solvent (Lesser): the GM's
-- Absolute Solvent (Moderate): the GM's
-- Quickmelt Slick (Greater): nothing read
-- Quickmelt Slick (Lesser): nothing read
-- Quickmelt Slick (Moderate): nothing read
+- Absolute Solvent (Greater): the GM's; *only this need*
+- Absolute Solvent (Lesser): the GM's; *only this need*
+- Absolute Solvent (Moderate): the GM's; *only this need*
+- Disruption Ammunition: the GM's; also sustained, repeating and later effects
+- Disruption Ammunition (Greater): the GM's; also sustained, repeating and later effects
+- Four-Tiger Blade (Ghost Chasing Tiger): partial; *only this need*
+- Golem Stylus: note only; *only this need*
+- Oculus of Abaddon: nothing read; also immunities and resistances by situation, several creatures at once, minds, attitudes and behaviour, messages, speech and sound, out of combat and the environment
+- Quickmelt Slick (Greater): nothing read; *only this need*
+- Quickmelt Slick (Lesser): nothing read; *only this need*
+- Quickmelt Slick (Moderate): nothing read; *only this need*
 - Serum of Sex Shift: nothing read; also choices on the card
 
-**Activations**
+**"end the effect"**: 3 (0 only this need)
 
 - Blindpepper Bolt: partial; also sustained, repeating and later effects
 - Buoyant Buckle (Flotation): partial; also objects and the item itself
-- Disruption Ammunition: the GM's; also sustained, repeating and later effects
-- Disruption Ammunition (Greater): the GM's; also sustained, repeating and later effects
-- Four-Tiger Blade (Ghost Chasing Tiger): partial
-- Golem Stylus: note only
-- Moonlit Chain (Dim Sight): note only; also plain results the reader doesn't parse yet
-- Oculus of Abaddon: nothing read; also immunities and resistances by situation, several creatures at once, minds, attitudes and behaviour, messages, speech and sound, out of combat and the environment
-- Ring of the Weary Traveler: partial
 - Silencing Ammunition: partial; also sustained, repeating and later effects
+
+**Other wordings**: 2 (1 only this need)
+
+- Moonlit Chain (Dim Sight) ("suppress the"): note only; also plain results the reader doesn't parse yet
+- Ring of the Weary Traveler ("suppresses the"): partial; *only this need*
 
 <a id="immunity"></a>
 ### Immunities and resistances by situation
@@ -1301,38 +1756,41 @@ An immunity, resistance or weakness that holds only sometimes or against one sou
 
 27 entries (and 3 of the modules' items).
 
-**Consumables**
+**"immune"**: 18 (1 only this need)
 
 - Antimagic Oil: note only; also objects and the item itself
-- Captivating Bauble: partial; also sustained, repeating and later effects, out of combat and the environment
-- Clockwork Monkey: nothing read; also objects and the item itself
-- Fundamental Oil: nothing read
-- Journeybread: note only; also sustained, repeating and later effects, out of combat and the environment
-- Journeybread (Power): partial; also sustained, repeating and later effects, out of combat and the environment
-- Mutagenic Renovator: partial; also sustained, repeating and later effects, out of combat and the environment
-- Obfuscation Oil: nothing read; also objects and the item itself, information
-- Scholar's Drop: partial; also sustained, repeating and later effects, out of combat and the environment
-- Spiced Demonade: note only; also minds, attitudes and behaviour, out of combat and the environment
-- Starsong Nectar: partial; also out of combat and the environment
-- Truth Potion: partial; also minds, attitudes and behaviour, messages, speech and sound
-- Tteokguk of Time Advancement: partial
-
-**Activations**
-
-- Awakened Adamantine Shot: note only; also plain results the reader doesn't parse yet
 - Beguiling Crown: note only; also choices on the card, out of combat and the environment
 - Bewitching Bloom (Magnolia): partial; also out of combat and the environment
-- Cauthooj Bagpipes (Disorienting Fugue): partial; also out of combat and the environment
-- Coral Aspect (Cohabitate): note only; also several creatures at once
+- Captivating Bauble: partial; also sustained, repeating and later effects, out of combat and the environment
 - Deafening Music Box: partial; also sustained, repeating and later effects, messages, speech and sound, out of combat and the environment
-- Gift of Olives (Sew the Cutting): nothing read; also bonuses only in some situations, objects and the item itself, information, out of combat and the environment
+- Journeybread: note only; also sustained, repeating and later effects, out of combat and the environment
+- Journeybread (Power): partial; also sustained, repeating and later effects, out of combat and the environment
 - Mindrender Baton: partial; also sustained, repeating and later effects, several creatures at once, out of combat and the environment
+- Obfuscation Oil: nothing read; also objects and the item itself, information
+- Scholar's Drop: partial; also sustained, repeating and later effects, out of combat and the environment
 - Shell of Easy Breathing (Fill the Shell): note only; also sustained, repeating and later effects, out of combat and the environment
 - Shell of Easy Breathing (Greater) (Fill the Shell): note only; also sustained, repeating and later effects, out of combat and the environment
 - Soulcutter (Heroic) (Shame Demon): note only; also information, out of combat and the environment
+- Spiced Demonade: note only; also minds, attitudes and behaviour, out of combat and the environment
 - Spiritsight Crossbow (Ethereal Vision): nothing read; also objects and the item itself, information
-- Viridian Crown (View Subject): nothing read; also information
-- Void Mirror: partial; also out of combat and the environment
+- Starsong Nectar: partial; also out of combat and the environment
+- Truth Potion: partial; also minds, attitudes and behaviour, messages, speech and sound
+- Tteokguk of Time Advancement: partial; *only this need*
+
+**"weakness to"**: 2 (1 only this need)
+
+- Awakened Adamantine Shot: note only; also plain results the reader doesn't parse yet
+- Fundamental Oil: nothing read; *only this need*
+
+**Other wordings**: 7 (0 only this need)
+
+- Cauthooj Bagpipes (Disorienting Fugue) ("immunity"): partial; also out of combat and the environment
+- Clockwork Monkey ("immunities"): nothing read; also objects and the item itself
+- Coral Aspect (Cohabitate) ("resistance 5"): note only; also several creatures at once
+- Gift of Olives (Sew the Cutting) ("resistance 3"): nothing read; also bonuses only in some situations, objects and the item itself, information, out of combat and the environment
+- Mutagenic Renovator ("resistance against"): partial; also sustained, repeating and later effects, out of combat and the environment
+- Viridian Crown (View Subject) ("resist the"): nothing read; also information
+- Void Mirror ("resist being"): partial; also out of combat and the environment
 
 <a id="situational"></a>
 ### Bonuses only in some situations
@@ -1341,31 +1799,37 @@ A bonus or penalty only against some creatures, checks or places (against undead
 
 20 entries (and 1 of the modules' items).
 
-**Consumables**
+**"bonus is only against"**: 4 (0 only this need)
 
-- Armor Polishing Kit: partial; also out of combat and the environment
-- Cat's Eye Elixir: note only; also several creatures at once, objects and the item itself
-- Eidetic Potion: note only; also sustained, repeating and later effects, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
+- Fungal Walk Musk: partial; also information, out of combat and the environment
+- Oozepick: partial; also choices on the card, objects and the item itself, out of combat and the environment
+- Oozepick (Greater): partial; also choices on the card, objects and the item itself, out of combat and the environment
+- Rhyton of the Radiant Ifrit (Toast!): partial; also out of combat and the environment
+
+**"bonus is only to"**: 3 (0 only this need)
+
 - Emetic Paste (Greater): partial; also choices on the card, plain results the reader doesn't parse yet, out of combat and the environment
 - Emetic Paste (Lesser): partial; also choices on the card, plain results the reader doesn't parse yet, out of combat and the environment
 - Emetic Paste (Moderate): partial; also choices on the card, plain results the reader doesn't parse yet, out of combat and the environment
-- Empath's Cordial: note only; also minds, attitudes and behaviour, information, out of combat and the environment
-- Fake Blood Pack: note only; also several creatures at once, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
-- Fungal Walk Musk: partial; also information, out of combat and the environment
-- Oil (1 pint): partial
-- Oozepick: partial; also choices on the card, objects and the item itself, out of combat and the environment
-- Oozepick (Greater): partial; also choices on the card, objects and the item itself, out of combat and the environment
-- Restful Sleep Fulu: note only; also out of combat and the environment
 
-**Activations**
+**"bonus to saves against"**: 2 (0 only this need)
 
-- Briar: partial; also plain results the reader doesn't parse yet, out of combat and the environment
-- Exploration Lens (Investigating): partial; also objects and the item itself, minds, attitudes and behaviour, information
-- Lodestone Pellet: nothing read
-- Rhyton of the Radiant Ifrit (Toast!): partial; also out of combat and the environment
-- Scene Stealer's Tunic (Look At Me!): partial; also several creatures at once, plain results the reader doesn't parse yet, out of combat and the environment
 - Singing Shortbow (Greater) (Harmonic Shot): partial; also several creatures at once, plain results the reader doesn't parse yet, minds, attitudes and behaviour, messages, speech and sound
 - Singing Shortbow (Harmonic Shot): partial; also several creatures at once, plain results the reader doesn't parse yet, minds, attitudes and behaviour, messages, speech and sound
+
+**Other wordings**: 11 (2 only this need)
+
+- Armor Polishing Kit ("bonus is only on"): partial; also out of combat and the environment
+- Briar ("bonus to all saving throws against"): partial; also plain results the reader doesn't parse yet, out of combat and the environment
+- Cat's Eye Elixir ("only against creatures"): note only; also several creatures at once, objects and the item itself
+- Eidetic Potion ("bonus to create representations of that"): note only; also sustained, repeating and later effects, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
+- Empath's Cordial ("bonus to perception checks to sense motive against"): note only; also minds, attitudes and behaviour, information, out of combat and the environment
+- Exploration Lens (Investigating) ("bonus to skill checks to recall knowledge while"): partial; also objects and the item itself, minds, attitudes and behaviour, information
+- Fake Blood Pack ("bonus to relevant deception checks, such as to lie about"): note only; also several creatures at once, objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
+- Lodestone Pellet ("bonus to ranged strikes made against"): nothing read; *only this need*
+- Oil (1 pint) ("only when the"): partial; *only this need*
+- Restful Sleep Fulu ("bonus to saves against mental effects that"): note only; also out of combat and the environment
+- Scene Stealer's Tunic (Look At Me!) ("penalty to perception checks against"): partial; also several creatures at once, plain results the reader doesn't parse yet, out of combat and the environment
 
 <a id="range"></a>
 ### Range, reach and areas made larger
@@ -1381,79 +1845,112 @@ An effect the user Sustains or Dismisses, one that repeats each round or at each
 
 68 entries (and 7 of the modules' items).
 
-**Consumables**
-
-- Banquet of Hungry Ghosts: note only; also messages, speech and sound, out of combat and the environment
-- Blackfinger Blight: partial
-- Bortled Favorite (Lesser): the GM's; also out of combat and the environment
-- Bortled Favorite (Moderate): the GM's; also out of combat and the environment
-- Breech Ejectors: nothing read; also objects and the item itself
-- Charm of the Ordinary: nothing read; also minds, attitudes and behaviour
-- Colorful Coating (Indigo): note only; also objects and the item itself, plain results the reader doesn't parse yet
-- Ember Dust: note only; also plain results the reader doesn't parse yet, out of combat and the environment
-- Everlasting Adhesive: nothing read; also objects and the item itself
-- Feast of Hungry Ghosts: note only; also messages, speech and sound, out of combat and the environment
-- Instant Spy: note only; also objects and the item itself, information, messages, speech and sound, out of combat and the environment
-- Kaiju Fulu: note only; also objects and the item itself, out of combat and the environment
-- Mender's Soup: partial; also objects and the item itself, out of combat and the environment
-- Potion of Shared Memories: note only; also minds, attitudes and behaviour, information
-
-**Activations**
+**"until you"**: 13 (3 only this need)
 
 - Aeon Stone (Eastern Star) (Absorb Language): the GM's; also messages, speech and sound
-- Aroden's Hearthstone: nothing read; also several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
-- Atlas Arcane (Situation Report): the GM's; also information, messages, speech and sound
+- Banquet of Hungry Ghosts: note only; also messages, speech and sound, out of combat and the environment
 - Bivouac Targe (Deploy Encampment): nothing read; also objects and the item itself
-- Blakenshipper (Be the Band): partial; also several creatures at once, plain results the reader doesn't parse yet, messages, speech and sound
-- Bone Dreadnought Plate: partial
-- Book of Lost Days (Study Memory): note only; also plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, out of combat and the environment
-- Bracelet of Buoyancy (Float): note only; also out of combat and the environment
+- Bortled Favorite (Lesser): the GM's; also out of combat and the environment
+- Bortled Favorite (Moderate): the GM's; also out of combat and the environment
 - Called (Lastwall): nothing read; also objects and the item itself, plain results the reader doesn't parse yet
-- Campaign Stable: the GM's; also objects and the item itself, out of combat and the environment
-- Clockwork Recorder: nothing read; also messages, speech and sound, out of combat and the environment
-- Clockwork Songbird: note only; also messages, speech and sound
-- Communication Pendants: the GM's; also messages, speech and sound
-- Demilich Eye Gem: nothing read; also out of combat and the environment
-- Dirt Sea in a Jar: note only; also out of combat and the environment
-- Duchy Defender (Declare Judgment): nothing read; also plain results the reader doesn't parse yet, information
-- Ebon Marionette: nothing read; also several creatures at once, minds, attitudes and behaviour
-- Eye of the Wise: the GM's; also objects and the item itself, messages, speech and sound
-- Faydhaan's Dallah (Brew): note only; also out of combat and the environment
-- Forgefather's Seal (Seal of Mending): nothing read; also objects and the item itself, out of combat and the environment
-- Guiding Chisel: nothing read
-- Hat of Many Minds (Patchwork Double): nothing read
-- Horrific Effigy (Whispers of Leng): nothing read; also messages, speech and sound, out of combat and the environment
-- Infernal Health: partial
-- Kizidhar's Shield (Repair): note only; also objects and the item itself
-- Librarian's Baton: nothing read; also objects and the item itself
-- Librarian's Baton: the GM's; also information
-- Lily Pad Platform (Plunge): note only; also out of combat and the environment
-- Miniaturization Module (Miniaturize Me!): note only
-- Necklace of Knives: nothing read
-- Nomad's Shawl (Mind's Map): nothing read; also minds, attitudes and behaviour, information
-- Pathfinder's Coin: nothing read; also messages, speech and sound
+- Feast of Hungry Ghosts: note only; also messages, speech and sound, out of combat and the environment
+- Guiding Chisel: nothing read; *only this need*
+- Mender's Soup: partial; also objects and the item itself, out of combat and the environment
 - Pathfinder's Pouch: nothing read; also objects and the item itself
-- Phoenix Fulu Holder (Duplicate Fulu): nothing read; also out of combat and the environment
-- Primeval Mistletoe (Greater) (Cultivate): nothing read; also objects and the item itself
-- Sea Retrieval Line: the GM's; also choices on the card, objects and the item itself
-- Shifter Prosthesis: nothing read
-- Shifter Prosthesis: nothing read
-- Silkspinner's Shield: partial
-- Silver Snake Cane (True Silver Snake): nothing read; also objects and the item itself, minds, attitudes and behaviour
-- Skeletal Claw: partial; also plain results the reader doesn't parse yet
-- Sluggish Bracelet: partial
-- Splithead Bow (Two-Headed Arrow): partial
-- The Lens of the Outreaching Eye: note only; also objects and the item itself, information, out of combat and the environment
+- Shifter Prosthesis: nothing read; *only this need*
+- Shifter Prosthesis: nothing read; *only this need*
 - The Marriage: nothing read; also choices on the card, plain results the reader doesn't parse yet, information, messages, speech and sound
+
+**"sustain"**: 9 (4 only this need)
+
+- Blakenshipper (Be the Band): partial; also several creatures at once, plain results the reader doesn't parse yet, messages, speech and sound
+- Campaign Stable: the GM's; also objects and the item itself, out of combat and the environment
+- Ebon Marionette: nothing read; also several creatures at once, minds, attitudes and behaviour
+- Librarian's Baton: the GM's; also information
+- Primeval Mistletoe (Greater) (Cultivate): nothing read; also objects and the item itself
+- Viridian Crown (Elven Hope): partial; *only this need*
+- Wraithweave Patch (Type I): nothing read; *only this need*
+- Wraithweave Patch (Type II): nothing read; *only this need*
+- Wraithweave Patch (Type III): nothing read; *only this need*
+
+**"dismiss"**: 9 (3 only this need)
+
+- Charm of the Ordinary: nothing read; also minds, attitudes and behaviour
+- Hat of Many Minds (Patchwork Double): nothing read; *only this need*
+- Miniaturization Module (Miniaturize Me!): note only; *only this need*
+- Nomad's Shawl (Mind's Map): nothing read; also minds, attitudes and behaviour, information
+- Silver Snake Cane (True Silver Snake): nothing read; also objects and the item itself, minds, attitudes and behaviour
+- The Lens of the Outreaching Eye: note only; also objects and the item itself, information, out of combat and the environment
 - Trackless (Greater): note only; also choices on the card, several creatures at once, out of combat and the environment
-- Troll Hide: partial; also plain results the reader doesn't parse yet
 - Twilight Tattoo (Inscribe): nothing read; also messages, speech and sound
+- War Mage's Buckler (Spell Amp): note only; *only this need*
+
+**"later"**: 8 (0 only this need)
+
+- Book of Lost Days (Study Memory): note only; also plain results the reader doesn't parse yet, minds, attitudes and behaviour, information, out of combat and the environment
+- Clockwork Recorder: nothing read; also messages, speech and sound, out of combat and the environment
+- Demilich Eye Gem: nothing read; also out of combat and the environment
+- Everlasting Adhesive: nothing read; also objects and the item itself
+- Faydhaan's Dallah (Brew): note only; also out of combat and the environment
+- Instant Spy: note only; also objects and the item itself, information, messages, speech and sound, out of combat and the environment
+- Librarian's Baton: nothing read; also objects and the item itself
+- Phoenix Fulu Holder (Duplicate Fulu): nothing read; also out of combat and the environment
+
+**"each round"**: 6 (2 only this need)
+
+- Aroden's Hearthstone: nothing read; also several creatures at once, objects and the item itself, plain results the reader doesn't parse yet
+- Blackfinger Blight: partial; *only this need*
+- Colorful Coating (Indigo): note only; also objects and the item itself, plain results the reader doesn't parse yet
+- Ember Dust: note only; also plain results the reader doesn't parse yet, out of combat and the environment
+- Infernal Health: partial; *only this need*
+- Kizidhar's Shield (Repair): note only; also objects and the item itself
+
+**"thereafter"**: 3 (1 only this need)
+
+- Kaiju Fulu: note only; also objects and the item itself, out of combat and the environment
+- Potion of Shared Memories: note only; also minds, attitudes and behaviour, information
+- Sluggish Bracelet: partial; *only this need*
+
+**"next time the"**: 3 (0 only this need)
+
+- Duchy Defender (Declare Judgment): nothing read; also plain results the reader doesn't parse yet, information
+- Horrific Effigy (Whispers of Leng): nothing read; also messages, speech and sound, out of combat and the environment
+- Pathfinder's Coin: nothing read; also messages, speech and sound
+
+**"each time you"**: 2 (1 only this need)
+
+- Bone Dreadnought Plate: partial; *only this need*
+- Troll Hide: partial; also plain results the reader doesn't parse yet
+
+**"for as long as"**: 2 (1 only this need)
+
+- Communication Pendants: the GM's; also messages, speech and sound
+- Necklace of Knives: nothing read; *only this need*
+
+**"afterward"**: 2 (0 only this need)
+
+- Atlas Arcane (Situation Report): the GM's; also information, messages, speech and sound
 - Unfolding Tree House (Unfold): nothing read; also objects and the item itself
-- Viridian Crown (Elven Hope): partial
-- War Mage's Buckler (Spell Amp): note only
-- Wraithweave Patch (Type I): nothing read
-- Wraithweave Patch (Type II): nothing read
-- Wraithweave Patch (Type III): nothing read
+
+**"next time you"**: 2 (0 only this need)
+
+- Breech Ejectors: nothing read; also objects and the item itself
+- Forgefather's Seal (Seal of Mending): nothing read; also objects and the item itself, out of combat and the environment
+
+**"dismissed"**: 2 (0 only this need)
+
+- Dirt Sea in a Jar: note only; also out of combat and the environment
+- Eye of the Wise: the GM's; also objects and the item itself, messages, speech and sound
+
+**Other wordings**: 7 (2 only this need)
+
+- Bracelet of Buoyancy (Float) ("at the end of each of your turns"): note only; also out of combat and the environment
+- Clockwork Songbird ("each time the"): note only; also messages, speech and sound
+- Lily Pad Platform (Plunge) ("escape dc"): note only; also out of combat and the environment
+- Sea Retrieval Line ("at the start of each of your turns"): the GM's; also choices on the card, objects and the item itself
+- Silkspinner's Shield ("escape (dc"): partial; *only this need*
+- Skeletal Claw ("as long as any"): partial; also plain results the reader doesn't parse yet
+- Splithead Bow (Two-Headed Arrow) ("on your next turn"): partial; *only this need*
 
 <a id="choice"></a>
 ### Choices on the card
@@ -1462,54 +1959,72 @@ A choice the user makes when using it (a damage type, a mode, a creature, a dire
 
 43 entries (and 6 of the modules' items).
 
-**Consumables**
-
-- Captivating Score: note only; also several creatures at once, minds, attitudes and behaviour, messages, speech and sound, out of combat and the environment
-- Elsie's Excellent Bottled Vim: note only; also plain results the reader doesn't parse yet, out of combat and the environment
-- Lockpicker's Oil: partial; also objects and the item itself
-- Lockpicker's Oil (Greater): partial; also objects and the item itself
-- Lockpicker's Oil (Major): partial; also objects and the item itself
-- Marvelous Miniature, Swift Sparrow: nothing read; also information
-- Watchful Portrait: nothing read; also out of combat and the environment
-- Whisper Briolette: the GM's; also messages, speech and sound
-
-**Activations**
+**"of your choice"**: 17 (3 only this need)
 
 - Accolade Robe (Greater) (Review): the GM's; also information
 - Accolade Robe (Review): the GM's; also information
-- Aeon Stone (Rainbow Prism): nothing read
 - Armbands of the Gorgon: partial; also out of combat and the environment
 - Armory Bracelet (Greater): nothing read; also objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
 - Armory Bracelet (Lesser): nothing read; also objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
 - Armory Bracelet (Major): nothing read; also objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
 - Armory Bracelet (Minor): nothing read; also objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
 - Armory Bracelet (Moderate): nothing read; also objects and the item itself, minds, attitudes and behaviour, out of combat and the environment
+- Cayden's Tankard: partial; also plain results the reader doesn't parse yet
+- Glaive of the Artist: note only; also objects and the item itself
+- Malleable (Reconfigure Armor): nothing read; also objects and the item itself
+- Marvelous Miniature, Swift Sparrow: nothing read; also information
+- Persona Mask (Assume Role): nothing read; *only this need*
+- Persona Mask (Greater) (Assume Role): nothing read; *only this need*
+- Runewell of Lust (Exit the Eye): nothing read; *only this need*
+- The Rakshasa: partial; also plain results the reader doesn't parse yet
+- Vernai Shell (Retrieve Item): note only; also objects and the item itself
+
+**"choose a"**: 6 (0 only this need)
+
 - Bewitching Bloom (Amaranth): nothing read; also several creatures at once
 - Bewitching Bloom (Bellflower): nothing read; also several creatures at once, plain results the reader doesn't parse yet
 - Bewitching Bloom (Lilac): nothing read; also several creatures at once, minds, attitudes and behaviour, information
 - Bewitching Bloom (Red Rose): note only; also several creatures at once, plain results the reader doesn't parse yet, minds, attitudes and behaviour
-- Cayden's Tankard: partial; also plain results the reader doesn't parse yet
-- Cowl of Keys: nothing read; also objects and the item itself
-- Glaive of the Artist: note only; also objects and the item itself
-- Lion's Call (Find the Pride): the GM's; also information
-- Malleable (Reconfigure Armor): nothing read; also objects and the item itself
-- Mat of Resilience (Greater) (Steady Ground): nothing read
-- Mat of Resilience (Steady Ground): nothing read
-- Moonstone Diadem: the GM's; also minds, attitudes and behaviour, out of combat and the environment
 - Mountebank's Passage (Doorway to Onyx): nothing read; also objects and the item itself, out of combat and the environment
 - Mountebank's Passage (Doorway to Pearl): nothing read; also objects and the item itself, out of combat and the environment
-- Persona Mask (Assume Role): nothing read
-- Persona Mask (Greater) (Assume Role): nothing read
-- Possibility Tome (Skim): nothing read; also information, out of combat and the environment
-- Remote Trigger: nothing read
-- Runewell of Lust (Exit the Eye): nothing read
-- Splatrope Extruder: note only; also objects and the item itself, out of combat and the environment
-- Splendid Floodlight: nothing read; also objects and the item itself
-- The Rakshasa: partial; also plain results the reader doesn't parse yet
+
+**"decide"**: 5 (1 only this need)
+
+- Aeon Stone (Rainbow Prism): nothing read; *only this need*
 - Unmemorable Mantle: partial; also minds, attitudes and behaviour
 - Unmemorable Mantle (Greater): partial; also minds, attitudes and behaviour
 - Unmemorable Mantle (Major): partial; also minds, attitudes and behaviour
-- Vernai Shell (Retrieve Item): note only; also objects and the item itself
+- Watchful Portrait: nothing read; also out of combat and the environment
+
+**"choose"**: 4 (1 only this need)
+
+- Captivating Score: note only; also several creatures at once, minds, attitudes and behaviour, messages, speech and sound, out of combat and the environment
+- Remote Trigger: nothing read; *only this need*
+- Splatrope Extruder: note only; also objects and the item itself, out of combat and the environment
+- Whisper Briolette: the GM's; also messages, speech and sound
+
+**"pick a"**: 4 (0 only this need)
+
+- Cowl of Keys: nothing read; also objects and the item itself
+- Lockpicker's Oil: partial; also objects and the item itself
+- Lockpicker's Oil (Greater): partial; also objects and the item itself
+- Lockpicker's Oil (Major): partial; also objects and the item itself
+
+**"one of the following"**: 3 (0 only this need)
+
+- Elsie's Excellent Bottled Vim: note only; also plain results the reader doesn't parse yet, out of combat and the environment
+- Lion's Call (Find the Pride): the GM's; also information
+- Splendid Floodlight: nothing read; also objects and the item itself
+
+**"choose which"**: 2 (2 only this need)
+
+- Mat of Resilience (Greater) (Steady Ground): nothing read; *only this need*
+- Mat of Resilience (Steady Ground): nothing read; *only this need*
+
+**Other wordings**: 2 (0 only this need)
+
+- Moonstone Diadem ("choose to"): the GM's; also minds, attitudes and behaviour, out of combat and the environment
+- Possibility Tome (Skim) ("choose one"): nothing read; also information, out of combat and the environment
 
 <a id="several"></a>
 ### Several creatures at once
@@ -1518,37 +2033,49 @@ Allies or several creatures each getting a result, or a number of targets the ca
 
 26 entries.
 
-**Consumables**
+**"creatures within"**: 7 (3 only this need)
 
 - Ectoplasmic Tracer: note only; also plain results the reader doesn't parse yet, information
-- Peachwood Talisman: note only; also plain results the reader doesn't parse yet
+- Gourd Home: the GM's; also objects and the item itself, out of combat and the environment
+- Hallajin Key: nothing read; *only this need*
+- Ring of Observation (Greater): note only; also out of combat and the environment
+- Ring of Observation (Lesser): note only; *only this need*
+- Ring of Observation (Moderate): note only; *only this need*
+- Singing Stone (Stone's Sight): nothing read; also objects and the item itself, information
 
-**Activations**
+**"ally"**: 7 (1 only this need)
 
-- Accursed Fame (Entreat Crowd): the GM's
+- Accursed Fame (Entreat Crowd): the GM's; *only this need*
 - Admirer's Bouquet: partial; also minds, attitudes and behaviour
 - Alchemical Atomizer: the GM's; also out of combat and the environment
-- Banner of Piercing Shards (Greater) (Shards Seek Wounds): partial
-- Banner of Piercing Shards (Major) (Shards Seek Wounds): partial
-- Banner of Piercing Shards (Shards Seek Wounds): partial
+- Kindler Cameo (Sense Soulheart): nothing read; also information
+- Lady's Knife: the GM's; also out of combat and the environment
+- Successor Doll (Fierce Gaze, Approving Smile): partial; also minds, attitudes and behaviour
+- The Waxworks: partial; also plain results the reader doesn't parse yet
+
+**"each creature"**: 4 (1 only this need)
+
 - Dragon-Lotus Drum (Summon Dragon-Lotus Army): partial; also plain results the reader doesn't parse yet
 - Essence Prism: nothing read; also out of combat and the environment
 - Faydhaan's Dallah (Faydhaan's Hospitality): nothing read; also objects and the item itself, messages, speech and sound
-- Gourd Home: the GM's; also objects and the item itself, out of combat and the environment
-- Guiding Cajon Drum: nothing read
-- Hallajin Key: nothing read
-- Kindler Cameo (Sense Soulheart): nothing read; also information
-- Lady's Chalice: partial
-- Lady's Knife: the GM's; also out of combat and the environment
-- Planar Ribbon: partial
-- Rhyton of the Radiant Ifrit (Ifrit's Command): nothing read; also plain results the reader doesn't parse yet, out of combat and the environment
-- Ring of Observation (Greater): note only; also out of combat and the environment
-- Ring of Observation (Lesser): note only
-- Ring of Observation (Moderate): note only
-- Singing Stone (Stone's Sight): nothing read; also objects and the item itself, information
-- Successor Doll (Fierce Gaze, Approving Smile): partial; also minds, attitudes and behaviour
+- Lady's Chalice: partial; *only this need*
+
+**"each enemy"**: 3 (3 only this need)
+
+- Banner of Piercing Shards (Greater) (Shards Seek Wounds): partial; *only this need*
+- Banner of Piercing Shards (Major) (Shards Seek Wounds): partial; *only this need*
+- Banner of Piercing Shards (Shards Seek Wounds): partial; *only this need*
+
+**"allies"**: 3 (1 only this need)
+
+- Peachwood Talisman: note only; also plain results the reader doesn't parse yet
+- Planar Ribbon: partial; *only this need*
 - The Empty Throne: partial; also out of combat and the environment
-- The Waxworks: partial; also plain results the reader doesn't parse yet
+
+**Other wordings**: 2 (1 only this need)
+
+- Guiding Cajon Drum ("up to 2 allies"): nothing read; *only this need*
+- Rhyton of the Radiant Ifrit (Ifrit's Command) ("each target"): nothing read; also plain results the reader doesn't parse yet, out of combat and the environment
 
 <a id="objects"></a>
 ### Objects and the item itself
@@ -1557,132 +2084,186 @@ What the card targets or changes isn't a creature: a lock, door, rope, container
 
 121 entries (and 2 of the modules' items).
 
-**Consumables**
+**"objects"**: 14 (3 only this need)
+
+- Aether Appendage: nothing read; *only this need*
+- Anticorrosion Oil: note only; also out of combat and the environment
+- Aurifying Salts: the GM's; also out of combat and the environment
+- Bellflower Toolbelt: the GM's; also out of combat and the environment
+- Extraction Cauldron: nothing read; also out of combat and the environment
+- Kotodama Whistle (Question the Soul): note only; also messages, speech and sound
+- Lifting Belt (Assisted Lift): nothing read; *only this need*
+- Miraculous Paintbrush: nothing read; also out of combat and the environment
+- Oil of Ownership (Greater): the GM's; also out of combat and the environment
+- Oil of Ownership (Lesser): the GM's; also out of combat and the environment
+- Oil of Ownership (Moderate): the GM's; also out of combat and the environment
+- Periscopic Viewfinder: nothing read; also information
+- Psychic Colors Elixir: note only; also information, messages, speech and sound
+- The Wanderer: note only; *only this need*
+
+**"extradimensional"**: 11 (5 only this need)
+
+- Legerdemain Handkerchief: nothing read; *only this need*
+- Retrieval Belt (Greater) (Store Item): nothing read; *only this need*
+- Retrieval Belt (Major) (Store Item): nothing read; *only this need*
+- Retrieval Belt (Store Item): nothing read; *only this need*
+- Ring of Stoneshifting: nothing read; also information, out of combat and the environment
+- Smuggler's Sack (Type I): nothing read; also messages, speech and sound
+- Smuggler's Sack (Type II): nothing read; also messages, speech and sound
+- Smuggler's Sack (Type III): nothing read; also messages, speech and sound
+- Smuggler's Sack (Type IV): nothing read; also messages, speech and sound
+- Smuggler's Sack (Type V): nothing read; also messages, speech and sound
+- Vernai Shell (Store Item): nothing read; *only this need*
+
+**"crumbles"**: 8 (0 only this need)
 
 - Ablative Shield Plating (Greater): the GM's; also plain results the reader doesn't parse yet, out of combat and the environment
 - Ablative Shield Plating (Lesser): the GM's; also plain results the reader doesn't parse yet
 - Ablative Shield Plating (Major): the GM's; also plain results the reader doesn't parse yet, out of combat and the environment
 - Ablative Shield Plating (Moderate): the GM's; also plain results the reader doesn't parse yet
 - Ablative Shield Plating (True): the GM's; also plain results the reader doesn't parse yet, out of combat and the environment
-- Anointing Oil: note only; also plain results the reader doesn't parse yet, out of combat and the environment
-- Anticorrosion Oil: note only; also out of combat and the environment
-- Ashes of the War God: note only; also out of combat and the environment
-- Aurifying Salts: the GM's; also out of combat and the environment
-- Black Powder (Dose): nothing read; also messages, speech and sound
-- Caustic Deteriorating Dust: note only; also plain results the reader doesn't parse yet, out of combat and the environment
 - Demolition Fulu (Greater): nothing read; also plain results the reader doesn't parse yet, information, out of combat and the environment
 - Demolition Fulu (Lesser): nothing read; also plain results the reader doesn't parse yet, information, out of combat and the environment
 - Demolition Fulu (Moderate): nothing read; also plain results the reader doesn't parse yet, information, out of combat and the environment
+
+**"hardness"**: 7 (4 only this need)
+
+- Caustic Deteriorating Dust: note only; also plain results the reader doesn't parse yet, out of combat and the environment
 - Deteriorating Dust: note only; also plain results the reader doesn't parse yet, out of combat and the environment
 - Extended Deteriorating Dust: note only; also plain results the reader doesn't parse yet, out of combat and the environment
-- Feather Token (Tree): nothing read
-- Forensic Dye: nothing read
-- Holy Steam Ball Refill: nothing read
+- Fan Buckler (Unfurl Fan): nothing read; *only this need*
+- Highhelm Drill Mark I: note only; *only this need*
+- Highhelm Drill Mark II: note only; *only this need*
+- Highhelm Drill Mark III: note only; *only this need*
+
+**"don"**: 7 (4 only this need)
+
+- Crushing Coils: nothing read; *only this need*
+- Deck of Many Things: nothing read; *only this need*
+- Fashionable Wayfinder: nothing read; *only this need*
+- Grimoire of Unknown Necessities: nothing read; also information, out of combat and the environment
+- Helmsman's Recourse: note only; also out of combat and the environment
+- Mark of the Torrent (Modus Operandi): the GM's; also information
+- Vorpal (Snicker-Snack): partial; *only this need*
+
+**"door"**: 6 (4 only this need)
+
+- Gourd Home: nothing read; *only this need*
 - Magical Lock Fulu: note only; also out of combat and the environment
-- Miraculous Paintbrush: nothing read; also out of combat and the environment
-- Oil of Ownership (Greater): the GM's; also out of combat and the environment
-- Oil of Ownership (Lesser): the GM's; also out of combat and the environment
-- Oil of Ownership (Moderate): the GM's; also out of combat and the environment
-- Oil of Weightlessness: the GM's; also out of combat and the environment
-- Oil of Weightlessness (Greater): the GM's; also out of combat and the environment
-- Periscopic Viewfinder: nothing read; also information
-- Psychic Colors Elixir: note only; also information, messages, speech and sound
-- Quickpatch Glue: nothing read; also out of combat and the environment
+- Portable Gaming Hall: nothing read; *only this need*
+- Suit of Armoire: nothing read; *only this need*
+- Tentacle Potion (Greater): partial; *only this need*
+- Wizard's Tower: nothing read; also messages, speech and sound
+
+**"rope"**: 6 (3 only this need)
+
+- Anylength Rope (Greater): nothing read; *only this need*
+- Anylength Rope (Greater): nothing read; also out of combat and the environment
+- Anylength Rope (Lesser): nothing read; *only this need*
+- Anylength Rope (Lesser): nothing read; also out of combat and the environment
+- Anylength Rope (Moderate): nothing read; *only this need*
+- Anylength Rope (Moderate): nothing read; also out of combat and the environment
+
+**"lens"**: 4 (2 only this need)
+
 - Recording Rod (Basic): note only; also messages, speech and sound
 - Recording Rod (Reusable): note only; also minds, attitudes and behaviour, messages, speech and sound
-- Recovery Bladder: nothing read; also out of combat and the environment
-- Runestone: nothing read
-- Self-Immolating Note: nothing read; also plain results the reader doesn't parse yet, out of combat and the environment
-- Smuggler's Padlock: nothing read; also out of combat and the environment
-- Tentacle Potion (Greater): partial
-- Timeless Salts: the GM's; also out of combat and the environment
+- Spyglass Eye: note only; *only this need*
+- Starless Scope Lens: nothing read; *only this need*
 
-**Activations**
+**"corpse"**: 3 (1 only this need)
 
-- Aether Appendage: nothing read
-- Aether Appendage: note only
-- Anchor Spear: nothing read
-- Ankylostar: nothing read
-- Anylength Rope (Greater): nothing read
-- Anylength Rope (Greater): nothing read; also out of combat and the environment
-- Anylength Rope (Lesser): nothing read
-- Anylength Rope (Lesser): nothing read; also out of combat and the environment
-- Anylength Rope (Moderate): nothing read
-- Anylength Rope (Moderate): nothing read; also out of combat and the environment
-- Autoload Leathers (Autoload): nothing read
-- Bellflower Toolbelt: the GM's; also out of combat and the environment
-- Blade of Fallen Stars: nothing read
+- Anointing Oil: note only; also plain results the reader doesn't parse yet, out of combat and the environment
 - Branch of the Great Sugi (A Multitude of Branches): nothing read; also plain results the reader doesn't parse yet, out of combat and the environment
-- Branch of the Great Sugi (A Single Branch): nothing read
-- Cape of Justice (Enact Justice): partial
-- Carrion Cask: nothing read
+- Carrion Cask: nothing read; *only this need*
+
+**"repair"**: 3 (0 only this need)
+
 - Chair of Inventions: nothing read; also out of combat and the environment
-- Crushing Coils: nothing read
-- Deck of Many Things: nothing read
+- Flawless Celestial Shawl (Reweave): nothing read; also out of combat and the environment
+- Quickpatch Glue: nothing read; also out of combat and the environment
+
+**"3 bulk"**: 3 (0 only this need)
+
 - Essence Forge (Greater) (Prime the Forge): note only; also out of combat and the environment
 - Essence Forge (Lesser) (Prime the Forge): note only; also out of combat and the environment
 - Essence Forge (Moderate) (Prime the Forge): note only; also out of combat and the environment
-- Everyneed Pack: nothing read
-- Everyneed Pack (Greater): nothing read
-- Extraction Cauldron: nothing read; also out of combat and the environment
-- Fan Buckler (Unfurl Fan): nothing read
-- Fashionable Wayfinder: nothing read
-- Flawless Celestial Shawl (Reweave): nothing read; also out of combat and the environment
-- Frog Chair (Grrrabbit!): nothing read
-- Ganjay Book (1 bulk book): nothing read
-- Ganjay Book (Light bulk book): nothing read
-- Gourd Home: nothing read
-- Grimoire of Unknown Necessities: nothing read; also information, out of combat and the environment
-- Gunner's Bandolier: nothing read
-- Hardened Harrow Deck: nothing read
-- Helmsman's Recourse: note only; also out of combat and the environment
-- Highhelm Drill Mark I: note only
-- Highhelm Drill Mark II: note only
-- Highhelm Drill Mark III: note only
-- Immaculate Holsters (Immaculatize): nothing read
-- Immovable Tripod: nothing read; also out of combat and the environment
-- Kotodama Whistle (Question the Soul): note only; also messages, speech and sound
+
+**"reload"**: 2 (2 only this need)
+
+- Autoload Leathers (Autoload): nothing read; *only this need*
+- Immaculate Holsters (Immaculatize): nothing read; *only this need*
+
+**"unfold"**: 2 (2 only this need)
+
+- Blade of Fallen Stars: nothing read; *only this need*
+- Lily Pad Platform (Expand): nothing read; *only this need*
+
+**"mundane gear"**: 2 (2 only this need)
+
+- Everyneed Pack: nothing read; *only this need*
+- Everyneed Pack (Greater): nothing read; *only this need*
+
+**"fold"**: 2 (2 only this need)
+
+- Ganjay Book (1 bulk book): nothing read; *only this need*
+- Ganjay Book (Light bulk book): nothing read; *only this need*
+
+**"return to the"**: 2 (2 only this need)
+
+- Gunner's Bandolier: nothing read; *only this need*
+- Thrower's Bandolier: nothing read; *only this need*
+
+**"1 bulk"**: 2 (1 only this need)
+
+- Forensic Dye: nothing read; *only this need*
+- Oil of Weightlessness: the GM's; also out of combat and the environment
+
+**"container"**: 2 (0 only this need)
+
+- Black Powder (Dose): nothing read; also messages, speech and sound
 - Lady's Chalice: nothing read; also out of combat and the environment
-- Legerdemain Handkerchief: nothing read
-- Lifting Belt (Assisted Lift): nothing read
-- Lily Pad Platform (Expand): nothing read
-- Mark of the Torrent (Modus Operandi): the GM's; also information
-- Miogimo's Mask: nothing read
-- Palm Crossbow: nothing read
+
+**"lock"**: 2 (0 only this need)
+
+- Immovable Tripod: nothing read; also out of combat and the environment
 - Passage Pane: nothing read; also information, out of combat and the environment
-- Phantom Piano: nothing read
-- Portable: nothing read
-- Portable Gaming Hall: nothing read
-- Retrieval Belt (Greater) (Store Item): nothing read
-- Retrieval Belt (Major) (Store Item): nothing read
-- Retrieval Belt (Store Item): nothing read
-- Ring of Stoneshifting: nothing read; also information, out of combat and the environment
-- Rusting Carapace: partial; also plain results the reader doesn't parse yet
-- Smuggler's Sack (Type I): nothing read; also messages, speech and sound
-- Smuggler's Sack (Type II): nothing read; also messages, speech and sound
-- Smuggler's Sack (Type III): nothing read; also messages, speech and sound
-- Smuggler's Sack (Type IV): nothing read; also messages, speech and sound
-- Smuggler's Sack (Type V): nothing read; also messages, speech and sound
-- Spyglass Eye: note only
-- Staff of Sun Wukong (Close at Hand): nothing read; also out of combat and the environment
-- Staff-Storing Shield (Astonishing Transfiguration): nothing read
-- Starless Scope Lens: nothing read
-- Storm Arrow: partial
-- Suit of Armoire: nothing read
-- The Forge: nothing read
-- The Wanderer: note only
-- Thousand-Blade Thesis (Instant Armory): note only
-- Thrower's Bandolier: nothing read
-- Traveler's Any-Tool (Tap): nothing read
-- Vagabond's Teapot (Share Brew): nothing read
-- Vengeful Arm: nothing read
-- Vernai Shell (Store Item): nothing read
-- Void Shackles (Release Shackle): partial
-- Vorpal (Snicker-Snack): partial
-- Wardrobe Stone (Greater): nothing read
-- Weapon Siphon: nothing read
-- Windborne Platform (Adjust Height): nothing read
-- Wizard's Tower: nothing read; also messages, speech and sound
+
+**Other wordings**: 33 (25 only this need)
+
+- Aether Appendage ("item becomes"): note only; *only this need*
+- Anchor Spear ("extends into a +2 greater striking longspear"): nothing read; *only this need*
+- Ankylostar ("transforms into a +2 greater striking greatclub"): nothing read; *only this need*
+- Ashes of the War God ("armor becomes"): note only; also out of combat and the environment
+- Branch of the Great Sugi (A Single Branch) ("transform the branch of the great sugi from its tree form back into its whip form"): nothing read; *only this need*
+- Cape of Justice (Enact Justice) ("manacles"): partial; *only this need*
+- Feather Token (Tree) ("transforms into an oak tree"): nothing read; *only this need*
+- Frog Chair (Grrrabbit!) ("unattended object"): nothing read; *only this need*
+- Hardened Harrow Deck ("fly back into"): nothing read; *only this need*
+- Holy Steam Ball Refill ("refill"): nothing read; *only this need*
+- Miogimo's Mask ("other form"): nothing read; *only this need*
+- Oil of Weightlessness (Greater) ("2 bulk"): the GM's; also out of combat and the environment
+- Palm Crossbow ("expand the bracelet into a hand crossbow"): nothing read; *only this need*
+- Phantom Piano ("shrinks down to a figurine"): nothing read; *only this need*
+- Portable ("doff"): nothing read; *only this need*
+- Recovery Bladder ("16 bulk"): nothing read; also out of combat and the environment
+- Runestone ("fundamental rune"): nothing read; *only this need*
+- Rusting Carapace ("item takes"): partial; also plain results the reader doesn't parse yet
+- Self-Immolating Note ("broken"): nothing read; also plain results the reader doesn't parse yet, out of combat and the environment
+- Smuggler's Padlock ("padlock"): nothing read; also out of combat and the environment
+- Staff of Sun Wukong (Close at Hand) ("negligible bulk"): nothing read; also out of combat and the environment
+- Staff-Storing Shield (Astonishing Transfiguration) ("shield form"): nothing read; *only this need*
+- Storm Arrow ("property rune"): partial; *only this need*
+- The Forge ("4 bulk"): nothing read; *only this need*
+- Thousand-Blade Thesis (Instant Armory) ("weapons contained"): note only; *only this need*
+- Timeless Salts ("40 bulk"): the GM's; also out of combat and the environment
+- Traveler's Any-Tool (Tap) ("any-tool"): nothing read; *only this need*
+- Vagabond's Teapot (Share Brew) ("uses of the same"): nothing read; *only this need*
+- Vengeful Arm ("transforms the tattoo into a weapon"): nothing read; *only this need*
+- Void Shackles (Release Shackle) ("shackles"): partial; *only this need*
+- Wardrobe Stone (Greater) ("permanently transforms"): nothing read; *only this need*
+- Weapon Siphon ("bomb fitted"): nothing read; *only this need*
+- Windborne Platform (Adjust Height) ("50 bulk"): nothing read; *only this need*
 
 <a id="reader"></a>
 ### Plain results the reader doesn't parse yet
@@ -1691,40 +2272,55 @@ Damage dice, a condition, a bonus or penalty, Hit Points, in words of their own:
 
 29 entries (and 11 of the modules' items).
 
-**Consumables**
+**"enfeebled"**: 5 (0 only this need)
 
-- Ghost Courier Fulu: nothing read; also messages, speech and sound
-- Mnemonic Acid: nothing read; also minds, attitudes and behaviour
-- Penultimate Heartbeat: partial; also out of combat and the environment
-- Rust Scrub: nothing read
 - Soldier's Syrup (Greater): note only; also out of combat and the environment
 - Soldier's Syrup (Lesser): note only; also out of combat and the environment
 - Soldier's Syrup (Major): note only; also out of combat and the environment
 - Soldier's Syrup (Minor): note only; also out of combat and the environment
 - Soldier's Syrup (Moderate): note only; also out of combat and the environment
-- Stage Fright Missive: partial; also messages, speech and sound
 
-**Activations**
+**"1d6"**: 2 (2 only this need)
 
-- Blood-Drinker Blade (Greater) (Exsanguinate): partial
-- Celestial Peachwood Sword (Violent Exorcism): partial
-- Chiromantic Lines (Cunning Consultation): nothing read
+- Celestial Peachwood Sword (Violent Exorcism): partial; *only this need*
+- Hodag Leather (Hodag Toss): partial; *only this need*
+
+**"temporary hit points"**: 2 (2 only this need)
+
+- Life's Last Breath: partial; *only this need*
+- Shield of Endurance (Temporary Endurance): note only; *only this need*
+
+**"1d4"**: 2 (1 only this need)
+
 - Duchy Defender (To the Worthy!): note only; also information, out of combat and the environment
-- Enfilading Arrow: partial
-- Graverose Garland (To the Grave with You!): partial; also information
-- Heart of Sarnax (Two Hearts as One): partial
-- Hodag Leather (Hodag Toss): partial
-- In the Shadows of Toil: note only
-- Life's Last Breath: partial
-- Reducer Round: partial
+- Reducer Round: partial; *only this need*
+
+**"fatigued"**: 2 (1 only this need)
+
+- In the Shadows of Toil: note only; *only this need*
 - Rime Jar (Siphon Chill): the GM's; also out of combat and the environment
-- Robe of Beneficence (Compelled Nonviolence): partial; also out of combat and the environment
-- Serrating: nothing read
-- Shield of Endurance (Temporary Endurance): note only
-- Shot of the First Vault (Vault Deposit): partial; also information
-- Spleen Bloodstone of Arazni (Break Bonds): partial
-- Swarmeater's Clasp: partial
-- Tideplate (Submerge): note only
+
+**"2d10"**: 2 (0 only this need)
+
+- Ghost Courier Fulu: nothing read; also messages, speech and sound
+- Mnemonic Acid: nothing read; also minds, attitudes and behaviour
+
+**Other wordings**: 14 (9 only this need)
+
+- Blood-Drinker Blade (Greater) (Exsanguinate) ("6d6"): partial; *only this need*
+- Chiromantic Lines (Cunning Consultation) ("off-guard"): nothing read; *only this need*
+- Enfilading Arrow ("immobilized"): partial; *only this need*
+- Graverose Garland (To the Grave with You!) ("prone"): partial; also information
+- Heart of Sarnax (Two Hearts as One) ("slowed"): partial; *only this need*
+- Penultimate Heartbeat ("frightened"): partial; also out of combat and the environment
+- Robe of Beneficence (Compelled Nonviolence) ("stunned"): partial; also out of combat and the environment
+- Rust Scrub ("2d4"): nothing read; *only this need*
+- Serrating ("1d12"): nothing read; *only this need*
+- Shot of the First Vault (Vault Deposit) ("1d20"): partial; also information
+- Spleen Bloodstone of Arazni (Break Bonds) ("confused"): partial; *only this need*
+- Stage Fright Missive ("sickened"): partial; also messages, speech and sound
+- Swarmeater's Clasp ("3d10"): partial; *only this need*
+- Tideplate (Submerge) ("10d6"): note only; *only this need*
 
 <a id="mind"></a>
 ### Minds, attitudes and behaviour
@@ -1733,25 +2329,34 @@ A creature's attitude, truthfulness, memory, beliefs or compelled behaviour: no 
 
 14 entries (and 2 of the modules' items).
 
-**Consumables**
+**"emotions"**: 3 (3 only this need)
 
-- Dr. Ushernacht's Astonishing Ink (Major): partial
-- Dr. Ushernacht's Astonishing Ink (Minor): partial
-- Dr. Ushernacht's Astonishing Ink (Moderate): partial
-- Mistranslator's Draft: note only; also information, messages, speech and sound, out of combat and the environment
+- Dr. Ushernacht's Astonishing Ink (Major): partial; *only this need*
+- Dr. Ushernacht's Astonishing Ink (Minor): partial; *only this need*
+- Dr. Ushernacht's Astonishing Ink (Moderate): partial; *only this need*
 
-**Activations**
+**"dominate"**: 2 (1 only this need)
 
-- Azarim: nothing read
-- Codex of Unimpeded Sight (Reveal Truth): the GM's; also information
-- Deravon's Helm (Bow Before Aroden): partial
-- Memory Guitar: nothing read; also information
 - Mirror of Sorshen (Irresistible Desire): note only; also out of combat and the environment
-- Sinuous Recorder (Sooth Serpents): partial
-- Spider Lily Tattoo (Dead Like You): partial
-- Token of Salt and Earth (Hide from the Hateful): note only
+- Watcher's Armband (Find the Plant): note only; *only this need*
+
+**"attitude"**: 2 (1 only this need)
+
+- Mistranslator's Draft: note only; also information, messages, speech and sound, out of combat and the environment
+- Sinuous Recorder (Sooth Serpents): partial; *only this need*
+
+**"memory"**: 2 (0 only this need)
+
+- Memory Guitar: nothing read; also information
 - Umbraex Eye: nothing read; also information, messages, speech and sound
-- Watcher's Armband (Find the Plant): note only
+
+**Other wordings**: 5 (4 only this need)
+
+- Azarim ("lie"): nothing read; *only this need*
+- Codex of Unimpeded Sight (Reveal Truth) ("truth"): the GM's; also information
+- Deravon's Helm (Bow Before Aroden) ("as its first action"): partial; *only this need*
+- Spider Lily Tattoo (Dead Like You) ("believes"): partial; *only this need*
+- Token of Salt and Earth (Hide from the Hateful) ("charm"): note only; *only this need*
 
 <a id="information"></a>
 ### Information
@@ -1760,49 +2365,73 @@ Something the user learns: a location, an identity, a creature's statistics, a m
 
 38 entries (and 7 of the modules' items).
 
-**Consumables**
+**"knows"**: 6 (3 only this need)
 
+- Astrolabe of the Falling Stars (Calculate): nothing read; *only this need*
 - Conspirator's Cookie: partial; also messages, speech and sound, out of combat and the environment
+- Genealogy Mask: the GM's; also messages, speech and sound
+- Philosopher's Extractor (Accelerated Synthesis): the GM's; also out of combat and the environment
+- Signaling Snare: nothing read; *only this need*
+- Standard Astrolabe (Calculate): nothing read; *only this need*
+
+**"recall knowledge"**: 5 (3 only this need)
+
+- Chronicler Wayfinder: nothing read; *only this need*
+- Diplomat's Badge (Diplomat's Bearing): partial; also out of combat and the environment
+- The Vision: the GM's; *only this need*
+- Twig of Knowledge and Memory: nothing read; *only this need*
+- Uniter of Clans: partial; also out of combat and the environment
+
+**"location"**: 5 (0 only this need)
+
+- Bloodstride Boots (Blood Hop): the GM's; also out of combat and the environment
 - Feather Token (Bird): nothing read; also messages, speech and sound, out of combat and the environment
 - Ghost Delivery Fulu: note only; also messages, speech and sound, out of combat and the environment
-- Ghost Ink: nothing read; also out of combat and the environment
-- Krasovnatype: nothing read
-- Missive Mint: nothing read; also messages, speech and sound, out of combat and the environment
-- Red-Handed Missive: the GM's; also out of combat and the environment
-- Signaling Snare: nothing read
-- Twig of Knowledge and Memory: nothing read
-
-**Activations**
-
-- Astrolabe of the Falling Stars (Calculate): nothing read
-- Bloodstride Boots (Blood Hop): the GM's; also out of combat and the environment
-- Chronicler Wayfinder: nothing read
-- Diplomat's Badge (Diplomat's Bearing): partial; also out of combat and the environment
-- Gaffe Glasses: nothing read
-- Genealogy Mask: the GM's; also messages, speech and sound
 - Gossip's Eye: note only; also messages, speech and sound
-- Homeward Swallow: nothing read
+- Spiral Chimes (Forecast Chime): note only; also messages, speech and sound, out of combat and the environment
+
+**"detect"**: 4 (3 only this need)
+
+- Ghost Ink: nothing read; also out of combat and the environment
+- Merchant's Guile: nothing read; *only this need*
+- Ring of Sigils (Greater) (Track Sigil): the GM's; *only this need*
+- Ring of Sigils (Track Sigil): the GM's; *only this need*
+
+**"documents"**: 4 (1 only this need)
+
 - Humbug Pocket (Greater) (Papers Please): nothing read; also out of combat and the environment
 - Humbug Pocket (Papers Please): nothing read; also out of combat and the environment
+- Misdirecting Haversack: nothing read; *only this need*
+- Red-Handed Missive: the GM's; also out of combat and the environment
+
+**"learn"**: 3 (3 only this need)
+
+- Krasovnatype: nothing read; *only this need*
+- Navigator's Star: the GM's; *only this need*
+- Three-Pillared Yang Na (Second Blessing): the GM's; *only this need*
+
+**"translated"**: 3 (0 only this need)
+
 - Linguist's Dictionary: nothing read; also messages, speech and sound
 - Linguist's Dictionary (Greater): nothing read; also messages, speech and sound
-- Magnifying Glass of Elucidation: the GM's
-- Merchant's Guile: nothing read
-- Misdirecting Haversack: nothing read
-- Navigator's Star: the GM's
-- Philosopher's Extractor (Accelerated Synthesis): the GM's; also out of combat and the environment
-- Purloining Cloak: nothing read
 - Reading Glyphs: nothing read; also messages, speech and sound
-- Ring of Sigils (Greater) (Track Sigil): the GM's
-- Ring of Sigils (Track Sigil): the GM's
+
+**"identify"**: 2 (0 only this need)
+
+- Missive Mint: nothing read; also messages, speech and sound, out of combat and the environment
+- Secret-Keeper's Mask (Reaper of Reputation): the GM's; also messages, speech and sound
+
+**"scanner"**: 2 (0 only this need)
+
 - Schematic Scanner (Reverse Engineer Schematics): nothing read; also out of combat and the environment
 - Schematic Scanner (Store Schematics): nothing read; also out of combat and the environment
-- Secret-Keeper's Mask (Reaper of Reputation): the GM's; also messages, speech and sound
-- Spiral Chimes (Forecast Chime): note only; also messages, speech and sound, out of combat and the environment
-- Standard Astrolabe (Calculate): nothing read
-- The Vision: the GM's
-- Three-Pillared Yang Na (Second Blessing): the GM's
-- Uniter of Clans: partial; also out of combat and the environment
+
+**Other wordings**: 4 (4 only this need)
+
+- Gaffe Glasses ("remember"): nothing read; *only this need*
+- Homeward Swallow ("sense the direction"): nothing read; *only this need*
+- Magnifying Glass of Elucidation ("scan"): the GM's; *only this need*
+- Purloining Cloak ("discern"): nothing read; *only this need*
 
 <a id="speech"></a>
 ### Messages, speech and sound
@@ -1811,47 +2440,59 @@ Messages, languages, telepathy, sounds and silence: note Effects or chat message
 
 36 entries (and 1 of the modules' items).
 
-**Consumables**
+**"words"**: 12 (12 only this need)
 
-- Bookthief Brew: nothing read
-- Comprehension Elixir (Greater): the GM's
-- Comprehension Elixir (Lesser): the GM's
+- Bookthief Brew: nothing read; *only this need*
+- Codebreaker's Parchment (Burn After Reading): nothing read; *only this need*
+- Codebreaker's Parchment (Decode Writing): nothing read; *only this need*
+- Codebreaker's Parchment (Greater) (Burn After Reading): nothing read; *only this need*
+- Codebreaker's Parchment (Greater) (Decode Writing): nothing read; *only this need*
+- Codebreaker's Parchment (Major) (Burn After Reading): nothing read; *only this need*
+- Codebreaker's Parchment (Major) (Decode Writing): nothing read; *only this need*
+- Comprehension Elixir (Greater): the GM's; *only this need*
+- Comprehension Elixir (Lesser): the GM's; *only this need*
+- Laboratory Coat (Quick Escape): nothing read; *only this need*
+- Slates of Distant Letters (Send a Message): nothing read; *only this need*
+- Wordreaper: note only; *only this need*
+
+**"voice"**: 8 (4 only this need)
+
 - Elixir of Gender Transformation (Greater): nothing read; also out of combat and the environment
-- Elixir of Gender Transformation (Lesser): nothing read
-- Elixir of Gender Transformation (Moderate): nothing read
+- Elixir of Gender Transformation (Lesser): nothing read; *only this need*
+- Elixir of Gender Transformation (Moderate): nothing read; *only this need*
+- Herald's Ring (Project Voice): nothing read; also out of combat and the environment
 - Megaphone Mutagen (Greater): partial; also out of combat and the environment
-- Megaphone Mutagen (Lesser): partial
+- Megaphone Mutagen (Lesser): partial; *only this need*
 - Megaphone Mutagen (Major): partial; also out of combat and the environment
-- Megaphone Mutagen (Moderate): partial
-- Neophyte's Fipple: nothing read
-- Potion of Truespeech: the GM's; also out of combat and the environment
+- Megaphone Mutagen (Moderate): partial; *only this need*
+
+**"sounds"**: 7 (4 only this need)
+
+- Neophyte's Fipple: nothing read; *only this need*
+- Ranging Shot: nothing read; *only this need*
+- Rhythm Bone: nothing read; also out of combat and the environment
+- Rhythm Bone: nothing read; *only this need*
+- Rhythm Bone (Greater): nothing read; also out of combat and the environment
+- Rhythm Bone (Greater): nothing read; *only this need*
 - Seven-Color Raw Fish Salad: nothing read; also out of combat and the environment
 
-**Activations**
+**"speaking"**: 4 (3 only this need)
 
-- Codebreaker's Parchment (Burn After Reading): nothing read
-- Codebreaker's Parchment (Decode Writing): nothing read
-- Codebreaker's Parchment (Greater) (Burn After Reading): nothing read
-- Codebreaker's Parchment (Greater) (Decode Writing): nothing read
-- Codebreaker's Parchment (Major) (Burn After Reading): nothing read
-- Codebreaker's Parchment (Major) (Decode Writing): nothing read
+- Decanter of Endless Water: nothing read; *only this need*
+- Decanter of Endless Water: nothing read; *only this need*
+- Mortar of Hidden Meaning: nothing read; *only this need*
+- Potion of Truespeech: the GM's; also out of combat and the environment
+
+**"language"**: 3 (1 only this need)
+
 - Conundrum Spectacles: the GM's; also out of combat and the environment
 - Conundrum Spectacles (Greater): the GM's; also out of combat and the environment
-- Decanter of Endless Water: nothing read
-- Decanter of Endless Water: nothing read
-- Deepdread Claw: the GM's
-- Envisioning Mask: the GM's
-- Herald's Ring (Project Voice): nothing read; also out of combat and the environment
-- Laboratory Coat (Quick Escape): nothing read
-- Mortar of Hidden Meaning: nothing read
-- Ranging Shot: nothing read
-- Rhythm Bone: nothing read; also out of combat and the environment
-- Rhythm Bone: nothing read
-- Rhythm Bone (Greater): nothing read; also out of combat and the environment
-- Rhythm Bone (Greater): nothing read
-- Sinew-Song (Cutting Cadenza): partial
-- Slates of Distant Letters (Send a Message): nothing read
-- Wordreaper: note only
+- Envisioning Mask: the GM's; *only this need*
+
+**Other wordings**: 2 (2 only this need)
+
+- Deepdread Claw ("telepathic"): the GM's; *only this need*
+- Sinew-Song (Cutting Cadenza) ("song"): partial; *only this need*
 
 <a id="out-of-combat"></a>
 ### Out of combat and the environment
@@ -1860,50 +2501,74 @@ Hours or days, rest, travel, crafting, downtime, weather, air and water, food: t
 
 39 entries (and 5 of the modules' items).
 
-**Consumables**
+**"24 hours"**: 8 (8 only this need)
 
-- Alchemical Fuse: nothing read
-- Baleblood Draft: the GM's
-- Basic Ingredient: nothing read
-- Bubbling Scale: note only
-- Cooling Elixir (Greater): the GM's
-- Cooling Elixir (Lesser): the GM's
-- Cooling Elixir (Moderate): the GM's
-- Drought Powder: note only
-- Feather Token (Puddle): nothing read
-- Follypops: partial
-- Formulated Sunlight: nothing read
-- Gossamer Sash: nothing read
-- Oxygen Ooze: note only
-- Special Ingredient: nothing read
-- Wasul Reed Mask: note only
-- Weapon-Weird Oil: the GM's
-- Witchwarg Elixir (Greater): the GM's
-- Witchwarg Elixir (Lesser): the GM's
-- Witchwarg Elixir (Moderate): the GM's
+- Cooling Elixir (Greater): the GM's; *only this need*
+- Cooling Elixir (Lesser): the GM's; *only this need*
+- Cooling Elixir (Moderate): the GM's; *only this need*
+- Drought Powder: note only; *only this need*
+- Everair Mask (Major): the GM's; *only this need*
+- Witchwarg Elixir (Greater): the GM's; *only this need*
+- Witchwarg Elixir (Lesser): the GM's; *only this need*
+- Witchwarg Elixir (Moderate): the GM's; *only this need*
 
-**Activations**
+**"1 hour"**: 7 (7 only this need)
 
-- Anointed Waterskin (Divine Decanting): nothing read
-- Bottled Air (Breathe In): nothing read
-- Carver-cutter (Carving Chisel): nothing read
-- Carver-cutter (Greater) (Carving Chisel): nothing read
-- Carver-cutter (Major) (Carving Chisel): nothing read
-- Carver-cutter (True) (Carving Chisel): nothing read
-- Crafting Leathers (Find Tool): the GM's
-- Everair Mask (Greater): the GM's
-- Everair Mask (Lesser): the GM's
-- Everair Mask (Major): the GM's
-- Everair Mask (Moderate): the GM's
-- Mask of Uncanny Breath: partial
-- Prankster's Perpetual Pieplate (Project Pastry): nothing read
-- Rowan Rifle (Briarbough Brachiaport): nothing read
-- Satchel of Numberless Seeds (Seed of Sustenance): partial
-- The Trader: the GM's
-- Whisperer of Souls: partial
-- Wind-Up Widget (Hand-Powered Digger): note only
-- Wind-Up Widget (Thieves' Friend): note only
-- Wind-Up Widget (Wind-Up Spy): note only
+- Baleblood Draft: the GM's; *only this need*
+- Bubbling Scale: note only; *only this need*
+- Crafting Leathers (Find Tool): the GM's; *only this need*
+- Everair Mask (Lesser): the GM's; *only this need*
+- Gossamer Sash: nothing read; *only this need*
+- The Trader: the GM's; *only this need*
+- Weapon-Weird Oil: the GM's; *only this need*
+
+**"crafting"**: 5 (5 only this need)
+
+- Carver-cutter (Carving Chisel): nothing read; *only this need*
+- Carver-cutter (Greater) (Carving Chisel): nothing read; *only this need*
+- Carver-cutter (Major) (Carving Chisel): nothing read; *only this need*
+- Carver-cutter (True) (Carving Chisel): nothing read; *only this need*
+- Mask of Uncanny Breath: partial; *only this need*
+
+**"daily preparations"**: 3 (3 only this need)
+
+- Wind-Up Widget (Hand-Powered Digger): note only; *only this need*
+- Wind-Up Widget (Thieves' Friend): note only; *only this need*
+- Wind-Up Widget (Wind-Up Spy): note only; *only this need*
+
+**"8 hours"**: 2 (2 only this need)
+
+- Anointed Waterskin (Divine Decanting): nothing read; *only this need*
+- Everair Mask (Greater): the GM's; *only this need*
+
+**"cooking"**: 2 (2 only this need)
+
+- Basic Ingredient: nothing read; *only this need*
+- Special Ingredient: nothing read; *only this need*
+
+**"breathe"**: 2 (2 only this need)
+
+- Bottled Air (Breathe In): nothing read; *only this need*
+- Oxygen Ooze: note only; *only this need*
+
+**"travels"**: 2 (2 only this need)
+
+- Follypops: partial; *only this need*
+- Rowan Rifle (Briarbough Brachiaport): nothing read; *only this need*
+
+**"submerged"**: 2 (2 only this need)
+
+- Prankster's Perpetual Pieplate (Project Pastry): nothing read; *only this need*
+- Wasul Reed Mask: note only; *only this need*
+
+**Other wordings**: 6 (6 only this need)
+
+- Alchemical Fuse ("underwater"): nothing read; *only this need*
+- Everair Mask (Moderate) ("4 hours"): the GM's; *only this need*
+- Feather Token (Puddle) ("1 day"): nothing read; *only this need*
+- Formulated Sunlight ("nourishment"): nothing read; *only this need*
+- Satchel of Numberless Seeds (Seed of Sustenance) ("hour"): partial; *only this need*
+- Whisperer of Souls ("1 week"): partial; *only this need*
 
 <a id="no-rules"></a>
 ### Nothing to automate
@@ -1912,45 +2577,42 @@ No rule a card could play: food, refills, ingredients, flavor. *Where: none.*
 
 37 entries (and 18 of the modules' items).
 
-**Consumables**
+**Its own text**: 37 (0 only this need)
 
 - Adaptive Cogwheel: the GM's
 - Alchemist's Damper: partial
+- Bottomless Purse (Fair Trade): nothing read
+- Called (Lastwall): nothing read
 - Chalk: nothing read
 - Chimera Thread: nothing read
+- Collar of the Eternal Bond (Eidolon's Freedom): note only
+- Essence Prism: nothing read
+- Essence Prism: nothing read
 - Feed (Standard): nothing read
 - Feed (Unique): nothing read
+- Floorbell: nothing read
+- Gearblade: partial
+- Jar of Shifting Sands (Avalanche of Sand): nothing read
 - Light Writer Plates: nothing read
+- Lookout's Spyglass (Seek Significance): nothing read
 - Matchstick: nothing read
+- Mirror of Sorshen (Second Glance): nothing read
 - Oil of Animation: nothing read
+- Orb of Dragonkind: partial
+- Parchment of Direct Message: nothing read
+- Passage Pane: nothing read
 - Potion of Shared Life: note only
 - Practice Target: nothing read
 - Rations: nothing read
 - Seeking Bracelets: nothing read
+- Sentinel Horn: nothing read
+- Shadewither Key: nothing read
 - Sling Darts: nothing read
 - Spray Pellets: nothing read
+- Storied Skin (Living History): note only
 - Tailor's Boll: nothing read
 - Treat (Standard): nothing read
 - Treat (Unique): nothing read
-
-**Activations**
-
-- Bottomless Purse (Fair Trade): nothing read
-- Called (Lastwall): nothing read
-- Collar of the Eternal Bond (Eidolon's Freedom): note only
-- Essence Prism: nothing read
-- Essence Prism: nothing read
-- Floorbell: nothing read
-- Gearblade: partial
-- Jar of Shifting Sands (Avalanche of Sand): nothing read
-- Lookout's Spyglass (Seek Significance): nothing read
-- Mirror of Sorshen (Second Glance): nothing read
-- Orb of Dragonkind: partial
-- Parchment of Direct Message: nothing read
-- Passage Pane: nothing read
-- Sentinel Horn: nothing read
-- Shadewither Key: nothing read
-- Storied Skin (Living History): note only
 - Vambrace of Gorum (Blade of Iron): note only
 - Verdant Branch: partial
 - Wayfinderfinder: nothing read

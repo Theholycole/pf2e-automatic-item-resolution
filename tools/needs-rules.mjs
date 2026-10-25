@@ -27,7 +27,7 @@ export const NEEDS = [
     {
         id: "retaliation",
         title: "Damage back at attackers",
-        needs: "Damage or a condition for each creature that hits, touches or attacks the user while it lasts: a hook on the attacks against the user that posts the result (the module's retaliate is built for one item).",
+        needs: "Damage or a condition for each creature that hits, touches or attacks the user while it lasts. The module's retaliation card (kept open for the item's time: plan.retaliation, and plan.alsoRetaliation beside another card) plays damage in the wordings it reads; the rest need their wording read, or a condition or save on each hit.",
         where: "item live play",
         test: /\b(?:whenever (?:a|an|another) (?:creature|enemy|foe|adjacent creature) (?:hits|touches|attacks|Strikes|damages)|(?:a |any )?creatures? that (?:hits?|touches?|attacks?|Strikes?) you|each creature that (?:hits|touches))\b/i
     },
@@ -43,6 +43,7 @@ export const NEEDS = [
         title: "Numbers the text doesn't give",
         needs: "A condition value, amount or DC the item's text leaves out (the GM sets it): the user's ruling for a default, then the card applies it.",
         where: "your decision",
+        question: "When the text leaves a number to the GM (\"unless the GM determines otherwise\"), should the card apply the number the text gives by default and say the GM may change it, or stay the GM's?",
         test: /\b(?:doesn't say how (?:much|long|many)|the GM (?:sets|decides|determines) (?:it|the|how)|unless the GM determines otherwise|as the GM (?:determines|decides))\b/i
     },
     {
@@ -85,6 +86,7 @@ export const NEEDS = [
         title: "Illusions and disbelief",
         needs: "An illusion and the check to disbelieve it: the user's rule for spells (disbelief as control), with the item's DC and who has seen through it.",
         where: "your decision + item live play",
+        question: "Play an item's illusion as the spells' are (disbelief as control: the card's check and who has seen through it), counted done?",
         test: /\b(?:illusion\w*|illusory|disbelie\w*|figment|disguise\w*)\b/i
     },
     {
@@ -104,7 +106,7 @@ export const NEEDS = [
     {
         id: "moving",
         title: "Moving creatures and the user",
-        needs: "The user or a target moved on the map: a Step, Stride, Leap, jump, fall, teleport or a pull along a path the card can't place today. Needs the move offered on the card (a target square, a token moved), or PF2e's own action for it.",
+        needs: "The user or a target moved on the map. The move card (the teleport card) already moves its user (a Stride, Step, Leap or teleport within a range) and a creature to a space its user picks (ability 0.9.2's hook); what's left: objects brought to hand, falls and their damage, jumps (High Jump, Long Jump), several creatures moved at once, travel off the map, and moves tied to another event.",
         where: "item live play",
         test: /\b(?:you (?:can )?(?:Step|Stride|Leap|Fly|Swim|Climb|Burrow|Crawl)\b|Steps? (?:twice|up to)|Strides? (?:twice|up to)|High Jump|Long Jump|\bjumps?\b|teleport\w*|you (?:move|fly|float|glide|travel)|moves? (?:up to|toward|away|you)|fall(?:s|ing)? (?:\d+ feet|prone|to the ground)|falling damage|slow(?:s|ed)? (?:the|your) fall|floats? (?:up|down|toward)|(?:pulls?|draws?|flings?|hurls?) (?:the|you|it|a) (?:target|creature)\b|(?:is |it's |are )?(?:pulled|pushed|knocked) (?:\d+ feet|back|away|toward|closer)|move its token|moves? (?:the target|them|it) \d+ feet|move the creature|Mount\b|another plane|a plane other than|\bGate\b|Plane Shift|\d+-foot fall)/i
     },
@@ -232,6 +234,7 @@ export const NEEDS = [
         title: "Minds, attitudes and behaviour",
         needs: "A creature's attitude, truthfulness, memory, beliefs or compelled behaviour: no game numbers to apply. A note Effect for its time or a GM ruling, by the user's decision.",
         where: "your decision",
+        question: "Attitude, truthfulness, memory and compelled behaviour: a note Effect for its time, counted done (as behaviour rules beside a real result are), or the GM's?",
         test: /\b(?:attitude\w*|truth\w*|\blie\b|\blies\b|charm\w*|compel\w*|memory|memories|emotion\w*|believes?|convinc\w*|suggestion|befriend|dominat\w*|loyal\w*|obey\w*|mood|feel(?:s)? (?:safe|calm|fear)|as its first action|must spend (?:all )?(?:\w+ )?actions)\b/i
     },
     {
@@ -239,6 +242,7 @@ export const NEEDS = [
         title: "Information",
         needs: "Something the user learns: a location, an identity, a creature's statistics, a memory shown, a translation, a direction. An information card whispered to the GM and the user (the user's rule for spells), with what the GM fills in.",
         where: "your decision + item live play",
+        question: "Apply the spells' rule (an information card whispered to the GM and the user) to items, counted done?",
         test: /\b(?:learn\w*|Identify\w*|identif\w*|detect\w*|reveal\w*|locat(?:e|es|ion|ing)|you know|knows?\b|discern\w*|divin\w*|translat\w*|shows? (?:you|the)|vision of|direction (?:of|to)|points? (?:toward|to the)|Recall Knowledge|Seek\b|aware of|remember\w*|scan\w*|pages? of writing|documents?|sense the direction)\b/i
     },
     {
@@ -246,6 +250,7 @@ export const NEEDS = [
         title: "Messages, speech and sound",
         needs: "Messages, languages, telepathy, sounds and silence: note Effects or chat messages, little to apply.",
         where: "your decision",
+        question: "Messages, languages, telepathy and sounds: a chat message or note Effect, counted done?",
         test: /\b(?:message\w*|speak\w*|language\w*|telepath\w*|voice\w*|\bwords?\b|music\w*|song\w*|silent\w*|silence\w*|whisper\w*|sounds?\b|noise\w*)\b/i
     },
     {
@@ -253,6 +258,7 @@ export const NEEDS = [
         title: "Out of combat and the environment",
         needs: "Hours or days, rest, travel, crafting, downtime, weather, air and water, food: the user's rule keeps out-of-combat consumables as they are; the GM's at the table.",
         where: "your decision",
+        question: "Out-of-combat consumables stay as they are (your rule): count them done, or keep them on this list?",
         test: /\b(?:\d+ (?:hours?|days?|weeks?|months?|years?)|(?:an|one) (?:hour|day|week|month|year)\b|24 hours|daily preparations|downtime|exploration|Earn Income|Craft\b|crafting|Subsist|rest\b|sleep\w*|travel\w*|journey|weather|severe (?:cold|heat)|extreme (?:cold|heat)|environmental|food|meal|cooking|camping|nourish\w*|formulas?\b|schematics?\b|airless|breathe\w*|underwater|submerged|\bsink\b|drown\w*)\b/i
     }
 ];
@@ -273,4 +279,25 @@ export function needsOf(entry) {
     const text = leftText(entry);
     const found = NEEDS.filter((need) => need.test.test(text)).map((need) => need.id);
     return found.length ? found : ["no-rules"];
+}
+
+// What its main need's words were — the phrase that matched it ("teleports into your hand", "fall", "summon"): the work within a need,
+// grouped (tools/needs.mjs's worklist). key: its words stemmed, so "summons" and "summoned" go together. Null when no words matched.
+// (Its words' first 8 letters, stemmed: "teleports" and "teleportation" together, "illusion" and "illusory" apart.)
+const stem = (word) => (word.length > 4 ? word.replace(/(?:ing|ed|es|s)$/, "") : word).slice(0, 8);
+// (A trigger's work is its event: the first words after "Trigger", "you are targeted", "an ally within".)
+const TRIGGER = /\bTrigger\s+(.+?)(?=\s+(?:Effect|Requirements?|Frequency)\b|[.;:]|$)/s;
+const TRIGGER_WORDS = 3;
+export function workOf(entry, id = needsOf(entry)[0]) {
+    const need = NEEDS.find((candidate) => candidate.id === id);
+    const text = leftText(entry);
+    const event = id === "triggers" ? TRIGGER.exec(text) : null;
+    if (event) {
+        const phrase = `${event[1].toLowerCase().replace(/[^a-z' ]+/g, " ").replace(/\s+/g, " ").trim().split(" ").slice(0, TRIGGER_WORDS).join(" ")} …`;
+        return { key: `trigger: ${phrase}`, phrase: `Trigger: ${phrase}` };
+    }
+    const match = need ? need.test.exec(text) : null;
+    if (!match) return null;
+    const phrase = match[0].toLowerCase().replace(/\s+/g, " ").replace(/^(?:an?|the|your|you|it|its|is|are) /, "").trim();
+    return { key: phrase.split(" ").map(stem).join(" "), phrase };
 }
