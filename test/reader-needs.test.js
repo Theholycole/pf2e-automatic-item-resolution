@@ -93,3 +93,10 @@ test("a DC and damage by the weapon's potency rune: Screaming Pinion's Eagle's C
     const at = (potency) => compileActivations({ ...pinion, system: { ...pinion.system, runes: { ...pinion.system.runes, potency } } }, { spellEffects })[1].plan;
     assert.deepEqual([2, 3].map((potency) => [at(potency).partial, at(potency).notes, at(potency).resolution.check.against.value, at(potency).resolution.sharedDamage.components[0].formula]), [[undefined, undefined, 30, "8d10[sonic]"], [undefined, undefined, 35, "10d10[sonic]"]]);
 });
+
+test("a resistance to splash or area damage, held by PF2e's names: not a rule left out (the honesty pass)", () => {
+    // (A made-up elixir, in the module's own words.)
+    const elixir = { name: "Test Blast Tonic", type: "consumable", system: { category: "elixir", level: { value: 1 }, traits: { value: ["alchemical", "consumable", "elixir"], rarity: "common" }, uses: { value: 1, max: 1, autoDestroy: true }, description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><hr /><p>For 1 minute, you gain resistance 3 to area damage and splash damage.</p>" } } };
+    const plan = compileItem({ ...elixir, ownerLevel: 1 }, { spellEffects });
+    assert.deepEqual([plan.partial, plan.notes, plan.item.resist.map((entry) => [entry.type, entry.value])], [undefined, undefined, [["area-damage", 3], ["splash-damage", 3]]]);
+});

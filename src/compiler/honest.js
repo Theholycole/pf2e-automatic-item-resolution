@@ -177,7 +177,8 @@ function mustOf(sentence) {
         ...(RECURRING.test(sentence) ? [{ recurring: true }] : []),
         ...[...sentence.matchAll(TYPED)].map((match) => ({ modifier: (match[4].toLowerCase() === "penalty" || /[\-–−]/.test(match[1]) ? -1 : 1) * Number(match[2]), type: match[3].toLowerCase() })),
         ...[...sentence.matchAll(SPEED_RULE)].map((match) => ({ speed: match[1].toLowerCase(), value: Number(match[2]) })),
-        ...[...sentence.matchAll(RESIST_RULE)].map((match) => ({ resist: match[1].toLowerCase(), value: Number(match[2]), of: match[3].toLowerCase() })),
+        // (Splash and area damage by PF2e's names, splash-damage and area-damage, as the reader keeps them: 2026-10-25.)
+        ...[...sentence.matchAll(RESIST_RULE)].map((match) => ({ resist: match[1].toLowerCase(), value: Number(match[2]), of: /^(?:splash|area)$/i.test(match[3]) ? `${match[3].toLowerCase()}-damage` : match[3].toLowerCase() })),
         ...[...sentence.matchAll(TEMP_RULE)].map((match) => ({ temp: Number(match[1]) }))
     ];
 }
