@@ -614,40 +614,27 @@ function equalTempHP(plan, text) {
 }
 
 // A condition only for a creature with a trait — Lacquered Waist Drum's "if the creature has the ghost trait, it becomes
-// Stupefied 1 for 1 minute" — isn't the ability compiler's to give every creature the save is for: its rows lose it, and a
-// note on each says who it's for. One the compiler left out ("the ghost becomes Sickened 1 if it fails the save") is a note
-// on the failures.
+// Stupefied 1 for 1 minute" — isn't the ability compiler's to give every creature the save is for: its rows lose it, and
+// plan.ifTarget gives it to those creatures at those degrees (src/live/if-target.js: their save card has it, 2026-10-25). One the compiler
+// left out ("the ghost becomes Sickened 1 if it fails the save") is theirs at the failures.
 const TRAIT_GATED = /\bif the (?:creature|undead|target)(?: also)? has the ([\w-]+) trait, (?:it|the [\w-]+) becomes ([A-Z][a-z-]+)((?: \d+)?[^.;]*)/g;
 function traitGated(plan, text) {
     const gated = [...String(text ?? "").matchAll(TRAIT_GATED)].map((match) => ({ trait: match[1].toLowerCase(), slug: match[2].toLowerCase(), words: `${match[2]}${match[3]}`.trim() }));
     if (!gated.length || !plan?.resolution?.outcomes) return plan;
-    let changed = false;
+    const ifTarget = [];
     const outcomes = {};
     for (const [degree, row] of Object.entries(plan.resolution.outcomes)) {
         const bad = (row?.effects ?? []).filter((effect) => effect?.kind === "condition" && gated.some((entry) => entry.slug === effect.slug));
-        if (!bad.length) {
-            outcomes[degree] = row;
-            continue;
-        }
-        changed = true;
-        outcomes[degree] = {
-            ...row,
-            effects: row.effects.filter((effect) => !bad.includes(effect)),
-            noteEffects: [...(row.noteEffects ?? []), ...bad.map((effect) => {
-                const entry = gated.find((one) => one.slug === effect.slug);
-                return { label: effect.slug, text: `Only a creature with the ${entry.trait} trait: ${effect.slug.charAt(0).toUpperCase()}${effect.slug.slice(1)}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}. Apply it by hand.`, duration: effect.duration ?? null };
-            })]
-        };
+        outcomes[degree] = bad.length ? { ...row, effects: row.effects.filter((effect) => !bad.includes(effect)) } : row;
+        for (const effect of bad) ifTarget.push({ traits: [gated.find((one) => one.slug === effect.slug).trait], degree, effects: [effect] });
     }
-    // (Left out: a note on the rows it names.)
+    // (Left out by the compiler: its words' condition at the rows they name.)
     for (const entry of gated.filter((one) => !Object.values(plan.resolution.outcomes).some((row) => (row?.effects ?? []).some((effect) => effect?.slug === one.slug)))) {
         const degrees = /\bif it (?:critically )?fails\b/i.test(entry.words) ? (/\bcritically fails\b/i.test(entry.words) ? ["criticalFailure"] : ["failure", "criticalFailure"]) : [];
-        for (const degree of degrees.filter((one) => outcomes[one])) {
-            changed = true;
-            outcomes[degree] = { ...outcomes[degree], noteEffects: [...(outcomes[degree].noteEffects ?? []), { label: entry.slug, text: `Only a creature with the ${entry.trait} trait: ${entry.words.replace(/\s+if it (?:critically )?fails the save\b/i, "")}. Apply it by hand.`, duration: null }] };
-        }
+        const value = Number(/^[A-Z][a-z-]+ (\d+)\b/.exec(entry.words)?.[1]);
+        for (const degree of degrees.filter((one) => outcomes[one])) ifTarget.push({ traits: [entry.trait], degree, effects: [{ kind: "condition", slug: entry.slug, value: Number.isFinite(value) ? value : null, duration: null }] });
     }
-    return changed ? { ...plan, resolution: { ...plan.resolution, outcomes }, partial: true } : plan;
+    return ifTarget.length ? { ...plan, resolution: { ...plan.resolution, outcomes }, ifTarget: [...(plan.ifTarget ?? []), ...ifTarget] } : plan;
 }
 
 // A spell the text only names as an example ("cannot be affected by any effect that requires an intact body to function,

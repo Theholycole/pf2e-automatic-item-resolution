@@ -86,9 +86,10 @@ test("a Speed of a new kind: PF2e's BaseSpeed on the land Speed or a number, for
     // "granting you a fly Speed of 25 feet or your land Speed, whichever is slower. This effect lasts for 5 minutes" (Winged).
     const winged = compileActivations(source("Winged"))[0].plan.item.speeds[0];
     assert.deepEqual([winged.type, winged.value, winged.duration.value, winged.duration.unit], ["fly", `min(25,${LAND})`, 5, "minutes"]);
-    // Not one under a condition ("If you don't have a fly Speed, you gain a 20-foot fly Speed …"); breathing underwater a note.
+    // Not one under a condition ("If you don't have a fly Speed, you gain a 20-foot fly Speed …"); breathing underwater in words beside it
+    // (2026-10-25, test/reader-needs.test.js).
     assert.equal(compileActivations(source("Dragonaut's Wingsuit")).find((entry) => entry.activation.name === "Drake's Glide").plan?.item?.speeds, undefined);
-    assert.equal(compileActivations(source("Submersible Helmet"))[0].plan.partial, true);
+    assert.equal(compileActivations(source("Submersible Helmet"))[0].plan.partial, undefined);
     // Apply: the Effect with PF2e's BaseSpeed rule.
     const cloak = foundry.giveItem(monk, source("Umbral Wings"));
     const count = foundry.messages.length;
@@ -103,7 +104,7 @@ test("a Speed of a new kind: PF2e's BaseSpeed on the land Speed or a number, for
     assert.deepEqual([effect.system.duration.value, effect.system.duration.unit, effect.system.duration.expiry], [1, "rounds", "turn-end"]);
 });
 
-test("a vision: PF2e's Sense rule, another way it ends on the note", () => {
+test("a vision: PF2e's Sense rule, another way it ends on the note or its Effect", () => {
     // "you gain darkvision until you deactivate it as an Interact action or the item is no longer invested by you, whichever comes first".
     const [goggles] = compileActivations(source("Obsidian Goggles (Greater)"));
     // (Its own end now read: toggled by its next activation, ended by uninvesting.)
@@ -111,7 +112,8 @@ test("a vision: PF2e's Sense rule, another way it ends on the note", () => {
     // "You gain greater darkvision until the beginning of your next turn, as long as you continue to look through the scope".
     const [scope] = compileActivations(source("Darkvision Scope (Greater)"));
     assert.deepEqual([scope.plan.item.senses[0].selector, scope.plan.item.senses[0].duration.expiry], ["greater-darkvision", "turn-start"]);
-    assert.equal(senseText(scope.plan.item.senses[0]), "Greater darkvision until the start of the next turn");
+    // (Its user's to keep looking, on the Effect's words: 2026-10-25.)
+    assert.equal(senseText(scope.plan.item.senses[0]), "Greater darkvision until the start of the next turn, as long as you continue to look through the scope");
     assert.deepEqual(senseEffectSource(goggles.plan.item.senses[0], { item: { name: "Obsidian Goggles (Greater): Darkvision" } }).system.rules, [{ key: "Sense", selector: "darkvision" }]);
 });
 

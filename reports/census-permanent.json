@@ -6,15 +6,15 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 758,
+   "resolves": 766,
    "builtin:cast-spell": 475,
-   "partial": 237,
+   "partial": 230,
    "none": 509,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
-   "builtin:no-effect": 100,
-   "note-only": 156,
+   "builtin:no-effect": 97,
+   "note-only": 155,
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 8,
@@ -24,7 +24,7 @@
    "builtin:ways": 20,
    "builtin:conjure": 13,
    "builtin:item-action": 23,
-   "builtin:roll-twice": 11,
+   "builtin:roll-twice": 14,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1
   },
@@ -32,10 +32,10 @@
    "save": 441,
    "cast": 475,
    "item": 592,
-   "none": 635,
+   "none": 632,
    "focus": 47,
    "counteract": 29,
-   "fortune": 57,
+   "fortune": 60,
    "reroll": 45,
    "strike": 108,
    "table": 7,
@@ -57,23 +57,23 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 444,
+    "resolves": 452,
     "builtin:cast-spell": 347,
     "none": 355,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
     "builtin:readied-bonus": 32,
-    "builtin:no-effect": 81,
-    "note-only": 115,
+    "builtin:no-effect": 78,
+    "note-only": 114,
     "builtin:reroll": 34,
-    "partial": 115,
+    "partial": 108,
     "builtin:table": 4,
     "builtin:teleport": 4,
     "builtin:zone": 14,
     "builtin:ways": 10,
     "builtin:conjure": 13,
     "builtin:modes": 17,
-    "builtin:roll-twice": 7,
+    "builtin:roll-twice": 10,
     "builtin:item-action": 11,
     "builtin:take-condition": 1
    }
@@ -697,7 +697,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -5993,7 +5993,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -8706,9 +8706,9 @@
    "time": "1",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Glamorous Buckler",
@@ -10423,9 +10423,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Inspiring Spotlight",
@@ -16089,9 +16089,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Freezing Ammunition",
@@ -17786,7 +17786,7 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -20789,7 +20789,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -21884,7 +21884,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -22624,7 +22624,7 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -24373,7 +24373,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -24384,7 +24384,7 @@
    "time": "3",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },

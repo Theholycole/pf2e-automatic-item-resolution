@@ -530,3 +530,11 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - Before its card is posted, live play looks at its user's latest rolls in the chat. If they don't qualify, the activation is refused, with no card and no use counted.
   - Its card then goes to the creature struck when its presser targets none.
   - What else a requirement says stays the GM's: Bloodgorger's target taking no bleed, Vampire-Fang's sunlight. One with another way in (Scizore of the Crab's "or you have a creature Grabbed") isn't refused.
+- **Read for docs/needs.md's reader needs** (2026-10-25, `test/reader-needs.test.js`):
+  - A condition only for creatures of a trait (`traitGated` in `src/compiler/guards.js`): Lacquered Waist Drum's ghosts. It's now `plan.ifTarget` at its degrees, so the save card for a ghost has it and the one for another undead doesn't. Before, it was a note Effect to apply by hand.
+  - A save harder for creatures named by their trait as a word (`src/compiler/kind-saves.js`): Mythotoxin's "Mythic creatures take a -2 circumstance penalty to saves against mythotoxin".
+  - A sense its user keeps by doing something, beside its own time: Darkvision Scope's "as long as you continue to look through the scope" is on the Effect's words, not a note.
+  - "On this check, you roll twice": the check the sentence before attempts (`src/compiler/fortune.js`). Brooch of Inspiration's "Recall Knowledge using Lore" is PF2e's `lore-skill-check`; the Major's "with any skill" is `skill-check`.
+  - Breathing underwater, which no PF2e rule plays: "You can breathe underwater for 8 hours" is in words on its user's Effect, for its time (Submersible Helmet, Sailor's Collar).
+  - A sentence that says only what the bonus's time already means: Affliction Suppressant's daily saves, which its 10 minutes never reach.
+  - A Quickened's extra action for the actions it names: Propulsive Boots' "You can use the extra action to Stride, Climb, or Swim" is a note Effect beside the Quickened.

@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 744,
+   "resolves": 748,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
-   "partial": 124,
+   "partial": 120,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 122,
@@ -36,9 +36,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 26,
-    "partial": 63,
+    "partial": 62,
     "builtin:ways": 18,
-    "resolves": 202,
+    "resolves": 203,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 95,
@@ -125,12 +125,12 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 89,
+    "resolves": 92,
     "none": 5,
     "builtin:counteract": 11,
-    "partial": 16,
     "builtin:no-effect": 9,
     "note-only": 16,
+    "partial": 13,
     "builtin:ways": 1,
     "builtin:zone": 2
    },
@@ -331,13 +331,13 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 296,
+   "resolves": 297,
    "gaps": 0,
    "none": 21
   },
   "affliction": {
    "count": 144,
-   "resolves": 133,
+   "resolves": 134,
    "gaps": 0,
    "none": 3
   },
@@ -355,7 +355,7 @@
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 56,
+   "resolves": 57,
    "gaps": 0,
    "none": 0
   },
@@ -379,13 +379,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 255,
+   "resolves": 256,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 595,
+   "resolves": 599,
    "gaps": 0,
    "none": 13
   }
@@ -1803,12 +1803,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Unlike with an antiplague, this suppressant isn't long-lasting enough to apply to a daily save against the progression of a disease, curse, or other long-lasting affliction.",
-    "It can still help protect you from catching such an affliction when you're initially exposed to it, as well as on saves that occur after stages that last 10 minutes or less."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -7040,12 +7037,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Unlike with an antiplague, this suppressant isn't long-lasting enough to apply to a daily save against the progression of a disease, curse, or other long-lasting affliction.",
-    "It can still help protect you from catching such an affliction when you're initially exposed to it, as well as on saves that occur after stages that last 10 minutes or less."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -7983,12 +7977,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Unlike with an antiplague, this suppressant isn't long-lasting enough to apply to a daily save against the progression of a disease, curse, or other long-lasting affliction.",
-    "It can still help protect you from catching such an affliction when you're initially exposed to it, as well as on saves that occur after stages that last 10 minutes or less."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -21955,8 +21946,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": "coat"
   },
   {
@@ -24643,8 +24635,6 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "Unlike with an antiplague, this suppressant isn't long-lasting enough to apply to a daily save against the progression of a disease, curse, or other long-lasting affliction.",
-    "It can still help protect you from catching such an affliction when you're initially exposed to it, as well as on saves that occur after stages that last 10 minutes or less.",
     "When you drink the affliction suppressant, you can attempt a save against one affliction of 14th level or lower affecting you."
    ],
    "live": "item"

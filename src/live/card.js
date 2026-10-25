@@ -357,7 +357,8 @@ export function senseText(sense) {
     const time = sense.duration?.mode === "fixed" ? (sense.duration.anchor === "source-turn" ? ` until the ${sense.duration.expiry === "turn-end" ? "end" : "start"} of the next turn` : ` for ${timeText(sense.duration)}`) : sense.toggle ? ` until deactivated (its next activation)${sense.invested ? " or no longer invested" : ""}` : "";
     // (Its acuity and range: "Imprecise tremorsense 30 feet for 1 minute".)
     const name = SENSE_WORDS[sense.selector] ?? sense.selector;
-    return `${sense.acuity ? `${sense.acuity.charAt(0).toUpperCase()}${sense.acuity.slice(1)} ${name.toLowerCase()}` : name}${Number.isFinite(sense.range) ? ` ${sense.range} feet` : ""}${time}`;
+    // (What its user keeps doing for it: "as long as you continue to look through the scope".)
+    return `${sense.acuity ? `${sense.acuity.charAt(0).toUpperCase()}${sense.acuity.slice(1)} ${name.toLowerCase()}` : name}${Number.isFinite(sense.range) ? ` ${sense.range} feet` : ""}${time}${sense.keeps ? `, ${sense.keeps}` : ""}`;
 }
 
 // Temporary Hit Points from the targeted creature's level in words: "Temporary Hit Points equal to twice the level of the creature

@@ -746,8 +746,11 @@ function sensesOf(sentences, duration, used = new Set()) {
             // the item is no longer invested by you, whichever comes first" — toggle, the item's next activation ends it, and invested, its
             // uninvesting does (scripts/live.js).)
             const deactivate = /\buntil you deactivate it(?: as an Interact action)?(?: or the item is no longer invested by you, whichever comes first)?[.,]?$/i.exec(sentence.trim());
-            if (deactivate || !/\bas long as\b|\bwhichever comes first\b|\bor (?:until|the item)\b/i.test(sentence)) used.add(index);
-            found.push({ selector, duration: time, ...(deactivate ? { toggle: true, ...(/\bno longer invested\b/i.test(deactivate[0]) ? { invested: true } : {}) } : {}) });
+            // (Its user's own doing that keeps it, beside a time of its own — Darkvision Scope's "until the beginning of your next turn, as long as
+            // you continue to look through the scope": on the Effect's words, its user's to keep doing, 2026-10-25.)
+            const keeps = until ? /,\s*(as long as you continue to look through (?:the|this|your) [\w' -]+?)\.?$/i.exec(sentence.trim()) : null;
+            if (deactivate || keeps || !/\bas long as\b|\bwhichever comes first\b|\bor (?:until|the item)\b/i.test(sentence)) used.add(index);
+            found.push({ selector, duration: time, ...(deactivate ? { toggle: true, ...(/\bno longer invested\b/i.test(deactivate[0]) ? { invested: true } : {}) } : {}), ...(keeps ? { keeps: keeps[1] } : {}) });
         }
     }
     // (Other senses with their acuity and range: Nosoi Charm's "You gain lifesense as an imprecise sense with a range of 30 feet for 1
@@ -876,6 +879,14 @@ function ruleEffectsOf(sentences, duration, used = new Set()) {
         // (And Deny Advantage's own words, Sturdy Neck Stock's "For 1 minute, you aren't off-guard to Hidden, undetected, or flanking creatures,
         // or creatures using surprise attack of your level or lower": PF2e's Deny Advantage rule, offGuardable its user's level.)
         const deny = flank ? null : /^For ((?:\d+|one|an?) (?:rounds?|minutes?|hours?)), you aren't off-guard to Hidden, undetected, or flanking creatures, or creatures using surprise attack of your level or lower\.$/i.exec(sentence.trim());
+        // (Breathing underwater, which no PF2e rule plays: Submersible Helmet's "You can breathe underwater for 8 hours" — on its user's Effect in
+        // words, for that time, 2026-10-25.)
+        const breathe = flank || deny ? null : /^(?:During this time, )?you can breathe underwater(?: for ((?:\d+|one|an?) (?:rounds?|minutes?|hours?)))?\.$/i.exec(sentence.trim());
+        if (breathe) {
+            used.add(index);
+            found.push({ name: "water breathing", words: "Can breathe underwater", rules: [], duration: breathe[1] ? durationIn(`for ${breathe[1]}`, duration) : duration });
+            continue;
+        }
         if (!flank && !deny) continue;
         used.add(index);
         if (flank) found.push({ name: "not off-guard to flankers", words: "Not Off-Guard to melee attacks from creatures flanking it", rules: [{ key: "ActiveEffectLike", mode: "override", path: "system.attributes.flanking.offGuardable", value: false }], duration: durationIn(`for ${flank[1]}`, duration) });
@@ -940,7 +951,11 @@ export function ownRow(item, { healing = true } = {}) {
     const restated = (sentence) => modifiers.length > 0 && /\ban? (?:item |status |circumstance )?bonus\b/i.test(sentence) && !/[+\-–]\d|\d+d\d+|\bDC\b/.test(sentence);
     // ("allowing you to move with greater speed": flavor, not a Speed.)
     // (Nor when it may be used, "You can use this action while Unconscious".)
-    const unread = sentences.filter((sentence, index) => !used.has(index) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always|The resonant power)\b/i.test(sentence) && !/^\s*This [\w ]+? can be applied to up to (?:\d+|two|three|four|five|six) willing creatures(?: to protect them from dangerous energies)?\.$/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
+    // (Nor what its time already says, Affliction Suppressant's "this suppressant isn't long-lasting enough to apply to a daily save against the
+    // progression of a disease …" and "It can still help protect you from catching such an affliction when you're initially exposed to it …":
+    // its bonus lasts its 10 minutes, so it's at the saves in them, 2026-10-25.)
+    const timeSays = (sentence) => /\bisn't long-lasting enough to apply to a daily save\b/i.test(sentence) || /^\s*It can still help protect you from catching such an affliction when you're initially exposed to it\b/i.test(sentence);
+    const unread = sentences.filter((sentence, index) => !used.has(index) && !timeSays(sentence) && !/^\s*You can use this (?:action|activation|reaction|ability) (?:while|even (?:if|when|while))\b/i.test(sentence) && MECHANICAL.test(sentence.replace(/\bwith (?:great|greater|incredible|blinding|amazing|surprising) speed\b/gi, "")) && !restated(sentence) && !/^\s*(?:The duration is|Duration|As usual|As normal|As always|The resonant power)\b/i.test(sentence) && !/^\s*This [\w ]+? can be applied to up to (?:\d+|two|three|four|five|six) willing creatures(?: to protect them from dangerous energies)?\.$/i.test(sentence) && !/^\s*The (?:climb|fly|swim|burrow) Speed lasts for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(sentence));
     if (secondary) unread.push(secondary);
     return { effects, modifiers, unread, duration, ...(resistances.length ? { resistances } : {}), ...(speeds.length ? { speeds } : {}), ...(senses.length ? { senses } : {}), ...(light.length ? { light } : {}), ...(levelTemp.length ? { levelTemp } : {}), ...(weapon.length ? { weapon } : {}), ...(attacks.length ? { attacks } : {}), ...(fastHealing.length ? { fastHealing } : {}), ...(strikeDamage.length ? { strikeDamage } : {}), ...(suppress.length ? { suppress } : {}), ...(ruleEffects.length ? { ruleEffects } : {}), ...(other ? { other } : {}) };
 }

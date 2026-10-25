@@ -179,12 +179,13 @@ test("Bloodline Robe's Quickened on its user's next turn, its limit a note Effec
     assert.notEqual(compileActivations(item("Dawnlight (Major)"), { spellEffects })[0].plan?.resolution?.kind, "save");
 });
 
-test("Lacquered Waist Drum: a damage save in brackets as basic; its conditions only for a ghost, notes and not rows", () => {
+test("Lacquered Waist Drum: a damage save in brackets as basic; its conditions only for a ghost, plan.ifTarget and not rows", () => {
     const [life, joy] = compileActivations(item("Lacquered Waist Drum"), { spellEffects }).map((entry) => entry.plan);
     assert.deepEqual([life.resolution.check.basic, life.resolution.sharedDamage.components[0].formula, life.targeting.range], [true, "5d8[vitality]", "30 feet"]);
-    assert.deepEqual(life.resolution.outcomes.failure.noteEffects.map((note) => note.text), ["Only a creature with the ghost trait: Sickened 1. Apply it by hand."]);
-    assert.deepEqual(["failure", "criticalFailure"].map((degree) => [joy.resolution.outcomes[degree].effects.length, joy.resolution.outcomes[degree].noteEffects.map((note) => note.text)]), [[0, ["Only a creature with the ghost trait: Stupefied 1. Apply it by hand."]], [0, ["Only a creature with the ghost trait: Stupefied 2. Apply it by hand."]]]);
-    assert.equal(joy.partial, true);
+    // (2026-10-25: the ghosts' at those degrees, test/reader-needs.test.js — no longer a note Effect to apply by hand.)
+    assert.deepEqual([life.resolution.outcomes.failure.noteEffects, life.ifTarget.filter((entry) => entry.degree === "failure").map((entry) => entry.effects[0].slug)], [undefined, ["sickened"]]);
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => [joy.resolution.outcomes[degree].effects.length, joy.ifTarget.find((entry) => entry.degree === degree).effects[0].value]), [[0, 1], [0, 2]]);
+    assert.equal(joy.partial, undefined);
 });
 
 test("the Harrow Court's damage and healing for its owner's level; The Survivor's and The Midwife's healing", async () => {

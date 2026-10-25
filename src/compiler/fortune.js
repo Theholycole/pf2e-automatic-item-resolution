@@ -30,7 +30,10 @@ function rollOf(phrase, trigger) {
         const skill = SKILLS.find((name) => new RegExp(String.raw`\b${name}\b`).test(lower));
         if (skill) return { selector: skill };
         if (/\bperception\b/.test(lower)) return { selector: "perception" };
-        if (/\bskill check\b/.test(lower)) return { selector: "skill-check" };
+        // (A Lore check, Brooch of Inspiration's "Recall Knowledge using Lore": PF2e's lore-skill-check domain, 2026-10-25.)
+        if (/\busing (?:a |your )?lore\b|\blore (?:skill )?check\b/.test(lower)) return { selector: "lore-skill-check" };
+        // (Or any skill's, the Major brooch's "Recall Knowledge with any skill".)
+        if (/\bskill check\b|\bwith any skill\b/.test(lower)) return { selector: "skill-check" };
         return null;
     };
     // (The text's own words first — "the skill check", "Perception" — narrowed by the trigger's: an initiative roll.)
@@ -64,7 +67,11 @@ export function readRollTwice(text, { trigger = null } = {}) {
     // (Only a fortune for its user: "lower" is someone else's misfortune, and needs its own target.)
     if (keep !== "higher") return null;
     const triggerText = trigger ?? /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|$)/.exec(plain)?.[1] ?? null;
-    const roll = rollOf(match[1], triggerText);
+    // ("On this check, you roll twice": the check the sentence before has its user attempt — Brooch of Inspiration's "You attempt to Recall
+    // Knowledge using Lore. On this check, …".)
+    const before = plain.slice(0, match.index);
+    const attempted = /\bOn this check\s*$/i.test(before) ? /\bYou attempt (?:to |an? )?([^.]+)\.\s*On this check\s*$/i.exec(before)?.[1] ?? null : null;
+    const roll = rollOf(attempted ?? match[1], triggerText);
     if (!roll) return null;
     // (What else the text says: notes — "ignoring any circumstance penalties", "You then become Off-Guard …".)
     const effect = plain.slice(match.index + match[0].length);

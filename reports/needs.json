@@ -1,17 +1,17 @@
 {
  "generated": "2026-10-25",
  "totals": {
-  "entries": 1476,
+  "entries": 1461,
   "results": {
    "none": 687,
-   "partial": 361,
-   "builtin:no-effect": 150,
-   "note-only": 278
+   "partial": 350,
+   "builtin:no-effect": 147,
+   "note-only": 277
   },
   "main": {
-   "speeds": 30,
+   "speeds": 28,
    "counteract": 18,
-   "afflictions": 59,
+   "afflictions": 56,
    "areas": 123,
    "moving": 123,
    "lasting": 74,
@@ -24,66 +24,66 @@
    "information": 38,
    "out-of-combat": 39,
    "actions": 32,
-   "triggers": 99,
    "no-rules": 37,
-   "senses": 25,
+   "senses": 23,
    "objects": 122,
-   "reader": 34,
+   "reader": 33,
    "illusions": 47,
    "removed": 4,
    "cooldown": 13,
    "vehicles": 20,
    "several": 27,
+   "triggers": 98,
    "immunity": 27,
-   "situational": 21,
+   "situational": 20,
    "creatures": 57,
    "dying": 32,
    "from-events": 7,
    "forms": 24,
    "retaliation": 4,
    "missing-number": 7,
-   "fortune": 10,
+   "fortune": 7,
    "linked-effect": 3,
-   "by-kind": 10
+   "by-kind": 8
   },
   "any": {
-   "speeds": 36,
+   "speeds": 34,
    "areas": 186,
    "immunity": 75,
    "objects": 403,
    "speech": 150,
-   "out-of-combat": 440,
+   "out-of-combat": 437,
    "counteract": 81,
-   "afflictions": 105,
+   "afflictions": 102,
    "lasting": 231,
    "moving": 157,
-   "triggers": 136,
+   "triggers": 135,
    "visibility": 60,
    "dying": 83,
    "choice": 120,
    "several": 103,
    "mind": 78,
    "strike": 206,
-   "reader": 254,
+   "reader": 251,
    "spells": 84,
-   "information": 220,
+   "information": 217,
    "actions": 67,
    "from-events": 38,
    "no-rules": 37,
-   "senses": 31,
+   "senses": 29,
    "illusions": 60,
    "removed": 5,
    "range": 4,
    "cooldown": 14,
    "vehicles": 24,
-   "situational": 88,
+   "situational": 84,
    "creatures": 57,
    "forms": 25,
-   "fortune": 13,
+   "fortune": 10,
    "retaliation": 4,
    "missing-number": 8,
    "linked-effect": 3,
-   "by-kind": 10
+   "by-kind": 8
   }
  },
  "entries": [
@@ -355,17 +355,6 @@
    "main": "lasting",
    "needs": [
     "lasting"
-   ]
-  },
-  {
-   "name": "Sailor's Collar",
-   "kind": "activation",
-   "activation": "Gasp for Air",
-   "result": "note-only",
-   "main": "triggers",
-   "needs": [
-    "triggers",
-    "out-of-combat"
    ]
   },
   {
@@ -814,16 +803,6 @@
     "objects",
     "mind",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Affliction Suppressant (Lesser)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "needs": [
-    "afflictions",
-    "situational"
    ]
   },
   {
@@ -3530,16 +3509,6 @@
    ]
   },
   {
-   "name": "Propulsive Boots",
-   "kind": "activation",
-   "activation": "Quickening Stomp",
-   "result": "partial",
-   "main": "reader",
-   "needs": [
-    "reader"
-   ]
-  },
-  {
    "name": "Possum's Play",
    "kind": "consumable",
    "result": "partial",
@@ -3565,16 +3534,6 @@
     "lasting",
     "objects",
     "reader"
-   ]
-  },
-  {
-   "name": "Affliction Suppressant (Moderate)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "needs": [
-    "afflictions",
-    "situational"
    ]
   },
   {
@@ -4178,16 +4137,6 @@
     "lasting",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Affliction Suppressant (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "needs": [
-    "afflictions",
-    "situational"
    ]
   },
   {
@@ -5134,16 +5083,6 @@
    ]
   },
   {
-   "name": "Brooch of Inspiration (Major)",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "fortune",
-   "needs": [
-    "fortune",
-    "information"
-   ]
-  },
-  {
    "name": "Doomsweeper",
    "kind": "activation",
    "activation": "Clear the Way",
@@ -5963,16 +5902,6 @@
    "main": "out-of-combat",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Brooch of Inspiration (Greater)",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "fortune",
-   "needs": [
-    "fortune",
-    "information"
    ]
   },
   {
@@ -9033,16 +8962,6 @@
    ]
   },
   {
-   "name": "Brooch of Inspiration",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "fortune",
-   "needs": [
-    "fortune",
-    "information"
-   ]
-  },
-  {
    "name": "Candle of Revealing",
    "kind": "consumable",
    "result": "note-only",
@@ -10178,16 +10097,6 @@
     "visibility",
     "several",
     "information"
-   ]
-  },
-  {
-   "name": "Submersible Helmet",
-   "kind": "activation",
-   "result": "partial",
-   "main": "speeds",
-   "needs": [
-    "speeds",
-    "out-of-combat"
    ]
   },
   {
@@ -11674,15 +11583,6 @@
    ]
   },
   {
-   "name": "Mythotoxin",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "situational",
-   "needs": [
-    "situational"
-   ]
-  },
-  {
    "name": "Tumbler's Belt",
    "kind": "activation",
    "activation": "Land With Grace",
@@ -11734,16 +11634,6 @@
    "needs": [
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Darkvision Scope (Greater)",
-   "kind": "activation",
-   "activation": "See Through Night",
-   "result": "partial",
-   "main": "senses",
-   "needs": [
-    "senses"
    ]
   },
   {
@@ -12484,16 +12374,6 @@
    ]
   },
   {
-   "name": "Darkvision Scope",
-   "kind": "activation",
-   "activation": "See Through Night",
-   "result": "partial",
-   "main": "senses",
-   "needs": [
-    "senses"
-   ]
-  },
-  {
    "name": "Silencing Ammunition",
    "kind": "activation",
    "result": "partial",
@@ -12896,16 +12776,6 @@
    "needs": [
     "lasting",
     "speech"
-   ]
-  },
-  {
-   "name": "Submersible Helmet (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "speeds",
-   "needs": [
-    "speeds",
-    "out-of-combat"
    ]
   },
   {
@@ -13947,28 +13817,6 @@
     "triggers",
     "dying",
     "lasting"
-   ]
-  },
-  {
-   "name": "Lacquered Waist Drum",
-   "kind": "activation",
-   "activation": "Memories of Life",
-   "result": "partial",
-   "main": "by-kind",
-   "needs": [
-    "by-kind",
-    "reader"
-   ]
-  },
-  {
-   "name": "Lacquered Waist Drum",
-   "kind": "activation",
-   "activation": "Memories of Joy",
-   "result": "partial",
-   "main": "by-kind",
-   "needs": [
-    "by-kind",
-    "reader"
    ]
   },
   {

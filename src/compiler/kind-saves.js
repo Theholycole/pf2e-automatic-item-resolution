@@ -14,6 +14,8 @@ const READINGS = [
     [new RegExp(String.raw`\b(\w+) animals and creatures with the (\w+) trait ${PENALTY}\.`, "i"), (match) => [{ traits: [match[1].toLowerCase(), match[2].toLowerCase()], bonus: bonusOf(match[3], match[4]) }]],
     [new RegExp(String.raw`\bIf the target is an? (\w+), they ${PENALTY}\.`, "i"), (match) => [{ traits: [match[1].toLowerCase()], bonus: bonusOf(match[2], match[3]) }]],
     [new RegExp(String.raw`\bCreatures with (darkvision|low-light vision|tremorsense|scent) ${PENALTY}\.`, "i"), (match) => [{ senses: [SENSES[match[1].toLowerCase()]], bonus: bonusOf(match[2], match[3]) }]],
+    // (Creatures of a trait by its own word, Mythotoxin's "Mythic creatures take a -2 circumstance penalty to saves against mythotoxin", 2026-10-25.)
+    [/\b(Mythic|Undead|Holy|Unholy|Fiend|Celestial|Elemental|Construct|Aquatic|Amphibious) creatures take an? [-–−](\d+) (circumstance|status) penalty to saves against (?:it|this|the [\w' -]+|[a-z][\w' -]*)\./, (match) => [{ traits: [match[1].toLowerCase()], bonus: bonusOf(match[2], match[3]) }]],
     // (A save only for a living creature — Slumber Arrow's "a living creature hit by it … must attempt", Ghost Ampoule's "each living creature in
     // a 15-foot emanation", Moritype's "If used on a living creature": undead and constructs aren't living, so no save card for them.)
     [/\b(?:a|each|any) living creature\b[^.]*?\b(?:must attempt|to attempt)\b|\bIf used on a living creature, that creature must attempt\b/i, () => [{ traits: ["undead", "construct"], immune: true }]]

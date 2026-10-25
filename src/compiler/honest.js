@@ -103,7 +103,8 @@ function withoutStaleReminder(plan) {
 // extra action each round only for Strike, Stride, and Support actions" — a behaviour rule beside the condition the plan really gives: a note
 // Effect beside its Quickened, for its time (the user's note-Effect rule), not a note left to the GM. Only when the plan's Quickened is its
 // own; Boots of the Blight's, given only on a successful save it doesn't play, stays a note.
-const ACTION_LIMIT = /\b(?:can|may) use the (?:extra|additional) action(?: each round)? (?:only|for only)\b|\bextra action (?:can be used )?only\b/i;
+// (Or the actions it's for, named: Propulsive Boots' "You can use the extra action to Stride, Climb, or Swim", 2026-10-25.)
+const ACTION_LIMIT = /\b(?:can|may) use the (?:extra|additional) action(?: each round)? (?:only|for only)\b|\bextra action (?:can be used )?only\b|\b(?:can|may) use the (?:extra|additional) action(?: each round)? to [A-Z][a-z]+(?:,? (?:or )?[A-Z][a-z]+)*\./;
 // (Its note or unread sentence: Zealous Banner's is unread. A Quickened its attack rider gives with the limit already — Frenzied Quintessence's
 // rider.self.only — needs no more.)
 export function withActionLimit(given) {
