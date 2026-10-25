@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-25",
  "totals": {
-  "entries": 1461,
+  "entries": 1454,
   "results": {
    "none": 687,
-   "partial": 350,
+   "partial": 343,
    "builtin:no-effect": 147,
    "note-only": 277
   },
@@ -14,7 +14,7 @@
    "afflictions": 56,
    "areas": 123,
    "moving": 123,
-   "lasting": 74,
+   "lasting": 69,
    "speech": 36,
    "visibility": 58,
    "choice": 43,
@@ -26,13 +26,13 @@
    "actions": 32,
    "no-rules": 37,
    "senses": 23,
-   "objects": 122,
+   "objects": 121,
    "reader": 33,
    "illusions": 47,
    "removed": 4,
    "cooldown": 13,
    "vehicles": 20,
-   "several": 27,
+   "several": 26,
    "triggers": 98,
    "immunity": 27,
    "situational": 20,
@@ -50,21 +50,21 @@
    "speeds": 34,
    "areas": 186,
    "immunity": 75,
-   "objects": 403,
+   "objects": 402,
    "speech": 150,
    "out-of-combat": 437,
    "counteract": 81,
    "afflictions": 102,
-   "lasting": 231,
+   "lasting": 226,
    "moving": 157,
    "triggers": 135,
    "visibility": 60,
    "dying": 83,
    "choice": 120,
-   "several": 103,
+   "several": 102,
    "mind": 78,
    "strike": 206,
-   "reader": 251,
+   "reader": 249,
    "spells": 84,
    "information": 217,
    "actions": 67,
@@ -204,15 +204,6 @@
    ]
   },
   {
-   "name": "Spring-Loaded Net Launcher",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "lasting",
-   "needs": [
-    "lasting"
-   ]
-  },
-  {
    "name": "Horned Hand Rests",
    "kind": "activation",
    "result": "partial",
@@ -346,15 +337,6 @@
    "main": "actions",
    "needs": [
     "actions"
-   ]
-  },
-  {
-   "name": "Black Tendril Shot (Moderate)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "needs": [
-    "lasting"
    ]
   },
   {
@@ -1120,16 +1102,6 @@
     "immunity",
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Fearless Sash",
-   "kind": "activation",
-   "result": "partial",
-   "main": "several",
-   "needs": [
-    "several",
-    "reader"
    ]
   },
   {
@@ -6362,15 +6334,6 @@
    ]
   },
   {
-   "name": "Black Tendril Shot (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "needs": [
-    "lasting"
-   ]
-  },
-  {
    "name": "Boots of Free Running (Greater)",
    "kind": "activation",
    "result": "note-only",
@@ -6859,17 +6822,6 @@
    "needs": [
     "creatures",
     "strike"
-   ]
-  },
-  {
-   "name": "Screaming Pinion",
-   "kind": "activation",
-   "activation": "Eagle's Cry",
-   "result": "partial",
-   "main": "objects",
-   "needs": [
-    "objects",
-    "reader"
    ]
   },
   {
@@ -7765,15 +7717,6 @@
     "strike",
     "objects",
     "information"
-   ]
-  },
-  {
-   "name": "Black Tendril Shot (Lesser)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "needs": [
-    "lasting"
    ]
   },
   {
@@ -10718,15 +10661,6 @@
    "needs": [
     "choice",
     "mind"
-   ]
-  },
-  {
-   "name": "Vine Arrow",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "needs": [
-    "lasting"
    ]
   },
   {

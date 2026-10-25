@@ -99,10 +99,11 @@ const forTime = (duration) => {
 // A condition it lowers, in words: "Lowers frightened by 1", "Ends doomed", "Lowers one of clumsy, enfeebled or
 // stupefied by 1 (picked below)", "… on each creature you target".
 const orList = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} or ${words.at(-1)}` : words[0]);
-export function reductionText({ slug, choose, by, who, optional }) {
+// (Its area, Fearless Sash's: "… on each creature you target (you and allies within 5 feet)".)
+export function reductionText({ slug, choose, by, who, optional, radius }) {
     const what = choose ? `one of ${orList(choose)}` : slug;
     const done = by === "all" ? `Ends ${what}` : `Lowers ${what} by ${by}`;
-    return `${done}${choose ? " (picked below)" : ""}${who === "targets" ? ` on each creature you target${optional ? " (if any)" : ""}` : ""}`;
+    return `${done}${choose ? " (picked below)" : ""}${who === "targets" ? ` on each creature you target${Number.isFinite(radius) ? ` (you and allies within ${radius} feet)` : ""}${optional ? " (if any)" : ""}` : ""}`;
 }
 
 // A bonus or penalty in words: "+2 item to performance for 1 hour", "+3 item to perception (sense motive, against the marked creature)".

@@ -17,8 +17,8 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 748 | 50% |
-| partial | 120 | 8% |
+| resolves | 749 | 50% |
+| partial | 119 | 8% |
 | note-only | 122 | 8% |
 | builtin:zone | 118 | 8% |
 | builtin:cast-spell | 35 | 2% |
@@ -43,7 +43,7 @@ Results, for the items this module handles:
 | elixir | 149 | 92 | 13 | 16 | 0 | 23 | 5 |
 | poison | 115 | 106 | 4 | 1 | 0 | 4 | 0 |
 | snare | 82 | 0 | 0 | 1 | 0 | 72 | 9 |
-| gadget | 77 | 22 | 8 | 6 | 0 | 33 | 8 |
+| gadget | 77 | 23 | 7 | 6 | 0 | 33 | 8 |
 | mutagen | 68 | 64 | 4 | 0 | 0 | 0 | 0 |
 | oil | 66 | 29 | 7 | 9 | 0 | 16 | 5 |
 | fulu | 46 | 20 | 2 | 7 | 0 | 5 | 12 |

@@ -50,7 +50,9 @@ test("the reading: the user's conditions it lowers, and what isn't one", () => {
 test("the reading: several conditions, one of several, to 0, and another creature's", () => {
     // "You and each ally in a 5-foot emanation" (Fearless Sash), "the ally's" (Banner of Common Cause), "that creature's"
     // (Fearcutter): the creatures the presser targets.
-    assert.deepEqual(compileActivations(source("Fearless Sash"))[0].plan.item.reduce, [{ slug: "frightened", by: 1, who: "targets" }]);
+    // (Its emanation's size on the entry, for the card's words: 2026-10-25.)
+    assert.deepEqual(compileActivations(source("Fearless Sash"))[0].plan.item.reduce, [{ slug: "frightened", by: 1, who: "targets", radius: 5 }]);
+    assert.equal(compileActivations(source("Fearless Sash"))[0].plan.partial, undefined);
     assert.deepEqual(compileActivations(source("Banner of Common Cause")).find((entry) => entry.activation.name === "Stand Firm").plan.item.reduce, [{ slug: "frightened", by: 1, who: "targets" }]);
     assert.deepEqual(readReductions("Reduce that creature's frightened value by 1."), [{ slug: "frightened", by: 1, who: "targets" }]);
     // On yourself or another: the drinker's (Serene Smelling Salts' "that target reduces the value of its frightened condition by 1").

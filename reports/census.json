@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 748,
+   "resolves": 749,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
-   "partial": 120,
+   "partial": 119,
    "builtin:ways": 25,
    "builtin:item-action": 16,
    "note-only": 122,
@@ -188,10 +188,10 @@
   "gadget": {
    "count": 77,
    "results": {
-    "partial": 8,
+    "resolves": 23,
     "builtin:zone": 17,
     "none": 8,
-    "resolves": 22,
+    "partial": 7,
     "note-only": 6,
     "builtin:item-action": 3,
     "builtin:no-effect": 5,
@@ -709,8 +709,9 @@
     "gadget"
    ],
    "mechanisms": [],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "save"
   },
   {

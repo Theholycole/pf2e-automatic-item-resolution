@@ -101,7 +101,9 @@ export function readReductions(text) {
         if (held) for (const [slug] of held[1].toLowerCase().matchAll(new RegExp(NAMES, "g"))) add({ slug, by: amount(held[2]) });
         if (TIMED.test(sentence) || DEGREE_ROW.test(sentence.trim())) continue;
         const area = AREA.test(sentence);
-        const who = area ? { who: "targets" } : {};
+        // (Its area's size, Fearless Sash's "in a 5-foot emanation": on the entry, for the card's words — 2026-10-25.)
+        const radius = area ? Number(/\b(\d+)-foot (?:emanation|radius|aura)\b|\bwithin (\d+) feet\b/i.exec(sentence)?.slice(1).find(Boolean)) : NaN;
+        const who = area ? { who: "targets", ...(Number.isFinite(radius) ? { radius } : {}) } : {};
         // (Another's: the creatures targeted; on yourself or another, the drinker's.)
         for (const match of sentence.matchAll(copy(OTHERS))) add({ slug: (match[1] ?? match[2]).toLowerCase(), by: amount(match[3], match[4]), ...(either ? {} : { who: "targets" }) });
         if (NOT_YOURS.test(sentence) && !area) continue;

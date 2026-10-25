@@ -68,6 +68,7 @@ import { withActionLimit, withHonestPartial, withUntracedRules } from "./honest.
 import { withSaveEnds } from "./save-ends.js";
 import { withStrikeGate } from "./strike-gate.js";
 import { withKindSaves } from "./kind-saves.js";
+import { withEscapeEnds } from "./escape-ends.js";
 import { withEffectThenCard } from "./effect-then-card.js";
 import { withRuneSteps } from "./rune-steps.js";
 
@@ -148,7 +149,7 @@ export function compileActivations(item, options = {}) {
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withUntracedRules(withHonestPartial(withStrikeGate(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withUntracedRules(withHonestPartial(withStrikeGate(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // Only after its user's action succeeds, Glamorous Buckler's "On a successful Feint, the target is Dazzled for 1 round" (src/compiler/item-data.js

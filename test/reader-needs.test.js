@@ -79,3 +79,17 @@ test("a Quickened's extra action for the actions it names: a note Effect beside 
     assert.deepEqual([row.effects[0].slug, row.noteEffects[0].label, row.noteEffects[0].duration.value], ["quickened", "Quickened's extra action", 1]);
     assert.match(row.noteEffects[0].text, /^You can use the extra action to Stride, Climb, or Swim\./);
 });
+
+test("an effect a successful Escape ends: the ability module's escape { dc } on the riders (Vine Arrow, the net launcher, Black Tendril Shot)", () => {
+    const vine = activation("Vine Arrow");
+    assert.deepEqual([vine.partial, vine.resolution.outcomes.success.modifiers[0].escape, vine.resolution.outcomes.criticalSuccess.effects[0].duration], [undefined, { dc: 19 }, { mode: "until-escape", escape: { dc: 19 } }]);
+    // (Black Tendril Shot's save rows carry it from the ability compiler: its sentence no longer a note.)
+    const tendril = activation("Black Tendril Shot (Lesser)");
+    assert.deepEqual([tendril.partial, tendril.strike.notes, tendril.strike.save.resolution.outcomes.failure.effects[0].duration], [undefined, [], { mode: "until-escape", escape: { dc: 25 } }]);
+});
+
+test("a DC and damage by the weapon's potency rune: Screaming Pinion's Eagle's Cry at +2 and at +3", () => {
+    const pinion = item("Screaming Pinion");
+    const at = (potency) => compileActivations({ ...pinion, system: { ...pinion.system, runes: { ...pinion.system.runes, potency } } }, { spellEffects })[1].plan;
+    assert.deepEqual([2, 3].map((potency) => [at(potency).partial, at(potency).notes, at(potency).resolution.check.against.value, at(potency).resolution.sharedDamage.components[0].formula]), [[undefined, undefined, 30, "8d10[sonic]"], [undefined, undefined, 35, "10d10[sonic]"]]);
+});

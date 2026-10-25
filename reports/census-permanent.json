@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 766,
+   "resolves": 772,
    "builtin:cast-spell": 475,
-   "partial": 230,
+   "partial": 224,
    "none": 509,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
@@ -57,7 +57,7 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 452,
+    "resolves": 453,
     "builtin:cast-spell": 347,
     "none": 355,
     "builtin:focus-point": 45,
@@ -66,7 +66,7 @@
     "builtin:no-effect": 78,
     "note-only": 114,
     "builtin:reroll": 34,
-    "partial": 108,
+    "partial": 107,
     "builtin:table": 4,
     "builtin:teleport": 4,
     "builtin:zone": 14,
@@ -81,8 +81,8 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 169,
-    "partial": 59,
+    "resolves": 170,
+    "partial": 58,
     "none": 75,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
@@ -103,8 +103,8 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "partial": 35,
-    "resolves": 48,
+    "partial": 31,
+    "resolves": 52,
     "builtin:pf2e-rules": 22,
     "none": 29,
     "builtin:no-effect": 2,
@@ -664,7 +664,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -1854,7 +1854,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -11105,7 +11105,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -12263,7 +12263,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -13874,7 +13874,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -18892,7 +18892,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },

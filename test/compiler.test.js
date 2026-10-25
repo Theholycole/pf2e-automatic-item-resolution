@@ -971,7 +971,9 @@ test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage t
     const spiral = compileItem({ ...item("Spiral Labyrinth"), ownerLevel: 14 });
     assert.deepEqual([spiral.resolution.check.statistic, spiral.resolution.check.basic, spiral.resolution.check.against.value, spiral.scaled.of], ["reflex", true, 32, "the damage your shield blocked, its Hardness 10 higher for that Shield Block"]);
     const net = compileItem({ ...item("Spring-Loaded Net Launcher"), ownerLevel: 2 });
-    assert.deepEqual([net.targeting.range, net.ownCheck.choose, net.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.resolution.outcomes.success.modifiers[0]], ["60 feet", ["thrown"], ["off-guard", "immobilized"], { selector: "all-speeds", value: -10, type: "circumstance", duration: null }]);
+    assert.deepEqual([net.targeting.range, net.ownCheck.choose, net.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.resolution.outcomes.success.modifiers[0]], ["60 feet", ["thrown"], ["off-guard", "immobilized"], { selector: "all-speeds", value: -10, type: "circumstance", duration: null, escape: { dc: 16 } }]);
+    // (Its Escape DC on all a hit gives, which a successful Escape ends: src/compiler/escape-ends.js, 2026-10-25.)
+    assert.deepEqual([net.partial, net.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.duration)], [undefined, [{ mode: "until-escape", escape: { dc: 16 } }, { mode: "until-escape", escape: { dc: 16 } }]]);
     const [azarim] = compileActivations(item("Azarim"));
     assert.deepEqual([azarim.plan.resolution.check.statistic, azarim.plan.resolution.check.against.value, azarim.plan.resolution.outcomes.failure.effects[0].slug, azarim.plan.resolution.outcomes.failure.effects[0].value], ["fortitude", 23, "enfeebled", 2]);
     // (Resolute Shield's "up to twice the shield's Hardness": its Hardness 12 doubled, resistance to the triggering physical damage.)
