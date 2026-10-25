@@ -4,7 +4,7 @@ A Foundry VTT module (id `pf2e-automatic-item-resolution`) that automates Pathfi
 
 Spell-casting items (scrolls, wands, staves, catalysts, spellhearts) belong to PF2e Automatic Spell Resolution.
 
-**Status (2026-10-20): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 327 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) and [docs/census-third-party.md](docs/census-third-party.md).
+**Status (2026-10-20): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 327 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md) [docs/census-third-party.md](docs/census-third-party.md), and [docs/needs.md](docs/needs.md) for what the items not yet automated still need.
 
 ## Install
 
@@ -105,7 +105,7 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 - **The compendium** is built from `packs/_source/items/*.json` with `node tools/build-packs.mjs`, using Foundry's own LevelDB library, with no world using the pack.
 - **Tests:** `node --test --test-isolation=none test/*.test.js`. The live layer runs against a stand-in for Foundry (`test/support/fake-foundry.mjs`) with PF2e's real items and Effects from its packs.
 - **Live check** in the disposable world pftest: `tools/live-check.mjs`, imported in the browser. It uses its own "PFTEST ITEM" data and cleans up only that.
-- **Censuses:** `node tools/census.mjs` (consumables) and `node tools/census-permanent.mjs` (activations) read the PF2e system's packs straight from LevelDB, with no Foundry login. `node tools/census-third-party.mjs` reads the installed modules' packs the same way; it commits counts only and keeps the rows in `.cache/`, which git ignores.
+- **Censuses:** `node tools/census.mjs` (consumables) and `node tools/census-permanent.mjs` (activations) read the PF2e system's packs straight from LevelDB, with no Foundry login. `node tools/census-third-party.mjs` reads the installed modules' packs the same way; it commits counts only and keeps the rows in `.cache/`, which git ignores. `node tools/needs.mjs` sorts every entry that isn't automated yet by what its card would need (`tools/needs-rules.mjs`) and writes docs/needs.md.
 - Imports reach the sibling modules by their ids (`../../pf2e-resolution-core/…`, `../../pf2e-automatic-ability-resolution/…`). In Foundry those are the module folders; on disk they are aliases next to this folder.
 - `api` (`game.modules.get("pf2e-automatic-item-resolution").api`):
   - `compileItem(item)` and `handlesItem(item)`;
