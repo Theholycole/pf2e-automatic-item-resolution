@@ -14,7 +14,7 @@
 
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, damageRollClass, entryOf, healCreature as heal, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, damageRollClass, entryOf, healCreature as heal, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, presserUuid, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -30,6 +30,7 @@ import { attackRidersText } from "../src/compiler/attack-riders.js";
 import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
+import { forAbility } from "./placed-moves.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
 import { checkSpend, payRegain, paySpend } from "./spend.js";
 import { placeLight } from "./placed-light.js";
@@ -179,6 +180,8 @@ async function cardForUse(message) {
 // (scripts/item-actions.js); else the item card below.
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
+    // (Its moves with ability 0.9.2's hook and moveFrom, else as read before: scripts/placed-moves.js.)
+    plan = forAbility(plan);
     // (A save against its user's own class or spell DC, src/compiler/item-data.js: that DC, as it is now. Without one, the GM rolls it.)
     if (hasOwnerDC(plan)) {
         const filled = fillOwnerDCs(plan, ownerDCsOf(actor));
@@ -424,7 +427,7 @@ async function onRequest(data) {
     const state = stateOf(message);
     const sender = game.users.get(data.userId);
     if (!state || !sender) return;
-    const owner = sender.isGM || !!(await fromUuid(state.user.actorUuid).catch(() => null))?.testUserPermission?.(sender, "OWNER");
+    const owner = sender.isGM || !!(await fromUuid(presserUuid(state)).catch(() => null))?.testUserPermission?.(sender, "OWNER");
     if (!owner) return;
     const choices = state.kind === "bomb" ? { included: Array.isArray(data.included) ? data.included.map(Number) : null }
         : state.kind === "poison" ? { weapon: data.weapon }

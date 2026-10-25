@@ -24,7 +24,7 @@ export async function pickTeleportSpace(state) {
     const width = (Number(token.width) || 1) * size;
     const height = (Number(token.height) || 1) * size;
     return new Promise((resolve) => {
-        ui.notifications?.info?.(`${state.item.name}: click the space ${state.user.name} ${state.plan?.teleport?.move ? "moves" : "teleports"} to (right-click or Escape cancels).`);
+        ui.notifications?.info?.(`${state.item.name}: click the space ${state.user.name} ${state.plan?.teleport?.place ? "is moved" : state.plan?.teleport?.move ? "moves" : "teleports"} to (right-click or Escape cancels).`);
         const stage = canvas.stage;
         const finish = (value) => {
             stage.off("pointerdown", down);
@@ -117,12 +117,25 @@ export async function applyTeleportCard(message, { destination = null, targets =
         const beside = canvas.scene.tokens.some((other) => other.id !== token.id && !other.hidden && other.actor?.isOfType?.("creature") && (token.actor?.isAllyOf ? token.actor.isAllyOf(other.actor) : other.disposition === token.disposition) && distanceFeet(spaceOf(other), spot, grid) <= 5);
         if (!beside) throw new Error(`${state.item.name}: ${state.user.name}'s movement must end beside an ally.`);
     }
+    // (A creature moved by its user, src/compiler/placed.js: within nearSource feet of them too — Whip-Tongue Sling's 20.)
+    const place = teleport.place ?? null;
+    if (Number.isFinite(place?.nearSource)) {
+        const by = place.by?.tokenUuid ? await fromUuid(place.by.tokenUuid).catch(() => null) : null;
+        const size = canvas.grid.size;
+        const spot = { x: at.x, y: at.y, w: (Number(token.width) || 1) * size, h: (Number(token.height) || 1) * size, elevation: Number(token.elevation ?? 0) };
+        const far = by ? distanceFeet(spaceOf(by), spot, { size, gridFeet: canvas.dimensions?.distance ?? 5 }) : null;
+        if (Number.isFinite(far) && far > place.nearSource) throw new Error(`${state.item.name}: that space is ${far} feet from ${place.by.name} (the item allows ${place.nearSource}).`);
+    }
     const start = { x: Number(token.x), y: Number(token.y) };
-    // (Its user's own move, src/compiler/move.js: a move on the map, as a Stride is — not a teleport.)
+    // (Its user's own move, src/compiler/move.js: a move on the map, as a Stride is — not a teleport. A creature moved by its user: forced
+    // movement, as the core's is — at once, flagged so.)
     const move = teleport.move ?? null;
-    await token.update({ x: at.x, y: at.y }, move ? { [MODULE_ID]: { moved: true } } : { teleport: true, animate: false, [MODULE_ID]: { teleported: true } });
+    const options = place ? { teleport: true, animate: false, "pf2e-resolution-core": { forcedMovement: true, reason: state.item.name }, [MODULE_ID]: { placed: true } }
+        : move ? { [MODULE_ID]: { moved: true } } : { teleport: true, animate: false, [MODULE_ID]: { teleported: true } };
+    await token.update({ x: at.x, y: at.y }, options);
     const VERBED = { Stride: "Strides", Step: "Steps", Leap: "Leaps", Burrow: "Burrows", Fly: "Flies", Swim: "Swims", Climb: "Climbs" };
-    const results = [`${state.user.name} ${move ? (VERBED[move.verb] ?? "moves").replace(/^./, (letter) => letter.toLowerCase()) : "teleports"}${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`];
+    const done = place ? `is moved${place.by?.name ? ` by ${place.by.name}` : ""}` : move ? (VERBED[move.verb] ?? "moves").replace(/^./, (letter) => letter.toLowerCase()) : "teleports";
+    const results = [`${state.user.name} ${done}${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`];
     // (Damage along the way, Quartz-Coil Rail Transport's: its user and each creature the line between its two spaces crosses.)
     if (teleport.line) {
         const struck = [token, ...creaturesOnLine(token, start, at)];

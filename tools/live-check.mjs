@@ -2442,8 +2442,10 @@ export const cases = {
     },
 
     // Roc-Shaft Arrow (ammunition only in its words): its user's next ranged Strike carries its save — on a hit, the ability module's
-    // Fortitude save card at DC 19.
+    // Fortitude save card at DC 19; a failure (a 5 on the die, 13), and once it's applied (ability 0.9.2's hook) the card for its attacker
+    // to pick the space within 10 feet — 15 feet off refused, 10 moved.
     async rocShaftArrow(scene) {
+        await clearSquares(scene, [[2, 19], [4, 19], [4, 17], [7, 19]]);
         const { actor: archer, token: archerToken } = await creature(scene, "Roc Archer", { type: "character", x: 2, y: 19 });
         const { token: foeToken } = await creature(scene, "Roc Target", { x: 4, y: 19, ac: 1, alliance: "opposition" });
         const bow = await give(archer, "Shortbow");
@@ -2468,7 +2470,79 @@ export const cases = {
         const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
         const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
         assert(check.statistic === "fortitude" && check.against.value === 19, `Fortitude DC 19 (${JSON.stringify(check)})`);
-        return { check };
+        since = Date.now();
+        await withDie(5, () => rollAndApply(save));
+        const place = await messageAfter(since, itemCard("teleport"), { what: "the card to pick the space" });
+        const state = place.getFlag(NS, "card");
+        assert(state.user.name.endsWith("Roc Target") && state.plan.teleport.within === 10 && /Archer/.test(state.presser?.name ?? ""), `the target moved, its archer picking (${JSON.stringify([state.user.name, state.plan.teleport.within, state.presser])})`);
+        const size = canvas.grid.size;
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(place.id, { destination: { x: 7 * size, y: 19 * size } }).catch((error) => { refused = error.message; });
+        assert(/15 feet away \(the item allows 10\)/.test(refused ?? ""), `15 feet refused (${refused})`);
+        await game.modules.get(NS).api.live.apply(place.id, { destination: { x: 4 * size, y: 17 * size } });
+        await until(() => foeToken.x === 4 * size && foeToken.y === 17 * size, `the target moved to (4, 17) (${foeToken.x / size}, ${foeToken.y / size})`, { timeout: 8000 });
+        return { check, refused, results: game.messages.get(place.id).getFlag(NS, "card").results };
+    },
+
+    // Dispersing Bullet: a sling's hit — the Fortitude DC 21 save card at the creature beside the one hit (not it), a failure (a 5, 13)
+    // pushing it 10 feet away from the creature hit (down, away from it), not from the slinger (ability 0.9.2's moveFrom).
+    async dispersingPush(scene) {
+        await clearSquares(scene, [[10, 15], [13, 15], [13, 16], [13, 17], [13, 18], [14, 17], [14, 18]]);
+        const { actor: slinger, token: slingerToken } = await creature(scene, "Dispersing Slinger", { type: "character", x: 10, y: 15 });
+        const { token: foeToken } = await creature(scene, "Dispersing Target", { x: 13, y: 15, ac: 1, alliance: "opposition" });
+        const { token: besideToken } = await creature(scene, "Dispersing Bystander", { x: 13, y: 16, alliance: "opposition" });
+        const sling = await give(slinger, "Sling");
+        const bullets = await give(slinger, "Dispersing Bullet");
+        await bullets.update({ "system.quantity": 3, "system.baseItem": "sling-bullets" });
+        await sling.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.selectedAmmoId": bullets.id, "system.reload.value": "0" });
+        let since = 0;
+        let attack = null;
+        for (let tries = 0; tries < 3 && !["success", "criticalSuccess"].includes(attack?.flags?.pf2e?.context?.outcome); tries++) {
+            since = Date.now();
+            await game.modules.get(NS).api.live.activate(bullets.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            await slingerToken.object?.control?.();
+            await target(foeToken);
+            since = Date.now();
+            ({ attack } = await strike(slinger, sling));
+        }
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card around the creature hit" });
+        const state = save.flags["pf2e-automatic-ability-resolution"].card;
+        assert(state.targets.length === 1 && /Bystander/.test(state.targets[0].name) && state.moveFrom === foeToken.uuid, `the bystander alone, measured from the creature hit (${JSON.stringify([state.targets.map((entry) => entry.name), state.moveFrom])})`);
+        await withDie(5, () => rollAndApply(save));
+        const size = canvas.grid.size;
+        await until(() => besideToken.y === 18 * size && besideToken.x === 13 * size, `pushed 10 feet down, away from the creature hit (${besideToken.x / size}, ${besideToken.y / size})`, { timeout: 10000 });
+        return { at: [besideToken.x / size, besideToken.y / size] };
+    },
+
+    // Whip-Tongue Sling's Tongue Twister: its user's Athletics against Fortitude DC 18 (an 18 on the die, a success); once applied, its
+    // user picks the space — up to 15 feet from where the creature was, within 20 feet of them: 20 feet off refused, 25 feet from its user
+    // refused, then moved.
+    async whipTongue(scene) {
+        await clearSquares(scene, [[15, 11], [17, 11], [17, 15], [19, 13], [16, 13]]);
+        const { actor: user, token: userToken } = await creature(scene, "Tongue Slinger", { type: "character", x: 15, y: 11 });
+        const { token: foeToken } = await creature(scene, "Tongue Mark", { x: 17, y: 11, alliance: "opposition" });
+        const sling = await give(user, "Whip-Tongue Sling");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(sling.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "Tongue Twister's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the ability module's Athletics card" });
+        since = Date.now();
+        await withDie(18, () => rollAndApply(check));
+        const place = await messageAfter(since, itemCard("teleport"), { what: "the card to pick the space" });
+        const size = canvas.grid.size;
+        const refusals = [];
+        for (const [x, y] of [[17, 15], [19, 13]]) await game.modules.get(NS).api.live.apply(place.id, { destination: { x: x * size, y: y * size } }).catch((error) => refusals.push(error.message));
+        assert(/20 feet away \(the item allows 15\)/.test(refusals[0] ?? "") && /25 feet from .*Tongue Slinger \(the item allows 20\)/.test(refusals[1] ?? ""), `both refused (${refusals.join(" / ")})`);
+        await game.modules.get(NS).api.live.apply(place.id, { destination: { x: 16 * size, y: 13 * size } });
+        await until(() => foeToken.x === 16 * size && foeToken.y === 13 * size, `the mark moved (${foeToken.x / size}, ${foeToken.y / size})`, { timeout: 8000 });
+        assert(userToken.x === 15 * size, "its user where it was");
+        return { refusals, results: game.messages.get(place.id).getFlag(NS, "card").results };
     },
 
     // Atrophy Bomb (Lesser): its damage sentence's rider — Enfeebled 1 on the creature hit.

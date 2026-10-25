@@ -178,8 +178,9 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     const slowed = (plan) => plan.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "slowed");
     assert.deepEqual([slowed(ghoul.strike.save), slowed(ghoul.strike.zone.saves[0].plan)], [{ kind: "condition", slug: "slowed", value: 1, duration: { mode: "while", condition: "sickened" } }, { kind: "condition", slug: "slowed", value: 1, duration: { mode: "while", condition: "sickened" } }]);
     assert.ok(!ghoul.notes.some((note) => /Slowed/.test(note)));
-    // Saves for the creatures around the one hit: Dispersing Bullet's push (Fortitude 21, the target left out, the push a note), Singularity
-    // Ammunition's pull and then its blast (7d12 bludgeoning, basic Reflex 28, the target too).
+    // Saves for the creatures around the one hit: Dispersing Bullet's push (Fortitude 21, the target left out, the push its rows' from the
+    // creature hit — moveFrom "target", the note it was before ability 0.9.2 kept as byHand), Singularity Ammunition's pull and then its blast
+    // (7d12 bludgeoning, basic Reflex 28, the target too).
     // Blade of Fallen Stars' projectile: the next ranged Strike's extra 6d8 cold, its Faerie Fire a note; Solar Shellflower's construct: its
     // Strikes' extra 3d4 persistent fire for 1 minute (the item's Effect); Essence Forge's healing, its gate a note.
     const blade = compileActivations(source("Blade of Fallen Stars"))[1].plan.strike;
@@ -192,9 +193,12 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     assert.match(forge.notes.join(" "), /only when the essence in the forge is worth at least 50 gp/);
     const dispersing = compileActivations(source("Dispersing Bullet"))[0].plan.strike;
     assert.deepEqual([dispersing.ammo, dispersing.around.map((entry) => [entry.radius, entry.includeTarget, entry.plan.resolution.check.against.value])], [true, [[10, false, 21]]]);
-    assert.match(dispersing.around[0].plan.notes[0], /pushed 10 feet from the target; 15 feet on a critical failure/);
+    const pushed = dispersing.around[0];
+    assert.deepEqual([pushed.moveFrom, pushed.plan.resolution.outcomes.failure.forcedMovement.distance, pushed.plan.resolution.outcomes.criticalFailure.forcedMovement.distance, pushed.plan.resolution.outcomes.success.forcedMovement, pushed.plan.notes], ["target", 10, 15, undefined, undefined]);
+    assert.match(pushed.byHand, /pushed 10 feet from the target; 15 feet on a critical failure/);
     const singularity = compileActivations(source("Singularity Ammunition"))[0].plan.strike;
     assert.deepEqual(singularity.around.map((entry) => [entry.radius, entry.includeTarget, entry.plan.resolution.check.statistic, entry.plan.resolution.check.basic]), [[10, false, "fortitude", false], [5, true, "reflex", true]]);
+    assert.deepEqual([singularity.around[0].moveFrom, singularity.around[0].plan.resolution.outcomes.failure.forcedMovement], ["target", { kind: "pull", distance: 5, upTo: true, optional: false, direction: "toward" }]);
 });
 
 test("the readied Strike's PF2e rules: dice on its weapon's damage, the bonus on its attack, a damage type", () => {
@@ -392,15 +396,21 @@ test("cast on hit in other words: Fairy Bullet's \"casts Revealing Light (DC 23)
     assert.deepEqual([cast("Silencing Ammunition").name, cast("Silencing Ammunition").rank, cast("Silencing Ammunition").saveFirst], ["Silence", 2, { statistic: "will", dc: 25 }]);
 });
 
-test("Roc-Shaft Arrow: ammunition only in its words — its user's next ranged Strike, whose hit is a Fortitude save or a push its attacker aims", () => {
+test("Roc-Shaft Arrow: ammunition only in its words — its user's next ranged Strike, whose hit is a Fortitude save or a space its attacker picks", async () => {
     const arrow = compileItem(source("Roc-Shaft Arrow (Lesser)"));
     assert.equal(routeOf(arrow), "strike");
     assert.deepEqual([arrow.strike.range, arrow.strike.ammo, arrow.strike.save.resolution.check.statistic, arrow.strike.save.resolution.check.against.value], ["ranged", undefined, "fortitude", 19]);
-    assert.deepEqual(["failure", "criticalFailure"].map((degree) => arrow.strike.save.resolution.outcomes[degree].forcedMovement?.distance), [10, 20]);
-    assert.ok(arrow.strike.notes.some((note) => /picks the space/.test(note)));
+    // (The space picked after the save card's applied, src/compiler/placed.js — not the core's straight push.)
+    assert.deepEqual(arrow.strike.save.placed.rows, { failure: { within: 10 }, criticalFailure: { within: 20 } });
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => arrow.strike.save.resolution.outcomes[degree].forcedMovement), [undefined, undefined]);
+    assert.deepEqual(arrow.strike.save.placed.lines, ["Into a hazardous space, this has the incapacitation trait"]);
     // (The ammunition its weapon fires, as PF2e's ammo.baseType names it: a bow's.)
     assert.deepEqual(arrow.strike.ammunition, ["arrows"]);
-    assert.equal(arrow.partial, true);
+    assert.deepEqual([arrow.strike.notes, arrow.partial], [[], undefined]);
+    // (Before ability 0.9.2: the note it was, partial.)
+    const { withoutPlacedMoves } = await import("../src/compiler/placed.js");
+    const before = withoutPlacedMoves(arrow);
+    assert.deepEqual([before.partial, before.strike.save.placed, before.strike.save.notes], [true, undefined, ["On a failure, move it to a space its attacker picks within 10 feet. On a critical failure, move it to a space its attacker picks within 20 feet."]]);
 });
 
 test("a Strike's attack without its range penalty (Sniper's Bead, Jistkan War Crossbow), without kickback's penalty (Alchemist's Damper), with flat splash damage (Jistkan): PF2e's RollOption, AdjustModifier and FlatModifier rules", () => {

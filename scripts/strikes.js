@@ -181,7 +181,8 @@ export async function strikeWithRider(message) {
         }
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
         if (postCard) {
-            await postCard({ plan: entry.plan, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens, cause: `${rider.item.name} hit ${target.name}` });
+            // (Pushed from or pulled toward the creature hit, not its attacker: the ability module's moveFrom, ability 0.9.2.)
+            await postCard({ plan: entry.plan, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens, cause: `${rider.item.name} hit ${target.name}`, ...(entry.moveFrom === "target" ? { moveFrom: targetToken.document?.uuid ?? targetToken.uuid } : {}) });
             lines.push(`${saveText(entry.plan)} for ${tokens.length} creature${tokens.length === 1 ? "" : "s"} within ${entry.radius} feet of ${target.name}`);
         } else lines.push(`${saveText(entry.plan)} for the creatures within ${entry.radius} feet of ${target.name} (roll it by hand)`);
     }

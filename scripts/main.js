@@ -12,6 +12,7 @@ import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
 import { setUpPlacedLights } from "./placed-light.js";
+import { setUpPlacedMoves } from "./placed-moves.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
@@ -106,6 +107,7 @@ Hooks.once("ready", async () => {
     setUpGenericItems();
     // (A light an item puts in a square, removed when its time is up: scripts/placed-light.js.)
     setUpPlacedLights();
+    setUpPlacedMoves();
     // (A runestone's rune etched onto its owner's weapon, armor or shield: scripts/etching.js.)
     setUpEtching();
     try {

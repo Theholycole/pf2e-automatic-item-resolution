@@ -46,10 +46,13 @@ export async function creatureOf(entry) {
 }
 
 // Whether this user may press a card's Apply: the GM, or an owner of the item's user.
+// (Its presser's when it has one — a creature moved by its user, src/live/teleport-card.js: the user's owner picks, not the creature's.)
+export const presserUuid = (state) => state?.presser?.actorUuid ?? state?.user?.actorUuid;
+
 export function mayApply(state) {
     if (game.user.isGM) return true;
     try {
-        return !!fromUuidSync(state.user.actorUuid)?.testUserPermission?.(game.user, "OWNER");
+        return !!fromUuidSync(presserUuid(state))?.testUserPermission?.(game.user, "OWNER");
     } catch {
         return false;
     }

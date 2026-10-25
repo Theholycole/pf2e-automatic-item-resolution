@@ -4,7 +4,8 @@
 // toward the creature hit and then "The singularity then explodes, dealing @Damage[7d12[bludgeoning]] damage to the original target and
 // all creatures in a @Template[emanation|distance:5] (@Check[reflex|dc:28|basic])". The ammunition's Strike, its hit's strike.around:
 // [{ radius, includeTarget, plan }] — live play posts each save card at the creatures within that distance of the creature hit. A push or
-// pull away from or toward that creature (not its user) is the card's note. Pure.
+// pull away from or toward that creature (not its user) is its rows' forcedMovement, the entry's moveFrom "target": the ability module's
+// card measures it from the creature hit (its postCard's moveFrom, ability 0.9.2, 2026-10-25); before that, the note it was (byHand). Pure.
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
@@ -32,17 +33,21 @@ export function hitAroundPlan(html, base, item, options = {}) {
         const check = /@Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(around[3]);
         if (!check) return null;
         const moved = around[4].replace(/\s*\(([^)]*) on a critical failure\)/i, "; $1 on a critical failure");
+        // ("pushed 10 feet from the target; 15 feet on a critical failure", "pulled 5 feet closer to the target": the rows' push or pull.)
+        const how = /^(pushed|pulled) (\d+) feet (?:from|away from|closer to|toward) the target(?:; (\d+) feet on a critical failure)?$/i.exec(moved.trim());
+        const byHand = `On a failure, it's ${moved} (move its token).`;
+        const rowOf = (feet) => ({ ...none(), forcedMovement: { kind: /^pulled/i.test(how[1]) ? "pull" : "push", distance: Number(feet), upTo: /^pulled/i.test(how[1]), optional: false, direction: /^pulled/i.test(how[1]) ? "toward" : "away" } });
         const plan = {
             ...base,
             modelVersion: MODEL_VERSION,
             automation: { level: "guided" },
             targeting: { target: "1 creature", range: null, area: null },
             trigger: { event: "use" },
-            resolution: { kind: "save", check: { roll: "save", statistic: check[1].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(check[2]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
-            notes: [`On a failure, it's ${moved} (move its token).`]
+            resolution: { kind: "save", check: { roll: "save", statistic: check[1].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(check[2]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: how ? rowOf(how[2]) : none(), criticalFailure: how ? rowOf(how[3] ?? how[2]) : none() } },
+            ...(how ? {} : { notes: [byHand] })
         };
         // (Not the creature hit itself: it's the one the others are pushed from or pulled toward.)
-        entries.push({ radius: Number(around[1]), includeTarget: false, plan });
+        entries.push({ radius: Number(around[1]), includeTarget: false, plan, ...(how ? { moveFrom: "target", byHand } : {}) });
     }
     if (explodes) {
         const plan = savePlan(item, `The target takes @Damage[${explodes[1]}] damage (${explodes[3]} save).`, options);
@@ -58,7 +63,7 @@ export function hitAroundPlan(html, base, item, options = {}) {
         trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
         resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
         strike: { range: "ranged", save: null, ...(ammo ? { ammo: true } : {}), around: entries, notes: [] },
-        partial: Boolean(around)
+        partial: entries.some((entry) => entry.plan.notes?.length)
     };
 }
 

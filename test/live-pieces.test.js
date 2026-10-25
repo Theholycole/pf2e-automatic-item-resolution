@@ -10,6 +10,7 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { expireLights, placeLight } from "../scripts/placed-light.js";
+import { placeAfterApplied } from "../scripts/placed-moves.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const SOCKET = `module.${MODULE_ID}`;
@@ -179,4 +180,24 @@ test("Steamflight Pack: its fly Speed of 20 feet on, for its 20 minutes of water
     const off = await press();
     assert.equal(speed().length, 0);
     assert.ok(off.flags[MODULE_ID].card.results.some((line) => /Steamflight Pack(?:: On\/Off Switch)?'s fly Speed turned off/.test(line)), off.flags[MODULE_ID].card.results.join(" | "));
+});
+
+test("a creature moved to a space its user picks: once the ability module's card is applied, the teleport card for each creature whose degree moves it — its user the presser", async () => {
+    const archer = foundry.makeActor({ id: "pieces-archer", name: "Roc Archer", owners: ["player"] });
+    const mark = foundry.makeActor({ id: "pieces-mark", name: "Roc Mark" });
+    const held = foundry.makeActor({ id: "pieces-held", name: "Roc Holder" });
+    foundry.place(archer, 0, 34000);
+    foundry.place(mark, 300, 34000);
+    foundry.place(held, 600, 34000);
+    const arrow = compileItem(source("Roc-Shaft Arrow (Lesser)"));
+    const state = { plan: arrow.strike.save, ability: { name: "Roc-Shaft Arrow (Lesser)", uuid: null }, source: { actorUuid: archer.uuid, tokenUuid: archer.token.uuid, name: "Roc Archer" } };
+    const count = foundry.messages.length;
+    const posted = await placeAfterApplied({ state, targets: [{ id: "a", tokenUuid: mark.token.uuid, actorUuid: mark.uuid, name: "Roc Mark", degree: "criticalFailure" }, { id: "b", tokenUuid: held.token.uuid, actorUuid: held.uuid, name: "Roc Holder", degree: "success" }] });
+    assert.equal(posted.length, 1, "the critical failure's, not the success's");
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "teleport").flags[MODULE_ID].card;
+    assert.deepEqual([card.user.name, card.presser.name, card.plan.teleport.within, card.plan.teleport.place.by.name], ["Roc Mark", "Roc Archer", 20, "Roc Archer"]);
+    assert.match(foundry.messages.at(-1).content, /Move Roc Mark: Up to 20 feet\./);
+    assert.match(foundry.messages.at(-1).content, /Into a hazardous space, this has the incapacitation trait/);
+    // (Not one of the item module's: nothing.)
+    assert.deepEqual(await placeAfterApplied({ state: { plan: { resolution: {} }, source: state.source }, targets: [{ degree: "failure", tokenUuid: mark.token.uuid }] }), []);
 });

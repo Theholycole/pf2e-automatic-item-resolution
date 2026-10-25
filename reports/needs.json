@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-25",
  "totals": {
-  "entries": 1419,
+  "entries": 1413,
   "results": {
    "none": 674,
-   "partial": 326,
+   "partial": 320,
    "builtin:no-effect": 146,
    "note-only": 273
   },
@@ -13,7 +13,7 @@
    "counteract": 18,
    "afflictions": 56,
    "areas": 120,
-   "moving": 104,
+   "moving": 98,
    "lasting": 68,
    "speech": 36,
    "visibility": 57,
@@ -56,14 +56,14 @@
    "counteract": 81,
    "afflictions": 102,
    "lasting": 223,
-   "moving": 135,
+   "moving": 129,
    "triggers": 135,
    "visibility": 59,
    "dying": 82,
    "choice": 120,
    "several": 99,
    "mind": 78,
-   "strike": 200,
+   "strike": 197,
    "reader": 241,
    "spells": 82,
    "information": 215,
@@ -2148,16 +2148,6 @@
    "main": "actions",
    "needs": [
     "actions"
-   ]
-  },
-  {
-   "name": "Roc-Shaft Arrow (Lesser)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike"
    ]
   },
   {
@@ -6620,15 +6610,6 @@
    ]
   },
   {
-   "name": "Singularity Ammunition",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
    "name": "Privacy Ward Fulu (Room)",
    "kind": "consumable",
    "result": "none",
@@ -8658,16 +8639,6 @@
     "several",
     "reader",
     "speech"
-   ]
-  },
-  {
-   "name": "Whip-Tongue Sling",
-   "kind": "activation",
-   "activation": "Tongue Twister",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving"
    ]
   },
   {
@@ -11470,15 +11441,6 @@
    ]
   },
   {
-   "name": "Dispersing Bullet",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
    "name": "Ruby String",
    "kind": "consumable",
    "result": "none",
@@ -11618,16 +11580,6 @@
    "main": "counteract",
    "needs": [
     "counteract"
-   ]
-  },
-  {
-   "name": "Roc-Shaft Arrow (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike"
    ]
   },
   {
@@ -14808,16 +14760,6 @@
     "retaliation",
     "immunity",
     "reader"
-   ]
-  },
-  {
-   "name": "Roc-Shaft Arrow (Moderate)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike"
    ]
   },
   {
