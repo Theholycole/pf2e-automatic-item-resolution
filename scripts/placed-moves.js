@@ -10,11 +10,19 @@ import { ABILITY_ID, FLAG, MODULE_ID } from "./foundry.js";
 
 const MOVES_FROM = "0.9.2";
 
-// Has the ability module the hook and moveFrom?
+// Has the ability module the hook and moveFrom? Its version, or — a build newer than the version Foundry read at its start, a world not
+// restarted since — its postCard taking moveFrom (its code as loaded: they came together).
 export function abilityMoves() {
-    const version = game.modules.get(ABILITY_ID)?.version;
-    if (!version) return false;
-    return version === MOVES_FROM || Boolean(foundry.utils?.isNewerVersion?.(version, MOVES_FROM));
+    const ability = game.modules.get(ABILITY_ID);
+    const postCard = ability?.active === false ? null : ability?.api?.live?.postCard;
+    if (!postCard) return false;
+    const version = ability.version;
+    if (version && (version === MOVES_FROM || foundry.utils?.isNewerVersion?.(version, MOVES_FROM))) return true;
+    try {
+        return /\bmoveFrom\b/.test(Function.prototype.toString.call(postCard));
+    } catch {
+        return false;
+    }
 }
 
 // The plan for live play: as it is with ability 0.9.2 or later, as read before without.
@@ -32,7 +40,7 @@ export async function placeAfterApplied({ state, targets }) {
         const plan = {
             builtin: "teleport",
             source: state.plan.source ?? null,
-            teleport: { within: row.within, from: "self", place: { by, ...(Number.isFinite(placed.nearSource) ? { nearSource: placed.nearSource } : {}), ...(placed.optional ? { optional: true } : {}), lines: placed.lines ?? [] } }
+            teleport: { within: row.within, from: "self", place: { by, ...(Number.isFinite(placed.nearSource) ? { nearSource: placed.nearSource } : {}), ...(placed.optional ? { optional: true } : {}), ...(placed.teleport ? { teleport: true } : {}), lines: placed.lines ?? [] } }
         };
         const card = createTeleportCard({ plan, item: { name: state.ability?.name ?? "The item", uuid: state.ability?.uuid ?? null }, user: { actorUuid: target.actorUuid, tokenUuid: target.tokenUuid, name: target.name }, presser: { actorUuid: by.actorUuid, name: by.name } });
         const sourceActor = by.actorUuid ? await fromUuid(by.actorUuid).catch(() => null) : null;

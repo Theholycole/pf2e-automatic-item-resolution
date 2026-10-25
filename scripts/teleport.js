@@ -11,8 +11,18 @@ import { FLAG, MODULE_ID, damageRollClass, entryOf, spaceOf, stateOf } from "./f
 // (PF2e 8.6's movement.speeds.land; before it, attributes.speed.)
 const landSpeed = (actor) => Number(actor?.system?.movement?.speeds?.land?.value ?? actor?.system?.attributes?.speed?.total ?? actor?.system?.attributes?.speed?.value) || null;
 
+// (The ranged weapon its ammunition is loaded in — Transposition Ammunition's, PF2e's selectedAmmoId — else its user's held ranged weapon with
+// the longest range increment: that increment.)
+function weaponRangeFor(actor, ammo) {
+    const ranged = (actor?.itemTypes?.weapon ?? []).filter((weapon) => Number(weapon.system?.range) > 0);
+    const loaded = ranged.find((weapon) => ammo?.id && weapon.system?.selectedAmmoId === ammo.id);
+    const held = ranged.filter((weapon) => weapon.system?.equipped?.carryType === "held").sort((a, b) => Number(b.system.range) - Number(a.system.range))[0];
+    return Number((loaded ?? held)?.system?.range) || null;
+}
+
 export async function postTeleportCard({ message, plan, used, actor, token }) {
-    const state = createTeleportCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), speed: landSpeed(actor) });
+    const weaponRange = plan.teleport?.weaponRange ? weaponRangeFor(actor, used.data) : null;
+    const state = createTeleportCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), speed: landSpeed(actor), weaponRange });
     return ChatMessage.create({ content: teleportCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
@@ -104,7 +114,8 @@ export async function applyTeleportCard(message, { destination = null, targets =
     // (Measured from the creature targeted, Golden Spur's "within 10 feet of the target"; else from where its user stands.)
     const aimed = teleport.from === "target" ? (await Promise.all((targets ?? []).map((uuid) => fromUuid(uuid).catch(() => null)))).find((other) => other && other.uuid !== token.uuid) ?? null : null;
     if (teleport.from === "target" && !aimed) throw new Error("Target the creature first, then press Pick.");
-    const range = critical && teleport.critical ? teleport.critical.within : teleportRange(teleport, { speed: state.speed });
+    const range = critical && teleport.critical ? teleport.critical.within : teleportRange(teleport, { speed: state.speed, weaponRange: state.weaponRange ?? null });
+    if (teleport.weaponRange && !Number.isFinite(range)) throw new Error(`${state.item.name}: ${state.user.name} has no ranged weapon loaded with it.`);
     const at = { x: Number(destination.x), y: Number(destination.y) };
     const problem = spaceProblem(token, at, { from: aimed ?? token, range });
     if (problem) throw new Error(`${state.item.name}: ${problem}.`);
@@ -134,7 +145,7 @@ export async function applyTeleportCard(message, { destination = null, targets =
         : move ? { [MODULE_ID]: { moved: true } } : { teleport: true, animate: false, [MODULE_ID]: { teleported: true } };
     await token.update({ x: at.x, y: at.y }, options);
     const VERBED = { Stride: "Strides", Step: "Steps", Leap: "Leaps", Burrow: "Burrows", Fly: "Flies", Swim: "Swims", Climb: "Climbs" };
-    const done = place ? `is moved${place.by?.name ? ` by ${place.by.name}` : ""}` : move ? (VERBED[move.verb] ?? "moves").replace(/^./, (letter) => letter.toLowerCase()) : "teleports";
+    const done = place ? `is ${place.teleport ? "teleported" : "moved"}${place.by?.name ? ` by ${place.by.name}` : ""}` : move ? (VERBED[move.verb] ?? "moves").replace(/^./, (letter) => letter.toLowerCase()) : "teleports";
     const results = [`${state.user.name} ${done}${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`];
     // (Damage along the way, Quartz-Coil Rail Transport's: its user and each creature the line between its two spaces crosses.)
     if (teleport.line) {

@@ -101,3 +101,17 @@ test("a check's success that pulls the creature toward its user: Tentacle Cannon
     assert.deepEqual([shot.resolution.outcomes.success.forcedMovement, shot.resolution.outcomes.criticalSuccess.forcedMovement, shot.resolution.outcomes.failure.forcedMovement], [pull, pull, undefined]);
     assert.deepEqual([shot.targeting.range, shot.notes, shot.partial], [15, undefined, undefined]);
 });
+
+test("Transposition Ammunition: its user teleported into the square shot, within the first range increment of the weapon it's loaded in", () => {
+    const shot = compileActivations(item("Transposition Ammunition"))[0].plan;
+    assert.deepEqual([routeOf(shot), shot.teleport.weaponRange, shot.teleport.alone, shot.notes, shot.partial], ["teleport", true, { used: false }, undefined, undefined]);
+    assert.deepEqual([teleportRange(shot.teleport, { weaponRange: 60 }), teleportText(shot.teleport, { weaponRange: 60 }), teleportText(shot.teleport)], [60, "Within its weapon's first range increment (60 feet)", "Within its weapon's first range increment (no ranged weapon loaded with it)"]);
+    // (The greater one's two willing creatures along: notes.)
+    const greater = compileActivations(item("Transposition Ammunition (Greater)"))[0].plan;
+    assert.deepEqual([greater.teleport.weaponRange, greater.partial, greater.notes.length], [true, true, 2]);
+});
+
+test("Emergency Escape Shield's Desperate Flight: \"to an unoccupied space that you can see within 20 feet\" — the teleport card's 20 feet", () => {
+    const flight = activation("Emergency Escape Shield", "Desperate Flight");
+    assert.deepEqual([routeOf(flight), flight.teleport.within, flight.teleport.from, flight.partial], ["teleport", 20, "self", undefined]);
+});

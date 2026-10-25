@@ -4,13 +4,15 @@
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
-export const isTeleport = (plan) => plan?.builtin === "teleport" && Boolean(plan.teleport) && (Number.isFinite(plan.teleport.within) || Number.isFinite(plan.teleport.speedTimes) || Number.isFinite(plan.teleport.leapTimes));
+export const isTeleport = (plan) => plan?.builtin === "teleport" && Boolean(plan.teleport) && (Number.isFinite(plan.teleport.within) || Number.isFinite(plan.teleport.speedTimes) || Number.isFinite(plan.teleport.leapTimes) || plan.teleport.weaponRange === true);
 
 // Its range in feet: its own, or its multiple of its user's land Speed (speed: that Speed).
 // (Half a Speed rounded down to the grid's 5 feet: a 25-foot Speed's half is 10.)
 // (A Leap's, PF2e's: 10 feet with a Speed of 15 or more, 15 with 30 or more. "+15-foot status bonus … for this movement": plus.)
-export function teleportRange(teleport, { speed = null } = {}) {
+// (Its weapon's first range increment, Transposition Ammunition's: weaponRange, that weapon's when the card is made.)
+export function teleportRange(teleport, { speed = null, weaponRange = null } = {}) {
     const plus = Number(teleport?.plus) || 0;
+    if (teleport?.weaponRange) return Number.isFinite(weaponRange) ? weaponRange : null;
     if (Number.isFinite(teleport?.within)) return teleport.within + plus;
     if (Number.isFinite(teleport?.leapTimes)) return Number.isFinite(speed) ? teleport.leapTimes * (speed >= 30 ? 15 : speed >= 15 ? 10 : 0) : null;
     return Number.isFinite(teleport?.speedTimes) && Number.isFinite(speed) ? Math.floor((teleport.speedTimes * speed) / 5) * 5 + plus : null;
@@ -18,8 +20,9 @@ export function teleportRange(teleport, { speed = null } = {}) {
 
 const TIMES = { 0.5: "half ", 1: "", 2: "double ", 3: "triple " };
 // Its range in words: "Up to 30 feet", "Within 10 feet of the creature targeted", "Up to double your Speed (50 feet)".
-export function teleportText(teleport, { speed = null } = {}) {
-    const range = teleportRange(teleport, { speed });
+export function teleportText(teleport, { speed = null, weaponRange = null } = {}) {
+    const range = teleportRange(teleport, { speed, weaponRange });
+    if (teleport?.weaponRange) return `Within its weapon's first range increment${Number.isFinite(range) ? ` (${range} feet)` : " (no ranged weapon loaded with it)"}`;
     const plus = Number(teleport?.plus) ? ` + ${teleport.plus} feet` : "";
     if (Number.isFinite(teleport?.leapTimes)) return `Up to ${TIMES[teleport.leapTimes] ?? `${teleport.leapTimes} times `}its user's Leap${Number.isFinite(range) ? ` (${range} feet)` : ""}`;
     if (Number.isFinite(teleport?.speedTimes)) return `Up to ${TIMES[teleport.speedTimes] ?? `${teleport.speedTimes} times `}its user's Speed${plus}${Number.isFinite(range) ? ` (${range} feet)` : ""}`;
@@ -43,15 +46,15 @@ export function teleportLines(teleport) {
 
 // speed: its user's land Speed, for a range that's a multiple of it.
 // presser: who picks the space when that's not the one moved — a creature moved by its user (src/compiler/placed.js): { actorUuid, name }.
-export function createTeleportCard({ plan, item, user, speed = null, presser = null }) {
-    return { kind: "teleport", status: "open", plan, item, user, speed: Number.isFinite(speed) ? speed : null, results: [], ...(presser ? { presser } : {}) };
+export function createTeleportCard({ plan, item, user, speed = null, presser = null, weaponRange = null }) {
+    return { kind: "teleport", status: "open", plan, item, user, speed: Number.isFinite(speed) ? speed : null, results: [], ...(presser ? { presser } : {}), ...(Number.isFinite(weaponRange) ? { weaponRange } : {}) };
 }
 
 export function teleportCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     // (A move, not a teleport: "Stride: Up to its user's Speed (25 feet)".)
-    const verb = state.plan.teleport.place ? `Move ${state.user.name}` : state.plan.teleport.move?.verb ?? "Teleport";
-    const range = `<p class="aar-actions">${escape(verb)}: ${escape(teleportText(state.plan.teleport, { speed: state.speed }))}.</p>`;
+    const verb = state.plan.teleport.place ? `${state.plan.teleport.place.teleport ? "Teleport" : "Move"} ${state.user.name}` : state.plan.teleport.move?.verb ?? "Teleport";
+    const range = `<p class="aar-actions">${escape(verb)}: ${escape(teleportText(state.plan.teleport, { speed: state.speed, weaponRange: state.weaponRange ?? null }))}.</p>`;
     const lines = teleportLines(state.plan.teleport);
     const said = lines.length ? `<ul class="aar-lines">${lines.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const tick = open && canApply && state.plan.teleport.critical ? `<label class="aar-choice"><input type="checkbox" data-air-field="critical"> The triggering save was a critical success (within ${escape(state.plan.teleport.critical.within)} feet)</label>` : "";

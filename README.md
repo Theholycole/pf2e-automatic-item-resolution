@@ -4,7 +4,7 @@ A Foundry VTT module (id `pf2e-automatic-item-resolution`) that automates Pathfi
 
 Spell-casting items (scrolls, wands, staves, catalysts, spellhearts) belong to PF2e Automatic Spell Resolution.
 
-**Status (2026-10-25): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (the full run of `tools/live-check.mjs`, 339 cases, passed on Foundry 14.367 and PF2e 8.6.1; the 4 move cases added since pass on their own).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md), [docs/census-third-party.md](docs/census-third-party.md), and [docs/needs.md](docs/needs.md) for what the items not yet automated still need.
+**Status (2026-10-25): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 350 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1: the full run of 347, 7 of them on a rerun after dice or crowded test squares, and the 3 cases added since on their own).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md), [docs/census-third-party.md](docs/census-third-party.md), and [docs/needs.md](docs/needs.md) for what the items not yet automated still need.
 
 ## Install
 
@@ -88,7 +88,7 @@ The module's compendium, **PF2e Automatic Item Resolution**, has two items that 
 Foundry 14 with the PF2e system 8.5 or later, plus:
 
 - [PF2e Resolution Core](https://github.com/Theholycole/PF2e-Automation-Core) v0.7.1 or later, which resolves the plans (and keeps damage materials such as silver, and a creature's Perception check against an item's DC);
-- [PF2e Automatic Ability Resolution](https://github.com/Theholycole/pf2e-automatic-ability-resolution) v0.8.4 or later, whose compiler reads the item text and whose save cards, conjured creatures, zones (and the areas snares leave, and saves or damage only for creatures with some traits), condition floors and conditions that last as long as a persistent damage the item cards use.
+- [PF2e Automatic Ability Resolution](https://github.com/Theholycole/pf2e-automatic-ability-resolution) v0.9.0 or later (v0.9.2 or later for pushes and pulls measured from the creature a Strike hit, and for creatures moved to a space their user picks; older versions leave those to the GM), whose compiler reads the item text and whose save cards, conjured creatures, zones (and the areas snares leave, and saves or damage only for creatures with some traits), condition floors and conditions that last as long as a persistent damage the item cards use.
 
 [PF2e Automatic Spell Resolution](https://github.com/Theholycole/pf2e-automatic-spell-resolution) (v0.10.0 or later) casts the spells items cast, and the items it acts on itself (its `claims`) are left to it. On an item it claims only for an item spellshape or an item cast, its other activations are this module's. Without it, a cast card says to cast the spell by hand. [Pseudo Afflictions](https://foundryvtt.com/packages/pseudo-afflictions) runs a poison's stages once its save card hands them on.
 

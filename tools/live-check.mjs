@@ -37,9 +37,11 @@ const abilitySaveCard = (message) => Boolean(message.flags?.["pf2e-automatic-abi
 
 // The lab's squares a case needs free (a teleport's): this module's test tokens a case before left there removed. (The lab is 20 squares
 // across and nearly every one is some case's.)
+// (Any of them a test token covers, a larger creature's too.)
 async function clearSquares(scene, squares) {
     const size = canvas.grid.size;
-    const ids = scene.tokens.filter((token) => String(token.name ?? token.actor?.name ?? "").startsWith(PREFIX) && squares.some(([x, y]) => token.x === x * size && token.y === y * size)).map((token) => token.id);
+    const covers = (token, [x, y]) => token.x < (x + 1) * size && token.x + (Number(token.width) || 1) * size > x * size && token.y < (y + 1) * size && token.y + (Number(token.height) || 1) * size > y * size;
+    const ids = scene.tokens.filter((token) => String(token.name ?? token.actor?.name ?? "").startsWith(PREFIX) && squares.some((square) => covers(token, square))).map((token) => token.id);
     if (ids.length) await scene.deleteEmbeddedDocuments("Token", ids);
 }
 
@@ -1440,6 +1442,25 @@ export const cases = {
         return { uses: state.uses };
     },
 
+    // Thunder Mail's Call Down Lightning: beside its own card, the retaliation card for the next minute, kept open; a press sends 1d8
+    // electricity at the creature that hit.
+    async thunderRetaliation(scene) {
+        await clearSquares(scene, [[14, 21], [15, 21]]);
+        const { actor: wearer } = await creature(scene, "Thunder Wearer", { type: "character", x: 14, y: 21 });
+        const { token: foeToken } = await creature(scene, "Thunder Hitter", { x: 15, y: 21, alliance: "opposition" });
+        const mail = await give(wearer, "Thunder Mail");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(mail.uuid, 0);
+        const card = await messageAfter(since, (message) => itemCard("expose")(message) && Boolean(message.getFlag(NS, "card")?.plan?.retaliation), { what: "the retaliation card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const damage = await messageAfter(since, abilitySaveCard, { what: "the ability module's no-save card" });
+        const components = damage.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage?.components ?? [];
+        assert(components.some((component) => /^1d8/.test(component.formula) && component.type === "electricity"), `1d8 electricity (${JSON.stringify(components)})`);
+        assert(game.messages.get(card.id).getFlag(NS, "card").status === "open", "still open");
+        return { formula: components[0]?.formula };
+    },
+
     // Burial Oil: the card picks the longsword; its Effect's AdjustStrike gives that Strike the Vitalizing rune (PF2e's disrupting).
     async runeOil(scene) {
         const { actor: fighter } = await creature(scene, "Oiled Fighter", { type: "character", x: 10, y: 17 });
@@ -2487,7 +2508,10 @@ export const cases = {
     // Dispersing Bullet: a sling's hit — the Fortitude DC 21 save card at the creature beside the one hit (not it), a failure (a 5, 13)
     // pushing it 10 feet away from the creature hit (down, away from it), not from the slinger (ability 0.9.2's moveFrom).
     async dispersingPush(scene) {
-        await clearSquares(scene, [[10, 15], [13, 15], [13, 16], [13, 17], [13, 18], [14, 17], [14, 18]]);
+        // (Every square within 10 feet of the creature hit, and the push's path: the save card goes to every creature there.)
+        const around = [];
+        for (let x = 11; x <= 15; x++) for (let y = 13; y <= 18; y++) around.push([x, y]);
+        await clearSquares(scene, [[10, 15], ...around]);
         const { actor: slinger, token: slingerToken } = await creature(scene, "Dispersing Slinger", { type: "character", x: 10, y: 15 });
         const { token: foeToken } = await creature(scene, "Dispersing Target", { x: 13, y: 15, ac: 1, alliance: "opposition" });
         const { token: besideToken } = await creature(scene, "Dispersing Bystander", { x: 13, y: 16, alliance: "opposition" });
@@ -2516,6 +2540,68 @@ export const cases = {
         const size = canvas.grid.size;
         await until(() => besideToken.y === 18 * size && besideToken.x === 13 * size, `pushed 10 feet down, away from the creature hit (${besideToken.x / size}, ${besideToken.y / size})`, { timeout: 10000 });
         return { at: [besideToken.x / size, besideToken.y / size] };
+    },
+
+    // Juxtaposition Ammunition from a shortbow (range increment 60 feet): a hit, then a critical failure of the Will DC 28 save (a 5, 13) —
+    // Sickened 1, and the card to teleport it: a square 65 feet from the archer refused, one 45 feet from where it stood taken.
+    async juxtapositionShot(scene) {
+        await clearSquares(scene, [[2, 13], [5, 13], [5, 1], [5, 4]]);
+        const { actor: archer, token: archerToken } = await creature(scene, "Juxtaposition Archer", { type: "character", x: 2, y: 13 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Juxtaposition Target", { x: 5, y: 13, ac: 1, alliance: "opposition" });
+        const bow = await give(archer, "Shortbow");
+        const ammo = await give(archer, "Juxtaposition Ammunition");
+        await ammo.update({ "system.quantity": 3 });
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": ammo.id });
+        let since = 0;
+        let attack = null;
+        for (let tries = 0; tries < 3 && !["success", "criticalSuccess"].includes(attack?.flags?.pf2e?.context?.outcome); tries++) {
+            since = Date.now();
+            await game.modules.get(NS).api.live.activate(ammo.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            await archerToken.object?.control?.();
+            await target(foeToken);
+            since = Date.now();
+            ({ attack } = await strike(archer, bow));
+        }
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the Will save card" });
+        const said = await messageAfter(since, (message) => /takes none of the Strike(?:&#39;|')s damage/.test(message.content ?? ""), { what: "the no-damage line" });
+        since = Date.now();
+        await withDie(5, () => rollAndApply(save));
+        const place = await messageAfter(since, itemCard("teleport"), { what: "the card to teleport it" });
+        const state = place.getFlag(NS, "card");
+        assert(state.plan.teleport.within === 60 && state.plan.teleport.place.nearSource === 60 && state.plan.teleport.place.teleport, `60 feet, within the bow's 60 (${JSON.stringify(state.plan.teleport)})`);
+        await until(() => (foe.getCondition("sickened")?.value ?? 0) === 1, "Sickened 1 on the critical failure", { timeout: 8000 });
+        const size = canvas.grid.size;
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(place.id, { destination: { x: 5 * size, y: 1 * size } }).catch((error) => { refused = error.message; });
+        assert(/65 feet from .*Juxtaposition Archer \(the item allows 60\)/.test(refused ?? ""), `65 feet from the archer refused (${refused})`);
+        await game.modules.get(NS).api.live.apply(place.id, { destination: { x: 5 * size, y: 4 * size } });
+        await until(() => foeToken.x === 5 * size && foeToken.y === 4 * size, `the target teleported (${foeToken.x / size}, ${foeToken.y / size})`, { timeout: 8000 });
+        return { said: said.id, refused, results: game.messages.get(place.id).getFlag(NS, "card").results };
+    },
+
+    // Transposition Ammunition loaded in a shortbow (range increment 60 feet): its user teleported into the square shot — 65 feet off
+    // refused, 60 taken.
+    async transpositionShot(scene) {
+        await clearSquares(scene, [[0, 14], [13, 14], [12, 14]]);
+        const { actor: archer, token } = await creature(scene, "Transposition Archer", { type: "character", x: 0, y: 14 });
+        const bow = await give(archer, "Shortbow");
+        const ammo = await give(archer, "Transposition Ammunition");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": ammo.id });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(ammo.uuid, 0);
+        const card = await messageAfter(since, itemCard("teleport"), { what: "the teleport card" });
+        assert(card.getFlag(NS, "card").weaponRange === 60 && /first range increment \(60 feet\)/.test(card.content), `the bow's 60 feet (${card.getFlag(NS, "card").weaponRange})`);
+        const size = canvas.grid.size;
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 13 * size, y: 14 * size } }).catch((error) => { refused = error.message; });
+        assert(/65 feet away \(the item allows 60\)/.test(refused ?? ""), `65 feet refused (${refused})`);
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 12 * size, y: 14 * size } });
+        await until(() => token.x === 12 * size && token.y === 14 * size, `the archer teleported (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+        return { refused, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
     // Whip-Tongue Sling's Tongue Twister: its user's Athletics against Fortitude DC 18 (an 18 on the die, a success); once applied, its
@@ -5149,6 +5235,9 @@ export const cases = {
         const pull = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check?.statistic === "fortitude", { what: "the pull's save card", timeout: 10000 });
         const blast = await messageAfter(since, (message) => abilitySaveCard(message) && message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check?.statistic === "reflex", { what: "the blast's save card", timeout: 10000 });
         assert(forUuids(pull).includes(nearby.uuid) && !forUuids(pull).includes(foe.uuid), `the pull for the bystander, not the target (${forUuids(pull).join(", ")})`);
+        // (Its pull toward the creature hit, ability 0.9.2's moveFrom: on its rows, measured from that creature.)
+        const pulled = pull.flags["pf2e-automatic-ability-resolution"].card;
+        assert(pulled.moveFrom === foeToken.uuid && pulled.plan.resolution.outcomes.failure.forcedMovement?.kind === "pull", `the pull toward the target (${JSON.stringify([pulled.moveFrom, pulled.plan.resolution.outcomes.failure.forcedMovement])})`);
         assert(forUuids(blast).includes(foe.uuid) && forUuids(blast).includes(nearby.uuid), `the blast for both (${forUuids(blast).join(", ")})`);
         return { pull: pull.id, blast: blast.id };
     },
@@ -5942,7 +6031,10 @@ export const cases = {
     // a space 10 feet from the ally refused, then one beside it, the token moved there.
     async squireAid(scene) {
         return unpaused(async () => {
-            await clearSquares(scene, [[0, 17], [5, 17], [6, 17], [7, 17]]);
+            // (And every square beside where it stops: no other ally there.)
+            const beside = [];
+            for (let x = 4; x <= 8; x++) for (let y = 16; y <= 18; y++) beside.push([x, y]);
+            await clearSquares(scene, [[0, 17], ...beside]);
             const { actor: user, token } = await creature(scene, "Squire Mover", { type: "character", x: 0, y: 17 });
             await creature(scene, "Squire Ally", { x: 7, y: 17 });
             const tabard = await give(user, "Squire's Tabard");

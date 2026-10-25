@@ -201,3 +201,10 @@ test("a creature moved to a space its user picks: once the ability module's card
     // (Not one of the item module's: nothing.)
     assert.deepEqual(await placeAfterApplied({ state: { plan: { resolution: {} }, source: state.source }, targets: [{ degree: "failure", tokenUuid: mark.token.uuid }] }), []);
 });
+
+test("a second card beside the first: Thunder Mail's retaliation for the next minute beside its 6d6 around its user; Panacea Fruit's counteract rank and modifier said again, not left over", () => {
+    const thunder = compileActivations({ ...source("Thunder Mail"), ownerLevel: 15 })[0].plan;
+    assert.deepEqual([thunder.partial, thunder.notes, thunder.alsoRetaliation.retaliation, thunder.alsoRetaliation.resolution.sharedDamage.components[0].formula], [undefined, undefined, { adjacentMelee: true, rounds: 10 }, "1d8[electricity]"]);
+    const fruit = compileItem({ ...source("Panacea Fruit"), ownerLevel: 19 });
+    assert.deepEqual([fruit.partial, fruit.notes, fruit.item.counteract.rank, fruit.item.counteract.modifier], [undefined, undefined, 9, 30]);
+});

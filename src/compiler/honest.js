@@ -6,6 +6,7 @@
 // nothing unread it's stale and gone. Plan-level notes are the readers' own choice (a card's line, or partial already). Pure.
 
 import { RUNE_STEP_SENTENCE } from "./rune-steps.js";
+import { restatesCounteract } from "./counteract.js";
 
 const NO_OP = /^(?:\{target\}(?: \([^)]*\))?:\s*)?(?:The (?:target|creature|animal|foe|undead|possessing creature)(?: creature)? (?:is unaffected|can act normally|takes no (?:additional )?damage)|(?:Its|The) (?:effect|oil|dust) (?:ends|becomes inert)[^.]*)\.?\s*$/i;
 // (An unaffected creature's awareness, the GM's flavor and no rule: "The creature is unaffected and realizes you tried to steal its memories",
@@ -250,6 +251,8 @@ export function withUntracedRules(plan, text) {
     const untraced = body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => {
         // (A step by the weapon's striking rune: its rune decides it, src/compiler/rune-steps.js.)
         if (!sentence || SKIP.test(sentence) || RUNE_STEP_SENTENCE.test(sentence)) return false;
+        // (Its counteract's rank and modifier said again, Panacea Fruit's: its counteract card's, src/compiler/counteract.js.)
+        if (restatesCounteract(sentence, plan.item?.counteract)) return false;
         // (An affliction's stages are its own, played from the item's text by Pseudo Afflictions: a drug's stage bonuses.)
         if (afflicted && /\bStage \d\b/.test(sentence)) return false;
         // (Said on a note or a line of the plan already: traced.)

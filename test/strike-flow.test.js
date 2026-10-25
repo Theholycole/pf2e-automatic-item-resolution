@@ -842,3 +842,13 @@ test("Gravebane Ammunition: its hit's Fortitude save only for a creature with vo
     const [save] = await shoot(ghoul);
     assert.equal(save?.plan.resolution.check.against.value, 19);
 });
+
+test("Juxtaposition Ammunition: a failed save teleports the creature hit to a square its attacker picks — 60 feet from where it was, within the weapon's range increment; Sickened 1 on a critical failure; no damage on the hit", async () => {
+    const ammo = compileActivations(source("Juxtaposition Ammunition"))[0].plan;
+    const placed = ammo.strike.save.placed;
+    assert.deepEqual([placed.rows, placed.nearSource, placed.teleport, placed.lines], [{ failure: { within: 60 }, criticalFailure: { within: 60 } }, "weapon-range", true, ["Into a safe, unoccupied square"]]);
+    assert.deepEqual(ammo.strike.save.resolution.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.value]), [["sickened", 1]]);
+    assert.deepEqual([ammo.strike.noDamage, ammo.strike.notes, ammo.partial], [true, [], undefined]);
+    const { withoutPlacedMoves } = await import("../src/compiler/placed.js");
+    assert.equal(withoutPlacedMoves(ammo).partial, true, "before ability 0.9.2: partial, its teleport the GM's");
+});

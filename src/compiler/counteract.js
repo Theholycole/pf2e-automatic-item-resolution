@@ -130,3 +130,29 @@ export function readCounteract(html, { level = 0 } = {}) {
     ];
     return { modifier, rank, conditions, traits, afflictions, pick, ...(adjacent ? { within: 5 } : {}), ...(reduce ? { reduce: { success: Number(reduce[1]), criticalSuccess: Number(reduce[2] ?? reduce[1]) } } : {}), ...(notes.length ? { notes } : {}) };
 }
+
+// A partial plan without the note that only says again the counteract its card makes: Panacea Fruit's "The fruit has a counteract rank of 9
+// and a 1d20+30 modifier for the rolls against each condition", its item.counteract rank 9 and +30 — and whole when that was all it left.
+// (Its rank and modifier, those of the counteract read, and nothing else: no "if", "unless" or "except".)
+export function restatesCounteract(sentence, counteract) {
+    if (!counteract) return false;
+    const text = String(typeof sentence === "string" ? sentence : sentence?.text ?? "");
+    const rank = /\bcounteract rank of (\d+)\b/i.exec(text);
+    const modifier = /\b(?:1d20\s*\+\s*|\+)(\d+)(?: counteract)? modifier\b/i.exec(text);
+    return Boolean(rank && modifier) && Number(rank[1]) === counteract.rank && Number(modifier[1]) === counteract.modifier && !/\bif\b|\bunless\b|\bexcept\b/i.test(text);
+}
+
+export function withoutCounteractRestated(plan) {
+    const counteract = plan?.item?.counteract;
+    if (!counteract || !plan.notes?.length) return plan;
+    const restates = (note) => restatesCounteract(note, counteract);
+    const notes = plan.notes.filter((note) => !restates(note));
+    if (notes.length === plan.notes.length) return plan;
+    const result = { ...plan, notes: notes.length ? notes : undefined };
+    const left = [...notes, ...(plan.unread ?? []), ...Object.values(plan.resolution?.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? [])];
+    if (plan.partial && !left.length) {
+        delete result.partial;
+        result.automation = { ...(result.automation ?? {}), level: "automatic" };
+    }
+    return result;
+}

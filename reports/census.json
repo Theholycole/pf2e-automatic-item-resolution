@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 755,
+   "resolves": 756,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
-   "partial": 112,
+   "partial": 111,
    "builtin:ways": 26,
    "builtin:item-action": 16,
    "note-only": 122,
@@ -36,9 +36,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 26,
-    "partial": 58,
+    "partial": 57,
     "builtin:ways": 19,
-    "resolves": 206,
+    "resolves": 207,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 95,
@@ -307,7 +307,7 @@
  "mechanismCoverage": {
   "heal": {
    "count": 43,
-   "resolves": 35,
+   "resolves": 36,
    "gaps": 0,
    "none": 1
   },
@@ -319,7 +319,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 166,
+   "resolves": 167,
    "gaps": 0,
    "none": 7
   },
@@ -367,7 +367,7 @@
   },
   "counteract": {
    "count": 79,
-   "resolves": 15,
+   "resolves": 16,
    "gaps": 0,
    "none": 8
   },
@@ -5274,8 +5274,9 @@
     "damage",
     "counteract"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "healing",
+   "gaps": [],
    "live": "item"
   },
   {

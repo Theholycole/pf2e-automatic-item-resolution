@@ -1,19 +1,19 @@
 {
  "generated": "2026-10-25",
  "totals": {
-  "entries": 1413,
+  "entries": 1407,
   "results": {
-   "none": 674,
-   "partial": 320,
+   "none": 671,
+   "partial": 317,
    "builtin:no-effect": 146,
    "note-only": 273
   },
   "main": {
    "speeds": 25,
-   "counteract": 18,
+   "counteract": 17,
    "afflictions": 56,
    "areas": 120,
-   "moving": 98,
+   "moving": 95,
    "lasting": 68,
    "speech": 36,
    "visibility": 57,
@@ -33,14 +33,14 @@
    "cooldown": 13,
    "vehicles": 20,
    "several": 26,
-   "triggers": 98,
+   "triggers": 97,
    "immunity": 27,
    "situational": 20,
    "creatures": 57,
    "dying": 31,
    "from-events": 7,
    "forms": 24,
-   "retaliation": 4,
+   "retaliation": 3,
    "missing-number": 7,
    "fortune": 7,
    "linked-effect": 1,
@@ -50,21 +50,21 @@
    "speeds": 31,
    "areas": 179,
    "immunity": 75,
-   "objects": 402,
+   "objects": 401,
    "speech": 150,
    "out-of-combat": 435,
-   "counteract": 81,
+   "counteract": 80,
    "afflictions": 102,
    "lasting": 223,
-   "moving": 129,
-   "triggers": 135,
+   "moving": 126,
+   "triggers": 134,
    "visibility": 59,
    "dying": 82,
-   "choice": 120,
+   "choice": 118,
    "several": 99,
    "mind": 78,
-   "strike": 197,
-   "reader": 241,
+   "strike": 194,
+   "reader": 238,
    "spells": 82,
    "information": 215,
    "actions": 62,
@@ -80,7 +80,7 @@
    "creatures": 57,
    "forms": 25,
    "fortune": 10,
-   "retaliation": 4,
+   "retaliation": 3,
    "missing-number": 8,
    "linked-effect": 1,
    "by-kind": 8
@@ -2198,16 +2198,6 @@
    ]
   },
   {
-   "name": "Emergency Escape Shield",
-   "kind": "activation",
-   "activation": "Desperate Flight",
-   "result": "none",
-   "main": "triggers",
-   "needs": [
-    "triggers"
-   ]
-  },
-  {
    "name": "Anointing Oil",
    "kind": "consumable",
    "result": "note-only",
@@ -2524,17 +2514,6 @@
    ]
   },
   {
-   "name": "Transposition Ammunition (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike",
-    "choice"
-   ]
-  },
-  {
    "name": "Slithermaw's Bane",
    "kind": "activation",
    "activation": "Terrain Adaptation",
@@ -2624,16 +2603,6 @@
    ]
   },
   {
-   "name": "Panacea Fruit",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "counteract",
-   "needs": [
-    "counteract",
-    "reader"
-   ]
-  },
-  {
    "name": "Mindlock Shot",
    "kind": "activation",
    "result": "none",
@@ -2695,18 +2664,6 @@
    "needs": [
     "counteract",
     "choice"
-   ]
-  },
-  {
-   "name": "Juxtaposition Ammunition",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike",
-    "choice",
-    "reader"
    ]
   },
   {
@@ -8044,17 +8001,6 @@
    ]
   },
   {
-   "name": "Thunder Mail",
-   "kind": "activation",
-   "activation": "Call Down Lightning",
-   "result": "partial",
-   "main": "retaliation",
-   "needs": [
-    "retaliation",
-    "reader"
-   ]
-  },
-  {
    "name": "Dream Hunter's Lodge",
    "kind": "activation",
    "activation": "Expand Lodge",
@@ -8794,17 +8740,6 @@
    "main": "out-of-combat",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Transposition Ammunition",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike",
-    "objects"
    ]
   },
   {

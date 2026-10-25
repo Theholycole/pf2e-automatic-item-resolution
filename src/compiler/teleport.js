@@ -17,13 +17,19 @@ const SPEED = /\bTeleport up to (double|twice|triple) your Speed to a (?:locatio
 const SPEED_RANGE = /\btransports you\b[^.]*?\bto an? (?:unoccupied |open )?space you can see within a range equal to your Speed\b/i;
 // (Or "You instantly transport yourself and any items you're wearing and holding from your current space to an unoccupied space up to 40 feet
 // away that you can see", Quartz-Coil Rail Transport's: that far from its user.)
-const TRANSPORT = /\bYou instantly transport yourself\b[^.]*?\bto an? (?:unoccupied |open )?space up to (\d+) feet away that you can see\b/i;
+// (Emergency Escape Shield's "to an unoccupied space that you can see within 20 feet" too.)
+const TRANSPORT = /\bYou instantly transport yourself\b[^.]*?\bto an? (?:unoccupied |open )?space (?:up to (\d+) feet away that you can see|that you can see within (\d+) feet)\b/i;
 // "teleport to a space adjacent to the target of your Strike".
 const ADJACENT = /\bteleport to a space adjacent to the target of your Strike\b/i;
 // (Dimension Shot's "If you hit a creature, you can teleport to an unoccupied space beside that creature" too: the creature targeted.)
 const BESIDE_HIT = /\bIf you hit a creature, you can teleport to an unoccupied space adjacent to that creature\b/i;
 // "You shoot an arrow at an open space on a surface within 500 feet … You teleport to that location".
 const SHOT = /\bat an open space on a surface within (\d+) feet\b[^.]*\.\s*You teleport to that location\b/i;
+// (Or Transposition Ammunition's "you fire transposition ammunition at any unoccupied square you can see within your weapon's first range
+// increment and succeed without making an attack roll. You pull yourself through the Astral Plane, teleporting … into the square where you
+// shot the ammunition": as far as the range increment of the weapon it's loaded in — teleport.weaponRange, its user's weapon's when the card
+// is made, scripts/teleport.js.)
+const WEAPON_SHOT = /\b(?:When you activate the ammunition, instead of making your Strike against a foe, )?you fire [\w ]+? at any unoccupied square you can see within your weapon(?:'|’)s first range increment and succeed without making an attack roll\.\s*You [^.]*?\bteleporting\b[^.]*?\binto the square where you shot the ammunition\./i;
 // (Farther after the triggering save's critical success, Dweomerveil's "If you critically succeeded at the triggering save, you can instead
 // teleport within 45 feet": teleport.critical, the card's tick.)
 const CRITICAL = /^If you critically succeeded at the triggering save, you can instead teleport within (\d+) feet\.$/i;
@@ -31,24 +37,26 @@ const CRITICAL = /^If you critically succeeded at the triggering save, you can i
 // extradimensional container—the teleportation fails", Master Magus Ring's "… the activation fails and is used", Mad Mammoth's Juke's "You
 // can't bring any other creature with you, even in an extradimensional space". The card moves its user's token alone; whether one rides
 // along hidden is its user's to say before Pick, as a requirement is — teleport.alone, the card's line.)
-const ALONE = /^(?:If this would bring another creature with you\s*[—–-]\s*even if you're carrying it in an extradimensional container\s*[—–-]\s*the (?:teleportation|activation) fails( and is used)?|You can't bring any other creature with you, even in an extradimensional space)\.$/i;
+const ALONE = /^(?:If this would bring another creature with you\s*[—–-]\s*even if you're carrying it in an extradimensional container\s*[—–-]\s*the (?:teleportation|activation) fails( and is used)?|You can't bring any other creature with you, even in an extradimensional space|If this would carry along any other creature \(even one in an extradimensional space\), the activation fails)\.$/i;
 // (Damage along the way, Quartz-Coil Rail Transport's "You and all creatures in a line between your original location and your destination take
 // 4 electricity damage": teleport.line, dealt by the card once the token's moved.)
 const LINE = /^You and all creatures in a line between your original location and your destination take (\d+(?:d\d+)?(?:\+\d+)?) (acid|cold|electricity|fire|force|sonic|vitality|void|bludgeoning|piercing|slashing|mental|poison|spirit) damage\.$/i;
 // (Its other rule sentences: not its flavor.)
-const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|reaction|spell|creature|line of effect|If|must)\b/;
+const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|reaction|spell|creatures?|line of effect|If|must)\b/;
 
 // The text (plain) → { within, speedTimes, from, sentence } or null.
 export function readTeleport(text) {
     const plain = String(text ?? "");
     const shot = SHOT.exec(plain);
     if (shot) return { within: Number(shot[1]), speedTimes: null, from: "self", match: shot };
+    const weaponShot = WEAPON_SHOT.exec(plain);
+    if (weaponShot) return { within: null, speedTimes: null, weaponRange: true, from: "self", match: weaponShot };
     const speed = SPEED.exec(plain);
     if (speed) return { within: null, speedTimes: NUMBER[speed[1].toLowerCase()], from: "self", match: speed };
     const ranged = SPEED_RANGE.exec(plain);
     if (ranged) return { within: null, speedTimes: 1, from: "self", match: ranged };
     const transport = TRANSPORT.exec(plain);
-    if (transport) return { within: Number(transport[1]), speedTimes: null, from: "self", match: transport };
+    if (transport) return { within: Number(transport[1] ?? transport[2]), speedTimes: null, from: "self", match: transport };
     const adjacent = ADJACENT.exec(plain) ?? BESIDE_HIT.exec(plain);
     if (adjacent) return { within: 5, speedTimes: null, from: "target", match: adjacent };
     const own = OWN.exec(plain);
@@ -72,9 +80,9 @@ export function teleportPlan(html, base, whole = null) {
     const critical = sentences.map((sentence) => CRITICAL.exec(sentence)).find(Boolean);
     const alone = sentences.map((sentence) => ALONE.exec(sentence)).find(Boolean);
     const line = sentences.map((sentence) => LINE.exec(sentence)).find(Boolean);
-    const own = (sentence) => sentence.includes(read.match[0]) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence);
+    const own = (sentence) => sentence.includes(read.match[0]) || read.match[0].includes(sentence) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence);
     const notes = sentences.filter((sentence) => !own(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
-    const teleport = { within: read.within, speedTimes: read.speedTimes, from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}) };
+    const teleport = { within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}) };
     return {
         ...base,
         builtin: "teleport",

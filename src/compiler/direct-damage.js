@@ -226,6 +226,19 @@ function adjacentOrTouchPlan(text, base) {
     };
 }
 
+// A retaliation beside an activation's own result, Thunder Mail's Call Down Lightning: its 6d6 electricity to the creatures around its user,
+// then "Additionally, for the next minute, whenever a creature touches you or hits you with a melee unarmed attack or a non-reach melee
+// weapon attack, it takes 1d8 electricity damage" — said as Numerian Steel Breastplate's is (a non-reach melee weapon's hit comes from an
+// adjacent creature): its retaliation plan, the later card posted beside the activation's (plan.alsoRetaliation, scripts/live.js).
+const RETALIATES_TOO = /^Additionally, for the next (minute|(\d+) (?:rounds|minutes)), whenever a creature touches you or hits you with a melee unarmed attack or a non-reach melee weapon attack, it takes (\d+d\d+(?:\s*\+\s*\d+)?) (acid|cold|electricity|fire|poison|sonic|force|mental|spirit|vitality|void) damage\.$/i;
+export function retaliationBeside(sentence, base) {
+    const match = RETALIATES_TOO.exec(String(sentence ?? "").trim());
+    if (!match) return null;
+    const [, time, count, dice, type] = match;
+    const span = time.toLowerCase() === "minute" ? "For 1 minute" : `For ${count} ${/rounds/i.test(time) ? "rounds" : "minutes"}`;
+    return adjacentOrTouchPlan(`${span}, adjacent creatures that hit you with a melee Strike, as well as creatures that touch you or hit you with an unarmed attack, take ${dice} ${type} damage per hit.`, base);
+}
+
 export function retaliationPlan(text, base) {
     const adjacent = adjacentOrTouchPlan(text, base);
     if (adjacent) return adjacent;

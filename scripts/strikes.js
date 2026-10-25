@@ -160,7 +160,12 @@ export async function strikeWithRider(message) {
     // (The save only for a creature its damage harms, Gravebane Ammunition's void healing: no card for another.)
     const fits = !rider.plan.strike?.saveOnly || voidHealed(targetToken.actor);
     if (worse && !fits) lines.push(`${target.name} hasn't void healing: no save.`);
-    const save = fits ? worse : null;
+    // (A square within the weapon's first range increment, Juxtaposition Ammunition's teleport: that weapon's, src/compiler/placed.js.)
+    const weapon = worse?.placed?.nearSource === "weapon-range" ? message.item ?? (message.flags?.pf2e?.origin?.uuid ? await fromUuid(message.flags.pf2e.origin.uuid).catch(() => null) : null) : null;
+    const ranged = worse?.placed?.nearSource === "weapon-range" ? { ...worse, placed: { ...worse.placed, nearSource: Number(weapon?.system?.range) || null } } : worse;
+    const save = fits ? ranged : null;
+    // (No damage on the hit, Juxtaposition Ammunition's "it doesn't deal the Strike's normal damage": said, for its damage roll.)
+    if (rider.plan.strike?.noDamage) lines.unshift(`${target.name} takes none of the Strike's damage (don't roll it)`);
     if (save) {
         const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);

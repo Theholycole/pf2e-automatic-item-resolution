@@ -309,10 +309,10 @@ test("temporary Hit Points, a penalty, a resistance and later words: Razmiri Way
     assert.deepEqual([words.item.skillPick.skills.length, words.partial], [3, undefined]);
     // "Trigger You would take mental, poison, or spirit damage Effect You gain resistance 5 to the triggering damage type": picked.
     assert.deepEqual(at("Safeguarding").item.resist, [{ type: null, choose: ["mental", "poison", "spirit"], value: 5, duration: { mode: "fixed", value: 10, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
-    // The 6d6 in its emanation; the minute of damage to whoever touches its wearer, a note.
+    // The 6d6 in its emanation; the minute of damage to whoever touches its wearer, its retaliation card beside (plan.alsoRetaliation).
     const mail = at("Thunder Mail");
     assert.deepEqual([mail.targeting.area, mail.resolution.sharedDamage.components[0].formula], [{ type: "emanation", value: 10 }, "6d6[electricity]"]);
-    assert.match(mail.notes.join(" "), /whenever a creature touches you/);
+    assert.deepEqual([mail.notes, mail.alsoRetaliation.retaliation.rounds], [undefined, 10]);
 });
 
 test("healing a feat of its owner's changes: Lover's Knot's 2d6, or 2d6+7 with Battle Medicine", async () => {

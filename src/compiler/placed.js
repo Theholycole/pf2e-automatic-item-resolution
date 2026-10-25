@@ -10,6 +10,13 @@
 const PICKS = /^Its attacker picks the space within that distance; move its token there\.$/i;
 const HAZARD = /^If this would move the target into a hazardous space, this effect gains the incapacitation trait\.$/i;
 const CARRY = /^On a hit, the arrow briefly grows a pair of avian wings and attempts to carry off the target\.$/i;
+// (Juxtaposition Ammunition's failed save, a note on its rows: "be teleported to a safe, unoccupied square of your choice within 60 feet of its
+// original position and within the weapon's first range increment" — nearSource the Strike's weapon's range increment, filled in on the
+// hit, scripts/strikes.js. Its other sentences: Sickened on a critical failure, its forced movement said, no damage on the hit.)
+const TELEPORTED = /^Failed save: be teleported to a safe, unoccupied square of your choice within (\d+) feet of its original position and within the weapon(?:'|’)s first range increment\.$/i;
+const ALSO = /^On a critical failure, the target is also (Sickened|Stupefied|Clumsy|Enfeebled|Dazzled|Frightened) (\d)\b[^.]*\.$/i;
+const FORCED = /^Any relocation from the [\w ]+? is forced movement\.$/i;
+const NO_DAMAGE = /^On a hit, it doesn(?:'|’)t deal the Strike(?:'|’)s normal damage\.$/i;
 // (Whip-Tongue Sling's: the ability compiler's line for the GM.)
 const MOVE_INTO = /^\{target\} \((critical success|success)\): you can move the creature up to (\d+) feet into any space within (\d+) feet of you\.?$/i;
 const said = (note) => String(typeof note === "string" ? note : note?.text ?? "").trim();
@@ -25,8 +32,34 @@ function settled(plan, notes, rows) {
     return result;
 }
 
+// A Strike's save that teleports the creature hit to a square its attacker picks (Juxtaposition Ammunition's): placed, teleport, within the
+// weapon's range; its critical failure's condition its row's; no damage on the hit, strike.noDamage (the hit's line, scripts/strikes.js).
+function withTeleportedSave(plan) {
+    const save = plan?.strike?.save;
+    const outcomes = save?.resolution?.outcomes;
+    const teleported = outcomes ? Object.values(outcomes).flatMap((row) => row?.noteEffects ?? []).map((note) => TELEPORTED.exec(said(note))).find(Boolean) : null;
+    if (!teleported) return plan;
+    const strikeNotes = plan.strike.notes ?? [];
+    const also = strikeNotes.map((note) => ALSO.exec(said(note))).find(Boolean);
+    const within = Number(teleported[1]);
+    const rows = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => {
+        if (!row) return [degree, row];
+        const noteEffects = (row.noteEffects ?? []).filter((note) => !TELEPORTED.test(said(note)));
+        const effects = degree === "criticalFailure" && also ? [...(row.effects ?? []), { kind: "condition", slug: also[1].toLowerCase(), value: Number(also[2]), duration: null }] : row.effects;
+        return [degree, { ...row, effects, ...(row.noteEffects ? { noteEffects } : {}) }];
+    }));
+    const placed = { rows: { failure: { within }, criticalFailure: { within } }, nearSource: "weapon-range", optional: false, teleport: true, lines: ["Into a safe, unoccupied square"], byHand: `On a failure, teleport it to a safe, unoccupied square its attacker picks within ${within} feet of where it was and within the weapon's first range increment.` };
+    const noDamage = strikeNotes.some((note) => NO_DAMAGE.test(said(note)));
+    const notes = strikeNotes.filter((note) => !(also && ALSO.test(said(note))) && !FORCED.test(said(note)) && !NO_DAMAGE.test(said(note)));
+    const result = settled({ ...plan, strike: { ...plan.strike, notes, ...(noDamage ? { noDamage: true } : {}), save: { ...save, resolution: { ...save.resolution, outcomes: rows }, placed } } }, plan.notes ?? [], null);
+    if (notes.length) result.partial = true;
+    return result;
+}
+
 // A Strike's save that moves the creature hit to a space its attacker picks: plan.strike.save.placed, its rows' pushes gone.
-export function withPlacedSave(plan) {
+export function withPlacedSave(given) {
+    const plan = withTeleportedSave(given);
+    if (plan !== given) return plan;
     const save = plan?.strike?.save;
     const outcomes = save?.resolution?.outcomes;
     // (Its notes the Strike's own.)
@@ -74,6 +107,7 @@ export function withoutPlacedMoves(plan) {
     if (!plan) return plan;
     let next = plan;
     const back = (entry) => ({ ...entry, partial: true, notes: [...(entry.notes ?? []), entry.placed.byHand], placed: undefined });
+    // (Juxtaposition's: its rows' notes stay as they are — the teleport said again, the GM's.)
     if (next.placed) next = back(next);
     if (next.strike?.save?.placed) next = { ...next, partial: true, strike: { ...next.strike, save: back(next.strike.save) } };
     if ((next.strike?.around ?? []).some((entry) => entry.moveFrom)) {

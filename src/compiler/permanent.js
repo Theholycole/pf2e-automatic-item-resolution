@@ -13,7 +13,7 @@ import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
-import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan, retaliationPlan, withoutDamageRestated } from "./direct-damage.js";
+import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan, retaliationBeside, retaliationPlan, withoutDamageRestated } from "./direct-damage.js";
 import { readReductions, readRegain, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan, recoverySaid } from "./recovery.js";
 import { beadsPlan } from "./beads.js";
@@ -501,6 +501,16 @@ function compileEach(item, options = {}) {
         plan = withPullToward(plan);
         // (A creature moved to a space its user picks, src/compiler/placed.js: Whip-Tongue Sling's Tongue Twister.)
         plan = withPlacedCheck(withPlacedSave(plan));
+        // (A retaliation beside its own result, Thunder Mail's for the next minute: plan.alsoRetaliation, src/compiler/direct-damage.js.)
+        const besideNote = (plan?.notes ?? []).find((note) => retaliationBeside(typeof note === "string" ? note : note?.text, base));
+        if (besideNote && !plan.builtin && !plan.retaliation) {
+            const notes = plan.notes.filter((note) => note !== besideNote);
+            plan = { ...plan, alsoRetaliation: retaliationBeside(typeof besideNote === "string" ? besideNote : besideNote.text, base), notes: notes.length ? notes : undefined };
+            if (plan.partial && !notes.length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length)) {
+                delete plan.partial;
+                plan.automation = { ...(plan.automation ?? {}), level: "automatic" };
+            }
+        }
         // (An ally's persistent damage taken onto its user, src/compiler/take-condition.js: Bloodstained Waistcoat's Staunch Bleeding.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = takePlan(activation.html, base) ?? plan;
         // (Temporary Hit Points for another creature, src/compiler/given-temp.js: Skeletal Claw's undead.)
