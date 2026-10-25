@@ -28,6 +28,7 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
+import { withPullToward } from "./pull-toward.js";
 import { takePlan } from "./take-condition.js";
 import { givenTempPlan } from "./given-temp.js";
 import { shoveFartherPlan } from "./shove-farther.js";
@@ -495,6 +496,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
         // (Its user's own move, a Stride or Step on the map — the teleport card's, as a move: src/compiler/move.js.)
         plan = withMove(plan, activation.html, base);
+        // (A check's success that pulls the creature toward its user, src/compiler/pull-toward.js: Tentacle Cannon's Grasping Deep Shot.)
+        plan = withPullToward(plan);
         // (An ally's persistent damage taken onto its user, src/compiler/take-condition.js: Bloodstained Waistcoat's Staunch Bleeding.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = takePlan(activation.html, base) ?? plan;
         // (Temporary Hit Points for another creature, src/compiler/given-temp.js: Skeletal Claw's undead.)

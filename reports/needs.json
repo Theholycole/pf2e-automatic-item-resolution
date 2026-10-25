@@ -1,19 +1,19 @@
 {
  "generated": "2026-10-25",
  "totals": {
-  "entries": 1425,
+  "entries": 1419,
   "results": {
    "none": 674,
-   "partial": 330,
+   "partial": 326,
    "builtin:no-effect": 146,
-   "note-only": 275
+   "note-only": 273
   },
   "main": {
    "speeds": 25,
    "counteract": 18,
    "afflictions": 56,
    "areas": 120,
-   "moving": 110,
+   "moving": 104,
    "lasting": 68,
    "speech": 36,
    "visibility": 57,
@@ -48,26 +48,26 @@
   },
   "any": {
    "speeds": 31,
-   "areas": 180,
+   "areas": 179,
    "immunity": 75,
    "objects": 402,
    "speech": 150,
    "out-of-combat": 435,
    "counteract": 81,
    "afflictions": 102,
-   "lasting": 224,
-   "moving": 141,
+   "lasting": 223,
+   "moving": 135,
    "triggers": 135,
    "visibility": 59,
    "dying": 82,
    "choice": 120,
    "several": 99,
    "mind": 78,
-   "strike": 201,
+   "strike": 200,
    "reader": 241,
    "spells": 82,
    "information": 215,
-   "actions": 66,
+   "actions": 62,
    "from-events": 38,
    "no-rules": 37,
    "senses": 29,
@@ -377,17 +377,6 @@
    "main": "speech",
    "needs": [
     "speech"
-   ]
-  },
-  {
-   "name": "Tentacle Cannon",
-   "kind": "activation",
-   "activation": "Grasping Deep Shot",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "actions"
    ]
   },
   {
@@ -6768,16 +6757,6 @@
    ]
   },
   {
-   "name": "Dancing Scarf (Greater)",
-   "kind": "activation",
-   "activation": "Swirling Scarf",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
    "name": "Jawbreaker Shield",
    "kind": "activation",
    "result": "partial",
@@ -7783,17 +7762,6 @@
     "lasting",
     "choice",
     "reader"
-   ]
-  },
-  {
-   "name": "Tentacle Cannon (Greater)",
-   "kind": "activation",
-   "activation": "Grasping Deep Shot",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "actions"
    ]
   },
   {
@@ -13629,17 +13597,6 @@
    ]
   },
   {
-   "name": "Tentacle Cannon (Major)",
-   "kind": "activation",
-   "activation": "Grasping Deep Shot",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "actions"
-   ]
-  },
-  {
    "name": "Cordelia's Greater Construct Key",
    "kind": "activation",
    "result": "note-only",
@@ -13766,18 +13723,6 @@
     "fortune",
     "triggers",
     "choice"
-   ]
-  },
-  {
-   "name": "Umbral Armor",
-   "kind": "activation",
-   "activation": "Shroud Stride",
-   "result": "note-only",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "areas",
-    "lasting"
    ]
   },
   {
@@ -15141,17 +15086,6 @@
    "main": "areas",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Nightmare Cudgel",
-   "kind": "activation",
-   "result": "note-only",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike",
-    "actions"
    ]
   },
   {

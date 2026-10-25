@@ -15,10 +15,22 @@ const MOVE = new RegExp(String.raw`^You (${VERB})(?: or (${VERB}))?(?: (twice))?
 // card is made; "doubling the vertical and horizontal distance of your Leap action": twice that.)
 const LEAP_DOUBLED = /^You Leap, doubling the vertical and horizontal distance of your Leap action\.$/i;
 // ("You gain a +15-foot status bonus to your Speed and fly Speed for this movement": the range's 15 feet more, teleport.plus.)
+// (Said another way: Umbral Armor's "You slip into the Netherworld for a moment, allowing you to Stride twice your speed", Nightmare Cudgel's
+// "As part of activating this item, you can Stride twice", Dancing Scarf's "You can also Stride up to half your Speed or Step" — read as
+// "You Stride up to twice your speed", "You Stride twice", "You Stride up to half your Speed or Step".)
+const SAID_OTHERWISE = [
+    [/^You [^.,]*, allowing you to (Stride|Step|Leap) (?:up to )?(twice|half) your speed\./i, (all, verb, times) => `You ${verb} up to ${times} your speed.`],
+    [/^As part of activating this item, you can (Stride|Step)\b/i, (all, verb) => `You ${verb}`],
+    [/^You can (?:also )?(Stride|Step|Leap)\b/i, (all, verb) => `You ${verb}`]
+];
+const plainly = (sentence) => SAID_OTHERWISE.reduce((text, [pattern, to]) => text.replace(pattern, to), sentence);
+// (A condition its user takes after the move, Umbral Armor's "causing you to become Concealed for 1 round afterward": plan.userEffects, given as
+// it's used — src/compiler/user-conditions.js's.)
+const AFTER = /\bcausing you to become (Concealed|Quickened|Invisible) for (\d+) rounds? afterward\.$/i;
 const PLUS = /^You gain a \+(\d+)-foot (?:status|circumstance|item) bonus to your (?:land )?Speed(?: and (?:fly|swim|climb|burrow) Speed)? for this movement\.$/i;
 // (The card's lines, said as the item says them.)
 const LINES = [
-    [/^This movement doesn't trigger reactions\.$/i, "This movement doesn't trigger reactions"],
+    [/^This movement doesn't trigger reactions(?:,? and [^.]+)?\.$/i, (sentence) => sentence.replace(/\.$/, "")],
     [/^You can Burrow, Climb, Fly, or Swim instead of Striding if you have the corresponding movement type\.$/i, "It can be a Burrow, Climb, Fly or Swim instead, with that movement type"],
     [/^You can (?:instead )?(?:Burrow|Climb|Fly|Swim)[^.]*instead[^.]*\.$/i, null],
     [/^If you have a (?:climb|fly|swim|burrow)(?: or (?:climb|fly|swim|burrow))? Speed, you can instead (?:Climb|Fly|Swim|Burrow)(?: or (?:Climb|Fly|Swim|Burrow))?(?: respectively)?\.$/i, (sentence) => `With a ${/\bhave a ([a-z]+(?: or [a-z]+)?) Speed/i.exec(sentence)[1]} Speed, it can be a ${/instead ([A-Za-z]+(?: or [A-Za-z]+)?)/.exec(sentence)[1]} instead`],
@@ -34,9 +46,9 @@ export function readMove(body) {
     const sentences = String(body ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
     const doubled = sentences.find((sentence) => LEAP_DOUBLED.test(sentence));
     if (doubled) return { verb: "Leap", leapTimes: 2, lines: [], said: [doubled], sentences };
-    const at = sentences.findIndex((sentence) => MOVE.test(sentence));
+    const at = sentences.findIndex((sentence) => MOVE.test(plainly(sentence)));
     if (at < 0) return null;
-    const [, verb, or, twice, through, feet, times, anywhere, joined, rest] = MOVE.exec(sentences[at]);
+    const [, verb, or, twice, through, feet, times, anywhere, joined, rest] = MOVE.exec(plainly(sentences[at]));
     const first = verb.charAt(0).toUpperCase() + verb.slice(1).toLowerCase();
     // (A Step or Stride is a Stride's range; a Step alone 5 feet, twice 10.)
     const kind = or && /stride/i.test(or) ? "Stride" : first;
@@ -61,13 +73,17 @@ export function readMove(body) {
     const said = [sentences[at]];
     const plus = sentences.map((sentence) => PLUS.exec(sentence)).find(Boolean);
     if (plus) said.push(plus[0]);
+    const afterAt = sentences.findIndex((sentence) => AFTER.test(sentence));
+    const after = afterAt >= 0 ? AFTER.exec(sentences[afterAt]) : null;
+    if (after) said.push(sentences[afterAt]);
     for (const sentence of sentences) {
         const line = LINES.find(([pattern]) => pattern.test(sentence));
         if (!line) continue;
         said.push(sentence);
         if (line[1]) lines.push(typeof line[1] === "function" ? line[1](sentence) : line[1]);
     }
-    return { verb: kind, ...range, ...(plus ? { plus: Number(plus[1]) } : {}), lines, said, sentences, ...(strikes.length ? { strikes: strikes.map((clause) => `${clause}.`) } : {}), ...(others.length ? { others: others.map((clause) => `${clause}.`) } : {}) };
+    const userEffects = after ? [{ slug: after[1].toLowerCase(), value: null, duration: { mode: "fixed", value: Number(after[2]), unit: "rounds", expiry: "turn-start", anchor: "source-turn" } }] : null;
+    return { verb: kind, ...range, ...(plus ? { plus: Number(plus[1]) } : {}), lines, said, sentences, ...(userEffects ? { userEffects } : {}), ...(strikes.length ? { strikes: strikes.map((clause) => `${clause}.`) } : {}), ...(others.length ? { others: others.map((clause) => `${clause}.`) } : {}) };
 }
 
 // The reading → the teleport card's range for it, with its move.
@@ -98,6 +114,7 @@ export function movePlan(html, base) {
         targeting: { target: "self", range: null, area: null },
         trigger: { event: "use" },
         teleport: moveOf(read),
+        ...(read.userEffects ? { userEffects: read.userEffects } : {}),
         ...(notes.length ? { notes, partial: true } : {})
     };
 }

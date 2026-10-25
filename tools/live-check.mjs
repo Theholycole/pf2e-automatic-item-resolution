@@ -5956,6 +5956,43 @@ export const cases = {
         });
     },
 
+    // Umbral Armor's Shroud Stride: Concealed for 1 round as it's used, and the move card's Stride at twice its user's Speed (50 feet).
+    async umbralShroud(scene) {
+        return unpaused(async () => {
+            await clearSquares(scene, [[12, 18], [19, 18]]);
+            const { actor: user, token } = await creature(scene, "Shroud Strider", { type: "character", x: 12, y: 18 });
+            const armor = await give(user, "Umbral Armor");
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(armor.uuid, 0);
+            const card = await messageAfter(since, itemCard("teleport"), { what: "the move card" });
+            await until(() => user.hasCondition("concealed"), "Concealed as it's used", { timeout: 8000 });
+            const size = canvas.grid.size;
+            await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 19 * size, y: 18 * size } });
+            await until(() => token.x === 19 * size, `the token 35 feet on (${token.x / size})`, { timeout: 8000 });
+            return { lines: card.getFlag(NS, "card").plan.teleport.move.lines, results: game.messages.get(card.id).getFlag(NS, "card").results };
+        });
+    },
+
+    // Tentacle Cannon's Grasping Deep Shot: its Grapple at +13 (a 10 on the die, 23 against Fortitude DC 18, a success) — Grabbed, and pulled 10
+    // feet toward its user, beside them.
+    async tentaclePull(scene) {
+        await clearSquares(scene, [[10, 17], [11, 17], [12, 17], [13, 17]]);
+        const { actor: user, token: userToken } = await creature(scene, "Tentacle Gunner", { type: "character", x: 10, y: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Tentacle Mark", { x: 13, y: 17, alliance: "opposition" });
+        const cannon = await give(user, "Tentacle Cannon");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(cannon.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the Grapple's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const check = await messageAfter(since, abilitySaveCard, { what: "the ability module's Grapple card" });
+        await withDie(10, () => rollAndApply(check));
+        const size = canvas.grid.size;
+        await until(() => foe.hasCondition("grabbed") && foeToken.x === 11 * size, `Grabbed and pulled beside its user (${foe.conditions.map((entry) => entry.slug).join(", ")}; at ${foeToken.x / size})`, { timeout: 10000 });
+        assert(userToken.x === 10 * size, "its user where it was");
+        return { at: foeToken.x / size };
+    },
+
     // Dragonclaw Scutcheon: fire picked on the ways card — immunity to fire until the end of the next turn, as PF2e's Immunity rule.
     async scutcheonImmunity(scene) {
         const { actor: user } = await creature(scene, "Scutcheon Bearer", { type: "character", x: 2, y: 2 });

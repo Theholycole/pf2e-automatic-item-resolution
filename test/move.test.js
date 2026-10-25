@@ -82,3 +82,22 @@ test("the card: its verb and range, again for each action more", () => {
     assert.match(html, />Pick</);
     assert.match(teleportCardHTML({ ...state, results: ["Mover strides (within 25 feet)."] }, { canApply: true }), /Pick again \(another action\)/);
 });
+
+test("a move said other ways: Umbral Armor's \"allowing you to Stride twice your speed\" and its Concealed after, Nightmare Cudgel's Strides, Dancing Scarf's beside its Concealed", () => {
+    const shroud = activation("Umbral Armor", "Shroud Stride");
+    assert.deepEqual([shroud.teleport.speedTimes, shroud.teleport.move.lines, shroud.userEffects.map((entry) => [entry.slug, entry.duration.value, entry.duration.expiry]), shroud.partial], [2, ["This movement doesn't trigger reactions and ignores difficult and hazardous terrain"], [["concealed", 1, "turn-start"]], undefined]);
+    const cudgel = compileActivations(item("Nightmare Cudgel"))[0].plan;
+    assert.deepEqual([cudgel.teleport.speedTimes, cudgel.partial], [2, true], "its Demoralize after a hit is a note");
+    const scarf = activation("Dancing Scarf (Greater)", "Swirling Scarf");
+    assert.deepEqual([scarf.item.move.speedTimes, scarf.item.move.move.lines, scarf.resolution.outcomes.success.effects[0].slug, scarf.partial], [0.5, ["Or Step"], "concealed", undefined]);
+});
+
+test("a check's success that pulls the creature toward its user: Tentacle Cannon's Grasping Deep Shot, within 15 feet — the ability module's card at the creature targeted", async () => {
+    const { compileBasicActions, BASIC_ACTIONS } = await import("../../pf2e-automatic-ability-resolution/src/compiler/index.js");
+    const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+    const shot = compileActivations(item("Tentacle Cannon"), { basicActions }).find((entry) => entry.activation.name === "Grasping Deep Shot").plan;
+    assert.equal(routeOf(shot), "save");
+    const pull = { kind: "pull", distance: 10, upTo: true, optional: false, direction: "toward" };
+    assert.deepEqual([shot.resolution.outcomes.success.forcedMovement, shot.resolution.outcomes.criticalSuccess.forcedMovement, shot.resolution.outcomes.failure.forcedMovement], [pull, pull, undefined]);
+    assert.deepEqual([shot.targeting.range, shot.notes, shot.partial], [15, undefined, undefined]);
+});
