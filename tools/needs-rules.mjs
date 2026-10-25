@@ -42,8 +42,9 @@ export const NEEDS = [
         id: "missing-number",
         title: "Numbers the text doesn't give",
         needs: "A condition value, amount or DC the item's text leaves out (the GM sets it): the user's ruling for a default, then the card applies it.",
-        where: "your decision",
+        where: "item reader",
         question: "When the text leaves a number to the GM (\"unless the GM determines otherwise\"), should the card apply the number the text gives by default and say the GM may change it, or stay the GM's?",
+        decided: "2026-10-25: Apply the text's number and say on the card that the GM may change it; counted done.",
         test: /\b(?:doesn't say how (?:much|long|many)|the GM (?:sets|decides|determines) (?:it|the|how)|unless the GM determines otherwise|as the GM (?:determines|decides))\b/i
     },
     {
@@ -85,8 +86,9 @@ export const NEEDS = [
         id: "illusions",
         title: "Illusions and disbelief",
         needs: "An illusion and the check to disbelieve it: the user's rule for spells (disbelief as control), with the item's DC and who has seen through it.",
-        where: "your decision + item live play",
+        where: "item live play",
         question: "Play an item's illusion as the spells' are (disbelief as control: the card's check and who has seen through it), counted done?",
+        decided: "2026-10-25: Play them as the spells' illusions are: disbelief as control, the card's check against the item's DC, who has seen through it tracked.",
         test: /\b(?:illusion\w*|illusory|disbelie\w*|figment|disguise\w*)\b/i
     },
     {
@@ -233,32 +235,36 @@ export const NEEDS = [
         id: "mind",
         title: "Minds, attitudes and behaviour",
         needs: "A creature's attitude, truthfulness, memory, beliefs or compelled behaviour: no game numbers to apply. A note Effect for its time or a GM ruling, by the user's decision.",
-        where: "your decision",
+        where: "item reader",
         question: "Attitude, truthfulness, memory and compelled behaviour: a note Effect for its time, counted done (as behaviour rules beside a real result are), or the GM's?",
+        decided: "2026-10-25: A note Effect on the creature for its time counts done on its own (for items; spells keep their rule).",
         test: /\b(?:attitude\w*|truth\w*|\blie\b|\blies\b|charm\w*|compel\w*|memory|memories|emotion\w*|believes?|convinc\w*|suggestion|befriend|dominat\w*|loyal\w*|obey\w*|mood|feel(?:s)? (?:safe|calm|fear)|as its first action|must spend (?:all )?(?:\w+ )?actions)\b/i
     },
     {
         id: "information",
         title: "Information",
         needs: "Something the user learns: a location, an identity, a creature's statistics, a memory shown, a translation, a direction. An information card whispered to the GM and the user (the user's rule for spells), with what the GM fills in.",
-        where: "your decision + item live play",
+        where: "item live play",
         question: "Apply the spells' rule (an information card whispered to the GM and the user) to items, counted done?",
+        decided: "2026-10-25: The spells' rule: an information card whispered to the GM and the user, with what the GM fills in; counted done.",
         test: /\b(?:learn\w*|Identify\w*|identif\w*|detect\w*|reveal\w*|locat(?:e|es|ion|ing)|you know|knows?\b|discern\w*|divin\w*|translat\w*|shows? (?:you|the)|vision of|direction (?:of|to)|points? (?:toward|to the)|Recall Knowledge|Seek\b|aware of|remember\w*|scan\w*|pages? of writing|documents?|sense the direction)\b/i
     },
     {
         id: "speech",
         title: "Messages, speech and sound",
         needs: "Messages, languages, telepathy, sounds and silence: note Effects or chat messages, little to apply.",
-        where: "your decision",
+        where: "item reader",
         question: "Messages, languages, telepathy and sounds: a chat message or note Effect, counted done?",
+        decided: "2026-10-25: A note Effect for the item's time; counted done.",
         test: /\b(?:message\w*|speak\w*|language\w*|telepath\w*|voice\w*|\bwords?\b|music\w*|song\w*|silent\w*|silence\w*|whisper\w*|sounds?\b|noise\w*)\b/i
     },
     {
         id: "out-of-combat",
         title: "Out of combat and the environment",
         needs: "Hours or days, rest, travel, crafting, downtime, weather, air and water, food: the user's rule keeps out-of-combat consumables as they are; the GM's at the table.",
-        where: "your decision",
+        where: "kept listed",
         question: "Out-of-combat consumables stay as they are (your rule): count them done, or keep them on this list?",
+        decided: "2026-10-25: Keep them on this list as unfinished; no note-Effect shortcut.",
         test: /\b(?:\d+ (?:hours?|days?|weeks?|months?|years?)|(?:an|one) (?:hour|day|week|month|year)\b|24 hours|daily preparations|downtime|exploration|Earn Income|Craft\b|crafting|Subsist|rest\b|sleep\w*|travel\w*|journey|weather|severe (?:cold|heat)|extreme (?:cold|heat)|environmental|food|meal|cooking|camping|nourish\w*|formulas?\b|schematics?\b|airless|breathe\w*|underwater|submerged|\bsink\b|drown\w*)\b/i
     }
 ];

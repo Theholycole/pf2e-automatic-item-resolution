@@ -16,13 +16,13 @@ How an item is sorted: the words its card leaves over (its notes, unread sentenc
 | [Creatures taken out of play](#removed) | 4 | 5 | 0 | item live play |
 | [Damage back at attackers](#retaliation) | 3 | 3 | 0 | item live play |
 | [Results for some creatures only](#by-kind) | 8 | 8 | 0 | item reader |
-| [Numbers the text doesn't give](#missing-number) | 7 | 8 | 0 | your decision |
+| [Numbers the text doesn't give](#missing-number) | 7 | 8 | 0 | item reader |
 | [Use limits of its own](#cooldown) | 13 | 14 | 0 | item reader |
 | [Hidden, undetected, invisible, cover](#visibility) | 57 | 59 | 2 | core + item live play |
 | [Senses](#senses) | 23 | 29 | 3 | item reader |
 | [Speeds](#speeds) | 25 | 31 | 0 | item reader |
 | [Fortune and rerolls on a later roll](#fortune) | 7 | 10 | 1 | item reader |
-| [Illusions and disbelief](#illusions) | 47 | 60 | 0 | your decision + item live play |
+| [Illusions and disbelief](#illusions) | 47 | 60 | 0 | item live play |
 | [Ships and vehicles](#vehicles) | 20 | 24 | 2 | item live play |
 | [A second linked Effect](#linked-effect) | 1 | 1 | 0 | item reader |
 | [Moving creatures and the user](#moving) | 95 | 126 | 12 | item live play |
@@ -43,10 +43,10 @@ How an item is sorted: the words its card leaves over (its notes, unread sentenc
 | [Several creatures at once](#several) | 26 | 99 | 0 | item live play |
 | [Objects and the item itself](#objects) | 121 | 401 | 2 | item live play |
 | [Plain results the reader doesn't parse yet](#reader) | 29 | 238 | 11 | item reader |
-| [Minds, attitudes and behaviour](#mind) | 14 | 78 | 2 | your decision |
-| [Information](#information) | 38 | 215 | 7 | your decision + item live play |
-| [Messages, speech and sound](#speech) | 36 | 150 | 1 | your decision |
-| [Out of combat and the environment](#out-of-combat) | 39 | 435 | 5 | your decision |
+| [Minds, attitudes and behaviour](#mind) | 14 | 78 | 2 | item reader |
+| [Information](#information) | 38 | 215 | 7 | item live play |
+| [Messages, speech and sound](#speech) | 36 | 150 | 1 | item reader |
+| [Out of combat and the environment](#out-of-combat) | 39 | 435 | 5 | kept listed |
 | [Nothing to automate](#no-rules) | 37 | 37 | 18 | none |
 
 ## The worklist
@@ -64,12 +64,12 @@ What to build, biggest first: each need with the PF2e entries whose main need it
 | [Creatures it makes or controls](#creatures) | 57 | 10 | 10 | ability module + item live play | "summon" 8, "conjured" 8, "companion" 7, "spirit of" 5 |
 | [Hidden, undetected, invisible, cover](#visibility) | 57 | 7 | 2 | core + item live play | "hide" 10, "standard cover" 9, "undetected" 7, "you're concealed" 4 |
 | [Afflictions and persistent damage](#afflictions) | 56 | 7 | 4 | ability module + item live play | "poison" 14, "curse" 6, "cursed" 5, "disease" 5 |
-| [Illusions and disbelief](#illusions) | 47 | 2 | 0 | your decision + item live play | "illusion" 17, "illusory" 12, "disguise" 10, "disguised" 5 |
+| [Illusions and disbelief](#illusions) | 47 | 2 | 0 | item live play | "illusion" 17, "illusory" 12, "disguise" 10, "disguised" 5 |
 | [Spells and the user's resources](#spells) | 45 | 24 | 0 | spell module + item live play | "ritual" 12, "stored spell" 7, "cantrip" 6, "mythic point" 5 |
 | [Choices on the card](#choice) | 43 | 7 | 6 | item live play | "of your choice" 17, "choose a" 6, "decide" 5, "choose" 4 |
-| [Out of combat and the environment](#out-of-combat) | 39 | 39 | 5 | your decision | "24 hours" 8, "1 hour" 7, "crafting" 5, "daily preparations" 3 |
-| [Information](#information) | 38 | 17 | 7 | your decision + item live play | "knows" 6, "recall knowledge" 5, "location" 5, "detect" 4 |
-| [Messages, speech and sound](#speech) | 36 | 26 | 1 | your decision | "words" 12, "voice" 8, "sounds" 7, "speak" 4 |
+| [Out of combat and the environment](#out-of-combat) | 39 | 39 | 5 | kept listed | "24 hours" 8, "1 hour" 7, "crafting" 5, "daily preparations" 3 |
+| [Information](#information) | 38 | 17 | 7 | item live play | "knows" 6, "recall knowledge" 5, "location" 5, "detect" 4 |
+| [Messages, speech and sound](#speech) | 36 | 26 | 1 | item reader | "words" 12, "voice" 8, "sounds" 7, "speak" 4 |
 | [Actions and feats for the user](#actions) | 32 | 10 | 1 | item live play | "grapple" 4, "force open" 3, "shield block" 3, "administer first aid" 3 |
 | [Dying, unconscious and death](#dying) | 31 | 3 | 2 | core + item live play | "dead" 11, "dies" 4, "death" 4, "doomed" 3 |
 | [Plain results the reader doesn't parse yet](#reader) | 29 | 15 | 11 | item reader | "enfeebled" 5, "temporary hit points" 2, "1d6" 2, "fatigued" 2 |
@@ -81,10 +81,10 @@ What to build, biggest first: each need with the PF2e entries whose main need it
 | [Ships and vehicles](#vehicles) | 20 | 4 | 2 | item live play | "boat" 7, "ship" 6, "vehicle" 4, "wagon" 2 |
 | [Bonuses only in some situations](#situational) | 20 | 2 | 1 | item reader | "bonus is only against" 4, "bonus is only to" 3, "bonus to saves against" 2 |
 | [Counteracting and ending effects](#counteract) | 17 | 9 | 0 | item live play | "counteract" 12, "end the effect" 3 |
-| [Minds, attitudes and behaviour](#mind) | 14 | 9 | 2 | your decision | "emotions" 3, "dominate" 2, "attitude" 2, "memory" 2 |
+| [Minds, attitudes and behaviour](#mind) | 14 | 9 | 2 | item reader | "emotions" 3, "dominate" 2, "attitude" 2, "memory" 2 |
 | [Use limits of its own](#cooldown) | 13 | 3 | 0 | item reader | "can't be activated again" 5, "can be activated again" 3, "can't be used again" 2, "can't activate it again" 2 |
 | [Results for some creatures only](#by-kind) | 8 | 1 | 0 | item reader | "only a living creature" 2 |
-| [Numbers the text doesn't give](#missing-number) | 7 | 0 | 0 | your decision | "unless the gm determines otherwise" 5, "doesn't say how much" 2 |
+| [Numbers the text doesn't give](#missing-number) | 7 | 0 | 0 | item reader | "unless the gm determines otherwise" 5, "doesn't say how much" 2 |
 | [Fortune and rerolls on a later roll](#fortune) | 7 | 1 | 1 | item reader | "reroll" 3, "roll twice" 2 |
 | [Numbers from another roll](#from-events) | 7 | 3 | 0 | item live play | "hit points equal to the" 2 |
 | [Creatures taken out of play](#removed) | 4 | 0 | 0 | item live play | "shunted" 2, "into the future" 2 |
@@ -95,18 +95,18 @@ Done by one need alone, all needs together: 357 of the 1407 PF2e entries; the re
 
 ## Your decisions
 
-The needs whose work starts with a ruling of yours: what a card should do when the item's text gives no game numbers to apply. The spells' rules already decided some of these (information whispered to the GM and the caster, disbelief played as control, out-of-combat consumables left as they are); applying them to items would count those entries done.
+The needs whose work started with a ruling of yours: what a card should do when the item's text gives no game numbers to apply. Still open ones ask their question; answered ones say what was decided, and their work now lies where the worklist says.
 
-| Need | PF2e entries (main) | Done by it alone | The question |
-|---|---:|---:|---|
-| [Numbers the text doesn't give](#missing-number) | 7 | 0 | When the text leaves a number to the GM ("unless the GM determines otherwise"), should the card apply the number the text gives by default and say the GM may change it, or stay the GM's? |
-| [Illusions and disbelief](#illusions) | 47 | 2 | Play an item's illusion as the spells' are (disbelief as control: the card's check and who has seen through it), counted done? |
-| [Minds, attitudes and behaviour](#mind) | 14 | 9 | Attitude, truthfulness, memory and compelled behaviour: a note Effect for its time, counted done (as behaviour rules beside a real result are), or the GM's? |
-| [Information](#information) | 38 | 17 | Apply the spells' rule (an information card whispered to the GM and the user) to items, counted done? |
-| [Messages, speech and sound](#speech) | 36 | 26 | Messages, languages, telepathy and sounds: a chat message or note Effect, counted done? |
-| [Out of combat and the environment](#out-of-combat) | 39 | 39 | Out-of-combat consumables stay as they are (your rule): count them done, or keep them on this list? |
+| Need | PF2e entries (main) | Done by it alone | Question | Decided |
+|---|---:|---:|---|---|
+| [Numbers the text doesn't give](#missing-number) | 7 | 0 | When the text leaves a number to the GM ("unless the GM determines otherwise"), should the card apply the number the text gives by default and say the GM may change it, or stay the GM's? | 2026-10-25: Apply the text's number and say on the card that the GM may change it; counted done. |
+| [Illusions and disbelief](#illusions) | 47 | 2 | Play an item's illusion as the spells' are (disbelief as control: the card's check and who has seen through it), counted done? | 2026-10-25: Play them as the spells' illusions are: disbelief as control, the card's check against the item's DC, who has seen through it tracked. |
+| [Minds, attitudes and behaviour](#mind) | 14 | 9 | Attitude, truthfulness, memory and compelled behaviour: a note Effect for its time, counted done (as behaviour rules beside a real result are), or the GM's? | 2026-10-25: A note Effect on the creature for its time counts done on its own (for items; spells keep their rule). |
+| [Information](#information) | 38 | 17 | Apply the spells' rule (an information card whispered to the GM and the user) to items, counted done? | 2026-10-25: The spells' rule: an information card whispered to the GM and the user, with what the GM fills in; counted done. |
+| [Messages, speech and sound](#speech) | 36 | 26 | Messages, languages, telepathy and sounds: a chat message or note Effect, counted done? | 2026-10-25: A note Effect for the item's time; counted done. |
+| [Out of combat and the environment](#out-of-combat) | 39 | 39 | Out-of-combat consumables stay as they are (your rule): count them done, or keep them on this list? | 2026-10-25: Keep them on this list as unfinished; no note-Effect shortcut. |
 
-Answered, these would finish up to 93 PF2e entries outright (the ones with no other need); the rest also need building.
+Still open: 0. Built as decided, the answered ones would finish up to 54 PF2e entries outright (the ones with no other need).
 
 ## Besides the items
 
@@ -123,12 +123,12 @@ By the first place each main need's work lies: the item module's reader (src/com
 
 | Where | PF2e entries (main need) | Needs |
 |---|---:|---|
-| item live play | 533 | creatures taken out of play; damage back at attackers; ships and vehicles; moving creatures and the user; triggers; actions and feats for the user; numbers from another roll; counteracting and ending effects; sustained, repeating and later effects; choices on the card; several creatures at once; objects and the item itself |
-| item reader | 290 | forms and size; results for some creatures only; use limits of its own; senses; speeds; fortune and rerolls on a later roll; a second linked effect; changes to a strike; immunities and resistances by situation; bonuses only in some situations; plain results the reader doesn't parse yet |
+| item live play | 618 | creatures taken out of play; damage back at attackers; illusions and disbelief; ships and vehicles; moving creatures and the user; triggers; actions and feats for the user; numbers from another roll; counteracting and ending effects; sustained, repeating and later effects; choices on the card; several creatures at once; objects and the item itself; information |
+| item reader | 347 | forms and size; results for some creatures only; numbers the text doesn't give; use limits of its own; senses; speeds; fortune and rerolls on a later roll; a second linked effect; changes to a strike; immunities and resistances by situation; bonuses only in some situations; plain results the reader doesn't parse yet; minds, attitudes and behaviour; messages, speech and sound |
 | ability module | 233 | creatures it makes or controls; light, darkness, smoke, terrain and walls; afflictions and persistent damage |
-| your decision | 181 | numbers the text doesn't give; illusions and disbelief; minds, attitudes and behaviour; information; messages, speech and sound; out of combat and the environment |
 | core | 88 | hidden, undetected, invisible, cover; dying, unconscious and death; range, reach and areas made larger |
 | spell module | 45 | spells and the user's resources |
+| kept listed | 39 | out of combat and the environment |
 | none | 37 | nothing to automate |
 
 ## Who can do it
@@ -137,10 +137,11 @@ By every need an entry has (not only its main one):
 
 | | PF2e entries |
 |---|---:|
-| The item module's reader alone (new readings, no new live play) | 31 |
-| The item module alone (its reader and its live play) | 418 |
+| The item module's reader alone (new readings, no new live play) | 72 |
+| The item module alone (its reader and its live play) | 601 |
 | Another module too (the ability module, the core or the spell module, asked of their session) | 477 |
-| A decision of yours for some part (illusions, information, minds, speech, numbers left out, out of combat) | 682 |
+| A decision of yours still open for some part | 0 |
+| Kept on the list by your decision for some part (out of combat) | 435 |
 | Nothing to automate | 37 |
 
 ## By need
@@ -356,7 +357,7 @@ A result or save only for creatures of a kind (a trait, living creatures, a size
 <a id="missing-number"></a>
 ### Numbers the text doesn't give
 
-A condition value, amount or DC the item's text leaves out (the GM sets it): the user's ruling for a default, then the card applies it. *Where: your decision.*
+A condition value, amount or DC the item's text leaves out (the GM sets it): the user's ruling for a default, then the card applies it. *Where: item reader.*
 
 7 entries.
 
@@ -641,7 +642,7 @@ Rolling twice or rerolling a later roll that the item names only by kind (your n
 <a id="illusions"></a>
 ### Illusions and disbelief
 
-An illusion and the check to disbelieve it: the user's rule for spells (disbelief as control), with the item's DC and who has seen through it. *Where: your decision + item live play.*
+An illusion and the check to disbelieve it: the user's rule for spells (disbelief as control), with the item's DC and who has seen through it. *Where: item live play.*
 
 47 entries.
 
@@ -2325,7 +2326,7 @@ Damage dice, a condition, a bonus or penalty, Hit Points, in words of their own:
 <a id="mind"></a>
 ### Minds, attitudes and behaviour
 
-A creature's attitude, truthfulness, memory, beliefs or compelled behaviour: no game numbers to apply. A note Effect for its time or a GM ruling, by the user's decision. *Where: your decision.*
+A creature's attitude, truthfulness, memory, beliefs or compelled behaviour: no game numbers to apply. A note Effect for its time or a GM ruling, by the user's decision. *Where: item reader.*
 
 14 entries (and 2 of the modules' items).
 
@@ -2361,7 +2362,7 @@ A creature's attitude, truthfulness, memory, beliefs or compelled behaviour: no 
 <a id="information"></a>
 ### Information
 
-Something the user learns: a location, an identity, a creature's statistics, a memory shown, a translation, a direction. An information card whispered to the GM and the user (the user's rule for spells), with what the GM fills in. *Where: your decision + item live play.*
+Something the user learns: a location, an identity, a creature's statistics, a memory shown, a translation, a direction. An information card whispered to the GM and the user (the user's rule for spells), with what the GM fills in. *Where: item live play.*
 
 38 entries (and 7 of the modules' items).
 
@@ -2436,7 +2437,7 @@ Something the user learns: a location, an identity, a creature's statistics, a m
 <a id="speech"></a>
 ### Messages, speech and sound
 
-Messages, languages, telepathy, sounds and silence: note Effects or chat messages, little to apply. *Where: your decision.*
+Messages, languages, telepathy, sounds and silence: note Effects or chat messages, little to apply. *Where: item reader.*
 
 36 entries (and 1 of the modules' items).
 
@@ -2497,7 +2498,7 @@ Messages, languages, telepathy, sounds and silence: note Effects or chat message
 <a id="out-of-combat"></a>
 ### Out of combat and the environment
 
-Hours or days, rest, travel, crafting, downtime, weather, air and water, food: the user's rule keeps out-of-combat consumables as they are; the GM's at the table. *Where: your decision.*
+Hours or days, rest, travel, crafting, downtime, weather, air and water, food: the user's rule keeps out-of-combat consumables as they are; the GM's at the table. *Where: kept listed.*
 
 39 entries (and 5 of the modules' items).
 

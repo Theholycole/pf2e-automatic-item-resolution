@@ -170,7 +170,8 @@ function whoCan(list) {
         ["The item module's reader alone (new readings, no new live play)", list.filter((entry) => only(entry, ["item reader"])).length],
         ["The item module alone (its reader and its live play)", list.filter((entry) => only(entry, ["item reader", "item live play"])).length],
         ["Another module too (the ability module, the core or the spell module, asked of their session)", list.filter((entry) => any(entry, ["ability module", "core", "spell module"])).length],
-        ["A decision of yours for some part (illusions, information, minds, speech, numbers left out, out of combat)", list.filter((entry) => any(entry, ["your decision"])).length],
+        ["A decision of yours still open for some part", list.filter((entry) => any(entry, ["your decision"])).length],
+        ["Kept on the list by your decision for some part (out of combat)", list.filter((entry) => any(entry, ["kept listed"])).length],
         ["Nothing to automate", list.filter((entry) => only(entry, ["none"])).length]
     ];
 }
@@ -233,13 +234,13 @@ const lines = [
     "",
     "## Your decisions",
     "",
-    "The needs whose work starts with a ruling of yours: what a card should do when the item's text gives no game numbers to apply. The spells' rules already decided some of these (information whispered to the GM and the caster, disbelief played as control, out-of-combat consumables left as they are); applying them to items would count those entries done.",
+    "The needs whose work started with a ruling of yours: what a card should do when the item's text gives no game numbers to apply. Still open ones ask their question; answered ones say what was decided, and their work now lies where the worklist says.",
     "",
-    "| Need | PF2e entries (main) | Done by it alone | The question |",
-    "|---|---:|---:|---|",
-    ...ALL.filter((need) => need.where.includes("your decision")).map((need) => `| [${need.title}](#${need.id}) | ${pf2eTotals.main[need.id] ?? 0} | ${onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id))} | ${need.question ?? need.needs} |`),
+    "| Need | PF2e entries (main) | Done by it alone | Question | Decided |",
+    "|---|---:|---:|---|---|",
+    ...ALL.filter((need) => need.question).map((need) => `| [${need.title}](#${need.id}) | ${pf2eTotals.main[need.id] ?? 0} | ${onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id))} | ${need.question} | ${need.decided ?? "open"} |`),
     "",
-    `Answered, these would finish up to ${ALL.filter((need) => need.where.includes("your decision")).reduce((sum, need) => sum + onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id)), 0)} PF2e entries outright (the ones with no other need); the rest also need building.`,
+    `Still open: ${ALL.filter((need) => need.question && !need.decided).length}. Built as decided, the answered ones would finish up to ${ALL.filter((need) => need.decided && need.where !== "kept listed").reduce((sum, need) => sum + onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id)), 0)} PF2e entries outright (the ones with no other need).`,
     "",
     "## Besides the items",
     "",
