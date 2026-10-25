@@ -14,7 +14,7 @@
 
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, damageRollClass, entryOf, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, damageRollClass, entryOf, healCreature as heal, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -74,6 +74,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
             // (And its retaliation cards kept open until then, Instinct Crown (Dragon)'s: closed — 2026-10-25.)
             closeRageCards(item.actor).catch((error) => console.error(`${MODULE_ID} | rage end cards`, error));
         }
+        // (A persistent damage over: a card's Effect that lowered its flat check's DC until then goes — Horned Lion Amulet Recovery's, 2026-10-25.)
+        if (isActiveGM() && item?.type === "condition" && item.slug === "persistent-damage" && item.actor) endRecoveryEffects(item.actor, item.system?.persistent?.damageType).catch((error) => console.error(`${MODULE_ID} | recovery Effect`, error));
         if (item?.type !== "consumable") return;
         deleted.set(item.uuid, { data: { ...item.toObject(false), uuid: item.uuid }, actor: item.actor ?? null });
         setTimeout(() => deleted.delete(item.uuid), 30_000);
@@ -214,6 +216,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         if (!met.ok) throw new Error(`${used.data.name}: its Requirements need ${met.why}.`);
         if (met.struck) plan = { ...plan, struckToken: met.struck };
     }
+    // (A condition its user takes beside the save, Pharasmin Visor's Dazzled: given as it's used, src/compiler/user-conditions.js.)
+    if (plan?.userEffects?.length && actor) await giveUserConditions(plan.userEffects, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user conditions`, error));
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
@@ -453,6 +457,29 @@ function runeKeyOf(rune) {
 // Whether a creature is raging: PF2e's Effect: Rage on it.
 const isRaging = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.slug === "effect-rage" || effect.name === "Effect: Rage");
 
+// A condition its user takes as it's used (plan.userEffects, src/compiler/user-conditions.js), through the ability module's applyChange, said in
+// the chat.
+async function giveUserConditions(effects, { actor, token, used }) {
+    const ability = game.modules.get(ABILITY_ID)?.api?.live;
+    const name = token?.name ?? actor.name;
+    const state = { plan: { item: {} }, ability: { name: used.data.name, uuid: used.data.uuid ?? null }, source: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null, name }, targets: [] };
+    const lines = [];
+    for (const effect of effects) {
+        const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: effect.slug, value: effect.value ?? null, target: "source", duration: effect.duration ?? null }, state) : null;
+        lines.push(line ?? `${name} is ${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
+    }
+    await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${lines.map(escapeHTML).join("; ")}.</p>` });
+}
+
+// Its persistent damage of a type over: the Effects an item card gave it that lower that type's flat-check DC with no time of their own (PF2e's
+// ItemAlteration on pd-recovery-dc for item:damage:type:<type>), deleted — once none of that type is left.
+async function endRecoveryEffects(actor, type) {
+    if (!type || (actor.itemTypes?.condition ?? []).some((condition) => condition.slug === "persistent-damage" && condition.system?.persistent?.damageType === type)) return;
+    const lowers = (effect) => (effect.system?.rules ?? []).some((rule) => rule?.key === "ItemAlteration" && rule.property === "pd-recovery-dc" && [].concat(rule.predicate ?? []).includes(`item:damage:type:${type}`));
+    const ids = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.card && effect.system?.duration?.unit === "unlimited" && lowers(effect)).map((effect) => effect.id);
+    if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
+}
+
 // A creature's rage over: its open cards that lasted until then (plan.retaliation.untilRage, src/compiler/direct-damage.js) closed, in the last
 // 200 messages.
 async function closeRageCards(actor) {
@@ -668,6 +695,15 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (A Speed of a new kind: Umbral Wings' fly Speed — an Effect with PF2e's BaseSpeed rule.)
     for (const speed of state.plan.item?.speeds ?? []) {
         if (!target.actor) break;
+        // (One its switch turns off, Steamflight Pack's: the item's next activation ends it — its Effect gone, no new one.)
+        // (Either of its activations: the Effect's origin is the item, else its name.)
+        const fromItem = (effect) => (state.item.uuid ? effect.system?.context?.origin?.item === state.item.uuid : String(effect.name).startsWith(`${state.item.name}:`));
+        const on = speed.toggle ? (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.speed === speed.type && fromItem(effect)) : [];
+        if (on.length) {
+            await target.actor.deleteEmbeddedDocuments("Item", on.map((effect) => effect.id));
+            lines.push(`${recipient.name}: ${state.item.name}'s ${speed.type} Speed turned off`);
+            continue;
+        }
         await target.actor.createEmbeddedDocuments("Item", [speedEffectSource(speed, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${speedText(speed)}`);
     }
@@ -948,24 +984,6 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     return lines;
 }
 
-// Healing through PF2e (its healing bonuses, its "healed" message with undo), then
-// Dying ends at 1 Hit Point or more (the core's api.dying; PF2e leaves it to the table).
-async function heal({ token, actor }, name, amount, state) {
-    if (!actor || !(amount > 0)) return null;
-    const dying = game.modules.get(CORE_ID)?.api?.dying;
-    const wasDying = dying?.isDying(actor) ?? actor.hasCondition?.("dying") ?? false;
-    const before = Number(actor.system?.attributes?.hp?.value) || 0;
-    await actor.applyDamage({ damage: -amount, token: token ?? actor.getActiveTokens?.(true, true)?.[0] ?? undefined });
-    const healed = (Number(actor.system?.attributes?.hp?.value) || 0) - before;
-    const parts = [`${name} regains ${healed} Hit Points${healed < amount ? ` (of ${amount})` : ""}${state.rolled?.kind === "healing" ? ", PF2e's roll" : ""}`];
-    if (wasDying && dying) {
-        // (Magical Medal (Phoenix's Fire)'s "Your Wounded value does not increase": the core's keepWounded.)
-        const revived = await dying.recoverFromDying(actor, wasDying, { keepWounded: Boolean(state.plan?.item?.keepWounded) });
-        // (The core's words are a spell's: "this spell doesn't increase it" — an item's here.)
-        if (revived) parts.push(dying.revivedNote(revived).replace(/\bthis spell\b/, "this item"));
-    } else if (wasDying) parts.push("It was dying: end Dying and raise Wounded by hand.");
-    return parts.join(". ");
-}
 
 // The item's PF2e Effect on the creature: its grade, the spell's rank, the item's time.
 // The recovery check for each persistent damage of the item's types: PF2e's condition.rollRecovery, which deletes it on a

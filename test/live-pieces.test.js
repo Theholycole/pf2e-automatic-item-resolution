@@ -105,3 +105,78 @@ test("Flare Beacon: its light, bright and dim in feet, at its user's square for 
     assert.equal(lights.length, 0);
     globalThis.game.scenes = scenes;
 });
+
+test("Spirit Fan: its living target healed instead of a save, its undead one's save card; Lance of Sun's Radiance's dragons at 6d12 spirit", async () => {
+    const { planFor } = await import("../src/live/if-target.js");
+    const fan = compileActivations(source("Spirit Fan"))[0].plan;
+    assert.deepEqual([fan.ifTarget, fan.partial], [[{ living: true, heal: "3d8+8" }], undefined]);
+    const living = foundry.makeActor({ id: "pieces-living", name: "Living Ally", hp: 10, max: 30 });
+    const undead = foundry.makeActor({ id: "pieces-undead", name: "Ghoul", undead: true });
+    foundry.place(living, 300, 34000);
+    foundry.place(undead, 400, 34000);
+    const card = await activated(lancer, "Spirit Fan");
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [living.token.uuid, undead.token.uuid] });
+    await settle();
+    // (The stand-in's dice total 7.)
+    assert.equal(living.system.attributes.hp.value, 17);
+    const cards = foundry.posted.slice(before);
+    assert.deepEqual([cards.length, cards[0].tokens.map((token) => token.actor?.name ?? token.name), cards[0].plan.kindHeal], [1, ["Ghoul"], undefined]);
+    assert.ok(card.flags[MODULE_ID].card.results.some((line) => /^Living Ally regains 7 Hit Points.*instead of the save/.test(line)), card.flags[MODULE_ID].card.results.join(" | "));
+    const lance = compileActivations(source("Lance of Sun's Radiance"))[1].plan;
+    assert.deepEqual([lance.partial, planFor(lance, { system: { traits: { value: ["dragon"] } } }).resolution.sharedDamage.components[0].formula, planFor(lance, { system: { traits: { value: ["humanoid"] } } }).resolution.sharedDamage.components[0].formula], [undefined, "6d12[spirit]", "6d8[spirit]"]);
+});
+
+test("Pharasmin Visor: its user Dazzled until the start of its next turn as it's used, beside the undead's save card", async () => {
+    const visor = compileActivations(source("Pharasmin Visor"))[0].plan;
+    assert.deepEqual([visor.userEffects, visor.partial], [[{ slug: "dazzled", value: null, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "source-turn" } }], undefined]);
+    const before = foundry.applied.length;
+    await activated(lancer, "Pharasmin Visor");
+    const change = foundry.applied.slice(before).find((entry) => entry.change.op === "condition")?.change;
+    assert.deepEqual([change?.slug, change?.target, change?.duration?.expiry], ["dazzled", "source", "turn-start"]);
+});
+
+test("Staff of Sun Wukong's Meteor Slam: its damage and Enfeebled on the creature targeted, and the save card for the others within 10 feet but its wielder", async () => {
+    const slam = compileActivations(source("Staff of Sun Wukong"))[0].plan;
+    assert.deepEqual([slam.resolution.check.roll, slam.resolution.sharedDamage.components[0].formula, slam.resolution.outcomes.success.effects[0].slug, slam.around[0].radius, slam.around[0].notUser, slam.partial], ["automatic", "10d10[bludgeoning]", "enfeebled", 10, true, undefined]);
+    const wielder = foundry.makeActor({ id: "pieces-wielder", name: "Wielder", owners: ["player"] });
+    const struck = foundry.makeActor({ id: "pieces-struck", name: "Struck" });
+    const beside = foundry.makeActor({ id: "pieces-beside", name: "Beside" });
+    foundry.place(wielder, 0, 35000);
+    foundry.place(struck, 100, 35000);
+    foundry.place(beside, 200, 35000);
+    const card = await activated(wielder, "Staff of Sun Wukong");
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [struck.token.uuid] });
+    await settle();
+    const cards = foundry.posted.slice(before);
+    assert.deepEqual(cards.map((entry) => [entry.plan.resolution.check.roll, entry.tokens.map((token) => token.actor?.name ?? token.name)]), [["automatic", ["Struck"]], ["save", ["Beside"]]]);
+});
+
+test("Horned Lion Amulet: two ways, its triggering damage plain fire (its Effect) or persistent fire (both Effects and the DC 10 flat check)", () => {
+    const amulet = compileItem(source("Horned Lion Amulet"));
+    assert.deepEqual([amulet.builtin, amulet.once, amulet.partial], ["ways", true, undefined]);
+    assert.deepEqual(amulet.ways.map((way) => [way.name, way.plan.resolution.applications.map((entry) => entry.label), way.plan.item.recovery ?? null]), [["Fire damage", ["Effect: Horned Lion Amulet"], null], ["Persistent fire damage", ["Effect: Horned Lion Amulet", "Effect: Horned Lion Amulet Recovery"], { types: ["fire"], dc: 10 }]]);
+});
+
+test("Steamflight Pack: its fly Speed of 20 feet on, for its 20 minutes of water; its switch again turns it off", async () => {
+    const pilot = foundry.makeActor({ id: "pieces-pilot", name: "Pilot", owners: ["player"] });
+    foundry.place(pilot, 0, 36000);
+    const pack = foundry.giveItem(pilot, source("Steamflight Pack"));
+    const press = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: pack.uuid, activation: 1, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+        return card;
+    };
+    const on = await press();
+    assert.match(on.content, /A fly Speed of 20 feet for 20 minutes \(the item&#39;s next activation turns it off\)|A fly Speed of 20 feet for 20 minutes \(the item's next activation turns it off\)/);
+    const speed = () => pilot.itemTypes.effect.filter((effect) => effect.flags?.[MODULE_ID]?.speed === "fly");
+    assert.equal(speed().length, 1);
+    const off = await press();
+    assert.equal(speed().length, 0);
+    assert.ok(off.flags[MODULE_ID].card.results.some((line) => /Steamflight Pack(?:: On\/Off Switch)?'s fly Speed turned off/.test(line)), off.flags[MODULE_ID].card.results.join(" | "));
+});

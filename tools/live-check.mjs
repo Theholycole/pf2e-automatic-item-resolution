@@ -1835,6 +1835,112 @@ export const cases = {
         return { placed: true };
     },
 
+    // Spirit Fan (docs/needs.md, 2026-10-25): its living target healed instead of a save; its undead target's save card. And Lance of Sun's
+    // Radiance's dragon: its own save card, at 6d12 spirit.
+    async kindHealAndDamage(scene) {
+        await clearSquares(scene, [[2, 2], [3, 2], [4, 2], [6, 2], [7, 2]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user } = await creature(scene, "Fan Wielder", { type: "character", x: 2, y: 2 });
+        const { actor: living, token: livingToken } = await creature(scene, "Fan Living", { x: 3, y: 2, hp: 50 });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Fan Undead", { x: 4, y: 2, alliance: "opposition" });
+        await undead.update({ "system.traits.value": ["undead"] });
+        await living.update({ "system.attributes.hp.value": 10 });
+        const fan = await give(user, "Spirit Fan");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(fan.uuid, 0);
+        let card = await messageAfter(since, itemCard("expose"), { what: "the fan's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [livingToken.uuid, undeadToken.uuid] });
+        await until(() => living.system.attributes.hp.value > 10, "the living one healed", { timeout: 8000 });
+        const fanCards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).map((message) => message.flags[ABILITY].card);
+        assert(fanCards.length === 1 && fanCards[0].targets.every((target) => target.actorUuid === undead.uuid), `one save card, the undead's (${fanCards.length})`);
+        const { actor: wielder } = await creature(scene, "Lance Wielder", { type: "character", x: 6, y: 2 });
+        const { actor: dragon, token: dragonToken } = await creature(scene, "Lance Dragon", { x: 7, y: 2, alliance: "opposition" });
+        await dragon.update({ "system.traits.value": ["dragon"] });
+        const lance = await give(wielder, "Lance of Sun's Radiance");
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(lance.uuid, 1);
+        card = await messageAfter(since, itemCard("expose"), { what: "the lance's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [dragonToken.uuid, undeadToken.uuid] });
+        await until(() => game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).length >= 2, "two save cards", { timeout: 10000 });
+        const lanceCards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).map((message) => message.flags[ABILITY].card);
+        const formulaFor = (actor) => JSON.stringify(lanceCards.find((state) => state.targets.some((target) => target.actorUuid === actor.uuid))?.plan?.resolution?.sharedDamage ?? null);
+        assert(/6d12\[spirit\]/.test(formulaFor(dragon)) && /6d8\[spirit\]/.test(formulaFor(undead)), `the dragon's 6d12, the other's 6d8 (${formulaFor(dragon)} / ${formulaFor(undead)})`);
+        return { healedTo: living.system.attributes.hp.value };
+    },
+
+    // Pharasmin Visor's Pharasma's Disdain (docs/needs.md, 2026-10-25): its user Dazzled as it's used, beside the undead's save card.
+    async visorDazzle(scene) {
+        await clearSquares(scene, [[9, 2]]);
+        const { actor: user } = await creature(scene, "Visor Wearer", { type: "character", x: 9, y: 2 });
+        const visor = await give(user, "Pharasmin Visor");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(visor.uuid, 0);
+        await messageAfter(since, itemCard("expose"), { what: "the visor's card" });
+        await until(() => user.hasCondition("dazzled"), "its user dazzled", { timeout: 8000 });
+        return { dazzled: true };
+    },
+
+    // Staff of Sun Wukong's Meteor Slam (docs/needs.md, 2026-10-25): the creature targeted's damage and Enfeebled with no save, then the save
+    // card for the others within 10 feet of it — not its wielder.
+    async meteorSlam(scene) {
+        await clearSquares(scene, [[11, 2], [12, 2], [13, 2]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: wielder } = await creature(scene, "Meteor Wielder", { type: "character", x: 11, y: 2 });
+        const { actor: struck, token: struckToken } = await creature(scene, "Meteor Struck", { x: 12, y: 2, alliance: "opposition" });
+        const { actor: beside } = await creature(scene, "Meteor Beside", { x: 13, y: 2, alliance: "opposition" });
+        const staff = await give(wielder, "Staff of Sun Wukong");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(staff.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the staff's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [struckToken.uuid] });
+        await until(() => game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).length >= 2, "its two cards", { timeout: 10000 });
+        await wait(800);
+        const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).map((message) => message.flags[ABILITY].card);
+        const forActor = (actor) => cards.find((state) => state.targets.some((target) => target.actorUuid === actor.uuid));
+        assert(forActor(struck)?.plan?.resolution?.check?.roll === "automatic" && forActor(beside)?.plan?.resolution?.check?.roll === "save" && !forActor(wielder), `the struck one's automatic card, the other's save, none for the wielder (${cards.length})`);
+        return { cards: cards.length };
+    },
+
+    // Horned Lion Amulet (docs/needs.md, 2026-10-25): its ways card; the persistent fire way gives both Effects and the DC 10 flat check.
+    async hornedLionWays(scene) {
+        await clearSquares(scene, [[15, 2]]);
+        const { actor: user } = await creature(scene, "Lion Wearer", { type: "character", x: 15, y: 2 });
+        const amulet = await give(user, "Horned Lion Amulet");
+        let since = Date.now();
+        await amulet.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the amulet's ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const card = await messageAfter(since, itemCard("item"), { what: "the persistent fire way's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const has = (name) => user.itemTypes.effect.some((effect) => effect.name === name);
+        await until(() => has("Effect: Horned Lion Amulet") && has("Effect: Horned Lion Amulet Recovery"), "both Effects", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Steamflight Pack (docs/needs.md, 2026-10-25): its switch turns its 20-foot fly Speed on, and off again.
+    async steamflightToggle(scene) {
+        await clearSquares(scene, [[17, 2]]);
+        const { actor: pilot } = await creature(scene, "Steam Pilot", { type: "character", x: 17, y: 2 });
+        const pack = await give(pilot, "Steamflight Pack");
+        const press = async () => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(pack.uuid, 1);
+            const card = await messageAfter(since, itemCard("item"), { what: "the switch's card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            return card;
+        };
+        const fly = () => pilot.itemTypes.effect.filter((effect) => effect.flags?.[NS]?.speed === "fly");
+        await press();
+        await until(() => fly().length === 1 && pilot.system.movement?.speeds?.fly?.value === 20, `a fly Speed of 20 (${pilot.system.movement?.speeds?.fly?.value})`, { timeout: 8000 });
+        await press();
+        await until(() => fly().length === 0, "turned off", { timeout: 8000 });
+        return { toggled: true };
+    },
+
     // A spell dropped on a Generic Spellgun's row in an inventory opens its picker with that spell (not PF2e's maker); loaded with Acid Grip
     // at rank 4, Fear dropped on its sheet makes it Fear's spellgun, with nothing of Acid Grip left in its plan.
     async spellDroppedOnSpellgun(scene) {

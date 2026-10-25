@@ -469,11 +469,12 @@ test("Lockpicker's Oil: its user's status bonus to Thievery checks to Pick a Loc
     assert.deepEqual([effect.flags["pf2e-automatic-item-resolution"].firstDegree.selector, effect.system.duration.value, effect.system.duration.unit], ["thievery", 1, "minutes"]);
 });
 
-test("Lance of Sun's Radiance: a line's basic Reflex damage, Blinded on a critical failure; a dragon's other damage a note", () => {
+test("Lance of Sun's Radiance: a line's basic Reflex damage, Blinded on a critical failure; a dragon's other damage its own (plan.ifTarget)", () => {
     const lance = compileActivations(item("Lance of Sun's Radiance"), { spellEffects }).find((entry) => entry.activation.name === "Sun Cutting Scales").plan;
     assert.deepEqual([lance.resolution.kind, lance.resolution.check.statistic, lance.resolution.check.basic, lance.targeting.area], ["save", "reflex", true, { type: "line", value: 120 }]);
     assert.ok(lance.resolution.outcomes.criticalFailure.effects.some((effect) => effect.slug === "blinded"));
-    assert.deepEqual(lance.notes, ["A dragon takes 6d12 spirit damage instead (by hand)."]);
+    // (2026-10-25: the dragons' card has their 6d12 spirit, src/live/if-target.js — no longer a note.)
+    assert.deepEqual([lance.notes, lance.ifTarget], [undefined, [{ traits: ["dragon"], formula: "6d12[spirit]" }]]);
 });
 
 test("Octopus Potion: its arms' Grapple at the potion's own Athletics modifier, given in a later sentence (+12 for the lesser), PF2e's Grapple rows; the random target and the added-effect table notes", async () => {

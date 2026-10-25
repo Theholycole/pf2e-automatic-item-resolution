@@ -17,14 +17,23 @@ export function materialGetsPast(actor, material) {
 // (2026-10-20, src/compiler/kind-saves.js: a creature's traits and senses — PF2e's actor.traits Set and system.perception.senses.)
 const traitsOf = (actor) => new Set([...(actor?.system?.traits?.value ?? []), ...(actor?.traits ?? [])].map((trait) => String(trait).toLowerCase()));
 const sensesOf = (actor) => [...(actor?.system?.perception?.senses ?? []), ...(actor?.perception?.senses ?? [])].map((sense) => String(sense?.type ?? sense).toLowerCase());
-const fits = (entry, actor) => (entry.material ? materialGetsPast(actor, entry.material) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
+// (Living, PF2e's mode of being — not undead nor a construct when PF2e doesn't say: Spirit Fan's living target, 2026-10-25.)
+const living = (actor) => (actor?.modeOfBeing ? actor.modeOfBeing === "living" : !traitsOf(actor).has("undead") && !traitsOf(actor).has("construct"));
+const fits = (entry, actor) => (entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
 
 // The plan for that creature: its riders added to their degree's effects when it fits; a save's bonus or penalty for its kind (Lamentation of
 // the Faithless's holy creatures' –2); null for a kind immune to it (its unholy ones).
+// (2026-10-25: healing instead for those creatures, Spirit Fan's living target's "the energy restores 3d8+8 Hit Points" — the plan's kindHeal, no
+// save, healed by the card itself (scripts/poisons.js); another damage for them, Lance of Sun's Radiance's dragons' 6d12 spirit — its shared
+// damage's first formula.)
 export function planFor(plan, actor) {
     const riders = (plan?.ifTarget ?? []).filter((entry) => fits(entry, actor));
     if (!riders.length) return plan;
     if (riders.some((entry) => entry.immune)) return null;
+    const heal = riders.find((entry) => entry.heal);
+    if (heal) return { ...plan, kindHeal: heal.heal };
+    const formula = riders.find((entry) => entry.formula)?.formula;
+    if (formula && plan.resolution.sharedDamage?.components?.length) plan = { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: plan.resolution.sharedDamage.components.map((component, index) => (index === 0 ? { ...component, formula } : component)) } } };
     const outcomes = { ...plan.resolution.outcomes };
     for (const rider of riders.filter((entry) => entry.degree && entry.effects)) outcomes[rider.degree] = { ...outcomes[rider.degree], effects: [...(outcomes[rider.degree]?.effects ?? []), ...rider.effects] };
     const bonuses = riders.filter((entry) => entry.bonus);

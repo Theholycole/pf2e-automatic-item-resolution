@@ -79,3 +79,31 @@ export function aroundAllies(html, item, options = {}) {
     const resolution = worse ? { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, criticalFailure: { ...failure, effects: [...(failure.effects ?? []), { kind: "condition", slug: "slowed", value: Number(worse[1]), duration: null }] } } } : plan.resolution;
     return { entries: [{ radius: Number(allies[1]), includeTarget: false, allies: true, plan: { ...plan, resolution } }], said: [allies[0], ...(worse ? [worse[0].trim()] : [])] };
 }
+
+// One creature's damage and condition with no save, then a save for every other creature near it — Staff of Sun Wukong's Meteor Slam,
+// "dealing @Damage[10d10[bludgeoning]] damage to a single creature within 120 feet and making it Enfeebled 1 for 1 day. All other creatures
+// within 10 feet of the target (except the staff's wielder) take @Damage[8d10[sonic]] damage (@Check[reflex|dc:43|basic] save)" (2026-10-25):
+// the card at the creature targeted, its damage and condition automatic, and plan.around's save card at the creatures within that distance of
+// it, of any side, but not its user (notUser). → the plan, or null.
+const ONE_THEN_AROUND = /\bdealing (@Damage\[(?:[^[\]]|\[[^\]]*\])*\])(?:\{[^}]*\})? damage to a single creature within (\d+) feet and making it @UUID\[Compendium\.pf2e\.conditionitems\.Item\.[^\]]+\]\{(\w+)(?: (\d))?\} for (\d+|one|an?) (rounds?|minutes?|hours?|days?)\. All other creatures within (\d+) feet of the target \(except the [\w' -]+?(?:'|’|&#39;)s wielder\) take (@Damage\[(?:[^[\]]|\[[^\]]*\])*\])(?:\{[^}]*\})? damage \((@Check\[(?:fortitude|reflex|will)\|[^\]]*\bbasic\b[^\]]*\])(?:\{[^}]*\})? save\)\./i;
+const DAMAGE_LINK = /^@Damage\[(\d+d\d+(?:\+\d+)?)\[(\w+)\](?:\|[^\]]*)?\]$/i;
+const UNIT = { round: "rounds", minute: "minutes", hour: "hours", day: "days" };
+export function oneThenAroundPlan(html, base, item, options = {}) {
+    const match = ONE_THEN_AROUND.exec(String(html ?? ""));
+    if (!match) return null;
+    const [, damage, range, condition, value, count, unit, radius, aroundDamage, check] = match;
+    const own = DAMAGE_LINK.exec(damage);
+    const around = savePlan(item, `The target takes ${aroundDamage} damage (${check} save).`, options);
+    if (!own || !around) return null;
+    const duration = { mode: "fixed", value: /^\d+$/.test(count) ? Number(count) : 1, unit: UNIT[unit.toLowerCase().replace(/s$/, "")], expiry: "turn-start", anchor: "effect-start" };
+    const hit = { damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] }, effects: [{ kind: "condition", slug: condition.toLowerCase(), value: value ? Number(value) : null, duration }], modifiers: [] };
+    return {
+        ...base,
+        modelVersion: MODEL_VERSION,
+        automation: { level: "automatic" },
+        targeting: { target: "1 creature", range: `${range} feet`, area: null },
+        trigger: { event: "use" },
+        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `${own[1]}[${own[2].toLowerCase()}]`, type: own[2].toLowerCase(), category: null }] }, outcomes: { criticalSuccess: none(), success: hit, failure: none(), criticalFailure: none() } },
+        around: [{ radius: Number(radius), includeTarget: false, allies: false, notUser: true, plan: around }]
+    };
+}

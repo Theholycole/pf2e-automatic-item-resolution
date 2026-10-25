@@ -298,6 +298,21 @@ export function ownPlan(item, base, options = {}) {
     const others = own ? links.filter((link) => link !== own && link !== doseLink && !allyLinks.some((entry) => entry.uuid === link.uuid) && !RIDER_LINKS.includes(String(link.label ?? "").replace(/^Effect:\s*/i, ""))).map((link) => `${link.label ?? "Another Effect"} is linked too: the GM's, when the text says it applies.`) : [];
     // (A granted spell with no PF2e Effect: a cast; only once the spell-effects index is known, so it isn't one by mistake.)
     if (!healing && !applications.length) return !links.length && options.spellEffects ? castPlan(item) : null;
+    // (Its second Effect only if the triggering damage was persistent — Horned Lion Amulet's "If the triggering damage was due to persistent fire
+    // damage, you immediately attempt a DC 10 flat check to recover from the persistent damage … Effect: Horned Lion Amulet Recovery": two ways
+    // on its card, the triggering damage's kind — its Effect alone, or both Effects and that flat check, 2026-10-25.)
+    const html = String(item?.system?.description?.value ?? "");
+    const persistent = own && !healing ? /\bIf the triggering damage was due to persistent (\w+) damage, you immediately attempt an? @Check\[flat\|[^\]]*?\bdc:(\d+)[^\]]*\](?:\{[^}]*\})? to recover from the persistent damage\b/i.exec(html) : null;
+    const recoveryLink = persistent ? links.find((link) => link !== own && /\bRecovery$/i.test(String(link.label ?? ""))) : null;
+    if (persistent && recoveryLink) {
+        const type = persistent[1].toLowerCase();
+        const shared = { ...base, automation: { level: "automatic" }, targeting: { target: recipient === "drinker" ? "the drinker" : null, range: null, area: null }, trigger: { event: "use" } };
+        const ways = [
+            { name: `${type.charAt(0).toUpperCase()}${type.slice(1)} damage`, html, plan: { ...shared, resolution: { kind: "effect", applications: [application(own, recipient)] }, item: { type: item.type, recipient: "user" } } },
+            { name: `Persistent ${type} damage`, html, plan: { ...shared, resolution: { kind: "effect", applications: [application(own, recipient), application(recoveryLink, recipient)] }, item: { type: item.type, recipient: "user", recovery: { types: [type], dc: Number(persistent[2]) } } } }
+        ];
+        return { ...shared, builtin: "ways", once: true, targeting: { target: null, range: null, area: null }, ways };
+    }
     const resolution = healing && !applications.length
         ? { kind: "healing", native: { healing } }
         : { kind: "effect", applications, ...(healing ? { native: { healing } } : {}) };

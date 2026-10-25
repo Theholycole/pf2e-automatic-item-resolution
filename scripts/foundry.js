@@ -149,3 +149,23 @@ export async function lowerCondition(actor, name, slug, by) {
     const after = Number(left?.value) || 0;
     return after ? `${name}'s ${slug} lowered to ${after}` : left || actor.hasCondition?.(slug) ? `${name} is still ${slug}` : `${name} is no longer ${slug}`;
 }
+
+// Healing through PF2e (its healing bonuses, its "healed" message with undo), then
+// Dying ends at 1 Hit Point or more (the core's api.dying; PF2e leaves it to the table). An item card's healing, and a save card's for the
+// creatures its plan heals instead (src/live/if-target.js). → the line for the card.
+export async function healCreature({ token, actor }, name, amount, state = {}) {
+    if (!actor || !(amount > 0)) return null;
+    const dying = game.modules.get(CORE_ID)?.api?.dying;
+    const wasDying = dying?.isDying(actor) ?? actor.hasCondition?.("dying") ?? false;
+    const before = Number(actor.system?.attributes?.hp?.value) || 0;
+    await actor.applyDamage({ damage: -amount, token: token ?? actor.getActiveTokens?.(true, true)?.[0] ?? undefined });
+    const healed = (Number(actor.system?.attributes?.hp?.value) || 0) - before;
+    const parts = [`${name} regains ${healed} Hit Points${healed < amount ? ` (of ${amount})` : ""}${state?.rolled?.kind === "healing" ? ", PF2e's roll" : ""}`];
+    if (wasDying && dying) {
+        // (Magical Medal (Phoenix's Fire)'s "Your Wounded value does not increase": the core's keepWounded.)
+        const revived = await dying.recoverFromDying(actor, wasDying, { keepWounded: Boolean(state?.plan?.item?.keepWounded) });
+        // (The core's words are a spell's: "this spell doesn't increase it" — an item's here.)
+        if (revived) parts.push(dying.revivedNote(revived).replace(/\bthis spell\b/, "this item"));
+    } else if (wasDying) parts.push("It was dying: end Dying and raise Wounded by hand.");
+    return parts.join(". ");
+}

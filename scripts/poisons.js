@@ -7,7 +7,7 @@ import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, distancePenalt
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
 import { scaledPlan } from "../src/compiler/scaled.js";
-import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, lowerCondition, spaceOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, healCreature, lowerCondition, spaceOf, stateOf } from "./foundry.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { targetGroups } from "../src/live/if-target.js";
 
@@ -208,6 +208,16 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
                 lines.push(`${group.tokens.map((token) => token.name ?? token.actor?.name).join(", ")}: immune to ${state.item.name} (by kind).`);
                 continue;
             }
+            // (Healed instead, no save — Spirit Fan's living target: its dice rolled and the Hit Points given here, src/live/if-target.js.)
+            if (group.plan.kindHeal) {
+                for (const token of group.tokens) {
+                    const creature = token.actor ?? token.object?.actor;
+                    const roll = await new Roll(group.plan.kindHeal).evaluate();
+                    const line = await healCreature({ token: token.object ?? token, actor: creature }, token.name ?? creature?.name, roll.total, { plan: group.plan });
+                    lines.push(`${line ?? `${token.name ?? creature?.name}: no Hit Points to regain`} (${group.plan.kindHeal} = ${roll.total}, instead of the save).`);
+                }
+                continue;
+            }
             carded.push(...group.tokens);
             await postCard({ plan: group.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: group.tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         }
@@ -220,7 +230,9 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         const center = tokens[0];
         const centerActor = center?.actor;
         const near = creaturesNear(center, entry.radius).map((other) => canvas.tokens.placeables.find((placeable) => placeable.document.uuid === other.tokenUuid)).filter(Boolean)
-            .filter((placeable) => !entry.allies || (placeable.actor && centerActor && (placeable.actor.isAllyOf?.(centerActor) ?? placeable.actor.alliance === centerActor.alliance)));
+            .filter((placeable) => !entry.allies || (placeable.actor && centerActor && (placeable.actor.isAllyOf?.(centerActor) ?? placeable.actor.alliance === centerActor.alliance)))
+            // (Not its user, Meteor Slam's "except the staff's wielder".)
+            .filter((placeable) => !entry.notUser || placeable.actor?.uuid !== state.user.actorUuid);
         const others = [...(entry.includeTarget ? [center.object ?? center] : []), ...near];
         const where = `within ${entry.radius} feet of ${center.name ?? centerActor?.name ?? "the target"}`;
         if (!others.length) lines.push(`No ${entry.allies ? "ally of it" : "creature"} ${where}.`);

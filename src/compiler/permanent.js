@@ -20,7 +20,7 @@ import { beadsPlan } from "./beads.js";
 import { focusPlan } from "./focus.js";
 import { compileStrike, strikeOver } from "./strikes.js";
 import { hitAuraPlan } from "./hit-auras.js";
-import { aroundAllies, hitAroundPlan } from "./hit-around.js";
+import { aroundAllies, hitAroundPlan, oneThenAroundPlan } from "./hit-around.js";
 import { cleanNotes } from "./notes.js";
 import { thrownPlan } from "./thrown.js";
 import { withImmunity } from "./immunity.js";
@@ -69,6 +69,8 @@ import { withSaveEnds } from "./save-ends.js";
 import { withStrikeGate } from "./strike-gate.js";
 import { withKindSaves } from "./kind-saves.js";
 import { withEscapeEnds } from "./escape-ends.js";
+import { withUserConditions } from "./user-conditions.js";
+import { onOffPlan } from "./on-off.js";
 import { withEffectThenCard } from "./effect-then-card.js";
 import { withRuneSteps } from "./rune-steps.js";
 
@@ -149,7 +151,7 @@ export function compileActivations(item, options = {}) {
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withUntracedRules(withHonestPartial(withStrikeGate(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // Only after its user's action succeeds, Glamorous Buckler's "On a successful Feint, the target is Dazzled for 1 round" (src/compiler/item-data.js
@@ -494,6 +496,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = takePlan(activation.html, base) ?? plan;
         // (Temporary Hit Points for another creature, src/compiler/given-temp.js: Skeletal Claw's undead.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = givenTempPlan(activation.html, base) ?? plan;
+        // (One creature's damage and condition, then a save for the others near it — Staff of Sun Wukong's Meteor Slam: src/compiler/hit-around.js.)
+        plan = oneThenAroundPlan(activation.html, base, part, options) ?? plan;
         // (Saves for the allies of the creature it hurts, beside its own row: plan.around, src/compiler/hit-around.js.)
         if (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic" && plan.targeting?.target === "1 creature") {
             const allies = aroundAllies(activation.html, part, options);
@@ -508,6 +512,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = shoveFartherPlan(activation.html, base) ?? plan;
         // (Beside a card of its own that gives it back — plan.item.regain, Preordained Spear's — no note: 2026-10-25.)
         if (mythicGain) plan = !plan || plan.noteOnly || plan.builtin === "no-effect" ? mythicGain : regain ? plan : (plan.notes ?? []).some((note) => /\bMythic Point\b/.test(note)) ? plan : { ...plan, notes: [...(plan.notes ?? []), "Its user also gains 1 Mythic Point (by hand)."] };
+        // (A Speed while it's on, Steamflight Pack's fly Speed — its switch turns it off again: src/compiler/on-off.js.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = onOffPlan(activation.html, item, base) ?? plan;
         // (Fruit it grows that heal when eaten: Verdant Branch's — consumables in its user's inventory.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = fruitPlan(activation.html, base, item) ?? plan;
         // (A roll on its own table, src/compiler/random-table.js: Madcap Top's d20, Pistol of Wonder's d% — each row's own card; over any

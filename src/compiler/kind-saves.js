@@ -18,7 +18,15 @@ const READINGS = [
     [/\b(Mythic|Undead|Holy|Unholy|Fiend|Celestial|Elemental|Construct|Aquatic|Amphibious) creatures take an? [-–−](\d+) (circumstance|status) penalty to saves against (?:it|this|the [\w' -]+|[a-z][\w' -]*)\./, (match) => [{ traits: [match[1].toLowerCase()], bonus: bonusOf(match[2], match[3]) }]],
     // (A save only for a living creature — Slumber Arrow's "a living creature hit by it … must attempt", Ghost Ampoule's "each living creature in
     // a 15-foot emanation", Moritype's "If used on a living creature": undead and constructs aren't living, so no save card for them.)
-    [/\b(?:a|each|any) living creature\b[^.]*?\b(?:must attempt|to attempt)\b|\bIf used on a living creature, that creature must attempt\b/i, () => [{ traits: ["undead", "construct"], immune: true }]]
+    [/\b(?:a|each|any) living creature\b[^.]*?\b(?:must attempt|to attempt)\b|\bIf used on a living creature, that creature must attempt\b/i, () => [{ traits: ["undead", "construct"], immune: true }]],
+    // (2026-10-25: another damage for a kind, Lance of Sun's Radiance's "or 6d12 spirit damage if they're a dragon" — in src/compiler/item-data.js's
+    // words "A dragon takes 6d12 spirit damage instead" — that formula for them.)
+    [/\bAn? ([\w-]+) takes (\d+d\d+) (\w+) damage instead\./i, (match) => [{ traits: [match[1].toLowerCase()], formula: `${match[2]}[${match[3].toLowerCase()}]` }]],
+    [/\bor (\d+d\d+) (\w+) damage if they're an? ([\w-]+)\b/i, (match) => [{ traits: [match[3].toLowerCase()], formula: `${match[1]}[${match[2].toLowerCase()}]` }]],
+    // (Healing instead for a living one, Spirit Fan's "If the target is a living creature, the energy restores 3d8+8 Hit Points" beside its undead's save.)
+    [/\bIf the target is a living creature, (?:the energy|it) restores (\d+d\d+(?:\+\d+)?) Hit Points\./i, (match) => [{ living: true, heal: match[1] }]],
+    // (A penalty for a trait's creatures, Golden Gloves' "Unholy creatures take a –2 item penalty to their roll".)
+    [/\b(Unholy|Holy|Undead|Fiend|Celestial|Dragon|Mythic) creatures take an? [-–−](\d+) (item|status|circumstance) penalty to their (?:roll|saves?|saving throws?)\./, (match) => [{ traits: [match[1].toLowerCase()], bonus: bonusOf(match[2], match[3]) }]]
 ];
 
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "");
@@ -31,10 +39,23 @@ function kindPlan(plan, plain) {
         return match ? { sentence: match[0], entries: build(match) } : null;
     }).filter(Boolean);
     if (!read.length) return plan;
-    const kept = (list) => (Array.isArray(list) ? list.filter((entry) => !read.some(({ sentence }) => said(entry).includes(sentence.slice(0, 60)))) : list);
+    // (Its note in the reworded form too, "A dragon takes 6d12 spirit damage instead (by hand)".)
+    const reworded = (entry) => /^An? [\w-]+ takes \d+d\d+ \w+ damage instead(?: \(by hand\))?\.$/i.test(said(entry).trim()) && read.some(({ entries }) => entries.some((one) => one.formula));
+    // (Dashes as one: the note's "-2", the text's "–2".)
+    const flat = (words) => String(words).replace(/[–−]/g, "-");
+    const kept = (list) => (Array.isArray(list) ? list.filter((entry) => !reworded(entry) && !read.some(({ sentence }) => flat(said(entry)).includes(flat(sentence.slice(0, 60)).replace(/\.$/, "")))) : list);
     const notes = kept(plan.notes);
     const { notes: _notes, ...rest } = plan;
-    return { ...rest, ...(notes?.length ? { notes } : {}), ifTarget: [...(plan.ifTarget ?? []), ...read.flatMap(({ entries }) => entries)] };
+    // (Each entry once: the reworded sentence and the text's own can both say it.)
+    const entries = read.flatMap(({ entries: found }) => found).filter((entry, index, all) => all.findIndex((other) => JSON.stringify(other) === JSON.stringify(entry)) === index);
+    const result = { ...rest, ...(notes?.length ? { notes } : {}), ifTarget: [...(plan.ifTarget ?? []), ...entries] };
+    // (Nothing else left to the GM: no longer partial.)
+    const left = [...(notes ?? []), ...(plan.unread ?? []), ...Object.values(plan.resolution.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? [])];
+    if (plan.partial && !left.length) {
+        delete result.partial;
+        result.automation = { ...(result.automation ?? {}), level: "automatic" };
+    }
+    return result;
 }
 
 // The plan, its Strike's save too. text: its plain text.

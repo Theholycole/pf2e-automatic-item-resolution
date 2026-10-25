@@ -18,7 +18,7 @@ Results, for the items this module handles:
 | Result | Items | Share |
 |---|---:|---:|
 | resolves | 752 | 51% |
-| partial | 116 | 8% |
+| partial | 115 | 8% |
 | note-only | 122 | 8% |
 | builtin:zone | 118 | 8% |
 | builtin:cast-spell | 35 | 2% |
@@ -30,14 +30,14 @@ Results, for the items this module handles:
 | builtin:item-action | 16 | 1% |
 | builtin:reroll | 3 | 0% |
 | builtin:teleport | 6 | 0% |
-| builtin:ways | 25 | 2% |
+| builtin:ways | 26 | 2% |
 | none | 178 | 12% |
 
 ## By category
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 203 | 62 | 59 | 0 | 93 | 95 |
+| other | 512 | 203 | 61 | 59 | 0 | 94 | 95 |
 | potion | 182 | 122 | 11 | 11 | 0 | 21 | 17 |
 | talisman | 156 | 63 | 9 | 7 | 0 | 50 | 27 |
 | elixir | 149 | 92 | 13 | 16 | 0 | 23 | 5 |
@@ -56,7 +56,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 
 | Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | fortune | action | counteract | ways | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 218 | 3 | 3 | 88 | 0 | 14 | 26 | 3 | 0 | 8 | 1 | 9 | 18 | 116 |
+| other | 512 | 217 | 3 | 3 | 88 | 0 | 14 | 26 | 3 | 0 | 8 | 1 | 9 | 19 | 116 |
 | potion | 182 | 85 | 0 | 0 | 1 | 58 | 9 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 26 |
 | talisman | 156 | 52 | 1 | 0 | 16 | 0 | 9 | 0 | 10 | 1 | 15 | 12 | 1 | 2 | 35 |
 | elixir | 149 | 119 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 1 | 14 |
@@ -68,7 +68,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | fulu | 46 | 16 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 14 |
 | drug | 24 | 1 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **631** | **46** | **89** | **136** | **64** | **35** | **118** | **13** | **3** | **25** | **16** | **33** | **25** | **239** |
+| **all** | **1486** | **630** | **46** | **89** | **136** | **64** | **35** | **118** | **13** | **3** | **25** | **16** | **33** | **26** | **239** |
 
 Why the rest have no card yet:
 

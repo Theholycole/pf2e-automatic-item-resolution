@@ -1,20 +1,20 @@
 {
  "generated": "2026-10-25",
  "totals": {
-  "entries": 1448,
+  "entries": 1441,
   "results": {
-   "none": 687,
-   "partial": 337,
+   "none": 686,
+   "partial": 332,
    "builtin:no-effect": 147,
-   "note-only": 277
+   "note-only": 276
   },
   "main": {
-   "speeds": 28,
+   "speeds": 27,
    "counteract": 18,
    "afflictions": 56,
    "areas": 120,
    "moving": 123,
-   "lasting": 69,
+   "lasting": 68,
    "speech": 36,
    "visibility": 58,
    "choice": 43,
@@ -27,7 +27,7 @@
    "no-rules": 37,
    "senses": 23,
    "objects": 121,
-   "reader": 33,
+   "reader": 29,
    "illusions": 47,
    "removed": 4,
    "cooldown": 13,
@@ -43,19 +43,19 @@
    "retaliation": 4,
    "missing-number": 7,
    "fortune": 7,
-   "linked-effect": 2,
+   "linked-effect": 1,
    "by-kind": 8
   },
   "any": {
-   "speeds": 34,
+   "speeds": 33,
    "areas": 183,
    "immunity": 75,
    "objects": 402,
    "speech": 150,
-   "out-of-combat": 437,
+   "out-of-combat": 436,
    "counteract": 81,
    "afflictions": 102,
-   "lasting": 225,
+   "lasting": 224,
    "moving": 157,
    "triggers": 135,
    "visibility": 60,
@@ -64,9 +64,9 @@
    "several": 101,
    "mind": 78,
    "strike": 206,
-   "reader": 248,
+   "reader": 244,
    "spells": 82,
-   "information": 217,
+   "information": 216,
    "actions": 67,
    "from-events": 38,
    "no-rules": 37,
@@ -82,7 +82,7 @@
    "fortune": 10,
    "retaliation": 4,
    "missing-number": 8,
-   "linked-effect": 2,
+   "linked-effect": 1,
    "by-kind": 8
   }
  },
@@ -2194,16 +2194,6 @@
    ]
   },
   {
-   "name": "Pharasmin Visor",
-   "kind": "activation",
-   "activation": "Pharasma's Disdain",
-   "result": "partial",
-   "main": "reader",
-   "needs": [
-    "reader"
-   ]
-  },
-  {
    "name": "Instrument Harness",
    "kind": "activation",
    "activation": "Ready to Play",
@@ -3460,15 +3450,6 @@
    "needs": [
     "situational",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Horned Lion Amulet",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "linked-effect",
-   "needs": [
-    "linked-effect"
    ]
   },
   {
@@ -7056,26 +7037,6 @@
    ]
   },
   {
-   "name": "Steamflight Pack",
-   "kind": "activation",
-   "result": "note-only",
-   "main": "speeds",
-   "needs": [
-    "speeds",
-    "information"
-   ]
-  },
-  {
-   "name": "Steamflight Pack",
-   "kind": "activation",
-   "activation": "On/Off Switch",
-   "result": "none",
-   "main": "lasting",
-   "needs": [
-    "lasting"
-   ]
-  },
-  {
    "name": "Emetic Paste (Greater)",
    "kind": "consumable",
    "result": "partial",
@@ -7517,16 +7478,6 @@
    "needs": [
     "lasting",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Spirit Fan",
-   "kind": "activation",
-   "activation": "Release Life Energy",
-   "result": "partial",
-   "main": "reader",
-   "needs": [
-    "reader"
    ]
   },
   {
@@ -11641,17 +11592,6 @@
   {
    "name": "Staff of Sun Wukong",
    "kind": "activation",
-   "activation": "Meteor Slam",
-   "result": "partial",
-   "main": "reader",
-   "needs": [
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Staff of Sun Wukong",
-   "kind": "activation",
    "activation": "Close at Hand",
    "result": "none",
    "main": "objects",
@@ -12588,16 +12528,6 @@
     "areas",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Lance of Sun's Radiance",
-   "kind": "activation",
-   "activation": "Sun Cutting Scales",
-   "result": "partial",
-   "main": "reader",
-   "needs": [
-    "reader"
    ]
   },
   {

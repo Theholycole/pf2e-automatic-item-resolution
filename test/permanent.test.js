@@ -262,7 +262,8 @@ test("activations read once their words are put as the readers take them: Catobl
     // "All enemies within a 40-feet emanation must make a … save or be Dazzled for 1 minute (or Blinded … on critical failure)".
     const gloves = at("Golden Gloves");
     assert.deepEqual([gloves.targeting.area, gloves.resolution.outcomes.failure.effects[0].slug, gloves.resolution.outcomes.criticalFailure.effects[0].slug], [{ type: "emanation", value: 40 }, "dazzled", "blinded"]);
-    assert.equal(gloves.notes.length, 2, "the unholy penalty and the counteract on its user: the GM's");
+    // (2026-10-25: the unholy penalty their save card's, src/compiler/kind-saves.js; the counteract on its user still the GM's.)
+    assert.deepEqual([gloves.notes.length, gloves.ifTarget], [1, [{ traits: ["unholy"], bonus: { value: -2, type: "item" } }]]);
     // "You regain Hit Points equal to twice your level": its owner's level.
     assert.equal(compileActivations(item("The Rakshasa"), { spellEffects })[0].plan?.resolution?.outcomes?.success?.effects?.some((effect) => effect.kind === "heal") ?? false, false);
     assert.equal(at("The Rakshasa", 0, { ownerLevel: 12 }).resolution.outcomes.success.effects.find((effect) => effect.kind === "heal").amount, 24);
