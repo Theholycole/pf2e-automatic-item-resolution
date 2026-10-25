@@ -64,6 +64,7 @@ import { elementWaysPlan, dragonWaysPlan } from "./bane.js";
 import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
+import { withMove } from "./move.js";
 import { withScaled } from "./scaled.js";
 import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
@@ -346,6 +347,8 @@ function compileOne(given, options = {}) {
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = dragonWaysPlan(html, base, item, options) ?? plan;
     // (A short teleport for its user, src/compiler/teleport.js: Mad Mammoth's Juke, Golden Spur.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(html, base, item?.system?.description?.value) ?? plan;
+    // (Its user's own move, src/compiler/move.js: Lion Claw's Stride before its Strike.)
+    plan = withMove(plan, html, base);
     // (A lit candle's or incense's area while it burns, src/compiler/lit-area.js: Candle of Inflamed Passions' penalty, Incense of Distilled
     // Death's fast healing for undead.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = litAreaPlan(plainText(html), base) ?? plan;

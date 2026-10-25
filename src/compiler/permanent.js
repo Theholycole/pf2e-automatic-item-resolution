@@ -27,6 +27,7 @@ import { withImmunity } from "./immunity.js";
 import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
+import { withMove } from "./move.js";
 import { takePlan } from "./take-condition.js";
 import { givenTempPlan } from "./given-temp.js";
 import { shoveFartherPlan } from "./shove-farther.js";
@@ -492,6 +493,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tattooWaysPlan(activation.html, base, item) ?? plan;
         // (A short teleport for its user, src/compiler/teleport.js: Dweomerveil's Dimension Leap — the space picked on the canvas.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
+        // (Its user's own move, a Stride or Step on the map — the teleport card's, as a move: src/compiler/move.js.)
+        plan = withMove(plan, activation.html, base);
         // (An ally's persistent damage taken onto its user, src/compiler/take-condition.js: Bloodstained Waistcoat's Staunch Bleeding.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = takePlan(activation.html, base) ?? plan;
         // (Temporary Hit Points for another creature, src/compiler/given-temp.js: Skeletal Claw's undead.)
@@ -597,7 +600,7 @@ function compileEach(item, options = {}) {
         plan = withActionGate(withNonlethalExempt(withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce })));
 
         const frequency = activation.frequency?.max ? activation.frequency : null;
-        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, ruleEffects, coats, coatLasts, creates, ...kept } = plan;
+        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, ruleEffects, coats, coatLasts, creates, move, ...kept } = plan;
         // (Granted to the creatures the presser targets: who and how far, for the simulator.)
         const others = targetedRecipient(plan, plainText(activation.html));
         return {
@@ -612,7 +615,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(ruleEffects ? { ruleEffects } : {}), ...(reduce.length ? { reduce } : {}), ...(regain ? { regain } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions, ...(untilRage.fastHealing ? { fastHealing: untilRage.fastHealing } : {}) } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(dropsToOne(plainText(activation.html)) ? { dropToOne: true } : {}), ...(recharge ? { recharges: recharge } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}), ...(installed ? { installed: { name: installed.name, count: installed.count, modifiers: installed.modifiers, ...(installed.resistance ? { resistance: installed.resistance } : {}), ...(installed.damage ? { damage: installed.damage } : {}), ...(installed.fastHealing ? { fastHealing: true } : {}), ...(installed.strength ? { strength: installed.strength } : {}), duration: installed.duration } } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(ruleEffects ? { ruleEffects } : {}), ...(reduce.length ? { reduce } : {}), ...(regain ? { regain } : {}), ...(resist ? { resist } : {}), ...(move ? { move } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions, ...(untilRage.fastHealing ? { fastHealing: untilRage.fastHealing } : {}) } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(dropsToOne(plainText(activation.html)) ? { dropToOne: true } : {}), ...(recharge ? { recharges: recharge } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}), ...(installed ? { installed: { name: installed.name, count: installed.count, modifiers: installed.modifiers, ...(installed.resistance ? { resistance: installed.resistance } : {}), ...(installed.damage ? { damage: installed.damage } : {}), ...(installed.fastHealing ? { fastHealing: true } : {}), ...(installed.strength ? { strength: installed.strength } : {}), duration: installed.duration } } : {}) }
             }
         };
     });

@@ -24,12 +24,12 @@ Results, for the items this module handles:
 | builtin:cast-spell | 35 | 2% |
 | builtin:roll-twice | 2 | 0% |
 | builtin:readied-bonus | 23 | 2% |
-| builtin:no-effect | 50 | 3% |
+| builtin:no-effect | 49 | 3% |
 | builtin:conjure | 7 | 0% |
 | builtin:counteract | 33 | 2% |
 | builtin:item-action | 16 | 1% |
 | builtin:reroll | 3 | 0% |
-| builtin:teleport | 6 | 0% |
+| builtin:teleport | 7 | 0% |
 | builtin:ways | 26 | 2% |
 | none | 178 | 12% |
 
@@ -58,7 +58,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | other | 512 | 217 | 3 | 3 | 88 | 0 | 14 | 26 | 3 | 0 | 8 | 1 | 9 | 19 | 116 |
 | potion | 182 | 85 | 0 | 0 | 1 | 58 | 9 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 26 |
-| talisman | 156 | 52 | 1 | 0 | 16 | 0 | 9 | 0 | 10 | 1 | 15 | 12 | 1 | 2 | 35 |
+| talisman | 156 | 52 | 1 | 0 | 16 | 0 | 9 | 0 | 10 | 1 | 15 | 12 | 1 | 2 | 34 |
 | elixir | 149 | 119 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 1 | 14 |
 | poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | snare | 82 | 1 | 0 | 0 | 0 | 0 | 0 | 71 | 0 | 0 | 0 | 0 | 0 | 1 | 9 |
@@ -68,14 +68,14 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | fulu | 46 | 16 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 14 |
 | drug | 24 | 1 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **630** | **46** | **89** | **136** | **64** | **35** | **118** | **13** | **3** | **25** | **16** | **33** | **26** | **239** |
+| **all** | **1486** | **630** | **46** | **89** | **136** | **64** | **35** | **118** | **13** | **3** | **25** | **16** | **33** | **26** | **238** |
 
 Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
 | nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 178 |
-| the ability compiler's GM fallback ("no-effect") | 50 |
+| the ability compiler's GM fallback ("no-effect") | 49 |
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
 
 ## What they do

@@ -1,22 +1,22 @@
 {
  "generated": "2026-10-25",
  "totals": {
-  "entries": 1441,
+  "entries": 1425,
   "results": {
-   "none": 686,
-   "partial": 332,
-   "builtin:no-effect": 147,
-   "note-only": 276
+   "none": 674,
+   "partial": 330,
+   "builtin:no-effect": 146,
+   "note-only": 275
   },
   "main": {
-   "speeds": 27,
+   "speeds": 25,
    "counteract": 18,
    "afflictions": 56,
    "areas": 120,
-   "moving": 123,
+   "moving": 110,
    "lasting": 68,
    "speech": 36,
-   "visibility": 58,
+   "visibility": 57,
    "choice": 43,
    "mind": 14,
    "strike": 113,
@@ -47,27 +47,27 @@
    "by-kind": 8
   },
   "any": {
-   "speeds": 33,
-   "areas": 183,
+   "speeds": 31,
+   "areas": 180,
    "immunity": 75,
    "objects": 402,
    "speech": 150,
-   "out-of-combat": 436,
+   "out-of-combat": 435,
    "counteract": 81,
    "afflictions": 102,
    "lasting": 224,
-   "moving": 157,
+   "moving": 141,
    "triggers": 135,
-   "visibility": 60,
+   "visibility": 59,
    "dying": 82,
    "choice": 120,
-   "several": 101,
+   "several": 99,
    "mind": 78,
-   "strike": 206,
-   "reader": 244,
+   "strike": 201,
+   "reader": 241,
    "spells": 82,
-   "information": 216,
-   "actions": 67,
+   "information": 215,
+   "actions": 66,
    "from-events": 38,
    "no-rules": 37,
    "senses": 29,
@@ -589,15 +589,6 @@
     "counteract",
     "lasting",
     "objects"
-   ]
-  },
-  {
-   "name": "Advancing (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving"
    ]
   },
   {
@@ -1147,18 +1138,6 @@
    ]
   },
   {
-   "name": "Earthglide Cloak",
-   "kind": "activation",
-   "activation": "Glide through Earth",
-   "result": "none",
-   "main": "speeds",
-   "needs": [
-    "speeds",
-    "moving",
-    "reader"
-   ]
-  },
-  {
    "name": "Chime of Opening",
    "kind": "activation",
    "result": "none",
@@ -1233,15 +1212,6 @@
    "main": "speech",
    "needs": [
     "speech"
-   ]
-  },
-  {
-   "name": "Advancing",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving"
    ]
   },
   {
@@ -1465,18 +1435,6 @@
    "needs": [
     "triggers",
     "counteract"
-   ]
-  },
-  {
-   "name": "Lion Claw",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "visibility",
-   "needs": [
-    "visibility",
-    "moving",
-    "strike",
-    "information"
    ]
   },
   {
@@ -3231,17 +3189,6 @@
    ]
   },
   {
-   "name": "Paws of the Grogrisant",
-   "kind": "activation",
-   "activation": "Grogrisant Leap",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike"
-   ]
-  },
-  {
    "name": "Emergency Disguise",
    "kind": "consumable",
    "result": "none",
@@ -4982,15 +4929,6 @@
    ]
   },
   {
-   "name": "Spring Heel",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
    "name": "Mountebank's Passage",
    "kind": "activation",
    "activation": "Doorway to Onyx",
@@ -5599,18 +5537,6 @@
    "needs": [
     "immunity",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Squire's Tabard",
-   "kind": "activation",
-   "activation": "At Your Aid",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "areas",
-    "several"
    ]
   },
   {
@@ -6518,20 +6444,6 @@
    "main": "mind",
    "needs": [
     "mind"
-   ]
-  },
-  {
-   "name": "Chimera Flail",
-   "kind": "activation",
-   "activation": "Pouncing Whirl",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike",
-    "several",
-    "reader",
-    "out-of-combat"
    ]
   },
   {
@@ -7534,16 +7446,6 @@
    "main": "reader",
    "needs": [
     "reader"
-   ]
-  },
-  {
-   "name": "Skyrider Sword",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike"
    ]
   },
   {
@@ -10203,19 +10105,6 @@
   {
    "name": "Spleen Bloodstone of Arazni",
    "kind": "activation",
-   "activation": "Sure Footing",
-   "result": "none",
-   "main": "speeds",
-   "needs": [
-    "speeds",
-    "moving",
-    "areas",
-    "actions"
-   ]
-  },
-  {
-   "name": "Spleen Bloodstone of Arazni",
-   "kind": "activation",
    "activation": "Break Bonds",
    "result": "partial",
    "main": "reader",
@@ -10937,15 +10826,6 @@
    ]
   },
   {
-   "name": "Cape of the Open Sky",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
    "name": "Alkenstar Ice Wine",
    "kind": "consumable",
    "result": "none",
@@ -11498,16 +11378,6 @@
    ]
   },
   {
-   "name": "Boots of Quick Marching",
-   "kind": "activation",
-   "activation": "Big Step",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
    "name": "Captivating Score",
    "kind": "consumable",
    "result": "note-only",
@@ -11598,16 +11468,6 @@
    "needs": [
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Staff of Sun Wukong",
-   "kind": "activation",
-   "activation": "Cloud Somersault",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving"
    ]
   },
   {
@@ -12678,16 +12538,6 @@
    "main": "objects",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Phase Spike",
-   "kind": "activation",
-   "activation": "Incorporeal Stride",
-   "result": "partial",
-   "main": "moving",
-   "needs": [
-    "moving"
    ]
   },
   {
@@ -14636,18 +14486,6 @@
    ]
   },
   {
-   "name": "Hellfire Boots",
-   "kind": "activation",
-   "activation": "Devil's Dance",
-   "result": "note-only",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "areas",
-    "reader"
-   ]
-  },
-  {
    "name": "Moonlit Chain",
    "kind": "activation",
    "activation": "Dim Sight",
@@ -15202,16 +15040,6 @@
    "main": "objects",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Skyrider Sword (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "needs": [
-    "moving",
-    "strike"
    ]
   },
   {

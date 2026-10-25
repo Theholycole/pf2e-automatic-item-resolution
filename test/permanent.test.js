@@ -534,10 +534,11 @@ test("a bonus for this turn's movement: Quick Runner's Shirt's +10-foot item bon
     const shirt = compileActivations(item("Quick Runner's Shirt"), { spellEffects })[0].plan;
     assert.deepEqual(shirt.resolution.outcomes.success.modifiers, [{ selector: "land-speed", value: 10, type: "item", duration: thisTurn }]);
     assert.equal(shirt.partial, undefined);
+    // (Cape of the Open Sky's: all for its Stride or Fly — the move card's, its user's Speed and 15 feet, its straight line a line on it:
+    // src/compiler/move.js.)
     const cape = compileActivations(item("Cape of the Open Sky"), { spellEffects })[1].plan;
-    assert.deepEqual(cape.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.value]), [["land-speed", 15, 0], ["fly-speed", 15, 0]]);
-    // (Its straight line is the note's.)
-    assert.equal(cape.partial, true);
+    assert.deepEqual([cape.builtin, cape.teleport.speedTimes, cape.teleport.plus, cape.teleport.move.verb, cape.resolution, cape.partial], ["teleport", 1, 15, "Stride", undefined, undefined]);
+    assert.deepEqual(cape.teleport.move.lines, ["Stride or Fly", "You can move only in a straight line"]);
 });
 
 test("Mordant Mask's Pounding Surf: Deafened until the end of its user's next turn", () => {

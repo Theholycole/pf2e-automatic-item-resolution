@@ -148,8 +148,11 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     // Two unarmed Strikes, each with the dice.
     const wraps = activation("Amphisbaena Handwraps").plan;
     assert.deepEqual([wraps.strike.uses, wraps.strike.unarmed, wraps.strike.own], [2, true, false]);
-    // Damage only under a condition ("If your last action was to Stride …, this does an additional 1d4 force damage"): not read.
-    assert.equal(compileActivations(source("Chimera Flail")).find((entry) => entry.activation.name === "Pouncing Whirl").plan, null);
+    // Damage only under a condition ("If your last action was to Stride …, this does an additional 1d4 force damage"): not read — its Stride
+    // the move card's (src/compiler/move.js), the Strike and the rest notes.
+    const whirl = compileActivations(source("Chimera Flail")).find((entry) => entry.activation.name === "Pouncing Whirl").plan;
+    assert.deepEqual([whirl.builtin, whirl.teleport.speedTimes, whirl.teleport.move.verb, whirl.partial, whirl.strike], ["teleport", 0.5, "Stride", true, undefined]);
+    assert.ok(whirl.notes.some((note) => /^Make a Strike\b/.test(note)) && whirl.notes.some((note) => /additional 1d4 force damage/.test(note)));
     // A trigger's hit with a save: the save at the creature struck, its critical failure its own ("(Stupefied 2 on a critical failure)").
     const sap = activation("Spore Sap").plan;
     assert.equal(sap.resolution.check.roll, "save");

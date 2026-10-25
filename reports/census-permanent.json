@@ -6,18 +6,18 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 781,
+   "resolves": 782,
    "builtin:cast-spell": 475,
-   "partial": 217,
-   "none": 508,
+   "partial": 215,
+   "none": 496,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
    "builtin:no-effect": 97,
-   "note-only": 154,
+   "note-only": 153,
    "builtin:reroll": 45,
    "builtin:table": 7,
-   "builtin:teleport": 8,
+   "builtin:teleport": 22,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 26,
    "builtin:modes": 33,
@@ -31,15 +31,15 @@
   "live": {
    "save": 441,
    "cast": 475,
-   "item": 593,
-   "none": 631,
+   "item": 591,
+   "none": 619,
    "focus": 47,
    "counteract": 29,
    "fortune": 60,
    "reroll": 45,
    "strike": 108,
    "table": 7,
-   "teleport": 8,
+   "teleport": 22,
    "zone": 26,
    "toggle": 33,
    "ways": 20,
@@ -59,16 +59,16 @@
    "results": {
     "resolves": 458,
     "builtin:cast-spell": 347,
-    "none": 354,
+    "none": 346,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
     "builtin:readied-bonus": 32,
     "builtin:no-effect": 78,
-    "note-only": 113,
+    "note-only": 112,
     "builtin:reroll": 34,
-    "partial": 104,
+    "partial": 103,
     "builtin:table": 4,
-    "builtin:teleport": 4,
+    "builtin:teleport": 14,
     "builtin:zone": 14,
     "builtin:ways": 10,
     "builtin:conjure": 13,
@@ -81,9 +81,9 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 174,
-    "partial": 54,
-    "none": 75,
+    "resolves": 175,
+    "partial": 53,
+    "none": 71,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "builtin:table": 1,
@@ -95,7 +95,7 @@
     "builtin:readied-bonus": 7,
     "builtin:no-effect": 10,
     "builtin:pf2e-rules": 2,
-    "builtin:teleport": 3,
+    "builtin:teleport": 7,
     "builtin:ways": 3,
     "builtin:roll-twice": 2
    }
@@ -1005,9 +1005,9 @@
    "time": "free",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null,
+   "live": "teleport",
    "rune": true
   },
   {
@@ -1920,9 +1920,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Bristling Spines (Moderate)",
@@ -2063,9 +2063,9 @@
    "time": "free",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null,
+   "live": "teleport",
    "rune": true
   },
   {
@@ -5606,9 +5606,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Banner of Creeping Death (Greater)",
@@ -8530,9 +8530,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Living Mantle (Greater)",
@@ -9971,9 +9971,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Spellcutter",
@@ -11734,9 +11734,9 @@
    "time": "2",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Chimera Flail",
@@ -13697,9 +13697,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Pillow Shield",
@@ -18304,9 +18304,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Spleen Bloodstone of Arazni",
@@ -19688,9 +19688,9 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "partial",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:teleport",
+   "kind": null,
+   "live": "teleport"
   },
   {
    "name": "Pact of the Herald and Host",
@@ -20856,9 +20856,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Quill of Passage",
@@ -20977,9 +20977,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Gate Attenuator",
@@ -22868,7 +22868,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -26477,9 +26477,9 @@
    "time": "2",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:teleport",
+   "kind": null,
+   "live": "teleport"
   },
   {
    "name": "Moonlit Chain",
@@ -27710,9 +27710,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Castrovel's Beacon",

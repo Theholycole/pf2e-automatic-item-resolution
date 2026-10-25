@@ -1,7 +1,8 @@
 // Live play for an item that teleports its user a short way (src/compiler/teleport.js, src/live/teleport-card.js): the card's Pick has
 // the presser click the space on their own canvas (the next left click, snapped to the grid for the token's size; a right click or
 // Escape cancels); the active GM's client checks the space is on the scene, unoccupied and within range — of the user's token, or of
-// the creature targeted — and moves the token there at once (Foundry's teleport, no animation).
+// the creature targeted — and moves the token there at once (Foundry's teleport, no animation). The same card for its user's own move, a
+// Stride, Step or Leap (src/compiler/move.js): the token moved on the map as a move is.
 
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { createTeleportCard, teleportCardHTML, teleportRange } from "../src/live/teleport-card.js";
@@ -22,7 +23,7 @@ export async function pickTeleportSpace(state) {
     const width = (Number(token.width) || 1) * size;
     const height = (Number(token.height) || 1) * size;
     return new Promise((resolve) => {
-        ui.notifications?.info?.(`${state.item.name}: click the space ${state.user.name} teleports to (right-click or Escape cancels).`);
+        ui.notifications?.info?.(`${state.item.name}: click the space ${state.user.name} ${state.plan?.teleport?.move ? "moves" : "teleports"} to (right-click or Escape cancels).`);
         const stage = canvas.stage;
         const finish = (value) => {
             stage.off("pointerdown", down);
@@ -106,9 +107,20 @@ export async function applyTeleportCard(message, { destination = null, targets =
     const at = { x: Number(destination.x), y: Number(destination.y) };
     const problem = spaceProblem(token, at, { from: aimed ?? token, range });
     if (problem) throw new Error(`${state.item.name}: ${problem}.`);
+    // (A move that must end beside an ally, Squire's Tabard's: a creature of its token's disposition within 5 feet of the space.)
+    if (teleport.move?.endsBeside === "ally") {
+        const size = canvas.grid.size;
+        const spot = { x: at.x, y: at.y, w: (Number(token.width) || 1) * size, h: (Number(token.height) || 1) * size, elevation: Number(token.elevation ?? 0) };
+        const grid = { size, gridFeet: canvas.dimensions?.distance ?? 5 };
+        const beside = canvas.scene.tokens.some((other) => other.id !== token.id && !other.hidden && other.actor?.isOfType?.("creature") && other.disposition === token.disposition && distanceFeet(spaceOf(other), spot, grid) <= 5);
+        if (!beside) throw new Error(`${state.item.name}: ${state.user.name}'s movement must end beside an ally.`);
+    }
     const start = { x: Number(token.x), y: Number(token.y) };
-    await token.update({ x: at.x, y: at.y }, { teleport: true, animate: false, [MODULE_ID]: { teleported: true } });
-    const results = [`${state.user.name} teleports${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`];
+    // (Its user's own move, src/compiler/move.js: a move on the map, as a Stride is — not a teleport.)
+    const move = teleport.move ?? null;
+    await token.update({ x: at.x, y: at.y }, move ? { [MODULE_ID]: { moved: true } } : { teleport: true, animate: false, [MODULE_ID]: { teleported: true } });
+    const VERBED = { Stride: "Strides", Step: "Steps", Leap: "Leaps", Burrow: "Burrows", Fly: "Flies", Swim: "Swims", Climb: "Climbs" };
+    const results = [`${state.user.name} ${move ? (VERBED[move.verb] ?? "moves").replace(/^./, (letter) => letter.toLowerCase()) : "teleports"}${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`];
     // (Damage along the way, Quartz-Coil Rail Transport's: its user and each creature the line between its two spaces crosses.)
     if (teleport.line) {
         const struck = [token, ...creaturesOnLine(token, start, at)];
@@ -120,6 +132,7 @@ export async function applyTeleportCard(message, { destination = null, targets =
         }
         results.push(`${teleport.line.formula} ${teleport.line.type} damage to ${struck.map((other) => other.name).join(", ")}.`);
     }
-    const next = { ...state, status: "applied", results };
+    // (Again for each action more, Spleen Bloodstone's: still open, from where it ends.)
+    const next = move?.again ? { ...state, results: [...(state.results ?? []), ...results] } : { ...state, status: "applied", results };
     return message.update({ content: teleportCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

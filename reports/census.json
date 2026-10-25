@@ -24,8 +24,8 @@
    "note-only": 122,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
-   "builtin:no-effect": 50,
-   "builtin:teleport": 6,
+   "builtin:no-effect": 49,
+   "builtin:teleport": 7,
    "builtin:reroll": 3,
    "builtin:roll-twice": 2
   }
@@ -98,13 +98,13 @@
     "builtin:item-action": 12,
     "resolves": 63,
     "note-only": 7,
-    "builtin:no-effect": 8,
+    "builtin:no-effect": 7,
     "builtin:reroll": 1,
     "builtin:ways": 2,
     "builtin:counteract": 1,
+    "builtin:teleport": 3,
     "builtin:cast-spell": 9,
     "partial": 9,
-    "builtin:teleport": 2,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -393,7 +393,7 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 239,
+   "none": 238,
    "item": 630,
    "fortune": 25,
    "zone": 118,
@@ -404,7 +404,7 @@
    "conjure": 7,
    "counteract": 33,
    "later": 64,
-   "teleport": 6,
+   "teleport": 7,
    "reroll": 3,
    "coat": 46,
    "strike": 13
@@ -436,15 +436,15 @@
     "zone": 1
    },
    "talisman": {
-    "none": 35,
+    "none": 34,
     "fortune": 15,
     "action": 12,
     "item": 52,
     "reroll": 1,
     "ways": 2,
     "counteract": 1,
+    "teleport": 3,
     "cast": 9,
-    "teleport": 2,
     "save": 16,
     "strike": 10,
     "coat": 1
@@ -514,7 +514,7 @@
   "noCard": {
    "no-plan": 178,
    "triggered": 11,
-   "gm": 50
+   "gm": 49
   }
  },
  "gapCounts": {},
@@ -2929,9 +2929,9 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Energy Breath Potion (Sonic, Greater)",
