@@ -132,6 +132,10 @@ export function previewLines(state) {
     if (plan?.spend?.spellSlot) lines.push(Number.isInteger(plan.spend.spellSlot.rank) ? `Costs a rank ${plan.spend.spellSlot.rank} spell slot` : `Costs a spell slot of rank ${plan.spend.spellSlot.min} or higher (the lowest left)`);
     // (The conditions it lowers, src/compiler/reduce.js.)
     for (const entry of plan?.item?.reduce ?? []) lines.push(reductionText(entry));
+    // (Its allies' own Effect, src/compiler/consumables.js plan.allyLinks: Belt of the Five Kings'.)
+    for (const link of plan?.allyLinks ?? []) lines.push(`${link.label} on each ally within ${link.radius} feet of you`);
+    // (A Mythic Point it gives back, src/compiler/reduce.js readRegain.)
+    if (plan?.item?.regain?.mythicPoints) lines.push(`Gives back ${plan.item.regain.mythicPoints} Mythic Point${plan.item.regain.mythicPoints === 1 ? "" : "s"} (a Hero Point instead under the world setting)`);
     // (A rune it lends a weapon, src/compiler/rune-loans.js.)
     if (plan?.item?.rune) lines.push(runeText(plan.item.rune));
     // (A condition until the end of the user's rage, src/compiler/rage-time.js.)

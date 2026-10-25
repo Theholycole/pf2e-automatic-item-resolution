@@ -11,6 +11,7 @@ import { etchedCritRiders } from "../src/compiler/rune-strikes.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
+import { setUpPlacedLights } from "./placed-light.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
@@ -103,6 +104,8 @@ Hooks.once("ready", async () => {
     }
     // (The generic spellgun and the gun staff ask for what they are when they first go into an inventory: scripts/generic-items.js.)
     setUpGenericItems();
+    // (A light an item puts in a square, removed when its time is up: scripts/placed-light.js.)
+    setUpPlacedLights();
     // (A runestone's rune etched onto its owner's weapon, armor or shield: scripts/etching.js.)
     setUpEtching();
     try {

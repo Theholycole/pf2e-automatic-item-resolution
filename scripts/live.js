@@ -31,7 +31,8 @@ import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
-import { checkSpend, paySpend } from "./spend.js";
+import { checkSpend, payRegain, paySpend } from "./spend.js";
+import { placeLight } from "./placed-light.js";
 import { readProficiencyRequirement, requirementWarning } from "../src/compiler/requirement.js";
 import { gateMet } from "../src/compiler/strike-gate.js";
 import { applyTableCard, postTableCard } from "./table.js";
@@ -70,6 +71,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         if (isActiveGM() && item?.type === "effect" && (item.slug === "effect-rage" || item.name === "Effect: Rage") && item.actor) {
             const ids = (item.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.untilRage).map((effect) => effect.id);
             if (ids.length) item.actor.deleteEmbeddedDocuments("Item", ids).catch((error) => console.error(`${MODULE_ID} | rage end`, error));
+            // (And its retaliation cards kept open until then, Instinct Crown (Dragon)'s: closed — 2026-10-25.)
+            closeRageCards(item.actor).catch((error) => console.error(`${MODULE_ID} | rage end cards`, error));
         }
         if (item?.type !== "consumable") return;
         deleted.set(item.uuid, { data: { ...item.toObject(false), uuid: item.uuid }, actor: item.actor ?? null });
@@ -211,6 +214,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         if (!met.ok) throw new Error(`${used.data.name}: its Requirements need ${met.why}.`);
         if (met.struck) plan = { ...plan, struckToken: met.struck };
     }
+    // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
+    if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
@@ -324,18 +329,21 @@ const APPLY = {
 const spendOf = (state, choices) => state.plan?.spend ?? (state.kind === "cast" ? state.plan?.choices?.[Number.isInteger(choices?.choice) ? choices.choice : state.choice ?? 0]?.spend ?? null : null);
 // (A temporary immunity after its use, scripts/immunity.js: the immune refused, the rest given its Effect once applied.)
 const applyByKind = (message, state, choices) => withImmunityGuard(message, state, choices, (given) => applyPaid(message, state, given));
+// (And what it gives back, a Mythic Point regained — plan.item.regain, src/compiler/reduce.js: once, after the card applies.)
 const applyPaid = async (message, state, choices) => {
     const spend = state.spent ? null : spendOf(state, choices);
-    if (!spend) return APPLY[state.kind](message, choices);
+    const regain = state.regained ? null : state.plan?.item?.regain ?? null;
+    if (!spend && !regain) return APPLY[state.kind](message, choices);
     const payer = await fromUuid(state.user?.actorUuid ?? "").catch(() => null);
     const name = state.item?.name ?? "The item";
-    checkSpend(payer, spend, name);
+    if (spend) checkSpend(payer, spend, name);
     const before = JSON.stringify(stateOf(message));
     const done = await APPLY[state.kind](message, choices);
     const now = game.messages.get(message.id) ?? message;
     if (JSON.stringify(stateOf(now)) === before) return done;
-    await paySpend(payer, spend, name);
-    await now.update({ [`flags.${MODULE_ID}.${FLAG}.spent`]: true });
+    if (spend) await paySpend(payer, spend, name);
+    if (regain) await payRegain(payer, regain, name);
+    await now.update({ ...(spend ? { [`flags.${MODULE_ID}.${FLAG}.spent`]: true } : {}), ...(regain ? { [`flags.${MODULE_ID}.${FLAG}.regained`]: true } : {}) });
     return done;
 };
 
@@ -444,6 +452,17 @@ function runeKeyOf(rune) {
 
 // Whether a creature is raging: PF2e's Effect: Rage on it.
 const isRaging = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.slug === "effect-rage" || effect.name === "Effect: Rage");
+
+// A creature's rage over: its open cards that lasted until then (plan.retaliation.untilRage, src/compiler/direct-damage.js) closed, in the last
+// 200 messages.
+async function closeRageCards(actor) {
+    for (const message of (game.messages?.contents ?? []).slice(-200)) {
+        const state = stateOf(message);
+        if (state?.kind !== "expose" || state.status !== "open" || !state.plan?.retaliation?.untilRage || state.user?.actorUuid !== actor.uuid) continue;
+        const over = { ...state, status: "applied", results: [...(state.results ?? []), `${state.user.name}'s rage ended: ${state.item.name}'s retaliation is over.`].slice(-6) };
+        await message.update({ content: exposureCardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
+    }
+}
 
 // A condition's PF2e uuid by its slug: PF2e's condition manager, else its conditions pack.
 async function conditionUuid(slug) {
@@ -586,6 +605,22 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             else if (change.op === "effect" && change.effect?.kind === "modifier" && change.effect.modifier) lines.push(`${name}: ${modifierText(change.effect.modifier)}`);
         } catch (error) {
             lines.push(`Couldn't apply ${change.op} to ${name}: ${error.message}`);
+        }
+    }
+    // (Its allies' own Effect beside its user's, Belt of the Five Kings' "(Allies)": each ally within that many feet of its user, plan.allyLinks
+    // — src/compiler/consumables.js. Not its user, nor a creature of another side.)
+    for (const link of state.plan.allyLinks ?? []) {
+        const userToken = user.token?.object ?? user.token ?? canvas.tokens?.placeables?.find((placeable) => placeable.actor?.uuid === state.user.actorUuid) ?? null;
+        const near = userToken ? creaturesNear(userToken, link.radius) : [];
+        const allies = [];
+        for (const entry of near) {
+            const { actor } = await creatureOf(entry);
+            if (actor && user.actor && actor.uuid !== user.actor.uuid && (actor.isAllyOf?.(user.actor) ?? actor.alliance === user.actor.alliance)) allies.push({ entry, actor });
+        }
+        if (!allies.length) lines.push(`No ally within ${link.radius} feet of ${state.user.name}: no ${link.label}.`);
+        for (const { entry, actor } of allies) {
+            const line = await nativeEffect(actor, entry.name, { op: "effect", target: "ally", effect: { kind: "native", uuid: link.uuid, label: link.label } }, state);
+            if (line) lines.push(line);
         }
     }
     // (Its resistance: Armorskin Robes' 5 to slashing and piercing — an Effect with PF2e's Resistance rules.)

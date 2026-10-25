@@ -428,7 +428,8 @@ test("an activation's retaliation: Numerian Steel Breastplate's 1d10 electricity
     assert.deepEqual([field.plan.retaliation, field.plan.resolution.sharedDamage.components[0].formula, field.plan.partial], [{ adjacentMelee: true, rounds: 10 }, "1d10[electricity]", undefined]);
     const dragon = compileActivations(source("Instinct Crown (Dragon)"))[1].plan;
     assert.deepEqual([routeOf(dragon), dragon.retaliation.rounds, dragon.damageChoices.map((choice) => choice.formula).slice(0, 3)], ["later", 10, ["2d6[acid]", "2d6[cold]", "2d6[electricity]"]]);
-    assert.deepEqual(dragon.notes, ["It lasts until the end of your rage: close the card then."]);
+    // (Until the rage ends: its card closes as the Rage Effect goes, scripts/live.js — 2026-10-25, no longer a note.)
+    assert.deepEqual([dragon.notes, dragon.partial, dragon.retaliation.untilRage], [undefined, undefined, true]);
 });
 
 test("Grim Ring: drained gained from an undead lowered by 1 on its user, and the undead targeted takes 2d6 vitality — both, one card; its sentence no longer a note", async () => {

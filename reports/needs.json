@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-25",
  "totals": {
-  "entries": 1454,
+  "entries": 1448,
   "results": {
    "none": 687,
-   "partial": 343,
+   "partial": 337,
    "builtin:no-effect": 147,
    "note-only": 277
   },
@@ -12,7 +12,7 @@
    "speeds": 28,
    "counteract": 18,
    "afflictions": 56,
-   "areas": 123,
+   "areas": 120,
    "moving": 123,
    "lasting": 69,
    "speech": 36,
@@ -20,7 +20,7 @@
    "choice": 43,
    "mind": 14,
    "strike": 113,
-   "spells": 46,
+   "spells": 45,
    "information": 38,
    "out-of-combat": 39,
    "actions": 32,
@@ -37,35 +37,35 @@
    "immunity": 27,
    "situational": 20,
    "creatures": 57,
-   "dying": 32,
+   "dying": 31,
    "from-events": 7,
    "forms": 24,
    "retaliation": 4,
    "missing-number": 7,
    "fortune": 7,
-   "linked-effect": 3,
+   "linked-effect": 2,
    "by-kind": 8
   },
   "any": {
    "speeds": 34,
-   "areas": 186,
+   "areas": 183,
    "immunity": 75,
    "objects": 402,
    "speech": 150,
    "out-of-combat": 437,
    "counteract": 81,
    "afflictions": 102,
-   "lasting": 226,
+   "lasting": 225,
    "moving": 157,
    "triggers": 135,
    "visibility": 60,
-   "dying": 83,
+   "dying": 82,
    "choice": 120,
-   "several": 102,
+   "several": 101,
    "mind": 78,
    "strike": 206,
-   "reader": 249,
-   "spells": 84,
+   "reader": 248,
+   "spells": 82,
    "information": 217,
    "actions": 67,
    "from-events": 38,
@@ -82,7 +82,7 @@
    "fortune": 10,
    "retaliation": 4,
    "missing-number": 8,
-   "linked-effect": 3,
+   "linked-effect": 2,
    "by-kind": 8
   }
  },
@@ -2697,15 +2697,6 @@
    ]
   },
   {
-   "name": "Flare Beacon (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Panacea Fruit",
    "kind": "consumable",
    "result": "partial",
@@ -4145,18 +4136,6 @@
     "lasting",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Preordained Spear",
-   "kind": "activation",
-   "activation": "Delay Doom",
-   "result": "partial",
-   "main": "dying",
-   "needs": [
-    "dying",
-    "spells",
-    "reader"
    ]
   },
   {
@@ -8322,15 +8301,6 @@
    ]
   },
   {
-   "name": "Flare Beacon (Major)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Undead Detection Dye",
    "kind": "consumable",
    "result": "none",
@@ -9058,16 +9028,6 @@
    ]
   },
   {
-   "name": "Belt of the Five Kings",
-   "kind": "activation",
-   "result": "partial",
-   "main": "linked-effect",
-   "needs": [
-    "linked-effect",
-    "several"
-   ]
-  },
-  {
    "name": "Kotodama Whistle",
    "kind": "activation",
    "activation": "Question the Soul",
@@ -9626,16 +9586,6 @@
    ]
   },
   {
-   "name": "Instinct Crown (Dragon)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "spells",
-   "needs": [
-    "spells",
-    "lasting"
-   ]
-  },
-  {
    "name": "Insistent Door Knocker (Greater)",
    "kind": "activation",
    "result": "none",
@@ -9761,15 +9711,6 @@
     "from-events",
     "afflictions",
     "immunity"
-   ]
-  },
-  {
-   "name": "Flare Beacon (Lesser)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "needs": [
-    "areas"
    ]
   },
   {

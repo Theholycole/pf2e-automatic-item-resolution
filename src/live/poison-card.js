@@ -226,7 +226,8 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const checked = state.plan?.resolution?.check?.roll === "skill";
     const who = EXPOSED_BY[state.delivery] ?? AREA_WORDS(state.plan?.targeting?.area);
     const used = state.uses ? ` (used ${state.uses} time${state.uses === 1 ? "" : "s"})` : "";
-    const again = !state.repeat ? "" : state.attacker || state.when ? ` It stays open until its time is up${used}.` : ` It can be used again${used} until its time is up, after each recharge.`;
+    // (Until its user's rage ends, Instinct Crown (Dragon)'s.)
+    const again = !state.repeat ? "" : state.plan?.retaliation?.untilRage ? ` It stays open until ${state.user?.name ?? "its user"}'s rage ends${used}.` : state.attacker || state.when ? ` It stays open until its time is up${used}.` : ` It can be used again${used} until its time is up, after each recharge.`;
     const hint = !open ? "" : state.step === "then"
         ? `<p class="aar-hint">If the attack hit: target the creature hit and press the button for its ${escape(saveText(state.plan.thenSave))}.</p>`
         : state.own

@@ -1759,6 +1759,82 @@ export const cases = {
         return { made };
     },
 
+    // Preordained Spear's Delay Doom (docs/needs.md, 2026-10-25): its user's doomed lowered by 1 and a Mythic Point given back once the card applies
+    // (a mythic NPC: PF2e gives characters Mythic Points only in a mythic campaign).
+    async regainMythic(scene) {
+        await clearSquares(scene, [[2, 0]]);
+        const { actor: user } = await creature(scene, "Spear Bearer", { x: 2, y: 0 });
+        await user.update({ "system.traits.value": [...(user.system.traits.value ?? []), "mythic"] });
+        await user.update({ "system.resources.mythicPoints.value": 1 });
+        await user.increaseCondition("doomed");
+        const spear = await give(user, "Preordained Spear");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(spear.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the spear's card" });
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        await until(() => !user.hasCondition("doomed") && user.system.resources.mythicPoints.value === 2, "doomed lowered and the point back", { timeout: 8000 });
+        return { mythic: user.system.resources.mythicPoints.value };
+    },
+
+    // Belt of the Five Kings (docs/needs.md, 2026-10-25): its wearer's Effect, and the allies' own on each ally within 20 feet of it — not one
+    // farther away, nor a foe.
+    async alliesBelt(scene) {
+        await clearSquares(scene, [[4, 0], [6, 0], [10, 0], [5, 1]]);
+        const { actor: wearer } = await creature(scene, "Belt Wearer", { type: "character", x: 4, y: 0 });
+        const { actor: near } = await creature(scene, "Belt Near Ally", { x: 6, y: 0 });
+        const { actor: far } = await creature(scene, "Belt Far Ally", { x: 10, y: 0 });
+        const { actor: foe } = await creature(scene, "Belt Foe", { x: 5, y: 1, alliance: "opposition" });
+        const belt = await give(wearer, "Belt of the Five Kings");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(belt.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the belt's card" });
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        const has = (actor, label) => actor.itemTypes.effect.some((effect) => effect.name === `Effect: Belt of the Five Kings (${label})`);
+        await until(() => has(wearer, "Wearer") && has(near, "Allies"), "the wearer's and the near ally's Effects", { timeout: 8000 });
+        await wait(500);
+        assert(!has(far, "Allies") && !has(foe, "Allies") && !has(wearer, "Allies"), "none for the far ally, the foe or the wearer");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Instinct Crown (Dragon) (docs/needs.md, 2026-10-25): its retaliation card kept open while its user rages, closed when its Rage Effect goes.
+    async rageCrown(scene) {
+        await clearSquares(scene, [[12, 0]]);
+        const { actor: barbarian } = await creature(scene, "Crown Barbarian", { type: "character", x: 12, y: 0 });
+        const pack = game.packs.get("pf2e.feat-effects");
+        const entry = (await pack.getIndex()).find((row) => row.name === "Effect: Rage");
+        assert(entry, "PF2e's Effect: Rage");
+        const rage = (await pack.getDocument(entry._id)).toObject();
+        delete rage._id;
+        const [raging] = await barbarian.createEmbeddedDocuments("Item", [rage]);
+        const crown = await give(barbarian, "Instinct Crown (Dragon)");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(crown.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the crown's retaliation card" });
+        assert(card.getFlag(NS, "card").plan.retaliation.untilRage && card.getFlag(NS, "card").status === "open", "open while raging");
+        await raging.delete();
+        await until(() => game.messages.get(card.id).getFlag(NS, "card").status === "applied", "closed as the rage ends", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Flare Beacon (docs/needs.md, 2026-10-25): its light at its user's square as it's used (bright 20, dim 40 feet), gone once its time is up.
+    // (Its end moved to a second from now, and the world's time a second on: not its whole minute.)
+    async flareLight(scene) {
+        await clearSquares(scene, [[14, 0]]);
+        const { actor: user, token } = await creature(scene, "Flare Thrower", { type: "character", x: 14, y: 0 });
+        const flare = await give(user, "Flare Beacon (Lesser)");
+        const ours = () => scene.lights.filter((light) => light.flags?.[NS]?.placedLight?.item === "Flare Beacon (Lesser)");
+        const before = ours().length;
+        await flare.consume();
+        await until(() => ours().length === before + 1, "the beacon's light", { timeout: 8000 });
+        const light = ours().at(-1);
+        const center = token.object?.center ?? { x: token.x + 50, y: token.y + 50 };
+        assert(light.config.bright === 20 && light.config.dim === 40 && Math.abs(light.x - center.x) < 2 && Math.abs(light.y - center.y) < 2, `at its square, 20 and 40 feet (${light.x},${light.y} ${light.config.bright}/${light.config.dim})`);
+        await light.update({ [`flags.${NS}.placedLight.endsAt`]: game.time.worldTime + 1 });
+        await game.time.advance(1);
+        await until(() => !scene.lights.get(light.id), "the light gone when its time is up", { timeout: 8000 });
+        return { placed: true };
+    },
+
     // A spell dropped on a Generic Spellgun's row in an inventory opens its picker with that spell (not PF2e's maker); loaded with Acid Grip
     // at rank 4, Fear dropped on its sheet makes it Fear's spellgun, with nothing of Acid Grip left in its plan.
     async spellDroppedOnSpellgun(scene) {

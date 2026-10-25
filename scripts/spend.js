@@ -2,6 +2,7 @@
 // (the user's answer of 2026-10-19). Checked before the card applies — none, and the card refuses — and spent once it has, with a line in
 // the chat for it.
 
+import { poolAfter } from "../src/live/focus-card.js";
 import { MODULE_ID } from "./foundry.js";
 
 export const HERO_FOR_MYTHIC = "heroPointsForMythic";
@@ -89,4 +90,16 @@ export async function paySpend(actor, spend, itemName) {
     const left = Math.max(0, pointsOf(actor, key) - amount);
     await actor.update({ [`system.resources.${key}.value`]: left });
     return ChatMessage.create({ content: `<p><strong>${escape(itemName)}</strong>: ${escape(actor.name)} spends ${amount} ${word}${amount > 1 ? "s" : ""} (${left} left).</p>`, speaker: ChatMessage.getSpeaker({ actor }) });
+}
+
+// A Mythic Point it gives back once its card applies (src/compiler/reduce.js readRegain, plan.item.regain: Preordained Spear's), up to its user's
+// maximum — a Hero Point under the world setting, as its costs are paid. Said in the chat.
+export async function payRegain(actor, regain, itemName) {
+    const amount = Number(regain?.mythicPoints) || 0;
+    if (!amount || !actor) return null;
+    const { key, word } = costResource();
+    const after = poolAfter(actor.system?.resources?.[key], amount);
+    const said = after.reason === "no-pool" ? `${actor.name} can't have ${word}s: none regained.` : after.reason === "full" ? `${actor.name}'s ${word}s are full (${after.value} of ${after.max}): none regained.` : `${actor.name} regains ${after.gained} ${word}${after.gained === 1 ? "" : "s"} (${after.value} of ${after.max}).`;
+    if (!after.reason) await actor.update({ [`system.resources.${key}.value`]: after.value });
+    return ChatMessage.create({ content: `<p><strong>${escape(itemName)}</strong>: ${escape(said)}</p>`, speaker: ChatMessage.getSpeaker({ actor }) });
 }

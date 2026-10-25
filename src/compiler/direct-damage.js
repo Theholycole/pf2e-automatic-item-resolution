@@ -216,13 +216,13 @@ function adjacentOrTouchPlan(text, base) {
     return {
         ...base,
         modelVersion: MODEL_VERSION,
-        automation: { level: breath || !count ? "guided" : "automatic" },
+        automation: { level: breath ? "guided" : "automatic" },
         targeting: { target: "the creature that touches you", range: null, area: null },
         trigger: { event: "use" },
-        retaliation: { adjacentMelee: true, rounds },
+        // (Until the end of its user's rage: the card closes when its Rage Effect goes, scripts/live.js — 2026-10-25, no longer a note.)
+        retaliation: { adjacentMelee: true, rounds, ...(!count ? { untilRage: true } : {}) },
         resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `${formula}[${type ? type.toLowerCase() : BREATH_TYPES[0]}]`, type: type ? type.toLowerCase() : BREATH_TYPES[0], category: null }] }, outcomes: { criticalSuccess: { ...none }, success, failure: { ...none }, criticalFailure: { ...none } } },
-        ...(breath ? { damageChoices: BREATH_TYPES.map((kind) => ({ label: kind.charAt(0).toUpperCase() + kind.slice(1), formula: `${formula}[${kind}]` })) } : {}),
-        ...(!count ? { notes: ["It lasts until the end of your rage: close the card then."], partial: true } : {})
+        ...(breath ? { damageChoices: BREATH_TYPES.map((kind) => ({ label: kind.charAt(0).toUpperCase() + kind.slice(1), formula: `${formula}[${kind}]` })) } : {})
     };
 }
 

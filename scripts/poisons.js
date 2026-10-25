@@ -142,6 +142,14 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         if (!Number.isFinite(typed) || typed < 0) throw new Error(`Type the amount (${state.plan.scaled.die ? `1${state.plan.scaled.die} per ${state.plan.scaled.of}` : state.plan.scaled.of}) first.`);
         state = { ...state, scaledAmount: typed };
     }
+    // (Until its user's rage ends, Instinct Crown (Dragon)'s: refused once its user isn't raging, and closed — scripts/live.js closes it as the
+    // Rage Effect goes.)
+    const raging = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.slug === "effect-rage" || effect.name === "Effect: Rage");
+    if (state.plan?.retaliation?.untilRage && !raging(await fromUuid(state.user.actorUuid).catch(() => null))) {
+        const over = { ...state, status: "applied", results: [...state.results, `${state.user.name} isn't raging: ${state.item.name}'s retaliation is over.`] };
+        await message.update({ content: exposureCardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
+        throw new Error(`${state.user.name} isn't raging: ${state.item.name}'s retaliation is over.`);
+    }
     // (Its time is up: the card closes.)
     if (state.repeat && Number.isFinite(state.until) && game.time.worldTime >= state.until) {
         const over = { ...state, status: "applied", results: [...state.results, `${state.item.name}'s time is up.`] };

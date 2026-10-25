@@ -149,6 +149,16 @@ export function reductionNotes(text) {
     const patterns = [REDUCE, LIST, TO_ZERO, OTHERS, TRIGGERING, EACH_HELD].map((pattern) => new RegExp(pattern.source, "i"));
     const reduces = { test: (sentence) => patterns.some((pattern) => pattern.test(sentence)) };
     // (The reduction's own sentence too when it says more: "…, and you regain 1 Mythic Point".)
-    return ownUse(text).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && (reduces.test(sentence) ? /\band (?:you )?(?:regain|gain|become|are|take|can)\b/i.test(sentence) : RULE_WORDS.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));
+    // (Not when that more is a Mythic Point regained, read as plan.item.regain: readRegain.)
+    return ownUse(text).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && (reduces.test(sentence) ? /\band (?:you )?(?:regain|gain|become|are|take|can)\b/i.test(sentence) && !REGAIN_ONLY.test(sentence) : RULE_WORDS.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));
+}
+
+// A Mythic Point its user regains (2026-10-25): Preordained Spear's "Your doomed value decreases by 1, and you regain 1 Mythic Point" →
+// { mythicPoints } (plan.item.regain), given back once its card applies, in Hero Points under the world setting (scripts/spend.js), or null.
+const REGAIN = /\byou regain (\d+|a|one) Mythic Points?\b/i;
+const REGAIN_ONLY = /,? and you regain (?:\d+|a|one) Mythic Points?\.$/i;
+export function readRegain(text) {
+    const said = ownUse(text).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).find((sentence) => REGAIN.test(sentence) && !/\b(?:do not|don't|doesn't|can't)\b/i.test(sentence));
+    return said ? { mythicPoints: amount(REGAIN.exec(said)[1]) } : null;
 }
 

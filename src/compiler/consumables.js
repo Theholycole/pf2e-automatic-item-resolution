@@ -291,13 +291,17 @@ export function ownPlan(item, base, options = {}) {
     // daily preparations", its Weakness Effect: plan.dose — the item card gives it to a creature that had a dose within the last day.)
     const doseLink = own && SECOND_DOSE.test(plain(item?.system?.description?.value)) ? links.find((link) => link !== own && /\bWeakness\b/i.test(String(link.label ?? ""))) : null;
     const dose = doseLink ? { uuid: doseLink.uuid, label: String(doseLink.label ?? "").replace(/^Effect:\s*/i, ""), key: familySlug(item?.name) || "item" } : null;
-    const others = own ? links.filter((link) => link !== own && link !== doseLink && !RIDER_LINKS.includes(String(link.label ?? "").replace(/^Effect:\s*/i, ""))).map((link) => `${link.label ?? "Another Effect"} is linked too: the GM's, when the text says it applies.`) : [];
+    // (The allies' own Effect beside its user's, Belt of the Five Kings' "(Allies)" for "allies within 20 feet of you": plan.allyLinks, each ally
+    // within that many feet of its user given it once the card applies — scripts/live.js, 2026-10-25.)
+    const allyFeet = Number(/\b(?:grant|granting|gives?|give) allies within (\d+) feet of you\b/i.exec(plain(item?.system?.description?.value))?.[1]);
+    const allyLinks = own && Number.isFinite(allyFeet) ? links.filter((link) => link !== own && /\(Allies\)$/i.test(String(link.label ?? ""))).map((link) => ({ uuid: link.uuid, label: String(link.label ?? "").replace(/^Effect:\s*/i, ""), radius: allyFeet })) : [];
+    const others = own ? links.filter((link) => link !== own && link !== doseLink && !allyLinks.some((entry) => entry.uuid === link.uuid) && !RIDER_LINKS.includes(String(link.label ?? "").replace(/^Effect:\s*/i, ""))).map((link) => `${link.label ?? "Another Effect"} is linked too: the GM's, when the text says it applies.`) : [];
     // (A granted spell with no PF2e Effect: a cast; only once the spell-effects index is known, so it isn't one by mistake.)
     if (!healing && !applications.length) return !links.length && options.spellEffects ? castPlan(item) : null;
     const resolution = healing && !applications.length
         ? { kind: "healing", native: { healing } }
         : { kind: "effect", applications, ...(healing ? { native: { healing } } : {}) };
-    return { ...base, automation: { level: others.length ? "guided" : "automatic" }, targeting: { target: recipient === "drinker" ? "the drinker" : null, range: null, area: null }, trigger: { event: "use" }, resolution, ...(dose ? { dose } : {}), ...(others.length ? { notes: others, partial: true } : {}) };
+    return { ...base, automation: { level: others.length ? "guided" : "automatic" }, targeting: { target: recipient === "drinker" ? "the drinker" : null, range: null, area: null }, trigger: { event: "use" }, resolution, ...(dose ? { dose } : {}), ...(allyLinks.length ? { allyLinks } : {}), ...(others.length ? { notes: others, partial: true } : {}) };
 }
 const SECOND_DOSE = /\b(?:Taking|Drinking|Eating) more than one (?:dose|cup|bottle|serving) of [\w' -]+? in a single day gives you weakness \d+ to \w+ until your next daily preparations\b/i;
 
