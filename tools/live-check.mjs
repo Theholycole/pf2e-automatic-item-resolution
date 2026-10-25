@@ -43,6 +43,17 @@ async function clearSquares(scene, squares) {
     if (ids.length) await scene.deleteEmbeddedDocuments("Token", ids);
 }
 
+// A move on the map (not Foundry's teleport) waits while the game is paused (Foundry 14): the case run unpaused, the pause put back after.
+async function unpaused(fn) {
+    const was = game.paused;
+    if (was) await game.togglePause(false, { broadcast: true });
+    try {
+        return await fn();
+    } finally {
+        if (was) await game.togglePause(true, { broadcast: true });
+    }
+}
+
 async function lab() {
     assert(game.world.id === "pftest" && game.user.isGM, "Disposable pftest, as GM, only.");
     assert(game.modules.get(NS)?.active, "Enable PF2e Automatic Item Resolution first.");
@@ -5851,6 +5862,98 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], destination: { x: 5 * size, y: 6 * size } });
         await until(() => token.x === 5 * size && token.y === 6 * size, `the token beside the mark (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
         return { refused, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Squire's Tabard's At Your Aid, its user's own move (src/compiler/move.js): two Strides, its 25-foot Speed twice, ending beside an ally —
+    // a space 10 feet from the ally refused, then one beside it, the token moved there.
+    async squireAid(scene) {
+        return unpaused(async () => {
+            await clearSquares(scene, [[0, 17], [5, 17], [6, 17], [7, 17]]);
+            const { actor: user, token } = await creature(scene, "Squire Mover", { type: "character", x: 0, y: 17 });
+            await creature(scene, "Squire Ally", { x: 7, y: 17 });
+            const tabard = await give(user, "Squire's Tabard");
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(tabard.uuid, 0);
+            const card = await messageAfter(since, itemCard("teleport"), { what: "the move card" });
+            const state = card.getFlag(NS, "card");
+            assert(state.speed === 25 && state.plan.teleport.move?.verb === "Stride" && state.plan.teleport.speedTimes === 2, `a Stride at twice a 25-foot Speed (${state.speed}, ${JSON.stringify(state.plan.teleport)})`);
+            assert(/Stride: Up to double its user(?:&#39;|')s Speed \(50 feet\)/.test(card.content), card.content.slice(0, 400));
+            const size = canvas.grid.size;
+            let refused = null;
+            await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 5 * size, y: 17 * size } }).catch((error) => { refused = error.message; });
+            assert(/must end beside an ally/.test(refused ?? ""), `not beside the ally refused (${refused})`);
+            await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 6 * size, y: 17 * size } });
+            await until(() => token.x === 6 * size && token.y === 17 * size, `the token beside the ally (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+            const results = game.messages.get(card.id).getFlag(NS, "card").results;
+            assert(results.some((line) => /Squire Mover strides \(within 50 feet\)/.test(line)), results.join(" / "));
+            return { refused, results };
+        });
+    },
+
+    // Spleen Bloodstone of Arazni's Sure Footing: a Stride, then another for another action from where it ended — the card open after the
+    // first, its button "Pick again", 30 feet from the new space refused.
+    async spleenAgain(scene) {
+        return unpaused(async () => {
+            await clearSquares(scene, [[0, 18], [5, 18], [10, 18], [16, 18]]);
+            const { actor: user, token } = await creature(scene, "Bloodstone Mover", { type: "character", x: 0, y: 18 });
+            const stone = await give(user, "Spleen Bloodstone of Arazni");
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(stone.uuid, 0);
+            const card = await messageAfter(since, itemCard("teleport"), { what: "the move card" });
+            const size = canvas.grid.size;
+            await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 5 * size, y: 18 * size } });
+            await until(() => token.x === 5 * size, `the first Stride (${token.x / size})`, { timeout: 8000 });
+            await until(() => game.messages.get(card.id).getFlag(NS, "card").results.length === 1, "the first result", { timeout: 8000 });
+            const after = game.messages.get(card.id);
+            assert(after.getFlag(NS, "card").status === "open" && /Pick again \(another action\)/.test(after.content), `still open (${after.getFlag(NS, "card").status})`);
+            let refused = null;
+            await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 16 * size, y: 18 * size } }).catch((error) => { refused = error.message; });
+            assert(/55 feet away \(the item allows 25\)/.test(refused ?? ""), `55 feet from the new space refused (${refused})`);
+            await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 10 * size, y: 18 * size } });
+            await until(() => token.x === 10 * size, `the second Stride (${token.x / size})`, { timeout: 8000 });
+            await until(() => game.messages.get(card.id).getFlag(NS, "card").results.length === 2, "the second result", { timeout: 8000 });
+            return { refused, results: game.messages.get(card.id).getFlag(NS, "card").results };
+        });
+    },
+
+    // Cape of the Open Sky's second activation: a Stride or Fly up to its user's Speed and 15 feet more (40) — 45 feet refused, 40 moved.
+    async capeOpenSky(scene) {
+        return unpaused(async () => {
+            await clearSquares(scene, [[0, 19], [8, 19], [9, 19]]);
+            const { actor: user, token } = await creature(scene, "Cape Mover", { type: "character", x: 0, y: 19 });
+            const cape = await give(user, "Cape of the Open Sky");
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(cape.uuid, 1);
+            const card = await messageAfter(since, itemCard("teleport"), { what: "the move card" });
+            assert(/Up to its user(?:&#39;|')s Speed \+ 15 feet \(40 feet\)/.test(card.content), card.content.slice(0, 400));
+            const size = canvas.grid.size;
+            let refused = null;
+            await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 9 * size, y: 19 * size } }).catch((error) => { refused = error.message; });
+            assert(/45 feet away \(the item allows 40\)/.test(refused ?? ""), `45 feet refused (${refused})`);
+            await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 8 * size, y: 19 * size } });
+            await until(() => token.x === 8 * size && token.y === 19 * size, `the token 40 feet on (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+            return { refused, results: game.messages.get(card.id).getFlag(NS, "card").results };
+        });
+    },
+
+    // Phase Spike's Incorporeal Stride: the item card (resistance 10 to all damage) and the move card beside it — both applied.
+    async phaseSpikeStride(scene) {
+        return unpaused(async () => {
+            await clearSquares(scene, [[0, 3], [5, 3]]);
+            const { actor: user, token } = await creature(scene, "Phase Strider", { type: "character", x: 0, y: 3 });
+            const spike = await give(user, "Phase Spike");
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(spike.uuid, 0);
+            const move = await messageAfter(since, itemCard("teleport"), { what: "the move card" });
+            const card = await messageAfter(since, itemCard("item"), { what: "the item card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            const resisted = () => (user.system.attributes.resistances ?? []).some((entry) => entry.type === "all-damage" && entry.value === 10);
+            await until(resisted, `resistance 10 to all damage (${JSON.stringify((user.system.attributes.resistances ?? []).map((entry) => [entry.type, entry.value]))})`, { timeout: 8000 });
+            const size = canvas.grid.size;
+            await game.modules.get(NS).api.live.apply(move.id, { destination: { x: 5 * size, y: 3 * size } });
+            await until(() => token.x === 5 * size && token.y === 3 * size, `the token 25 feet on (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+            return { lines: move.getFlag(NS, "card").plan.teleport.move.lines, results: game.messages.get(move.id).getFlag(NS, "card").results };
+        });
     },
 
     // Dragonclaw Scutcheon: fire picked on the ways card — immunity to fire until the end of the next turn, as PF2e's Immunity rule.

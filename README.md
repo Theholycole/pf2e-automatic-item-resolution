@@ -4,7 +4,7 @@ A Foundry VTT module (id `pf2e-automatic-item-resolution`) that automates Pathfi
 
 Spell-casting items (scrolls, wands, staves, catalysts, spellhearts) belong to PF2e Automatic Spell Resolution.
 
-**Status (2026-10-25): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (all 339 cases of `tools/live-check.mjs` pass on Foundry 14.367 and PF2e 8.6.1).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md), [docs/census-third-party.md](docs/census-third-party.md), and [docs/needs.md](docs/needs.md) for what the items not yet automated still need.
+**Status (2026-10-25): built, tested offline against a stand-in for Foundry, and live-checked in the disposable world pftest (the full run of `tools/live-check.mjs`, 339 cases, passed on Foundry 14.367 and PF2e 8.6.1; the 4 move cases added since pass on their own).** See [docs/design.md](docs/design.md), [docs/census.md](docs/census.md), [docs/census-permanent.md](docs/census-permanent.md), [docs/census-third-party.md](docs/census-third-party.md), and [docs/needs.md](docs/needs.md) for what the items not yet automated still need.
 
 ## Install
 

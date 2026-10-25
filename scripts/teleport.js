@@ -8,7 +8,8 @@ import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { createTeleportCard, teleportCardHTML, teleportRange } from "../src/live/teleport-card.js";
 import { FLAG, MODULE_ID, damageRollClass, entryOf, spaceOf, stateOf } from "./foundry.js";
 
-const landSpeed = (actor) => Number(actor?.system?.attributes?.speed?.total ?? actor?.system?.attributes?.speed?.value) || null;
+// (PF2e 8.6's movement.speeds.land; before it, attributes.speed.)
+const landSpeed = (actor) => Number(actor?.system?.movement?.speeds?.land?.value ?? actor?.system?.attributes?.speed?.total ?? actor?.system?.attributes?.speed?.value) || null;
 
 export async function postTeleportCard({ message, plan, used, actor, token }) {
     const state = createTeleportCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), speed: landSpeed(actor) });
@@ -107,12 +108,13 @@ export async function applyTeleportCard(message, { destination = null, targets =
     const at = { x: Number(destination.x), y: Number(destination.y) };
     const problem = spaceProblem(token, at, { from: aimed ?? token, range });
     if (problem) throw new Error(`${state.item.name}: ${problem}.`);
-    // (A move that must end beside an ally, Squire's Tabard's: a creature of its token's disposition within 5 feet of the space.)
+    // (A move that must end beside an ally, Squire's Tabard's: a creature PF2e counts its ally — its alliance, isAllyOf — within 5 feet of
+    // the space; without it, its token's disposition.)
     if (teleport.move?.endsBeside === "ally") {
         const size = canvas.grid.size;
         const spot = { x: at.x, y: at.y, w: (Number(token.width) || 1) * size, h: (Number(token.height) || 1) * size, elevation: Number(token.elevation ?? 0) };
         const grid = { size, gridFeet: canvas.dimensions?.distance ?? 5 };
-        const beside = canvas.scene.tokens.some((other) => other.id !== token.id && !other.hidden && other.actor?.isOfType?.("creature") && other.disposition === token.disposition && distanceFeet(spaceOf(other), spot, grid) <= 5);
+        const beside = canvas.scene.tokens.some((other) => other.id !== token.id && !other.hidden && other.actor?.isOfType?.("creature") && (token.actor?.isAllyOf ? token.actor.isAllyOf(other.actor) : other.disposition === token.disposition) && distanceFeet(spaceOf(other), spot, grid) <= 5);
         if (!beside) throw new Error(`${state.item.name}: ${state.user.name}'s movement must end beside an ally.`);
     }
     const start = { x: Number(token.x), y: Number(token.y) };
