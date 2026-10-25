@@ -1759,6 +1759,57 @@ export const cases = {
         return { made };
     },
 
+    // Lacquered Waist Drum's Memories of Joy (docs/needs.md, 2026-10-25): a ghost's save card has its Stupefied, another undead's doesn't.
+    async ghostDrum(scene) {
+        await clearSquares(scene, [[2, 4], [3, 4], [4, 4]]);
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: drummer } = await creature(scene, "Drum Player", { type: "character", x: 2, y: 4 });
+        const { actor: ghost, token: ghostToken } = await creature(scene, "Drum Ghost", { x: 3, y: 4, alliance: "opposition" });
+        const { actor: zombie, token: zombieToken } = await creature(scene, "Drum Zombie", { x: 4, y: 4, alliance: "opposition" });
+        await ghost.update({ "system.traits.value": ["undead", "ghost"] });
+        await zombie.update({ "system.traits.value": ["undead"] });
+        const drum = await give(drummer, "Lacquered Waist Drum");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(drum.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the drum's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [ghostToken.uuid, zombieToken.uuid] });
+        await until(() => game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).length >= 2, "two save cards", { timeout: 10000 });
+        const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).map((message) => message.flags[ABILITY].card);
+        const failureFor = (actor) => (cards.find((state) => state.targets.some((entry) => entry.actorUuid === actor.uuid))?.plan?.resolution?.outcomes?.failure?.effects ?? []).map((effect) => effect.slug);
+        assert(failureFor(ghost).includes("stupefied") && !failureFor(zombie).includes("stupefied"), `the ghost's Stupefied only (${failureFor(ghost)} / ${failureFor(zombie)})`);
+        return { ghost: failureFor(ghost), zombie: failureFor(zombie) };
+    },
+
+    // Brooch of Inspiration (docs/needs.md, 2026-10-25): its card gives PF2e's RollTwice for the next Lore check.
+    async broochLore(scene) {
+        await clearSquares(scene, [[6, 4]]);
+        const { actor: scholar } = await creature(scene, "Brooch Scholar", { type: "character", x: 6, y: 4 });
+        const brooch = await give(scholar, "Brooch of Inspiration");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(brooch.uuid, 0);
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the brooch's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const effect = () => scholar.itemTypes.effect.find((entry) => (entry.system.rules ?? []).some((rule) => rule.key === "RollTwice" && [].concat(rule.selector).includes("lore-skill-check")));
+        await until(effect, "the RollTwice Effect for a Lore check", { timeout: 8000 });
+        return { effect: effect().name };
+    },
+
+    // Submersible Helmet (docs/needs.md, 2026-10-25): its swim Speed and its water breathing, each on its user's Effect for 8 hours.
+    async helmetBreathing(scene) {
+        await clearSquares(scene, [[8, 4]]);
+        const { actor: diver } = await creature(scene, "Helmet Diver", { type: "character", x: 8, y: 4 });
+        const helmet = await give(diver, "Submersible Helmet");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(helmet.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the helmet's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const named = (name) => diver.itemTypes.effect.find((entry) => entry.name === `Submersible Helmet: ${name}`);
+        await until(() => named("swim Speed") && named("water breathing"), "its two Effects", { timeout: 8000 });
+        assert(named("water breathing").system.duration.value === 8 && named("water breathing").system.duration.unit === "hours", "breathing for 8 hours");
+        return { swim: diver.system.movement?.speeds?.swim?.value ?? null };
+    },
+
     // Preordained Spear's Delay Doom (docs/needs.md, 2026-10-25): its user's doomed lowered by 1 and a Mythic Point given back once the card applies
     // (a mythic NPC: PF2e gives characters Mythic Points only in a mythic campaign).
     async regainMythic(scene) {
@@ -5204,6 +5255,8 @@ export const cases = {
         const plan = attack.flags["pf2e-automatic-ability-resolution"].card.plan;
         const crit = plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug);
         assert(plan.resolution.check.against?.statistic === "ac" && crit.includes("off-guard") && crit.includes("immobilized"), `the attack against AC, Off-Guard and Immobilized on a critical hit (${JSON.stringify(plan.resolution.check)}, ${crit.join(", ")})`);
+        // (Each ended by an Escape against DC 16, src/compiler/escape-ends.js — 2026-10-25.)
+        assert(plan.resolution.outcomes.success.modifiers.every((modifier) => modifier.escape?.dc === 16) && plan.resolution.outcomes.criticalSuccess.effects.every((effect) => effect.duration?.escape?.dc === 16), "its Escape DC 16 on what it gives");
         return { thrown, crit };
     },
 
@@ -7007,6 +7060,8 @@ export const cases = {
         await until(slowed, "-10 feet to its Speeds", { timeout: 10000 });
         const rounds = slowed().system.duration?.value;
         assert(rounds >= 2 && rounds <= 8 && slowed().system.duration.unit === "rounds", `for 2d4 rounds (${rounds} ${slowed().system.duration.unit})`);
+        // (Ended early by an Escape against DC 19, the ability module's flag on its Effect — src/compiler/escape-ends.js, 2026-10-25.)
+        assert(JSON.stringify(slowed().flags ?? {}).includes('"escape":{"dc":19}'), `its Escape DC 19 on the Effect (${JSON.stringify(slowed().flags)})`);
         if (attack.flags.pf2e.context.outcome === "criticalSuccess") await until(() => foe.itemTypes.condition.some((entry) => entry.slug === "immobilized"), "Immobilized on the critical hit", { timeout: 8000 });
         return { rounds, outcome: attack.flags.pf2e.context.outcome };
     },
