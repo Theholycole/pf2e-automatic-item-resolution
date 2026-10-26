@@ -1140,7 +1140,8 @@ test("a condition for a time and a save again at its turns are each traced on th
     const boosted = { resolution: { kind: "check", outcomes: { success: { effects: [], modifiers: [{ selector: "stealth", value: 3, type: "status" }] } } } };
     assert.equal(withUntracedRules(boosted, bonus), boosted);
     assert.equal(withUntracedRules(boosted, "Effect The resonant power grants you a +1 circumstance bonus to initiative rolls."), boosted);
-    assert.equal(compileItem(item("Golden Liberator's Feather")).partial, true);
+    // (Golden Liberator's Feather itself is a ways card now, its wings and buffet each read — 2026-10-26, src/compiler/action-ways.js.)
+    assert.equal(compileItem(item("Golden Liberator's Feather")).builtin, "ways");
     // (A resistance of a number and kind, and temporary Hit Points of a number: Death Tusk Helm's 5 its save plan doesn't hold.)
     assert.ok(compileActivations(item("Death Tusk Helm"))[0].plan.notes.some((note) => /\b5 temporary Hit Points\b/.test(note)));
     const resisted = { resolution: { kind: "check", outcomes: { success: { effects: [], modifiers: [{ selector: "ac", type: "status", value: 1 }], resist: [{ type: "fire", value: 3 }] } } } };

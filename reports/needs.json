@@ -1,15 +1,15 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1314,
+  "entries": 1313,
   "results": {
    "none": 624,
-   "partial": 299,
+   "partial": 298,
    "builtin:no-effect": 129,
    "note-only": 262
   },
   "main": {
-   "speeds": 25,
+   "speeds": 24,
    "counteract": 17,
    "afflictions": 54,
    "areas": 112,
@@ -47,7 +47,7 @@
    "by-kind": 8
   },
   "any": {
-   "speeds": 31,
+   "speeds": 30,
    "areas": 171,
    "immunity": 75,
    "objects": 393,
@@ -76,7 +76,7 @@
    "range": 4,
    "cooldown": 11,
    "vehicles": 24,
-   "situational": 82,
+   "situational": 81,
    "creatures": 53,
    "forms": 25,
    "fortune": 10,
@@ -13813,17 +13813,6 @@
    "work": "trip wire",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Golden Liberator's Feather",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "speeds",
-   "work": "fly speed",
-   "needs": [
-    "speeds",
-    "situational"
    ]
   },
   {

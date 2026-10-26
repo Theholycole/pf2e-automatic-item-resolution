@@ -1679,6 +1679,32 @@ export const cases = {
         return { read };
     },
 
+    // Golden Liberator's Feather with 1 action: its ways card; the wings' item card gives its user a fly Speed of 50; the buffet's save card
+    // follows, Fortitude DC 41 (basic), at the adjacent enemy targeted.
+    async featherBuffet(scene) {
+        await clearSquares(scene, [[17, 17], [18, 17]]);
+        const { actor: user } = await creature(scene, "Feather User", { type: "character", x: 17, y: 17, level: 19 });
+        const { token: foeToken } = await creature(scene, "Feather Foe", { x: 18, y: 17, hp: 400, alliance: "opposition" });
+        const feather = await give(user, "Golden Liberator's Feather");
+        let since = Date.now();
+        await feather.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const card = await messageAfter(since, itemCard("item"), { what: "the wings' card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id);
+        const fly = () => Number(user.system.movement?.speeds?.fly?.value ?? user.system.attributes?.speed?.otherSpeeds?.find((entry) => entry.type === "fly")?.value);
+        await until(() => fly() === 50, `fly 50 (${fly()})`, { timeout: 8000 });
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the buffet's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(expose.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the buffet's save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.against?.value === 41 && check.basic === true && check.statistic === "fortitude", `basic Fortitude DC 41 (${JSON.stringify(check)})`);
+        return { fly: fly(), check };
+    },
+
     // Shield of Snakes' Snap Up, held: its card raises the shield with PF2e's own Raise a Shield (its Effect on the user).
     async snakeShieldRaise(scene) {
         await clearSquares(scene, [[19, 15]]);
