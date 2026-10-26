@@ -191,6 +191,7 @@ These mechanics have no table yet. An item gets one when its text uses the same 
 - **A named state that's a penalty** (`item-data.js`): "must succeed at a DC 20 Will save or be pacified. A pacified creature takes a –2 penalty to attack rolls on any attacks that aren't nonlethal for 1 minute" (Pacifying). The save's failure is that penalty, and the nonlethal exception is a note.
 - **More wordings read through `item-data.js`:**
   - Mirror Robe's "Creates a Diversion for you with a +9 Deception modifier": the robe's own check against the target's Perception DC.
+  - An intelligent item's maneuver with no number (2026-10-26): Anima Robe (Heroic)'s "attempts to Feint a creature you're adjacent to" is rolled at its stat block's Deception +35 (`src/compiler/item-data.js`). Each action uses its own skill: Deception for Feint and Create a Diversion, Intimidation for Demoralize, Athletics for the maneuvers.
   - Aerekostes's "their wielder rolls twice and takes the better result" on its next attack: its user's roll twice.
   - Smoldering Armor's "The armor is sheathed in a Fire Shield": the spell's Effect on its wearer.
   - Deravon's Helm's "save to resist being compelled to drop Prone": the save or Prone, with its timing a note.

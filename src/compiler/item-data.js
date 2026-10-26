@@ -394,6 +394,15 @@ export function withItemData(html, item) {
     // (An action the item takes for its user at its own modifier, Mirror Robe's "The mirror robe Creates a Diversion for you with a +9 Deception
     // modifier": the own-check reader's "attempts to Create a Diversion with a +9 modifier".)
     text = text.replace(/\b(The (?:<em>)?[\w' -]+?(?:<\/em>)?) Creates a Diversion for you with an? \[\[\/r 1d20\s*\+\s*(\d+)[^\]]*\]\](?:\{[^}]*\})? Deception modifier/, (all, who, modifier) => `${who} attempts to Create a Diversion for you with a +${modifier} modifier`);
+    // (An intelligent item's own maneuver with no number, Anima Robe's "The Anima Robe billows … and attempts to Feint a creature you're adjacent to"
+    // beside its stat block's "Skills Deception [[/r 1d20+35 #Deception]]{+35}": that skill's modifier, the own-check reader's words, 2026-10-26.)
+    const skills = /\bSkills\b([\s\S]*?)(?:\b(?:Int|Str|Dex)\b\s*[+-]\d|<\/p>)/.exec(text)?.[1] ?? "";
+    const skillOf = (name) => Number(new RegExp(String.raw`\b${name}\s*\[\[\/r 1d20\s*\+\s*(\d+)`, "i").exec(skills)?.[1]) || null;
+    const SKILL_FOR = { feint: "Deception", "create a diversion": "Deception", demoralize: "Intimidation", grapple: "Athletics", shove: "Athletics", trip: "Athletics", disarm: "Athletics", reposition: "Athletics" };
+    if (skills) text = text.replace(/\battempts to (@UUID\[[^\]]*\]\{(Feint|Demoralize|Create a Diversion|Grapple|Shove|Trip|Disarm|Reposition)\}|(Feint|Demoralize|Create a Diversion|Grapple|Shove|Trip|Disarm|Reposition))( a creature[^.<]*?)?\./g, (all, link, linked, bare, rest) => {
+        const modifier = skillOf(SKILL_FOR[(linked ?? bare).toLowerCase()]);
+        return modifier ? `attempts to ${link}${rest ?? ""} with a +${modifier} modifier.` : all;
+    });
     // (A spell its armor wraps it in, Smoldering Armor's "The armor is sheathed in a Fire Shield": the spell's effects on its wearer.)
     text = text.replace(/\bThe (?:<em>)?[\w' -]+?(?:<\/em>)? is sheathed in an? (@UUID\[Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+\]\{[^}]+\})/, "You gain the effects of $1");
     // (A command to drop Prone, Deravon's Helm's "The targeted creature must make a @Check[will|dc:18] save to resist being compelled to drop

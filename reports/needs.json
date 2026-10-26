@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1292,
+  "entries": 1291,
   "results": {
-   "none": 621,
+   "none": 620,
    "partial": 284,
    "builtin:no-effect": 129,
    "note-only": 258
@@ -22,7 +22,7 @@
    "spells": 45,
    "information": 23,
    "out-of-combat": 33,
-   "actions": 32,
+   "actions": 31,
    "no-rules": 37,
    "senses": 23,
    "objects": 116,
@@ -67,7 +67,7 @@
    "reader": 224,
    "spells": 82,
    "information": 191,
-   "actions": 62,
+   "actions": 61,
    "from-events": 38,
    "no-rules": 37,
    "senses": 29,
@@ -11543,17 +11543,6 @@
    "work": "counteract",
    "needs": [
     "counteract"
-   ]
-  },
-  {
-   "name": "Anima Robe (Heroic)",
-   "kind": "activation",
-   "activation": "Billowing Distraction",
-   "result": "none",
-   "main": "actions",
-   "work": "feint",
-   "needs": [
-    "actions"
    ]
   },
   {

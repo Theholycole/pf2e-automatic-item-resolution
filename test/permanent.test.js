@@ -714,6 +714,9 @@ test("more one-offs: Aerekostes's next attack rolled twice, Anointed Waterskin's
     const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
     const [robe] = compileActivations(item("Mirror Robe"), { spellEffects, basicActions });
     assert.deepEqual([robe.plan.resolution.check.statistic, robe.plan.resolution.check.modifier, robe.plan.resolution.check.against.statistic], ["deception", 9, "perception"]);
+    // (Anima Robe (Heroic)'s Billowing Distraction, 2026-10-26: its Feint with no number, at its stat block's Deception +35 — PF2e's Feint rows.)
+    const [billow] = compileActivations(item("Anima Robe (Heroic)"), { spellEffects, basicActions });
+    assert.deepEqual([billow.plan.resolution.check.statistic, billow.plan.resolution.check.modifier, billow.plan.resolution.check.against.statistic, billow.plan.resolution.outcomes.success.effects[0].slug, Boolean(billow.plan.partial)], ["deception", 35, "perception", "off-guard", false]);
     const [smoker] = compileActivations(item("Beekeeper's Smoker"), { spellEffects });
     assert.deepEqual([smoker.plan.builtin, smoker.plan.zone.area, smoker.plan.zone.centre, smoker.plan.zone.concealed, smoker.plan.zone.lasts], ["zone", { type: "square", value: 5 }, "placed", true, null]);
     assert.ok(smoker.plan.zone.notes.includes("It lasts 1d4 rounds: roll them and remove it by hand."));
