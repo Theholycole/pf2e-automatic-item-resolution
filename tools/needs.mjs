@@ -94,7 +94,7 @@ function entriesOf(docs, base = {}) {
                 const plan = compileItem(withOwner(item), options);
                 const result = resultOf(plan);
                 if (plan?.noRules && !base.module) noRulesDone.push(item.name);
-                if (unfinished(result)) add({ kind: "consumable", name: item.name, category: item.system?.category ?? "other", result, left: plan ? leftovers(plan) : [], text: plainText(item.system?.description?.value ?? "") });
+                if (unfinished(result)) add({ kind: "consumable", name: item.name, category: item.system?.category ?? "other", result, ...(plan?.builtin === "cast-spell" ? { cast: true } : {}), left: plan ? leftovers(plan) : [], text: plainText(item.system?.description?.value ?? "") });
             } else if (/<strong>\s*Activat/i.test(String(item.system?.description?.value ?? ""))) {
                 if (!handlesPermanent(item, options)) continue;
                 // (An armor rune as it plays, etched: its armor's numbers in its text — none, for armor with no item bonus to AC.)
@@ -102,7 +102,7 @@ function entriesOf(docs, base = {}) {
                 for (const { activation, plan } of compileActivations(withOwner(etched), options)) {
                     const result = resultOf(plan);
                     if (plan?.noRules && !base.module) noRulesDone.push(`${item.name}${activation.name ? ` (${activation.name})` : ""}`);
-                    if (unfinished(result)) add({ kind: "activation", name: item.name, type: item.type, activation: activation.name ?? null, trigger: Boolean(activation.trigger), result, left: plan ? leftovers(plan) : [], text: plainText(activation.html ?? "") });
+                    if (unfinished(result)) add({ kind: "activation", name: item.name, type: item.type, activation: activation.name ?? null, trigger: Boolean(activation.trigger), result, ...(plan?.builtin === "cast-spell" ? { cast: true } : {}), left: plan ? leftovers(plan) : [], text: plainText(activation.html ?? "") });
                 }
             }
         } catch (error) {

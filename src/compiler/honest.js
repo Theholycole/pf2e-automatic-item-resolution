@@ -6,6 +6,7 @@
 // nothing unread it's stale and gone. Plan-level notes are the readers' own choice (a card's line, or partial already). Pure.
 
 import { withCastDuration } from "./cast-duration.js";
+import { withCastRange } from "./cast-range.js";
 import { RUNE_STEP_SENTENCE } from "./rune-steps.js";
 import { restatesCounteract } from "./counteract.js";
 
@@ -319,7 +320,7 @@ const NOT_A_RULE = /^(?:As normal with the spell\b|Its statistics improve\b)/i;
 const literal = (words) => words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const castWords = (note, plan, spell) => {
     let text = said(note);
-    for (const words of plan.castDuration?.said ?? []) text = text.replace(words, " ");
+    for (const words of [...(plan.castDuration?.said ?? []), plan.castRange?.said].filter(Boolean)) text = text.replace(words, " ");
     const name = plan.spell?.name;
     if (name) text = text.replace(new RegExp(literal(name), "gi"), " ");
     // (The cast's rank and counteract modifier said again: Dragonfire Halfbow's "heightened to 5th rank", a cantrip "heightened to a spell rank
@@ -334,8 +335,8 @@ const castWords = (note, plan, spell) => {
 export function withCastNotes(plan, options = {}) {
     if (plan?.builtin !== "cast-spell" || plan.partial || !(plan.notes ?? []).length) return plan;
     const spell = options.spells?.[String(plan.spell?.name ?? "").toLowerCase()] ?? null;
-    // (A duration the cast plays now — cast-duration.js — is no leftover.)
-    const timed = withCastDuration(plan, spell);
+    // (A duration or range the cast plays now — cast-duration.js, cast-range.js — is no leftover.)
+    const timed = withCastRange(withCastDuration(plan, spell), spell);
     const adds = timed.notes.filter((note) => !isGmCall(note) && !NOT_A_RULE.test(said(note)) && CAST_RULE.test(castWords(note, timed, spell)));
     return adds.length ? { ...timed, partial: true, automation: { ...(timed.automation ?? {}), level: "guided" } } : timed;
 }

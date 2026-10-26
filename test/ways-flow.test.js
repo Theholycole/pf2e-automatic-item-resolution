@@ -177,3 +177,11 @@ test("Broken Tusk Pendant: +1 item to AC against the triggering attack, or +2 wh
     assert.ok(fortune, "the bonus's card");
     assert.equal(fortune.flags[MODULE_ID].card.plan.bonus.modifiers[0].value, 2);
 });
+
+test("the item's own Effect linked after its secondary effect is its use's: Poison Fizz's save bonus (Crackling Bubble Gum's Failure Effect stays its pop's)", () => {
+    const fizz = compileItem(source("Poison Fizz (Moderate)"));
+    assert.equal(fizz.builtin, "ways");
+    assert.equal(fizz.ways[0].plan.noteOnly, undefined);
+    assert.ok(JSON.stringify(fizz.ways[0].plan.resolution).includes("AJNUrLJgTC0AdBhS"));
+    assert.ok(!JSON.stringify(compileItem(source("Crackling Bubble Gum (Lesser)")).ways[0].html).includes("(Failure)"));
+});

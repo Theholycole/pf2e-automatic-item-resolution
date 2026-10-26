@@ -1,19 +1,19 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1329,
+  "entries": 1323,
   "results": {
-   "partial": 402,
+   "partial": 399,
    "none": 554,
-   "note-only": 254,
+   "note-only": 251,
    "builtin:no-effect": 119
   },
   "main": {
-   "no-rules": 40,
+   "cast-changes": 25,
    "speeds": 24,
-   "areas": 138,
+   "areas": 135,
    "counteract": 26,
-   "afflictions": 55,
+   "afflictions": 58,
    "moving": 92,
    "visibility": 48,
    "choice": 31,
@@ -22,9 +22,10 @@
    "spells": 36,
    "information": 23,
    "out-of-combat": 35,
+   "no-rules": 12,
    "actions": 32,
    "immunity": 26,
-   "creatures": 64,
+   "creatures": 63,
    "mind": 6,
    "objects": 110,
    "illusions": 50,
@@ -36,7 +37,7 @@
    "situational": 18,
    "dying": 29,
    "senses": 22,
-   "speech": 21,
+   "speech": 19,
    "from-events": 4,
    "forms": 26,
    "several": 26,
@@ -47,12 +48,12 @@
    "by-kind": 7
   },
   "any": {
-   "no-rules": 40,
+   "cast-changes": 25,
    "speeds": 30,
-   "areas": 201,
+   "areas": 198,
    "immunity": 87,
    "objects": 388,
-   "speech": 132,
+   "speech": 130,
    "out-of-combat": 438,
    "counteract": 98,
    "afflictions": 104,
@@ -69,9 +70,10 @@
    "information": 199,
    "actions": 64,
    "from-events": 29,
-   "situational": 88,
-   "creatures": 64,
-   "mind": 66,
+   "no-rules": 12,
+   "situational": 85,
+   "creatures": 63,
+   "mind": 65,
    "illusions": 60,
    "removed": 7,
    "range": 6,
@@ -91,9 +93,9 @@
    "name": "Perfection's First Step",
    "kind": "consumable",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -807,9 +809,9 @@
    "name": "Spiral Athame",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -850,9 +852,9 @@
    "kind": "activation",
    "activation": "Roll the Bones",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -913,17 +915,6 @@
    "needs": [
     "dying",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Queen Mother",
-   "kind": "activation",
-   "result": "partial",
-   "main": "creatures",
-   "work": "summon",
-   "needs": [
-    "creatures",
-    "mind"
    ]
   },
   {
@@ -1421,16 +1412,6 @@
    ]
   },
   {
-   "name": "Tiger Shield",
-   "kind": "activation",
-   "activation": "Tiger's Eyes",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Gossip's Eye",
    "kind": "activation",
    "result": "note-only",
@@ -1703,9 +1684,9 @@
    "kind": "activation",
    "activation": "Peer Beyond",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -3494,9 +3475,9 @@
    "kind": "activation",
    "activation": "Healing Wind",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -3527,9 +3508,9 @@
    "name": "Radiant Spark",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -3570,14 +3551,12 @@
   {
    "name": "Poison Fizz (Greater)",
    "kind": "consumable",
-   "result": "note-only",
-   "main": "areas",
-   "work": "mist",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "poison",
    "needs": [
-    "areas",
     "afflictions",
     "immunity",
-    "situational",
     "reader",
     "out-of-combat"
    ]
@@ -4322,14 +4301,12 @@
   {
    "name": "Poison Fizz (Moderate)",
    "kind": "consumable",
-   "result": "note-only",
-   "main": "areas",
-   "work": "mist",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "poison",
    "needs": [
-    "areas",
     "afflictions",
     "immunity",
-    "situational",
     "reader",
     "out-of-combat"
    ]
@@ -5865,9 +5842,9 @@
    "kind": "activation",
    "activation": "Raise the Tide",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -6337,9 +6314,9 @@
    "kind": "activation",
    "activation": "Elemental Spell",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -7150,9 +7127,9 @@
    "kind": "activation",
    "activation": "Elemental Spell",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -7405,9 +7382,9 @@
    "name": "Elemental Wayfinder (Air)",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -7746,17 +7723,6 @@
    ]
   },
   {
-   "name": "General's Word",
-   "kind": "activation",
-   "activation": "Battlefield Broadcast",
-   "result": "partial",
-   "main": "speech",
-   "work": "telepathy",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Potion of Disguise (Greater)",
    "kind": "consumable",
    "result": "partial",
@@ -7790,16 +7756,6 @@
     "lasting",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Medusa's Scream (Greater)",
-   "kind": "activation",
-   "activation": "Petrifying Gaze",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -7894,9 +7850,9 @@
    "name": "Blessed Reformer",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -8208,9 +8164,9 @@
    "kind": "activation",
    "activation": "Storm's Arms",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -8587,9 +8543,9 @@
    "name": "Faerie Queen's Bower",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -8640,9 +8596,9 @@
    "name": "The Courtesan",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -8831,14 +8787,12 @@
   {
    "name": "Poison Fizz (Lesser)",
    "kind": "consumable",
-   "result": "note-only",
-   "main": "areas",
-   "work": "mist",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "poison",
    "needs": [
-    "areas",
     "afflictions",
     "immunity",
-    "situational",
     "reader",
     "out-of-combat"
    ]
@@ -10806,9 +10760,9 @@
    "name": "Spark Dancer",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -11423,9 +11377,9 @@
    "kind": "activation",
    "activation": "Consider the Consequences",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -11688,9 +11642,9 @@
    "kind": "activation",
    "activation": "Elemental Spell",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -12070,9 +12024,9 @@
    "name": "The Inquisitor",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -12965,16 +12919,6 @@
    ]
   },
   {
-   "name": "Medusa's Scream",
-   "kind": "activation",
-   "activation": "Petrifying Gaze",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Vaccine (Lesser)",
    "kind": "consumable",
    "result": "partial",
@@ -12998,16 +12942,6 @@
     "senses",
     "speeds",
     "immunity"
-   ]
-  },
-  {
-   "name": "Empathic Cords",
-   "kind": "activation",
-   "result": "partial",
-   "main": "speech",
-   "work": "message",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -13544,9 +13478,9 @@
    "name": "Rime Foil",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -13686,9 +13620,9 @@
    "name": "Songbird's Brush",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -13902,9 +13836,9 @@
    "kind": "activation",
    "activation": "Healing Wind",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -14460,9 +14394,9 @@
    "name": "Wildwood Ink",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -15138,9 +15072,9 @@
    "kind": "activation",
    "activation": "Soulcutting Storm",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -15267,9 +15201,9 @@
    "kind": "activation",
    "activation": "Soulcutting Storm",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   },
   {
@@ -15924,9 +15858,9 @@
    "kind": "activation",
    "activation": "Grasping Talons",
    "result": "partial",
-   "main": "no-rules",
+   "main": "cast-changes",
    "needs": [
-    "no-rules"
+    "cast-changes"
    ]
   }
  ]

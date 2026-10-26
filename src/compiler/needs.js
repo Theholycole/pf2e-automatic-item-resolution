@@ -227,6 +227,14 @@ export const NEEDS = [
         test: /\b(?:an? (?:unattended )?object\b|objects\b|lock\b|locks\b|Pick a Lock|padlock|door\b|doors\b|rope\b|chains?\b|container\b|extradimensional|Hardness|Broken condition|is broken|repair\w*|negligible Bulk|\d+ Bulk|the (?:item|weapon|armor|shield|staff|cane|rod) (?:becomes|transforms|turns|changes|grows|extends|returns)|transforms? into an? (?:common )?(?:weapon|shield|tool|item|object)|weapon of your choice|(?:transforms?|transform|extends?|expands?|expand|shrinks?|grows?|folds?|collapses?|unfolds?|reverts?|reforms?)(?: (?:the|this|its|your) [\w' ]{1,30}?)?(?: from its \w+ form)? (?:down |back )?(?:into|to) (?:an?|its|the) (?:[+\w-]+ ){0,4}(?:form|weapon|shield|figurine|tree|boat|bridge|tent|crossbow|bow|club|greatclub|longspear|spear|sword|greatsword|staff|hammer|axe|whip|item|object|instrument)|an item takes|shackles|manacles|mundane gear|pieces of gear|\bdon\b|\bdoff|\bfolds?\b|\bunfold\w*|its other form|(?:shield|staff|weapon|armor) form|return to the|fly back into|uses of the same|weapons contained|permanently transforms|transforms into it|any-tool|\brefill\b|\blens\b|Bomb Fitted|reload\w*|staff's charges|temporary charges?|adds? (?:one|a|\d+) (?:temporary )?charges?|etched (?:onto|rune)|(?:potency|striking|property|fundamental|resilient) runes?|corpse|the item is destroyed|crumbles?)\b/i
     },
     {
+        // (A spell-cast card's note whose words show no other need: the user's answer 2, 2026-10-26 — entry.cast, needsOf.)
+        id: "cast-changes",
+        title: "A spell cast with the item's changes",
+        needs: "The item casts a spell but changes it: another range, area, target or rank, a rule beside the spell. The cast card plays the spell as PF2e has it; the change is a line of it.",
+        where: "item live play + spell module",
+        test: /(?!)/
+    },
+    {
         id: "reader",
         title: "Plain results the reader doesn't parse yet",
         needs: "Damage dice, a condition, a bonus or penalty, Hit Points, in words of their own: the item reader (or the ability compiler) taught the sentence. The cheapest kind to fix.",
@@ -286,7 +294,7 @@ export function leftText(entry) {
 export function needsOf(entry) {
     const text = leftText(entry);
     const found = NEEDS.filter((need) => need.test.test(text)).map((need) => need.id);
-    return found.length ? found : ["no-rules"];
+    return found.length ? found : [entry?.cast ? "cast-changes" : "no-rules"];
 }
 
 // What its main need's words were — the phrase that matched it ("teleports into your hand", "fall", "summon"): the work within a need,

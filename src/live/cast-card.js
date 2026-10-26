@@ -5,6 +5,8 @@
 // spell module places it. Several spells to choose from ("cast either Darkvision or See the Unseen"): a picker. Pure;
 // the ability module's classes.
 
+import { rangeWords } from "../compiler/cast-range.js";
+
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export const isCast = (plan) => plan?.builtin === "cast-spell" && Boolean(plan.spell?.uuid);
@@ -55,7 +57,7 @@ export function castCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const plan = state.plan;
     const chosen = chosenSpell(state);
-    const numbers = [chosen.rank ? `rank ${chosen.rank}` : null, plan.dc ? `DC ${plan.dc}` : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration)].filter(Boolean).join(", ");
+    const numbers = [chosen.rank ? `rank ${chosen.rank}` : null, plan.dc ? `DC ${plan.dc}` : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange)].filter(Boolean).join(", ");
     const caster = casterOf(state);
     // (Several spells to choose from: a picker while it's open.)
     const pick = plan.choices?.length > 1 && open && canApply

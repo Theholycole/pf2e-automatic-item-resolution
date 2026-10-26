@@ -10,12 +10,25 @@ import { plainText } from "./rows.js";
 const HEADING = /<p>\s*<strong>\s*Secondary Effect\s*<\/strong>/i;
 const plays = (plan) => Boolean(plan) && !plan.noteOnly && plan.builtin !== "no-effect" && plan.builtin !== "ways";
 
+// The item's own Effect linked in a paragraph of its own at the text's end, after the secondary effect: Poison Fizz's "Effect: Poison Fizz",
+// the candy's save bonus — the use's when the use links none of its own (Crackling Bubble Gum's "(Failure)" Effect after its pop is the
+// pop's: its use links its own).
+const TRAILING_EFFECTS = /(?:<p>\s*(?:@UUID\[Compendium\.pf2e\.equipment-effects\.Item\.\w+\]\{[^}]+\}\s*)+<\/p>\s*)+$/;
+const EFFECT_LINK = /@UUID\[Compendium\.pf2e\.equipment-effects\.Item\.\w+\]/;
+
 // The item's html → { use, secondary } (each its html), or null.
 export function splitSecondary(html) {
     const text = String(html ?? "");
     const at = HEADING.exec(text);
     if (!at) return null;
-    return { use: text.slice(0, at.index), secondary: text.slice(at.index).replace(/<strong>\s*Secondary Effect\s*<\/strong>/i, "<strong>Activate</strong>") };
+    let use = text.slice(0, at.index);
+    let secondary = text.slice(at.index).replace(/<strong>\s*Secondary Effect\s*<\/strong>/i, "<strong>Activate</strong>");
+    const trailing = TRAILING_EFFECTS.exec(secondary);
+    if (trailing && !EFFECT_LINK.test(use) && !/\{Effect: [^}]*\(/.test(trailing[0])) {
+        use = `${use}${trailing[0]}`;
+        secondary = secondary.slice(0, trailing.index);
+    }
+    return { use, secondary };
 }
 
 // The use's plan, the item, and the compiler for the use's own words (src/compiler/index.js compileItem, its text up to the secondary

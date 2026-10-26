@@ -62,3 +62,11 @@ test("a cast's own duration: Dust of Disappearance's 1-minute Invisibility, The 
     // (Not the spell's own: Spectacles of Understanding's hour of Translate.)
     assert.equal(first("Spectacles of Understanding").castDuration, undefined);
 });
+
+test("a cast's own range: Medusa's Scream's 30-foot Petrify (the spell's is 120), Tiger Shield's melee reach; the card says it", async () => {
+    const { rangeWords } = await import("../src/compiler/cast-range.js");
+    const scream = first("Medusa's Scream");
+    assert.deepEqual([scream.castRange.feet, scream.partial], [30, undefined]);
+    assert.equal(rangeWords(scream.castRange), "range 30 feet");
+    assert.equal(first("Tiger Shield").castRange.reach, true);
+});

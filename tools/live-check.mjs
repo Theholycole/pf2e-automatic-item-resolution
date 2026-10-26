@@ -6142,6 +6142,31 @@ export const cases = {
         return { effect: effect().name, duration: effect().system.duration, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Medusa's Scream's Petrify at the shield's 30 feet: a creature 40 feet off refused, one 25 feet off cast at.
+    async medusaRange(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: bearer, token: bearerToken } = await creature(scene, "Medusa Bearer", { type: "character", x: 2, y: 16, level: 14 });
+        const { token: far } = await creature(scene, "Medusa Far Foe", { x: 10, y: 16, alliance: "opposition" });
+        const { token: near } = await creature(scene, "Medusa Near Foe", { x: 7, y: 16, alliance: "opposition" });
+        const shield = await give(bearer, "Medusa's Scream");
+        await bearerToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        assert(/range 30 feet/.test(card.content), "the card's range");
+        let refused = null;
+        try {
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [far.uuid] });
+        } catch (error) {
+            refused = error.message;
+        }
+        assert(/beyond/.test(refused ?? ""), `the far foe refused (${refused})`);
+        assert(game.messages.get(card.id).getFlag(NS, "card").status === "open", "the card still open");
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [near.uuid] });
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        return { refused, cast: cast.flags["pf2e-automatic-resolution"].castFromItem.dc };
+    },
+
     // Standard of the Sure-Footed's Help Up: the ally targeted, Prone, stands.
     async sureFootedStand(scene) {
         const { actor: bearer } = await creature(scene, "Banner Bearer", { type: "character", x: 15, y: 4 });
