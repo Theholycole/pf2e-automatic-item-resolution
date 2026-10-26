@@ -1973,6 +1973,25 @@ export const cases = {
         return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
+    // Armbands of the Gorgon: the card's picker lists only its user's conditions (slowed, frightened); the one picked is removed, the other stays.
+    async armbandsCondition(scene) {
+        await clearSquares(scene, [[13, 9]]);
+        const { actor: wearer } = await creature(scene, "Gorgon Wearer", { type: "character", x: 13, y: 9, level: 17 });
+        await wearer.increaseCondition("frightened", { value: 2 });
+        await wearer.increaseCondition("slowed", { value: 1 });
+        const armbands = await give(wearer, "Armbands of the Gorgon");
+        await armbands.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(armbands.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the armbands' card" });
+        const choose = game.messages.get(card.id).getFlag(NS, "card").plan.item.reduce[0].choose;
+        assert(JSON.stringify(choose) === JSON.stringify(["frightened", "slowed"]), `only its conditions (${JSON.stringify(choose)})`);
+        await game.modules.get(NS).api.live.apply(card.id, { reduceChoice: 1 });
+        await until(() => !wearer.hasCondition("slowed"), "slowed removed", { timeout: 8000 });
+        assert(wearer.hasCondition("frightened"), "frightened stays");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Oracular Crown at cursebound 3: its healing rolled at 7d8, not 3d8 (the formula picked from its user's cursebound value).
     async oracularHeal(scene) {
         await clearSquares(scene, [[11, 9]]);

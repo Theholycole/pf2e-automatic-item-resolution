@@ -27,7 +27,10 @@ export const picksWeapon = (plan) => Boolean((plan?.item?.rune && !plan.item.run
 // installed: its user's items of the kind installed in it (plan.item.installed), [{ id, name, level, bonus, splash, quantity }], picked on
 // the card.
 // potions: its user's, [{ id, name, level }], for a potion it holds (plan.item.patch), picked on the card.
-export function createItemCard({ plan, item, user, drinkers = [], rolled = null, weapons = [], installed = [], potions = [] }) {
+// (held: the conditions its user has now — a reduce entry "held", Armbands of the Gorgon's "a single condition of your choice currently
+// afflicting you", lists only those.)
+export function createItemCard({ plan: given, item, user, drinkers = [], rolled = null, weapons = [], installed = [], potions = [], held = null }) {
+    const plan = held && (given?.item?.reduce ?? []).some((entry) => entry.held) ? { ...given, item: { ...given.item, reduce: given.item.reduce.map((entry) => (entry.held ? { ...entry, choose: entry.choose.filter((slug) => held.includes(slug)) } : entry)) } } : given;
     const drinker = plan?.item?.recipient === "drinker";
     const choices = drinker ? [user, ...drinkers.filter((entry) => entry.actorUuid !== user.actorUuid || entry.tokenUuid !== user.tokenUuid)] : [];
     return {

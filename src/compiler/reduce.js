@@ -64,6 +64,10 @@ const amount = (count, zero) => (zero === "0" ? "all" : COUNT[String(count).toLo
 const copy = (pattern) => new RegExp(pattern.source, "gi");
 
 // The text (plain) → reduce entries (above), each condition once for each recipient.
+const HELD = /\bremove a single condition of your choice currently afflicting you\b/i;
+// (Its permanent one only suppressed, the Armbands' "If the condition is permanent, it's instead suppressed for 1 hour": a note Effect on its
+// user for that hour — whether it was permanent is the table's.)
+const SUPPRESSED = /^If the condition is permanent, it's instead suppressed for (\d+|one|an?) (hours?|minutes?)\.$/i;
 export function readReductions(text) {
     const found = [];
     const add = (entry) => {
@@ -86,7 +90,8 @@ export function readReductions(text) {
     if (/\byou can\b[^.]*\bending the Prone condition\b/i.test(ownUse(text))) add({ slug: "prone", by: "all" });
     // (Any one condition, picked on the card: Armbands of the Gorgon's "remove a single condition of your choice currently
     // afflicting you".)
-    if (/\bremove a single condition of your choice currently afflicting you\b/i.test(ownUse(text))) add({ choose: CONDITIONS.split("|").filter((slug) => slug !== "persistent bleed"), by: "all" });
+    // (held: the card lists only those its user has, 2026-10-26.)
+    if (HELD.test(ownUse(text))) add({ choose: CONDITIONS.split("|").filter((slug) => slug !== "persistent bleed"), by: "all", held: true });
     const ending = ENDING.exec(ownUse(text));
     if (ending) for (const slug of ending[1].toLowerCase().match(new RegExp(CONDITIONS, "g"))) {
         add({ slug, by: "all" });
@@ -128,7 +133,9 @@ export function reductionPlan(base, reduce, given = []) {
     // Immunity to prone on its user to the end of the turn — item.ruleEffects, the item card's Effect.)
     const STAND_AND_STAY = /^When you Activate (?:it|the [\w' -]+?), you Stand and can't be knocked prone again on the current turn\.$/i;
     const stays = given.some((note) => STAND_AND_STAY.test(String(note).trim())) && reduce.some((entry) => entry.slug === "prone" && !entry.who);
-    const notes = stays ? given.filter((note) => !STAND_AND_STAY.test(String(note).trim())) : given;
+    const suppressed = reduce.some((entry) => entry.held) ? given.map((note) => SUPPRESSED.exec(String(note).trim())).find(Boolean) : null;
+    const notes = (stays ? given.filter((note) => !STAND_AND_STAY.test(String(note).trim())) : given).filter((note) => !(suppressed && SUPPRESSED.test(String(note).trim())));
+    const noteEffects = suppressed ? [{ label: "Permanent condition suppressed", text: `If the condition it removed was permanent, it's only suppressed for ${suppressed[1]} ${suppressed[2]}: it comes back then.`, duration: { mode: "fixed", value: /^\d+$/.test(suppressed[1]) ? Number(suppressed[1]) : 1, unit: /^hour/i.test(suppressed[2]) ? "hours" : "minutes", expiry: "turn-start", anchor: "effect-start" } }] : null;
     const ruleEffects = stays ? [{ name: "not knocked prone", words: "Can't be knocked Prone again this turn", rules: [{ key: "Immunity", type: "prone" }], duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } }] : null;
     return {
         ...(ruleEffects ? { ruleEffects } : {}),
@@ -137,7 +144,7 @@ export function reductionPlan(base, reduce, given = []) {
         automation: { level: notes.length ? "guided" : "automatic" },
         targeting: { target: null, range: null, area: null },
         trigger: { event: "use" },
-        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: { ...none(), ...(noteEffects ? { noteEffects } : {}) }, failure: none(), criticalFailure: none() } },
         reduce,
         ...(notes.length ? { notes, partial: true } : {})
     };
@@ -146,7 +153,7 @@ export function reductionPlan(base, reduce, given = []) {
 // What else the text says that a card should show (rules, not its flavor): its other sentences with rule words.
 export function reductionNotes(text) {
     // (A copy without the global flag: the shared one keeps its place between calls.)
-    const patterns = [REDUCE, LIST, TO_ZERO, OTHERS, TRIGGERING, EACH_HELD].map((pattern) => new RegExp(pattern.source, "i"));
+    const patterns = [REDUCE, LIST, TO_ZERO, OTHERS, TRIGGERING, EACH_HELD, HELD].map((pattern) => new RegExp(pattern.source, "i"));
     const reduces = { test: (sentence) => patterns.some((pattern) => pattern.test(sentence)) };
     // (The reduction's own sentence too when it says more: "…, and you regain 1 Mythic Point".)
     // (Not when that more is a Mythic Point regained, read as plan.item.regain: readRegain.)

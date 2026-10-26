@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1293,
+  "entries": 1292,
   "results": {
    "none": 621,
-   "partial": 285,
+   "partial": 284,
    "builtin:no-effect": 129,
    "note-only": 258
   },
@@ -16,7 +16,7 @@
    "moving": 88,
    "lasting": 65,
    "visibility": 53,
-   "choice": 38,
+   "choice": 37,
    "mind": 9,
    "strike": 107,
    "spells": 45,
@@ -52,7 +52,7 @@
    "immunity": 74,
    "objects": 392,
    "speech": 124,
-   "out-of-combat": 422,
+   "out-of-combat": 421,
    "counteract": 80,
    "afflictions": 94,
    "lasting": 216,
@@ -60,7 +60,7 @@
    "triggers": 126,
    "visibility": 55,
    "dying": 78,
-   "choice": 111,
+   "choice": 110,
    "several": 90,
    "mind": 71,
    "strike": 188,
@@ -10310,17 +10310,6 @@
    "needs": [
     "objects",
     "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Armbands of the Gorgon",
-   "kind": "activation",
-   "result": "partial",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
     "out-of-combat"
    ]
   },

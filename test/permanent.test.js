@@ -229,15 +229,18 @@ test("Antler Arrow: its hit's Reflex save or Immobilized (a bow's critical speci
     assert.ok(arrow.strike.notes.some((note) => /DC 10 Athletics check/.test(note)));
 });
 
-test("activations the ability compiler left to the GM, read: Heartstone's counteract, Pilferer's Gloves, Cloak of Repute, Armbands of the Gorgon, Blood of Iron", () => {
+test("activations the ability compiler left to the GM, read: Heartstone's counteract, Pilferer's Gloves, Cloak of Repute, Armbands of the Gorgon, Blood of Iron", async () => {
     const at = (name, index = 0) => compileActivations(item(name), { spellEffects })[index].plan;
     const heartstone = at("Heartstone");
     assert.deepEqual([heartstone.builtin, heartstone.item.counteract.modifier, heartstone.item.counteract.rank, heartstone.item.counteract.afflictions], ["counteract", 18, 5, ["disease"]]);
     assert.deepEqual(at("Pilferer's Gloves").reroll.raise.change, { failure: "success", criticalFailure: "failure" });
     assert.deepEqual(at("Cloak of Repute").bonus.degree, { selector: "diplomacy", adjustment: { success: "one-degree-better" }, predicate: ["action:request"] });
     const armbands = at("Armbands of the Gorgon");
-    assert.deepEqual([armbands.item.reduce[0].by, armbands.item.reduce[0].choose.includes("paralyzed")], ["all", true]);
-    assert.match(armbands.notes.join(" "), /suppressed for 1 hour/);
+    assert.deepEqual([armbands.item.reduce[0].by, armbands.item.reduce[0].choose.includes("paralyzed"), armbands.item.reduce[0].held], ["all", true, true]);
+    // (2026-10-26: whole — its permanent condition's suppression a note Effect for the hour; the card's picker only what its user has.)
+    assert.deepEqual([Boolean(armbands.partial), armbands.notes, armbands.resolution.outcomes.success.noteEffects.map((note) => [note.label, note.duration.value, note.duration.unit])], [false, undefined, [["Permanent condition suppressed", 1, "hours"]]]);
+    const { createItemCard } = await import("../src/live/card.js");
+    assert.deepEqual(createItemCard({ plan: armbands, item: { name: "Armbands of the Gorgon" }, user: { name: "Gorgon" }, held: ["slowed", "frightened"] }).plan.item.reduce[0].choose, ["frightened", "slowed"]);
     // Blood of Iron: 30 temporary Hit Points for you and your allies within 10 feet, and their conditions lowered.
     const blood = at("Vambrace of Gorum", 1);
     assert.deepEqual([blood.allyArea, blood.targeting.area, blood.resolution.outcomes.success.effects[0].amount], [true, { type: "emanation", value: 10 }, 30]);

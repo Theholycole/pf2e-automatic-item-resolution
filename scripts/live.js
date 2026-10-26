@@ -282,6 +282,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         // (Or a whetstone's: Frenzied Quintessence.)
         // (The alchemical item installed in it, Living Leaf Weave's elixir of life: its user's of that kind.)
         installed: plan.item?.installed ? installedOf(actor, plan.item.installed) : [],
+        // (A condition of its user's choice it has now, Armbands of the Gorgon's: PF2e's conditions on its user.)
+        held: (plan.item?.reduce ?? []).some((entry) => entry.held) ? [...new Set((actor.conditions?.active ?? actor.itemTypes?.condition ?? []).map((condition) => condition.slug))] : null,
         // (A potion it holds, Potion Patch's: its user's potions, up to its level.)
         potions: plan.item?.patch ? (actor.items?.contents ?? [...(actor.items ?? [])]).filter((entry) => entry.type === "consumable" && entry.system?.category === "potion" && entry.id !== used.data._id && !(plan.item.patch.maxLevel && Number(entry.system?.level?.value) > plan.item.patch.maxLevel)).map((entry) => ({ id: entry.id, name: entry.name, level: Number(entry.system?.level?.value) || 0 })) : [],
         weapons: picksWeapon(plan) ? (actor.itemTypes?.weapon ?? []).filter((weapon) => !weapon.isOfType?.("bomb") && weapon.system?.group !== "bomb" && !(plan.item?.proficiency?.maxLevel && Number(weapon.system?.level?.value) > plan.item.proficiency.maxLevel)).map((weapon) => ({ id: weapon.id, name: weapon.name })) : []
@@ -1000,6 +1002,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     const unmasked = [];
     const still = [];
     for (const entry of reduce) {
+        // (Of those its user has, none: Armbands of the Gorgon with no condition on it.)
+        if (entry.held && !(entry.choose ?? []).length) {
+            lines.push(`${recipient.name} has no condition to remove.`);
+            continue;
+        }
         const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
         const creatures = entry.who === "targets" ? others : [{ actor: target.actor, name: recipient.name }];
         for (const creature of creatures) {
