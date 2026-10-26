@@ -1584,6 +1584,45 @@ export const cases = {
         return { ignored: user.system.movement.terrain.difficult.ignored };
     },
 
+    // Row readings (src/compiler/row-readings.js): Reducer Round's critical failure, PF2e's size rule (Tiny, reach 0) with its Enfeebled 2 from
+    // that Effect; Splintering Spear's Shatter, a critical failure taking the spear's bleed as persistent damage beside the save's; Chiromantic
+    // Lines, its user's Strike finding the creature Off-Guard.
+    async rowReadings(scene) {
+        await clearSquares(scene, [[4, 30], [5, 30]]);
+        const { actor: user, token: userToken } = await creature(scene, "Row Reader", { type: "character", x: 4, y: 30, level: 13 });
+        // (Hit Points enough for Shatter's critical failure, 24d6 piercing, with its bleed after.)
+        const { actor: foe, token: foeToken } = await creature(scene, "Row Target", { x: 5, y: 30, hp: 400, ac: 1, save: 0, alliance: "opposition" });
+        const saveAt = async (item, what) => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, 0);
+            const card = await messageAfter(since, itemCard("expose"), { what: `${what}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+            const save = await messageAfter(since, abilitySaveCard, { what: `${what}'s save card` });
+            await withDie(2, () => rollAndApply(save));
+        };
+        await saveAt(await give(user, "Reducer Round"), "Reducer Round");
+        await until(() => foe.system.traits?.size?.value === "tiny", `Tiny (${foe.system.traits?.size?.value})`, { timeout: 8000 });
+        await until(() => foe.getCondition?.("enfeebled")?.value === 2, `Enfeebled 2 (${foe.getCondition?.("enfeebled")?.value})`, { timeout: 8000 });
+        const shrunk = foe.itemTypes.effect.find((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "CreatureSize"));
+        assert(shrunk && shrunk.system.duration.value === 1 && shrunk.system.duration.unit === "minutes", `its minute (${JSON.stringify(shrunk?.system?.duration)})`);
+        await saveAt(await give(user, "Splintering Spear"), "Shatter");
+        await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "bleed"), "persistent bleed", { timeout: 8000 });
+        const lines = await give(user, "Chiromantic Lines");
+        const dagger = await give(user, "Dagger");
+        await dagger.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(lines.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "Cunning Consultation's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "EphemeralEffect")), "its Off-Guard Effect", { timeout: 8000 });
+        await userToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await strike(user, dagger);
+        const options = attack.flags.pf2e.context.options ?? [];
+        assert(options.includes("target:condition:off-guard"), `the target Off-Guard to it (${options.filter((option) => /off-guard/.test(option)).join(", ") || "none"})`);
+        return { size: foe.system.traits.size.value, enfeebled: foe.getCondition("enfeebled").value };
+    },
+
     // Burial Oil: the card picks the longsword; its Effect's AdjustStrike gives that Strike the Vitalizing rune (PF2e's disrupting).
     async runeOil(scene) {
         const { actor: fighter } = await creature(scene, "Oiled Fighter", { type: "character", x: 10, y: 17 });
@@ -7318,7 +7357,7 @@ export const cases = {
     },
 
     // Silkspinner's Shield: its Climb Effect on its user, and for the minute its shield bash (AC 1) leaves the creature struck -10 feet to its
-    // Speeds (a hit) or Immobilized (a critical hit), for a round.
+    // Speeds (a hit) or Immobilized (a critical hit), for a round, a successful Escape against DC 30 ending it.
     async silkspinnerBash(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Silkspinner Bearer", { type: "character", x: 20, y: 10, level: 15 });
         const { actor: foe, token: foeToken } = await creature(scene, "Silkspinner Target", { x: 21, y: 10, ac: 1, alliance: "opposition" });
@@ -7337,6 +7376,8 @@ export const cases = {
         assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
         if (outcome === "criticalSuccess") await until(() => foe.itemTypes.condition.some((entry) => entry.slug === "immobilized"), "Immobilized on the critical hit", { timeout: 8000 });
         else await until(() => foe.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("all-speeds") && rule.value === -10)), "-10 feet to its Speeds", { timeout: 8000 });
+        // (Each ended by an Escape against DC 30: the ability module's escape flag on what it made.)
+        await until(() => foe.itemTypes.effect.some((effect) => Number(effect.flags?.["pf2e-automatic-ability-resolution"]?.escape?.dc) === 30), "its Escape DC 30", { timeout: 8000 });
         return { outcome };
     },
 
