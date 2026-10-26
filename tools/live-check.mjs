@@ -56,6 +56,23 @@ async function unpaused(fn) {
     }
 }
 
+// The lab scene's temperature set through PF2e Automatic Environment Resolution while fn runs, then put back.
+const ENVIRONMENT = "pf2e-automatic-environment-resolution";
+const weatherName = (actor) => (actor.itemTypes?.effect ?? []).find((effect) => effect.flags?.[ENVIRONMENT]?.weather)?.name ?? "";
+async function withTemperature(scene, temperature, fn) {
+    const env = game.modules.get(ENVIRONMENT);
+    assert(env?.active && env.api?.setWeather, "PF2e Automatic Environment Resolution active");
+    const before = env.api.weather(scene)?.state ?? {};
+    await env.api.setWeather(scene, { ...before, temperature });
+    await env.api.sync(scene);
+    try {
+        return await fn(env);
+    } finally {
+        await env.api.setWeather(scene, { ...before, temperature: before.temperature ?? "normal" });
+        await env.api.sync(scene);
+    }
+}
+
 async function lab() {
     assert(game.world.id === "pftest" && game.user.isGM, "Disposable pftest, as GM, only.");
     assert(game.modules.get(NS)?.active, "Enable PF2e Automatic Item Resolution first.");
@@ -1459,6 +1476,44 @@ export const cases = {
         assert(components.some((component) => /^1d8/.test(component.formula) && component.type === "electricity"), `1d8 electricity (${JSON.stringify(components)})`);
         assert(game.messages.get(card.id).getFlag(NS, "card").status === "open", "still open");
         return { formula: components[0]?.formula };
+    },
+
+    // Cooling Elixir (Lesser) in severe heat (PF2e Automatic Environment Resolution on the lab scene): its Effect, the environment module's
+    // flag on it — the creature's weather no longer severe heat (mild heat, which does nothing in a fight).
+    async coolingElixirHeat(scene) {
+        await clearSquares(scene, [[17, 23]]);
+        const { actor: drinker } = await creature(scene, "Elixir Drinker", { type: "character", x: 17, y: 23 });
+        return withTemperature(scene, "severe-heat", async (env) => {
+            await env.api.sync(scene);
+            await until(() => /Severe heat/.test(weatherName(drinker)), `severe heat first (${weatherName(drinker)})`, { timeout: 8000 });
+            const elixir = await give(drinker, "Cooling Elixir (Lesser)");
+            const since = Date.now();
+            await elixir.consume();
+            const card = await messageAfter(since, itemCard("item"), { what: "the elixir's card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => drinker.itemTypes.effect.some((effect) => effect.flags?.[ENVIRONMENT]?.temperature?.counts?.["severe-heat"] === "mild-heat"), "the Effect with the environment module's flag", { timeout: 8000 });
+            // (Mild heat does nothing in a fight: the environment module's weather Effect gone, or without the heat.)
+            await until(() => !/Severe heat/.test(weatherName(drinker)), `no severe heat after it (${weatherName(drinker)})`, { timeout: 8000 });
+            return { weather: weatherName(drinker) };
+        });
+    },
+
+    // Shade Hat worn and invested in severe heat: api.temperatureProtections(actor) — mild and severe heat count as normal, so no heat on
+    // the creature's weather.
+    async shadeHatHeat(scene) {
+        await clearSquares(scene, [[18, 23]]);
+        const { actor: wearer } = await creature(scene, "Hat Wearer", { type: "character", x: 18, y: 23 });
+        return withTemperature(scene, "severe-heat", async (env) => {
+            await env.api.sync(scene);
+            await until(() => /Severe heat/.test(weatherName(wearer)), `severe heat first (${weatherName(wearer)})`, { timeout: 8000 });
+            const hat = await give(wearer, "Shade Hat");
+            await hat.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+            const protections = game.modules.get(NS).api.temperatureProtections(wearer);
+            assert(protections.some((entry) => entry.source === "Shade Hat" && entry.counts["severe-heat"] === "normal"), `the hat's protection (${JSON.stringify(protections)})`);
+            await env.api.sync(scene);
+            await until(() => !/heat/i.test(weatherName(wearer)), `no heat with the hat (${weatherName(wearer)})`, { timeout: 8000 });
+            return { weather: weatherName(wearer), protections };
+        });
     },
 
     // Burial Oil: the card picks the longsword; its Effect's AdjustStrike gives that Strike the Vitalizing rune (PF2e's disrupting).
