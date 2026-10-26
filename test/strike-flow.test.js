@@ -565,14 +565,17 @@ test("Drake Rifles' Drake Shot: a Strike with the rifle itself, its splash of it
     assert.equal(riderFor(growth, { ranged: true, outcome: "success", options: ["item:ranged", "item:id:other"], weaponId: "gun" }), null, "another weapon's Strike doesn't carry it");
 });
 
-test("Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check against DC 38 (the core's save family), Off-Guard for the turn on a failure and until the end of its next turn on a critical failure; the Step and Strike a note", () => {
+test("Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check against DC 38 (the core's save family), Off-Guard to its user for the turn on a failure and until the end of its next turn on a critical failure; the Step and Strike its own actions", () => {
     const [dodge] = compileActivations(source("Mercurial Mantle"));
     const resolution = dodge.plan.resolution;
     assert.deepEqual([resolution.kind, resolution.check.roll, resolution.check.statistic, resolution.check.against], ["save", "save", "perception", { dc: "fixed", value: 38 }]);
     assert.deepEqual(resolution.outcomes.failure.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.expiry]), [["off-guard", 0, "turn-end"]]);
     assert.deepEqual(resolution.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.duration.value]), [["off-guard", 1]]);
     assert.equal(routeOf(dodge.plan), "save");
-    assert.match(dodge.plan.notes[0], /^You Step, .* \(by hand\)\.$/);
+    // (Only to its user's attacks, the core's scope: its melee Strike on a failure, all of them on a critical failure; the Step and Strike its own
+    // actions, a line of the card — 2026-10-26.)
+    assert.deepEqual([resolution.outcomes.failure.effects[0].scope, resolution.outcomes.criticalFailure.effects[0].scope, Boolean(dodge.plan.partial)], [{ against: "actor", attacks: "melee", uses: 1 }, { against: "actor", attacks: "any" }, false]);
+    assert.match(dodge.plan.notes[0], /^You Step, .* \(its own actions\)\.$/);
 });
 
 test("Iron Cube: its melee Strike's hit posts PF2e's Trip card at the creature hit, the 2d6 bludgeoning on its success; Serpent's Lash's Reposition after its whip's hit", async () => {

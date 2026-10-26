@@ -3,7 +3,7 @@
 // @Check[perception|dc:38] check before you roll. Failure This creature is Off-Guard against the Strike. Critical Failure This creature
 // is off-guard against all your attacks until the end of its next turn." The core's save family with the Perception statistic (core
 // 60e5ff9): the ability compiler reads the rows as a Will save's, and the statistic is then Perception. Off-guard "against the Strike"
-// lasts the turn, and only its user's attacks counting is a note, as is the Step and the Strike itself. Pure.
+// lasts the turn, only to its user's attacks (the core's scope); the Step and the Strike are its user's own, a line of the card. Pure.
 
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 
@@ -26,7 +26,12 @@ export function perceptionCheckPlan(html, base, item, options = {}) {
     const before = text.slice(0, check.index).replace(/<[^>]+>/g, " ").replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\s+/g, " ").replace(/^.*?\bEffect\b\s*/s, "").trim();
     // (What its user does first, its flavor left out: "You Step, … and then make a melee Strike against the triggering enemy".)
     const does = before.replace(/\s*If you do make a Strike,\s*$/i, "").split(/(?<=[.!?])\s+/).filter((sentence) => /\b(?:Step|Stride|Strike|reach|move)\b/.test(sentence)).join(" ");
-    const notes = [...(does ? [`${does.replace(/\.$/, "")} (by hand).`] : []), "Off-Guard only against its user's attacks: the Strike on a failure, all of them on a critical failure."];
+    // (Its user's Step and Strike, a line of the card: its own actions. 2026-10-26: by hand before.)
+    const notes = does ? [`${does.replace(/\.$/, "")} (its own actions).`] : [];
+    // (Off-guard only to its user's attacks, the core's scope (the ability module's mark on its user): its melee Strike on a failure, all its
+    // attacks on a critical failure, until the end of the creature's next turn. 2026-10-26: a note before.)
+    const scoped = { failure: { against: "actor", attacks: "melee", uses: 1 }, criticalFailure: { against: "actor", attacks: "any" } };
+    const outcomes = Object.fromEntries(Object.entries(read.resolution.outcomes).map(([degree, row]) => [degree, scoped[degree] && row ? { ...row, effects: (row.effects ?? []).map((effect) => (effect?.slug === "off-guard" ? { ...effect, scope: scoped[degree], ...(degree === "criticalFailure" && effect.duration ? { duration: { ...effect.duration, anchor: "target-turn" } } : {}) } : effect)) } : row]));
     return {
         ...base,
         ...read,
@@ -34,8 +39,8 @@ export function perceptionCheckPlan(html, base, item, options = {}) {
         activation: base.activation,
         targeting: { target: "1 creature", range: null, area: null },
         trigger: { event: "use" },
-        resolution: { ...read.resolution, check: { ...read.resolution.check, statistic: "perception" } },
-        notes,
-        partial: true
+        resolution: { ...read.resolution, check: { ...read.resolution.check, statistic: "perception" }, outcomes },
+        ...(notes.length ? { notes } : {}),
+        automation: { level: "automatic" }
     };
 }

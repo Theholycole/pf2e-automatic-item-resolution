@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1198,
+  "entries": 1196,
   "results": {
    "none": 596,
-   "partial": 221,
+   "partial": 219,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -13,7 +13,7 @@
    "counteract": 16,
    "afflictions": 47,
    "areas": 109,
-   "moving": 82,
+   "moving": 80,
    "lasting": 62,
    "visibility": 46,
    "choice": 36,
@@ -56,15 +56,15 @@
    "counteract": 79,
    "afflictions": 89,
    "lasting": 207,
-   "moving": 106,
-   "triggers": 123,
+   "moving": 104,
+   "triggers": 121,
    "visibility": 48,
    "dying": 72,
    "choice": 106,
    "several": 89,
    "mind": 69,
-   "strike": 175,
-   "reader": 184,
+   "strike": 173,
+   "reader": 182,
    "spells": 71,
    "information": 190,
    "actions": 56,
@@ -9411,20 +9411,6 @@
    ]
   },
   {
-   "name": "Mercurial Mantle",
-   "kind": "activation",
-   "activation": "Cunning Dodge",
-   "result": "partial",
-   "main": "moving",
-   "work": "step",
-   "needs": [
-    "moving",
-    "triggers",
-    "strike",
-    "reader"
-   ]
-  },
-  {
    "name": "Golden Blade of Mzali",
    "kind": "activation",
    "result": "partial",
@@ -12291,19 +12277,6 @@
     "objects",
     "mind",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Purloining Cloak",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "work": "step",
-   "needs": [
-    "moving",
-    "triggers",
-    "strike",
-    "reader"
    ]
   },
   {

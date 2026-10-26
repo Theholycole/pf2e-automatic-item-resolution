@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 886,
+   "resolves": 888,
    "builtin:cast-spell": 475,
-   "partial": 139,
+   "partial": 137,
    "none": 431,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
@@ -61,7 +61,7 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 512,
+    "resolves": 514,
     "builtin:cast-spell": 347,
     "none": 300,
     "builtin:focus-point": 45,
@@ -70,7 +70,7 @@
     "builtin:no-effect": 69,
     "note-only": 109,
     "builtin:reroll": 34,
-    "partial": 67,
+    "partial": 65,
     "builtin:table": 4,
     "builtin:teleport": 14,
     "builtin:zone": 14,
@@ -18550,7 +18550,7 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -24163,7 +24163,7 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
