@@ -11,6 +11,8 @@
 // - an attack it makes nonlethal, Possum's Play's "When you activate the talisman, the triggering attack gains the nonlethal trait, and you
 //   fall Prone, feigning death" (the Prone the row's): a note Effect on its user for the round — what nonlethal damage does at 0 Hit Points
 //   is PF2e's rule, the damage the attacker's roll; the user's note-Effect ruling counts it done.
+// - whom it's at, a banner's "each enemy within the banner's aura that has been dealt damage since the end of your last turn" (Banner of
+//   Piercing Shards, worded so by src/compiler/item-data.js): the card's target, the creatures its presser targets — not a GM line.
 // Each sentence read is no longer a note. Pure.
 
 const CONDITION_IDS = { blinded: "XgEqL1kFApUbl5Z2", clumsy: "i3OJZU2nk64Df3xm", confused: "yblD8fOR1J8rDwEQ", controlled: "9qGBRpbX9NEwtAAr", dazzled: "TkIyaNPgTZFBCCuh", deafened: "9PR9y0bi4JPKnHPR", drained: "4D2KBtexWXa6oUMR", enfeebled: "MIRkyAjyBeXivMa7", fascinated: "AdPVz7rbaVSRxHFg", fatigued: "HL2l2VRSaQHu9lUw", frightened: "TBSHQspnbcqxsmjL", grabbed: "kWc1fhmv9LBiTuei", immobilized: "eIcWbB5o3pP6OIMe", "off-guard": "AJh5ex99aV6VTggg", paralyzed: "6uEgoh53GbXuHpTF", petrified: "dTwPJuKgBQCMxixg", prone: "j91X7x0XSomq8d60", restrained: "VcDeM8A5oI6VqhbM", sickened: "fesd1n5eVhpCSS18", slowed: "xYTAsEpcJE1Ccni3", stunned: "dfCMdR4wnpbYNTix", stupefied: "e1XGnhKNSQIm5IXg" };
@@ -59,6 +61,8 @@ const STRIDE_AFTER = /^\{target\} \((?:critical )?failure, the rest by hand\): T
 
 const NONLETHAL = /^When you activate [\w' -]+?, the triggering attack gains the nonlethal trait(?:, and you fall Prone, feigning death)?\.$/i;
 
+const AIMED = /^\{target\}: Target (each enemy within the banner's aura that [^.]+)\.$/i;
+
 const leftOver = (plan) => !(plan.notes ?? []).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
 
 // The plan and its (activation's) html → the plan with the rows that carry these.
@@ -70,6 +74,7 @@ export function withRowReadings(plan, html, item = null) {
     // (Its notes, and what it didn't read — notes later.)
     let notes = [...(plan.notes ?? [])];
     let unread = [...(plan.unread ?? [])];
+    let targetWords = null;
     const kept = (list, words) => list.filter((note) => !said(note).includes(words) && !words.includes(said(note).replace(/^(?:Critical Success|Success|Failure|Critical Failure)\s+/, "")));
     const drop = (words) => {
         notes = kept(notes, words);
@@ -124,8 +129,17 @@ export function withRowReadings(plan, html, item = null) {
             drop(said(entry));
         }
     }
-    if (notes.length === (plan.notes ?? []).length && unread.length === (plan.unread ?? []).length && Object.keys(rows).every((degree) => rows[degree] === outcomes[degree])) return plan;
-    next = { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread } : {}), resolution: { ...plan.resolution, outcomes: rows } };
+    // (Whom it's at, the banner's aura's enemies: the card's target words.)
+    for (const [degree, row] of Object.entries(rows)) {
+        const lines = row?.manualInstructions ?? [];
+        const aimed = lines.map((line) => [line, AIMED.exec(String(line))]).filter(([, match]) => match);
+        if (!aimed.length) continue;
+        rows[degree] = { ...row, manualInstructions: lines.filter((line) => !aimed.some(([one]) => one === line)) };
+        targetWords = aimed[0][1][1];
+        notes = notes.filter((note) => !/^Only each enemy within the banner's aura that\b/i.test(said(note)));
+    }
+    if (!targetWords && notes.length === (plan.notes ?? []).length && unread.length === (plan.unread ?? []).length && Object.keys(rows).every((degree) => rows[degree] === outcomes[degree])) return plan;
+    next = { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread } : {}), resolution: { ...plan.resolution, outcomes: rows }, ...(targetWords ? { targeting: { ...(plan.targeting ?? {}), target: targetWords } } : {}) };
     if (next.partial && leftOver(next)) {
         delete next.partial;
         next.automation = { ...(next.automation ?? {}), level: "automatic" };

@@ -397,8 +397,9 @@ test("Demoralize at the target and the enemies around it (Shrieking Skull), afte
     const armbands = compileActivations(item("Wrestler's Armbands"), { spellEffects })[0].plan;
     assert.deepEqual([armbands.builtin, armbands.action.slug, armbands.action.targeted], ["item-action", "demoralize", true]);
     const banner = compileActivations(item("Banner of Piercing Shards"), { spellEffects })[0].plan;
-    assert.deepEqual([banner.resolution.sharedDamage.components[0].formula, banner.targeting.range, banner.partial], ["1d4[persistent,bleed]", "30 feet", true]);
-    assert.match(banner.notes.join(" "), /dealt damage since the end of your last turn/);
+    // (Whom it's at the card's target now, 2026-10-26: not partial, no note — src/compiler/row-readings.js.)
+    assert.deepEqual([banner.resolution.sharedDamage.components[0].formula, banner.targeting.range, Boolean(banner.partial), banner.notes], ["1d4[persistent,bleed]", "30 feet", false, undefined]);
+    assert.match(banner.targeting.target, /dealt damage since the end of your last turn/);
 });
 
 test("a moment's resistance with its type first (Sparkshade Parasol) and a companion's swim Speed (Waverider Barding)", () => {

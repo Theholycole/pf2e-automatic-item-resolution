@@ -69,3 +69,10 @@ test("Alchemist's Flamethrower: the grade of alchemist's fire loaded picked on t
     ]);
     assert.equal(plan.ways[0].plan.resolution.outcomes.failure.damage.mode, "shared");
 });
+
+test("Banner of Piercing Shards: whom it's at — each enemy in the banner's aura dealt damage since its user's last turn — the card's target, not the GM's", () => {
+    for (const name of ["Banner of Piercing Shards", "Banner of Piercing Shards (Greater)", "Banner of Piercing Shards (Major)"]) {
+        const plan = compileActivations(item(name))[0].plan;
+        assert.deepEqual([plan.targeting.target, plan.resolution.outcomes.success.manualInstructions ?? [], plan.notes, Boolean(plan.partial)], ["each enemy within the banner's aura that has been dealt damage since the end of your last turn", [], undefined, false]);
+    }
+});

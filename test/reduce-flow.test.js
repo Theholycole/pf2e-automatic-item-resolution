@@ -277,7 +277,8 @@ test("Copper Penny stands its user up (prone ended) and keeps it from being knoc
     assert.deepEqual([scout.hasCondition("prone"), scout.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "Immunity" && rule.type === "prone"))], [false, true]);
     const possum = compileItem(source("Possum's Play"));
     assert.deepEqual(possum.resolution.outcomes.success.effects, [{ kind: "condition", slug: "prone", value: null, duration: null }]);
-    assert.ok(possum.unread.some((sentence) => /nonlethal trait/.test(sentence)));
+    // (Its nonlethal attack a note Effect on its user now, 2026-10-26: src/compiler/row-readings.js.)
+    assert.ok(!possum.unread.some((sentence) => /nonlethal trait/.test(sentence)) && possum.resolution.outcomes.success.noteEffects.some((note) => note.label === "Nonlethal attack"));
 });
 
 test("Standard of the Sure-Footed's Help Up: prone ended on the ally targeted", () => {

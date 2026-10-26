@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1320,
+  "entries": 1314,
   "results": {
    "none": 624,
-   "partial": 305,
+   "partial": 299,
    "builtin:no-effect": 129,
    "note-only": 262
   },
@@ -13,7 +13,7 @@
    "counteract": 17,
    "afflictions": 54,
    "areas": 112,
-   "moving": 91,
+   "moving": 88,
    "lasting": 66,
    "visibility": 57,
    "choice": 44,
@@ -31,7 +31,7 @@
    "removed": 4,
    "cooldown": 10,
    "vehicles": 20,
-   "several": 26,
+   "several": 23,
    "triggers": 93,
    "immunity": 27,
    "situational": 20,
@@ -56,15 +56,15 @@
    "counteract": 80,
    "afflictions": 97,
    "lasting": 217,
-   "moving": 119,
-   "triggers": 129,
+   "moving": 116,
+   "triggers": 126,
    "visibility": 59,
-   "dying": 82,
+   "dying": 79,
    "choice": 118,
-   "several": 98,
+   "several": 95,
    "mind": 73,
    "strike": 188,
-   "reader": 233,
+   "reader": 230,
    "spells": 82,
    "information": 192,
    "actions": 62,
@@ -1588,19 +1588,6 @@
    "needs": [
     "spells",
     "lasting"
-   ]
-  },
-  {
-   "name": "Possum's Play (Major)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "fall prone",
-   "needs": [
-    "moving",
-    "triggers",
-    "dying",
-    "reader"
    ]
   },
   {
@@ -3414,19 +3401,6 @@
    ]
   },
   {
-   "name": "Possum's Play",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "fall prone",
-   "needs": [
-    "moving",
-    "triggers",
-    "dying",
-    "reader"
-   ]
-  },
-  {
    "name": "Bloodhammer Reserve",
    "kind": "consumable",
    "result": "none",
@@ -4178,17 +4152,6 @@
     "objects",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Banner of Piercing Shards (Greater)",
-   "kind": "activation",
-   "activation": "Shards Seek Wounds",
-   "result": "partial",
-   "main": "several",
-   "work": "each enemy",
-   "needs": [
-    "several"
    ]
   },
   {
@@ -12869,19 +12832,6 @@
    ]
   },
   {
-   "name": "Possum's Play (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "fall prone",
-   "needs": [
-    "moving",
-    "triggers",
-    "dying",
-    "reader"
-   ]
-  },
-  {
    "name": "Affliction Suppressant (Major)",
    "kind": "consumable",
    "result": "partial",
@@ -13198,17 +13148,6 @@
     "visibility",
     "areas",
     "speech"
-   ]
-  },
-  {
-   "name": "Banner of Piercing Shards (Major)",
-   "kind": "activation",
-   "activation": "Shards Seek Wounds",
-   "result": "partial",
-   "main": "several",
-   "work": "each enemy",
-   "needs": [
-    "several"
    ]
   },
   {
@@ -13807,17 +13746,6 @@
    "needs": [
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Banner of Piercing Shards",
-   "kind": "activation",
-   "activation": "Shards Seek Wounds",
-   "result": "partial",
-   "main": "several",
-   "work": "each enemy",
-   "needs": [
-    "several"
    ]
   },
   {

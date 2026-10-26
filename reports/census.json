@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 171,
-   "resolves": 774,
+   "resolves": 777,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
-   "partial": 107,
+   "partial": 104,
    "builtin:ways": 26,
    "builtin:item-action": 16,
    "note-only": 117,
@@ -99,8 +99,8 @@
     "none": 25,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 63,
-    "partial": 10,
+    "resolves": 66,
+    "partial": 7,
     "builtin:no-effect": 7,
     "builtin:reroll": 1,
     "builtin:ways": 2,
@@ -366,7 +366,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 65,
+   "resolves": 68,
    "gaps": 0,
    "none": 19
   },
@@ -384,7 +384,7 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 259,
+   "resolves": 262,
    "gaps": 0,
    "none": 22
   },
@@ -3253,11 +3253,9 @@
     "trigger",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "When you activate the talisman, the triggering attack gains the nonlethal trait, and you fall Prone, feigning death."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -6969,11 +6967,9 @@
     "trigger",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "When you activate the talisman, the triggering attack gains the nonlethal trait, and you fall Prone, feigning death."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -24653,11 +24649,9 @@
     "trigger",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "When you activate the talisman, the triggering attack gains the nonlethal trait, and you fall Prone, feigning death."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {

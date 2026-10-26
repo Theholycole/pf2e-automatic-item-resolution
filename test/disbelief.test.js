@@ -18,8 +18,8 @@ const item = (name) => {
 test("Possum's Play: its illusion's disbelief — Perception DC 18 for a creature that touches it or Seeks, for up to a minute, what ends it on the card", () => {
     const plan = compileItem(item("Possum's Play"));
     assert.deepEqual(plan.disbelief, { dc: 18, statistic: "perception", when: "touches the illusion or Seeks to examine its user", lasts: { value: 1, unit: "minutes" }, ends: "Any action requiring its user to move or make noise immediately ends the illusion." });
-    // (What's left: the triggering attack made nonlethal, the GM's.)
-    assert.deepEqual(plan.unread, ["When you activate the talisman, the triggering attack gains the nonlethal trait, and you fall Prone, feigning death."]);
+    // (The triggering attack made nonlethal: a note Effect on its user beside its Prone, 2026-10-26 — nothing left over.)
+    assert.deepEqual([plan.unread, Boolean(plan.partial), plan.resolution.outcomes.success.noteEffects.map((note) => note.label)], [[], false, ["Nonlethal attack"]]);
     assert.equal(compileItem(item("Possum's Play (Greater)")).disbelief.dc > 18, true);
     assert.equal(disbeliefText(plan.disbelief), "A creature that touches the illusion or Seeks to examine its user can try to disbelieve it: Perception DC 18");
 });
