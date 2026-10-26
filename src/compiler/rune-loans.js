@@ -18,6 +18,9 @@ const PASSIVE = /\b(?:invest|While\b|Any creature|This ammunition|has the benefi
 // rune, or Wounding weapon rune for 1 minute" — plan.item.rune.choices, the card's picker.)
 const NAME = String.raw`((?:(?:Greater|Major|True) )?[A-Z][\w']*(?: [A-Z][\w']*)?)(?: weapon| property)? rune`;
 const EITHER = new RegExp(String.raw`\b(?:benefits?|effects?|properties) of either an? ${NAME}, (?:an? )?${NAME},? or (?:an? )?${NAME}\b`);
+// (Or a list, Glaive of the Artist's "causing the glaive to gain the effects of your choice of the corrosive, flaming, frost, shocking, or thundering
+// property runes for 1 round", 2026-10-26.)
+const CHOICE_OF = /\b(?:benefits?|effects?|properties) of your choice of the ((?:[a-z]+, )+)(?:or )([a-z]+) property runes\b/i;
 const FOR_TIME = /\bfor (\d+|one|a|an) (round|rounds|minute|minutes|hour|hours)\b/i;
 const UNTIL_TURN_END = /\bUntil the end of your turn\b|\bfor the duration of the triggering (?:attack|Strike)\b/i;
 const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours" };
@@ -45,6 +48,15 @@ export function readRuneLoan(text, item = null) {
         if (bane && !PASSIVE.test(sentence)) {
             const choices = BANE_TYPES.map((traits) => ({ key: "bane", name: `Bane (${traits.join(" and ")})`, traits }));
             return { key: "bane", name: "Bane", choices, duration: { mode: "fixed", value: COUNT[bane[1].toLowerCase()] ?? Number(bane[1]), unit: UNITS[bane[2].toLowerCase()], expiry: "turn-start" }, own: false, supersedes: true };
+        }
+        const listed = CHOICE_OF.exec(sentence);
+        if (listed && !PASSIVE.test(sentence)) {
+            const time = FOR_TIME.exec(sentence) ?? FOR_TIME.exec(String(text));
+            const duration = UNTIL_TURN_END.test(sentence) ? { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end" } : time ? { mode: "fixed", value: COUNT[time[1].toLowerCase()] ?? Number(time[1]), unit: UNITS[time[2].toLowerCase()], expiry: "turn-start" } : null;
+            const names = [...listed[1].split(",").map((word) => word.trim()).filter(Boolean), listed[2]].map((word) => word.charAt(0).toUpperCase() + word.slice(1));
+            const choices = names.map((name) => ({ key: runeKey(name), name }));
+            const own = item?.type === "weapon" && !/\ba weapon\b/i.test(sentence);
+            return { key: choices[0].key, name: choices[0].name, choices, duration, own };
         }
         const either = EITHER.exec(sentence);
         if (either && !PASSIVE.test(sentence)) {

@@ -71,6 +71,20 @@ test("Boughshatter: one of three runes, picked on the card (Grievous), on the we
     assert.match(card.content, /Gives Boughshatter the Grievous rune for 1 minute/);
 });
 
+test("Glaive of the Artist: one of five property runes for 1 round, picked on the card (Frost), on the glaive itself (2026-10-26)", async () => {
+    const glaive = foundry.giveItem(fighter, source("Glaive of the Artist"));
+    fighter.weapons.push(glaive);
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: glaive.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    assert.match(card.content, /Gives its weapon the Corrosive, Flaming, Frost, Shocking or Thundering rune \(picked\) for 1 round/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", runeChoice: 2 });
+    await settle();
+    const effect = fighter.created.filter((entry) => entry.flags?.[MODULE_ID]?.rune).at(-1);
+    assert.deepEqual([effect.system.rules[0].value, effect.system.rules[0].definition], ["frost", [`item:id:${glaive.id}`]]);
+});
+
 test("Blade Phantom's Guide: the weapon picked (up to level 11) at its user's highest weapon proficiency for 1 minute — PF2e's MartialProficiency on it", async () => {
     const guide = compileItem(source("Blade Phantom's Guide"));
     assert.deepEqual([guide.item.proficiency.duration.value, guide.item.proficiency.duration.unit, guide.item.proficiency.maxLevel], [1, "minutes", 11]);

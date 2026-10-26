@@ -1,12 +1,12 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1294,
+  "entries": 1293,
   "results": {
    "none": 621,
    "partial": 285,
    "builtin:no-effect": 129,
-   "note-only": 259
+   "note-only": 258
   },
   "main": {
    "speeds": 24,
@@ -16,7 +16,7 @@
    "moving": 88,
    "lasting": 65,
    "visibility": 53,
-   "choice": 39,
+   "choice": 38,
    "mind": 9,
    "strike": 107,
    "spells": 45,
@@ -50,7 +50,7 @@
    "speeds": 30,
    "areas": 166,
    "immunity": 74,
-   "objects": 393,
+   "objects": 392,
    "speech": 124,
    "out-of-combat": 422,
    "counteract": 80,
@@ -60,7 +60,7 @@
    "triggers": 126,
    "visibility": 55,
    "dying": 78,
-   "choice": 112,
+   "choice": 111,
    "several": 90,
    "mind": 71,
    "strike": 188,
@@ -4902,17 +4902,6 @@
     "areas",
     "lasting",
     "reader"
-   ]
-  },
-  {
-   "name": "Glaive of the Artist",
-   "kind": "activation",
-   "result": "note-only",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "objects"
    ]
   },
   {
