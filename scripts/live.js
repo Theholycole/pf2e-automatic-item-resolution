@@ -598,6 +598,8 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     const lines = [];
     const each = allies ? allies.map((creature) => ({ ...state, drinkers: [entryOf(creature.token, creature.actor)], drinker: 0 })) : [state];
     for (const one of each) lines.push(...await applyToRecipient(one, { core, others: allies ? [] : others, reduce: allies ? reduce.filter((entry) => entry.who !== "targets") : reduce }));
+    // (Its user's shield raised, Shield of Snakes' Snap Up: PF2e's own Raise a Shield, src/compiler/raise-shield.js.)
+    if (state.plan.raiseShield) lines.push(await raiseShieldFor(state));
     // (An illusion its user can be seen through, Possum's Play's: the GM's disbelief card for its time, scripts/disbelief.js.)
     if (state.plan.disbelief) lines.push(await postDisbeliefCard(state));
     // (Another's conditions once, when the Effect went to each ally.)
@@ -607,6 +609,17 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     }
     const next = { ...state, status: "applied", results: lines.length ? lines : ["Nothing to apply."] };
     return message.update({ content: cardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// Its user's held shield raised with PF2e's own Raise a Shield (its Effect: Raise a Shield): a line for the card.
+async function raiseShieldFor(state) {
+    const { actor } = await creatureOf(state.user);
+    if (!actor) return `${state.user.name} isn't there any more.`;
+    const shield = actor.heldShield ?? null;
+    if (!shield) return `${state.user.name} holds no shield to raise.`;
+    if (typeof game.pf2e?.actions?.raiseAShield !== "function") return `${state.user.name}: raise ${shield.name} by hand (PF2e's Raise a Shield isn't here).`;
+    await game.pf2e.actions.raiseAShield({ actors: [actor] });
+    return `${state.user.name} raises ${shield.name}`;
 }
 
 // What the item card does for its recipient (its user, the drinker, or one of the allies targeted): the core's changes,

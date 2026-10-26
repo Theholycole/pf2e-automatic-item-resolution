@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 819,
+   "resolves": 820,
    "builtin:cast-spell": 475,
    "partial": 199,
-   "none": 454,
+   "none": 453,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
@@ -33,8 +33,8 @@
   "live": {
    "save": 441,
    "cast": 475,
-   "item": 604,
-   "none": 566,
+   "item": 605,
+   "none": 565,
    "focus": 47,
    "counteract": 29,
    "fortune": 60,
@@ -159,8 +159,8 @@
    "results": {
     "builtin:cast-spell": 11,
     "note-only": 13,
-    "resolves": 39,
-    "none": 13,
+    "resolves": 40,
+    "none": 12,
     "builtin:modes": 4,
     "builtin:teleport": 1,
     "builtin:readied-bonus": 4,
@@ -13808,9 +13808,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Shield of Snakes",

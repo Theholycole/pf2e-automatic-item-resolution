@@ -48,3 +48,11 @@ test("Blast Lance: the push its failures already make, the Stride after the crea
         assert.deepEqual([failure.forcedMovement.distance, criticalFailure.forcedMovement.distance, failure.manualInstructions, criticalFailure.manualInstructions, plan.notes, Boolean(plan.partial)], [5, 10, [], [], ["After the push, its user can Stride after the creature, the same distance and direction."], false]);
     }
 });
+
+test("Shield of Snakes' Snap Up: its user's shield raised on the item card's Apply (PF2e's own Raise a Shield), nothing left over", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const snap = activation("Shield of Snakes", "Snap Up");
+    assert.deepEqual([routeOf(snap), snap.raiseShield, Boolean(snap.partial), snap.notes], ["item", true, false, undefined]);
+    // (Not Shield of Endurance's, whose shield's temporary Hit Points stay its note.)
+    assert.equal(activation("Shield of Endurance", "Temporary Endurance")?.raiseShield, undefined);
+});

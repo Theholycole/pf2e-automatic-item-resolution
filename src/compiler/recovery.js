@@ -3,7 +3,8 @@
 // you", Antivenom Potion's "attempt a @Check[flat|dc:10] to end any persistent poison damage", Ring of Torag's "you gain an
 // immediate flat check to remove the persistent fire damage, and the DC typically decreases from 15 to 10", Cauterizing
 // Torch's "an immediate flat check to end any persistent bleed effect with the lower DC for particularly effective
-// assistance". Read as plan.item.recovery { types, dc }: the item card rolls PF2e's own recovery check (the condition's
+// assistance", Cinnamon Nostalgia Bun's "an immediate flat check to recover from a single source of persistent mental damage, with the DC
+// reduction from appropriate assistance". Read as plan.item.recovery { types, dc }: the item card rolls PF2e's own recovery check (the condition's
 // rollRecovery) for each persistent damage of those types the creature has, at that DC when it's lower (10, for
 // particularly appropriate help). Not one whose type is the item's to choose ("the persistent damage the powder works
 // against"), nor another creature's. Pure.
@@ -12,9 +13,10 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 
 const TYPES = ["acid", "bleed", "bludgeoning", "cold", "electricity", "fire", "force", "mental", "piercing", "poison", "slashing", "sonic", "spirit", "vitality", "void"];
 const TYPE = `(?:${TYPES.join("|")})`;
-const CHECK = new RegExp(String.raw`\b(?:attempts?|gain|roll) (?:a |an )?(?:immediate |new )?(?:@Check\[flat\|dc:(\d+)\](?:\{[^}]*\})?|flat check) to (?:end|remove) (?:any |all |the )?persistent (${TYPE}(?:(?:,|, or|, and| or| and) ${TYPE})*) (?:damage|effects?)\b`, "i");
+const CHECK = new RegExp(String.raw`\b(?:attempts?|gain|roll) (?:a |an )?(?:immediate |new )?(?:@Check\[flat\|dc:(\d+)\](?:\{[^}]*\})?|flat check) to (?:end|remove|recover from) (?:any |all |the |a single source of )?persistent (${TYPE}(?:(?:,|, or|, and| or| and) ${TYPE})*) (?:damage|effects?)\b`, "i");
 // The DC for particularly appropriate help (Player Core's persistent damage): 10, or the number the text gives.
-const LOWER = /\b(?:particularly (?:appropriate|effective)|especially effective)\b/i;
+// (Cinnamon Nostalgia Bun's "with the DC reduction from appropriate assistance" too.)
+const LOWER = /\b(?:particularly (?:appropriate|effective)|especially effective|the DC reduction from appropriate assistance)\b/i;
 const LOWER_TO = /\bDC (?:typically )?(?:decreases|is lowered|lowers|drops) (?:from \d+ )?to (\d+)\b|\blowers the DC to (\d+)\b/i;
 const NOT_YOURS = /\b(?:each|every|all) (?:other )?(?:all(?:y|ies)|creatures?)\b|\bemanation\b|\baura\b|\bWhenever\b/i;
 

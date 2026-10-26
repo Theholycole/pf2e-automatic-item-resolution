@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1323,
+  "entries": 1322,
   "results": {
-   "none": 625,
+   "none": 624,
    "partial": 307,
    "builtin:no-effect": 129,
    "note-only": 262
@@ -32,7 +32,7 @@
    "cooldown": 10,
    "vehicles": 20,
    "several": 26,
-   "triggers": 94,
+   "triggers": 93,
    "immunity": 27,
    "situational": 20,
    "creatures": 53,
@@ -57,7 +57,7 @@
    "afflictions": 99,
    "lasting": 217,
    "moving": 119,
-   "triggers": 130,
+   "triggers": 129,
    "visibility": 59,
    "dying": 82,
    "choice": 118,
@@ -7638,17 +7638,6 @@
    "needs": [
     "strike",
     "actions"
-   ]
-  },
-  {
-   "name": "Shield of Snakes",
-   "kind": "activation",
-   "activation": "Snap Up",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: the shield of …",
-   "needs": [
-    "triggers"
    ]
   },
   {

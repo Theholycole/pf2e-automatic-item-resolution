@@ -151,6 +151,8 @@ export function previewLines(state) {
     if (plan?.temperature?.counts) lines.push(temperatureLine(plan.temperature));
     // (A fall it eases, src/compiler/falls.js: the card's own Effect, for the environment module.)
     if (plan?.fall) lines.push(fallLine(plan.fall));
+    // (Its user's shield raised, src/compiler/raise-shield.js: PF2e's own Raise a Shield.)
+    if (plan?.raiseShield) lines.push("Raises its user's shield (PF2e's Raise a Shield)");
     for (const light of plan?.item?.light ?? []) lines.push(lightText(light));
     for (const entry of plan?.item?.levelTemp ?? []) lines.push(levelTempText(entry));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));

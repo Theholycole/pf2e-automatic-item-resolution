@@ -31,6 +31,7 @@ import { withMove } from "./move.js";
 import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { withFalls } from "./falls.js";
+import { withRaiseShield } from "./raise-shield.js";
 import { withRowReadings } from "./row-readings.js";
 import { withDisbelief } from "./disbelief.js";
 import { objectsPlan } from "./objects.js";
@@ -521,6 +522,8 @@ function compileEach(item, options = {}) {
         plan = withTemperature(plan, activation.html, base);
         // (A fall it eases, src/compiler/falls.js: Tumbler's Belt's 120 feet shorter — the environment module's to apply.)
         plan = withFalls(plan, activation.html, base);
+        // (Its user's shield raised, src/compiler/raise-shield.js: Shield of Snakes' Snap Up — PF2e's own Raise a Shield on Apply.)
+        plan = withRaiseShield(plan, activation.html, base);
         // (One of its user's items moved or changed, or itself, src/compiler/objects.js: Retrieval Belt, The Forge, Lady's Knife.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = objectsPlan(activation.html, base, item) ?? plan;
         // (A check's success that pulls the creature toward its user, src/compiler/pull-toward.js: Tentacle Cannon's Grasping Deep Shot.)

@@ -1653,6 +1653,20 @@ export const cases = {
         return { dealt, temp, moved: (foeToken.x - x) / scene.grid.size };
     },
 
+    // Shield of Snakes' Snap Up, held: its card raises the shield with PF2e's own Raise a Shield (its Effect on the user).
+    async snakeShieldRaise(scene) {
+        await clearSquares(scene, [[19, 15]]);
+        const { actor: user } = await creature(scene, "Snake Shield Bearer", { type: "character", x: 19, y: 15, level: 10 });
+        const shield = await give(user, "Shield of Snakes");
+        await shield.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "Snap Up's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => effect.slug === "raise-a-shield" || /Raise a Shield/.test(effect.name)), "PF2e's Raise a Shield Effect", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Falls through PF2e Automatic Environment Resolution: the environment module's falling hook offers Tumbler's Belt's reaction to the GMs and
     // its owners; Gliding Membranes (Lesser) worn eases a 60-foot fall to 35 feet (17 damage, Prone) through api.fallEases; Land With Grace's
     // Effect (120 feet shorter, on its feet) leaves none.
