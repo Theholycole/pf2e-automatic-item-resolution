@@ -14,6 +14,13 @@ export async function toggleOff(plan, { actor, token, used }) {
     await actor.createEmbeddedDocuments("Item", [source]);
 }
 
+// (Its own toggle turned on as it's used, Golden Blade of Mzali's "used Elemental Form": plan.toggleOn.)
+export async function toggleOn(plan, { actor, used }) {
+    const itemId = used.data._id ?? String(used.data.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? null;
+    if (!itemId || !actor?.toggleRollOption) return;
+    await actor.toggleRollOption("all", plan.toggleOn.option, itemId, true);
+}
+
 export function setUpToggleOff() {
     Hooks.on("deleteItem", (item) => {
         const flag = item?.flags?.[MODULE_ID]?.toggleOff;

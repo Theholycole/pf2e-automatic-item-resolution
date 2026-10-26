@@ -2101,6 +2101,82 @@ export const cases = {
         return { check };
     },
 
+    // Elysian Dew drunk by an unholy creature: no aura, its Fortitude DC 30 save card at it instead.
+    async elysianUnholy(scene) {
+        await clearSquares(scene, [[1, 5]]);
+        const { actor: drinker, token } = await creature(scene, "Unholy Drinker", { x: 1, y: 5, level: 12 });
+        await drinker.update({ "system.traits.value": [...(drinker.system.traits.value ?? []), "unholy"] });
+        const dew = await give(drinker, "Elysian Dew");
+        let since = Date.now();
+        await dew.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the dew's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "its save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "fortitude" && check.against.value === 30, `Fortitude DC 30 (${JSON.stringify(check)})`);
+        assert(!drinker.itemTypes.effect.some((effect) => /Elysian Dew/.test(effect.name) && !/Immune/.test(effect.name)), "no aura");
+        return { check };
+    },
+
+    // Flame Layer Balm: its wearer marked for the hour; the first fire damage it takes gives it PF2e's Spell Effect: Fiery Body.
+    async balmBurst(scene) {
+        await clearSquares(scene, [[2, 5]]);
+        const { actor: wearer, token } = await creature(scene, "Balm Wearer", { x: 2, y: 5, hp: 200, level: 17 });
+        const balm = await give(wearer, "Flame Layer Balm");
+        const since = Date.now();
+        await balm.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the balm's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        await until(() => wearer.itemTypes.effect.some((effect) => effect.flags?.[NS]?.armed), "the balm's mark", { timeout: 8000 });
+        assert(!wearer.itemTypes.effect.some((effect) => /Fiery Body/.test(effect.name)), "no Fiery Body yet");
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await wearer.applyDamage({ damage: await new DamageRoll("6[fire]").evaluate(), token });
+        await until(() => wearer.itemTypes.effect.some((effect) => /Fiery Body/.test(effect.name)), "Fiery Body after the fire", { timeout: 8000 });
+        assert(!wearer.itemTypes.effect.some((effect) => effect.flags?.[NS]?.armed), "the mark used up");
+        const fiery = wearer.itemTypes.effect.find((effect) => /Fiery Body/.test(effect.name));
+        return { duration: fiery.system.duration };
+    },
+
+    // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
+    async hellcatPounce(scene) {
+        await clearSquares(scene, [[3, 5], [4, 5]]);
+        const { actor: user, token } = await creature(scene, "Hellcat Pouncer", { type: "character", x: 3, y: 5, level: 7 });
+        const { token: foeToken } = await creature(scene, "Hellcat Prey", { x: 4, y: 5, alliance: "opposition" });
+        const amulet = await give(user, "Amulet of the Hellcat");
+        await amulet.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const dagger = await give(user, "Dagger");
+        await dagger.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(amulet.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the pounce's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        await until(() => user.hasCondition("invisible"), "Invisible", { timeout: 8000 });
+        await token.object?.control?.();
+        await target(foeToken);
+        await strike(user, dagger);
+        await until(() => !user.hasCondition("invisible"), "no longer invisible after the Strike", { timeout: 8000 });
+        return { invisible: false };
+    },
+
+    // Golden Blade of Mzali's second activation: PF2e's "used Elemental Form" toggle on, the form's Effect at fire.
+    async goldenBladeForm(scene) {
+        await clearSquares(scene, [[5, 5]]);
+        const { actor: user, token } = await creature(scene, "Golden Blade Wielder", { type: "character", x: 5, y: 5, level: 15 });
+        const blade = await give(user, "Golden Blade of Mzali");
+        await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the form's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        await until(() => user.getRollOptions?.(["all"])?.includes("used-elemental-form") || user.rollOptions?.all?.["used-elemental-form"], "PF2e's toggle on", { timeout: 8000 });
+        const form = () => user.itemTypes.effect.find((effect) => /Elemental Form/.test(effect.name));
+        await until(form, "the form's Effect", { timeout: 8000 });
+        const choice = form().system.rules.find((rule) => rule.key === "ChoiceSet")?.selection ?? form().flags?.pf2e?.rulesSelections?.spellEffectElementalForm;
+        assert(choice === "fire", `fire (${choice})`);
+        return { choice };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {

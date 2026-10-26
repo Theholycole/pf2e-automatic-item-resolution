@@ -288,7 +288,8 @@ test("routes for saves and checks read but not played: Frogskin Tincture's toxin
     assert.equal(ampoule.resolution.outcomes.criticalFailure.followUps[0].check.against.value, 23);
     const dew = compileItem(source("Elysian Dew"));
     assert.deepEqual([dew.resolution.kind, dew.resolution.applications.map((entry) => entry.label), consumable("Elysian Dew")], ["effect", ["Aura: Elysian Dew"], "item"]);
-    assert.match(dew.notes.join(" "), /If you're unholy and drink this potion, .* a DC 30 Fortitude save or the potion renders you Drained 2\./);
+    // (Its unholy drinker's save: the card's own since 2026-10-26, test/options-flow.test.js.)
+    assert.deepEqual([dew.notes ?? null, dew.item.unlessKind.traits], [null, ["unholy"]]);
 });
 
 test("an item thrown as a Strike that PF2e can't roll (Sack of Rotten Fruit): its user's simple thrown attack against AC with its 1d4 bludgeoning on the ability module's card, then — the card's second step — the hit's DC 15 Fortitude save at the creature hit", async () => {

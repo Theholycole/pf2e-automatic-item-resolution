@@ -109,7 +109,7 @@ const AIMED = /^\{target\}: Target (each enemy within the banner's aura that [^.
 const INVESTIGATOR = "If you're an investigator, you can use this activation as part of the action you take to Devise a Stratagem or Pursue a Lead, and you can do the latter even though you can't see the creature.";
 // (Its user's own Stride before the Effect, Invisible Chain Shirt's Obscured Approach: a line of the card — 2026-10-26.)
 const STRIDE_FIRST = "Stride first (its user's own move).";
-const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus.", "After the push, its user can Stride after the creature, the same distance and direction.", INVESTIGATOR, STRIDE_FIRST]);
+const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus.", "After the push, its user can Stride after the creature, the same distance and direction.", INVESTIGATOR, STRIDE_FIRST, "Then Stride up to its Speed and make a melee Strike at the end of that movement (its own actions)."]);
 // (A note that's one of those lines: later readings — the mark's — leave the plan whole beside it too.)
 export const isCardLine = (note) => CARD_LINES.has(said(note));
 const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !CARD_LINES.has(said(note))).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
@@ -144,6 +144,27 @@ function withExposure(plan, itemHtml) {
     return result;
 }
 
+// (Invisible until its user's Strike, Amulet of the Hellcat's Invisible Pounce: "You become Invisible, Stride up to your speed, and then make a
+// melee Strike … After making the Strike, you are no longer invisible. If at any point during your Stride, you pass out of bright light, you
+// are no longer invisible and must stop moving" — its Invisible on an Effect that the user's next Strike ends (endsOnStrike, scripts/
+// ends-on-strike.js), the bright light's end in its words (the user's note-Effect rule), the Stride and Strike its own, a line of the card.
+// 2026-10-26.)
+const AFTER_STRIKE = /^After making the Strike, you are no longer invisible\.$/i;
+const OUT_OF_LIGHT = /^If at any point during your Stride, you pass out of bright light, you are no longer invisible and must stop moving\.$/i;
+const MAY_STRIKE = /^You may make a melee Strike if you have a target within reach\.$/i;
+export const POUNCE_LINE = "Then Stride up to its Speed and make a melee Strike at the end of that movement (its own actions).";
+function withInvisibleUntilStrike(plan) {
+    const rows = plan?.resolution?.outcomes;
+    if (plan?.resolution?.kind !== "check" || !(rows?.success?.effects ?? []).some((effect) => effect?.slug === "invisible") || !(plan.notes ?? []).some((note) => AFTER_STRIKE.test(said(note)))) return plan;
+    const gone = (note) => AFTER_STRIKE.test(said(note)) || OUT_OF_LIGHT.test(said(note)) || MAY_STRIKE.test(said(note));
+    const light = (plan.notes ?? []).some((note) => OUT_OF_LIGHT.test(said(note)));
+    const notes = [...(plan.notes ?? []).filter((note) => !gone(note)), POUNCE_LINE];
+    const effect = { name: "invisible until its Strike", words: `Invisible until after its next Strike${light ? "; if it passes out of bright light during its Stride, it's no longer invisible and must stop moving" : ""}`, rules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.zJxUflt9np0q4yML", onDeleteActions: { granter: "cascade", grantee: "cascade" } }], duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }, endsOnStrike: true };
+    const success = { ...rows.success, effects: rows.success.effects.filter((entry) => entry?.slug !== "invisible") };
+    const next = { ...plan, notes, resolution: { ...plan.resolution, outcomes: { ...rows, success } }, item: { ...(plan.item ?? {}), ruleEffects: [...(plan.item?.ruleEffects ?? []), effect] } };
+    return next;
+}
+
 // (Its Prone only for a creature on the ground, Drake Rifle (Fire)'s Drake Shot: "A target that isn't on the ground doesn't fall Prone" — the
 // Strike's strike.groundedProne, its rows' Prone left off for a target above the ground as the riders apply, src/live/if-target.js.)
 const GROUNDED = /^A target that isn't on the ground doesn't fall Prone\.$/i;
@@ -162,7 +183,7 @@ function withGroundedProne(plan) {
 }
 
 export function withRowReadings(given, html, item = null) {
-    const plan = withExposure(withGroundedProne(given), item?.system?.description?.value ?? html);
+    const plan = withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html));
     const outcomes = plan?.resolution?.outcomes;
     if (!outcomes || plan.builtin) return plan;
     let next = plan;

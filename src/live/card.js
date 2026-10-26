@@ -227,7 +227,9 @@ export function effectSource(template, { application = null, item = {}, user = {
             if (chosen) rule.selection = chosen.value;
             continue;
         }
-        const choice = rule.choices.find((entry) => (item.sourceId && entry?.value === item.sourceId) || (slug && JSON.stringify(entry?.predicate ?? []).includes(`parent:origin:item:slug:${slug}"`)));
+        // (Its choice named by the text, Elemental Form's element: application.choice, src/compiler/form-extras.js.)
+        const named = application?.choice ? rule.choices.find((entry) => entry?.value === application.choice) : null;
+        const choice = named ?? rule.choices.find((entry) => (item.sourceId && entry?.value === item.sourceId) || (slug && JSON.stringify(entry?.predicate ?? []).includes(`parent:origin:item:slug:${slug}"`)));
         if (choice) rule.selection = choice.value;
     }
     source.system ??= {};
@@ -294,7 +296,8 @@ export function recoveryText(recovery) {
 // named for the item, flagged as the module's. Returns a new source.
 // An Effect of PF2e's own rules on its user (item.ruleEffects): Mirrorblade's flanking.offGuardable.
 export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name }, item, user, worldTime, initiative, moduleId });
+    // (Ended by its creature's next Strike, Amulet of the Hellcat's Invisible: entry.endsOnStrike, scripts/ends-on-strike.js.)
+    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.endsOnStrike ? { endsOnStrike: true } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // Protection from heat or cold in words, with its time and its terms: "Severe heat counts as mild heat for 24 hours".
@@ -375,6 +378,13 @@ export function afterEndsEffectSource(then, { item = {}, user = {}, worldTime = 
     const uuid = conditionUuid(then.slug);
     const rules = uuid ? [{ key: "GrantItem", uuid, allowDuplicate: true, alterations: Number.isFinite(then.value) ? [{ mode: "override", property: "badge-value", value: then.value }] : [], onDeleteActions: { granter: "cascade", grantee: "cascade" } }] : [];
     return ownEffectSource({ name: oneCondition(then.slug, then.value), img: "icons/svg/clockwork.svg", words: `${oneCondition(then.slug, then.value)}${then.duration?.mode === "fixed" ? ` for ${timeText(then.duration)}` : ""}`, rules, duration: then.duration, flag: { afterEndsThen: then.slug }, item, user, worldTime, initiative, moduleId });
+}
+
+// Its wait on its wearer for a kind of damage (src/compiler/armed.js, scripts/armed.js): the mark for its time, carrying what that damage sets off.
+export function armedMarkSource(armed, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const what = armed.applications.map((entry) => entry.label ?? "its Effect").join(", ");
+    const words = `The first ${armed.damageType} damage it takes gives it ${what}${armed.applications[0]?.duration ? ` for ${armed.applications[0].duration.value} ${armed.applications[0].duration.value === 1 ? armed.applications[0].duration.unit.replace(/s$/, "") : armed.applications[0].duration.unit}` : ""}`;
+    return ownEffectSource({ name: "armed", img: "icons/svg/fire.svg", words, rules: [], duration: armed.lasts, flag: { armed }, item, user, worldTime, initiative, moduleId });
 }
 
 // What of the weather it ignores, with its time: "Ignores the weather's fog and mist for 1 minute".

@@ -19070,7 +19070,7 @@
     "duration"
    ],
    "result": "resolves",
-   "kind": "effect",
+   "kind": "check",
    "gaps": [],
    "live": "item"
   },

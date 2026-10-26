@@ -12,6 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
+import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, damageRollClass, entryOf, healCreature as heal, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, presserUuid, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
@@ -53,7 +54,8 @@ import { appliedAnyway, verifyEffectRules } from "../src/compiler/verify-effect.
 import { isUnloadedSpellgun, restoreUnloaded } from "./generic-items.js";
 import { strikeWithRunes } from "./rune-strikes.js";
 import { chargeSpellstrike, strikeWithSpellstrike } from "./spellstrike.js";
-import { toggleOff } from "./toggle-off.js";
+import { toggleOff, toggleOn } from "./toggle-off.js";
+import { endOnStrike } from "./ends-on-strike.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -108,6 +110,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         weaponDamageDealt(message).catch((error) => console.error(`${MODULE_ID} | weapon damage dealt`, error));
         // (An item's toggle on until its next damage roll: scripts/toggle.js.)
         togglesAfterDamage(message).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
+        // (An Effect its creature's next Strike ends, Amulet of the Hellcat's Invisible: scripts/ends-on-strike.js.)
+        endOnStrike(message).catch((error) => console.error(`${MODULE_ID} | ends on Strike`, error));
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
         hideCovered(message, html);
@@ -240,6 +244,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.userEffects?.length && actor) await giveUserConditions(plan.userEffects, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user conditions`, error));
     // (A healing of the item's own stopped for a while, Splithead Bow's Two-Headed Arrow: its PF2e toggle off, scripts/toggle-off.js.)
     if (plan?.toggleOff && actor) await toggleOff(plan, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
+    if (plan?.toggleOn && actor) await toggleOn(plan, { actor, used }).catch((error) => console.error(`${MODULE_ID} | toggle on`, error));
     // (Its save's DC its user's conditions higher, Death Tusk Helm's doomed and wounded: src/live/scaled.js.)
     if (plan?.dcBy && actor) plan = withConditionDC(plan, (slug) => actor.getCondition?.(slug)?.value ?? 0);
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
@@ -646,6 +651,20 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     const user = await creatureOf(state.user);
     const target = await creatureOf(recipient);
     if (!target.actor) throw new Error(`${recipient.name} isn't there any more.`);
+    // (Its wait for a kind of damage, Flame Layer Balm's: the mark on the wearer for its time, scripts/armed.js.)
+    if (state.plan.item?.armed) {
+        await target.actor.createEmbeddedDocuments("Item", [armedMarkSource(state.plan.item.armed, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: startInitiative(target.actor), moduleId: MODULE_ID })]);
+        return [`${recipient.name}: ${state.item.name} waits for the first ${state.plan.item.armed.damageType} damage it takes, for ${state.plan.item.armed.lasts.value} ${state.plan.item.armed.lasts.unit}`];
+    }
+    // (A drinker it fails for, Elysian Dew's unholy one: none of its results, its save card at that drinker instead — src/compiler/drinker-kind.js.)
+    const unless = state.plan.item?.unlessKind;
+    const kinds = new Set([...(target.actor.system?.traits?.value ?? []), ...(target.actor.traits ?? [])].map((trait) => String(trait).toLowerCase()));
+    if (unless?.traits?.some((trait) => kinds.has(trait))) {
+        const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+        const tokens = [target.token?.object ?? target.token].filter(Boolean);
+        if (postCard && tokens.length) await postCard({ plan: unless.save, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: user.actor ?? target.actor, sourceToken: user.token ?? null, tokens });
+        return [`${recipient.name} is ${unless.traits.join(" or ")}: ${state.item.name} fails to work${postCard && tokens.length ? ", and its save card follows" : `; roll its ${unless.save.resolution.check.statistic} save (DC ${unless.save.resolution.check.against.value}) by hand`}`];
+    }
     const wrappers = { [USER_ID]: user.actor, [DRINKER_ID]: target.actor };
     const context = {
         caster: { id: USER_ID },

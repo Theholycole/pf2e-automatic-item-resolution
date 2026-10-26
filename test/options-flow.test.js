@@ -7,7 +7,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
-import { compileItem } from "../src/compiler/index.js";
+import { compileItem, spellEffectIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { namedOptions } from "../src/compiler/named-options.js";
 import { afterEndsEffectSource, afterEndsMarkSource } from "../src/live/card.js";
@@ -20,7 +20,8 @@ const item = (name) => {
     assert.ok(found, name);
     return { ...found, ownerLevel: Number(found.system.level?.value) || 1 };
 };
-const planOf = (name, index = 0) => compileActivations(item(name))[index].plan;
+const spellEffects = spellEffectIndex(readDocuments(path.join(PACKS, "spell-effects")).filter((doc) => doc.collection === "items"));
+const planOf = (name, index = 0) => compileActivations(item(name), { spellEffects })[index].plan;
 const rowEffects = (plan, degree) => (plan.resolution.outcomes[degree]?.effects ?? []).map((effect) => [effect.slug, effect.value ?? null]);
 
 test("Tactician's Helm: a button for each of its four options, not only Move It!'s Effect; the user's own moves a line of the card", () => {
@@ -161,4 +162,48 @@ test("Tarantula Ampoule: its critical failure's exposure to the venom is a follo
     const plan = compileItem(item("Tarantula Ampoule"));
     const [follow] = plan.resolution.outcomes.criticalFailure.followUps;
     assert.deepEqual([follow.check.statistic, follow.check.against.value, follow.afflictionHandoff.name, follow.afflictionHandoff.stages.length, follow.outcomes.failure.affliction.stage, plan.resolution.outcomes.criticalFailure.manualInstructions ?? null], ["fortitude", 23, "Giant Tarantula Venom", 4, 1, null]);
+});
+
+// (Plans counted whole with a rule left in their notes, found 2026-10-26: each now plays it, or says it's partial.)
+test("Elysian Dew: an unholy drinker's save card in place of the aura — Fortitude DC 30, Drained 2 on a failure", () => {
+    const dew = compileItem(item("Elysian Dew"));
+    const { traits, save } = dew.item.unlessKind;
+    assert.deepEqual([traits, save.resolution.check.statistic, save.resolution.check.against.value, save.resolution.outcomes.failure.effects[0], dew.notes ?? null], [["unholy"], "fortitude", 30, { kind: "condition", slug: "drained", value: 2, duration: null }, null]);
+});
+
+test("Flame Layer Balm: no Fiery Body at once — its wearer marked for the hour, the first fire damage it takes setting it off for a minute", async () => {
+    const { armedMarkSource } = await import("../src/live/card.js");
+    const balm = compileItem(item("Flame Layer Balm"), { spellEffects });
+    assert.deepEqual([balm.resolution.kind, balm.item.armed.damageType, balm.item.armed.lasts.value, balm.item.armed.lasts.unit, balm.item.armed.applications[0].label, balm.item.armed.applications[0].duration, balm.notes ?? null], ["check", "fire", 1, "hours", "Spell Effect: Fiery Body", { value: 1, unit: "minutes" }, null]);
+    const mark = armedMarkSource(balm.item.armed, { item: { name: "Flame Layer Balm" } });
+    assert.deepEqual([mark.name, mark.system.duration.value, mark.system.duration.unit], ["Flame Layer Balm: armed", 1, "hours"]);
+});
+
+test("Golden Blade of Mzali's Elemental Form: fire, at rank 7, its extra fire damage off by PF2e's own toggle — the toggle's reset at daily preparations the user's (partial)", () => {
+    const blade = planOf("Golden Blade of Mzali", 1);
+    assert.deepEqual([blade.toggleOn, blade.resolution.applications[0].choice, blade.resolution.applications[0].level, blade.partial], [{ option: "used-elemental-form" }, "fire", 7, true]);
+});
+
+test("Amulet of the Hellcat: Invisible on an Effect its next Strike ends, the bright light's end in its words, the Stride and Strike a line of the card", async () => {
+    const { ruleEffectSource } = await import("../src/live/card.js");
+    const amulet = planOf("Amulet of the Hellcat");
+    const [effect] = amulet.item.ruleEffects;
+    assert.deepEqual([effect.endsOnStrike, effect.rules[0].uuid, amulet.resolution.outcomes.success.effects, Boolean(amulet.partial)], [true, "Compendium.pf2e.conditionitems.Item.zJxUflt9np0q4yML", [], false]);
+    assert.match(effect.words, /out of bright light/);
+    assert.equal(ruleEffectSource(effect, { item: { name: "Amulet of the Hellcat" } }).flags["pf2e-automatic-item-resolution"].endsOnStrike, true);
+    const { endOnStrike, isStrikeRoll } = await import("../scripts/ends-on-strike.js");
+    assert.deepEqual([isStrikeRoll({ type: "attack-roll", outcome: "success", options: ["action:strike"] }), isStrikeRoll({ type: "spell-attack-roll", outcome: "success", options: [] })], [true, false]);
+    let deleted = null;
+    const actor = { itemTypes: { effect: [{ id: "e1", flags: { "pf2e-automatic-item-resolution": { endsOnStrike: true } } }, { id: "e2", flags: {} }] }, deleteEmbeddedDocuments: async (type, ids) => { deleted = ids; } };
+    await endOnStrike({ actor, flags: { pf2e: { context: { type: "attack-roll", outcome: "hit", options: ["action:strike"] } } } });
+    assert.deepEqual(deleted, ["e1"]);
+});
+
+test("Robe of Stone's Become Stone: Elemental Form's earth chosen on PF2e's Effect, an Effect for the minute with its 30-foot tremorsense and burrowing through stone", async () => {
+    const { effectSource } = await import("../src/live/card.js");
+    const robe = planOf("Robe of Stone");
+    const [extra] = robe.item.ruleEffects;
+    assert.deepEqual([robe.resolution.applications[0].choice, extra.rules, extra.duration.value, robe.notes ?? null, Boolean(robe.partial)], ["earth", [{ key: "Sense", selector: "tremorsense", range: 30, acuity: "imprecise" }], 1, null, false]);
+    const source = effectSource({ name: "Spell Effect: Elemental Form", system: { rules: [{ key: "ChoiceSet", flag: "spellEffectElementalForm", choices: [{ value: "air" }, { value: "earth" }] }] } }, { application: robe.resolution.applications[0] });
+    assert.equal(source.system.rules[0].selection, "earth");
 });

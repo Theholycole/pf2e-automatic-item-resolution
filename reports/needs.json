@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1245,
+  "entries": 1246,
   "results": {
    "none": 611,
-   "partial": 248,
+   "partial": 249,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -21,7 +21,7 @@
    "strike": 106,
    "spells": 45,
    "information": 23,
-   "out-of-combat": 32,
+   "out-of-combat": 33,
    "actions": 26,
    "no-rules": 36,
    "objects": 115,
@@ -52,7 +52,7 @@
    "immunity": 72,
    "objects": 390,
    "speech": 124,
-   "out-of-combat": 415,
+   "out-of-combat": 416,
    "counteract": 80,
    "afflictions": 91,
    "lasting": 208,
@@ -9839,6 +9839,16 @@
     "triggers",
     "strike",
     "reader"
+   ]
+  },
+  {
+   "name": "Golden Blade of Mzali",
+   "kind": "activation",
+   "result": "partial",
+   "main": "out-of-combat",
+   "work": "daily preparations",
+   "needs": [
+    "out-of-combat"
    ]
   },
   {
