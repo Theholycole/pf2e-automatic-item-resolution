@@ -56,3 +56,16 @@ test("Shield of Snakes' Snap Up: its user's shield raised on the item card's App
     // (Not Shield of Endurance's, whose shield's temporary Hit Points stay its note.)
     assert.equal(activation("Shield of Endurance", "Temporary Endurance")?.raiseShield, undefined);
 });
+
+test("Alchemist's Flamethrower: the grade of alchemist's fire loaded picked on the ways card, each its basic Reflex save in its line and its persistent fire on a critical failure", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const plan = compileActivations(item("Alchemist's Flamethrower"))[0].plan;
+    assert.equal(routeOf(plan), "ways");
+    assert.deepEqual(plan.ways.map((way) => [way.name, way.plan.resolution.check.against.value, way.plan.targeting.area.value, way.plan.resolution.sharedDamage.components[0].formula, way.plan.resolution.outcomes.criticalFailure.damage.formulas[0].formula]), [
+        ["Lesser Alchemist's Fire", 15, 30, "1d8[fire]", "1[persistent,fire]"],
+        ["Moderate Alchemist's Fire", 17, 60, "2d8[fire]", "2[persistent,fire]"],
+        ["Greater Alchemist's Fire", 28, 90, "6d8[fire]", "3[persistent,fire]"],
+        ["Major Alchemist's Fire", 37, 120, "10d8[fire]", "4[persistent,fire]"]
+    ]);
+    assert.equal(plan.ways[0].plan.resolution.outcomes.failure.damage.mode, "shared");
+});

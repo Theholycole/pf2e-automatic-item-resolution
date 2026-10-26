@@ -1,17 +1,17 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1321,
+  "entries": 1320,
   "results": {
    "none": 624,
-   "partial": 306,
+   "partial": 305,
    "builtin:no-effect": 129,
    "note-only": 262
   },
   "main": {
    "speeds": 25,
    "counteract": 17,
-   "afflictions": 55,
+   "afflictions": 54,
    "areas": 112,
    "moving": 91,
    "lasting": 66,
@@ -54,7 +54,7 @@
    "speech": 124,
    "out-of-combat": 423,
    "counteract": 80,
-   "afflictions": 98,
+   "afflictions": 97,
    "lasting": 217,
    "moving": 119,
    "triggers": 129,
@@ -64,7 +64,7 @@
    "several": 98,
    "mind": 73,
    "strike": 188,
-   "reader": 234,
+   "reader": 233,
    "spells": 82,
    "information": 192,
    "actions": 62,
@@ -11157,17 +11157,6 @@
     "strike",
     "several",
     "objects"
-   ]
-  },
-  {
-   "name": "Alchemist's Flamethrower",
-   "kind": "activation",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "persistent fire damage",
-   "needs": [
-    "afflictions",
-    "reader"
    ]
   },
   {

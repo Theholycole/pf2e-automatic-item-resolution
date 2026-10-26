@@ -8,6 +8,9 @@
 // - a push the row already makes, its GM line the whole paragraph: Blast Lance's "The target takes the full fire damage and is pushed back 5
 //   feet. You can Stride after it, but you must move the same distance and in the same direction." — the push the row's, the Stride its
 //   user's option, a line on the card.
+// - an attack it makes nonlethal, Possum's Play's "When you activate the talisman, the triggering attack gains the nonlethal trait, and you
+//   fall Prone, feigning death" (the Prone the row's): a note Effect on its user for the round — what nonlethal damage does at 0 Hit Points
+//   is PF2e's rule, the damage the attacker's roll; the user's note-Effect ruling counts it done.
 // Each sentence read is no longer a note. Pure.
 
 const CONDITION_IDS = { blinded: "XgEqL1kFApUbl5Z2", clumsy: "i3OJZU2nk64Df3xm", confused: "yblD8fOR1J8rDwEQ", controlled: "9qGBRpbX9NEwtAAr", dazzled: "TkIyaNPgTZFBCCuh", deafened: "9PR9y0bi4JPKnHPR", drained: "4D2KBtexWXa6oUMR", enfeebled: "MIRkyAjyBeXivMa7", fascinated: "AdPVz7rbaVSRxHFg", fatigued: "HL2l2VRSaQHu9lUw", frightened: "TBSHQspnbcqxsmjL", grabbed: "kWc1fhmv9LBiTuei", immobilized: "eIcWbB5o3pP6OIMe", "off-guard": "AJh5ex99aV6VTggg", paralyzed: "6uEgoh53GbXuHpTF", petrified: "dTwPJuKgBQCMxixg", prone: "j91X7x0XSomq8d60", restrained: "VcDeM8A5oI6VqhbM", sickened: "fesd1n5eVhpCSS18", slowed: "xYTAsEpcJE1Ccni3", stunned: "dfCMdR4wnpbYNTix", stupefied: "e1XGnhKNSQIm5IXg" };
@@ -53,6 +56,8 @@ function persistentOf(sentence, itemHtml) {
 
 // (A paragraph whose results the row has — its damage, its push — but its Stride after the creature, its user's to take.)
 const STRIDE_AFTER = /^\{target\} \((?:critical )?failure, the rest by hand\): The target takes (?:the )?(?:full|double|half)(?: fire| \w+)? damage and is pushed back (\d+) feet\. (You can Stride after it, but you must move the same distance and in the same direction\.)$/;
+
+const NONLETHAL = /^When you activate [\w' -]+?, the triggering attack gains the nonlethal trait(?:, and you fall Prone, feigning death)?\.$/i;
 
 const leftOver = (plan) => !(plan.notes ?? []).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
 
@@ -107,6 +112,17 @@ export function withRowReadings(plan, html, item = null) {
         rows[degree] = { ...row, manualInstructions: lines.filter((line) => !said.some(([one]) => one === line)) };
         const option = `After the push, its user can Stride after the creature, the same distance and direction.`;
         if (!notes.includes(option)) notes.push(option);
+    }
+    // (The triggering attack made nonlethal, its Prone the row's: a note Effect on its user.)
+    if (plan.resolution.kind === "check" && rows.success) {
+        for (const entry of [...notes, ...unread]) {
+            const match = NONLETHAL.exec(said(entry));
+            if (!match) continue;
+            const prone = /\bfall Prone\b/i.test(said(entry));
+            if (prone && !(rows.success.effects ?? []).some((effect) => effect?.slug === "prone")) continue;
+            rows.success = { ...rows.success, noteEffects: [...(rows.success.noteEffects ?? []), { label: "Nonlethal attack", text: "The triggering attack is nonlethal: if it brings you to 0 Hit Points, you're unconscious instead of dying (PF2e's rule for nonlethal damage).", duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start" } }] };
+            drop(said(entry));
+        }
     }
     if (notes.length === (plan.notes ?? []).length && unread.length === (plan.unread ?? []).length && Object.keys(rows).every((degree) => rows[degree] === outcomes[degree])) return plan;
     next = { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread } : {}), resolution: { ...plan.resolution, outcomes: rows } };

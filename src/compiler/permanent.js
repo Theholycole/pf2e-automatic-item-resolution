@@ -265,6 +265,30 @@ function chosenEffectsPlan(html, base, item, options, own = null) {
     return { ...base, builtin: "ways", automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, ...(notes.length ? { notes, partial: true } : {}) };
 }
 
+// Ammunition of several grades, the weakest loaded deciding: Alchemist's Flamethrower's "Creatures in the area take fire damage based on the
+// weakest alchemist's fire loaded into the flamethrower, as noted below. Creatures that critically fail the basic Reflex save additionally
+// take the listed persistent fire damage", its list of grades each with its damage, save, line and persistent damage. The ways card's pick of
+// the grade loaded (2026-10-26), each way that basic save in that line, the critical failure's persistent damage beside its own.
+const GRADE_ROW = /<li>\s*<strong>([^<]+)<\/strong>\s*:\s*The [\w' -]+? deals (@Damage\[[^\]]*?\[[^\]]*\][^\]]*\])\s*\((@Check\[[^\]]*\])\) in an? (@Template\[[^\]]*\])\.\s*(?:@Damage\[(\d+(?:d\d+)?)\[persistent,(\w+)\]\]\s*damage\.)?\s*<\/li>/gi;
+function gradeWaysPlan(html, base, item, options, own) {
+    const text = String(html ?? "");
+    if (!/\bbased on the weakest [\w' -]+? loaded\b/i.test(plainText(text))) return null;
+    const rows = [...text.matchAll(GRADE_ROW)];
+    if (rows.length < 2) return null;
+    const head = text.slice(0, Math.max(0, text.indexOf("<p><strong>Effect</strong>")));
+    const ways = [];
+    for (const [, name, damage, check, template, persistent, type] of rows) {
+        const body = `<p><strong>Effect</strong> Each creature in a ${template} takes ${damage} damage with a ${check} save.</p>`;
+        const [entry] = compileEach({ ...item, system: { ...(item.system ?? {}), description: { value: `${/^\s*<p>/.test(head) ? head : `<p>${head}`}${body}` } } }, options);
+        let plan = entry?.plan;
+        if (!plan?.resolution?.sharedDamage) return null;
+        const row = plan.resolution.outcomes?.criticalFailure;
+        if (persistent && row?.damage?.mode === "shared") plan = { ...plan, resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, criticalFailure: { ...row, damage: { mode: "mixed", shared: row.damage, formulas: [{ formula: `${persistent}[persistent,${type.toLowerCase()}]` }], rollScope: "target" } } } } };
+        ways.push({ name: name.trim(), html: body, plan: { ...plan, source: base.source, activation: base.activation, item: { ...(plan.item ?? {}), activation: own ?? plan.item?.activation } } });
+    }
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways };
+}
+
 // A breath whose area, damage type and save are its user's draconic benefactor's: Pact of the Herald and Host's torrent of energy (a cone,
 // or a longer line), "dealing 1d6 damage per level. Each creature in the area must attempt a basic saving throw against the higher of
 // your class DC or spell DC", its three save links after. The ways card's pick of the save, each way that basic
@@ -569,6 +593,9 @@ function compileEach(item, options = {}) {
         // other reading when its text says the roll decides it — Jabali's Dice's first row's spell Effect isn't its every use.)
         const rolled = /\b(?:roll|draw)\b[^.]*\b(?:to determine|on the (?:following |[\w' -]+ )?table|chosen randomly)\b/i.test(plainText(activation.html));
         if (!plan || plan.noteOnly || plan.builtin === "no-effect" || rolled) plan = tablePlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
+        // (Ammunition of several grades, the weakest loaded deciding: Alchemist's Flamethrower — the grade picked on the ways card, over its first
+        // grade read alone.)
+        plan = gradeWaysPlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (A breath that's its user's draconic benefactor's: Pact of the Herald and Host — the save picked on the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = benefactorBreathPlan(activation.html, base, item, options, { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }) ?? plan;
         // (Effects its user picks one of, listed in a sentence: Heartripper Blade's — the ways card.)

@@ -47,5 +47,11 @@ export function withDisbelief(plan, html) {
     const kept = (list) => (list ?? []).filter((entry) => !sentences.some((sentence) => said(entry).includes(sentence.replace(/\.$/, "")) || sentence.includes(said(entry).replace(/\.$/, ""))));
     const next = { ...plan, disbelief, ...(plan.unread ? { unread: kept(plan.unread) } : {}), ...(plan.notes ? { notes: kept(plan.notes) } : {}) };
     if (next.notes && !next.notes.length) delete next.notes;
+    // (Nothing else left: no longer partial.)
+    const left = [...(next.notes ?? []), ...(next.unread ?? []), ...Object.values(next.resolution?.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? [])];
+    if (next.partial && !left.length) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
     return next;
 }
