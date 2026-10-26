@@ -32,6 +32,7 @@
 // Each sentence read is no longer a note. Pure.
 
 import { readAffliction } from "../../../pf2e-automatic-ability-resolution/src/compiler/afflictions.js";
+import { itemDuration } from "./rows.js";
 
 const IGNITE = /^You must succeed at a DC (\d+) flat check for the (\w+) to ignite successfully when it hits\.$/i;
 const IGNITES_ONLY = /^Its damage only when the (\w+) ignites\.$/i;
@@ -264,7 +265,37 @@ function withTradedResistance(plan, html) {
 // lasts. 2026-10-26.)
 const TO_THE_GRAVE = /^If the undead knows of a nearby empty grave, it must flee toward that grave\s*[-–—]\s*if it enters the grave, it drops Prone into the grave and remains prone until it is no longer frightened\.$/i;
 const STAGE_FRIGHT = /^During this time, if the creature attempts to speak or perform in front of an audience, they become Sickened (\d+)(?: \(by hand\))?\.$/i;
-function withBehaviourRows(plan, html) {
+// (Truth Potion's: its failure's "When you speak, you must tell the truth" and its critical failure's question — "when someone asks you a question,
+// you must attempt another DC 19 Will saving throw. If you fail this saving throw, you must answer the question truthfully if you are able to do so;
+// if you succeed, you are temporarily immune to further attempts to ask the same question within the potion's duration" — note Effects on the
+// drinker for the potion's time, that save its inline check, by the user's 2026-10-25 ruling on minds. 2026-10-26.)
+const TELL_TRUTH = /^\{target\} \(failure\): When you speak, you must tell the truth\.$/;
+const ASKED = /\bwhen someone asks you a question, you must attempt another (?:DC (\d+) (Fortitude|Reflex|Will)|@Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?) saving throw\. If you fail this saving throw, you must answer the question truthfully if you are able to do so; if you succeed, you are temporarily immune to further attempts to ask the same question within the potion's duration\./i;
+function withTruthRows(plan, html) {
+    const rows = plan?.resolution?.outcomes;
+    const fails = (rows?.failure?.manualInstructions ?? []).find((line) => TELL_TRUTH.test(said(line)));
+    const asked = ASKED.exec(plainOf(html));
+    if (!fails || !asked || !rows.criticalFailure) return plan;
+    const dc = asked[1] ?? asked[4];
+    const save = (asked[2] ?? asked[3]).toLowerCase();
+    const time = itemDuration(plainOf(html)) ?? null;
+    const truth = { label: "Must tell the truth", text: "When it speaks, it must tell the truth.", duration: time };
+    const question = { label: "A question asked", text: `When someone asks it a question, it attempts a DC ${dc} ${save.charAt(0).toUpperCase()}${save.slice(1)} save (@Check[${save}|dc:${dc}]). ${/If you fail this saving throw, you must answer[^.]*\./.exec(asked[0])[0]}`, duration: time };
+    // (And its success's "The potion does not affect you": nothing to do.)
+    const unaffected = (line) => /^\{target\} \(success\): The potion does not affect you\.$/.test(said(line));
+    const outcomes = { ...rows, ...(rows.success?.manualInstructions ? { success: { ...rows.success, manualInstructions: rows.success.manualInstructions.filter((line) => !unaffected(line)) } } : {}), failure: { ...rows.failure, manualInstructions: rows.failure.manualInstructions.filter((line) => line !== fails), noteEffects: [...(rows.failure.noteEffects ?? []), truth] }, criticalFailure: { ...rows.criticalFailure, manualInstructions: (rows.criticalFailure.manualInstructions ?? []).filter((line) => !ASKED.test(said(line))), noteEffects: [...(rows.criticalFailure.noteEffects ?? []), truth, question] } };
+    for (const row of Object.values(outcomes)) if (row?.manualInstructions && !row.manualInstructions.length) delete row.manualInstructions;
+    const notes = (plan.notes ?? []).filter((note) => !/^If you fail this saving throw, you must answer the question truthfully\b/i.test(said(note)));
+    const next = { ...plan, notes: notes.length ? notes : undefined, resolution: { ...plan.resolution, outcomes } };
+    if (next.partial && leftOver(next)) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}
+
+function withBehaviourRows(given, html) {
+    const plan = withTruthRows(given, html);
     const rows = plan?.resolution?.outcomes;
     if (plan?.resolution?.kind !== "save" || !rows) return plan;
     let next = plan;

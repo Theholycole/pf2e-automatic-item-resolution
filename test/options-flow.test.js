@@ -561,3 +561,10 @@ test("Unmemorable Mantle: a creature's memory its user decides is a mind's (the 
         assert.deepEqual([Boolean(plan.partial), Object.values(plan.resolution.outcomes).map((row) => (row.noteEffects ?? []).length), Object.values(plan.resolution.outcomes).every((row) => !(row.manualInstructions ?? []).length)], [false, [1, 1, 1, 1], true], name);
     }
 });
+
+test("Truth Potion: telling the truth a note Effect for its 10 minutes; a critical failure's question its DC 19 Will save, the creature's own inline check on its note (the user's ruling on minds)", () => {
+    const potion = compileItem(item("Truth Potion"), { spellEffects });
+    const rows = potion.resolution.outcomes;
+    assert.deepEqual([Boolean(potion.partial), potion.notes ?? [], rows.failure.noteEffects.map((note) => [note.label, note.duration.value, note.duration.unit]), rows.criticalFailure.noteEffects.map((note) => note.label)], [false, [], [["Must tell the truth", 10, "minutes"]], ["Must tell the truth", "A question asked"]]);
+    assert.match(rows.criticalFailure.noteEffects[1].text, /@Check\[will\|dc:19\]/);
+});

@@ -1,12 +1,12 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1186,
+  "entries": 1184,
   "results": {
    "none": 593,
-   "partial": 212,
-   "builtin:no-effect": 124,
-   "note-only": 257
+   "partial": 211,
+   "note-only": 257,
+   "builtin:no-effect": 123
   },
   "main": {
    "speeds": 22,
@@ -14,8 +14,8 @@
    "afflictions": 47,
    "areas": 109,
    "moving": 80,
-   "lasting": 62,
    "visibility": 46,
+   "lasting": 61,
    "choice": 33,
    "mind": 8,
    "strike": 93,
@@ -32,7 +32,7 @@
    "reader": 16,
    "several": 21,
    "triggers": 90,
-   "immunity": 23,
+   "immunity": 22,
    "situational": 16,
    "creatures": 53,
    "dying": 29,
@@ -49,20 +49,20 @@
   "any": {
    "speeds": 28,
    "areas": 163,
-   "immunity": 71,
+   "immunity": 70,
    "objects": 380,
-   "speech": 123,
+   "speech": 121,
    "out-of-combat": 409,
    "counteract": 79,
    "afflictions": 88,
-   "lasting": 207,
+   "lasting": 206,
    "moving": 104,
    "triggers": 121,
    "visibility": 48,
    "dying": 72,
    "choice": 103,
    "several": 88,
-   "mind": 66,
+   "mind": 65,
    "strike": 170,
    "reader": 182,
    "spells": 71,
@@ -145,17 +145,6 @@
     "moving",
     "areas",
     "triggers"
-   ]
-  },
-  {
-   "name": "Communication Pendants",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "lasting",
-   "work": "for as long as",
-   "needs": [
-    "lasting",
-    "speech"
    ]
   },
   {
@@ -4162,18 +4151,6 @@
     "afflictions",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Truth Potion",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "immunity",
-   "work": "immune",
-   "needs": [
-    "immunity",
-    "mind",
-    "speech"
    ]
   },
   {

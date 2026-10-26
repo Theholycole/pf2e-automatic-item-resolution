@@ -226,7 +226,9 @@ export function withImmunity(given, html, names = {}) {
         else if (ALL_DEGREES(immunity.degrees) && !others) next = { ...next, item: { ...(next.item ?? {}), immunity } };
         else unread.push(immunity.raw);
     }
-    const notes = unread.filter((sentence) => !(next.notes ?? []).some((note) => holds(note, sentence)));
+    // (Nor one a row's note Effect says already, Truth Potion's question: its own words on the creature's note — 2026-10-26.)
+    const onNotes = Object.values(next.resolution?.outcomes ?? {}).flatMap((row) => (row?.noteEffects ?? []).map((note) => String(note?.text ?? "")));
+    const notes = unread.filter((sentence) => !(next.notes ?? []).some((note) => holds(note, sentence)) && !onNotes.some((text) => text.includes(String(sentence).trim().replace(/\.$/, ""))));
     if (notes.length) return { ...next, notes: [...(next.notes ?? []), ...notes], partial: true, automation: { ...(next.automation ?? {}), level: "guided" } };
     // (Partial for its immunity alone: no longer.)
     if (plan.partial && !leftIn(next)) {
