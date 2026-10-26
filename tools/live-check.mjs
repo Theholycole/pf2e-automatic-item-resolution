@@ -1973,6 +1973,55 @@ export const cases = {
         return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
+    // Death Tusk Helm at wounded 2: its roar's save card at DC 18 (16 and its wounded), and its user's 5 temporary Hit Points as it's used.
+    async deathTuskRoar(scene) {
+        await clearSquares(scene, [[7, 7], [8, 7]]);
+        const { actor: wearer } = await creature(scene, "Tusk Wearer", { type: "character", x: 7, y: 7, level: 6 });
+        await creature(scene, "Tusk Target", { x: 8, y: 7, alliance: "opposition" });
+        await wearer.increaseCondition("wounded", { value: 2 });
+        const helm = await give(wearer, "Death Tusk Helm");
+        await helm.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(helm.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the roar's card" });
+        const dc = game.messages.get(card.id).getFlag(NS, "card").plan.resolution.check.against.value;
+        assert(dc === 18, `DC 18 at wounded 2 (${dc})`);
+        await until(() => Number(wearer.system.attributes.hp.temp) === 5, `5 temporary Hit Points (${wearer.system.attributes.hp.temp})`, { timeout: 8000 });
+        return { dc, temp: wearer.system.attributes.hp.temp };
+    },
+
+    // Emetic Paste on its sickened user: an Effect with PF2e's Retch FlatModifier and a roll note while sickened — not a bonus to every
+    // Fortitude save.
+    async emeticRetch(scene) {
+        await clearSquares(scene, [[5, 7]]);
+        const { actor: eater, token } = await creature(scene, "Emetic Eater", { type: "character", x: 5, y: 7, level: 4 });
+        await eater.increaseCondition("sickened", { value: 1 });
+        const paste = await give(eater, "Emetic Paste (Lesser)");
+        const before = eater.saves.fortitude.mod;
+        const since = Date.now();
+        await paste.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the paste's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        const effect = () => eater.itemTypes.effect.find((entry) => (entry.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && JSON.stringify(rule.predicate) === JSON.stringify(["action:retch"])));
+        await until(effect, "the Retch Effect", { timeout: 8000 });
+        assert(eater.saves.fortitude.mod === before, `its plain Fortitude unchanged (${eater.saves.fortitude.mod} from ${before})`);
+        return { effect: effect().name };
+    },
+
+    // Three Bird Pinion: its user's Effect ignores difficult and greater difficult terrain (PF2e's rule) for its minute.
+    async pinionLevitate(scene) {
+        await clearSquares(scene, [[3, 7]]);
+        const { actor: flier } = await creature(scene, "Pinion Flier", { type: "character", x: 3, y: 7, level: 4 });
+        const pinion = await give(flier, "Three Bird Pinion");
+        const since = Date.now();
+        await pinion.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the pinion's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const ignored = () => flier.itemTypes.effect.some((entry) => (entry.system.rules ?? []).some((rule) => rule.path === "system.movement.terrain.greater.ignored"));
+        await until(ignored, "the levitation's terrain Effect", { timeout: 8000 });
+        return { effects: flier.itemTypes.effect.map((entry) => entry.name) };
+    },
+
     // Autoload Leathers: the objects card's reload — its user's Flintlock Pistol (reload 1) loaded with one of its rounds (PF2e's own attach).
     async autoloadReload(scene) {
         await clearSquares(scene, [[17, 11]]);
