@@ -1973,6 +1973,49 @@ export const cases = {
         return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
+    // Anima Robe (Heroic)'s Billowing Distraction: the robe's own Feint at its Deception +35 against the adjacent creature targeted.
+    async animaFeint(scene) {
+        await clearSquares(scene, [[15, 9], [16, 9]]);
+        const { actor: wearer } = await creature(scene, "Anima Wearer", { type: "character", x: 15, y: 9, level: 18 });
+        const { token: foeToken } = await creature(scene, "Anima Mark", { x: 16, y: 9, alliance: "opposition" });
+        const robe = await give(wearer, "Anima Robe (Heroic)");
+        await robe.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(robe.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "the Feint's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const check = (await messageAfter(since, abilitySaveCard, { what: "the Feint's check card" })).flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.modifier === 35 && check.statistic === "deception" && check.against?.statistic === "perception", `Deception +35 against Perception (${JSON.stringify(check)})`);
+        return { check };
+    },
+
+    // Golden-Cased Bullet (Greater) fired at a target in lesser cover: the attack's DC is its AC without the cover's +1 (PF2e's
+    // EphemeralEffect suppressing it, on the readied Strike).
+    async goldenCover(scene) {
+        await clearSquares(scene, [[17, 9], [19, 9]]);
+        const { actor: gunner, token: gunnerToken } = await creature(scene, "Golden Gunner", { type: "character", x: 17, y: 9, level: 10 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Covered Mark", { x: 19, y: 9, ac: 18, alliance: "opposition" });
+        await give(foe, "Effect: Cover", "pf2e.other-effects");
+        await until(() => foe.system.attributes.ac.value === 19, `AC 19 in lesser cover (${foe.system.attributes.ac.value})`, { timeout: 4000 });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        const rounds = await give(gunner, "Golden-Cased Bullet (Greater)");
+        await rounds.update({ "system.quantity": 3, "system.baseItem": "rounds" });
+        // (Reload 0 for the test: the readied Strike is what's checked here.)
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.selectedAmmoId": rounds.id, "system.reload.value": "0" });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(rounds.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        await gunnerToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await strike(gunner, pistol);
+        const dc = attack.flags.pf2e.context.dc?.value;
+        assert(dc === 18, `the attack's DC 18, the cover ignored (${dc})`);
+        return { dc };
+    },
+
     // Armbands of the Gorgon: the card's picker lists only its user's conditions (slowed, frightened); the one picked is removed, the other stays.
     async armbandsCondition(scene) {
         await clearSquares(scene, [[13, 9]]);
