@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1194,
+  "entries": 1193,
   "results": {
    "none": 596,
-   "partial": 217,
+   "partial": 216,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -30,7 +30,7 @@
    "cooldown": 9,
    "vehicles": 20,
    "reader": 16,
-   "several": 22,
+   "several": 21,
    "triggers": 90,
    "immunity": 23,
    "situational": 16,
@@ -61,7 +61,7 @@
    "visibility": 48,
    "dying": 72,
    "choice": 106,
-   "several": 89,
+   "several": 88,
    "mind": 69,
    "strike": 173,
    "reader": 182,
@@ -4832,16 +4832,6 @@
    "needs": [
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Lady's Chalice",
-   "kind": "activation",
-   "result": "partial",
-   "main": "several",
-   "work": "each creature",
-   "needs": [
-    "several"
    ]
   },
   {

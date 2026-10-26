@@ -522,3 +522,26 @@ test("Diplomat's Badge and Uniter of Clans: its Effect only after its user's Rec
     }
     assert.deepEqual([degreeOf(20, 20), degreeOf(19, 20), degreeOf(30, 20), degreeOf(19, 20, 20), degreeOf(21, 20, 1)], [2, 1, 3, 2, 1]);
 });
+
+test("Lady's Chalice's splash: the bomb card's splash list at the creatures within 5 feet once its attack card applies, its user left out unless evil or unholy", async () => {
+    const plan = planOf("Lady's Chalice", 1);
+    const { postOwnSplash } = await import("../scripts/own-splash.js");
+    const saved = { game: globalThis.game, fromUuid: globalThis.fromUuid, ChatMessage: globalThis.ChatMessage, canvas: globalThis.canvas };
+    const posted = [];
+    const actorOf = (name, uuid, traits = []) => ({ uuid, name, system: { traits: { value: traits } }, isOfType: () => true });
+    const user = actorOf("Priest", "Actor.user");
+    const foe = actorOf("Ghoul", "Actor.foe", ["undead"]);
+    const other = actorOf("Ghast", "Actor.other");
+    const placeable = (actor, x) => ({ actor, document: { uuid: `Scene.s.Token.${actor.name}`, parent: { id: "s" }, hidden: false, x: x * 100, y: 0, width: 1, height: 1 }, name: actor.name, x: x * 100, y: 0, w: 100, h: 100 });
+    const tokens = [placeable(user, 0), placeable(foe, 1), placeable(other, 2)];
+    globalThis.canvas = { ready: true, scene: { id: "s" }, grid: { size: 100 }, dimensions: { distance: 5 }, tokens: { placeables: tokens } };
+    globalThis.game = { user: { isGM: true } };
+    globalThis.fromUuid = async (uuid) => (uuid === "Actor.user" ? user : uuid === "Scene.s.Token.Ghoul" ? { ...tokens[1].document, actor: foe, object: tokens[1], name: "Ghoul" } : null);
+    globalThis.ChatMessage = { create: async (data) => { posted.push(data.flags["pf2e-automatic-item-resolution"].card); return data; }, getSpeaker: () => ({}) };
+    try {
+        await postOwnSplash({ state: { plan, source: { actorUuid: "Actor.user", name: "Priest" }, ability: { name: "Lady's Chalice" } }, targets: [{ actorUuid: "Actor.foe", tokenUuid: "Scene.s.Token.Ghoul", degree: "success" }] });
+        assert.deepEqual([posted.length, posted[0].splashed.map((entry) => entry.name), posted[0].splash], [1, ["Ghast"], [{ type: "spirit", total: 2 }]]);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

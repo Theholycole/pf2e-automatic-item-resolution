@@ -90,13 +90,19 @@ export function thrownPlan(html, base, item, options = {}) {
     const hit = (multiplier, extra = []) => ({ damage: component ? { mode: "shared", multiplier, sourceComponentIds: ["0", ...(deadly && multiplier === 2 ? ["deadly"] : [])], ...(deadly && multiplier === 2 ? { componentMultipliers: { deadly: 1 } } : {}) } : { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [...(rows.effects ?? []), ...extra], modifiers: [...(rows.modifiers ?? [])] });
     if (!component && !(rows.effects ?? []).length && !(rows.modifiers ?? []).length) return null;
     const used = new Set([at, ...(then?.used ?? []), ...(later >= 0 && later !== null ? [at + 1 + later] : [])]);
+    // (Its splash, Lady's Chalice's "2 spirit splash damage (including to you, if you're evil)": plan.splash { value, damageType, selfOnlyIf } —
+    // the bomb card's splash list once its attack card is applied, the creatures within 5 feet of the target (and the target on a failure),
+    // its user among them only when it has one of those traits (scripts/own-splash.js). 2026-10-26: a note before.)
+    const splashWords = /\b(\d+) (\w+) splash damage(?: \(including to you, if you're (evil|unholy)\))?/i.exec(hitSentence);
+    const splash = splashWords && TYPES.split("|").includes(splashWords[2].toLowerCase()) ? { value: Number(splashWords[1]), damageType: splashWords[2].toLowerCase(), ...(splashWords[3] ? { selfOnlyIf: ["evil", "unholy"] } : { selfOnlyIf: [] }) } : null;
     const notes = [
         // (Splash beside the hit's damage, the hit's limits — "against an undead" — and a later damage's gate.)
-        ...(/\bsplash damage\b/i.test(hitSentence) ? [`Its splash: ${/(\d+ \w+ splash damage[^.]*)/i.exec(hitSentence)?.[1] ?? "splash damage"} to each creature within 5 feet of the target (by hand).`] : []),
+        ...(/\bsplash damage\b/i.test(hitSentence) && !splash ? [`Its splash: ${/(\d+ \w+ splash damage[^.]*)/i.exec(hitSentence)?.[1] ?? "splash damage"} to each creature within 5 feet of the target (by hand).`] : []),
         ...(/^On a hit against an? (\w+)\b/i.test(hitSentence) ? [`Only against an ${/^On a hit against an? (\w+)\b/i.exec(hitSentence)[1]}.`] : []),
         ...(later >= 0 && later !== null ? [`Its damage only when ${/^If ([^,]+),/i.exec(sentences[at + 1 + later])[1]}.`] : []),
         ...(/\bdeadly (d\d+)\b/i.test(text) && !deadly ? [`Deadly ${/\bdeadly (d\d+)\b/i.exec(text)[1]}: a critical hit adds that die of damage (by hand).`] : []),
-        ...sentences.filter((sentence, index) => !used.has(index) && /\b(?:damage|splash|flat check|@Check|DC|Escape|undead|attack|can't|counteract|deadly|volley)\b/i.test(sentence) && !THROWN.test(sentence)).map(readable)
+        // (Not "Unlike an alchemical bomb, it doesn't add the manipulate trait to the attack made with it": the card's attack has none.)
+        ...sentences.filter((sentence, index) => !used.has(index) && /\b(?:damage|splash|flat check|@Check|DC|Escape|undead|attack|can't|counteract|deadly|volley)\b/i.test(sentence) && !THROWN.test(sentence) && !/^Unlike an alchemical bomb, it doesn't add the manipulate trait to the attack made with it\.$/i.test(sentence)).map(readable)
     ];
     return {
         ...base,
@@ -115,6 +121,7 @@ export function thrownPlan(html, base, item, options = {}) {
             outcomes: { criticalSuccess: hit(2, critRows?.effects ?? []), success: hit(1), failure: none(), criticalFailure: none() }
         },
         ...(then ? { thenSave: then.plan } : {}),
+        ...(splash ? { splash } : {}),
         ...(notes.length ? { notes, partial: true } : {})
     };
 }
