@@ -10,7 +10,8 @@ const expired = (actor, worldTime) => (actor?.items?.contents ?? [...(actor?.ite
 });
 
 export async function expireItems(worldTime) {
-    const actors = [...(game.actors ?? []), ...(game.scenes ?? []).flatMap((scene) => (scene.tokens?.contents ?? [...(scene.tokens ?? [])]).filter((token) => !token.actorLink && token.actor).map((token) => token.actor))];
+    // (Foundry's collections have no flatMap: spread first.)
+    const actors = [...(game.actors ?? []), ...[...(game.scenes ?? [])].flatMap((scene) => (scene.tokens?.contents ?? [...(scene.tokens ?? [])]).filter((token) => !token.actorLink && token.actor).map((token) => token.actor))];
     for (const actor of actors) {
         const ids = expired(actor, worldTime).map((item) => item.id);
         if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
