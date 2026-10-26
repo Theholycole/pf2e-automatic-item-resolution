@@ -125,3 +125,29 @@ test("Smoldering Armor's second activation recharges its first: the fire shield 
     await settle();
     assert.deepEqual([armor.getFlag(MODULE_ID, "activationUses")[0], armor.getFlag(MODULE_ID, "activationUses")[1]?.count], [undefined, 1], "the first given back, the second counted");
 });
+
+test("an activation's own wait (src/compiler/cooldown.js): Storm Hammer's 10 minutes kept on the item and told, the GM warned on a use before then; Retrieval Belt's shared by both activations", async () => {
+    const { rechargeLeft, waitText } = await import("../src/live/activations-card.js");
+    const hammer = foundry.giveItem(elf, source("Storm Hammer"));
+    const first = await activate(hammer, 0);
+    const waits = hammer.getFlag(MODULE_ID, "activationRecharges");
+    assert.equal(rechargeLeft(waits, 0, globalThis.game.time.worldTime), 600);
+    assert.ok(first.some((message) => /usable again in 10 minutes/.test(message.content)), "told when it's usable again");
+    const again = await activate(hammer, 0);
+    assert.ok(again.some((message) => /activated again, though it(?:&#39;|')s usable again only in 10 minutes/.test(message.content)), "the GM's warning");
+    const belt = foundry.giveItem(elf, source("Retrieval Belt"));
+    await activate(belt, 0);
+    const shared = belt.getFlag(MODULE_ID, "activationRecharges");
+    assert.deepEqual([rechargeLeft(shared, 0, globalThis.game.time.worldTime), rechargeLeft(shared, 1, globalThis.game.time.worldTime)], [60, 60]);
+    assert.equal(waitText(7), "2 rounds");
+});
+
+test("the waits read (src/compiler/cooldown.js): each as the text says, rolled ones as formulas; not one that starts as the effect ends", async () => {
+    const { readCooldown } = await import("../src/compiler/cooldown.js");
+    assert.deepEqual(readCooldown("Neither Store Item nor Retrieve Item can be activated again for 1 minute."), { value: 1, unit: "minutes", names: ["Store Item", "Retrieve Item"] });
+    assert.deepEqual(readCooldown("Regardless of the result, the rod of cancellation can't be activated again for 2d6 hours."), { formula: "2d6", unit: "hours" });
+    assert.deepEqual(readCooldown("After you activate the bow, you can't activate it again for 7 days."), { value: 7, unit: "days" });
+    assert.deepEqual(readCooldown("You can't Retrieve Item again for 1 minute."), { value: 1, unit: "minutes", names: ["Retrieve Item"] });
+    assert.equal(readCooldown("Once deactivated, the forge can't be activated again for 4 hours."), null);
+    assert.equal(readCooldown("When the activation ends, the broom floats to the ground and can't be activated again for 1 hour."), null);
+});

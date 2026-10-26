@@ -173,7 +173,8 @@ export function createFakeFoundry() {
             // (Its items by id, as Foundry's collection: what giveItem gave it.)
             get items() {
                 const owned = [...documents.values()].filter((entry) => entry.actor === this && entry.id && entry.uuid?.startsWith(`${this.uuid}.Item.`));
-                return { get: (id) => owned.find((entry) => entry.id === id) ?? null, contents: owned };
+                // (Iterable, as Foundry's is: `[...actor.items]`.)
+                return { get: (id) => owned.find((entry) => entry.id === id) ?? null, contents: owned, [Symbol.iterator]: () => owned[Symbol.iterator]() };
             },
             get itemTypes() {
                 return {

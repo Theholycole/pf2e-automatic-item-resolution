@@ -34,6 +34,7 @@ import { withFalls } from "./falls.js";
 import { withRaiseShield } from "./raise-shield.js";
 import { withRowReadings } from "./row-readings.js";
 import { withDisbelief } from "./disbelief.js";
+import { withCooldown } from "./cooldown.js";
 import { withWeatherIgnores } from "./weather.js";
 import { objectsPlan } from "./objects.js";
 import { withPullToward } from "./pull-toward.js";
@@ -166,7 +167,20 @@ export function compileActivations(item, options = {}) {
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(withWeatherIgnores(withDisbelief(withRowReadings(ownerDCs(entry.plan), entry.activation.html, item), entry.activation.html), entry.activation.html), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(ownerDCs(entry.plan), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item)));
+}
+
+// (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of
+// them: the other gets the same wait, sharing it back — src/compiler/cooldown.js.)
+function sharedRecharges(entries) {
+    const named = (name) => entries.find((entry) => entry.activation?.name && entry.activation.name.toLowerCase() === String(name).toLowerCase());
+    return entries.map((entry) => {
+        if (!entry.plan || entry.plan.trigger?.recharge) return entry;
+        const from = entries.find((other) => (other.plan?.trigger?.recharge?.shared ?? []).some((name) => named(name) === entry));
+        if (!from) return entry;
+        const { shared, ...time } = from.plan.trigger.recharge;
+        return { ...entry, plan: { ...entry.plan, trigger: { ...(entry.plan.trigger ?? {}), recharge: { ...time, shared: [from.activation.name] } } } };
+    });
 }
 
 // (An activation's plan as the user decided, src/compiler/decided.js: one built from nothing gets its own base and item part.)

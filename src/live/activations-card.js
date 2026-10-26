@@ -41,6 +41,20 @@ export function withoutUse(record, index, frequency, now) {
 // Whether one more use goes over the frequency.
 export const overLimit = (record, index, frequency, now) => Boolean(frequency?.max) && usesNow(record, index, frequency, now) >= frequency.max;
 
+// A wait before it's used again (trigger.recharge { formula | value, unit }, src/compiler/cooldown.js and the ability compiler's recharge): its
+// seconds in world time, the formula's roll given. Waits { [activationIndex]: until } on the item.
+const UNIT_SECONDS = { rounds: 6, minutes: 60, hours: 3600, days: 86_400, weeks: 604_800 };
+export const rechargeSeconds = (recharge, rolled = null) => (Number(rolled ?? recharge?.value) || 0) * (UNIT_SECONDS[recharge?.unit] ?? 0);
+export const rechargeLeft = (waits, index, worldTime) => Math.max(0, (Number(waits?.[index]) || 0) - (Number(worldTime) || 0));
+// "3 rounds", "10 minutes", "2 hours": what's left, in its largest whole unit.
+export function waitText(seconds) {
+    const left = Math.max(0, Number(seconds) || 0);
+    if (left >= 86_400) return `${Math.ceil(left / 86_400)} ${Math.ceil(left / 86_400) === 1 ? "day" : "days"}`;
+    if (left >= 3600) return `${Math.ceil(left / 3600)} ${Math.ceil(left / 3600) === 1 ? "hour" : "hours"}`;
+    if (left >= 60) return `${Math.ceil(left / 60)} ${Math.ceil(left / 60) === 1 ? "minute" : "minutes"}`;
+    return `${Math.ceil(left / 6)} ${Math.ceil(left / 6) === 1 ? "round" : "rounds"}`;
+}
+
 const PER_WORDS = { round: "round", turn: "turn", minute: "minute", "10-minutes": "10 minutes", hour: "hour", day: "day", encounter: "encounter" };
 export const frequencyText = (frequency) => (frequency?.max ? `${frequency.max === 1 ? "once" : frequency.max === 2 ? "twice" : `${frequency.max} times`} per ${PER_WORDS[frequency.per] ?? frequency.per}` : null);
 export const perWord = (frequency) => PER_WORDS[frequency?.per] ?? "period";
@@ -48,10 +62,12 @@ export const perWord = (frequency) => PER_WORDS[frequency?.per] ?? "period";
 const TIME_WORDS = { 1: "1 action", 2: "2 actions", 3: "3 actions", reaction: "reaction", free: "free action", cast: "Cast a Spell" };
 
 // An activation's button tooltip: "Activate: Shadow Slip (reaction, once per day; used 0 of 1 this day)".
-export function activationTooltip(activation, { itemName, record = {}, now = {} } = {}) {
+export function activationTooltip(activation, { itemName, record = {}, now = {}, waits = {} } = {}) {
     const frequency = frequencyText(activation.frequency);
     const used = activation.frequency?.max ? `used ${usesNow(record, activation.index, activation.frequency, now)} of ${activation.frequency.max} this ${perWord(activation.frequency)}` : null;
-    const details = [[TIME_WORDS[activation.time] ?? activation.time, frequency].filter(Boolean).join(", "), used].filter(Boolean).join("; ");
+    // (Still waiting to be used again: how long.)
+    const left = rechargeLeft(waits, activation.index, now.worldTime);
+    const details = [[TIME_WORDS[activation.time] ?? activation.time, frequency].filter(Boolean).join(", "), used, left ? `usable again in ${waitText(left)}` : null].filter(Boolean).join("; ");
     return `Activate: ${activation.name ?? itemName}${details ? ` (${details})` : ""}`;
 }
 

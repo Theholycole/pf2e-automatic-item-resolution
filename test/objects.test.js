@@ -19,12 +19,12 @@ const item = (name) => {
 };
 const activation = (name, which) => compileActivations(item(name)).find((entry) => (which ? entry.activation.name === which : true)).plan;
 
-test("the reading: store and retrieve in a container, to hand (itself or one picked), don, repair — its cooldown a note", () => {
+test("the reading: store and retrieve in a container, to hand (itself or one picked), don, repair — its wait shared by both", () => {
     const store = activation("Retrieval Belt", "Store Item");
     assert.deepEqual([routeOf(store), store.objects, store.partial], ["objects", { op: "store", maxBulk: 1 }, undefined]);
     const retrieve = activation("Retrieval Belt", "Retrieve Item");
-    assert.deepEqual([retrieve.objects, retrieve.partial], [{ op: "retrieve" }, true]);
-    assert.match(retrieve.notes[0], /can be activated again for 1 minute/);
+    // (Its minute's wait, shared with Store Item, the plan's trigger.recharge — src/compiler/cooldown.js, 2026-10-26.)
+    assert.deepEqual([retrieve.objects, Boolean(retrieve.partial), retrieve.notes, retrieve.trigger.recharge, store.trigger.recharge], [{ op: "retrieve" }, false, undefined, { value: 1, unit: "minutes", shared: ["Store Item"] }, { value: 1, unit: "minutes", shared: ["Retrieve Item"] }]);
     assert.deepEqual(activation("Blackaxe", "Owner's Reclamation").objects, { op: "hand", self: true });
     assert.deepEqual(compileItem(item("Retrieval Prism")).objects, { op: "hand", maxBulk: 1 });
     assert.deepEqual(activation("Crushing Coils").objects, { op: "don", self: true });

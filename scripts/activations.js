@@ -4,7 +4,7 @@
 // (scripts/live.js postCardFor: the item card, a save at the targets, a cast, a zone, a Focus Point…) and count its use
 // against its frequency on the item (flag activationUses); over it, the GM gets a whispered warning, not a refusal.
 
-import { activationButtonsHTML, frequencyText, overLimit, perWord, usesNow, withUse } from "../src/live/activations-card.js";
+import { activationButtonsHTML, frequencyText, overLimit, perWord, rechargeLeft, rechargeSeconds, usesNow, waitText, withUse } from "../src/live/activations-card.js";
 import { handlesPermanent } from "../src/compiler/permanent.js";
 import { etchedKeys, isRuneItem } from "../src/compiler/runes.js";
 import { chargeSpellstrike } from "./spellstrike.js";
@@ -13,6 +13,8 @@ import { plainText } from "../src/compiler/rows.js";
 import { MODULE_ID, SOCKET, encounterOf, isActiveGM, ownerOf } from "./foundry.js";
 
 export const USES = "activationUses";
+// (When each activation is usable again after its own wait, trigger.recharge: { [index]: worldTime }.)
+export const WAITS = "activationRecharges";
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 let compileActivations = null;
@@ -63,7 +65,7 @@ function addButtons(sheet, html) {
         if (!anchor) continue;
         const holder = document.createElement("span");
         holder.className = "air-activations";
-        holder.innerHTML = activationButtonsHTML(list.map(({ activation, plan, index, rune }) => ({ index, name: activationName(activation, rune), time: activation.time, frequency: plan.trigger?.frequency ?? null })), { itemName: item.name, record: item.getFlag(MODULE_ID, USES) ?? {}, now: now(actor) });
+        holder.innerHTML = activationButtonsHTML(list.map(({ activation, plan, index, rune }) => ({ index, name: activationName(activation, rune), time: activation.time, frequency: plan.trigger?.frequency ?? null })), { itemName: item.name, record: item.getFlag(MODULE_ID, USES) ?? {}, waits: item.getFlag(MODULE_ID, WAITS) ?? {}, now: now(actor) });
         anchor.after(holder);
         for (const button of holder.querySelectorAll("[data-air-activate]")) button.addEventListener("click", (event) => {
             event.preventDefault();
@@ -106,10 +108,31 @@ export async function activate(itemUuid, index, userId = game.user.id) {
             content: `<p><strong>${escape(name)}</strong>: activated again, though it's ${frequencyText(frequency)} (used ${usesNow(record, entry.index, frequency, at)} this ${perWord(frequency)}). The GM's call.</p>`
         });
     }
+    // (Used before its own wait is over: the GM's warning too, not a refusal.)
+    const recharge = entry.plan.trigger?.recharge ?? null;
+    const waits = item.getFlag(MODULE_ID, WAITS) ?? {};
+    const left = rechargeLeft(waits, entry.index, at.worldTime);
+    if (left) {
+        await ChatMessage.create({
+            speaker: ChatMessage.getSpeaker({ actor: item.actor }),
+            whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id),
+            content: `<p><strong>${escape(name)}</strong>: activated again, though it's usable again only in ${waitText(left)}. The GM's call.</p>`
+        });
+    }
     const token = item.actor.getActiveTokens?.(true)?.[0] ?? null;
     // (The activation's card, named for it; its text the activation's own block.)
     const used = { data: { ...entry.data, name, system: { ...entry.data.system, description: { value: entry.activation.html } } }, actor: item.actor };
     const card = await postCardFor({ message: null, plan: entry.plan, used, actor: item.actor, token });
     if (frequency?.max) await item.setFlag(MODULE_ID, USES, withUse(record, entry.index, frequency, at));
+    // (Its wait from now — rolled when it's dice, "1d4 rounds" — for it and the activations it shares the wait with.)
+    if (recharge) {
+        const rolled = recharge.formula ? (await new Roll(recharge.formula).evaluate()).total : null;
+        const until = at.worldTime + rechargeSeconds(recharge, rolled);
+        const shared = (recharge.shared ?? []).map((one) => playable(item).find((other) => String(other.activation?.name ?? "").toLowerCase() === String(one).toLowerCase())?.index).filter((index) => index !== undefined);
+        const next = { ...waits };
+        for (const index of [entry.index, ...shared]) next[index] = until;
+        await item.setFlag(MODULE_ID, WAITS, next);
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: item.actor }), whisper: (game.users?.filter?.((user) => user.isGM || item.actor.testUserPermission?.(user, "OWNER")) ?? []).map((user) => user.id), content: `<p><strong>${escape(name)}</strong>: usable again in ${waitText(until - at.worldTime)}${recharge.formula ? ` (rolled ${escape(recharge.formula)} = ${rolled})` : ""}${shared.length ? `, and so is ${escape(recharge.shared.join(" and "))}` : ""}.</p>` });
+    }
     return card;
 }

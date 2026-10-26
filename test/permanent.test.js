@@ -828,7 +828,8 @@ test("a breath that's its user's draconic benefactor's (Pact of the Herald and H
     assert.deepEqual([routeOf(reflex), reflex.resolution.check.statistic, reflex.resolution.check.basic, reflex.resolution.check.against], ["save", "reflex", true, { dc: "owner", statistic: "class-spell" }]);
     assert.deepEqual([reflex.targeting.area, reflex.resolution.sharedDamage.components[0].formula], [{ type: "cone", value: 30 }, "(@actor.level)d6[untyped]"]);
     assert.equal(reflex.damageChoices.find((choice) => choice.label === "Fire").formula, "(@actor.level)d6[fire]");
-    assert.deepEqual([reflex.item.activation.frequency.per, breath.plan.notes], ["day", ["You can't use this ability again for 1d4 rounds."]]);
+    // (Its 1d4 rounds' wait the plan's trigger.recharge now, kept on the item — src/compiler/cooldown.js, 2026-10-26.)
+    assert.deepEqual([reflex.item.activation.frequency.per, breath.plan.notes, breath.plan.trigger.recharge], ["day", undefined, { formula: "1d4", unit: "rounds" }]);
 });
 
 test("a cast in other words, \"as if you cast\" (Crown of the Companion's Share Life at the ally): the spell module's cast, its healing after a note; not a ritual (Whisperer of Souls)", async () => {
