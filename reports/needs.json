@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1180,
+  "entries": 1179,
   "results": {
-   "none": 590,
+   "none": 589,
    "partial": 210,
    "note-only": 257,
    "builtin:no-effect": 123
@@ -18,7 +18,7 @@
    "lasting": 61,
    "choice": 33,
    "mind": 8,
-   "strike": 93,
+   "strike": 92,
    "spells": 35,
    "information": 21,
    "out-of-combat": 33,
@@ -50,9 +50,9 @@
    "speeds": 28,
    "areas": 163,
    "immunity": 69,
-   "objects": 380,
+   "objects": 379,
    "speech": 121,
-   "out-of-combat": 409,
+   "out-of-combat": 408,
    "counteract": 79,
    "afflictions": 88,
    "lasting": 206,
@@ -63,7 +63,7 @@
    "choice": 103,
    "several": 87,
    "mind": 65,
-   "strike": 170,
+   "strike": 169,
    "reader": 182,
    "spells": 71,
    "information": 188,
@@ -687,19 +687,6 @@
     "immunity",
     "objects",
     "information"
-   ]
-  },
-  {
-   "name": "Spiritsight Crossbow",
-   "kind": "activation",
-   "activation": "Ethereal Shot",
-   "result": "none",
-   "main": "strike",
-   "work": "strike",
-   "needs": [
-    "strike",
-    "objects",
-    "out-of-combat"
    ]
   },
   {

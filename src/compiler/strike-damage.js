@@ -38,7 +38,9 @@ const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike 
 // (Cover it ignores, Golden-Cased Bullet's "allowing you to ignore the bonus to AC granted to a target in standard or lesser cover", Arcing Hand
 // Crossbow's "This attack ignores the target's cover": PF2e's EphemeralEffect that suppresses the target's cover bonus, for a target in that
 // cover, as PF2e's Alchemist Goggles have it — ignoresCover, the levels, 2026-10-26.)
-const IGNORE_COVER = /\bignore the bonus to AC granted to a target in ((?:greater|standard|lesser)(?:,? (?:or )?(?:greater|standard|lesser))*) cover\b|\b(?:This|The) (?:attack|Strike) ignores the target's cover\b/i;
+// (And Spiritsight Crossbow's Ethereal Shot, "This shot travels through the Ethereal Plane, allowing it to pass through and ignore cover from physical
+// objects within the range of your Ethereal Vision": every cover — the objects that give it within those 60 feet, its target's — 2026-10-26.)
+const IGNORE_COVER = /\bignore the bonus to AC granted to a target in ((?:greater|standard|lesser)(?:,? (?:or )?(?:greater|standard|lesser))*) cover\b|\b(?:This|The) (?:attack|Strike) ignores the target's cover\b|\bThis shot travels through the Ethereal Plane, allowing it to pass through and ignore cover from physical objects within the range of your Ethereal Vision\b/i;
 const coverLevels = (words) => (words ? [...new Set(words.toLowerCase().match(/greater|standard|lesser/g))].flatMap((level) => (level === "greater" ? ["greater", "greater-prone"] : [level])) : ["lesser", "standard", "greater", "greater-prone"]);
 // "Your outcome is one degree of success better than what you rolled": PF2e's AdjustDegreeOfSuccess on the attack roll.
 const BETTER = /\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i;

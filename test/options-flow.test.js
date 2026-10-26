@@ -583,3 +583,8 @@ test("Viper Rapier's Step and Little Love's Leap: its user's own one move, a lin
     assert.deepEqual([planOf("Viper Rapier", 1).notes, Boolean(planOf("Viper Rapier", 1).partial)], [["Step (its own move on the map)."], false]);
     assert.deepEqual(planOf("Little Love").notes, ["Leap (or Vault, if you're Spring-Heeled Jack) (its own move on the map)."]);
 });
+
+test("Spiritsight Crossbow's Ethereal Shot: its Strike through the Ethereal Plane ignores every cover from objects (PF2e's cover-suppressing Effect)", () => {
+    const shot = planOf("Spiritsight Crossbow", 1);
+    assert.deepEqual([Boolean(shot.partial), shot.strike.own, shot.strike.ignoresCover], [false, true, ["lesser", "standard", "greater", "greater-prone"]]);
+});
