@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1298,
+  "entries": 1297,
   "results": {
    "none": 621,
-   "partial": 288,
+   "partial": 287,
    "builtin:no-effect": 129,
    "note-only": 260
   },
@@ -14,7 +14,7 @@
    "afflictions": 54,
    "areas": 111,
    "moving": 88,
-   "lasting": 66,
+   "lasting": 65,
    "visibility": 53,
    "choice": 39,
    "mind": 9,
@@ -55,7 +55,7 @@
    "out-of-combat": 422,
    "counteract": 80,
    "afflictions": 96,
-   "lasting": 217,
+   "lasting": 216,
    "moving": 116,
    "triggers": 126,
    "visibility": 55,
@@ -5667,17 +5667,6 @@
    "needs": [
     "immunity",
     "information"
-   ]
-  },
-  {
-   "name": "Viridian Crown",
-   "kind": "activation",
-   "activation": "Elven Hope",
-   "result": "partial",
-   "main": "lasting",
-   "work": "sustain",
-   "needs": [
-    "lasting"
    ]
   },
   {

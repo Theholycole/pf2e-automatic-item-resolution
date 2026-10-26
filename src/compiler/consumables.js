@@ -364,9 +364,20 @@ export function checkGated(plan, text) {
 
 // The plan for what it gives its user and allies in an area (rows.js allyAreaRow): the core's check family with no roll, its
 // row for each creature the presser targets (the ability module's card, as a save at targets would be). null without one.
+// (Its Sustain alone, Viridian Crown's "You can Sustain this Activation for up to 1 minute", when the Effects already last that long: a line of
+// the card, as the zones say it — not a note, 2026-10-26.)
+const SUSTAIN_ONLY = /^You can Sustain this (?:Activation|activation|effect) for up to (\d+|one|a) (minutes?|rounds?)\.$/;
 export function allyAreaPlan(text, base, allyArea) {
     if (!allyArea) return null;
     const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+    const times = [...allyArea.row.effects, ...allyArea.row.modifiers].map((entry) => entry.duration).filter(Boolean);
+    const lasts = (match) => times.length > 0 && times.every((time) => time.mode === "fixed" && time.value === (/^\d+$/.test(match[1]) ? Number(match[1]) : 1) && String(time.unit).replace(/s$/, "") === match[2].replace(/s$/, ""));
+    const lines = allyArea.notes.filter((note) => SUSTAIN_ONLY.test(note) && lasts(SUSTAIN_ONLY.exec(note))).map((note) => {
+        const match = SUSTAIN_ONLY.exec(note);
+        return `It lasts while its user Sustains it, up to ${match[1]} ${match[2]}: end its Effects sooner if they stop.`;
+    });
+    const notes = allyArea.notes.filter((note) => !(SUSTAIN_ONLY.test(note) && lasts(SUSTAIN_ONLY.exec(note))));
+    allyArea = { ...allyArea, notes };
     return {
         ...base,
         automation: { level: allyArea.notes.length ? "guided" : "automatic" },
@@ -374,7 +385,7 @@ export function allyAreaPlan(text, base, allyArea) {
         trigger: { event: "use" },
         resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: { damage: none().damage, effects: allyArea.row.effects, modifiers: allyArea.row.modifiers }, failure: none(), criticalFailure: none() } },
         allyArea: true,
-        notes: allyArea.notes,
+        notes: [...lines, ...allyArea.notes],
         ...(allyArea.notes.length ? { partial: true } : {})
     };
 }

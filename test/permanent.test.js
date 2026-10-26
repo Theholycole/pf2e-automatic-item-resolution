@@ -129,6 +129,10 @@ test("what it gives its user and allies in an area: an automatic row at the crea
     assert.deepEqual(speed.resolution.outcomes.success.effects.map((effect) => effect.slug), ["quickened"]);
     // (The extra action's limit a note Effect beside the Quickened: src/compiler/honest.js withActionLimit.)
     assert.match(JSON.stringify(speed.resolution.outcomes.success.noteEffects), /only Step and Stride/, "the extra action's limit a note Effect");
+    // (Viridian Crown's Elven Hope, "You can Sustain this Activation for up to 1 minute": its +3 for that minute, the Sustain a line of the
+    // card — the plan whole, 2026-10-26.)
+    const hope = compileActivations(item("Viridian Crown")).find((entry) => entry.activation.name === "Elven Hope").plan;
+    assert.deepEqual([Boolean(hope.partial), hope.notes, hope.resolution.outcomes.success.modifiers.map((modifier) => [modifier.value, modifier.duration.value, modifier.duration.unit])], [false, ["It lasts while its user Sustains it, up to 1 minute: end its Effects sooner if they stop."], [[3, 1, "minutes"]]]);
 });
 
 test("activated ammunition whose own PF2e rules do it: a builtin with what they add, the rest of its text a note", async () => {
