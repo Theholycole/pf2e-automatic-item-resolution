@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1203,
+  "entries": 1201,
   "results": {
    "none": 596,
-   "partial": 226,
+   "partial": 224,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -16,7 +16,7 @@
    "moving": 82,
    "lasting": 62,
    "visibility": 46,
-   "choice": 37,
+   "choice": 36,
    "mind": 8,
    "strike": 96,
    "spells": 35,
@@ -29,7 +29,7 @@
    "removed": 4,
    "cooldown": 9,
    "vehicles": 20,
-   "reader": 17,
+   "reader": 16,
    "several": 22,
    "triggers": 90,
    "immunity": 23,
@@ -60,11 +60,11 @@
    "triggers": 123,
    "visibility": 48,
    "dying": 72,
-   "choice": 107,
+   "choice": 106,
    "several": 89,
    "mind": 69,
    "strike": 175,
-   "reader": 189,
+   "reader": 187,
    "spells": 71,
    "information": 190,
    "actions": 56,
@@ -5105,17 +5105,6 @@
    ]
   },
   {
-   "name": "Cayden's Tankard",
-   "kind": "activation",
-   "result": "partial",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "reader"
-   ]
-  },
-  {
    "name": "Windstep Sheath",
    "kind": "consumable",
    "result": "none",
@@ -9290,17 +9279,6 @@
     "speeds",
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Spleen Bloodstone of Arazni",
-   "kind": "activation",
-   "activation": "Break Bonds",
-   "result": "partial",
-   "main": "reader",
-   "work": "confused",
-   "needs": [
-    "reader"
    ]
   },
   {

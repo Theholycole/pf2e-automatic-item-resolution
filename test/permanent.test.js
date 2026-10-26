@@ -772,10 +772,10 @@ test("effects its user picks one of, in a sentence (Heartripper Blade): the ways
     assert.match(siphon.plan.notes[0], /^Or: reduce the stage of one toxin or disease .* \(by hand\)\.$/);
 });
 
-test("conditions that end on its user (Spleen Bloodstone of Arazni's Break Bonds: each one to 0, its Speed penalties and exception a note); a portion rubbed in (Tallowheart Mass: Quickened for 1 minute, its extra action's limit a note Effect)", () => {
+test("conditions that end on its user (Spleen Bloodstone of Arazni's Break Bonds: each one to 0, its Speed penalties and exception read since 2026-10-26, test/options-flow.test.js); a portion rubbed in (Tallowheart Mass: Quickened for 1 minute, its extra action's limit a note Effect)", () => {
     const [, bonds] = compileActivations(item("Spleen Bloodstone of Arazni"));
     assert.deepEqual(bonds.plan.item.reduce.map((entry) => `${entry.slug}:${entry.by}`), ["confused:all", "controlled:all", "grabbed:all", "immobilized:all", "paralyzed:all", "petrified:all", "restrained:all"]);
-    assert.match(bonds.plan.notes[0], /as well as any Speed penalties affecting you, immediately end unless/);
+    assert.deepEqual([bonds.plan.notes, bonds.plan.item.speedPenaltiesEnd], [undefined, { unlessMagical: 12 }]);
     const [rubbed] = compileActivations(item("Tallowheart Mass"));
     assert.deepEqual(rubbed.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.unit]), [["quickened", 1, "minutes"]]);
     assert.deepEqual([rubbed.plan.notes, rubbed.plan.resolution.outcomes.success.noteEffects.find((note) => note.label === "Quickened's extra action")?.text], [undefined, "You can use the extra action each round only for Strike actions made with weapons you wield in your hands."]);

@@ -460,3 +460,22 @@ test("Costume Change (Sihedron Ring, Raiment, Skirmisher's Coat): a note Effect 
         assert.match(plan.disbelief.when, /truesight/);
     }
 });
+
+test("Break Bonds and Cayden's Tankard: the Speed penalties ended with the conditions (the Tankard's circumstance ones, its targets' too); Break Bonds spares a magical Effect of level 12 or higher", async () => {
+    const bonds = planOf("Spleen Bloodstone of Arazni", 1);
+    const tankard = planOf("Cayden's Tankard", 1);
+    assert.deepEqual([Boolean(bonds.partial), bonds.notes ?? [], bonds.item.speedPenaltiesEnd, bonds.item.reduce.every((entry) => entry.unlessMagical === 12)], [false, [], { unlessMagical: 12 }, true]);
+    assert.deepEqual([Boolean(tankard.partial), tankard.notes ?? [], tankard.item.speedPenaltiesEnd], [false, [], { type: "circumstance", targets: true }]);
+    const { endSpeedPenalties, sparedBy } = await import("../scripts/speed-penalties.js");
+    const made = (name, rules, extra = {}) => { const effect = { name, system: { rules, ...extra }, updated: null, deleted: false, update: async (changes) => { effect.updated = changes; }, delete: async () => { effect.deleted = true; } }; return effect; };
+    const mud = made("Mud", [{ key: "FlatModifier", selector: "land-speed", value: -10, type: "circumstance" }]);
+    const curse = made("Curse", [{ key: "FlatModifier", selector: "all-speeds", value: -5, type: "status" }, { key: "FlatModifier", selector: "attack", value: -1, type: "status" }]);
+    const haste = made("Haste", [{ key: "FlatModifier", selector: "land-speed", value: 10, type: "status" }]);
+    const wish = made("Spell Effect: Binding", [{ key: "FlatModifier", selector: "all-speeds", value: -20, type: "status" }], { level: { value: 14 }, traits: { value: ["arcane"] } });
+    const actor = { itemTypes: { effect: [mud, curse, haste, wish] } };
+    const tankardLines = await endSpeedPenalties(actor, "Kyra", tankard.item.speedPenaltiesEnd);
+    assert.deepEqual([mud.deleted, curse.updated, haste.deleted, tankardLines.length], [true, null, false, 1]);
+    const bondsLines = await endSpeedPenalties(actor, "Kyra", bonds.item.speedPenaltiesEnd);
+    assert.deepEqual([curse.updated, wish.deleted, bondsLines.some((line) => /Binding's Speed penalty stays/.test(line))], [{ "system.rules": [{ key: "FlatModifier", selector: "attack", value: -1, type: "status" }] }, false, true]);
+    assert.deepEqual([sparedBy(wish, 12), sparedBy(mud, 12)], [true, false]);
+});

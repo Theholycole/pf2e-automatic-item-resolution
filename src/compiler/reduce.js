@@ -160,6 +160,24 @@ export function reductionNotes(text) {
     return ownUse(text).replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && (reduces.test(sentence) ? /\band (?:you )?(?:regain|gain|become|are|take|can)\b/i.test(sentence) && !REGAIN_ONLY.test(sentence) : RULE_WORDS.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));
 }
 
+// The Speed penalties ended with the conditions (2026-10-26): Spleen Bloodstone of Arazni's "as well as any Speed penalties affecting you",
+// Cayden's Tankard's "as well as anything giving such targets a circumstance penalty to Speed" → { type?, targets } (plan.item.speedPenaltiesEnd:
+// the penalties' rules taken off the Effects that give them, scripts/speed-penalties.js), with Break Bonds' "immediately end unless the effect
+// is magical and of 12th level or higher" → unlessMagical: an Effect of that level or higher keeps its condition or penalty. null when none.
+const SPEED_OWN = /\bas well as any Speed penalties affecting you\b/i;
+const SPEED_TARGETS = /\bas well as anything giving such targets an? (circumstance|status|item) penalty to Speed\b/i;
+const UNLESS_MAGICAL = /\bimmediately end unless the effect is magical and of (\d+)(?:st|nd|rd|th) level or higher\b/i;
+export function readSpeedPenaltyEnds(text) {
+    const said = ownUse(text);
+    const own = SPEED_OWN.test(said);
+    const targets = SPEED_TARGETS.exec(said);
+    if (!own && !targets) return null;
+    const unless = UNLESS_MAGICAL.exec(said);
+    return { ...(targets ? { type: targets[1].toLowerCase(), targets: true } : {}), ...(unless ? { unlessMagical: Number(unless[1]) } : {}) };
+}
+// (The level its "unless" spares, for the conditions it ends too.)
+export const unlessMagicalOf = (text) => Number(UNLESS_MAGICAL.exec(ownUse(text))?.[1]) || null;
+
 // A Mythic Point its user regains (2026-10-25): Preordained Spear's "Your doomed value decreases by 1, and you regain 1 Mythic Point" →
 // { mythicPoints } (plan.item.regain), given back once its card applies, in Hero Points under the world setting (scripts/spend.js), or null.
 const REGAIN = /\byou regain (\d+|a|one) Mythic Points?\b/i;

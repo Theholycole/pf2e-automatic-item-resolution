@@ -20,7 +20,7 @@ import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
 import { withDrain } from "./drain.js";
 import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan, retaliationBeside, retaliationPlan, withoutDamageRestated } from "./direct-damage.js";
-import { readReductions, readRegain, reductionNotes, reductionPlan } from "./reduce.js";
+import { readReductions, readRegain, readSpeedPenaltyEnds, reductionNotes, reductionPlan, unlessMagicalOf } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan, recoverySaid } from "./recovery.js";
 import { beadsPlan } from "./beads.js";
 import { focusPlan } from "./focus.js";
@@ -539,7 +539,11 @@ function compileEach(item, options = {}) {
         // (An Effect behind a check the text opens with: only on its success, a note.)
         plan = checkGated(plan, plainText(activation.html));
         // (A condition it lowers on its user, src/compiler/reduce.js: Coin of Comfort; a plan of its own when it's all.)
-        const reduce = readReductions(plainText(activation.html));
+        // (Break Bonds' "unless the effect is magical and of 12th level or higher": on each condition it ends.)
+        const unlessMagical = unlessMagicalOf(plainText(activation.html));
+        const reduce = readReductions(plainText(activation.html)).map((entry) => (unlessMagical && entry.by === "all" ? { ...entry, unlessMagical } : entry));
+        // (And the Speed penalties it ends with them: Cayden's Tankard, Spleen Bloodstone of Arazni.)
+        const speedEnds = reduce.length ? readSpeedPenaltyEnds(plainText(activation.html)) : null;
         // (A Mythic Point it gives back, src/compiler/reduce.js readRegain: the card's, once applied.)
         const regain = readRegain(plainText(activation.html));
         if ((!plan || plan.builtin === "no-effect") && reduce.length) plan = reductionPlan(base, reduce, reductionNotes(plainText(activation.html)));
@@ -552,9 +556,12 @@ function compileEach(item, options = {}) {
         // condition, the value of each of these conditions is reduced by 1" — read whole, it saying nothing more.)
         if (reduce.length && plan?.partial) {
             const lowered = (sentence) => {
-                const read = readReductions(String(sentence));
+                const read = readReductions(String(sentence)).map((entry) => (unlessMagical && entry.by === "all" ? { ...entry, unlessMagical } : entry));
+                const same = read.length > 0 && read.every((entry) => reduce.some((own) => JSON.stringify(own) === JSON.stringify(entry)));
+                // (One whose Speed penalties and "unless" are read too: Cayden's Tankard's, Break Bonds'.)
+                if (same && speedEnds && readSpeedPenaltyEnds(String(sentence))) return true;
                 // (Not one with a clause of its own besides, Grim Ring's "…, and the undead that caused the condition takes 2d6 vitality damage".)
-                return read.length > 0 && read.every((entry) => reduce.some((own) => JSON.stringify(own) === JSON.stringify(entry))) && !reductionNotes(`Effect ${sentence}`).length && !/,\s*and\b|\bdamage\b/i.test(String(sentence));
+                return same && !reductionNotes(`Effect ${sentence}`).length && !/,\s*and\b|\bdamage\b/i.test(String(sentence));
             };
             const unread = (plan.unread ?? []).filter((sentence) => !lowered(sentence));
             const notes = (plan.notes ?? []).filter((sentence) => !lowered(sentence));
@@ -751,7 +758,7 @@ function compileEach(item, options = {}) {
                 ...(plan.trigger || frequency ? { trigger: { ...(plan.trigger ?? {}), ...(frequency ? { frequency } : {}) } } : {}),
                 // ("drinker": a creature it heals other than its user, "a willing, living, adjacent creature" — chosen on the card.)
                 // (Its Trigger's words, and what they're read as: src/compiler/activation.js triggerOn.)
-                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(ruleEffects ? { ruleEffects } : {}), ...(reduce.length ? { reduce } : {}), ...(regain ? { regain } : {}), ...(resist ? { resist } : {}), ...(move ? { move } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions, ...(untilRage.fastHealing ? { fastHealing: untilRage.fastHealing } : {}) } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(dropsToOne(plainText(activation.html)) ? { dropToOne: true } : {}), ...(recharge ? { recharges: recharge } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}), ...(installed ? { installed: { name: installed.name, count: installed.count, modifiers: installed.modifiers, ...(installed.resistance ? { resistance: installed.resistance } : {}), ...(installed.damage ? { damage: installed.damage } : {}), ...(installed.fastHealing ? { fastHealing: true } : {}), ...(installed.strength ? { strength: installed.strength } : {}), ...(installed.shortensOnHit ? { shortensOnHit: installed.shortensOnHit } : {}), duration: installed.duration } } : {}) }
+                item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: others ? "targets" : plan.otherRecipient ? "drinker" : "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger, ...(activation.trigger ? { triggerOn: triggerOn(activation.trigger) } : {}) }, links: effectLinks(part).length, ...(ruleEffects ? { ruleEffects } : {}), ...(reduce.length ? { reduce } : {}), ...(speedEnds ? { speedPenaltiesEnd: speedEnds } : {}), ...(regain ? { regain } : {}), ...(resist ? { resist } : {}), ...(move ? { move } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(creates ? { creates } : {}), ...(form ? { shieldForm: form } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(suppress ? { suppress } : {}), ...(skillPick ? { skillPick } : {}), ...(recovery ? { recovery } : {}), ...(rune ? { rune } : {}), ...(untilRage ? { untilRage: { conditions: untilRage.conditions, ...(untilRage.fastHealing ? { fastHealing: untilRage.fastHealing } : {}) } } : {}), ...(counteract && (plan.builtin === "counteract" || !counteract.free) ? { counteract } : {}), ...(keepsWounded(plainText(activation.html)) ? { keepWounded: true } : {}), ...(dropsToOne(plainText(activation.html)) ? { dropToOne: true } : {}), ...(recharge ? { recharges: recharge } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}), ...(installed ? { installed: { name: installed.name, count: installed.count, modifiers: installed.modifiers, ...(installed.resistance ? { resistance: installed.resistance } : {}), ...(installed.damage ? { damage: installed.damage } : {}), ...(installed.fastHealing ? { fastHealing: true } : {}), ...(installed.strength ? { strength: installed.strength } : {}), ...(installed.shortensOnHit ? { shortensOnHit: installed.shortensOnHit } : {}), duration: installed.duration } } : {}) }
             }
         };
     });

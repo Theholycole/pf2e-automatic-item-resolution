@@ -57,6 +57,7 @@ import { chargeSpellstrike, strikeWithSpellstrike } from "./spellstrike.js";
 import { toggleOff, toggleOn } from "./toggle-off.js";
 import { endOnStrike } from "./ends-on-strike.js";
 import { plateShield } from "./shield-temp.js";
+import { endSpeedPenalties, granterOf, sparedBy } from "./speed-penalties.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -1049,6 +1050,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
         const creatures = entry.who === "targets" ? others : [{ actor: target.actor, name: recipient.name }];
         for (const creature of creatures) {
+            // (One a magical Effect of that level or higher gives, Break Bonds' exception: it stays.)
+            if (entry.unlessMagical && sparedBy(granterOf(creature.actor, slug), entry.unlessMagical)) {
+                lines.push(`${creature.name} stays ${slug} (${granterOf(creature.actor, slug).name}: magical, level ${entry.unlessMagical} or higher)`);
+                continue;
+            }
             const line = await lowerCondition(creature.actor, creature.name, slug, entry.by);
             // (Of a list it ends — Cayden's Tankard's six — only the ones there.)
             if (reduce.length <= 2 || !/: nothing to lower\.$/.test(line)) lines.push(line);
@@ -1062,6 +1068,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         lines.push(await lowerCondition(creature.actor, creature.name, slug, "all"));
     }
     for (const [creature, slug, at] of still) if (!creature.actor?.hasCondition?.(slug)) lines[at] = `${creature.name} is no longer ${slug}`;
+    // (The Speed penalties it ends with them, scripts/speed-penalties.js: its user's, and the creatures targeted when the text says so.)
+    const speedEnds = state.plan.item?.speedPenaltiesEnd;
+    if (speedEnds) for (const creature of [{ actor: target.actor, name: recipient.name }, ...(speedEnds.targets ? others : [])]) lines.push(...await endSpeedPenalties(creature.actor, creature.name, speedEnds));
     // (Its flat check to end persistent damage: PF2e's own recovery roll for each of those types, at the text's DC when it's
     // lower — Quenching Potion's 10 — then the condition's own DC again if it stays.)
     if (state.plan.item?.recovery) {
