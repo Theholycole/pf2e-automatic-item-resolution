@@ -142,3 +142,27 @@ test("A weapon's other shape (Anchor Spear's longspear, the Shifting rune's any 
         Object.assign(globalThis, saved);
     }
 });
+
+test("Armory Bracelet: a common base weapon of its charms' groups, picked; its runes lowered after a minute; its weapon gone at its user's next daily preparations", async () => {
+    const plans = ["Minor", "Lesser", "Moderate", "Greater", "Major"].map((grade) => activation(`Armory Bracelet (${grade})`));
+    assert.deepEqual(plans.map((plan) => [plan.objects.potency, plan.objects.striking, plan.objects.then.potency, plan.objects.then.striking, Boolean(plan.partial)]), [[1, 1, 0, 0, false], [1, 1, 1, 0, false], [2, 1, 1, 1, false], [2, 2, 2, 1, false], [3, 2, 2, 2, false]]);
+    assert.deepEqual([plans[2].objects.ammo, plans[2].objects.untilRest, plans[2].objects.choose.groups.length], [20, true, 15]);
+    const { charmChoices } = await import("../scripts/objects.js");
+    const { lowerMadeRunes } = await import("../scripts/expiring.js");
+    const row = (id, name, group, rarity = "common", extra = {}) => ({ _id: id, name, type: "weapon", system: { slug: name.toLowerCase(), baseItem: name.toLowerCase(), group, level: { value: 0 }, traits: { rarity }, ...extra } });
+    const rows = [row("a", "Longsword", "sword"), row("b", "Katana", "sword", "uncommon"), row("c", "Longbow", "bow"), row("d", "Flaming Longsword", "sword", "common", { baseItem: "longsword", level: { value: 8 } }), row("e", "Whip", "flail")];
+    const saved = { game: globalThis.game };
+    try {
+        globalThis.game = { packs: new Map([["pf2e.equipment-srd", { getIndex: async () => rows }]]) };
+        assert.deepEqual((await charmChoices({ choose: { groups: ["sword", "bow"], common: true } })).map((choice) => choice.name), ["Longbow (bow)", "Longsword (sword)"]);
+        const updates = [];
+        const made = { flags: { "pf2e-automatic-item-resolution": { made: { downgradeAt: 100, downgrade: { potency: 1, striking: 1 } } } }, update: async (changes) => updates.push(changes) };
+        globalThis.game = { actors: [{ items: { contents: [made] } }], scenes: [] };
+        await lowerMadeRunes(99);
+        assert.equal(updates.length, 0);
+        await lowerMadeRunes(100);
+        assert.deepEqual([updates[0]["system.runes.potency"], updates[0]["system.runes.striking"]], [1, 1]);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

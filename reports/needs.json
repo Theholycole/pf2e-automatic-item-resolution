@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1177,
+  "entries": 1172,
   "results": {
-   "none": 587,
+   "none": 582,
    "partial": 210,
    "note-only": 257,
    "builtin:no-effect": 123
@@ -16,7 +16,7 @@
    "moving": 78,
    "visibility": 46,
    "lasting": 61,
-   "choice": 33,
+   "choice": 28,
    "mind": 8,
    "strike": 92,
    "spells": 35,
@@ -50,9 +50,9 @@
    "speeds": 28,
    "areas": 163,
    "immunity": 69,
-   "objects": 377,
+   "objects": 372,
    "speech": 121,
-   "out-of-combat": 408,
+   "out-of-combat": 403,
    "counteract": 79,
    "afflictions": 88,
    "lasting": 206,
@@ -60,9 +60,9 @@
    "triggers": 119,
    "visibility": 48,
    "dying": 72,
-   "choice": 103,
+   "choice": 98,
    "several": 87,
-   "mind": 65,
+   "mind": 60,
    "strike": 169,
    "reader": 182,
    "spells": 71,
@@ -1196,19 +1196,6 @@
     "several",
     "mind",
     "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Armory Bracelet (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "objects",
-    "mind",
     "out-of-combat"
    ]
   },
@@ -3293,19 +3280,6 @@
    "needs": [
     "strike",
     "choice"
-   ]
-  },
-  {
-   "name": "Armory Bracelet (Lesser)",
-   "kind": "activation",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "objects",
-    "mind",
-    "out-of-combat"
    ]
   },
   {
@@ -7636,19 +7610,6 @@
    ]
   },
   {
-   "name": "Armory Bracelet (Moderate)",
-   "kind": "activation",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "objects",
-    "mind",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Feather Token (Whip)",
    "kind": "consumable",
    "result": "none",
@@ -8937,19 +8898,6 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
-   ]
-  },
-  {
-   "name": "Armory Bracelet (Major)",
-   "kind": "activation",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "objects",
-    "mind",
-    "out-of-combat"
    ]
   },
   {
@@ -12854,19 +12802,6 @@
    "needs": [
     "strike",
     "reader"
-   ]
-  },
-  {
-   "name": "Armory Bracelet (Minor)",
-   "kind": "activation",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "objects",
-    "mind",
-    "out-of-combat"
    ]
   },
   {

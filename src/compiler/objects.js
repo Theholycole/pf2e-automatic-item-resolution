@@ -29,6 +29,17 @@ const DRAW_ATTACHED = /\bYou draw (and load )?the attached weapon\b/i;
 // original form as a +2 greater striking spear" — its two forms; the Shifting rune's "The weapon takes the shape of another melee weapon that requires
 // the same number of hands to wield" — any such, picked. op "reshape", scripts/objects.js. 2026-10-26.)
 const RESHAPE_TWO = /\bThe [\w' -]+? extends into an? (?:\+\d (?:(?:greater|major) )?striking )?([a-z-]+(?: [a-z-]+)?) or back to its original form as an? (?:\+\d (?:(?:greater|major) )?striking )?([a-z-]+(?: [a-z-]+)?)\./i;
+// (A weapon of its user's choice from a charm's group, Armory Bracelet's: "You pull one charm from the bracelet. The charm transforms into a common
+// weapon of your choice from the charm's weapon group. If the weapon requires ammunition, it appears with … 20 pieces of ammunition … The weapon
+// is a +2 striking weapon of the type you chose. After 1 minute, the weapon transforms into a +1 striking weapon and remains until your next daily
+// preparations. At that point, the weapon and any remaining ammunition crumble to dust" — op "create" with choose { groups } (PF2e's common base
+// weapons of those groups, picked on the card), its runes, then { after, potency, striking }, untilRest, ammo. 2026-10-26.)
+const CHARM = /\bYou pull one charm from the [\w' -]+?\. The charm transforms into a common weapon of your choice from the charm's weapon group\./i;
+const CHARM_RUNES = /\bThe weapon is a \+(\d)((?: (?:greater|major))? striking)? weapon of the type you chose\./i;
+const CHARM_AFTER = /\bAfter 1 minute, the weapon transforms into (?:a non-magical version|a \+(\d)((?: (?:greater|major))? striking)? weapon) and remains until your next daily preparations\./i;
+const CHARM_GROUPS = /\bone charm each for the groups ([a-z]+(?:, [a-z]+)*),? and ([a-z]+)\./i;
+const CHARM_AMMO = /\bIf the weapon requires ammunition, it appears with a quiver or pouch with (\d+) pieces of ammunition for the weapon\./i;
+const strikingOf = (words) => (!words ? 0 : /major/i.test(words) ? 3 : /greater/i.test(words) ? 2 : 1);
 const RESHAPE_ANY = /\bThe weapon takes the shape of another melee weapon that requires the same number of hands to wield\./i;
 const ATTUNED_BULK = /\battune it to a single item of (\d+|light) Bulk or less\b/i;
 const DON = /\bThe armor wraps around you, allowing you to don it\b/i;
@@ -55,6 +66,14 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     if (store && type === "backpack") return { op: "store", maxBulk: BULK(store[1]), said: store[0] };
     if (RETRIEVE.test(text) && type === "backpack") return { op: "retrieve", said: RETRIEVE.exec(text)[0] };
     if (name && SELF_HAND(name).test(text)) return { op: "hand", self: true, said: SELF_HAND(name).exec(text)[0] };
+    const charm = CHARM.exec(text);
+    const charmRunes = CHARM_RUNES.exec(text);
+    const groups = CHARM_GROUPS.exec(String(whole ?? ""));
+    if (charm && charmRunes && groups) {
+        const after = CHARM_AFTER.exec(text);
+        const ammo = CHARM_AMMO.exec(text);
+        return { op: "create", self: true, choose: { groups: [...groups[1].split(/,\s*/), groups[2]].map((group) => group.toLowerCase()), common: true }, potency: Number(charmRunes[1]), striking: strikingOf(charmRunes[2]), ...(after ? { then: { after: { value: 1, unit: "minutes" }, potency: Number(after[1] ?? 0), striking: strikingOf(after[2]) }, untilRest: true } : {}), ...(ammo ? { ammo: Number(ammo[1]) } : {}), said: charm[0] };
+    }
     const two = RESHAPE_TWO.exec(text);
     if (two) return { op: "reshape", self: true, forms: [two[1].toLowerCase(), two[2].toLowerCase()], said: two[0] };
     if (RESHAPE_ANY.test(text)) return { op: "reshape", self: true, sameHands: true, said: RESHAPE_ANY.exec(text)[0] };

@@ -2404,6 +2404,30 @@ export const cases = {
         return { shapes: choices.length, traits: item.system.traits.value };
     },
 
+    // Armory Bracelet (Moderate): its charm's longbow picked — a +2 striking longbow in hand with 20 arrows, both flagged to crumble; PF2e's Rest for
+    // the Night hook (called here, no real rest) takes them away.
+    async armoryCharm(scene) {
+        await clearSquares(scene, [[19, 9]]);
+        const { actor: user } = await creature(scene, "Charm Archer", { type: "character", x: 19, y: 9, level: 8 });
+        const bracelet = await give(user, "Armory Bracelet (Moderate)");
+        await bracelet.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(bracelet.uuid, 0);
+        const card = await messageAfter(since, itemCard("objects"), { what: "the charm's card" });
+        const choices = card.getFlag(NS, "card").choices;
+        const bow = choices.findIndex((choice) => choice.name === "Longbow (bow)");
+        assert(bow >= 0, `the longbow among ${choices.length} choices`);
+        await game.modules.get(NS).api.live.apply(card.id, { pick: bow });
+        const made = () => user.items.filter((item) => item.flags?.[NS]?.made?.by === bracelet.id);
+        await until(() => made().length === 2, "the longbow and its arrows", { timeout: 8000 });
+        const longbow = made().find((item) => item.type === "weapon");
+        const arrows = made().find((item) => item.type === "ammo");
+        assert(longbow.system.runes.potency === 2 && longbow.system.runes.striking === 1 && longbow.flags[NS].made.downgradeAt > game.time.worldTime && arrows.system.quantity === 20, `+2 striking, its minute, 20 arrows (${JSON.stringify(longbow.system.runes)}, ${arrows.system.quantity})`);
+        Hooks.callAll("pf2e.restForTheNight", user);
+        await until(() => made().length === 0, "crumbled at the rest", { timeout: 8000 });
+        return { choices: choices.length };
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);

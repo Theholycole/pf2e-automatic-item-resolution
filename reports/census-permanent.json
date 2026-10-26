@@ -9,7 +9,7 @@
    "resolves": 902,
    "builtin:cast-spell": 475,
    "partial": 131,
-   "none": 422,
+   "none": 417,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
@@ -22,9 +22,9 @@
    "builtin:pf2e-rules": 24,
    "builtin:zone": 26,
    "builtin:modes": 33,
+   "builtin:objects": 31,
    "builtin:conjure": 13,
    "builtin:item-action": 23,
-   "builtin:objects": 26,
    "builtin:roll-twice": 15,
    "builtin:whisper": 17,
    "builtin:spellstrike": 9,
@@ -34,7 +34,7 @@
    "save": 434,
    "cast": 475,
    "item": 615,
-   "none": 532,
+   "none": 527,
    "focus": 47,
    "counteract": 29,
    "fortune": 61,
@@ -45,9 +45,9 @@
    "ways": 32,
    "zone": 26,
    "toggle": 33,
+   "objects": 31,
    "conjure": 13,
    "action": 23,
-   "objects": 26,
    "whisper": 17,
    "coat": 4,
    "later": 4,
@@ -63,7 +63,7 @@
    "results": {
     "resolves": 522,
     "builtin:cast-spell": 347,
-    "none": 298,
+    "none": 293,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
     "builtin:readied-bonus": 32,
@@ -73,10 +73,10 @@
     "builtin:table": 4,
     "builtin:teleport": 14,
     "builtin:no-effect": 68,
+    "builtin:objects": 20,
     "builtin:zone": 14,
     "builtin:ways": 19,
     "builtin:conjure": 13,
-    "builtin:objects": 15,
     "builtin:modes": 17,
     "builtin:roll-twice": 11,
     "builtin:whisper": 16,
@@ -2275,9 +2275,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Gossip's Eye",
@@ -6448,9 +6448,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Necklace of Fireballs IV",
@@ -15793,9 +15793,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Spellender",
@@ -17964,9 +17964,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Warrior's Training Ring",
@@ -25938,9 +25938,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Dragon Turtle Plate",

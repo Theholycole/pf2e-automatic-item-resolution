@@ -22,6 +22,10 @@ export function objectsText(objects, item = {}, stored = null) {
     if (objects.op === "repair") return `Repaired to its full Hit Points, no longer broken: one of its user's items${limit}`;
     if (objects.op === "reload") return `Reloaded with one of its user's rounds for it: one of its user's weapons with reload ${objects.reload}`;
     // ("A +1 striking dagger in its user's hand, the last one gone: Strike with it".)
+    if (objects.op === "create" && objects.choose) {
+        const runes = (potency, striking) => (potency ? `+${potency}${striking ? ` ${["", "", "greater ", "major "][striking]}striking` : ""}` : "non-magical");
+        return `A ${runes(objects.potency, objects.striking)} weapon of its user's choice in hand (picked)${objects.ammo ? `, with ${objects.ammo} pieces of its ammunition if it takes some` : ""}${objects.then ? `; ${runes(objects.then.potency, objects.then.striking)} after ${objects.then.after.value} minute` : ""}${objects.untilRest ? "; it crumbles at its user's next daily preparations" : ""}`;
+    }
     if (objects.op === "create") {
         const runes = objects.potency ? `+${objects.potency}${objects.striking ? ` ${["", "", "greater ", "major "][objects.striking]}striking` : ""} ` : "";
         return `A ${runes}${objects.weapon} in its user's hand${objects.replaces ? ", the last one it made gone" : ""}${objects.whileHeld ? ", gone once it's out of the hand" : ""}: Strike with it`;
@@ -39,13 +43,13 @@ export function objectsCardHTML(state, { canApply = false } = {}) {
     const objects = state.plan.objects;
     // (A stored spell to cast: no item to pick.)
     // (Its own shape changed: the shape picked.)
-    const own = (objects.self && objects.op !== "reshape") || (objects.op === "cast-stored" && Boolean(state.stored));
+    const own = (objects.self && objects.op !== "reshape" && !objects.choose) || (objects.op === "cast-stored" && Boolean(state.stored));
     const line = `<p class="aar-actions">${escape(objectsText(objects, state.item, state.stored ?? null))}.</p>`;
     const notes = open && (state.plan.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     const picker = own ? ""
         : !state.choices.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no item it can take.</p>` : "")
-            : open && canApply ? `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : "Item"}: <select data-air-field="pick">${state.choices.map((choice, index) => `<option value="${index}"${index === (state.pick ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
-                : `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : "Item"}: ${escape(state.choices[state.pick ?? 0]?.name ?? "")}</p>`;
+            : open && canApply ? `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : objects.choose ? "Weapon" : "Item"}: <select data-air-field="pick">${state.choices.map((choice, index) => `<option value="${index}"${index === (state.pick ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
+                : `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : objects.choose ? "Weapon" : "Item"}: ${escape(state.choices[state.pick ?? 0]?.name ?? "")}</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((entry) => `<li>${escape(entry)}</li>`).join("")}</ul>` : "";
     const ready = own || state.choices.length;
     const controls = open && canApply && ready ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open && ready ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";

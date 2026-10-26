@@ -90,10 +90,20 @@ export async function reshapeWeapon(holder, entryId) {
     return shape.name;
 }
 
+// (A weapon of its user's choice from groups, Armory Bracelet's charm: PF2e's common base weapons of those groups, by name and group.)
+export async function charmChoices(objects) {
+    const pack = game.packs.get("pf2e.equipment-srd");
+    if (!pack) return [];
+    const index = await pack.getIndex({ fields: [...RESHAPE_FIELDS, "system.group", "system.traits.rarity"] });
+    const groups = new Set(objects.choose?.groups ?? []);
+    return index.filter((row) => row.type === "weapon" && (Number(row.system?.level?.value) || 0) === 0 && groups.has(row.system?.group) && row.system?.slug && row.system?.baseItem === row.system.slug && (!objects.choose?.common || (row.system?.traits?.rarity ?? "common") === "common"))
+        .sort((a, b) => String(a.system.group).localeCompare(String(b.system.group)) || a.name.localeCompare(b.name)).map((row) => ({ id: row._id, name: `${row.name} (${row.system.group})` }));
+}
+
 export async function postObjectsCard({ message, plan, used, actor, token }) {
     const holderId = String(used.data.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? used.data._id ?? null;
     const held = storedOf(actor?.items?.get?.(holderId));
-    const choices = plan.objects.op === "reshape" ? await reshapeChoices(actor?.items?.get?.(holderId), plan.objects) : objectChoices(actor, plan.objects, holderId);
+    const choices = plan.objects.op === "reshape" ? await reshapeChoices(actor?.items?.get?.(holderId), plan.objects) : plan.objects.op === "create" && plan.objects.choose ? await charmChoices(plan.objects) : objectChoices(actor, plan.objects, holderId);
     const state = createObjectsCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, id: holderId }, user: entryOf(token, actor), choices, stored: held ? { name: held.name, rank: held.rank } : null });
     return ChatMessage.create({ content: objectsCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
@@ -168,16 +178,46 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
         const madeBy = (item) => item.flags?.[MODULE_ID]?.made?.by === holder.id;
         const old = objects.replaces ? actor.items.filter(madeBy).map((item) => item.id) : [];
         if (old.length) await actor.deleteEmbeddedDocuments("Item", old);
-        const source = await weaponSource(objects.weapon);
+        // (Picked from its groups, Armory Bracelet's: PF2e's weapon by its id.)
+        const picked = objects.choose ? state.choices[Number(pick) || 0] : null;
+        if (objects.choose && !picked) throw new Error(`Pick the weapon first.`);
+        const source = picked ? await weaponSourceById(picked.id) : await weaponSource(objects.weapon);
         source.name = `${source.name} (${holder.name})`;
         source.system.runes = { ...(source.system.runes ?? {}), potency: Number(objects.potency) || 0, striking: Number(objects.striking) || 0 };
-        source.system.equipped = { ...(source.system.equipped ?? {}), carryType: "held", handsHeld: 1 };
-        source.flags = { ...(source.flags ?? {}), [MODULE_ID]: { made: { by: holder.id, from: holder.name, ...(objects.whileHeld ? { whileHeld: true } : {}) } } };
+        source.system.equipped = { ...(source.system.equipped ?? {}), carryType: "held", handsHeld: /two-hands/.test(String(source.system.usage?.value ?? "")) ? 2 : 1 };
+        // (Its runes lower after a time, and it crumbles at its user's next daily preparations: scripts/expiring.js, setUpMadeWeapons.)
+        const then = objects.then ? { downgradeAt: game.time.worldTime + (Number(objects.then.after.value) || 1) * 60, downgrade: { potency: objects.then.potency, striking: objects.then.striking } } : {};
+        source.flags = { ...(source.flags ?? {}), [MODULE_ID]: { made: { by: holder.id, from: holder.name, ...(objects.whileHeld ? { whileHeld: true } : {}), ...(objects.untilRest ? { untilRest: true } : {}), ...then } } };
         const [made] = await actor.createEmbeddedDocuments("Item", [source]);
-        line = `${made.name} is in ${state.user.name}'s hand${old.length ? ", the last one gone" : ""}: Strike with it`;
+        // (Its ammunition with it, when it takes some: PF2e's ammunition of its kind.)
+        const ammo = objects.ammo && made.system?.ammo?.baseType ? await ammoSource(made.system.ammo.baseType) : null;
+        if (ammo) await actor.createEmbeddedDocuments("Item", [{ ...ammo, system: { ...ammo.system, quantity: objects.ammo }, flags: { ...(ammo.flags ?? {}), [MODULE_ID]: { made: { by: holder.id, from: holder.name, ...(objects.untilRest ? { untilRest: true } : {}) } } } }]);
+        line = `${made.name} is in ${state.user.name}'s hand${ammo ? `, with ${objects.ammo} ${ammo.name}` : ""}${old.length ? ", the last one gone" : ""}${objects.then ? `; after ${objects.then.after.value} minute it becomes ${objects.then.potency ? `+${objects.then.potency}${objects.then.striking ? ` ${["", "", "greater ", "major "][objects.then.striking]}striking` : ""}` : "non-magical"}` : ""}${objects.untilRest ? ", until its user's next daily preparations" : ""}: Strike with it`;
     } else throw new Error(`${state.item.name}: nothing to do (${objects.op}).`);
     const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
     return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// PF2e's own weapon by its compendium id, as a new item's source.
+async function weaponSourceById(id) {
+    const pack = game.packs.get("pf2e.equipment-srd");
+    const document = pack ? await pack.getDocument(id) : null;
+    if (!document) throw new Error("That weapon wasn't found in PF2e's equipment.");
+    const source = document.toObject();
+    delete source._id;
+    source._stats = { ...(source._stats ?? {}), compendiumSource: `Compendium.pf2e.equipment-srd.Item.${id}` };
+    return source;
+}
+
+// PF2e's ammunition of a kind ("arrows", "bolts"), as a new item's source, or null.
+async function ammoSource(kind) {
+    const pack = game.packs.get("pf2e.equipment-srd");
+    const index = pack ? await pack.getIndex({ fields: ["system.slug", "system.baseItem", "system.level.value"] }) : [];
+    const entry = index.find((row) => row.type === "ammo" && (row.system?.slug === kind || row.system?.baseItem === kind) && !(Number(row.system?.level?.value) > 0));
+    if (!entry) return null;
+    const source = (await pack.getDocument(entry._id)).toObject();
+    delete source._id;
+    return source;
 }
 
 // PF2e's own weapon of that name ("dagger"), as a new item's source.
@@ -194,6 +234,12 @@ async function weaponSource(weapon) {
 
 // (A weapon made to last while it's held, Necklace of Knives': gone once it's out of the hand — dropped, stowed or worn.)
 export function setUpMadeWeapons() {
+    // (Made until its user's next daily preparations, Armory Bracelet's weapon and ammunition: gone at PF2e's Rest for the Night.)
+    Hooks.on("pf2e.restForTheNight", (actor) => {
+        if (!isActiveGM()) return;
+        const ids = (actor?.items?.contents ?? []).filter((item) => item.flags?.[MODULE_ID]?.made?.untilRest).map((item) => item.id);
+        if (ids.length) actor.deleteEmbeddedDocuments("Item", ids).catch((error) => console.error(`${MODULE_ID} | made items at rest`, error));
+    });
     Hooks.on("updateItem", (item, changes) => {
         if (!isActiveGM() || !item.flags?.[MODULE_ID]?.made?.whileHeld) return;
         const carry = changes?.system?.equipped?.carryType;

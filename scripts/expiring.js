@@ -18,9 +18,25 @@ export async function expireItems(worldTime) {
     }
 }
 
+// (Made weapons whose runes lower after a time, Armory Bracelet's after its minute: those runes then.)
+const lowering = (actor, worldTime) => (actor?.items?.contents ?? [...(actor?.items ?? [])]).filter((item) => {
+    const at = Number(item.flags?.[MODULE_ID]?.made?.downgradeAt);
+    return Number.isFinite(at) && worldTime >= at;
+});
+export async function lowerMadeRunes(worldTime) {
+    const actors = [...(game.actors ?? []), ...[...(game.scenes ?? [])].flatMap((scene) => (scene.tokens?.contents ?? [...(scene.tokens ?? [])]).filter((token) => !token.actorLink && token.actor).map((token) => token.actor))];
+    for (const actor of actors) {
+        for (const item of lowering(actor, worldTime)) {
+            const down = item.flags[MODULE_ID].made.downgrade ?? {};
+            await item.update({ "system.runes.potency": Number(down.potency) || 0, "system.runes.striking": Number(down.striking) || 0, [`flags.${MODULE_ID}.made.-=downgradeAt`]: null });
+        }
+    }
+}
+
 export function setUpExpiringItems() {
     Hooks.on("updateWorldTime", (worldTime) => {
         if (!isActiveGM()) return;
         expireItems(Number(worldTime) || 0).catch((error) => console.error(`${MODULE_ID} | expiring items`, error));
+        lowerMadeRunes(Number(worldTime) || 0).catch((error) => console.error(`${MODULE_ID} | made weapons' runes`, error));
     });
 }
