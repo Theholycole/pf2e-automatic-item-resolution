@@ -25,6 +25,12 @@ export async function applyFortuneCard(message, { targets = [] } = {}) {
         ? (await Promise.all(targets.map(async (uuid) => { const token = await fromUuid(uuid).catch(() => null); return token?.actor ? { actor: token.actor, name: token.name ?? token.actor.name } : null; }))).filter(Boolean)
         : [{ actor: await fromUuid(state.user.actorUuid).catch(() => null), name: state.user.name }];
     if (!creatures.length || !creatures[0].actor) throw new Error(`${forTarget ? "That creature" : state.user.name} isn't there any more.`);
+    // (Its user's legendary rolls, Perfected Robes': read off its sheet now; none, nothing to roll twice.)
+    if (state.plan.rollTwice?.selector === "legendary") {
+        const rolls = legendaryRolls(creatures[0].actor);
+        if (!rolls.length) throw new Error(`${state.user.name} has no legendary proficiency to roll with.`);
+        state.plan = { ...state.plan, rollTwice: { ...state.plan.rollTwice, rolls } };
+    }
     for (const { actor } of creatures) {
         // (The same item's earlier one, unused: replaced.)
         const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.item?.name === state.item.name);
@@ -144,4 +150,19 @@ async function onAttackResult(onAttack, { hit, attacker, attackerToken, guarded,
         await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: guarded }), flavor: `<strong>${name}</strong>: the attack still hit — ${damage.formula} ${damage.type} damage to ${escape(attacker.name)}` });
         await attacker.applyDamage({ damage: roll, token: attackerToken ?? attacker.getActiveTokens?.(true, true)?.[0] ?? undefined });
     }
+}
+
+// The d20 rolls its user has legendary proficiency in: [{ selector, predicate?, label }] — PF2e's skills, saves and Perception at rank 4, and
+// its Strikes and spell attacks with a legendary proficiency (PF2e's "item:proficiency:rank:4", its spellcasting's rank).
+export function legendaryRolls(actor) {
+    const rolls = [];
+    const legendary = (statistic) => Number(statistic?.rank) === 4;
+    for (const [slug, skill] of Object.entries(actor?.skills ?? {})) if (legendary(skill)) rolls.push({ selector: slug, label: skill.label ?? slug });
+    for (const [slug, save] of Object.entries(actor?.saves ?? {})) if (legendary(save)) rolls.push({ selector: slug, label: save.label ?? slug });
+    if (legendary(actor?.perception)) rolls.push({ selector: "perception", label: "Perception" });
+    const weapons = Object.values(actor?.system?.proficiencies?.attacks ?? {}).some((entry) => Number(entry?.rank) === 4);
+    if (weapons) rolls.push({ selector: "strike-attack-roll", predicate: ["item:proficiency:rank:4"], label: "Strikes at legendary proficiency" });
+    const casting = (actor?.spellcasting?.contents ?? [...(actor?.spellcasting ?? [])]).some((entry) => Number(entry?.statistic?.rank) === 4);
+    if (casting) rolls.push({ selector: "spell-attack-roll", label: "spell attacks" });
+    return rolls;
 }

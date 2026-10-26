@@ -51,8 +51,17 @@ function rollOf(phrase, trigger) {
 // (Or the roll named before it, in a clause of its own: "when you make an attack roll against …, you can roll twice" — a Barbarians+
 // crown's, once during the rage.)
 const WHEN_TWICE = /\bwhen you (?:make|attempt) an? (attack roll|saving throw|skill check|Perception check|(?:Fortitude|Reflex|Will) save)\b[^.]*?\byou can roll twice[^.]*?\bbetter result\b/i;
+// (Any d20 roll at its user's legendary proficiency, Perfected Robes': "If your next action is to attempt a d20 roll with which you have
+// legendary proficiency, roll twice and take the better result" — selector "legendary": its rules, one RollTwice for each of its user's
+// legendary statistics, are made as it's applied (scripts/fortune.js legendaryRolls), 2026-10-26.)
+const LEGENDARY = /\bIf your next action is to attempt a d20 roll with which you have legendary proficiency, roll twice and take the better result\./i;
 export function readRollTwice(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
+    const legendary = LEGENDARY.exec(plain);
+    if (legendary) {
+        const notes = plain.slice(legendary.index + legendary[0].length).split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && !/^(?:This is a fortune effect)\.?$/i.test(sentence) && !/^Craft Requirements\b/i.test(sentence));
+        return { selector: "legendary", keep: "higher", notes };
+    }
     const when = ROLL_TWICE.exec(plain) ? null : WHEN_TWICE.exec(plain);
     if (when) {
         const roll = rollOf(when[1], null);

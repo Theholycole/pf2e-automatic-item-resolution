@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1233,
+  "entries": 1232,
   "results": {
-   "none": 603,
+   "none": 602,
    "partial": 244,
    "builtin:no-effect": 129,
    "note-only": 257
@@ -42,7 +42,7 @@
    "forms": 24,
    "retaliation": 3,
    "missing-number": 7,
-   "fortune": 7,
+   "fortune": 6,
    "linked-effect": 1,
    "by-kind": 6
   },
@@ -79,7 +79,7 @@
    "creatures": 53,
    "senses": 27,
    "forms": 25,
-   "fortune": 10,
+   "fortune": 9,
    "retaliation": 3,
    "missing-number": 8,
    "linked-effect": 1,
@@ -2896,16 +2896,6 @@
     "actions",
     "situational",
     "objects"
-   ]
-  },
-  {
-   "name": "Perfected Robes",
-   "kind": "activation",
-   "result": "none",
-   "main": "fortune",
-   "work": "roll twice",
-   "needs": [
-    "fortune"
    ]
   },
   {

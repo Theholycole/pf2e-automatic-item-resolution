@@ -251,3 +251,16 @@ test("Blessed Lantern Flail's Purge Unholy Magic: its Strike, then the Will save
     const effect = castFlatCheckSource(save.castFlatCheck.criticalFailure, { item: { name: "Blessed Lantern Flail" } });
     assert.deepEqual([effect.flags["pf2e-automatic-resolution"].runtime.castFlatCheck, effect.system.duration.value, effect.system.duration.unit], [{ dc: 11 }, 1, "minutes"]);
 });
+
+test("Perfected Robes: the next d20 roll at legendary proficiency rolled twice — a RollTwice for each of its user's legendary statistics, read off its sheet", async () => {
+    const { readiedRules, rollWords } = await import("../src/live/fortune-card.js");
+    const { legendaryRolls } = await import("../scripts/fortune.js");
+    const robes = planOf("Perfected Robes");
+    assert.deepEqual([robes.builtin, robes.rollTwice, Boolean(robes.partial)], ["roll-twice", { selector: "legendary", keep: "higher" }, false]);
+    const actor = { skills: { athletics: { rank: 4, label: "Athletics" }, stealth: { rank: 3 } }, saves: { will: { rank: 4, label: "Will" } }, perception: { rank: 2 }, system: { proficiencies: { attacks: { martial: { rank: 4 } } } }, spellcasting: { contents: [] } };
+    const rolls = legendaryRolls(actor);
+    assert.deepEqual(rolls.map((roll) => roll.selector), ["athletics", "will", "strike-attack-roll"]);
+    const rules = readiedRules({ ...robes, rollTwice: { ...robes.rollTwice, rolls } });
+    assert.deepEqual(rules.map((rule) => [rule.selector, rule.removeAfterRoll, rule.predicate ?? null]), [["athletics", true, null], ["will", true, null], ["strike-attack-roll", true, ["item:proficiency:rank:4"]]]);
+    assert.match(rollWords({ ...robes.rollTwice, rolls }), /^d20 roll with legendary proficiency, if it's its next action \(Athletics, Will, Strikes at legendary proficiency\)$/);
+});

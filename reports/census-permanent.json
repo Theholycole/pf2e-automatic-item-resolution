@@ -9,7 +9,7 @@
    "resolves": 871,
    "builtin:cast-spell": 475,
    "partial": 156,
-   "none": 436,
+   "none": 435,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
@@ -25,7 +25,7 @@
    "builtin:conjure": 13,
    "builtin:item-action": 23,
    "builtin:objects": 24,
-   "builtin:roll-twice": 14,
+   "builtin:roll-twice": 15,
    "builtin:whisper": 17,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1
@@ -34,10 +34,10 @@
    "save": 439,
    "cast": 475,
    "item": 608,
-   "none": 547,
+   "none": 546,
    "focus": 47,
    "counteract": 29,
-   "fortune": 60,
+   "fortune": 61,
    "reroll": 45,
    "strike": 112,
    "table": 7,
@@ -63,7 +63,7 @@
    "results": {
     "resolves": 501,
     "builtin:cast-spell": 347,
-    "none": 305,
+    "none": 304,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
     "builtin:readied-bonus": 32,
@@ -78,7 +78,7 @@
     "builtin:conjure": 13,
     "builtin:objects": 14,
     "builtin:modes": 17,
-    "builtin:roll-twice": 10,
+    "builtin:roll-twice": 11,
     "builtin:whisper": 16,
     "builtin:item-action": 11,
     "builtin:take-condition": 1
@@ -5420,9 +5420,9 @@
    "time": "free",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:roll-twice",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Perfected Robes",

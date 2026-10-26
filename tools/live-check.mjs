@@ -2286,6 +2286,26 @@ export const cases = {
         return { left: user.system.resources.mythicPoints.value };
     },
 
+    // Perfected Robes' fortune: its user legendary in Athletics — the Effect's RollTwice for Athletics, spent by the next Athletics check.
+    async robesLegendary(scene) {
+        await clearSquares(scene, [[14, 5]]);
+        const { actor: user } = await creature(scene, "Perfected Monk", { type: "character", x: 14, y: 5, level: 20 });
+        await user.update({ "system.skills.athletics.rank": 4 });
+        const robes = await give(user, "Perfected Robes");
+        await robes.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(robes.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the robes' card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const effect = () => user.itemTypes.effect.find((entry) => (entry.system.rules ?? []).some((rule) => rule.key === "RollTwice"));
+        await until(effect, "its RollTwice Effect", { timeout: 8000 });
+        const selectors = effect().system.rules.map((rule) => rule.selector);
+        assert(selectors.includes("athletics"), `Athletics among them (${selectors.join(", ")})`);
+        await user.skills.athletics.roll({ skipDialog: true });
+        await until(() => !effect(), "spent by the Athletics check", { timeout: 8000 });
+        return { selectors };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {

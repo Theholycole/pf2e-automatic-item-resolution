@@ -17,6 +17,7 @@ const nameOf = (selector) => ROLL_WORDS[selector] ?? (/-dc$/.test(selector) ? `$
 
 // The roll in words: "initiative roll", "Athletics check (force open, reposition, shove)".
 export function rollWords(rollTwice) {
+    if (rollTwice.selector === "legendary") return `d20 roll with legendary proficiency, if it's its next action${rollTwice.rolls ? ` (${rollTwice.rolls.map((roll) => roll.label ?? roll.selector).join(", ") || "none"})` : ""}`;
     const actions = actionWords(rollTwice.predicate);
     return actions ? `${nameOf(rollTwice.selector)} (${actions})` : nameOf(rollTwice.selector);
 }
@@ -69,6 +70,8 @@ export function createFortuneCard({ plan, item, user }) {
 export function readiedRules(plan) {
     if (plan.builtin === "roll-twice") {
         const rollTwice = plan.rollTwice;
+        // (Its user's legendary statistics, Perfected Robes': a RollTwice each, the first roll among them spending the Effect.)
+        if (rollTwice.selector === "legendary") return (rollTwice.rolls ?? []).map((roll) => ({ key: "RollTwice", selector: roll.selector, keep: rollTwice.keep ?? "higher", removeAfterRoll: true, ...(roll.predicate ? { predicate: roll.predicate } : {}) }));
         return [{ key: "RollTwice", selector: rollTwice.selector, keep: rollTwice.keep ?? "higher", removeAfterRoll: true, ...(rollTwice.predicate ? { predicate: rollTwice.predicate } : {}) }];
     }
     const label = plan.source?.name ?? null;
