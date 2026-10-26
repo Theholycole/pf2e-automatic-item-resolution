@@ -1811,6 +1811,64 @@ export const cases = {
         return { worn, belted };
     },
 
+    // Impact Foam Chassis (Moderate) worn, through the environment module (env f06ece4, core 0e35ee9): its reading of the creature's eases
+    // takes 30 off a 60-foot fall's 30 damage; its fell hook then uses the chassis up and leaves the foam with 10 Hit Points around it —
+    // Immobilized, its cover's +2 to AC, the ability module's Escape DC 15.
+    async foamChassis(scene) {
+        assert(game.modules.get(ENVIRONMENT)?.active, "PF2e Automatic Environment Resolution isn't active in pftest.");
+        const { easedFall } = await import(`/modules/pf2e-resolution-core/src/environment/disasters.js?v=${Date.now()}`);
+        const { fallEasesOf } = await import(`/modules/${ENVIRONMENT}/scripts/foundry.js?v=${Date.now()}`);
+        await clearSquares(scene, [[19, 11]]);
+        const { actor: user, token } = await creature(scene, "Foam Faller", { type: "character", x: 19, y: 11 });
+        const chassis = await give(user, "Impact Foam Chassis (Moderate)");
+        await chassis.update({ "system.equipped.carryType": "worn" });
+        const fall = easedFall(60, fallEasesOf(user));
+        assert(fall.before === 30 && fall.damage === 0 && !fall.prone && fall.reductions[0]?.amount === 30 && fall.reductions[0]?.itemUuid === chassis.uuid, `30 off a 60-foot fall (${JSON.stringify(fall)})`);
+        const since = Date.now();
+        Hooks.callAll(`${ENVIRONMENT}.fell`, { token, feet: 60, damage: fall.before, applied: fall.damage, reductions: fall.reductions });
+        const line = await messageAfter(since, (message) => /activates as .*falls: it takes 30 off the falling damage, and its foam \(10 Hit Points\)/.test(message.content), { what: "the foam's line" });
+        await until(() => !user.items.get(chassis.id), "the chassis used up", { timeout: 8000 });
+        await until(() => user.itemTypes.effect.some((effect) => effect.flags?.[NS]?.foam?.hp === 10), "the foam's Effect with 10 Hit Points", { timeout: 8000 });
+        await until(() => user.hasCondition("immobilized"), "Immobilized", { timeout: 8000 });
+        const foam = user.itemTypes.effect.find((effect) => effect.flags?.[NS]?.foam);
+        const cover = user.armorClass.modifiers.find((modifier) => modifier.slug === "cover");
+        assert(cover?.enabled && cover.modifier === 2, `its cover's +2 to AC (${JSON.stringify(cover ?? null)})`);
+        assert(Number(foam.flags["pf2e-automatic-ability-resolution"]?.escape?.dc) === 15 && foam.system.duration.value === 1 && foam.system.duration.unit === "minutes", `Escape DC 15, 1 minute (${JSON.stringify(foam.system.duration)})`);
+        return { fall, whisper: line.whisper.length, foam: foam.name };
+    },
+
+    // Blood-Drinker Blade (Greater)'s Exsanguinate: its card at the creature deals 6d6 persistent bleed and marks it; the bleed's first tick
+    // applied gives its user half the Hit Points the creature lost as PF2e's TempHP, for the rest of the minute, the mark used up.
+    async exsanguinate(scene) {
+        await clearSquares(scene, [[17, 11], [18, 11]]);
+        const { actor: user } = await creature(scene, "Exsanguinator", { type: "character", x: 17, y: 11, level: 9 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Exsanguinated", { x: 18, y: 11, hp: 200, alliance: "opposition", level: 9 });
+        const blade = await give(user, "Blood-Drinker Blade (Greater)");
+        await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 1);
+        const card = await messageAfter(since, itemCard("expose"), { what: "Exsanguinate's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const damage = await messageAfter(since, abilitySaveCard, { what: "the damage card at the creature" });
+        await applyAbilityCard(damage);
+        const bleed = () => foe.itemTypes.condition.find((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "bleed");
+        await until(bleed, "persistent bleed", { timeout: 8000 });
+        assert(/6d6/.test(bleed().system.persistent.formula), `6d6 (${bleed().system.persistent.formula})`);
+        await until(() => foe.itemTypes.effect.some((effect) => effect.flags?.[NS]?.drain), "the drained mark", { timeout: 8000 });
+        const hp = foe.system.attributes.hp.value;
+        since = Date.now();
+        await bleed().onEndTurn({ token: foeToken.object ?? foeToken });
+        const tick = await messageAfter(since, (message) => message.rolls?.[0]?.instances?.some((instance) => instance.type === "bleed"), { what: "the bleed's tick" });
+        await foe.applyDamage({ damage: tick.rolls[0], token: foeToken });
+        const lost = hp - foe.system.attributes.hp.value;
+        assert(lost > 0, `the tick dealt damage (${lost})`);
+        await until(() => Number(user.system.attributes.hp.temp) === Math.floor(lost / 2), `half of ${lost} as temporary Hit Points (${user.system.attributes.hp.temp})`, { timeout: 8000 });
+        await until(() => !foe.itemTypes.effect.some((effect) => effect.flags?.[NS]?.drain), "the mark used up", { timeout: 8000 });
+        const temp = user.itemTypes.effect.find((effect) => effect.flags?.[NS]?.drainTemp);
+        assert(temp && temp.system.duration.value === 1 && temp.system.duration.unit === "minutes", `its Effect for the minute (${JSON.stringify(temp?.system?.duration)})`);
+        return { lost, temp: user.system.attributes.hp.temp };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {

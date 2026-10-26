@@ -108,3 +108,28 @@ export function passiveFallOf(text) {
     const read = readFall(passive);
     return read ? { ...(read.shorter ? { shorter: read.shorter } : {}), ...(read.noDamage ? { noDamage: true } : {}) } : null;
 }
+
+// A worn consumable that eases its wearer's falls by an amount and stays around it (2026-10-26, the environment module's reduceBy, env
+// f06ece4): Impact Foam Chassis' "it Activates automatically whenever you fall at least 10 feet, causing a layer of soft, flexible impact foam
+// to expand beneath and around you … The impact foam decreases the falling damage by up to the listed amount, taking damage equal to the
+// amount of falling damage the foam reduced … if the foam has any Hit Points remaining, it remains surrounding you for up to 1 minute",
+// "prevents up to 20 falling damage and has 20 Hit Points" → { reduceBy, minFeet, hp }: api.fallEases(actor) gives the environment module its
+// reduceBy while it's worn; after the fall (its "fell" hook), the chassis is used up and the foam with the Hit Points it has left is an
+// Effect around its wearer (scripts/falls.js).
+const FOAM = /\bActivates automatically whenever you fall at least (\d+) feet\b[^]*?\bdecreases the falling damage by up to the listed amount\b[^]*?\bprevents up to (\d+) falling damage and has (\d+) Hit Points\b/i;
+export function readFoam(text) {
+    const match = FOAM.exec(String(text ?? ""));
+    return match ? { reduceBy: Number(match[2]), minFeet: Number(match[1]), hp: Number(match[3]) } : null;
+}
+
+// After a fall (the environment module's "fell" hook: { feet, reductions [{ itemUuid, amount }] }), which worn chassis activated and the
+// foam's Hit Points left: the one whose reduction it was, else — its fall long enough, no damage to take off — the one easing most, untouched.
+// worn: [{ uuid, reduceBy, minFeet, hp }] → { uuid, amount, left } or null.
+export function foamUsed({ feet = 0, reductions = [] } = {}, worn = []) {
+    const fell = Number(feet) || 0;
+    const reduced = (reductions ?? []).find((entry) => entry?.itemUuid && worn.some((one) => one.uuid === entry.itemUuid));
+    const chassis = reduced ? worn.find((one) => one.uuid === reduced.itemUuid) : [...worn].filter((one) => fell >= (Number(one.minFeet) || 0)).sort((a, b) => b.reduceBy - a.reduceBy)[0];
+    if (!chassis) return null;
+    const amount = Math.max(0, Number(reduced?.amount) || 0);
+    return { uuid: chassis.uuid, amount, left: Math.max(0, chassis.hp - amount) };
+}

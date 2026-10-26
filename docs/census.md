@@ -27,13 +27,14 @@ Results, for the items this module handles:
 | builtin:no-effect | 43 | 3% |
 | builtin:conjure | 7 | 0% |
 | builtin:counteract | 33 | 2% |
+| builtin:fall-foam | 4 | 0% |
 | builtin:item-action | 16 | 1% |
 | builtin:objects | 3 | 0% |
 | builtin:reroll | 3 | 0% |
 | builtin:teleport | 7 | 0% |
 | builtin:ways | 27 | 2% |
 | builtin:whisper | 1 | 0% |
-| none | 171 | 12% |
+| none | 167 | 11% |
 
 ## By category
 
@@ -45,7 +46,7 @@ Results, for the items this module handles:
 | elixir | 149 | 104 | 13 | 12 | 0 | 17 | 3 |
 | poison | 115 | 106 | 4 | 1 | 0 | 4 | 0 |
 | snare | 82 | 0 | 0 | 1 | 0 | 73 | 8 |
-| gadget | 77 | 26 | 4 | 6 | 0 | 33 | 8 |
+| gadget | 77 | 26 | 4 | 6 | 0 | 37 | 4 |
 | mutagen | 68 | 64 | 4 | 0 | 0 | 0 | 0 |
 | oil | 66 | 30 | 6 | 9 | 0 | 16 | 5 |
 | fulu | 46 | 20 | 2 | 7 | 0 | 5 | 12 |
@@ -76,9 +77,10 @@ Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
-| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 171 |
+| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 167 |
 | the ability compiler's GM fallback ("no-effect") | 43 |
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
+| another plan not played yet | 4 |
 
 ## What they do
 
@@ -88,7 +90,7 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 |---|---:|---:|---:|---:|
 | duration | 943 | 622 | 0 | 13 |
 | fixed-dc | 491 | 305 | 0 | 21 |
-| condition | 433 | 270 | 0 | 22 |
+| condition | 433 | 270 | 0 | 18 |
 | linked-effect | 393 | 364 | 0 | 0 |
 | damage | 277 | 172 | 0 | 7 |
 | trigger | 156 | 69 | 0 | 19 |

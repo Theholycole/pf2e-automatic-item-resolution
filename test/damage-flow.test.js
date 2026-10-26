@@ -49,9 +49,9 @@ test("the reading: outright damage to the creature it names, its conditions, and
     assert.equal(readDirectDamage("Effect The target must attempt a DC 20 Fortitude save. Success The creature takes 2d6 acid damage."), null);
     assert.equal(readDirectDamage("Effect Make a Strike. On a successful hit, the target takes an additional 1d6 force damage."), null);
     assert.equal(readDirectDamage("Effect Each creature within 10 feet takes 2d6 fire damage."), null);
-    // (Bleed persistent unless its user gains a share of it at once, Exsanguinate's "half the bleed damage the creature takes", 2026-10-26.)
+    // (Bleed always persistent, as PF2e has it: Exsanguinate's too, its user's share from the bleed taken later, src/compiler/drain.js.)
     assert.equal(readDirectDamage("Effect The creature you damaged takes 1d6 bleed damage and is off-guard until the bleed ends.").category, "persistent");
-    assert.equal(readDirectDamage("Effect The required creature takes 6d6 bleed damage. You gain temporary Hit Points equal to half the bleed damage the creature takes.").category, null);
+    assert.equal(readDirectDamage("Effect The required creature takes 6d6 bleed damage. You gain temporary Hit Points equal to half the bleed damage the creature takes.").category, "persistent");
     // Ammunition: PF2e's own rules deal it.
     assert.equal(compileItem(source("Big Rock Bullet"))?.directDamage ?? null, null);
 });

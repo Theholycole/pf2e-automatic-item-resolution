@@ -53,11 +53,8 @@ export function readDirectDamage(text) {
         const match = TAKES.exec(sentence) ?? DEALS_TO.exec(sentence) ?? inflicting;
         if (!match || NOT_OUTRIGHT.test(sentence) || ROW_START.test(sentence)) continue;
         const [, formula, given, type] = match;
-        // (Bleed is persistent — Murderer's Knot's "off-guard until the bleed ends" — but not one its user gains a share of at once as temporary
-        // Hit Points, Blood-Drinker Blade's Exsanguinate's "You gain temporary Hit Points equal to half the bleed damage the creature takes":
-        // that damage is outright, 2026-10-26.)
-        const outright = /\btemporary Hit Points equal to (?:half )?the bleed damage\b/i.test(body);
-        const category = given || (/^bleed$/i.test(type ?? "") && !outright) ? "persistent" : null;
+        // (Bleed is always persistent, as PF2e has it — Exsanguinate's share of it too, src/compiler/drain.js.)
+        const category = given || /^bleed$/i.test(type ?? "") ? "persistent" : null;
         // (What the sentence leaves — "Reduce the value of the drained condition you gain by 1, and …" — and the others, as notes.)
         const rest = sentence.replace(match[0], "").replace(/^[\s,.;]+|[\s,.;]+$/g, "");
         // ("… takes 1d6 bleed damage and is off-guard until the end of your next turn": its conditions too, the bombs' reader.)

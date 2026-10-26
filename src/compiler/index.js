@@ -67,7 +67,7 @@ import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
 import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
-import { withFalls } from "./falls.js";
+import { readFoam, withFalls } from "./falls.js";
 import { withRowReadings } from "./row-readings.js";
 import { withDisbelief } from "./disbelief.js";
 import { withWeatherIgnores } from "./weather.js";
@@ -212,7 +212,28 @@ function decide(plan, given, options) {
     return next && next !== plan && !next.item ? { ...next, item: itemInfo(given) } : next;
 }
 
+// Its plan: builtin "fall-foam", what the environment module and scripts/falls.js play while it's worn.
+function foamPlan(item, foam) {
+    return {
+        modelVersion: MODEL_VERSION,
+        source: { name: item?.name ?? null, slug: item?.system?.slug ?? null, uuid: item?.uuid ?? null, type: item?.type ?? null },
+        rank: 1,
+        traits: [...(item?.system?.traits?.value ?? [])],
+        activation: { time: null, traits: [] },
+        builtin: "fall-foam",
+        automation: { level: "automatic" },
+        targeting: { target: "its wearer", range: null, area: null },
+        trigger: { event: "fall" },
+        foam,
+        notes: [`Worn, it activates by itself when its wearer falls at least ${foam.minFeet} feet: up to ${foam.reduceBy} less falling damage, and the foam it leaves around its wearer.`],
+        item: { type: item?.type ?? null, category: item?.system?.category ?? null, level: Number(item?.system?.level?.value) || 0, uses: { max: 1, autoDestroy: true } }
+    };
+}
+
 export function compileItem(given, options = {}) {
+    // (A worn chassis that eases its wearer's falls by itself, src/compiler/falls.js readFoam: no card of its own — the environment module's fall.)
+    const foam = readFoam(plainText(given?.system?.description?.value));
+    if (foam) return foamPlan(given, foam);
     const unlinked = withoutUnverifiedLinks(given, options);
     const instead = unlinked ? overUnverified(compileOne(unlinked.item, options), unlinked.dropped, given?.system?.description?.value) : null;
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)

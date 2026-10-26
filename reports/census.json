@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 171,
+   "none": 167,
    "resolves": 788,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
@@ -26,6 +26,7 @@
    "builtin:counteract": 33,
    "builtin:no-effect": 43,
    "builtin:teleport": 7,
+   "builtin:fall-foam": 4,
    "builtin:reroll": 3,
    "builtin:objects": 3,
    "builtin:whisper": 1,
@@ -195,7 +196,8 @@
    "results": {
     "resolves": 26,
     "builtin:zone": 17,
-    "none": 8,
+    "builtin:fall-foam": 4,
+    "none": 4,
     "note-only": 6,
     "builtin:item-action": 3,
     "builtin:no-effect": 5,
@@ -386,7 +388,7 @@
    "count": 433,
    "resolves": 270,
    "gaps": 0,
-   "none": 22
+   "none": 18
   },
   "duration": {
    "count": 943,
@@ -522,9 +524,10 @@
    }
   },
   "noCard": {
-   "no-plan": 171,
+   "no-plan": 167,
    "triggered": 11,
-   "gm": 43
+   "gm": 43,
+   "other": 4
   }
  },
  "gapCounts": {},
@@ -1868,7 +1871,9 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:fall-foam",
+   "kind": null,
+   "live": null
   },
   {
    "name": "Dust of Corpse Animation",
@@ -6662,7 +6667,9 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:fall-foam",
+   "kind": null,
+   "live": null
   },
   {
    "name": "Necrotic Cap (Major)",
@@ -17658,7 +17665,9 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:fall-foam",
+   "kind": null,
+   "live": null
   },
   {
    "name": "Silvertongue Mutagen (Lesser)",
@@ -19638,7 +19647,9 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:fall-foam",
+   "kind": null,
+   "live": null
   },
   {
    "name": "Wolf Fang",

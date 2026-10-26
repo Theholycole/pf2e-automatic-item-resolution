@@ -16,6 +16,7 @@ import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
 import { ownCheckOver, ownCheckPlan } from "./own-checks.js";
+import { withDrain } from "./drain.js";
 import { directDamageOver, directDamagePlan, energyChoicePlan, negatingSavePlan, retaliationBeside, retaliationPlan, withoutDamageRestated } from "./direct-damage.js";
 import { readReductions, readRegain, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan, recoverySaid } from "./recovery.js";
@@ -466,6 +467,8 @@ function compileEach(item, options = {}) {
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)
         // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
         plan = guardValues(directDamageOver(guardText(plan, plainText(activation.html)), directDamagePlan(plainText(activation.html), base, { item })));
+        // (Temporary Hit Points from a share of the damage it deals the creature, src/compiler/drain.js: Exsanguinate's half its bleed.)
+        plan = withDrain(plan, plainText(activation.html), base, { item });
         // (A row's own linked Effect, src/compiler/degree-effects.js: Cape of Justice's Enact Justice failure.)
         plan = withDegreeEffects(plan, activation.html, options.itemEffects);
         // (What a failed save primes for later, and what its damage dropping the creature does: notes, src/compiler/primed.js.)

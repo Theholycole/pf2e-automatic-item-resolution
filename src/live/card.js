@@ -323,6 +323,45 @@ export function fallEffectSource(fall, { item = {}, user = {}, worldTime = 0, in
     return ownEffectSource({ name: "fall", img: "icons/svg/wing.svg", words: fallLine(fall), rules, duration: fall.duration, flag: { fall: true }, extraFlags: { [ENVIRONMENT_ID]: { fall: flag } }, item, user, worldTime, initiative, moduleId });
 }
 
+// The foam an Impact Foam Chassis leaves around its wearer after a fall (src/compiler/falls.js readFoam, scripts/falls.js), with the Hit
+// Points it has left: PF2e's Immobilized granted while it lasts; standard cover against other creatures as PF2e's Effect: Cover has it
+// (its roll options, so what ignores cover sees it, and +2 circumstance to AC, Reflex against areas, Stealth to Hide or Sneak); their standard
+// cover against its own attacks as −2 to them; Escape DC 15 (the ability module's escape flag: an Escape that beats it removes the foam);
+// 1 minute. Three Interact actions or damaging it to 0 (AC 12) remove it: the GM deletes it, its Hit Points on it.
+export const FOAM_ESCAPE_DC = 15;
+export const FOAM_AC = 12;
+const IMMOBILIZED = "Compendium.pf2e.conditionitems.Item.eIcWbB5o3pP6OIMe";
+export function foamEffectSource(hp, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const cover = [
+        { key: "RollOption", option: "self:cover-bonus:2" },
+        { key: "RollOption", option: "self:cover-level:standard" },
+        { key: "FlatModifier", selector: "ac", slug: "cover", label: "Cover", type: "circumstance", value: 2 },
+        { key: "FlatModifier", selector: "reflex", slug: "cover", label: "Cover", type: "circumstance", value: 2, predicate: ["area-effect"] },
+        { key: "FlatModifier", selector: "stealth", slug: "cover", label: "Cover", type: "circumstance", value: 2, predicate: [{ or: ["action:hide", "action:sneak", "avoid-detection"] }] }
+    ];
+    const rules = [{ key: "GrantItem", uuid: IMMOBILIZED }, ...cover, { key: "FlatModifier", selector: "attack-roll", slug: "foam-cover", label: "Their cover (foam)", type: "circumstance", value: -2 }];
+    const words = `Wrapped in foam with ${hp} Hit Points (AC ${FOAM_AC}) for up to 1 minute: immobilized, standard cover against other creatures and they have standard cover against it. Escape DC ${FOAM_ESCAPE_DC}; three Interact actions, or damaging the foam to 0 Hit Points, removes it`;
+    const source = ownEffectSource({ name: "foam", img: "icons/svg/clockwork.svg", words, rules, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { foam: { hp, ac: FOAM_AC } }, extraFlags: { "pf2e-automatic-ability-resolution": { escape: { dc: FOAM_ESCAPE_DC } } }, item, user, worldTime, initiative, moduleId });
+    source.system.description.value += `<p>[[/act escape dc=${FOAM_ESCAPE_DC}]]{Escape}</p>`;
+    return source;
+}
+
+// Exsanguinate's mark on the creature its card damaged (src/compiler/drain.js, scripts/drain.js): the first damage of its type the creature
+// then takes gives its user that share as temporary Hit Points, until the item's time from now runs out. drain: { fraction, type,
+// duration }; user: its user's { actorUuid, name }.
+const SHARE_WORDS = { 0.5: "half", 1: "all", 2: "twice" };
+export function drainMarkSource(drain, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const share = SHARE_WORDS[drain.fraction] ?? `${drain.fraction} times`;
+    const words = `The next ${drain.type ? `${drain.type} ` : ""}damage it takes gives ${user.name ?? "its user"} ${share} of it (after resistances) as temporary Hit Points${drain.duration?.mode === "fixed" ? `, until ${timeText(drain.duration)} after the activation` : ""}`;
+    return ownEffectSource({ name: "drained", img: "icons/svg/blood.svg", words, rules: [], duration: drain.duration, flag: { drain: { fraction: drain.fraction, type: drain.type ?? null, userUuid: user.actorUuid ?? null, userName: user.name ?? null } }, item, user: {}, worldTime, initiative, moduleId });
+}
+
+// Its user's temporary Hit Points from it: PF2e's TempHP (more than it has, else nothing; gone with the Effect), its time counted from the
+// mark's start.
+export function drainTempSource(amount, { item = {}, user = {}, start = { value: 0, initiative: null }, duration = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: "temporary Hit Points", img: "icons/svg/regen.svg", words: `${amount} temporary Hit Points`, rules: [{ key: "TempHP", value: amount }], duration, flag: { drainTemp: true }, item, user, worldTime: start.value ?? 0, initiative: start.initiative ?? null, moduleId });
+}
+
 // What of the weather it ignores, with its time: "Ignores the weather's fog and mist for 1 minute".
 export function weatherLine(entry) {
     const time = entry.duration?.mode === "fixed" ? ` for ${entry.duration.value} ${entry.duration.value === 1 ? entry.duration.unit.replace(/s$/, "") : entry.duration.unit}` : "";

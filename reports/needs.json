@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1264,
+  "entries": 1259,
   "results": {
-   "none": 615,
-   "partial": 263,
+   "none": 611,
+   "partial": 262,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -15,7 +15,7 @@
    "areas": 110,
    "moving": 85,
    "lasting": 63,
-   "visibility": 50,
+   "visibility": 46,
    "choice": 37,
    "mind": 8,
    "strike": 106,
@@ -29,7 +29,7 @@
    "removed": 4,
    "cooldown": 10,
    "vehicles": 20,
-   "reader": 24,
+   "reader": 23,
    "several": 23,
    "triggers": 93,
    "immunity": 26,
@@ -55,20 +55,20 @@
    "out-of-combat": 418,
    "counteract": 80,
    "afflictions": 93,
-   "lasting": 214,
-   "moving": 113,
+   "lasting": 210,
+   "moving": 109,
    "triggers": 126,
-   "visibility": 52,
-   "dying": 77,
+   "visibility": 48,
+   "dying": 73,
    "choice": 107,
    "several": 90,
    "mind": 70,
    "strike": 185,
-   "reader": 217,
+   "reader": 212,
    "spells": 82,
    "information": 191,
    "actions": 57,
-   "from-events": 38,
+   "from-events": 34,
    "no-rules": 37,
    "illusions": 56,
    "removed": 5,
@@ -783,21 +783,6 @@
     "spells",
     "counteract",
     "information"
-   ]
-  },
-  {
-   "name": "Impact Foam Chassis (Lesser)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "visibility",
-   "work": "standard cover",
-   "needs": [
-    "visibility",
-    "moving",
-    "from-events",
-    "dying",
-    "lasting",
-    "reader"
    ]
   },
   {
@@ -3180,21 +3165,6 @@
    "needs": [
     "triggers",
     "strike"
-   ]
-  },
-  {
-   "name": "Impact Foam Chassis (Moderate)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "visibility",
-   "work": "standard cover",
-   "needs": [
-    "visibility",
-    "moving",
-    "from-events",
-    "dying",
-    "lasting",
-    "reader"
    ]
   },
   {
@@ -8777,21 +8747,6 @@
    ]
   },
   {
-   "name": "Impact Foam Chassis (Major)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "visibility",
-   "work": "standard cover",
-   "needs": [
-    "visibility",
-    "moving",
-    "from-events",
-    "dying",
-    "lasting",
-    "reader"
-   ]
-  },
-  {
    "name": "Mirror of Sorshen",
    "kind": "activation",
    "activation": "Second Glance",
@@ -9850,21 +9805,6 @@
     "strike",
     "from-events",
     "situational",
-    "reader"
-   ]
-  },
-  {
-   "name": "Impact Foam Chassis (Greater)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "visibility",
-   "work": "standard cover",
-   "needs": [
-    "visibility",
-    "moving",
-    "from-events",
-    "dying",
-    "lasting",
     "reader"
    ]
   },
@@ -14295,17 +14235,6 @@
    "work": "hardness",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Blood-Drinker Blade (Greater)",
-   "kind": "activation",
-   "activation": "Exsanguinate",
-   "result": "partial",
-   "main": "reader",
-   "work": "6d6",
-   "needs": [
-    "reader"
    ]
   },
   {

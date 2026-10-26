@@ -15,11 +15,12 @@ import { setUpPlacedLights } from "./placed-light.js";
 import { setUpPlacedMoves } from "./placed-moves.js";
 import { setUpMadeWeapons } from "./objects.js";
 import { temperatureProtections } from "./temperature.js";
-import { fallEases, setUpFallOffers } from "./falls.js";
+import { fallEases, setUpFallOffers, setUpFoam } from "./falls.js";
 import { weatherIgnores } from "./weather.js";
 import { fallLine } from "../src/live/card.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { setUpHPFloor } from "./hp-floor.js";
+import { setUpDrain } from "./drain.js";
 import { setUpShortenOnHit } from "./shorten-on-hit.js";
 import { setUpToggleOff } from "./toggle-off.js";
 import { ownerOf } from "./foundry.js";
@@ -124,6 +125,10 @@ Hooks.once("ready", async () => {
     setUpEtching();
     // (An ally kept at 1 Hit Point through its next damage from a hazard or an enemy: scripts/hp-floor.js.)
     setUpHPFloor();
+    // (A share of the damage a creature the card damaged then takes, as its user's temporary Hit Points: scripts/drain.js.)
+    setUpDrain();
+    // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
+    setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)
     setUpShortenOnHit();
     // (A healing of an item's own back on once its Effect ends: scripts/toggle-off.js.)
