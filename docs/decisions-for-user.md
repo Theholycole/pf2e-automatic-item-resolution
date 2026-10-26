@@ -23,3 +23,10 @@ The "Nothing to automate" need has 37 PF2e entries (and 18 of the modules' items
 - **A (suggested):** count an item's note Effect as done only when I've checked that nothing in it is a number, condition, Speed or other rule a card could play. I'd automate those parts first (Hovering Potion's climb at full Speed, for one) and list what's left in its note Effect, item by item.
 - **B:** count every note-only item as done, as for spells.
 - **C:** keep them all listed, as now.
+
+## 4. A rule the text leaves to the GM's discretion
+
+Some cards do everything their text says except a clause the text itself leaves to the GM. Examples: Dr. Ushernacht's Astonishing Ink (3 grades) has "At the GM's discretion, … a –4 circumstance penalty … if the question relates to advice, emotions, opinions". Vorpal's Snicker-Snack kills on a failed save "except ones that don't require a head to live", and "usually" only at the last of several heads. Blindpepper Bolt's "At the GM's discretion, a creature with no eyes or olfactory organs might not be affected". Guise of the Smirking Devil (Greater) affects only living creatures "unless the GM says otherwise". These 6 entries count as not done only because of that clause.
+
+- **A (suggested):** the card shows the clause as a line saying it's the GM's call, and the entry counts done (as for your 2026-10-25 ruling on GM numbers).
+- **B:** keep them listed, as now.

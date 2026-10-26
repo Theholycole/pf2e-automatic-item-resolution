@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1209,
+  "entries": 1207,
   "results": {
-   "none": 602,
+   "none": 600,
    "partial": 226,
    "builtin:no-effect": 124,
    "note-only": 257
@@ -31,7 +31,7 @@
    "vehicles": 20,
    "reader": 17,
    "several": 22,
-   "triggers": 92,
+   "triggers": 90,
    "immunity": 23,
    "situational": 16,
    "creatures": 53,
@@ -50,14 +50,14 @@
    "speeds": 28,
    "areas": 163,
    "immunity": 71,
-   "objects": 383,
+   "objects": 381,
    "speech": 123,
    "out-of-combat": 411,
    "counteract": 79,
    "afflictions": 91,
    "lasting": 207,
    "moving": 106,
-   "triggers": 125,
+   "triggers": 123,
    "visibility": 48,
    "dying": 72,
    "choice": 107,
@@ -3205,17 +3205,6 @@
    "needs": [
     "choice",
     "information"
-   ]
-  },
-  {
-   "name": "Liquid Gold (Greater)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you roll for …",
-   "needs": [
-    "triggers",
-    "objects"
    ]
   },
   {
@@ -7351,17 +7340,6 @@
     "lasting",
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Liquid Gold",
-   "kind": "consumable",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you roll for …",
-   "needs": [
-    "triggers",
-    "objects"
    ]
   },
   {

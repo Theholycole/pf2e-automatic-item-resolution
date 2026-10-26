@@ -44,7 +44,7 @@ export function objectChoices(actor, objects, holderId) {
     const held = (item) => item.system?.equipped?.carryType === "held";
     const list = objects.op === "store" ? items.filter((item) => held(item) && fits(item, objects))
         : objects.op === "retrieve" ? items.filter((item) => item.system?.containerId === holderId)
-            : objects.op === "hand" ? items.filter((item) => !held(item) && fits(item, objects))
+            : objects.op === "hand" ? items.filter((item) => !held(item) && fits(item, objects) && (!objects.weapon || item.type === "weapon"))
                 : objects.op === "repair" ? items.filter((item) => Number(item.system?.hp?.max) > 0 && Number(item.system?.hp?.value) < Number(item.system?.hp?.max) && fits(item, objects))
                     : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && ammoFor(actor, item))
                         : [];
@@ -85,6 +85,14 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
     } else if (objects.op === "retrieve" || objects.op === "hand") {
         await chosen.update({ "system.containerId": null, "system.equipped.carryType": "held", "system.equipped.handsHeld": handsFor(chosen) });
         line = `${chosen.name} is in ${state.user.name}'s ${handsFor(chosen) === 2 ? "hands" : "hand"}`;
+        // (And loaded, Liquid Gold (Greater)'s: one round of its ammunition, PF2e's own attach — when it takes ammunition and has room.)
+        if (objects.load && chosen.type === "weapon" && chosen.system?.reload?.value !== undefined && String(chosen.system.reload.value) !== "0" && loadedOf(chosen) < capacityOf(chosen)) {
+            const ammo = ammoFor(actor, chosen);
+            if (ammo) {
+                await chosen.attach(ammo, { quantity: 1, stack: true });
+                line += `, loaded with ${ammo.name}`;
+            } else line += ` (no ammunition for it to load)`;
+        }
     } else if (objects.op === "don") {
         await chosen.update({ "system.containerId": null, "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.handsHeld": 0 });
         line = `${state.user.name} wears ${chosen.name}`;

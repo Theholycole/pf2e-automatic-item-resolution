@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 167,
+   "none": 165,
    "resolves": 801,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
@@ -28,7 +28,7 @@
    "builtin:teleport": 7,
    "builtin:fall-foam": 4,
    "builtin:reroll": 3,
-   "builtin:objects": 3,
+   "builtin:objects": 5,
    "builtin:whisper": 1,
    "builtin:roll-twice": 2
   }
@@ -97,7 +97,7 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 25,
+    "none": 23,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
     "resolves": 70,
@@ -108,7 +108,7 @@
     "builtin:teleport": 3,
     "builtin:cast-spell": 9,
     "note-only": 5,
-    "builtin:objects": 2,
+    "builtin:objects": 4,
     "partial": 4,
     "builtin:roll-twice": 2
    },
@@ -369,7 +369,7 @@
    "count": 156,
    "resolves": 69,
    "gaps": 0,
-   "none": 19
+   "none": 17
   },
   "counteract": {
    "count": 79,
@@ -399,7 +399,7 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 220,
+   "none": 218,
    "item": 644,
    "fortune": 25,
    "zone": 119,
@@ -414,7 +414,7 @@
    "reroll": 3,
    "coat": 46,
    "strike": 13,
-   "objects": 3,
+   "objects": 5,
    "whisper": 1
   },
   "byCategory": {
@@ -445,7 +445,7 @@
     "zone": 1
    },
    "talisman": {
-    "none": 32,
+    "none": 30,
     "fortune": 15,
     "action": 12,
     "item": 52,
@@ -455,7 +455,7 @@
     "teleport": 3,
     "cast": 9,
     "save": 16,
-    "objects": 2,
+    "objects": 4,
     "strike": 10,
     "coat": 1
    },
@@ -523,7 +523,7 @@
    }
   },
   "noCard": {
-   "no-plan": 167,
+   "no-plan": 165,
    "triggered": 11,
    "gm": 38,
    "other": 4
@@ -7215,7 +7215,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Poison Fizz (Greater)",
@@ -15595,7 +15597,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Potion of Cold Retaliation (Lesser)",

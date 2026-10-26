@@ -24,6 +24,7 @@ const STORE = /\bOne item you(?:'re| are) holding with a Bulk of (\d+|light) or 
 const RETRIEVE = /\bThe item stored in the [\w' -]+? appears in your hand\b/i;
 const SELF_HAND = (name) => new RegExp(String.raw`\b(?:The )?${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s*\([^)]*\)$/, "")} (?:instantly )?(?:teleports to your hand|appears in your hands?)\b`, "i");
 const PICKED_HAND = /\b(?:the attuned item|any item in your possession of (\d+|light) Bulk or less) (?:immediately |instantly )?teleports into your hand\b|\bThe item teleports to a free hand\b/i;
+const DRAW_ATTACHED = /\bYou draw (and load )?the attached weapon\b/i;
 const ATTUNED_BULK = /\battune it to a single item of (\d+|light) Bulk or less\b/i;
 const DON = /\bThe armor wraps around you, allowing you to don it\b/i;
 const REPAIR = /\brestore the object to its full Hit Point total, removing the broken condition\b/i;
@@ -49,6 +50,10 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     if (store && type === "backpack") return { op: "store", maxBulk: BULK(store[1]), said: store[0] };
     if (RETRIEVE.test(text) && type === "backpack") return { op: "retrieve", said: RETRIEVE.exec(text)[0] };
     if (name && SELF_HAND(name).test(text)) return { op: "hand", self: true, said: SELF_HAND(name).exec(text)[0] };
+    // (The weapon its talisman is fastened to, drawn — and loaded too — Liquid Gold's "You draw (and load) the attached weapon as a free action":
+    // one of its user's weapons not in hand, picked on the card, 2026-10-26.)
+    const attached = DRAW_ATTACHED.exec(text);
+    if (attached) return { op: "hand", weapon: true, ...(attached[1] ? { load: true } : {}), said: attached[0] };
     const picked = PICKED_HAND.exec(text);
     if (picked) {
         const bulk = picked[1] ?? ATTUNED_BULK.exec(String(whole ?? ""))?.[1] ?? null;

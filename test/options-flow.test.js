@@ -438,3 +438,16 @@ test("Blackfinger Blight and Astringent Venom: a flat check at each afflicted tu
         Object.assign(globalThis, saved);
     }
 });
+
+test("Liquid Gold: its attached weapon drawn (one of its user's weapons not in hand, picked); the Greater one's loaded too", async () => {
+    const { objectChoices } = await import("../scripts/objects.js");
+    const lesser = compileItem(item("Liquid Gold"), { spellEffects });
+    const greater = compileItem(item("Liquid Gold (Greater)"), { spellEffects });
+    assert.deepEqual([lesser.builtin, lesser.objects, Boolean(lesser.partial), greater.objects], ["objects", { op: "hand", weapon: true }, false, { op: "hand", weapon: true, load: true }]);
+    const things = [
+        { id: "gun", name: "Dueling Pistol", type: "weapon", system: { equipped: { carryType: "worn" }, bulk: { value: 0.1 } } },
+        { id: "rope", name: "Rope", type: "equipment", system: { equipped: { carryType: "worn" }, bulk: { value: 0.1 } } },
+        { id: "sword", name: "Longsword", type: "weapon", system: { equipped: { carryType: "held" }, bulk: { value: 1 } } }
+    ];
+    assert.deepEqual(objectChoices({ items: things }, lesser.objects, "vial").map((choice) => choice.name), ["Dueling Pistol"]);
+});
