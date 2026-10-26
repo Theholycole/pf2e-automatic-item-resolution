@@ -563,7 +563,8 @@ test("a bonus to some actions' checks: Eye of the Wise's \"attempts to Decipher 
     assert.deepEqual(bonus.predicate, [{ or: ["action:decipher-writing", "action:disable-a-device", "action:identify-magic", "action:pick-a-lock", "action:seek", "action:sense-motive"] }]);
     const spectacles = compileActivations(item("Spectacles of Inquiry"), { spellEffects })[0].plan;
     assert.deepEqual(spectacles.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["perception", 3, ["action:sense-motive", "target:mark:spectacles-of-inquiry-mark"]]]);
-    assert.deepEqual([spectacles.item.recipient, spectacles.item.mark, spectacles.partial], ["user", { slug: "spectacles-of-inquiry-mark", duration: null }, true]);
+    // (Its investigator's way to use it a line of the card, 2026-10-26: whole.)
+    assert.deepEqual([spectacles.item.recipient, spectacles.item.mark, Boolean(spectacles.partial), spectacles.notes], ["user", { slug: "spectacles-of-inquiry-mark", duration: null }, false, ["If you're an investigator, you can use this activation as part of the action you take to Devise a Stratagem or Pursue a Lead, and you can do the latter even though you can't see the creature."]]);
     const stasis = compileActivations(item("Aeon Stone (Flickering)"), { spellEffects })[1].plan;
     assert.deepEqual(stasis.resolution.outcomes.success.modifiers, []);
 });

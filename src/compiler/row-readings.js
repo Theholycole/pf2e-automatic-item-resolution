@@ -97,7 +97,12 @@ const NONLETHAL = /^When you activate [\w' -]+?, the triggering attack gains the
 const AIMED = /^\{target\}: Target (each enemy within the banner's aura that [^.]+)\.$/i;
 
 // (Nothing left but the readings' own lines of the card: Emetic Paste's save at once, a push's Stride after.)
-const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus.", "After the push, its user can Stride after the creature, the same distance and direction."]);
+// (And a class's action economy for it, Spectacles of Inquiry's "If you're an investigator, you can use this activation as part of the action you
+// take to Devise a Stratagem or Pursue a Lead, …": its user's to take, a line of the card — 2026-10-26.)
+const INVESTIGATOR = "If you're an investigator, you can use this activation as part of the action you take to Devise a Stratagem or Pursue a Lead, and you can do the latter even though you can't see the creature.";
+const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus.", "After the push, its user can Stride after the creature, the same distance and direction.", INVESTIGATOR]);
+// (A note that's one of those lines: later readings — the mark's — leave the plan whole beside it too.)
+export const isCardLine = (note) => CARD_LINES.has(said(note));
 const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !CARD_LINES.has(said(note))).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
 
 // The plan and its (activation's) html → the plan with the rows that carry these.
@@ -178,6 +183,11 @@ export function withRowReadings(plan, html, item = null) {
             rows.success = { ...rows.success, effects: rows.success.effects.map((effect) => (effect?.kind === "heal" ? { ...effect, byCondition } : effect)) };
             drop(said(entry));
         }
+    }
+    // (An investigator's way to use it, a line of the card.)
+    if ([...notes, ...unread].some((entry) => said(entry) === INVESTIGATOR)) {
+        unread = unread.filter((entry) => said(entry) !== INVESTIGATOR);
+        if (!notes.some((entry) => said(entry) === INVESTIGATOR)) notes.push(INVESTIGATOR);
     }
     // (Its disbelief undone on a success: a note Effect on the creature on both successes, the GM's line gone.)
     if (plan.resolution.kind === "check" && (rows.success?.manualInstructions ?? []).some((line) => STILL_FOOLED.test(said(line)))) {

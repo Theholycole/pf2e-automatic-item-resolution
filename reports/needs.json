@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1266,
+  "entries": 1264,
   "results": {
    "none": 615,
-   "partial": 265,
+   "partial": 263,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -22,7 +22,7 @@
    "spells": 45,
    "information": 23,
    "out-of-combat": 33,
-   "actions": 29,
+   "actions": 27,
    "no-rules": 37,
    "objects": 115,
    "illusions": 43,
@@ -67,7 +67,7 @@
    "reader": 217,
    "spells": 82,
    "information": 191,
-   "actions": 59,
+   "actions": 57,
    "from-events": 38,
    "no-rules": 37,
    "illusions": 56,
@@ -12205,16 +12205,6 @@
    ]
   },
   {
-   "name": "Spectacles of Inquiry",
-   "kind": "activation",
-   "result": "partial",
-   "main": "actions",
-   "work": "as part of the action",
-   "needs": [
-    "actions"
-   ]
-  },
-  {
    "name": "Chimera Thread",
    "kind": "consumable",
    "result": "none",
@@ -14076,16 +14066,6 @@
     "lasting",
     "objects",
     "reader"
-   ]
-  },
-  {
-   "name": "White Cleome's Eye",
-   "kind": "activation",
-   "result": "partial",
-   "main": "actions",
-   "work": "as part of the action",
-   "needs": [
-    "actions"
    ]
   },
   {
