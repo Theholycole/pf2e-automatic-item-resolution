@@ -907,6 +907,15 @@ function ruleEffectsOf(sentences, duration, used = new Set()) {
             found.push({ name: "difficult terrain ignored", words: `Ignores ${greater ? "difficult and greater difficult" : "difficult"} terrain${features.length ? ` from ${features.join(", ").replace("undergrowth", "plants and fungi")}` : ""}${falling ? `, and doesn't risk falling when crossing ${falling[1]}` : ""}`, rules, duration: time });
             continue;
         }
+        // (Creatures Off-Guard to its user, Chiromantic Lines' "Until the end of the turn, all creatures you can see that are not Concealed or
+        // hidden are Off-Guard to you": PF2e's EphemeralEffect of Off-Guard on its user's attacks and their damage, as PF2e's own Effects for
+        // "off-guard to you" have it — not at a concealed or hidden one; whom its user sees, the table's.)
+        const offGuard = flank || deny ? null : /^Until the end of (?:the|your) turn, all creatures you can see that are not Concealed or hidden are Off-Guard to you\.$/i.exec(sentence.trim());
+        if (offGuard) {
+            used.add(index);
+            found.push({ name: "off-guard to you", words: "Creatures it can see that aren't Concealed or hidden are Off-Guard to its attacks", rules: [{ key: "EphemeralEffect", predicate: [{ not: "target:condition:concealed" }, { not: "target:condition:hidden" }], selectors: ["strike-attack-roll", "spell-attack-roll", "strike-damage", "attack-spell-damage"], uuid: "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg" }], duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } });
+            continue;
+        }
         if (!flank && !deny) continue;
         used.add(index);
         if (flank) found.push({ name: "not off-guard to flankers", words: "Not Off-Guard to melee attacks from creatures flanking it", rules: [{ key: "ActiveEffectLike", mode: "override", path: "system.attributes.flanking.offGuardable", value: false }], duration: durationIn(`for ${flank[1]}`, duration) });

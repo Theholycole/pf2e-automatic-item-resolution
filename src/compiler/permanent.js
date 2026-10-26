@@ -30,6 +30,7 @@ import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
 import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
+import { withRowReadings } from "./row-readings.js";
 import { objectsPlan } from "./objects.js";
 import { withPullToward } from "./pull-toward.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
@@ -155,10 +156,12 @@ export function compileActivations(item, options = {}) {
     const share = spellModuleShare(item, options);
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
+    // (A row's own reading of what the ability compiler left as a note, src/compiler/row-readings.js: Reducer Round's shrink, Splintering Spear's
+    // bleed on a failure.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(withRowReadings(ownerDCs(entry.plan), entry.activation.html, item), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // (An activation's plan as the user decided, src/compiler/decided.js: one built from nothing gets its own base and item part.)

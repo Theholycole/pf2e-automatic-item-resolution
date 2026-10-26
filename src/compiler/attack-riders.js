@@ -59,13 +59,15 @@ export function readAttackRiders(html) {
     }
     const bash = OWN_BASH.exec(text);
     if (bash) {
-        const rounds = (count) => ({ mode: "fixed", value: Number(count), unit: "rounds", expiry: "turn-start", anchor: "effect-start" });
-        riders.push({ on: ["success"], own: true, targetModifier: { selector: "all-speeds", value: -Number(bash[1]), type: bash[2].toLowerCase(), duration: rounds(bash[3]) } });
+        // (Its Escape, "Regardless, the target can attempt to Escape (DC 30) to end the effect early": the penalty's and the condition's
+        // escape { dc }, the ability module's — a successful Escape against it ends them, 2026-10-25.)
+        const escapeDC = /\bRegardless, the target can attempt to Escape \(DC (\d+)\) to end the effect early\./i.exec(text);
+        const escape = escapeDC ? { escape: { dc: Number(escapeDC[1]) } } : {};
+        const rounds = (count) => ({ mode: "fixed", value: Number(count), unit: "rounds", expiry: "turn-start", anchor: "effect-start", ...escape });
+        riders.push({ on: ["success"], own: true, targetModifier: { selector: "all-speeds", value: -Number(bash[1]), type: bash[2].toLowerCase(), duration: rounds(bash[3]), ...escape } });
         riders.push({ on: ["criticalSuccess"], own: true, target: { slug: bash[4].toLowerCase(), value: null, duration: rounds(bash[5]) } });
         said.push(...bash[0].split(/(?<=\.)\s+(?=[A-Z])/));
-        // (Its Escape, the GM's: a note on the card.)
-        const escape = /\bRegardless, the target can attempt to Escape \(DC (\d+)\) to end the effect early\./i.exec(text);
-        if (escape) extra.push(`The struck creature can Escape (DC ${escape[1]}) to end it early (by hand).`);
+        if (escapeDC) said.push(escapeDC[0]);
     }
     const succeed = SUCCEED.exec(text);
     if (succeed) {
@@ -97,8 +99,9 @@ export function attackRidersText(riders, weaponName = null) {
         const when = rider.on.includes("success") ? "a melee hit" : rider.on.includes("criticalSuccess") ? "a melee critical hit" : "a melee miss";
         const with_ = rider.own ? " with the item" : "";
         if (rider.offGuard) return `On ${when}: the target off-guard to your next attack before your next turn`;
-        if (rider.targetModifier) return `On a hit${with_}: the target ${rider.targetModifier.value} feet to its Speeds for ${rider.targetModifier.duration.value} round${rider.targetModifier.duration.value === 1 ? "" : "s"}`;
-        if (rider.target && rider.target.value === null) return `On a critical hit${with_}: the target ${rider.target.slug} for ${rider.target.duration.value} round${rider.target.duration.value === 1 ? "" : "s"} instead`;
+        const escapes = (escape) => (Number(escape?.dc) > 0 ? ` (a successful Escape, DC ${Number(escape.dc)}, ends it)` : "");
+        if (rider.targetModifier) return `On a hit${with_}: the target ${rider.targetModifier.value} feet to its Speeds for ${rider.targetModifier.duration.value} round${rider.targetModifier.duration.value === 1 ? "" : "s"}${escapes(rider.targetModifier.escape)}`;
+        if (rider.target && rider.target.value === null) return `On a critical hit${with_}: the target ${rider.target.slug} for ${rider.target.duration.value} round${rider.target.duration.value === 1 ? "" : "s"} instead${escapes(rider.target.duration.escape)}`;
         if (rider.target) return `On ${when}: the target ${rider.target.slug} ${rider.target.value} until your next turn`;
         return `On ${when}: you are ${rider.self.slug} ${rider.self.value}, till your next turn ends`;
     });
