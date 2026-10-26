@@ -20,8 +20,10 @@ const SENTENCE = /[^.]*\b(?:temporarily immune\b|immune to [^.]*?\bfor (?:the ne
 // a rule the GM keeps, a note — ATTEMPTS.)
 const ATTEMPTS = /\bimmune to (?:that|the|their|this) [\w ]+?'s attempts\b/i;
 const NOT_OURS = /\b(?:doesn't|does not|don't|isn't|aren't|won't|never) become\b|\bignores? any temporary immunity\b|\binstead of\b|\b(?:minor|severe|extreme|mild) (?:cold|heat)\b|\byour (?:Demoralize|Battle Medicine|Treat Wounds)\b/i;
-// (Only one part of it: "immune to being blinded by poison fizz", "immune to the sickened condition caused by other durian bombs".)
+// (Only one part of it: "immune to being blinded by poison fizz", "immune to the sickened condition caused by other durian bombs" — unless
+// that condition is all its save gives, Magnolia's "immune to being fascinated by any magnolia bewitching bloom": only, that slug.)
 const ONE_PART = /\bimmune to (?:being \w+|the \w+ condition)\b/i;
+const onePart = (sentence, only = null) => ONE_PART.test(sentence) && !(only && new RegExp(String.raw`\bimmune to (?:being ${only}|the ${only} condition)\b`, "i").test(sentence));
 // (A time with no clock it can be held to.)
 const NO_CLOCK = /\buntil (?:the next lunar new year|it wakes up|the next time it wakes|you eat|your next|it next|you get a full night's rest)\b|\bonce its effects end\b|\bwhen the effect ends\b|\bwhen the \d+ (?:rounds|minutes|hours) are up\b|\bentirely\b|\b\d+d\d+\b/i;
 const DAILY = /\buntil (?:the next time (?:you|it) makes? (?:your|its) daily preparations|your next daily preparations)\b/i;
@@ -39,7 +41,8 @@ const baseSlug = (name) => slugOf(String(name ?? "").replace(/\s*\([^)]*\)\s*$/,
 function degreesOf(sentence, headingOf = () => null) {
     if (/^Critical Success\b|\bcritically succeeds?\b|\bOn a critical success\b/i.test(sentence)) return ["criticalSuccess"];
     if (/^Critical Failure\b|\bcritically fails?\b/i.test(sentence)) return ["criticalFailure"];
-    if (/\bregardless\b|\beither way\b|\bwhether or not\b|\battempts? (?:this|the|its) save\b|\bafter which\b/i.test(sentence)) return [...ALL];
+    // (Magnolia's "If the save succeeds or the effect ends": a failure's too, once its condition is over.)
+    if (/\bregardless\b|\beither way\b|\bwhether or not\b|\battempts? (?:this|the|its) save\b|\bafter which\b|\bsucceeds or the effect ends\b/i.test(sentence)) return [...ALL];
     if (/^Success\b|\bsucceed(?:s|ed)?\b|\bsuccessfully saves?\b|\bsuccessful save\b/i.test(sentence)) return ["criticalSuccess", "success"];
     return headingOf(sentence) ?? [...ALL];
 }
@@ -72,7 +75,7 @@ function durationOf(sentence) {
 
 // The text (plain, the activation's own) and the item (and the activation's name) → { immunity } with its slug, { unread: [sentences] }
 // for what isn't one this module can hold to, or null when there's none.
-export function readItemImmunity(text, { name = null, activation = null, headingOf = () => null } = {}) {
+export function readItemImmunity(text, { name = null, activation = null, headingOf = () => null, only = null } = {}) {
     // (From its Effect on: its Trigger's words — "Trigger The target critically fails its save …" — aren't the immunity's.)
     const plain = String(text ?? "").replace(/\s+/g, " ").replace(/^.*?\bTrigger\b.*?\bEffect\b\s*/, "");
     const family = familySlug(name);
@@ -94,7 +97,7 @@ export function readItemImmunity(text, { name = null, activation = null, heading
     let immunity = null;
     for (const sentence of found) {
         // (One held to; the same one again at other results joins it — Pheromone Flare's critical success and failure —, another stays a note.)
-        const timed = ONE_PART.test(sentence) || (NO_CLOCK.test(sentence) && !DAILY.test(sentence)) ? null : durationOf(sentence);
+        const timed = onePart(sentence, only) || (NO_CLOCK.test(sentence) && !DAILY.test(sentence)) ? null : durationOf(sentence);
         if (immunity && timed && !/\bimmune to\b/i.test(sentence) && timed.value === immunity.duration.value && timed.unit === immunity.duration.unit) {
             immunity = { ...immunity, degrees: ALL.filter((degree) => immunity.degrees.includes(degree) || degreesOf(sentence, headingOf).includes(degree)) };
             also.push(sentence);
@@ -166,12 +169,20 @@ function leftIn(node, seen = new Set()) {
 // character's attempts to remove the effect", read so before ability 9bc3db1): taken off, its sentence the reading's note.
 // (Nor one to only part of it, Poison Fizz's "immune to being blinded by poison fizz for 1 hour": as the whole item's, a creature that only
 // succeeded would get no card for the next fizz's damage. A note, ONE_PART.)
-function withoutMisread(plan) {
-    for (const save of savesIn(plan).filter((entry) => entry.trigger?.immunity?.raw && (ATTEMPTS.test(entry.trigger.immunity.raw) || NOT_OURS.test(entry.trigger.immunity.raw) || ONE_PART.test(entry.trigger.immunity.raw)))) {
+function withoutMisread(plan, only = null) {
+    for (const save of savesIn(plan).filter((entry) => entry.trigger?.immunity?.raw && (ATTEMPTS.test(entry.trigger.immunity.raw) || NOT_OURS.test(entry.trigger.immunity.raw) || onePart(entry.trigger.immunity.raw, only)))) {
         const { immunity, ...trigger } = save.trigger;
         save.trigger = trigger;
     }
     return plan;
+}
+
+// The one condition every save in the plan gives and nothing else (no damage, no other condition, nothing to the GM), or null.
+function onlyCondition(plan) {
+    const rows = savesIn(plan).flatMap((save) => Object.values(save.resolution?.outcomes ?? {}));
+    if (!rows.length || rows.some((row) => (row?.damage?.mode ?? "none") !== "none" || (row?.modifiers ?? []).length || (row?.manualInstructions ?? []).length || row?.forcedMovement)) return null;
+    const slugs = new Set(rows.flatMap((row) => (row?.effects ?? []).map((effect) => (effect.kind === "condition" || !effect.kind ? effect.slug : `(${effect.kind})`))));
+    return slugs.size === 1 && /^[a-z-]+$/.test([...slugs][0]) ? [...slugs][0] : null;
 }
 
 // The plan with its immunity held to: on every save plan its trigger.immunity (the ability module's cards give the "Immune:" Effect by degree
@@ -180,9 +191,10 @@ function withoutMisread(plan) {
 // html: the activation's (or item's) own; names: { name, activation }.
 export function withImmunity(given, html, names = {}) {
     if (!given || given.noteOnly || given.builtin === "no-effect") return given;
-    const plan = withoutMisread(given);
+    const only = onlyCondition(given);
+    const plan = withoutMisread(given, only);
     const text = String(html ?? "").replace(/<strong>\s*(Critical Success|Success|Failure|Critical Failure)\s*<\/strong>/gi, ". $1").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").replace(/(?:^|\s)\.\s+/g, ". ");
-    const read = readItemImmunity(text, { ...names, headingOf: degreeParagraphs(html) });
+    const read = readItemImmunity(text, { ...names, headingOf: degreeParagraphs(html), only });
     if (!read) return plan;
     const shared = read.immunity ? SHARED.find(([words]) => words.test(read.immunity.raw))?.[1] : null;
     const immunity = read.immunity ? { ...read.immunity, ...(shared ? { slug: shared } : {}) } : null;

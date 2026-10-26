@@ -1,12 +1,12 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1313,
+  "entries": 1307,
   "results": {
-   "none": 624,
-   "partial": 298,
+   "none": 621,
+   "partial": 297,
    "builtin:no-effect": 129,
-   "note-only": 262
+   "note-only": 260
   },
   "main": {
    "speeds": 24,
@@ -16,7 +16,7 @@
    "moving": 88,
    "lasting": 66,
    "visibility": 57,
-   "choice": 44,
+   "choice": 40,
    "mind": 9,
    "strike": 107,
    "spells": 45,
@@ -33,10 +33,10 @@
    "vehicles": 20,
    "several": 23,
    "triggers": 93,
-   "immunity": 27,
+   "immunity": 26,
    "situational": 20,
    "creatures": 53,
-   "dying": 31,
+   "dying": 30,
    "speech": 18,
    "from-events": 7,
    "forms": 24,
@@ -49,24 +49,24 @@
   "any": {
    "speeds": 30,
    "areas": 171,
-   "immunity": 75,
+   "immunity": 74,
    "objects": 393,
    "speech": 124,
-   "out-of-combat": 423,
+   "out-of-combat": 422,
    "counteract": 80,
    "afflictions": 97,
    "lasting": 217,
    "moving": 116,
    "triggers": 126,
    "visibility": 59,
-   "dying": 79,
-   "choice": 118,
-   "several": 95,
-   "mind": 73,
+   "dying": 78,
+   "choice": 113,
+   "several": 90,
+   "mind": 71,
    "strike": 188,
-   "reader": 230,
+   "reader": 228,
    "spells": 82,
-   "information": 192,
+   "information": 191,
    "actions": 62,
    "from-events": 38,
    "no-rules": 38,
@@ -3121,19 +3121,6 @@
    ]
   },
   {
-   "name": "Bewitching Bloom (Red Rose)",
-   "kind": "activation",
-   "result": "note-only",
-   "main": "choice",
-   "work": "choose a",
-   "needs": [
-    "choice",
-    "several",
-    "reader",
-    "mind"
-   ]
-  },
-  {
    "name": "Feather Token (Swan Boat) (Ammunition)",
    "kind": "activation",
    "result": "none",
@@ -3299,19 +3286,6 @@
    "needs": [
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Bewitching Bloom (Lilac)",
-   "kind": "activation",
-   "result": "none",
-   "main": "choice",
-   "work": "choose a",
-   "needs": [
-    "choice",
-    "several",
-    "mind",
-    "information"
    ]
   },
   {
@@ -3891,17 +3865,6 @@
    ]
   },
   {
-   "name": "Bewitching Bloom (Amaranth)",
-   "kind": "activation",
-   "result": "none",
-   "main": "choice",
-   "work": "choose a",
-   "needs": [
-    "choice",
-    "several"
-   ]
-  },
-  {
    "name": "Sprite Apple (Teal)",
    "kind": "consumable",
    "result": "partial",
@@ -3954,18 +3917,6 @@
    "work": "infused reagents",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Bewitching Bloom (Bellflower)",
-   "kind": "activation",
-   "result": "none",
-   "main": "choice",
-   "work": "choose a",
-   "needs": [
-    "choice",
-    "several",
-    "reader"
    ]
   },
   {
@@ -5597,17 +5548,6 @@
    "needs": [
     "moving",
     "from-events"
-   ]
-  },
-  {
-   "name": "Bewitching Bloom (Magnolia)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "immunity",
-   "work": "immune",
-   "needs": [
-    "immunity",
-    "out-of-combat"
    ]
   },
   {
@@ -10516,18 +10456,6 @@
    "needs": [
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Bewitching Bloom (Cherry Blossom)",
-   "kind": "activation",
-   "result": "note-only",
-   "main": "dying",
-   "work": "dying",
-   "needs": [
-    "dying",
-    "choice",
-    "several"
    ]
   },
   {

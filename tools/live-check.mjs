@@ -1697,6 +1697,50 @@ export const cases = {
         return { until };
     },
 
+    // The Bewitching Bloom tattoos at a chosen ally: Amaranth's floor holds it at 1 Hit Point against an enemy's damage (an ally's doesn't use it
+    // up), Cherry Blossom's recovery DC is 10 while dying, Red Rose's toggle gives +1 to saves, Magnolia's Effect then the ally's save card.
+    async bloomAllies(scene) {
+        await clearSquares(scene, [[7, 9], [8, 9]]);
+        const { actor: user } = await creature(scene, "Bloom Bearer", { type: "character", x: 7, y: 9, level: 15 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Bloom Ally", { x: 8, y: 9, hp: 60 });
+        const bloom = async (name) => {
+            const tattoo = await give(user, `Bewitching Bloom (${name})`);
+            await tattoo.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(tattoo.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what: `${name}'s card` });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+            await wait(800);
+            return since;
+        };
+        const effectNamed = (words) => ally.itemTypes.effect.find((effect) => effect.name.includes(words));
+        await bloom("Amaranth");
+        await until(() => effectNamed("hp floor"), "the hp floor Effect", { timeout: 8000 });
+        await ally.applyDamage({ damage: 5, token: allyToken, rollOptions: new Set(["origin:ally"]) });
+        assert(ally.system.attributes.hp.value === 55 && effectNamed("hp floor"), `an ally's damage leaves it (${ally.system.attributes.hp.value})`);
+        let since = Date.now();
+        await ally.applyDamage({ damage: 500, token: allyToken, rollOptions: new Set(["origin:enemy"]) });
+        await messageAfter(since, (message) => /stays at 1 Hit Point/.test(message.content), { what: "the floor's line" });
+        assert(ally.system.attributes.hp.value === 1 && !effectNamed("hp floor"), `held at 1 and used up (${ally.system.attributes.hp.value})`);
+        await bloom("Cherry Blossom");
+        await until(() => effectNamed("recovery DC"), "the recovery DC Effect", { timeout: 8000 });
+        await ally.increaseCondition("dying", { value: 2 });
+        await until(() => ally.system.attributes.dying.value === 2, "dying 2", { timeout: 4000 });
+        const dc = ally.system.attributes.dying.recoveryDC + ally.system.attributes.dying.value;
+        assert(dc === 10, `recovery DC 10 while dying 2 (${dc})`);
+        await ally.decreaseCondition("dying", { forceRemove: true });
+        await bloom("Red Rose");
+        await until(() => effectNamed("beloved"), "the beloved Effect", { timeout: 8000 });
+        const before = ally.saves.fortitude.mod;
+        await ally.toggleRollOption("all", "beloved-within-10-feet", effectNamed("beloved").id, true);
+        await until(() => ally.saves.fortitude.mod === before + 1, `+1 to saves with the toggle on (${ally.saves.fortitude.mod} from ${before})`, { timeout: 4000 });
+        since = await bloom("Magnolia");
+        await until(() => effectNamed("Magnolia"), "Magnolia's Effect", { timeout: 8000 });
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the ally's save card for later" });
+        return { hp: ally.system.attributes.hp.value, dc, saves: [before, ally.saves.fortitude.mod], saveCard: Boolean(expose) };
+    },
+
     // Golden Liberator's Feather with 1 action: its ways card; the wings' item card gives its user a fly Speed of 50; the buffet's save card
     // follows, Fortitude DC 41 (basic), at the adjacent enemy targeted.
     async featherBuffet(scene) {

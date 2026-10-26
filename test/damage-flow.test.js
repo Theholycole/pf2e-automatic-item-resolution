@@ -254,7 +254,8 @@ test("its user's own Effect, then the save card it had (src/compiler/effect-then
     const activation = (name, index) => compileActivations(source(name))[index].plan;
     assert.deepEqual(shape(activation("Final Scalecloak", 1)), ["item", "effect", "Effect: Embody the Storm", { later: true, repeat: true, attacker: true }]);
     assert.deepEqual(shape(activation("Kraken's Guard", 0)), ["item", "effect", "Effect: Kraken's Guard", { later: false }]);
-    for (const [name, index] of [["Bewitching Bloom (Magnolia)", 0], ["Sinuous Recorder", 0], ["Arctic Worm Chitin Shield", 0], ["Mamlambo Scale", 0]]) assert.equal(activation(name, index)?.again, undefined, name);
+    // (Bewitching Bloom (Magnolia)'s Effect is its chosen ally's, and so is the save card after it: test/chosen-ally.test.js.)
+    for (const [name, index] of [["Sinuous Recorder", 0], ["Arctic Worm Chitin Shield", 0], ["Mamlambo Scale", 0]]) assert.equal(activation(name, index)?.again, undefined, name);
     assert.ok(!(compileItem(source("Crackling Bubble Gum (Lesser)")).ways ?? []).some((way) => way.plan?.again), "a candy's pop: its Effect is the failure's");
     const drinker = foundry.makeActor({ id: "damage-breather", name: "Breather", owners: ["player"] });
     foundry.place(drinker, 300, 17400);

@@ -19,6 +19,7 @@ import { fallEases, setUpFallOffers } from "./falls.js";
 import { weatherIgnores } from "./weather.js";
 import { fallLine } from "../src/live/card.js";
 import { etchRune, setUpEtching } from "./etching.js";
+import { setUpHPFloor } from "./hp-floor.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
@@ -119,6 +120,8 @@ Hooks.once("ready", async () => {
     setUpFallOffers({ activations: (item) => compileActivations(dataOf(item), options()), consumable: (item) => compile(item), isActiveGM: () => game.users.activeGM?.isSelf ?? game.user.isGM, fallLine });
     // (A runestone's rune etched onto its owner's weapon, armor or shield: scripts/etching.js.)
     setUpEtching();
+    // (An ally kept at 1 Hit Point through its next damage from a hazard or an enemy: scripts/hp-floor.js.)
+    setUpHPFloor();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

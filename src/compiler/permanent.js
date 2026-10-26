@@ -4,6 +4,7 @@
 // get (the drinker aside: an activation acts for its user). Staves are the spell module's (their spells, charges).
 // Pure.
 
+import { chosenAllyPlan, withAllyEffectThenCard } from "./chosen-ally.js";
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf, triggerOn } from "./activation.js";
@@ -422,6 +423,8 @@ function compileEach(item, options = {}) {
             plan = own ?? (read ? fitPlan(part, read, base, options) : ownPlan(part, base, options));
             // (Its user's own Effect beside a save for others, src/compiler/effect-then-card.js: Final Scalecloak's nimbus, then its attackers' card.)
             if (plan?.resolution?.kind === "save") plan = withEffectThenCard(plan, plainText(activation.html), ownPlan(part, base, options), part, { activation: true });
+            // (The chosen ally's own Effect, then the save it makes later, src/compiler/chosen-ally.js: Bewitching Bloom (Magnolia).)
+            if (plan?.resolution?.kind === "save") plan = withAllyEffectThenCard(plan, activation.html, ownPlan(part, base, options));
         }
         // (A note alone from the ability compiler gives way to the item's own row when that reads something: Silkspinner's Shield's
         // climb Speed.)
@@ -483,6 +486,9 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = energyChoicePlan(plainText(activation.html), base, plainText(html)) ?? plan;
         // (What it gives its user and allies in an area, src/compiler/rows.js: Knight Captain's Lance.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = allyAreaPlan(plainText(activation.html), base, allyAreaRow(plainText(activation.html))) ?? plan;
+        // (What it gives the one willing ally its user chooses, PF2e's own rules on that ally's Effect, src/compiler/chosen-ally.js: Bewitching
+        // Bloom's Cherry Blossom, Amaranth, Bellflower, Lilac, Red Rose.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenAllyPlan(activation.html, base) ?? plan;
         // (Its allies' bonus beside its enemies' save — Horn of the Archon's "Allies in the area gain a +1 status bonus to attack rolls and saving
         // throws for 1 round" — the allies' card first, then the save's: plan.again.)
         // ("In the area" is the save's own emanation; the save's sentences, the allies' notes, are the save card's.)
