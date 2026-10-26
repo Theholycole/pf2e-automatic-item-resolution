@@ -208,7 +208,8 @@ export const NEEDS = [
         title: "Choices on the card",
         needs: "A choice the user makes when using it (a damage type, a mode, a creature, a direction, one of a list): a picker on the card that sets what the card does.",
         where: "item live play",
-        test: /\b(?:of your choice|you choose|choose (?:a|an|one|whether|which|the|to|between)|pick (?:a|an|one)|one of the following|you decide|(?:you )?select (?:a|one))\b/i
+        // (Not a creature's memory its user decides, Unmemorable Mantle's "You decide whether or not the creature recalls the interaction": a mind's, 2026-10-26.)
+        test: /\b(?:of your choice|you choose|choose (?:a|an|one|whether|which|the|to|between)|pick (?:a|an|one)|one of the following|you decide(?! whether or not the creature recalls)|(?:you )?select (?:a|one))\b/i
     },
     {
         id: "several",
@@ -238,7 +239,7 @@ export const NEEDS = [
         where: "item reader",
         question: "Attitude, truthfulness, memory and compelled behaviour: a note Effect for its time, counted done (as behaviour rules beside a real result are), or the GM's?",
         decided: "2026-10-25: A note Effect on the creature for its time counts done on its own (for items; spells keep their rule).",
-        test: /\b(?:attitude\w*|truth\w*|\blie\b|\blies\b|charm\w*|compel\w*|memory|memories|emotion\w*|believes?|convinc\w*|suggestion|befriend|dominat\w*|loyal\w*|obey\w*|mood|feel(?:s)? (?:safe|calm|fear)|as its first action|must spend (?:all )?(?:\w+ )?actions)\b/i
+        test: /\b(?:attitude\w*|truth\w*|\blie\b|\blies\b|charm\w*|compel\w*|memory|memories|recalls the interaction|emotion\w*|believes?|convinc\w*|suggestion|befriend|dominat\w*|loyal\w*|obey\w*|mood|feel(?:s)? (?:safe|calm|fear)|as its first action|must spend (?:all )?(?:\w+ )?actions)\b/i
     },
     {
         id: "information",

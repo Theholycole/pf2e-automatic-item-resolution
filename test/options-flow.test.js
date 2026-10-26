@@ -554,3 +554,10 @@ test("Flashblade's Prepare Flash: a melee Strike readied until the start of its 
         assert.ok(strikeLines(plan).some((line) => /^Readied \(its user's Ready action\)/.test(line)));
     }
 });
+
+test("Unmemorable Mantle: a creature's memory its user decides is a mind's (the user's 2026-10-25 ruling), each degree a note Effect on it", () => {
+    for (const name of ["Unmemorable Mantle", "Unmemorable Mantle (Greater)", "Unmemorable Mantle (Major)"]) {
+        const plan = planOf(name);
+        assert.deepEqual([Boolean(plan.partial), Object.values(plan.resolution.outcomes).map((row) => (row.noteEffects ?? []).length), Object.values(plan.resolution.outcomes).every((row) => !(row.manualInstructions ?? []).length)], [false, [1, 1, 1, 1], true], name);
+    }
+});

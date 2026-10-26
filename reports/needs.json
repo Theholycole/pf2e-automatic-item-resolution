@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1189,
+  "entries": 1186,
   "results": {
    "none": 593,
-   "partial": 215,
+   "partial": 212,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -16,7 +16,7 @@
    "moving": 80,
    "lasting": 62,
    "visibility": 46,
-   "choice": 36,
+   "choice": 33,
    "mind": 8,
    "strike": 93,
    "spells": 35,
@@ -60,9 +60,9 @@
    "triggers": 121,
    "visibility": 48,
    "dying": 72,
-   "choice": 106,
+   "choice": 103,
    "several": 88,
-   "mind": 69,
+   "mind": 66,
    "strike": 170,
    "reader": 182,
    "spells": 71,
@@ -4270,17 +4270,6 @@
    ]
   },
   {
-   "name": "Unmemorable Mantle (Major)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "choice",
-   "work": "decide",
-   "needs": [
-    "choice",
-    "mind"
-   ]
-  },
-  {
    "name": "Mage's Hat (Greater)",
    "kind": "activation",
    "activation": "Hat Spell",
@@ -5917,17 +5906,6 @@
    "work": "radius",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Unmemorable Mantle",
-   "kind": "activation",
-   "result": "partial",
-   "main": "choice",
-   "work": "decide",
-   "needs": [
-    "choice",
-    "mind"
    ]
   },
   {
@@ -9430,17 +9408,6 @@
    "work": "submerged",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Unmemorable Mantle (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "choice",
-   "work": "decide",
-   "needs": [
-    "choice",
-    "mind"
    ]
   },
   {
