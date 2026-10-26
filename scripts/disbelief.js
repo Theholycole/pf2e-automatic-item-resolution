@@ -12,7 +12,9 @@ const DEGREES = ["criticalFailure", "failure", "success", "criticalSuccess"];
 export async function postDisbeliefCard(state) {
     const card = createDisbeliefCard({ plan: state.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, user: state.user, worldTime: game.time.worldTime });
     const whisper = game.users.filter((user) => user.isGM).map((user) => user.id);
-    await ChatMessage.create({ content: disbeliefCardHTML(card, { canApply: true }), whisper, speaker: ChatMessage.getSpeaker(), flags: { [MODULE_ID]: { [FLAG]: card } } });
+    // (Spoken as its user, so its card goes with its user's messages.)
+    const actor = state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : null;
+    await ChatMessage.create({ content: disbeliefCardHTML(card, { canApply: true }), whisper, speaker: ChatMessage.getSpeaker(actor ? { actor } : {}), flags: { [MODULE_ID]: { [FLAG]: card } } });
     return `Its illusion: the GM's disbelief card follows (DC ${state.plan.disbelief.dc}).`;
 }
 

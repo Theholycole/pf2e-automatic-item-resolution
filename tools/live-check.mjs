@@ -1653,6 +1653,36 @@ export const cases = {
         return { dealt, temp, moved: (foeToken.x - x) / scene.grid.size };
     },
 
+    // Falls through PF2e Automatic Environment Resolution: the environment module's falling hook offers Tumbler's Belt's reaction to the GMs and
+    // its owners; Gliding Membranes (Lesser) worn eases a 60-foot fall to 35 feet (17 damage, Prone) through api.fallEases; Land With Grace's
+    // Effect (120 feet shorter, on its feet) leaves none.
+    async fallsEased(scene) {
+        assert(game.modules.get(ENVIRONMENT)?.active, "PF2e Automatic Environment Resolution isn't active in pftest.");
+        const { easedFall } = await import(`/modules/pf2e-resolution-core/src/environment/disasters.js?v=${Date.now()}`);
+        const { fallEasesOf } = await import(`/modules/${ENVIRONMENT}/scripts/foundry.js?v=${Date.now()}`);
+        await clearSquares(scene, [[19, 14]]);
+        const { actor: user, token } = await creature(scene, "Belted Faller", { type: "character", x: 19, y: 14 });
+        const belt = await give(user, "Tumbler's Belt");
+        await belt.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const membranes = await give(user, "Gliding Membranes (Lesser)");
+        // (A graft: implanted, as PF2e equips it.)
+        await membranes.update({ "system.equipped.carryType": "implanted", "system.equipped.invested": true });
+        let since = Date.now();
+        Hooks.callAll(`${ENVIRONMENT}.falling`, { token, feet: 60 });
+        const offer = await messageAfter(since, (message) => /is falling 60 feet\. Its reactions: Tumbler/.test(message.content), { what: "the reaction offer" });
+        assert(offer.whisper.length > 0, "whispered");
+        const worn = easedFall(60, fallEasesOf(user));
+        assert(worn.feet === 35 && worn.damage === 17 && worn.prone, `the membranes alone: 35 feet (${JSON.stringify(worn)})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(belt.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "Land With Grace's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => effect.flags?.[ENVIRONMENT]?.fall?.shorter === 120), "the belt's Effect", { timeout: 8000 });
+        const belted = easedFall(60, fallEasesOf(user));
+        assert(belted.damage === 0 && !belted.prone, `no damage, on its feet (${JSON.stringify(belted)})`);
+        return { worn, belted };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {

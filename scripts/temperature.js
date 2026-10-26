@@ -14,7 +14,7 @@ const PHYSICAL = new Set(["equipment", "armor", "weapon", "shield", "backpack", 
 const cache = new Map();
 
 // (A sheet toggle with a picked suboption, Shawl of Seasons' "Change of Seasons": the picked one's name, and all its names.)
-function picked(item) {
+export function picked(item) {
     for (const rule of item.system?.rules ?? []) {
         if (rule?.key !== "RollOption" || !Array.isArray(rule.suboptions) || !rule.suboptions.length) continue;
         const names = rule.suboptions.map((entry) => String(entry.value ?? "").replace(/^./, (letter) => letter.toUpperCase())).filter(Boolean);
@@ -24,7 +24,7 @@ function picked(item) {
     return null;
 }
 // (Its passage: from its name to the next one's.)
-function passageOf(text, name, names) {
+export function passageOf(text, name, names) {
     const at = text.search(new RegExp(String.raw`\b${name}\b(?= [A-Z])`));
     if (at < 0) return null;
     const rest = text.slice(at + name.length);
@@ -49,7 +49,7 @@ export function readingOf(item) {
 
 // In use as it says: held in a hand, invested, or as PF2e has it equipped (worn as its usage says, and invested when it's investable).
 // ("While active", Heated Cloak's, worn; a machine that's switched on, Nightbreeze Machine's, isn't one a creature carries.)
-function inUse(item, how) {
+export function inUse(item, how) {
     const equipped = item.system?.equipped ?? {};
     if (how === "held") return equipped.carryType === "held";
     if (how === "invested") return item.isInvested === true || equipped.invested === true;

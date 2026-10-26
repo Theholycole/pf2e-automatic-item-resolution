@@ -1,12 +1,12 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1324,
+  "entries": 1323,
   "results": {
-   "none": 627,
-   "partial": 304,
+   "none": 625,
+   "partial": 307,
    "builtin:no-effect": 129,
-   "note-only": 264
+   "note-only": 262
   },
   "main": {
    "speeds": 25,
@@ -16,14 +16,14 @@
    "moving": 91,
    "lasting": 66,
    "visibility": 57,
-   "choice": 43,
+   "choice": 44,
    "mind": 9,
    "strike": 107,
    "spells": 45,
    "information": 23,
    "out-of-combat": 33,
    "actions": 32,
-   "no-rules": 37,
+   "no-rules": 38,
    "senses": 23,
    "objects": 116,
    "reader": 25,
@@ -32,7 +32,7 @@
    "cooldown": 10,
    "vehicles": 20,
    "several": 26,
-   "triggers": 97,
+   "triggers": 94,
    "immunity": 27,
    "situational": 20,
    "creatures": 53,
@@ -57,7 +57,7 @@
    "afflictions": 99,
    "lasting": 217,
    "moving": 119,
-   "triggers": 134,
+   "triggers": 130,
    "visibility": 59,
    "dying": 82,
    "choice": 118,
@@ -69,7 +69,7 @@
    "information": 192,
    "actions": 62,
    "from-events": 38,
-   "no-rules": 37,
+   "no-rules": 38,
    "senses": 29,
    "illusions": 57,
    "removed": 5,
@@ -709,12 +709,11 @@
   {
    "name": "Jade Cat",
    "kind": "consumable",
-   "result": "note-only",
+   "result": "partial",
    "main": "areas",
    "work": "difficult terrain",
    "needs": [
     "areas",
-    "triggers",
     "reader"
    ]
   },
@@ -1055,11 +1054,10 @@
    "name": "Aerial Cloak",
    "kind": "activation",
    "activation": "Fall Gently",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: the cloak catches …",
+   "result": "partial",
+   "main": "choice",
+   "work": "of your choice",
    "needs": [
-    "triggers",
     "choice"
    ]
   },
@@ -1548,11 +1546,10 @@
    "name": "Dragonaut's Wingsuit",
    "kind": "activation",
    "activation": "Descend",
-   "result": "note-only",
-   "main": "triggers",
-   "work": "Trigger: your fall slows …",
+   "result": "partial",
+   "main": "no-rules",
    "needs": [
-    "triggers"
+    "no-rules"
    ]
   },
   {
@@ -11544,17 +11541,6 @@
     "objects",
     "reader",
     "mind"
-   ]
-  },
-  {
-   "name": "Tumbler's Belt",
-   "kind": "activation",
-   "activation": "Land With Grace",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: treat your fall …",
-   "needs": [
-    "triggers"
    ]
   },
   {

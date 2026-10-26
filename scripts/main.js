@@ -15,6 +15,8 @@ import { setUpPlacedLights } from "./placed-light.js";
 import { setUpPlacedMoves } from "./placed-moves.js";
 import { setUpMadeWeapons } from "./objects.js";
 import { temperatureProtections } from "./temperature.js";
+import { fallEases, setUpFallOffers } from "./falls.js";
+import { fallLine } from "../src/live/card.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
@@ -112,6 +114,8 @@ Hooks.once("ready", async () => {
     setUpPlacedMoves();
     // (A weapon an item made that lasts while it's held: scripts/objects.js.)
     setUpMadeWeapons();
+    // (Its fall reactions offered as the environment module's card means a fall: scripts/falls.js.)
+    setUpFallOffers({ activations: (item) => compileActivations(dataOf(item), options()), consumable: (item) => compile(item), isActiveGM: () => game.users.activeGM?.isSelf ?? game.user.isGM, fallLine });
     // (A runestone's rune etched onto its owner's weapon, armor or shield: scripts/etching.js.)
     setUpEtching();
     try {
@@ -130,5 +134,5 @@ Hooks.once("ready", async () => {
     // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
     // (temperatureProtections: what its items protect a creature from in heat and cold, for the environment module — synchronous,
     // scripts/temperature.js.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
 });

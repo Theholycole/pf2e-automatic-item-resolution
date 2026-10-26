@@ -18,8 +18,8 @@ Results, for the items this module handles:
 | Result | Items | Share |
 |---|---:|---:|
 | resolves | 773 | 52% |
-| partial | 107 | 7% |
-| note-only | 118 | 8% |
+| partial | 108 | 7% |
+| note-only | 117 | 8% |
 | builtin:zone | 118 | 8% |
 | builtin:cast-spell | 35 | 2% |
 | builtin:roll-twice | 2 | 0% |
@@ -41,7 +41,7 @@ Results, for the items this module handles:
 |---|---:|---:|---:|---:|---:|---:|---:|
 | other | 512 | 211 | 53 | 59 | 0 | 95 | 94 |
 | potion | 182 | 123 | 11 | 11 | 0 | 21 | 16 |
-| talisman | 156 | 63 | 9 | 7 | 0 | 52 | 25 |
+| talisman | 156 | 63 | 10 | 6 | 0 | 52 | 25 |
 | elixir | 149 | 104 | 13 | 12 | 0 | 17 | 3 |
 | poison | 115 | 106 | 4 | 1 | 0 | 4 | 0 |
 | snare | 82 | 0 | 0 | 1 | 0 | 73 | 8 |

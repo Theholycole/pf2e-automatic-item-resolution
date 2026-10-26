@@ -8,6 +8,7 @@ import { firstDegreeRules } from "../compiler/first-degree.js";
 import { restoreText } from "../compiler/restore.js";
 import { attackRidersText } from "../compiler/attack-riders.js";
 import { ENVIRONMENT_ID, temperatureFlag, temperatureText } from "../compiler/temperature.js";
+import { fallText } from "../compiler/falls.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -148,6 +149,8 @@ export function previewLines(state) {
     for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
     // (Protection from heat or cold, src/compiler/temperature.js: the card's own Effect, for the environment module.)
     if (plan?.temperature?.counts) lines.push(temperatureLine(plan.temperature));
+    // (A fall it eases, src/compiler/falls.js: the card's own Effect, for the environment module.)
+    if (plan?.fall) lines.push(fallLine(plan.fall));
     for (const light of plan?.item?.light ?? []) lines.push(lightText(light));
     for (const entry of plan?.item?.levelTemp ?? []) lines.push(levelTempText(entry));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
@@ -295,6 +298,19 @@ export function temperatureLine(temperature) {
 // temperature, for the item's time.
 export function temperatureEffectSource(temperature, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return ownEffectSource({ name: "temperature", img: "icons/svg/sun.svg", words: temperatureLine(temperature), rules: [], duration: temperature.duration, flag: { temperature: true }, extraFlags: { [ENVIRONMENT_ID]: { temperature: temperatureFlag(temperature, item.name ?? "an item") } }, item, user, worldTime, initiative, moduleId });
+}
+
+// A fall it eases in words, with its time: "Its falls count as 120 feet shorter for 1 round".
+export function fallLine(fall) {
+    const time = fall.duration?.mode === "fixed" ? ` for ${fall.duration.value} ${fall.duration.value === 1 ? fall.duration.unit.replace(/s$/, "") : fall.duration.unit}` : "";
+    return `${fallText(fall)}${time}`;
+}
+
+// Its Effect: the environment module's flag (flags.<environment>.fall { shorter?, noDamage?, landsOnFeet?, source }), read as it rolls the creature's falling
+// damage, for the item's time.
+export function fallEffectSource(fall, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const flag = { ...(fall.shorter ? { shorter: fall.shorter } : {}), ...(fall.noDamage ? { noDamage: true } : {}), ...(fall.landsOnFeet ? { landsOnFeet: true } : {}), source: item.name ?? null };
+    return ownEffectSource({ name: "fall", img: "icons/svg/wing.svg", words: fallLine(fall), rules: [], duration: fall.duration, flag: { fall: true }, extraFlags: { [ENVIRONMENT_ID]: { fall: flag } }, item, user, worldTime, initiative, moduleId });
 }
 
 function ownEffectSource({ name, img, words, rules, duration, flag, extraFlags = {}, item, user, worldTime, initiative, moduleId }) {
