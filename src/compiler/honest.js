@@ -5,6 +5,7 @@
 // as done; only the whole text's reminder beside a part read (src/compiler/rows.js noteRow) goes with partial, and once later readings leave
 // nothing unread it's stale and gone. Plan-level notes are the readers' own choice (a card's line, or partial already). Pure.
 
+import { withCastDuration } from "./cast-duration.js";
 import { RUNE_STEP_SENTENCE } from "./rune-steps.js";
 import { restatesCounteract } from "./counteract.js";
 
@@ -313,11 +314,12 @@ export function withGmCalls(plan) {
 // its spell, rank and DC, its spell attack, the spell's own duration and range (options.spells: Satchel of Numberless Seeds' "within 30
 // feet" for Protector Tree's 30 feet, Clockwork Songbird's 24 hours for Peaceful Bubble's), "within range", what it does "as normal with
 // the spell", an intelligent item's statistics. Those left out of the words looked at; a note the GM's call (withGmCalls) is a card line.
-const CAST_RULE = /\b\d+d\d+\b|\bdamage\b|\bcounteract\b|\bbonus\b|\bpenalty\b|\b(?:frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|fatigued|drained|quickened|off-guard|concealed|invisible|hidden)\b|\brange\b|\b\d+ (?:feet|foot|miles?)\b|\b\d+ (?:rounds?|minutes?|hours?|days?)\b|\binstead\b|\bexcept\b|\bdegree of success\b|\bStrike\b|\bweakness\b|\bresistance\b|\bimmune\b|\bdoesn't require\b|\bas a (?:one|two|three)-action\b|\bsave DC is your\b|\bheightened\b|\bmore targets?\b|\barea\b/i;
+const CAST_RULE = /\b\d+d\d+\b|\bdamage\b|\bcounteract\b|\bbonus\b|\bpenalty\b|\b(?:frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|fatigued|drained|quickened|off-guard|concealed|invisible|hidden)\b|\brange\b|\b\d+ (?:feet|foot|miles?)\b|\b\d+ (?:rounds?|minutes?|hours?|days?)\b|\binstead\b|\bexcept\b|\bdegree of success\b|\bStrike\b|\bweakness\b|\bresistance\b|\bimmune\b|\bdoesn't require\b|\bas a (?:one|two|three)-action\b|\bsave DC is your\b|\bheightened\b|\bmore targets?\b|\bon another creature\b|\barea\b/i;
 const NOT_A_RULE = /^(?:As normal with the spell\b|Its statistics improve\b)/i;
 const literal = (words) => words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const castWords = (note, plan, spell) => {
     let text = said(note);
+    for (const words of plan.castDuration?.said ?? []) text = text.replace(words, " ");
     const name = plan.spell?.name;
     if (name) text = text.replace(new RegExp(literal(name), "gi"), " ");
     // (The cast's rank and counteract modifier said again: Dragonfire Halfbow's "heightened to 5th rank", a cantrip "heightened to a spell rank
@@ -332,6 +334,8 @@ const castWords = (note, plan, spell) => {
 export function withCastNotes(plan, options = {}) {
     if (plan?.builtin !== "cast-spell" || plan.partial || !(plan.notes ?? []).length) return plan;
     const spell = options.spells?.[String(plan.spell?.name ?? "").toLowerCase()] ?? null;
-    const adds = plan.notes.filter((note) => !isGmCall(note) && !NOT_A_RULE.test(said(note)) && CAST_RULE.test(castWords(note, plan, spell)));
-    return adds.length ? { ...plan, partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } } : plan;
+    // (A duration the cast plays now — cast-duration.js — is no leftover.)
+    const timed = withCastDuration(plan, spell);
+    const adds = timed.notes.filter((note) => !isGmCall(note) && !NOT_A_RULE.test(said(note)) && CAST_RULE.test(castWords(note, timed, spell)));
+    return adds.length ? { ...timed, partial: true, automation: { ...(timed.automation ?? {}), level: "guided" } } : timed;
 }

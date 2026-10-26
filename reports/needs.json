@@ -1,31 +1,31 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1338,
+  "entries": 1329,
   "results": {
-   "partial": 411,
+   "partial": 402,
    "none": 554,
    "note-only": 254,
    "builtin:no-effect": 119
   },
   "main": {
-   "no-rules": 41,
-   "speeds": 25,
+   "no-rules": 40,
+   "speeds": 24,
    "areas": 138,
    "counteract": 26,
    "afflictions": 55,
    "moving": 92,
-   "visibility": 51,
+   "visibility": 48,
    "choice": 31,
-   "lasting": 70,
+   "lasting": 69,
    "strike": 107,
    "spells": 36,
    "information": 23,
-   "out-of-combat": 36,
+   "out-of-combat": 35,
    "actions": 32,
    "immunity": 26,
    "creatures": 64,
-   "mind": 7,
+   "mind": 6,
    "objects": 110,
    "illusions": 50,
    "removed": 6,
@@ -36,7 +36,7 @@
    "situational": 18,
    "dying": 29,
    "senses": 22,
-   "speech": 22,
+   "speech": 21,
    "from-events": 4,
    "forms": 26,
    "several": 26,
@@ -47,31 +47,31 @@
    "by-kind": 7
   },
   "any": {
-   "no-rules": 41,
-   "speeds": 31,
+   "no-rules": 40,
+   "speeds": 30,
    "areas": 201,
    "immunity": 87,
    "objects": 388,
-   "speech": 134,
-   "out-of-combat": 440,
+   "speech": 132,
+   "out-of-combat": 438,
    "counteract": 98,
    "afflictions": 104,
-   "lasting": 237,
+   "lasting": 236,
    "moving": 120,
    "triggers": 124,
-   "visibility": 53,
+   "visibility": 50,
    "dying": 75,
    "choice": 110,
    "several": 106,
    "strike": 203,
    "reader": 213,
    "spells": 76,
-   "information": 200,
+   "information": 199,
    "actions": 64,
    "from-events": 29,
    "situational": 88,
    "creatures": 64,
-   "mind": 67,
+   "mind": 66,
    "illusions": 60,
    "removed": 7,
    "range": 6,
@@ -631,15 +631,6 @@
    "work": "sustain",
    "needs": [
     "lasting"
-   ]
-  },
-  {
-   "name": "The Peacock",
-   "kind": "activation",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -2743,16 +2734,6 @@
    "needs": [
     "strike",
     "choice"
-   ]
-  },
-  {
-   "name": "Dust of Disappearance",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "visibility",
-   "work": "invisibility",
-   "needs": [
-    "visibility"
    ]
   },
   {
@@ -7385,16 +7366,6 @@
    ]
   },
   {
-   "name": "Vanishing Wayfinder",
-   "kind": "activation",
-   "result": "partial",
-   "main": "speech",
-   "work": "word",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Deteriorating Dust",
    "kind": "consumable",
    "result": "note-only",
@@ -7587,18 +7558,6 @@
    "needs": [
     "strike",
     "actions"
-   ]
-  },
-  {
-   "name": "Crown of the Master (Greater)",
-   "kind": "activation",
-   "activation": "Imperative Order",
-   "result": "partial",
-   "main": "mind",
-   "work": "dominate",
-   "needs": [
-    "mind",
-    "out-of-combat"
    ]
   },
   {
@@ -8231,17 +8190,6 @@
    ]
   },
   {
-   "name": "Invisibility",
-   "kind": "activation",
-   "activation": "Go Invisible",
-   "result": "partial",
-   "main": "visibility",
-   "work": "become invisible",
-   "needs": [
-    "visibility"
-   ]
-  },
-  {
    "name": "Bargainer's Instrument",
    "kind": "consumable",
    "result": "none",
@@ -8767,19 +8715,6 @@
     "choice",
     "several",
     "objects"
-   ]
-  },
-  {
-   "name": "Archivist's Gaze",
-   "kind": "activation",
-   "activation": "Aid from Beyond",
-   "result": "partial",
-   "main": "lasting",
-   "work": "each time the",
-   "needs": [
-    "lasting",
-    "information",
-    "speech"
    ]
   },
   {
@@ -10113,17 +10048,6 @@
    ]
   },
   {
-   "name": "Invisibility (Greater)",
-   "kind": "activation",
-   "activation": "Go Invisible",
-   "result": "partial",
-   "main": "visibility",
-   "work": "become invisible",
-   "needs": [
-    "visibility"
-   ]
-  },
-  {
    "name": "Warrior's Training Ring",
    "kind": "activation",
    "result": "partial",
@@ -10441,16 +10365,6 @@
    "work": "ritual",
    "needs": [
     "spells",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Mountain Man",
-   "kind": "activation",
-   "result": "partial",
-   "main": "out-of-combat",
-   "work": "1 hour",
-   "needs": [
     "out-of-combat"
    ]
   },
@@ -15167,16 +15081,6 @@
    "needs": [
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Energy Robe of Cold",
-   "kind": "activation",
-   "result": "partial",
-   "main": "speeds",
-   "work": "water walk",
-   "needs": [
-    "speeds"
    ]
   },
   {

@@ -24,6 +24,7 @@ import { setUpDrain } from "./drain.js";
 import { setUpAfterEnds } from "./after-ends.js";
 import { setUpShortenOnHit } from "./shorten-on-hit.js";
 import { setUpToggleOff } from "./toggle-off.js";
+import { setUpCastDurations } from "./cast-duration.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
@@ -163,6 +164,8 @@ Hooks.once("ready", async () => {
     setUpShortenOnHit();
     // (A healing of an item's own back on once its Effect ends: scripts/toggle-off.js.)
     setUpToggleOff();
+    // (A cast's Effects at the item's duration, Dust of Disappearance's minute: scripts/cast-duration.js.)
+    setUpCastDurations();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

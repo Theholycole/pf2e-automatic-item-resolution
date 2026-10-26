@@ -48,3 +48,17 @@ test("the cast's own rank said again isn't a rule — Cultist Cowl (Major)'s Cri
     const cowl = first("Cultist Cowl (Major)");
     assert.deepEqual([cowl.rank, cowl.partial], [7, undefined]);
 });
+
+test("a cast's own duration: Dust of Disappearance's 1-minute Invisibility, The Mountain Man's hour from 15th level; the card says it", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { castDurationAt } = await import("../src/compiler/cast-duration.js");
+    const { lastsWords } = await import("../src/live/cast-card.js");
+    const dust = compileItem(item("Dust of Disappearance"), options);
+    assert.deepEqual([dust.castDuration.value, dust.castDuration.unit, dust.partial], [1, "minutes", undefined]);
+    const man = first("The Mountain Man");
+    assert.deepEqual(castDurationAt(man.castDuration, 14), { value: 5, unit: "minutes" });
+    assert.deepEqual(castDurationAt(man.castDuration, 15), { value: 1, unit: "hours" });
+    assert.equal(lastsWords(man.castDuration), "lasts 5 minutes (1 hour from level 15)");
+    // (Not the spell's own: Spectacles of Understanding's hour of Translate.)
+    assert.equal(first("Spectacles of Understanding").castDuration, undefined);
+});

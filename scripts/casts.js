@@ -3,6 +3,7 @@
 
 import { castCardHTML, castRequest, chosenSpell, createCastCard, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, stateOf } from "./foundry.js";
+import { rememberCastDuration } from "./cast-duration.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -35,6 +36,9 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (needsTargets(state.plan, chosenSpell(state)) && !targetTokens.length) throw new Error("Target the creatures first.");
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: targetTokens, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${targetTokens.length && !selfOf(state) ? ` at ${targetTokens.map((target) => target.name).join(", ")}` : ""}.`);
+        // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
+        const lasts = state.plan.castDuration ? await rememberCastDuration(cast, state.plan.castDuration, { actor, targets: targetTokens }) : null;
+        if (lasts) lines.push(lasts);
     }
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: castCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

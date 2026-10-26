@@ -6120,6 +6120,28 @@ export const cases = {
         return { flag };
     },
 
+    // Vanishing Wayfinder: its Invisibility for 5 minutes, not the spell's 10 — the spell module's Effect from the cast set to it.
+    async wayfinderDuration(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Wayfinder Wearer", { type: "character", x: 11, y: 6, level: 10 });
+        const wayfinder = await give(wearer, "Vanishing Wayfinder");
+        await wearerToken.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(wayfinder.uuid, 0);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        await until(() => game.messages.get(cast.id)?.getFlag(NS, "castDuration"), "the cast's duration mark", { timeout: 8000 });
+        const mark = game.messages.get(cast.id).getFlag(NS, "castDuration");
+        // (The spell module's card applies the spell's Effect: its button in the chat log.)
+        await until(() => document.querySelector(`[data-message-id="${cast.id}"] .pf2e-auto-runtime-resolve`), "the spell card's Apply button", { timeout: 8000 });
+        document.querySelector(`[data-message-id="${cast.id}"] .pf2e-auto-runtime-resolve`).click();
+        const effect = () => wearer.itemTypes.effect.find((entry) => entry.system?.context?.origin?.item === mark.spellUuid);
+        await until(() => effect(), `the cast's Effect (${wearer.itemTypes.effect.map((entry) => entry.name).join(", ")})`, { timeout: 10000 });
+        await until(() => effect().system.duration.value === 5 && effect().system.duration.unit === "minutes", `5 minutes (${JSON.stringify(effect().system.duration)})`, { timeout: 8000 });
+        return { effect: effect().name, duration: effect().system.duration, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Standard of the Sure-Footed's Help Up: the ally targeted, Prone, stands.
     async sureFootedStand(scene) {
         const { actor: bearer } = await creature(scene, "Banner Bearer", { type: "character", x: 15, y: 4 });
