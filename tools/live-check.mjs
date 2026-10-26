@@ -2267,8 +2267,8 @@ export const cases = {
         return { d20, outcome: attack.flags.pf2e.context.outcome, damage: damage.rolls[0]?.total };
     },
 
-    // Blackfinger Blight: coated on a shortsword, a hit's save card failed (save −30) — the creature marked; at the start of its own turn its
-    // DC 5 flat check to keep hold is rolled (a failure drops its dagger).
+    // Blackfinger Blight: a contact poison, its card at the creature touched, the save card failed (save −30) — the creature marked; at the
+    // start of its own turn its DC 5 flat check to keep hold is rolled (a failure drops its dagger).
     async blackfingerTurns(scene) {
         await clearSquares(scene, [[11, 5], [12, 5]]);
         const { actor: rogue, token: rogueToken } = await creature(scene, "Blight Rogue", { type: "character", x: 11, y: 5, level: 12 });
@@ -2285,14 +2285,9 @@ export const cases = {
             await wait(500);
             let since = Date.now();
             await blight.consume();
-            const card = await messageAfter(since, itemCard("poison"));
-            await game.modules.get(NS).api.live.apply(card.id, { weapon: card.getFlag(NS, "card").weapons.findIndex((entry) => entry.id === sword.id) });
-            await wait(600);
-            await rogueToken.object?.control?.();
-            await target(foeToken);
+            const card = await messageAfter(since, itemCard("expose"), { what: "the poison's card" });
             since = Date.now();
-            const { attack } = await strike(rogue, sword);
-            assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
             await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the poison's save card" }));
             const mark = () => foe.itemTypes.effect.find((effect) => effect.flags?.[NS]?.afflictedTurns);
             await until(mark, "the flat check's mark", { timeout: 8000 });
@@ -2305,6 +2300,50 @@ export const cases = {
         } finally {
             await combat.delete().catch(() => null);
         }
+    },
+
+    // Diplomat's Badge's Diplomat's Bearing: Apply refused before a Recall Knowledge roll; after one (Society, the action's option) reaching DC 20
+    // — its user's modifier made huge — PF2e's Effect: Diplomat's Badge on its user.
+    async diplomatGate(scene) {
+        await clearSquares(scene, [[13, 5]]);
+        const { actor: user } = await creature(scene, "Badge Diplomat", { type: "character", x: 13, y: 5, level: 5 });
+        const badge = await give(user, "Diplomat's Badge");
+        await badge.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(badge.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the badge's card" });
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id).catch((error) => { refused = error.message; });
+        assert(/Roll .* recall knowledge first/i.test(refused ?? ""), `refused before the roll (${refused})`);
+        await user.skills.society.roll({ dc: { value: 20 }, modifiers: [new game.pf2e.Modifier({ slug: "pftest-sure", label: "Sure", modifier: 40 })], extraRollOptions: ["action:recall-knowledge"], skipDialog: true });
+        await wait(500);
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => effect.name === "Effect: Diplomat's Badge"), "PF2e's Effect: Diplomat's Badge", { timeout: 8000 });
+        return { refused };
+    },
+
+    // Doom Switch's Bragging Rights: its attack card hits (AC 1), the target marked; its user's sword damage that leaves it at 0 gives its user
+    // temporary Hit Points equal to its level (twice on a critical success).
+    async doomFelled(scene) {
+        await clearSquares(scene, [[14, 7], [15, 7]]);
+        const { actor: user, token: userToken } = await creature(scene, "Doom Bragger", { type: "character", x: 14, y: 7, level: 8 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Doom Target", { x: 15, y: 7, alliance: "opposition", ac: 1, hp: 20, level: 6 });
+        const doom = await give(user, "Doom Switch");
+        const sword = await give(user, "Longsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(doom.uuid, 0);
+        const card = await messageAfter(since, itemCard("expose"), { what: "Bragging Rights' card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the attack card" }));
+        const mark = () => foe.itemTypes.effect.find((effect) => effect.flags?.[NS]?.felled);
+        await until(mark, "the creature marked", { timeout: 8000 });
+        const multiplier = mark().flags[NS].felled.multiplier;
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await foe.applyDamage({ damage: await new DamageRoll("40[slashing]").evaluate(), token: foeToken, item: sword });
+        await until(() => user.system.attributes.hp.temp === 6 * multiplier, `temporary Hit Points ${6 * multiplier} (${user.system.attributes.hp.temp})`, { timeout: 8000 });
+        return { multiplier, temp: user.system.attributes.hp.temp, userToken: userToken.id };
     },
 
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
@@ -9650,7 +9689,9 @@ export async function cleanup() {
     const actors = game.actors.filter((actor) => actor.getFlag(NS, FIXTURE) && actor.name.startsWith(PREFIX));
     const ids = new Set(actors.map((actor) => actor.id));
     // (Every message its creatures spoke: PF2e's, this module's cards, the ability module's save cards for them.)
-    const messages = game.messages.filter((message) => ids.has(message.speaker?.actor)).map((message) => message.id);
+    // (And what other modules say about them with no speaker of theirs, the morale checks: by their names, this check's prefix — 2026-10-26.)
+    const names = actors.map((actor) => actor.name);
+    const messages = game.messages.filter((message) => ids.has(message.speaker?.actor) || (names.length && names.some((name) => String(message.content ?? "").includes(name)))).map((message) => message.id);
     for (let index = 0; index < messages.length; index += 200) await ChatMessage.deleteDocuments(messages.slice(index, index + 200)).catch(() => null);
     if (actors.length) await Actor.deleteDocuments(actors.map((actor) => actor.id));
     // (Its own encounters only, flagged as its fixtures: never another.)
