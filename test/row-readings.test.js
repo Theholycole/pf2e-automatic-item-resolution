@@ -86,3 +86,8 @@ test("Oracular Crown: its 3d8 healing more by its user's cursebound value, the f
     assert.deepEqual([heal.formula, heal.byCondition, Boolean(plan.partial), plan.notes], ["3d8", { slug: "cursebound", formulas: { 2: "5d8", 3: "7d8", 4: "9d8" } }, false, undefined]);
     assert.deepEqual([1, 2, 3, 4].map((value) => scaledByCondition(plan, (slug) => (slug === "cursebound" ? value : 0)).resolution.outcomes.success.effects[0].formula), ["3d8", "5d8", "7d8", "9d8"]);
 });
+
+test("Storyteller's Opus's Hoodwink: on a success its creature doesn't disbelieve the illusion after all — a note Effect on it, not the GM's line (2026-10-26)", () => {
+    const plan = activation("Storyteller's Opus", "Hoodwink");
+    assert.deepEqual([["success", "criticalSuccess"].map((degree) => plan.resolution.outcomes[degree].noteEffects.map((note) => note.label)), plan.resolution.outcomes.success.manualInstructions, Boolean(plan.partial)], [[["Still fooled"], ["Still fooled"]], [], false]);
+});

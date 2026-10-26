@@ -793,7 +793,7 @@ const OTHER_SENSES = { "blood sight": "bloodsense", bloodsense: "bloodsense", tr
 const SHEDS = String.raw`(?:\byou (?:also )?shed|\b(?:it|that|the [\w' -]+?|an? [\w' -]+?) (?:also )?sheds|\b(?:it|the [\w' -]+?) to shed|\bYour [\w' -]+? glows?[^.,]*?, shedding)`;
 const TORCH = new RegExp(String.raw`${SHEDS} (?:[\w,]+ ){0,3}light (?:like|as) a torch\b|\bglows as bright as a torch\b`, "i");
 const BRIGHT = new RegExp(String.raw`${SHEDS} bright light in an? (\d+)[-‐]foot (?:radius|burst|emanation)\b`, "i");
-const DIM = new RegExp(String.raw`${SHEDS} dim light in an? (\d+)[-‐]foot (?:radius|burst|emanation)\b`, "i");
+const DIM = new RegExp(String.raw`${SHEDS} dim light in an? (\d+)[-‐]foot (?:radius|burst|emanation)\b|\b(?:the [\w' -]+?|it) glows with (?:\w+ )?dim (?:\w+ )?light in an? (\d+)[-‐]foot (?:radius|burst|emanation)\b`, "i");
 const HOODED = /\bsheds light\b[^.]*\.(?:[^.]*\.)?[^.]*\bwork as normal for a hooded lantern\b/i;
 // (Its time when it says one, "for 8 hours", or a sentence after it, One-Hour Flower's "At the end of an hour, the plant
 // disintegrates"; out until its user puts it out — "until you deactivate it", "until you Dismiss it", activating it again — when it
@@ -809,7 +809,8 @@ function lightOf(sentences, duration, used = new Set()) {
         const dimOnly = hooded || bright || torch ? null : DIM.exec(sentence);
         if (!hooded && !torch && !bright && !dimOnly) continue;
         const more = bright ? /\bdim light (?:for|to) (?:the next )?(\d+) (?:feet|more feet)\b/i.exec(sentence.slice(bright.index)) : null;
-        const light = hooded ? { bright: 30, dim: 60 } : torch ? { bright: 20, dim: 40 } : bright ? { bright: Number(bright[1]), dim: Number(bright[1]) + (more ? Number(more[1]) : 0) } : { bright: 0, dim: Number(dimOnly[1]) };
+        // (Or its own glow, Boughshatter's "While under this effect, the morningstar glows with dim green light in a 20-foot radius", 2026-10-26.)
+        const light = hooded ? { bright: 30, dim: 60 } : torch ? { bright: 20, dim: 40 } : bright ? { bright: Number(bright[1]), dim: Number(bright[1]) + (more ? Number(more[1]) : 0) } : { bright: 0, dim: Number(dimOnly[1] ?? dimOnly[2]) };
         if (!/\bas long as\b|\bor until\b/i.test(sentence)) used.add(index);
         if (hooded) used.add(sentences.findIndex((later, at) => at > index && /\bwork as normal for a hooded lantern\b/i.test(later)));
         const later = sentences.slice(index + 1, index + 3);

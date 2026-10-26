@@ -37,6 +37,9 @@ const IGNITES_ONLY = /^Its damage only when the (\w+) ignites\.$/i;
 const RETCH_ONLY = /^The bonus is only to saves to reduce the sickened condition, and the creature attempts one such save at once\.$/i;
 const CHOSEN_IN_REACH = /^Choose a creature within reach \(you, or a sickened creature\)\.$/i;
 
+// (An illusion spell's disbelief undone, Storyteller's Opus's Hoodwink: "If you succeed, the creature doesn't disbelieve the illusion" — a note
+// Effect on it, as the user's ruling has illusions the GM's control, 2026-10-26.)
+const STILL_FOOLED = /^\{target\} \(success\): the creature doesn't disbelieve the illusion\.?$/i;
 const STAYS_PRONE = /^It drops prone as its first action on its next turn; on a critical failure, the target must spend all three actions on its next turn remaining prone(?: \(by hand\))?\.$/i;
 
 const AGAINST_PERSISTENT = /^(?:In addition, )?for (\d+|one|an?) (rounds?|minutes?|hours?) after drinking (?:the|this) potion, you gain an? \+(\d+) (?:(status|item|circumstance) )?bonus to (Fortitude|Reflex|Will) saving throws to avoid taking persistent (\w+) damage\.$/i;
@@ -175,6 +178,11 @@ export function withRowReadings(plan, html, item = null) {
             rows.success = { ...rows.success, effects: rows.success.effects.map((effect) => (effect?.kind === "heal" ? { ...effect, byCondition } : effect)) };
             drop(said(entry));
         }
+    }
+    // (Its disbelief undone on a success: a note Effect on the creature on both successes, the GM's line gone.)
+    if (plan.resolution.kind === "check" && (rows.success?.manualInstructions ?? []).some((line) => STILL_FOOLED.test(said(line)))) {
+        const fooled = { label: "Still fooled", text: "It doesn't disbelieve the illusion after all.", duration: null };
+        for (const degree of ["success", "criticalSuccess"]) if (rows[degree]) rows[degree] = { ...rows[degree], manualInstructions: (rows[degree].manualInstructions ?? []).filter((line) => !STILL_FOOLED.test(said(line))), noteEffects: [...(rows[degree].noteEffects ?? []), fooled] };
     }
     // (Its ignition's flat check: the card's, as it's thrown.)
     let ignite = null;

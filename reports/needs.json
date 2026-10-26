@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1269,
+  "entries": 1267,
   "results": {
    "none": 615,
-   "partial": 268,
+   "partial": 266,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -12,7 +12,7 @@
    "speeds": 22,
    "counteract": 17,
    "afflictions": 51,
-   "areas": 111,
+   "areas": 110,
    "moving": 85,
    "lasting": 64,
    "visibility": 50,
@@ -25,7 +25,7 @@
    "actions": 29,
    "no-rules": 37,
    "objects": 115,
-   "illusions": 44,
+   "illusions": 43,
    "removed": 4,
    "cooldown": 10,
    "vehicles": 20,
@@ -48,7 +48,7 @@
   },
   "any": {
    "speeds": 28,
-   "areas": 165,
+   "areas": 164,
    "immunity": 74,
    "objects": 390,
    "speech": 124,
@@ -70,7 +70,7 @@
    "actions": 59,
    "from-events": 38,
    "no-rules": 37,
-   "illusions": 57,
+   "illusions": 56,
    "removed": 5,
    "range": 4,
    "cooldown": 11,
@@ -518,17 +518,6 @@
     "objects",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Storyteller's Opus",
-   "kind": "activation",
-   "activation": "Hoodwink",
-   "result": "partial",
-   "main": "illusions",
-   "work": "disbelieve",
-   "needs": [
-    "illusions"
    ]
   },
   {
@@ -3424,17 +3413,6 @@
    "needs": [
     "strike",
     "reader"
-   ]
-  },
-  {
-   "name": "Boughshatter",
-   "kind": "activation",
-   "activation": "Absorb Corruption",
-   "result": "partial",
-   "main": "areas",
-   "work": "light in a 20-foot",
-   "needs": [
-    "areas"
    ]
   },
   {
