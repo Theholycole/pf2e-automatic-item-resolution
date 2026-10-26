@@ -1,15 +1,15 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1285,
+  "entries": 1283,
   "results": {
-   "none": 616,
+   "none": 615,
    "partial": 282,
    "builtin:no-effect": 129,
-   "note-only": 258
+   "note-only": 257
   },
   "main": {
-   "speeds": 24,
+   "speeds": 22,
    "counteract": 17,
    "afflictions": 51,
    "areas": 111,
@@ -47,10 +47,10 @@
    "by-kind": 6
   },
   "any": {
-   "speeds": 30,
-   "areas": 166,
+   "speeds": 28,
+   "areas": 165,
    "immunity": 74,
-   "objects": 391,
+   "objects": 390,
    "speech": 124,
    "out-of-combat": 421,
    "counteract": 80,
@@ -1484,18 +1484,6 @@
    "work": "as though by a successful",
    "needs": [
     "actions"
-   ]
-  },
-  {
-   "name": "Dragonaut's Wingsuit",
-   "kind": "activation",
-   "activation": "Drake's Glide",
-   "result": "none",
-   "main": "speeds",
-   "work": "fly speed",
-   "needs": [
-    "speeds",
-    "objects"
    ]
   },
   {
@@ -4690,17 +4678,6 @@
    "needs": [
     "actions",
     "reader"
-   ]
-  },
-  {
-   "name": "Three Bird Pinion",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "speeds",
-   "work": "levitate",
-   "needs": [
-    "speeds",
-    "areas"
    ]
   },
   {

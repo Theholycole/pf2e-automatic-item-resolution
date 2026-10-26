@@ -108,4 +108,10 @@ test("difficult terrain ignored: PF2e's own rule, its features ice, snow and pla
     const pattern = compileActivations(item("Frostwalker Pattern"))[0].plan.item.ruleEffects[0];
     assert.ok(pattern.rules.some((rule) => rule.path === "system.movement.terrain.greater.ignored" && rule.value.feature === "ice"));
     assert.match(pattern.words, /doesn't risk falling when crossing ice/);
+    // (Three Bird Pinion's levitation, 2026-10-26: both kinds of terrain, any feature, for its minute — whole.)
+    const pinion = compileItem(item("Three Bird Pinion"));
+    assert.deepEqual([pinion.item.ruleEffects[0].rules.map((rule) => [rule.path, rule.value.feature]), pinion.item.ruleEffects[0].duration.value, pinion.item.ruleEffects[0].duration.unit, Boolean(pinion.partial)], [[["system.movement.terrain.difficult.ignored", "all"], ["system.movement.terrain.greater.ignored", "all"]], 1, "minutes", false]);
+    // (Dragonaut's Wingsuit's Drake's Glide: its 20-foot fly Speed to the end of the turn for its two moves, a line of the card.)
+    const glide = compileActivations(item("Dragonaut's Wingsuit")).find((each) => each.activation.name === "Drake's Glide").plan;
+    assert.deepEqual([routeOf(glide), glide.item.speeds.map((speed) => [speed.type, speed.value, speed.duration.expiry]), glide.notes, Boolean(glide.partial)], ["item", [["fly", 20, "turn-end"]], ["Then take 2 move actions, each a Fly or a Stride (its own moves on the map)."], false]);
 });

@@ -15,13 +15,13 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 171,
-   "resolves": 783,
+   "resolves": 784,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
    "partial": 97,
    "builtin:ways": 27,
    "builtin:item-action": 16,
-   "note-only": 117,
+   "note-only": 116,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
    "builtin:no-effect": 43,
@@ -99,14 +99,14 @@
     "none": 25,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 67,
+    "resolves": 68,
     "builtin:no-effect": 7,
     "builtin:reroll": 1,
     "builtin:ways": 2,
     "builtin:counteract": 1,
     "builtin:teleport": 3,
     "builtin:cast-spell": 9,
-    "note-only": 6,
+    "note-only": 5,
     "partial": 6,
     "builtin:objects": 2,
     "builtin:roll-twice": 2
@@ -390,7 +390,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 618,
+   "resolves": 619,
    "gaps": 0,
    "none": 13
   }
@@ -9242,8 +9242,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

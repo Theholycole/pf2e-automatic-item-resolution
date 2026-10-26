@@ -5,6 +5,7 @@
 // Pure.
 
 import { chosenAllyPlan, withAllyEffectThenCard } from "./chosen-ally.js";
+import { moveActionsPlan } from "./move-actions.js";
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf, triggerOn } from "./activation.js";
@@ -489,6 +490,8 @@ function compileEach(item, options = {}) {
         // (What it gives the one willing ally its user chooses, PF2e's own rules on that ally's Effect, src/compiler/chosen-ally.js: Bewitching
         // Bloom's Cherry Blossom, Amaranth, Bellflower, Lilac, Red Rose.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenAllyPlan(activation.html, base) ?? plan;
+        // (Its user's own moves with a Speed for them, src/compiler/move-actions.js: Dragonaut's Wingsuit's Drake's Glide.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = moveActionsPlan(activation.html, base) ?? plan;
         // (Its allies' bonus beside its enemies' save — Horn of the Archon's "Allies in the area gain a +1 status bonus to attack rolls and saving
         // throws for 1 round" — the allies' card first, then the save's: plan.again.)
         // ("In the area" is the save's own emanation; the save's sentences, the allies' notes, are the save card's.)

@@ -907,6 +907,19 @@ function ruleEffectsOf(sentences, duration, used = new Set()) {
             found.push({ name: "difficult terrain ignored", words: `Ignores ${greater ? "difficult and greater difficult" : "difficult"} terrain${features.length ? ` from ${features.join(", ").replace("undergrowth", "plants and fungi")}` : ""}${falling ? `, and doesn't risk falling when crossing ${falling[1]}` : ""}`, rules, duration: time });
             continue;
         }
+        // (Levitating over it, Three Bird Pinion's "you become lighter than air, causing you to levitate 1 foot off the ground for 1 minute. While
+        // levitated this way, you can still move as normal, but you ignore most difficult, greater difficult, and hazardous terrain on the ground",
+        // 2026-10-26: PF2e's terrain rule for both kinds; the hazardous terrain and what "most" leaves out, its words.)
+        const levitated = /^While levitated this way, you can still move as normal, but you ignore most difficult, greater difficult, and hazardous terrain on the ground\.$/i.test(sentence.trim());
+        if (levitated) {
+            const lifted = sentences.findIndex((other, at) => at < index && /\bcausing you to levitate (\d+) foot off the ground for (?:\d+|one|an?) (?:rounds?|minutes?|hours?)\.$/i.test(other.trim()));
+            const height = lifted >= 0 ? /\blevitate (\d+) foot\b/i.exec(sentences[lifted])[1] : null;
+            const add = (path) => ({ key: "ActiveEffectLike", mode: "add", path, value: { environment: "all", feature: "all" } });
+            used.add(index);
+            if (lifted >= 0) used.add(lifted);
+            found.push({ name: "levitating", words: `Levitates${height ? ` ${height} foot` : ""} off the ground: ignores most difficult and greater difficult terrain on the ground, and its hazardous terrain`, rules: [add("system.movement.terrain.difficult.ignored"), add("system.movement.terrain.greater.ignored")], duration: lifted >= 0 ? durationIn(sentences[lifted], duration) : duration });
+            continue;
+        }
         // (Creatures Off-Guard to its user, Chiromantic Lines' "Until the end of the turn, all creatures you can see that are not Concealed or
         // hidden are Off-Guard to you": PF2e's EphemeralEffect of Off-Guard on its user's attacks and their damage, as PF2e's own Effects for
         // "off-guard to you" have it — not at a concealed or hidden one; whom its user sees, the table's.)

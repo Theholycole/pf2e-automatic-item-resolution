@@ -88,7 +88,9 @@ test("a Speed of a new kind: PF2e's BaseSpeed on the land Speed or a number, for
     assert.deepEqual([winged.type, winged.value, winged.duration.value, winged.duration.unit], ["fly", `min(25,${LAND})`, 5, "minutes"]);
     // Not one under a condition ("If you don't have a fly Speed, you gain a 20-foot fly Speed …"); breathing underwater in words beside it
     // (2026-10-25, test/reader-needs.test.js).
-    assert.equal(compileActivations(source("Dragonaut's Wingsuit")).find((entry) => entry.activation.name === "Drake's Glide").plan?.item?.speeds, undefined);
+    // (Dragonaut's Wingsuit's "If you don't have a fly Speed, you gain a 20-foot fly Speed for Fly actions from this activation" is the activation's
+    // own moves' Speed, src/compiler/move-actions.js — to the end of the turn, 2026-10-26.)
+    assert.deepEqual(compileActivations(source("Dragonaut's Wingsuit")).find((entry) => entry.activation.name === "Drake's Glide").plan?.item?.speeds?.map((speed) => [speed.type, speed.value]), [["fly", 20]]);
     assert.equal(compileActivations(source("Submersible Helmet"))[0].plan.partial, undefined);
     // Apply: the Effect with PF2e's BaseSpeed rule.
     const cloak = foundry.giveItem(monk, source("Umbral Wings"));
