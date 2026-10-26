@@ -156,3 +156,9 @@ test("Spark Wafer: a 5-foot burst placed within 20 feet for a round, its basic R
     assert.deepEqual([plan.builtin, plan.zone.centre, plan.zone.range, plan.zone.lasts.value, plan.zone.lasts.unit, plan.zone.light, plan.zone.saves[0].when, Boolean(plan.partial)], ["zone", "placed", 20, 1, "rounds", { bright: 5, dim: 10 }, ["start"], false]);
     assert.deepEqual([plan.zone.saves[0].plan.resolution.check.statistic, plan.zone.saves[0].plan.resolution.check.basic], ["reflex", true]);
 });
+
+test("Tarantula Ampoule: its critical failure's exposure to the venom is a follow-up save handing on the venom's stages, not the GM's line", () => {
+    const plan = compileItem(item("Tarantula Ampoule"));
+    const [follow] = plan.resolution.outcomes.criticalFailure.followUps;
+    assert.deepEqual([follow.check.statistic, follow.check.against.value, follow.afflictionHandoff.name, follow.afflictionHandoff.stages.length, follow.outcomes.failure.affliction.stage, plan.resolution.outcomes.criticalFailure.manualInstructions ?? null], ["fortitude", 23, "Giant Tarantula Venom", 4, 1, null]);
+});

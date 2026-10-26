@@ -282,10 +282,10 @@ test("routes for saves and checks read but not played: Frogskin Tincture's toxin
     const gorget = compileActivations(source("Gorget of the Primal Roar"))[0].plan;
     assert.deepEqual([activation("Gorget of the Primal Roar"), gorget.resolution.check.statistic, gorget.resolution.check.against.statistic, gorget.resolution.outcomes.criticalSuccess.effects.map((effect) => `${effect.slug} ${effect.value}`), gorget.resolution.outcomes.success.effects.map((effect) => `${effect.slug} ${effect.value}`)], ["save", "intimidation", "will", ["frightened 2"], ["frightened 1"]]);
     // Tarantula Ampoule's effigy: its Fortitude save at the creature it lunges at, a failure's piercing damage, a critical failure's
-    // exposure to its venom a note.
+    // exposure to its venom its follow-up save since 2026-10-26 (test/options-flow.test.js).
     const ampoule = compileItem(source("Tarantula Ampoule"));
     assert.deepEqual([consumable("Tarantula Ampoule"), ampoule.resolution.check.against.value, ampoule.resolution.outcomes.failure.damage.mode, ampoule.resolution.outcomes.success.damage.mode], ["save", 21, "formulas", "none"]);
-    assert.match(ampoule.resolution.outcomes.criticalFailure.manualInstructions.join(" "), /exposed to .*DC 23 Fortitude/);
+    assert.equal(ampoule.resolution.outcomes.criticalFailure.followUps[0].check.against.value, 23);
     const dew = compileItem(source("Elysian Dew"));
     assert.deepEqual([dew.resolution.kind, dew.resolution.applications.map((entry) => entry.label), consumable("Elysian Dew")], ["effect", ["Aura: Elysian Dew"], "item"]);
     assert.match(dew.notes.join(" "), /If you're unholy and drink this potion, .* a DC 30 Fortitude save or the potion renders you Drained 2\./);

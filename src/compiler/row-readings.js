@@ -31,6 +31,8 @@
 //   failure, the hit deals no damage.
 // Each sentence read is no longer a note. Pure.
 
+import { readAffliction } from "../../../pf2e-automatic-ability-resolution/src/compiler/afflictions.js";
+
 const IGNITE = /^You must succeed at a DC (\d+) flat check for the (\w+) to ignite successfully when it hits\.$/i;
 const IGNITES_ONLY = /^Its damage only when the (\w+) ignites\.$/i;
 
@@ -114,6 +116,34 @@ const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !CARD_LINES.has(
 
 // The plan and its (activation's) html → the plan with the rows that carry these.
 // (item: the item's own html, for what a sentence refers to there.)
+// (An affliction a degree exposes the creature to, its stat block in the item's text, Tarantula Ampoule's critical failure "it's also exposed to
+// tarantula venom": that row's follow-up save — the core's outcome.followUps, the ability module's next card — handing on the affliction's
+// stages as the ability compiler reads a stat block (readAffliction), in place of the GM's line. 2026-10-26.)
+const EXPOSED_LINE = /^\{target\} is exposed to [^:]+: a DC (\d+) (Fortitude|Reflex|Will) save against it \(its stages are in the ability's text\)\.?$/i;
+const STAT_BLOCK = /<p>\s*<strong>([^<]+)<\/strong>\s*\(([^)]*)\)\s*<\/p>([\s\S]*?<strong>\s*Saving Throw\s*<\/strong>[\s\S]*?<strong>\s*Stage 1\s*<\/strong>[\s\S]*?)(?=<hr|<p>\s*<strong>\s*Craft Requirements|$)/i;
+function withExposure(plan, itemHtml) {
+    const rows = plan?.resolution?.outcomes;
+    if (plan?.resolution?.kind !== "save" || !rows) return plan;
+    const entries = Object.entries(rows).filter(([, row]) => (row?.manualInstructions ?? []).some((line) => EXPOSED_LINE.test(said(line))));
+    const block = entries.length ? STAT_BLOCK.exec(String(itemHtml ?? "")) : null;
+    const affliction = block ? readAffliction({ name: block[1].trim(), system: { slug: null, traits: { value: block[2].split(/,\s*/).map((trait) => trait.trim().toLowerCase()).filter(Boolean) }, description: { value: block[3] } } }) : null;
+    if (!affliction) return plan;
+    const stage = (value) => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], affliction: { name: affliction.name, stage: Math.min(value, affliction.stages.length) } });
+    const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [] });
+    const followUp = { kind: "save", check: { roll: "save", statistic: affliction.statistic, basic: false, against: { dc: "fixed", value: affliction.dc } }, outcomes: { criticalSuccess: none(), success: none(), failure: stage(1), criticalFailure: stage(2) }, afflictionHandoff: affliction };
+    const next = { ...rows };
+    for (const [degree, row] of entries) {
+        const lines = row.manualInstructions.filter((line) => !EXPOSED_LINE.test(said(line)));
+        next[degree] = { ...row, followUps: [...(row.followUps ?? []), followUp], ...(lines.length ? { manualInstructions: lines } : { manualInstructions: undefined }) };
+    }
+    const result = { ...plan, resolution: { ...plan.resolution, outcomes: next } };
+    if (result.partial && leftOver(result)) {
+        delete result.partial;
+        result.automation = { ...(result.automation ?? {}), level: "automatic" };
+    }
+    return result;
+}
+
 // (Its Prone only for a creature on the ground, Drake Rifle (Fire)'s Drake Shot: "A target that isn't on the ground doesn't fall Prone" — the
 // Strike's strike.groundedProne, its rows' Prone left off for a target above the ground as the riders apply, src/live/if-target.js.)
 const GROUNDED = /^A target that isn't on the ground doesn't fall Prone\.$/i;
@@ -132,7 +162,7 @@ function withGroundedProne(plan) {
 }
 
 export function withRowReadings(given, html, item = null) {
-    const plan = withGroundedProne(given);
+    const plan = withExposure(withGroundedProne(given), item?.system?.description?.value ?? html);
     const outcomes = plan?.resolution?.outcomes;
     if (!outcomes || plan.builtin) return plan;
     let next = plan;

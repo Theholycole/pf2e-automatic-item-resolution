@@ -1,17 +1,17 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1246,
+  "entries": 1245,
   "results": {
    "none": 611,
-   "partial": 249,
+   "partial": 248,
    "builtin:no-effect": 129,
    "note-only": 257
   },
   "main": {
    "speeds": 22,
    "counteract": 17,
-   "afflictions": 50,
+   "afflictions": 49,
    "areas": 109,
    "moving": 83,
    "lasting": 63,
@@ -54,7 +54,7 @@
    "speech": 124,
    "out-of-combat": 415,
    "counteract": 80,
-   "afflictions": 92,
+   "afflictions": 91,
    "lasting": 208,
    "moving": 107,
    "triggers": 126,
@@ -9108,16 +9108,6 @@
     "from-events",
     "afflictions",
     "immunity"
-   ]
-  },
-  {
-   "name": "Tarantula Ampoule",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "stages",
-   "needs": [
-    "afflictions"
    ]
   },
   {
