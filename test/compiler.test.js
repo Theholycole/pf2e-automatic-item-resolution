@@ -992,6 +992,8 @@ test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage t
     // (Resolute Shield's "up to twice the shield's Hardness": its Hardness 12 doubled, resistance to the triggering physical damage.)
     const [resolute] = compileActivations(item("Resolute Shield"));
     assert.deepEqual([resolute.plan.builtin, resolute.plan.bonus.resistance], ["readied-bonus", { type: "physical", value: 24 }]);
+    // (And "You and the shield each take any remaining damage": the shield's share, scripts/shield-share.js — whole.)
+    assert.deepEqual([resolute.plan.bonus.shieldShare, resolute.plan.partial], [true, undefined]);
     // (Rusting Carapace's rust at a creature, Last Hope's dice typed for the undead, Briar's Stunned save.)
     const [rust] = compileActivations(item("Rusting Carapace"));
     assert.deepEqual([rust.plan.resolution.sharedDamage.components[0].formula, rust.plan.resolution.check.basic, rust.plan.resolution.outcomes.failure.damage.formulas[0].formula], ["8d6[untyped]", true, "2d6[persistent,untyped]"]);

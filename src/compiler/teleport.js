@@ -42,6 +42,9 @@ const ALONE = /^(?:If this would bring another creature with you\s*[—–-]\s*e
 // (Damage along the way, Quartz-Coil Rail Transport's "You and all creatures in a line between your original location and your destination take
 // 4 electricity damage": teleport.line, dealt by the card once the token's moved.)
 const LINE = /^You and all creatures in a line between your original location and your destination take (\d+(?:d\d+)?(?:\+\d+)?) (acid|cold|electricity|fire|force|sonic|vitality|void|bludgeoning|piercing|slashing|mental|poison|spirit) damage\.$/i;
+// (A space it must have line of effect to, Golden Spur's: teleport.lineOfEffect — no wall that blocks movement between its user and the space,
+// scripts/teleport.js.)
+const LINE_OF_EFFECT = /^You must have line of effect to the space\.$/i;
 // (Its other rule sentences: not its flavor.)
 const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|reaction|spell|creatures?|line of effect|If|must)\b/;
 
@@ -81,9 +84,10 @@ export function teleportPlan(html, base, whole = null) {
     const critical = sentences.map((sentence) => CRITICAL.exec(sentence)).find(Boolean);
     const alone = sentences.map((sentence) => ALONE.exec(sentence)).find(Boolean);
     const line = sentences.map((sentence) => LINE.exec(sentence)).find(Boolean);
-    const own = (sentence) => sentence.includes(read.match[0]) || read.match[0].includes(sentence) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence);
+    const lineOfEffect = sentences.some((sentence) => LINE_OF_EFFECT.test(sentence));
+    const own = (sentence) => sentence.includes(read.match[0]) || read.match[0].includes(sentence) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence) || LINE_OF_EFFECT.test(sentence);
     const notes = sentences.filter((sentence) => !own(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
-    const teleport = { within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}) };
+    const teleport = { within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
     return {
         ...base,
         builtin: "teleport",

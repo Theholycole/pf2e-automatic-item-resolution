@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1323,
+  "entries": 1318,
   "results": {
-   "partial": 399,
+   "partial": 394,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -17,14 +17,14 @@
    "moving": 92,
    "visibility": 48,
    "choice": 31,
-   "lasting": 69,
+   "lasting": 67,
    "strike": 107,
    "spells": 36,
    "information": 23,
    "out-of-combat": 35,
-   "no-rules": 12,
+   "no-rules": 10,
    "actions": 32,
-   "immunity": 26,
+   "immunity": 25,
    "creatures": 63,
    "mind": 6,
    "objects": 110,
@@ -51,13 +51,13 @@
    "cast-changes": 25,
    "speeds": 30,
    "areas": 198,
-   "immunity": 87,
+   "immunity": 86,
    "objects": 388,
    "speech": 130,
    "out-of-combat": 438,
    "counteract": 98,
    "afflictions": 104,
-   "lasting": 236,
+   "lasting": 234,
    "moving": 120,
    "triggers": 124,
    "visibility": 50,
@@ -65,12 +65,12 @@
    "choice": 110,
    "several": 106,
    "strike": 203,
-   "reader": 213,
+   "reader": 211,
    "spells": 76,
    "information": 199,
    "actions": 64,
    "from-events": 29,
-   "no-rules": 12,
+   "no-rules": 10,
    "situational": 85,
    "creatures": 63,
    "mind": 65,
@@ -1287,17 +1287,6 @@
     "forms",
     "lasting",
     "choice",
-    "reader"
-   ]
-  },
-  {
-   "name": "Enveloping Light (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "work": "at the end of each of your turns",
-   "needs": [
-    "lasting",
     "reader"
    ]
   },
@@ -5072,16 +5061,6 @@
    ]
   },
   {
-   "name": "Elemental Wayfinder (Fire)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "immunity",
-   "work": "resistance 5",
-   "needs": [
-    "immunity"
-   ]
-  },
-  {
    "name": "Oxygen Ooze",
    "kind": "consumable",
    "result": "note-only",
@@ -6882,15 +6861,6 @@
    "work": "counteract",
    "needs": [
     "counteract"
-   ]
-  },
-  {
-   "name": "Golden Spur",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -9057,16 +9027,6 @@
     "visibility",
     "triggers",
     "information"
-   ]
-  },
-  {
-   "name": "Resolute Shield",
-   "kind": "activation",
-   "activation": "Stand Firm",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -14294,17 +14254,6 @@
    "work": "bomb fitted",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Enveloping Light",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "work": "at the end of each of your turns",
-   "needs": [
-    "lasting",
-    "reader"
    ]
   },
   {

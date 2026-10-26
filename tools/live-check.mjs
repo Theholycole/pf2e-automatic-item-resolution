@@ -1093,7 +1093,14 @@ export const cases = {
         await wait(800);
         const resistances = wearer.attributes.resistances ?? [];
         assert(resistances.some((entry) => entry.type === "physical" && entry.value === 24), `resistance 24 to physical (${JSON.stringify(resistances.map((entry) => [entry.type, entry.value]))})`);
-        return { resistances: resistances.map((entry) => `${entry.type} ${entry.value}`) };
+        // ("You and the shield each take any remaining damage": 30 bludgeoning less 24 — 6 to its user, and 6 to the shield.)
+        const hp = wearer.system.attributes.hp.value;
+        const shieldHP = shield.system.hp.value;
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await wearer.applyDamage({ damage: await new DamageRoll("30[bludgeoning]").evaluate(), token: wearer.getActiveTokens(true, true)[0] });
+        await until(() => shield.system.hp.value === shieldHP - 6, `the shield's 6 (${shieldHP} → ${shield.system.hp.value})`, { timeout: 8000 });
+        assert(wearer.system.attributes.hp.value === hp - 6, `its user's 6: ${hp} → ${wearer.system.attributes.hp.value}`);
+        return { resistances: resistances.map((entry) => `${entry.type} ${entry.value}`), shield: [shieldHP, shield.system.hp.value], hp: [hp, wearer.system.attributes.hp.value] };
     },
 
     // Potion of Resistance: the type picked on the card (fire, the fourth) — PF2e's Resistance 5 to fire for an hour.
@@ -4023,6 +4030,27 @@ export const cases = {
         return { refused, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Golden Spur: within 10 feet of the creature targeted, with line of effect — a space past a wall (the lab's own, gone with it) refused, one
+    // on this side taken.
+    async goldenSpurWall(scene) {
+        await clearSquares(scene, [[1, 9], [3, 9], [5, 9], [3, 10]]);
+        const { actor: rider, token } = await creature(scene, "Spur Rider", { type: "character", x: 1, y: 9 });
+        const { token: foe } = await creature(scene, "Spur Mark", { x: 3, y: 9, alliance: "opposition" });
+        const size = canvas.grid.size;
+        await scene.createEmbeddedDocuments("Wall", [{ c: [4 * size, 7 * size, 4 * size, 12 * size], move: CONST.WALL_MOVEMENT_TYPES.NORMAL, sight: CONST.WALL_SENSE_TYPES.NORMAL, flags: { [NS]: { [FIXTURE]: true } } }]);
+        const spur = await give(rider, "Golden Spur");
+        const since = Date.now();
+        await spur.consume();
+        const card = await messageAfter(since, itemCard("teleport"), { what: "the teleport card" });
+        assert(/line of effect/.test(card.content), "the card's line of effect");
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 5 * size, y: 9 * size }, targets: [foe.uuid] }).catch((error) => { refused = error.message; });
+        assert(/no line of effect/.test(refused ?? ""), `past the wall refused (${refused})`);
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 3 * size, y: 10 * size }, targets: [foe.uuid] });
+        await until(() => token.x === 3 * size && token.y === 10 * size, `the rider teleported (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+        return { refused };
+    },
+
     // Whip-Tongue Sling's Tongue Twister: its user's Athletics against Fortitude DC 18 (an 18 on the die, a success); once applied, its
     // user picks the space — up to 15 feet from where the creature was, within 20 feet of them: 20 feet off refused, 25 feet from its user
     // refused, then moved.
@@ -6140,6 +6168,27 @@ export const cases = {
         await until(() => effect(), `the cast's Effect (${wearer.itemTypes.effect.map((entry) => entry.name).join(", ")})`, { timeout: 10000 });
         await until(() => effect().system.duration.value === 5 && effect().system.duration.unit === "minutes", `5 minutes (${JSON.stringify(effect().system.duration)})`, { timeout: 8000 });
         return { effect: effect().name, duration: effect().system.duration, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Enveloping Light: Light cast, and an Effect on its user for 5 rounds that heals 1d4 at the end of each of its turns (the end of a turn
+    // called as PF2e's hook would).
+    async envelopingHeal(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: wearer, token } = await creature(scene, "Glowing Wearer", { x: 2, y: 18, hp: 20 });
+        await wearer.update({ "system.attributes.hp.value": 10 });
+        const tattoo = await give(wearer, "Enveloping Light");
+        await token.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(tattoo.uuid, 0);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        await until(() => wearer.itemTypes.effect.some((effect) => effect.getFlag(NS, "turnHeal")), "the turn heal Effect", { timeout: 15000 });
+        const effect = wearer.itemTypes.effect.find((entry) => entry.getFlag(NS, "turnHeal"));
+        assert(effect.system.duration.value === 5 && effect.system.duration.unit === "rounds", `5 rounds (${JSON.stringify(effect.system.duration)})`);
+        const { turnEndHeal } = await import("../scripts/turn-heal.js");
+        const lines = await turnEndHeal(wearer, token);
+        assert(wearer.system.attributes.hp.value > 10, `healed (${wearer.system.attributes.hp.value})`);
+        return { lines, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
     // Medusa's Scream's Petrify at the shield's 30 feet: a creature 40 feet off refused, one 25 feet off cast at.

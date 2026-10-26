@@ -29,7 +29,7 @@ export function teleportText(teleport, { speed = null, weaponRange = null } = {}
     return teleport?.from === "target" ? (range === 5 ? "To a space adjacent to the creature targeted" : `Within ${range} feet of the creature targeted`) : `Up to ${range} feet`;
 }
 
-// Its other lines: the farther range after a critical success, its user alone, the damage along the way.
+// Its other lines: the farther range after a critical success, its user alone, the damage along the way, line of effect.
 export function teleportLines(teleport) {
     return [
         // (Its user's own move, src/compiler/move.js: what it ignores, how it ends.)
@@ -40,7 +40,8 @@ export function teleportLines(teleport) {
         ...(teleport?.place?.lines ?? []),
         teleport?.critical ? `Within ${teleport.critical.within} feet instead if the triggering save was a critical success (tick it before Pick)` : null,
         teleport?.alone ? `Its user alone, with what they wear and hold: with another creature along, even in an extradimensional container, it fails${teleport.alone.used ? " and the activation is used" : ""}` : null,
-        teleport?.line ? `${teleport.line.formula} ${teleport.line.type} damage to its user and each creature in the line between where it was and where it lands` : null
+        teleport?.line ? `${teleport.line.formula} ${teleport.line.type} damage to its user and each creature in the line between where it was and where it lands` : null,
+        teleport?.lineOfEffect ? "Its user must have line of effect to the space: no wall in the way" : null
     ].filter(Boolean);
 }
 

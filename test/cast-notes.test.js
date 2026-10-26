@@ -70,3 +70,8 @@ test("a cast's own range: Medusa's Scream's 30-foot Petrify (the spell's is 120)
     assert.equal(rangeWords(scream.castRange), "range 30 feet");
     assert.equal(first("Tiger Shield").castRange.reach, true);
 });
+
+test("healing at the end of each turn beside a cast, for the item's time: Enveloping Light's 1d4 for 5 rounds", () => {
+    const light = first("Enveloping Light");
+    assert.deepEqual([light.turnHeal.formula, light.castDuration.value, light.castDuration.unit, light.partial], ["1d4", 5, "rounds", undefined]);
+});

@@ -798,6 +798,10 @@ test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spu
     assert.equal(compileActivations(item("Master Magus Ring"))[1].plan.teleport.alone.used, true, "the activation fails and is used");
     assert.equal(teleportText(compileItem(item("Mad Mammoth's Juke")).teleport), "Up to 200 feet");
     assert.equal(teleportText(compileItem(item("Golden Spur")).teleport), "Within 10 feet of the creature targeted");
+    // (Its "You must have line of effect to the space": the card's check for a wall in the way, and its line.)
+    const spur = compileItem(item("Golden Spur"));
+    assert.deepEqual([spur.teleport.lineOfEffect, spur.partial], [true, undefined]);
+    assert.ok(teleportLines(spur.teleport).includes("Its user must have line of effect to the space: no wall in the way"));
     const [, twirl] = compileActivations(item("Mercurial Mantle"));
     assert.equal(teleportText(twirl.plan.teleport, { speed: 25 }), "Up to double its user's Speed (50 feet)");
     assert.equal(teleportText(compileActivations(item("Gloaming Shard"))[0].plan.teleport), "To a space adjacent to the creature targeted");

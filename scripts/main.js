@@ -25,6 +25,8 @@ import { setUpAfterEnds } from "./after-ends.js";
 import { setUpShortenOnHit } from "./shorten-on-hit.js";
 import { setUpToggleOff } from "./toggle-off.js";
 import { setUpCastDurations } from "./cast-duration.js";
+import { setUpShieldShare } from "./shield-share.js";
+import { setUpTurnHeals } from "./turn-heal.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
@@ -166,6 +168,10 @@ Hooks.once("ready", async () => {
     setUpToggleOff();
     // (A cast's Effects at the item's duration, Dust of Disappearance's minute: scripts/cast-duration.js.)
     setUpCastDurations();
+    // (A shield that takes what gets through too, Resolute Shield's: scripts/shield-share.js.)
+    setUpShieldShare();
+    // (Healing at the end of each of its user's turns beside a cast, Enveloping Light's: scripts/turn-heal.js.)
+    setUpTurnHeals();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

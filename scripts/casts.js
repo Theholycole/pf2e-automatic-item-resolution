@@ -5,6 +5,7 @@ import { castCardHTML, castRequest, chosenSpell, createCastCard, needsTargets, s
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, spaceOf, stateOf } from "./foundry.js";
 import { rememberCastDuration } from "./cast-duration.js";
+import { rememberTurnHeal } from "./turn-heal.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -53,6 +54,9 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
         const lasts = state.plan.castDuration ? await rememberCastDuration(cast, state.plan.castDuration, { actor, targets: targetTokens }) : null;
         if (lasts) lines.push(lasts);
+        // (Healing at the end of each of its user's turns for the item's time: scripts/turn-heal.js.)
+        const heals = state.plan.turnHeal ? await rememberTurnHeal(state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor, state.plan.turnHeal, { item: state.item, duration: state.plan.castDuration }) : null;
+        if (heals) lines.push(heals);
     }
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: castCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

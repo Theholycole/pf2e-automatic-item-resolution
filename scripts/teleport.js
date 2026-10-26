@@ -74,6 +74,16 @@ export function spaceProblem(token, at, { from = null, range = null } = {}) {
     return null;
 }
 
+// Whether a wall that blocks movement stands between the centre of the token's space and the centre of the space at { x, y } (Foundry's move
+// collision): no line of effect.
+export function wallBetween(token, at) {
+    const size = canvas.grid.size;
+    const half = { x: ((Number(token.width) || 1) * size) / 2, y: ((Number(token.height) || 1) * size) / 2 };
+    const backend = CONFIG.Canvas.polygonBackends?.move;
+    if (!backend?.testCollision) return false;
+    return Boolean(backend.testCollision({ x: Number(token.x) + half.x, y: Number(token.y) + half.y }, { x: at.x + half.x, y: at.y + half.y }, { type: "move", mode: "any" }));
+}
+
 // The creatures (token documents) whose spaces the line from the centre of the token's old space to the centre of its new one crosses: not
 // its own, nor a hidden one.
 export function creaturesOnLine(token, start, end) {
@@ -119,6 +129,7 @@ export async function applyTeleportCard(message, { destination = null, targets =
     const at = { x: Number(destination.x), y: Number(destination.y) };
     const problem = spaceProblem(token, at, { from: aimed ?? token, range });
     if (problem) throw new Error(`${state.item.name}: ${problem}.`);
+    if (teleport.lineOfEffect && wallBetween(token, at)) throw new Error(`${state.item.name}: ${state.user.name} has no line of effect to that space (a wall is in the way).`);
     // (A move that must end beside an ally, Squire's Tabard's: a creature PF2e counts its ally — its alliance, isAllyOf — within 5 feet of
     // the space; without it, its token's disposition.)
     if (teleport.move?.endsBeside === "ally") {
