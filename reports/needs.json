@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1182,
+  "entries": 1180,
   "results": {
-   "none": 592,
+   "none": 590,
    "partial": 210,
    "note-only": 257,
    "builtin:no-effect": 123
@@ -13,7 +13,7 @@
    "counteract": 16,
    "afflictions": 47,
    "areas": 109,
-   "moving": 80,
+   "moving": 78,
    "visibility": 46,
    "lasting": 61,
    "choice": 33,
@@ -56,8 +56,8 @@
    "counteract": 79,
    "afflictions": 88,
    "lasting": 206,
-   "moving": 104,
-   "triggers": 121,
+   "moving": 102,
+   "triggers": 119,
    "visibility": 48,
    "dying": 72,
    "choice": 103,
@@ -6402,17 +6402,6 @@
    ]
   },
   {
-   "name": "Little Love",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "work": "leap",
-   "needs": [
-    "moving",
-    "triggers"
-   ]
-  },
-  {
    "name": "Camouflaging Chromatophores (Lesser)",
    "kind": "activation",
    "activation": "Background Adaptation",
@@ -11396,17 +11385,6 @@
    "work": "any-tool",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Viper Rapier",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "work": "step",
-   "needs": [
-    "moving",
-    "triggers"
    ]
   },
   {

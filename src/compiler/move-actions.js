@@ -48,3 +48,20 @@ export function alliesMovePlan(html, base) {
         notes: [`Up to ${count} allies that can hear it can use a reaction to ${moves[2]} ${moves[3]} feet (their own moves on the map).`]
     };
 }
+
+// Its user's own one move as the whole of it (2026-10-26): Viper Rapier's reaction "With a slight, obviously mocking bow or curtsy, you Step.",
+// Little Love's "You Leap (or Vault, if you're Spring-Heeled Jack)." Its user's own move on the map: a line of the card, nothing to apply.
+const OWN_MOVE = /^(?:[^.]+?, )?you (Step|Stride|Leap)( \([^)]*\))?\.$/i;
+export function ownMovePlan(html, base) {
+    const sentences = SENTENCES(plainOf(html).replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, ""));
+    const move = sentences.length === 1 ? OWN_MOVE.exec(sentences[0]) : null;
+    if (!move) return null;
+    return {
+        ...base,
+        automation: { level: "automatic" },
+        targeting: { target: null, range: null, area: null },
+        trigger: { event: "use" },
+        resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
+        notes: [`${move[1].charAt(0).toUpperCase()}${move[1].slice(1).toLowerCase()}${move[2] ?? ""} (its own move on the map).`]
+    };
+}

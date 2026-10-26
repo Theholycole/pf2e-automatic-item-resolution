@@ -578,3 +578,8 @@ test("Guiding Cajon Drum: up to 2 allies' own reaction Strides of 5 feet, a line
     const plan = planOf("Guiding Cajon Drum");
     assert.deepEqual([Boolean(plan.partial), plan.notes], [false, ["Up to 2 allies that can hear it can use a reaction to Stride 5 feet (their own moves on the map)."]]);
 });
+
+test("Viper Rapier's Step and Little Love's Leap: its user's own one move, a line of the card", () => {
+    assert.deepEqual([planOf("Viper Rapier", 1).notes, Boolean(planOf("Viper Rapier", 1).partial)], [["Step (its own move on the map)."], false]);
+    assert.deepEqual(planOf("Little Love").notes, ["Leap (or Vault, if you're Spring-Heeled Jack) (its own move on the map)."]);
+});
