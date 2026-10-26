@@ -162,6 +162,8 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const chosen = state.own ? [ownToken].filter(Boolean) : Array.isArray(targets) && targets.length ? targets : state.plan?.struckToken ? [state.plan.struckToken] : [];
     const tokens = (await Promise.all(chosen.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
     if (!tokens.length) throw new Error(state.own ? `${state.user.name} has no token here.` : "Target the creatures first.");
+    // (No more enemies than its warriors, Spiritual Warhorn's.)
+    if (Number(state.plan?.ownCheck?.warriors) > 0 && tokens.length > Number(state.plan.ownCheck.warriors)) throw new Error(`${state.item.name}: target up to ${state.plan.ownCheck.warriors} enemies.`);
     // (A retaliation only for creatures of a trait, a third-party salve's oozes: another refused.)
     const only = state.plan?.retaliation?.only?.traits ?? [];
     const traitsOf = (token) => new Set([...(token.actor?.system?.traits?.value ?? []), ...(token.actor?.traits ?? [])]);
@@ -220,6 +222,15 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
             }
             carded.push(...group.tokens);
             await postCard({ plan: group.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: group.tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
+        }
+        // (Warriors beyond the enemies targeted, Spiritual Warhorn's: each Strikes them again in turn, a card of its own.)
+        const warriors = Number(played?.ownCheck?.warriors) || 0;
+        if (warriors > tokens.length && carded.length) {
+            for (let extra = tokens.length; extra < warriors; extra++) {
+                const token = carded[extra % carded.length];
+                await postCard({ plan: played, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: [token.object ?? token], cause: `${state.item.name}: warrior ${extra + 1} of ${warriors}` });
+            }
+            lines.push(`${warriors - tokens.length} more warrior${warriors - tokens.length === 1 ? "" : "s"}: ${warriors - tokens.length === 1 ? "its card follows" : "their cards follow"}.`);
         }
         const cardedNames = carded.map((token) => token.name ?? token.actor?.name).join(", ");
         if (carded.length) lines.push(state.delivery ? `${cardedNames}: exposed to ${state.item.name} (its save card follows).` : `${cardedNames}: ${state.item.name}'s ${["automatic", "skill"].includes(state.plan?.resolution?.check?.roll) ? "" : "save "}card follows.`);

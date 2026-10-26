@@ -119,7 +119,7 @@ export function readOwnCheck(given) {
     if (warriorStrike) {
         const count = COUNTS[warriors[1].toLowerCase()] ?? Number(warriors[1]);
         const range = WARRIOR_RANGE.exec(String(text ?? ""))?.[1];
-        return { kind: "attack", range: null, count, reach: range ? `${range} feet` : null, modifier: Number(warriors[2]), formula: warriorStrike[1].replace(/\s+/g, ""), category: null, type: warriorStrike[2].toLowerCase(), notes: [`${count} warriors, each Striking one of the enemies you target; the GM rolls any more at the same enemy.`] };
+        return { kind: "attack", range: null, count, reach: range ? `${range} feet` : null, modifier: Number(warriors[2]), formula: warriorStrike[1].replace(/\s+/g, ""), category: null, type: warriorStrike[2].toLowerCase(), notes: [], warriors: count };
     }
     for (const [index, sentence] of sentences.entries()) {
         if (MANY.test(sentence)) continue;
@@ -149,7 +149,10 @@ export function ownCheckPlan(text, base, options = {}) {
     if (!read) return null;
     // (Its user's own attack, picked on the card — at least the item's modifier when it says "whichever is higher".)
     const own = read.choose ? { choose: read.choose, ...(read.atLeast ? { atLeast: read.modifier } : {}) } : {};
-    const common = { ...base, modelVersion: MODEL_VERSION, automation: { level: read.notes.length ? "guided" : "automatic" }, trigger: { event: "use" }, ownCheck: { kind: read.kind, modifier: read.modifier, ...own }, notes: read.notes, ...(read.notes.length ? { partial: true } : {}) };
+    // (Warriors, each a Strike of its own: as many cards as warriors — fewer enemies targeted, the rest Strike them again in turn, scripts/poisons.js
+    // applyExposureCard; each target's damage its own roll. Its line on the card, 2026-10-25.)
+    const warriorLine = read.warriors ? [`${read.warriors} warriors, each Striking one of the enemies you target; with fewer targeted, the rest Strike them again in turn (a card each).`] : [];
+    const common = { ...base, modelVersion: MODEL_VERSION, automation: { level: read.notes.length ? "guided" : "automatic" }, trigger: { event: "use" }, ownCheck: { kind: read.kind, modifier: read.modifier, ...own, ...(read.warriors ? { warriors: read.warriors } : {}) }, notes: [...read.notes, ...warriorLine], ...(read.notes.length ? { partial: true } : {}) };
     if (read.kind === "maneuver") {
         const basic = options.basicActions?.[read.slug];
         if (!basic?.resolution?.check || basic.builtin) return null;
@@ -173,7 +176,7 @@ export function ownCheckPlan(text, base, options = {}) {
     return {
         ...common,
         targeting: { target: read.count ? `up to ${read.count} enemies` : "1 creature", range: read.reach ?? null, area: null },
-        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: read.modifier }, sharedDamage: { rollOnce: true, components: extra ? [component, extra] : [component] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } },
+        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: read.modifier }, sharedDamage: { rollOnce: !read.warriors, components: extra ? [component, extra] : [component] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } },
         ...(read.typeChoices ? { damageChoices: read.typeChoices.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)}`, formula: `${read.formula}[${type}]` })) } : {})
     };
 }

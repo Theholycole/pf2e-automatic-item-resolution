@@ -175,6 +175,24 @@ test("Spiritual Warhorn: its warriors' Strikes at the item's modifier, at up to 
     assert.equal(routeOf(horn), "save");
     assert.deepEqual([horn.resolution.check.modifier, component(horn).formula, component(horn).type, horn.targeting.target, horn.targeting.range], [17, "2d6", "force", "up to 4 enemies", "60 feet"]);
     assert.deepEqual([horn.resolution.outcomes.criticalSuccess.damage.multiplier, horn.resolution.outcomes.success.damage.multiplier, horn.resolution.outcomes.failure.damage.mode], [2, 1, "none"]);
+    // (Each warrior's Strike its own damage roll; the card's line says the rest Strike again, 2026-10-25.)
+    assert.deepEqual([horn.ownCheck.warriors, horn.resolution.sharedDamage.rollOnce, horn.partial, horn.notes], [4, false, undefined, ["4 warriors, each Striking one of the enemies you target; with fewer targeted, the rest Strike them again in turn (a card each)."]]);
+});
+
+test("Spiritual Warhorn live: one enemy targeted, all four warriors' Strikes at it, a card each; more enemies than warriors refused", async () => {
+    const bugler = foundry.makeActor({ id: "damage-bugler", name: "Bugler", owners: ["player"] });
+    foundry.place(bugler, 400, 17000);
+    const horn = foundry.giveItem(bugler, source("Spiritual Warhorn (Moderate)"));
+    const data = horn.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: horn.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: bugler.id }, actor: bugler, token: bugler.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    const before = foundry.posted.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [brute.token.uuid] });
+    await settle();
+    const posted = foundry.posted.slice(before);
+    assert.deepEqual([posted.length, posted.every((entry) => entry.tokens.length === 1)], [4, true]);
 });
 
 test("Potion of Fire Retaliation: its damage to a creature that touches the drinker, on a card kept open for its minute", async () => {

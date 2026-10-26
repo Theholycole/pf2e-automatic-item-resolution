@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1328,
+  "entries": 1324,
   "results": {
    "none": 627,
-   "partial": 308,
+   "partial": 304,
    "builtin:no-effect": 129,
    "note-only": 264
   },
@@ -35,7 +35,7 @@
    "triggers": 97,
    "immunity": 27,
    "situational": 20,
-   "creatures": 57,
+   "creatures": 53,
    "dying": 31,
    "speech": 18,
    "from-events": 7,
@@ -77,7 +77,7 @@
    "cooldown": 11,
    "vehicles": 24,
    "situational": 82,
-   "creatures": 57,
+   "creatures": 53,
    "forms": 25,
    "fortune": 10,
    "retaliation": 3,
@@ -2650,16 +2650,6 @@
    "needs": [
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Spiritual Warhorn (Lesser)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "creatures",
-   "work": "warriors",
-   "needs": [
-    "creatures"
    ]
   },
   {
@@ -6448,16 +6438,6 @@
    ]
   },
   {
-   "name": "Spiritual Warhorn (Major)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "creatures",
-   "work": "warriors",
-   "needs": [
-    "creatures"
-   ]
-  },
-  {
    "name": "Wraithweave Patch (Type I)",
    "kind": "activation",
    "result": "none",
@@ -7824,16 +7804,6 @@
     "dying",
     "lasting",
     "objects"
-   ]
-  },
-  {
-   "name": "Spiritual Warhorn (Moderate)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "creatures",
-   "work": "warriors",
-   "needs": [
-    "creatures"
    ]
   },
   {
@@ -12693,16 +12663,6 @@
    "needs": [
     "strike",
     "spells"
-   ]
-  },
-  {
-   "name": "Spiritual Warhorn (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "creatures",
-   "work": "warriors",
-   "needs": [
-    "creatures"
    ]
   },
   {

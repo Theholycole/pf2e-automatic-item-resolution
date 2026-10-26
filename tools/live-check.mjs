@@ -1623,6 +1623,52 @@ export const cases = {
         return { size: foe.system.traits.size.value, enfeebled: foe.getCondition("enfeebled").value };
     },
 
+    // Life's Last Breath's Envision at a creature that fails its Fortitude save: its void damage, and its user's temporary Hit Points of that
+    // damage. Blast Lance at a creature that fails: the push the row makes, the Stride after it a line on the save card's item card.
+    async damageAndPush(scene) {
+        // (In the lab, the push's squares free: 10 feet east of the target, Avalanche Boots' row.)
+        await clearSquares(scene, [[10, 14], [11, 14], [12, 14], [13, 14]]);
+        const { actor: user } = await creature(scene, "Breath Wielder", { type: "character", x: 10, y: 14, level: 18 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Lance Target", { x: 11, y: 14, hp: 400, save: 0, alliance: "opposition" });
+        const saveAt = async (item, index, what) => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, index);
+            const card = await messageAfter(since, itemCard("expose"), { what: `${what}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+            const save = await messageAfter(since, abilitySaveCard, { what: `${what}'s save card` });
+            await withDie(2, () => rollAndApply(save));
+            return card;
+        };
+        const sword = await give(user, "Life's Last Breath");
+        await saveAt(sword, 1, "Life's Last Breath");
+        await until(() => Number(foe.system.attributes.hp.value) < 400, `the void damage (${foe.system.attributes.hp.value})`, { timeout: 8000 });
+        const dealt = 400 - Number(foe.system.attributes.hp.value);
+        await until(() => Number(user.system.attributes.hp.temp) > 0, `its user's temporary Hit Points (${user.system.attributes.hp.temp})`, { timeout: 8000 });
+        const temp = Number(user.system.attributes.hp.temp);
+        const x = foeToken.x;
+        const lance = await give(user, "Blast Lance");
+        const card = await saveAt(lance, 0, "Blast Lance");
+        assert((card.getFlag(NS, "card").plan.notes ?? []).some((note) => /Stride after the creature/.test(note)), "the Stride after it on the card");
+        await until(() => foeToken.x - x >= scene.grid.size, `pushed east (${(foeToken.x - x) / scene.grid.size} squares)`, { timeout: 8000 });
+        return { dealt, temp, moved: (foeToken.x - x) / scene.grid.size };
+    },
+
+    // Spiritual Warhorn (Lesser) at one enemy: both warriors' Strikes at it, an attack card each (+11, 2d6 force).
+    async warhornWarriors(scene) {
+        await clearSquares(scene, [[14, 14], [15, 14]]);
+        const { actor: user } = await creature(scene, "Warhorn Bugler", { type: "character", x: 14, y: 14 });
+        const { token: foeToken } = await creature(scene, "Warhorn Target", { x: 15, y: 14, hp: 300, ac: 1, alliance: "opposition" });
+        const horn = await give(user, "Spiritual Warhorn (Lesser)");
+        const since = Date.now();
+        await horn.consume();
+        const card = await messageAfter(since, itemCard("expose"), { what: "the warhorn's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        await until(() => game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message)).length === 2, "two attack cards", { timeout: 8000 });
+        const cards = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && abilitySaveCard(message));
+        assert(cards.every((message) => message.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check.modifier === 11), "each at +11");
+        return { cards: cards.length };
+    },
+
     // Boots of the Secret Blade (Greater): a +1 striking dagger in its user's hand, a Strike of its user's, the next activation's dagger
     // replacing it; Necklace of Knives' dagger gone once it's out of the hand; Rust Scrub's 2d4 Hit Points back to a damaged shield.
     async madeBlades(scene) {
