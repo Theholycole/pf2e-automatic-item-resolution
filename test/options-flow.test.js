@@ -264,3 +264,21 @@ test("Perfected Robes: the next d20 roll at legendary proficiency rolled twice â
     assert.deepEqual(rules.map((rule) => [rule.selector, rule.removeAfterRoll, rule.predicate ?? null]), [["athletics", true, null], ["will", true, null], ["strike-attack-roll", true, ["item:proficiency:rank:4"]]]);
     assert.match(rollWords({ ...robes.rollTwice, rolls }), /^d20 roll with legendary proficiency, if it's its next action \(Athletics, Will, Strikes at legendary proficiency\)$/);
 });
+
+test("Behaviour rows as note Effects on the creature (the user's 2026-10-25 rulings): Robe of Beneficence, Successor Doll, Graverose Garland, Shining Shield", () => {
+    const notes = (plan, degree) => (plan.resolution.outcomes[degree].noteEffects ?? []).map((note) => [note.label ?? null, note.text, note.duration?.value ?? null, note.duration?.unit ?? null]);
+    // "As failure, and â€¦": the row's own Stunned 2 applied; the rest a note, not the reminder again.
+    const robe = planOf("Robe of Beneficence");
+    assert.deepEqual([Boolean(robe.partial), rowEffects(robe, "criticalFailure"), notes(robe, "criticalFailure")], [false, [["stunned", 2]], [[null, "The creature can't use any hostile action against you for 1 round.", 1, "rounds"]]]);
+    // No end of its own: until the GM removes it.
+    const doll = planOf("Successor Doll", 1);
+    assert.deepEqual([Boolean(doll.partial), notes(doll, "failure").map(([, , value]) => value)], [false, [null]]);
+    assert.match(notes(doll, "failure")[0][1], /\bdoesn't act against you\b/);
+    // Its critical failure's flight to a grave: a note Effect, its Prone when it gets there the GM's.
+    const garland = planOf("Graverose Garland");
+    assert.deepEqual([Boolean(garland.partial), notes(garland, "criticalFailure").map(([label]) => label)], [false, ["To its grave"]]);
+    // "As failure, but the duration is 1 minute": a minute, not its reminder's round; not the shield's stat line.
+    const shield = planOf("Shining Shield");
+    assert.deepEqual([Boolean(shield.partial), notes(shield, "failure").map(([, , value, unit]) => `${value} ${unit}`), notes(shield, "criticalFailure").map(([, , value, unit]) => `${value} ${unit}`)], [false, ["1 rounds"], ["1 minutes"]]);
+    assert.doesNotMatch(notes(shield, "criticalFailure")[0][1], /Hardness/);
+});

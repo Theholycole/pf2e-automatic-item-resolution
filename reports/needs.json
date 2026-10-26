@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1232,
+  "entries": 1228,
   "results": {
    "none": 602,
-   "partial": 244,
+   "partial": 240,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -29,8 +29,8 @@
    "removed": 4,
    "cooldown": 9,
    "vehicles": 20,
-   "reader": 21,
-   "several": 23,
+   "reader": 18,
+   "several": 22,
    "triggers": 92,
    "immunity": 23,
    "situational": 16,
@@ -51,8 +51,8 @@
    "areas": 163,
    "immunity": 71,
    "objects": 389,
-   "speech": 124,
-   "out-of-combat": 415,
+   "speech": 123,
+   "out-of-combat": 414,
    "counteract": 79,
    "afflictions": 91,
    "lasting": 208,
@@ -61,12 +61,12 @@
    "visibility": 48,
    "dying": 73,
    "choice": 107,
-   "several": 90,
-   "mind": 70,
+   "several": 89,
+   "mind": 69,
    "strike": 185,
-   "reader": 206,
+   "reader": 203,
    "spells": 71,
-   "information": 191,
+   "information": 190,
    "actions": 56,
    "from-events": 33,
    "no-rules": 36,
@@ -1784,18 +1784,6 @@
     "lasting",
     "objects",
     "reader"
-   ]
-  },
-  {
-   "name": "Successor Doll",
-   "kind": "activation",
-   "activation": "Fierce Gaze, Approving Smile",
-   "result": "partial",
-   "main": "several",
-   "work": "ally",
-   "needs": [
-    "several",
-    "mind"
    ]
   },
   {
@@ -3911,18 +3899,6 @@
    "needs": [
     "counteract",
     "lasting"
-   ]
-  },
-  {
-   "name": "Graverose Garland",
-   "kind": "activation",
-   "activation": "To the Grave with You!",
-   "result": "partial",
-   "main": "reader",
-   "work": "prone",
-   "needs": [
-    "reader",
-    "information"
    ]
   },
   {
@@ -6640,17 +6616,6 @@
    ]
   },
   {
-   "name": "Stage Fright Missive",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "reader",
-   "work": "sickened",
-   "needs": [
-    "reader",
-    "speech"
-   ]
-  },
-  {
    "name": "Swallow-Spike (Major)",
    "kind": "activation",
    "result": "partial",
@@ -8731,18 +8696,6 @@
    "work": "shrinks down to a figurine",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Robe of Beneficence",
-   "kind": "activation",
-   "activation": "Compelled Nonviolence",
-   "result": "partial",
-   "main": "reader",
-   "work": "stunned",
-   "needs": [
-    "reader",
-    "out-of-combat"
    ]
   },
   {

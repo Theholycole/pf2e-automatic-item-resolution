@@ -43,7 +43,7 @@ export function leftToTheGM(row) {
 // tell the truth", Animal Pheromones' attitude — as a note Effect on the creature for that time (the user's note-Effect rule, 2026-09-26), not a
 // GM line: its time the line's own, else the item's (time: its text's). Not one with numbers or conditions the card should apply, nor one with
 // two times.
-const BEHAVIOUR_NOTE = /\bcan't use reactions\b|\bmust tell the truth\b|\bunable to tell any deliberate lies\b|\battitude\b[^.]*\bimproves\b|\battitude increases\b|\bbecomes (?:friendly|helpful)\b|\bcan't use hostile actions\b|\bignores other creatures\b|\bdoesn't disbelieve\b|\bbelieves you're\b|\bdoesn't act against you\b/i;
+const BEHAVIOUR_NOTE = /\bcan't use reactions\b|\bmust tell the truth\b|\bunable to tell any deliberate lies\b|\battitude\b[^.]*\bimproves\b|\battitude increases\b|\bbecomes (?:friendly|helpful)\b|\bcan't use (?:any )?hostile actions?\b|\bignores other creatures\b|\bdoesn't disbelieve\b|\bbelieves you're\b|\bdoesn't act against you\b/i;
 const MECHANICAL = /\b\d+d\d+\b|[+\-–]\d+\b|\bDC \d+\b|\b(?:frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|dies|damage)\b/i;
 const TURN_TIMES = [
     [/\buntil the end (?:of )?your turn\b/i, { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }],
@@ -53,7 +53,11 @@ const TURN_TIMES = [
 ];
 const FOR_TIME = /\b(?:for|persists for|lasts) (\d+|one|an?) (round|minute|hour)s?\b/gi;
 const COUNT = { one: 1, a: 1, an: 1 };
+// ("As failure, but the duration is 1 minute. (failure: For 1 round, …)": the row's own time, not its reminder's — Shining Shield, 2026-10-26.)
+const BUT_DURATION = /^As (?:critical success|success|failure|critical failure), but the duration is (\d+|one|an?) (round|minute|hour)s?\b/i;
 function timeOf(line) {
+    const but = BUT_DURATION.exec(line);
+    if (but) return { mode: "fixed", value: COUNT[but[1].toLowerCase()] ?? Number(but[1]), unit: `${but[2].toLowerCase()}s`, expiry: "turn-start", anchor: "effect-start" };
     const turns = TURN_TIMES.filter(([pattern]) => pattern.test(line));
     const times = [...line.matchAll(FOR_TIME)];
     if (turns.length + times.length !== 1) return turns.length + times.length ? undefined : null;
@@ -71,10 +75,15 @@ function withBehaviourNotes(plan, time) {
         const kept = [];
         const notes = [];
         for (const entry of lines) {
-            const line = said(entry).replace(/^\{target\}(?: \([^)]*\))?:\s*/, "").replace(/\s*\(by hand\)\.?$/, "");
+            // (An "As failure, and …" line without the row it repeats — Robe of Beneficence's "(failure: The creature is Stunned 2.)", the row's own
+            // Stunned 2 already; an "As failure, but …" one keeps it, its note to be read. Not a shield's stat line, "Hardness HP BT 6 24 12" — 2026-10-26.)
+            const plain = said(entry).replace(/^\{target\}(?: \([^)]*\))?:\s*/, "").replace(/\s*\(by hand\)\.?$/, "").replace(/\s*Hardness HP BT(?: \d+){3}(?=\s*(?:\(|$))/, "");
+            const line = /^As (?:success|failure), and (?:the creature|it) /i.test(plain) ? plain.replace(/\s*\((?:critical success|success|failure|critical failure): [^)]*\)$/i, "").replace(/^As (?:success|failure), and (?:the creature|it) /i, "The creature ") : plain;
             const own = timeOf(line);
+            // (One with no end of its own, Successor Doll's "doesn't act against you as a result of your coercion": until the GM removes it.)
+            const open = own === null && !time && /\bdoesn't act against you\b/i.test(line);
             const duration = own === undefined ? undefined : own ?? time ?? undefined;
-            if (BEHAVIOUR_NOTE.test(line) && !MECHANICAL.test(line) && duration) notes.push({ text: line, duration });
+            if (BEHAVIOUR_NOTE.test(line) && !MECHANICAL.test(line) && (duration || open)) notes.push({ text: line, duration: duration ?? null });
             else kept.push(entry);
         }
         if (!notes.length) return [degree, row];

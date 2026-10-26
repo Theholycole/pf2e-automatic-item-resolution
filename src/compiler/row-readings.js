@@ -205,6 +205,41 @@ function withTradedResistance(plan, html) {
     return next;
 }
 
+// (Behaviour beside its rows' conditions, as the user's 2026-10-25 rulings have minds and speech — a note Effect on the creature, counted done:
+// Graverose Garland's undead fleeing to its grave on a critical failure, Stage Fright Missive's speaking before an audience while its penalty
+// lasts. 2026-10-26.)
+const TO_THE_GRAVE = /^If the undead knows of a nearby empty grave, it must flee toward that grave\s*[-–—]\s*if it enters the grave, it drops Prone into the grave and remains prone until it is no longer frightened\.$/i;
+const STAGE_FRIGHT = /^During this time, if the creature attempts to speak or perform in front of an audience, they become Sickened (\d+)(?: \(by hand\))?\.$/i;
+function withBehaviourRows(plan, html) {
+    const rows = plan?.resolution?.outcomes;
+    if (plan?.resolution?.kind !== "save" || !rows) return plan;
+    let next = plan;
+    const drop = (entry) => {
+        const notes = (next.notes ?? []).filter((one) => one !== entry);
+        next = { ...next, notes: notes.length ? notes : undefined };
+    };
+    // (Its sentence from the text too: the honesty pass adds it as a note only later.)
+    const grave = (plan.notes ?? []).find((entry) => TO_THE_GRAVE.test(said(entry))) ?? plainOf(html).split(/(?<=[.!?])\s+(?=[A-Z])/).map((one) => one.trim()).find((one) => TO_THE_GRAVE.test(one));
+    if (grave && (rows.criticalFailure?.effects ?? []).some((effect) => effect?.slug === "fleeing")) {
+        next = { ...next, resolution: { ...next.resolution, outcomes: { ...next.resolution.outcomes, criticalFailure: { ...rows.criticalFailure, noteEffects: [...(rows.criticalFailure.noteEffects ?? []), { label: "To its grave", text: "If it knows of a nearby empty grave, it flees toward it; entering the grave, it drops Prone there and stays prone until it's no longer frightened.", duration: null }] } } } };
+        drop(grave);
+    }
+    const stage = (plan.notes ?? []).map((entry) => [entry, STAGE_FRIGHT.exec(said(entry))]).find(([, match]) => match);
+    const penalized = Object.entries(rows).filter(([, row]) => (row?.modifiers ?? []).length);
+    if (stage && penalized.length) {
+        const outcomes = { ...next.resolution.outcomes };
+        for (const [degree, row] of penalized) outcomes[degree] = { ...row, noteEffects: [...(row.noteEffects ?? []), { label: "Stage fright", text: `If it speaks or performs in front of an audience, it becomes Sickened ${stage[1][1]}; once it recovers from that, the missive's effects end.`, duration: row.modifiers[0].duration ?? null }] };
+        next = { ...next, resolution: { ...next.resolution, outcomes } };
+        drop(stage[0]);
+    }
+    if (next === plan) return plan;
+    if (next.partial && leftOver(next)) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}
+
 // (Its Prone only for a creature on the ground, Drake Rifle (Fire)'s Drake Shot: "A target that isn't on the ground doesn't fall Prone" — the
 // Strike's strike.groundedProne, its rows' Prone left off for a target above the ground as the riders apply, src/live/if-target.js.)
 const GROUNDED = /^A target that isn't on the ground doesn't fall Prone\.$/i;
@@ -223,7 +258,7 @@ function withGroundedProne(plan) {
 }
 
 export function withRowReadings(given, html, item = null) {
-    const plan = withTradedResistance(withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html), html);
+    const plan = withBehaviourRows(withTradedResistance(withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html), html), html);
     const outcomes = plan?.resolution?.outcomes;
     if (!outcomes || plan.builtin) return plan;
     let next = plan;

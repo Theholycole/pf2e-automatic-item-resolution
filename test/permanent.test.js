@@ -350,10 +350,12 @@ test("consumables read: Serene Smelling Salts, Explosive Missive's written type,
     assert.deepEqual([pepper.targeting.area, pepper.resolution.outcomes.failure.effects.map((effect) => `${effect.slug} ${effect.duration?.value ?? "-"}`)], [{ type: "burst", value: 15 }, ["blinded 1", "dazzled 2"]]);
     assert.deepEqual(pepper.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug), ["blinded", "sickened", "dazzled"]);
     // "save or be overcome with embarrassment for 1 hour, taking a –1 status penalty to Deception, Diplomacy, Intimidation, and
-    // Performance checks": those four, on a failure and a critical failure; the sickened when it speaks, a note.
+    // Performance checks": those four, on a failure and a critical failure; the sickened when it speaks, a note Effect on the creature for the
+    // hour (2026-10-26), not a GM line.
     const fright = at("Stage Fright Missive");
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => fright.resolution.outcomes[degree].modifiers.map((modifier) => modifier.selector)), [["deception", "diplomacy", "intimidation", "performance"], ["deception", "diplomacy", "intimidation", "performance"]]);
-    assert.equal(fright.notes.length, 1);
+    assert.deepEqual([fright.notes ?? [], Boolean(fright.partial), ...["failure", "criticalFailure"].map((degree) => fright.resolution.outcomes[degree].noteEffects.map((note) => `${note.label} ${note.duration.value} ${note.duration.unit}`))], [[], false, ["Stage fright 1 hours"], ["Stage fright 1 hours"]]);
+    assert.match(fright.resolution.outcomes.failure.noteEffects[0].text, /\bSickened 1\b.*\bthe missive's effects end\.$/);
     // "-1 status penalty to Perception checks for 10 minutes", "As success, but a –2 penalty" (and Fascinated on a critical failure).
     const rose = at("Captivating Rosebud");
     assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => rose.resolution.outcomes[degree].modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`)), [["perception -1"], ["perception -2"], ["perception -2"]]);
