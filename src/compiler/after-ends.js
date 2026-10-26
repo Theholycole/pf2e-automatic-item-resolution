@@ -107,6 +107,12 @@ export function withSlain(plan, html) {
 const DESTROYED = /\bThe creature must succeed at a (Fortitude|Reflex|Will) save or be destroyed\./i;
 const BACKLASH = /\bIf the undead fails its saving throw and is destroyed, you suffer a backlash, taking (\d+d\d+) (\w+) damage per level of the destroyed undead\./i;
 const REGAIN = /^If you are an? (undead), you regain Hit Points equal to the (\w+) damage the creature took\.$/i;
+// - its user's healing and the same amount as damage to a creature, Swarmeater's Clasp's "You recover 3d10+8 Hit Points and deal the same
+//   amount of bludgeoning damage to the swarm" (its Requirements' swarm within reach): a damage card at that creature, its user healed by the
+//   roll (plan.drain { fromRoll }), not by what the creature lost; not when its user has void healing, as "a vitality healing effect".
+const SAME_AMOUNT = /^You recover (\d+d\d+(?:[+-]\d+)?) Hit Points and deal the same amount of (\w+) damage to the (\w+)\.$/i;
+const NEAR = /\bRequirements An? (\w+) creature is within your reach\b/i;
+const VITALITY = /^The Hit Point recovery is a vitality healing effect\.$/i;
 const FAILURES = ["failure", "criticalFailure"];
 export function withAfterApplied(plan, html) {
     const outcomes = plan?.resolution?.outcomes;
@@ -129,8 +135,26 @@ export function withAfterApplied(plan, html) {
         next = { ...next, drain: { fraction: 1, type: regain[2].toLowerCase(), duration: null, heal: true, immediate: true, onlyIf: regain[1].toLowerCase() } };
         read.push(regain[0]);
     }
+    const same = (plan.unread ?? []).map((entry) => SAME_AMOUNT.exec(said(entry))).find(Boolean);
+    const near = NEAR.exec(text);
+    const heal = outcomes.success?.effects?.find((effect) => effect?.kind === "heal" && effect.formula === same?.[1]);
+    if (same && heal && near && near[1].toLowerCase() === same[3].toLowerCase() && plan.resolution.kind === "check" && Object.keys(outcomes).length === 1) {
+        const type = same[2].toLowerCase();
+        const vitality = (plan.unread ?? []).find((entry) => VITALITY.test(said(entry)));
+        next = {
+            ...next,
+            targeting: { target: `1 ${near[1].toLowerCase()} creature`, range: "melee", area: null },
+            resolution: { ...next.resolution, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: same[1], type, category: null }] }, outcomes: { success: { ...outcomes.success, damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] }, effects: outcomes.success.effects.filter((effect) => effect !== heal) } } },
+            drain: { fraction: 1, type, duration: null, heal: true, immediate: true, fromRoll: true, ...(vitality ? { vitality: true } : {}) }
+        };
+        read.push(same[0], ...(vitality ? [said(vitality)] : []));
+    }
     if (!read.length) return plan;
     const gone = (entry) => read.some((sentence) => said(entry).replace(/^\{target\}:\s*/, "").replace(/\s*\(by hand\)\.?$/, "").replace(/\.$/, "") === sentence.replace(/\.$/, ""));
+    if (next.unread) {
+        const unread = next.unread.filter((entry) => !gone(entry));
+        next = { ...next, unread: unread.length ? unread : undefined };
+    }
     const notes = (next.notes ?? []).filter((note) => !gone(note));
     const rows = Object.fromEntries(Object.entries(next.resolution.outcomes).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: row.manualInstructions.filter((line) => !gone(line)) } : row]));
     for (const row of Object.values(rows)) if (row?.manualInstructions && !row.manualInstructions.length) delete row.manualInstructions;

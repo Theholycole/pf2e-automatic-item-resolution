@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1228,
+  "entries": 1227,
   "results": {
    "none": 602,
-   "partial": 240,
+   "partial": 239,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -29,7 +29,7 @@
    "removed": 4,
    "cooldown": 9,
    "vehicles": 20,
-   "reader": 18,
+   "reader": 17,
    "several": 22,
    "triggers": 92,
    "immunity": 23,
@@ -64,7 +64,7 @@
    "several": 89,
    "mind": 69,
    "strike": 185,
-   "reader": 203,
+   "reader": 202,
    "spells": 71,
    "information": 190,
    "actions": 56,
@@ -9709,16 +9709,6 @@
    "needs": [
     "visibility",
     "objects",
-    "reader"
-   ]
-  },
-  {
-   "name": "Swarmeater's Clasp",
-   "kind": "activation",
-   "result": "partial",
-   "main": "reader",
-   "work": "3d10",
-   "needs": [
     "reader"
    ]
   },

@@ -282,3 +282,31 @@ test("Behaviour rows as note Effects on the creature (the user's 2026-10-25 ruli
     assert.deepEqual([Boolean(shield.partial), notes(shield, "failure").map(([, , value, unit]) => `${value} ${unit}`), notes(shield, "criticalFailure").map(([, , value, unit]) => `${value} ${unit}`)], [false, ["1 rounds"], ["1 minutes"]]);
     assert.doesNotMatch(notes(shield, "criticalFailure")[0][1], /Hardness/);
 });
+
+test("Swarmeater's Clasp: a damage card at the swarm in reach, its user healed by the same roll — not by what the swarm lost, none with void healing", async () => {
+    const clasp = planOf("Swarmeater's Clasp");
+    assert.deepEqual([clasp.targeting.target, clasp.resolution.sharedDamage.components.map((component) => `${component.formula} ${component.type}`), clasp.resolution.outcomes.success.effects, clasp.drain, Boolean(clasp.partial), clasp.unread ?? []], ["1 swarm creature", ["3d10+8 bludgeoning"], [], { fraction: 1, type: "bludgeoning", duration: null, heal: true, immediate: true, fromRoll: true, vitality: true }, false, []]);
+    const { before, usePlans } = await import("../scripts/drain.js");
+    const saved = { game: globalThis.game, ChatMessage: globalThis.ChatMessage, fromUuidSync: globalThis.fromUuidSync };
+    const updates = [];
+    const messages = [];
+    globalThis.game = { user: { isGM: true }, users: [], modules: new Map() };
+    globalThis.ChatMessage = { create: async (data) => messages.push(data.content), getSpeaker: () => ({}) };
+    const swarm = { uuid: "Actor.swarm", name: "Swarm", system: { attributes: { hp: { value: 60, temp: 0 } } }, itemTypes: { effect: [] } };
+    globalThis.fromUuidSync = (uuid) => (uuid === "Actor.swarm" ? swarm : null);
+    try {
+        usePlans(() => [{ plan: clasp }]);
+        const wearer = (negativeHealing) => ({ uuid: `Item.clasp-${negativeHealing}`, name: "Swarmeater's Clasp", system: { description: { value: "x" } }, actor: { name: "Wearer", system: { traits: { value: [] }, attributes: { hp: { value: 10, max: 100, negativeHealing } } }, update: async (data) => updates.push(data) } });
+        const damage = { instances: [{ type: "bludgeoning", persistent: false, options: {}, total: 25 }] };
+        // (The swarm resists 10 of it: its user still regains the 25 rolled.)
+        const after = before(swarm, { damage, item: wearer(false) });
+        swarm.system.attributes.hp.value = 45;
+        await after();
+        assert.deepEqual(updates, [{ "system.attributes.hp.value": 35 }]);
+        await before(swarm, { damage, item: wearer(true) })();
+        assert.equal(updates.length, 1);
+        assert.match(messages.at(-1), /regains no Hit Points/);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

@@ -2038,6 +2038,28 @@ export const cases = {
         return { lost };
     },
 
+    // Swarmeater's Clasp: the damage card at the swarm, its wearer healed by the roll — the swarm's resistance 5 leaves it 5 short of that.
+    async swarmeaterHeal(scene) {
+        await clearSquares(scene, [[16, 1], [17, 1]]);
+        const { actor: wearer } = await creature(scene, "Clasp Wearer", { x: 16, y: 1, hp: 300, level: 10 });
+        await wearer.update({ "system.attributes.hp.value": 100 });
+        const { actor: swarm, token: swarmToken } = await creature(scene, "Clasp Swarm", { x: 17, y: 1, hp: 200, alliance: "opposition", level: 8 });
+        await swarm.update({ "system.traits.value": [...(swarm.system.traits.value ?? []), "swarm"], "system.attributes.resistances": [{ type: "bludgeoning", value: 5 }] });
+        const clasp = await give(wearer, "Swarmeater's Clasp");
+        await clasp.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(clasp.uuid, 0);
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the clasp's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(expose.id, { targets: [swarmToken.uuid] });
+        const before = swarm.system.attributes.hp.value;
+        await applyAbilityCard(await messageAfter(since, abilitySaveCard, { what: "the damage card" }));
+        await until(() => swarm.system.attributes.hp.value < before, "the bludgeoning damage", { timeout: 8000 });
+        const lost = before - swarm.system.attributes.hp.value;
+        await until(() => wearer.system.attributes.hp.value === 100 + lost + 5, `healed ${lost} + 5 (${wearer.system.attributes.hp.value})`, { timeout: 8000 });
+        return { lost, healed: lost + 5 };
+    },
+
     // Spark Wafer: its zone placed (the placement click stood in for) with its light at the zone's centre, the light gone with the zone.
     async sparkZoneLight(scene) {
         await clearSquares(scene, [[15, 3]]);

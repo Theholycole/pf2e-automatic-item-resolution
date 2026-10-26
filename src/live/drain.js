@@ -12,6 +12,13 @@ export function shareOfType(damage, type) {
     return all > 0 ? sum(ofType) / all : 1;
 }
 
+// The damage of the type rolled now, by its instances' totals (Swarmeater's Clasp's healing "the same amount"): before the creature's
+// resistances, 0 when none is of that type.
+export function rolledOfType(damage, type) {
+    const now = (damage?.instances ?? []).filter((instance) => !instance?.persistent || instance?.options?.evaluatePersistent);
+    return now.filter((instance) => !type || instance?.type === type).reduce((total, instance) => total + Math.max(0, Math.floor(Number(instance?.total) || 0)), 0);
+}
+
 // What its user gains: the Hit Points and temporary Hit Points the creature lost (after its resistances), that share, the fraction, rounded down.
 export function drained(before, after, share, fraction) {
     const total = (hp) => (Number(hp?.value) || 0) + (Number(hp?.temp) || 0);

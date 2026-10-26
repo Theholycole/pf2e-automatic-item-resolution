@@ -5,7 +5,7 @@
 // are told.
 
 import { drainMarkSource, drainTempSource } from "../src/live/card.js";
-import { drained, shareOfType } from "../src/live/drain.js";
+import { drained, rolledOfType, shareOfType } from "../src/live/drain.js";
 import { ABILITY_ID, CORE_ID, MODULE_ID } from "./foundry.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -108,14 +108,22 @@ function healFromDamage(actor, params, drain) {
     const kind = (creature) => [...(creature?.system?.traits?.value ?? []), ...(creature?.traits ?? [])].map((trait) => String(trait).toLowerCase());
     if (!share || !user || user === actor || (drain.onlyIf && !kind(user).includes(drain.onlyIf))) return null;
     const hp = hpOf(actor);
+    // (Swarmeater's Clasp's: the roll itself, whatever the creature resisted — none for a user with void healing, its "vitality healing".)
+    const rolled = drain.fromRoll ? Math.floor(rolledOfType(params?.damage, drain.type) * (Number(drain.fraction) || 0)) : null;
+    const voidHealing = Boolean(drain.vitality && (user.system?.attributes?.hp?.negativeHealing || user.attributes?.hp?.negativeHealing));
     return async () => {
         const live = fromUuidSync(actor.uuid) ?? actor;
-        const amount = drained(hp, hpOf(live), share, drain.fraction);
+        const amount = rolled ?? drained(hp, hpOf(live), share, drain.fraction);
         if (!amount) return;
+        const whisper = (game.users?.filter?.((one) => one.isGM || user.testUserPermission?.(one, "OWNER")) ?? []).map((one) => one.id);
+        if (voidHealing) {
+            await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: user }), whisper, content: `<p><strong>${escape(user.name)}</strong> regains no Hit Points from ${escape(params.item.name)}: its healing is vitality, and ${escape(user.name)} has void healing.</p>` });
+            return;
+        }
         const own = user.system?.attributes?.hp;
         const healed = Math.min(amount, Math.max(0, (Number(own?.max) || 0) - (Number(own?.value) || 0)));
         if (healed > 0) await user.update({ "system.attributes.hp.value": (Number(own.value) || 0) + healed });
-        const whisper = (game.users?.filter?.((one) => one.isGM || user.testUserPermission?.(one, "OWNER")) ?? []).map((one) => one.id);
-        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: user }), whisper, content: `<p><strong>${escape(user.name)}</strong> regains ${healed} Hit Points from the ${escape(drain.type)} damage <strong>${escape(live.token?.name ?? live.name)}</strong> took (${escape(params.item.name)}).</p>` });
+        const from = rolled === null ? `the ${escape(drain.type)} damage <strong>${escape(live.token?.name ?? live.name)}</strong> took` : `the ${amount} ${escape(drain.type)} damage it deals <strong>${escape(live.token?.name ?? live.name)}</strong>`;
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: user }), whisper, content: `<p><strong>${escape(user.name)}</strong> regains ${healed} Hit Points from ${from} (${escape(params.item.name)}).</p>` });
     };
 }

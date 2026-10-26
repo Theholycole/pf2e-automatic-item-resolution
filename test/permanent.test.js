@@ -631,12 +631,10 @@ test("healing back from dying without raising Wounded (Magical Medal (Phoenix's 
     assert.ok(scythe.partial && scythe.unread.some((sentence) => /the creature struck becomes Sickened 1/.test(sentence)), JSON.stringify(scythe.unread));
 });
 
-test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 force damage\" at the target, the designated offender's more a note; Swarmeater's Clasp's \"You recover 3d10+8 Hit Points\", the swarm's damage a note", () => {
+test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 force damage\" at the target, the designated offender's more a note; Swarmeater's Clasp's \"You recover 3d10+8 Hit Points\" and the same at the swarm (test/options-flow.test.js)", () => {
     const cape = compileActivations(item("Cape of Justice"), { spellEffects })[0].plan;
     assert.deepEqual([cape.resolution.check.roll, cape.resolution.sharedDamage.components[0].formula, cape.resolution.sharedDamage.components[0].type, cape.targeting.target], ["automatic", "1d4+1", "force", "1 creature"]);
     assert.ok(cape.notes.some((note) => /designated offender takes 2d4\+2 force damage instead/.test(note)));
-    const clasp = compileActivations(item("Swarmeater's Clasp"), { spellEffects })[0].plan;
-    assert.deepEqual([clasp.resolution.outcomes.success.effects[0].formula, clasp.partial], ["3d10+8", true]);
 });
 
 test("Clockwork Helm: \"Make a spell or ranged attack roll (your choice)\" — the card's pick of its user's spell attack or best ranged Strike, 10d8 fire on a hit (doubled on a critical hit) and Drained 2", () => {
