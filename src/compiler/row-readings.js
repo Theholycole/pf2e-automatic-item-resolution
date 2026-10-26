@@ -165,6 +165,25 @@ function withInvisibleUntilStrike(plan) {
     return next;
 }
 
+// (A Speed's end by what the card can't see, Buoyant Buckle's Flotation: "If the pouches take any damage (AC 10, Hardness 0), they quickly
+// deflate, ending the effect" — in the Speed Effect's words, with its swimming only along the surface (the user's note-Effect rule). 2026-10-26.)
+const DEFLATES = /^If the pouches take any damage \(AC (\d+), Hardness (\d+)\), they quickly deflate, ending the effect\.$/i;
+function withSpeedNote(plan, html) {
+    const speeds = plan?.item?.speeds ?? [];
+    const found = [...(plan?.unread ?? []), ...(plan?.notes ?? [])].map((entry) => [entry, DEFLATES.exec(said(entry))]).find(([, match]) => match);
+    if (speeds.length !== 1 || speeds[0].type !== "swim" || !found) return plan;
+    const [entry, match] = found;
+    const surface = /\bYou can swim only along the surface of the water while this is active\./i.test(plainOf(html));
+    const note = `${surface ? "only along the water's surface; " : ""}it ends if the pouches take any damage (AC ${match[1]}, Hardness ${match[2]})`;
+    const next = { ...plan, item: { ...plan.item, speeds: [{ ...speeds[0], note }] }, ...(plan.unread ? { unread: plan.unread.filter((one) => one !== entry) } : {}), ...(plan.notes ? { notes: plan.notes.filter((one) => one !== entry) } : {}) };
+    if (next.notes && !next.notes.length) next.notes = undefined;
+    if (next.partial && leftOver(next)) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}
+
 // (Its Prone only for a creature on the ground, Drake Rifle (Fire)'s Drake Shot: "A target that isn't on the ground doesn't fall Prone" — the
 // Strike's strike.groundedProne, its rows' Prone left off for a target above the ground as the riders apply, src/live/if-target.js.)
 const GROUNDED = /^A target that isn't on the ground doesn't fall Prone\.$/i;
@@ -183,7 +202,7 @@ function withGroundedProne(plan) {
 }
 
 export function withRowReadings(given, html, item = null) {
-    const plan = withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html));
+    const plan = withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html);
     const outcomes = plan?.resolution?.outcomes;
     if (!outcomes || plan.builtin) return plan;
     let next = plan;

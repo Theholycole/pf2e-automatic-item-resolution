@@ -207,3 +207,30 @@ test("Robe of Stone's Become Stone: Elemental Form's earth chosen on PF2e's Effe
     const source = effectSource({ name: "Spell Effect: Elemental Form", system: { rules: [{ key: "ChoiceSet", flag: "spellEffectElementalForm", choices: [{ value: "air" }, { value: "earth" }] }] } }, { application: robe.resolution.applications[0] });
     assert.equal(source.system.rules[0].selection, "earth");
 });
+
+test("Buoyant Buckle: its swim Speed's words say it's only along the surface and ends once the pouches take damage", async () => {
+    const { speedText } = await import("../src/live/card.js");
+    const buckle = planOf("Buoyant Buckle");
+    assert.equal(Boolean(buckle.partial), false);
+    assert.match(speedText(buckle.item.speeds[0]), /; only along the water's surface; it ends if the pouches take any damage \(AC 10, Hardness 0\)$/);
+});
+
+test("Cauthooj Bagpipes' Disorienting Fugue: a critical success's immunity an hour; a critical failure's attack on itself rolled", async () => {
+    const pipes = planOf("Cauthooj Bagpipes");
+    assert.deepEqual([pipes.immunityLonger, pipes.selfAttack, pipes.trigger.immunity.duration, Boolean(pipes.partial)], [{ criticalSuccess: { value: 1, unit: "hours" } }, { degrees: ["criticalFailure"] }, { value: 1, unit: "minutes" }, false]);
+    const { longerImmunity, selfAttacks } = await import("../scripts/after-ends.js");
+    const saved = { fromUuid: globalThis.fromUuid };
+    const updates = [];
+    const applied = [];
+    const immune = { flags: { "pf2e-automatic-ability-resolution": { immunity: { slug: pipes.trigger.immunity.slug } } }, update: async (data) => updates.push(data) };
+    const foe = { itemTypes: { effect: [immune] }, system: { actions: [{ type: "strike", item: { isMelee: true }, damage: async () => ({ total: 7 }) }] }, applyDamage: async (data) => applied.push(data.damage.total) };
+    globalThis.fromUuid = async () => foe;
+    try {
+        await longerImmunity({ state: { plan: pipes }, targets: [{ actorUuid: "Actor.foe", degree: "criticalSuccess" }, { actorUuid: "Actor.foe", degree: "success" }] });
+        assert.deepEqual(updates, [{ "system.duration.value": 1, "system.duration.unit": "hours" }]);
+        await selfAttacks({ state: { plan: pipes }, targets: [{ actorUuid: "Actor.foe", degree: "criticalFailure" }, { actorUuid: "Actor.foe", degree: "failure" }] });
+        assert.deepEqual(applied, [7]);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

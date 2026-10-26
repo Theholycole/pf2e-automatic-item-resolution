@@ -1,16 +1,16 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1246,
+  "entries": 1244,
   "results": {
    "none": 611,
-   "partial": 249,
+   "partial": 247,
    "builtin:no-effect": 129,
    "note-only": 257
   },
   "main": {
    "speeds": 22,
-   "counteract": 17,
+   "counteract": 16,
    "afflictions": 49,
    "areas": 109,
    "moving": 83,
@@ -32,7 +32,7 @@
    "reader": 21,
    "several": 23,
    "triggers": 93,
-   "immunity": 24,
+   "immunity": 23,
    "situational": 16,
    "creatures": 53,
    "dying": 29,
@@ -49,11 +49,11 @@
   "any": {
    "speeds": 28,
    "areas": 163,
-   "immunity": 72,
-   "objects": 390,
+   "immunity": 71,
+   "objects": 389,
    "speech": 124,
-   "out-of-combat": 416,
-   "counteract": 80,
+   "out-of-combat": 415,
+   "counteract": 79,
    "afflictions": 91,
    "lasting": 208,
    "moving": 107,
@@ -3058,18 +3058,6 @@
     "situational",
     "mind",
     "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Cauthooj Bagpipes",
-   "kind": "activation",
-   "activation": "Disorienting Fugue",
-   "result": "partial",
-   "main": "immunity",
-   "work": "immunity",
-   "needs": [
-    "immunity",
     "out-of-combat"
    ]
   },
@@ -7243,18 +7231,6 @@
     "vehicles",
     "dying",
     "lasting",
-    "objects"
-   ]
-  },
-  {
-   "name": "Buoyant Buckle",
-   "kind": "activation",
-   "activation": "Flotation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "ending the effect",
-   "needs": [
-    "counteract",
     "objects"
    ]
   },

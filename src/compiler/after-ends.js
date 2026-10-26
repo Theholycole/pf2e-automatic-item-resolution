@@ -142,3 +142,39 @@ export function withAfterApplied(plan, html) {
     }
     return next;
 }
+
+// Two more after a save card (2026-10-26), Cauthooj Bagpipes' Disorienting Fugue:
+// - a longer immunity on one degree, "Critical Success The target is unaffected and its temporary immunity to Disorienting Fugue increases to
+//   1 hour": plan.immunityLonger { criticalSuccess: { value, unit } } — the ability module's "Immune:" Effect lengthened once the card is
+//   applied (scripts/after-ends.js);
+// - a confused creature attacking itself, "Critical Failure The target is confused for 1 round and immediately attacks itself (in the normal
+//   fashion for attacking oneself while confused)": plan.selfAttack { degrees } — its own first melee Strike's damage rolled and applied to it
+//   (PF2e's confused: an attack on itself hits), once the card is applied. Before, that sentence was dropped unread.
+const LONGER = /^\{target\} \((critical success|success|failure)\): The target is unaffected and its temporary immunity to [^.]+? increases to (\d+|one|an?) (hours?|minutes?)\.$/i;
+const ATTACKS_ITSELF = /\bimmediately attacks itself\b/i;
+const DEGREE_KEYS = { "critical success": "criticalSuccess", success: "success", failure: "failure", "critical failure": "criticalFailure" };
+export function withSaveAfterApplied(plan, html) {
+    const rows = plan?.resolution?.outcomes;
+    if (plan?.resolution?.kind !== "save" || !rows) return plan;
+    let next = plan;
+    const immunity = plan.trigger?.immunity;
+    for (const [degree, row] of Object.entries(rows)) {
+        const lines = row?.manualInstructions ?? [];
+        const found = lines.map((line) => [line, LONGER.exec(said(line))]).find(([, match]) => match);
+        if (!found || !immunity || DEGREE_KEYS[found[1][1].toLowerCase()] !== degree) continue;
+        const [line, match] = found;
+        const time = timeOf(match[2], match[3]);
+        // (Its own field: the immunity reader, later, writes trigger.immunity anew.)
+        next = { ...next, immunityLonger: { ...(next.immunityLonger ?? {}), [degree]: { value: time.value, unit: time.unit } }, resolution: { ...next.resolution, outcomes: { ...next.resolution.outcomes, [degree]: { ...next.resolution.outcomes[degree], manualInstructions: lines.filter((one) => one !== line).length ? lines.filter((one) => one !== line) : undefined } } } };
+    }
+    // (Its critical failure's paragraph says it attacks itself, and the row is Confused.)
+    const paragraph = /<p>\s*<strong>\s*Critical Failure\s*<\/strong>([\s\S]*?)<\/p>/i.exec(String(html ?? ""))?.[1] ?? "";
+    if (ATTACKS_ITSELF.test(paragraph) && (rows.criticalFailure?.effects ?? []).some((effect) => effect?.slug === "confused")) next = { ...next, selfAttack: { degrees: ["criticalFailure"] } };
+    if (next === plan) return plan;
+    const left = [...(next.notes ?? []), ...(next.unread ?? []), ...Object.values(next.resolution.outcomes).flatMap((row) => row?.manualInstructions ?? [])];
+    if (next.partial && !left.length) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}

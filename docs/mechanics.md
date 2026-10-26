@@ -641,6 +641,10 @@ These mechanics have no table yet. An item gets one when its text uses the same 
     - Golden Blade of Mzali's Elemental Form is fire at rank 7, and turns PF2e's own "used Elemental Form" toggle on (`plan.toggleOn`). Turning it back off at daily preparations is the user's, so the plan stays partial.
     - Amulet of the Hellcat's Invisible is on an Effect its user's next Strike ends (`endsOnStrike`, `scripts/ends-on-strike.js`).
     - Robe of Stone's Elemental Form is earth (`application.choice`, the Effect's ChoiceSet preset). Its 30-foot tremorsense and burrowing through stone are an Effect for the form's minute (`src/compiler/form-extras.js`).
+  - A swim Speed's own limits in its words (`speed.note`): Buoyant Buckle's swimming only along the surface, ended once its pouches take damage (AC 10, Hardness 0). What hits the pouches is the table's to say.
+  - After a save card (`withSaveAfterApplied`, scripts/after-ends.js, 2026-10-26), Cauthooj Bagpipes' Disorienting Fugue:
+    - a critical success's immunity lasts an hour: `plan.immunityLonger`, the ability module's "Immune:" Effect lengthened once the card is applied;
+    - a critical failure's creature attacks itself: `plan.selfAttack`, its own first melee Strike's damage rolled with PF2e and applied to it (a confused creature attacking itself hits). Before, that sentence was dropped unread.
   - A worse condition the card can't see the cause of (`src/compiler/instead-way.js`, 2026-10-26): Imposing Shield's Frightened 3 "if the Shield Block reduced the incoming damage to 0" is a second button beside Frightened 2, as the user's 2026-10-11 ruling has choices.
   - Its user blinded for good as it's thrown: Skull Bomb's thrower is Blinded with no end (`plan.userEffects`, `src/compiler/user-conditions.js`); a consumable's plan now reads its user's conditions too.
   - Prone only on the ground: Drake Rifle (Fire)'s Drake Shot leaves its rows' Prone off for a target whose token is above the ground (`strike.groundedProne`, `withoutAloftProne`).

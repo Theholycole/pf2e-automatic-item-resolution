@@ -276,7 +276,8 @@ export function speedText(speed) {
     const said = typeof speed.value === "number" ? `of ${speed.value} feet` : LAND_WORDS.reduce((words, [pattern, text]) => words ?? (pattern.test(formula) ? formula.replace(pattern, text) : null), null) ?? `of ${formula}`;
     const time = speed.duration?.mode === "fixed" ? (speed.duration.expiry === "turn-end" && speed.duration.anchor === "source-turn" ? " until the end of the next turn" : ` for ${timeText(speed.duration)}`) : "";
     // (One its switch turns off, Steamflight Pack's.)
-    return `A ${speed.type} Speed ${said}${time}${speed.toggle ? " (the item's next activation turns it off)" : ""}`;
+    // (What else holds it, in its words: Buoyant Buckle's surface swimming and its deflating pouches, speed.note.)
+    return `A ${speed.type} Speed ${said}${time}${speed.toggle ? " (the item's next activation turns it off)" : ""}${speed.note ? `; ${speed.note}` : ""}`;
 }
 
 // Its Speed's Effect: PF2e's BaseSpeed rule ("until the end of the next turn": PF2e's one round, ending at a turn's end).

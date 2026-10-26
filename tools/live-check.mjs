@@ -2177,6 +2177,37 @@ export const cases = {
         return { choice };
     },
 
+    // Cauthooj Bagpipes' Disorienting Fugue: a critical success's "Immune:" Effect an hour long; a critical failure's creature confused and hit
+    // by its own Strike.
+    async bagpipesFugue(scene) {
+        await clearSquares(scene, [[6, 5], [7, 5], [8, 5]]);
+        const { actor: piper } = await creature(scene, "Bagpiper", { type: "character", x: 6, y: 5, level: 13 });
+        const { actor: calm, token: calmToken } = await creature(scene, "Fugue Calm", { x: 7, y: 5, save: 40, alliance: "opposition" });
+        const { actor: lost, token: lostToken } = await creature(scene, "Fugue Lost", { x: 8, y: 5, hp: 200, save: 0, alliance: "opposition" });
+        await lost.createEmbeddedDocuments("Item", [{ name: "Fist", type: "melee", system: { damageRolls: { fist: { damage: "1d4+2", damageType: "bludgeoning" } }, bonus: { value: 5 }, traits: { value: [] }, attackEffects: { value: [] } } }]);
+        const pipes = await give(piper, "Cauthooj Bagpipes");
+        await pipes.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(pipes.uuid, 0);
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the fugue's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(expose.id, { targets: [calmToken.uuid] });
+        await withDie(20, async () => rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the calm one's save card" })));
+        const immune = () => calm.itemTypes.effect.find((effect) => effect.flags?.["pf2e-automatic-ability-resolution"]?.immunity);
+        await until(() => immune()?.system.duration.unit === "hours", `immune for an hour (${JSON.stringify(immune()?.system?.duration)})`, { timeout: 8000 });
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(pipes.uuid, 0).catch(() => null);
+        const again = await messageAfter(since, itemCard("expose"), { what: "the fugue's second card" }).catch(() => null);
+        assert(again, "a second fugue card");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(again.id, { targets: [lostToken.uuid] });
+        const before = lost.system.attributes.hp.value;
+        await withDie(1, async () => rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the lost one's save card" })));
+        await until(() => lost.hasCondition("confused"), "Confused", { timeout: 8000 });
+        await until(() => lost.system.attributes.hp.value < before, "hit by its own Strike", { timeout: 10000 });
+        return { lost: before - lost.system.attributes.hp.value };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {

@@ -14,6 +14,8 @@ export function setUpAfterEnds() {
         if (!game.user.isGM) return;
         markAfterEnds(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | after-ends mark`, error));
         backlashAfterApplied(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | backlash`, error));
+        longerImmunity(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | longer immunity`, error));
+        selfAttacks(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | self attack`, error));
     });
     Hooks.on("deleteItem", (item) => {
         if (item?.type !== "condition" || !isActiveGM()) return;
@@ -76,6 +78,48 @@ export async function backlashAfterApplied({ state, targets }) {
         await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: user }), flavor: `<strong>${state.ability?.name ?? "Backlash"}</strong>: backlash for destroying ${target.name ?? "the creature"} (level ${level})` });
         await user.applyDamage({ damage: roll, token: state.source.tokenUuid ? (await fromUuid(state.source.tokenUuid).catch(() => null)) ?? undefined : undefined });
         rolls.push(roll);
+    }
+    return rolls;
+}
+
+// (A longer immunity for a degree, Cauthooj Bagpipes' critical success's hour — plan.immunityLonger: the ability module's "Immune:" Effect it
+// just gave, lengthened.)
+export async function longerImmunity({ state, targets }) {
+    const longer = state?.plan?.immunityLonger;
+    const slug = state?.plan?.trigger?.immunity?.slug;
+    if (!longer || !slug) return [];
+    const changed = [];
+    for (const target of targets ?? []) {
+        const time = longer[target.degree];
+        const actor = time && target.actorUuid ? await fromUuid(target.actorUuid).catch(() => null) : null;
+        for (const effect of (actor?.itemTypes?.effect ?? []).filter((one) => one.flags?.[ABILITY_ID]?.immunity?.slug === slug)) {
+            await effect.update({ "system.duration.value": time.value, "system.duration.unit": time.unit });
+            changed.push(effect);
+        }
+    }
+    return changed;
+}
+
+// (A confused creature attacking itself, Cauthooj Bagpipes' critical failure — plan.selfAttack: its own first melee Strike's damage, PF2e's
+// roll and message, applied to it.)
+export async function selfAttacks({ state, targets }) {
+    const self = state?.plan?.selfAttack;
+    if (!self) return [];
+    const rolls = [];
+    for (const target of (targets ?? []).filter((one) => self.degrees.includes(one.degree))) {
+        const token = target.tokenUuid ? await fromUuid(target.tokenUuid).catch(() => null) : null;
+        const actor = token?.actor ?? (target.actorUuid ? await fromUuid(target.actorUuid).catch(() => null) : null);
+        const strikes = (actor?.system?.actions ?? []).filter((action) => action?.type === "strike" && typeof action.damage === "function");
+        const strike = strikes.find((action) => action.item?.isMelee ?? !action.item?.isRanged) ?? strikes[0];
+        if (!strike) {
+            await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: game.users.filter((user) => user.isGM).map((user) => user.id), content: `<p>${target.name} attacks itself, but has no Strike to roll: apply its damage by hand.</p>` });
+            continue;
+        }
+        const roll = await strike.damage({ createMessage: true });
+        if (roll && typeof roll === "object") {
+            await actor.applyDamage({ damage: roll, token: token ?? undefined });
+            rolls.push(roll);
+        }
     }
     return rolls;
 }
