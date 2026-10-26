@@ -1973,6 +1973,26 @@ export const cases = {
         return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
+    // Autoload Leathers: the objects card's reload — its user's Flintlock Pistol (reload 1) loaded with one of its rounds (PF2e's own attach).
+    async autoloadReload(scene) {
+        await clearSquares(scene, [[17, 11]]);
+        const { actor: gunner } = await creature(scene, "Autoload Gunner", { type: "character", x: 17, y: 11, level: 6 });
+        const leathers = await give(gunner, "Autoload Leathers");
+        await leathers.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const pistol = await give(gunner, "Flintlock Pistol");
+        await pistol.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const rounds = await give(gunner, "Rounds (Flintlock Pistol)");
+        await rounds.update({ "system.quantity": 4 });
+        const loaded = () => [...(pistol.subitems ?? [])].filter((entry) => entry.type === "ammo").reduce((sum, entry) => sum + (Number(entry.quantity) || 0), 0);
+        assert(loaded() === 0, `empty at first (${loaded()})`);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(leathers.uuid, 0);
+        const card = await messageAfter(since, itemCard("objects"), { what: "the reload card" });
+        await game.modules.get(NS).api.live.apply(card.id, { pick: 0 });
+        await until(() => loaded() === 1, `one round loaded (${loaded()})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results, left: gunner.items.get(rounds.id)?.quantity ?? 0 };
+    },
+
     // Anima Robe (Heroic)'s Billowing Distraction: the robe's own Feint at its Deception +35 against the adjacent creature targeted.
     async animaFeint(scene) {
         await clearSquares(scene, [[15, 9], [16, 9]]);

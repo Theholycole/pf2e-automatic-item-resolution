@@ -64,3 +64,15 @@ test("Rust Scrub: 2d4 Hit Points back to one of its user's damaged items, up to 
     assert.deepEqual([routeOf(scrub), scrub.objects, scrub.partial, scrub.notes], ["objects", { op: "repair", amount: "2d4", damagedBy: "rust" }, undefined, ["The GM may lower it to what the rust did, when that isn't known."]]);
     assert.equal(objectsText(scrub.objects), "2d4 Hit Points restored, up to its maximum: one of its user's damaged items (what the rust did)");
 });
+
+test("Autoload Leathers: one of its user's reload 1 weapons with room for a round and ammunition for it, reloaded (2026-10-26)", () => {
+    const autoload = activation("Autoload Leathers", "Autoload");
+    assert.deepEqual([routeOf(autoload), autoload.objects, Boolean(autoload.partial)], ["objects", { op: "reload", reload: "1" }, false]);
+    assert.equal(objectsText(autoload.objects), "Reloaded with one of its user's rounds for it: one of its user's weapons with reload 1");
+    const round = { id: "r1", name: "Round", type: "ammo", quantity: 5, isAmmoFor: (weapon) => weapon.id !== "bow" };
+    const pistol = { id: "p1", name: "Pistol", type: "weapon", system: { reload: { value: "1" } }, subitems: [] };
+    const loaded = { id: "p2", name: "Loaded Pistol", type: "weapon", system: { reload: { value: "1" } }, subitems: [{ type: "ammo", quantity: 1 }] };
+    const bow = { id: "bow", name: "Bow", type: "weapon", system: { reload: { value: "0" } }, subitems: [] };
+    assert.deepEqual(objectChoices({ items: [round, pistol, loaded, bow] }, autoload.objects, "leathers"), [{ id: "p1", name: "Pistol" }]);
+    assert.deepEqual(objectChoices({ items: [pistol] }, autoload.objects, "leathers"), [], "no ammunition for it");
+});

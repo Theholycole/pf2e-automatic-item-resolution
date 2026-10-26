@@ -11,6 +11,10 @@ const PHYSICAL = new Set(["equipment", "armor", "weapon", "shield", "backpack", 
 const bulkOf = (item) => Number(item?.system?.bulk?.value ?? 0) || 0;
 const fits = (item, objects) => !Number.isFinite(objects.maxBulk) || bulkOf(item) <= objects.maxBulk;
 const itemsOf = (actor) => [...(actor?.items ?? [])].filter((item) => PHYSICAL.has(item.type));
+// (A weapon's rounds loaded — PF2e keeps them as its subitems — and how many it holds; its user's ammunition for it, PF2e's isAmmoFor.)
+const loadedOf = (weapon) => [...(weapon?.subitems ?? [])].filter((entry) => entry.isOfType?.("ammo") || entry.type === "ammo").reduce((sum, entry) => sum + (Number(entry.quantity ?? entry.system?.quantity) || 0), 0);
+const capacityOf = (weapon) => Number(weapon?.system?.ammo?.capacity) || 1;
+const ammoFor = (actor, weapon) => [...(actor?.items ?? [])].find((item) => item.type === "ammo" && (Number(item.quantity ?? item.system?.quantity) || 0) > 0 && (item.isAmmoFor?.(weapon) ?? false)) ?? null;
 
 // Its user's items the op can take: { id, name }.
 export function objectChoices(actor, objects, holderId) {
@@ -21,7 +25,8 @@ export function objectChoices(actor, objects, holderId) {
         : objects.op === "retrieve" ? items.filter((item) => item.system?.containerId === holderId)
             : objects.op === "hand" ? items.filter((item) => !held(item) && fits(item, objects))
                 : objects.op === "repair" ? items.filter((item) => Number(item.system?.hp?.max) > 0 && Number(item.system?.hp?.value) < Number(item.system?.hp?.max) && fits(item, objects))
-                    : [];
+                    : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && ammoFor(actor, item))
+                        : [];
     return list.map((item) => ({ id: item.id, name: item.name }));
 }
 
@@ -68,6 +73,12 @@ export async function applyObjectsCard(message, { pick = 0 } = {}) {
         const max = Number(chosen.system?.hp?.max) || 0;
         await chosen.update({ "system.hp.value": max });
         line = `${chosen.name} is repaired (${max} Hit Points), no longer broken`;
+    } else if (objects.op === "reload") {
+        // (One round of its user's ammunition for it: PF2e's own attach, as the weapon's reload button does.)
+        const ammo = ammoFor(actor, chosen);
+        if (!ammo) throw new Error(`${state.user.name} has no ammunition for ${chosen.name}.`);
+        await chosen.attach(ammo, { quantity: 1, stack: true });
+        line = `${chosen.name} is reloaded with ${ammo.name}`;
     } else if (objects.op === "create") {
         // (The last one this item made, gone first when a new one replaces it.)
         const madeBy = (item) => item.flags?.[MODULE_ID]?.made?.by === holder.id;

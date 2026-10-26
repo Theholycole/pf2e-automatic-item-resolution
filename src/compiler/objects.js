@@ -13,6 +13,8 @@
 //   melee Strike with it … The dagger remains a physical object until the next time you use Draw Secret Blade" (PF2e's dagger with those
 //   runes, the last one made gone; the Strike its user's own, with it), Necklace of Knives' "it grows into a normal stone, steel, or wooden
 //   dagger for as long as you hold it" (gone once it's out of the hand: scripts/objects.js).
+// - reload: Autoload Leathers' "You reload a weapon with reload 1" (2026-10-26) — one of its user's weapons with that reload and room for a
+//   round, loaded with one of its user's ammunition for it (PF2e's own attach, as its reload button does).
 // Its other rule sentences are notes. Pure.
 
 const BULK = (words) => (/^light$/i.test(words) ? 0.1 : /^negligible$/i.test(words) ? 0 : Number(words));
@@ -30,6 +32,7 @@ const BLADE = /\bdraw an? (?:\+(\d) (?:(greater|major) )?striking )?(dagger) fro
 const BLADE_REPLACED = /\bremains a physical object until the next time you use [\w' -]+?, and it disappears as a new blade is created\b/i;
 const KNIFE = /\bYou pluck a miniature knife from the [\w' -]+?, and it grows into a normal (?:stone, steel, or wooden )?(dagger) for as long as you hold it\b/i;
 const STRIKING = { undefined: 0, "": 1, greater: 2, major: 3 };
+const RELOAD = /\bYou reload a weapon with reload (\d+)\b/i;
 const RULE = /\b(?:bonus|penalty|saving throws?|saves?|resistance|weakness|Strike|check|DC|attack|Speed|Hit Points|damage|condition|can't be activated again|can be activated again|can't Retrieve Item again)\b/i;
 const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 
@@ -50,6 +53,8 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     if (blade) return { op: "create", self: true, weapon: blade[3].toLowerCase(), potency: Number(blade[1] ?? 0), striking: blade[1] ? STRIKING[(blade[2] ?? "").toLowerCase()] : 0, ...(BLADE_REPLACED.test(text) ? { replaces: true } : {}), said: blade[0], also: BLADE_REPLACED.exec(text)?.[0] ?? null };
     const knife = KNIFE.exec(text);
     if (knife) return { op: "create", self: true, weapon: knife[1].toLowerCase(), potency: 0, striking: 0, whileHeld: true, said: knife[0], also: null };
+    const reload = RELOAD.exec(text);
+    if (reload) return { op: "reload", reload: reload[1], said: reload[0] };
     const by = REPAIR_BY.exec(text);
     if (by) return { op: "repair", amount: by[1].replace(/\s+/g, ""), ...(by[2] ? { damagedBy: by[2].toLowerCase() } : {}), said: by[0] };
     if (REPAIR.test(text)) {

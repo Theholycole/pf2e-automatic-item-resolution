@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1287,
+  "entries": 1286,
   "results": {
-   "none": 617,
+   "none": 616,
    "partial": 283,
    "builtin:no-effect": 129,
    "note-only": 258
@@ -25,7 +25,7 @@
    "actions": 31,
    "no-rules": 37,
    "senses": 23,
-   "objects": 116,
+   "objects": 115,
    "illusions": 44,
    "removed": 4,
    "cooldown": 10,
@@ -50,7 +50,7 @@
    "speeds": 30,
    "areas": 166,
    "immunity": 74,
-   "objects": 392,
+   "objects": 391,
    "speech": 124,
    "out-of-combat": 421,
    "counteract": 80,
@@ -6872,17 +6872,6 @@
    "work": "1 hour",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Autoload Leathers",
-   "kind": "activation",
-   "activation": "Autoload",
-   "result": "none",
-   "main": "objects",
-   "work": "reload",
-   "needs": [
-    "objects"
    ]
   },
   {
