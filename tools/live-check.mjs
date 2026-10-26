@@ -2190,8 +2190,8 @@ export const cases = {
     async tigerClawStriking(scene) {
         await clearSquares(scene, [[6, 5]]);
         const { actor: user, token } = await creature(scene, "Tiger Ring Wearer", { type: "character", x: 6, y: 5, level: 10 });
-        const wraps = await give(user, "Handwraps of Mighty Blows (+1 Striking)");
-        await wraps.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const wraps = await give(user, "Handwraps of Mighty Blows");
+        await wraps.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true, "system.runes.potency": 1, "system.runes.striking": 1 });
         const ring = await give(user, "Ring of the Tiger (Greater)");
         await ring.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
         const since = Date.now();
@@ -2200,10 +2200,12 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
         const claw = () => user.system.actions.find((action) => /claw/i.test(action.label ?? action.item?.name ?? "") && action.item?.system?.category === "unarmed");
         await until(claw, "the claw's Strike", { timeout: 8000 });
-        const base = claw().item.system.damage.dice;
+        // (Its own die, the Strike rule's; PF2e's prepared dice with the striking rune's.)
+        const base = claw().item._source.system.damage.dice;
+        const dice = claw().item.system.damage.dice;
         const striking = claw().item.system.runes?.striking ?? 0;
-        assert(base === 1 && striking === 1, `1 die of its own and striking 1 (${base}, ${striking})`);
-        return { base, striking };
+        assert(base === 1 && striking === 1 && dice === 2, `1 die of its own, striking 1, 2d6 in all (${base}, ${striking}, ${dice})`);
+        return { base, striking, dice };
     },
 
     // Nap Gas Dispenser: a creature that fails is Slowed at once and marked; the end of the user's turn (the one under way) gives nothing, the
@@ -2245,7 +2247,10 @@ export const cases = {
         const { actor: user, token: userToken } = await creature(scene, "Coldstar Gunner", { type: "character", x: 9, y: 5, level: 20 });
         const { token: foeToken } = await creature(scene, "Coldstar Target", { x: 10, y: 5, alliance: "opposition", ac: 1, hp: 300 });
         const pistols = await give(user, "Coldstar Pistols");
-        await pistols.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        // (Its rounds, picked as PF2e's ammunition for it: reload 0.)
+        const rounds = await give(user, "Rounds (Dueling Pistol)");
+        await rounds.update({ "system.quantity": 4 });
+        await pistols.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.selectedAmmoId": rounds.id });
         let since = Date.now();
         await game.modules.get(NS).api.live.activate(pistols.uuid, 1);
         const card = await messageAfter(since, itemCard("strike"), { what: "the twin Strike's card" });
