@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 891,
+   "resolves": 894,
    "builtin:cast-spell": 475,
    "partial": 134,
-   "none": 431,
+   "none": 428,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
@@ -34,12 +34,12 @@
    "save": 434,
    "cast": 475,
    "item": 611,
-   "none": 542,
+   "none": 539,
    "focus": 47,
    "counteract": 29,
    "fortune": 61,
    "reroll": 45,
-   "strike": 112,
+   "strike": 115,
    "table": 7,
    "teleport": 28,
    "ways": 32,
@@ -87,9 +87,9 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 202,
+    "resolves": 205,
     "partial": 29,
-    "none": 70,
+    "none": 67,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "builtin:table": 1,
@@ -7770,9 +7770,9 @@
    "time": "2",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Disintegration Bolt",
@@ -12506,9 +12506,9 @@
    "time": "2",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Shatterpoint Ammunition",
@@ -26048,9 +26048,9 @@
    "time": "2",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Living Leaf Weave",

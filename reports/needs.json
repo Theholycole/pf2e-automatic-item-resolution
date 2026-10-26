@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1192,
+  "entries": 1189,
   "results": {
-   "none": 596,
+   "none": 593,
    "partial": 215,
    "builtin:no-effect": 124,
    "note-only": 257
@@ -18,7 +18,7 @@
    "visibility": 46,
    "choice": 36,
    "mind": 8,
-   "strike": 96,
+   "strike": 93,
    "spells": 35,
    "information": 21,
    "out-of-combat": 33,
@@ -63,7 +63,7 @@
    "choice": 106,
    "several": 88,
    "mind": 69,
-   "strike": 173,
+   "strike": 170,
    "reader": 182,
    "spells": 71,
    "information": 188,
@@ -3999,17 +3999,6 @@
    ]
   },
   {
-   "name": "Flashblade (Major)",
-   "kind": "activation",
-   "activation": "Prepare Flash",
-   "result": "none",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike"
-   ]
-  },
-  {
    "name": "Caustic Deteriorating Dust",
    "kind": "consumable",
    "result": "note-only",
@@ -6151,17 +6140,6 @@
     "strike",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Flashblade",
-   "kind": "activation",
-   "activation": "Prepare Flash",
-   "result": "none",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike"
    ]
   },
   {
@@ -13055,17 +13033,6 @@
     "moving",
     "strike",
     "objects"
-   ]
-  },
-  {
-   "name": "Flashblade (Greater)",
-   "kind": "activation",
-   "activation": "Prepare Flash",
-   "result": "none",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike"
    ]
   },
   {

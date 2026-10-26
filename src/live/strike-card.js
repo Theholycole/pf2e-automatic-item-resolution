@@ -75,6 +75,7 @@ export function strikeLines(plan) {
         ...(strike.follow?.notes ?? []).map((note) => `Also: ${note}`),
         ...(strike.requires ?? []).map((line) => `Its target: ${line.charAt(0).toLowerCase()}${line.slice(1).replace(/\.$/, "")}`),
         strike.missRefund ? "On a miss: the activation's use is given back (it doesn't count against its frequency)" : null,
+        strike.readied ? "Readied (its user's Ready action): made when its trigger happens, before the start of its user's next turn; if it isn't, the activation's use is given back" : null,
         strike.reach ? (strike.reach.feet ? `Reach ${strike.reach.feet} feet for this Strike` : `Reach ${strike.reach.more} feet more for this Strike`) : null,
         // (What it says of PF2e's multiple attack penalty, whose buttons are the user's to pick.)
         strike.map === "double" ? "Your multiple attack penalty rises two steps after it (it counts as two attacks)" : null,
@@ -89,7 +90,7 @@ export function strikeLines(plan) {
 
 const RANGE_WORDS = { melee: "melee Strike", ranged: "ranged Strike" };
 export const strikeWord = (plan) => (plan.strike?.unarmed ? "unarmed Strike" : RANGE_WORDS[plan.strike?.range] ?? "Strike");
-const UNTIL_WORDS = { "turn-end": "this turn", "next-turn-end": "before the end of the next turn", minute: "within a minute" };
+const UNTIL_WORDS = { "turn-end": "this turn", "next-turn-end": "before the end of the next turn", "next-turn-start": "before the start of the next turn", minute: "within a minute" };
 
 // The card's hint: which Strike carries it and what spends it.
 // (uses: how many it readied, a volley at each creature targeted.)
@@ -191,6 +192,7 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
 const DURATIONS = {
     "turn-end": { value: 0, unit: "rounds", expiry: "turn-end" },
     "next-turn-end": { value: 1, unit: "rounds", expiry: "turn-end" },
+    "next-turn-start": { value: 1, unit: "rounds", expiry: "turn-start" },
     minute: { value: 1, unit: "minutes", expiry: "turn-start" }
 };
 

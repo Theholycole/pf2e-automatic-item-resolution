@@ -12,7 +12,7 @@ import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
 import { USES, now } from "./activations.js";
 import { withoutUse } from "../src/live/activations-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
 import { planFor, withoutAloftProne } from "../src/live/if-target.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -50,6 +50,16 @@ export async function applyStrikeCard(message, choices = {}) {
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 
+// (A readied Strike never made, Flashblade's Prepare Flash: its Effect gone with its time, the activation's use given back — on the active GM's
+// client.)
+export function setUpReadiedRefund() {
+    Hooks.on("deleteItem", (item) => {
+        const rider = item?.type === "effect" ? item.flags?.[MODULE_ID]?.[MODULE_KEY] : null;
+        if (!rider?.plan?.strike?.readied || rider.made || !item.actor || !isActiveGM()) return;
+        refundUse(rider, item.actor).then((refunded) => refunded && ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: item.actor }), content: `<p><strong>${escape(rider.item?.name ?? "The item")}</strong>: its readied Strike wasn't made, so the activation's use is given back.</p>` })).catch((error) => console.error(`${MODULE_ID} | readied refund`, error));
+    });
+}
+
 // The activation's use given back on its item's record (scripts/activations.js): true when there was one.
 async function refundUse(rider, actor) {
     const item = rider.item?.uuid ? await fromUuid(rider.item.uuid).catch(() => null) : null;
@@ -79,6 +89,8 @@ export async function secondStrikeDamage(actor, message, outcome, rider) {
 // One Strike of the readied ones used: the Effect gone with the last, else one fewer left.
 async function useOne(actor, effect, rider) {
     const left = (Number(rider.uses) || 1) - 1;
+    // (A readied one made: marked so, so that its going isn't taken for its time running out — setUpReadiedRefund.)
+    if (left <= 0 && rider.plan?.strike?.readied) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.made`]: true });
     if (left <= 0) return actor.deleteEmbeddedDocuments("Item", [effect.id]);
     return effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.uses`]: left, [`flags.${MODULE_ID}.${MODULE_KEY}.awaiting`]: false });
 }

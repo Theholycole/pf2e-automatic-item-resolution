@@ -545,3 +545,12 @@ test("Lady's Chalice's splash: the bomb card's splash list at the creatures with
         Object.assign(globalThis, saved);
     }
 });
+
+test("Flashblade's Prepare Flash: a melee Strike readied until the start of its user's next turn with reach 15 feet (20 for the Greater), its use given back if it isn't made", async () => {
+    const { strikeLines } = await import("../src/live/strike-card.js");
+    for (const [name, feet] of [["Flashblade", 15], ["Flashblade (Greater)", 20]]) {
+        const plan = planOf(name);
+        assert.deepEqual([Boolean(plan.partial), plan.strike.readied, plan.strike.until, plan.strike.reach, plan.strike.notes], [false, true, "next-turn-start", { feet }, []], name);
+        assert.ok(strikeLines(plan).some((line) => /^Readied \(its user's Ready action\)/.test(line)));
+    }
+});

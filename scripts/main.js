@@ -35,6 +35,7 @@ import { setUpLater } from "./later.js";
 import { setUpAfflictedTurns } from "./afflicted-turns.js";
 import { setUpFelled } from "./felled.js";
 import { setUpOwnSplash } from "./own-splash.js";
+import { setUpReadiedRefund } from "./strikes.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -154,6 +155,8 @@ Hooks.once("ready", async () => {
     setUpFelled();
     // (An item's own attack's splash, Lady's Chalice's: scripts/own-splash.js.)
     setUpOwnSplash();
+    // (A readied Strike never made, Flashblade's: its activation's use given back, scripts/strikes.js.)
+    setUpReadiedRefund();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

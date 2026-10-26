@@ -394,6 +394,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.requires ? { requires: extras.requires } : {}),
               // (A miss giving its use back: Hydra Head Club's.)
               ...(extras.missRefund ? { missRefund: true } : {}),
+              // (A Strike readied, Flashblade's: until the start of its user's next turn, its use given back if it isn't made.)
+              ...(extras.readied ? { readied: true } : {}),
               // (More reach for it: the Extending rune's, Tasset of Flexibility's.)
               ...(extras.reach ? { reach: extras.reach } : {}),
               // (What it says of the multiple attack penalty: the card's line.)
@@ -404,7 +406,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               unarmed: strike.unarmed,
               uses: strike.uses,
               ...(strike.volley ? { volley: strike.volley } : {}),
-              until: strike.hit ? "turn-end" : untilOf(strike.after),
+              until: strike.hit ? "turn-end" : extras.readied ? "next-turn-start" : untilOf(strike.after),
               missKeeps: strike.missKeeps,
               hit: strike.hit,
               notes: extras.notes

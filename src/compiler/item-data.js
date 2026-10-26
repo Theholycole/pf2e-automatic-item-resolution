@@ -241,6 +241,10 @@ export function withItemData(html, item) {
     // (Admirer's Bouquet handed over, "If they accept the bouquet, they gain a +1 item bonus to saves against emotion and mental effects as
     // long as they continue to carry the admirer's bouquet": the triggering ally's, for as long as it carries the bouquet.)
     text = text.replace(/\bIf they accept the bouquet, they gain (an? \+\d+ item bonus to saves against emotion and mental effects) as long as they continue to carry the admirer's bouquet\./i, "The triggering ally gains $1. The bonus ends once the ally no longer carries the bouquet (end it by hand).");
+    // (Flashblade's Prepare Flash, "You Ready a melee Strike, increasing the flashblade's reach for that Strike to 15 feet. If the trigger doesn't
+    // occur, this doesn't count against the flashblade's frequency": the Strike with that reach, readied until the start of its user's next
+    // turn, its use given back when it isn't made — src/compiler/strike-damage.js READIED. 2026-10-26.)
+    text = text.replace(/\bYou Ready a melee Strike, increasing the ([\w' -]+?)'s reach for that Strike to (\d+) feet\. If the trigger doesn't occur, this doesn't count against the [\w' -]+?'s frequency\./i, (all, name, feet) => `Make a melee Strike with the ${name}, and you have reach ${feet} feet for the Strike. You Ready it until the start of your next turn; if it isn't made by then, the activation does not count against its frequency.`);
     // (Iron Cudgel's "you use Brutal Finish, as the fighter feat": that feat's Strike — with a melee weapon in two hands, one more weapon
     // damage die (two at 18th level, by its owner's level), the die alone on a failure, the turn over after it; the feat's own extra die,
     // src/compiler/strike-damage.js FEAT_DIE.)
