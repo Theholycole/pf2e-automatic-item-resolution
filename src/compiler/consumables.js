@@ -353,13 +353,30 @@ export function fitPlan(item, plan, base, options = {}) {
 
 // An Effect plan behind a check its text opens with — Diplomat's Badge's "Attempt a DC 20 check to Recall Knowledge … If you
 // succeed, the badge's bonus increases": the check on the card, so the Effect is applied only on its success; partial.
+// (A Recall Knowledge check, Diplomat's Badge's and Uniter of Clans': plan.checkGate { action, dc } — its user rolls PF2e's Recall
+// Knowledge with the skill that fits (the GM's to say, the text's own words), and Apply takes its latest one in the chat, its total
+// against the DC; the Effect only on a success, none and nothing used otherwise — scripts/live.js. 2026-10-26.)
+const RECALL = /^Attempt an? DC (\d+) check to Recall Knowledge\b/i;
 export function checkGated(plan, text) {
     if (plan?.resolution?.kind !== "effect" || !(plan.resolution.applications ?? []).length) return plan;
     const effect = String(text ?? "").replace(/^.*?\bEffect\b\s*/s, "");
     const check = /^Attempt an? DC \d+ [^.]*?\bcheck\b[^.]*\./i.exec(effect);
     const success = /\bIf you succeed\b[^.]*\./i.exec(effect);
     if (!check || !success) return plan;
+    const recall = RECALL.exec(check[0]);
+    if (recall) {
+        const notes = (plan.notes ?? []).filter((note) => !String(note).includes(check[0].trim().slice(0, 40)));
+        return { ...plan, checkGate: { action: "recall-knowledge", dc: Number(recall[1]) }, notes: notes.length ? notes : undefined, ...(notes.length || plan.unread?.length ? {} : { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
+    }
     return { ...plan, automation: { level: "guided" }, notes: [...(plan.notes ?? []), `Only on a success: ${check[0].trim()} ${success[0].trim()}`], partial: true };
+}
+
+// The degree of a check's total against a DC, PF2e's: 10 over or under a step, a natural 20 or 1 a step more or less.
+export function degreeOf(total, dc, natural = null) {
+    let degree = total >= dc + 10 ? 3 : total >= dc ? 2 : total <= dc - 10 ? 0 : 1;
+    if (natural === 20) degree = Math.min(3, degree + 1);
+    if (natural === 1) degree = Math.max(0, degree - 1);
+    return degree;
 }
 
 // The plan for what it gives its user and allies in an area (rows.js allyAreaRow): the core's check family with no roll, its

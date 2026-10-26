@@ -403,10 +403,9 @@ test("of several linked Effects, the item's own (its name, or the wearer's); the
     assert.equal(compileActivations(item("Weapon Siphon"))[0].plan?.resolution?.applications?.length ?? 0, 0);
 });
 
-test("an Effect behind the check its text opens with: only on a success, a note (Diplomat's Badge); not a later save's (Antiplague)", () => {
+test("an Effect behind the check its text opens with: only on a success, its Recall Knowledge the card's gate since 2026-10-26 (Diplomat's Badge); not a later save's (Antiplague)", () => {
     const badge = compileActivations(item("Diplomat's Badge"), { spellEffects }).find((entry) => entry.activation.name === "Diplomat's Bearing").plan;
-    assert.equal(badge.partial, true);
-    assert.match(badge.notes.at(-1), /^Only on a success: Attempt a DC 20 check to Recall Knowledge/);
+    assert.deepEqual([badge.partial, badge.checkGate], [undefined, { action: "recall-knowledge", dc: 20 }]);
     assert.equal(compileItem(item("Antiplague (Major)")).notes?.some((note) => /^Only on a success/.test(note)) ?? false, false);
 });
 

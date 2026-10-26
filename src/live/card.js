@@ -147,6 +147,8 @@ export function previewLines(state) {
     if (plan?.item?.rune) lines.push(runeText(plan.item.rune));
     // (A condition until the end of the user's rage, src/compiler/rage-time.js.)
     if (plan?.item?.untilRage) lines.push(`${untilRageText(plan.item.untilRage)}, while raging`);
+    // (Only after its user's check succeeds, Diplomat's Badge's Recall Knowledge: src/compiler/consumables.js checkGated.)
+    if (plan?.checkGate) lines.push(`Only after a successful ${plan.checkGate.action.replace(/-/g, " ")} (DC ${plan.checkGate.dc}, with the skill the GM says fits): roll it first, then Apply checks its latest one`);
     // (Its resistance, src/compiler/rows.js: the card's own Effect.)
     if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)

@@ -58,6 +58,7 @@ import { toggleOff, toggleOn } from "./toggle-off.js";
 import { endOnStrike } from "./ends-on-strike.js";
 import { plateShield } from "./shield-temp.js";
 import { endSpeedPenalties, granterOf, sparedBy } from "./speed-penalties.js";
+import { degreeOf } from "../src/compiler/consumables.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -589,6 +590,21 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
         const owned = owner?.items?.get?.(entry.id) ?? null;
         if (!entry || !owned) throw new Error(`${state.user.name} has no ${installing.name} to install in ${state.item.name}.`);
         if ((Number(owned.system?.quantity) || 1) < installing.count) throw new Error(`${state.item.name} needs ${installing.count} of ${owned.name} installed: ${state.user.name} has ${Number(owned.system?.quantity) || 1}.`);
+    }
+    // (Only after its user's check succeeds, Diplomat's Badge's Recall Knowledge at DC 20: its latest one in the chat, its total against the DC —
+    // refused, nothing applied, when there's none or it fell short. src/compiler/consumables.js checkGated.)
+    const gate = state.plan.checkGate;
+    if (gate) {
+        const option = `action:${gate.action}`;
+        const latest = (game.messages?.contents ?? []).slice(-40).reverse().find((entry) => (entry.actor?.uuid ?? (entry.speaker?.actor ? `Actor.${entry.speaker.actor}` : null)) === state.user.actorUuid && (entry.flags?.pf2e?.context?.options ?? []).includes(option) && entry.rolls?.[0]);
+        const words = gate.action.replace(/-/g, " ");
+        if (!latest) throw new Error(`Roll ${state.user.name}'s ${words} first (DC ${gate.dc}), then press Apply.`);
+        const roll = latest.rolls[0];
+        const natural = roll.dice?.[0]?.total ?? null;
+        if (degreeOf(Number(roll.total), gate.dc, natural) < 2) {
+            const over = { ...state, status: "applied", results: [`${state.user.name}'s ${words} (${roll.total}) didn't reach DC ${gate.dc}: no Effect.`] };
+            return message.update({ content: cardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
+        }
     }
     // (A condition it lowers on others: the creatures the presser targets, before anything is applied.)
     const reduce = state.plan.item?.reduce ?? [];

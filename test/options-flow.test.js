@@ -513,3 +513,12 @@ test("Doom Switch's Bragging Rights: the creature marked for a minute; felled by
         Object.assign(globalThis, saved);
     }
 });
+
+test("Diplomat's Badge and Uniter of Clans: its Effect only after its user's Recall Knowledge reaches DC 20, its latest roll in the chat", async () => {
+    const { degreeOf } = await import("../src/compiler/consumables.js");
+    for (const name of ["Diplomat's Badge", "Uniter of Clans"]) {
+        const plan = planOf(name);
+        assert.deepEqual([Boolean(plan.partial), plan.notes ?? [], plan.checkGate], [false, [], { action: "recall-knowledge", dc: 20 }], name);
+    }
+    assert.deepEqual([degreeOf(20, 20), degreeOf(19, 20), degreeOf(30, 20), degreeOf(19, 20, 20), degreeOf(21, 20, 1)], [2, 1, 3, 2, 1]);
+});
