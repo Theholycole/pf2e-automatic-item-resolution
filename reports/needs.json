@@ -1,12 +1,12 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1295,
+  "entries": 1294,
   "results": {
    "none": 621,
    "partial": 285,
    "builtin:no-effect": 129,
-   "note-only": 260
+   "note-only": 259
   },
   "main": {
    "speeds": 24,
@@ -26,11 +26,11 @@
    "no-rules": 37,
    "senses": 23,
    "objects": 116,
-   "reader": 25,
    "illusions": 44,
    "removed": 4,
    "cooldown": 10,
    "vehicles": 20,
+   "reader": 24,
    "several": 23,
    "triggers": 93,
    "immunity": 26,
@@ -64,7 +64,7 @@
    "several": 90,
    "mind": 71,
    "strike": 188,
-   "reader": 225,
+   "reader": 224,
    "spells": 82,
    "information": 191,
    "actions": 62,
@@ -418,17 +418,6 @@
     "immunity",
     "lasting",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Shield of Endurance",
-   "kind": "activation",
-   "activation": "Temporary Endurance",
-   "result": "note-only",
-   "main": "reader",
-   "work": "temporary hit points",
-   "needs": [
-    "reader"
    ]
   },
   {

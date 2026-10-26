@@ -53,8 +53,10 @@ test("Shield of Snakes' Snap Up: its user's shield raised on the item card's App
     const { routeOf } = await import("../src/live/route.js");
     const snap = activation("Shield of Snakes", "Snap Up");
     assert.deepEqual([routeOf(snap), snap.raiseShield, Boolean(snap.partial), snap.notes], ["item", true, false, undefined]);
-    // (Not Shield of Endurance's, whose shield's temporary Hit Points stay its note.)
-    assert.equal(activation("Shield of Endurance", "Temporary Endurance")?.raiseShield, undefined);
+    // (Shield of Endurance's too, 2026-10-26: its shield's 10 temporary Hit Points for a minute a note Effect on its user — PF2e gives a shield none.)
+    const endurance = activation("Shield of Endurance", "Temporary Endurance");
+    const [note] = endurance.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([routeOf(endurance), endurance.raiseShield, Boolean(endurance.partial), Boolean(endurance.noteOnly), note.label, note.duration.value, note.duration.unit], ["item", true, false, false, "Shield: 10 temporary Hit Points", 1, "minutes"]);
 });
 
 test("Alchemist's Flamethrower: the grade of alchemist's fire loaded picked on the ways card, each its basic Reflex save in its line and its persistent fire on a critical failure", async () => {
