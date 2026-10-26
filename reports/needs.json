@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1255,
+  "entries": 1251,
   "results": {
    "none": 611,
-   "partial": 258,
+   "partial": 254,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -29,16 +29,16 @@
    "removed": 4,
    "cooldown": 9,
    "vehicles": 20,
-   "reader": 22,
+   "reader": 21,
    "several": 23,
    "triggers": 93,
-   "immunity": 26,
+   "immunity": 24,
    "situational": 16,
    "creatures": 53,
    "dying": 29,
    "senses": 21,
    "speech": 18,
-   "from-events": 7,
+   "from-events": 6,
    "forms": 24,
    "retaliation": 3,
    "missing-number": 7,
@@ -49,13 +49,13 @@
   "any": {
    "speeds": 28,
    "areas": 164,
-   "immunity": 74,
+   "immunity": 72,
    "objects": 390,
    "speech": 124,
-   "out-of-combat": 418,
+   "out-of-combat": 416,
    "counteract": 80,
    "afflictions": 93,
-   "lasting": 210,
+   "lasting": 209,
    "moving": 108,
    "triggers": 126,
    "visibility": 48,
@@ -64,11 +64,11 @@
    "several": 90,
    "mind": 70,
    "strike": 185,
-   "reader": 208,
+   "reader": 207,
    "spells": 82,
    "information": 191,
    "actions": 56,
-   "from-events": 34,
+   "from-events": 33,
    "no-rules": 37,
    "illusions": 56,
    "removed": 5,
@@ -4026,18 +4026,6 @@
    ]
   },
   {
-   "name": "Captivating Bauble",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "immunity",
-   "work": "immune",
-   "needs": [
-    "immunity",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Philosopher's Stone",
    "kind": "consumable",
    "result": "builtin:no-effect",
@@ -7016,16 +7004,6 @@
   {
    "name": "Horns of Naraga",
    "kind": "activation",
-   "result": "partial",
-   "main": "from-events",
-   "work": "regain hit points equal",
-   "needs": [
-    "from-events"
-   ]
-  },
-  {
-   "name": "Horns of Naraga",
-   "kind": "activation",
    "result": "builtin:no-effect",
    "main": "creatures",
    "work": "summoned",
@@ -7269,17 +7247,6 @@
     "moving",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Celestial Peachwood Sword",
-   "kind": "activation",
-   "activation": "Violent Exorcism",
-   "result": "partial",
-   "main": "reader",
-   "work": "1d6",
-   "needs": [
-    "reader"
    ]
   },
   {
@@ -12788,17 +12755,6 @@
     "visibility",
     "moving",
     "information"
-   ]
-  },
-  {
-   "name": "Starsong Nectar",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "immunity",
-   "work": "immune",
-   "needs": [
-    "immunity",
-    "out-of-combat"
    ]
   },
   {

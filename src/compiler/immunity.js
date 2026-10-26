@@ -27,6 +27,10 @@ const onePart = (sentence, only = null) => ONE_PART.test(sentence) && !(only && 
 // (A time with no clock it can be held to.)
 const NO_CLOCK = /\buntil (?:the next lunar new year|it wakes up|the next time it wakes|you eat|your next|it next|you get a full night's rest)\b|\bonce its effects end\b|\bwhen the effect ends\b|\bwhen the \d+ (?:rounds|minutes|hours) are up\b|\bentirely\b|\b\d+d\d+\b/i;
 const DAILY = /\buntil (?:the next time (?:you|it) makes? (?:your|its) daily preparations|your next daily preparations)\b/i;
+// (From when its effect ends, Starsong Nectar's "You are temporarily immune to this potion for 24 hours once its effects end", Captivating Bauble's
+// "When the effect ends, the target becomes temporarily immune for 24 hours": held to with after — the item card's Effect's end, or the save's
+// condition's — 2026-10-26.)
+const AFTER_END = /\bonce its effects end\b|\bWhen the effect ends\b/i;
 
 const slugOf = (words) => String(words ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 // The item's name without its grade, "Aetheric Irritant (Lesser)" → "aetheric-irritant" — a kind kept, Spun Cloud (Red) not (Green); for "all"
@@ -97,7 +101,8 @@ export function readItemImmunity(text, { name = null, activation = null, heading
     let immunity = null;
     for (const sentence of found) {
         // (One held to; the same one again at other results joins it — Pheromone Flare's critical success and failure —, another stays a note.)
-        const timed = onePart(sentence, only) || (NO_CLOCK.test(sentence) && !DAILY.test(sentence)) ? null : durationOf(sentence);
+        const afterEnd = AFTER_END.test(sentence) && !onePart(sentence, only) && !/\b\d+d\d+\b|\buntil\b/i.test(sentence) ? durationOf(sentence) : null;
+        const timed = afterEnd ? { ...afterEnd, after: true } : onePart(sentence, only) || (NO_CLOCK.test(sentence) && !DAILY.test(sentence)) ? null : durationOf(sentence);
         if (immunity && timed && !/\bimmune to\b/i.test(sentence) && timed.value === immunity.duration.value && timed.unit === immunity.duration.unit) {
             immunity = { ...immunity, degrees: ALL.filter((degree) => immunity.degrees.includes(degree) || degreesOf(sentence, headingOf).includes(degree)) };
             also.push(sentence);
@@ -113,7 +118,7 @@ export function readItemImmunity(text, { name = null, activation = null, heading
         const named = /^(?:the )?([A-Z][\w'’-]*(?: [A-Z][\w'’-]*)*)$/.exec(to.trim())?.[1];
         const ownName = named && familySlug(named) !== family && !/^(?:this|the|that|its|all|any)\b/i.test(to.trim()) ? `${family}-${slugOf(named)}` : null;
         const slug = ownName ?? (/^(?:all|any)\b/i.test(to.trim()) ? baseSlug(name) : own);
-        immunity = { scope: "target", raw: sentence, duration: { value: duration.value, unit: duration.unit }, ...(duration.daily ? { daily: true } : {}), degrees: degreesOf(sentence, headingOf), against: "all", slug };
+        immunity = { scope: "target", raw: sentence, duration: { value: duration.value, unit: duration.unit }, ...(duration.daily ? { daily: true } : {}), ...(duration.after ? { after: true } : {}), degrees: degreesOf(sentence, headingOf), against: "all", slug };
     }
     return { ...(immunity ? { immunity } : {}), unread, ...(also.length ? { also } : {}) };
 }
@@ -206,7 +211,18 @@ export function withImmunity(given, html, names = {}) {
         // (With no save, its card's own recipient's — not "a creature that begins its turn in the area", Nightmare's Lament's smoke, unless a
         // cast's: the creatures it's cast at.)
         const others = /^(?:A|Any|Each) creatures? (?:that|who|in|within)\b|^Creatures (?:that|who|in|within)\b|\bin the area\b/i.test(immunity.raw) && next.builtin !== "cast-spell";
-        if (saves.length) for (const save of saves) save.trigger = { ...(save.trigger ?? { event: "use" }), immunity };
+        // (From when its effect ends, on a save: the ability module's cards only leave out the immune — no degree gives it at once — and once the
+        // condition a row gave ends, the creature gets it, src/compiler/after-ends.js plan.afterEnds.)
+        const { after, ...held } = immunity;
+        const ending = after ? saves.map((save) => [save, Object.entries(save.resolution.outcomes ?? {}).filter(([degree, row]) => held.degrees.includes(degree) && (row?.effects ?? []).some((effect) => effect?.kind === "condition"))]) : [];
+        if (after && saves.length && ending.every(([, rows]) => rows.length)) {
+            for (const [save, rows] of ending) {
+                // (A degree no result has, "after-end": the ability module's immunityApplies reads no degrees as every degree.)
+                save.trigger = { ...(save.trigger ?? { event: "use" }), immunity: { ...held, degrees: ["after-end"] } };
+                save.afterEnds = [...(save.afterEnds ?? []), ...rows.map(([degree, row]) => ({ degree, when: row.effects.find((effect) => effect?.kind === "condition").slug, then: { immunity: held } }))];
+            }
+        } else if (after && saves.length) unread.push(immunity.raw);
+        else if (saves.length) for (const save of saves) save.trigger = { ...(save.trigger ?? { event: "use" }), immunity };
         else if (ALL_DEGREES(immunity.degrees) && !others) next = { ...next, item: { ...(next.item ?? {}), immunity } };
         else unread.push(immunity.raw);
     }

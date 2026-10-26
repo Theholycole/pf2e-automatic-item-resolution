@@ -1142,7 +1142,8 @@ async function nativeEffect(actor, name, change, state) {
         user: state.user,
         worldTime: game.time.worldTime,
         initiative: startInitiative(actor),
-        flags: { [MODULE_ID]: { card: true } }
+        // (Its temporary immunity from when this Effect ends, Starsong Nectar's: given then, scripts/immunity.js.)
+        flags: { [MODULE_ID]: { card: true, ...(state.plan.item?.immunity?.after ? { immunityAfter: state.plan.item.immunity } : {}) } }
     });
     source._stats = { ...(source._stats ?? {}), compendiumSource: change.effect.uuid };
     await actor.createEmbeddedDocuments("Item", [source]);

@@ -38,7 +38,8 @@ test("the reading: its key (the item's name without its grade, an ability it nam
     assert.deepEqual(read("You're then temporarily immune to galvanic chews for 24 hours or until the next time you make your daily preparations.", { name: "Galvanic Chew" }).immunity.duration, { value: 1, unit: "days" });
     // Not one it holds to: a part of it, a time with no clock — notes.
     assert.deepEqual(read("A creature that critically fails is also Blinded until the end of your next turn and is then temporarily immune to being blinded by poison fizz for 1 hour.", { name: "Poison Fizz (Lesser)" }), { unread: ["A creature that critically fails is also Blinded until the end of your next turn and is then temporarily immune to being blinded by poison fizz for 1 hour."] });
-    assert.equal(read("You are temporarily immune to this potion for 24 hours once its effects end.", { name: "Starsong Nectar" }).immunity, undefined);
+    // (From when its effect ends: held to with after, 2026-10-26 — test/options-flow.test.js.)
+    assert.deepEqual([read("You are temporarily immune to this potion for 24 hours once its effects end.", { name: "Starsong Nectar" }).immunity.after, read("You are temporarily immune to this potion for 24 hours once its effects end.", { name: "Starsong Nectar" }).immunity.duration], [true, { value: 24, unit: "hours" }]);
     // Not an immunity to the item at all: a benefit, PF2e's own Demoralize's.
     assert.equal(read("If the result is heads, you become immune to fear effects for 1 hour.", { name: "Velicarn's Cursed Coin" }), null);
     assert.equal(read("If you already have the Warning Shot feat, the target doesn't become temporarily immune to your Demoralize.", { name: "Admonishing Band" }), null);
@@ -59,8 +60,8 @@ test("where a plan holds to it: a save's trigger.immunity (the ability module's 
     const [cloak] = compileActivations(source("Nightmare's Lament"));
     assert.deepEqual([cloak.plan.item?.immunity, cloak.plan.partial], [undefined, true]);
     assert.ok(cloak.plan.notes.some((note) => /temporarily immune to the sickness from the smoke/.test(note)));
-    // (Its immunity a part of it, or starting once its effect ends: notes, partial.)
-    assert.equal(compileItem(source("Starsong Nectar")).partial, true);
+    // (Starting once its effect ends: held to since 2026-10-26, test/options-flow.test.js.)
+    assert.equal(compileItem(source("Starsong Nectar")).item.immunity.after, true);
     // (The same immunity said again in another degree's paragraph joins it: Pheromone Flare's critical success, and its failure's "After this,
     // it becomes temporarily immune for 24 hours" with the critical failure that's "As failure"; not its success, a new save every 10 minutes.)
     const flare = compileItem(source("Pheromone Flare (Lesser)"));

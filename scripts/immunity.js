@@ -6,7 +6,7 @@
 
 import { immunityEffect, isImmune } from "../../pf2e-automatic-ability-resolution/src/live/auras.js";
 import { recipientOf } from "../src/live/card.js";
-import { ABILITY_ID, MODULE_ID, stateOf } from "./foundry.js";
+import { ABILITY_ID, MODULE_ID, isActiveGM, stateOf } from "./foundry.js";
 
 // (Kinds whose card holds to it some other way: a save at the creatures, the ability module's; a Strike's or a bomb's, theirs.)
 const OWN_KINDS = new Set(["item", "cast", "fortune", "reroll", "ways", "counteract", "item-action", "toggle", "focus", "take"]);
@@ -53,6 +53,19 @@ export async function withImmunityGuard(message, state, choices, run) {
     const now = game.messages?.get?.(message.id) ?? message;
     // (Only once it was applied: its card changed.)
     if (JSON.stringify(stateOf(now)) === before) return done;
+    // (From when its Effect ends, Starsong Nectar's: that Effect carries it, setUpImmunityAfter.)
+    if (immunity.after) return done;
     for (const creature of creatures.filter((one) => !immune.includes(one))) await grant(creature, immunity, state);
     return done;
+}
+
+// (An item card's Effect flagged immunityAfter, gone — expired or deleted —: its creature's "Immune:" Effect from then, on the active GM's client.)
+export function setUpImmunityAfter() {
+    Hooks.on("deleteItem", (item) => {
+        const immunity = item?.type === "effect" ? item.flags?.[MODULE_ID]?.immunityAfter : null;
+        if (!immunity?.slug || !item.parent || !isActiveGM()) return;
+        const { after, ...held } = immunity;
+        const name = String(item.name ?? "").replace(/^Effect:\s*/, "");
+        grant({ actor: item.parent }, held, { item: { name, img: item.img ?? null }, user: { actorUuid: item.system?.context?.origin?.actor ?? null, name: "" } }).catch((error) => console.error(`${MODULE_ID} | immunity after`, error));
+    });
 }

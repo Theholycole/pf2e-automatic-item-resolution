@@ -54,7 +54,8 @@ const LASTS = new RegExp(String.raw`^This effect lasts for (\d+|one|an?) (rounds
 const ABOUT_ACTION = /\b(?:during this action|uses the action to)\b/i;
 // (The activation's own words before the option: whom it's at.)
 const TARGETING = /\btargeting an? (living )?creature within (\d+) feet\b/i;
-const plainOf = (html) => String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+// (A check link with no label — "@Check[fortitude|dc:35] save" — its save's name.)
+const plainOf = (html) => String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/@Check\[(?:type:)?(\w+)[^\]]*\]/g, (all, type) => type.charAt(0).toUpperCase() + type.slice(1)).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 export function afterEffectPlan(html, base) {
     const body = plainOf(html).replace(/^.*?\bEffect\b\s*/s, "");
@@ -92,4 +93,52 @@ export function withSlain(plan, html) {
     const sentence = SLAIN.exec(plainOf(html))[0];
     const notes = (plan.notes ?? []).filter((note) => !said(note).includes(sentence.replace(/\.$/, "")));
     return { ...plan, resolution: { ...resolution, postDamageTerminal: { kind: "death", threshold: 0 } }, ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}) };
+}
+
+// What follows the card's own results (2026-10-26):
+// - destroyed on a failed save, Celestial Peachwood Sword's Violent Exorcism (its undead destroyed unless its Fortitude save succeeds):
+//   the failure rows' terminal death (the core's), which the ability module plays;
+// - its user's backlash then, "If the undead fails its saving throw and is destroyed, you suffer a backlash, taking 1d6 void damage per level of
+//   the destroyed undead": plan.backlash { degrees, perLevel, type } — rolled on its user once the card is applied, by that creature's level
+//   (scripts/after-ends.js);
+// - its user's healing from the damage the card dealt, Horns of Naraga's "If you are an undead, you regain Hit Points equal to the void damage
+//   the creature took": plan.drain { fraction: 1, type, heal: true, immediate: true, onlyIf: "undead" } — the damage the card applies seen by
+//   the item module's damage listener as it lands, the Hit Points the creature lost given back to its user (scripts/drain.js).
+const DESTROYED = /\bThe creature must succeed at a (Fortitude|Reflex|Will) save or be destroyed\./i;
+const BACKLASH = /\bIf the undead fails its saving throw and is destroyed, you suffer a backlash, taking (\d+d\d+) (\w+) damage per level of the destroyed undead\./i;
+const REGAIN = /^If you are an? (undead), you regain Hit Points equal to the (\w+) damage the creature took\.$/i;
+const FAILURES = ["failure", "criticalFailure"];
+export function withAfterApplied(plan, html) {
+    const outcomes = plan?.resolution?.outcomes;
+    if (!outcomes) return plan;
+    const text = plainOf(html);
+    let next = plan;
+    const read = [];
+    // (Its failures' death the ability compiler's own reading, or this one's.)
+    if (plan.resolution.kind === "save" && DESTROYED.test(text) && FAILURES.every((degree) => outcomes[degree] && (outcomes[degree].terminal?.kind === "death" || (!outcomes[degree].terminal && !(outcomes[degree].effects ?? []).length)))) {
+        next = { ...next, resolution: { ...next.resolution, outcomes: { ...next.resolution.outcomes, ...Object.fromEntries(FAILURES.map((degree) => [degree, { ...next.resolution.outcomes[degree], terminal: { kind: "death" } }])) } } };
+        read.push(DESTROYED.exec(text)[0]);
+        const backlash = BACKLASH.exec(text);
+        if (backlash) {
+            next = { ...next, backlash: { degrees: FAILURES, perLevel: backlash[1], type: backlash[2].toLowerCase() } };
+            read.push(backlash[0]);
+        }
+    }
+    const regain = [...(plan.notes ?? [])].map((note) => REGAIN.exec(said(note))).find(Boolean);
+    if (regain && Object.values(outcomes).some((row) => row?.damage?.mode === "shared")) {
+        next = { ...next, drain: { fraction: 1, type: regain[2].toLowerCase(), duration: null, heal: true, immediate: true, onlyIf: regain[1].toLowerCase() } };
+        read.push(regain[0]);
+    }
+    if (!read.length) return plan;
+    const gone = (entry) => read.some((sentence) => said(entry).replace(/^\{target\}:\s*/, "").replace(/\s*\(by hand\)\.?$/, "").replace(/\.$/, "") === sentence.replace(/\.$/, ""));
+    const notes = (next.notes ?? []).filter((note) => !gone(note));
+    const rows = Object.fromEntries(Object.entries(next.resolution.outcomes).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: row.manualInstructions.filter((line) => !gone(line)) } : row]));
+    for (const row of Object.values(rows)) if (row?.manualInstructions && !row.manualInstructions.length) delete row.manualInstructions;
+    next = { ...next, notes: notes.length ? notes : undefined, resolution: { ...next.resolution, outcomes: rows } };
+    const left = [...notes, ...(next.unread ?? []), ...Object.values(rows).flatMap((row) => row?.manualInstructions ?? [])];
+    if (next.partial && !left.length) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
 }

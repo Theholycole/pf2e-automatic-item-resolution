@@ -93,3 +93,40 @@ test("Skull Bomb: its thrower Blinded for good as it's thrown; Drake Shot's Pron
     assert.deepEqual([shot.strike.groundedProne, shot.strike.notes, Boolean(shot.partial)], [true, [], false]);
     assert.deepEqual([rowEffects(withoutAloftProne(shot, 10), "success"), rowEffects(withoutAloftProne(shot, 0), "success")], [[], [["prone", null]]]);
 });
+
+test("after its effect ends: Starsong Nectar's 24 hours from its Effect's end; Captivating Bauble's once the fascination ends, only the immune left out at once", () => {
+    const nectar = compileItem(item("Starsong Nectar"));
+    assert.deepEqual([nectar.item.immunity.after, nectar.item.immunity.duration, Boolean(nectar.partial)], [true, { value: 24, unit: "hours" }, false]);
+    const bauble = compileItem(item("Captivating Bauble"));
+    assert.deepEqual([bauble.trigger.immunity.degrees, bauble.afterEnds.map((entry) => [entry.degree, entry.when, entry.then.immunity.slug]), Boolean(bauble.partial)], [["after-end"], [["failure", "fascinated", "captivating-bauble"], ["criticalFailure", "fascinated", "captivating-bauble"]], false]);
+    assert.match(afterEndsMarkSource(bauble.afterEnds[0], { item: { name: "Captivating Bauble" } }).system.description.value, /When it(?:&#39;|')s no longer fascinated, it becomes temporarily immune to it for 24 hours/);
+});
+
+test("Celestial Peachwood Sword: a failed save destroys the undead, its user's backlash 1d6 void per level; Horns of Naraga's undead user healed by the void damage taken", () => {
+    const sword = planOf("Celestial Peachwood Sword");
+    assert.deepEqual([sword.resolution.outcomes.failure.terminal, sword.backlash, Boolean(sword.partial)], [{ kind: "death" }, { degrees: ["failure", "criticalFailure"], perLevel: "1d6", type: "void" }, false]);
+    const horns = planOf("Horns of Naraga");
+    assert.deepEqual([horns.drain, Boolean(horns.partial), horns.resolution.outcomes.success.manualInstructions ?? null], [{ fraction: 1, type: "void", duration: null, heal: true, immediate: true, onlyIf: "undead" }, false, null]);
+});
+
+test("live: a card's own damage heals its undead user by what the creature lost; a living user nothing", async () => {
+    const { before, usePlans } = await import("../scripts/drain.js");
+    const saved = { game: globalThis.game, ChatMessage: globalThis.ChatMessage, fromUuidSync: globalThis.fromUuidSync };
+    const updates = [];
+    globalThis.game = { user: { isGM: true }, users: [], modules: new Map() };
+    globalThis.ChatMessage = { create: async (data) => data, getSpeaker: () => ({}) };
+    const foe = { uuid: "Actor.foe", name: "Foe", system: { attributes: { hp: { value: 60, temp: 0 } } }, itemTypes: { effect: [] } };
+    globalThis.fromUuidSync = (uuid) => (uuid === "Actor.foe" ? foe : null);
+    try {
+        usePlans(() => [{ plan: planOf("Horns of Naraga") }]);
+        const horns = (traits) => ({ uuid: `Item.horns-${traits.join("")}`, name: "Horns of Naraga", system: { description: { value: "x" } }, actor: { name: "Wearer", system: { traits: { value: traits }, attributes: { hp: { value: 10, max: 100 } } }, update: async (data) => updates.push(data) } });
+        const damage = { instances: [{ type: "void", persistent: false, options: {}, total: 18 }] };
+        const after = before(foe, { damage, item: horns(["undead"]) });
+        foe.system.attributes.hp.value = 42;
+        await after();
+        assert.deepEqual(updates, [{ "system.attributes.hp.value": 28 }]);
+        assert.equal(before(foe, { damage, item: horns(["humanoid"]) }), null);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

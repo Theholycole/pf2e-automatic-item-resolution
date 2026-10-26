@@ -13,7 +13,32 @@ const markOf = (actor) => (actor?.itemTypes?.effect ?? []).find((effect) => effe
 const hpOf = (actor) => ({ value: actor?.system?.attributes?.hp?.value, temp: actor?.system?.attributes?.hp?.temp });
 const DAMAGED = new Set(["success", "criticalSuccess", "failure", "criticalFailure"]);
 
-export function setUpDrain() {
+// planOf(item) → its activations' plans (scripts/main.js's compile), for a card's own damage as it lands: Horns of Naraga's healing.
+let plansOf = () => [];
+const cache = new Map();
+function immediateDrainOf(item) {
+    if (!item) return null;
+    const key = `${item.uuid}|${String(item.system?.description?.value ?? "").length}`;
+    if (!cache.has(key)) {
+        let found = null;
+        try {
+            found = (plansOf(item) ?? []).map((entry) => entry?.plan?.drain).find((drain) => drain?.immediate) ?? null;
+        } catch (error) {
+            console.warn(`${MODULE_ID} | drain reading of ${item.name}`, error);
+        }
+        cache.set(key, found);
+    }
+    return cache.get(key);
+}
+
+// (The plans to read an item's by: its setter, also for tests.)
+export function usePlans(planOf) {
+    plansOf = planOf;
+    cache.clear();
+}
+
+export function setUpDrain(planOf = () => []) {
+    usePlans(planOf);
     Hooks.on(`${ABILITY_ID}.applied`, (payload) => {
         if (!game.user.isGM) return;
         markAfterApplied(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | drain mark`, error));
@@ -50,6 +75,10 @@ export async function markAfterApplied({ state, targets }) {
 // (PF2e applies the damage to a copy of the creature with the attack's context: its Hit Points afterwards are the creature's own.)
 export function before(actor, params) {
     if (!game.user.isGM) return null;
+    // (A card's own damage, the ability module's applyDamage with the card's item: Horns of Naraga's "If you are an undead, you regain Hit Points
+    // equal to the void damage the creature took" — its user healed by what the creature lost of that type, when it's of that kind.)
+    const immediate = immediateDrainOf(params?.item);
+    if (immediate) return healFromDamage(actor, params, immediate);
     const mark = markOf(actor);
     const drain = mark?.flags?.[MODULE_ID]?.drain;
     const share = drain ? shareOfType(params?.damage, drain.type) : null;
@@ -70,5 +99,23 @@ export function before(actor, params) {
         const name = escape(live.token?.name ?? live.name);
         const content = amount > 0 ? `<p><strong>${escape(user?.name ?? drain.userName ?? "Its user")}</strong> gains ${amount} temporary Hit Points from the ${drain.type ? `${escape(drain.type)} ` : ""}damage <strong>${name}</strong> took (${escape(mark.name)}).</p>` : `<p>${escape(mark.name)} is used up: <strong>${name}</strong>'s damage gave no temporary Hit Points.</p>`;
         await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: user ?? live }), whisper, content });
+    };
+}
+
+function healFromDamage(actor, params, drain) {
+    const share = shareOfType(params?.damage, drain.type);
+    const user = params.item?.actor;
+    const kind = (creature) => [...(creature?.system?.traits?.value ?? []), ...(creature?.traits ?? [])].map((trait) => String(trait).toLowerCase());
+    if (!share || !user || user === actor || (drain.onlyIf && !kind(user).includes(drain.onlyIf))) return null;
+    const hp = hpOf(actor);
+    return async () => {
+        const live = fromUuidSync(actor.uuid) ?? actor;
+        const amount = drained(hp, hpOf(live), share, drain.fraction);
+        if (!amount) return;
+        const own = user.system?.attributes?.hp;
+        const healed = Math.min(amount, Math.max(0, (Number(own?.max) || 0) - (Number(own?.value) || 0)));
+        if (healed > 0) await user.update({ "system.attributes.hp.value": (Number(own.value) || 0) + healed });
+        const whisper = (game.users?.filter?.((one) => one.isGM || user.testUserPermission?.(one, "OWNER")) ?? []).map((one) => one.id);
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: user }), whisper, content: `<p><strong>${escape(user.name)}</strong> regains ${healed} Hit Points from the ${escape(drain.type)} damage <strong>${escape(live.token?.name ?? live.name)}</strong> took (${escape(params.item.name)}).</p>` });
     };
 }

@@ -367,7 +367,8 @@ export function drainTempSource(amount, { item = {}, user = {}, start = { value:
 // then the next condition for its time — PF2e's condition granted by the Effect (gone with it), as the ability module's timed conditions are.
 const oneCondition = (slug, value) => `${slug.charAt(0).toUpperCase()}${slug.slice(1)}${Number.isFinite(value) ? ` ${value}` : ""}`;
 export function afterEndsMarkSource(entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    const words = `When it's no longer ${entry.when}, it becomes ${oneCondition(entry.then.slug, entry.then.value)}${entry.then.duration?.mode === "fixed" ? ` for ${timeText(entry.then.duration)}` : ""}`;
+    const then = entry.then.immunity ? `temporarily immune to it for ${entry.then.immunity.duration.value} ${entry.then.immunity.duration.unit}` : `${oneCondition(entry.then.slug, entry.then.value)}${entry.then.duration?.mode === "fixed" ? ` for ${timeText(entry.then.duration)}` : ""}`;
+    const words = `When it's no longer ${entry.when}, it becomes ${then}`;
     return ownEffectSource({ name: `after ${entry.when}`, img: "icons/svg/clockwork.svg", words, rules: [], duration: null, flag: { afterEnds: { when: entry.when, then: entry.then } }, item, user, worldTime, initiative, moduleId });
 }
 export function afterEndsEffectSource(then, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {

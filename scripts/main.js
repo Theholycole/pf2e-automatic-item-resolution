@@ -27,6 +27,7 @@ import { setUpToggleOff } from "./toggle-off.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
+import { setUpImmunityAfter } from "./immunity.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -127,9 +128,11 @@ Hooks.once("ready", async () => {
     // (An ally kept at 1 Hit Point through its next damage from a hazard or an enemy: scripts/hp-floor.js.)
     setUpHPFloor();
     // (A share of the damage a creature the card damaged then takes, as its user's temporary Hit Points: scripts/drain.js.)
-    setUpDrain();
+    setUpDrain((item) => compileActivations(dataOf(item), options()));
     // (A condition that follows once another ends, Heart of Sarnax's: scripts/after-ends.js.)
     setUpAfterEnds();
+    // (A temporary immunity from when an item card's Effect ends, Starsong Nectar's: scripts/immunity.js.)
+    setUpImmunityAfter();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)
