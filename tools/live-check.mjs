@@ -1516,6 +1516,74 @@ export const cases = {
         });
     },
 
+    // Retrieval Belt: Store Item puts the held dagger in the belt (a PF2e container), Retrieve Item brings it back to a hand.
+    async retrievalBelt(scene) {
+        const { actor: user } = await creature(scene, "Belt Wearer", { type: "character", x: 1, y: 30 });
+        const belt = await give(user, "Retrieval Belt");
+        await belt.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const dagger = await give(user, "Dagger");
+        await dagger.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(belt.uuid, 0);
+        let card = await messageAfter(since, itemCard("objects"), { what: "Store Item's card" });
+        const choices = card.getFlag(NS, "card").choices.map((choice) => choice.name);
+        assert(choices.includes("Dagger"), `the dagger offered (${choices.join(", ")})`);
+        await game.modules.get(NS).api.live.apply(card.id, { pick: choices.indexOf("Dagger") });
+        await until(() => dagger.system.containerId === belt.id, `the dagger in the belt (${dagger.system.containerId})`, { timeout: 8000 });
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(belt.uuid, 1);
+        card = await messageAfter(since, itemCard("objects"), { what: "Retrieve Item's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { pick: 0 });
+        await until(() => !dagger.system.containerId && dagger.system.equipped.carryType === "held", `the dagger in hand (${dagger.system.equipped.carryType})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // The Forge repairs a damaged steel shield of its user's to its full Hit Points; Crushing Coils are worn once activated.
+    async forgeAndCoils(scene) {
+        const { actor: user } = await creature(scene, "Forge User", { type: "character", x: 2, y: 30 });
+        const forge = await give(user, "The Forge");
+        const shield = await give(user, "Steel Shield");
+        const max = Number(shield.system.hp.max);
+        await shield.update({ "system.hp.value": Math.floor(max / 3) });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(forge.uuid, 0);
+        const card = await messageAfter(since, itemCard("objects"), { what: "The Forge's card" });
+        const choices = card.getFlag(NS, "card").choices.map((choice) => choice.name);
+        await game.modules.get(NS).api.live.apply(card.id, { pick: choices.indexOf("Steel Shield") });
+        await until(() => Number(shield.system.hp.value) === max, `the shield repaired (${shield.system.hp.value}/${max})`, { timeout: 8000 });
+        const coils = await give(user, "Crushing Coils");
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(coils.uuid, 0);
+        const worn = await messageAfter(since, itemCard("objects"), { what: "Crushing Coils' card" });
+        await game.modules.get(NS).api.live.apply(worn.id, {});
+        await until(() => coils.system.equipped.carryType === "worn" && coils.system.equipped.inSlot, `the coils worn (${JSON.stringify(coils.system.equipped)})`, { timeout: 8000 });
+        return { hp: shield.system.hp.value };
+    },
+
+    // Navigator's Star (information): whispered to the GM and its user. Codebreaker's Parchment's Decode Writing (speech): its note Effect.
+    // Winterstep Elixir (Lesser): PF2e's own rule ignoring difficult terrain from ice and snow on its user.
+    async decidedAndTerrain(scene) {
+        const { actor: user } = await creature(scene, "Decided User", { type: "character", x: 3, y: 30 });
+        const star = await give(user, "Navigator's Star");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(star.uuid, 0);
+        const whisper = await messageAfter(since, (message) => message.flags?.[NS]?.whisper?.item === "Navigator's Star", { what: "the whispered card" });
+        assert(whisper.whisper.length > 0 && /which direction you(?:&#39;|')re facing/.test(whisper.content), `whispered, with its words (${whisper.whisper.length})`);
+        const parchment = await give(user, "Codebreaker's Parchment");
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(parchment.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "Decode Writing's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => /scrambled words align/i.test(effect.system?.description?.value ?? "")), "its note Effect", { timeout: 8000 });
+        const elixir = await give(user, "Winterstep Elixir (Lesser)");
+        since = Date.now();
+        await elixir.consume();
+        const drink = await messageAfter(since, itemCard("item"), { what: "the elixir's card" });
+        await game.modules.get(NS).api.live.apply(drink.id);
+        await until(() => (user.system.movement?.terrain?.difficult?.ignored ?? []).some((entry) => entry.feature === "ice"), `ice ignored (${JSON.stringify(user.system.movement?.terrain)})`, { timeout: 8000 });
+        return { ignored: user.system.movement.terrain.difficult.ignored };
+    },
+
     // Burial Oil: the card picks the longsword; its Effect's AdjustStrike gives that Strike the Vitalizing rune (PF2e's disrupting).
     async runeOil(scene) {
         const { actor: fighter } = await creature(scene, "Oiled Fighter", { type: "character", x: 10, y: 17 });
