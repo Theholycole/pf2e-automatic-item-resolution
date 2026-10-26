@@ -28,3 +28,23 @@ export function moveActionsPlan(html, base) {
         notes: [`Then take ${count} move actions, each a ${moves[2]} or a ${moves[3]} (its own moves on the map).`]
     };
 }
+
+// Its allies' own moves (2026-10-26): Guiding Cajon Drum's "Up to 2 allies that can hear the drum can use a reaction to Stride 5 feet." Each ally's
+// reaction is its own to use, on the map: a line of the card, nothing for the card to apply. Only when that and the use's own flavor are all
+// it says.
+const ALLIES_MOVE = /^Up to (\d+|two|three) allies that can hear the [\w' -]+? can use a reaction to (Stride|Step) (\d+) feet\.$/i;
+const FLAVOR = /^You (?:play|beat|strike|sound|shake) the [\w' -]+?, [^.]*\.$/i;
+export function alliesMovePlan(html, base) {
+    const sentences = SENTENCES(plainOf(html).replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, ""));
+    const moves = sentences.map((sentence) => ALLIES_MOVE.exec(sentence)).find(Boolean);
+    if (!moves || !sentences.every((sentence) => ALLIES_MOVE.test(sentence) || FLAVOR.test(sentence))) return null;
+    const count = COUNT[moves[1].toLowerCase()] ?? Number(moves[1]);
+    return {
+        ...base,
+        automation: { level: "automatic" },
+        targeting: { target: null, range: null, area: null },
+        trigger: { event: "use" },
+        resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
+        notes: [`Up to ${count} allies that can hear it can use a reaction to ${moves[2]} ${moves[3]} feet (their own moves on the map).`]
+    };
+}

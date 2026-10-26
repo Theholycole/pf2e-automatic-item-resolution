@@ -573,3 +573,8 @@ test("Tteokguk of Time Advancement: once its Effect ends, temporarily immune unt
     const soup = compileItem(item("Tteokguk of Time Advancement"), { spellEffects });
     assert.deepEqual([Boolean(soup.partial), soup.notes ?? [], soup.item.immunity.after, soup.item.immunity.duration], [false, [], true, { value: -1, unit: "unlimited", until: "the next lunar new year" }]);
 });
+
+test("Guiding Cajon Drum: up to 2 allies' own reaction Strides of 5 feet, a line of the card", () => {
+    const plan = planOf("Guiding Cajon Drum");
+    assert.deepEqual([Boolean(plan.partial), plan.notes], [false, ["Up to 2 allies that can hear it can use a reaction to Stride 5 feet (their own moves on the map)."]]);
+});

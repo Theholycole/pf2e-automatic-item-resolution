@@ -5,7 +5,7 @@
 // Pure.
 
 import { chosenAllyPlan, withAllyEffectThenCard } from "./chosen-ally.js";
-import { moveActionsPlan } from "./move-actions.js";
+import { alliesMovePlan, moveActionsPlan } from "./move-actions.js";
 import { afterEffectPlan, withAfterApplied, withAfterEnds, withCastFlatCheck, withFelledReward, withSaveAfterApplied, withSlain } from "./after-ends.js";
 import { withToggleOff, withToggleOn } from "./toggle-off.js";
 import { withFormExtras } from "./form-extras.js";
@@ -525,6 +525,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenAllyPlan(activation.html, base) ?? plan;
         // (Its user's own moves with a Speed for them, src/compiler/move-actions.js: Dragonaut's Wingsuit's Drake's Glide.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = moveActionsPlan(activation.html, base) ?? plan;
+        // (Its allies' own reaction moves, src/compiler/move-actions.js: Guiding Cajon Drum.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = alliesMovePlan(activation.html, base) ?? plan;
         // (A condition for a time and another after it, src/compiler/after-ends.js: Heart of Sarnax's Bestow Vim.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = afterEffectPlan(activation.html, base) ?? plan;
         // (An illusion on its user's clothes, its disbelief the GM's control, src/compiler/disbelief.js: Costume Change.)

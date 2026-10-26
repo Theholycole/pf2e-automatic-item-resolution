@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1183,
+  "entries": 1182,
   "results": {
-   "none": 593,
+   "none": 592,
    "partial": 210,
    "note-only": 257,
    "builtin:no-effect": 123
@@ -30,7 +30,6 @@
    "cooldown": 9,
    "vehicles": 20,
    "reader": 16,
-   "several": 21,
    "triggers": 90,
    "immunity": 21,
    "situational": 16,
@@ -40,6 +39,7 @@
    "speech": 18,
    "from-events": 4,
    "forms": 24,
+   "several": 20,
    "retaliation": 3,
    "missing-number": 7,
    "fortune": 6,
@@ -61,7 +61,7 @@
    "visibility": 48,
    "dying": 72,
    "choice": 103,
-   "several": 88,
+   "several": 87,
    "mind": 65,
    "strike": 170,
    "reader": 182,
@@ -627,16 +627,6 @@
    "work": "to strike",
    "needs": [
     "strike",
-    "several"
-   ]
-  },
-  {
-   "name": "Guiding Cajon Drum",
-   "kind": "activation",
-   "result": "none",
-   "main": "several",
-   "work": "up to 2 allies",
-   "needs": [
     "several"
    ]
   },
