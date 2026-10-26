@@ -1,12 +1,12 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1399,
+  "entries": 1361,
   "results": {
-   "none": 669,
-   "partial": 318,
-   "builtin:no-effect": 139,
-   "note-only": 273
+   "none": 642,
+   "partial": 316,
+   "builtin:no-effect": 131,
+   "note-only": 272
   },
   "main": {
    "speeds": 25,
@@ -15,13 +15,12 @@
    "areas": 118,
    "moving": 95,
    "lasting": 68,
-   "speech": 36,
    "visibility": 57,
    "choice": 43,
-   "mind": 14,
+   "mind": 9,
    "strike": 113,
    "spells": 45,
-   "information": 38,
+   "information": 23,
    "out-of-combat": 33,
    "actions": 32,
    "no-rules": 37,
@@ -38,6 +37,7 @@
    "situational": 20,
    "creatures": 57,
    "dying": 31,
+   "speech": 18,
    "from-events": 7,
    "forms": 24,
    "retaliation": 3,
@@ -51,7 +51,7 @@
    "areas": 177,
    "immunity": 75,
    "objects": 401,
-   "speech": 150,
+   "speech": 127,
    "out-of-combat": 427,
    "counteract": 80,
    "afflictions": 102,
@@ -62,11 +62,11 @@
    "dying": 82,
    "choice": 118,
    "several": 99,
-   "mind": 78,
+   "mind": 73,
    "strike": 194,
    "reader": 238,
    "spells": 82,
-   "information": 215,
+   "information": 197,
    "actions": 62,
    "from-events": 38,
    "no-rules": 37,
@@ -155,16 +155,6 @@
    "work": "for as long as",
    "needs": [
     "lasting",
-    "speech"
-   ]
-  },
-  {
-   "name": "Elixir of Gender Transformation (Moderate)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "speech",
-   "work": "voice",
-   "needs": [
     "speech"
    ]
   },
@@ -392,17 +382,6 @@
    "needs": [
     "senses",
     "strike"
-   ]
-  },
-  {
-   "name": "Slates of Distant Letters",
-   "kind": "activation",
-   "activation": "Send a Message",
-   "result": "none",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -1270,16 +1249,6 @@
    ]
   },
   {
-   "name": "Rhythm Bone (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "speech",
-   "work": "sounds",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Potion of Annulment (Moderate)",
    "kind": "consumable",
    "result": "builtin:no-effect",
@@ -1560,17 +1529,6 @@
    "needs": [
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Laboratory Coat",
-   "kind": "activation",
-   "activation": "Quick Escape",
-   "result": "none",
-   "main": "speech",
-   "work": "word",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -2542,16 +2500,6 @@
    ]
   },
   {
-   "name": "Magnifying Glass of Elucidation",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "scan",
-   "needs": [
-    "information"
-   ]
-  },
-  {
    "name": "Retrieval Belt (Greater)",
    "kind": "activation",
    "activation": "Store Item",
@@ -3007,16 +2955,6 @@
     "information",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Merchant's Guile",
-   "kind": "activation",
-   "result": "none",
-   "main": "information",
-   "work": "detect",
-   "needs": [
-    "information"
    ]
   },
   {
@@ -4222,17 +4160,6 @@
    ]
   },
   {
-   "name": "Spider Lily Tattoo",
-   "kind": "activation",
-   "activation": "Dead Like You",
-   "result": "partial",
-   "main": "mind",
-   "work": "believes",
-   "needs": [
-    "mind"
-   ]
-  },
-  {
    "name": "Revealing Mist (Lesser)",
    "kind": "consumable",
    "result": "note-only",
@@ -4687,16 +4614,6 @@
     "lasting",
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Elixir of Gender Transformation (Lesser)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "speech",
-   "work": "voice",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -5350,17 +5267,6 @@
    ]
   },
   {
-   "name": "Linguist's Dictionary",
-   "kind": "activation",
-   "result": "none",
-   "main": "information",
-   "work": "translated",
-   "needs": [
-    "information",
-    "speech"
-   ]
-  },
-  {
    "name": "Diplomat's Badge",
    "kind": "activation",
    "activation": "Diplomat's Bearing",
@@ -5640,16 +5546,6 @@
    "work": "difficult terrain",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Gaffe Glasses",
-   "kind": "activation",
-   "result": "none",
-   "main": "information",
-   "work": "remember",
-   "needs": [
-    "information"
    ]
   },
   {
@@ -6002,17 +5898,6 @@
     "visibility",
     "areas",
     "situational"
-   ]
-  },
-  {
-   "name": "Ring of Sigils (Greater)",
-   "kind": "activation",
-   "activation": "Track Sigil",
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "detect",
-   "needs": [
-    "information"
    ]
   },
   {
@@ -6424,16 +6309,6 @@
    ]
   },
   {
-   "name": "Navigator's Star",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "learn",
-   "needs": [
-    "information"
-   ]
-  },
-  {
    "name": "Golden Gloves",
    "kind": "activation",
    "activation": "Heaven's Wings",
@@ -6551,16 +6426,6 @@
     "lasting",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Misdirecting Haversack",
-   "kind": "activation",
-   "result": "none",
-   "main": "information",
-   "work": "documents",
-   "needs": [
-    "information"
    ]
   },
   {
@@ -7039,38 +6904,6 @@
    ]
   },
   {
-   "name": "Bookthief Brew",
-   "kind": "consumable",
-   "result": "none",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
-   "name": "Codebreaker's Parchment (Greater)",
-   "kind": "activation",
-   "activation": "Burn After Reading",
-   "result": "none",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
-   "name": "Codebreaker's Parchment (Greater)",
-   "kind": "activation",
-   "activation": "Decode Writing",
-   "result": "none",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Ancestral Geometry",
    "kind": "activation",
    "result": "none",
@@ -7130,17 +6963,6 @@
     "afflictions",
     "immunity",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Three-Pillared Yang Na",
-   "kind": "activation",
-   "activation": "Second Blessing",
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "learn",
-   "needs": [
-    "information"
    ]
   },
   {
@@ -8261,17 +8083,6 @@
    ]
   },
   {
-   "name": "Memory Guitar",
-   "kind": "activation",
-   "result": "none",
-   "main": "mind",
-   "work": "memory",
-   "needs": [
-    "mind",
-    "information"
-   ]
-  },
-  {
    "name": "Warding Escutcheon",
    "kind": "activation",
    "result": "note-only",
@@ -8531,28 +8342,6 @@
     "moving",
     "lasting",
     "reader"
-   ]
-  },
-  {
-   "name": "Codebreaker's Parchment (Major)",
-   "kind": "activation",
-   "activation": "Burn After Reading",
-   "result": "none",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
-   "name": "Codebreaker's Parchment (Major)",
-   "kind": "activation",
-   "activation": "Decode Writing",
-   "result": "none",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -8984,16 +8773,6 @@
    ]
   },
   {
-   "name": "Ranging Shot",
-   "kind": "activation",
-   "result": "none",
-   "main": "speech",
-   "work": "sounds",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Ring of Observation (Lesser)",
    "kind": "activation",
    "result": "note-only",
@@ -9266,16 +9045,6 @@
    ]
   },
   {
-   "name": "Signaling Snare",
-   "kind": "consumable",
-   "result": "none",
-   "main": "information",
-   "work": "knows",
-   "needs": [
-    "information"
-   ]
-  },
-  {
    "name": "Condensed Mana",
    "kind": "consumable",
    "result": "none",
@@ -9518,17 +9287,6 @@
     "information",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Sinuous Recorder",
-   "kind": "activation",
-   "activation": "Sooth Serpents",
-   "result": "partial",
-   "main": "mind",
-   "work": "attitude",
-   "needs": [
-    "mind"
    ]
   },
   {
@@ -10110,26 +9868,6 @@
     "missing-number",
     "areas",
     "strike"
-   ]
-  },
-  {
-   "name": "Decanter of Endless Water",
-   "kind": "activation",
-   "result": "none",
-   "main": "speech",
-   "work": "speaking",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
-   "name": "Decanter of Endless Water",
-   "kind": "activation",
-   "result": "none",
-   "main": "speech",
-   "work": "speaking",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -11732,16 +11470,6 @@
    ]
   },
   {
-   "name": "Rhythm Bone",
-   "kind": "activation",
-   "result": "none",
-   "main": "speech",
-   "work": "sounds",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Compass of Transpositional Awareness",
    "kind": "activation",
    "activation": "Track Teleportation",
@@ -12359,16 +12087,6 @@
    "needs": [
     "spells",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Deepdread Claw",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "speech",
-   "work": "telepathic",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -13849,18 +13567,6 @@
    ]
   },
   {
-   "name": "Umbraex Eye",
-   "kind": "activation",
-   "result": "none",
-   "main": "mind",
-   "work": "memory",
-   "needs": [
-    "mind",
-    "information",
-    "speech"
-   ]
-  },
-  {
    "name": "Bloodstride Boots",
    "kind": "activation",
    "activation": "Blood Hop",
@@ -14176,28 +13882,6 @@
    ]
   },
   {
-   "name": "Codebreaker's Parchment",
-   "kind": "activation",
-   "activation": "Burn After Reading",
-   "result": "none",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
-   "name": "Codebreaker's Parchment",
-   "kind": "activation",
-   "activation": "Decode Writing",
-   "result": "none",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Phoenix Cinder",
    "kind": "consumable",
    "result": "note-only",
@@ -14306,16 +13990,6 @@
    ]
   },
   {
-   "name": "Purloining Cloak",
-   "kind": "activation",
-   "result": "none",
-   "main": "information",
-   "work": "discern",
-   "needs": [
-    "information"
-   ]
-  },
-  {
    "name": "Secret-Keeper's Mask (Father Skinsaw)",
    "kind": "activation",
    "result": "note-only",
@@ -14388,18 +14062,6 @@
    ]
   },
   {
-   "name": "Codex of Unimpeded Sight",
-   "kind": "activation",
-   "activation": "Reveal Truth",
-   "result": "builtin:no-effect",
-   "main": "mind",
-   "work": "truth",
-   "needs": [
-    "mind",
-    "information"
-   ]
-  },
-  {
    "name": "The Eclipse",
    "kind": "activation",
    "result": "none",
@@ -14441,17 +14103,6 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
-   ]
-  },
-  {
-   "name": "Reading Glyphs",
-   "kind": "activation",
-   "result": "none",
-   "main": "information",
-   "work": "translate",
-   "needs": [
-    "information",
-    "speech"
    ]
   },
   {
@@ -15726,16 +15377,6 @@
    ]
   },
   {
-   "name": "Homeward Swallow",
-   "kind": "activation",
-   "result": "none",
-   "main": "information",
-   "work": "sense the direction",
-   "needs": [
-    "information"
-   ]
-  },
-  {
    "name": "Vambrace of Gorum",
    "kind": "activation",
    "activation": "Blade of Iron",
@@ -15743,16 +15384,6 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
-   ]
-  },
-  {
-   "name": "Wordreaper",
-   "kind": "activation",
-   "result": "note-only",
-   "main": "speech",
-   "work": "words",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -15800,17 +15431,6 @@
    "needs": [
     "areas",
     "triggers"
-   ]
-  },
-  {
-   "name": "Genealogy Mask",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "knows",
-   "needs": [
-    "information",
-    "speech"
    ]
   },
   {
@@ -15870,17 +15490,6 @@
    "work": "forms a cloud",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Linguist's Dictionary (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "information",
-   "work": "translated",
-   "needs": [
-    "information",
-    "speech"
    ]
   },
   {
@@ -16411,17 +16020,6 @@
    "work": "fold",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Ring of Sigils",
-   "kind": "activation",
-   "activation": "Track Sigil",
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "detect",
-   "needs": [
-    "information"
    ]
   },
   {

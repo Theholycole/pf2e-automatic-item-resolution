@@ -59,6 +59,8 @@ export function routeOf(plan, text = "") {
     if (isTable(plan)) return "table";
     // (A short teleport for its user: the space picked on the canvas, scripts/teleport.js.)
     if (isTeleport(plan)) return "teleport";
+    // (What it tells its user, whispered to the GM and the user: src/compiler/decided.js, the user's ruling.)
+    if (plan.builtin === "whisper" && plan.whisper?.text) return "whisper";
     // (An ally's condition taken onto its user: scripts/take.js.)
     if (isTake(plan)) return "take";
     // (A lasting area or a snare: the ability module's zone.)

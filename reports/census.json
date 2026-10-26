@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 178,
-   "resolves": 762,
+   "none": 174,
+   "resolves": 765,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
    "partial": 111,
@@ -27,6 +27,7 @@
    "builtin:no-effect": 43,
    "builtin:teleport": 7,
    "builtin:reroll": 3,
+   "builtin:whisper": 1,
    "builtin:roll-twice": 2
   }
  },
@@ -68,10 +69,10 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 122,
+    "resolves": 123,
     "note-only": 11,
     "partial": 11,
-    "none": 17,
+    "none": 16,
     "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
     "builtin:counteract": 2,
@@ -125,13 +126,13 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 98,
-    "none": 5,
+    "resolves": 100,
     "builtin:counteract": 11,
     "builtin:no-effect": 3,
     "note-only": 16,
     "partial": 13,
     "builtin:ways": 1,
+    "none": 3,
     "builtin:zone": 2
    },
    "mechanisms": {
@@ -171,10 +172,11 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 9,
+    "none": 8,
     "builtin:zone": 71,
     "note-only": 1,
-    "builtin:ways": 1
+    "builtin:ways": 1,
+    "builtin:whisper": 1
    },
    "mechanisms": {
     "damage": 49,
@@ -393,8 +395,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 232,
-   "item": 636,
+   "none": 228,
+   "item": 639,
    "fortune": 25,
    "zone": 118,
    "save": 136,
@@ -407,7 +409,8 @@
    "teleport": 7,
    "reroll": 3,
    "coat": 46,
-   "strike": 13
+   "strike": 13,
+   "whisper": 1
   },
   "byCategory": {
    "other": {
@@ -427,9 +430,9 @@
     "coat": 3
    },
    "potion": {
-    "item": 85,
+    "item": 86,
     "later": 58,
-    "none": 26,
+    "none": 25,
     "cast": 9,
     "save": 1,
     "counteract": 2,
@@ -450,9 +453,9 @@
     "coat": 1
    },
    "elixir": {
-    "item": 125,
-    "none": 8,
+    "item": 127,
     "counteract": 11,
+    "none": 6,
     "save": 1,
     "ways": 1,
     "zone": 2,
@@ -468,10 +471,11 @@
     "item": 1
    },
    "snare": {
-    "none": 9,
+    "none": 8,
     "zone": 71,
     "item": 1,
-    "ways": 1
+    "ways": 1,
+    "whisper": 1
    },
    "gadget": {
     "save": 17,
@@ -512,7 +516,7 @@
    }
   },
   "noCard": {
-   "no-plan": 178,
+   "no-plan": 174,
    "triggered": 11,
    "gm": 43
   }
@@ -647,7 +651,10 @@
     "elixir"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Chromatic Burst (7th-rank)",
@@ -8725,7 +8732,10 @@
     "elixir"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Peachwood Talisman",
@@ -12697,7 +12707,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Blood Sap",
@@ -17071,7 +17084,9 @@
     "trap"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Silvered Marp Fur",

@@ -65,6 +65,7 @@ import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
+import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { withScaled } from "./scaled.js";
@@ -197,6 +198,14 @@ function withBurnTime(plan, text) {
 // (Retaliation while its resistance lasts, for creatures of one trait: plan.item.retaliate, src/compiler/direct-damage.js.)
 const retaliateAfter = (plan) => (plan?.item?.resist?.length ? withRetaliateAfter(plan, plan) : plan);
 
+// (A consumable's plan as the user decided, src/compiler/decided.js: its own base and item part when nothing was read.)
+// (Only the items this module handles: not the spell module's scrolls, wands and catalysts.)
+function decide(plan, given, options) {
+    if (!handlesItem(given, options)) return plan;
+    const next = withDecided(plan, { text: plainText(given?.system?.description?.value), base: basePlan(given), kind: "consumable", name: given.name });
+    return next && next !== plan && !next.item ? { ...next, item: itemInfo(given) } : next;
+}
+
 export function compileItem(given, options = {}) {
     const unlinked = withoutUnverifiedLinks(given, options);
     const instead = unlinked ? overUnverified(compileOne(unlinked.item, options), unlinked.dropped, given?.system?.description?.value) : null;
@@ -209,7 +218,8 @@ export function compileItem(given, options = {}) {
     // (A new save at the creature's turns, src/compiler/save-ends.js.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (A creature moved to a space its user picks, src/compiler/placed.js: Roc-Shaft Arrow's — its Strike's plan whole by then.)
-    return withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), text), text))), text)))), itemDuration(text)), text);
+    // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
+    return decide(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(ownerDCs(instead ?? compileOne(given, options)), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), text), text))), text)))), itemDuration(text)), text), given, options);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

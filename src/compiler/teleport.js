@@ -18,7 +18,8 @@ const SPEED_RANGE = /\btransports you\b[^.]*?\bto an? (?:unoccupied |open )?spac
 // (Or "You instantly transport yourself and any items you're wearing and holding from your current space to an unoccupied space up to 40 feet
 // away that you can see", Quartz-Coil Rail Transport's: that far from its user.)
 // (Emergency Escape Shield's "to an unoccupied space that you can see within 20 feet" too.)
-const TRANSPORT = /\bYou instantly transport yourself\b[^.]*?\bto an? (?:unoccupied |open )?space (?:up to (\d+) feet away that you can see|that you can see within (\d+) feet)\b/i;
+// (And Laboratory Coat's "to instantly transport yourself … to an unoccupied space within 20 feet of you that you can see".)
+const TRANSPORT = /\b(?:You instantly transport yourself|to instantly transport yourself)\b[^.]*?\bto an? (?:unoccupied |open )?space (?:up to (\d+) feet away that you can see|that you can see within (\d+) feet|within (\d+) feet of you that you can see)\b/i;
 // "teleport to a space adjacent to the target of your Strike".
 const ADJACENT = /\bteleport to a space adjacent to the target of your Strike\b/i;
 // (Dimension Shot's "If you hit a creature, you can teleport to an unoccupied space beside that creature" too: the creature targeted.)
@@ -56,7 +57,7 @@ export function readTeleport(text) {
     const ranged = SPEED_RANGE.exec(plain);
     if (ranged) return { within: null, speedTimes: 1, from: "self", match: ranged };
     const transport = TRANSPORT.exec(plain);
-    if (transport) return { within: Number(transport[1] ?? transport[2]), speedTimes: null, from: "self", match: transport };
+    if (transport) return { within: Number(transport[1] ?? transport[2] ?? transport[3]), speedTimes: null, from: "self", match: transport };
     const adjacent = ADJACENT.exec(plain) ?? BESIDE_HIT.exec(plain);
     if (adjacent) return { within: 5, speedTimes: null, from: "target", match: adjacent };
     const own = OWN.exec(plain);

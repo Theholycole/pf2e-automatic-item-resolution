@@ -28,6 +28,7 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
+import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { withPullToward } from "./pull-toward.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
@@ -155,7 +156,18 @@ export function compileActivations(item, options = {}) {
     // (And a Mythic Point it can spend for more: the ways card's two buttons, src/compiler/mythic-upgrade.js.)
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(ownerDCs(entry.plan), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item));
+}
+
+// (An activation's plan as the user decided, src/compiler/decided.js: one built from nothing gets its own base and item part.)
+function decideActivation(item, entry, plan) {
+    const { activation, index } = entry;
+    const base = { modelVersion: MODEL_VERSION, source: { name: `${item.name}${activation.name ? `: ${activation.name}` : ""}`, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type }, rank: 1, traits: [...(item.system?.traits?.value ?? [])], activation: { time: activation.time ?? null, traits: activation.traits ?? [] } };
+    const next = withDecided(plan, { text: plainText(activation.html), base, kind: "activation", trigger: Boolean(activation.trigger), name: base.source.name });
+    if (!next || next === plan || next.item) return next;
+    const frequency = activation.frequency?.max ? activation.frequency : null;
+    return { ...next, ...(frequency ? { trigger: { ...(next.trigger ?? {}), frequency } } : {}), item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: 0 } };
 }
 
 // Only after its user's action succeeds, Glamorous Buckler's "On a successful Feint, the target is Dazzled for 1 round" (src/compiler/item-data.js

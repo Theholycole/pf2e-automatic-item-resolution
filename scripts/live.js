@@ -178,6 +178,19 @@ async function cardForUse(message) {
 // PF2e has no Effect for, cast by the spell module (scripts/casts.js); a zone or a conjured creature (scripts/zones.js); a Focus Point
 // (scripts/focus.js); a readied Strike (scripts/strikes.js); a reroll (scripts/rerolls.js); a roll twice (scripts/fortune.js); a skill action
 // (scripts/item-actions.js); else the item card below.
+// What an item tells its user (an information item, src/compiler/decided.js): whispered to the GM and the user's owners, the GM to fill in
+// what it shows — the user's ruling, as for spells.
+async function postWhisper({ plan, used, actor, token }) {
+    const owners = (game.users ?? []).filter((user) => user.isGM || actor?.testUserPermission?.(user, "OWNER")).map((user) => user.id);
+    const who = token?.name ?? actor?.name ?? "its user";
+    return ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor, token: token?.document ?? token ?? undefined }),
+        whisper: owners,
+        content: `<section class="pf2e-aar-card pf2e-air-card" data-air-status="applied"><header><strong>${escapeHTML(used.data.name)}</strong><span class="aar-check">used by ${escapeHTML(who)}</span></header><p>${escapeHTML(plan.whisper.text)}</p><p class="aar-hint">Whispered to the GM and ${escapeHTML(who)}'s player: the GM says what it tells.</p></section>`,
+        flags: { [MODULE_ID]: { whisper: { item: used.data.name, actorUuid: actor?.uuid ?? null } } }
+    });
+}
+
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
     // (Its moves with ability 0.9.2's hook and moveFrom, else as read before: scripts/placed-moves.js.)
@@ -246,6 +259,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "toggle") return postToggleCard({ message, plan, used, actor, token });
     if (route === "ways") return postWaysCard({ message, plan, used, actor, token });
     if (route === "teleport") return postTeleportCard({ message, plan, used, actor, token });
+    if (route === "whisper") return postWhisper({ plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
     if (route === "take") return postTakeCard({ message, plan, used, actor, token });
     if (route !== "item") return;

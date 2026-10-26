@@ -17,7 +17,7 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 762 | 51% |
+| resolves | 765 | 51% |
 | partial | 111 | 7% |
 | note-only | 122 | 8% |
 | builtin:zone | 118 | 8% |
@@ -31,18 +31,19 @@ Results, for the items this module handles:
 | builtin:reroll | 3 | 0% |
 | builtin:teleport | 7 | 0% |
 | builtin:ways | 26 | 2% |
-| none | 178 | 12% |
+| builtin:whisper | 1 | 0% |
+| none | 174 | 12% |
 
 ## By category
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | other | 512 | 207 | 57 | 59 | 0 | 94 | 95 |
-| potion | 182 | 122 | 11 | 11 | 0 | 21 | 17 |
+| potion | 182 | 123 | 11 | 11 | 0 | 21 | 16 |
 | talisman | 156 | 63 | 9 | 7 | 0 | 50 | 27 |
-| elixir | 149 | 98 | 13 | 16 | 0 | 17 | 5 |
+| elixir | 149 | 100 | 13 | 16 | 0 | 17 | 3 |
 | poison | 115 | 106 | 4 | 1 | 0 | 4 | 0 |
-| snare | 82 | 0 | 0 | 1 | 0 | 72 | 9 |
+| snare | 82 | 0 | 0 | 1 | 0 | 73 | 8 |
 | gadget | 77 | 26 | 4 | 6 | 0 | 33 | 8 |
 | mutagen | 68 | 64 | 4 | 0 | 0 | 0 | 0 |
 | oil | 66 | 29 | 7 | 9 | 0 | 16 | 5 |
@@ -57,24 +58,24 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | fortune | action | counteract | ways | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | other | 512 | 217 | 3 | 3 | 88 | 0 | 14 | 26 | 3 | 0 | 8 | 1 | 9 | 19 | 116 |
-| potion | 182 | 85 | 0 | 0 | 1 | 58 | 9 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 26 |
+| potion | 182 | 86 | 0 | 0 | 1 | 58 | 9 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 25 |
 | talisman | 156 | 52 | 1 | 0 | 16 | 0 | 9 | 0 | 10 | 1 | 15 | 12 | 1 | 2 | 34 |
-| elixir | 149 | 125 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 1 | 8 |
+| elixir | 149 | 127 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 1 | 6 |
 | poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
-| snare | 82 | 1 | 0 | 0 | 0 | 0 | 0 | 71 | 0 | 0 | 0 | 0 | 0 | 1 | 9 |
+| snare | 82 | 1 | 0 | 0 | 0 | 0 | 0 | 71 | 0 | 0 | 0 | 0 | 0 | 1 | 8 |
 | gadget | 77 | 19 | 0 | 0 | 17 | 0 | 0 | 17 | 0 | 0 | 0 | 3 | 8 | 0 | 13 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | oil | 66 | 43 | 0 | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 11 |
 | fulu | 46 | 16 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 14 |
 | drug | 24 | 1 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **636** | **46** | **89** | **136** | **64** | **35** | **118** | **13** | **3** | **25** | **16** | **33** | **26** | **232** |
+| **all** | **1486** | **639** | **46** | **89** | **136** | **64** | **35** | **118** | **13** | **3** | **25** | **16** | **33** | **26** | **228** |
 
 Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
-| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 178 |
+| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 174 |
 | the ability compiler's GM fallback ("no-effect") | 43 |
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
 
