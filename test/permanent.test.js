@@ -722,6 +722,8 @@ test("more one-offs: Aerekostes's next attack rolled twice, Anointed Waterskin's
     assert.ok(smoker.plan.zone.notes.includes("It lasts 1d4 rounds: roll them and remove it by hand."));
     const [helm] = compileActivations(item("Deravon's Helm"), { spellEffects });
     assert.deepEqual([helm.plan.resolution.check.statistic, helm.plan.resolution.outcomes.failure.effects.map((effect) => effect.slug)], ["will", ["prone"]]);
+    // (Its critical failure's whole next turn spent Prone a note Effect on that row, 2026-10-26: whole.)
+    assert.deepEqual([helm.plan.resolution.outcomes.criticalFailure.noteEffects.map((note) => note.label), Boolean(helm.plan.partial), helm.plan.notes], [["Stays Prone"], false, undefined]);
     const [armor] = compileActivations(item("Smoldering Armor"), { spellEffects });
     assert.equal(armor.plan.resolution.applications[0].label, "Spell Effect: Fire Shield");
     const [stone] = compileActivations(item("Stone of Unrivaled Skill"), { spellEffects });

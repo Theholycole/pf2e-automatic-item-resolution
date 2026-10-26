@@ -19,7 +19,12 @@
 // - a save bonus only against persistent damage, Antivenom Potion's "In addition, for 1 minute after drinking the potion, you gain a +1 bonus to
 //   Fortitude saving throws to avoid taking persistent poison damage" (2026-10-26): a note Effect for that minute in place of the whole text's
 //   reminder, its flat check the card's own (plan.item.recovery) — PF2e has no option for a save against persistent damage.
+// - what a critical failure's Prone makes it do, Deravon's Helm's "on a critical failure, the target must spend all three actions on its next turn
+//   remaining prone" (as src/compiler/item-data.js words it, its Prone the rows'): a note Effect on that row to the end of its next turn — a
+//   behaviour rule beside the condition the row gives (2026-10-26).
 // Each sentence read is no longer a note. Pure.
+
+const STAYS_PRONE = /^It drops prone as its first action on its next turn; on a critical failure, the target must spend all three actions on its next turn remaining prone(?: \(by hand\))?\.$/i;
 
 const AGAINST_PERSISTENT = /^(?:In addition, )?for (\d+|one|an?) (rounds?|minutes?|hours?) after drinking (?:the|this) potion, you gain an? \+(\d+) (?:(status|item|circumstance) )?bonus to (Fortitude|Reflex|Will) saving throws to avoid taking persistent (\w+) damage\.$/i;
 
@@ -152,6 +157,14 @@ export function withRowReadings(plan, html, item = null) {
             if (slugs.size !== 1) continue;
             const byCondition = { slug: [...slugs][0], formulas: Object.fromEntries(steps.map((step) => [step[3], step[1]])) };
             rows.success = { ...rows.success, effects: rows.success.effects.map((effect) => (effect?.kind === "heal" ? { ...effect, byCondition } : effect)) };
+            drop(said(entry));
+        }
+    }
+    // (Its critical failure's Prone kept for its whole next turn: a note Effect on that row, its Prone the rows' own.)
+    if (plan.resolution.kind === "save" && ["failure", "criticalFailure"].every((degree) => (rows[degree]?.effects ?? []).some((effect) => effect?.slug === "prone"))) {
+        for (const entry of [...notes, ...unread]) {
+            if (!STAYS_PRONE.test(said(entry))) continue;
+            rows.criticalFailure = { ...rows.criticalFailure, noteEffects: [...(rows.criticalFailure.noteEffects ?? []), { label: "Stays Prone", text: "It must spend all three actions on its next turn remaining Prone.", duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } }] };
             drop(said(entry));
         }
     }

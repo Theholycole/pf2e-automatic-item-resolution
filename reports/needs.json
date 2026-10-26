@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1283,
+  "entries": 1279,
   "results": {
    "none": 615,
-   "partial": 282,
+   "partial": 278,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -13,11 +13,11 @@
    "counteract": 17,
    "afflictions": 51,
    "areas": 111,
-   "moving": 88,
+   "moving": 85,
    "lasting": 65,
    "visibility": 50,
    "choice": 37,
-   "mind": 9,
+   "mind": 8,
    "strike": 106,
    "spells": 45,
    "information": 23,
@@ -56,15 +56,15 @@
    "counteract": 80,
    "afflictions": 93,
    "lasting": 216,
-   "moving": 116,
+   "moving": 113,
    "triggers": 126,
    "visibility": 52,
    "dying": 78,
    "choice": 110,
    "several": 90,
-   "mind": 71,
+   "mind": 70,
    "strike": 187,
-   "reader": 224,
+   "reader": 221,
    "spells": 82,
    "information": 191,
    "actions": 61,
@@ -5955,18 +5955,6 @@
   {
    "name": "Ouroboros Flail",
    "kind": "activation",
-   "activation": "Chained Grasp",
-   "result": "partial",
-   "main": "moving",
-   "work": "move",
-   "needs": [
-    "moving",
-    "reader"
-   ]
-  },
-  {
-   "name": "Ouroboros Flail",
-   "kind": "activation",
    "activation": "Infinite Links",
    "result": "none",
    "main": "strike",
@@ -11384,18 +11372,6 @@
   {
    "name": "Ouroboros Flail (Major)",
    "kind": "activation",
-   "activation": "Chained Grasp",
-   "result": "partial",
-   "main": "moving",
-   "work": "move",
-   "needs": [
-    "moving",
-    "reader"
-   ]
-  },
-  {
-   "name": "Ouroboros Flail (Major)",
-   "kind": "activation",
    "activation": "Infinite Links",
    "result": "none",
    "main": "strike",
@@ -12132,17 +12108,6 @@
    "needs": [
     "creatures",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Deravon's Helm",
-   "kind": "activation",
-   "activation": "Bow Before Aroden",
-   "result": "partial",
-   "main": "mind",
-   "work": "as its first action",
-   "needs": [
-    "mind"
    ]
   },
   {
@@ -13573,18 +13538,6 @@
     "objects",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Ouroboros Flail (Greater)",
-   "kind": "activation",
-   "activation": "Chained Grasp",
-   "result": "partial",
-   "main": "moving",
-   "work": "move",
-   "needs": [
-    "moving",
-    "reader"
    ]
   },
   {

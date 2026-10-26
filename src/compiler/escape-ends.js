@@ -10,6 +10,10 @@
 const PENALTIES = /^The penalty ends early if the target Escapes \(DC (\d+)\)\.$/i;
 const ALL = /^The Escape DC is (\d+) \(it functions as an unattached Net\)\.$/i;
 const READ = /^The ammunition's effects last until the target Escapes\.$/i;
+// (Ouroboros Flail's Chained Grasp, 2026-10-26: "A creature pulled to you is then Grabbed by the flail until the end of your next turn unless you
+// move, your target Escapes, or you attack with the flail, whichever comes first" — the Escape's DC its link's, "[[/act escape dc=31]]"; its
+// other two endings words on the grab, a note Effect on the rows that grab.)
+const GRAB_UNLESS = /^A creature pulled to you is then Grabbed by the ([\w' ]+?) until the end of your next turn unless you move, your target Escapes, or you attack with the \1, whichever comes first\.$/i;
 const DEGREES = ["criticalSuccess", "success", "failure", "criticalFailure"];
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 
@@ -23,14 +27,25 @@ const ends = (row) => (row.effects ?? []).some((effect) => effect?.duration?.esc
 // A condition's duration that also ends on the Escape (an untimed one only then); a modifier's.
 const untilEscape = (effect, escape) => (effect?.kind !== "condition" ? effect : { ...effect, duration: effect.duration ? { ...effect.duration, escape } : { mode: "until-escape", escape } });
 
-export function withEscapeEnds(given) {
+export function withEscapeEnds(given, html = "") {
     const notes = [...(given?.notes ?? []), ...(given?.strike?.notes ?? [])].map(said);
     const penalties = notes.map((note) => PENALTIES.exec(note)).find(Boolean);
     const all = notes.map((note) => ALL.exec(note)).find(Boolean);
     const read = notes.find((note) => READ.test(note));
-    if (!penalties && !all && !read) return given;
+    const grab = notes.map((note) => GRAB_UNLESS.exec(note)).find(Boolean);
+    const grabDC = grab ? Number(/\[\[\/act escape dc=(\d+)\]\]/i.exec(String(html ?? ""))?.[1]) || null : null;
+    if (!penalties && !all && !read && !grabDC) return given;
     const plan = JSON.parse(JSON.stringify(given));
     const done = [];
+    if (grabDC) {
+        const escape = { dc: grabDC };
+        for (const row of rowsOf(plan)) {
+            if (!(row.effects ?? []).some((effect) => effect?.kind === "condition" && effect.slug === "grabbed")) continue;
+            row.effects = row.effects.map((effect) => (effect?.kind === "condition" && effect.slug === "grabbed" ? untilEscape(effect, escape) : effect));
+            row.noteEffects = [...(row.noteEffects ?? []), { label: `Grabbed by the ${grab[1]}`, text: `The grab also ends if its grabber moves or attacks with the ${grab[1]}.`, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } }];
+        }
+        done.push(grab[0]);
+    }
     if (penalties || all) {
         const escape = { dc: Number((penalties ?? all)[1]) };
         for (const row of rowsOf(plan)) {

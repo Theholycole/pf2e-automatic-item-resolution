@@ -975,6 +975,10 @@ test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage t
     assert.deepEqual([net.targeting.range, net.ownCheck.choose, net.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.resolution.outcomes.success.modifiers[0]], ["60 feet", ["thrown"], ["off-guard", "immobilized"], { selector: "all-speeds", value: -10, type: "circumstance", duration: null, escape: { dc: 16 } }]);
     // (Its Escape DC on all a hit gives, which a successful Escape ends: src/compiler/escape-ends.js, 2026-10-25.)
     assert.deepEqual([net.partial, net.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.duration)], [undefined, [{ mode: "until-escape", escape: { dc: 16 } }, { mode: "until-escape", escape: { dc: 16 } }]]);
+    // (Ouroboros Flail's Chained Grasp, 2026-10-26: its grab until the end of the next turn also ends on an Escape at its link's DC 31, its
+    // grabber's moving or attacking with the flail words on the grab — whole.)
+    const grasp = compileActivations(item("Ouroboros Flail"))[0].plan;
+    assert.deepEqual([grasp.resolution.outcomes.failure.effects[0].duration.escape, grasp.resolution.outcomes.criticalFailure.noteEffects[0].label, Boolean(grasp.partial), grasp.notes], [{ dc: 31 }, "Grabbed by the flail", false, undefined]);
     const [azarim] = compileActivations(item("Azarim"));
     assert.deepEqual([azarim.plan.resolution.check.statistic, azarim.plan.resolution.check.against.value, azarim.plan.resolution.outcomes.failure.effects[0].slug, azarim.plan.resolution.outcomes.failure.effects[0].value], ["fortitude", 23, "enfeebled", 2]);
     // (Resolute Shield's "up to twice the shield's Hardness": its Hardness 12 doubled, resistance to the triggering physical damage.)
