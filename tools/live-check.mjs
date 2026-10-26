@@ -2160,6 +2160,31 @@ export const cases = {
         return { duration: fiery.system.duration };
     },
 
+    // Ablative Shield Plating (Moderate): its held shield plated with 10 temporary Hit Points; a Shield Block of 15 (Hardness 5) takes 10 of the
+    // shield's Hit Points, all off the plating — the shield whole, the plating gone.
+    async ablativePlating(scene) {
+        await clearSquares(scene, [[5, 5]]);
+        const { actor: user, token } = await creature(scene, "Plating Bearer", { type: "character", x: 5, y: 5, level: 5 });
+        const shield = await give(user, "Steel Shield");
+        await shield.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const plating = await give(user, "Ablative Shield Plating (Moderate)");
+        const since = Date.now();
+        await plating.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the plating's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        const effect = () => user.itemTypes.effect.find((one) => one.flags?.[NS]?.shieldTemp?.shieldId === shield.id);
+        await until(effect, "the plating's Effect", { timeout: 8000 });
+        assert(effect().system.badge?.value === 10, `its counter at 10 (${effect().system.badge?.value})`);
+        await game.pf2e.actions.raiseAShield({ actors: [user] });
+        await until(() => user.attributes.shield?.raised, "the shield raised", { timeout: 8000 });
+        const hp = shield.system.hp.value;
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await user.applyDamage({ damage: await new DamageRoll("15[bludgeoning]").evaluate(), token, shieldBlockRequest: true });
+        await until(() => !effect(), "the plating used up", { timeout: 8000 });
+        assert(shield.system.hp.value === hp, `the shield's Hit Points kept (${shield.system.hp.value} of ${hp})`);
+        return { shieldHp: shield.system.hp.value };
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);

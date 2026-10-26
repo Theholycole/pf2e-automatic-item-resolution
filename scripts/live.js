@@ -56,6 +56,7 @@ import { strikeWithRunes } from "./rune-strikes.js";
 import { chargeSpellstrike, strikeWithSpellstrike } from "./spellstrike.js";
 import { toggleOff, toggleOn } from "./toggle-off.js";
 import { endOnStrike } from "./ends-on-strike.js";
+import { plateShield } from "./shield-temp.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -652,6 +653,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     const user = await creatureOf(state.user);
     const target = await creatureOf(recipient);
     if (!target.actor) throw new Error(`${recipient.name} isn't there any more.`);
+    // (A shield's own temporary Hit Points, Ablative Shield Plating's: the Effect for the shield it plates, scripts/shield-temp.js.)
+    if (state.plan.item?.shieldTemp) return [await plateShield(state, target.actor, recipient.name)];
     // (Its wait for a kind of damage, Flame Layer Balm's: the mark on the wearer for its time, scripts/armed.js.)
     if (state.plan.item?.armed) {
         await target.actor.createEmbeddedDocuments("Item", [armedMarkSource(state.plan.item.armed, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: startInitiative(target.actor), moduleId: MODULE_ID })]);

@@ -17,14 +17,14 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 793 | 53% |
+| resolves | 798 | 54% |
 | partial | 87 | 6% |
 | note-only | 116 | 8% |
 | builtin:zone | 119 | 8% |
 | builtin:cast-spell | 35 | 2% |
 | builtin:roll-twice | 2 | 0% |
 | builtin:readied-bonus | 23 | 2% |
-| builtin:no-effect | 43 | 3% |
+| builtin:no-effect | 38 | 3% |
 | builtin:conjure | 7 | 0% |
 | builtin:counteract | 33 | 2% |
 | builtin:fall-foam | 4 | 0% |
@@ -46,7 +46,7 @@ Results, for the items this module handles:
 | elixir | 149 | 104 | 13 | 12 | 0 | 17 | 3 |
 | poison | 115 | 106 | 4 | 1 | 0 | 4 | 0 |
 | snare | 82 | 0 | 0 | 1 | 0 | 73 | 8 |
-| gadget | 77 | 26 | 4 | 6 | 0 | 37 | 4 |
+| gadget | 77 | 31 | 4 | 6 | 0 | 32 | 4 |
 | mutagen | 68 | 64 | 4 | 0 | 0 | 0 | 0 |
 | oil | 66 | 30 | 6 | 9 | 0 | 16 | 5 |
 | fulu | 46 | 20 | 2 | 7 | 0 | 5 | 12 |
@@ -65,20 +65,20 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | elixir | 149 | 127 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 1 | 6 |
 | poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | snare | 82 | 1 | 0 | 0 | 0 | 0 | 0 | 71 | 0 | 0 | 0 | 0 | 0 | 1 | 8 |
-| gadget | 77 | 19 | 0 | 0 | 17 | 0 | 0 | 17 | 0 | 0 | 0 | 3 | 8 | 0 | 13 |
+| gadget | 77 | 24 | 0 | 0 | 17 | 0 | 0 | 17 | 0 | 0 | 0 | 3 | 8 | 0 | 8 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | oil | 66 | 43 | 0 | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 11 |
 | fulu | 46 | 16 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 14 |
 | drug | 24 | 1 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **639** | **46** | **89** | **134** | **64** | **35** | **119** | **13** | **3** | **25** | **16** | **33** | **27** | **225** |
+| **all** | **1486** | **644** | **46** | **89** | **134** | **64** | **35** | **119** | **13** | **3** | **25** | **16** | **33** | **27** | **220** |
 
 Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
 | nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 167 |
-| the ability compiler's GM fallback ("no-effect") | 43 |
+| the ability compiler's GM fallback ("no-effect") | 38 |
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
 | another plan not played yet | 4 |
 
@@ -88,7 +88,7 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
-| duration | 943 | 626 | 0 | 13 |
+| duration | 943 | 631 | 0 | 13 |
 | fixed-dc | 491 | 310 | 0 | 21 |
 | condition | 433 | 275 | 0 | 18 |
 | linked-effect | 393 | 365 | 0 | 0 |
@@ -99,7 +99,7 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 | on-weapon | 67 | 57 | 0 | 0 |
 | area | 44 | 16 | 0 | 5 |
 | heal | 43 | 36 | 0 | 1 |
-| temp-hp | 37 | 26 | 0 | 2 |
+| temp-hp | 37 | 31 | 0 | 2 |
 | casts-spell | 33 | 5 | 0 | 2 |
 | strike | 31 | 20 | 0 | 1 |
 

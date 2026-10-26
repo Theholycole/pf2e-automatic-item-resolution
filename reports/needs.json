@@ -1,11 +1,11 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1227,
+  "entries": 1222,
   "results": {
    "none": 602,
    "partial": 239,
-   "builtin:no-effect": 129,
+   "builtin:no-effect": 124,
    "note-only": 257
   },
   "main": {
@@ -24,7 +24,7 @@
    "out-of-combat": 33,
    "actions": 26,
    "no-rules": 36,
-   "objects": 115,
+   "objects": 110,
    "illusions": 43,
    "removed": 4,
    "cooldown": 9,
@@ -50,9 +50,9 @@
    "speeds": 28,
    "areas": 163,
    "immunity": 71,
-   "objects": 389,
+   "objects": 384,
    "speech": 123,
-   "out-of-combat": 414,
+   "out-of-combat": 411,
    "counteract": 79,
    "afflictions": 91,
    "lasting": 208,
@@ -64,7 +64,7 @@
    "several": 89,
    "mind": 69,
    "strike": 185,
-   "reader": 202,
+   "reader": 197,
    "spells": 71,
    "information": 190,
    "actions": 56,
@@ -4270,18 +4270,6 @@
    ]
   },
   {
-   "name": "Ablative Shield Plating (True)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "objects",
-   "work": "crumbles",
-   "needs": [
-    "objects",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Hex Blaster",
    "kind": "activation",
    "result": "partial",
@@ -6924,18 +6912,6 @@
    ]
   },
   {
-   "name": "Ablative Shield Plating (Greater)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "objects",
-   "work": "crumbles",
-   "needs": [
-    "objects",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Serrating",
    "kind": "activation",
    "result": "none",
@@ -9014,17 +8990,6 @@
    ]
   },
   {
-   "name": "Ablative Shield Plating (Moderate)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "objects",
-   "work": "crumbles",
-   "needs": [
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "Godsbreath Bow",
    "kind": "activation",
    "result": "partial",
@@ -9742,18 +9707,6 @@
    "work": "speak",
    "needs": [
     "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Ablative Shield Plating (Major)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "objects",
-   "work": "crumbles",
-   "needs": [
-    "objects",
-    "reader",
     "out-of-combat"
    ]
   },
@@ -12631,17 +12584,6 @@
     "triggers",
     "afflictions",
     "situational"
-   ]
-  },
-  {
-   "name": "Ablative Shield Plating (Lesser)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "objects",
-   "work": "crumbles",
-   "needs": [
-    "objects",
-    "reader"
    ]
   },
   {

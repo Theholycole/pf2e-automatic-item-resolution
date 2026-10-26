@@ -68,6 +68,7 @@ import { withMove } from "./move.js";
 import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { readFoam, withFalls } from "./falls.js";
+import { readShieldTemp } from "./shield-temp.js";
 import { withRowReadings } from "./row-readings.js";
 import { withUserConditions } from "./user-conditions.js";
 import { sparkColumnPlan } from "./spark-column.js";
@@ -238,6 +239,9 @@ export function compileItem(given, options = {}) {
     // (A worn chassis that eases its wearer's falls by itself, src/compiler/falls.js readFoam: no card of its own — the environment module's fall.)
     const foam = readFoam(plainText(given?.system?.description?.value));
     if (foam) return foamPlan(given, foam);
+    // (A shield's own temporary Hit Points, src/compiler/shield-temp.js: Ablative Shield Plating's.)
+    const shieldTemp = handlesItem(given, options) ? readShieldTemp(plainText(given?.system?.description?.value)) : null;
+    if (shieldTemp) return shieldTempPlan(given, shieldTemp);
     const unlinked = withoutUnverifiedLinks(given, options);
     const instead = unlinked ? overUnverified(compileOne(unlinked.item, options), unlinked.dropped, given?.system?.description?.value) : null;
     // (What its use costs, a Mythic Point: src/compiler/spend.js.)
@@ -301,6 +305,20 @@ function guardedSaves(zonePlan, text) {
     const saves = zonePlan?.zone?.saves;
     if (!saves?.length) return zonePlan;
     return { ...zonePlan, zone: { ...zonePlan.zone, saves: saves.map((save) => (save.plan ? { ...save, plan: guardText(save.plan, text) ?? save.plan } : save)) } };
+}
+
+// Its plan: an automatic card whose result is plan.item.shieldTemp, the Effect on its user for the shield it plates (scripts/shield-temp.js).
+function shieldTempPlan(item, shieldTemp) {
+    const none = { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] };
+    return {
+        ...basePlan(item),
+        automation: { level: "automatic" },
+        targeting: { target: null, range: null, area: null },
+        trigger: { event: "use" },
+        resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none } },
+        notes: ["Not on a shield that has a boss, spikes or another item attached; taking the plating off early destroys it."],
+        item: { ...itemInfo(item), shieldTemp }
+    };
 }
 
 function compileOne(given, options = {}) {

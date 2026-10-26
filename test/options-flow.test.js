@@ -310,3 +310,47 @@ test("Swarmeater's Clasp: a damage card at the swarm in reach, its user healed b
         Object.assign(globalThis, saved);
     }
 });
+
+test("Ablative Shield Plating: the shield's own temporary Hit Points for their time, its Hit Points lost coming off them first", async () => {
+    const plans = ["Lesser", "Moderate", "Greater", "Major", "True"].map((grade) => compileItem(item(`Ablative Shield Plating (${grade})`), { spellEffects }));
+    assert.deepEqual(plans.map((plan) => [plan.builtin ?? null, plan.item.shieldTemp.value, `${plan.item.shieldTemp.lasts.value} ${plan.item.shieldTemp.lasts.unit}`, Boolean(plan.partial)]), [[null, 5, "1 minutes", false], [null, 10, "10 minutes", false], [null, 20, "1 hours", false], [null, 30, "1 hours", false], [null, 40, "1 hours", false]]);
+    const { shieldTempSource } = await import("../src/live/card.js");
+    const source = shieldTempSource(plans[1].item.shieldTemp, { shield: { id: "shield1", name: "Steel Shield" }, item: { name: "Ablative Shield Plating (Moderate)" } });
+    assert.deepEqual([source.name, source.system.badge, source.flags["pf2e-automatic-item-resolution"].shieldTemp, source.system.duration.value, source.system.duration.unit], ["Ablative Shield Plating (Moderate): Steel Shield", { type: "counter", value: 10, max: 10 }, { shieldId: "shield1", value: 10 }, 10, "minutes"]);
+    const { absorb, afterAbsorbed, shieldToPlate } = await import("../scripts/shield-temp.js");
+    const saved = { foundry: globalThis.foundry, game: globalThis.game, ChatMessage: globalThis.ChatMessage };
+    const get = (object, key) => key.split(".").reduce((node, part) => node?.[part], object);
+    const set = (object, key, value) => { const parts = key.split("."); const last = parts.pop(); parts.reduce((node, part) => (node[part] ??= {}), object)[last] = value; };
+    globalThis.foundry = { utils: { getProperty: get, setProperty: set } };
+    globalThis.game = { users: [] };
+    const messages = [];
+    globalThis.ChatMessage = { create: async (data) => messages.push(data.content), getSpeaker: () => ({}) };
+    try {
+        const updates = [];
+        const plating = { id: "plating1", name: source.name, flags: source.flags, system: { badge: { value: 10 } }, update: async (data) => updates.push(data), delete: async () => updates.push("deleted") };
+        const actor = { itemTypes: { effect: [plating], shield: [] }, items: { get: (id) => (id === "plating1" ? plating : null) } };
+        const shield = { id: "shield1", type: "shield", name: "Steel Shield", actor, _source: { system: { hp: { value: 20 } } } };
+        actor.itemTypes.shield.push(shield);
+        assert.equal(shieldToPlate(actor), shield);
+        // (6 lost: all of it off the plating, the shield at 20 still.)
+        const changes = { system: { hp: { value: 14 } } };
+        const options = {};
+        assert.equal(absorb(shield, changes, options), 6);
+        assert.equal(changes.system.hp.value, 20);
+        await afterAbsorbed(shield, options);
+        assert.deepEqual(updates, [{ "system.badge.value": 4 }]);
+        // (9 more: 4 off the plating, gone; the shield down 5.)
+        plating.system.badge.value = 4;
+        const more = { system: { hp: { value: 11 } } };
+        const again = {};
+        assert.equal(absorb(shield, more, again), 4);
+        assert.equal(more.system.hp.value, 15);
+        await afterAbsorbed(shield, again);
+        assert.equal(updates.at(-1), "deleted");
+        assert.match(messages.at(-1), /takes 4 of the Hit Points .* falls apart/);
+        // (A repair isn't touched.)
+        assert.equal(absorb(shield, { system: { hp: { value: 25 } } }, {}), 0);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

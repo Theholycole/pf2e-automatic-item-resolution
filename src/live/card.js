@@ -390,6 +390,14 @@ export function armedMarkSource(armed, { item = {}, user = {}, worldTime = 0, in
     return ownEffectSource({ name: "armed", img: "icons/svg/fire.svg", words, rules: [], duration: armed.lasts, flag: { armed }, item, user, worldTime, initiative, moduleId });
 }
 
+// A shield's own temporary Hit Points (src/compiler/shield-temp.js: Ablative Shield Plating): an Effect on its user for that shield, its
+// counter the temporary Hit Points left (scripts/shield-temp.js takes the shield's lost Hit Points off them).
+export function shieldTempSource(shieldTemp, { shield = {}, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const words = `${shield.name ?? "The shield"} has ${shieldTemp.value} temporary Hit Points of its own for ${timeText(shieldTemp.lasts)} or until they're lost: the Hit Points it loses come off them first`;
+    const source = ownEffectSource({ name: shield.name ?? "shield", img: "icons/svg/shield.svg", words, rules: [], duration: shieldTemp.lasts, flag: { shieldTemp: { shieldId: shield.id ?? null, value: shieldTemp.value } }, item, user, worldTime, initiative, moduleId });
+    return { ...source, system: { ...source.system, badge: { type: "counter", value: shieldTemp.value, max: shieldTemp.value } } };
+}
+
 // A flat check to Cast a Spell on the creature, for its time (src/compiler/after-ends.js withCastFlatCheck: Blessed Lantern Flail): the spell
 // module's casting rules read its runtime flag — flags["pf2e-automatic-resolution"].runtime.castFlatCheck { dc }, its note Effects' own — and
 // roll it as the creature casts, the spell lost on a failure.

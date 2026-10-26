@@ -15,7 +15,7 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 167,
-   "resolves": 793,
+   "resolves": 798,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
    "partial": 87,
@@ -24,7 +24,7 @@
    "note-only": 116,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
-   "builtin:no-effect": 43,
+   "builtin:no-effect": 38,
    "builtin:teleport": 7,
    "builtin:fall-foam": 4,
    "builtin:reroll": 3,
@@ -194,13 +194,12 @@
   "gadget": {
    "count": 77,
    "results": {
-    "resolves": 26,
+    "resolves": 31,
     "builtin:zone": 17,
     "builtin:fall-foam": 4,
     "none": 4,
     "note-only": 6,
     "builtin:item-action": 3,
-    "builtin:no-effect": 5,
     "builtin:counteract": 8,
     "partial": 4
    },
@@ -320,7 +319,7 @@
   },
   "temp-hp": {
    "count": 37,
-   "resolves": 26,
+   "resolves": 31,
    "gaps": 0,
    "none": 2
   },
@@ -392,7 +391,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 626,
+   "resolves": 631,
    "gaps": 0,
    "none": 13
   }
@@ -400,8 +399,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 225,
-   "item": 639,
+   "none": 220,
+   "item": 644,
    "fortune": 25,
    "zone": 119,
    "save": 134,
@@ -488,8 +487,8 @@
    "gadget": {
     "save": 17,
     "zone": 17,
-    "none": 13,
-    "item": 19,
+    "none": 8,
+    "item": 24,
     "action": 3,
     "counteract": 8
    },
@@ -526,7 +525,7 @@
   "noCard": {
    "no-plan": 167,
    "triggered": 11,
-   "gm": 43,
+   "gm": 38,
    "other": 4
   }
  },
@@ -8968,9 +8967,10 @@
     "temp-hp",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Crying Angel Pendant",
@@ -14194,9 +14194,10 @@
     "temp-hp",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Teeming Ghosts (3rd-Rank)",
@@ -18529,9 +18530,10 @@
     "temp-hp",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Candle of Inflamed Passions",
@@ -20125,9 +20127,10 @@
     "temp-hp",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Dreamtime Tea",
@@ -25992,9 +25995,10 @@
     "temp-hp",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Sentry Fulu",
