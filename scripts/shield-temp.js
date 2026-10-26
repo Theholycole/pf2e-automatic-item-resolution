@@ -1,7 +1,7 @@
 // Live play for plan.item.shieldTemp (src/compiler/shield-temp.js: Ablative Shield Plating). The card plates a shield of its user's — the one
 // held, else its only one — with an Effect whose counter is the shield's own temporary Hit Points. When that shield's Hit Points go down
 // (PF2e's Shield Block, or by hand), the loss comes off the counter first: the update is lowered as it's made (preUpdateItem, on the client
-// making it), then the counter lowered, the Effect gone once it's used up, and the user's owners told.
+// making it) and the counter lowered with it, the Effect gone once it's used up, and the user's owners told.
 
 import { shieldTempSource } from "../src/live/card.js";
 import { MODULE_ID } from "./foundry.js";
@@ -44,7 +44,7 @@ export function absorb(shield, changes, options) {
     return absorbed;
 }
 
-// (Once made: the counter lowered, or the plating gone.)
+// (The counter lowered, or the plating gone.)
 export async function afterAbsorbed(shield, options) {
     const done = options?.[ABSORBED];
     if (!done) return;
@@ -56,16 +56,14 @@ export async function afterAbsorbed(shield, options) {
     await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: shield.actor }), whisper, content: `<p>${escape(plating.name.replace(/: [^:]*$/, ""))} takes ${done.absorbed} of the Hit Points <strong>${escape(shield.name)}</strong> would lose${done.left > 0 ? `; ${done.left} temporary Hit Points left` : ", and falls apart"}.</p>` });
 }
 
+// (The counter lowered from the pre-update itself: a loss all absorbed leaves the update nothing to change, and Foundry then makes none — no
+// updateItem hook to wait for.)
 export function setUpShieldTemp() {
     Hooks.on("preUpdateItem", (item, changes, options) => {
         try {
-            absorb(item, changes, options);
+            if (absorb(item, changes, options)) afterAbsorbed(item, options).catch((error) => console.error(`${MODULE_ID} | shield plating`, error));
         } catch (error) {
             console.error(`${MODULE_ID} | shield plating`, error);
         }
-    });
-    Hooks.on("updateItem", (item, changes, options, userId) => {
-        if (userId !== game.user.id) return;
-        afterAbsorbed(item, options).catch((error) => console.error(`${MODULE_ID} | shield plating`, error));
     });
 }

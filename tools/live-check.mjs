@@ -2346,7 +2346,8 @@ export const cases = {
         await game.modules.get(NS).api.live.apply(card.id);
         const effect = () => user.itemTypes.effect.find((entry) => (entry.system.rules ?? []).some((rule) => rule.key === "RollTwice"));
         await until(effect, "its RollTwice Effect", { timeout: 8000 });
-        const selectors = effect().system.rules.map((rule) => rule.selector);
+        // (PF2e keeps a selector as a list.)
+        const selectors = effect().system.rules.flatMap((rule) => [].concat(rule.selector ?? []));
         assert(selectors.includes("athletics"), `Athletics among them (${selectors.join(", ")})`);
         await user.skills.athletics.roll({ skipDialog: true });
         await until(() => !effect(), "spent by the Athletics check", { timeout: 8000 });
