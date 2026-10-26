@@ -684,8 +684,9 @@ test("a consumable thrown as a Strike: Sack of Rotten Fruit's 1d4 bludgeoning, t
     assert.deepEqual([sack.ownCheck.choose, sack.resolution.sharedDamage.components[0].formula, sack.thenSave.resolution.check.statistic, sack.thenSave.resolution.check.against.value, sack.thenSave.resolution.outcomes.failure.effects.map((effect) => `${effect.slug}${effect.value}`), sack.thenSave.targeting.target], [["thrown"], "1d4", "fortitude", 15, ["sickened1"], "the creature hit"]);
     const salt = compileItem(item("Life Salt"));
     assert.deepEqual([salt.resolution.sharedDamage.components[0], salt.thenSave.resolution.check.statistic, salt.thenSave.resolution.check.against.value], [{ id: "0", formula: "1", type: "vitality", category: "persistent" }, "will", 20]);
-    assert.match(salt.thenSave.resolution.outcomes.failure.noteEffects[0].text, /^Failed save: be unable to attack you/);
-    assert.ok(salt.notes.includes("Only against an undead."));
+    // (Its note Effect ending once its user is hostile to any undead; only undead its targets, the card refusing others — 2026-10-26.)
+    assert.match(salt.thenSave.resolution.outcomes.failure.noteEffects[0].text, /^Failed save: it's unable to attack its user as long as .*; it ends once its user uses a hostile action against any undead\.$/);
+    assert.deepEqual([salt.onlyAgainst, salt.notes, salt.partial], [{ traits: ["undead"] }, undefined, undefined]);
     const oil = compileItem(item("Oil (1 pint)"));
     assert.deepEqual([oil.resolution.sharedDamage.components[0].formula, oil.resolution.sharedDamage.components[0].type], ["1d6", "fire"]);
     // (2026-10-26: its ignition the card's flat check as it's thrown, ownCheck.ignite — a failure, its hit deals none — and where it lands a card

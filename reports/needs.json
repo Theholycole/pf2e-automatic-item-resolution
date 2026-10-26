@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1193,
+  "entries": 1192,
   "results": {
    "none": 596,
-   "partial": 216,
+   "partial": 215,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -44,7 +44,7 @@
    "missing-number": 7,
    "fortune": 6,
    "linked-effect": 1,
-   "by-kind": 6
+   "by-kind": 5
   },
   "any": {
    "speeds": 28,
@@ -54,7 +54,7 @@
    "speech": 123,
    "out-of-combat": 409,
    "counteract": 79,
-   "afflictions": 89,
+   "afflictions": 88,
    "lasting": 207,
    "moving": 104,
    "triggers": 121,
@@ -75,7 +75,7 @@
    "range": 4,
    "cooldown": 10,
    "vehicles": 24,
-   "situational": 67,
+   "situational": 66,
    "creatures": 53,
    "senses": 23,
    "forms": 25,
@@ -83,7 +83,7 @@
    "retaliation": 3,
    "missing-number": 8,
    "linked-effect": 1,
-   "by-kind": 6
+   "by-kind": 5
   }
  },
  "entries": [
@@ -6020,18 +6020,6 @@
    "work": "Trigger: replace the roll …",
    "needs": [
     "triggers"
-   ]
-  },
-  {
-   "name": "Life Salt",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "by-kind",
-   "work": "only against an undead",
-   "needs": [
-    "by-kind",
-    "afflictions",
-    "situational"
    ]
   },
   {

@@ -170,6 +170,10 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const traitsOf = (token) => new Set([...(token.actor?.system?.traits?.value ?? []), ...(token.actor?.traits ?? [])]);
     const unfit = only.length ? tokens.filter((token) => !only.some((trait) => traitsOf(token).has(trait))) : [];
     if (unfit.length) throw new Error(`${unfit.map((token) => token.name ?? token.actor?.name).join(", ")} ${unfit.length === 1 ? "has" : "have"} no ${only.join(" or ")} trait: ${state.item.name}'s retaliation isn't for ${unfit.length === 1 ? "it" : "them"}.`);
+    // (A hit against one kind only, Life Salt's undead: another refused — src/compiler/thrown.js plan.onlyAgainst.)
+    const against = state.plan?.onlyAgainst?.traits ?? [];
+    const otherKind = against.length && state.step !== "then" ? tokens.filter((token) => !against.some((trait) => traitsOf(token).has(trait))) : [];
+    if (otherKind.length) throw new Error(`${otherKind.map((token) => token.name ?? token.actor?.name).join(", ")} ${otherKind.length === 1 ? "isn't" : "aren't"} ${against.join(" or ")}: ${state.item.name} works only against ${against.join(" or ")} creatures.`);
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
     const sourceToken = state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null;
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;

@@ -52,8 +52,11 @@ function thenSaveOf(sentences, at, item, options) {
     // damage": the save, its failure a note Effect on the creature.)
     const check = /@Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(must[1]);
     if (!check || !must[2]) return null;
-    const failed = { ...none(), noteEffects: [{ text: `Failed save: ${must[2]} ${must[3]}.` }] };
-    return { plan: { ...(read ?? {}), source: item?.source ?? read?.source ?? { name: item?.name ?? null }, modelVersion: MODEL_VERSION, automation: { level: "guided" }, trigger: { event: "use" }, targeting, resolution: { kind: "save", check: { roll: "save", statistic: check[1].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(check[2]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: failed, criticalFailure: failed } } }, used: [] };
+    // (And when it ends sooner, the sentence after: "If you use a hostile action against any undead, this second effect ends, and the undead can
+    // attack you normally" — said on the note, its sentence read. 2026-10-26.)
+    const ends = /^If you use a hostile action against any (\w+), this second effect ends\b/i.exec(sentences[at + 1] ?? "");
+    const failed = { ...none(), noteEffects: [{ text: `Failed save: it's ${must[3].replace(/\byou\b/g, "its user")}${ends ? `; it ends once its user uses a hostile action against any ${ends[1]}` : ""}.` }] };
+    return { plan: { ...(read ?? {}), source: item?.source ?? read?.source ?? { name: item?.name ?? null }, modelVersion: MODEL_VERSION, automation: { level: "guided" }, trigger: { event: "use" }, targeting, resolution: { kind: "save", check: { roll: "save", statistic: check[1].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(check[2]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: failed, criticalFailure: failed } } }, used: ends ? [at + 1] : [] };
 }
 
 // The activation's (or item's) html, its base, the item → the attack plan, or null.
@@ -98,7 +101,7 @@ export function thrownPlan(html, base, item, options = {}) {
     const notes = [
         // (Splash beside the hit's damage, the hit's limits — "against an undead" — and a later damage's gate.)
         ...(/\bsplash damage\b/i.test(hitSentence) && !splash ? [`Its splash: ${/(\d+ \w+ splash damage[^.]*)/i.exec(hitSentence)?.[1] ?? "splash damage"} to each creature within 5 feet of the target (by hand).`] : []),
-        ...(/^On a hit against an? (\w+)\b/i.test(hitSentence) ? [`Only against an ${/^On a hit against an? (\w+)\b/i.exec(hitSentence)[1]}.`] : []),
+        // (A hit against one kind only, Life Salt's "On a hit against an undead": plan.onlyAgainst, the card refusing other creatures — 2026-10-26.)
         ...(later >= 0 && later !== null ? [`Its damage only when ${/^If ([^,]+),/i.exec(sentences[at + 1 + later])[1]}.`] : []),
         ...(/\bdeadly (d\d+)\b/i.test(text) && !deadly ? [`Deadly ${/\bdeadly (d\d+)\b/i.exec(text)[1]}: a critical hit adds that die of damage (by hand).`] : []),
         // (Not "Unlike an alchemical bomb, it doesn't add the manipulate trait to the attack made with it": the card's attack has none.)
@@ -122,6 +125,7 @@ export function thrownPlan(html, base, item, options = {}) {
         },
         ...(then ? { thenSave: then.plan } : {}),
         ...(splash ? { splash } : {}),
+        ...(/^On a hit against an? (\w+)\b/i.test(hitSentence) ? { onlyAgainst: { traits: [/^On a hit against an? (\w+)\b/i.exec(hitSentence)[1].toLowerCase()] } } : {}),
         ...(notes.length ? { notes, partial: true } : {})
     };
 }
