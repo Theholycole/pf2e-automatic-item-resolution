@@ -2346,6 +2346,28 @@ export const cases = {
         return { multiplier, temp: user.system.attributes.hp.temp, userToken: userToken.id };
     },
 
+    // Flashblade's Prepare Flash: the readied Strike's Effect with reach 15 feet; gone before the Strike is made (its time up), the activation's
+    // use is given back on the blade's record.
+    async flashbladeRefund(scene) {
+        await clearSquares(scene, [[16, 7]]);
+        const { actor: user } = await creature(scene, "Flash Fencer", { type: "character", x: 16, y: 7, level: 10 });
+        const blade = await give(user, "Flashblade");
+        await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const record = () => JSON.stringify(user.items.get(blade.id)?.flags?.[NS] ?? {});
+        const before = record();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(blade.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the readied Strike's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const effect = () => user.itemTypes.effect.find((one) => one.flags?.[NS] && Object.values(one.flags[NS]).some((value) => value?.plan?.strike?.readied));
+        await until(effect, "the readied Strike's Effect", { timeout: 8000 });
+        const used = record();
+        assert(used !== before, "the use recorded");
+        await effect().delete();
+        await until(() => record() !== used, "the use given back", { timeout: 8000 });
+        return { before, used, after: record() };
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);
