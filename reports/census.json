@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 172,
+   "none": 171,
    "resolves": 769,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
@@ -27,7 +27,7 @@
    "builtin:no-effect": 43,
    "builtin:teleport": 7,
    "builtin:reroll": 3,
-   "builtin:objects": 2,
+   "builtin:objects": 3,
    "builtin:whisper": 1,
    "builtin:roll-twice": 2
   }
@@ -43,12 +43,13 @@
     "resolves": 207,
     "note-only": 59,
     "builtin:readied-bonus": 8,
-    "none": 95,
+    "none": 94,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 9,
     "builtin:item-action": 1,
-    "builtin:conjure": 1
+    "builtin:conjure": 1,
+    "builtin:objects": 1
    },
    "mechanisms": {
     "casts-spell": 17,
@@ -397,7 +398,7 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 226,
+   "none": 225,
    "item": 639,
    "fortune": 25,
    "zone": 118,
@@ -412,14 +413,14 @@
    "reroll": 3,
    "coat": 46,
    "strike": 13,
-   "objects": 2,
+   "objects": 3,
    "whisper": 1
   },
   "byCategory": {
    "other": {
     "cast": 14,
     "zone": 26,
-    "none": 116,
+    "none": 115,
     "ways": 19,
     "save": 88,
     "item": 217,
@@ -430,6 +431,7 @@
     "expose": 3,
     "action": 1,
     "conjure": 1,
+    "objects": 1,
     "coat": 3
    },
    "potion": {
@@ -520,7 +522,7 @@
    }
   },
   "noCard": {
-   "no-plan": 172,
+   "no-plan": 171,
    "triggered": 11,
    "gm": 43
   }
@@ -20801,7 +20803,9 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Oil of Unlife (Minor)",

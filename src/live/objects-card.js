@@ -12,6 +12,7 @@ export function objectsText(objects, item = {}) {
     if (objects.op === "retrieve") return `Out of ${item.name ?? "it"}, into a hand: an item stored in it`;
     if (objects.op === "hand") return objects.self ? `${item.name ?? "It"} to its user's hand` : `To its user's hand: one of its items${limit}`;
     if (objects.op === "don") return `${item.name ?? "It"} worn`;
+    if (objects.op === "repair" && objects.amount) return `${objects.amount} Hit Points restored, up to its maximum: one of its user's damaged items${objects.damagedBy ? ` (what the ${objects.damagedBy} did)` : ""}${limit}`;
     if (objects.op === "repair") return `Repaired to its full Hit Points, no longer broken: one of its user's items${limit}`;
     // ("A +1 striking dagger in its user's hand, the last one gone: Strike with it".)
     if (objects.op === "create") {

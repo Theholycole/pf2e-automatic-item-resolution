@@ -167,14 +167,15 @@ test("an Effect's opening flavor left out when it keeps the rest from being read
     assert.deepEqual([ghast.noteOnly ?? false, ghast.strike?.zone?.area?.value], [false, 10]);
 });
 
-test("Bloodline Robe's Quickened on its user's next turn, its limit a note Effect; Life's Last Breath's save written without the word", () => {
+test("Bloodline Robe's Quickened on its user's next turn, its limit a note Effect; Life's Last Breath's save written without the word, its user's temporary Hit Points of the damage", () => {
     const robe = compileActivations(item("Bloodline Robe"), { spellEffects })[0].plan;
     assert.deepEqual(robe.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.expiry]), [["quickened", 1, "turn-end"]]);
     // (Its limit a note Effect beside the Quickened, for its time: src/compiler/honest.js withActionLimit.)
     assert.deepEqual([robe.unread, robe.resolution.outcomes.success.noteEffects.find((note) => note.label === "Quickened's extra action")?.text], [undefined, "You can use the extra action only as part of casting a bloodline spell."]);
     const breath = compileActivations(item("Life's Last Breath"), { spellEffects })[1].plan;
     assert.deepEqual([breath.resolution.check.statistic, breath.resolution.check.basic, breath.resolution.sharedDamage.components[0].formula, breath.resolution.outcomes.success.damage.mode], ["fortitude", false, "4d6[void]", "none"]);
-    assert.match(breath.notes.join(" "), /^You gain an equal amount of temporary Hit Points that last 1 minute \(the damage dealt\): add them by hand\.$/);
+    // (Its temporary Hit Points equal to the damage, 2026-10-25: on the rows that deal it, its user's — the core's temp-hp fromDamage — for a minute.)
+    assert.deepEqual([breath.notes, breath.resolution.outcomes.failure.effects, breath.resolution.outcomes.success.effects], [undefined, [{ kind: "temp-hp", fromDamage: true, recipient: "self", duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" } }], []]);
     // Not a passive sentence's save: Dawnlight's flash for "Creatures with darkvision …" stays its casts'.
     assert.notEqual(compileActivations(item("Dawnlight (Major)"), { spellEffects })[0].plan?.resolution?.kind, "save");
 });

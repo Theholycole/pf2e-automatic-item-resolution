@@ -56,6 +56,14 @@ export async function applyObjectsCard(message, { pick = 0 } = {}) {
     } else if (objects.op === "don") {
         await chosen.update({ "system.containerId": null, "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.handsHeld": 0 });
         line = `${state.user.name} wears ${chosen.name}`;
+    } else if (objects.op === "repair" && objects.amount) {
+        // (By an amount, Rust Scrub's 2d4: rolled, up to its maximum.)
+        const max = Number(chosen.system?.hp?.max) || 0;
+        const before = Number(chosen.system?.hp?.value) || 0;
+        const roll = await new Roll(objects.amount).evaluate();
+        const after = Math.min(max, before + Math.max(0, roll.total));
+        await chosen.update({ "system.hp.value": after });
+        line = `${chosen.name} regains ${after - before} Hit Points (rolled ${objects.amount} = ${roll.total}): ${after}/${max}`;
     } else if (objects.op === "repair") {
         const max = Number(chosen.system?.hp?.max) || 0;
         await chosen.update({ "system.hp.value": max });

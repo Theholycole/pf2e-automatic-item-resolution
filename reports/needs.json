@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1332,
+  "entries": 1328,
   "results": {
-   "none": 628,
-   "partial": 311,
+   "none": 627,
+   "partial": 308,
    "builtin:no-effect": 129,
    "note-only": 264
   },
@@ -13,7 +13,7 @@
    "counteract": 17,
    "afflictions": 56,
    "areas": 112,
-   "moving": 90,
+   "moving": 88,
    "lasting": 66,
    "visibility": 57,
    "choice": 43,
@@ -26,7 +26,7 @@
    "no-rules": 37,
    "senses": 23,
    "objects": 116,
-   "reader": 27,
+   "reader": 25,
    "illusions": 47,
    "removed": 4,
    "cooldown": 10,
@@ -52,11 +52,11 @@
    "immunity": 75,
    "objects": 393,
    "speech": 127,
-   "out-of-combat": 425,
+   "out-of-combat": 423,
    "counteract": 80,
    "afflictions": 99,
    "lasting": 217,
-   "moving": 121,
+   "moving": 119,
    "triggers": 134,
    "visibility": 59,
    "dying": 82,
@@ -64,7 +64,7 @@
    "several": 98,
    "mind": 73,
    "strike": 188,
-   "reader": 236,
+   "reader": 234,
    "spells": 82,
    "information": 195,
    "actions": 62,
@@ -540,16 +540,6 @@
     "objects",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Life's Last Breath",
-   "kind": "activation",
-   "result": "partial",
-   "main": "reader",
-   "work": "temporary hit points",
-   "needs": [
-    "reader"
    ]
   },
   {
@@ -7321,17 +7311,6 @@
    ]
   },
   {
-   "name": "Blast Lance (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "work": "pushed back",
-   "needs": [
-    "moving",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Camouflaging Chromatophores (Lesser)",
    "kind": "activation",
    "activation": "Background Adaptation",
@@ -10973,16 +10952,6 @@
    ]
   },
   {
-   "name": "Rust Scrub",
-   "kind": "consumable",
-   "result": "none",
-   "main": "reader",
-   "work": "2d4",
-   "needs": [
-    "reader"
-   ]
-  },
-  {
    "name": "Sling Darts",
    "kind": "consumable",
    "result": "none",
@@ -13748,17 +13717,6 @@
     "several",
     "information",
     "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Blast Lance",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "work": "pushed back",
-   "needs": [
-    "moving",
     "out-of-combat"
    ]
   },

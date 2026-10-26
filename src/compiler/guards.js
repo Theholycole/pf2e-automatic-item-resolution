@@ -598,7 +598,9 @@ function alreadyGated(plan, text) {
 }
 
 // Temporary Hit Points equal to the damage it deals — Life's Last Breath's "or take 4d6 void damage; you gain an equal amount of
-// temporary Hit Points that last 1 minute" — which the ability compiler leaves out: a note for its user.
+// temporary Hit Points that last 1 minute" — which the ability compiler leaves out: on each row that deals damage, its user's temporary Hit
+// Points of the damage that row rolled (the core's temp-hp fromDamage, recipient self), for their time (2026-10-25); a note for its user
+// when it's any other amount.
 const EQUAL_TEMP = /\byou gain (?:an equal amount of|a number of) temporary Hit Points\b[^.;]*/i;
 function equalTempHP(plan, text) {
     const match = EQUAL_TEMP.exec(String(text ?? ""));
@@ -609,6 +611,16 @@ function equalTempHP(plan, text) {
     // (Equal to a creature's level, Bloodthirsty's: the card's own, plan.item.levelTemp; "the damage dealt" only when it's that.)
     if (/\bequal to (?:(?:half|twice|double|three times|four times) )?the (?:[a-z]+ )?(?:creature|foe|enemy|target)'s level\b/i.test(match[0])) return plan;
     const dealt = /\ban equal amount of\b|\bequal to (?:half )?the damage\b/i.test(match[0]);
+    // (All of it, on the rows that deal damage: the core's.)
+    const lasts = /\bthat last (\d+|one|an?) (round|minute|hour)s?\b/i.exec(match[0]);
+    const damaging = Object.entries(plan.resolution.outcomes).filter(([, row]) => row?.damage?.mode && row.damage.mode !== "none");
+    if (/\ban equal amount of\b/i.test(match[0]) && damaging.length) {
+        const duration = lasts ? { mode: "fixed", value: /^\d+$/.test(lasts[1]) ? Number(lasts[1]) : 1, unit: `${lasts[2].toLowerCase()}s`, expiry: "turn-start" } : null;
+        const temp = { kind: "temp-hp", fromDamage: true, recipient: "self", ...(duration ? { duration } : {}) };
+        const outcomes = { ...plan.resolution.outcomes };
+        for (const [degree, row] of damaging) outcomes[degree] = { ...row, effects: [...(row.effects ?? []), temp] };
+        return { ...plan, resolution: { ...plan.resolution, outcomes } };
+    }
     const note = `${match[0].charAt(0).toUpperCase()}${match[0].slice(1)}${dealt ? " (the damage dealt)" : ""}: add them by hand.`;
     return { ...plan, notes: [...(plan.notes ?? []), note], partial: true };
 }

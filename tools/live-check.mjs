@@ -1624,7 +1624,7 @@ export const cases = {
     },
 
     // Boots of the Secret Blade (Greater): a +1 striking dagger in its user's hand, a Strike of its user's, the next activation's dagger
-    // replacing it; Necklace of Knives' dagger gone once it's out of the hand.
+    // replacing it; Necklace of Knives' dagger gone once it's out of the hand; Rust Scrub's 2d4 Hit Points back to a damaged shield.
     async madeBlades(scene) {
         await clearSquares(scene, [[6, 30]]);
         const { actor: user } = await creature(scene, "Blade Drawer", { type: "character", x: 6, y: 30 });
@@ -1649,7 +1649,17 @@ export const cases = {
         await until(() => made(necklace).length === 1, "the knife", { timeout: 8000 });
         await made(necklace)[0].update({ "system.equipped.carryType": "worn", "system.equipped.handsHeld": 0 });
         await until(() => made(necklace).length === 0, "the knife gone out of the hand", { timeout: 8000 });
-        return { dagger: dagger.name };
+        // (Rust Scrub: 2d4 Hit Points back to the damaged shield picked.)
+        const shield = await give(user, "Steel Shield");
+        await shield.update({ "system.hp.value": 4 });
+        const scrub = await give(user, "Rust Scrub");
+        const since = Date.now();
+        await scrub.consume();
+        const card = await messageAfter(since, itemCard("objects"), { what: "Rust Scrub's card" });
+        const choices = card.getFlag(NS, "card").choices.map((choice) => choice.name);
+        await game.modules.get(NS).api.live.apply(card.id, { pick: choices.indexOf("Steel Shield") });
+        await until(() => Number(shield.system.hp.value) >= 6 && Number(shield.system.hp.value) <= 12, `2d4 back (${shield.system.hp.value})`, { timeout: 8000 });
+        return { dagger: dagger.name, shield: shield.system.hp.value };
     },
 
     // Burial Oil: the card picks the longsword; its Effect's AdjustStrike gives that Strike the Vitalizing rune (PF2e's disrupting).

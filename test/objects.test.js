@@ -58,3 +58,9 @@ test("a weapon made in its user's hand: Boots of the Secret Blade's dagger with 
     assert.deepEqual(necklace.objects, { op: "create", self: true, weapon: "dagger", potency: 0, striking: 0, whileHeld: true });
     assert.equal(objectsText(necklace.objects), "A dagger in its user's hand, gone once it's out of the hand: Strike with it");
 });
+
+test("Rust Scrub: 2d4 Hit Points back to one of its user's damaged items, up to its maximum, the GM's share of the rust a card line", () => {
+    const scrub = compileItem(item("Rust Scrub"));
+    assert.deepEqual([routeOf(scrub), scrub.objects, scrub.partial, scrub.notes], ["objects", { op: "repair", amount: "2d4", damagedBy: "rust" }, undefined, ["The GM may lower it to what the rust did, when that isn't known."]]);
+    assert.equal(objectsText(scrub.objects), "2d4 Hit Points restored, up to its maximum: one of its user's damaged items (what the rust did)");
+});
