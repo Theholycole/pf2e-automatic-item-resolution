@@ -10,6 +10,7 @@ import { isFortune } from "./fortune-card.js";
 import { isToggle } from "./toggle-card.js";
 import { isWays } from "./ways-card.js";
 import { isTeleport } from "./teleport-card.js";
+import { isObjects } from "./objects-card.js";
 import { isTable } from "./table-card.js";
 import { isTake } from "./take-card.js";
 
@@ -61,6 +62,8 @@ export function routeOf(plan, text = "") {
     if (isTeleport(plan)) return "teleport";
     // (What it tells its user, whispered to the GM and the user: src/compiler/decided.js, the user's ruling.)
     if (plan.builtin === "whisper" && plan.whisper?.text) return "whisper";
+    // (One of its user's items moved or changed, or itself: the objects card, scripts/objects.js.)
+    if (isObjects(plan)) return "objects";
     // (An ally's condition taken onto its user: scripts/take.js.)
     if (isTake(plan)) return "take";
     // (A lasting area or a snare: the ability module's zone.)

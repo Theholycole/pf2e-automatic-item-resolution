@@ -67,6 +67,7 @@ import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
 import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
+import { objectsPlan } from "./objects.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { withScaled } from "./scaled.js";
 import { withSpend } from "./spend.js";
@@ -364,6 +365,8 @@ function compileOne(given, options = {}) {
     plan = withMove(plan, html, base);
     // (Protection from heat or cold for its time, src/compiler/temperature.js: Cooling Elixir's — the environment module's to apply.)
     plan = withTemperature(plan, html, base);
+    // (One of its user's items to hand, src/compiler/objects.js: Retrieval Prism.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = objectsPlan(html, base, item) ?? plan;
     // (A lit candle's or incense's area while it burns, src/compiler/lit-area.js: Candle of Inflamed Passions' penalty, Incense of Distilled
     // Death's fast healing for undead.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = litAreaPlan(plainText(html), base) ?? plan;

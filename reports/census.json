@@ -14,7 +14,7 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 174,
+   "none": 172,
    "resolves": 765,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
@@ -27,6 +27,7 @@
    "builtin:no-effect": 43,
    "builtin:teleport": 7,
    "builtin:reroll": 3,
+   "builtin:objects": 2,
    "builtin:whisper": 1,
    "builtin:roll-twice": 2
   }
@@ -94,7 +95,7 @@
   "talisman": {
    "count": 156,
    "results": {
-    "none": 27,
+    "none": 25,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
     "resolves": 63,
@@ -106,6 +107,7 @@
     "builtin:teleport": 3,
     "builtin:cast-spell": 9,
     "partial": 9,
+    "builtin:objects": 2,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -395,7 +397,7 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 228,
+   "none": 226,
    "item": 639,
    "fortune": 25,
    "zone": 118,
@@ -410,6 +412,7 @@
    "reroll": 3,
    "coat": 46,
    "strike": 13,
+   "objects": 2,
    "whisper": 1
   },
   "byCategory": {
@@ -439,7 +442,7 @@
     "zone": 1
    },
    "talisman": {
-    "none": 34,
+    "none": 32,
     "fortune": 15,
     "action": 12,
     "item": 52,
@@ -449,6 +452,7 @@
     "teleport": 3,
     "cast": 9,
     "save": 16,
+    "objects": 2,
     "strike": 10,
     "coat": 1
    },
@@ -516,7 +520,7 @@
    }
   },
   "noCard": {
-   "no-plan": 174,
+   "no-plan": 172,
    "triggered": 11,
    "gm": 43
   }
@@ -9106,7 +9110,9 @@
     "teleportation"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Digly's Oil of Sympathy (Greater)",
@@ -29265,7 +29271,9 @@
     "teleportation"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Primal Pollen",

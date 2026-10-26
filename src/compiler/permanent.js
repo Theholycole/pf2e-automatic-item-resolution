@@ -30,6 +30,7 @@ import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
 import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
+import { objectsPlan } from "./objects.js";
 import { withPullToward } from "./pull-toward.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { takePlan } from "./take-condition.js";
@@ -512,6 +513,8 @@ function compileEach(item, options = {}) {
         plan = withMove(plan, activation.html, base);
         // (Protection from heat or cold for its time, src/compiler/temperature.js: Rime Jar's, Slithermaw's Bane's pick.)
         plan = withTemperature(plan, activation.html, base);
+        // (One of its user's items moved or changed, or itself, src/compiler/objects.js: Retrieval Belt, The Forge, Lady's Knife.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = objectsPlan(activation.html, base, item) ?? plan;
         // (A check's success that pulls the creature toward its user, src/compiler/pull-toward.js: Tentacle Cannon's Grasping Deep Shot.)
         plan = withPullToward(plan);
         // (A creature moved to a space its user picks, src/compiler/placed.js: Whip-Tongue Sling's Tongue Twister.)

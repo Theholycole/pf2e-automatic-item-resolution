@@ -1,19 +1,19 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1361,
+  "entries": 1348,
   "results": {
-   "none": 642,
+   "none": 634,
    "partial": 316,
-   "builtin:no-effect": 131,
-   "note-only": 272
+   "builtin:no-effect": 129,
+   "note-only": 269
   },
   "main": {
    "speeds": 25,
    "counteract": 17,
    "afflictions": 56,
    "areas": 118,
-   "moving": 95,
+   "moving": 90,
    "lasting": 68,
    "visibility": 57,
    "choice": 43,
@@ -25,11 +25,11 @@
    "actions": 32,
    "no-rules": 37,
    "senses": 23,
-   "objects": 121,
+   "objects": 116,
    "reader": 29,
    "illusions": 47,
    "removed": 4,
-   "cooldown": 13,
+   "cooldown": 10,
    "vehicles": 20,
    "several": 26,
    "triggers": 97,
@@ -50,23 +50,23 @@
    "speeds": 31,
    "areas": 177,
    "immunity": 75,
-   "objects": 401,
+   "objects": 394,
    "speech": 127,
    "out-of-combat": 427,
    "counteract": 80,
    "afflictions": 102,
    "lasting": 222,
-   "moving": 126,
+   "moving": 121,
    "triggers": 134,
    "visibility": 59,
    "dying": 82,
    "choice": 118,
-   "several": 99,
+   "several": 98,
    "mind": 73,
    "strike": 194,
    "reader": 238,
    "spells": 82,
-   "information": 197,
+   "information": 195,
    "actions": 62,
    "from-events": 38,
    "no-rules": 37,
@@ -74,7 +74,7 @@
    "illusions": 60,
    "removed": 5,
    "range": 4,
-   "cooldown": 14,
+   "cooldown": 11,
    "vehicles": 24,
    "situational": 82,
    "creatures": 57,
@@ -2500,28 +2500,6 @@
    ]
   },
   {
-   "name": "Retrieval Belt (Greater)",
-   "kind": "activation",
-   "activation": "Store Item",
-   "result": "none",
-   "main": "objects",
-   "work": "extradimensional",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
-   "name": "Retrieval Belt (Greater)",
-   "kind": "activation",
-   "activation": "Retrieve Item",
-   "result": "note-only",
-   "main": "cooldown",
-   "work": "can be activated again",
-   "needs": [
-    "cooldown"
-   ]
-  },
-  {
    "name": "Battle Medic's Baton",
    "kind": "activation",
    "result": "note-only",
@@ -3403,18 +3381,6 @@
    "needs": [
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Lady's Knife",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "moving",
-   "work": "teleports",
-   "needs": [
-    "moving",
-    "several",
-    "information"
    ]
   },
   {
@@ -4856,17 +4822,6 @@
    ]
   },
   {
-   "name": "Retrieval Prism",
-   "kind": "consumable",
-   "result": "none",
-   "main": "moving",
-   "work": "teleports",
-   "needs": [
-    "moving",
-    "objects"
-   ]
-  },
-  {
    "name": "The Waxworks",
    "kind": "activation",
    "result": "partial",
@@ -5004,16 +4959,6 @@
    "needs": [
     "speeds",
     "areas"
-   ]
-  },
-  {
-   "name": "Crushing Coils",
-   "kind": "activation",
-   "result": "none",
-   "main": "objects",
-   "work": "don",
-   "needs": [
-    "objects"
    ]
   },
   {
@@ -7045,16 +6990,6 @@
    ]
   },
   {
-   "name": "Called",
-   "kind": "activation",
-   "result": "builtin:no-effect",
-   "main": "moving",
-   "work": "teleports",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
    "name": "Jawbreaker Shield",
    "kind": "activation",
    "result": "partial",
@@ -8388,28 +8323,6 @@
    "needs": [
     "situational",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Retrieval Belt (Major)",
-   "kind": "activation",
-   "activation": "Store Item",
-   "result": "none",
-   "main": "objects",
-   "work": "extradimensional",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
-   "name": "Retrieval Belt (Major)",
-   "kind": "activation",
-   "activation": "Retrieve Item",
-   "result": "note-only",
-   "main": "cooldown",
-   "work": "can be activated again",
-   "needs": [
-    "cooldown"
    ]
   },
   {
@@ -13213,28 +13126,6 @@
    ]
   },
   {
-   "name": "Retrieval Belt",
-   "kind": "activation",
-   "activation": "Store Item",
-   "result": "none",
-   "main": "objects",
-   "work": "extradimensional",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
-   "name": "Retrieval Belt",
-   "kind": "activation",
-   "activation": "Retrieve Item",
-   "result": "note-only",
-   "main": "cooldown",
-   "work": "can be activated again",
-   "needs": [
-    "cooldown"
-   ]
-  },
-  {
    "name": "Possum's Play (Greater)",
    "kind": "consumable",
    "result": "partial",
@@ -13425,18 +13316,6 @@
    ]
   },
   {
-   "name": "Blackaxe",
-   "kind": "activation",
-   "activation": "Owner's Reclamation",
-   "result": "none",
-   "main": "moving",
-   "work": "teleporting",
-   "needs": [
-    "moving",
-    "information"
-   ]
-  },
-  {
    "name": "Oil of Revelation",
    "kind": "consumable",
    "result": "note-only",
@@ -13554,16 +13433,6 @@
    "needs": [
     "illusions",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Forge",
-   "kind": "activation",
-   "result": "none",
-   "main": "objects",
-   "work": "4 bulk",
-   "needs": [
-    "objects"
    ]
   },
   {
@@ -15579,17 +15448,6 @@
    "needs": [
     "areas",
     "strike"
-   ]
-  },
-  {
-   "name": "Retrieval Prism (Greater)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "moving",
-   "work": "teleports",
-   "needs": [
-    "moving",
-    "objects"
    ]
   },
   {

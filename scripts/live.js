@@ -31,6 +31,7 @@ import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { forAbility } from "./placed-moves.js";
+import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
 import { checkSpend, payRegain, paySpend } from "./spend.js";
 import { placeLight } from "./placed-light.js";
@@ -260,6 +261,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "ways") return postWaysCard({ message, plan, used, actor, token });
     if (route === "teleport") return postTeleportCard({ message, plan, used, actor, token });
     if (route === "whisper") return postWhisper({ plan, used, actor, token });
+    if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
     if (route === "take") return postTakeCard({ message, plan, used, actor, token });
     if (route !== "item") return;
@@ -320,6 +322,8 @@ function choicesOf(state, root) {
     if (state.kind === "toggle" || state.kind === "ways") return { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) };
     // (A teleport: the creature targeted, when it's measured from one; the space is picked on Pick.)
     if (state.kind === "teleport") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), critical: Boolean(root.querySelector("[data-air-field='critical']")?.checked) };
+    // (One of its user's items, picked: scripts/objects.js.)
+    if (state.kind === "objects") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0) };
     if (state.kind === "table") return {};
     // (An ally's condition taken: the ally targeted.)
     if (state.kind === "take") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
@@ -344,6 +348,7 @@ const APPLY = {
     toggle: (message, choices) => applyToggleCard(message, choices),
     ways: (message, choices) => applyWaysCard(message, choices, postCardFor),
     teleport: (message, choices) => applyTeleportCard(message, choices),
+    objects: (message, choices) => applyObjectsCard(message, choices),
     take: (message, choices) => applyTakeCard(message, choices),
     // (A RollTable's row drawn: compiled as the item's use, a consumable's of that text.)
     table: (message, choices) => applyTableCard(message, choices, postCardFor, (html) => compile?.({ name: stateOf(message)?.item?.name ?? "Table", type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null),
@@ -452,6 +457,7 @@ async function onRequest(data) {
         : state.kind === "toggle" || state.kind === "ways" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
         : state.kind === "table" ? {}
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0 }
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], critical: Boolean(data.critical) }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null, ...(data.ownRank !== undefined ? { ownRank: data.ownRank === null ? null : String(data.ownRank) } : {}) }

@@ -9,12 +9,12 @@
    "resolves": 807,
    "builtin:cast-spell": 475,
    "partial": 205,
-   "none": 468,
+   "none": 462,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
-   "builtin:no-effect": 88,
-   "note-only": 150,
+   "builtin:no-effect": 86,
+   "note-only": 147,
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 28,
@@ -26,14 +26,15 @@
    "builtin:item-action": 23,
    "builtin:roll-twice": 14,
    "builtin:whisper": 17,
+   "builtin:objects": 11,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1
   },
   "live": {
    "save": 441,
    "cast": 475,
-   "item": 603,
-   "none": 582,
+   "item": 600,
+   "none": 574,
    "focus": 47,
    "counteract": 29,
    "fortune": 60,
@@ -47,6 +48,7 @@
    "conjure": 13,
    "action": 23,
    "whisper": 17,
+   "objects": 11,
    "coat": 4,
    "later": 4,
    "spellstrike": 9,
@@ -61,11 +63,11 @@
    "results": {
     "resolves": 472,
     "builtin:cast-spell": 347,
-    "none": 326,
+    "none": 325,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
     "builtin:readied-bonus": 32,
-    "builtin:no-effect": 70,
+    "builtin:no-effect": 69,
     "note-only": 112,
     "builtin:reroll": 34,
     "partial": 101,
@@ -78,7 +80,8 @@
     "builtin:roll-twice": 10,
     "builtin:whisper": 16,
     "builtin:item-action": 11,
-    "builtin:take-condition": 1
+    "builtin:take-condition": 1,
+    "builtin:objects": 2
    }
   },
   "weapon": {
@@ -86,7 +89,7 @@
    "results": {
     "resolves": 181,
     "partial": 49,
-    "none": 71,
+    "none": 70,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "builtin:table": 1,
@@ -96,7 +99,8 @@
     "builtin:zone": 6,
     "builtin:counteract": 2,
     "builtin:readied-bonus": 7,
-    "builtin:no-effect": 9,
+    "builtin:no-effect": 8,
+    "builtin:objects": 2,
     "builtin:pf2e-rules": 2,
     "builtin:teleport": 8,
     "builtin:ways": 3,
@@ -121,8 +125,9 @@
   "backpack": {
    "activations": 26,
    "results": {
-    "none": 17,
-    "note-only": 5,
+    "none": 14,
+    "builtin:objects": 6,
+    "note-only": 2,
     "builtin:cast-spell": 1,
     "builtin:whisper": 1,
     "builtin:table": 2
@@ -139,10 +144,11 @@
     "builtin:zone": 4,
     "note-only": 8,
     "builtin:teleport": 2,
-    "none": 15,
+    "none": 14,
     "builtin:no-effect": 5,
     "builtin:reroll": 4,
     "builtin:item-action": 2,
+    "builtin:objects": 1,
     "builtin:readied-bonus": 3,
     "builtin:focus-point": 2,
     "builtin:roll-twice": 2
@@ -4189,9 +4195,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Retrieval Belt (Greater)",
@@ -4200,9 +4206,9 @@
    "time": "free",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Battle Medic's Baton",
@@ -5789,9 +5795,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Ka Stone",
@@ -8303,9 +8309,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Hat of Many Minds",
@@ -12467,9 +12473,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Dancing Scarf (Greater)",
@@ -14794,9 +14800,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Retrieval Belt (Major)",
@@ -14805,9 +14811,9 @@
    "time": "free",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Oneiric Crystals of the Slumberer",
@@ -23061,9 +23067,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Retrieval Belt",
@@ -23072,9 +23078,9 @@
    "time": "free",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Mat of Resilience (Greater)",
@@ -23371,9 +23377,9 @@
    "time": "free",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Blackaxe",
@@ -23690,9 +23696,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Umbraex Eye",
