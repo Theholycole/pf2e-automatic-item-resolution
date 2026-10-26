@@ -89,6 +89,14 @@ export function othersTargeting(text) {
     }
     return null;
 }
+// Its linked Effects for each creature targeted: "self" (the card's user, to the core) is each of them when they're the recipients (2026-10-26,
+// found live: Bewitching Bloom (Magnolia)'s +1 Diplomacy went to its bearer, not the ally chosen), as fitPlan does for a drinker.
+export function forTargets(plan) {
+    const applications = plan?.resolution?.applications;
+    if (!(applications ?? []).some((entry) => entry.recipients === "self")) return plan;
+    return { ...plan, resolution: { ...plan.resolution, applications: applications.map((entry) => (entry.recipients === "self" ? { ...entry, recipients: "target" } : entry)) } };
+}
+
 // (A plan for the item card — healing, Effects, an automatic row — whose text grants it to allies.)
 export function targetedRecipient(plan, text) {
     if (!plan || plan.builtin || plan.allyArea || !["healing", "effect", "check"].includes(plan.resolution?.kind)) return false;

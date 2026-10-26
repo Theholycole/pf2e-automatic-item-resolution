@@ -8,7 +8,7 @@ import { chosenAllyPlan, withAllyEffectThenCard } from "./chosen-ally.js";
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf, triggerOn } from "./activation.js";
-import { othersTargeting, targetedRecipient, allyAreaPlan, castPlan, checkGated, effectLinks, fitPlan, ownPlan, withStatedHealing } from "./consumables.js";
+import { forTargets, othersTargeting, targetedRecipient, allyAreaPlan, castPlan, checkGated, effectLinks, fitPlan, ownPlan, withStatedHealing } from "./consumables.js";
 import { castWordsPlan, fillCast } from "./cast-words.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
@@ -693,9 +693,9 @@ function compileEach(item, options = {}) {
         plan = withActionGate(withNonlethalExempt(withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce })));
 
         const frequency = activation.frequency?.max ? activation.frequency : null;
-        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, ruleEffects, coats, coatLasts, creates, move, ...kept } = plan;
-        // (Granted to the creatures the presser targets: who and how far, for the simulator.)
+        // (Granted to the creatures the presser targets: who and how far, for the simulator; its linked Effects theirs, not its user's.)
         const others = targetedRecipient(plan, plainText(activation.html));
+        const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, shieldForm: form, strikeDamage, suppress, ruleEffects, coats, coatLasts, creates, move, ...kept } = others ? forTargets(plan) : plan;
         return {
             activation,
             index,

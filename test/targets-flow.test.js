@@ -66,6 +66,22 @@ test("Warpipes' Inspirational Salute: its Effect on each creature targeted; with
     assert.ok(card.flags[MODULE_ID].card.results.some((line) => /^Ally gains Effect: Inspirational Salute/.test(line)), card.flags[MODULE_ID].card.results.join(" | "));
 });
 
+// (2026-10-26, found live: an ally's own linked Effect read as "self" went to the item's user — Bewitching Bloom (Magnolia)'s +1 Diplomacy on its
+// bearer, not the ally chosen. For the creatures targeted, "self" is each of them.)
+test("Bewitching Bloom (Lotus): its PF2e Effect on the ally targeted, not on its user", async () => {
+    const [lotus] = compileActivations(source("Bewitching Bloom (Lotus)"));
+    assert.deepEqual(lotus.plan.resolution.applications.map((entry) => entry.recipients), ["target"]);
+    const bloom = foundry.giveItem(piper, source("Bewitching Bloom (Lotus)"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: bloom.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "item");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [ally.token.uuid] });
+    await settle();
+    const has = (actor) => actor.created.some((entry) => entry.name === "Effect: Bewitching Bloom (Lotus)");
+    assert.deepEqual([has(ally), has(piper)], [true, false], card.flags[MODULE_ID].card.results.join(" | "));
+});
+
 test("Therapeutic Snap Peas: PF2e's healing roll for each creature targeted, and the Effect", async () => {
     piper.system.attributes.hp.value = 2;
     ally.system.attributes.hp.value = 4;

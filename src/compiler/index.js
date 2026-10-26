@@ -21,7 +21,7 @@ import { withEffectThenCard } from "./effect-then-card.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { readActivations } from "./activation.js";
 import { asAbility } from "./ability-shape.js";
-import { othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf, withStatedHealing } from "./consumables.js";
+import { forTargets, othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf, withStatedHealing } from "./consumables.js";
 import { allyAreaRow, dropsToOne, itemDuration, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
 import { auraZonePlan } from "./aura-zones.js";
@@ -480,7 +480,9 @@ function compileOne(given, options = {}) {
     // (Its notes without the Activate line, the crafting or a Destruction line: src/compiler/notes.js.)
     if (Array.isArray(rest.notes)) rest.notes = cleanNotes(rest.notes);
     if (Array.isArray(rest.strike?.notes)) rest.strike = { ...rest.strike, notes: cleanNotes(rest.strike.notes) };
-    return withDegreeEffects(withMaterialRider(damageMaterial(withTypeChoices(guardText(guardValues({ ...rest, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), typeChoice), plainText(item?.system?.description?.value))), item?.system?.description?.value, options.itemEffects);
+    // (Its linked Effects for each creature targeted, not its user: forTargets.)
+    const theirs = recipient === "targets" ? forTargets(rest) : rest;
+    return withDegreeEffects(withMaterialRider(damageMaterial(withTypeChoices(guardText(guardValues({ ...theirs, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), typeChoice), plainText(item?.system?.description?.value))), item?.system?.description?.value, options.itemEffects);
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success

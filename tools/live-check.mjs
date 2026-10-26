@@ -1973,6 +1973,23 @@ export const cases = {
         return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
+    // Commander's Signet's "a creature you touch": PF2e's Effect on the ally targeted, not on its user (its "self" each target's, 2026-10-26).
+    async signetTouch(scene) {
+        await clearSquares(scene, [[9, 11], [10, 11]]);
+        const { actor: user } = await creature(scene, "Signet Wearer", { type: "character", x: 9, y: 11, level: 8 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Signet Ally", { x: 10, y: 11 });
+        const signet = await give(user, "Commander's Signet");
+        await signet.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(signet.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the signet's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [allyToken.uuid] });
+        const has = (actor) => actor.itemTypes.effect.some((effect) => effect.name === "Effect: Commander's Signet");
+        await until(() => has(ally), "the Effect on the ally", { timeout: 8000 });
+        assert(!has(user), "not on its user");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Warpipes' Inspirational Salute: "You and all allies within a 60-foot emanation gain …" — its Effect on each creature
     // targeted.
     async alliesEffect(scene) {
