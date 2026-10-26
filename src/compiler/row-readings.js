@@ -48,8 +48,8 @@ const AGAINST_PERSISTENT = /^(?:In addition, )?for (\d+|one|an?) (rounds?|minute
 const SCALED_HEAL = /^The amount of healing increases to ((?:\d+d\d+ if you're [a-z-]+ \d+(?:,? (?:or )?)?)+)\.$/i;
 const SCALE_STEP = /(\d+d\d+) if you're ([a-z-]+) (\d+)/gi;
 
-const CONDITION_IDS = { blinded: "XgEqL1kFApUbl5Z2", clumsy: "i3OJZU2nk64Df3xm", confused: "yblD8fOR1J8rDwEQ", controlled: "9qGBRpbX9NEwtAAr", dazzled: "TkIyaNPgTZFBCCuh", deafened: "9PR9y0bi4JPKnHPR", drained: "4D2KBtexWXa6oUMR", enfeebled: "MIRkyAjyBeXivMa7", fascinated: "AdPVz7rbaVSRxHFg", fatigued: "HL2l2VRSaQHu9lUw", frightened: "TBSHQspnbcqxsmjL", grabbed: "kWc1fhmv9LBiTuei", immobilized: "eIcWbB5o3pP6OIMe", "off-guard": "AJh5ex99aV6VTggg", paralyzed: "6uEgoh53GbXuHpTF", petrified: "dTwPJuKgBQCMxixg", prone: "j91X7x0XSomq8d60", restrained: "VcDeM8A5oI6VqhbM", sickened: "fesd1n5eVhpCSS18", slowed: "xYTAsEpcJE1Ccni3", stunned: "dfCMdR4wnpbYNTix", stupefied: "e1XGnhKNSQIm5IXg" };
-const conditionUuid = (slug) => (CONDITION_IDS[slug] ? `Compendium.pf2e.conditionitems.Item.${CONDITION_IDS[slug]}` : null);
+const CONDITION_IDS = { blinded: "XgEqL1kFApUbl5Z2", clumsy: "i3OJZU2nk64Df3xm", confused: "yblD8fOR1J8rDwEQ", controlled: "9qGBRpbX9NEwtAAr", dazzled: "TkIyaNPgTZFBCCuh", deafened: "9PR9y0bi4JPKnHPR", drained: "4D2KBtexWXa6oUMR", enfeebled: "MIRkyAjyBeXivMa7", fascinated: "AdPVz7rbaVSRxHFg", fatigued: "HL2l2VRSaQHu9lUw", frightened: "TBSHQspnbcqxsmjL", grabbed: "kWc1fhmv9LBiTuei", immobilized: "eIcWbB5o3pP6OIMe", "off-guard": "AJh5ex99aV6VTggg", paralyzed: "6uEgoh53GbXuHpTF", petrified: "dTwPJuKgBQCMxixg", prone: "j91X7x0XSomq8d60", quickened: "nlCjDvLMf2EkV2dl", restrained: "VcDeM8A5oI6VqhbM", sickened: "fesd1n5eVhpCSS18", slowed: "xYTAsEpcJE1Ccni3", stunned: "dfCMdR4wnpbYNTix", stupefied: "e1XGnhKNSQIm5IXg" };
+export const conditionUuid = (slug) => (CONDITION_IDS[slug] ? `Compendium.pf2e.conditionitems.Item.${CONDITION_IDS[slug]}` : null);
 const UNITS = { round: "rounds", minute: "minutes", hour: "hours" };
 const plainOf = (html) => String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\[\[\/r ([^\]#]+?)(?:\s*#[^\]]*)?\]\](?:\{[^}]*\})?/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
@@ -107,7 +107,25 @@ const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !CARD_LINES.has(
 
 // The plan and its (activation's) html → the plan with the rows that carry these.
 // (item: the item's own html, for what a sentence refers to there.)
-export function withRowReadings(plan, html, item = null) {
+// (Its Prone only for a creature on the ground, Drake Rifle (Fire)'s Drake Shot: "A target that isn't on the ground doesn't fall Prone" — the
+// Strike's strike.groundedProne, its rows' Prone left off for a target above the ground as the riders apply, src/live/if-target.js.)
+const GROUNDED = /^A target that isn't on the ground doesn't fall Prone\.$/i;
+function withGroundedProne(plan) {
+    const notes = plan?.strike?.notes ?? [];
+    if (!notes.some((note) => GROUNDED.test(said(note)))) return plan;
+    if (!Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.effects ?? []).some((effect) => effect?.slug === "prone"))) return plan;
+    const kept = notes.filter((note) => !GROUNDED.test(said(note)));
+    const next = { ...plan, strike: { ...plan.strike, notes: kept, groundedProne: true } };
+    const left = [...kept, ...(plan.notes ?? []), ...(plan.unread ?? []), ...Object.values(plan.resolution.outcomes).flatMap((row) => row?.manualInstructions ?? [])];
+    if (next.partial && !left.length) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}
+
+export function withRowReadings(given, html, item = null) {
+    const plan = withGroundedProne(given);
     const outcomes = plan?.resolution?.outcomes;
     if (!outcomes || plan.builtin) return plan;
     let next = plan;

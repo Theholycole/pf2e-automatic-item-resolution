@@ -9,6 +9,7 @@ import { restoreText } from "../compiler/restore.js";
 import { attackRidersText } from "../compiler/attack-riders.js";
 import { ENVIRONMENT_ID, temperatureFlag, temperatureText } from "../compiler/temperature.js";
 import { fallText } from "../compiler/falls.js";
+import { conditionUuid } from "../compiler/row-readings.js";
 import { weatherText } from "../compiler/weather.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -360,6 +361,19 @@ export function drainMarkSource(drain, { item = {}, user = {}, worldTime = 0, in
 // mark's start.
 export function drainTempSource(amount, { item = {}, user = {}, start = { value: 0, initiative: null }, duration = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return ownEffectSource({ name: "temporary Hit Points", img: "icons/svg/regen.svg", words: `${amount} temporary Hit Points`, rules: [{ key: "TempHP", value: amount }], duration, flag: { drainTemp: true }, item, user, worldTime: start.value ?? 0, initiative: start.initiative ?? null, moduleId });
+}
+
+// What follows once a condition ends (src/compiler/after-ends.js, scripts/after-ends.js): the creature's mark while it has that condition, and
+// then the next condition for its time — PF2e's condition granted by the Effect (gone with it), as the ability module's timed conditions are.
+const oneCondition = (slug, value) => `${slug.charAt(0).toUpperCase()}${slug.slice(1)}${Number.isFinite(value) ? ` ${value}` : ""}`;
+export function afterEndsMarkSource(entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const words = `When it's no longer ${entry.when}, it becomes ${oneCondition(entry.then.slug, entry.then.value)}${entry.then.duration?.mode === "fixed" ? ` for ${timeText(entry.then.duration)}` : ""}`;
+    return ownEffectSource({ name: `after ${entry.when}`, img: "icons/svg/clockwork.svg", words, rules: [], duration: null, flag: { afterEnds: { when: entry.when, then: entry.then } }, item, user, worldTime, initiative, moduleId });
+}
+export function afterEndsEffectSource(then, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const uuid = conditionUuid(then.slug);
+    const rules = uuid ? [{ key: "GrantItem", uuid, allowDuplicate: true, alterations: Number.isFinite(then.value) ? [{ mode: "override", property: "badge-value", value: then.value }] : [], onDeleteActions: { granter: "cascade", grantee: "cascade" } }] : [];
+    return ownEffectSource({ name: oneCondition(then.slug, then.value), img: "icons/svg/clockwork.svg", words: `${oneCondition(then.slug, then.value)}${then.duration?.mode === "fixed" ? ` for ${timeText(then.duration)}` : ""}`, rules, duration: then.duration, flag: { afterEndsThen: then.slug }, item, user, worldTime, initiative, moduleId });
 }
 
 // What of the weather it ignores, with its time: "Ignores the weather's fog and mist for 1 minute".

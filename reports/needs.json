@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1259,
+  "entries": 1255,
   "results": {
    "none": 611,
-   "partial": 262,
+   "partial": 258,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -13,7 +13,7 @@
    "counteract": 17,
    "afflictions": 51,
    "areas": 110,
-   "moving": 85,
+   "moving": 84,
    "lasting": 63,
    "visibility": 46,
    "choice": 37,
@@ -22,14 +22,14 @@
    "spells": 45,
    "information": 23,
    "out-of-combat": 33,
-   "actions": 27,
+   "actions": 26,
    "no-rules": 37,
    "objects": 115,
    "illusions": 43,
    "removed": 4,
-   "cooldown": 10,
+   "cooldown": 9,
    "vehicles": 20,
-   "reader": 23,
+   "reader": 22,
    "several": 23,
    "triggers": 93,
    "immunity": 26,
@@ -56,7 +56,7 @@
    "counteract": 80,
    "afflictions": 93,
    "lasting": 210,
-   "moving": 109,
+   "moving": 108,
    "triggers": 126,
    "visibility": 48,
    "dying": 73,
@@ -64,16 +64,16 @@
    "several": 90,
    "mind": 70,
    "strike": 185,
-   "reader": 212,
+   "reader": 208,
    "spells": 82,
    "information": 191,
-   "actions": 57,
+   "actions": 56,
    "from-events": 34,
    "no-rules": 37,
    "illusions": 56,
    "removed": 5,
    "range": 4,
-   "cooldown": 11,
+   "cooldown": 10,
    "vehicles": 24,
    "situational": 73,
    "creatures": 53,
@@ -2439,17 +2439,6 @@
    ]
   },
   {
-   "name": "Skull Bomb",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "cooldown",
-   "work": "can't be used again",
-   "needs": [
-    "cooldown",
-    "reader"
-   ]
-  },
-  {
    "name": "Book of Lost Days",
    "kind": "activation",
    "activation": "Study Memory",
@@ -4207,18 +4196,6 @@
    ]
   },
   {
-   "name": "Drake Rifle (Fire)",
-   "kind": "activation",
-   "activation": "Drake Shot",
-   "result": "partial",
-   "main": "moving",
-   "work": "fall prone",
-   "needs": [
-    "moving",
-    "reader"
-   ]
-  },
-  {
    "name": "Peachwood Talisman",
    "kind": "consumable",
    "result": "note-only",
@@ -4547,18 +4524,6 @@
    "work": "learn",
    "needs": [
     "information"
-   ]
-  },
-  {
-   "name": "Imposing Shield",
-   "kind": "activation",
-   "activation": "Terrifying Block",
-   "result": "partial",
-   "main": "actions",
-   "work": "shield block",
-   "needs": [
-    "actions",
-    "reader"
    ]
   },
   {
@@ -11238,17 +11203,6 @@
    "needs": [
     "triggers",
     "counteract"
-   ]
-  },
-  {
-   "name": "Heart of Sarnax",
-   "kind": "activation",
-   "activation": "Two Hearts as One",
-   "result": "partial",
-   "main": "reader",
-   "work": "slowed",
-   "needs": [
-    "reader"
    ]
   },
   {

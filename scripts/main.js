@@ -21,6 +21,7 @@ import { fallLine } from "../src/live/card.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { setUpHPFloor } from "./hp-floor.js";
 import { setUpDrain } from "./drain.js";
+import { setUpAfterEnds } from "./after-ends.js";
 import { setUpShortenOnHit } from "./shorten-on-hit.js";
 import { setUpToggleOff } from "./toggle-off.js";
 import { ownerOf } from "./foundry.js";
@@ -127,6 +128,8 @@ Hooks.once("ready", async () => {
     setUpHPFloor();
     // (A share of the damage a creature the card damaged then takes, as its user's temporary Hit Points: scripts/drain.js.)
     setUpDrain();
+    // (A condition that follows once another ends, Heart of Sarnax's: scripts/after-ends.js.)
+    setUpAfterEnds();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

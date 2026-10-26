@@ -36,10 +36,26 @@ function withUserTemp(plan, plain) {
     return result;
 }
 
+// (Its user blinded for good as it's used up, Skull Bomb's "The skull is permanently destroyed and can't be used again, and the throwing creature is
+// permanently Blinded and headless" — the bomb used up as a consumable is, its headless body the Blinded's cause: 2026-10-26.)
+const PERMANENT = /^The [\w' -]+? is permanently destroyed and can't be used again, and the throwing creature is permanently (Blinded|Deafened)(?: and headless)?\.$/i;
+function withUserPermanent(plan, plain) {
+    const sentence = plain.split(/(?<=[.!?])\s+(?=[A-Z])/).map((one) => one.trim()).find((one) => PERMANENT.test(one));
+    if (!sentence) return plan;
+    const notes = (plan.notes ?? []).filter((note) => said(note).replace(/\.$/, "") !== sentence.replace(/\.$/, ""));
+    const result = { ...plan, userEffects: [...(plan.userEffects ?? []), { slug: PERMANENT.exec(sentence)[1].toLowerCase(), value: null, duration: null }], ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}) };
+    const left = [...notes, ...(plan.unread ?? []), ...Object.values(plan.resolution.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? [])];
+    if (plan.partial && !left.length) {
+        delete result.partial;
+        result.automation = { ...(result.automation ?? {}), level: "automatic" };
+    }
+    return result;
+}
+
 export function withUserConditions(given, text) {
     if (given?.resolution?.kind !== "save" || given.builtin) return given;
     const plain = String(text ?? "");
-    const plan = withUserTemp(given, plain);
+    const plan = withUserPermanent(withUserTemp(given, plain), plain);
     const becomes = BECOMES.exec(plain);
     const remains = REMAINS.exec(plain);
     if (!becomes || !remains || remains[1].toLowerCase() !== becomes[1].toLowerCase()) return plan;

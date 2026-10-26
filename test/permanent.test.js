@@ -438,9 +438,10 @@ test("conditions only under if/when come off their rows (Heart of Sarnax, Hex Bl
     const { compileItem } = await import("../src/compiler/index.js");
     const at = (name, index = 0) => compileActivations(item(name), { spellEffects }).filter((entry) => entry.plan?.resolution?.kind === "save")[index]?.plan ?? compileItem(item(name), { spellEffects });
     const slugs = (plan, degree) => plan.resolution.outcomes[degree].effects.map((effect) => effect.slug);
-    const heart = compileActivations(item("Heart of Sarnax"), { spellEffects }).find((entry) => entry.activation.name === "Two Hearts as One").plan;
+    // (Crush Heart, one of its two options since 2026-10-26: its Slowed 2 after the stun, src/compiler/after-ends.js.)
+    const heart = compileActivations(item("Heart of Sarnax"), { spellEffects }).find((entry) => entry.activation.name === "Two Hearts as One").plan.ways[1].plan;
     assert.deepEqual(slugs(heart, "criticalFailure"), ["stunned"], "slowed 2 only after the stun");
-    assert.match(heart.resolution.outcomes.criticalFailure.noteEffects.map((note) => note.text).join(" "), /When it recovers from being stunned/);
+    assert.deepEqual([heart.afterEnds[0].when, heart.afterEnds[0].then.slug], ["stunned", "slowed"]);
     const hex = compileItem(item("Hex Blaster"), { spellEffects }) ?? at("Hex Blaster");
     assert.ok(!slugs(hex, "criticalFailure").includes("unconscious"), "unconscious only if the damage knocks it out");
     const winter = compileActivations(item("Wintershot"), { spellEffects })[0].plan;

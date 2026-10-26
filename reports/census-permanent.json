@@ -8,7 +8,7 @@
   "results": {
    "resolves": 861,
    "builtin:cast-spell": 475,
-   "partial": 169,
+   "partial": 166,
    "none": 444,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
@@ -18,7 +18,7 @@
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 28,
-   "builtin:ways": 23,
+   "builtin:ways": 26,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 26,
    "builtin:modes": 33,
@@ -31,9 +31,9 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 441,
+   "save": 439,
    "cast": 475,
-   "item": 609,
+   "item": 608,
    "none": 556,
    "focus": 47,
    "counteract": 29,
@@ -42,7 +42,7 @@
    "strike": 111,
    "table": 7,
    "teleport": 28,
-   "ways": 23,
+   "ways": 26,
    "zone": 26,
    "toggle": 33,
    "conjure": 13,
@@ -61,7 +61,7 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 495,
+    "resolves": 494,
     "builtin:cast-spell": 347,
     "none": 313,
     "builtin:focus-point": 45,
@@ -70,11 +70,11 @@
     "builtin:no-effect": 69,
     "note-only": 109,
     "builtin:reroll": 34,
-    "partial": 88,
+    "partial": 87,
     "builtin:table": 4,
     "builtin:teleport": 14,
     "builtin:zone": 14,
-    "builtin:ways": 11,
+    "builtin:ways": 13,
     "builtin:conjure": 13,
     "builtin:modes": 17,
     "builtin:roll-twice": 10,
@@ -87,8 +87,8 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 197,
-    "partial": 34,
+    "resolves": 198,
+    "partial": 33,
     "none": 70,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
@@ -165,10 +165,10 @@
     "builtin:teleport": 1,
     "builtin:readied-bonus": 4,
     "builtin:no-effect": 2,
-    "partial": 7,
+    "builtin:ways": 2,
     "builtin:counteract": 1,
+    "partial": 6,
     "builtin:zone": 1,
-    "builtin:ways": 1,
     "builtin:item-action": 1
    }
   }
@@ -7803,7 +7803,7 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -8287,9 +8287,9 @@
    "time": "free",
    "frequency": "once per 10 minutes",
    "trigger": true,
-   "result": "partial",
-   "kind": "check",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Admiral's Bicorne",
@@ -21231,9 +21231,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Weapon Shot (Major)",
@@ -24229,9 +24229,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Ethereal",

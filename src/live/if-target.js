@@ -60,3 +60,11 @@ export function targetGroups(plan, tokens) {
     }
     return groups;
 }
+
+// (Its Prone only for a creature on the ground, Drake Rifle (Fire)'s Drake Shot — plan.strike.groundedProne, src/compiler/row-readings.js: a
+// target above the ground, its token's elevation, keeps the rest of its rows but not their Prone.)
+export function withoutAloftProne(plan, elevation) {
+    if (!plan?.strike?.groundedProne || !(Number(elevation) > 0)) return plan;
+    const outcomes = Object.fromEntries(Object.entries(plan.resolution?.outcomes ?? {}).map(([degree, row]) => [degree, row ? { ...row, effects: (row.effects ?? []).filter((effect) => effect?.slug !== "prone") } : row]));
+    return { ...plan, resolution: { ...plan.resolution, outcomes } };
+}

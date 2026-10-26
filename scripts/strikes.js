@@ -13,7 +13,7 @@ import { postActionCard } from "./item-actions.js";
 import { USES, now } from "./activations.js";
 import { withoutUse } from "../src/live/activations-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, startInitiative, stateOf } from "./foundry.js";
-import { planFor } from "../src/live/if-target.js";
+import { planFor, withoutAloftProne } from "../src/live/if-target.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -161,7 +161,10 @@ export async function strikeWithRider(message) {
         return;
     }
     const target = entryOf(targetToken.object ?? targetToken, targetToken.actor);
-    const lines = await applyRiders({ plan: rider.plan, degree: context.outcome, user: rider.user, target, item: rider.item });
+    // (Its Prone only for a creature on the ground, Drake Shot's: src/live/if-target.js.)
+    const elevation = Number(targetToken.document?.elevation ?? targetToken.elevation) || 0;
+    const lines = await applyRiders({ plan: withoutAloftProne(rider.plan, elevation), degree: context.outcome, user: rider.user, target, item: rider.item });
+    if (rider.plan.strike?.groundedProne && elevation > 0) lines.push(`${target.name} isn't on the ground: it doesn't fall Prone`);
     // (A critical hit's harder save, Blister Ammunition's: its DC then.)
     const plain = rider.plan.strike?.save;
     const harder = plain && rider.plan.strike.criticalDC && context.outcome === "criticalSuccess" ? { ...plain, resolution: { ...plain.resolution, check: { ...plain.resolution.check, against: { ...plain.resolution.check.against, value: rider.plan.strike.criticalDC } } } } : plain;

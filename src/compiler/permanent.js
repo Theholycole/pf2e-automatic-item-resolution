@@ -6,6 +6,7 @@
 
 import { chosenAllyPlan, withAllyEffectThenCard } from "./chosen-ally.js";
 import { moveActionsPlan } from "./move-actions.js";
+import { afterEffectPlan, withAfterEnds, withSlain } from "./after-ends.js";
 import { withToggleOff } from "./toggle-off.js";
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
@@ -57,6 +58,8 @@ import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { playedBySpellModule, spellModuleShare } from "./index.js";
 import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
+import { withInsteadWay } from "./instead-way.js";
+import { namedOptions, namedOptionsPlan } from "./named-options.js";
 import { withMark } from "./marked.js";
 import { withAttackRiders } from "./attack-riders.js";
 import { installedPlan, readInstalled } from "./installed.js";
@@ -171,7 +174,7 @@ export function compileActivations(item, options = {}) {
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(ownerDCs(entry.plan), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), entry.activation.html), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item)));
+    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withInsteadWay(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(withAfterEnds(withSlain(ownerDCs(entry.plan), entry.activation.html)), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), entry.activation.html), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).map((entry) => withNamedOptions(item, entry, options)).filter((entry) => !playedBySpellModule(entry, share, item)));
 }
 
 // (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of
@@ -188,6 +191,21 @@ function sharedRecharges(entries) {
 }
 
 // (An activation's plan as the user decided, src/compiler/decided.js: one built from nothing gets its own base and item part.)
+// (An Effect that offers named options, src/compiler/named-options.js: each option read as the activation with that option for its Effect — the
+// ways card's buttons — in place of the one option read before.)
+function withNamedOptions(item, entry, options) {
+    const found = namedOptions(entry.activation?.html);
+    if (!found) return entry;
+    const plans = found.map((option) => compileActivations({ ...item, system: { ...(item.system ?? {}), description: { value: option.html } } }, options)[0]?.plan ?? null);
+    const own = entry.plan ?? plans.find(Boolean);
+    if (!own) return entry;
+    const base = { modelVersion: own.modelVersion, source: own.source, rank: own.rank, traits: own.traits, activation: own.activation, trigger: own.trigger, item: own.item };
+    const plan = namedOptionsPlan(found, plans, base);
+    if (!plan) return entry;
+    // (Each way's card the activation's own: its index and frequency.)
+    return { ...entry, plan: { ...plan, ways: plan.ways.map((way) => ({ ...way, plan: { ...way.plan, item: { ...(way.plan.item ?? {}), ...(own.item?.activation ? { activation: own.item.activation } : {}) } } })) } };
+}
+
 function decideActivation(item, entry, plan) {
     const { activation, index } = entry;
     const base = { modelVersion: MODEL_VERSION, source: { name: `${item.name}${activation.name ? `: ${activation.name}` : ""}`, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type }, rank: 1, traits: [...(item.system?.traits?.value ?? [])], activation: { time: activation.time ?? null, traits: activation.traits ?? [] } };
@@ -496,6 +514,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = chosenAllyPlan(activation.html, base) ?? plan;
         // (Its user's own moves with a Speed for them, src/compiler/move-actions.js: Dragonaut's Wingsuit's Drake's Glide.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = moveActionsPlan(activation.html, base) ?? plan;
+        // (A condition for a time and another after it, src/compiler/after-ends.js: Heart of Sarnax's Bestow Vim.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = afterEffectPlan(activation.html, base) ?? plan;
         // (Its allies' bonus beside its enemies' save — Horn of the Archon's "Allies in the area gain a +1 status bonus to attack rolls and saving
         // throws for 1 round" — the allies' card first, then the save's: plan.again.)
         // ("In the area" is the save's own emanation; the save's sentences, the allies' notes, are the save card's.)
