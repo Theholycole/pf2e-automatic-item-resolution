@@ -645,6 +645,11 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - After a save card (`withSaveAfterApplied`, scripts/after-ends.js, 2026-10-26), Cauthooj Bagpipes' Disorienting Fugue:
     - a critical success's immunity lasts an hour: `plan.immunityLonger`, the ability module's "Immune:" Effect lengthened once the card is applied;
     - a critical failure's creature attacks itself: `plan.selfAttack`, its own first melee Strike's damage rolled with PF2e and applied to it (a confused creature attacking itself hits). Before, that sentence was dropped unread.
+  - A spell an item holds for later (`src/compiler/stored-spell.js`, the objects card's `cast-stored`, `ready-stored` and `expend-stored`, 2026-10-26). The spell is the item's flag (`storedSpell`: `{ source, rank, name }`).
+    - Furnace of Endings, by grade: its card with nothing stored picks one of its user's scrolls that fits (rank, fire or void trait, three actions at most) and burns it. With a spell stored, it casts it through the spell module's `castFromItem` at the creatures targeted, at its user's best spell DC (as a scroll's), and empties.
+    - Spell Bastion: storing picks one of its user's spells that fits (3rd rank or lower, 2 actions or fewer, able to target another creature); spending its casting is the user's own, a line of the card. Its readying is an Effect to the start of the user's next turn. Its unleashing casts at the attacker targeted, and its last activation lets the spell go.
+    - Ring of Counterspells' harmless expending empties it.
+    - Not Spell Reservoir: the spell module keeps and casts the reservoir's spell itself.
   - A worse condition the card can't see the cause of (`src/compiler/instead-way.js`, 2026-10-26): Imposing Shield's Frightened 3 "if the Shield Block reduced the incoming damage to 0" is a second button beside Frightened 2, as the user's 2026-10-11 ruling has choices.
   - Its user blinded for good as it's thrown: Skull Bomb's thrower is Blinded with no end (`plan.userEffects`, `src/compiler/user-conditions.js`); a consumable's plan now reads its user's conditions too.
   - Prone only on the ground: Drake Rifle (Fire)'s Drake Shot leaves its rows' Prone off for a target whose token is above the ground (`strike.groundedProne`, `withoutAloftProne`).

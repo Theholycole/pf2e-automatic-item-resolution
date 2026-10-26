@@ -6,7 +6,12 @@ export const isObjects = (plan) => plan?.builtin === "objects" && Boolean(plan.o
 
 const BULK_WORDS = (bulk) => (bulk === 0 ? "negligible Bulk" : bulk === 0.1 ? "light Bulk" : `${bulk} Bulk`);
 // What it does, in words: "Into Retrieval Belt: an item it's holding (1 Bulk or less)".
-export function objectsText(objects, item = {}) {
+// (stored: the spell it holds, { name, rank }, for its stored-spell ops — src/compiler/stored-spell.js.)
+export function objectsText(objects, item = {}, stored = null) {
+    if (objects.op === "cast-stored" && stored) return `${stored.name} (rank ${stored.rank}) cast from ${item.name ?? "it"} at ${objects.at === "attacker" ? "the attacker (target it)" : "the creatures its user targets"}; it's empty after`;
+    if (objects.op === "cast-stored") return `Nothing stored: store ${objects.store?.from === "scroll" ? "one of its user's scrolls that fits (the scroll is burned)" : "one of its user's spells that fits (spending its casting is its user's own)"}`;
+    if (objects.op === "ready-stored") return stored ? `Ready to unleash ${stored.name} on a foe that hits its user, until its next turn` : `Nothing stored in ${item.name ?? "it"} to unleash`;
+    if (objects.op === "expend-stored") return stored ? `${stored.name} let go: ${item.name ?? "it"} is empty` : `Nothing stored in ${item.name ?? "it"}`;
     const limit = Number.isFinite(objects.maxBulk) ? ` (${BULK_WORDS(objects.maxBulk)} or less)` : "";
     if (objects.op === "store") return `Into ${item.name ?? "it"}: an item it's holding${limit}`;
     if (objects.op === "retrieve") return `Out of ${item.name ?? "it"}, into a hand: an item stored in it`;
@@ -24,15 +29,16 @@ export function objectsText(objects, item = {}) {
 }
 
 // choices: [{ id, name }] — its user's items the op can take (none for its own).
-export function createObjectsCard({ plan, item, user, choices = [] }) {
-    return { kind: "objects", status: "open", plan, item, user, choices, pick: 0, results: [] };
+export function createObjectsCard({ plan, item, user, choices = [], stored = null }) {
+    return { kind: "objects", status: "open", plan, item, user, choices, pick: 0, results: [], ...(stored ? { stored } : {}) };
 }
 
 export function objectsCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const objects = state.plan.objects;
-    const own = objects.self;
-    const line = `<p class="aar-actions">${escape(objectsText(objects, state.item))}.</p>`;
+    // (A stored spell to cast: no item to pick.)
+    const own = objects.self || (objects.op === "cast-stored" && Boolean(state.stored));
+    const line = `<p class="aar-actions">${escape(objectsText(objects, state.item, state.stored ?? null))}.</p>`;
     const notes = open && (state.plan.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     const picker = own ? ""
         : !state.choices.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no item it can take.</p>` : "")

@@ -76,3 +76,43 @@ test("Autoload Leathers: one of its user's reload 1 weapons with room for a roun
     assert.deepEqual(objectChoices({ items: [round, pistol, loaded, bow] }, autoload.objects, "leathers"), [{ id: "p1", name: "Pistol" }]);
     assert.deepEqual(objectChoices({ items: [pistol] }, autoload.objects, "leathers"), [], "no ammunition for it");
 });
+
+// (A spell an item holds for later, src/compiler/stored-spell.js, 2026-10-26.)
+test("stored spells: Furnace of Endings' scroll by grade, cast as the scroll; Spell Bastion's readied, unleashed at the attacker, let go; Ring of Counterspells' let go", async () => {
+    const { storable } = await import("../src/compiler/stored-spell.js");
+    const furnaces = ["Furnace of Endings", "Furnace of Endings (Greater)", "Furnace of Endings (Major)"].map((name) => compileActivations(item(name))[0].plan.objects);
+    assert.deepEqual(furnaces.map((objects) => [objects.op, objects.store.from, objects.store.maxRank]), [["cast-stored", "scroll", 1], ["cast-stored", "scroll", 3], ["cast-stored", "scroll", 5]]);
+    const bastion = compileActivations(item("Spell Bastion")).map((entry) => entry.plan.objects);
+    assert.deepEqual(bastion.map((objects) => [objects.op, objects.at ?? null]), [["ready-stored", null], ["cast-stored", "attacker"], ["expend-stored", null]]);
+    assert.deepEqual(bastion[0].store, { from: "cast", maxRank: 3, maxActions: 2, otherTarget: true });
+    assert.equal(compileActivations(item("Ring of Counterspells"))[1].plan.objects.op, "expend-stored");
+    assert.deepEqual([storable(bastion[0].store, { rank: 3, actions: 2, traits: [], target: "1 creature" }), storable(bastion[0].store, { rank: 4, actions: 2, target: "1 creature" }), storable(bastion[0].store, { rank: 1, actions: 2, target: "you" }), storable(furnaces[0].store, { rank: 1, actions: 2, traits: ["cold"] })], [true, false, false, false]);
+    assert.equal(objectsText(bastion[1], { name: "Spell Bastion" }, { name: "Fireball", rank: 3 }), "Fireball (rank 3) cast from Spell Bastion at the attacker (target it); it's empty after");
+    assert.match(objectsText(furnaces[0], { name: "Furnace of Endings" }), /^Nothing stored: store one of its user's scrolls that fits \(the scroll is burned\)$/);
+});
+
+test("live: a scroll burned into the furnace, then cast through the spell module at the user's best spell DC, the furnace empty after", async () => {
+    const { applyObjectsCard } = await import("../scripts/objects.js");
+    const saved = { game: globalThis.game, fromUuid: globalThis.fromUuid, foundry: globalThis.foundry };
+    const casts = [];
+    const flags = {};
+    const furnace = { id: "furnace", name: "Furnace of Endings", uuid: "Actor.a.Item.furnace", flags: { "pf2e-automatic-item-resolution": flags }, setFlag: async (scope, key, value) => { flags[key] = value; }, unsetFlag: async (scope, key) => { delete flags[key]; } };
+    let burned = 0;
+    const scroll = { id: "scroll", name: "Scroll of Burning Hands", type: "consumable", system: { quantity: 1, spell: { name: "Burning Hands", system: { level: { value: 1 }, time: { value: "2" }, traits: { value: ["fire"] }, target: { value: "" } } } }, delete: async () => { burned += 1; } };
+    const items = new Map([["furnace", furnace], ["scroll", scroll]]);
+    const actor = { uuid: "Actor.a", items: Object.assign([...items.values()], { get: (id) => items.get(id) }), itemTypes: { spell: [] }, spellcasting: { contents: [{ statistic: { dc: { value: 24 } } }, { statistic: { dc: { value: 21 } } }] } };
+    globalThis.foundry = { utils: { deepClone: (value) => JSON.parse(JSON.stringify(value)) } };
+    globalThis.fromUuid = async (uuid) => (uuid === "Actor.a" ? actor : { name: "Ogre", uuid });
+    globalThis.game = { modules: new Map([["pf2e-automatic-resolution", { api: { castFromItem: async (options) => casts.push(options) } }]]) };
+    const state = (stored) => ({ kind: "objects", status: "open", plan: compileActivations(item("Furnace of Endings"))[0].plan, item: { name: "Furnace of Endings", id: "furnace" }, user: { actorUuid: "Actor.a", name: "Ash" }, choices: [], results: [], ...(stored ? { stored } : {}) });
+    const message = (one) => ({ getFlag: (scope, key) => (key === "card" ? one : null), update: async (data) => data });
+    try {
+        const stored = await applyObjectsCard(message(state(null)), { pick: 0 });
+        assert.deepEqual([burned, flags.storedSpell?.name, flags.storedSpell?.rank], [1, "Burning Hands", 1]);
+        assert.match(stored["flags.pf2e-automatic-item-resolution.card"].results[0], /burned in Furnace of Endings: Burning Hands \(rank 1\) is stored/);
+        await applyObjectsCard(message(state({ name: "Burning Hands", rank: 1 })), { targets: ["Scene.s.Token.ogre"] });
+        assert.deepEqual([casts.length, casts[0].dc, casts[0].rank, casts[0].spell.name, casts[0].targets.length, flags.storedSpell], [1, 24, 1, "Burning Hands", 1, undefined]);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

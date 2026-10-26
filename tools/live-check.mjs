@@ -2208,6 +2208,36 @@ export const cases = {
         return { lost: before - lost.system.attributes.hp.value };
     },
 
+    // Furnace of Endings: a scroll of Harm (void) burned into it on its first card, then cast from it at a foe through the spell module, the
+    // furnace empty after.
+    async furnaceStored(scene) {
+        await clearSquares(scene, [[9, 5], [10, 5]]);
+        const { actor: user, token } = await creature(scene, "Furnace Keeper", { type: "character", x: 9, y: 5, level: 5 });
+        const { token: foeToken } = await creature(scene, "Furnace Foe", { x: 10, y: 5, hp: 200, alliance: "opposition" });
+        const furnace = await give(user, "Furnace of Endings");
+        await furnace.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const harm = await fromUuid((await game.packs.get("pf2e.spells-srd").getIndex()).find((entry) => entry.name === "Harm").uuid);
+        const spell = harm.toObject();
+        delete spell._id;
+        await user.createEmbeddedDocuments("Item", [{ name: "Scroll of Harm (Rank 1)", type: "consumable", system: { category: "scroll", quantity: 1, level: { value: 1 }, spell, traits: { value: ["consumable", "magical", "scroll"], rarity: "common" } } }]);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(furnace.uuid, 0);
+        const store = await messageAfter(since, itemCard("objects"), { what: "the furnace's card" });
+        await game.modules.get(NS).api.live.apply(store.id, { pick: 0 });
+        await until(() => furnace.flags?.[NS]?.storedSpell?.name === "Harm", "Harm stored", { timeout: 8000 });
+        assert(!user.items.some((item) => item.name === "Scroll of Harm (Rank 1)"), "the scroll burned");
+        await token.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(furnace.uuid, 0);
+        const cast = await messageAfter(since, itemCard("objects"), { what: "the furnace's cast card" });
+        await game.modules.get(NS).api.live.apply(cast.id, { targets: [foeToken.uuid] });
+        await until(() => !furnace.flags?.[NS]?.storedSpell, "the furnace empty", { timeout: 15000 });
+        const spellCard = game.messages.contents.slice(-12).find((message) => message.flags?.["pf2e-automatic-resolution"]?.castFromItem?.itemName === "Furnace of Endings");
+        assert(spellCard, "the spell module's cast of Harm");
+        return { cast: spellCard.flags["pf2e-automatic-resolution"].castFromItem };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {

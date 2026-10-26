@@ -15,3 +15,11 @@ The "Nothing to automate" need has 37 PF2e entries (and 18 of the modules' items
 
 - **A (suggested):** count a cast as partial when a note adds a rule the cast doesn't play, using the same leftover check as other cards. The list grows by those entries, and I work through them like the rest.
 - **B:** keep counting every cast as done, as now.
+
+## 3. Items whose whole effect is a rule a card can't play
+
+257 entries are "note only": the card puts the item's text on a note Effect and plays nothing else. About 137 of them give no number, condition or save at all. Examples: Hovering Potion's floating and Stride up or down, Boots of Free Running's running up walls, and other movement or behaviour rules. For spells, your 2026-09-30 ruling counted note-only spells as done. For items there's no ruling yet, so they all count as not done.
+
+- **A (suggested):** count an item's note Effect as done only when I've checked that nothing in it is a number, condition, Speed or other rule a card could play. I'd automate those parts first (Hovering Potion's climb at full Speed, for one) and list what's left in its note Effect, item by item.
+- **B:** count every note-only item as done, as for spells.
+- **C:** keep them all listed, as now.

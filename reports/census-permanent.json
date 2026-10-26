@@ -9,7 +9,7 @@
    "resolves": 868,
    "builtin:cast-spell": 475,
    "partial": 159,
-   "none": 444,
+   "none": 437,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
    "builtin:readied-bonus": 46,
@@ -24,9 +24,9 @@
    "builtin:modes": 33,
    "builtin:conjure": 13,
    "builtin:item-action": 23,
+   "builtin:objects": 23,
    "builtin:roll-twice": 14,
    "builtin:whisper": 17,
-   "builtin:objects": 16,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1
   },
@@ -34,7 +34,7 @@
    "save": 440,
    "cast": 475,
    "item": 608,
-   "none": 555,
+   "none": 548,
    "focus": 47,
    "counteract": 29,
    "fortune": 60,
@@ -47,8 +47,8 @@
    "toggle": 33,
    "conjure": 13,
    "action": 23,
+   "objects": 23,
    "whisper": 17,
-   "objects": 16,
    "coat": 4,
    "later": 4,
    "spellstrike": 9,
@@ -63,7 +63,7 @@
    "results": {
     "resolves": 499,
     "builtin:cast-spell": 347,
-    "none": 313,
+    "none": 306,
     "builtin:focus-point": 45,
     "builtin:counteract": 25,
     "builtin:readied-bonus": 32,
@@ -76,10 +76,10 @@
     "builtin:zone": 14,
     "builtin:ways": 13,
     "builtin:conjure": 13,
+    "builtin:objects": 13,
     "builtin:modes": 17,
     "builtin:roll-twice": 10,
     "builtin:whisper": 16,
-    "builtin:objects": 6,
     "builtin:item-action": 11,
     "builtin:take-condition": 1
    }
@@ -3600,9 +3600,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Grisly Brigandine",
@@ -8872,9 +8872,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Hunter's Arrowhead",
@@ -16651,9 +16651,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Rusting Ammunition (Greater)",
@@ -17379,9 +17379,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Spell Bastion",
@@ -17390,9 +17390,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Spell Bastion",
@@ -17401,9 +17401,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Stone Circle (Greater)",
@@ -18118,9 +18118,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "The Silent Hag",

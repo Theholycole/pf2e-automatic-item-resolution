@@ -17,6 +17,8 @@
 //   round, loaded with one of its user's ammunition for it (PF2e's own attach, as its reload button does).
 // Its other rule sentences are notes. Pure.
 
+import { readStoredSpell } from "./stored-spell.js";
+
 const BULK = (words) => (/^light$/i.test(words) ? 0.1 : /^negligible$/i.test(words) ? 0 : Number(words));
 const STORE = /\bOne item you(?:'re| are) holding with a Bulk of (\d+|light) or less vanishes into the [\w' -]+?(?:'s)? extradimensional space\b/i;
 const RETRIEVE = /\bThe item stored in the [\w' -]+? appears in your hand\b/i;
@@ -39,6 +41,10 @@ const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).m
 // The activation's plain text (from its Effect on), the item's name and type, the item's whole text → { op, maxBulk?, self?, said } or null.
 export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     const text = String(body ?? "");
+    // (A spell it holds for later, cast or let go: src/compiler/stored-spell.js, 2026-10-26 — not Spell Reservoir's, whose spell the spell module
+    // keeps and casts itself.)
+    const stored = /^Spell Reservoir\b/.test(name) ? null : readStoredSpell(text, whole);
+    if (stored) return { ...stored, self: stored.op !== "cast-stored", said: stored.said[0], also: stored.said[1] ?? null };
     const store = STORE.exec(text);
     if (store && type === "backpack") return { op: "store", maxBulk: BULK(store[1]), said: store[0] };
     if (RETRIEVE.test(text) && type === "backpack") return { op: "retrieve", said: RETRIEVE.exec(text)[0] };

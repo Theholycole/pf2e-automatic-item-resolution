@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1244,
+  "entries": 1237,
   "results": {
-   "none": 611,
+   "none": 604,
    "partial": 247,
    "builtin:no-effect": 129,
    "note-only": 257
@@ -19,7 +19,7 @@
    "choice": 37,
    "mind": 8,
    "strike": 106,
-   "spells": 45,
+   "spells": 39,
    "information": 23,
    "out-of-combat": 33,
    "actions": 26,
@@ -31,7 +31,7 @@
    "vehicles": 20,
    "reader": 21,
    "several": 23,
-   "triggers": 93,
+   "triggers": 92,
    "immunity": 23,
    "situational": 16,
    "creatures": 53,
@@ -57,7 +57,7 @@
    "afflictions": 91,
    "lasting": 208,
    "moving": 107,
-   "triggers": 126,
+   "triggers": 125,
    "visibility": 48,
    "dying": 73,
    "choice": 107,
@@ -65,7 +65,7 @@
    "mind": 70,
    "strike": 185,
    "reader": 206,
-   "spells": 82,
+   "spells": 75,
    "information": 191,
    "actions": 56,
    "from-events": 33,
@@ -1967,16 +1967,6 @@
    "needs": [
     "immunity",
     "objects"
-   ]
-  },
-  {
-   "name": "Furnace of Endings",
-   "kind": "activation",
-   "result": "none",
-   "main": "spells",
-   "work": "stored spell",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -4683,16 +4673,6 @@
     "dying",
     "several",
     "reader"
-   ]
-  },
-  {
-   "name": "Furnace of Endings (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "spells",
-   "work": "stored spell",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -8644,16 +8624,6 @@
    ]
   },
   {
-   "name": "Furnace of Endings (Major)",
-   "kind": "activation",
-   "result": "none",
-   "main": "spells",
-   "work": "stored spell",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
    "name": "Rusting Ammunition (Greater)",
    "kind": "activation",
    "result": "partial",
@@ -9147,37 +9117,6 @@
    ]
   },
   {
-   "name": "Spell Bastion",
-   "kind": "activation",
-   "result": "none",
-   "main": "spells",
-   "work": "stored spell",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
-   "name": "Spell Bastion",
-   "kind": "activation",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you unleash the …",
-   "needs": [
-    "triggers",
-    "spells"
-   ]
-  },
-  {
-   "name": "Spell Bastion",
-   "kind": "activation",
-   "result": "none",
-   "main": "spells",
-   "work": "stored spell",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
    "name": "Stone Circle (Greater)",
    "kind": "activation",
    "result": "builtin:no-effect",
@@ -9465,16 +9404,6 @@
    "work": "daily preparations",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Ring of Counterspells",
-   "kind": "activation",
-   "result": "none",
-   "main": "spells",
-   "work": "stored spell",
-   "needs": [
-    "spells"
    ]
   },
   {
