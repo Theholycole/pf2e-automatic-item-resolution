@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1219,
+  "entries": 1213,
   "results": {
    "none": 602,
-   "partial": 236,
+   "partial": 230,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -18,7 +18,7 @@
    "visibility": 46,
    "choice": 37,
    "mind": 8,
-   "strike": 103,
+   "strike": 97,
    "spells": 35,
    "information": 23,
    "out-of-combat": 33,
@@ -63,19 +63,19 @@
    "choice": 107,
    "several": 89,
    "mind": 69,
-   "strike": 182,
-   "reader": 196,
+   "strike": 176,
+   "reader": 190,
    "spells": 71,
    "information": 190,
    "actions": 56,
-   "from-events": 33,
+   "from-events": 27,
    "no-rules": 36,
    "illusions": 56,
    "removed": 5,
    "range": 4,
    "cooldown": 10,
    "vehicles": 24,
-   "situational": 73,
+   "situational": 67,
    "creatures": 53,
    "senses": 27,
    "forms": 25,
@@ -2810,32 +2810,6 @@
    "work": "triggered again",
    "needs": [
     "from-events"
-   ]
-  },
-  {
-   "name": "Swallow-Spike",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack deals",
-   "needs": [
-    "strike",
-    "from-events",
-    "situational",
-    "reader"
-   ]
-  },
-  {
-   "name": "Swallow-Spike",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack deals",
-   "needs": [
-    "strike",
-    "from-events",
-    "situational",
-    "reader"
    ]
   },
   {
@@ -6582,32 +6556,6 @@
    ]
   },
   {
-   "name": "Swallow-Spike (Major)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack deals",
-   "needs": [
-    "strike",
-    "from-events",
-    "situational",
-    "reader"
-   ]
-  },
-  {
-   "name": "Swallow-Spike (Major)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack deals",
-   "needs": [
-    "strike",
-    "from-events",
-    "situational",
-    "reader"
-   ]
-  },
-  {
    "name": "Vagabond's Teapot",
    "kind": "activation",
    "activation": "Share Brew",
@@ -9417,32 +9365,6 @@
    "main": "reader",
    "work": "confused",
    "needs": [
-    "reader"
-   ]
-  },
-  {
-   "name": "Swallow-Spike (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack deals",
-   "needs": [
-    "strike",
-    "from-events",
-    "situational",
-    "reader"
-   ]
-  },
-  {
-   "name": "Swallow-Spike (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack deals",
-   "needs": [
-    "strike",
-    "from-events",
-    "situational",
     "reader"
    ]
   },

@@ -8,7 +8,7 @@
   "results": {
    "resolves": 877,
    "builtin:cast-spell": 475,
-   "partial": 150,
+   "partial": 144,
    "none": 435,
    "builtin:focus-point": 47,
    "builtin:counteract": 29,
@@ -18,7 +18,7 @@
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 28,
-   "builtin:ways": 26,
+   "builtin:ways": 32,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 26,
    "builtin:modes": 33,
@@ -31,7 +31,7 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 440,
+   "save": 434,
    "cast": 475,
    "item": 607,
    "none": 546,
@@ -42,7 +42,7 @@
    "strike": 112,
    "table": 7,
    "teleport": 28,
-   "ways": 26,
+   "ways": 32,
    "zone": 26,
    "toggle": 33,
    "conjure": 13,
@@ -70,11 +70,11 @@
     "builtin:no-effect": 69,
     "note-only": 109,
     "builtin:reroll": 34,
-    "partial": 75,
+    "partial": 69,
     "builtin:table": 4,
     "builtin:teleport": 14,
     "builtin:zone": 14,
-    "builtin:ways": 13,
+    "builtin:ways": 19,
     "builtin:conjure": 13,
     "builtin:objects": 14,
     "builtin:modes": 17,
@@ -5352,9 +5352,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
-   "kind": "check",
-   "live": "save",
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways",
    "rune": true
   },
   {
@@ -5364,9 +5364,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
-   "kind": "check",
-   "live": "save",
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways",
    "rune": true
   },
   {
@@ -13146,9 +13146,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
-   "kind": "check",
-   "live": "save",
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways",
    "rune": true
   },
   {
@@ -13158,9 +13158,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
-   "kind": "check",
-   "live": "save",
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways",
    "rune": true
   },
   {
@@ -18338,9 +18338,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
-   "kind": "check",
-   "live": "save",
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways",
    "rune": true
   },
   {
@@ -18350,9 +18350,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
-   "kind": "check",
-   "live": "save",
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways",
    "rune": true
   },
   {

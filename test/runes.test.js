@@ -163,11 +163,16 @@ test("Swarming: double the weapon's damage dice as its damage, of the weapon's t
     assert.deepEqual([swarm.index, swarm.plan.resolution.sharedDamage.components[0].formula, swarm.plan.targeting.area, swarm.plan.resolution.check.basic, swarm.plan.resolution.check.against.value], ["rune:swarming:0", "4[piercing]", { type: "cone", value: 30 }, true, 27]);
 });
 
-test("Swallow-Spike etched on +2 armor: its attack at the armor's bonus (+16, 2d6+4), and its second activation the same attack", () => {
+test("Swallow-Spike etched on +2 chain mail: its attack at the armor's item bonus to AC, its AC Bonus 4 and potency 2 (+20, 2d6+12), its second activation the same; the swallowed or engulfed die a second button", () => {
     const mail = equipment.find((doc) => doc.name === "Chain Mail");
     const armor = { ...mail, system: { ...mail.system, runes: { potency: 2, resilient: 1, property: ["swallowSpike"] } } };
     const [reaction, action] = etchedRuneActivations(armor, runes, {});
-    for (const entry of [reaction, action]) assert.deepEqual([entry.plan.ownCheck.modifier, entry.plan.resolution.sharedDamage.components[0].formula, entry.plan.resolution.sharedDamage.components[0].type], [16, "2d6+4", "piercing"]);
+    const ways = (entry) => entry.plan.ways.map((way) => way.plan);
+    for (const entry of [reaction, action]) assert.deepEqual([entry.plan.builtin, Boolean(entry.plan.partial), ...ways(entry).map((plan) => [plan.ownCheck.modifier, plan.resolution.sharedDamage.components.map((component) => `${component.formula} ${component.type}`), plan.resolution.outcomes.success.damage.sourceComponentIds])], ["ways", false, [20, ["2d6+12 piercing"], ["0"]], [20, ["2d6+12 piercing", "1d6 untyped"], ["0", "swallowed"]]]);
+    assert.deepEqual(ways(reaction)[1].notes, ["Its damage cuts its user free by the swallowing or engulfing creature's Rupture (the ability module's Swallow Whole or Engulf)."]);
+    // (Armor with no item bonus to AC: the attack as written.)
+    const clothing = { ...mail, system: { ...mail.system, acBonus: 0, runes: { potency: 0, resilient: 0, property: ["swallowSpike"] } } };
+    assert.deepEqual(etchedRuneActivations(clothing, runes, {})[0].plan.ways[0].plan.ownCheck.modifier, 14);
     assert.deepEqual([reaction.plan.activation.time, action.plan.activation.time, action.plan.trigger.event], ["reaction", "1", "use"]);
 });
 

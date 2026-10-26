@@ -17,6 +17,7 @@ import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/c
 import { equipmentEffectIndex } from "../src/compiler/degree-effects.js";
 import { isBomb } from "../src/compiler/bombs.js";
 import { compileActivations, handlesPermanent } from "../src/compiler/permanent.js";
+import { isRuneItem, withArmorPotency } from "../src/compiler/runes.js";
 import { leftToTheGM } from "../src/compiler/honest.js";
 import { plainText } from "../src/compiler/rows.js";
 import { NEEDS, needsOf, workOf } from "./needs-rules.mjs";
@@ -93,7 +94,9 @@ function entriesOf(docs, base = {}) {
                 if (unfinished(result)) add({ kind: "consumable", name: item.name, category: item.system?.category ?? "other", result, left: plan ? leftovers(plan) : [], text: plainText(item.system?.description?.value ?? "") });
             } else if (/<strong>\s*Activat/i.test(String(item.system?.description?.value ?? ""))) {
                 if (!handlesPermanent(item, options)) continue;
-                for (const { activation, plan } of compileActivations(withOwner(item), options)) {
+                // (An armor rune as it plays, etched: its armor's numbers in its text — none, for armor with no item bonus to AC.)
+                const etched = isRuneItem(item) && /armor/.test(item.system?.usage?.value ?? "") ? { ...item, system: { ...item.system, description: { ...item.system.description, value: withArmorPotency(item.system.description?.value, { system: { acBonus: 0, runes: { potency: 0 } } }) } } } : item;
+                for (const { activation, plan } of compileActivations(withOwner(etched), options)) {
                     const result = resultOf(plan);
                     if (unfinished(result)) add({ kind: "activation", name: item.name, type: item.type, activation: activation.name ?? null, trigger: Boolean(activation.trigger), result, left: plan ? leftovers(plan) : [], text: plainText(activation.html ?? "") });
                 }

@@ -103,7 +103,8 @@ test("a check with the item's own modifier: PF2e's basic Grapple rows at +13, an
     assert.equal(routeOf(cannon), "save");
     assert.deepEqual([cannon.resolution.check.statistic, cannon.resolution.check.modifier, cannon.resolution.check.against.statistic], ["athletics", 13, "fortitude"]);
     assert.ok(cannon.resolution.outcomes.success.effects.some((effect) => effect.slug === "grabbed"), "Grapple's own row");
-    const spike = compileActivations(source("Swallow-Spike"), { basicActions })[0].plan;
+    // (Its first button's, "As it is": a swallowing creature's extra die is the second's.)
+    const spike = compileActivations(source("Swallow-Spike"), { basicActions })[0].plan.ways[0].plan;
     assert.deepEqual([spike.resolution.check.statistic, spike.resolution.check.modifier, spike.resolution.check.against.statistic], ["attack", 14, "ac"]);
     assert.deepEqual([spike.resolution.outcomes.success.damage.multiplier, spike.resolution.outcomes.criticalSuccess.damage.multiplier], [1, 2]);
     // Without the ability module's compiled actions, no Grapple plan.

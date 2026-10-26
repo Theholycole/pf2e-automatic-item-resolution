@@ -43,3 +43,35 @@ export function withInsteadWay(plan, text, html = "") {
         once: true
     };
 }
+
+// More damage when the creature holds its user a way the card can't see (2026-10-26): Swallow-Spike's "If the creature is swallowing or
+// engulfing you, the attack deals an additional 1d6 untyped damage, and damage from this attack can cut you free if it equals or exceeds the
+// Rupture value of the immobilizing ability". The ways card's two buttons, "As it is" and that case with the extra die on the hit rows; the
+// cutting free is the ability module's own Rupture for its Swallow Whole and Engulf (scripts/swallow.js there), a line of the card.
+const EXTRA_IF = /^If the creature is swallowing or engulfing you, the attack deals an additional (\d+d\d+) (untyped|[a-z]+) damage, and damage from this attack can cut you free if it equals or exceeds the Rupture value of the immobilizing ability\.$/;
+export const RUPTURE_LINE = "Its damage cuts its user free by the swallowing or engulfing creature's Rupture (the ability module's Swallow Whole or Engulf).";
+export function withExtraWay(plan, html = "") {
+    if (!playable(plan) || !plan.resolution.sharedDamage?.components?.length) return plan;
+    const found = (plan.notes ?? []).map((note) => [note, EXTRA_IF.exec(said(note))]).find(([, match]) => match);
+    if (!found) return plan;
+    const [note, [, formula, type]] = found;
+    const notes = [...(plan.notes ?? []).filter((entry) => entry !== note), RUPTURE_LINE];
+    const left = [...notes.filter((entry) => said(entry) !== RUPTURE_LINE), ...(plan.unread ?? []), ...Object.values(plan.resolution.outcomes).flatMap((row) => row?.manualInstructions ?? [])];
+    const whole = (given) => (left.length ? given : { ...given, partial: undefined, automation: { ...(given.automation ?? {}), level: "automatic" } });
+    const base = whole({ ...plan, notes });
+    const extra = { id: "swallowed", formula, type, category: null };
+    const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => [degree, row?.damage?.mode === "shared" ? { ...row, damage: { ...row.damage, sourceComponentIds: [...row.damage.sourceComponentIds, extra.id] } } : row]));
+    const held = whole({ ...plan, notes, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: [...plan.resolution.sharedDamage.components, extra] }, outcomes } });
+    const { resolution, ...rest } = plan;
+    return {
+        ...rest,
+        notes: undefined,
+        unread: undefined,
+        builtin: "ways",
+        automation: { level: base.partial || held.partial ? "guided" : "automatic" },
+        ...(base.partial || held.partial ? { partial: true } : { partial: undefined }),
+        trigger: { ...(plan.trigger ?? {}) },
+        ways: [{ name: "As it is", html: String(html ?? ""), plan: base }, { name: "It's swallowing or engulfing you", html: String(html ?? ""), plan: held }],
+        once: true
+    };
+}

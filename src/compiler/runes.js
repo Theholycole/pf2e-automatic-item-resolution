@@ -39,15 +39,16 @@ export function etchedKeys(item) {
 // The activations of the runes etched onto the item: [{ activation, plan, index: "rune:<key>:<n>", rune: { key, name, uuid } }],
 // as compileActivations gives a permanent item's own. index: runeIndex's map; options: compileActivations'.
 // (An armor rune's attack with the armor's own bonus: Swallow-Spike's "This attack gets an item bonus to the attack roll equal to the
-// armor's item bonus to your AC and an item bonus to damage equal to double that amount" — its potency on the modifier, twice on
-// the damage.)
+// armor's item bonus to your AC and an item bonus to damage equal to double that amount" — the armor's item bonus to AC, its AC Bonus and
+// its potency rune's (as PF2e's Armor Potency and Plated Duster say "the armor's item bonus to AC"), on the modifier, twice on the damage;
+// none for armor with none. 2026-10-26: its AC Bonus as well, not its potency alone.)
 export function withArmorPotency(html, armor) {
     const text = String(html ?? "");
-    const potency = Number(armor?.system?.runes?.potency) || 0;
-    const said = /\bThis attack gets an item bonus to the attack roll equal to the armor's item bonus to your AC and an item bonus to damage equal to double that amount\.?/i;
-    if (!potency || !said.test(text)) return text;
+    const bonus = (Number(armor?.system?.acBonus) || 0) + (Number(armor?.system?.runes?.potency) || 0);
+    const said = /\s*\bThis attack gets an item bonus to the attack roll equal to the armor's item bonus to your AC and an item bonus to damage equal to double that amount\.?/i;
+    if (!armor || !said.test(text)) return text;
     return text
-        .replace(/\battack modifier of (?:\[\[[^\]]*\]\]\{)?\+(\d+)\}? that deals (?:@Damage\[(\d+d\d+)\[(\w+)\]\]|(\d+d\d+) (\w+)) damage\b/gi, (whole, modifier, linkedDice, linkedType, dice, type) => `attack modifier of +${Number(modifier) + potency} that deals ${linkedDice ?? dice}+${potency * 2} ${linkedType ?? type} damage`)
+        .replace(/\battack modifier of (?:\[\[[^\]]*\]\]\{)?\+(\d+)\}? that deals (?:@Damage\[(\d+d\d+)\[(\w+)\]\]|(\d+d\d+) (\w+)) damage\b/gi, (whole, modifier, linkedDice, linkedType, dice, type) => `attack modifier of +${Number(modifier) + bonus} that deals ${linkedDice ?? dice}${bonus ? `+${bonus * 2}` : ""} ${linkedType ?? type} damage`)
         .replace(said, "");
 }
 
