@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1276,
+  "entries": 1273,
   "results": {
    "none": 615,
-   "partial": 275,
+   "partial": 272,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -34,7 +34,7 @@
    "several": 23,
    "triggers": 93,
    "immunity": 26,
-   "situational": 20,
+   "situational": 17,
    "creatures": 53,
    "dying": 29,
    "speech": 18,
@@ -52,7 +52,7 @@
    "immunity": 74,
    "objects": 390,
    "speech": 124,
-   "out-of-combat": 421,
+   "out-of-combat": 418,
    "counteract": 80,
    "afflictions": 93,
    "lasting": 216,
@@ -60,11 +60,11 @@
    "triggers": 126,
    "visibility": 52,
    "dying": 77,
-   "choice": 110,
+   "choice": 107,
    "several": 90,
    "mind": 70,
    "strike": 187,
-   "reader": 220,
+   "reader": 217,
    "spells": 82,
    "information": 191,
    "actions": 59,
@@ -76,7 +76,7 @@
    "range": 4,
    "cooldown": 11,
    "vehicles": 24,
-   "situational": 77,
+   "situational": 74,
    "creatures": 53,
    "forms": 25,
    "fortune": 10,
@@ -4503,19 +4503,6 @@
    ]
   },
   {
-   "name": "Emetic Paste (Moderate)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "situational",
-   "work": "bonus is only to",
-   "needs": [
-    "situational",
-    "choice",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Sweet Hag's Eye",
    "kind": "activation",
    "activation": "Meltaway Mint",
@@ -6758,19 +6745,6 @@
     "lasting",
     "reader",
     "speech"
-   ]
-  },
-  {
-   "name": "Emetic Paste (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "situational",
-   "work": "bonus is only to",
-   "needs": [
-    "situational",
-    "choice",
-    "reader",
-    "out-of-combat"
    ]
   },
   {
@@ -9770,19 +9744,6 @@
     "choice",
     "reader",
     "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Emetic Paste (Lesser)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "situational",
-   "work": "bonus is only to",
-   "needs": [
-    "situational",
-    "choice",
-    "reader",
     "out-of-combat"
    ]
   },

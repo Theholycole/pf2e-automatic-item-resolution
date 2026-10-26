@@ -22,7 +22,14 @@
 // - what a critical failure's Prone makes it do, Deravon's Helm's "on a critical failure, the target must spend all three actions on its next turn
 //   remaining prone" (as src/compiler/item-data.js words it, its Prone the rows'): a note Effect on that row to the end of its next turn — a
 //   behaviour rule beside the condition the row gives (2026-10-26).
+// - a save bonus only to reduce the sickened condition, Emetic Paste's "The bonus is only to saves to reduce the sickened condition, and the
+//   creature attempts one such save at once" (as src/compiler/item-data.js words it, 2026-10-26): its +2 item to Fortitude no longer every
+//   Fortitude save's — an Effect with PF2e's FlatModifier for a Retch ("action:retch", as PF2e's Stench has it) and a roll note on its
+//   Fortitude saves while sickened; the save at once its target's own roll, a line of the card.
 // Each sentence read is no longer a note. Pure.
+
+const RETCH_ONLY = /^The bonus is only to saves to reduce the sickened condition, and the creature attempts one such save at once\.$/i;
+const CHOSEN_IN_REACH = /^Choose a creature within reach \(you, or a sickened creature\)\.$/i;
 
 const STAYS_PRONE = /^It drops prone as its first action on its next turn; on a critical failure, the target must spend all three actions on its next turn remaining prone(?: \(by hand\))?\.$/i;
 
@@ -80,7 +87,9 @@ const NONLETHAL = /^When you activate [\w' -]+?, the triggering attack gains the
 
 const AIMED = /^\{target\}: Target (each enemy within the banner's aura that [^.]+)\.$/i;
 
-const leftOver = (plan) => !(plan.notes ?? []).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
+// (Nothing left but the readings' own lines of the card: Emetic Paste's save at once, a push's Stride after.)
+const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus.", "After the push, its user can Stride after the creature, the same distance and direction."]);
+const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !CARD_LINES.has(said(note))).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
 
 // The plan and its (activation's) html → the plan with the rows that carry these.
 // (item: the item's own html, for what a sentence refers to there.)
@@ -92,6 +101,7 @@ export function withRowReadings(plan, html, item = null) {
     let notes = [...(plan.notes ?? [])];
     let unread = [...(plan.unread ?? [])];
     let targetWords = null;
+    const ruleEffects = [];
     const kept = (list, words) => list.filter((note) => !said(note).includes(words) && !words.includes(said(note).replace(/^(?:Critical Success|Success|Failure|Critical Failure)\s+/, "")));
     const drop = (words) => {
         notes = kept(notes, words);
@@ -160,6 +170,18 @@ export function withRowReadings(plan, html, item = null) {
             drop(said(entry));
         }
     }
+    // (A Fortitude bonus only to reduce the sickened condition: an Effect of PF2e's rules in place of the row's plain bonus.)
+    const retch = [...notes, ...unread].find((entry) => RETCH_ONLY.test(said(entry)));
+    const fortitude = (rows.success?.modifiers ?? []).find((modifier) => modifier?.selector === "fortitude" && modifier.type === "item");
+    if (retch && fortitude && plan.resolution.kind === "check") {
+        const words = `+${fortitude.value} item bonus to saves to reduce the sickened condition`;
+        ruleEffects.push({ name: "saves against sickened", words, rules: [{ key: "FlatModifier", selector: "fortitude", type: "item", value: fortitude.value, predicate: ["action:retch"] }, { key: "Note", selector: "fortitude", title: words, text: `${words.charAt(0).toUpperCase()}${words.slice(1)}: add it when this save is to reduce it.`, predicate: ["self:condition:sickened"] }], duration: fortitude.duration ?? null });
+        rows.success = { ...rows.success, modifiers: rows.success.modifiers.filter((modifier) => modifier !== fortitude), noteEffects: (rows.success.noteEffects ?? []).filter((entry) => !entry?.reminder) };
+        const atOnce = [...CARD_LINES][0];
+        if (!notes.includes(atOnce)) notes.push(atOnce);
+        drop(said(retch));
+        for (const entry of [...notes, ...unread]) if (CHOSEN_IN_REACH.test(said(entry)) || /^Sickened creatures have difficulty swallowing\b/i.test(said(entry))) drop(said(entry));
+    }
     // (Its critical failure's Prone kept for its whole next turn: a note Effect on that row, its Prone the rows' own.)
     if (plan.resolution.kind === "save" && ["failure", "criticalFailure"].every((degree) => (rows[degree]?.effects ?? []).some((effect) => effect?.slug === "prone"))) {
         for (const entry of [...notes, ...unread]) {
@@ -190,8 +212,8 @@ export function withRowReadings(plan, html, item = null) {
         targetWords = aimed[0][1][1];
         notes = notes.filter((note) => !/^Only each enemy within the banner's aura that\b/i.test(said(note)));
     }
-    if (!targetWords && notes.length === (plan.notes ?? []).length && unread.length === (plan.unread ?? []).length && Object.keys(rows).every((degree) => rows[degree] === outcomes[degree])) return plan;
-    next = { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread } : {}), resolution: { ...plan.resolution, outcomes: rows }, ...(targetWords ? { targeting: { ...(plan.targeting ?? {}), target: targetWords } } : {}) };
+    if (!targetWords && !ruleEffects.length && notes.length === (plan.notes ?? []).length && unread.length === (plan.unread ?? []).length && Object.keys(rows).every((degree) => rows[degree] === outcomes[degree])) return plan;
+    next = { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread } : {}), resolution: { ...plan.resolution, outcomes: rows }, ...(targetWords ? { targeting: { ...(plan.targeting ?? {}), target: targetWords } } : {}), ...(ruleEffects.length ? { item: { ...(plan.item ?? {}), ruleEffects: [...(plan.item?.ruleEffects ?? []), ...ruleEffects] } } : {}) };
     if (next.partial && leftOver(next)) {
         delete next.partial;
         next.automation = { ...(next.automation ?? {}), level: "automatic" };

@@ -238,6 +238,9 @@ test("Spirit Bulb's two casts at its rank, Plant Form on its user or Summon Plan
         assert.deepEqual([bulb.builtin, bulb.choices.map((entry) => [entry.spell.name, entry.rank, Boolean(entry.self)])], ["cast-spell", [["Plant Form", rank, true], ["Summon Plant or Fungus", rank, false]]], name);
     }
     const paste = compileItem(source("Emetic Paste (Moderate)"));
-    assert.deepEqual([paste.item.recipient, paste.targeting.target, paste.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, `${modifier.duration.value} ${modifier.duration.unit}`])], ["targets", "1 creature", [["fortitude", 3, "item", "1 hours"]]]);
-    assert.ok(paste.unread.some((sentence) => /only to saves to reduce the sickened condition/.test(sentence)), "its narrower words a note");
+    // (2026-10-26: not every Fortitude save's — an Effect with PF2e's FlatModifier for a Retch and a roll note while sickened, for the hour; the
+    // save at once a line of the card — whole.)
+    const [rule] = paste.item.ruleEffects;
+    assert.deepEqual([paste.item.recipient, paste.targeting.target, paste.resolution.outcomes.success.modifiers, rule.rules.map((entry) => [entry.key, entry.value ?? null, entry.predicate]), `${rule.duration.value} ${rule.duration.unit}`, Boolean(paste.partial)], ["targets", "1 creature", [], [["FlatModifier", 3, ["action:retch"]], ["Note", null, ["self:condition:sickened"]]], "1 hours", false]);
+    assert.deepEqual(paste.notes, ["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus."]);
 });
