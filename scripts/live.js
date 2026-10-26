@@ -21,6 +21,7 @@ import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, s
 import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
 import { startItemConjure, startItemZone } from "./zones.js";
+import { scaledByCondition } from "../src/live/scaled.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { againstRolled, applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
@@ -654,7 +655,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         },
         choose: () => undefined
     };
-    const result = await core.registry.resolve(state.plan, context, io);
+    // (Healing by its user's condition value, Oracular Crown's cursebound: that value's formula, src/live/scaled.js.)
+    const scaled = scaledByCondition(state.plan, (slug) => user.actor?.getCondition?.(slug)?.value ?? user.actor?.conditions?.bySlug?.(slug)?.[0]?.value ?? 0);
+    const result = await core.registry.resolve(scaled, context, io);
     const lines = [...rolledLines];
     // (Left at 1 Hit Point instead of 0, The Survivor's and Immortal Bastion's: its Hit Points to 1, the Dying PF2e gave it ended with no Wounded
     // for it — before the healing or temporary Hit Points.)

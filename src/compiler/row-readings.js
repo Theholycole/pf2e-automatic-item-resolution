@@ -13,7 +13,14 @@
 //   is PF2e's rule, the damage the attacker's roll; the user's note-Effect ruling counts it done.
 // - whom it's at, a banner's "each enemy within the banner's aura that has been dealt damage since the end of your last turn" (Banner of
 //   Piercing Shards, worded so by src/compiler/item-data.js): the card's target, the creatures its presser targets — not a GM line.
+// - healing more by its user's condition value, Oracular Crown's "You regain 3d8 Hit Points. The amount of healing increases to 5d8 if you're
+//   cursebound 2, 7d8 if you're cursebound 3, or 9d8 if you're cursebound 4" (2026-10-26): its heal effect's byCondition { slug, formulas },
+//   the formula picked from its user's value as the card applies (src/live/scaled.js).
 // Each sentence read is no longer a note. Pure.
+
+// ("… increases to 5d8 if you're cursebound 2, 7d8 if you're cursebound 3, or 9d8 if you're cursebound 4.")
+const SCALED_HEAL = /^The amount of healing increases to ((?:\d+d\d+ if you're [a-z-]+ \d+(?:,? (?:or )?)?)+)\.$/i;
+const SCALE_STEP = /(\d+d\d+) if you're ([a-z-]+) (\d+)/gi;
 
 const CONDITION_IDS = { blinded: "XgEqL1kFApUbl5Z2", clumsy: "i3OJZU2nk64Df3xm", confused: "yblD8fOR1J8rDwEQ", controlled: "9qGBRpbX9NEwtAAr", dazzled: "TkIyaNPgTZFBCCuh", deafened: "9PR9y0bi4JPKnHPR", drained: "4D2KBtexWXa6oUMR", enfeebled: "MIRkyAjyBeXivMa7", fascinated: "AdPVz7rbaVSRxHFg", fatigued: "HL2l2VRSaQHu9lUw", frightened: "TBSHQspnbcqxsmjL", grabbed: "kWc1fhmv9LBiTuei", immobilized: "eIcWbB5o3pP6OIMe", "off-guard": "AJh5ex99aV6VTggg", paralyzed: "6uEgoh53GbXuHpTF", petrified: "dTwPJuKgBQCMxixg", prone: "j91X7x0XSomq8d60", restrained: "VcDeM8A5oI6VqhbM", sickened: "fesd1n5eVhpCSS18", slowed: "xYTAsEpcJE1Ccni3", stunned: "dfCMdR4wnpbYNTix", stupefied: "e1XGnhKNSQIm5IXg" };
 const conditionUuid = (slug) => (CONDITION_IDS[slug] ? `Compendium.pf2e.conditionitems.Item.${CONDITION_IDS[slug]}` : null);
@@ -126,6 +133,20 @@ export function withRowReadings(plan, html, item = null) {
             const prone = /\bfall Prone\b/i.test(said(entry));
             if (prone && !(rows.success.effects ?? []).some((effect) => effect?.slug === "prone")) continue;
             rows.success = { ...rows.success, noteEffects: [...(rows.success.noteEffects ?? []), { label: "Nonlethal attack", text: "The triggering attack is nonlethal: if it brings you to 0 Hit Points, you're unconscious instead of dying (PF2e's rule for nonlethal damage).", duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start" } }] };
+            drop(said(entry));
+        }
+    }
+    // (Healing by its user's condition value: on the success row's heal.)
+    // (Its sentences, not its notes: the honesty pass makes it a note only later, src/compiler/honest.js — its dice in byCondition trace it.)
+    if (plan.resolution.kind === "check" && (rows.success?.effects ?? []).some((effect) => effect?.kind === "heal")) {
+        for (const entry of plainOf(html).split(/(?<=[.!?])\s+(?=[A-Z])/)) {
+            const match = SCALED_HEAL.exec(said(entry).trim());
+            if (!match) continue;
+            const steps = [...match[1].matchAll(new RegExp(SCALE_STEP.source, "gi"))];
+            const slugs = new Set(steps.map((step) => step[2].toLowerCase()));
+            if (slugs.size !== 1) continue;
+            const byCondition = { slug: [...slugs][0], formulas: Object.fromEntries(steps.map((step) => [step[3], step[1]])) };
+            rows.success = { ...rows.success, effects: rows.success.effects.map((effect) => (effect?.kind === "heal" ? { ...effect, byCondition } : effect)) };
             drop(said(entry));
         }
     }

@@ -1,17 +1,17 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1297,
+  "entries": 1295,
   "results": {
    "none": 621,
-   "partial": 287,
+   "partial": 285,
    "builtin:no-effect": 129,
    "note-only": 260
   },
   "main": {
    "speeds": 24,
    "counteract": 17,
-   "afflictions": 54,
+   "afflictions": 52,
    "areas": 111,
    "moving": 88,
    "lasting": 65,
@@ -54,7 +54,7 @@
    "speech": 124,
    "out-of-combat": 422,
    "counteract": 80,
-   "afflictions": 96,
+   "afflictions": 94,
    "lasting": 216,
    "moving": 116,
    "triggers": 126,
@@ -64,7 +64,7 @@
    "several": 90,
    "mind": 71,
    "strike": 188,
-   "reader": 227,
+   "reader": 225,
    "spells": 82,
    "information": 191,
    "actions": 62,
@@ -1579,18 +1579,6 @@
    "work": "creatures within",
    "needs": [
     "several"
-   ]
-  },
-  {
-   "name": "Locust Leather",
-   "kind": "activation",
-   "activation": "Poison Fumes",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "persistent poison damage",
-   "needs": [
-    "afflictions",
-    "reader"
    ]
   },
   {
@@ -9832,17 +9820,6 @@
    "needs": [
     "choice",
     "objects"
-   ]
-  },
-  {
-   "name": "Oracular Crown",
-   "kind": "activation",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "cursebound",
-   "needs": [
-    "afflictions",
-    "reader"
    ]
   },
   {

@@ -2,7 +2,8 @@
 // immune to this effect, but creatures with the holy trait take a -2 status penalty on this save", Anglerfish Lantern's "Aquatic animals and
 // creatures with the water trait take a -2 circumstance penalty to this check", Deravon's Helm's "If the target is a human, they take a -1
 // status penalty to the save", Daybreak Ammunition's "Creatures with darkvision take a -2 circumstance penalty to this save". plan.ifTarget
-// [{ traits | senses, bonus }] or [{ traits, immune: true }]: the save card for those creatures carries it (src/live/if-target.js), the
+// [{ traits | senses, bonus }], [{ traits, immune: true }] or [{ traits, failDamage }] (more damage on its failures, Locust Leather's swarms'):
+// the save card for those creatures carries it (src/live/if-target.js), the
 // sentence no longer a note. And a save only for living creatures, none for undead and constructs. Pure.
 
 // (Its sentence as a note said it "(by hand)" — an activation's text read again after that: Deravon's Helm.)
@@ -25,6 +26,9 @@ const READINGS = [
     [/\bor (\d+d\d+) (\w+) damage if they're an? ([\w-]+)\b/i, (match) => [{ traits: [match[3].toLowerCase()], formula: `${match[1]}[${match[2].toLowerCase()}]` }]],
     // (Healing instead for a living one, Spirit Fan's "If the target is a living creature, the energy restores 3d8+8 Hit Points" beside its undead's save.)
     [/\bIf the target is a living creature, (?:the energy|it) restores (\d+d\d+(?:\+\d+)?) Hit Points\./i, (match) => [{ living: true, heal: match[1] }]],
+    // (More damage for a kind on a failure, Locust Leather's "Swarms that fail this save also take 1d6 persistent poison damage", 2026-10-26: their
+    // failure rows' damage mixed, the save's and that.)
+    [/\b(Swarms|Undead|Constructs|Plants|Oozes|Fungi|Animals|Beasts) that fail this save also take (\d+d\d+) (persistent )?(\w+) damage\./i, (match) => [{ traits: [{ swarms: "swarm", undead: "undead", constructs: "construct", plants: "plant", oozes: "ooze", fungi: "fungus", animals: "animal", beasts: "beast" }[match[1].toLowerCase()]], failDamage: `${match[2]}[${match[3] ? "persistent," : ""}${match[4].toLowerCase()}]` }]],
     // (A penalty for a trait's creatures, Golden Gloves' "Unholy creatures take a –2 item penalty to their roll".)
     [/\b(Unholy|Holy|Undead|Fiend|Celestial|Dragon|Mythic) creatures take an? [-–−](\d+) (item|status|circumstance) penalty to their (?:roll|saves?|saving throws?)\./, (match) => [{ traits: [match[1].toLowerCase()], bonus: bonusOf(match[2], match[3]) }]]
 ];

@@ -76,3 +76,11 @@ test("Banner of Piercing Shards: whom it's at — each enemy in the banner's aur
         assert.deepEqual([plan.targeting.target, plan.resolution.outcomes.success.manualInstructions ?? [], plan.notes, Boolean(plan.partial)], ["each enemy within the banner's aura that has been dealt damage since the end of your last turn", [], undefined, false]);
     }
 });
+
+test("Oracular Crown: its 3d8 healing more by its user's cursebound value, the formula picked as the card applies (5d8 at 2, 7d8 at 3, 9d8 at 4)", async () => {
+    const { scaledByCondition } = await import("../src/live/scaled.js");
+    const plan = compileActivations(item("Oracular Crown"))[1].plan;
+    const [heal] = plan.resolution.outcomes.success.effects;
+    assert.deepEqual([heal.formula, heal.byCondition, Boolean(plan.partial), plan.notes], ["3d8", { slug: "cursebound", formulas: { 2: "5d8", 3: "7d8", 4: "9d8" } }, false, undefined]);
+    assert.deepEqual([1, 2, 3, 4].map((value) => scaledByCondition(plan, (slug) => (slug === "cursebound" ? value : 0)).resolution.outcomes.success.effects[0].formula), ["3d8", "5d8", "7d8", "9d8"]);
+});

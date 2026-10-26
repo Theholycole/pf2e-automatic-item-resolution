@@ -36,6 +36,11 @@ export function planFor(plan, actor) {
     if (formula && plan.resolution.sharedDamage?.components?.length) plan = { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: plan.resolution.sharedDamage.components.map((component, index) => (index === 0 ? { ...component, formula } : component)) } } };
     const outcomes = { ...plan.resolution.outcomes };
     for (const rider of riders.filter((entry) => entry.degree && entry.effects)) outcomes[rider.degree] = { ...outcomes[rider.degree], effects: [...(outcomes[rider.degree]?.effects ?? []), ...rider.effects] };
+    // (More damage on its failures for those creatures, Locust Leather's swarms' 1d6 persistent poison: the save's shared damage and that, 2026-10-26.)
+    for (const rider of riders.filter((entry) => entry.failDamage)) for (const degree of ["failure", "criticalFailure"]) {
+        const row = outcomes[degree];
+        if (row?.damage?.mode === "shared") outcomes[degree] = { ...row, damage: { mode: "mixed", shared: row.damage, formulas: [{ formula: rider.failDamage }], rollScope: "target" } };
+    }
     const bonuses = riders.filter((entry) => entry.bonus);
     const check = bonuses.length ? { ...plan.resolution.check, bonus: { value: bonuses.reduce((sum, entry) => sum + Number(entry.bonus.value), Number(plan.resolution.check?.bonus?.value) || 0), type: bonuses[0].bonus.type } } : plan.resolution.check;
     return { ...plan, resolution: { ...plan.resolution, check, outcomes } };

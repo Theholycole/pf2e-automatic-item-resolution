@@ -323,6 +323,11 @@ test("a save harder for some creatures or not for them (src/compiler/kind-saves.
     assert.equal(planFor(lament.plan, plain), lament.plan);
     const groups = targetGroups(lament.plan, [{ name: "Angel", actor: holy }, { name: "Fiend", actor: unholy }, { name: "Guard", actor: plain }, { name: "Priest", actor: { system: { traits: { value: ["holy"] } } } }]);
     assert.deepEqual(groups.map((group) => [group.plan === null ? "immune" : group.plan === lament.plan ? "plain" : group.plan.resolution.check.bonus.value, group.tokens.map((token) => token.name)]), [[-2, ["Angel", "Priest"]], ["immune", ["Fiend"]], ["plain", ["Guard"]]]);
+    // (Locust Leather's swarms that fail take 1d6 persistent poison besides the basic save's 5d6, 2026-10-26: their failure rows mixed.)
+    const fumes = compileActivations(source("Locust Leather")).find((entry) => entry.activation.name === "Poison Fumes").plan;
+    assert.deepEqual([fumes.ifTarget, Boolean(fumes.partial)], [[{ traits: ["swarm"], failDamage: "1d6[persistent,poison]" }], false]);
+    const swarmed = planFor(fumes, { system: { traits: { value: ["swarm", "animal"] } } }).resolution.outcomes;
+    assert.deepEqual([swarmed.failure.damage.mode, swarmed.criticalFailure.damage.formulas, swarmed.success.damage.mode, planFor(fumes, plain)], ["mixed", [{ formula: "1d6[persistent,poison]" }], "shared", fumes]);
     const [lantern] = compileActivations(source("Anglerfish Lantern"));
     assert.deepEqual(planFor(lantern.plan, { system: { traits: { value: ["water", "elemental"] } } }).resolution.check.bonus, { value: -2, type: "circumstance" });
     // (Slumber Arrow: only a living creature saves, its failure a Speed penalty and its critical failure Slowed 1 beside it, src/compiler/guards.js.)

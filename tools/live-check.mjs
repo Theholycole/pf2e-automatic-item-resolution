@@ -1973,6 +1973,22 @@ export const cases = {
         return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
+    // Oracular Crown at cursebound 3: its healing rolled at 7d8, not 3d8 (the formula picked from its user's cursebound value).
+    async oracularHeal(scene) {
+        await clearSquares(scene, [[11, 9]]);
+        const { actor: oracle } = await creature(scene, "Crowned Oracle", { type: "character", x: 11, y: 9, level: 12 });
+        await oracle.increaseCondition("cursebound", { value: 3 });
+        await until(() => oracle.getCondition?.("cursebound")?.value === 3, `cursebound 3 (${oracle.getCondition?.("cursebound")?.value})`, { timeout: 4000 });
+        const crown = await give(oracle, "Oracular Crown");
+        await crown.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(crown.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the crown's card" });
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        await until(() => (game.messages.get(card.id).getFlag(NS, "card").results ?? []).some((line) => /^Rolled 7d8 = /.test(line)), `7d8 rolled (${JSON.stringify(game.messages.get(card.id).getFlag(NS, "card").results)})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Commander's Signet's "a creature you touch": PF2e's Effect on the ally targeted, not on its user (its "self" each target's, 2026-10-26).
     async signetTouch(scene) {
         await clearSquares(scene, [[9, 11], [10, 11]]);
