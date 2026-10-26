@@ -111,8 +111,11 @@ const INVESTIGATOR = "If you're an investigator, you can use this activation as 
 const STRIDE_FIRST = "Stride first (its user's own move).";
 const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus.", "After the push, its user can Stride after the creature, the same distance and direction.", INVESTIGATOR, STRIDE_FIRST, "Then Stride up to its Speed and make a melee Strike at the end of that movement (its own actions)."]);
 // (A note that's one of those lines: later readings — the mark's — leave the plan whole beside it too.)
-export const isCardLine = (note) => CARD_LINES.has(said(note));
-const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !CARD_LINES.has(said(note))).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
+// (Its user's own Strike with the attack it grants, Ring of the Tiger's — withGrantedStrike.)
+const OWN_STRIKE = /^Then Strike with the \w+ \(its user's own action\)\.$/;
+const cardLine = (note) => CARD_LINES.has(said(note)) || OWN_STRIKE.test(said(note));
+export const isCardLine = (note) => cardLine(note);
+const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !cardLine(note)).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
 
 // The plan and its (activation's) html → the plan with the rows that carry these.
 // (item: the item's own html, for what a sentence refers to there.)
@@ -168,6 +171,35 @@ function withInvisibleUntilStrike(plan) {
 // (A Speed's end by what the card can't see, Buoyant Buckle's Flotation: "If the pouches take any damage (AC 10, Hardness 0), they quickly
 // deflate, ending the effect" — in the Speed Effect's words, with its swimming only along the surface (the user's note-Effect rule). 2026-10-26.)
 const DEFLATES = /^If the pouches take any damage \(AC (\d+), Hardness (\d+)\), they quickly deflate, ending the effect\.$/i;
+// An unarmed attack the activation grants for one Strike (2026-10-26), Ring of the Tiger's "granting you an agile claw unarmed attack that
+// inflicts 1d6 slashing damage, and you Strike with the claw. Then the claw turns back to normal": the attack plan.item.attacks' (its Effect to
+// the end of the turn), the Strike its user's own — a line of the card. And the Greater ring's "The additional damage die is not cumulative
+// with additional damage dice from striking runes": attack.strikingCap, the dice its user's unarmed striking rune adds counted toward the
+// attack's own extra die (src/live/card.js attackEffectSource).
+const GRANTS_STRIKE = /^Your hand becomes an? [\w' -]+?, granting you an? (?:agile )?(\w+) unarmed attack that inflicts \d+d\d+ \w+ damage, and you Strike with the \1\.$/i;
+const NOT_CUMULATIVE = /^The additional damage die is not cumulative with additional damage dice from striking runes\.$/i;
+function withGrantedStrike(plan, html) {
+    const attacks = plan?.item?.attacks ?? [];
+    const entries = [...(plan?.unread ?? []), ...(plan?.notes ?? [])];
+    // (Its sentence a note, or not: its dice traced by the attack, src/compiler/honest.js.)
+    const grants = entries.find((entry) => GRANTS_STRIKE.test(said(entry))) ?? new RegExp(GRANTS_STRIKE.source.replace(/^\^|\$$/g, ""), "i").exec(plainOf(html))?.[0];
+    const capped = entries.find((entry) => NOT_CUMULATIVE.test(said(entry)));
+    const name = grants ? GRANTS_STRIKE.exec(said(grants))[1].toLowerCase() : null;
+    const once = attacks.length === 1 && attacks[0].duration?.value === 0 && attacks[0].duration?.expiry === "turn-end";
+    if (!once || (!grants && !capped) || (grants && name !== attacks[0].name) || (capped && attacks[0].dice < 2)) return plan;
+    const gone = new Set([grants, capped].filter(Boolean));
+    const line = `Then Strike with the ${attacks[0].name} (its user's own action).`;
+    const notes = [...(plan.notes ?? []).filter((note) => !gone.has(note))];
+    if (!notes.some((note) => said(note) === line)) notes.push(line);
+    const unread = (plan.unread ?? []).filter((entry) => !gone.has(entry));
+    const next = { ...plan, notes, unread: unread.length ? unread : undefined, item: { ...plan.item, attacks: [{ ...attacks[0], ...(capped ? { strikingCap: true } : {}) }] } };
+    if (next.partial && leftOver(next)) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}
+
 function withSpeedNote(plan, html) {
     const speeds = plan?.item?.speeds ?? [];
     const found = [...(plan?.unread ?? []), ...(plan?.notes ?? [])].map((entry) => [entry, DEFLATES.exec(said(entry))]).find(([, match]) => match);
@@ -258,7 +290,7 @@ function withGroundedProne(plan) {
 }
 
 export function withRowReadings(given, html, item = null) {
-    const plan = withBehaviourRows(withTradedResistance(withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html), html), html);
+    const plan = withGrantedStrike(withBehaviourRows(withTradedResistance(withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html), html), html), html);
     const outcomes = plan?.resolution?.outcomes;
     if (!outcomes || plan.builtin) return plan;
     let next = plan;

@@ -354,3 +354,14 @@ test("Ablative Shield Plating: the shield's own temporary Hit Points for their t
         Object.assign(globalThis, saved);
     }
 });
+
+test("Ring of the Tiger: its claw for the turn, the Strike its user's own (a card line); the Greater ring's extra die not on top of a striking rune's", async () => {
+    const { attackEffectSource } = await import("../src/live/card.js");
+    const ring = planOf("Ring of the Tiger");
+    const greater = planOf("Ring of the Tiger (Greater)");
+    assert.deepEqual([ring, greater].map((plan) => [Boolean(plan.partial), plan.notes, plan.unread ?? [], plan.item.attacks[0].dice, Boolean(plan.item.attacks[0].strikingCap)]), [[false, ["Then Strike with the claw (its user's own action)."], [], 1, false], [false, ["Then Strike with the claw (its user's own action)."], [], 2, true]]);
+    const actorWith = (striking) => ({ system: { actions: [{ item: { system: { category: "unarmed", damage: { die: "d4" }, traits: { value: ["agile"] }, runes: { striking } } } }] } });
+    const dice = (actor) => attackEffectSource(greater.item.attacks[0], { item: { name: "Ring of the Tiger (Greater)" }, actor }).system.rules[0].damage.base.dice;
+    // (No striking rune: 2d6. Striking: 1d6 + the rune's 1 = 2d6. Greater striking: 1d6 + 2 = 3d6.)
+    assert.deepEqual([dice(actorWith(0)), dice(actorWith(1)), dice(actorWith(2)), dice(null)], [2, 1, 1, 2]);
+});

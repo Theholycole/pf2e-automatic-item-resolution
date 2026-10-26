@@ -243,6 +243,8 @@ function traceOf(plan) {
     const json = JSON.stringify(plan).toLowerCase();
     const dice = new Set([...(json.match(/\b\d+d\d+\b/g) ?? [])]);
     for (const match of json.matchAll(/"dicenumber":(\d+),(?:[^{}]*?)"diesize":"(d\d+)"/g)) dice.add(`${match[1]}${match[2]}`);
+    // (An unarmed attack it grants, plan.item.attacks' { dice, die }: Ring of the Tiger's claw.)
+    for (const match of json.matchAll(/"dice":(\d+),"die":"(d\d+)"/g)) dice.add(`${match[1]}${match[2]}`);
     // (Any number in it, a string's "90-foot line" too.)
     const numbers = new Set([...json.matchAll(/\d+/g)].map((match) => Number(match[0])));
     return { json, dice, numbers };

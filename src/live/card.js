@@ -583,7 +583,7 @@ export function attackText(attack) {
     const traits = attack.traits.filter((trait) => trait !== "unarmed");
     // (Copying its user's best unarmed attack, Tooth and Claw Tattoo's: "A claw unarmed attack (your best unarmed attack's damage, slashing)".)
     if (attack.copyBest) return `A ${attack.name} unarmed attack (your best unarmed attack's damage and traits, ${attack.type})${forTime(attack.duration)}`;
-    return `A ${attack.name} unarmed attack (${attack.dice}${attack.die} ${attack.type}${traits.length ? `; ${traits.join(", ")}` : ""})${forTime(attack.duration)}`;
+    return `A ${attack.name} unarmed attack (${attack.dice}${attack.die} ${attack.type}${traits.length ? `; ${traits.join(", ")}` : ""}${attack.strikingCap ? "; a striking rune's dice count toward its extra die" : ""})${forTime(attack.duration)}`;
 }
 
 // Its user's best unarmed attack: { die, traits } — the largest die among its unarmed Strikes (PF2e's fist, 1d4, without one).
@@ -594,11 +594,21 @@ export function bestUnarmed(actor) {
     return best ? { die: best.system?.damage?.die ?? "d4", traits: [...(best.system?.traits?.value ?? [])].filter((trait) => !["unarmed"].includes(trait)) } : { die: "d4", traits: ["agile", "finesse", "nonlethal"] };
 }
 
+// The striking rune's dice on its user's unarmed attacks (its handwraps'), 0 with none.
+export function unarmedStriking(actor) {
+    const unarmed = (actor?.system?.actions ?? []).map((action) => action.item).filter((weapon) => weapon?.system?.category === "unarmed" || weapon?.category === "unarmed");
+    return Math.max(0, ...unarmed.map((weapon) => Number(weapon?.system?.runes?.striking) || 0));
+}
+
 // Its Effect: PF2e's Strike rule, as its own Effects grant one (Bestial Mutagen's claw).
 export function attackEffectSource(given, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution", actor = null } = {}) {
     // (Its die and traits its user's best unarmed attack's, when it copies one.)
     const best = given.copyBest ? bestUnarmed(actor) : null;
-    const attack = best ? { ...given, dice: 1, die: best.die, traits: [...new Set(["unarmed", ...best.traits])] } : given;
+    // (Its extra dice not cumulative with a striking rune's, Ring of the Tiger (Greater)'s: the rune's dice its user's unarmed attacks have
+    // — PF2e adds them to this one too — counted toward the extra ones, one die at least.)
+    const striking = given.strikingCap ? unarmedStriking(actor) : 0;
+    const capped = striking ? { ...given, dice: Math.max(1, given.dice - striking) } : given;
+    const attack = best ? { ...capped, dice: 1, die: best.die, traits: [...new Set(["unarmed", ...best.traits])] } : capped;
     const rule = { key: "Strike", category: "unarmed", group: "brawling", ...(["claw", "jaws", "fist", "horn", "tail", "foot", "fangs", "tusk"].includes(attack.name) ? { baseType: attack.name } : {}), damage: { base: { damageType: attack.type, dice: attack.dice, die: attack.die } }, label: `${attack.name.charAt(0).toUpperCase()}${attack.name.slice(1)}`, range: null, slug: `${attack.name}-${String(item.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`, traits: attack.traits };
     return ownEffectSource({ name: `${attack.name} attack`, img: "icons/svg/sword.svg", words: attackText(given), rules: [rule], duration: attack.duration, flag: { attack: attack.name }, item, user, worldTime, initiative, moduleId });
 }

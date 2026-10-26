@@ -2185,6 +2185,27 @@ export const cases = {
         return { shieldHp: shield.system.hp.value };
     },
 
+    // Ring of the Tiger (Greater): with +1 striking handwraps, its claw's Strike rule has 1 die of its own — PF2e's striking makes it 2d6, not
+    // 3d6.
+    async tigerClawStriking(scene) {
+        await clearSquares(scene, [[6, 5]]);
+        const { actor: user, token } = await creature(scene, "Tiger Ring Wearer", { type: "character", x: 6, y: 5, level: 10 });
+        const wraps = await give(user, "Handwraps of Mighty Blows (+1 Striking)");
+        await wraps.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const ring = await give(user, "Ring of the Tiger (Greater)");
+        await ring.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(ring.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the ring's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        const claw = () => user.system.actions.find((action) => /claw/i.test(action.label ?? action.item?.name ?? "") && action.item?.system?.category === "unarmed");
+        await until(claw, "the claw's Strike", { timeout: 8000 });
+        const base = claw().item.system.damage.dice;
+        const striking = claw().item.system.runes?.striking ?? 0;
+        assert(base === 1 && striking === 1, `1 die of its own and striking 1 (${base}, ${striking})`);
+        return { base, striking };
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);
