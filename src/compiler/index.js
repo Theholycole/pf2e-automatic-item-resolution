@@ -68,6 +68,7 @@ import { withMove } from "./move.js";
 import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { withRowReadings } from "./row-readings.js";
+import { withDisbelief } from "./disbelief.js";
 import { objectsPlan } from "./objects.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { withScaled } from "./scaled.js";
@@ -221,8 +222,9 @@ export function compileItem(given, options = {}) {
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (A creature moved to a space its user picks, src/compiler/placed.js: Roc-Shaft Arrow's — its Strike's plan whole by then.)
     // (A row's own reading of what the ability compiler left as a note, src/compiler/row-readings.js: a shrink, persistent damage on a failure.)
+    // (An illusion a creature can see through, src/compiler/disbelief.js: Possum's Play's — the GM's disbelief card once it applies.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    return decide(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), text), text))), text)))), itemDuration(text)), text), given, options);
+    return decide(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withDisbelief(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), given?.system?.description?.value), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), text), text))), text)))), itemDuration(text)), text), given, options);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a

@@ -1653,6 +1653,29 @@ export const cases = {
         return { dealt, temp, moved: (foeToken.x - x) / scene.grid.size };
     },
 
+    // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
+    // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
+    async possumDisbelief(scene) {
+        await clearSquares(scene, [[16, 14], [17, 14], [18, 14]]);
+        const { actor: user } = await creature(scene, "Possum Player", { type: "character", x: 16, y: 14 });
+        const { actor: wolf, token: wolfToken } = await creature(scene, "Possum Wolf", { x: 17, y: 14, alliance: "opposition" });
+        const { token: ogreToken } = await creature(scene, "Possum Ogre", { x: 18, y: 14, alliance: "opposition" });
+        const charm = await give(user, "Possum's Play");
+        let since = Date.now();
+        await charm.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "Possum's Play's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.hasCondition("prone"), "its user Prone", { timeout: 8000 });
+        const disbelief = await messageAfter(since, itemCard("disbelief"), { what: "the disbelief card" });
+        assert(disbelief.whisper.length > 0 && /Perception DC 18/.test(disbelief.content), `whispered, DC 18 (${disbelief.whisper.length})`);
+        await withDie(19, () => game.modules.get(NS).api.live.apply(disbelief.id, { targets: [wolfToken.uuid] }));
+        await withDie(2, () => game.modules.get(NS).api.live.apply(disbelief.id, { targets: [ogreToken.uuid] }));
+        const state = game.messages.get(disbelief.id).getFlag(NS, "card");
+        assert(state.saw.length === 1 && /Possum Wolf/.test(state.saw[0]) && /Possum Ogre/.test(state.fooled[0] ?? ""), `the wolf saw through, the ogre fooled (${JSON.stringify([state.saw, state.fooled])})`);
+        await until(() => wolf.itemTypes.effect.some((effect) => effect.getFlag(NS, "disbelieved")?.item === "Possum's Play"), "the wolf's Effect", { timeout: 8000 });
+        return { saw: state.saw, fooled: state.fooled };
+    },
+
     // Spiritual Warhorn (Lesser) at one enemy: both warriors' Strikes at it, an attack card each (+11, 2d6 force).
     async warhornWarriors(scene) {
         await clearSquares(scene, [[14, 14], [15, 14]]);

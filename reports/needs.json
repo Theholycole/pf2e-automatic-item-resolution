@@ -13,7 +13,7 @@
    "counteract": 17,
    "afflictions": 56,
    "areas": 112,
-   "moving": 88,
+   "moving": 91,
    "lasting": 66,
    "visibility": 57,
    "choice": 43,
@@ -27,7 +27,7 @@
    "senses": 23,
    "objects": 116,
    "reader": 25,
-   "illusions": 47,
+   "illusions": 44,
    "removed": 4,
    "cooldown": 10,
    "vehicles": 20,
@@ -51,7 +51,7 @@
    "areas": 171,
    "immunity": 75,
    "objects": 393,
-   "speech": 127,
+   "speech": 124,
    "out-of-combat": 423,
    "counteract": 80,
    "afflictions": 99,
@@ -66,12 +66,12 @@
    "strike": 188,
    "reader": 234,
    "spells": 82,
-   "information": 195,
+   "information": 192,
    "actions": 62,
    "from-events": 38,
    "no-rules": 37,
    "senses": 29,
-   "illusions": 60,
+   "illusions": 57,
    "removed": 5,
    "range": 4,
    "cooldown": 11,
@@ -1597,16 +1597,13 @@
    "name": "Possum's Play (Major)",
    "kind": "consumable",
    "result": "partial",
-   "main": "illusions",
-   "work": "illusion",
+   "main": "moving",
+   "work": "fall prone",
    "needs": [
-    "illusions",
     "moving",
     "triggers",
     "dying",
-    "reader",
-    "information",
-    "speech"
+    "reader"
    ]
   },
   {
@@ -3423,16 +3420,13 @@
    "name": "Possum's Play",
    "kind": "consumable",
    "result": "partial",
-   "main": "illusions",
-   "work": "illusion",
+   "main": "moving",
+   "work": "fall prone",
    "needs": [
-    "illusions",
     "moving",
     "triggers",
     "dying",
-    "reader",
-    "information",
-    "speech"
+    "reader"
    ]
   },
   {
@@ -12924,16 +12918,13 @@
    "name": "Possum's Play (Greater)",
    "kind": "consumable",
    "result": "partial",
-   "main": "illusions",
-   "work": "illusion",
+   "main": "moving",
+   "work": "fall prone",
    "needs": [
-    "illusions",
     "moving",
     "triggers",
     "dying",
-    "reader",
-    "information",
-    "speech"
+    "reader"
    ]
   },
   {

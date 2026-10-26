@@ -197,10 +197,10 @@ const onlyOf = (list) => list.filter((entry) => entry.needs.length === 1 && entr
 
 // Besides the items' own text: work this index can't read from the items, kept here by hand (dated).
 const BESIDES = [
-    "**The simulator** plays the items' plans through the core. Its code (PF2e Combat Simulator 0.18.0) reads none of these newer plan fields: `placed` (a creature moved to a space its user picks), `alsoRetaliation`, the around saves' `moveFrom`, `ifTarget` (results by creature kind), `userEffects`, `item.regain`, `item.placedLight`, `item.move`. That work is the auto-combat session's, asked when it's wanted. *(2026-10-25)*",
+    "**The simulator** plays the items' plans through the core. Its code (PF2e Combat Simulator 0.18.0) reads none of these newer plan fields: `placed` (a creature moved to a space its user picks), `alsoRetaliation`, the around saves' `moveFrom`, `ifTarget` (results by creature kind), `userEffects`, `item.regain`, `item.placedLight`, `item.move`, and tonight's `temperature`, `objects`, `disbelief`, `ownCheck.warriors` (the extra warriors), the made weapons and the row readings' note Effects with rules. That work is the auto-combat session's, asked when it's wanted. *(2026-10-25)*",
     "**The ability module's minimum** in module.json is 0.9.0; ability 0.9.2 is needed for pushes measured from the creature a Strike hits and for creatures moved to a space their user picks. Without it, those fall back to the GM's notes. Raising the minimum is your call at a release. *(2026-10-25)*",
     "**The spell module's items** (scrolls, wands, staves, spellhearts, and the casts and item spellshapes it claims) are its own work, not in this index: docs/census.md counts them.",
-    "**Live checks** (`tools/live-check.mjs`, 350 cases, all passing on 2026-10-25): the pieces built last without a case of their own are Emergency Escape Shield's teleport, Panacea Fruit's counteract sentence and Transposition Ammunition (Greater)'s creatures along (a note). *(2026-10-25)*"
+    "**Live checks** (`tools/live-check.mjs`, 359 cases; the full run of 2026-10-25 night passed 354, the 5 cases that move a token on the map stalled in a hidden browser and passed the run before): the pieces built last without a case of their own are Emergency Escape Shield's teleport, Panacea Fruit's counteract sentence, Transposition Ammunition (Greater)'s creatures along (a note), and the disbelief card (Possum's Play). *(2026-10-25)*"
 ];
 
 const lines = [

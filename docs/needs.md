@@ -22,10 +22,10 @@ How an item is sorted: the words its card leaves over (its notes, unread sentenc
 | [Senses](#senses) | 23 | 29 | 3 | item reader |
 | [Speeds](#speeds) | 25 | 31 | 0 | item reader |
 | [Fortune and rerolls on a later roll](#fortune) | 7 | 10 | 1 | item reader |
-| [Illusions and disbelief](#illusions) | 47 | 60 | 0 | item live play |
+| [Illusions and disbelief](#illusions) | 44 | 57 | 0 | item live play |
 | [Ships and vehicles](#vehicles) | 20 | 24 | 2 | item live play |
 | [A second linked Effect](#linked-effect) | 1 | 1 | 0 | item reader |
-| [Moving creatures and the user](#moving) | 88 | 119 | 12 | item live play |
+| [Moving creatures and the user](#moving) | 91 | 119 | 12 | item live play |
 | [Light, darkness, smoke, terrain and walls](#areas) | 112 | 171 | 15 | ability module + item live play |
 | [Triggers](#triggers) | 97 | 134 | 1 | item live play |
 | [Changes to a Strike](#strike) | 107 | 188 | 14 | item reader + item live play |
@@ -44,8 +44,8 @@ How an item is sorted: the words its card leaves over (its notes, unread sentenc
 | [Objects and the item itself](#objects) | 116 | 393 | 2 | item live play |
 | [Plain results the reader doesn't parse yet](#reader) | 25 | 234 | 11 | item reader |
 | [Minds, attitudes and behaviour](#mind) | 9 | 73 | 2 | item reader |
-| [Information](#information) | 23 | 195 | 7 | item live play |
-| [Messages, speech and sound](#speech) | 18 | 127 | 1 | item reader |
+| [Information](#information) | 23 | 192 | 7 | item live play |
+| [Messages, speech and sound](#speech) | 18 | 124 | 1 | item reader |
 | [Out of combat and the environment](#out-of-combat) | 33 | 423 | 5 | kept listed |
 | [Nothing to automate](#no-rules) | 37 | 37 | 18 | none |
 
@@ -59,13 +59,13 @@ What to build, biggest first: each need with the PF2e entries whose main need it
 | [Light, darkness, smoke, terrain and walls](#areas) | 112 | 20 | 15 | ability module + item live play | "wall" 21, "radius" 20, "difficult terrain" 11, "cube" 10 |
 | [Changes to a Strike](#strike) | 107 | 15 | 14 | item reader + item live play | "attack roll" 14, "strike" 13, "on a hit" 9, "attack deals" 6 |
 | [Triggers](#triggers) | 97 | 14 | 1 | item live play | "Trigger: you hit a …" 4, "Trigger: the triggering strike …" 3, "Trigger: you gain an …" 3, "Trigger: attempt a counteract …" 3 |
-| [Moving creatures and the user](#moving) | 88 | 12 | 12 | item live play | "teleportation" 26, "high jump" 10, "move" 6, "falls to the ground" 5 |
+| [Moving creatures and the user](#moving) | 91 | 12 | 12 | item live play | "teleportation" 26, "high jump" 10, "fall prone" 7, "move" 6 |
 | [Sustained, repeating and later effects](#lasting) | 66 | 15 | 7 | item live play | "until you" 13, "sustain" 9, "dismiss" 9, "later" 8 |
 | [Hidden, undetected, invisible, cover](#visibility) | 57 | 7 | 2 | core + item live play | "hide" 10, "standard cover" 9, "undetected" 7, "you're concealed" 4 |
 | [Afflictions and persistent damage](#afflictions) | 56 | 7 | 4 | ability module + item live play | "poison" 14, "curse" 6, "cursed" 5, "disease" 5 |
 | [Creatures it makes or controls](#creatures) | 53 | 6 | 10 | ability module + item live play | "summon" 8, "conjured" 8, "companion" 7, "spirit of" 5 |
-| [Illusions and disbelief](#illusions) | 47 | 2 | 0 | item live play | "illusion" 17, "illusory" 12, "disguise" 10, "disguised" 5 |
 | [Spells and the user's resources](#spells) | 45 | 24 | 0 | spell module + item live play | "ritual" 12, "stored spell" 7, "cantrip" 6, "mythic point" 5 |
+| [Illusions and disbelief](#illusions) | 44 | 2 | 0 | item live play | "illusion" 14, "illusory" 12, "disguise" 10, "disguised" 5 |
 | [Choices on the card](#choice) | 43 | 7 | 6 | item live play | "of your choice" 17, "choose a" 6, "decide" 5, "choose" 4 |
 | [Out of combat and the environment](#out-of-combat) | 33 | 33 | 5 | kept listed | "1 hour" 7, "crafting" 5, "daily preparations" 3, "submerged" 2 |
 | [Actions and feats for the user](#actions) | 32 | 10 | 1 | item live play | "grapple" 4, "force open" 3, "shield block" 3, "administer first aid" 3 |
@@ -100,7 +100,7 @@ The needs whose work started with a ruling of yours: what a card should do when 
 | Need | PF2e entries (main) | Done by it alone | Question | Decided |
 |---|---:|---:|---|---|
 | [Numbers the text doesn't give](#missing-number) | 7 | 0 | When the text leaves a number to the GM ("unless the GM determines otherwise"), should the card apply the number the text gives by default and say the GM may change it, or stay the GM's? | 2026-10-25: Apply the text's number and say on the card that the GM may change it; counted done. |
-| [Illusions and disbelief](#illusions) | 47 | 2 | Play an item's illusion as the spells' are (disbelief as control: the card's check and who has seen through it), counted done? | 2026-10-25: Play them as the spells' illusions are: disbelief as control, the card's check against the item's DC, who has seen through it tracked. |
+| [Illusions and disbelief](#illusions) | 44 | 2 | Play an item's illusion as the spells' are (disbelief as control: the card's check and who has seen through it), counted done? | 2026-10-25: Play them as the spells' illusions are: disbelief as control, the card's check against the item's DC, who has seen through it tracked. |
 | [Minds, attitudes and behaviour](#mind) | 9 | 7 | Attitude, truthfulness, memory and compelled behaviour: a note Effect for its time, counted done (as behaviour rules beside a real result are), or the GM's? | 2026-10-25: A note Effect on the creature for its time counts done on its own (for items; spells keep their rule). |
 | [Information](#information) | 23 | 6 | Apply the spells' rule (an information card whispered to the GM and the user) to items, counted done? | 2026-10-25: The spells' rule: an information card whispered to the GM and the user, with what the GM fills in; counted done. |
 | [Messages, speech and sound](#speech) | 18 | 8 | Messages, languages, telepathy and sounds: a chat message or note Effect, counted done? | 2026-10-25: A note Effect for the item's time; counted done. |
@@ -110,10 +110,10 @@ Still open: 0. Built as decided, the answered ones would finish up to 23 PF2e en
 
 ## Besides the items
 
-- **The simulator** plays the items' plans through the core. Its code (PF2e Combat Simulator 0.18.0) reads none of these newer plan fields: `placed` (a creature moved to a space its user picks), `alsoRetaliation`, the around saves' `moveFrom`, `ifTarget` (results by creature kind), `userEffects`, `item.regain`, `item.placedLight`, `item.move`. That work is the auto-combat session's, asked when it's wanted. *(2026-10-25)*
+- **The simulator** plays the items' plans through the core. Its code (PF2e Combat Simulator 0.18.0) reads none of these newer plan fields: `placed` (a creature moved to a space its user picks), `alsoRetaliation`, the around saves' `moveFrom`, `ifTarget` (results by creature kind), `userEffects`, `item.regain`, `item.placedLight`, `item.move`, and tonight's `temperature`, `objects`, `disbelief`, `ownCheck.warriors` (the extra warriors), the made weapons and the row readings' note Effects with rules. That work is the auto-combat session's, asked when it's wanted. *(2026-10-25)*
 - **The ability module's minimum** in module.json is 0.9.0; ability 0.9.2 is needed for pushes measured from the creature a Strike hits and for creatures moved to a space their user picks. Without it, those fall back to the GM's notes. Raising the minimum is your call at a release. *(2026-10-25)*
 - **The spell module's items** (scrolls, wands, staves, spellhearts, and the casts and item spellshapes it claims) are its own work, not in this index: docs/census.md counts them.
-- **Live checks** (`tools/live-check.mjs`, 350 cases, all passing on 2026-10-25): the pieces built last without a case of their own are Emergency Escape Shield's teleport, Panacea Fruit's counteract sentence and Transposition Ammunition (Greater)'s creatures along (a note). *(2026-10-25)*
+- **Live checks** (`tools/live-check.mjs`, 359 cases; the full run of 2026-10-25 night passed 354, the 5 cases that move a token on the map stalled in a hidden browser and passed the run before): the pieces built last without a case of their own are Emergency Escape Shield's teleport, Panacea Fruit's counteract sentence, Transposition Ammunition (Greater)'s creatures along (a note), and the disbelief card (Possum's Play). *(2026-10-25)*
 
 No entry has core gaps or a compile error.
 
@@ -631,9 +631,9 @@ Rolling twice or rerolling a later roll that the item names only by kind (your n
 
 An illusion and the check to disbelieve it: the user's rule for spells (disbelief as control), with the item's DC and who has seen through it. *Where: item live play.*
 
-47 entries.
+44 entries.
 
-**"illusion"**: 17 (0 only this need)
+**"illusion"**: 14 (0 only this need)
 
 - Arclord Eye (Open the Eye): the GM's; also information
 - Camp Shroud (Greater): nothing read; also light, darkness, smoke, terrain and walls, counteracting and ending effects, objects and the item itself, information, messages, speech and sound, out of combat and the environment
@@ -647,9 +647,6 @@ An illusion and the check to disbelieve it: the user's rule for spells (disbelie
 - Essence Forge (Greater) (Craft an Item): nothing read; also sustained, repeating and later effects, choices on the card, minds, attitudes and behaviour, out of combat and the environment
 - Essence Forge (Lesser) (Craft an Item): nothing read; also sustained, repeating and later effects, choices on the card, minds, attitudes and behaviour, out of combat and the environment
 - Essence Forge (Moderate) (Craft an Item): nothing read; also sustained, repeating and later effects, choices on the card, minds, attitudes and behaviour, out of combat and the environment
-- Possum's Play: partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
-- Possum's Play (Greater): partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
-- Possum's Play (Major): partial; also moving creatures and the user, triggers, dying, unconscious and death, plain results the reader doesn't parse yet, information, messages, speech and sound
 - Talespinner's Lyre: nothing read; also sustained, repeating and later effects, minds, attitudes and behaviour, information, messages, speech and sound
 - Veiled Figurehead (Veil!): note only; also ships and vehicles, sustained, repeating and later effects, information, out of combat and the environment
 
@@ -753,7 +750,7 @@ A second PF2e Effect the text links, applied only when the text says (another st
 
 The user or a target moved on the map. The move card (the teleport card) already moves its user (a Stride, Step, Leap or teleport within a range) and a creature to a space its user picks (ability 0.9.2's hook); what's left: objects brought to hand, falls and their damage, jumps (High Jump, Long Jump), several creatures moved at once, travel off the map, and moves tied to another event. *Where: item live play.*
 
-88 entries (and 12 of the modules' items).
+91 entries (and 12 of the modules' items).
 
 **"teleportation"**: 26 (2 only this need)
 
@@ -797,6 +794,16 @@ The user or a target moved on the map. The move card (the teleport card) already
 - Leaper's Elixir (Lesser): note only; also objects and the item itself
 - Twining Staff (Form Staff): nothing read; also actions and feats for the user, objects and the item itself, plain results the reader doesn't parse yet
 
+**"fall prone"**: 7 (0 only this need)
+
+- Bola Shot: nothing read; also changes to a strike, plain results the reader doesn't parse yet
+- Drake Rifle (Fire) (Drake Shot): partial; also plain results the reader doesn't parse yet
+- Nap Gas Dispenser: partial; also dying, unconscious and death, plain results the reader doesn't parse yet
+- Possum's Play: partial; also triggers, dying, unconscious and death, plain results the reader doesn't parse yet
+- Possum's Play (Greater): partial; also triggers, dying, unconscious and death, plain results the reader doesn't parse yet
+- Possum's Play (Major): partial; also triggers, dying, unconscious and death, plain results the reader doesn't parse yet
+- Sargassum Phial: note only; also several creatures at once, objects and the item itself, plain results the reader doesn't parse yet, minds, attitudes and behaviour
+
 **"move"**: 6 (1 only this need)
 
 - Oil of Skating: partial; also light, darkness, smoke, terrain and walls, out of combat and the environment
@@ -827,13 +834,6 @@ The user or a target moved on the map. The move card (the teleport card) already
 - Stepping Stone Shot: nothing read; also changes to a strike, objects and the item itself
 - Stepping Stone Shot (Greater): nothing read; also changes to a strike, objects and the item itself
 - The Cricket: nothing read; *only this need*
-
-**"falls prone"**: 4 (0 only this need)
-
-- Bola Shot: nothing read; also changes to a strike, plain results the reader doesn't parse yet
-- Drake Rifle (Fire) (Drake Shot): partial; also plain results the reader doesn't parse yet
-- Nap Gas Dispenser: partial; also dying, unconscious and death, plain results the reader doesn't parse yet
-- Sargassum Phial: note only; also several creatures at once, objects and the item itself, plain results the reader doesn't parse yet, minds, attitudes and behaviour
 
 **"jump"**: 4 (0 only this need)
 

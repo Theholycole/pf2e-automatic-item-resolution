@@ -32,6 +32,7 @@ import { applyWaysCard, postWaysCard } from "./ways.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
+import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
 import { checkSpend, payRegain, paySpend } from "./spend.js";
 import { placeLight } from "./placed-light.js";
@@ -325,6 +326,8 @@ function choicesOf(state, root) {
     // (One of its user's items, picked: scripts/objects.js.)
     if (state.kind === "objects") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0) };
     if (state.kind === "table") return {};
+    // (The creatures trying to disbelieve an illusion: the GM's targets.)
+    if (state.kind === "disbelief") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (An ally's condition taken: the ally targeted.)
     if (state.kind === "take") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A bonus for the creature targeted: the presser's targets.)
@@ -349,6 +352,7 @@ const APPLY = {
     ways: (message, choices) => applyWaysCard(message, choices, postCardFor),
     teleport: (message, choices) => applyTeleportCard(message, choices),
     objects: (message, choices) => applyObjectsCard(message, choices),
+    disbelief: (message, choices) => applyDisbeliefCard(message, choices),
     take: (message, choices) => applyTakeCard(message, choices),
     // (A RollTable's row drawn: compiled as the item's use, a consumable's of that text.)
     table: (message, choices) => applyTableCard(message, choices, postCardFor, (html) => compile?.({ name: stateOf(message)?.item?.name ?? "Table", type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null),
@@ -458,6 +462,7 @@ async function onRequest(data) {
         : state.kind === "table" ? {}
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0 }
+        : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], critical: Boolean(data.critical) }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null })) : null, ...(data.ownRank !== undefined ? { ownRank: data.ownRank === null ? null : String(data.ownRank) } : {}) }
@@ -593,6 +598,8 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     const lines = [];
     const each = allies ? allies.map((creature) => ({ ...state, drinkers: [entryOf(creature.token, creature.actor)], drinker: 0 })) : [state];
     for (const one of each) lines.push(...await applyToRecipient(one, { core, others: allies ? [] : others, reduce: allies ? reduce.filter((entry) => entry.who !== "targets") : reduce }));
+    // (An illusion its user can be seen through, Possum's Play's: the GM's disbelief card for its time, scripts/disbelief.js.)
+    if (state.plan.disbelief) lines.push(await postDisbeliefCard(state));
     // (Another's conditions once, when the Effect went to each ally.)
     if (allies) for (const entry of reduce.filter((candidate) => candidate.who === "targets")) {
         const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
