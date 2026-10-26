@@ -2,10 +2,10 @@
   "id": "pf2e-automatic-item-resolution",
   "title": "PF2e Automatic Item Resolution",
   "description": "Automates PF2e's items in live play and, through the resolution core, in the Combat Simulator: consumables (potions, elixirs, mutagens, poisons, bombs, talismans, oils, snares) and activated permanent items, each with a confirmation card.",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "url": "https://github.com/Theholycole/pf2e-automatic-item-resolution",
   "manifest": "https://github.com/Theholycole/pf2e-automatic-item-resolution/releases/latest/download/module.json",
-  "download": "https://github.com/Theholycole/pf2e-automatic-item-resolution/releases/download/v0.20.0/module.zip",
+  "download": "https://github.com/Theholycole/pf2e-automatic-item-resolution/releases/download/v0.21.0/module.zip",
   "readme": "https://github.com/Theholycole/pf2e-automatic-item-resolution#readme",
   "bugs": "https://github.com/Theholycole/pf2e-automatic-item-resolution/issues",
   "license": "LICENSE",
@@ -36,7 +36,7 @@
         "reason": "Items are resolved by the core's families.",
         "manifest": "https://github.com/Theholycole/PF2e-Automation-Core/releases/latest/download/module.json",
         "compatibility": {
-          "minimum": "0.7.1"
+          "minimum": "0.7.5"
         }
       },
       {
@@ -45,7 +45,7 @@
         "reason": "An item's saves, afflictions and effects are read by the ability module's compiler.",
         "manifest": "https://github.com/Theholycole/pf2e-automatic-ability-resolution/releases/latest/download/module.json",
         "compatibility": {
-          "minimum": "0.9.0"
+          "minimum": "0.9.2"
         }
       }
     ],
@@ -57,6 +57,15 @@
         "reason": "It casts the spells items cast (its castFromItem), and the items it acts on itself are left to it.",
         "compatibility": {
           "minimum": "0.10.0"
+        }
+      },
+      {
+        "id": "pf2e-automatic-environment-resolution",
+        "type": "module",
+        "manifest": "https://github.com/Theholycole/pf2e-automatic-environment-resolution/releases/latest/download/module.json",
+        "reason": "It applies what items do about its weather and falls: protection from heat and cold, falls made shorter or harmless, and fog, rain or wind ignored.",
+        "compatibility": {
+          "minimum": "0.1.2"
         }
       }
     ]
