@@ -36,8 +36,9 @@ test("the reading: the user's conditions it lowers, and what isn't one", () => {
     assert.deepEqual(badge.item.reduce, [{ slug: "frightened", by: 1 }]);
     // An activation: Coin of Comfort's "You reduce your Frightened condition by 1".
     assert.deepEqual(compileActivations(source("Coin of Comfort"))[0].plan.item.reduce, [{ slug: "frightened", by: 1 }]);
-    // What else it says, as a note: Cinnamon Nostalgia Bun's flat check.
-    assert.match(compileItem(source("Cinnamon Nostalgia Bun")).notes.join(" "), /flat check/);
+    // What else it says: Cinnamon Nostalgia Bun's flat check, its recovery now (2026-10-26), not a note.
+    const bun = compileItem(source("Cinnamon Nostalgia Bun"));
+    assert.deepEqual([bun.item.recovery, bun.notes], [{ types: ["mental"], dc: 10 }, undefined]);
     // Not one: a later Secondary Effect (Ginger Chew), "if successful" (Moon Radish Soup's counteract), an area, a passive.
     assert.equal(compileItem(source("Ginger Chew")).item.reduce, undefined);
     assert.equal(compileItem(source("Moon Radish Soup")).item.reduce, undefined);

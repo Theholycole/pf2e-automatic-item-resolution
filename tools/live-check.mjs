@@ -1653,6 +1653,32 @@ export const cases = {
         return { dealt, temp, moved: (foeToken.x - x) / scene.grid.size };
     },
 
+    // Weather ignores through PF2e Automatic Environment Resolution: Ixamè's Eye's Effect (fog and mist for a minute), Cape of the Open Sky worn
+    // and Wintershot held through api.weatherIgnores — all three in the environment module's own reading of the creature.
+    async weatherIgnored(scene) {
+        assert(game.modules.get(ENVIRONMENT)?.active, "PF2e Automatic Environment Resolution isn't active in pftest.");
+        const { weatherIgnoresOf } = await import(`/modules/${ENVIRONMENT}/scripts/foundry.js?v=${Date.now()}`);
+        await clearSquares(scene, [[19, 16]]);
+        const { actor: user } = await creature(scene, "Weather Watcher", { type: "character", x: 19, y: 16, level: 20 });
+        const cape = await give(user, "Cape of the Open Sky");
+        // (A cloak: worn in its slot, as PF2e equips it.)
+        await cape.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const bow = await give(user, "Wintershot");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        const eye = await give(user, "Ixamè's Eye");
+        const since = Date.now();
+        await eye.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "Ixamè's Eye's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => effect.flags?.[ENVIRONMENT]?.weatherIgnores?.ignores?.includes("fog-mist")), "the eye's Effect", { timeout: 8000 });
+        const read = weatherIgnoresOf(user);
+        const by = (source) => read.find((entry) => String(entry.source).startsWith(source));
+        assert(by("Ixamè's Eye")?.ignores.includes("fog-mist"), `the eye's (${JSON.stringify(read)})`);
+        assert(by("Cape of the Open Sky")?.ignores.includes("wind-movement"), `the cape's (${JSON.stringify(read)})`);
+        assert(by("Wintershot")?.weapon === bow.id && by("Wintershot").windUpTo === 2, `the bow's, its own Strikes (${JSON.stringify(read)})`);
+        return { read };
+    },
+
     // Shield of Snakes' Snap Up, held: its card raises the shield with PF2e's own Raise a Shield (its Effect on the user).
     async snakeShieldRaise(scene) {
         await clearSquares(scene, [[19, 15]]);

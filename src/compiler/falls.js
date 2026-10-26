@@ -14,7 +14,9 @@ export const plainOf = (html) => String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^
 const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 
 const SHORTER = /\b(?:you )?treat (?:your fall|all falls|falls) as (?:if it were )?(\d+) feet shorter\b/i;
-const NO_DAMAGE = /\b(?:you take no damage from the fall|never take falling damage)\b/i;
+// (And PF2e's Gentle Landing, no falling damage: Cape of the Open Sky's "whenever you fall while wearing the cape …, the cape automatically
+// casts Gentle Landing on you", Soft-Landing's "You gain the effects of Gentle Landing for 1 minute".)
+const NO_DAMAGE = /\b(?:you take no damage from the fall|never take falling damage|whenever you fall\b[^.]*?\bcasts? Gentle Landing on you|You gain the effects of Gentle Landing)\b/i;
 // (Tumbler's Belt's "Regardless of whether you take damage or not from the fall, you land on your feet": landsOnFeet, no Prone — the
 // environment module's, 2026-10-26.)
 const ON_FEET = /\bRegardless of whether you take damage or not from the fall, you land on your feet\b/i;

@@ -37,6 +37,11 @@ async function use(item) {
     return foundry.messages[foundry.messages.indexOf(message) + 1];
 }
 
+test("Cinnamon Nostalgia Bun: its flat check against one persistent mental damage at the lower DC, beside its frightened lowered — nothing left over", () => {
+    const bun = compileItem(source("Cinnamon Nostalgia Bun"));
+    assert.deepEqual([bun.item.recovery, bun.notes, Boolean(bun.partial)], [{ types: ["mental"], dc: 10 }, undefined, false]);
+});
+
 test("the reading: the types and the DC, and what else it says", () => {
     const quench = compileItem(source("Quenching Potion"));
     assert.equal(routeOf(quench), "item");

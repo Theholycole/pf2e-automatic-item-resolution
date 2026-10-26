@@ -91,7 +91,9 @@ export function recoveryPlan(base, notes = [], recovery = null) {
 }
 
 // Whether a sentence is the recovery's own, read as plan.item.recovery: the one ending it outright, or its flat check alone.
+// (Or its flat check with nothing more, Cinnamon Nostalgia Bun's "You can also attempt an immediate flat check to recover from a single source
+// of persistent mental damage, with the DC reduction from appropriate assistance" beside its frightened lowered.)
 export function recoverySaid(sentence) {
     const text = String(sentence ?? "").trim();
-    return ENDS.test(text) || new RegExp(String.raw`^The persistent ${TYPE} damage ends\.?$`, "i").test(text);
+    return ENDS.test(text) || new RegExp(String.raw`^The persistent ${TYPE} damage ends\.?$`, "i").test(text) || (CHECK.test(text) && !NOT_YOURS.test(text) && !recoveryNotes(text).length);
 }

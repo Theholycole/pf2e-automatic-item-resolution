@@ -34,6 +34,7 @@ import { withFalls } from "./falls.js";
 import { withRaiseShield } from "./raise-shield.js";
 import { withRowReadings } from "./row-readings.js";
 import { withDisbelief } from "./disbelief.js";
+import { withWeatherIgnores } from "./weather.js";
 import { objectsPlan } from "./objects.js";
 import { withPullToward } from "./pull-toward.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
@@ -165,7 +166,7 @@ export function compileActivations(item, options = {}) {
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(withDisbelief(withRowReadings(ownerDCs(entry.plan), entry.activation.html, item), entry.activation.html), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item));
+    return sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withSpend(withMark(withWeatherIgnores(withDisbelief(withRowReadings(ownerDCs(entry.plan), entry.activation.html, item), entry.activation.html), entry.activation.html), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html)))), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html))) })).filter((entry) => !playedBySpellModule(entry, share, item));
 }
 
 // (An activation's plan as the user decided, src/compiler/decided.js: one built from nothing gets its own base and item part.)

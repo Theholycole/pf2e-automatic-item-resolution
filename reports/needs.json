@@ -1,17 +1,17 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1322,
+  "entries": 1321,
   "results": {
    "none": 624,
-   "partial": 307,
+   "partial": 306,
    "builtin:no-effect": 129,
    "note-only": 262
   },
   "main": {
    "speeds": 25,
    "counteract": 17,
-   "afflictions": 56,
+   "afflictions": 55,
    "areas": 112,
    "moving": 91,
    "lasting": 66,
@@ -54,7 +54,7 @@
    "speech": 124,
    "out-of-combat": 423,
    "counteract": 80,
-   "afflictions": 99,
+   "afflictions": 98,
    "lasting": 217,
    "moving": 119,
    "triggers": 129,
@@ -10334,16 +10334,6 @@
     "counteract",
     "lasting",
     "objects"
-   ]
-  },
-  {
-   "name": "Cinnamon Nostalgia Bun",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "persistent mental damage",
-   "needs": [
-    "afflictions"
    ]
   },
   {

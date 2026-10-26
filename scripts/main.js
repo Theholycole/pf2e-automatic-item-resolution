@@ -16,6 +16,7 @@ import { setUpPlacedMoves } from "./placed-moves.js";
 import { setUpMadeWeapons } from "./objects.js";
 import { temperatureProtections } from "./temperature.js";
 import { fallEases, setUpFallOffers } from "./falls.js";
+import { weatherIgnores } from "./weather.js";
 import { fallLine } from "../src/live/card.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { ownerOf } from "./foundry.js";
@@ -134,5 +135,5 @@ Hooks.once("ready", async () => {
     // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
     // (temperatureProtections: what its items protect a creature from in heat and cold, for the environment module — synchronous,
     // scripts/temperature.js.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
 });

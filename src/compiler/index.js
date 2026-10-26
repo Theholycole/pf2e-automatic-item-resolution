@@ -43,7 +43,7 @@ import { readPatch } from "./patch.js";
 import { withSecondary } from "./secondary.js";
 import { directDamageOver, directDamagePlan, retaliationPlan, withoutDamageRestated, withRetaliateAfter } from "./direct-damage.js";
 import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
-import { readRecovery, recoveryNotes, recoveryPlan } from "./recovery.js";
+import { readRecovery, recoveryNotes, recoveryPlan, recoverySaid } from "./recovery.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
 import { readCounteract, withoutCounteractRestated } from "./counteract.js";
@@ -70,6 +70,7 @@ import { withTemperature } from "./temperature.js";
 import { withFalls } from "./falls.js";
 import { withRowReadings } from "./row-readings.js";
 import { withDisbelief } from "./disbelief.js";
+import { withWeatherIgnores } from "./weather.js";
 import { objectsPlan } from "./objects.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { withScaled } from "./scaled.js";
@@ -225,7 +226,7 @@ export function compileItem(given, options = {}) {
     // (A row's own reading of what the ability compiler left as a note, src/compiler/row-readings.js: a shrink, persistent damage on a failure.)
     // (An illusion a creature can see through, src/compiler/disbelief.js: Possum's Play's — the GM's disbelief card once it applies.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    return decide(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withDisbelief(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), given?.system?.description?.value), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), text), text))), text)))), itemDuration(text)), text), given, options);
+    return decide(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withWeatherIgnores(withDisbelief(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), given?.system?.description?.value), given?.system?.description?.value), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), text)), text), given?.system?.description?.value, { name: given?.name }), text), text))), text)))), itemDuration(text)), text), given, options);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
@@ -432,6 +433,12 @@ function compileOne(given, options = {}) {
     if (recovery && !plan) plan = recoveryPlan(base, recoveryNotes(plainText(item?.system?.description?.value)), recovery);
     // (Its note the whole text, when the recovery reads all of it — Soothing Powder (Greater)'s lasting lower DC too: the recovery's plan.)
     else if (recovery && plan.noteOnly) plan = recoveryNotes(plainText(item?.system?.description?.value)).length ? { ...withoutNoteOnly(plan), partial: true } : recoveryPlan(base, [], recovery);
+    // (Its own sentence no longer what the plan leaves, beside another reading: Cinnamon Nostalgia Bun's flat check beside its frightened lowered.)
+    if (recovery && plan?.partial && [...(plan.unread ?? []), ...(plan.notes ?? [])].some(recoverySaid)) {
+        const unread = (plan.unread ?? []).filter((sentence) => !recoverySaid(sentence));
+        const notes = (plan.notes ?? []).filter((sentence) => !recoverySaid(sentence));
+        plan = { ...plan, ...(plan.unread ? { unread: unread.length ? unread : undefined } : {}), ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}), ...(!unread.length && !notes.length ? { partial: undefined } : {}) };
+    }
     // (Restored to its maximum Hit Points and rid of afflictions, src/compiler/restore.js: Elixir of Rejuvenation; with a note alone,
     // the note is the rest of it.)
     if (readRestore(plainText(item?.system?.description?.value))) plan = !plan ? restorePlan(base, restoreNotes(plainText(item?.system?.description?.value))) : plan.noteOnly ? { ...withoutNoteOnly(plan), partial: true } : plan;

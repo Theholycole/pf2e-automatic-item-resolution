@@ -9,6 +9,7 @@ import { restoreText } from "../compiler/restore.js";
 import { attackRidersText } from "../compiler/attack-riders.js";
 import { ENVIRONMENT_ID, temperatureFlag, temperatureText } from "../compiler/temperature.js";
 import { fallText } from "../compiler/falls.js";
+import { weatherText } from "../compiler/weather.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -151,6 +152,8 @@ export function previewLines(state) {
     if (plan?.temperature?.counts) lines.push(temperatureLine(plan.temperature));
     // (A fall it eases, src/compiler/falls.js: the card's own Effect, for the environment module.)
     if (plan?.fall) lines.push(fallLine(plan.fall));
+    // (What of the weather it ignores, src/compiler/weather.js: the card's own Effect, for the environment module.)
+    if (plan?.weatherIgnores) lines.push(weatherLine(plan.weatherIgnores));
     // (Its user's shield raised, src/compiler/raise-shield.js: PF2e's own Raise a Shield.)
     if (plan?.raiseShield) lines.push("Raises its user's shield (PF2e's Raise a Shield)");
     for (const light of plan?.item?.light ?? []) lines.push(lightText(light));
@@ -313,6 +316,19 @@ export function fallLine(fall) {
 export function fallEffectSource(fall, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const flag = { ...(fall.shorter ? { shorter: fall.shorter } : {}), ...(fall.noDamage ? { noDamage: true } : {}), ...(fall.landsOnFeet ? { landsOnFeet: true } : {}), source: item.name ?? null };
     return ownEffectSource({ name: "fall", img: "icons/svg/wing.svg", words: fallLine(fall), rules: [], duration: fall.duration, flag: { fall: true }, extraFlags: { [ENVIRONMENT_ID]: { fall: flag } }, item, user, worldTime, initiative, moduleId });
+}
+
+// What of the weather it ignores, with its time: "Ignores the weather's fog and mist for 1 minute".
+export function weatherLine(entry) {
+    const time = entry.duration?.mode === "fixed" ? ` for ${entry.duration.value} ${entry.duration.value === 1 ? entry.duration.unit.replace(/s$/, "") : entry.duration.unit}` : "";
+    return `${weatherText(entry)}${time}`;
+}
+
+// Its Effect: the environment module's flag (flags.<environment>.weatherIgnores { ignores, source, windUpTo? } — not "weather", its own
+// Effects' mark), for the item's time.
+export function weatherEffectSource(entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const flag = { ignores: entry.ignores, ...(entry.windUpTo ? { windUpTo: entry.windUpTo } : {}), source: item.name ?? null };
+    return ownEffectSource({ name: "weather", img: "icons/svg/eye.svg", words: weatherLine(entry), rules: [], duration: entry.duration, flag: { weatherIgnores: true }, extraFlags: { [ENVIRONMENT_ID]: { weatherIgnores: flag } }, item, user, worldTime, initiative, moduleId });
 }
 
 function ownEffectSource({ name, img, words, rules, duration, flag, extraFlags = {}, item, user, worldTime, initiative, moduleId }) {
