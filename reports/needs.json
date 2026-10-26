@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1222,
+  "entries": 1221,
   "results": {
    "none": 602,
-   "partial": 239,
+   "partial": 238,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -18,7 +18,7 @@
    "visibility": 46,
    "choice": 37,
    "mind": 8,
-   "strike": 106,
+   "strike": 105,
    "spells": 35,
    "information": 23,
    "out-of-combat": 33,
@@ -63,7 +63,7 @@
    "choice": 107,
    "several": 89,
    "mind": 69,
-   "strike": 185,
+   "strike": 184,
    "reader": 197,
    "spells": 71,
    "information": 190,
@@ -8152,16 +8152,6 @@
    "work": "suppresses the",
    "needs": [
     "counteract"
-   ]
-  },
-  {
-   "name": "Iron Cudgel",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "strike",
-   "work": "strike",
-   "needs": [
-    "strike"
    ]
   },
   {

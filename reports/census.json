@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 167,
-   "resolves": 798,
+   "resolves": 799,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
-   "partial": 87,
+   "partial": 86,
    "builtin:ways": 27,
    "builtin:item-action": 16,
    "note-only": 116,
@@ -100,7 +100,7 @@
     "none": 25,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 69,
+    "resolves": 70,
     "builtin:no-effect": 7,
     "builtin:reroll": 1,
     "builtin:ways": 2,
@@ -109,7 +109,7 @@
     "builtin:cast-spell": 9,
     "note-only": 5,
     "builtin:objects": 2,
-    "partial": 5,
+    "partial": 4,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -17219,8 +17219,9 @@
     "talisman"
    ],
    "mechanisms": [],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": "strike"
   },
   {

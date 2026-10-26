@@ -242,11 +242,11 @@ export function withItemData(html, item) {
     // long as they continue to carry the admirer's bouquet": the triggering ally's, for as long as it carries the bouquet.)
     text = text.replace(/\bIf they accept the bouquet, they gain (an? \+\d+ item bonus to saves against emotion and mental effects) as long as they continue to carry the admirer's bouquet\./i, "The triggering ally gains $1. The bonus ends once the ally no longer carries the bouquet (end it by hand).");
     // (Iron Cudgel's "you use Brutal Finish, as the fighter feat": that feat's Strike — with a melee weapon in two hands, one more weapon
-    // damage die (two at 18th level, by its owner's level), the die alone on a failure, the turn over after it; the feat's own extra die a
-    // note.)
+    // damage die (two at 18th level, by its owner's level), the die alone on a failure, the turn over after it; the feat's own extra die,
+    // src/compiler/strike-damage.js FEAT_DIE.)
     text = text.replace(/\bWhen you activate the cudgel, you use (?:@UUID\[[^\]]*\]\{)?Brutal Finish\}?, as the fighter feat\. You must meet the normal requirements, including those of the press trait\.(<\/p>\s*<p>)If you have the Brutal Finish feat, add an additional weapon damage die on a success or a failure to the normal results\./i, (all, paragraph) => {
         const dice = Number(item?.ownerLevel) >= 18 ? "two" : "one";
-        return `When you activate the cudgel, make a melee Strike with a weapon you're wielding in two hands. The Strike deals ${dice === "two" ? "an extra two dice" : "an extra die"} of weapon damage. On a failure, you deal damage equal to ${dice} weapon damage ${dice === "two" ? "dice" : "die"}. After the Strike, your turn ends.${paragraph}With the Brutal Finish feat, one more weapon damage die on a hit and on a failure (by hand).`;
+        return `When you activate the cudgel, make a melee Strike with a weapon you're wielding in two hands. The Strike deals ${dice === "two" ? "an extra two dice" : "an extra die"} of weapon damage. On a failure, you deal damage equal to ${dice} weapon damage ${dice === "two" ? "dice" : "die"}. After the Strike, your turn ends.${paragraph}With the Brutal Finish feat, one more weapon damage die on a hit and on a failure.`;
     });
     // (Viper Rapier's "The target is affected as if successfully poisoned with cave worm venom (DC 43)": that venom's own stages at that DC,
     // as PF2e's Cave Worm Venom gives them — the ability module's affliction save card at the creature missed.)

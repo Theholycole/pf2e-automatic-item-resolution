@@ -58,6 +58,8 @@ export function strikeLines(plan) {
         strike.instead?.hit ? `On a hit: ${strike.instead.hit.formula} ${strike.instead.hit.type} damage in place of the weapon's (doubled on a critical hit)` : null,
         strike.instead?.failure ? `On a failure (not a critical failure): ${strike.instead.failure.formula} ${strike.instead.failure.type} damage` : null,
         strike.failDice ? `On a failure (not a critical failure): ${strike.failDice} weapon damage ${strike.failDice === 1 ? "die" : "dice"} as damage` : null,
+        strike.featDie ? `With the ${strike.featDie.name} feat: ${strike.featDie.diceNumber} more weapon damage ${strike.featDie.diceNumber === 1 ? "die" : "dice"} on a hit and on a failure` : null,
+        strike.turnEnds ? "After the Strike, its user's turn ends" : null,
         strike.failHalf ? `On a failure (not a critical failure): half of its ${strike.failHalf.formula} ${strike.failHalf.type} damage` : null,
         hit ? `On a hit: ${hit}` : null,
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
@@ -157,6 +159,8 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
         // (Only against some creatures: Bane Ammunition's type, "target:trait:dragon".)
         ...(entry.predicate ? { predicate: entry.predicate } : {})
     }));
+    // (A feat's own extra die, Iron Cudgel's Brutal Finish: only with PF2e's roll option for that feat.)
+    if (strike.featDie) rules.push({ key: "DamageDice", selector: damageSelector, slug: `${slug}-${strike.featDie.slug}`, ...(label ? { label } : {}), diceNumber: strike.featDie.diceNumber, predicate: [`feat:${strike.featDie.slug}`] });
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });
     // (A precious material for it: PF2e's AdjustStrike on the Strikes it's for.)

@@ -385,6 +385,9 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.ignoresCover ? { ignoresCover: extras.ignoresCover } : {}),
               // (Weapon dice on a failure: Brutal Finish's.)
               ...(extras.failDice ? { failDice: extras.failDice } : {}),
+              // (A feat's own extra die, Iron Cudgel's Brutal Finish; its user's turn over after it.)
+              ...(extras.featDie ? { featDie: extras.featDie } : {}),
+              ...(extras.turnEnds ? { turnEnds: true } : {}),
               // (Half its extra damage on a failure: Energizing Lattice's.)
               ...(extras.failHalf ? { failHalf: extras.failHalf } : {}),
               // (What its target must be, a reaction its target may have: the card's lines.)

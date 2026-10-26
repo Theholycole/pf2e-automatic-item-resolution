@@ -492,13 +492,15 @@ test("Iron Cudgel (Brutal Finish): a melee Strike with one more weapon die (PF2e
     const cudgel = compileItem({ ...source("Iron Cudgel"), ownerLevel: 14 });
     assert.equal(routeOf(cudgel), "strike");
     assert.deepEqual([cudgel.strike.range, cudgel.strike.damage.map((entry) => [entry.diceNumber, entry.dieSize]), cudgel.strike.failDice], ["melee", [[1, null]], 1]);
-    assert.deepEqual(strikeRules(cudgel, { label: "Iron Cudgel" }).map((rule) => [rule.key, rule.selector, rule.diceNumber, "dieSize" in rule]), [["DamageDice", "melee-strike-damage", 1, false]]);
+    // (With the feat itself, one more die: PF2e's roll option for it, feat:brutal-finish, on that die's rule.)
+    assert.deepEqual(strikeRules(cudgel, { label: "Iron Cudgel" }).map((rule) => [rule.key, rule.selector, rule.diceNumber, "dieSize" in rule, rule.predicate ?? null]), [["DamageDice", "melee-strike-damage", 1, false, null], ["DamageDice", "melee-strike-damage", 1, false, ["feat:brutal-finish"]]]);
     assert.ok(strikeLines(cudgel).includes("+1 weapon die damage"));
     assert.ok(strikeLines(cudgel).includes("On a failure (not a critical failure): 1 weapon damage die as damage"));
-    // (At 18th level, two of each; with the feat, one more by hand.)
+    assert.ok(strikeLines(cudgel).includes("After the Strike, its user's turn ends"));
+    assert.deepEqual([cudgel.partial, cudgel.strike.notes], [undefined, []]);
+    // (At 18th level, two of each.)
     const high = compileItem({ ...source("Iron Cudgel"), ownerLevel: 18 });
-    assert.deepEqual([high.strike.damage[0].diceNumber, high.strike.failDice], [2, 2]);
-    assert.ok(high.strike.notes.some((note) => /With the Brutal Finish feat\b/.test(note)));
+    assert.deepEqual([high.strike.damage[0].diceNumber, high.strike.failDice, high.strike.featDie, high.strike.turnEnds], [2, 2, { slug: "brutal-finish", name: "Brutal Finish", diceNumber: 1 }, true]);
     assert.equal(riderFor(cudgel, { outcome: "failure", options: ["item:melee"] }), "failure");
     // Live: readied, then a failed attack with the greataxe posts the axe's 1d12 slashing at the foe.
     const axe = foundry.giveItem(fighter, source("Greataxe"));
@@ -514,6 +516,19 @@ test("Iron Cudgel (Brutal Finish): a melee Strike with one more weapon die (PF2e
     const [miss] = foundry.posted.slice(before);
     assert.deepEqual([miss.plan.resolution.sharedDamage.components[0].formula, miss.plan.resolution.sharedDamage.components[0].type], ["1d12", "slashing"]);
     assert.equal(miss.tokens[0].actor?.id ?? miss.tokens[0].document?.actor?.id, foe.id);
+    // (A user with Brutal Finish: two of the axe's dice on a failure.)
+    fighter.rollOptions = { all: { "feat:brutal-finish": true } };
+    try {
+        const again = await useCard("Iron Cudgel");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: again.id, userId: "player" });
+        await settle();
+        const after = foundry.posted.length;
+        await foundry.call("createChatMessage", foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome: "failure", options: ["item:melee"], target: { actor: foe.uuid, token: foe.token.uuid } }, origin: { uuid: axe.uuid, type: "weapon" } } }, speaker: { actor: fighter.id }, actor: fighter, token: fighter.token.document }));
+        await settle();
+        assert.equal(foundry.posted.slice(after)[0].plan.resolution.sharedDamage.components[0].formula, "2d12");
+    } finally {
+        delete fighter.rollOptions;
+    }
 });
 
 test("Energizing Lattice: a Strike with 6d6 more force damage, and on a failure (not a critical failure) half of that 6d6 force on the ability module's card at the creature missed", async () => {

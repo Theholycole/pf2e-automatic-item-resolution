@@ -22,6 +22,8 @@ const TARGET_TAKES = new RegExp(String.raw`^In addition, (?:the target|it) (?:al
 // (Damage on a failure too, Brutal Finish's "On a failure, you deal damage equal to one weapon damage die": that many of the weapon's dice
 // at the creature it missed, src/live/strike-card.js riderFor.)
 const FAIL_DICE = /^On a failure, you deal damage equal to (one|two|three|\d+) weapon damage (?:die|dice)\.?$/i;
+const FEAT_DIE = /^With the ([A-Z][\w' -]+?) feat, one more weapon damage die on a hit and on a failure\.$/;
+const TURN_ENDS = /^After the Strike, your turn ends\.$/;
 // (Half its extra damage on a failure, Energizing Lattice's "If your Strike fails, but doesn't critically fail, the target still takes half
 // the force damage": failHalf, that type's extra dice — scripts/strikes.js, the ability module's card at half.)
 const FAIL_HALF = /^If your Strike fails, but doesn't critically fail, the target still takes half the (\w+) damage\.?$/i;
@@ -116,6 +118,8 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let offGuard = false;
     let ignoresCover = null;
     let failDice = 0;
+    let featDie = null;
+    let turnEnds = false;
     let failHalfType = null;
     let missRefund = false;
     let reach = null;
@@ -191,6 +195,18 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         const halved = FAIL_HALF.exec(sentence.trim());
         if (halved) {
             failHalfType = halved[1].toLowerCase();
+            continue;
+        }
+        // (A feat's own extra die beside it, Iron Cudgel's "With the Brutal Finish feat, one more weapon damage die on a hit and on a failure":
+        // the die's rule only with PF2e's roll option for the feat, feat:brutal-finish, and one more die on a failure — 2026-10-26.)
+        const feat = FEAT_DIE.exec(sentence.trim());
+        if (feat) {
+            featDie = { slug: feat[1].toLowerCase().replace(/[^a-z0-9]+/g, "-"), name: feat[1], diceNumber: 1 };
+            continue;
+        }
+        // (Its user's turn over after the Strike, Brutal Finish's: a line of the card.)
+        if (TURN_ENDS.test(sentence.trim())) {
+            turnEnds = true;
             continue;
         }
         const failing = FAIL_DICE.exec(sentence.trim());
@@ -282,5 +298,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
     if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
     const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(ignoresCover ? { ignoresCover } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || ignoresCover || failDice || failHalf || requires.length || missRefund || reach || map) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(ignoresCover ? { ignoresCover } : {}), ...(failDice ? { failDice } : {}), ...(featDie ? { featDie } : {}), ...(turnEnds ? { turnEnds } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || ignoresCover || failDice || featDie || turnEnds || failHalf || requires.length || missRefund || reach || map) };
 }

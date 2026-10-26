@@ -122,9 +122,12 @@ export async function strikeWithRider(message) {
         const weapon = message.item ?? (message.flags?.pf2e?.origin?.uuid ? await fromUuid(message.flags.pf2e.origin.uuid).catch(() => null) : null);
         const die = weapon?.system?.damage?.die;
         const type = weapon?.system?.damage?.damageType;
-        if (die && type) return strikeInstead({ message, context, actor, effect, rider: { ...rider, plan: { ...rider.plan, strike: { ...rider.plan.strike, instead: { hit: null, failure: { formula: `${rider.plan.strike.failDice}${die}`, type } } } } }, what });
+        // (And a feat's own die, Iron Cudgel's with Brutal Finish: when its user has that feat.)
+        const featDie = rider.plan.strike.featDie;
+        const count = rider.plan.strike.failDice + (featDie && actor?.rollOptions?.all?.[`feat:${featDie.slug}`] ? featDie.diceNumber : 0);
+        if (die && type) return strikeInstead({ message, context, actor, effect, rider: { ...rider, plan: { ...rider.plan, strike: { ...rider.plan.strike, instead: { hit: null, failure: { formula: `${count}${die}`, type } } } } }, what });
         await useOne(actor, effect, rider);
-        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike failed — ${rider.plan.strike.failDice} of the weapon's damage dice at its target (by hand).</p>` });
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike failed — ${count} of the weapon's damage dice at its target (by hand).</p>` });
         return;
     }
     // (Weapon Shot's striking rune counts: the damage roll's dice are its; so does flat splash damage, Jistkan War Crossbow's, and
