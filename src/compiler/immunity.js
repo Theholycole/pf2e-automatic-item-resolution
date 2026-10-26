@@ -31,6 +31,7 @@ const DAILY = /\buntil (?:the next time (?:you|it) makes? (?:your|its) daily pre
 // "When the effect ends, the target becomes temporarily immune for 24 hours": held to with after — the item card's Effect's end, or the save's
 // condition's — 2026-10-26.)
 const AFTER_END = /\bonce its effects end\b|\bWhen the effect ends\b/i;
+const LUNAR = /\bat which point you are temporarily immune until (the next lunar new year)\b/i;
 
 const slugOf = (words) => String(words ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 // The item's name without its grade, "Aetheric Irritant (Lesser)" → "aetheric-irritant" — a kind kept, Spun Cloud (Red) not (Green); for "all"
@@ -101,7 +102,10 @@ export function readItemImmunity(text, { name = null, activation = null, heading
     let immunity = null;
     for (const sentence of found) {
         // (One held to; the same one again at other results joins it — Pheromone Flare's critical success and failure —, another stays a note.)
-        const afterEnd = AFTER_END.test(sentence) && !onePart(sentence, only) && !/\b\d+d\d+\b|\buntil\b/i.test(sentence) ? durationOf(sentence) : null;
+        // (Or from its effect's end to a date the GM keeps, Tteokguk of Time Advancement's "This lasts until morning of the next day, at which point you
+        // are temporarily immune until the next lunar new year": an immunity with no end of its own, its words saying when — 2026-10-26.)
+        const lunar = LUNAR.exec(sentence);
+        const afterEnd = lunar ? { value: -1, unit: "unlimited", until: lunar[1] } : AFTER_END.test(sentence) && !onePart(sentence, only) && !/\b\d+d\d+\b|\buntil\b/i.test(sentence) ? durationOf(sentence) : null;
         const timed = afterEnd ? { ...afterEnd, after: true } : onePart(sentence, only) || (NO_CLOCK.test(sentence) && !DAILY.test(sentence)) ? null : durationOf(sentence);
         if (immunity && timed && !/\bimmune to\b/i.test(sentence) && timed.value === immunity.duration.value && timed.unit === immunity.duration.unit) {
             immunity = { ...immunity, degrees: ALL.filter((degree) => immunity.degrees.includes(degree) || degreesOf(sentence, headingOf).includes(degree)) };
@@ -118,7 +122,7 @@ export function readItemImmunity(text, { name = null, activation = null, heading
         const named = /^(?:the )?([A-Z][\w'’-]*(?: [A-Z][\w'’-]*)*)$/.exec(to.trim())?.[1];
         const ownName = named && familySlug(named) !== family && !/^(?:this|the|that|its|all|any)\b/i.test(to.trim()) ? `${family}-${slugOf(named)}` : null;
         const slug = ownName ?? (/^(?:all|any)\b/i.test(to.trim()) ? baseSlug(name) : own);
-        immunity = { scope: "target", raw: sentence, duration: { value: duration.value, unit: duration.unit }, ...(duration.daily ? { daily: true } : {}), ...(duration.after ? { after: true } : {}), degrees: degreesOf(sentence, headingOf), against: "all", slug };
+        immunity = { scope: "target", raw: sentence, duration: { value: duration.value, unit: duration.unit, ...(duration.until ? { until: duration.until } : {}) }, ...(duration.daily ? { daily: true } : {}), ...(duration.after ? { after: true } : {}), degrees: degreesOf(sentence, headingOf), against: "all", slug };
     }
     return { ...(immunity ? { immunity } : {}), unread, ...(also.length ? { also } : {}) };
 }

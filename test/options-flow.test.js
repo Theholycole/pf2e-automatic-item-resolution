@@ -568,3 +568,8 @@ test("Truth Potion: telling the truth a note Effect for its 10 minutes; a critic
     assert.deepEqual([Boolean(potion.partial), potion.notes ?? [], rows.failure.noteEffects.map((note) => [note.label, note.duration.value, note.duration.unit]), rows.criticalFailure.noteEffects.map((note) => note.label)], [false, [], [["Must tell the truth", 10, "minutes"]], ["Must tell the truth", "A question asked"]]);
     assert.match(rows.criticalFailure.noteEffects[1].text, /@Check\[will\|dc:19\]/);
 });
+
+test("Tteokguk of Time Advancement: once its Effect ends, temporarily immune until the next lunar new year — an immunity with no end of its own, its words saying when", () => {
+    const soup = compileItem(item("Tteokguk of Time Advancement"), { spellEffects });
+    assert.deepEqual([Boolean(soup.partial), soup.notes ?? [], soup.item.immunity.after, soup.item.immunity.duration], [false, [], true, { value: -1, unit: "unlimited", until: "the next lunar new year" }]);
+});

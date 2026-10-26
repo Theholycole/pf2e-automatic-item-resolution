@@ -34,8 +34,14 @@ async function grant(creature, immunity, state) {
         source: { actorUuid: state.user?.actorUuid ?? null, name: state.user?.name ?? "" },
         time: { worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null }
     });
-    await creature.actor.createEmbeddedDocuments("Item", [{ ...data, flags: { ...data.flags, [MODULE_ID]: { immunity: immunity.slug } } }]);
+    // (One with no end of its own, Tteokguk of Time Advancement's "until the next lunar new year": unlimited, its words saying when it ends.)
+    const open = immunity.duration?.unit === "unlimited";
+    const system = open ? { ...data.system, duration: { value: -1, unit: "unlimited", expiry: null, sustained: false }, description: { value: `${data.system.description.value}<p>It ends at ${immunity.duration.until ?? "the GM's word"} (remove it then).</p>` } } : data.system;
+    await creature.actor.createEmbeddedDocuments("Item", [{ ...data, system, flags: { ...data.flags, [MODULE_ID]: { immunity: immunity.slug } } }]);
 }
+
+// Its time in words: "24 hours", "until the next lunar new year".
+const timeWords = (duration) => (duration.unit === "unlimited" ? `until ${duration.until ?? "the GM ends it"}` : `${duration.value} ${duration.value === 1 ? duration.unit.replace(/s$/, "") : duration.unit} from its last use`);
 
 // Around a card's Apply (run: the card's own): the immune refused or left out, then the Effect on each creature it went to → run's result.
 export async function withImmunityGuard(message, state, choices, run) {
@@ -43,8 +49,8 @@ export async function withImmunityGuard(message, state, choices, run) {
     if (!immunity?.slug || !OWN_KINDS.has(state.kind)) return run(choices);
     const creatures = await recipientsOf(state, choices);
     const immune = creatures.filter((creature) => immuneNow(creature.actor, immunity));
-    const time = `${immunity.duration.value} ${immunity.duration.value === 1 ? immunity.duration.unit.replace(/s$/, "") : immunity.duration.unit}`;
-    if (creatures.length && immune.length === creatures.length) throw new Error(`${immune.map((creature) => creature.name).join(", ")} ${immune.length === 1 ? "is" : "are"} still immune to ${state.item?.name ?? "it"} (temporarily, ${time} from its last use).`);
+    const time = timeWords(immunity.duration);
+    if (creatures.length && immune.length === creatures.length) throw new Error(`${immune.map((creature) => creature.name).join(", ")} ${immune.length === 1 ? "is" : "are"} still immune to ${state.item?.name ?? "it"} (temporarily, ${time}).`);
     // (Several targeted, some immune: the rest only.)
     const given = immune.length ? { ...choices, targets: (choices.targets ?? []).filter((uuid) => !immune.some((creature) => creature.uuid === uuid)) } : choices;
     if (immune.length) ui.notifications?.warn?.(`${state.item?.name ?? "Item"}: ${immune.map((creature) => creature.name).join(", ")} still immune, left out.`);

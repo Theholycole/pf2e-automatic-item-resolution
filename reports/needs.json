@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1184,
+  "entries": 1183,
   "results": {
    "none": 593,
-   "partial": 211,
+   "partial": 210,
    "note-only": 257,
    "builtin:no-effect": 123
   },
@@ -32,7 +32,7 @@
    "reader": 16,
    "several": 21,
    "triggers": 90,
-   "immunity": 22,
+   "immunity": 21,
    "situational": 16,
    "creatures": 53,
    "dying": 29,
@@ -49,7 +49,7 @@
   "any": {
    "speeds": 28,
    "areas": 163,
-   "immunity": 70,
+   "immunity": 69,
    "objects": 380,
    "speech": 121,
    "out-of-combat": 409,
@@ -10101,16 +10101,6 @@
    "needs": [
     "objects",
     "speech"
-   ]
-  },
-  {
-   "name": "Tteokguk of Time Advancement",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "immunity",
-   "work": "immune",
-   "needs": [
-    "immunity"
    ]
   },
   {

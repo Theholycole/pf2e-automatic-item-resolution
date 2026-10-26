@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 165,
-   "resolves": 803,
+   "resolves": 804,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
-   "partial": 80,
+   "partial": 79,
    "builtin:ways": 29,
    "builtin:item-action": 16,
    "note-only": 116,
@@ -39,9 +39,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 27,
-    "partial": 36,
+    "partial": 35,
     "builtin:ways": 22,
-    "resolves": 224,
+    "resolves": 225,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 94,
@@ -331,7 +331,7 @@
   },
   "linked-effect": {
    "count": 393,
-   "resolves": 365,
+   "resolves": 366,
    "gaps": 0,
    "none": 0
   },
@@ -21636,8 +21636,9 @@
    "mechanisms": [
     "linked-effect"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "effect",
+   "gaps": [],
    "live": "item"
   },
   {
