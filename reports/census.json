@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 171,
-   "resolves": 787,
+   "resolves": 788,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
-   "partial": 94,
+   "partial": 93,
    "builtin:ways": 27,
    "builtin:item-action": 16,
    "note-only": 116,
@@ -234,14 +234,14 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 29,
+    "resolves": 30,
     "builtin:conjure": 6,
     "builtin:no-effect": 6,
     "note-only": 9,
-    "partial": 7,
     "none": 5,
     "builtin:cast-spell": 2,
-    "builtin:counteract": 2
+    "builtin:counteract": 2,
+    "partial": 6
    },
    "mechanisms": {
     "linked-effect": 17,
@@ -324,7 +324,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 171,
+   "resolves": 172,
    "gaps": 0,
    "none": 7
   },
@@ -336,7 +336,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 304,
+   "resolves": 305,
    "gaps": 0,
    "none": 21
   },
@@ -378,7 +378,7 @@
   },
   "area": {
    "count": 44,
-   "resolves": 15,
+   "resolves": 16,
    "gaps": 0,
    "none": 5
   },
@@ -7449,8 +7449,9 @@
     "fixed-dc",
     "area"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "save"
   },
   {

@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1273,
+  "entries": 1272,
   "results": {
    "none": 615,
-   "partial": 272,
+   "partial": 271,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -34,7 +34,7 @@
    "several": 23,
    "triggers": 93,
    "immunity": 26,
-   "situational": 17,
+   "situational": 16,
    "creatures": 53,
    "dying": 29,
    "speech": 18,
@@ -76,7 +76,7 @@
    "range": 4,
    "cooldown": 11,
    "vehicles": 24,
-   "situational": 74,
+   "situational": 73,
    "creatures": 53,
    "forms": 25,
    "fortune": 10,
@@ -3583,16 +3583,6 @@
     "vehicles",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Oil (1 pint)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "situational",
-   "work": "only when the",
-   "needs": [
-    "situational"
    ]
   },
   {

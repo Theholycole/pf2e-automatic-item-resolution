@@ -15,7 +15,9 @@ const UNAFFECTED_AWARE = /^(?:\{target\}(?: \([^)]*\))?:\s*)?(?:The (?:target|cr
 // (Lines the card's own results already are: "takes half damage and no other effects", Hauling's direction line, an item's own recharge.)
 // (An item that comes back by itself after a while — "reappears on the … after 24 hours", Eternal Eruption's "After 2d4 hours, the eternal
 // eruption reforms itself in a container on your person" — is the card's line: nothing for the GM to do.)
-const CARD_LINE = /\btakes half damage and no other effects\b|^The direction is its user's choice: the card moves it\b|\breappears on the [\w ]+? after 24 hours\.$|\breforms itself in a container on your person\b/i;
+// (And where a thrown item lands, Oil's "If you hit, it splatters on the creature or in a single 5-foot square you target": its attack card's
+// target, 2026-10-26.)
+const CARD_LINE = /\btakes half damage and no other effects\b|^The direction is its user's choice: the card moves it\b|\breappears on the [\w ]+? after 24 hours\.$|\breforms itself in a container on your person\b|^If you hit, it splatters on the creature or in a single 5-foot square you target\.$/i;
 const BEHAVIOUR = /\bcan't use (?:reactions|hostile actions)\b|\bmust (?:spend|use) (?:at least )?(?:one of )?its (?:first )?actions?\b|\bcan't treat any creature as (?:its|an) ally\b|\bdoesn't act against you\b|\bignores other creatures\b/i;
 const DEGREES = ["criticalSuccess", "success", "failure", "criticalFailure"];
 

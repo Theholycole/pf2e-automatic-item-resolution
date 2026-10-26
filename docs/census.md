@@ -17,8 +17,8 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 787 | 53% |
-| partial | 94 | 6% |
+| resolves | 788 | 53% |
+| partial | 93 | 6% |
 | note-only | 116 | 8% |
 | builtin:zone | 118 | 8% |
 | builtin:cast-spell | 35 | 2% |
@@ -47,7 +47,7 @@ Results, for the items this module handles:
 | snare | 82 | 0 | 0 | 1 | 0 | 73 | 8 |
 | gadget | 77 | 26 | 4 | 6 | 0 | 33 | 8 |
 | mutagen | 68 | 64 | 4 | 0 | 0 | 0 | 0 |
-| oil | 66 | 29 | 7 | 9 | 0 | 16 | 5 |
+| oil | 66 | 30 | 6 | 9 | 0 | 16 | 5 |
 | fulu | 46 | 20 | 2 | 7 | 0 | 5 | 12 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |
@@ -87,15 +87,15 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
 | duration | 943 | 622 | 0 | 13 |
-| fixed-dc | 491 | 304 | 0 | 21 |
+| fixed-dc | 491 | 305 | 0 | 21 |
 | condition | 433 | 270 | 0 | 22 |
 | linked-effect | 393 | 364 | 0 | 0 |
-| damage | 277 | 171 | 0 | 7 |
+| damage | 277 | 172 | 0 | 7 |
 | trigger | 156 | 69 | 0 | 19 |
 | affliction | 144 | 134 | 0 | 3 |
 | counteract | 79 | 16 | 0 | 8 |
 | on-weapon | 67 | 57 | 0 | 0 |
-| area | 44 | 15 | 0 | 5 |
+| area | 44 | 16 | 0 | 5 |
 | heal | 43 | 36 | 0 | 1 |
 | temp-hp | 37 | 26 | 0 | 2 |
 | casts-spell | 33 | 5 | 0 | 2 |

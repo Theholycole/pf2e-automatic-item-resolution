@@ -10,6 +10,7 @@ import { scaledPlan } from "../src/compiler/scaled.js";
 import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, healCreature, lowerCondition, spaceOf, stateOf } from "./foundry.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { targetGroups } from "../src/live/if-target.js";
+import { withoutHitDamage } from "../src/live/scaled.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
 export async function postPoisonCard({ message, plan, used, actor, token }) {
@@ -199,6 +200,16 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         if (out) throw new Error(`${state.item.name}: ${out}.`);
         state = { ...state, attackPenalty: penalty };
         if (penalty) lines.push(`${tokens[0].name ?? tokens[0].actor?.name} ${feet} feet away: ${words.join(", ")}.`);
+    }
+    // (An ignition its hit needs, Oil's DC 10 flat check: rolled as it's thrown, its own roll whatever the attack's — a failure, the hit deals no
+    // damage, src/live/scaled.js.)
+    const ignite = Number(state.plan?.ownCheck?.ignite) || 0;
+    if (ignite && state.step !== "then") {
+        const roll = await new Roll("1d20").evaluate();
+        await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: flat check DC ${ignite} to ignite` });
+        const lit = roll.total >= ignite;
+        lines.push(lit ? `It ignites (flat check ${roll.total}, DC ${ignite}).` : `It doesn't ignite (flat check ${roll.total}, DC ${ignite}): its hit deals no damage.`);
+        if (!lit) state = { ...state, plan: withoutHitDamage(state.plan) };
     }
     if (postCard && actor) {
         // (A rider only for some creatures, Moonlit Spellgun's Enfeebled at one silver gets past: their card has it, src/live/if-target.js.)

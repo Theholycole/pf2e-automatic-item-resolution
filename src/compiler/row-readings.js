@@ -26,7 +26,13 @@
 //   creature attempts one such save at once" (as src/compiler/item-data.js words it, 2026-10-26): its +2 item to Fortitude no longer every
 //   Fortitude save's — an Effect with PF2e's FlatModifier for a Retch ("action:retch", as PF2e's Stench has it) and a roll note on its
 //   Fortitude saves while sickened; the save at once its target's own roll, a line of the card.
+// - an ignition its hit needs, Oil's "You must succeed at a DC 10 flat check for the oil to ignite successfully when it hits" (and "Its
+//   damage only when the oil ignites", 2026-10-26): ownCheck.ignite, the flat check the card rolls as it's thrown (scripts/poisons.js) — a
+//   failure, the hit deals no damage.
 // Each sentence read is no longer a note. Pure.
+
+const IGNITE = /^You must succeed at a DC (\d+) flat check for the (\w+) to ignite successfully when it hits\.$/i;
+const IGNITES_ONLY = /^Its damage only when the (\w+) ignites\.$/i;
 
 const RETCH_ONLY = /^The bonus is only to saves to reduce the sickened condition, and the creature attempts one such save at once\.$/i;
 const CHOSEN_IN_REACH = /^Choose a creature within reach \(you, or a sickened creature\)\.$/i;
@@ -170,6 +176,16 @@ export function withRowReadings(plan, html, item = null) {
             drop(said(entry));
         }
     }
+    // (Its ignition's flat check: the card's, as it's thrown.)
+    let ignite = null;
+    if (plan.ownCheck?.kind === "attack") {
+        const found = [...notes, ...unread].map((entry) => IGNITE.exec(said(entry))).find(Boolean);
+        if (found) {
+            ignite = Number(found[1]);
+            drop(found[0]);
+            for (const entry of [...notes, ...unread]) if (IGNITES_ONLY.test(said(entry))) drop(said(entry));
+        }
+    }
     // (A Fortitude bonus only to reduce the sickened condition: an Effect of PF2e's rules in place of the row's plain bonus.)
     const retch = [...notes, ...unread].find((entry) => RETCH_ONLY.test(said(entry)));
     const fortitude = (rows.success?.modifiers ?? []).find((modifier) => modifier?.selector === "fortitude" && modifier.type === "item");
@@ -212,8 +228,8 @@ export function withRowReadings(plan, html, item = null) {
         targetWords = aimed[0][1][1];
         notes = notes.filter((note) => !/^Only each enemy within the banner's aura that\b/i.test(said(note)));
     }
-    if (!targetWords && !ruleEffects.length && notes.length === (plan.notes ?? []).length && unread.length === (plan.unread ?? []).length && Object.keys(rows).every((degree) => rows[degree] === outcomes[degree])) return plan;
-    next = { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread } : {}), resolution: { ...plan.resolution, outcomes: rows }, ...(targetWords ? { targeting: { ...(plan.targeting ?? {}), target: targetWords } } : {}), ...(ruleEffects.length ? { item: { ...(plan.item ?? {}), ruleEffects: [...(plan.item?.ruleEffects ?? []), ...ruleEffects] } } : {}) };
+    if (!targetWords && !ruleEffects.length && !ignite && notes.length === (plan.notes ?? []).length && unread.length === (plan.unread ?? []).length && Object.keys(rows).every((degree) => rows[degree] === outcomes[degree])) return plan;
+    next = { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread } : {}), resolution: { ...plan.resolution, outcomes: rows }, ...(targetWords ? { targeting: { ...(plan.targeting ?? {}), target: targetWords } } : {}), ...(ruleEffects.length ? { item: { ...(plan.item ?? {}), ruleEffects: [...(plan.item?.ruleEffects ?? []), ...ruleEffects] } } : {}), ...(ignite ? { ownCheck: { ...plan.ownCheck, ignite } } : {}) };
     if (next.partial && leftOver(next)) {
         delete next.partial;
         next.automation = { ...(next.automation ?? {}), level: "automatic" };

@@ -24,3 +24,10 @@ export function withConditionDC(plan, valueOf) {
     const value = Math.min(by.max ?? raised, Math.max(Number(against.value), raised));
     return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...against, value } } } };
 }
+
+// Its hit's damage gone, an ignition failed (Oil's flat check, plan.ownCheck.ignite): the plan with its success rows dealing none.
+export function withoutHitDamage(plan) {
+    const none = { mode: "none", multiplier: 0, sourceComponentIds: [] };
+    const outcomes = Object.fromEntries(Object.entries(plan?.resolution?.outcomes ?? {}).map(([degree, row]) => [degree, ["success", "criticalSuccess"].includes(degree) && row ? { ...row, damage: none } : row]));
+    return { ...plan, resolution: { ...plan.resolution, outcomes } };
+}

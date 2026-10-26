@@ -679,7 +679,7 @@ test("live routes: a fulu affixed is used (not a trigger its primed damage names
     assert.equal(routeOf(censer.plan, plainText(censer.activation.html)), "ways", "Light Incense's (aura, manipulate): the ways card of its zones, not a save card");
 });
 
-test("a consumable thrown as a Strike: Sack of Rotten Fruit's 1d4 bludgeoning, then its DC 15 Fortitude save at the creature hit; Life Salt's 1 persistent vitality and its Will save's note Effect; Oil's 1d6 fire with its flat check a note", () => {
+test("a consumable thrown as a Strike: Sack of Rotten Fruit's 1d4 bludgeoning, then its DC 15 Fortitude save at the creature hit; Life Salt's 1 persistent vitality and its Will save's note Effect; Oil's 1d6 fire with its flat check a note", async () => {
     const sack = compileItem(item("Sack of Rotten Fruit"));
     assert.deepEqual([sack.ownCheck.choose, sack.resolution.sharedDamage.components[0].formula, sack.thenSave.resolution.check.statistic, sack.thenSave.resolution.check.against.value, sack.thenSave.resolution.outcomes.failure.effects.map((effect) => `${effect.slug}${effect.value}`), sack.thenSave.targeting.target], [["thrown"], "1d4", "fortitude", 15, ["sickened1"], "the creature hit"]);
     const salt = compileItem(item("Life Salt"));
@@ -688,7 +688,12 @@ test("a consumable thrown as a Strike: Sack of Rotten Fruit's 1d4 bludgeoning, t
     assert.ok(salt.notes.includes("Only against an undead."));
     const oil = compileItem(item("Oil (1 pint)"));
     assert.deepEqual([oil.resolution.sharedDamage.components[0].formula, oil.resolution.sharedDamage.components[0].type], ["1d6", "fire"]);
-    assert.deepEqual(oil.notes, ["Its damage only when the oil ignites.", "You must succeed at a DC 10 flat check for the oil to ignite successfully when it hits."]);
+    // (2026-10-26: its ignition the card's flat check as it's thrown, ownCheck.ignite — a failure, its hit deals none — and where it lands a card
+    // line: whole.)
+    assert.deepEqual([oil.ownCheck.ignite, Boolean(oil.partial), oil.notes], [10, false, ["If you hit, it splatters on the creature or in a single 5-foot square you target."]]);
+    const { withoutHitDamage } = await import("../src/live/scaled.js");
+    const unlit = withoutHitDamage(oil);
+    assert.deepEqual([unlit.resolution.outcomes.success.damage.mode, unlit.resolution.outcomes.criticalSuccess.damage.mode, oil.resolution.outcomes.success.damage.mode], ["none", "none", "shared"]);
 });
 
 test("a creature whose numbers the item gives (the shape of a third-party bottled ooze and canister zombie, in this module's words): the conjured token with that AC and Hit Points, its size and time, the rest the GM's", async () => {
