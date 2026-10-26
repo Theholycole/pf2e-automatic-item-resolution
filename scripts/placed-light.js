@@ -25,6 +25,20 @@ export async function placeLight(light, { token, actor, item }) {
     return made ?? null;
 }
 
+// (A zone's light at its centre, Spark Wafer's sparks — plan.zone.light, src/compiler/spark-column.js: its zone's region found once the ability
+// module has placed it — the newest of its zones named for the item —, the light flagged with that region and its zone's time, gone with it.)
+export async function lightZone(light, lasts, { scene, item }) {
+    const ability = "pf2e-automatic-ability-resolution";
+    const regions = (scene?.regions?.contents ?? [...(scene?.regions ?? [])]).filter((region) => region.flags?.[ability]?.zone && String(region.name ?? "").startsWith(item?.name ?? "\u0000"));
+    const region = regions.at(-1);
+    const shape = region?.shapes?.[0];
+    if (!shape || !Number.isFinite(Number(shape.x))) return null;
+    const seconds = lasts?.mode === "fixed" ? (Number(lasts.value) || 1) * (SECONDS[lasts.unit] ?? 60) : null;
+    const endsAt = seconds ? (Number(game.time.worldTime) || 0) + seconds : null;
+    const [made] = await scene.createEmbeddedDocuments("AmbientLight", [{ x: Number(shape.x), y: Number(shape.y), config: { bright: light.bright, dim: light.dim }, flags: { [MODULE_ID]: { [KEY]: { item: item?.name ?? null, endsAt, regionUuid: region.uuid } } } }]);
+    return made ?? null;
+}
+
 // The lights whose time is up, on every scene, removed.
 export async function expireLights(worldTime) {
     for (const scene of game.scenes ?? []) {
@@ -40,5 +54,12 @@ export function setUpPlacedLights() {
     Hooks.on("updateWorldTime", (worldTime) => {
         if (!isActiveGM()) return;
         expireLights(Number(worldTime) || 0).catch((error) => console.error(`${MODULE_ID} | placed lights`, error));
+    });
+    // (A zone's light gone with its zone, ended on its card.)
+    Hooks.on("deleteRegion", (region) => {
+        const scene = region?.parent;
+        if (!scene || !isActiveGM()) return;
+        const ids = (scene.lights?.contents ?? [...(scene.lights ?? [])]).filter((light) => light.flags?.[MODULE_ID]?.[KEY]?.regionUuid === region.uuid).map((light) => light.id);
+        if (ids.length) scene.deleteEmbeddedDocuments("AmbientLight", ids).catch((error) => console.error(`${MODULE_ID} | zone light`, error));
     });
 }

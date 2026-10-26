@@ -825,7 +825,7 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     if (state.plan.item?.creates && target.actor) {
         const creates = state.plan.item.creates;
         const count = /d/.test(String(creates.count)) ? (await new Roll(String(creates.count)).evaluate()).total : Number(creates.count) || 1;
-        await target.actor.createEmbeddedDocuments("Item", [createdItemSource(creates, { count, level: Number(state.plan.item?.level) || 0 })]);
+        await target.actor.createEmbeddedDocuments("Item", [createdItemSource(creates, { count, level: Number(state.plan.item?.level) || 0, worldTime: game.time.worldTime, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${count} ${creates.name} in the inventory`);
     }
     // (A light its user sheds: Sprite Apple's — an Effect with PF2e's TokenLight rule. One with no time is put out by the item's next

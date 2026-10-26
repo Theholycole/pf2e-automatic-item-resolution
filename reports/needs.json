@@ -1,19 +1,19 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1251,
+  "entries": 1246,
   "results": {
    "none": 611,
-   "partial": 254,
+   "partial": 249,
    "builtin:no-effect": 129,
    "note-only": 257
   },
   "main": {
    "speeds": 22,
    "counteract": 17,
-   "afflictions": 51,
-   "areas": 110,
-   "moving": 84,
+   "afflictions": 50,
+   "areas": 109,
+   "moving": 83,
    "lasting": 63,
    "visibility": 46,
    "choice": 37,
@@ -21,9 +21,9 @@
    "strike": 106,
    "spells": 45,
    "information": 23,
-   "out-of-combat": 33,
+   "out-of-combat": 32,
    "actions": 26,
-   "no-rules": 37,
+   "no-rules": 36,
    "objects": 115,
    "illusions": 43,
    "removed": 4,
@@ -48,15 +48,15 @@
   },
   "any": {
    "speeds": 28,
-   "areas": 164,
+   "areas": 163,
    "immunity": 72,
    "objects": 390,
    "speech": 124,
-   "out-of-combat": 416,
+   "out-of-combat": 415,
    "counteract": 80,
-   "afflictions": 93,
-   "lasting": 209,
-   "moving": 108,
+   "afflictions": 92,
+   "lasting": 208,
+   "moving": 107,
    "triggers": 126,
    "visibility": 48,
    "dying": 73,
@@ -64,12 +64,12 @@
    "several": 90,
    "mind": 70,
    "strike": 185,
-   "reader": 207,
+   "reader": 206,
    "spells": 82,
    "information": 191,
    "actions": 56,
    "from-events": 33,
-   "no-rules": 37,
+   "no-rules": 36,
    "illusions": 56,
    "removed": 5,
    "range": 4,
@@ -805,16 +805,6 @@
    "work": "fold",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Spark Wafer",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "column of",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -2856,18 +2846,6 @@
    ]
   },
   {
-   "name": "Invisible Chain Shirt",
-   "kind": "activation",
-   "activation": "Obscured Approach",
-   "result": "partial",
-   "main": "moving",
-   "work": "stride",
-   "needs": [
-    "moving",
-    "lasting"
-   ]
-  },
-  {
    "name": "Swallow-Spike",
    "kind": "activation",
    "result": "partial",
@@ -4374,18 +4352,6 @@
    ]
   },
   {
-   "name": "Sweet Hag's Eye",
-   "kind": "activation",
-   "activation": "Meltaway Mint",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "persistent fire damage",
-   "needs": [
-    "afflictions",
-    "reader"
-   ]
-  },
-  {
    "name": "Beckoning Cat Amulet",
    "kind": "consumable",
    "result": "none",
@@ -4967,15 +4933,6 @@
     "reader",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Verdant Branch",
-   "kind": "activation",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -10817,17 +10774,6 @@
     "counteract",
     "choice",
     "reader"
-   ]
-  },
-  {
-   "name": "Satchel of Numberless Seeds",
-   "kind": "activation",
-   "activation": "Seed of Sustenance",
-   "result": "partial",
-   "main": "out-of-combat",
-   "work": "hour",
-   "needs": [
-    "out-of-combat"
    ]
   },
   {

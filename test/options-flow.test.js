@@ -130,3 +130,29 @@ test("live: a card's own damage heals its undead user by what the creature lost;
         Object.assign(globalThis, saved);
     }
 });
+
+test("Sweet Hag's Eye: Meltaway Mint's own Reflex DC 18, its failure's 1d4 persistent fire — not the eye's poison after it", () => {
+    const mint = planOf("Sweet Hag's Eye");
+    assert.deepEqual([mint.resolution.check.statistic, mint.resolution.check.against.value, Boolean(mint.partial)], ["reflex", 18, false]);
+    assert.doesNotMatch(compileActivations(item("Sweet Hag's Eye"))[0].activation.html, /Sickeningly Sweet/);
+});
+
+test("Invisible Chain Shirt: Concealed to the end of its user's next turn, its hostile-action end a note Effect, the Stride a line of the card", () => {
+    const plan = planOf("Invisible Chain Shirt");
+    const success = plan.resolution.outcomes.success;
+    assert.deepEqual([success.effects[0].slug, success.effects[0].duration.expiry, success.noteEffects[0].text, plan.notes, Boolean(plan.partial)], ["concealed", "turn-end", "It ends sooner once you use a hostile action.", ["Stride first (its user's own move)."], false]);
+});
+
+test("Verdant Branch: its fruits wither 10 minutes after they grow — flagged with the world time they go", async () => {
+    const { createdItemSource } = await import("../src/live/card.js");
+    const plan = planOf("Verdant Branch");
+    assert.deepEqual([plan.item.creates.lasts, Boolean(plan.partial)], [{ value: 10, unit: "minutes" }, false]);
+    const fruit = createdItemSource(plan.item.creates, { count: 2, worldTime: 1000 });
+    assert.deepEqual([fruit.flags["pf2e-automatic-item-resolution"].expiresAt, fruit.system.quantity], [1600, 2]);
+});
+
+test("Spark Wafer: a 5-foot burst placed within 20 feet for a round, its basic Reflex save on a creature starting its turn there, its light at the zone", () => {
+    const plan = compileItem(item("Spark Wafer"));
+    assert.deepEqual([plan.builtin, plan.zone.centre, plan.zone.range, plan.zone.lasts.value, plan.zone.lasts.unit, plan.zone.light, plan.zone.saves[0].when, Boolean(plan.partial)], ["zone", "placed", 20, 1, "rounds", { bright: 5, dim: 10 }, ["start"], false]);
+    assert.deepEqual([plan.zone.saves[0].plan.resolution.check.statistic, plan.zone.saves[0].plan.resolution.check.basic], ["reflex", true]);
+});

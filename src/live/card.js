@@ -492,18 +492,21 @@ export function createsText(creates) {
 }
 
 // The fruit's item: a consumable eaten with an Interact action for its healing — the module's own heal card when it's eaten.
-export function createdItemSource(creates, { count = 1, level = 0, img = null } = {}) {
+// (Its time, creates.lasts: flags.<module>.expiresAt, the world time it withers at — scripts/expiring.js removes it then.)
+const SECONDS = { minutes: 60, hours: 3600, days: 86400 };
+export function createdItemSource(creates, { count = 1, level = 0, img = null, worldTime = 0, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return {
         name: creates.name,
         type: "consumable",
         img: img ?? "icons/consumables/fruit/apple-red.webp",
+        ...(creates.lasts ? { flags: { [moduleId]: { expiresAt: worldTime + creates.lasts.value * (SECONDS[creates.lasts.unit] ?? 60) } } } : {}),
         system: {
             category: "other",
             quantity: count,
             uses: { value: 1, max: 1, autoDestroy: true },
             level: { value: level },
             traits: { value: ["consumable", "healing", "magical"], rarity: "common" },
-            description: { value: `<p><strong>Activate</strong> <span class="action-glyph">A</span> Interact</p><hr /><p>You eat the fruit and regain ${creates.heal} Hit Points.</p>` }
+            description: { value: `<p><strong>Activate</strong> <span class="action-glyph">A</span> Interact</p><hr /><p>You eat the fruit and regain ${creates.heal} Hit Points.</p>${creates.lasts ? `<p>It withers away ${creates.lasts.value} ${creates.lasts.value === 1 ? creates.lasts.unit.replace(/s$/, "") : creates.lasts.unit} after it grew.</p>` : ""}` }
         }
     };
 }

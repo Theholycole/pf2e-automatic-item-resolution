@@ -5,6 +5,7 @@
 
 import { ABILITY_ID, MODULE_ID } from "./foundry.js";
 import { effectSource } from "../src/live/card.js";
+import { lightZone } from "./placed-light.js";
 
 export async function startItemZone({ plan, used, actor, token }) {
     const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
@@ -15,7 +16,12 @@ export async function startItemZone({ plan, used, actor, token }) {
         const template = await fromUuid(plan.ownEffect.uuid).catch(() => null);
         if (template) await actor.createEmbeddedDocuments("Item", [effectSource(template.toObject(), { item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, flags: { [MODULE_ID]: { card: true } } })]);
     }
-    if (startZone) return startZone({ item, plan, sourceToken: token?.document ?? token });
+    if (startZone) {
+        const started = await startZone({ item, plan, sourceToken: token?.document ?? token });
+        // (Its light at the zone, Spark Wafer's: scripts/placed-light.js.)
+        if (plan.zone?.light) await lightZone(plan.zone.light, plan.zone.lasts, { scene: (token?.document ?? token)?.parent ?? canvas.scene, item }).catch((error) => console.error(`${MODULE_ID} | zone light`, error));
+        return started;
+    }
     const what = plan.zone?.once ? "Set the snare in a square within reach; the first creature to enter it attempts its save." : "Mark its area on the scene.";
     return ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),

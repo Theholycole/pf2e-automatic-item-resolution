@@ -112,8 +112,8 @@ test("an activation that heals its user in other words: \"You restore\", \"heali
 test("self conditions: \"You Stride and …, becoming Concealed until the end of your next turn\", \"rendering you Immobilized until you Dismiss\"", () => {
     const [approach] = compileActivations(item("Invisible Chain Shirt"));
     assert.deepEqual(approach.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration?.expiry]), [["concealed", "turn-end"]]);
-    // "or until you use a hostile action, whichever comes first": another way it ends, on the note.
-    assert.equal(approach.plan.partial, true);
+    // "or until you use a hostile action, whichever comes first": another way it ends, a note Effect beside it since 2026-10-26.
+    assert.deepEqual([Boolean(approach.plan.partial), approach.plan.resolution.outcomes.success.noteEffects[0].text], [false, "It ends sooner once you use a hostile action."]);
     const [anchor] = compileActivations(item("Immovable"));
     assert.deepEqual(anchor.plan.resolution.outcomes.success.effects.map((effect) => [effect.slug, effect.duration]), [["immobilized", null]]);
 });
@@ -892,13 +892,13 @@ test("a table whose die is its first body row's (a third-party robe's d20 of cha
     assert.deepEqual([rowFor(chaos.table, 3).plan.builtin, rowFor(chaos.table, 3).plan.dc], ["cast-spell", 34]);
 });
 
-test("fruit it grows that heal when eaten (Verdant Branch's 1d4, Satchel of Numberless Seeds' 5): the item card's consumables in its user's inventory, each the module's own heal when eaten; when they wither a note", async () => {
+test("fruit it grows that heal when eaten (Verdant Branch's 1d4, Satchel of Numberless Seeds' 5): the item card's consumables in its user's inventory, each the module's own heal when eaten; when they wither their time (2026-10-26)", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const { createdItemSource, createsText } = await import("../src/live/card.js");
     const [grow] = compileActivations(item("Verdant Branch"));
-    assert.deepEqual(grow.plan.item.creates, { name: "Verdant Branch Fruit", count: "1d4", heal: "@Damage[(2d6+5)[healing]]" });
+    assert.deepEqual(grow.plan.item.creates, { name: "Verdant Branch Fruit", count: "1d4", heal: "@Damage[(2d6+5)[healing]]", lasts: { value: 10, unit: "minutes" } });
     assert.equal(createsText(grow.plan.item.creates), "1d4 Verdant Branch Fruit in its user's inventory, each eaten for 2d6+5 Hit Points");
-    assert.deepEqual(grow.plan.notes, ["The fruits wither away after 10 minutes (by hand)."]);
+    assert.equal(grow.plan.notes, undefined);
     const fruit = compileItem(createdItemSource(grow.plan.item.creates, { count: 3, level: 5 }));
     assert.deepEqual(fruit.resolution.native.healing.components.map((component) => component.formula), ["2d6+5"]);
     assert.equal(compileActivations(item("Satchel of Numberless Seeds"))[1].plan.item.creates.count, 5);

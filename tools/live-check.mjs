@@ -2038,6 +2038,69 @@ export const cases = {
         return { lost };
     },
 
+    // Spark Wafer: its zone placed (the placement click stood in for) with its light at the zone's centre, the light gone with the zone.
+    async sparkZoneLight(scene) {
+        await clearSquares(scene, [[15, 3]]);
+        const { actor: user, token } = await creature(scene, "Spark Thrower", { type: "character", x: 15, y: 3 });
+        const wafer = await give(user, "Spark Wafer");
+        await token.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        try {
+            await wafer.consume();
+            const zone = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Spark Wafer/.test(region.name));
+            await until(zone, "the sparks' Region", { timeout: 8000 });
+            const light = () => scene.lights.find((entry) => entry.flags?.[NS]?.placedLight?.regionUuid === zone()?.uuid);
+            await until(light, "its light at the zone", { timeout: 8000 });
+            const shape = zone().shapes[0];
+            assert(light().config.bright === 5 && light().config.dim === 10 && Math.abs(light().x - shape.x) < 2, `bright 5, dim 10 at its centre (${light().config.bright}/${light().config.dim} ${light().x},${light().y} vs ${shape.x},${shape.y})`);
+            const id = light().id;
+            await zone().delete();
+            await until(() => !scene.lights.get(id), "the light gone with the zone", { timeout: 8000 });
+            return { placed: true };
+        } finally {
+            canvas.regions.placeRegion = placing;
+        }
+    },
+
+    // Verdant Branch: its fruits in its user's inventory, gone once their 10 minutes are up (their end moved to a second from now).
+    async verdantWither(scene) {
+        await clearSquares(scene, [[16, 3]]);
+        const { actor: user } = await creature(scene, "Verdant Grower", { type: "character", x: 16, y: 3, level: 7 });
+        const branch = await give(user, "Verdant Branch");
+        await branch.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(branch.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the branch's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const fruit = () => user.items.find((item) => item.name === "Verdant Branch Fruit");
+        await until(fruit, "its fruit", { timeout: 8000 });
+        assert(Number(fruit().flags[NS].expiresAt) === game.time.worldTime + 600, `withering in 10 minutes (${fruit().flags[NS].expiresAt - game.time.worldTime})`);
+        await fruit().update({ [`flags.${NS}.expiresAt`]: game.time.worldTime + 1 });
+        await game.time.advance(1);
+        await until(() => !fruit(), "the fruit withered", { timeout: 8000 });
+        return { withered: true };
+    },
+
+    // Sweet Hag's Eye's Meltaway Mint: its own Reflex DC 18 at the creature holding it, 1d4 persistent fire on a failure.
+    async meltawayMint(scene) {
+        await clearSquares(scene, [[17, 3], [18, 3]]);
+        const { actor: hag } = await creature(scene, "Sweet Hag", { x: 17, y: 3, level: 6 });
+        const { actor: holder, token: holderToken } = await creature(scene, "Eye Holder", { x: 18, y: 3, save: 0, alliance: "opposition" });
+        const eye = await give(hag, "Sweet Hag's Eye");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(eye.uuid, 0);
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the mint's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(expose.id, { targets: [holderToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the Reflex save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "reflex" && check.against.value === 18, `Reflex DC 18 (${JSON.stringify(check)})`);
+        await withDie(5, () => rollAndApply(save));
+        await until(() => holder.itemTypes.condition.some((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "fire"), "persistent fire", { timeout: 8000 });
+        return { check };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {

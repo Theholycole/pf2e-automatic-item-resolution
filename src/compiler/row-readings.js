@@ -37,6 +37,11 @@ const IGNITES_ONLY = /^Its damage only when the (\w+) ignites\.$/i;
 const RETCH_ONLY = /^The bonus is only to saves to reduce the sickened condition, and the creature attempts one such save at once\.$/i;
 const CHOSEN_IN_REACH = /^Choose a creature within reach \(you, or a sickened creature\)\.$/i;
 
+// (Concealed to the end of its user's next turn, gone sooner on a hostile action, Invisible Chain Shirt's Obscured Approach: "You Stride and turn
+// partially invisible, becoming Concealed until the end of your next turn or until you use a hostile action, whichever comes first" — the row's
+// Concealed for that time, its hostile-action end a note Effect beside it, the Stride a line of the card.)
+const CONCEALED_UNTIL = /^You (Stride|Step) and [^,.]+, becoming Concealed until the end of your next turn or until you use a hostile action, whichever comes first\.$/i;
+
 // (An illusion spell's disbelief undone, Storyteller's Opus's Hoodwink: "If you succeed, the creature doesn't disbelieve the illusion" — a note
 // Effect on it, as the user's ruling has illusions the GM's control, 2026-10-26.)
 const STILL_FOOLED = /^\{target\} \(success\): the creature doesn't disbelieve the illusion\.?$/i;
@@ -100,7 +105,9 @@ const AIMED = /^\{target\}: Target (each enemy within the banner's aura that [^.
 // (And a class's action economy for it, Spectacles of Inquiry's "If you're an investigator, you can use this activation as part of the action you
 // take to Devise a Stratagem or Pursue a Lead, …": its user's to take, a line of the card — 2026-10-26.)
 const INVESTIGATOR = "If you're an investigator, you can use this activation as part of the action you take to Devise a Stratagem or Pursue a Lead, and you can do the latter even though you can't see the creature.";
-const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus.", "After the push, its user can Stride after the creature, the same distance and direction.", INVESTIGATOR]);
+// (Its user's own Stride before the Effect, Invisible Chain Shirt's Obscured Approach: a line of the card — 2026-10-26.)
+const STRIDE_FIRST = "Stride first (its user's own move).";
+const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened condition at once, with the bonus.", "After the push, its user can Stride after the creature, the same distance and direction.", INVESTIGATOR, STRIDE_FIRST]);
 // (A note that's one of those lines: later readings — the mark's — leave the plan whole beside it too.)
 export const isCardLine = (note) => CARD_LINES.has(said(note));
 const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !CARD_LINES.has(said(note))).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
@@ -200,6 +207,16 @@ export function withRowReadings(given, html, item = null) {
             const byCondition = { slug: [...slugs][0], formulas: Object.fromEntries(steps.map((step) => [step[3], step[1]])) };
             rows.success = { ...rows.success, effects: rows.success.effects.map((effect) => (effect?.kind === "heal" ? { ...effect, byCondition } : effect)) };
             drop(said(entry));
+        }
+    }
+    // (Concealed for its time, ended by a hostile action: the success row's.)
+    if (plan.resolution.kind === "check" && (rows.success?.effects ?? []).some((effect) => effect?.slug === "concealed")) {
+        const found = [...notes, ...unread].find((entry) => CONCEALED_UNTIL.test(said(entry)));
+        if (found) {
+            const duration = { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" };
+            rows.success = { ...rows.success, effects: rows.success.effects.map((effect) => (effect?.slug === "concealed" ? { ...effect, duration: effect.duration ?? duration } : effect)), noteEffects: [...(rows.success.noteEffects ?? []), { label: "Concealed", text: "It ends sooner once you use a hostile action.", duration }] };
+            drop(said(found));
+            if (!notes.includes(STRIDE_FIRST)) notes.push(STRIDE_FIRST);
         }
     }
     // (An investigator's way to use it, a line of the card.)

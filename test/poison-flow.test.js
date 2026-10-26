@@ -127,14 +127,15 @@ test("a contact, inhaled or ingested poison: exposure of the creatures its press
 });
 
 test("another item's save on its Use goes to the creatures its presser targets; one for later doesn't", async () => {
-    const card = await use(foundry.giveItem(rogue, source("Spark Wafer")));
+    // (Black Powder (Horn): Spark Wafer was this test's until its sparks became a zone, 2026-10-26.)
+    const card = await use(foundry.giveItem(rogue, source("Black Powder (Horn)")));
     const state = card.flags[MODULE_ID].card;
     assert.deepEqual([state.kind, state.delivery], ["expose", null]);
-    assert.match(card.content, /A save for the creatures in its 5-foot burst \(DC 14 Reflex save\)/);
+    assert.match(card.content, /A save for the creatures in its 5-foot burst \(DC 16 Reflex save\)/);
     const before = foundry.posted.length;
     await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ogre.token.uuid], userId: "player" });
     await settle();
-    assert.equal(foundry.posted.slice(before)[0]?.plan.resolution.check.against.value, 14);
+    assert.equal(foundry.posted.slice(before)[0]?.plan.resolution.check.against.value, 16);
     // An energy breath potion gives an action for an hour: its card waits for that action.
     const breath = await use(foundry.giveItem(rogue, source("Energy Breath Potion (Acid, Greater)")));
     assert.equal(breath.flags[MODULE_ID].card.later, true);

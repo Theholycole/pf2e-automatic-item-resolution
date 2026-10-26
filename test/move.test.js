@@ -60,13 +60,13 @@ test("not a move: a Trigger that's a Stride, a Strike along the way left as a no
     assert.deepEqual([claw.builtin, claw.teleport.move.verb, claw.partial], ["teleport", "Stride", true]);
 });
 
-test("the move beside the rest: Phase Spike's resistance during its Stride; Invisible Chain Shirt's Concealed, its other ending still unread", () => {
+test("the move beside the rest: Phase Spike's resistance during its Stride; Invisible Chain Shirt's Concealed, its hostile-action end a note Effect (2026-10-26)", () => {
     const spike = activation("Phase Spike", "Incorporeal Stride");
     assert.deepEqual([routeOf(spike), spike.item.move.speedTimes, spike.item.move.move.verb, spike.item.resist?.[0]?.value, spike.partial, spike.unread], ["item", 1, "Stride", 10, undefined, undefined]);
     assert.deepEqual(spike.item.move.move.lines, ["Through solid objects and creatures, ending in neither"]);
     const shirt = activation("Invisible Chain Shirt", "Obscured Approach");
-    assert.deepEqual([shirt.item.move.move.verb, shirt.resolution.outcomes.success.effects[0].slug, shirt.partial], ["Stride", "concealed", true]);
-    assert.equal(shirt.unread.length, 1);
+    assert.deepEqual([shirt.item.move.move.verb, shirt.resolution.outcomes.success.effects[0].slug, Boolean(shirt.partial)], ["Stride", "concealed", false]);
+    assert.equal((shirt.unread ?? []).length, 0);
 });
 
 test("the card: its verb and range, again for each action more", () => {

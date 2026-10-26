@@ -17,8 +17,8 @@
    "none": 167,
    "resolves": 791,
    "builtin:readied-bonus": 23,
-   "builtin:zone": 118,
-   "partial": 90,
+   "builtin:zone": 119,
+   "partial": 89,
    "builtin:ways": 27,
    "builtin:item-action": 16,
    "note-only": 116,
@@ -38,8 +38,8 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 14,
-    "builtin:zone": 26,
-    "partial": 43,
+    "builtin:zone": 27,
+    "partial": 42,
     "builtin:ways": 20,
     "resolves": 220,
     "note-only": 59,
@@ -403,8 +403,8 @@
    "none": 225,
    "item": 639,
    "fortune": 25,
-   "zone": 118,
-   "save": 135,
+   "zone": 119,
+   "save": 134,
    "expose": 89,
    "ways": 27,
    "action": 16,
@@ -421,10 +421,10 @@
   "byCategory": {
    "other": {
     "cast": 14,
-    "zone": 26,
+    "zone": 27,
     "none": 115,
     "ways": 20,
-    "save": 87,
+    "save": 86,
     "item": 217,
     "fortune": 8,
     "teleport": 4,
@@ -1905,9 +1905,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Lion Badge",

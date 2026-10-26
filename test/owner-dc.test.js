@@ -91,9 +91,10 @@ test("the world setting for item DCs: each save others attempt against the item'
     assert.equal(raiseItemDCs(plan, {}).plan, plan, "no DC of its user's: the same plan");
 });
 
-test("live, the setting on: Spark Wafer's DC 14 Reflex save posted at its user's spell DC 27; off, the item's 14", async () => {
+// (Black Powder (Horn): Spark Wafer was this test's until its sparks became a zone, 2026-10-26.)
+test("live, the setting on: Black Powder (Horn)'s DC 16 Reflex save posted at its user's spell DC 27; off, the item's 16", async () => {
     const use = async (actor, id) => {
-        const item = foundry.giveItem(actor, { ...source("Spark Wafer"), _id: id });
+        const item = foundry.giveItem(actor, { ...source("Black Powder (Horn)"), _id: id });
         const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: null, type: "consumable" } } }, speaker: { actor: actor.id }, actor, token: actor.token.document });
         await foundry.call("createChatMessage", message);
         await settle();
@@ -104,12 +105,12 @@ test("live, the setting on: Spark Wafer's DC 14 Reflex save posted at its user's
     try {
         const card = await use(reader, "ownerWafer000001");
         assert.equal(card.flags[MODULE_ID].card.plan.resolution.check.against.value, 27);
-        assert.ok(card.flags[MODULE_ID].card.plan.notes.some((note) => /its user's spell DC, over the item's own 14/.test(note)));
+        assert.ok(card.flags[MODULE_ID].card.plan.notes.some((note) => /its user's spell DC, over the item's own 16/.test(note)));
     } finally {
         globalThis.game.settings = settings;
     }
     const off = await use(reader, "ownerWafer000002");
-    assert.equal(off.flags[MODULE_ID].card.plan.resolution.check.against.value, 14);
+    assert.equal(off.flags[MODULE_ID].card.plan.resolution.check.against.value, 16);
 });
 
 test("poisons and alchemists: the setting raises Black Adder Venom's 18 to its user's spell DC 27, and to 31 with Potent Poisoner's +4; setting or not, an alchemist's infused item saves at their alchemist class DC (PF2e's Powerful Alchemy)", async () => {

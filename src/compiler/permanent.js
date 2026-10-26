@@ -132,7 +132,11 @@ export function splitActivations(html) {
         // (Nor an artifact's Destruction paragraph after it: Orb of Dragonkind's "… explodes … to all creatures within 90 feet" isn't its
         // breath's range.)
         const heading = whole.search(/<h[1-6]\b|<p>\s*<strong>\s*Destruction\s*<\/strong>/i);
-        const block = heading > 0 ? whole.slice(0, heading) : whole;
+        const cut = heading > 0 ? whole.slice(0, heading) : whole;
+        // (Nor an affliction's stat block after it that it doesn't name: Sweet Hag's Eye's Sickeningly Sweet, the eye eaten, isn't its Meltaway
+        // Mint's save — 2026-10-26.)
+        const affliction = /<p>\s*<strong>([^<]+)<\/strong>\s*\([a-z, ]*\b(?:ingested|inhaled|contact|injury|poison|disease|curse)\b[a-z, ]*\)[\s\S]*?<strong>\s*Saving Throw\s*<\/strong>/i.exec(cut);
+        const block = affliction && affliction.index > 0 && !new RegExp(`\\b${affliction[1].trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(plainText(cut.slice(0, affliction.index))) ? cut.slice(0, affliction.index) : cut;
         const head = /<strong>\s*Activat(?:e|ion)\s*(?:[—–-]\s*([^<]*?))?\s*<\/strong>([\s\S]*?)(?=<\/p>|<br|<hr|<strong>|$)/i.exec(block);
         const glyph = /<span class="action-glyph">\s*([^<\s]+)\s*<\/span>/i.exec(head?.[2] ?? "")?.[1]?.toLowerCase();
         const words = plainText(head?.[2] ?? "");
@@ -357,13 +361,19 @@ function benefactorBreathPlan(html, base, item, options, own) {
 // Fruit it grows that heal when eaten: Verdant Branch's "producing 1d4 ripe and flavorful fruits. A creature can pick and eat a fruit with
 // an Interact action to regain 2d6+5 Hit Points", Satchel of Numberless Seeds' tree "producing 5 fruits. A creature who eats the fruit with
 // an Interact action regains 1d6+2 Hit Points". The item card makes them consumables in its user's inventory (plan.item.creates: { name,
-// count, heal }), each eaten as the module's own heal; when they wither is a note.
+// count, heal }), each eaten as the module's own heal. When they wither — "The fruits wither away after 10 minutes", "After an hour, the tree and
+// all its fruits wither away" — is creates.lasts { value, unit }: gone from the inventory then (scripts/expiring.js, 2026-10-26).
+const WITHER = /^(?:The fruits wither away after (\d+|an?|one) (minutes?|hours?)|After (\d+|an?|one) (minutes?|hours?), the tree and all its fruits wither away)\.$/i;
 const FRUIT = /\bproducing (?:\[\[\/r (\d*d\d+)\]\](?:\{[^}]*\})?|(\d+)) (?:ripe and flavorful )?fruits\b[^.]*\.\s*A creature (?:can pick and eat a fruit|who eats the fruit) with an Interact action (?:to )?regains? (@Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})?) Hit Points\b/i;
 function fruitPlan(html, base, item) {
     const fruit = FRUIT.exec(String(html ?? ""));
     if (!fruit) return null;
-    const notes = plainText(String(html ?? "")).split(/(?<=[.!?])\s+(?=[A-Z])/).filter((sentence) => /\bwither\b/i.test(sentence)).map((sentence) => `${sentence.trim().replace(/\.$/, "")} (by hand).`);
-    return { ...base, automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, creates: { name: `${item?.name ?? "Item"} Fruit`, count: fruit[1] ?? Number(fruit[2]), heal: fruit[3].replace(/\{[^}]*\}$/, "") }, ...(notes.length ? { notes, partial: true } : {}) };
+    const withering = plainText(String(html ?? "")).split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => /\bwither\b/i.test(sentence));
+    const timed = withering.map((sentence) => WITHER.exec(sentence)).find(Boolean);
+    const count = (words) => ({ a: 1, an: 1, one: 1 })[String(words).toLowerCase()] ?? Number(words);
+    const lasts = timed ? { value: count(timed[1] ?? timed[3]), unit: (timed[2] ?? timed[4]).toLowerCase().replace(/s?$/, "s") } : null;
+    const notes = withering.filter((sentence) => !WITHER.test(sentence)).map((sentence) => `${sentence.replace(/\.$/, "")} (by hand).`);
+    return { ...base, automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, creates: { name: `${item?.name ?? "Item"} Fruit`, count: fruit[1] ?? Number(fruit[2]), heal: fruit[3].replace(/\{[^}]*\}$/, ""), ...(lasts ? { lasts } : {}) }, ...(notes.length ? { notes, partial: true } : {}) };
 }
 
 // An item whose effect is a roll on its own table, src/compiler/random-table.js: each row compiled alone as the item's use.
