@@ -200,6 +200,28 @@ function withGrantedStrike(plan, html) {
     return next;
 }
 
+// A weakness triggered again in place of the card's damage (2026-10-26), Freedom's Flame's Holy Retribution: "The target's holy weakness is
+// triggered again or, if the target doesn't have a holy weakness, it takes 15 spirit damage" (src/compiler/item-data.js leaves the first a GM
+// line). plan.ifTarget { weakness, weaknessDamage }: a creature with that weakness takes its value as untyped damage in place of the card's
+// (src/live/if-target.js), the rest the card's own.
+const WEAKNESS_AGAIN = /^\{target\}: If the target has an? (\w+) weakness, its \1 weakness is triggered again instead \(by hand\)\.$/;
+function withWeaknessAgain(plan) {
+    const rows = plan?.resolution?.outcomes;
+    const shared = plan?.resolution?.sharedDamage?.components ?? [];
+    const found = Object.entries(rows ?? {}).map(([degree, row]) => [degree, (row?.manualInstructions ?? []).find((line) => WEAKNESS_AGAIN.test(said(line)))]).find(([, line]) => line);
+    if (!found || shared.length !== 1) return plan;
+    const [degree, line] = found;
+    const type = WEAKNESS_AGAIN.exec(said(line))[1].toLowerCase();
+    const outcomes = { ...rows, [degree]: { ...rows[degree], manualInstructions: rows[degree].manualInstructions.filter((one) => one !== line) } };
+    if (!outcomes[degree].manualInstructions.length) delete outcomes[degree].manualInstructions;
+    const next = { ...plan, resolution: { ...plan.resolution, outcomes }, ifTarget: [...(plan.ifTarget ?? []), { weakness: type, weaknessDamage: true }] };
+    if (next.partial && leftOver(next)) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}
+
 function withSpeedNote(plan, html) {
     const speeds = plan?.item?.speeds ?? [];
     const found = [...(plan?.unread ?? []), ...(plan?.notes ?? [])].map((entry) => [entry, DEFLATES.exec(said(entry))]).find(([, match]) => match);
@@ -290,7 +312,7 @@ function withGroundedProne(plan) {
 }
 
 export function withRowReadings(given, html, item = null) {
-    const plan = withGrantedStrike(withBehaviourRows(withTradedResistance(withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html), html), html), html);
+    const plan = withWeaknessAgain(withGrantedStrike(withBehaviourRows(withTradedResistance(withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html), html), html), html));
     const outcomes = plan?.resolution?.outcomes;
     if (!outcomes || plan.builtin) return plan;
     let next = plan;

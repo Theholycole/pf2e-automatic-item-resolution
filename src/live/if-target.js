@@ -19,7 +19,9 @@ const traitsOf = (actor) => new Set([...(actor?.system?.traits?.value ?? []), ..
 const sensesOf = (actor) => [...(actor?.system?.perception?.senses ?? []), ...(actor?.perception?.senses ?? [])].map((sense) => String(sense?.type ?? sense).toLowerCase());
 // (Living, PF2e's mode of being — not undead nor a construct when PF2e doesn't say: Spirit Fan's living target, 2026-10-25.)
 const living = (actor) => (actor?.modeOfBeing ? actor.modeOfBeing === "living" : !traitsOf(actor).has("undead") && !traitsOf(actor).has("construct"));
-const fits = (entry, actor) => (entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
+// (Its weakness of a type, PF2e's attributes.weaknesses: its value, 0 with none.)
+export const weaknessOf = (actor, type) => Math.max(0, ...((actor?.attributes ?? actor?.system?.attributes ?? {}).weaknesses ?? []).filter((weakness) => String(weakness?.type ?? "").toLowerCase() === type).map((weakness) => Number(weakness.value) || 0));
+const fits = (entry, actor) => (entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
 
 // The plan for that creature: its riders added to their degree's effects when it fits; a save's bonus or penalty for its kind (Lamentation of
 // the Faithless's holy creatures' –2); null for a kind immune to it (its unholy ones).
@@ -32,7 +34,9 @@ export function planFor(plan, actor) {
     if (riders.some((entry) => entry.immune)) return null;
     const heal = riders.find((entry) => entry.heal);
     if (heal) return { ...plan, kindHeal: heal.heal };
-    const formula = riders.find((entry) => entry.formula)?.formula;
+    // (Its weakness triggered again in place of the damage, Freedom's Flame's holy one: that weakness's value, untyped.)
+    const again = riders.find((entry) => entry.weaknessDamage);
+    const formula = again ? `${weaknessOf(actor, again.weakness)}[untyped]` : riders.find((entry) => entry.formula)?.formula;
     if (formula && plan.resolution.sharedDamage?.components?.length) plan = { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: plan.resolution.sharedDamage.components.map((component, index) => (index === 0 ? { ...component, formula } : component)) } } };
     const outcomes = { ...plan.resolution.outcomes };
     for (const rider of riders.filter((entry) => entry.degree && entry.effects)) outcomes[rider.degree] = { ...outcomes[rider.degree], effects: [...(outcomes[rider.degree]?.effects ?? []), ...rider.effects] };

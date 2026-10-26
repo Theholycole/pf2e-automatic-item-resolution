@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1212,
+  "entries": 1211,
   "results": {
    "none": 602,
-   "partial": 229,
+   "partial": 228,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -38,7 +38,7 @@
    "dying": 29,
    "senses": 21,
    "speech": 18,
-   "from-events": 6,
+   "from-events": 5,
    "forms": 24,
    "retaliation": 3,
    "missing-number": 7,
@@ -68,7 +68,7 @@
    "spells": 71,
    "information": 190,
    "actions": 56,
-   "from-events": 27,
+   "from-events": 26,
    "no-rules": 36,
    "illusions": 56,
    "removed": 5,
@@ -2799,17 +2799,6 @@
    "work": "mythic point",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Freedom's Flame",
-   "kind": "activation",
-   "activation": "Holy Retribution",
-   "result": "partial",
-   "main": "from-events",
-   "work": "triggered again",
-   "needs": [
-    "from-events"
    ]
   },
   {

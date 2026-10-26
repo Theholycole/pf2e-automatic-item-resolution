@@ -365,3 +365,14 @@ test("Ring of the Tiger: its claw for the turn, the Strike its user's own (a car
     // (No striking rune: 2d6. Striking: 1d6 + the rune's 1 = 2d6. Greater striking: 1d6 + 2 = 3d6.)
     assert.deepEqual([dice(actorWith(0)), dice(actorWith(1)), dice(actorWith(2)), dice(null)], [2, 1, 1, 2]);
 });
+
+test("Freedom's Flame's Holy Retribution: a creature with a holy weakness takes its weakness's value again (untyped), the rest 15 spirit", async () => {
+    const { planFor, targetGroups } = await import("../src/live/if-target.js");
+    const flame = planOf("Freedom's Flame", 1);
+    assert.deepEqual([Boolean(flame.partial), flame.ifTarget, flame.resolution.outcomes.success.manualInstructions ?? []], [false, [{ weakness: "holy", weaknessDamage: true }], []]);
+    const fiend = { attributes: { weaknesses: [{ type: "holy", value: 10 }] } };
+    const ogre = { attributes: { weaknesses: [{ type: "cold-iron", value: 5 }] } };
+    const formula = (actor) => planFor(flame, actor).resolution.sharedDamage.components[0].formula;
+    assert.deepEqual([formula(fiend), formula(ogre)], ["10[untyped]", "15[spirit]"]);
+    assert.equal(targetGroups(flame, [{ actor: fiend }, { actor: ogre }]).length, 2);
+});
