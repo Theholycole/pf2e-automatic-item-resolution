@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1291,
+  "entries": 1287,
   "results": {
-   "none": 620,
-   "partial": 284,
+   "none": 617,
+   "partial": 283,
    "builtin:no-effect": 129,
    "note-only": 258
   },
@@ -15,10 +15,10 @@
    "areas": 111,
    "moving": 88,
    "lasting": 65,
-   "visibility": 53,
+   "visibility": 50,
    "choice": 37,
    "mind": 9,
-   "strike": 107,
+   "strike": 106,
    "spells": 45,
    "information": 23,
    "out-of-combat": 33,
@@ -58,12 +58,12 @@
    "lasting": 216,
    "moving": 116,
    "triggers": 126,
-   "visibility": 55,
+   "visibility": 52,
    "dying": 78,
    "choice": 110,
    "several": 90,
    "mind": 71,
-   "strike": 188,
+   "strike": 187,
    "reader": 224,
    "spells": 82,
    "information": 191,
@@ -1578,16 +1578,6 @@
    "work": "versatile vial",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Golden-Cased Bullet (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "visibility",
-   "work": "lesser cover",
-   "needs": [
-    "visibility"
    ]
   },
   {
@@ -5549,16 +5539,6 @@
     "creatures",
     "moving",
     "afflictions"
-   ]
-  },
-  {
-   "name": "Golden-Cased Bullet (Standard)",
-   "kind": "activation",
-   "result": "none",
-   "main": "visibility",
-   "work": "lesser cover",
-   "needs": [
-    "visibility"
    ]
   },
   {
@@ -9673,16 +9653,6 @@
    ]
   },
   {
-   "name": "Golden-Cased Bullet (Major)",
-   "kind": "activation",
-   "result": "none",
-   "main": "visibility",
-   "work": "lesser cover",
-   "needs": [
-    "visibility"
-   ]
-  },
-  {
    "name": "Breech Ejectors",
    "kind": "consumable",
    "result": "none",
@@ -13775,17 +13745,6 @@
     "actions",
     "several",
     "objects"
-   ]
-  },
-  {
-   "name": "Arcing Hand Crossbow",
-   "kind": "activation",
-   "activation": "Curve Bolt",
-   "result": "partial",
-   "main": "strike",
-   "work": "ignores the target's cover",
-   "needs": [
-    "strike"
    ]
   },
   {

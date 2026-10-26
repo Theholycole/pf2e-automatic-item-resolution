@@ -33,6 +33,11 @@ const ATTACK = /\+(\d+) (status|circumstance|item) bonus to (?:this Strike|the S
 // (And Blessed Ampoule's "the weapon's physical damage for the Strike becomes spirit damage".)
 const MATERIAL_STRIKE = /\bThe (?:attack|Strike) is treated as (silver|cold iron|adamantine)\b\.?/i;
 const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike is (${TYPES}) damage\b|\b(?:It|The Strike|This Strike|The ammunition) deals (${TYPES}) damage instead of its (?:normal|usual) damage type\b|\bthe weapon's (?:physical )?damage for the Strike becomes (${TYPES}) damage\b`, "i");
+// (Cover it ignores, Golden-Cased Bullet's "allowing you to ignore the bonus to AC granted to a target in standard or lesser cover", Arcing Hand
+// Crossbow's "This attack ignores the target's cover": PF2e's EphemeralEffect that suppresses the target's cover bonus, for a target in that
+// cover, as PF2e's Alchemist Goggles have it — ignoresCover, the levels, 2026-10-26.)
+const IGNORE_COVER = /\bignore the bonus to AC granted to a target in ((?:greater|standard|lesser)(?:,? (?:or )?(?:greater|standard|lesser))*) cover\b|\b(?:This|The) (?:attack|Strike) ignores the target's cover\b/i;
+const coverLevels = (words) => (words ? [...new Set(words.toLowerCase().match(/greater|standard|lesser/g))].flatMap((level) => (level === "greater" ? ["greater", "greater-prone"] : [level])) : ["lesser", "standard", "greater", "greater-prone"]);
 // "Your outcome is one degree of success better than what you rolled": PF2e's AdjustDegreeOfSuccess on the attack roll.
 const BETTER = /\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i;
 // (The target Off-Guard to it, Sawtooth Reaper's Bloodmist Whirl's "The next Strike you make treats the target as Off-Guard": PF2e's
@@ -109,6 +114,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const suppress = [];
     let splash = null;
     let offGuard = false;
+    let ignoresCover = null;
     let failDice = 0;
     let failHalfType = null;
     let missRefund = false;
@@ -249,6 +255,11 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
             offGuard = true;
             rest = rest.replace(flat[0], " ");
         }
+        const cover = IGNORE_COVER.exec(rest);
+        if (cover) {
+            ignoresCover = coverLevels(cover[1]);
+            rest = rest.replace(cover[0], " ");
+        }
         const better = BETTER.exec(rest);
         if (better) {
             degree = { all: "one-degree-better" };
@@ -271,5 +282,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
     if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
     const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || failDice || failHalf || requires.length || missRefund || reach || map) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(ignoresCover ? { ignoresCover } : {}), ...(failDice ? { failDice } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || ignoresCover || failDice || failHalf || requires.length || missRefund || reach || map) };
 }

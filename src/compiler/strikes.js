@@ -111,7 +111,9 @@ const isAmmo = (item) => item?.type === "ammo" || (item?.system?.traits?.value ?
 function ammoStrike(text) {
     // (The Strike that fires it, not only its hit: Weapon Shot's "For the Strike with which you consume the ammunition, the
     // weapon is a +1 striking weapon …" — its runes for that Strike's attack and damage, src/compiler/strike-damage.js.)
-    const firing = /\bFor the Strike with which you consume the ammunition, /i.exec(text);
+    // (Or its own attack's cover, Golden-Cased Bullet's "once the bullet has been fired, allowing you to ignore the bonus to AC granted to a target
+    // in lesser cover": that Strike's attack roll, src/compiler/strike-damage.js ignoresCover.)
+    const firing = /\bFor the Strike with which you consume the ammunition, |\ballowing you to ignore the bonus to AC granted to a target in\b/i.exec(text);
     if (firing) return { range: "ranged", unarmed: false, after: text.slice(firing.index), sentence: null, next: false, missKeeps: false, uses: 1, hit: false, ammo: true };
     let after = text;
     for (const [pattern, replacement] of AMMO_HITS) after = after.replace(pattern, replacement);
@@ -359,6 +361,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.suppress ? { suppress: extras.suppress } : {}),
               ...(extras.splash ? { splash: extras.splash } : {}),
               ...(extras.offGuard ? { offGuard: true } : {}),
+              // (Cover it ignores: Golden-Cased Bullet's levels.)
+              ...(extras.ignoresCover ? { ignoresCover: extras.ignoresCover } : {}),
               // (Weapon dice on a failure: Brutal Finish's.)
               ...(extras.failDice ? { failDice: extras.failDice } : {}),
               // (Half its extra damage on a failure: Energizing Lattice's.)

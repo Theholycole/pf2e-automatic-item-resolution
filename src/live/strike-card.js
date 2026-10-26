@@ -168,6 +168,9 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     for (const penalty of strike.suppress ?? []) rules.push({ key: "AdjustModifier", selector: attackSelector, slug: penalty, suppress: true });
     // (Its target Off-Guard to it: PF2e's EphemeralEffect of the condition on the attack.)
     if (strike.offGuard) rules.push({ key: "EphemeralEffect", affects: "target", selectors: [attackSelector], uuid: "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg" });
+    // (Cover it ignores: PF2e's Effect that suppresses the target's cover bonus to AC — Effect: Alchemist Goggles, whose only rule it is —
+    // for a target in that cover.)
+    if (strike.ignoresCover?.length) rules.push({ key: "EphemeralEffect", affects: "target", selectors: [attackSelector], predicate: [{ or: strike.ignoresCover.map((level) => `target:cover-level:${level}`) }], uuid: "Compendium.pf2e.equipment-effects.Item.SZWxyXOTZtGvZbN7" });
     if (strike.splash) rules.push({ key: "FlatModifier", selector: damageSelector, slug: `${slug}-splash`, ...(label ? { label } : {}), value: strike.splash.value, damageType: strike.splash.damageType, damageCategory: "splash" });
     // (Its runes for the Strike, Weapon Shot's: PF2e's rune upgrade on the weapon loaded with it — the better of the two.)
     if (strike.runes) for (const [property, value] of [["runes-potency", strike.runes.potency], ["runes-striking", strike.runes.striking]]) {

@@ -266,6 +266,7 @@ These mechanics have no table yet. An item gets one when its text uses the same 
 - **Next-Strike riders:**
   - Hyldarf's Fang's Linnorm's Fang coats the hand cannon itself with its venom for the round (`hit-delivery.js`), so its next hit posts the DC 34 save card. The venom's block names no save; it reads as Fortitude, PF2e's save for injury poisons.
   - Sawtooth Reaper's Bloodmist Whirl readies its next Strike with the target Off-Guard to it. That's a new Strike extra (`strike-damage.js` offGuard), PF2e's EphemeralEffect of the condition on the attack. The fog's concealment and Ensnaring Disarm's free Strike are the Strike card's notes.
+  - Cover a Strike ignores (`ignoresCover` in `strike-damage.js`, 2026-10-26): Golden-Cased Bullet's "ignore the bonus to AC granted to a target in standard or lesser cover" (each grade its levels) and Arcing Hand Crossbow's Curve Bolt, "This attack ignores the target's cover" (every level). The readied Strike's Effect has PF2e's EphemeralEffect of Effect: Alchemist Goggles (its one rule suppresses the target's cover bonus to AC), for a target with that `target:cover-level`.
   - Scope of Limning's Outline readies the next Strike, and its hit leaves the glow as a note Effect on the creature for a round (`hit-notes.js`).
   - Starshot Arrow's Strike carries PF2e's `ignore-range-penalty:6`.
 - **Coronet of Stars' reassurance** rerolls the targeted ally's latest failed check, keeping the higher (`rerolls.js` who "target"). The reroll card's applied line names the creature whose roll it was.

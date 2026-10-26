@@ -188,6 +188,14 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     // (7d12 bludgeoning, basic Reflex 28, the target too).
     // Blade of Fallen Stars' projectile: the next ranged Strike's extra 6d8 cold, its Faerie Fire a note; Solar Shellflower's construct: its
     // Strikes' extra 3d4 persistent fire for 1 minute (the item's Effect); Essence Forge's healing, its gate a note.
+    // (Cover a Strike ignores, 2026-10-26: Golden-Cased Bullet's levels, Arcing Hand Crossbow's all — PF2e's EphemeralEffect suppressing the
+    // target's cover bonus, as Alchemist Goggles', for a target in that cover.)
+    const golden = compileActivations(source("Golden-Cased Bullet (Greater)"))[0].plan;
+    assert.deepEqual([golden.strike.ammo, golden.strike.ignoresCover, Boolean(golden.partial)], [true, ["standard", "lesser"], false]);
+    assert.deepEqual(strikeRules(golden).find((rule) => rule.key === "EphemeralEffect"), { key: "EphemeralEffect", affects: "target", selectors: ["ranged-strike-attack-roll"], predicate: [{ or: ["target:cover-level:standard", "target:cover-level:lesser"] }], uuid: "Compendium.pf2e.equipment-effects.Item.SZWxyXOTZtGvZbN7" });
+    assert.deepEqual(compileActivations(source("Golden-Cased Bullet (Major)"))[0].plan.strike.ignoresCover, ["greater", "greater-prone", "standard", "lesser"]);
+    const curve = compileActivations(source("Arcing Hand Crossbow")).find((entry) => entry.activation.name === "Curve Bolt").plan;
+    assert.deepEqual([curve.strike.ignoresCover.length, Boolean(curve.partial)], [4, false]);
     const blade = compileActivations(source("Blade of Fallen Stars"))[1].plan.strike;
     assert.deepEqual([blade.range, blade.damage.map((entry) => `${entry.diceNumber}${entry.dieSize} ${entry.damageType}`)], ["ranged", ["6d8 cold"]]);
     assert.match(blade.notes.join(" "), /Faerie Fire/);
