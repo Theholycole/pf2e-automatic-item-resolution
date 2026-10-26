@@ -1,17 +1,17 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1201,
+  "entries": 1199,
   "results": {
    "none": 596,
-   "partial": 224,
+   "partial": 222,
    "builtin:no-effect": 124,
    "note-only": 257
   },
   "main": {
    "speeds": 22,
    "counteract": 16,
-   "afflictions": 49,
+   "afflictions": 47,
    "areas": 109,
    "moving": 82,
    "lasting": 62,
@@ -54,7 +54,7 @@
    "speech": 123,
    "out-of-combat": 411,
    "counteract": 79,
-   "afflictions": 91,
+   "afflictions": 89,
    "lasting": 207,
    "moving": 106,
    "triggers": 123,
@@ -64,7 +64,7 @@
    "several": 89,
    "mind": 69,
    "strike": 175,
-   "reader": 187,
+   "reader": 185,
    "spells": 71,
    "information": 190,
    "actions": 56,
@@ -8959,17 +8959,6 @@
    ]
   },
   {
-   "name": "Searing Suture (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "persistent bleed damage",
-   "needs": [
-    "afflictions",
-    "reader"
-   ]
-  },
-  {
    "name": "Breech Ejectors",
    "kind": "consumable",
    "result": "none",
@@ -9511,17 +9500,6 @@
    "needs": [
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Searing Suture (Lesser)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "persistent bleed damage",
-   "needs": [
-    "afflictions",
-    "reader"
    ]
   },
   {

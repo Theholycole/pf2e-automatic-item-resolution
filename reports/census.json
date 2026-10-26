@@ -18,8 +18,8 @@
    "resolves": 801,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
-   "partial": 84,
-   "builtin:ways": 27,
+   "partial": 82,
+   "builtin:ways": 29,
    "builtin:item-action": 16,
    "note-only": 116,
    "builtin:conjure": 7,
@@ -39,8 +39,8 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 27,
-    "partial": 39,
-    "builtin:ways": 20,
+    "partial": 37,
+    "builtin:ways": 22,
     "resolves": 223,
     "note-only": 59,
     "builtin:readied-bonus": 8,
@@ -400,12 +400,12 @@
   "totals": {
    "cast": 35,
    "none": 218,
-   "item": 644,
+   "item": 642,
    "fortune": 25,
    "zone": 119,
    "save": 134,
    "expose": 89,
-   "ways": 27,
+   "ways": 29,
    "action": 16,
    "conjure": 7,
    "counteract": 33,
@@ -422,9 +422,9 @@
     "cast": 14,
     "zone": 27,
     "none": 115,
-    "ways": 20,
+    "ways": 22,
     "save": 86,
-    "item": 217,
+    "item": 215,
     "fortune": 8,
     "teleport": 4,
     "counteract": 9,
@@ -18911,9 +18911,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "partial",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Yellow Musk Poison",
@@ -20173,9 +20173,9 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "partial",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Metalmist Sphere (Greater)",

@@ -479,3 +479,10 @@ test("Break Bonds and Cayden's Tankard: the Speed penalties ended with the condi
     assert.deepEqual([curse.updated, wish.deleted, bondsLines.some((line) => /Binding's Speed penalty stays/.test(line))], [{ "system.rules": [{ key: "FlatModifier", selector: "attack", value: -1, type: "status" }] }, false, true]);
     assert.deepEqual([sparedBy(wish, 12), sparedBy(mud, 12)], [true, false]);
 });
+
+test("Searing Suture: 1d6 fire at the creature it's applied to, then its flat check against persistent bleed; a second button for a bleed from a lower-level effect, ended outright", () => {
+    for (const [name, dc] of [["Searing Suture (Lesser)", 15], ["Searing Suture (Greater)", 5]]) {
+        const plan = compileItem(item(name), { spellEffects });
+        assert.deepEqual([plan.builtin, Boolean(plan.partial), plan.ways.map((way) => [way.plan.item.recovery.dc, Boolean(way.plan.item.recovery.ends), way.plan.resolution.sharedDamage.components[0].formula, way.plan.resolution.sharedDamage.components[0].type, Boolean(way.plan.partial)])], ["ways", false, [[dc, false, "1d6", "fire", false], [dc, true, "1d6", "fire", false]]], name);
+    }
+});

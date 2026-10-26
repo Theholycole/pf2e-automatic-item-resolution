@@ -97,3 +97,27 @@ export function recoverySaid(sentence) {
     const text = String(sentence ?? "").trim();
     return ENDS.test(text) || new RegExp(String.raw`^The persistent ${TYPE} damage ends\.?$`, "i").test(text) || (CHECK.test(text) && !NOT_YOURS.test(text) && !recoveryNotes(text).length);
 }
+
+// A recovery's own damage first, and its lower-level case (2026-10-26): Searing Suture's "The target creature takes 1d6 fire damage and can
+// immediately attempt a flat check to remove the persistent bleed damage. When applied against a bleed effect that is lower level than the
+// searing suture, the flat check is automatically successful." The damage is the card's own, at the creature it's applied to; the lower-level
+// case is the ways card's second button, the bleed ended without the check (the card can't see the level of what caused it — the user's
+// 2026-10-11 ruling has such choices as buttons). The plan, the item's plain text and html → the ways plan, or the same plan.
+const TAKES_FIRST = /^The target creature takes (\d+d\d+) (\w+) damage and can immediately attempt\b/i;
+const AUTO_BELOW = /^When applied against an? (\w+) effect that is lower level than the [\w' -]+?, the flat check is automatically successful\.$/i;
+export function withLowerLevelRecovery(plan, text, html = "") {
+    const recovery = plan?.item?.recovery;
+    if (!recovery || plan.builtin || !plan.resolution) return plan;
+    const sentences = String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z@])/).map((sentence) => sentence.trim());
+    const takes = sentences.map((sentence) => TAKES_FIRST.exec(sentence)).find(Boolean);
+    const below = sentences.find((sentence) => AUTO_BELOW.test(sentence));
+    if (!takes || !below || !recovery.types.includes(AUTO_BELOW.exec(below)[1].toLowerCase())) return plan;
+    const said = new Set([takes.input, below]);
+    const notes = (plan.notes ?? []).filter((note) => !said.has(String(note).trim()));
+    const left = [...notes, ...(plan.unread ?? [])];
+    const success = { ...none(), noteEffects: [], damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] } };
+    const base = { ...plan, notes: notes.length ? notes : undefined, resolution: { kind: "check", check: { roll: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: takes[1], type: takes[2].toLowerCase(), category: null }] }, outcomes: { success } }, ...(left.length ? {} : { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
+    const lower = { ...base, item: { ...base.item, recovery: { ...recovery, ends: true } } };
+    const { resolution, ...rest } = base;
+    return { ...rest, builtin: "ways", ways: [{ name: "As it is", html: String(html ?? ""), plan: base }, { name: `Its ${recovery.types.join(", ")} from a lower-level effect`, html: String(html ?? ""), plan: lower }], once: true };
+}

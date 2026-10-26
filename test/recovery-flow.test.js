@@ -62,10 +62,10 @@ test("the reading: the types and the DC, and what else it says", () => {
     // "the DC typically decreases from 15 to 10" (Ring of Torag): no note of it.
     const [torag] = compileActivations(source("Ring of Torag"));
     assert.deepEqual([torag.plan.item.recovery, torag.plan.notes], [{ types: ["fire"], dc: 10 }, undefined]);
-    // Searing Suture's "takes 1d6 fire damage and can immediately attempt a @Check[flat|dc:15] …": the damage is a note.
+    // Searing Suture's "takes 1d6 fire damage and can immediately attempt a @Check[flat|dc:15] …": the damage the card's own since 2026-10-26
+    // (test/options-flow.test.js).
     const suture = compileItem(source("Searing Suture (Lesser)"));
-    assert.deepEqual(suture.item.recovery, { types: ["bleed"], dc: 15 });
-    assert.match(suture.notes[0], /takes 1d6 fire damage/);
+    assert.deepEqual([suture.item.recovery, suture.ways[0].plan.resolution.sharedDamage.components[0].formula], [{ types: ["bleed"], dc: 15 }, "1d6"]);
     // The type the powder's own (Soothing Powder): the card's picker. Not one for others.
     assert.deepEqual(compileItem(source("Soothing Powder (Lesser)")).item.recovery, { types: ["bleed", "poison", "fire", "acid"], dc: 10, choose: true });
     assert.equal(recoveryText(compileItem(source("Soothing Powder (Greater)")).item.recovery), "A flat check (DC 10) to end persistent damage of its type (picked below)");
