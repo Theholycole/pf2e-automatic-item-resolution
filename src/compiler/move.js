@@ -6,6 +6,8 @@
 // teleport (scripts/teleport.js). What the movement ignores or how it must end is the card's lines; its other rule sentences are notes.
 // Pure.
 
+import { OWN_STRIKE } from "./teleport.js";
+
 const VERB = "Stride|Step|Leap|Burrow|Fly|Swim|Climb";
 // "You Stride.", "You Stride up to 15 feet.", "You Stride up to twice your speed", "You Stride up to half your Speed and make a Strike …",
 // "You Step or Stride, treating …", "You Stride or Fly up to your Speed, but …", "You Burrow through dirt and stone up to your land Speed, …".
@@ -65,7 +67,7 @@ export function readMove(body) {
     const clauses = String(rest ?? "").split(/,\s*(?:but\s+)?|\s+but\s+/).map((part) => part.trim()).filter(Boolean);
     if (/or/i.test(joined ?? "") && clauses.length) clauses[0] = `or ${clauses[0]}`;
     // (A Strike along the way, Skyrider Sword's "making a melee Strike with the weapon once at any point during your movement": its user's own,
-    // from their sheet — a note, not a line: the move's card doesn't make it.)
+    // from their sheet — the card doesn't make it; a line of the card, its own actions, when the item doesn't change it (movePlan, OWN_STRIKE).)
     // (And what isn't about the move, Invisible Chain Shirt's "and turn partially invisible, becoming Concealed …": the rest's, not the card's.)
     const strikes = [];
     const others = [];
@@ -106,7 +108,11 @@ export function movePlan(html, base) {
     const body = bodyOf(html);
     const read = readMove(body);
     if (!read) return null;
-    const notes = [...(read.strikes ?? []), ...(read.others ?? []), ...read.sentences.filter((sentence) => !read.said.includes(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence))];
+    const ruled = [...(read.strikes ?? []), ...(read.others ?? []), ...read.sentences.filter((sentence) => !read.said.includes(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence))];
+    // (Its user's own Strike, as PF2e makes it — Paws of the Grogrisant's "If you land adjacent to a creature, you can Strike that creature once
+    // as part of this action": a line of the card.)
+    const strikes = ruled.filter(OWN_STRIKE).map((sentence) => `${sentence.replace(/\.$/, "")} (its own actions).`);
+    const notes = ruled.filter((sentence) => !OWN_STRIKE(sentence));
     return {
         ...base,
         builtin: "teleport",
@@ -115,7 +121,8 @@ export function movePlan(html, base) {
         trigger: { event: "use" },
         teleport: moveOf(read),
         ...(read.userEffects ? { userEffects: read.userEffects } : {}),
-        ...(notes.length ? { notes, partial: true } : {})
+        ...(notes.length || strikes.length ? { notes: [...strikes, ...notes] } : {}),
+        ...(notes.length ? { partial: true } : {})
     };
 }
 

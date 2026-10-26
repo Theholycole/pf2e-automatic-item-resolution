@@ -45,6 +45,10 @@ const LINE = /^You and all creatures in a line between your original location an
 // (A space it must have line of effect to, Golden Spur's: teleport.lineOfEffect — no wall that blocks movement between its user and the space,
 // scripts/teleport.js.)
 const LINE_OF_EFFECT = /^You must have line of effect to the space\.$/i;
+// (Its user's own Strike before or after, as PF2e makes it: Gloaming Shard's "You make a thrown Strike with the gloaming shard at a target within
+// 60 feet", Mercurial Mantle's "At the end of the teleportation, you can make a melee Strike against a creature within reach" — a line of the
+// card, its own actions. Not one the item changes: its damage, a bonus, a condition, a save.)
+export const OWN_STRIKE = (sentence) => /\bStrike\b/.test(sentence) && !/\b(?:damage|bonus|penalty|Off-Guard|flat-footed|additional|instead|DC|save|critical|twice|hits?|miss(?:es)?|Hardness|undetected|hidden|concealed|invisible|remains?|whenever|each time|free action|successfully|for the next)\b/i.test(sentence);
 // (Its other rule sentences: not its flavor.)
 const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|reaction|spell|creatures?|line of effect|If|must)\b/;
 
@@ -86,7 +90,9 @@ export function teleportPlan(html, base, whole = null) {
     const line = sentences.map((sentence) => LINE.exec(sentence)).find(Boolean);
     const lineOfEffect = sentences.some((sentence) => LINE_OF_EFFECT.test(sentence));
     const own = (sentence) => sentence.includes(read.match[0]) || read.match[0].includes(sentence) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence) || LINE_OF_EFFECT.test(sentence);
-    const notes = sentences.filter((sentence) => !own(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
+    const ruled = sentences.filter((sentence) => !own(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
+    const strikes = ruled.filter(OWN_STRIKE).map((sentence) => `${sentence.replace(/\.$/, "")} (its own actions).`);
+    const notes = ruled.filter((sentence) => !OWN_STRIKE(sentence));
     const teleport = { within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
     return {
         ...base,
@@ -95,6 +101,7 @@ export function teleportPlan(html, base, whole = null) {
         targeting: read.from === "target" ? { target: "1 creature", range: null, area: null } : { target: "self", range: null, area: null },
         trigger: { event: "use" },
         teleport,
-        ...(notes.length ? { notes, partial: true } : {})
+        ...(notes.length || strikes.length ? { notes: [...strikes, ...notes] } : {}),
+        ...(notes.length ? { partial: true } : {})
     };
 }

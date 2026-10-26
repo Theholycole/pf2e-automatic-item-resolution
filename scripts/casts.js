@@ -30,6 +30,27 @@ export function beyondRange(castRange, casterToken, actor, targets) {
     return targets.filter((target) => distanceFeet(from, spaceOf(target.object ?? target), grid) > feet).map((target) => target.name);
 }
 
+// The cast's bonus beside the spell (src/compiler/cast-riders.js castBonus) on each creature it's cast on: PF2e's FlatModifier rules for its
+// time. → the card's lines.
+export async function giveCastBonus(state, actors) {
+    const { modifiers, said } = state.plan.castBonus;
+    const time = modifiers[0].duration;
+    const words = said.replace(/^(?:and|with) /i, "");
+    const lines = [];
+    for (const actor of actors) {
+        await actor.createEmbeddedDocuments("Item", [{
+            name: `${state.item.name}: ${words.replace(/ for \d+ \w+$/, "")}`,
+            type: "effect",
+            img: state.item.img ?? "icons/svg/upgrade.svg",
+            flags: { [MODULE_ID]: { castBonus: true } },
+            system: { description: { value: `<p>${words.charAt(0).toUpperCase()}${words.slice(1)} (${state.item.name}).</p>` }, duration: { value: time.value, unit: time.unit, expiry: time.expiry ?? "turn-start", sustained: false }, start: { value: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null }, tokenIcon: { show: true },
+                rules: modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: modifier.type, value: modifier.value, label: state.item.name, ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })) }
+        }]);
+        lines.push(`${actor.name} gains ${words}.`);
+    }
+    return lines;
+}
+
 // targets: the token uuids of whoever pressed Apply, for a spell aimed at others; choice: the spell picked of several.
 export async function applyCastCard(message, { drinker = null, targets = [], choice = null } = {}) {
     let state = stateOf(message);
@@ -57,6 +78,8 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         // (Healing at the end of each of its user's turns for the item's time: scripts/turn-heal.js.)
         const heals = state.plan.turnHeal ? await rememberTurnHeal(state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor, state.plan.turnHeal, { item: state.item, duration: state.plan.castDuration }) : null;
         if (heals) lines.push(heals);
+        // (A bonus with the spell, Psyche Salts': an Effect of PF2e's rules on the creature it's cast on.)
+        if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean)));
     }
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: castCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

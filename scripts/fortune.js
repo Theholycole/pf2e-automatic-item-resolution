@@ -35,9 +35,12 @@ export async function applyFortuneCard(message, { targets = [] } = {}) {
         // (The same item's earlier one, unused: replaced.)
         const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.item?.name === state.item.name);
         if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
-        await actor.createEmbeddedDocuments("Item", [fortuneEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID })]);
+        await actor.createEmbeddedDocuments("Item", [fortuneEffectSource({ state: forExpert(state, actor), img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID })]);
+        // (What a failure at that roll costs, Iris of the Sky's: a mark of its own — PF2e takes the RollTwice Effect away with the roll.)
+        const onFailure = state.plan.rollTwice?.onFailure;
+        if (onFailure) await actor.createEmbeddedDocuments("Item", [{ name: `${state.item.name}: a failure costs ${failureWords(onFailure)}`, type: "effect", img: state.item.img ?? "icons/svg/hazard.svg", flags: { [MODULE_ID]: { rollAfter: { selector: state.plan.rollTwice.selector, onFailure, item: state.item } } }, system: { description: { value: `<p>If the roll is a failure, ${escape(actor.name)} takes ${escape(failureWords(onFailure))}.</p>` }, duration: { value: 1, unit: "minutes", expiry: "turn-start", sustained: false }, start: { value: game.time.worldTime, initiative: startInitiative(actor) }, rules: [] } }]);
     }
-    const results = creatures.map(({ name }) => `${name}: ${readiedWords(state.plan)}.`);
+    const results = creatures.map(({ actor, name }) => `${name}: ${readiedWords(forExpert(state, actor).plan)}.`);
     if (state.plan.bonus?.breaks) results.push(await breakItem(state.item));
     const next = { ...state, status: "applied", results };
     return message.update({ content: fortuneCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
@@ -59,6 +62,18 @@ async function breakItem(entry) {
 }
 
 // A check by a creature with such an Effect, rolled for its roll: the Effect gone (PF2e's own removal may have done it).
+// (More for an expert in any weapon, Warrior's Training Ring's +4: the modifier's value for this creature — a character's attack
+// proficiencies, expert or better in one.)
+const expertIn = (actor) => Object.values(actor?.system?.proficiencies?.attacks ?? {}).some((entry) => Number(entry?.rank ?? 0) >= 2);
+function forExpert(state, actor) {
+    const modifiers = state.plan.bonus?.modifiers ?? [];
+    if (!modifiers.some((modifier) => modifier.ifExpert)) return state;
+    const expert = expertIn(actor);
+    return { ...state, plan: { ...state.plan, bonus: { ...state.plan.bonus, modifiers: modifiers.map(({ ifExpert, ...modifier }) => (ifExpert && expert ? { ...modifier, value: ifExpert } : modifier)) } } };
+}
+
+const failureWords = (onFailure) => `${onFailure.formula} ${onFailure.persistent ? "persistent " : ""}${onFailure.type} damage`;
+
 export async function fortuneRolled(message) {
     if (!isActiveGM()) return;
     const context = message?.flags?.pf2e?.context;
@@ -82,6 +97,16 @@ export async function fortuneRolled(message) {
         return !predicates.length || predicates.some((rule) => fits(rule.predicate));
     });
     if (spent.length) await actor.deleteEmbeddedDocuments("Item", spent.map((effect) => effect.id)).catch(() => null);
+    // (What a failure at that roll costs, Iris of the Sky's 5 persistent fire: dealt to its user on a failure, the mark gone either way.)
+    const after = (actor?.itemTypes?.effect ?? []).filter((effect) => domains.includes(effect.flags?.[MODULE_ID]?.rollAfter?.selector));
+    if (after.length) await actor.deleteEmbeddedDocuments("Item", after.map((effect) => effect.id)).catch(() => null);
+    for (const effect of context.outcome === "failure" ? after : []) {
+        const { onFailure, item } = effect.flags[MODULE_ID].rollAfter;
+        const DamageRoll = damageRollClass();
+        const roll = await new DamageRoll(`${onFailure.formula}[${onFailure.persistent ? `persistent,${onFailure.type}` : onFailure.type}]`).evaluate();
+        await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `<strong>${escape(item?.name ?? "Item")}</strong>: a failure — ${escape(failureWords(onFailure))} to ${escape(actor.name)}` });
+        await actor.applyDamage({ damage: roll, token: message.token ?? actor.getActiveTokens?.(true, true)?.[0] ?? undefined });
+    }
     // (A critical success at that roll gives more: Champion's Laurels' temporary Hit Points — the ability module's, with their time.)
     for (const effect of context.outcome === "criticalSuccess" ? spent : []) {
         const flag = effect.flags[MODULE_ID][MODULE_KEY];

@@ -346,7 +346,7 @@ function scopeOf(scope) {
 // "+1 item bonus to Fortitude saves" / "–2 penalty to Will saves, Perception checks and initiative rolls" / "+1 item bonus to
 // saving throws against diseases and poisons" / "+2 status bonus to Athletics checks to Climb" / "+10-foot status bonus to
 // your Speed".
-function modifiersOf(sentences, duration, used = new Set()) {
+export function modifiersOf(sentences, duration, used = new Set()) {
     const modifiers = [];
     const pattern = /\b(?:you (?:gain|get|have|receive|take|suffer)|grants? you|granting you)(?: an?)? ([+-])(\d+)(-foot)? (?:(item|status|circumstance) )?(bonus|penalty) (?:to|on) ([^.;]+?)(?=(?: for (?:\d+|one|an?) \w+| until\b| while\b| during (?:those|these|the|that|this)\b| for (?:this|that|the) (?:movement|move|Stride)\b|,? (?:but|which|though|unless|if)\b|,? and (?:you|your)\b| as long as\b|;|\.|$))/gi;
     for (const [index, whole] of sentences.entries()) {

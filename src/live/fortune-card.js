@@ -42,12 +42,14 @@ export function bonusWords(bonus) {
     const against = traits.length ? ` against ${traits.join(" or ")} effects` : "";
     // (Resolute Shield's: the shield takes what gets through too.)
     const shared = bonus.shieldShare ? "the shield taking the rest of the damage too" : null;
-    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}` : null, resistance, immunity, degree, shared].filter(Boolean).join(", ");
+    // (Warrior's Training Ring's more for an expert: "+4 for an expert in any weapon".)
+    const expert = first?.ifExpert ? ` (+${first.ifExpert} for an expert in any weapon)` : "";
+    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, degree, shared].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
 export function readiedWords(plan) {
-    if (plan.builtin === "roll-twice") return `next ${rollWords(plan.rollTwice)}: roll twice, take the better${plan.rollTwice.duration?.expiry === "turn-end" ? ", before the end of the next turn" : ""}`;
+    if (plan.builtin === "roll-twice") return `next ${rollWords(plan.rollTwice)}: roll twice, take the better${plan.rollTwice.duration?.expiry === "turn-end" ? ", before the end of the next turn" : ""}${plan.rollTwice.onFailure ? `; on a failure, its user takes ${plan.rollTwice.onFailure.formula} ${plan.rollTwice.onFailure.persistent ? "persistent " : ""}${plan.rollTwice.onFailure.type} damage` : ""}`;
     const bonus = plan.bonus;
     // (Only against what triggered it: "against what triggered it, this turn".)
     const time = bonus.duration?.expiry === "turn-start" ? "until the start of the next turn" : bonus.duration?.value ? "until the end of the next turn" : "this turn";

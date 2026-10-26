@@ -6191,6 +6191,62 @@ export const cases = {
         return { lines, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Psyche Salts (Moderate): Clear Mind cast on the drinker, and PF2e's +2 item bonus to saves against mental effects for 10 minutes on them.
+    async psycheSaltsBonus(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: user } = await creature(scene, "Salts Sniffer", { type: "character", x: 4, y: 18, level: 9 });
+        const salts = await give(user, "Psyche Salts (Moderate)");
+        const since = Date.now();
+        await salts.consume();
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await until(() => user.itemTypes.effect.some((effect) => effect.getFlag(NS, "castBonus")), "the bonus Effect", { timeout: 15000 });
+        const effect = user.itemTypes.effect.find((entry) => entry.getFlag(NS, "castBonus"));
+        const rule = effect.system.rules[0];
+        assert(rule.key === "FlatModifier" && [].concat(rule.selector).includes("saving-throw") && rule.value === 2 && JSON.stringify(rule.predicate) === JSON.stringify(["item:trait:mental"]), `the rule (${JSON.stringify(rule)})`);
+        assert(effect.system.duration.value === 10 && effect.system.duration.unit === "minutes", `10 minutes (${JSON.stringify(effect.system.duration)})`);
+        return { effect: effect.name, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Iris of the Sky's A Wish Granted With Inevitable Fire: its roll-twice Effect and the mark of what a failure costs; a failed attack roll
+    // (its message as PF2e makes it, the failure stated) gives its user 5 persistent fire.
+    async irisFailure(scene) {
+        // (A creature with Hit Points: PF2e gives none at 0 the persistent damage.)
+        const { actor: gunner } = await creature(scene, "Iris Gunner", { x: 6, y: 18, level: 6 });
+        const iris = await give(gunner, "Iris of the Sky");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(iris.uuid, 1);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        assert(/5 persistent fire damage/.test(card.content), "the card's failure line");
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => gunner.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollAfter")), "the failure mark", { timeout: 8000 });
+        const { fortuneRolled } = await import("../scripts/fortune.js");
+        await fortuneRolled({ actor: gunner, token: null, flags: { pf2e: { context: { type: "attack-roll", domains: ["attack", "attack-roll", "strike-attack-roll"], options: [], outcome: "failure" } } } });
+        const burning = () => gunner.itemTypes.condition.find((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "fire");
+        await until(() => burning(), `5 persistent fire (${gunner.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 8000 });
+        assert(!gunner.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollAfter")), "the mark gone");
+        return { formula: burning().system.persistent.formula };
+    },
+
+    // Warrior's Training Ring: +2 circumstance to the attack roll for a wearer untrained in all weapons, +4 for one expert in simple weapons.
+    async trainingRingExpert(scene) {
+        const bonusOf = async (name, x, expert) => {
+            const { actor } = await creature(scene, name, { type: "character", x, y: 16, level: 5 });
+            if (expert) await actor.update({ "system.proficiencies.attacks.simple.rank": 2 });
+            const ring = await give(actor, "Warrior's Training Ring");
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(ring.uuid, 0);
+            const card = await messageAfter(since, itemCard("fortune"), { what: `${name}'s fortune card` });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => actor.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")), `${name}'s Effect`, { timeout: 8000 });
+            return actor.itemTypes.effect.find((effect) => effect.getFlag(NS, "rollTwice")).system.rules.find((rule) => rule.key === "FlatModifier")?.value;
+        };
+        const untrained = await bonusOf("Ring Novice", 12, false);
+        const expert = await bonusOf("Ring Expert", 14, true);
+        assert(untrained === 2 && expert === 4, `+2 and +4 (${untrained}, ${expert})`);
+        return { untrained, expert };
+    },
+
     // Medusa's Scream's Petrify at the shield's 30 feet: a creature 40 feet off refused, one 25 feet off cast at.
     async medusaRange(scene) {
         assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");

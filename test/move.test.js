@@ -43,7 +43,8 @@ test("an activation that moves its user: the move card's, fully read", () => {
     assert.deepEqual(activation("Staff of Sun Wukong", "Cloud Somersault").teleport, { within: 50, from: "self", move: { verb: "Leap", lines: ["In any direction"] } });
     // (A doubled Leap: twice its user's own Leap, 30 feet at a Speed of 30.)
     const paws = activation("Paws of the Grogrisant", "Grogrisant Leap");
-    assert.deepEqual([paws.teleport.leapTimes, teleportRange(paws.teleport, { speed: 30 }), teleportRange(paws.teleport, { speed: 25 }), paws.partial], [2, 30, 20, true], "its Strike on landing is a note");
+    assert.deepEqual([paws.teleport.leapTimes, teleportRange(paws.teleport, { speed: 30 }), teleportRange(paws.teleport, { speed: 25 }), paws.partial], [2, 30, 20, undefined], "its Strike on landing is a line of the card");
+    assert.ok(paws.notes.some((note) => /\(its own actions\)\.$/.test(note)));
     // (Its movement ends beside an ally; again for each action more.)
     assert.equal(activation("Squire's Tabard", "At Your Aid").teleport.move.endsBeside, "ally");
     const footing = activation("Spleen Bloodstone of Arazni", "Sure Footing");
@@ -51,11 +52,12 @@ test("an activation that moves its user: the move card's, fully read", () => {
     assert.ok(footing.teleport.move.lines.includes("With a climb or fly Speed, it can be a Climb or Fly instead"));
 });
 
-test("not a move: a Trigger that's a Stride, a Strike along the way left as a note", () => {
+test("not a move: a Trigger that's a Stride, a Strike along the way a line of the card", () => {
     assert.ok(!compileActivations(item("Demon-Hunting Bands")).some((entry) => entry.plan?.teleport?.move), "its Trigger, not its Effect");
     const sword = compileActivations(item("Skyrider Sword")).find((entry) => entry.plan?.teleport?.move).plan;
-    assert.deepEqual([sword.teleport.move.verb, sword.partial], ["Fly", true]);
-    assert.ok(sword.notes.some((note) => /\bmelee Strike\b/.test(note)));
+    // (Its Strike along the way, as PF2e makes it: a line of the card, its own actions — 2026-10-26.)
+    assert.deepEqual([sword.teleport.move.verb, sword.partial], ["Fly", undefined]);
+    assert.ok(sword.notes.some((note) => /\bmelee Strike\b.*\(its own actions\)\.$/.test(note)));
     const claw = compileItem(item("Lion Claw"));
     assert.deepEqual([claw.builtin, claw.teleport.move.verb, claw.partial], ["teleport", "Stride", true]);
 });

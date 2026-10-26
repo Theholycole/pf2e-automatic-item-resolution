@@ -75,3 +75,9 @@ test("healing at the end of each turn beside a cast, for the item's time: Envelo
     const light = first("Enveloping Light");
     assert.deepEqual([light.turnHeal.formula, light.castDuration.value, light.castDuration.unit, light.partial], ["1d4", 5, "rounds", undefined]);
 });
+
+test("a bonus beside the cast: Psyche Salts (Moderate)'s +2 item bonus to saves against mental effects for 10 minutes, PF2e's rule for it", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const salts = compileItem(item("Psyche Salts (Moderate)"), options);
+    assert.deepEqual([salts.attack, salts.castBonus.modifiers[0].selector, salts.castBonus.modifiers[0].value, salts.castBonus.modifiers[0].predicate, salts.partial], [17, "saving-throw", 2, ["item:trait:mental"], undefined]);
+});

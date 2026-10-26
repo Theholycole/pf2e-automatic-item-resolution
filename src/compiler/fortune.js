@@ -96,8 +96,12 @@ export function rollTwicePlan(text, base, { trigger = null } = {}) {
     // (Its time, Aerekostes's "Only an attack before the end of your next turn" (src/compiler/item-data.js words it so): the Effect's, to the end
     // of the next turn — not a note.)
     const until = read_notes.find((note) => /^Only an attack before the end of your next turn\.$/i.test(note));
-    const notes = read_notes.filter((note) => note !== until);
-    const rollTwice = { ...found, ...(until ? { duration: { value: 1, unit: "rounds", expiry: "turn-end" } } : {}) };
+    // (What a failure at that roll costs its user, Iris of the Sky's "If the attack is a failure, you take 5 persistent fire damage":
+    // rollTwice.onFailure, dealt once the roll comes — scripts/fortune.js. A failure, not a critical failure.)
+    const failing = read_notes.map((note) => [note, /^If the (?:attack|check) is a failure, you take (\d+(?:d\d+)?) (persistent )?(acid|cold|electricity|fire|sonic|force|mental|poison|spirit|vitality|void|bleed|bludgeoning|piercing|slashing) damage\.$/i.exec(note)]).find(([, match]) => match);
+    const notes = read_notes.filter((note) => note !== until && note !== failing?.[0]);
+    const onFailure = failing ? { formula: failing[1][1], type: failing[1][3].toLowerCase(), persistent: Boolean(failing[1][2]) } : null;
+    const rollTwice = { ...found, ...(until ? { duration: { value: 1, unit: "rounds", expiry: "turn-end" } } : {}), ...(onFailure ? { onFailure } : {}) };
     return { ...base, builtin: "roll-twice", automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: "the user", range: null, area: null }, trigger: { event: "use" }, rollTwice, notes, ...(notes.length ? { partial: true } : {}) };
 }
 

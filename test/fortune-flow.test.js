@@ -416,3 +416,15 @@ test("Champion's Laurels: +1 status to the triggering Acrobatics or Athletics ch
     assert.deepEqual([given.change.op, given.change.target, given.change.amount, given.change.duration.unit, given.state.source.name], ["tempHp", "source", 2, "minutes", "Athlete"]);
     assert.match(foundry.messages.at(-1).content, /Champion&#39;s Laurels \(Amateur\)<\/strong>: a critical success — ability applied tempHp/);
 });
+
+test("what a failure at the roll costs: Iris of the Sky's A Wish Granted With Inevitable Fire — 5 persistent fire to its user on a failure, on the card", () => {
+    const [, wish] = compileActivations(source("Iris of the Sky"));
+    assert.deepEqual([wish.plan.rollTwice.onFailure, wish.plan.partial], [{ formula: "5", type: "fire", persistent: true }, undefined]);
+    assert.match(readiedWords(wish.plan), /on a failure, its user takes 5 persistent fire damage$/);
+});
+
+test("more for an expert: Warrior's Training Ring's +2 to the attack roll, +4 for an expert in any weapon — on the card", () => {
+    const [ring] = compileActivations(source("Warrior's Training Ring"));
+    assert.deepEqual([ring.plan.bonus.modifiers[0].value, ring.plan.bonus.modifiers[0].ifExpert, ring.plan.partial], [2, 4, undefined]);
+    assert.match(readiedWords(ring.plan), /\(\+4 for an expert in any weapon\)/);
+});

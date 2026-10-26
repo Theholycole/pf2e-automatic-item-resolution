@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1318,
+  "entries": 1307,
   "results": {
-   "partial": 394,
+   "partial": 383,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -12,13 +12,13 @@
    "cast-changes": 25,
    "speeds": 24,
    "areas": 135,
-   "counteract": 26,
-   "afflictions": 58,
-   "moving": 92,
+   "counteract": 23,
+   "afflictions": 57,
+   "moving": 90,
    "visibility": 48,
    "choice": 31,
    "lasting": 67,
-   "strike": 107,
+   "strike": 102,
    "spells": 36,
    "information": 23,
    "out-of-combat": 35,
@@ -55,23 +55,23 @@
    "objects": 388,
    "speech": 130,
    "out-of-combat": 438,
-   "counteract": 98,
-   "afflictions": 104,
+   "counteract": 95,
+   "afflictions": 103,
    "lasting": 234,
-   "moving": 120,
+   "moving": 118,
    "triggers": 124,
    "visibility": 50,
    "dying": 75,
    "choice": 110,
    "several": 106,
-   "strike": 203,
+   "strike": 196,
    "reader": 211,
    "spells": 76,
    "information": 199,
    "actions": 64,
    "from-events": 29,
    "no-rules": 10,
-   "situational": 85,
+   "situational": 82,
    "creatures": 63,
    "mind": 65,
    "illusions": 60,
@@ -3208,17 +3208,6 @@
    ]
   },
   {
-   "name": "Paws of the Grogrisant",
-   "kind": "activation",
-   "activation": "Grogrisant Leap",
-   "result": "partial",
-   "main": "strike",
-   "work": "can strike",
-   "needs": [
-    "strike"
-   ]
-  },
-  {
    "name": "Emergency Disguise",
    "kind": "consumable",
    "result": "none",
@@ -4590,17 +4579,6 @@
     "fortune",
     "triggers",
     "several"
-   ]
-  },
-  {
-   "name": "Gloaming Shard",
-   "kind": "activation",
-   "activation": "Umbral Jaunt",
-   "result": "partial",
-   "main": "strike",
-   "work": "thrown strike",
-   "needs": [
-    "strike"
    ]
   },
   {
@@ -7431,16 +7409,6 @@
    ]
   },
   {
-   "name": "Skyrider Sword",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike"
-   ]
-  },
-  {
    "name": "Infernal Health",
    "kind": "activation",
    "result": "partial",
@@ -9602,17 +9570,6 @@
    ]
   },
   {
-   "name": "Psyche Salts (Moderate)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract",
-    "situational"
-   ]
-  },
-  {
    "name": "Fortifying Pebble",
    "kind": "consumable",
    "result": "none",
@@ -9962,16 +9919,6 @@
    ]
   },
   {
-   "name": "Warrior's Training Ring",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack roll",
-   "needs": [
-    "strike"
-   ]
-  },
-  {
    "name": "Guangu of the Steppe",
    "kind": "activation",
    "activation": "The Hammer of Hooves",
@@ -10297,18 +10244,6 @@
    ]
   },
   {
-   "name": "Mercurial Mantle",
-   "kind": "activation",
-   "activation": "Wandering Twirl",
-   "result": "partial",
-   "main": "moving",
-   "work": "teleportation",
-   "needs": [
-    "moving",
-    "strike"
-   ]
-  },
-  {
    "name": "Gourd Home",
    "kind": "activation",
    "result": "none",
@@ -10364,17 +10299,6 @@
    "needs": [
     "information",
     "speech"
-   ]
-  },
-  {
-   "name": "Iris of the Sky",
-   "kind": "activation",
-   "activation": "A Wish Granted With Inevitable Fire",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "persistent fire damage",
-   "needs": [
-    "afflictions"
    ]
   },
   {
@@ -10484,17 +10408,6 @@
     "dying",
     "objects",
     "reader"
-   ]
-  },
-  {
-   "name": "Psyche Salts (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract",
-    "situational"
    ]
   },
   {
@@ -13458,17 +13371,6 @@
    ]
   },
   {
-   "name": "Purloining Cloak",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "work": "teleportation",
-   "needs": [
-    "moving",
-    "strike"
-   ]
-  },
-  {
    "name": "Secret-Keeper's Mask (Father Skinsaw)",
    "kind": "activation",
    "result": "note-only",
@@ -14452,17 +14354,6 @@
    ]
   },
   {
-   "name": "Psyche Salts (Lesser)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract",
-    "situational"
-   ]
-  },
-  {
    "name": "Elder Seed",
    "kind": "consumable",
    "result": "none",
@@ -15248,16 +15139,6 @@
    "needs": [
     "objects",
     "speech"
-   ]
-  },
-  {
-   "name": "Skyrider Sword (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike"
    ]
   },
   {
