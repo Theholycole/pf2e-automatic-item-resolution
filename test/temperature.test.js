@@ -97,3 +97,15 @@ test("the environment module's API: worn, held and invested items as each needs;
         globalThis.game = previous;
     }
 });
+
+test("difficult terrain ignored: PF2e's own rule, its features ice, snow and plants (the environment module's undergrowth), greater too when named", () => {
+    const winter = compileItem(item("Winterstep Elixir (Lesser)"));
+    const [entry] = winter.item.ruleEffects;
+    assert.deepEqual(entry.rules.map((rule) => [rule.path, rule.value.feature]), [["system.movement.terrain.difficult.ignored", "ice"], ["system.movement.terrain.difficult.ignored", "snow"]]);
+    assert.equal(winter.partial, undefined);
+    const cloak = compileActivations(item("Underbrush Cloak")).find((each) => each.activation.name === "One with the Woods").plan;
+    assert.deepEqual([cloak.item.ruleEffects[0].rules[0].value.feature, cloak.item.ruleEffects[0].duration.value, cloak.item.ruleEffects[0].duration.unit, cloak.noteOnly], ["undergrowth", 1, "minutes", undefined]);
+    const pattern = compileActivations(item("Frostwalker Pattern"))[0].plan.item.ruleEffects[0];
+    assert.ok(pattern.rules.some((rule) => rule.path === "system.movement.terrain.greater.ignored" && rule.value.feature === "ice"));
+    assert.match(pattern.words, /doesn't risk falling when crossing ice/);
+});

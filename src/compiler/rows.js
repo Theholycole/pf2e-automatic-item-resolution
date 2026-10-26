@@ -887,6 +887,26 @@ function ruleEffectsOf(sentences, duration, used = new Set()) {
             found.push({ name: "water breathing", words: "Can breathe underwater", rules: [], duration: breathe[1] ? durationIn(`for ${breathe[1]}`, duration) : duration });
             continue;
         }
+        // (Difficult terrain ignored, 2026-10-25 — Winterstep Elixir's "You ignore the uneven ground and difficult terrain caused by ice, and the
+        // difficult terrain caused by snow", Underbrush Cloak's "you ignore any difficult terrain caused by plants and fungi", Frostwalker
+        // Pattern's "Until the end of your next turn, you ignore difficult terrain and greater difficult terrain from ice and snow": PF2e's own
+        // rule for it, system.movement.terrain.{difficult,greater}.ignored { environment, feature } — "all" when it names none; PF2e's own
+        // features ice and snow, plants and fungi the environment module's undergrowth. PF2e reduces greater difficult terrain to difficult
+        // when difficult is ignored, as Winterstep's "(reducing greater difficult terrain … to ordinary difficult terrain)" says.)
+        const terrain = /^(?:(For the next (?:(?:\d+|one|an?) )?(?:rounds?|minutes?|hours?)|Until the end of your (?:next )?turn|For (?:\d+|one|an?) (?:rounds?|minutes?|hours?)), )?you ignore (?:the (?:effects of )?|any )?(?:uneven ground and )?(?:non-magical )?difficult terrain\b([^.]*)\.$/i.exec(sentence.trim());
+        if (terrain && !/\bwithin the chosen environment\b|\bresistance\b|\bwhile\b|\bif\b/i.test(terrain[2])) {
+            const rest = terrain[2];
+            const features = [...new Set([...rest.matchAll(/\b(ice|snow|sand|rubble|plants|fungi|undergrowth)\b/gi)].map(([, word]) => ({ fungi: "undergrowth", plants: "undergrowth" })[word.toLowerCase()] ?? word.toLowerCase()))];
+            const greater = /\band greater difficult terrain\b/i.test(sentence);
+            const add = (path, feature) => ({ key: "ActiveEffectLike", mode: "add", path, value: { environment: "all", feature } });
+            const rules = (features.length ? features : ["all"]).flatMap((feature) => [add("system.movement.terrain.difficult.ignored", feature), ...(greater ? [add("system.movement.terrain.greater.ignored", feature)] : [])]);
+            const time = terrain[1] ? (/^Until the end of your next turn$/i.test(terrain[1]) ? { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } : /^Until the end of your turn$/i.test(terrain[1]) ? { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } : durationIn(terrain[1].replace(/^For the next (?=[a-z])(?!one\b|an?\b)/i, "for 1 ").replace(/^For the next/i, "for"), duration)) : duration;
+            used.add(index);
+            // (Frostwalker Pattern's "and don't risk falling when crossing ice": said too — the environment module's Balance on ice.)
+            const falling = /\bdon't risk falling when crossing (\w+)\b/i.exec(rest);
+            found.push({ name: "difficult terrain ignored", words: `Ignores ${greater ? "difficult and greater difficult" : "difficult"} terrain${features.length ? ` from ${features.join(", ").replace("undergrowth", "plants and fungi")}` : ""}${falling ? `, and doesn't risk falling when crossing ${falling[1]}` : ""}`, rules, duration: time });
+            continue;
+        }
         if (!flank && !deny) continue;
         used.add(index);
         if (flank) found.push({ name: "not off-guard to flankers", words: "Not Off-Guard to melee attacks from creatures flanking it", rules: [{ key: "ActiveEffectLike", mode: "override", path: "system.attributes.flanking.offGuardable", value: false }], duration: durationIn(`for ${flank[1]}`, duration) });

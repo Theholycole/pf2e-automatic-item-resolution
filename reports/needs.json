@@ -1,18 +1,18 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1348,
+  "entries": 1342,
   "results": {
-   "none": 634,
+   "none": 633,
    "partial": 316,
    "builtin:no-effect": 129,
-   "note-only": 269
+   "note-only": 264
   },
   "main": {
    "speeds": 25,
    "counteract": 17,
    "afflictions": 56,
-   "areas": 118,
+   "areas": 112,
    "moving": 90,
    "lasting": 68,
    "visibility": 57,
@@ -48,11 +48,11 @@
   },
   "any": {
    "speeds": 31,
-   "areas": 177,
+   "areas": 171,
    "immunity": 75,
-   "objects": 394,
+   "objects": 393,
    "speech": 127,
-   "out-of-combat": 427,
+   "out-of-combat": 425,
    "counteract": 80,
    "afflictions": 102,
    "lasting": 222,
@@ -2038,16 +2038,6 @@
    ]
   },
   {
-   "name": "Winterstep Elixir (Lesser)",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Shot of the First Vault",
    "kind": "activation",
    "activation": "Reload Order",
@@ -2453,17 +2443,6 @@
     "areas",
     "lasting",
     "several"
-   ]
-  },
-  {
-   "name": "Winterstep Elixir (Greater)",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "out-of-combat"
    ]
   },
   {
@@ -6514,17 +6493,6 @@
    ]
   },
   {
-   "name": "Winterstep Elixir (Moderate)",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Astrolabe of the Falling Stars",
    "kind": "activation",
    "activation": "Calculate",
@@ -7278,16 +7246,6 @@
    "needs": [
     "lasting",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Winterstep Elixir (Minor)",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -14665,17 +14623,6 @@
    ]
   },
   {
-   "name": "Frostwalker Pattern",
-   "kind": "activation",
-   "result": "none",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "objects"
-   ]
-  },
-  {
    "name": "Weapon Siphon",
    "kind": "activation",
    "result": "none",
@@ -15232,17 +15179,6 @@
    "work": "6d6",
    "needs": [
     "reader"
-   ]
-  },
-  {
-   "name": "Underbrush Cloak",
-   "kind": "activation",
-   "activation": "One with the Woods",
-   "result": "note-only",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas"
    ]
   },
   {
