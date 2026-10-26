@@ -13,6 +13,7 @@ import { postActionCard } from "./item-actions.js";
 import { USES, now } from "./activations.js";
 import { withoutUse } from "../src/live/activations-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, startInitiative, stateOf } from "./foundry.js";
+import { planFor } from "../src/live/if-target.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -168,13 +169,16 @@ export async function strikeWithRider(message) {
     const worsened = harder && (rider.plan.strike.criticalWorse ?? []).length && context.outcome === "criticalSuccess" ? criticalWorse(harder, rider.plan.strike.criticalWorse) : harder;
     // (After a critical hit, a penalty to the save, Blindpepper Bolt's: the core's own save bonus.)
     const worse = worsened && rider.plan.strike.criticalSaveBonus && context.outcome === "criticalSuccess" ? { ...worsened, resolution: { ...worsened.resolution, check: { ...worsened.resolution.check, bonus: rider.plan.strike.criticalSaveBonus } } } : worsened;
+    // (Its conditions longer after a critical hit, Rattling Bolt's 1 minute: each of the save's rows' times then, src/compiler/strikes.js.)
+    const timed = worse && rider.plan.strike.criticalTime && context.outcome === "criticalSuccess" ? criticalTimed(worse, rider.plan.strike.criticalTime) : worse;
     // (The save only for a creature its damage harms, Gravebane Ammunition's void healing: no card for another.)
     const fits = !rider.plan.strike?.saveOnly || voidHealed(targetToken.actor);
-    if (worse && !fits) lines.push(`${target.name} hasn't void healing: no save.`);
+    if (timed && !fits) lines.push(`${target.name} hasn't void healing: no save.`);
     // (A square within the weapon's first range increment, Juxtaposition Ammunition's teleport: that weapon's, src/compiler/placed.js.)
-    const weapon = worse?.placed?.nearSource === "weapon-range" ? message.item ?? (message.flags?.pf2e?.origin?.uuid ? await fromUuid(message.flags.pf2e.origin.uuid).catch(() => null) : null) : null;
-    const ranged = worse?.placed?.nearSource === "weapon-range" ? { ...worse, placed: { ...worse.placed, nearSource: Number(weapon?.system?.range) || null } } : worse;
-    const save = fits ? ranged : null;
+    const weapon = timed?.placed?.nearSource === "weapon-range" ? message.item ?? (message.flags?.pf2e?.origin?.uuid ? await fromUuid(message.flags.pf2e.origin.uuid).catch(() => null) : null) : null;
+    const ranged = timed?.placed?.nearSource === "weapon-range" ? { ...timed, placed: { ...timed.placed, nearSource: Number(weapon?.system?.range) || null } } : timed;
+    // (A rider only for some creatures, Rattling Bolt's undead's lifesense: the target's own plan, src/live/if-target.js.)
+    const save = fits && ranged ? planFor(ranged, targetToken.actor) : null;
     // (No damage on the hit, Juxtaposition Ammunition's "it doesn't deal the Strike's normal damage": said, for its damage roll.)
     if (rider.plan.strike?.noDamage) lines.unshift(`${target.name} takes none of the Strike's damage (don't roll it)`);
     if (save) {
@@ -294,6 +298,14 @@ async function postStrikeSplash({ message, context, rider }) {
     const splash = rider.plan.strike.splash;
     const state = createBombCard({ plan: { source: rider.plan.source ?? null }, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: rider.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), outcome: context.outcome, splash: [{ type: splash.damageType, total: splash.value }], near });
     await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: message.actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
+}
+
+// The save's rows with each condition and note Effect lasting the critical hit's time.
+function criticalTimed(plan, time) {
+    const lasting = { mode: "fixed", value: time.value, unit: time.unit, expiry: "turn-start", anchor: "effect-start" };
+    const outcomes = Object.fromEntries(Object.entries(plan.resolution?.outcomes ?? {}).map(([degree, row]) => [degree, row ? { ...row, effects: (row.effects ?? []).map((effect) => (effect?.duration?.mode === "fixed" ? { ...effect, duration: lasting } : effect)) } : row]));
+    const ifTarget = (plan.ifTarget ?? []).map((entry) => (entry.noteEffects ? { ...entry, noteEffects: entry.noteEffects.map((note) => (note.duration?.mode === "fixed" ? { ...note, duration: lasting } : note)) } : entry));
+    return { ...plan, resolution: { ...plan.resolution, outcomes }, ...(plan.ifTarget ? { ifTarget } : {}) };
 }
 
 // Whether vitality damage harms the creature: void healing, or the undead trait.

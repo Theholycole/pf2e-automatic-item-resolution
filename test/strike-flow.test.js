@@ -10,6 +10,7 @@ import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { riderFor, strikeLines, strikeRules } from "../src/live/strike-card.js";
 import { routeOf } from "../src/live/route.js";
+import { planFor as planForTarget } from "../src/live/if-target.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const SOCKET = `module.${MODULE_ID}`;
@@ -196,6 +197,12 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     assert.deepEqual(compileActivations(source("Golden-Cased Bullet (Major)"))[0].plan.strike.ignoresCover, ["greater", "greater-prone", "standard", "lesser"]);
     const curve = compileActivations(source("Arcing Hand Crossbow")).find((entry) => entry.activation.name === "Curve Bolt").plan;
     assert.deepEqual([curve.strike.ignoresCover.length, Boolean(curve.partial)], [4, false]);
+    // (Rattling Bolt, 2026-10-26: its Deafened and Stupefied for a minute after a critical hit, strike.criticalTime; an undead's lifesense lost
+    // for that time, a note Effect for it alone — whole.)
+    const rattling = compileActivations(source("Rattling Bolt"))[0].plan;
+    assert.deepEqual([rattling.strike.criticalTime, Boolean(rattling.partial), rattling.strike.notes ?? []], [{ value: 1, unit: "minutes" }, false, []]);
+    const undead = planForTarget(rattling.strike.save, { system: { traits: { value: ["undead", "skeleton"] } } });
+    assert.deepEqual([undead.resolution.outcomes.failure.noteEffects.map((note) => note.label), planForTarget(rattling.strike.save, { system: { traits: { value: ["humanoid"] } } }).resolution.outcomes.failure.noteEffects], [["Lifesense lost"], undefined]);
     const blade = compileActivations(source("Blade of Fallen Stars"))[1].plan.strike;
     assert.deepEqual([blade.range, blade.damage.map((entry) => `${entry.diceNumber}${entry.dieSize} ${entry.damageType}`)], ["ranged", ["6d8 cold"]]);
     assert.match(blade.notes.join(" "), /Faerie Fire/);

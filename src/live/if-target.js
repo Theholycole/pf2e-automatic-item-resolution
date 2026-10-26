@@ -36,6 +36,8 @@ export function planFor(plan, actor) {
     if (formula && plan.resolution.sharedDamage?.components?.length) plan = { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: plan.resolution.sharedDamage.components.map((component, index) => (index === 0 ? { ...component, formula } : component)) } } };
     const outcomes = { ...plan.resolution.outcomes };
     for (const rider of riders.filter((entry) => entry.degree && entry.effects)) outcomes[rider.degree] = { ...outcomes[rider.degree], effects: [...(outcomes[rider.degree]?.effects ?? []), ...rider.effects] };
+    // (A note Effect for those creatures, Rattling Bolt's undead's lifesense lost, 2026-10-26.)
+    for (const rider of riders.filter((entry) => entry.degree && entry.noteEffects)) outcomes[rider.degree] = { ...outcomes[rider.degree], noteEffects: [...(outcomes[rider.degree]?.noteEffects ?? []), ...rider.noteEffects] };
     // (More damage on its failures for those creatures, Locust Leather's swarms' 1d6 persistent poison: the save's shared damage and that, 2026-10-26.)
     for (const rider of riders.filter((entry) => entry.failDamage)) for (const degree of ["failure", "criticalFailure"]) {
         const row = outcomes[degree];

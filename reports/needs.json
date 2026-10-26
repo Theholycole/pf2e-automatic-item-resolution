@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1271,
+  "entries": 1269,
   "results": {
    "none": 615,
-   "partial": 270,
+   "partial": 268,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -24,7 +24,6 @@
    "out-of-combat": 33,
    "actions": 29,
    "no-rules": 37,
-   "senses": 23,
    "objects": 115,
    "illusions": 44,
    "removed": 4,
@@ -37,6 +36,7 @@
    "situational": 16,
    "creatures": 53,
    "dying": 29,
+   "senses": 21,
    "speech": 18,
    "from-events": 7,
    "forms": 24,
@@ -63,14 +63,13 @@
    "choice": 107,
    "several": 90,
    "mind": 70,
-   "strike": 187,
+   "strike": 185,
    "reader": 217,
    "spells": 82,
    "information": 191,
    "actions": 59,
    "from-events": 38,
    "no-rules": 37,
-   "senses": 29,
    "illusions": 57,
    "removed": 5,
    "range": 4,
@@ -78,6 +77,7 @@
    "vehicles": 24,
    "situational": 73,
    "creatures": 53,
+   "senses": 27,
    "forms": 25,
    "fortune": 10,
    "retaliation": 3,
@@ -371,17 +371,6 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
-   ]
-  },
-  {
-   "name": "Rattling Bolt",
-   "kind": "activation",
-   "result": "partial",
-   "main": "senses",
-   "work": "lifesense",
-   "needs": [
-    "senses",
-    "strike"
    ]
   },
   {
@@ -2374,17 +2363,6 @@
     "lasting",
     "choice",
     "information"
-   ]
-  },
-  {
-   "name": "Rattling Bolt (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "senses",
-   "work": "lifesense",
-   "needs": [
-    "senses",
-    "strike"
    ]
   },
   {
