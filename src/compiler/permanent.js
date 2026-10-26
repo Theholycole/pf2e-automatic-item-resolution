@@ -28,6 +28,7 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
+import { withTemperature } from "./temperature.js";
 import { withPullToward } from "./pull-toward.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { takePlan } from "./take-condition.js";
@@ -497,6 +498,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(activation.html, base) ?? plan;
         // (Its user's own move, a Stride or Step on the map — the teleport card's, as a move: src/compiler/move.js.)
         plan = withMove(plan, activation.html, base);
+        // (Protection from heat or cold for its time, src/compiler/temperature.js: Rime Jar's, Slithermaw's Bane's pick.)
+        plan = withTemperature(plan, activation.html, base);
         // (A check's success that pulls the creature toward its user, src/compiler/pull-toward.js: Tentacle Cannon's Grasping Deep Shot.)
         plan = withPullToward(plan);
         // (A creature moved to a space its user picks, src/compiler/placed.js: Whip-Tongue Sling's Tongue Twister.)

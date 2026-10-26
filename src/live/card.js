@@ -7,6 +7,7 @@ import { skillPickRules } from "../compiler/skill-pick.js";
 import { firstDegreeRules } from "../compiler/first-degree.js";
 import { restoreText } from "../compiler/restore.js";
 import { attackRidersText } from "../compiler/attack-riders.js";
+import { ENVIRONMENT_ID, temperatureFlag, temperatureText } from "../compiler/temperature.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -145,6 +146,8 @@ export function previewLines(state) {
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
     for (const speed of plan?.item?.speeds ?? []) lines.push(speedText(speed));
     for (const sense of plan?.item?.senses ?? []) lines.push(senseText(sense));
+    // (Protection from heat or cold, src/compiler/temperature.js: the card's own Effect, for the environment module.)
+    if (plan?.temperature?.counts) lines.push(temperatureLine(plan.temperature));
     for (const light of plan?.item?.light ?? []) lines.push(lightText(light));
     for (const entry of plan?.item?.levelTemp ?? []) lines.push(levelTempText(entry));
     for (const adjust of plan?.item?.weapon ?? []) lines.push(weaponText(adjust));
@@ -282,12 +285,24 @@ export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, i
     return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name }, item, user, worldTime, initiative, moduleId });
 }
 
-function ownEffectSource({ name, img, words, rules, duration, flag, item, user, worldTime, initiative, moduleId }) {
+// Protection from heat or cold in words, with its time and its terms: "Severe heat counts as mild heat for 24 hours".
+export function temperatureLine(temperature) {
+    const time = temperature.duration?.mode === "fixed" ? ` for ${temperature.duration.value} ${temperature.duration.value === 1 ? temperature.duration.unit.replace(/s$/, "") : temperature.duration.unit}` : temperature.until ? ` (${temperature.until.toLowerCase()})` : "";
+    return `${temperatureText(temperature)}${time}${temperature.only ? ` (${temperature.only.toLowerCase()})` : ""}`;
+}
+
+// Its Effect: the environment module's flag (flags.<environment>.temperature { counts, fatigueHours?, source }), read as the creature feels the
+// temperature, for the item's time.
+export function temperatureEffectSource(temperature, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: "temperature", img: "icons/svg/sun.svg", words: temperatureLine(temperature), rules: [], duration: temperature.duration, flag: { temperature: true }, extraFlags: { [ENVIRONMENT_ID]: { temperature: temperatureFlag(temperature, item.name ?? "an item") } }, item, user, worldTime, initiative, moduleId });
+}
+
+function ownEffectSource({ name, img, words, rules, duration, flag, extraFlags = {}, item, user, worldTime, initiative, moduleId }) {
     return {
         name: `${item.name}: ${name}`,
         type: "effect",
         img: item.img ?? img,
-        flags: { [moduleId]: flag },
+        flags: { [moduleId]: flag, ...extraFlags },
         system: {
             description: { value: `<p>${escape(words)}, from <strong>${escape(item.name)}</strong>.</p>` },
             duration: duration?.mode === "fixed" ? { value: duration.value, unit: duration.unit, expiry: duration.expiry ?? "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false },

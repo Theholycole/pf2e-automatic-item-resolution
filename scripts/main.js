@@ -13,6 +13,7 @@ import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
 import { setUpPlacedLights } from "./placed-light.js";
 import { setUpPlacedMoves } from "./placed-moves.js";
+import { temperatureProtections } from "./temperature.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
@@ -124,5 +125,7 @@ Hooks.once("ready", async () => {
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)
     // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
+    // (temperatureProtections: what its items protect a creature from in heat and cold, for the environment module — synchronous,
+    // scripts/temperature.js.)
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
 });

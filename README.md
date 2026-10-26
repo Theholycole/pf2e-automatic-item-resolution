@@ -89,6 +89,7 @@ Foundry 14 with the PF2e system 8.5 or later, plus:
 
 - [PF2e Resolution Core](https://github.com/Theholycole/PF2e-Automation-Core) v0.7.1 or later, which resolves the plans (and keeps damage materials such as silver, and a creature's Perception check against an item's DC);
 - [PF2e Automatic Ability Resolution](https://github.com/Theholycole/pf2e-automatic-ability-resolution) v0.9.0 or later (v0.9.2 or later for pushes and pulls measured from the creature a Strike hit, and for creatures moved to a space their user picks; older versions leave those to the GM), whose compiler reads the item text and whose save cards, conjured creatures, zones (and the areas snares leave, and saves or damage only for creatures with some traits), condition floors and conditions that last as long as a persistent damage the item cards use.
+- Optional: [PF2e Automatic Environment Resolution](https://github.com/Theholycole/pf2e-automatic-environment-resolution) 0.1.2 or later (with core 0.7.5), which applies the items' protection from heat and cold to the weather it plays.
 
 [PF2e Automatic Spell Resolution](https://github.com/Theholycole/pf2e-automatic-spell-resolution) (v0.10.0 or later) casts the spells items cast, and the items it acts on itself (its `claims`) are left to it. On an item it claims only for an item spellshape or an item cast, its other activations are this module's. Without it, a cast card says to cast the spell by hand. [Pseudo Afflictions](https://foundryvtt.com/packages/pseudo-afflictions) runs a poison's stages once its save card hands them on.
 

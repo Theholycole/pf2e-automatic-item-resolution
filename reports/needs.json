@@ -1,18 +1,18 @@
 {
- "generated": "2026-10-25",
+ "generated": "2026-10-26",
  "totals": {
-  "entries": 1407,
+  "entries": 1399,
   "results": {
-   "none": 671,
-   "partial": 317,
-   "builtin:no-effect": 146,
+   "none": 669,
+   "partial": 318,
+   "builtin:no-effect": 139,
    "note-only": 273
   },
   "main": {
    "speeds": 25,
    "counteract": 17,
    "afflictions": 56,
-   "areas": 120,
+   "areas": 118,
    "moving": 95,
    "lasting": 68,
    "speech": 36,
@@ -22,7 +22,7 @@
    "strike": 113,
    "spells": 45,
    "information": 38,
-   "out-of-combat": 39,
+   "out-of-combat": 33,
    "actions": 32,
    "no-rules": 37,
    "senses": 23,
@@ -48,14 +48,14 @@
   },
   "any": {
    "speeds": 31,
-   "areas": 179,
+   "areas": 177,
    "immunity": 75,
    "objects": 401,
    "speech": 150,
-   "out-of-combat": 435,
+   "out-of-combat": 427,
    "counteract": 80,
    "afflictions": 102,
-   "lasting": 223,
+   "lasting": 222,
    "moving": 126,
    "triggers": 134,
    "visibility": 59,
@@ -76,7 +76,7 @@
    "range": 4,
    "cooldown": 14,
    "vehicles": 24,
-   "situational": 84,
+   "situational": 82,
    "creatures": 57,
    "forms": 25,
    "fortune": 10,
@@ -673,7 +673,7 @@
    "name": "Rime Jar",
    "kind": "activation",
    "activation": "Siphon Chill",
-   "result": "builtin:no-effect",
+   "result": "partial",
    "main": "reader",
    "work": "fatigued",
    "needs": [
@@ -723,20 +723,6 @@
    "work": "Trigger: you grab the …",
    "needs": [
     "triggers"
-   ]
-  },
-  {
-   "name": "Slithermaw's Bane (Heroic)",
-   "kind": "activation",
-   "activation": "Terrain Adaptation",
-   "result": "none",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "situational",
-    "lasting",
-    "out-of-combat"
    ]
   },
   {
@@ -941,16 +927,6 @@
    "work": "administer first aid",
    "needs": [
     "actions",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Witchwarg Elixir (Moderate)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "out-of-combat",
-   "work": "24 hours",
-   "needs": [
     "out-of-combat"
    ]
   },
@@ -2733,19 +2709,6 @@
    ]
   },
   {
-   "name": "Slithermaw's Bane",
-   "kind": "activation",
-   "activation": "Terrain Adaptation",
-   "result": "none",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "situational",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Silver Tripod",
    "kind": "consumable",
    "result": "note-only",
@@ -4028,16 +3991,6 @@
    ]
   },
   {
-   "name": "Cooling Elixir (Moderate)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "out-of-combat",
-   "work": "24 hours",
-   "needs": [
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Clockwork Diving Suit",
    "kind": "activation",
    "result": "none",
@@ -4174,16 +4127,6 @@
    "work": "scent",
    "needs": [
     "senses",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Cooling Elixir (Lesser)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "out-of-combat",
-   "work": "24 hours",
-   "needs": [
     "out-of-combat"
    ]
   },
@@ -9235,16 +9178,6 @@
    ]
   },
   {
-   "name": "Cooling Elixir (Greater)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "out-of-combat",
-   "work": "24 hours",
-   "needs": [
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Strand of the Seven Births",
    "kind": "activation",
    "activation": "Hero-God's Whisper",
@@ -10209,16 +10142,6 @@
     "strike",
     "lasting",
     "speech"
-   ]
-  },
-  {
-   "name": "Witchwarg Elixir (Greater)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "out-of-combat",
-   "work": "24 hours",
-   "needs": [
-    "out-of-combat"
    ]
   },
   {
@@ -13469,16 +13392,6 @@
    "work": "knows",
    "needs": [
     "information"
-   ]
-  },
-  {
-   "name": "Witchwarg Elixir (Lesser)",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "out-of-combat",
-   "work": "24 hours",
-   "needs": [
-    "out-of-combat"
    ]
   },
   {

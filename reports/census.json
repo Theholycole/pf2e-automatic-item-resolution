@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-25",
+ "generated": "2026-10-26",
  "system": "~/.local/share/FoundryVTT/Data/systems/pf2e/packs",
  "totals": {
   "consumables": 1724,
@@ -15,7 +15,7 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 178,
-   "resolves": 756,
+   "resolves": 762,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
    "partial": 111,
@@ -24,7 +24,7 @@
    "note-only": 122,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
-   "builtin:no-effect": 49,
+   "builtin:no-effect": 43,
    "builtin:teleport": 7,
    "builtin:reroll": 3,
    "builtin:roll-twice": 2
@@ -125,10 +125,10 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 92,
+    "resolves": 98,
     "none": 5,
     "builtin:counteract": 11,
-    "builtin:no-effect": 9,
+    "builtin:no-effect": 3,
     "note-only": 16,
     "partial": 13,
     "builtin:ways": 1,
@@ -385,7 +385,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 602,
+   "resolves": 608,
    "gaps": 0,
    "none": 13
   }
@@ -393,8 +393,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 238,
-   "item": 630,
+   "none": 232,
+   "item": 636,
    "fortune": 25,
    "zone": 118,
    "save": 136,
@@ -450,8 +450,8 @@
     "coat": 1
    },
    "elixir": {
-    "item": 119,
-    "none": 14,
+    "item": 125,
+    "none": 8,
     "counteract": 11,
     "save": 1,
     "ways": 1,
@@ -514,7 +514,7 @@
   "noCard": {
    "no-plan": 178,
    "triggered": 11,
-   "gm": 49
+   "gm": 43
   }
  },
  "gapCounts": {},
@@ -1952,9 +1952,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Silver Crescent (Moderate)",
@@ -7597,9 +7598,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Contagion Metabolizer (Lesser)",
@@ -7842,9 +7844,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Dragontooth Trophy",
@@ -16944,9 +16947,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Storm Breath",
@@ -18155,9 +18159,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Philter of Empty Dreams",
@@ -24431,9 +24436,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Torrent Snare",
@@ -29892,8 +29898,7 @@
    "result": "partial",
    "kind": "check",
    "unread": [
-    "If the creature has taken fire damage within the last minute, it restores additional Hit Points equal to the amount of fire damage the creature took within the last minute (maximum +10).",
-    "Finally, the creature becomes immune to the effects of severe heat for 1 hour."
+    "If the creature has taken fire damage within the last minute, it restores additional Hit Points equal to the amount of fire damage the creature took within the last minute (maximum +10)."
    ],
    "live": "item"
   },

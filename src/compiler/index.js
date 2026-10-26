@@ -65,6 +65,7 @@ import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
+import { withTemperature } from "./temperature.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { withScaled } from "./scaled.js";
 import { withSpend } from "./spend.js";
@@ -351,6 +352,8 @@ function compileOne(given, options = {}) {
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = teleportPlan(html, base, item?.system?.description?.value) ?? plan;
     // (Its user's own move, src/compiler/move.js: Lion Claw's Stride before its Strike.)
     plan = withMove(plan, html, base);
+    // (Protection from heat or cold for its time, src/compiler/temperature.js: Cooling Elixir's — the environment module's to apply.)
+    plan = withTemperature(plan, html, base);
     // (A lit candle's or incense's area while it burns, src/compiler/lit-area.js: Candle of Inflamed Passions' penalty, Incense of Distilled
     // Death's fast healing for undead.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = litAreaPlan(plainText(html), base) ?? plan;
