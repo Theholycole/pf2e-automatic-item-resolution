@@ -10,40 +10,54 @@ const VALUED = new Set(["clumsy", "doomed", "drained", "enfeebled", "frightened"
 
 const unvalued = (effect) => effect?.kind === "condition" && VALUED.has(effect.slug) && !Number.isFinite(effect.value) && !(effect.slug === "stunned" && effect.duration) && effect.recipient !== "self";
 
-function guardOutcomes(resolution) {
+// (A value the text leaves out while another row gives one higher, The Desert's "Fatigued and enfeebled for 1 minute" beside its critical
+// failure's Enfeebled 2: 1, the user's answer to question 5 (2026-10-26) — a line of the card saying the GM may change it. Not one the text
+// rolls, Guise of the Smirking Devil's "Drained [[/r 1d4]]": its roll, a note still. text: the item's html, else no default.)
+const DEGREE_NAMES = { criticalSuccess: "critical success", success: "success", failure: "failure", criticalFailure: "critical failure" };
+function guardOutcomes(resolution, text = null) {
     if (!resolution?.outcomes) return null;
     let changed = false;
     const outcomes = {};
+    const defaulted = [];
+    const higher = (slug) => Object.values(resolution.outcomes).some((row) => (row?.effects ?? []).some((effect) => effect?.slug === slug && Number(effect.value) > 1));
+    const rolled = (slug) => new RegExp(String.raw`\{${slug}\}\s*\[\[/r|\b${slug} \[\[/r`, "i").test(String(text ?? ""));
     for (const [degree, row] of Object.entries(resolution.outcomes)) {
-        const bad = (row?.effects ?? []).filter(unvalued);
-        if (!bad.length) {
+        const unvaluedHere = (row?.effects ?? []).filter(unvalued);
+        if (!unvaluedHere.length) {
             outcomes[degree] = row;
             continue;
         }
         changed = true;
+        // (Not a Stunned with no value: a time's, Flawed Orb of Gold Dragonkind's "stunned for as long as the orb's wielder Sustains".)
+        const one = text ? unvaluedHere.filter((effect) => effect.slug !== "stunned" && higher(effect.slug) && !rolled(effect.slug)) : [];
+        const bad = unvaluedHere.filter((effect) => !one.includes(effect));
+        for (const effect of one) defaulted.push(`${effect.slug.charAt(0).toUpperCase()}${effect.slug.slice(1)} 1 on a ${DEGREE_NAMES[degree] ?? degree}: the item gives no value, so 1, as another row gives more (the GM's call).`);
         outcomes[degree] = {
             ...row,
-            effects: row.effects.filter((effect) => !bad.includes(effect)),
-            noteEffects: [...(row.noteEffects ?? []), ...bad.map((effect) => ({ label: effect.slug, text: `${effect.slug.charAt(0).toUpperCase()}${effect.slug.slice(1)}: the item doesn't say how much; the GM sets it.`, duration: effect.duration ?? null }))]
+            effects: row.effects.filter((effect) => !bad.includes(effect)).map((effect) => (one.includes(effect) ? { ...effect, value: 1 } : effect)),
+            ...(bad.length ? { noteEffects: [...(row.noteEffects ?? []), ...bad.map((effect) => ({ label: effect.slug, text: `${effect.slug.charAt(0).toUpperCase()}${effect.slug.slice(1)}: the item doesn't say how much; the GM sets it.`, duration: effect.duration ?? null }))] } : {})
         };
     }
-    return changed ? { ...resolution, outcomes } : null;
+    return changed ? { resolution: { ...resolution, outcomes }, defaulted, guessed: Object.values(outcomes).some((row) => (row?.noteEffects ?? []).some((note) => /doesn't say how much/.test(note.text ?? ""))) } : null;
 }
 
 // The plan with its unvalued conditions as notes (its own rows, and the saves it carries: a bomb's, a Strike's), marked
 // partial; the same plan when there are none.
-export function guardValues(plan) {
+export function guardValues(plan, text = null) {
     if (!plan || plan.builtin) return plan;
-    const own = guardOutcomes(plan.resolution);
-    const itemSave = plan.item?.save?.plan ? guardOutcomes(plan.item.save.plan.resolution) : null;
-    const strikeSave = plan.strike?.save ? guardOutcomes(plan.strike.save.resolution) : null;
+    const own = guardOutcomes(plan.resolution, text);
+    const itemSave = plan.item?.save?.plan ? guardOutcomes(plan.item.save.plan.resolution, text) : null;
+    const strikeSave = plan.strike?.save ? guardOutcomes(plan.strike.save.resolution, text) : null;
     if (!own && !itemSave && !strikeSave) return plan;
+    const lines = [own, itemSave, strikeSave].flatMap((read) => read?.defaulted ?? []);
+    const guessed = [own, itemSave, strikeSave].some((read) => read?.guessed);
     return {
         ...plan,
-        ...(own ? { resolution: own } : {}),
-        ...(itemSave ? { item: { ...plan.item, save: { ...plan.item.save, plan: { ...plan.item.save.plan, resolution: itemSave } } } } : {}),
-        ...(strikeSave ? { strike: { ...plan.strike, save: { ...plan.strike.save, resolution: strikeSave } } } : {}),
-        partial: true
+        ...(own ? { resolution: own.resolution } : {}),
+        ...(itemSave ? { item: { ...plan.item, save: { ...plan.item.save, plan: { ...plan.item.save.plan, resolution: itemSave.resolution } } } } : {}),
+        ...(strikeSave ? { strike: { ...plan.strike, save: { ...plan.strike.save, resolution: strikeSave.resolution } } } : {}),
+        ...(lines.length ? { notes: [...(plan.notes ?? []), ...lines] } : {}),
+        ...(guessed ? { partial: true } : {})
     };
 }
 

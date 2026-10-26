@@ -75,6 +75,8 @@ function leftovers(plan) {
 }
 
 // Every unfinished entry of a pack's documents → [{ name, kind, activation?, result, needs }].
+// (The ones done only by the user's ruling that they have no rules to play — question 1, 2026-10-26 —, kept on a line of their own.)
+const noRulesDone = [];
 function entriesOf(docs, base = {}) {
     const entries = [];
     // (Its needs, the main one first, and the words that showed its main need: the work within it, tools/needs-rules.mjs workOf.)
@@ -91,6 +93,7 @@ function entriesOf(docs, base = {}) {
                 if (!handlesItem(item, options)) continue;
                 const plan = compileItem(withOwner(item), options);
                 const result = resultOf(plan);
+                if (plan?.noRules && !base.module) noRulesDone.push(item.name);
                 if (unfinished(result)) add({ kind: "consumable", name: item.name, category: item.system?.category ?? "other", result, left: plan ? leftovers(plan) : [], text: plainText(item.system?.description?.value ?? "") });
             } else if (/<strong>\s*Activat/i.test(String(item.system?.description?.value ?? ""))) {
                 if (!handlesPermanent(item, options)) continue;
@@ -98,6 +101,7 @@ function entriesOf(docs, base = {}) {
                 const etched = isRuneItem(item) && /armor/.test(item.system?.usage?.value ?? "") ? { ...item, system: { ...item.system, description: { ...item.system.description, value: withArmorPotency(item.system.description?.value, { system: { acBonus: 0, runes: { potency: 0 } } }) } } } : item;
                 for (const { activation, plan } of compileActivations(withOwner(etched), options)) {
                     const result = resultOf(plan);
+                    if (plan?.noRules && !base.module) noRulesDone.push(`${item.name}${activation.name ? ` (${activation.name})` : ""}`);
                     if (unfinished(result)) add({ kind: "activation", name: item.name, type: item.type, activation: activation.name ?? null, trigger: Boolean(activation.trigger), result, left: plan ? leftovers(plan) : [], text: plainText(activation.html ?? "") });
                 }
             }
@@ -245,6 +249,8 @@ const lines = [
     ...ALL.filter((need) => need.question).map((need) => `| [${need.title}](#${need.id}) | ${pf2eTotals.main[need.id] ?? 0} | ${onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id))} | ${need.question} | ${need.decided ?? "open"} |`),
     "",
     `Still open: ${ALL.filter((need) => need.question && !need.decided).length}. Built as decided, the answered ones would finish up to ${ALL.filter((need) => need.decided && need.where !== "kept listed").reduce((sum, need) => sum + onlyOf(pf2e.filter((entry) => entry.needs[0] === need.id)), 0)} PF2e entries outright (the ones with no other need).`,
+    "",
+    `Done by your ruling that they have no rules to play (question 1, 2026-10-26; their card says so): ${noRulesDone.length} PF2e entries — ${noRulesDone.sort((a, b) => a.localeCompare(b)).join(", ")}.`,
     "",
     "## Besides the items",
     "",

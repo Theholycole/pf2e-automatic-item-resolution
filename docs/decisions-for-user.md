@@ -38,3 +38,7 @@ A few texts give a check or condition without the number the card needs. Flowing
 - **A (suggested):** a counteract check with no modifier uses GM Core's DC for the item's level minus 10 (Flowing Water (Lesser), level 3: DC 18, so +8). A condition with no value takes 1 when another row gives a higher one (The Desert's failure: Enfeebled 1). The card says the GM may change either number.
 - **B:** the card asks the GM for the number each time (a box on the card).
 - **C:** keep them listed, as now.
+
+## Answers (2026-10-26)
+
+The user answered all five with **A**: 1 no-rules items counted done; 2 a cast counted partial when a note adds a rule it doesn't play; 3 a note-only item counted done once checked for anything a card could play, those parts built first; 4 a GM's-discretion clause a line of the card, counted done; 5 a counteract check with no modifier at the item level's DC − 10, a condition with no value at 1 when another row gives more, the GM free to change either.

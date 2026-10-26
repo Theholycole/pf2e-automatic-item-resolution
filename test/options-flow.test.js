@@ -594,3 +594,21 @@ test("Spiritsight Crossbow's Ethereal Shot: its Strike through the Ethereal Plan
     const shot = planOf("Spiritsight Crossbow", 1);
     assert.deepEqual([Boolean(shot.partial), shot.strike.own, shot.strike.ignoresCover], [false, true, ["lesser", "standard", "greater", "greater-prone"]]);
 });
+
+test("The user's answers of 2026-10-26: no rules to play counted done (1); a GM's-discretion clause a line of the card (4); a missing number defaulted (5)", () => {
+    // (1) Rations: its card says it has no rules to play.
+    const rations = compileItem(item("Rations"), { spellEffects });
+    assert.deepEqual([rations.noRules, Boolean(rations.partial), rations.notes], [true, false, ["It has no rules to play: the card does nothing more."]]);
+    // (4) Vorpal's headless creatures, Astonishing Ink's opinion questions: the GM's call.
+    const vorpal = planOf("Vorpal");
+    assert.deepEqual([Boolean(vorpal.partial), vorpal.notes.every((note) => /\(the GM's call\)\.$/.test(note))], [false, true]);
+    assert.equal(Boolean(compileItem(item("Dr. Ushernacht's Astonishing Ink (Minor)"), { spellEffects }).partial), false);
+    // (5) The Desert's failure: Enfeebled 1 (its critical failure's 2), the GM free to change it; Smirking Devil's rolled Drained 1d4 not defaulted.
+    const desert = planOf("The Desert");
+    assert.deepEqual([desert.resolution.outcomes.failure.effects.find((effect) => effect.slug === "enfeebled").value, Boolean(desert.partial)], [1, false]);
+    assert.match(desert.notes[0], /^Enfeebled 1 on a failure: .*\(the GM's call\)\.$/);
+    const devil = planOf("Guise of the Smirking Devil (Greater)");
+    assert.equal(Boolean(devil.partial), true);
+    // (5) Flowing Water: its counteract modifier its level's DC less 10.
+    assert.deepEqual(["Lesser", "Moderate", "Greater"].map((grade) => planOf(`Flowing Water (${grade})`).item.counteract.modifier), [8, 13, 18]);
+});

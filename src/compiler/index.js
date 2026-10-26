@@ -11,7 +11,7 @@
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { litAreaPlan } from "./lit-area.js";
 import { weakenedAroundPlan } from "./weakened-around.js";
-import { withActionLimit, withHonestPartial, withUntracedRules } from "./honest.js";
+import { withActionLimit, withGmCalls, withHonestPartial, withUntracedRules } from "./honest.js";
 import { withSaveEnds } from "./save-ends.js";
 import { withKindSaves } from "./kind-saves.js";
 import { withEscapeEnds } from "./escape-ends.js";
@@ -259,7 +259,7 @@ export function compileItem(given, options = {}) {
     // (A talisman used with a free action or 1, src/compiler/action-ways.js: Golden Liberator's Feather — the ways card.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
     // (A recovery's own damage first and its lower-level case a second button, src/compiler/recovery.js: Searing Suture.)
-    return decide(withLowerLevelRecovery(withAfflictedTurns(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), given?.system?.description?.value), text, given?.system?.description?.value), given, options);
+    return decide(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), given?.system?.description?.value), text, given?.system?.description?.value)), given, options);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
@@ -527,7 +527,7 @@ function compileOne(given, options = {}) {
     if (Array.isArray(rest.strike?.notes)) rest.strike = { ...rest.strike, notes: cleanNotes(rest.strike.notes) };
     // (Its linked Effects for each creature targeted, not its user: forTargets.)
     const theirs = recipient === "targets" ? forTargets(rest) : rest;
-    return withDegreeEffects(withMaterialRider(damageMaterial(withTypeChoices(guardText(guardValues({ ...theirs, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }), plainText(item?.system?.description?.value)), typeChoice), plainText(item?.system?.description?.value))), item?.system?.description?.value, options.itemEffects);
+    return withDegreeEffects(withMaterialRider(damageMaterial(withTypeChoices(guardText(guardValues({ ...theirs, ...(targeting ? { targeting } : {}), ...(source ? { source } : {}), item: { ...info, recipient } }, item?.system?.description?.value), plainText(item?.system?.description?.value)), typeChoice), plainText(item?.system?.description?.value))), item?.system?.description?.value, options.itemEffects);
 }
 
 // What the text does to the drinker or user, as the core's check family's automatic row (no roll: the success

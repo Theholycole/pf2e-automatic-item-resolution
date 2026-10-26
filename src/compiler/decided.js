@@ -46,6 +46,12 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     if (result === "resolves" || (result.startsWith("builtin:") && result !== "builtin:no-effect")) return plan;
     const entry = { result, kind, trigger, text, left: plan ? leftovers(plan) : [] };
     const needs = needsOf(entry);
+    // (Nothing in its words a card could play — food, refills, ingredients, flavor —: counted done, its card saying so (the user's answer to
+    // question 1, 2026-10-26).)
+    // (A note-only one only when its words show no number either — Vambrace of Gorum's "+3 … major striking" is a rule the needs' words miss.)
+    if (needs.length === 1 && needs[0] === "no-rules" && (!plan || result === "builtin:no-effect" || (result === "note-only" && !MECHANICAL.test(leftText(entry)) && !/\d/.test(leftText(entry))))) {
+        return { ...(base ?? plan ?? {}), ...(plan?.item ? { item: plan.item } : {}), builtin: undefined, noteOnly: undefined, partial: undefined, noRules: true, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: ["It has no rules to play: the card does nothing more."] };
+    }
     if (!needs.length || !needs.every((need) => DECIDED.has(need))) return plan;
     const words = leftText(entry);
     if (MECHANICAL.test(words)) return plan;

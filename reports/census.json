@@ -14,17 +14,17 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 165,
-   "resolves": 804,
+   "none": 150,
+   "resolves": 823,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
-   "partial": 79,
    "builtin:ways": 29,
    "builtin:item-action": 16,
+   "partial": 76,
    "note-only": 116,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
-   "builtin:no-effect": 38,
+   "builtin:no-effect": 37,
    "builtin:teleport": 7,
    "builtin:fall-foam": 4,
    "builtin:reroll": 3,
@@ -39,12 +39,12 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 27,
-    "partial": 35,
+    "resolves": 242,
     "builtin:ways": 22,
-    "resolves": 225,
+    "partial": 32,
     "note-only": 59,
     "builtin:readied-bonus": 8,
-    "none": 94,
+    "none": 80,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 9,
@@ -100,8 +100,8 @@
     "none": 23,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 70,
-    "builtin:no-effect": 7,
+    "resolves": 71,
+    "builtin:no-effect": 6,
     "builtin:reroll": 1,
     "builtin:ways": 2,
     "builtin:counteract": 1,
@@ -235,11 +235,11 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 30,
+    "resolves": 31,
     "builtin:conjure": 6,
     "builtin:no-effect": 6,
     "note-only": 9,
-    "none": 5,
+    "none": 4,
     "builtin:cast-spell": 2,
     "builtin:counteract": 2,
     "partial": 6
@@ -337,7 +337,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 314,
+   "resolves": 317,
    "gaps": 0,
    "none": 21
   },
@@ -385,13 +385,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 277,
+   "resolves": 280,
    "gaps": 0,
    "none": 18
   },
   "duration": {
    "count": 943,
-   "resolves": 634,
+   "resolves": 635,
    "gaps": 0,
    "none": 13
   }
@@ -399,8 +399,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 218,
-   "item": 642,
+   "none": 202,
+   "item": 658,
    "fortune": 25,
    "zone": 119,
    "save": 134,
@@ -421,10 +421,10 @@
    "other": {
     "cast": 14,
     "zone": 27,
-    "none": 115,
+    "none": 101,
     "ways": 22,
     "save": 86,
-    "item": 215,
+    "item": 229,
     "fortune": 8,
     "teleport": 4,
     "counteract": 9,
@@ -445,10 +445,10 @@
     "zone": 1
    },
    "talisman": {
-    "none": 30,
+    "none": 29,
     "fortune": 15,
     "action": 12,
-    "item": 52,
+    "item": 53,
     "reroll": 1,
     "ways": 2,
     "counteract": 1,
@@ -496,9 +496,9 @@
     "item": 68
    },
    "oil": {
-    "item": 43,
+    "item": 44,
     "conjure": 6,
-    "none": 11,
+    "none": 10,
     "save": 1,
     "later": 1,
     "cast": 2,
@@ -523,9 +523,9 @@
    }
   },
   "noCard": {
-   "no-plan": 165,
+   "no-plan": 150,
    "triggered": 11,
-   "gm": 38,
+   "gm": 37,
    "other": 4
   }
  },
@@ -710,8 +710,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": null
   },
   {
@@ -1322,7 +1323,10 @@
     "light"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Void Salts",
@@ -2467,7 +2471,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Diplomat's Charcuterie",
@@ -7128,7 +7135,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Peace in Dreams Tea",
@@ -8899,9 +8909,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Champion's Laurels (Renowned)",
@@ -10321,7 +10332,10 @@
     "oil"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Mental Purification (8th-rank)",
@@ -10667,7 +10681,10 @@
    "level": 0,
    "traits": [],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Invisible Net",
@@ -11706,7 +11723,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Foe-Sensing Rod",
@@ -14028,8 +14048,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": null
   },
   {
@@ -19229,7 +19250,10 @@
     "wood"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Blast Boots (Greater)",
@@ -20877,7 +20901,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Potion of Acid Retaliation (Major)",
@@ -21086,7 +21113,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Cayden's Brew (Double)",
@@ -24417,7 +24447,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Quicksilver Mutagen (Moderate)",
@@ -24606,7 +24639,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Crimson Worm Repellent",
@@ -25583,7 +25619,10 @@
    "level": 0,
    "traits": [],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Smother Shroud",
@@ -26173,7 +26212,10 @@
    "level": 0,
    "traits": [],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Bloodhound Mask (Moderate)",
@@ -27648,8 +27690,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": null
   },
   {
@@ -29358,7 +29401,10 @@
    "level": 0,
    "traits": [],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Lockpicker's Oil",
@@ -30051,7 +30097,10 @@
     "fire"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Piercing Whistle Snare",

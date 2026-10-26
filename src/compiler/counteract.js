@@ -23,6 +23,9 @@ const HALF_LEVEL_RANK = /\bcounteract rank equal to your level divided by 2 \(ro
 // effect is counteracted.)
 const DETERMINATION = /\bgain the benefit of the fighter's Determination class feat, with a counteract rank of (\d+) and a counteract modifier of \+(\d+)/i;
 
+// GM Core's DCs by level, 0 to 25.
+const LEVEL_DCS = [14, 15, 16, 18, 19, 20, 22, 23, 24, 26, 27, 28, 30, 31, 32, 34, 35, 36, 38, 39, 40, 42, 44, 46, 48, 50];
+
 // The text → { modifier, rank, conditions, traits, afflictions, pick: "each" | "one" | "highest", reduce?, notes } or null.
 // (Determination's: { …, spells, magical, endsConditions, self }.)
 export function readCounteract(html, { level = 0 } = {}) {
@@ -47,6 +50,14 @@ export function readCounteract(html, { level = 0 } = {}) {
                 ...(feat ? ["With the Determination feat, use your own counteract modifier if it's better (by hand)."] : [])
             ]
         };
+    }
+    // (A counteract check with a rank and no modifier, Flowing Water's Embody the Truce, "Attempt a counteract check with a counteract rank of 2 to
+    // end the effect" — the triggering effect its trigger names: GM Core's DC for the item's level, less 10, the user's answer to question 5
+    // (2026-10-26), a line of the card saying the GM may change it.)
+    const bare = /\bAttempt a counteract check with a counteract rank of (\d+)(?:st|nd|rd|th)? to end the effect\./i.exec(text);
+    if (bare) {
+        const modifier = (LEVEL_DCS[Math.max(0, Math.min(25, Number(level) || 0))] ?? 14) - 10;
+        return { modifier, rank: Number(bare[1]), conditions: [], traits: [], afflictions: [], free: { name: "the triggering effect" }, pick: "one", notes: [`Its counteract modifier +${modifier}: the item gives none, so its level's DC less 10 (the GM's call).`] };
     }
     // (The sentence that counteracts, and the next one, where the rank or modifier is often given.)
     const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z(])/);

@@ -17,14 +17,14 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 804 | 54% |
-| partial | 79 | 5% |
+| resolves | 823 | 55% |
+| partial | 76 | 5% |
 | note-only | 116 | 8% |
 | builtin:zone | 119 | 8% |
 | builtin:cast-spell | 35 | 2% |
 | builtin:roll-twice | 2 | 0% |
 | builtin:readied-bonus | 23 | 2% |
-| builtin:no-effect | 38 | 3% |
+| builtin:no-effect | 37 | 2% |
 | builtin:conjure | 7 | 0% |
 | builtin:counteract | 33 | 2% |
 | builtin:fall-foam | 4 | 0% |
@@ -34,21 +34,21 @@ Results, for the items this module handles:
 | builtin:teleport | 7 | 0% |
 | builtin:ways | 29 | 2% |
 | builtin:whisper | 1 | 0% |
-| none | 165 | 11% |
+| none | 150 | 10% |
 
 ## By category
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 225 | 35 | 59 | 0 | 99 | 94 |
+| other | 512 | 242 | 32 | 59 | 0 | 99 | 80 |
 | potion | 182 | 126 | 8 | 11 | 0 | 21 | 16 |
-| talisman | 156 | 70 | 4 | 5 | 0 | 54 | 23 |
+| talisman | 156 | 71 | 4 | 5 | 0 | 53 | 23 |
 | elixir | 149 | 104 | 13 | 12 | 0 | 17 | 3 |
 | poison | 115 | 107 | 3 | 1 | 0 | 4 | 0 |
 | snare | 82 | 0 | 0 | 1 | 0 | 73 | 8 |
 | gadget | 77 | 31 | 4 | 6 | 0 | 32 | 4 |
 | mutagen | 68 | 64 | 4 | 0 | 0 | 0 | 0 |
-| oil | 66 | 30 | 6 | 9 | 0 | 16 | 5 |
+| oil | 66 | 31 | 6 | 9 | 0 | 16 | 4 |
 | fulu | 46 | 20 | 2 | 7 | 0 | 5 | 12 |
 | drug | 24 | 24 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 3 | 0 | 5 | 0 | 1 | 0 |
@@ -59,26 +59,26 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 
 | Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | fortune | action | counteract | ways | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 215 | 3 | 3 | 86 | 0 | 14 | 27 | 3 | 0 | 8 | 1 | 9 | 22 | 115 |
+| other | 512 | 229 | 3 | 3 | 86 | 0 | 14 | 27 | 3 | 0 | 8 | 1 | 9 | 22 | 101 |
 | potion | 182 | 86 | 0 | 0 | 1 | 58 | 9 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 25 |
-| talisman | 156 | 52 | 1 | 0 | 16 | 0 | 9 | 0 | 10 | 1 | 15 | 12 | 1 | 2 | 30 |
+| talisman | 156 | 53 | 1 | 0 | 16 | 0 | 9 | 0 | 10 | 1 | 15 | 12 | 1 | 2 | 29 |
 | elixir | 149 | 127 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 1 | 6 |
 | poison | 115 | 1 | 42 | 63 | 2 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | snare | 82 | 1 | 0 | 0 | 0 | 0 | 0 | 71 | 0 | 0 | 0 | 0 | 0 | 1 | 8 |
 | gadget | 77 | 24 | 0 | 0 | 17 | 0 | 0 | 17 | 0 | 0 | 0 | 3 | 8 | 0 | 8 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| oil | 66 | 43 | 0 | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 11 |
+| oil | 66 | 44 | 0 | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 10 |
 | fulu | 46 | 16 | 0 | 0 | 10 | 1 | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 14 |
 | drug | 24 | 1 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| **all** | **1486** | **642** | **46** | **89** | **134** | **64** | **35** | **119** | **13** | **3** | **25** | **16** | **33** | **29** | **218** |
+| **all** | **1486** | **658** | **46** | **89** | **134** | **64** | **35** | **119** | **13** | **3** | **25** | **16** | **33** | **29** | **202** |
 
 Why the rest have no card yet:
 
 | Reason | Items |
 |---|---:|
-| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 165 |
-| the ability compiler's GM fallback ("no-effect") | 38 |
+| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 150 |
+| the ability compiler's GM fallback ("no-effect") | 37 |
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
 | another plan not played yet | 4 |
 
@@ -88,9 +88,9 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
-| duration | 943 | 634 | 0 | 13 |
-| fixed-dc | 491 | 314 | 0 | 21 |
-| condition | 433 | 277 | 0 | 18 |
+| duration | 943 | 635 | 0 | 13 |
+| fixed-dc | 491 | 317 | 0 | 21 |
+| condition | 433 | 280 | 0 | 18 |
 | linked-effect | 393 | 366 | 0 | 0 |
 | damage | 277 | 173 | 0 | 7 |
 | trigger | 156 | 69 | 0 | 17 |

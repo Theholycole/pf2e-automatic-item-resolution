@@ -280,3 +280,29 @@ export function withUntracedRules(plan, text) {
     if (!rules.length) return { ...plan, notes: [...(plan.notes ?? []), ...untraced] };
     return { ...plan, notes: [...(plan.notes ?? []), ...untraced], partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };
 }
+
+// A clause the text itself leaves to the GM's discretion (the user's answer to question 4, 2026-10-26): Dr. Ushernacht's Astonishing Ink's "At
+// the GM's discretion, the astonishing ink takes a -4 circumstance penalty …", Vorpal's "This kills any creature except ones that don't require a
+// head to live" and "For creatures with multiple heads, this usually kills the creature only if …", Blindpepper Bolt's "At the GM's discretion, a
+// creature with no eyes … might not be affected", Guise of the Smirking Devil's "unless the GM says otherwise". A line of the card saying it's
+// the GM's call; the plan whole when nothing else is left.
+const GM_CALL = /\bAt the GM's discretion\b|\bunless the GM (?:says|determines) otherwise\b|^This kills any creature except ones that don't require a head to live\.|^For creatures with multiple heads, this usually kills the creature only if\b/i;
+export const isGmCall = (entry) => /\(the GM's call\)\.?$/.test(said(entry));
+export function withGmCalls(plan) {
+    if (!plan || (!plan.notes?.length && !plan.strike?.notes?.length)) return plan;
+    const called = (entry) => GM_CALL.test(said(entry).replace(/^\{target\}(?: \([^)]*\))?:\s*/, ""));
+    const mark = (entry) => (called(entry) && !isGmCall(entry) ? `${said(entry).replace(/\s*\(by hand\)\.?$/, "").replace(/\.$/, "")} (the GM's call).` : entry);
+    // (Its own notes, and its Strike's: Blindpepper Bolt's.)
+    const notes = (plan.notes ?? []).map(mark);
+    const strikeNotes = (plan.strike?.notes ?? []).map(mark);
+    if (![...notes, ...strikeNotes].some(isGmCall)) return plan;
+    const next = { ...plan, ...(plan.notes ? { notes } : {}), ...(plan.strike?.notes ? { strike: { ...plan.strike, notes: strikeNotes } } : {}) };
+    // (Nor a note Effect that's the GM's work still, "Drained: the item doesn't say how much; the GM sets it".)
+    const gmNotes = rowsOf(next).flatMap((row) => (row?.noteEffects ?? []).filter((note) => /\bthe GM sets it\b|\(by hand\)/.test(String(note?.text ?? ""))));
+    const left = [...notes, ...strikeNotes].filter((note) => !isGmCall(note)).concat(next.unread ?? [], rowsOf(next).flatMap(leftToTheGM), gmNotes);
+    if (next.partial && !left.length) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}

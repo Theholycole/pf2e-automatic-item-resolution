@@ -20,7 +20,7 @@ const ownActionsOnly = (text) => {
     return sentences.length > 0 && sentences.every((sentence) => OWN_ACTION.test(sentence));
 };
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] });
-const plays = (plan) => Boolean(plan) && !plan.noteOnly && plan.builtin !== "no-effect" && plan.builtin !== "ways";
+const plays = (plan) => Boolean(plan) && !plan.noteOnly && !plan.noRules && plan.builtin !== "no-effect" && plan.builtin !== "ways";
 
 // The activation's html → [{ name, html }]: each option's own activation html, or null when it offers none.
 export function namedOptions(html) {

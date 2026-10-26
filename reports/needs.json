@@ -1,12 +1,12 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1171,
+  "entries": 1134,
   "results": {
-   "none": 582,
-   "partial": 209,
+   "none": 554,
+   "partial": 204,
    "note-only": 257,
-   "builtin:no-effect": 123
+   "builtin:no-effect": 119
   },
   "main": {
    "speeds": 22,
@@ -17,20 +17,20 @@
    "visibility": 46,
    "lasting": 61,
    "choice": 28,
-   "mind": 8,
    "strike": 92,
    "spells": 35,
    "information": 21,
    "out-of-combat": 32,
    "actions": 26,
-   "no-rules": 36,
-   "objects": 109,
+   "no-rules": 7,
+   "mind": 5,
+   "objects": 108,
    "illusions": 43,
    "removed": 4,
    "cooldown": 9,
    "vehicles": 20,
    "reader": 16,
-   "triggers": 90,
+   "triggers": 87,
    "immunity": 21,
    "situational": 16,
    "creatures": 53,
@@ -41,7 +41,7 @@
    "forms": 23,
    "several": 20,
    "retaliation": 3,
-   "missing-number": 7,
+   "missing-number": 6,
    "fortune": 6,
    "linked-effect": 1,
    "by-kind": 5
@@ -50,26 +50,26 @@
    "speeds": 28,
    "areas": 163,
    "immunity": 69,
-   "objects": 372,
+   "objects": 371,
    "speech": 121,
    "out-of-combat": 402,
-   "counteract": 79,
+   "counteract": 76,
    "afflictions": 88,
    "lasting": 206,
    "moving": 102,
-   "triggers": 119,
+   "triggers": 116,
    "visibility": 48,
    "dying": 72,
    "choice": 98,
    "several": 87,
-   "mind": 60,
    "strike": 169,
-   "reader": 182,
+   "reader": 181,
    "spells": 71,
    "information": 188,
    "actions": 56,
    "from-events": 25,
-   "no-rules": 36,
+   "no-rules": 7,
+   "mind": 57,
    "illusions": 52,
    "removed": 5,
    "range": 4,
@@ -81,7 +81,7 @@
    "forms": 24,
    "fortune": 9,
    "retaliation": 3,
-   "missing-number": 8,
+   "missing-number": 7,
    "linked-effect": 1,
    "by-kind": 5
   }
@@ -181,16 +181,6 @@
    "work": "of your choice",
    "needs": [
     "choice"
-   ]
-  },
-  {
-   "name": "Dr. Ushernacht's Astonishing Ink (Moderate)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "mind",
-   "work": "emotions",
-   "needs": [
-    "mind"
    ]
   },
   {
@@ -471,15 +461,6 @@
    "work": "submerged",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Light Writer Plates",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -1013,15 +994,6 @@
     "information",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Treat (Unique)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -1711,15 +1683,6 @@
    "name": "Called (Lastwall)",
    "kind": "activation",
    "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
-   "name": "Called (Lastwall)",
-   "kind": "activation",
-   "result": "none",
    "main": "lasting",
    "work": "until you",
    "needs": [
@@ -1855,17 +1818,6 @@
    ]
   },
   {
-   "name": "Vorpal",
-   "kind": "activation",
-   "activation": "Snicker-Snack",
-   "result": "partial",
-   "main": "objects",
-   "work": "don",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
    "name": "Smuggler's Sack (Type I)",
    "kind": "activation",
    "result": "none",
@@ -1908,16 +1860,6 @@
    "needs": [
     "lasting",
     "objects"
-   ]
-  },
-  {
-   "name": "Jar of Shifting Sands",
-   "kind": "activation",
-   "activation": "Avalanche of Sand",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -2303,15 +2245,6 @@
     "afflictions",
     "objects",
     "reader"
-   ]
-  },
-  {
-   "name": "Floorbell",
-   "kind": "activation",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -3079,15 +3012,6 @@
     "lasting",
     "objects",
     "mind"
-   ]
-  },
-  {
-   "name": "Seeking Bracelets",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -4083,15 +4007,6 @@
    ]
   },
   {
-   "name": "Adaptive Cogwheel",
-   "kind": "consumable",
-   "result": "builtin:no-effect",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Gaze of the Mantis",
    "kind": "activation",
    "activation": "Target Sense",
@@ -4694,15 +4609,6 @@
    ]
   },
   {
-   "name": "Oil of Animation",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Gingerbread House",
    "kind": "activation",
    "result": "none",
@@ -4897,15 +4803,6 @@
    "name": "Orb of Dragonkind",
    "kind": "activation",
    "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
-   "name": "Rations",
-   "kind": "consumable",
-   "result": "none",
    "main": "no-rules",
    "needs": [
     "no-rules"
@@ -5476,15 +5373,6 @@
    ]
   },
   {
-   "name": "Treat (Standard)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Locket of Love Left Behind",
    "kind": "activation",
    "activation": "True Love's Power",
@@ -5690,15 +5578,6 @@
    "needs": [
     "strike",
     "reader"
-   ]
-  },
-  {
-   "name": "Sentinel Horn",
-   "kind": "activation",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -6091,15 +5970,6 @@
     "situational",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Wayfinderfinder",
-   "kind": "activation",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -6503,25 +6373,6 @@
    "needs": [
     "actions",
     "lasting"
-   ]
-  },
-  {
-   "name": "Dr. Ushernacht's Astonishing Ink (Major)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "mind",
-   "work": "emotions",
-   "needs": [
-    "mind"
-   ]
-  },
-  {
-   "name": "Parchment of Direct Message",
-   "kind": "activation",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -7872,18 +7723,6 @@
    ]
   },
   {
-   "name": "Flowing Water (Greater)",
-   "kind": "activation",
-   "activation": "Embody the Truce",
-   "result": "builtin:no-effect",
-   "main": "triggers",
-   "work": "Trigger: attempt a counteract …",
-   "needs": [
-    "triggers",
-    "counteract"
-   ]
-  },
-  {
    "name": "Artevil Suspension",
    "kind": "consumable",
    "result": "none",
@@ -7893,16 +7732,6 @@
     "actions",
     "afflictions",
     "reader"
-   ]
-  },
-  {
-   "name": "Bottomless Purse",
-   "kind": "activation",
-   "activation": "Fair Trade",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -8030,15 +7859,6 @@
    ]
   },
   {
-   "name": "Passage Pane",
-   "kind": "activation",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Hunter's Bane",
    "kind": "consumable",
    "result": "builtin:no-effect",
@@ -8153,16 +7973,6 @@
    "needs": [
     "moving",
     "several"
-   ]
-  },
-  {
-   "name": "Mirror of Sorshen",
-   "kind": "activation",
-   "activation": "Second Glance",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -8670,16 +8480,6 @@
    ]
   },
   {
-   "name": "Lookout's Spyglass",
-   "kind": "activation",
-   "activation": "Seek Significance",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Awakened Silver Shot",
    "kind": "activation",
    "result": "partial",
@@ -8889,15 +8689,6 @@
    "needs": [
     "choice",
     "objects"
-   ]
-  },
-  {
-   "name": "Tailor's Boll",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -9549,15 +9340,6 @@
    ]
   },
   {
-   "name": "Sling Darts",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Clarity Goggles (Greater)",
    "kind": "activation",
    "result": "note-only",
@@ -9693,15 +9475,6 @@
    "needs": [
     "afflictions",
     "immunity"
-   ]
-  },
-  {
-   "name": "Feed (Standard)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -10356,18 +10129,6 @@
    ]
   },
   {
-   "name": "Flowing Water (Moderate)",
-   "kind": "activation",
-   "activation": "Embody the Truce",
-   "result": "builtin:no-effect",
-   "main": "triggers",
-   "work": "Trigger: attempt a counteract …",
-   "needs": [
-    "triggers",
-    "counteract"
-   ]
-  },
-  {
    "name": "Weapon Shot (Major)",
    "kind": "activation",
    "result": "none",
@@ -10470,15 +10231,6 @@
     "lasting",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Shadewither Key",
-   "kind": "activation",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -10834,29 +10586,11 @@
    "name": "Essence Prism",
    "kind": "activation",
    "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
-   "name": "Essence Prism",
-   "kind": "activation",
-   "result": "none",
    "main": "several",
    "work": "each creature",
    "needs": [
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Essence Prism",
-   "kind": "activation",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -11239,15 +10973,6 @@
    ]
   },
   {
-   "name": "Chimera Thread",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Bola Shot",
    "kind": "activation",
    "result": "none",
@@ -11347,15 +11072,6 @@
    "work": "24 hours",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Feed (Unique)",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -11818,15 +11534,6 @@
    ]
   },
   {
-   "name": "Practice Target",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Aeon Stone (Olivine Pendeloque)",
    "kind": "activation",
    "activation": "Still Earth",
@@ -12102,15 +11809,6 @@
     "triggers",
     "dying",
     "lasting"
-   ]
-  },
-  {
-   "name": "Spray Pellets",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -12544,18 +12242,6 @@
    ]
   },
   {
-   "name": "Flowing Water (Lesser)",
-   "kind": "activation",
-   "activation": "Embody the Truce",
-   "result": "builtin:no-effect",
-   "main": "triggers",
-   "work": "Trigger: attempt a counteract …",
-   "needs": [
-    "triggers",
-    "counteract"
-   ]
-  },
-  {
    "name": "Exploration Lens (Detecting)",
    "kind": "activation",
    "result": "none",
@@ -12722,16 +12408,6 @@
     "choice",
     "mind",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Dr. Ushernacht's Astonishing Ink (Minor)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "mind",
-   "work": "emotions",
-   "needs": [
-    "mind"
    ]
   },
   {
@@ -13443,15 +13119,6 @@
    ]
   },
   {
-   "name": "Chalk",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Lockpicker's Oil",
    "kind": "consumable",
    "result": "partial",
@@ -13496,17 +13163,6 @@
     "immunity",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Desert",
-   "kind": "activation",
-   "result": "partial",
-   "main": "missing-number",
-   "work": "doesn't say how much",
-   "needs": [
-    "missing-number",
-    "reader"
    ]
   },
   {
@@ -13829,15 +13485,6 @@
     "immunity",
     "situational",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Matchstick",
-   "kind": "consumable",
-   "result": "none",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {

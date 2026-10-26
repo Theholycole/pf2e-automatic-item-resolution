@@ -6,18 +6,18 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 903,
+   "resolves": 918,
    "builtin:cast-spell": 475,
-   "partial": 130,
-   "none": 417,
+   "partial": 128,
+   "none": 404,
    "builtin:focus-point": 47,
-   "builtin:counteract": 29,
+   "builtin:counteract": 32,
    "builtin:readied-bonus": 46,
    "note-only": 141,
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 28,
-   "builtin:no-effect": 85,
+   "builtin:no-effect": 82,
    "builtin:ways": 32,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 26,
@@ -33,10 +33,10 @@
   "live": {
    "save": 434,
    "cast": 475,
-   "item": 615,
-   "none": 527,
+   "item": 628,
+   "none": 511,
    "focus": 47,
-   "counteract": 29,
+   "counteract": 32,
    "fortune": 61,
    "reroll": 45,
    "strike": 116,
@@ -61,18 +61,18 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 522,
+    "resolves": 537,
     "builtin:cast-spell": 347,
-    "none": 293,
+    "none": 280,
     "builtin:focus-point": 45,
-    "builtin:counteract": 25,
+    "builtin:counteract": 28,
     "builtin:readied-bonus": 32,
     "note-only": 109,
     "builtin:reroll": 34,
-    "partial": 59,
+    "partial": 57,
     "builtin:table": 4,
     "builtin:teleport": 14,
-    "builtin:no-effect": 68,
+    "builtin:no-effect": 65,
     "builtin:objects": 20,
     "builtin:zone": 14,
     "builtin:ways": 19,
@@ -3234,9 +3234,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "check",
+   "live": "item",
    "rune": true
   },
   {
@@ -3478,7 +3478,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save",
    "rune": true
@@ -3688,9 +3688,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Jar of Shifting Sands",
@@ -4415,9 +4415,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Elemental Ammunition (Greater, Cold)",
@@ -11502,9 +11502,9 @@
    "time": "2",
    "frequency": "once per round",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Earthbinding",
@@ -12561,9 +12561,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Parachute Mail",
@@ -13533,9 +13533,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Ooze Ammunition (Greater)",
@@ -16222,9 +16222,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Reactive Mail (Greater)",
@@ -16244,9 +16244,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Cassisian Helmet",
@@ -16464,9 +16464,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Resolute Shield",
@@ -16618,9 +16618,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Mirror of Sorshen",
@@ -17456,9 +17456,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Bane Ammunition (Lesser)",
@@ -21209,9 +21209,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Beekeeper's Smoker",
@@ -21421,9 +21421,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Shadewither Key",
@@ -21940,9 +21940,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Essence Prism",
@@ -21962,9 +21962,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Awakened Cold Iron Shot",
@@ -25431,9 +25431,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Exploration Lens (Detecting)",
@@ -27480,7 +27480,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
