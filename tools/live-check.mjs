@@ -1870,6 +1870,174 @@ export const cases = {
         return { lost, temp: user.system.attributes.hp.temp };
     },
 
+    // Tactician's Helm: a ways card with its four options; Move It! gives PF2e's own Effect, Charge! is a line of the card.
+    async tacticianWays(scene) {
+        await clearSquares(scene, [[1, 1]]);
+        const { actor: user } = await creature(scene, "Tactician", { type: "character", x: 1, y: 1, level: 5 });
+        const helm = await give(user, "Tactician's Helm");
+        await helm.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(helm.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the helm's ways card" });
+        const names = game.messages.get(ways.id).getFlag(NS, "card").plan.ways.map((way) => way.name);
+        assert(names.join("|") === "Charge!|Move It!|Protect!|Re-Arm!", `its four options (${names.join(", ")})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const card = await messageAfter(since, itemCard("item"), { what: "Move It!'s card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => /Move It!/.test(effect.name)), "PF2e's Move It! Effect", { timeout: 8000 });
+        return { names };
+    },
+
+    // Heart of Sarnax: Crush Heart's critical failure stuns the creature (its 7d6 spirit doubled); once Stunned is gone it's Slowed 2 for a
+    // minute. Bestow Vim's Quickened for a minute, then Fatigued for an hour once that Quickened ends.
+    async sarnaxAfter(scene) {
+        await clearSquares(scene, [[2, 1], [3, 1], [4, 1]]);
+        const { actor: user } = await creature(scene, "Sarnax Holder", { type: "character", x: 2, y: 1, level: 10 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Sarnax Victim", { x: 3, y: 1, hp: 500, save: 0, alliance: "opposition", level: 10 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Sarnax Ally", { x: 4, y: 1, level: 10 });
+        const use = async (choice, token) => {
+            // (A heart for each: its once a day.)
+            const heart = await give(user, "Heart of Sarnax");
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(heart.uuid, 0);
+            const ways = await messageAfter(since, itemCard("ways"), { what: "the heart's ways card" });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(ways.id, { choice });
+            const expose = await messageAfter(since, itemCard("expose"), { what: "the option's card" });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(expose.id, { targets: [token.uuid] });
+            return messageAfter(since, abilitySaveCard, { what: "the card at the creature" });
+        };
+        const crush = await use(1, foeToken);
+        await withDie(1, () => rollAndApply(crush));
+        await until(() => foe.hasCondition("stunned"), "Stunned", { timeout: 8000 });
+        await until(() => foe.itemTypes.effect.some((effect) => effect.flags?.[NS]?.afterEnds?.when === "stunned"), "its mark", { timeout: 8000 });
+        await foe.itemTypes.condition.find((condition) => condition.slug === "stunned").delete();
+        await until(() => foe.getCondition?.("slowed")?.value === 2, `Slowed 2 (${foe.getCondition?.("slowed")?.value})`, { timeout: 8000 });
+        const slowed = foe.itemTypes.effect.find((effect) => effect.flags?.[NS]?.afterEndsThen === "slowed");
+        assert(slowed?.system.duration.value === 1 && slowed.system.duration.unit === "minutes", `for a minute (${JSON.stringify(slowed?.system?.duration)})`);
+        const vim = await use(0, allyToken);
+        await applyAbilityCard(vim);
+        await until(() => ally.hasCondition("quickened"), "Quickened", { timeout: 8000 });
+        await ally.itemTypes.effect.find((effect) => /Quickened/.test(effect.name) && effect.flags?.["pf2e-automatic-ability-resolution"]?.timedCondition)?.delete();
+        await until(() => ally.hasCondition("fatigued"), "Fatigued after", { timeout: 8000 });
+        return { slowed: slowed.name, fatigued: ally.itemTypes.effect.find((effect) => effect.flags?.[NS]?.afterEndsThen === "fatigued")?.system.duration };
+    },
+
+    // Imposing Shield's Terrifying Block: the ways card's second button — the Shield Block took all the damage — Frightened 3.
+    async imposingWorse(scene) {
+        await clearSquares(scene, [[5, 1], [6, 1]]);
+        const { actor: user } = await creature(scene, "Imposing Blocker", { type: "character", x: 5, y: 1, level: 6 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Imposing Attacker", { x: 6, y: 1, alliance: "opposition" });
+        const shield = await give(user, "Imposing Shield");
+        await shield.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the shield's ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the block's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(expose.id, { targets: [foeToken.uuid] });
+        await applyAbilityCard(await messageAfter(since, abilitySaveCard, { what: "the card at the attacker" }));
+        await until(() => foe.getCondition?.("frightened")?.value === 3, `Frightened 3 (${foe.getCondition?.("frightened")?.value})`, { timeout: 8000 });
+        return { frightened: 3 };
+    },
+
+    // Skull Bomb thrown: its thrower Blinded for good.
+    async skullBlind(scene) {
+        await clearSquares(scene, [[7, 1]]);
+        const { actor: thrower } = await creature(scene, "Skull Thrower", { x: 7, y: 1, level: 8 });
+        const bomb = await give(thrower, "Skull Bomb");
+        const since = Date.now();
+        await bomb.consume();
+        await messageAfter(since, itemCard("expose"), { what: "the bomb's card" });
+        await until(() => thrower.hasCondition("blinded"), "its thrower Blinded", { timeout: 8000 });
+        return { blinded: true };
+    },
+
+    // Starsong Nectar: its Effect on the drinker, the immunity once that Effect is gone.
+    async starsongAfter(scene) {
+        await clearSquares(scene, [[8, 1]]);
+        const { actor: drinker, token } = await creature(scene, "Starsong Drinker", { type: "character", x: 8, y: 1, level: 20 });
+        const nectar = await give(drinker, "Starsong Nectar");
+        const since = Date.now();
+        await nectar.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the nectar's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        await until(() => drinker.itemTypes.effect.some((effect) => effect.flags?.[NS]?.immunityAfter), "its Effect, flagged", { timeout: 8000 });
+        const immune = () => drinker.itemTypes.effect.some((effect) => effect.flags?.["pf2e-automatic-ability-resolution"]?.immunity?.slug === "starsong-nectar");
+        assert(!immune(), "not immune while it lasts");
+        await drinker.itemTypes.effect.find((effect) => effect.flags?.[NS]?.immunityAfter).delete();
+        await until(immune, "immune once it's gone", { timeout: 8000 });
+        return { immune: true };
+    },
+
+    // Captivating Bauble: a failed Will save fascinates; once Fascinated ends, immune for 24 hours.
+    async baubleAfter(scene) {
+        await clearSquares(scene, [[9, 1], [10, 1]]);
+        const { actor: user } = await creature(scene, "Bauble Talker", { type: "character", x: 9, y: 1, level: 12 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Bauble Listener", { x: 10, y: 1, save: 0, alliance: "opposition", level: 12 });
+        const bauble = await give(user, "Captivating Bauble");
+        let since = Date.now();
+        await bauble.consume();
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the bauble's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(expose.id, { targets: [foeToken.uuid] });
+        await withDie(2, async () => rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the Will save card" })));
+        await until(() => foe.hasCondition("fascinated"), "Fascinated", { timeout: 8000 });
+        await until(() => foe.itemTypes.effect.some((effect) => effect.flags?.[NS]?.afterEnds?.when === "fascinated"), "its mark", { timeout: 8000 });
+        const immune = () => foe.itemTypes.effect.some((effect) => effect.flags?.["pf2e-automatic-ability-resolution"]?.immunity?.slug === "captivating-bauble");
+        assert(!immune(), "not immune while fascinated");
+        const fascinated = foe.itemTypes.condition.find((condition) => condition.slug === "fascinated") ?? foe.itemTypes.effect.find((effect) => /Fascinated/.test(effect.name));
+        await fascinated.delete();
+        await until(immune, "immune once it ends", { timeout: 8000 });
+        return { immune: true };
+    },
+
+    // Celestial Peachwood Sword's Violent Exorcism: a failed save destroys the undead, its user's backlash 1d6 void per its level.
+    async peachwoodBacklash(scene) {
+        await clearSquares(scene, [[11, 1], [12, 1]]);
+        const { actor: user } = await creature(scene, "Peachwood Exorcist", { x: 11, y: 1, hp: 300, level: 17 });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Peachwood Undead", { x: 12, y: 1, save: 0, alliance: "opposition", level: 4 });
+        await undead.update({ "system.traits.value": [...(undead.system.traits.value ?? []), "undead"] });
+        const sword = await give(user, "Celestial Peachwood Sword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(sword.uuid, 0);
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the exorcism's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(expose.id, { targets: [undeadToken.uuid] });
+        const hp = user.system.attributes.hp.value;
+        await withDie(2, async () => rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the Fortitude save card" })));
+        await until(() => user.system.attributes.hp.value < hp, `the backlash (${user.system.attributes.hp.value} of ${hp})`, { timeout: 8000 });
+        const lost = hp - user.system.attributes.hp.value;
+        assert(lost >= 4 && lost <= 24, `4d6 (${lost})`);
+        return { lost, undeadHp: undead.system.attributes.hp.value, dead: undead.hasCondition?.("dead") ?? null };
+    },
+
+    // Horns of Naraga's touch: 5d6 void at the creature, its undead wearer healed by what the creature lost.
+    async hornsHeal(scene) {
+        await clearSquares(scene, [[13, 1], [14, 1]]);
+        const { actor: wearer } = await creature(scene, "Naraga Wearer", { x: 13, y: 1, hp: 300, level: 20 });
+        await wearer.update({ "system.traits.value": [...(wearer.system.traits.value ?? []), "undead"], "system.attributes.hp.value": 100 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Naraga Victim", { x: 14, y: 1, hp: 200, alliance: "opposition", level: 10 });
+        const horns = await give(wearer, "Horns of Naraga");
+        await horns.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(horns.uuid, 0);
+        const expose = await messageAfter(since, itemCard("expose"), { what: "the touch's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(expose.id, { targets: [foeToken.uuid] });
+        const before = foe.system.attributes.hp.value;
+        await applyAbilityCard(await messageAfter(since, abilitySaveCard, { what: "the damage card" }));
+        await until(() => foe.system.attributes.hp.value < before, "the void damage", { timeout: 8000 });
+        const lost = before - foe.system.attributes.hp.value;
+        await until(() => wearer.system.attributes.hp.value === 100 + lost, `healed ${lost} (${wearer.system.attributes.hp.value})`, { timeout: 8000 });
+        return { lost };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {
