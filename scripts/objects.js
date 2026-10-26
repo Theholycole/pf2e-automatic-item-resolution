@@ -31,7 +31,9 @@ function storableChoices(actor, store) {
         const spell = scrollSpell(item);
         return spell && storable(store, { ...spellFacts(spell), rank: Number(spell.system?.location?.heightenedLevel ?? spell.system?.level?.value) || 1 });
     }).map((item) => ({ id: item.id, name: item.name, kind: "scroll", rank: Number(scrollSpell(item).system?.location?.heightenedLevel ?? scrollSpell(item).system?.level?.value) || 1 }));
-    return (actor?.itemTypes?.spell ?? []).filter((spell) => !spell.isRitual && !(spell.system?.traits?.value ?? []).includes("cantrip") && storable(store, spellFacts(spell))).map((spell) => ({ id: spell.id, name: `${spell.name} (rank ${spellFacts(spell).rank})`, kind: "spell", rank: spellFacts(spell).rank }));
+    // (A cantrip at its caster's rank, half its level rounded up — PF2e's own.)
+    const rankOf = (spell) => ((spell.system?.traits?.value ?? []).includes("cantrip") ? Math.max(1, Math.ceil((Number(actor?.level) || 1) / 2)) : spellFacts(spell).rank);
+    return (actor?.itemTypes?.spell ?? []).filter((spell) => !spell.isRitual && storable(store, spellFacts(spell))).map((spell) => ({ id: spell.id, name: `${spell.name} (rank ${rankOf(spell)})`, kind: "spell", rank: rankOf(spell) }));
 }
 
 // Its user's items the op can take: { id, name }.

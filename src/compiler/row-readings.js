@@ -184,6 +184,27 @@ function withSpeedNote(plan, html) {
     return next;
 }
 
+// (A resistance it trades for another, Chromatic Robe's Align Energy: "You align the robe's magical energies to provide heightened protection
+// against a specific damage type, at the expense of all the others … The effect lasts until the next time you make your daily preparations …
+// or until you use this activation again" — its Effect's words say the others are lost and when it ends, and a new use replaces the last one
+// (resist.note, resist.replaces). 2026-10-26.)
+const ALIGNS = /^You align the [\w' -]+?'s magical energies to provide heightened protection against a specific damage type, at the expense of all the others\.$/i;
+const UNTIL_PREP = /\bThe effect lasts until the next time you make your daily preparations \(at which point the [\w' -]+? returns to normal\) or until you use this activation again\./i;
+function withTradedResistance(plan, html) {
+    const resist = plan?.item?.resist ?? [];
+    const found = [...(plan?.unread ?? []), ...(plan?.notes ?? [])].find((entry) => ALIGNS.test(said(entry)));
+    if (resist.length !== 1 || !resist[0].choose || !found || !UNTIL_PREP.test(plainOf(html))) return plan;
+    const others = resist[0].choose.length - 1;
+    const entry = { ...resist[0], note: `no resistance from it to the other ${others === 3 ? "three" : others} types; until the next daily preparations (remove it then) or the next use`, replaces: true };
+    const next = { ...plan, item: { ...plan.item, resist: [entry] }, ...(plan.unread ? { unread: plan.unread.filter((one) => one !== found) } : {}), ...(plan.notes ? { notes: plan.notes.filter((one) => one !== found) } : {}) };
+    if (next.notes && !next.notes.length) next.notes = undefined;
+    if (next.partial && leftOver(next)) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}
+
 // (Its Prone only for a creature on the ground, Drake Rifle (Fire)'s Drake Shot: "A target that isn't on the ground doesn't fall Prone" — the
 // Strike's strike.groundedProne, its rows' Prone left off for a target above the ground as the riders apply, src/live/if-target.js.)
 const GROUNDED = /^A target that isn't on the ground doesn't fall Prone\.$/i;
@@ -202,7 +223,7 @@ function withGroundedProne(plan) {
 }
 
 export function withRowReadings(given, html, item = null) {
-    const plan = withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html);
+    const plan = withTradedResistance(withSpeedNote(withInvisibleUntilStrike(withExposure(withGroundedProne(given), item?.system?.description?.value ?? html)), html), html);
     const outcomes = plan?.resolution?.outcomes;
     if (!outcomes || plan.builtin) return plan;
     let next = plan;

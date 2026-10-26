@@ -736,6 +736,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (Its resistance: Armorskin Robes' 5 to slashing and piercing — an Effect with PF2e's Resistance rules.)
     if (state.plan.item?.resist?.length && target.actor) {
         const resist = chosenResistances(state.plan.item.resist, state.resistType ?? 0);
+        // (One a new use replaces, Chromatic Robe's: the last one this item gave, gone first.)
+        if (resist.some((entry) => entry.replaces)) {
+            const old = (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.resist && effect.system?.context?.origin?.item === (state.item.uuid ?? null)).map((effect) => effect.id);
+            if (old.length) await target.actor.deleteEmbeddedDocuments("Item", old);
+        }
         await target.actor.createEmbeddedDocuments("Item", [resistanceEffectSource(resist, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${resistanceText(resist)}`);
     }

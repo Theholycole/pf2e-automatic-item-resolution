@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1237,
+  "entries": 1234,
   "results": {
-   "none": 604,
-   "partial": 247,
+   "none": 603,
+   "partial": 245,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -19,7 +19,7 @@
    "choice": 37,
    "mind": 8,
    "strike": 106,
-   "spells": 39,
+   "spells": 36,
    "information": 23,
    "out-of-combat": 33,
    "actions": 26,
@@ -65,7 +65,7 @@
    "mind": 70,
    "strike": 185,
    "reader": 206,
-   "spells": 75,
+   "spells": 72,
    "information": 191,
    "actions": 56,
    "from-events": 33,
@@ -5642,17 +5642,6 @@
    ]
   },
   {
-   "name": "Chromatic Robe (Greater)",
-   "kind": "activation",
-   "activation": "Align Energy",
-   "result": "partial",
-   "main": "spells",
-   "work": "mythic point",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
    "name": "Golden Gloves",
    "kind": "activation",
    "activation": "Heaven's Wings",
@@ -5996,17 +5985,6 @@
     "strike",
     "afflictions",
     "lasting"
-   ]
-  },
-  {
-   "name": "Chromatic Robe",
-   "kind": "activation",
-   "activation": "Align Energy",
-   "result": "partial",
-   "main": "spells",
-   "work": "mythic point",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -10730,16 +10708,6 @@
     "lasting",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Archaic Wayfinder",
-   "kind": "activation",
-   "result": "none",
-   "main": "spells",
-   "work": "cantrip",
-   "needs": [
-    "spells"
    ]
   },
   {

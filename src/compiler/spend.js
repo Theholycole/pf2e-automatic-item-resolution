@@ -26,5 +26,14 @@ export function withSpend(plan, text, { spells = {} } = {}) {
     const mythic = plan.builtin === "cast-spell" && !plan.choices?.length && mythicSpell(plan.spell, spells);
     if (!said && !mythic && !choices?.some((choice) => choice.spend)) return plan;
     const notes = (plan.notes ?? []).filter((note) => !SPEND_NOTE.test(note));
-    return { ...plan, ...(said || mythic ? { spend: { ...COST } } : {}), ...(choices ? { choices } : {}), ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}) };
+    // (Its unread lines too, Chromatic Robe's "Spend 1 Mythic Point." — 2026-10-26.)
+    const unread = (plan.unread ?? []).filter((line) => !SPEND_NOTE.test(line));
+    const next = { ...plan, ...(said || mythic ? { spend: { ...COST } } : {}), ...(choices ? { choices } : {}), ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}), ...(plan.unread ? { unread } : {}) };
+    // (Partial for its cost's sentence alone: no longer.)
+    const left = [...notes, ...unread, ...Object.values(plan.resolution?.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? [])];
+    if (plan.partial && !left.length && (plan.notes?.length !== notes.length || plan.unread?.length !== unread.length)) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
 }

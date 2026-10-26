@@ -116,3 +116,10 @@ test("live: a scroll burned into the furnace, then cast through the spell module
         Object.assign(globalThis, saved);
     }
 });
+
+test("Archaic Wayfinder: one cantrip cast into it (not a free action's or a reaction's), cast again from it once", async () => {
+    const { storable } = await import("../src/compiler/stored-spell.js");
+    const { objects } = compileActivations(item("Archaic Wayfinder"))[0].plan;
+    assert.deepEqual([objects.op, objects.store], ["cast-stored", { from: "cast", cantrip: true, maxActions: 3 }]);
+    assert.deepEqual([storable(objects.store, { rank: 1, actions: 2, traits: ["cantrip", "fire"] }), storable(objects.store, { rank: 1, actions: 2, traits: ["fire"] }), storable(objects.store, { rank: 1, actions: 0, traits: ["cantrip"] })], [true, false, false]);
+});

@@ -234,3 +234,10 @@ test("Cauthooj Bagpipes' Disorienting Fugue: a critical success's immunity an ho
         Object.assign(globalThis, saved);
     }
 });
+
+test("Chromatic Robe's Align Energy: a Mythic Point, resistance 15 to the type chosen — its words saying the others are lost and when it ends, a new use replacing it", async () => {
+    const { resistanceText } = await import("../src/live/card.js");
+    const robe = planOf("Chromatic Robe");
+    assert.deepEqual([robe.spend, robe.item.resist[0].value, robe.item.resist[0].replaces, Boolean(robe.partial), robe.unread ?? []], [{ mythicPoints: 1 }, 15, true, false, []]);
+    assert.match(resistanceText([{ ...robe.item.resist[0], type: "fire", choose: undefined }]), /^Resistance 15 to fire; no resistance from it to the other three types; until the next daily preparations \(remove it then\) or the next use$/);
+});

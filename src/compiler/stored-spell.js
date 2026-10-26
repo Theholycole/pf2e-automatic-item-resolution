@@ -15,8 +15,12 @@ const SCROLL = /\bimmolate a scroll containing an? (\d+)(?:st|nd|rd|th)-rank spe
 const CAST_INTO = /\bA spellcaster can (?:spend 1 minute to )?(?:@UUID\[[^\]]*\]\{)?[Cc]ast (?:a|a single) [Ss]pell\}?(?: of (\d+)(?:st|nd|rd|th) (?:rank|level) or lower)? into (?:this|the) [\w-]+\b/i;
 const ACTIONS = /\bThe spell must (?:require|take) (\d|one|two|three) actions? or fewer\b/i;
 const OTHER = /\bmust be able to target a creature other than the caster\b/i;
+// (One cantrip, not one cast as a free action or a reaction, Archaic Wayfinder's "acts as a repository for one cantrip cast into it".)
+const CANTRIP = /\bacts as a repository for one cantrip cast into it\b/i;
+const NOT_FREE = /\bthe spell cannot be one that is normally cast as a free action or reaction\b/i;
 export function readStore(whole) {
     const text = String(whole ?? "");
+    if (CANTRIP.test(text)) return { from: "cast", cantrip: true, ...(NOT_FREE.test(text) ? { maxActions: 3 } : {}) };
     const scroll = SCROLL.exec(text);
     if (scroll) return { from: "scroll", maxRank: Number(scroll[1]), traits: [scroll[2].toLowerCase(), scroll[3].toLowerCase()], maxActions: numberOf(scroll[4]) };
     const cast = CAST_INTO.exec(text);
@@ -25,7 +29,8 @@ export function readStore(whole) {
     return { from: "cast", ...(cast[1] ? { maxRank: Number(cast[1]) } : {}), ...(actions ? { maxActions: numberOf(actions[1]) } : {}), ...(OTHER.test(text) ? { otherTarget: true } : {}) };
 }
 
-const CAST = /^You cast the stored spell as if you were activating the scroll\.$/i;
+const CAST = /^You cast the stored spell as if you were activating the scroll\.$|^Activating an? [\w' -]+? is the same as the casting for the relevant spell\.$/i;
+const EMPTY_AFTER = /^Once it has been activated, it becomes empty again\.$/i;
 const UNLEASH = /^You unleash the stored spell, which uses the target of the triggering attack as the target of the spell\./i;
 const EXPEND = /^(?:You )?[Hh]armlessly expend the stored spell\b/;
 // (Its use readied first, Spell Bastion's "You prepare to unleash the stored spell on any foe that hits you until your next turn": an Effect on
@@ -38,7 +43,7 @@ export function readStoredSpell(body, whole) {
     const store = readStore(whole);
     if (!store) return null;
     for (const sentence of SENTENCES(body)) {
-        if (CAST.test(sentence)) return { op: "cast-stored", store, said: [sentence] };
+        if (CAST.test(sentence)) return { op: "cast-stored", store, said: [sentence, ...SENTENCES(body).filter((one) => EMPTY_AFTER.test(one))] };
         if (UNLEASH.test(sentence)) return { op: "cast-stored", store, at: "attacker", said: SENTENCES(body).filter((one) => UNLEASH.test(one) || /^This empties the spell from the [\w-]+ and allows a spell to be cast into it again\.$/i.test(one)) };
         if (READY.test(sentence)) return { op: "ready-stored", store, said: [sentence] };
         if (EXPEND.test(sentence)) return { op: "expend-stored", store, said: SENTENCES(body).filter((one) => EXPEND.test(one) || /^This frees the [\w-]+ to have a new spell cast into it\.$/i.test(one)) };
@@ -49,6 +54,8 @@ export function readStoredSpell(body, whole) {
 // Which of its user's spells or scrolls fit what it stores: a spell's { rank, actions, traits, target } (rank the base rank; actions 1–3, or
 // none for a longer one).
 export function storable(store, { rank, actions, traits = [], target = "" }) {
+    // (A cantrip store takes cantrips only; the others, none.)
+    if (Boolean(store.cantrip) !== traits.includes("cantrip")) return false;
     if (Number.isFinite(store.maxRank) && rank > store.maxRank) return false;
     if (Number.isFinite(store.maxActions) && !(actions >= 1 && actions <= store.maxActions)) return false;
     if (store.traits?.length && !store.traits.some((trait) => traits.includes(trait))) return false;

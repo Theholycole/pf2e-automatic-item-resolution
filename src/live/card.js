@@ -266,7 +266,9 @@ export function resistanceText(resist) {
     // (A turn's end or start: "until the end of the turn".)
     const time = !duration ? "" : duration.anchor === "source-turn" ? ` until the ${duration.expiry === "turn-end" ? "end" : "start"} of the ${duration.value ? "next " : ""}turn` : ` for ${timeText(duration)}`;
     const lower = resist.find((entry) => entry.recoveryDC);
-    return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${lower ? `, and the flat check to end persistent ${lower.type ?? "damage of that type"}${lower.type ? " damage" : ""} ${lower.recoveryDC} easier` : ""}${time}`;
+    // (What else its text holds it to, Chromatic Robe's: resist.note.)
+    const note = resist.find((entry) => entry.note)?.note;
+    return `${[...byValue].map(([value, types]) => `Resistance ${value} to ${types.join(" and ")}`).join(", ")}${lower ? `, and the flat check to end persistent ${lower.type ?? "damage of that type"}${lower.type ? " damage" : ""} ${lower.recoveryDC} easier` : ""}${time}${note ? `; ${note}` : ""}`;
 }
 
 // A Speed in words: "A fly Speed equal to your land Speed until the end of the next turn", "A swim Speed of 30 feet".
