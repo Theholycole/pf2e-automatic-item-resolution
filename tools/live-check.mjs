@@ -7820,6 +7820,25 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Sprite Apple (Golden): a creature in its light gets the -1 item penalty to its Will DC only against Diplomacy (PF2e's will-dc with
+    // check:statistic:diplomacy); the light's Effect says its eater can't be concealed while visible.
+    async spriteAppleGolden(scene) {
+        await clearSquares(scene, [[15, 6], [16, 6]]);
+        const { actor: eater } = await creature(scene, "Golden Apple Eater", { type: "character", x: 15, y: 6 });
+        const { actor: friend } = await creature(scene, "Golden Apple Friend", { type: "character", x: 16, y: 6 });
+        const apple = await give(eater, "Sprite Apple (Golden)");
+        const since = Date.now();
+        await apple.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the apple's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const penalty = () => friend.itemTypes.effect.flatMap((effect) => effect.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("will-dc"));
+        await until(penalty, "the Will DC penalty for the creature in the light", { timeout: 10000 });
+        assert(penalty().value === -1 && JSON.stringify(penalty().predicate) === JSON.stringify(["check:statistic:diplomacy"]), `-1 against Diplomacy only (${JSON.stringify(penalty())})`);
+        const light = eater.itemTypes.effect.find((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "TokenLight"));
+        assert(/can't be concealed if it's visible/.test(light?.system.description.value ?? ""), "the light's words");
+        return { penalty: penalty() };
+    },
+
     // The Mythic runes' cards: Mythic Resilient's two buttons (any other effect: a critical failure a success), Mythic Armor Potency's (a
     // non-mythic creature's critical hit a failure, when it was one), Mythic Weapon Potency's reroll at mythic proficiency, Mythic Striking's damage
     // reroll — each spending a point (a character's Hero Point here, under the world setting).

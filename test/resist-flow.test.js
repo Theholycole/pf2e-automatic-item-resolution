@@ -152,7 +152,8 @@ test("a light its user sheds: PF2e's TokenLight rule, its dim light the whole ra
     // Sprite Apple's "you shed bright light in a 20-foot emanation (and dim light for the next 20 feet)", for 10 minutes.
     const apple = compileItem(source("Sprite Apple (Pink)"));
     assert.deepEqual(apple.item.light.map((light) => [light.bright, light.dim, light.duration.value, light.duration.unit]), [[20, 40, 10, "minutes"]]);
-    assert.equal(lightText(apple.item.light[0]), "Bright light in 20 feet and dim light to 40 feet for 10 minutes");
+    // (Its "can't be Concealed" sentence in the light's words, 2026-10-26.)
+    assert.equal(lightText(apple.item.light[0]), "Bright light in 20 feet and dim light to 40 feet for 10 minutes; while it sheds it, it can't be concealed if it's visible, and invisible it's concealed rather than undetected");
     assert.deepEqual(lightEffectSource(apple.item.light[0], { item: { name: "Sprite Apple (Pink)" } }).system.rules, [{ key: "TokenLight", value: { bright: 20, dim: 40 } }]);
     // (In this module's words: a stew that makes its eater glow like a torch for an hour; dim light alone.)
     const stew = (text) => compileItem({ name: "Stand-in Stew", type: "consumable", system: { category: "other", level: { value: 2 }, traits: { value: ["alchemical", "consumable"] }, description: { value: `<p><strong>Activate</strong> 1 minute (manipulate)</p><hr /><p>${text}</p>` } } });

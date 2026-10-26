@@ -1033,17 +1033,23 @@ test("a released creature's own attack with a condition on its critical hit (a t
     assert.deepEqual([plan.ownCheck, dazzled.slug, dazzled.duration?.value, dazzled.duration?.unit, plan.resolution.outcomes.success.effects.length], [{ kind: "attack", modifier: 8 }, "dazzled", 1, "rounds", 0]);
 });
 
-test("a bonus for the creatures in the light its user sheds (Sprite Apple): plan.item.lightAura beside the light, an ability-module zone of that radius with its modifiers; a narrower second half, or a DC against one skill, stays a note", async () => {
+test("a bonus for the creatures in the light its user sheds (Sprite Apple): plan.item.lightAura beside the light, an ability-module zone of that radius with its modifiers; a narrower second half, or a DC against one skill, with PF2e's predicate", async () => {
     const { lightAuraZone } = await import("../src/compiler/light-aura.js");
     const pink = compileItem(item("Sprite Apple (Pink)"));
     assert.deepEqual([pink.item.light[0].bright, pink.item.lightAura.radius, pink.item.lightAura.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type])], [20, 20, [["performance", 1, "item"]]]);
     const zone = lightAuraZone(pink.item.lightAura);
     assert.deepEqual([zone.area, zone.centre, zone.lasts.value, zone.lasts.unit, zone.modifiers[0].duration], [{ type: "emanation", value: 20 }, "self", 10, "minutes", null]);
     assert.deepEqual(compileItem(item("Sprite Apple (Teal)")).item.lightAura.modifiers.map((modifier) => [modifier.selector, modifier.predicate]), [["saving-throw", ["item:trait:fear"]]]);
+    // (2026-10-26: its narrower half, Diplomacy at an animal or a plant; Golden's Will DC against Diplomacy, as PF2e's Stone Face; and its user's
+    // "can't be Concealed" words on the light's Effect — each apple whole.)
     const chartreuse = compileItem(item("Sprite Apple (Chartreuse)"));
-    assert.deepEqual(chartreuse.item.lightAura.modifiers.map((modifier) => modifier.selector), ["nature"]);
-    assert.ok(chartreuse.unread.some((sentence) => /Diplomacy checks attempted against animals/.test(sentence)), "its narrower half a note");
-    assert.equal(compileItem(item("Sprite Apple (Golden)")).item.lightAura, undefined);
+    assert.deepEqual(chartreuse.item.lightAura.modifiers.map((modifier) => [modifier.selector, modifier.predicate ?? null]), [["nature", null], ["diplomacy", [{ or: ["target:trait:animal", "target:trait:plant"] }]]]);
+    const golden = compileItem(item("Sprite Apple (Golden)"));
+    assert.deepEqual(golden.item.lightAura.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate]), [["will-dc", -1, "item", ["check:statistic:diplomacy"]]]);
+    for (const apple of [pink, chartreuse, golden]) {
+        assert.deepEqual([Boolean(apple.partial), apple.unread ?? []], [false, []]);
+        assert.match(apple.item.light[0].note, /can't be concealed if it's visible, and invisible it's concealed rather than undetected/);
+    }
 });
 
 test("a bonus to the next save against one trait's effects, whenever it comes (Psychic Warding Bracelet): the readied-bonus card over the monster builtin, kept until that save, its trait the predicate", async () => {

@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1307,
+  "entries": 1303,
   "results": {
    "none": 621,
-   "partial": 297,
+   "partial": 293,
    "builtin:no-effect": 129,
    "note-only": 260
   },
@@ -15,7 +15,7 @@
    "areas": 112,
    "moving": 88,
    "lasting": 66,
-   "visibility": 57,
+   "visibility": 53,
    "choice": 40,
    "mind": 9,
    "strike": 107,
@@ -48,7 +48,7 @@
   },
   "any": {
    "speeds": 30,
-   "areas": 171,
+   "areas": 167,
    "immunity": 74,
    "objects": 393,
    "speech": 124,
@@ -58,7 +58,7 @@
    "lasting": 217,
    "moving": 116,
    "triggers": 126,
-   "visibility": 59,
+   "visibility": 55,
    "dying": 78,
    "choice": 113,
    "several": 90,
@@ -76,7 +76,7 @@
    "range": 4,
    "cooldown": 11,
    "vehicles": 24,
-   "situational": 81,
+   "situational": 78,
    "creatures": 53,
    "forms": 25,
    "fortune": 10,
@@ -944,17 +944,6 @@
     "situational",
     "lasting",
     "objects"
-   ]
-  },
-  {
-   "name": "Sprite Apple (Pink)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "visibility",
-   "work": "you're concealed",
-   "needs": [
-    "visibility",
-    "areas"
    ]
   },
   {
@@ -3865,18 +3854,6 @@
    ]
   },
   {
-   "name": "Sprite Apple (Teal)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "visibility",
-   "work": "you're concealed",
-   "needs": [
-    "visibility",
-    "areas",
-    "situational"
-   ]
-  },
-  {
    "name": "Ration Tonic (Greater)",
    "kind": "consumable",
    "result": "none",
@@ -4908,18 +4885,6 @@
    ]
   },
   {
-   "name": "Sprite Apple (Chartreuse)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "visibility",
-   "work": "you're concealed",
-   "needs": [
-    "visibility",
-    "areas",
-    "situational"
-   ]
-  },
-  {
    "name": "Emerald Fulcrum Lens",
    "kind": "activation",
    "result": "none",
@@ -5638,18 +5603,6 @@
     "immunity",
     "lasting",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Sprite Apple (Golden)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "visibility",
-   "work": "you're concealed",
-   "needs": [
-    "visibility",
-    "areas",
-    "situational"
    ]
   },
   {

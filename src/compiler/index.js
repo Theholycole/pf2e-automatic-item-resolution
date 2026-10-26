@@ -79,7 +79,7 @@ import { withSpend } from "./spend.js";
 import { withMythicUpgrade } from "./mythic-upgrade.js";
 import { readAttackRiders, withAttackRiders } from "./attack-riders.js";
 import { withAreaTraitNote } from "./area-trait.js";
-import { readLightAura } from "./light-aura.js";
+import { readLightAura, REVEALED_NOTE, revealedSentence } from "./light-aura.js";
 
 export { readActivations, actionTypeOf } from "./activation.js";
 export { itemDuration, noteRow, ownRow, plainText } from "./rows.js";
@@ -233,14 +233,18 @@ export function compileItem(given, options = {}) {
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
 // note, unless it goes on to something narrower.)
+// (And its user's own in that light, "you can't be Concealed if you're visible …": words on the light's Effect, its sentence no longer unread.)
 function withLightAura(plan, html) {
     const read = plan?.item ? readLightAura(html, plan) : null;
     if (!read) return plan;
     const said = plainText(`<p>${read.said}</p>`).trim();
-    const kept = (list) => (read.whole ? (list ?? []).filter((sentence) => !String(sentence).includes(said) && !said.includes(String(sentence).trim())) : list ?? []);
+    const revealed = (plan.item.light ?? []).length ? revealedSentence(html) : null;
+    const gone = [...(read.whole ? [said] : []), ...(revealed ? [plainText(`<p>${revealed}</p>`).trim()] : [])];
+    const kept = (list) => (list ?? []).filter((sentence) => !gone.some((words) => String(sentence).includes(words) || words.includes(String(sentence).trim())));
     const unread = kept(plan.unread);
     const notes = kept(plan.notes);
-    return { ...plan, item: { ...plan.item, lightAura: read.aura }, ...(plan.unread ? { unread } : {}), ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}), ...(plan.partial && !unread.length && !notes.length ? { partial: undefined } : {}) };
+    const light = revealed ? plan.item.light.map((entry, index) => (index ? entry : { ...entry, note: entry.note ? `${entry.note}; ${REVEALED_NOTE}` : REVEALED_NOTE })) : plan.item.light;
+    return { ...plan, item: { ...plan.item, lightAura: read.aura, ...(light ? { light } : {}) }, ...(plan.unread ? { unread } : {}), ...(plan.notes ? { notes: notes.length ? notes : undefined } : {}), ...(plan.partial && !unread.length && !notes.length ? { partial: undefined } : {}) };
 }
 
 // Effects its user picks one of, each its own named paragraph after "Choose one of the following effects": a third-party jar whose

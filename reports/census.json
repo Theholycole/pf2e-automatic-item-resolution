@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 171,
-   "resolves": 777,
+   "resolves": 781,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
-   "partial": 103,
+   "partial": 99,
    "builtin:ways": 27,
    "builtin:item-action": 16,
    "note-only": 117,
@@ -38,9 +38,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 26,
-    "partial": 51,
+    "partial": 47,
     "builtin:ways": 20,
-    "resolves": 212,
+    "resolves": 216,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 94,
@@ -384,13 +384,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 262,
+   "resolves": 266,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 612,
+   "resolves": 616,
    "gaps": 0,
    "none": 13
   }
@@ -2078,11 +2078,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -7821,11 +7819,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -9477,12 +9473,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected.",
-    "Creatures in the bright light feel more in tune with nature, gaining a +1 item bonus to Nature checks and to Diplomacy checks attempted against animals or plants (if they have the Animal Empathy feat, Plant Empathy feat, or some other ability to make such checks)."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -10905,12 +10898,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "While shedding this light, you can't be Concealed if you're visible, and if you're Invisible, you're concealed instead rather than being undetected.",
-    "Creatures in the bright light feel kind and inviting, taking a -1 item penalty to their Will DC against Diplomacy checks."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
