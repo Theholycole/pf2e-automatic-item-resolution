@@ -5,6 +5,9 @@
 // - persistent damage a failed save adds to a basic save's, Splintering Spear's Shatter's "A creature that fails also takes the same amount of
 //   persistent bleed damage as the spear deals on a hit" (the item's "when you hit with the spear, splinters break off in the target, dealing
 //   1d6 bleed damage"): the failure's and the critical failure's damage, mixed — the save's shared damage and that persistent damage.
+// - a push the row already makes, its GM line the whole paragraph: Blast Lance's "The target takes the full fire damage and is pushed back 5
+//   feet. You can Stride after it, but you must move the same distance and in the same direction." — the push the row's, the Stride its
+//   user's option, a line on the card.
 // Each sentence read is no longer a note. Pure.
 
 const CONDITION_IDS = { blinded: "XgEqL1kFApUbl5Z2", clumsy: "i3OJZU2nk64Df3xm", confused: "yblD8fOR1J8rDwEQ", controlled: "9qGBRpbX9NEwtAAr", dazzled: "TkIyaNPgTZFBCCuh", deafened: "9PR9y0bi4JPKnHPR", drained: "4D2KBtexWXa6oUMR", enfeebled: "MIRkyAjyBeXivMa7", fascinated: "AdPVz7rbaVSRxHFg", fatigued: "HL2l2VRSaQHu9lUw", frightened: "TBSHQspnbcqxsmjL", grabbed: "kWc1fhmv9LBiTuei", immobilized: "eIcWbB5o3pP6OIMe", "off-guard": "AJh5ex99aV6VTggg", paralyzed: "6uEgoh53GbXuHpTF", petrified: "dTwPJuKgBQCMxixg", prone: "j91X7x0XSomq8d60", restrained: "VcDeM8A5oI6VqhbM", sickened: "fesd1n5eVhpCSS18", slowed: "xYTAsEpcJE1Ccni3", stunned: "dfCMdR4wnpbYNTix", stupefied: "e1XGnhKNSQIm5IXg" };
@@ -47,6 +50,9 @@ function persistentOf(sentence, itemHtml) {
     const hit = new RegExp(String.raw`\bwhen you hit with the [^.]*?@Damage\[(\d+d\d+|\d+)\[${type}\]\]`, "i").exec(String(itemHtml ?? ""));
     return hit ? { formula: `${hit[1]}[persistent,${type}]` } : null;
 }
+
+// (A paragraph whose results the row has — its damage, its push — but its Stride after the creature, its user's to take.)
+const STRIDE_AFTER = /^\{target\} \((?:critical )?failure, the rest by hand\): The target takes (?:the )?(?:full|double|half)(?: fire| \w+)? damage and is pushed back (\d+) feet\. (You can Stride after it, but you must move the same distance and in the same direction\.)$/;
 
 const leftOver = (plan) => !(plan.notes ?? []).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
 
@@ -91,6 +97,16 @@ export function withRowReadings(plan, html, item = null) {
             }
             drop(said(note));
         }
+    }
+    // (A push the row has, its Stride the user's option: the card's line.)
+    for (const degree of ["failure", "criticalFailure"]) {
+        const row = rows[degree];
+        const lines = row?.manualInstructions ?? [];
+        const said = lines.map((line) => [line, STRIDE_AFTER.exec(String(line))]).filter(([, match]) => match && Number(match[1]) === Number(row.forcedMovement?.distance) && row.forcedMovement?.kind === "push");
+        if (!said.length) continue;
+        rows[degree] = { ...row, manualInstructions: lines.filter((line) => !said.some(([one]) => one === line)) };
+        const option = `After the push, its user can Stride after the creature, the same distance and direction.`;
+        if (!notes.includes(option)) notes.push(option);
     }
     if (notes.length === (plan.notes ?? []).length && unread.length === (plan.unread ?? []).length && Object.keys(rows).every((degree) => rows[degree] === outcomes[degree])) return plan;
     next = { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread } : {}), resolution: { ...plan.resolution, outcomes: rows } };

@@ -1623,6 +1623,35 @@ export const cases = {
         return { size: foe.system.traits.size.value, enfeebled: foe.getCondition("enfeebled").value };
     },
 
+    // Boots of the Secret Blade (Greater): a +1 striking dagger in its user's hand, a Strike of its user's, the next activation's dagger
+    // replacing it; Necklace of Knives' dagger gone once it's out of the hand.
+    async madeBlades(scene) {
+        await clearSquares(scene, [[6, 30]]);
+        const { actor: user } = await creature(scene, "Blade Drawer", { type: "character", x: 6, y: 30 });
+        const draw = async (item, what) => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(item.uuid, 0);
+            const card = await messageAfter(since, itemCard("objects"), { what: `${what}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id, {});
+        };
+        const boots = await give(user, "Boots of the Secret Blade (Greater)");
+        const made = (by) => user.items.filter((item) => item.flags?.[NS]?.made?.by === by.id);
+        await draw(boots, "Draw Secret Blade");
+        await until(() => made(boots).length === 1, "the dagger", { timeout: 8000 });
+        const first = made(boots)[0].id;
+        await draw(boots, "Draw Secret Blade again");
+        await until(() => made(boots).length === 1 && made(boots)[0].id !== first, `one new dagger (${made(boots).length})`, { timeout: 8000 });
+        const [dagger] = made(boots);
+        assert(dagger.system.equipped.carryType === "held" && dagger.system.runes.potency === 1 && dagger.system.runes.striking === 1, `held, +1 striking (${JSON.stringify(dagger.system.runes)})`);
+        assert((user.system.actions ?? []).some((action) => action.item?.id === dagger.id), "a Strike with it");
+        const necklace = await give(user, "Necklace of Knives");
+        await draw(necklace, "Necklace of Knives");
+        await until(() => made(necklace).length === 1, "the knife", { timeout: 8000 });
+        await made(necklace)[0].update({ "system.equipped.carryType": "worn", "system.equipped.handsHeld": 0 });
+        await until(() => made(necklace).length === 0, "the knife gone out of the hand", { timeout: 8000 });
+        return { dagger: dagger.name };
+    },
+
     // Burial Oil: the card picks the longsword; its Effect's AdjustStrike gives that Strike the Vitalizing rune (PF2e's disrupting).
     async runeOil(scene) {
         const { actor: fighter } = await creature(scene, "Oiled Fighter", { type: "character", x: 10, y: 17 });

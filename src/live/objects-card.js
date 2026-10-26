@@ -1,5 +1,5 @@
 // The objects card (src/compiler/objects.js): what an item does to one of its user's items, or to itself — stored in it, out of it into a
-// hand, to a hand, worn, repaired — the item picked on the card from the user's own (its choices, made when the card is posted). Pure.
+// hand, to a hand, worn, repaired, a weapon made in the hand — the item picked on the card from the user's own (its choices, made when the card is posted). Pure.
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 export const isObjects = (plan) => plan?.builtin === "objects" && Boolean(plan.objects?.op);
@@ -13,6 +13,11 @@ export function objectsText(objects, item = {}) {
     if (objects.op === "hand") return objects.self ? `${item.name ?? "It"} to its user's hand` : `To its user's hand: one of its items${limit}`;
     if (objects.op === "don") return `${item.name ?? "It"} worn`;
     if (objects.op === "repair") return `Repaired to its full Hit Points, no longer broken: one of its user's items${limit}`;
+    // ("A +1 striking dagger in its user's hand, the last one gone: Strike with it".)
+    if (objects.op === "create") {
+        const runes = objects.potency ? `+${objects.potency}${objects.striking ? ` ${["", "", "greater ", "major "][objects.striking]}striking` : ""} ` : "";
+        return `A ${runes}${objects.weapon} in its user's hand${objects.replaces ? ", the last one it made gone" : ""}${objects.whileHeld ? ", gone once it's out of the hand" : ""}: Strike with it`;
+    }
     return objects.op;
 }
 

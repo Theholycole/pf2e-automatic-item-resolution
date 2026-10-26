@@ -40,3 +40,11 @@ test("Splintering Spear's Shatter: a creature that fails its basic Reflex save a
         assert.deepEqual([success.damage.mode, failure.damage.formulas, criticalFailure.damage.shared.multiplier, shatter.notes ?? []], ["shared", [{ formula: "1d6[persistent,bleed]" }], 2, []]);
     }
 });
+
+test("Blast Lance: the push its failures already make, the Stride after the creature its user's option on the card, no GM line", () => {
+    for (const name of ["Blast Lance", "Blast Lance (Greater)"]) {
+        const plan = compileActivations(item(name))[0].plan;
+        const { failure, criticalFailure } = plan.resolution.outcomes;
+        assert.deepEqual([failure.forcedMovement.distance, criticalFailure.forcedMovement.distance, failure.manualInstructions, criticalFailure.manualInstructions, plan.notes, Boolean(plan.partial)], [5, 10, [], [], ["After the push, its user can Stride after the creature, the same distance and direction."], false]);
+    }
+});

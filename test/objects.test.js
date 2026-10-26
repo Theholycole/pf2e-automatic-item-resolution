@@ -48,3 +48,13 @@ test("the choices: its user's items each op can take", () => {
     assert.deepEqual(names({ op: "repair", maxBulk: 4 }), ["Shield"]);
     assert.deepEqual(names({ op: "don", self: true }), []);
 });
+
+test("a weapon made in its user's hand: Boots of the Secret Blade's dagger with each grade's runes, the last one replaced; Necklace of Knives' while it's held", () => {
+    const boots = activation("Boots of the Secret Blade", "Draw Secret Blade");
+    assert.deepEqual([routeOf(boots), boots.objects, boots.notes, boots.partial], ["objects", { op: "create", self: true, weapon: "dagger", potency: 0, striking: 0, replaces: true }, undefined, undefined]);
+    assert.deepEqual([activation("Boots of the Secret Blade (Greater)", "Draw Secret Blade").objects.potency, activation("Boots of the Secret Blade (Major)", "Draw Secret Blade").objects.striking], [1, 2]);
+    assert.equal(objectsText(activation("Boots of the Secret Blade (Major)", "Draw Secret Blade").objects), "A +2 greater striking dagger in its user's hand, the last one it made gone: Strike with it");
+    const necklace = activation("Necklace of Knives");
+    assert.deepEqual(necklace.objects, { op: "create", self: true, weapon: "dagger", potency: 0, striking: 0, whileHeld: true });
+    assert.equal(objectsText(necklace.objects), "A dagger in its user's hand, gone once it's out of the hand: Strike with it");
+});

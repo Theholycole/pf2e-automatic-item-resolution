@@ -1,9 +1,11 @@
 // Live play for the objects card (src/compiler/objects.js, src/live/objects-card.js): its user's items it can take, listed when it's posted;
 // on the active GM's client, the picked item (or the item itself) updated as PF2e keeps items — into the container (its containerId, stowed),
-// out of it into a hand, to a hand (held, its hands as its usage says), worn (Crushing Coils), repaired to its full Hit Points.
+// out of it into a hand, to a hand (held, its hands as its usage says), worn (Crushing Coils), repaired to its full Hit Points; or a weapon
+// made in its user's hand (Boots of the Secret Blade's dagger): PF2e's own, with the text's runes, flagged as the item's — the next one made
+// replaces it, or (Necklace of Knives') it goes once it's out of the hand.
 
 import { createObjectsCard, objectsCardHTML } from "../src/live/objects-card.js";
-import { FLAG, MODULE_ID, entryOf, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, entryOf, isActiveGM, stateOf } from "./foundry.js";
 
 const PHYSICAL = new Set(["equipment", "armor", "weapon", "shield", "backpack", "consumable", "treasure", "ammo", "book"]);
 const bulkOf = (item) => Number(item?.system?.bulk?.value ?? 0) || 0;
@@ -58,7 +60,40 @@ export async function applyObjectsCard(message, { pick = 0 } = {}) {
         const max = Number(chosen.system?.hp?.max) || 0;
         await chosen.update({ "system.hp.value": max });
         line = `${chosen.name} is repaired (${max} Hit Points), no longer broken`;
+    } else if (objects.op === "create") {
+        // (The last one this item made, gone first when a new one replaces it.)
+        const madeBy = (item) => item.flags?.[MODULE_ID]?.made?.by === holder.id;
+        const old = objects.replaces ? actor.items.filter(madeBy).map((item) => item.id) : [];
+        if (old.length) await actor.deleteEmbeddedDocuments("Item", old);
+        const source = await weaponSource(objects.weapon);
+        source.name = `${source.name} (${holder.name})`;
+        source.system.runes = { ...(source.system.runes ?? {}), potency: Number(objects.potency) || 0, striking: Number(objects.striking) || 0 };
+        source.system.equipped = { ...(source.system.equipped ?? {}), carryType: "held", handsHeld: 1 };
+        source.flags = { ...(source.flags ?? {}), [MODULE_ID]: { made: { by: holder.id, from: holder.name, ...(objects.whileHeld ? { whileHeld: true } : {}) } } };
+        const [made] = await actor.createEmbeddedDocuments("Item", [source]);
+        line = `${made.name} is in ${state.user.name}'s hand${old.length ? ", the last one gone" : ""}: Strike with it`;
     } else throw new Error(`${state.item.name}: nothing to do (${objects.op}).`);
     const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
     return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// PF2e's own weapon of that name ("dagger"), as a new item's source.
+async function weaponSource(weapon) {
+    const pack = game.packs.get("pf2e.equipment-srd");
+    const name = String(weapon ?? "").replace(/^./, (letter) => letter.toUpperCase());
+    const entry = pack ? (await pack.getIndex()).find((row) => row.name === name && row.type === "weapon") : null;
+    if (!entry) throw new Error(`PF2e's ${name} wasn't found.`);
+    const source = (await pack.getDocument(entry._id)).toObject();
+    delete source._id;
+    source._stats = { ...(source._stats ?? {}), compendiumSource: `Compendium.pf2e.equipment-srd.Item.${entry._id}` };
+    return source;
+}
+
+// (A weapon made to last while it's held, Necklace of Knives': gone once it's out of the hand — dropped, stowed or worn.)
+export function setUpMadeWeapons() {
+    Hooks.on("updateItem", (item, changes) => {
+        if (!isActiveGM() || !item.flags?.[MODULE_ID]?.made?.whileHeld) return;
+        const carry = changes?.system?.equipped?.carryType;
+        if (carry && carry !== "held") item.delete().catch((error) => console.error(`${MODULE_ID} | a made weapon out of the hand`, error));
+    });
 }

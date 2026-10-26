@@ -13,6 +13,7 @@ import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
 import { setUpPlacedLights } from "./placed-light.js";
 import { setUpPlacedMoves } from "./placed-moves.js";
+import { setUpMadeWeapons } from "./objects.js";
 import { temperatureProtections } from "./temperature.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { ownerOf } from "./foundry.js";
@@ -109,6 +110,8 @@ Hooks.once("ready", async () => {
     // (A light an item puts in a square, removed when its time is up: scripts/placed-light.js.)
     setUpPlacedLights();
     setUpPlacedMoves();
+    // (A weapon an item made that lasts while it's held: scripts/objects.js.)
+    setUpMadeWeapons();
     // (A runestone's rune etched onto its owner's weapon, armor or shield: scripts/etching.js.)
     setUpEtching();
     try {

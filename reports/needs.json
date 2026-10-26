@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1336,
+  "entries": 1332,
   "results": {
-   "none": 632,
+   "none": 628,
    "partial": 311,
    "builtin:no-effect": 129,
    "note-only": 264
@@ -14,11 +14,11 @@
    "afflictions": 56,
    "areas": 112,
    "moving": 90,
-   "lasting": 67,
+   "lasting": 66,
    "visibility": 57,
    "choice": 43,
    "mind": 9,
-   "strike": 110,
+   "strike": 107,
    "spells": 45,
    "information": 23,
    "out-of-combat": 33,
@@ -55,7 +55,7 @@
    "out-of-combat": 425,
    "counteract": 80,
    "afflictions": 99,
-   "lasting": 221,
+   "lasting": 217,
    "moving": 121,
    "triggers": 134,
    "visibility": 59,
@@ -63,7 +63,7 @@
    "choice": 118,
    "several": 98,
    "mind": 73,
-   "strike": 191,
+   "strike": 188,
    "reader": 236,
    "spells": 82,
    "information": 195,
@@ -2778,28 +2778,6 @@
     "immunity",
     "situational",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Necklace of Knives",
-   "kind": "activation",
-   "result": "none",
-   "main": "lasting",
-   "work": "for as long as",
-   "needs": [
-    "lasting"
-   ]
-  },
-  {
-   "name": "Boots of the Secret Blade (Greater)",
-   "kind": "activation",
-   "activation": "Draw Secret Blade",
-   "result": "none",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike",
-    "lasting"
    ]
   },
   {
@@ -10522,18 +10500,6 @@
    ]
   },
   {
-   "name": "Boots of the Secret Blade",
-   "kind": "activation",
-   "activation": "Draw Secret Blade",
-   "result": "none",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike",
-    "lasting"
-   ]
-  },
-  {
    "name": "Golem Stylus",
    "kind": "activation",
    "result": "note-only",
@@ -11923,18 +11889,6 @@
    "needs": [
     "objects",
     "speech"
-   ]
-  },
-  {
-   "name": "Boots of the Secret Blade (Major)",
-   "kind": "activation",
-   "activation": "Draw Secret Blade",
-   "result": "none",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike",
-    "lasting"
    ]
   },
   {
