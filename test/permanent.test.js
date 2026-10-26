@@ -425,14 +425,35 @@ test("a mount's bleed and quickened condition (Heedless Spurs): the fuller outri
     assert.match(spurs.notes.join(" "), /Target your mount/);
 });
 
-test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and unconscious only later, at the end of its next turn (a note, not now)", async () => {
+test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and unconscious only later, at the end of its next turn (the row's later, given then)", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const gas = compileItem(item("Nap Gas Dispenser"), { spellEffects });
     const rows = gas.resolution.outcomes;
-    assert.deepEqual([rows.success.modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`), rows.success.effects.map((effect) => effect.slug)], [["perception -2"], ["slowed"]]);
+    assert.deepEqual([rows.success.modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`), rows.success.effects.map((effect) => effect.slug), Boolean(gas.partial)], [["perception -2"], ["slowed"], false]);
     for (const degree of ["failure", "criticalFailure"]) {
         assert.deepEqual(rows[degree].effects.map((effect) => effect.slug), ["slowed"], `${degree}: slowed now`);
-        assert.match(rows[degree].noteEffects.map((note) => note.text).join(" "), /At the end of their next turn, they fall Prone and fall Unconscious/);
+        assert.deepEqual(rows[degree].later.conditions.map((condition) => `${condition.slug} ${condition.duration?.value ?? "-"} ${condition.duration?.unit ?? "-"}`), ["prone - -", "unconscious 1 minutes"]);
+    }
+    assert.deepEqual([rows.failure.later.wake, rows.criticalFailure.later.wake], [undefined, 3]);
+    // Live: marked when the card applies; the end of its turn that's under way doesn't count, the next one gives them.
+    const { markLater, laterAtTurnEnd } = await import("../scripts/later.js");
+    const saved = { game: globalThis.game, fromUuid: globalThis.fromUuid, ChatMessage: globalThis.ChatMessage };
+    const items = [];
+    const raised = [];
+    const actor = { uuid: "Actor.napper", name: "Napper", itemTypes: { get effect() { return items; } }, increaseCondition: async (slug) => raised.push(slug), createEmbeddedDocuments: async (type, sources) => sources.map((source) => { const made = { ...source, id: `e${items.length}`, update: async (changes) => { for (const [key, value] of Object.entries(changes)) { const parts = key.split("."); const last = parts.pop(); parts.reduce((node, part) => node[part], made)[last] = value; } }, delete: async () => items.splice(items.indexOf(made), 1) }; items.push(made); return made; }) };
+    globalThis.game = { combat: { started: true, combatant: { actor } }, time: { worldTime: 0 }, user: { isGM: true } };
+    globalThis.fromUuid = async (uuid) => (uuid === actor.uuid ? actor : null);
+    globalThis.ChatMessage = { create: async () => null, getSpeaker: () => ({}) };
+    try {
+        await markLater({ state: { plan: gas, ability: { name: "Nap Gas Dispenser" }, source: {} }, targets: [{ actorUuid: actor.uuid, degree: "criticalFailure" }] });
+        assert.equal(items.length, 1);
+        await laterAtTurnEnd(actor);
+        assert.deepEqual([items.length, raised], [1, []], "its own turn's end: not yet");
+        await laterAtTurnEnd(actor);
+        assert.deepEqual([raised, items.map((one) => one.name)], [["prone"], ["Nap Gas Dispenser: Unconscious"]]);
+        assert.match(items[0].system.description.value, /Waking it takes 3 Interact actions/);
+    } finally {
+        Object.assign(globalThis, saved);
     }
 });
 

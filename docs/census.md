@@ -18,8 +18,9 @@ Results, for the items this module handles:
 | Result | Items | Share |
 |---|---:|---:|
 | resolves | 799 | 54% |
-| partial | 86 | 6% |
+| partial | 85 | 6% |
 | note-only | 116 | 8% |
+| gaps | 1 | 0% |
 | builtin:zone | 119 | 8% |
 | builtin:cast-spell | 35 | 2% |
 | builtin:roll-twice | 2 | 0% |
@@ -40,7 +41,7 @@ Results, for the items this module handles:
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 222 | 40 | 59 | 0 | 97 | 94 |
+| other | 512 | 222 | 39 | 59 | 1 | 97 | 94 |
 | potion | 182 | 125 | 9 | 11 | 0 | 21 | 16 |
 | talisman | 156 | 70 | 4 | 5 | 0 | 52 | 25 |
 | elixir | 149 | 104 | 13 | 12 | 0 | 17 | 3 |
@@ -88,9 +89,9 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
-| duration | 943 | 631 | 0 | 13 |
-| fixed-dc | 491 | 310 | 0 | 21 |
-| condition | 433 | 275 | 0 | 18 |
+| duration | 943 | 631 | 1 | 13 |
+| fixed-dc | 491 | 310 | 1 | 21 |
+| condition | 433 | 275 | 1 | 18 |
 | linked-effect | 393 | 365 | 0 | 0 |
 | damage | 277 | 173 | 0 | 7 |
 | trigger | 156 | 69 | 0 | 19 |
@@ -107,3 +108,4 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Gap | Items |
 |---|---:|
+| later | 1 |

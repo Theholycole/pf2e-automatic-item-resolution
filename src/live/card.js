@@ -377,6 +377,14 @@ export function afterEndsMarkSource(entry, { item = {}, user = {}, worldTime = 0
     const words = `When it's no longer ${entry.when}, it becomes ${then}`;
     return ownEffectSource({ name: `after ${entry.when}`, img: "icons/svg/clockwork.svg", words, rules: [], duration: null, flag: { afterEnds: { when: entry.when, then: entry.then } }, item, user, worldTime, initiative, moduleId });
 }
+// Its wait for the end of the creature's next turn (src/compiler/guards.js delayedConditions, scripts/later.js: Nap Gas Dispenser's Prone and
+// Unconscious): the mark carrying those conditions; skip, made during its own turn, that turn's end isn't the one.
+export function laterMarkSource(later, { item = {}, user = {}, worldTime = 0, initiative = null, skip = false, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const what = later.conditions.map((condition) => `${oneCondition(condition.slug, condition.value)}${condition.duration?.mode === "fixed" ? ` for ${timeText(condition.duration)}` : ""}`).join(" and ");
+    const words = `At the end of its next turn, it becomes ${what}${later.wake ? `; waking it takes ${later.wake} Interact actions` : ""}`;
+    return ownEffectSource({ name: "at its next turn's end", img: "icons/svg/sleep.svg", words, rules: [], duration: null, flag: { later: { ...later, skip } }, item, user, worldTime, initiative, moduleId });
+}
+
 export function afterEndsEffectSource(then, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const uuid = conditionUuid(then.slug);
     const rules = uuid ? [{ key: "GrantItem", uuid, allowDuplicate: true, alterations: Number.isFinite(then.value) ? [{ mode: "override", property: "badge-value", value: then.value }] : [], onDeleteActions: { granter: "cascade", grantee: "cascade" } }] : [];

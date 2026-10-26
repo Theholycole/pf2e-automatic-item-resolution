@@ -2206,6 +2206,38 @@ export const cases = {
         return { base, striking };
     },
 
+    // Nap Gas Dispenser: a creature that fails is Slowed at once and marked; the end of the user's turn (the one under way) gives nothing, the
+    // end of the creature's own next turn gives it Prone and Unconscious for 1 minute.
+    async napGasLater(scene) {
+        await clearSquares(scene, [[7, 5], [8, 5]]);
+        const { actor: user, token: userToken } = await creature(scene, "Nap Gas Thrower", { type: "character", x: 7, y: 5 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Nap Gas Sleeper", { x: 8, y: 5, alliance: "opposition", hp: 100, save: -30 });
+        const gas = await give(user, "Nap Gas Dispenser");
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 20 }, { tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            const since = Date.now();
+            await gas.consume();
+            const card = await messageAfter(since, itemCard("expose"), { what: "the gas's card" });
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+            await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the gas's save card" }));
+            const mark = () => foe.itemTypes.effect.find((effect) => effect.flags?.[NS]?.later);
+            await until(mark, "the mark for its next turn's end", { timeout: 8000 });
+            assert(foe.hasCondition("slowed") && !foe.hasCondition("unconscious"), "slowed now, not asleep yet");
+            await combat.nextTurn();
+            await wait(800);
+            assert(!foe.hasCondition("unconscious"), "not asleep at the user's turn's end");
+            await combat.nextTurn();
+            await until(() => foe.hasCondition("unconscious") && foe.hasCondition("prone"), "prone and unconscious at its own turn's end", { timeout: 8000 });
+            assert(!mark(), "the mark used up");
+            return { asleep: true };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);
@@ -4075,24 +4107,6 @@ export const cases = {
         const held = (slug) => mount.itemTypes.condition.some((condition) => condition.slug === slug);
         await until(() => held("persistent-damage") && (held("quickened") || mount.itemTypes.effect.some((effect) => /quickened/i.test(JSON.stringify(effect.system.rules ?? [])))), "bleed and quickened on the mount", { timeout: 10000 });
         return { conditions: mount.itemTypes.condition.map((condition) => condition.slug) };
-    },
-
-    // Nap Gas Dispenser: a critical failure is slowed now; prone and unconscious only at the end of its next turn (a note), not at once.
-    async napGasLater(scene) {
-        const { actor: user } = await creature(scene, "Gas User", { type: "character", x: 8, y: 12 });
-        const { actor: foe, token: foeToken } = await creature(scene, "Gas Target", { x: 10, y: 12, alliance: "opposition", save: -30 });
-        const gas = await give(user, "Nap Gas Dispenser");
-        let since = Date.now();
-        await gas.consume();
-        const card = await messageAfter(since, itemCard("expose"), { what: "the gas card" });
-        since = Date.now();
-        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
-        await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the save card" }));
-        await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "slowed"), "slowed", { timeout: 10000 });
-        await wait(800);
-        const slugs = foe.itemTypes.condition.map((condition) => condition.slug);
-        assert(!slugs.includes("prone") && !slugs.includes("unconscious"), `not prone or unconscious yet (${JSON.stringify(slugs)})`);
-        return { conditions: slugs, notes: foe.itemTypes.effect.map((effect) => effect.name) };
     },
 
     // Sparkshade Parasol: fire resistance 20 for the effect that triggered it (the fortune card's Effect).

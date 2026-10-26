@@ -360,8 +360,9 @@ function conditionalOnly(plan, text) {
 }
 
 // Conditions a row gives later, not now — Nap Gas Dispenser's failure, "At the end of their next turn, they fall Prone and fall
-// Unconscious for 1 minute", which the ability compiler applies at once (and copies to "As failure, but …"): off those rows, and a
-// note on the creature for when they come.
+// Unconscious for 1 minute", which the ability compiler applies at once (and copies to "As failure, but …"): off those rows, and the row's
+// later { at: "turn-end", words, conditions: [{ slug, value, duration }] } — a mark on the creature once the card is applied, those
+// conditions given at the end of its next turn (scripts/later.js; 2026-10-26, a note before).
 const LATER_CONDITIONS = /\bAt the end of (?:their|its|the creature's|the target's) next turn, (?:they|it|the creature|the target) (?:falls?|becomes?|is|are) ([^.]+)\./;
 const DELAYABLE = ["prone", "unconscious", "asleep", "paralyzed", "stunned", "slowed", "petrified", "blinded", "deafened", "confused", "fascinated", "frightened", "sickened"];
 function delayedConditions(plan, text) {
@@ -375,15 +376,22 @@ function delayedConditions(plan, text) {
         const later = own ?? base;
         if (!later) continue;
         const slugs = DELAYABLE.filter((slug) => new RegExp(String.raw`\b${slug}\b`, "i").test(later[1]));
-        if (slugs.length) changed[degree] = { slugs, words: later[0] };
+        // (Each one's own time, "Unconscious for 1 minute".)
+        const conditions = slugs.map((slug) => {
+            const time = new RegExp(String.raw`\b${slug} for (\d+|one|an?) (rounds?|minutes?|hours?)\b`, "i").exec(later[1]);
+            return { slug, value: null, duration: time ? { mode: "fixed", value: { one: 1, a: 1, an: 1 }[time[1].toLowerCase()] ?? Number(time[1]), unit: time[2].toLowerCase().replace(/s?$/, "s"), expiry: "turn-start", anchor: "effect-start" } : null };
+        });
+        // (Waking it harder on that row, the critical failure's "it takes three Interact actions to wake them": the Unconscious Effect's words.)
+        const wake = /\bit takes (two|three|four|\d+) Interact actions to wake (?:them|it)\b/i.exec(row);
+        if (slugs.length) changed[degree] = { slugs, words: later[0], conditions, ...(wake ? { wake: { two: 2, three: 3, four: 4 }[wake[1].toLowerCase()] ?? Number(wake[1]) } : {}) };
     }
     if (!Object.keys(changed).length) return plan;
     const next = eachRow(plan, (row, degree) => {
         const later = changed[degree];
         if (!later || !(row?.effects ?? []).some((effect) => later.slugs.includes(effect.slug))) return row;
-        return { ...row, effects: row.effects.filter((effect) => !later.slugs.includes(effect.slug)), noteEffects: [...(row.noteEffects ?? []), { label: later.slugs.join(", "), text: `${later.words} Apply that then.`, duration: null }] };
+        return { ...row, effects: row.effects.filter((effect) => !later.slugs.includes(effect.slug)), later: { at: "turn-end", words: later.words, conditions: later.conditions, ...(later.wake ? { wake: later.wake } : {}) } };
     });
-    return next === plan ? plan : { ...next, partial: true };
+    return next;
 }
 
 // Which creatures to target, in src/compiler/item-data.js's words for an aura's damage (Banner of Piercing Shards' "Target each

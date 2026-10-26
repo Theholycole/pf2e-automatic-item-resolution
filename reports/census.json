@@ -18,7 +18,7 @@
    "resolves": 799,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
-   "partial": 86,
+   "partial": 85,
    "builtin:ways": 27,
    "builtin:item-action": 16,
    "note-only": 116,
@@ -30,7 +30,8 @@
    "builtin:reroll": 3,
    "builtin:objects": 3,
    "builtin:whisper": 1,
-   "builtin:roll-twice": 2
+   "builtin:roll-twice": 2,
+   "gaps": 1
   }
  },
  "byCategory": {
@@ -39,7 +40,7 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 27,
-    "partial": 40,
+    "partial": 39,
     "builtin:ways": 20,
     "resolves": 222,
     "note-only": 59,
@@ -50,7 +51,8 @@
     "builtin:counteract": 9,
     "builtin:item-action": 1,
     "builtin:conjure": 1,
-    "builtin:objects": 1
+    "builtin:objects": 1,
+    "gaps": 1
    },
    "mechanisms": {
     "casts-spell": 17,
@@ -338,7 +340,7 @@
   "fixed-dc": {
    "count": 491,
    "resolves": 310,
-   "gaps": 0,
+   "gaps": 1,
    "none": 21
   },
   "affliction": {
@@ -386,13 +388,13 @@
   "condition": {
    "count": 433,
    "resolves": 275,
-   "gaps": 0,
+   "gaps": 1,
    "none": 18
   },
   "duration": {
    "count": 943,
    "resolves": 631,
-   "gaps": 0,
+   "gaps": 1,
    "none": 13
   }
  },
@@ -529,7 +531,9 @@
    "other": 4
   }
  },
- "gapCounts": {},
+ "gapCounts": {
+  "later": 1
+ },
  "rows": [
   {
    "name": "Perfection's First Step",
@@ -26789,8 +26793,11 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "gaps",
    "kind": "save",
+   "gaps": [
+    "later"
+   ],
    "live": "save"
   },
   {

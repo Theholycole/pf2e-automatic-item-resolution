@@ -4,16 +4,17 @@
   "entries": 1213,
   "results": {
    "none": 602,
-   "partial": 230,
+   "partial": 229,
    "builtin:no-effect": 124,
-   "note-only": 257
+   "note-only": 257,
+   "gaps": 1
   },
   "main": {
    "speeds": 22,
    "counteract": 16,
    "afflictions": 49,
    "areas": 109,
-   "moving": 83,
+   "moving": 82,
    "lasting": 63,
    "visibility": 46,
    "choice": 37,
@@ -23,7 +24,7 @@
    "information": 23,
    "out-of-combat": 33,
    "actions": 26,
-   "no-rules": 36,
+   "no-rules": 37,
    "objects": 110,
    "illusions": 43,
    "removed": 4,
@@ -56,20 +57,20 @@
    "counteract": 79,
    "afflictions": 91,
    "lasting": 208,
-   "moving": 107,
+   "moving": 106,
    "triggers": 125,
    "visibility": 48,
-   "dying": 73,
+   "dying": 72,
    "choice": 107,
    "several": 89,
    "mind": 69,
    "strike": 176,
-   "reader": 190,
+   "reader": 189,
    "spells": 71,
    "information": 190,
    "actions": 56,
    "from-events": 27,
-   "no-rules": 36,
+   "no-rules": 37,
    "illusions": 56,
    "removed": 5,
    "range": 4,
@@ -12770,13 +12771,10 @@
   {
    "name": "Nap Gas Dispenser",
    "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "fall prone",
+   "result": "gaps",
+   "main": "no-rules",
    "needs": [
-    "moving",
-    "dying",
-    "reader"
+    "no-rules"
    ]
   },
   {

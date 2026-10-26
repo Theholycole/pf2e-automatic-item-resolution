@@ -31,6 +31,7 @@ import { setUpImmunityAfter } from "./immunity.js";
 import { setUpExpiringItems } from "./expiring.js";
 import { setUpArmed } from "./armed.js";
 import { setUpShieldTemp } from "./shield-temp.js";
+import { setUpLater } from "./later.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -142,6 +143,8 @@ Hooks.once("ready", async () => {
     setUpArmed();
     // (A shield's own temporary Hit Points, Ablative Shield Plating's: scripts/shield-temp.js.)
     setUpShieldTemp();
+    // (A row's conditions at the end of the creature's next turn, Nap Gas Dispenser's: scripts/later.js.)
+    setUpLater();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)
