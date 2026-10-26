@@ -179,9 +179,15 @@ test("Flame Layer Balm: no Fiery Body at once — its wearer marked for the hour
     assert.deepEqual([mark.name, mark.system.duration.value, mark.system.duration.unit], ["Flame Layer Balm: armed", 1, "hours"]);
 });
 
-test("Golden Blade of Mzali's Elemental Form: fire, at rank 7, its extra fire damage off by PF2e's own toggle — the toggle's reset at daily preparations the user's (partial)", () => {
+test("Golden Blade of Mzali's Elemental Form: fire, at rank 7, its extra fire damage off by PF2e's own toggle — turned back at its user's next Rest for the Night", async () => {
     const blade = planOf("Golden Blade of Mzali", 1);
-    assert.deepEqual([blade.toggleOn, blade.resolution.applications[0].choice, blade.resolution.applications[0].level, blade.partial], [{ option: "used-elemental-form" }, "fire", 7, true]);
+    assert.deepEqual([blade.toggleOn, blade.resolution.applications[0].choice, blade.resolution.applications[0].level, Boolean(blade.partial)], [{ option: "used-elemental-form", untilRest: true }, "fire", 7, false]);
+    const { togglesAtRest } = await import("../scripts/toggle-off.js");
+    const toggled = [];
+    const unset = [];
+    const spear = { id: "spear", flags: { "pf2e-automatic-item-resolution": { toggleUntilRest: "used-elemental-form" } }, unsetFlag: async (scope, key) => unset.push(key) };
+    await togglesAtRest({ items: { contents: [spear, { id: "other", flags: {} }] }, toggleRollOption: async (...args) => toggled.push(args) });
+    assert.deepEqual([toggled, unset], [[["all", "used-elemental-form", "spear", false]], ["toggleUntilRest"]]);
 });
 
 test("Amulet of the Hellcat: Invisible on an Effect its next Strike ends, the bright light's end in its words, the Stride and Strike a line of the card", async () => {

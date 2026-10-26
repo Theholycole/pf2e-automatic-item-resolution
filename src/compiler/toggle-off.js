@@ -28,8 +28,8 @@ export function withToggleOff(plan, html, item) {
 
 // A damage its item loses until its user's next daily preparations (2026-10-26): Golden Blade of Mzali's Elemental Form, "The spear loses its
 // additional fire damage until your next daily preparations" — PF2e's own toggle on the spear that its extra damage dice are predicated off
-// ("used-elemental-form"), plan.toggleOn: turned on as the activation is used (scripts/toggle-off.js). Its end is the daily preparations', the
-// user's to turn back: a note, the plan partial (the user's ruling keeps out-of-combat parts listed).
+// ("used-elemental-form"), plan.toggleOn: turned on as the activation is used, and back off at its user's next daily preparations — PF2e's
+// Rest for the Night (scripts/toggle-off.js; 2026-10-26, a note for the user before).
 const LOSES = /^The [\w' -]+? loses its additional (\w+) damage until your next daily preparations\.$/i;
 export function withToggleOn(plan, html, item) {
     if (!plan) return plan;
@@ -40,5 +40,7 @@ export function withToggleOn(plan, html, item) {
     const toggle = rules.find((rule) => rule?.key === "RollOption" && rule.toggleable && rules.some((other) => other?.key === "DamageDice" && other.damageType === type && JSON.stringify(other.predicate ?? []).includes(`{"not":"${rule.option}"}`)));
     if (!toggle) return plan;
     const notes = (plan.notes ?? []).filter((entry) => said(entry) !== sentence);
-    return { ...plan, toggleOn: { option: toggle.option }, notes: [...notes, `Its extra ${type} damage is off (PF2e's toggle on it): turn the toggle back off at your next daily preparations.`], partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };
+    const next = { ...plan, toggleOn: { option: toggle.option, untilRest: true }, notes: notes.length ? notes : undefined };
+    const left = [...notes, ...(plan.unread ?? []), ...Object.values(plan.resolution?.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? [])];
+    return left.length ? { ...next, partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } } : { ...next, partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } };
 }

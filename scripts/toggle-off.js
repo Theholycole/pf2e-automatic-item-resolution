@@ -19,9 +19,23 @@ export async function toggleOn(plan, { actor, used }) {
     const itemId = used.data._id ?? String(used.data.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? null;
     if (!itemId || !actor?.toggleRollOption) return;
     await actor.toggleRollOption("all", plan.toggleOn.option, itemId, true);
+    // (Until its user's next daily preparations: remembered on the item, turned back then.)
+    if (plan.toggleOn.untilRest) await actor.items.get(itemId)?.setFlag(MODULE_ID, "toggleUntilRest", plan.toggleOn.option);
+}
+
+// PF2e's Rest for the Night: each item's toggle turned on until then, back off (Golden Blade of Mzali's extra fire damage back).
+export async function togglesAtRest(actor) {
+    for (const item of (actor?.items?.contents ?? []).filter((one) => one.flags?.[MODULE_ID]?.toggleUntilRest)) {
+        await actor.toggleRollOption("all", item.flags[MODULE_ID].toggleUntilRest, item.id, false);
+        await item.unsetFlag(MODULE_ID, "toggleUntilRest");
+    }
 }
 
 export function setUpToggleOff() {
+    Hooks.on("pf2e.restForTheNight", (actor) => {
+        if (!isActiveGM()) return;
+        togglesAtRest(actor).catch((error) => console.error(`${MODULE_ID} | toggles at rest`, error));
+    });
     Hooks.on("deleteItem", (item) => {
         const flag = item?.flags?.[MODULE_ID]?.toggleOff;
         if (!flag || !item.parent?.toggleRollOption || !isActiveGM()) return;
