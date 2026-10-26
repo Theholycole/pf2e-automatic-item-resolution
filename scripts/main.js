@@ -105,7 +105,7 @@ Hooks.once("ready", async () => {
     }
     try {
         const pack = game.packs.get("pf2e.spells-srd");
-        spells = pack ? spellIndex([...(await pack.getIndex({ fields: ["system.area", "system.target", "system.ritual", "system.level.value", "system.traits.value"] }))]) : {};
+        spells = pack ? spellIndex([...(await pack.getIndex({ fields: ["system.area", "system.target", "system.ritual", "system.level.value", "system.traits.value", "system.duration", "system.range"] }))]) : {};
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spells couldn't be indexed.`, error);
     }

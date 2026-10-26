@@ -306,3 +306,27 @@ export function withGmCalls(plan) {
     }
     return next;
 }
+
+// A spell-cast card whose notes add a rule the cast doesn't play (the user's answer to question 2, 2026-10-26): The Beating's area also
+// difficult terrain, The Winged Serpent's Foresight only 10 minutes, Fan of the Four Winds' vessel +10 feet Speed, Fiendish Teleportation's
+// 2d6 spirit damage beside the teleport. Partial, as other cards are with their leftovers; a note that only restates the cast doesn't count:
+// its spell, rank and DC, its spell attack, the spell's own duration and range (options.spells: Satchel of Numberless Seeds' "within 30
+// feet" for Protector Tree's 30 feet, Clockwork Songbird's 24 hours for Peaceful Bubble's), "within range", what it does "as normal with
+// the spell", an intelligent item's statistics. Those left out of the words looked at; a note the GM's call (withGmCalls) is a card line.
+const CAST_RULE = /\b\d+d\d+\b|\bdamage\b|\bcounteract\b|\bbonus\b|\bpenalty\b|\b(?:frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|fatigued|drained|quickened|off-guard|concealed|invisible|hidden)\b|\brange\b|\b\d+ (?:feet|foot|miles?)\b|\b\d+ (?:rounds?|minutes?|hours?|days?)\b|\binstead\b|\bexcept\b|\bdegree of success\b|\bStrike\b|\bweakness\b|\bresistance\b|\bimmune\b|\bdoesn't require\b|\bas a (?:one|two|three)-action\b|\bsave DC is your\b|\bheightened\b|\bmore targets?\b|\barea\b/i;
+const NOT_A_RULE = /^(?:As normal with the spell\b|Its statistics improve\b)/i;
+const literal = (words) => words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const castWords = (note, plan, spell) => {
+    let text = said(note);
+    const name = plan.spell?.name;
+    if (name) text = text.replace(new RegExp(literal(name), "gi"), " ");
+    text = text.replace(/\b(?:\d+(?:st|nd|rd|th)[- ]rank|rank \d+|\d+(?:st|nd|rd|th)[- ]level)\b/gi, " ").replace(/spell attack (?:roll|modifier) of \+\d+/gi, " ").replace(/\b(?:with)?in (?:the spell's )?range(?: of the spells?)?\b/gi, " ");
+    for (const own of [spell?.duration, spell?.range]) if (/^\d+ (?:feet|miles?|rounds?|minutes?|hours?|days?)$/i.test(own ?? "")) text = text.replace(new RegExp(String.raw`\b${literal(own)}\b`, "gi"), " ");
+    return plan.dc ? text.replace(new RegExp(String.raw`\(?DC ${plan.dc}\)?`, "g"), " ") : text;
+};
+export function withCastNotes(plan, options = {}) {
+    if (plan?.builtin !== "cast-spell" || plan.partial || !(plan.notes ?? []).length) return plan;
+    const spell = options.spells?.[String(plan.spell?.name ?? "").toLowerCase()] ?? null;
+    const adds = plan.notes.filter((note) => !isGmCall(note) && !NOT_A_RULE.test(said(note)) && CAST_RULE.test(castWords(note, plan, spell)));
+    return adds.length ? { ...plan, partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } } : plan;
+}

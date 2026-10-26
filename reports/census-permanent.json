@@ -6,14 +6,14 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 918,
+   "resolves": 923,
    "builtin:cast-spell": 475,
    "partial": 128,
    "none": 404,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
    "builtin:readied-bonus": 46,
-   "note-only": 141,
+   "note-only": 136,
    "builtin:reroll": 45,
    "builtin:table": 7,
    "builtin:teleport": 28,
@@ -61,13 +61,13 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 537,
+    "resolves": 542,
     "builtin:cast-spell": 347,
     "none": 280,
     "builtin:focus-point": 45,
     "builtin:counteract": 28,
     "builtin:readied-bonus": 32,
-    "note-only": 109,
+    "note-only": 104,
     "builtin:reroll": 34,
     "partial": 57,
     "builtin:table": 4,
@@ -4096,7 +4096,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -11669,7 +11669,7 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -16354,7 +16354,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -22603,7 +22603,7 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -27755,7 +27755,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item",
    "rune": true

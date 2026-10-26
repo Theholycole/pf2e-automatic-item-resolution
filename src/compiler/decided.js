@@ -7,6 +7,7 @@
 
 import { leftToTheGM } from "./honest.js";
 import { leftText, needsOf } from "./needs.js";
+import { notesChecked } from "./notes-checked.js";
 
 const DECIDED = new Set(["speech", "mind", "information"]);
 const MECHANICAL = /\b\d+d\d+\b|(?:^|\s)[+\-–]\d+\b|\bDC \d+\b|\b\d+ (?:feet|foot)\b|\b(?:damage|Hit Points|Strikes?|attack|teleport\w*|transport\w*|Speed|bonus|penalty|resistance|weakness|saving throws?|save|check|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|dies|concealed|invisible|hidden)\b/i;
@@ -45,6 +46,9 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     const result = resultOf(plan);
     if (result === "resolves" || (result.startsWith("builtin:") && result !== "builtin:no-effect")) return plan;
     const entry = { result, kind, trigger, text, left: plan ? leftovers(plan) : [] };
+    // (A note-only item checked and found to hold nothing a card could play, src/compiler/notes-checked.js — the user's answer to question 3,
+    // 2026-10-26: its note row kept, done.)
+    if (result === "note-only" && notesChecked(name ?? plan?.source?.name)) return { ...plan, noteOnly: undefined, decided: "checked", automation: { ...(plan.automation ?? {}), level: "automatic" } };
     const needs = needsOf(entry);
     // (Nothing in its words a card could play — food, refills, ingredients, flavor —: counted done, its card saying so (the user's answer to
     // question 1, 2026-10-26).)

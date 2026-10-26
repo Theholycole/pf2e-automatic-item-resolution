@@ -15,13 +15,13 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 150,
-   "resolves": 823,
+   "resolves": 824,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
    "builtin:ways": 29,
    "builtin:item-action": 16,
    "partial": 76,
-   "note-only": 116,
+   "note-only": 115,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
    "builtin:no-effect": 37,
@@ -72,8 +72,8 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 126,
-    "note-only": 11,
+    "resolves": 127,
+    "note-only": 10,
     "partial": 8,
     "none": 16,
     "builtin:no-effect": 9,
@@ -391,7 +391,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 635,
+   "resolves": 636,
    "gaps": 0,
    "none": 13
   }
@@ -22836,8 +22836,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

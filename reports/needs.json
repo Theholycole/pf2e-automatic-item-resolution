@@ -1,92 +1,101 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1134,
+  "entries": 1356,
   "results": {
+   "partial": 429,
    "none": 554,
-   "partial": 204,
-   "note-only": 257,
+   "note-only": 254,
    "builtin:no-effect": 119
   },
   "main": {
-   "speeds": 22,
-   "counteract": 16,
-   "afflictions": 47,
-   "areas": 109,
-   "moving": 78,
-   "visibility": 46,
-   "lasting": 61,
-   "choice": 28,
-   "strike": 92,
-   "spells": 35,
-   "information": 21,
-   "out-of-combat": 32,
-   "actions": 26,
-   "no-rules": 7,
-   "mind": 5,
-   "objects": 108,
-   "illusions": 43,
-   "removed": 4,
+   "no-rules": 42,
+   "speeds": 25,
+   "areas": 138,
+   "counteract": 34,
+   "afflictions": 57,
+   "moving": 92,
+   "visibility": 51,
+   "choice": 31,
+   "lasting": 70,
+   "strike": 107,
+   "spells": 38,
+   "information": 23,
+   "out-of-combat": 36,
+   "actions": 32,
+   "immunity": 26,
+   "creatures": 65,
+   "mind": 8,
+   "objects": 110,
+   "illusions": 51,
+   "removed": 6,
    "cooldown": 9,
-   "vehicles": 20,
-   "reader": 16,
-   "triggers": 87,
-   "immunity": 21,
-   "situational": 16,
-   "creatures": 53,
+   "vehicles": 21,
+   "reader": 18,
+   "triggers": 95,
+   "situational": 18,
    "dying": 29,
-   "senses": 17,
-   "speech": 18,
+   "senses": 22,
+   "speech": 22,
    "from-events": 4,
-   "forms": 23,
-   "several": 20,
+   "forms": 27,
+   "several": 26,
    "retaliation": 3,
    "missing-number": 6,
    "fortune": 6,
    "linked-effect": 1,
-   "by-kind": 5
+   "by-kind": 7
   },
   "any": {
-   "speeds": 28,
-   "areas": 163,
-   "immunity": 69,
-   "objects": 371,
-   "speech": 121,
-   "out-of-combat": 402,
-   "counteract": 76,
-   "afflictions": 88,
-   "lasting": 206,
-   "moving": 102,
-   "triggers": 116,
-   "visibility": 48,
-   "dying": 72,
-   "choice": 98,
-   "several": 87,
-   "strike": 169,
-   "reader": 181,
-   "spells": 71,
-   "information": 188,
-   "actions": 56,
-   "from-events": 25,
-   "no-rules": 7,
-   "mind": 57,
-   "illusions": 52,
-   "removed": 5,
-   "range": 4,
+   "no-rules": 42,
+   "speeds": 31,
+   "areas": 201,
+   "immunity": 88,
+   "objects": 389,
+   "speech": 135,
+   "out-of-combat": 440,
+   "counteract": 110,
+   "afflictions": 106,
+   "lasting": 238,
+   "moving": 120,
+   "triggers": 125,
+   "visibility": 53,
+   "dying": 75,
+   "choice": 110,
+   "several": 106,
+   "strike": 203,
+   "reader": 215,
+   "spells": 78,
+   "information": 201,
+   "actions": 64,
+   "from-events": 29,
+   "situational": 88,
+   "creatures": 65,
+   "mind": 69,
+   "illusions": 61,
+   "removed": 7,
+   "range": 6,
    "cooldown": 10,
-   "vehicles": 24,
-   "situational": 66,
-   "creatures": 53,
-   "senses": 23,
-   "forms": 24,
+   "vehicles": 27,
+   "senses": 28,
+   "forms": 28,
    "fortune": 9,
    "retaliation": 3,
    "missing-number": 7,
    "linked-effect": 1,
-   "by-kind": 5
+   "by-kind": 7
   }
  },
  "entries": [
+  {
+   "name": "Perfection's First Step",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
   {
    "name": "Clockwork Chirper",
    "kind": "consumable",
@@ -100,6 +109,16 @@
     "objects",
     "speech",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "The Cyclone",
+   "kind": "activation",
+   "result": "partial",
+   "main": "areas",
+   "work": "difficult terrain",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -157,6 +176,17 @@
     "visibility",
     "areas",
     "dying"
+   ]
+  },
+  {
+   "name": "Locket of Sealed Nightmares",
+   "kind": "activation",
+   "result": "partial",
+   "main": "choice",
+   "work": "one of the following",
+   "needs": [
+    "choice",
+    "out-of-combat"
    ]
   },
   {
@@ -322,6 +352,15 @@
    ]
   },
   {
+   "name": "Deck of illusions",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Immovable Rod",
    "kind": "activation",
    "result": "none",
@@ -329,6 +368,23 @@
    "work": "force open",
    "needs": [
     "actions"
+   ]
+  },
+  {
+   "name": "Whispering Remnant",
+   "kind": "activation",
+   "activation": "Hear My Words",
+   "result": "partial",
+   "main": "immunity",
+   "work": "resist this",
+   "needs": [
+    "immunity",
+    "lasting",
+    "objects",
+    "reader",
+    "information",
+    "speech",
+    "out-of-combat"
    ]
   },
   {
@@ -350,6 +406,44 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
+   ]
+  },
+  {
+   "name": "Pheromone Flare (Moderate)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "counteract",
+   "work": "ends the effect",
+   "needs": [
+    "counteract",
+    "situational",
+    "lasting",
+    "reader"
+   ]
+  },
+  {
+   "name": "The Beating",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "conjure",
+   "needs": [
+    "creatures",
+    "areas"
+   ]
+  },
+  {
+   "name": "Three Day's Breath",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "poisons",
+   "needs": [
+    "afflictions",
+    "spells",
+    "situational",
+    "objects",
+    "out-of-combat"
    ]
   },
   {
@@ -540,6 +634,15 @@
    ]
   },
   {
+   "name": "The Peacock",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Ring of Fair Assessment",
    "kind": "activation",
    "activation": "Fair Assessment",
@@ -550,6 +653,18 @@
     "areas",
     "choice",
     "information"
+   ]
+  },
+  {
+   "name": "Dawnlight",
+   "kind": "activation",
+   "result": "partial",
+   "main": "areas",
+   "work": "darkness",
+   "needs": [
+    "areas",
+    "strike",
+    "counteract"
    ]
   },
   {
@@ -622,6 +737,19 @@
    ]
   },
   {
+   "name": "Slithermaw's Bane (Heroic)",
+   "kind": "activation",
+   "activation": "Terrain Adaptation",
+   "result": "partial",
+   "main": "areas",
+   "work": "difficult terrain",
+   "needs": [
+    "areas",
+    "situational",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Splatrope Extruder",
    "kind": "activation",
    "result": "note-only",
@@ -685,6 +813,27 @@
    ]
   },
   {
+   "name": "Spiral Athame",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
+   "name": "Bewitching Bloom (Purple Iris)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "moving",
+   "work": "fall prone",
+   "needs": [
+    "moving",
+    "several",
+    "reader"
+   ]
+  },
+  {
    "name": "Runewell of Lust",
    "kind": "activation",
    "activation": "Exit the Eye",
@@ -703,6 +852,16 @@
    "work": "decide",
    "needs": [
     "choice"
+   ]
+  },
+  {
+   "name": "Osteomancer's Pouch",
+   "kind": "activation",
+   "activation": "Roll the Bones",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -766,6 +925,17 @@
    ]
   },
   {
+   "name": "The Queen Mother",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "summon",
+   "needs": [
+    "creatures",
+    "mind"
+   ]
+  },
+  {
    "name": "Vital Earth",
    "kind": "consumable",
    "result": "note-only",
@@ -807,6 +977,21 @@
    "work": "mundane gear",
    "needs": [
     "objects"
+   ]
+  },
+  {
+   "name": "Dragon Pearl (Draconic Codex)",
+   "kind": "activation",
+   "activation": "Pearlescent Shell",
+   "result": "partial",
+   "main": "areas",
+   "work": "barrier",
+   "needs": [
+    "areas",
+    "afflictions",
+    "immunity",
+    "choice",
+    "information"
    ]
   },
   {
@@ -918,6 +1103,24 @@
    ]
   },
   {
+   "name": "Pistol of Wonder",
+   "kind": "activation",
+   "activation": "Wonder Shot",
+   "result": "partial",
+   "main": "creatures",
+   "work": "summon",
+   "needs": [
+    "creatures",
+    "moving",
+    "areas",
+    "range",
+    "lasting",
+    "objects",
+    "reader",
+    "mind"
+   ]
+  },
+  {
    "name": "Oil of Ownership (Greater)",
    "kind": "consumable",
    "result": "builtin:no-effect",
@@ -961,6 +1164,17 @@
    ]
   },
   {
+   "name": "Sun Sight",
+   "kind": "activation",
+   "result": "partial",
+   "main": "illusions",
+   "work": "illusion",
+   "needs": [
+    "illusions",
+    "counteract"
+   ]
+  },
+  {
    "name": "Blooming Lotus Seed Pod",
    "kind": "consumable",
    "result": "note-only",
@@ -997,6 +1211,28 @@
    ]
   },
   {
+   "name": "Crown of the Companion",
+   "kind": "activation",
+   "result": "partial",
+   "main": "moving",
+   "work": "move",
+   "needs": [
+    "moving",
+    "several",
+    "reader"
+   ]
+  },
+  {
+   "name": "Dragonclaw Scutcheon",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "spells",
+   "work": "focus spell",
+   "needs": [
+    "spells"
+   ]
+  },
+  {
    "name": "Grail of Twisted Desires",
    "kind": "activation",
    "result": "none",
@@ -1007,6 +1243,17 @@
     "choice",
     "reader",
     "information"
+   ]
+  },
+  {
+   "name": "Earthglide Cloak",
+   "kind": "activation",
+   "activation": "Glide through Earth",
+   "result": "partial",
+   "main": "reader",
+   "work": "1d6",
+   "needs": [
+    "reader"
    ]
   },
   {
@@ -1058,6 +1305,17 @@
     "forms",
     "lasting",
     "choice",
+    "reader"
+   ]
+  },
+  {
+   "name": "Enveloping Light (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "at the end of each of your turns",
+   "needs": [
+    "lasting",
     "reader"
    ]
   },
@@ -1172,6 +1430,16 @@
    ]
   },
   {
+   "name": "Tiger Shield",
+   "kind": "activation",
+   "activation": "Tiger's Eyes",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Gossip's Eye",
    "kind": "activation",
    "result": "note-only",
@@ -1241,6 +1509,18 @@
    ]
   },
   {
+   "name": "Horn of Rust",
+   "kind": "activation",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "disease",
+   "needs": [
+    "afflictions",
+    "counteract",
+    "immunity"
+   ]
+  },
+  {
    "name": "Drought Powder",
    "kind": "consumable",
    "result": "note-only",
@@ -1283,6 +1563,18 @@
    ]
   },
   {
+   "name": "Arboreal's Revenge",
+   "kind": "activation",
+   "activation": "Arboreal's Grace",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "curse",
+   "needs": [
+    "afflictions",
+    "immunity"
+   ]
+  },
+  {
    "name": "Feather Token (Tree)",
    "kind": "consumable",
    "result": "none",
@@ -1304,6 +1596,17 @@
    ]
   },
   {
+   "name": "Lion Claw",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "visibility",
+   "work": "remain undetected",
+   "needs": [
+    "visibility",
+    "strike"
+   ]
+  },
+  {
    "name": "Undead Compendium",
    "kind": "activation",
    "result": "partial",
@@ -1313,6 +1616,17 @@
     "strike",
     "situational",
     "several"
+   ]
+  },
+  {
+   "name": "Chalice of Ozem",
+   "kind": "activation",
+   "activation": "Iomedae's Blessing",
+   "result": "partial",
+   "main": "counteract",
+   "work": "dispelling",
+   "needs": [
+    "counteract"
    ]
   },
   {
@@ -1392,6 +1706,19 @@
    ]
   },
   {
+   "name": "Pheromone Flare (Lesser)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "counteract",
+   "work": "ends the effect",
+   "needs": [
+    "counteract",
+    "situational",
+    "lasting",
+    "reader"
+   ]
+  },
+  {
    "name": "Soulheart (Greater)",
    "kind": "activation",
    "activation": "Bolster Maiserene Phantom",
@@ -1401,6 +1728,16 @@
    "needs": [
     "afflictions",
     "lasting"
+   ]
+  },
+  {
+   "name": "Malefic Mirror",
+   "kind": "activation",
+   "activation": "Peer Beyond",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -1445,6 +1782,19 @@
     "senses",
     "areas",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Candle of Truth",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "situational",
+   "work": "only while it",
+   "needs": [
+    "situational",
+    "lasting",
+    "several",
+    "mind"
    ]
   },
   {
@@ -1496,6 +1846,21 @@
    "work": "cast the spell",
    "needs": [
     "spells"
+   ]
+  },
+  {
+   "name": "Static Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "senses",
+   "work": "precise sense",
+   "needs": [
+    "senses",
+    "areas",
+    "afflictions",
+    "situational",
+    "lasting",
+    "out-of-combat"
    ]
   },
   {
@@ -1715,6 +2080,21 @@
    ]
   },
   {
+   "name": "Dinosaur Boots (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "forms",
+   "work": "enlarge",
+   "needs": [
+    "forms",
+    "strike",
+    "lasting",
+    "choice",
+    "several",
+    "reader"
+   ]
+  },
+  {
    "name": "Atlas Arcane",
    "kind": "activation",
    "activation": "Situation Report",
@@ -1818,6 +2198,17 @@
    ]
   },
   {
+   "name": "Rod of Wonder",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "attack roll",
+   "needs": [
+    "strike",
+    "reader"
+   ]
+  },
+  {
    "name": "Smuggler's Sack (Type I)",
    "kind": "activation",
    "result": "none",
@@ -1849,6 +2240,16 @@
    "needs": [
     "immunity",
     "objects"
+   ]
+  },
+  {
+   "name": "Wildwood Ink (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "out-of-combat",
+   "work": "1 hour",
+   "needs": [
+    "out-of-combat"
    ]
   },
   {
@@ -2072,16 +2473,6 @@
    ]
   },
   {
-   "name": "Spyglass Eye",
-   "kind": "activation",
-   "result": "note-only",
-   "main": "objects",
-   "work": "lens",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
    "name": "Soulheart",
    "kind": "activation",
    "activation": "Bolster Maiserene Phantom",
@@ -2259,6 +2650,30 @@
    ]
   },
   {
+   "name": "Transposition Ammunition (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleport",
+   "needs": [
+    "moving",
+    "choice"
+   ]
+  },
+  {
+   "name": "Slithermaw's Bane",
+   "kind": "activation",
+   "activation": "Terrain Adaptation",
+   "result": "partial",
+   "main": "areas",
+   "work": "difficult terrain",
+   "needs": [
+    "areas",
+    "situational",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Silver Tripod",
    "kind": "consumable",
    "result": "note-only",
@@ -2268,6 +2683,17 @@
     "dying",
     "lasting",
     "information"
+   ]
+  },
+  {
+   "name": "Biting Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas",
+    "out-of-combat"
    ]
   },
   {
@@ -2282,6 +2708,16 @@
     "reader",
     "mind",
     "information",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "The Winged Serpent",
+   "kind": "activation",
+   "result": "partial",
+   "main": "out-of-combat",
+   "work": "1 hour",
+   "needs": [
     "out-of-combat"
    ]
   },
@@ -2333,6 +2769,16 @@
    ]
   },
   {
+   "name": "Dust of Disappearance",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "visibility",
+   "work": "invisibility",
+   "needs": [
+    "visibility"
+   ]
+  },
+  {
    "name": "Rope of Climbing (Moderate)",
    "kind": "activation",
    "result": "note-only",
@@ -2370,6 +2816,17 @@
    ]
   },
   {
+   "name": "Soulspeaker",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "next time it",
+   "needs": [
+    "lasting",
+    "speech"
+   ]
+  },
+  {
    "name": "Clockwork Monkey",
    "kind": "consumable",
    "result": "none",
@@ -2402,6 +2859,19 @@
     "immunity",
     "situational",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Assassin's Bracers (Type III)",
+   "kind": "activation",
+   "activation": "Focus on the Doomed",
+   "result": "partial",
+   "main": "actions",
+   "work": "feint",
+   "needs": [
+    "actions",
+    "dying",
+    "situational"
    ]
   },
   {
@@ -2525,6 +2995,19 @@
    "needs": [
     "objects",
     "speech"
+   ]
+  },
+  {
+   "name": "Bonmuan Swapping Stone (Lesser)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleport",
+   "needs": [
+    "moving",
+    "strike",
+    "immunity",
+    "objects"
    ]
   },
   {
@@ -2677,6 +3160,17 @@
    ]
   },
   {
+   "name": "Symbol of Conflict",
+   "kind": "activation",
+   "activation": "Presence",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteract",
+   "needs": [
+    "counteract"
+   ]
+  },
+  {
    "name": "Pocket Stage",
    "kind": "activation",
    "activation": "Play with Dolls",
@@ -2749,6 +3243,17 @@
    ]
   },
   {
+   "name": "Jax",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "until you",
+   "needs": [
+    "lasting",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "The Uprising",
    "kind": "activation",
    "result": "note-only",
@@ -2783,6 +3288,17 @@
     "actions",
     "dying",
     "reader"
+   ]
+  },
+  {
+   "name": "Paws of the Grogrisant",
+   "kind": "activation",
+   "activation": "Grogrisant Leap",
+   "result": "partial",
+   "main": "strike",
+   "work": "can strike",
+   "needs": [
+    "strike"
    ]
   },
   {
@@ -2857,6 +3373,18 @@
    ]
   },
   {
+   "name": "Symbol of Conflict (Major)",
+   "kind": "activation",
+   "activation": "Presence",
+   "result": "partial",
+   "main": "creatures",
+   "work": "summon",
+   "needs": [
+    "creatures",
+    "counteract"
+   ]
+  },
+  {
    "name": "Cauthooj Bagpipes",
    "kind": "activation",
    "activation": "Throw Song",
@@ -2878,6 +3406,18 @@
    "needs": [
     "several",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Inspiring Spotlight (Portable)",
+   "kind": "activation",
+   "activation": "Light It Up",
+   "result": "partial",
+   "main": "areas",
+   "work": "darkness",
+   "needs": [
+    "areas",
+    "counteract"
    ]
   },
   {
@@ -3015,6 +3555,16 @@
    ]
   },
   {
+   "name": "Fan of Soothing Winds (Greater)",
+   "kind": "activation",
+   "activation": "Healing Wind",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Mask of Uncanny Breath",
    "kind": "activation",
    "result": "partial",
@@ -3036,6 +3586,15 @@
     "mind",
     "information",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Radiant Spark",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -3071,6 +3630,21 @@
    "needs": [
     "choice",
     "information"
+   ]
+  },
+  {
+   "name": "Poison Fizz (Greater)",
+   "kind": "consumable",
+   "result": "note-only",
+   "main": "areas",
+   "work": "mist",
+   "needs": [
+    "areas",
+    "afflictions",
+    "immunity",
+    "situational",
+    "reader",
+    "out-of-combat"
    ]
   },
   {
@@ -3410,6 +3984,17 @@
    ]
   },
   {
+   "name": "Enigma-Sight Potion",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "senses",
+   "work": "truesight",
+   "needs": [
+    "senses",
+    "counteract"
+   ]
+  },
+  {
    "name": "Hodag Leather",
    "kind": "activation",
    "activation": "Hodag Toss",
@@ -3718,6 +4303,16 @@
    ]
   },
   {
+   "name": "Conrasu Coin (Bythos)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "moving",
+   "work": "can stride",
+   "needs": [
+    "moving"
+   ]
+  },
+  {
    "name": "The Carnival",
    "kind": "activation",
    "result": "none",
@@ -3790,6 +4385,21 @@
    ]
   },
   {
+   "name": "Poison Fizz (Moderate)",
+   "kind": "consumable",
+   "result": "note-only",
+   "main": "areas",
+   "work": "mist",
+   "needs": [
+    "areas",
+    "afflictions",
+    "immunity",
+    "situational",
+    "reader",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Redeemer's Pistol",
    "kind": "activation",
    "result": "none",
@@ -3823,6 +4433,17 @@
    "work": "transforms the tattoo into a weapon",
    "needs": [
     "objects"
+   ]
+  },
+  {
+   "name": "Flurrying",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "sustain",
+   "needs": [
+    "lasting",
+    "choice"
    ]
   },
   {
@@ -4032,6 +4653,19 @@
    ]
   },
   {
+   "name": "Razmiri Mask (Gold)",
+   "kind": "activation",
+   "activation": "Call Upon Razmir's Mercy",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "affliction",
+   "needs": [
+    "afflictions",
+    "counteract",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Hex Blaster",
    "kind": "activation",
    "result": "partial",
@@ -4055,6 +4689,17 @@
     "fortune",
     "triggers",
     "several"
+   ]
+  },
+  {
+   "name": "Gloaming Shard",
+   "kind": "activation",
+   "activation": "Umbral Jaunt",
+   "result": "partial",
+   "main": "strike",
+   "work": "thrown strike",
+   "needs": [
+    "strike"
    ]
   },
   {
@@ -4291,6 +4936,42 @@
    ]
   },
   {
+   "name": "Ivory Baton (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "by-kind",
+   "work": "only constructs",
+   "needs": [
+    "by-kind",
+    "counteract",
+    "mind"
+   ]
+  },
+  {
+   "name": "The Fiend",
+   "kind": "activation",
+   "result": "partial",
+   "main": "immunity",
+   "work": "immune",
+   "needs": [
+    "immunity",
+    "information"
+   ]
+  },
+  {
+   "name": "Razmiri Mask (Porcelain)",
+   "kind": "activation",
+   "activation": "Call Upon Razmir's Mercy",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "affliction",
+   "needs": [
+    "afflictions",
+    "counteract",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Mountebank's Passage",
    "kind": "activation",
    "activation": "Doorway to Onyx",
@@ -4314,6 +4995,18 @@
     "choice",
     "objects",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Ring of Spell Turning",
+   "kind": "activation",
+   "result": "partial",
+   "main": "triggers",
+   "work": "triggering spell",
+   "needs": [
+    "triggers",
+    "counteract",
+    "reader"
    ]
   },
   {
@@ -4479,12 +5172,39 @@
    ]
   },
   {
+   "name": "Elemental Wayfinder (Fire)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "immunity",
+   "work": "resistance 5",
+   "needs": [
+    "immunity"
+   ]
+  },
+  {
    "name": "Oxygen Ooze",
    "kind": "consumable",
    "result": "note-only",
    "main": "out-of-combat",
    "work": "breathe",
    "needs": [
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Vile Remnant",
+   "kind": "activation",
+   "activation": "Hear My Words",
+   "result": "partial",
+   "main": "immunity",
+   "work": "resist this",
+   "needs": [
+    "immunity",
+    "lasting",
+    "objects",
+    "reader",
+    "information",
+    "speech",
     "out-of-combat"
    ]
   },
@@ -4500,6 +5220,30 @@
     "vehicles",
     "lasting",
     "information",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Bonmuan Swapping Stone (Moderate)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleport",
+   "needs": [
+    "moving",
+    "strike",
+    "immunity",
+    "objects"
+   ]
+  },
+  {
+   "name": "Tornado Trompo",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "sustained",
+   "needs": [
+    "lasting",
     "out-of-combat"
    ]
   },
@@ -4576,6 +5320,16 @@
    ]
   },
   {
+   "name": "Elder Sign",
+   "kind": "activation",
+   "result": "partial",
+   "main": "counteract",
+   "work": "dispel",
+   "needs": [
+    "counteract"
+   ]
+  },
+  {
    "name": "Navigator's Feather",
    "kind": "consumable",
    "result": "note-only",
@@ -4589,6 +5343,18 @@
   {
    "name": "Boots of the Blight",
    "kind": "activation",
+   "activation": "Swift Sidestep",
+   "result": "partial",
+   "main": "actions",
+   "work": "additional action",
+   "needs": [
+    "actions",
+    "reader"
+   ]
+  },
+  {
+   "name": "Boots of the Blight",
+   "kind": "activation",
    "activation": "Fungal Stride",
    "result": "note-only",
    "main": "areas",
@@ -4596,6 +5362,16 @@
    "needs": [
     "areas",
     "immunity"
+   ]
+  },
+  {
+   "name": "Dimension Shot",
+   "kind": "activation",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleport",
+   "needs": [
+    "moving"
    ]
   },
   {
@@ -4737,6 +5513,31 @@
    ]
   },
   {
+   "name": "Dawnlight (Major)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "senses",
+   "work": "darkvision",
+   "needs": [
+    "senses",
+    "areas",
+    "strike",
+    "counteract",
+    "reader"
+   ]
+  },
+  {
+   "name": "Telekinetic Converters",
+   "kind": "activation",
+   "activation": "Mental Fling",
+   "result": "partial",
+   "main": "spells",
+   "work": "cantrip",
+   "needs": [
+    "spells"
+   ]
+  },
+  {
    "name": "Telekinetic Converters",
    "kind": "activation",
    "activation": "Mind Over Matter",
@@ -4787,6 +5588,18 @@
    ]
   },
   {
+   "name": "Everburning Coal",
+   "kind": "activation",
+   "activation": "Coal Wall",
+   "result": "partial",
+   "main": "areas",
+   "work": "wall of",
+   "needs": [
+    "areas",
+    "immunity"
+   ]
+  },
+  {
    "name": "The Eye of the Slumberer",
    "kind": "activation",
    "activation": "Vortex",
@@ -4797,6 +5610,18 @@
     "areas",
     "lasting",
     "objects"
+   ]
+  },
+  {
+   "name": "Orb of Dragonkind",
+   "kind": "activation",
+   "result": "partial",
+   "main": "situational",
+   "work": "bonus to saving throws against",
+   "needs": [
+    "situational",
+    "mind",
+    "out-of-combat"
    ]
   },
   {
@@ -4875,6 +5700,31 @@
    ]
   },
   {
+   "name": "Voyager's Pack",
+   "kind": "activation",
+   "activation": "Group Voyage",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleport",
+   "needs": [
+    "moving",
+    "several"
+   ]
+  },
+  {
+   "name": "Assassin's Bracers (Type I)",
+   "kind": "activation",
+   "activation": "Focus on the Doomed",
+   "result": "partial",
+   "main": "actions",
+   "work": "feint",
+   "needs": [
+    "actions",
+    "dying",
+    "situational"
+   ]
+  },
+  {
    "name": "Windstep Sheath",
    "kind": "consumable",
    "result": "none",
@@ -4948,6 +5798,18 @@
    ]
   },
   {
+   "name": "Liver Bloodstone of Arazni",
+   "kind": "activation",
+   "activation": "Arazni's Fervor",
+   "result": "partial",
+   "main": "areas",
+   "work": "radius",
+   "needs": [
+    "areas",
+    "lasting"
+   ]
+  },
+  {
    "name": "Kinburi's Sandals of Bounding",
    "kind": "activation",
    "activation": "Light-Footed Bound",
@@ -4970,6 +5832,16 @@
     "strike",
     "afflictions",
     "lasting"
+   ]
+  },
+  {
+   "name": "Wildwood Ink (Major)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "out-of-combat",
+   "work": "8 hours",
+   "needs": [
+    "out-of-combat"
    ]
   },
   {
@@ -5087,6 +5959,16 @@
    ]
   },
   {
+   "name": "Helm of the Tides",
+   "kind": "activation",
+   "activation": "Raise the Tide",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Persona Mask",
    "kind": "activation",
    "activation": "Assume Role",
@@ -5193,6 +6075,17 @@
    ]
   },
   {
+   "name": "The Betrayal",
+   "kind": "activation",
+   "result": "partial",
+   "main": "several",
+   "work": "allies",
+   "needs": [
+    "several",
+    "mind"
+   ]
+  },
+  {
    "name": "Mutagenic Renovator",
    "kind": "consumable",
    "result": "partial",
@@ -5227,6 +6120,16 @@
     "strike",
     "reader",
     "information"
+   ]
+  },
+  {
+   "name": "Shard of the Third Seal",
+   "kind": "activation",
+   "result": "partial",
+   "main": "spells",
+   "work": "cantrip",
+   "needs": [
+    "spells"
    ]
   },
   {
@@ -5272,6 +6175,17 @@
     "areas",
     "objects",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Fan of Falling Words",
+   "kind": "activation",
+   "activation": "Whispered World",
+   "result": "partial",
+   "main": "illusions",
+   "work": "illusory",
+   "needs": [
+    "illusions"
    ]
   },
   {
@@ -5331,6 +6245,18 @@
     "visibility",
     "areas",
     "reader"
+   ]
+  },
+  {
+   "name": "Stage Magician's Cloak",
+   "kind": "activation",
+   "activation": "...Now You Don't",
+   "result": "partial",
+   "main": "areas",
+   "work": "smoke",
+   "needs": [
+    "areas",
+    "objects"
    ]
   },
   {
@@ -5515,6 +6441,16 @@
    ]
   },
   {
+   "name": "Gate Attenuator (Major)",
+   "kind": "activation",
+   "activation": "Elemental Spell",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Wraithweave Patch (Type I)",
    "kind": "activation",
    "result": "none",
@@ -5522,6 +6458,16 @@
    "work": "sustain",
    "needs": [
     "lasting"
+   ]
+  },
+  {
+   "name": "Metronomic Hammer",
+   "kind": "activation",
+   "result": "partial",
+   "main": "actions",
+   "work": "trip",
+   "needs": [
+    "actions"
    ]
   },
   {
@@ -5603,13 +6549,14 @@
    ]
   },
   {
-   "name": "Storied Skin",
+   "name": "Fiendish Teleportation",
    "kind": "activation",
-   "activation": "Living History",
-   "result": "note-only",
-   "main": "no-rules",
+   "result": "partial",
+   "main": "senses",
+   "work": "scent",
    "needs": [
-    "no-rules"
+    "senses",
+    "reader"
    ]
   },
   {
@@ -5647,6 +6594,19 @@
    "work": "charm",
    "needs": [
     "mind"
+   ]
+  },
+  {
+   "name": "Chimera Flail",
+   "kind": "activation",
+   "activation": "Pouncing Whirl",
+   "result": "partial",
+   "main": "strike",
+   "work": "make a strike",
+   "needs": [
+    "strike",
+    "several",
+    "reader"
    ]
   },
   {
@@ -5763,6 +6723,20 @@
    ]
   },
   {
+   "name": "Passage Charm",
+   "kind": "activation",
+   "activation": "Shape the Shadows",
+   "result": "partial",
+   "main": "areas",
+   "work": "wall of",
+   "needs": [
+    "areas",
+    "objects",
+    "mind",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Conflagration Club",
    "kind": "activation",
    "activation": "Absorb Arcana",
@@ -5784,6 +6758,19 @@
    "needs": [
     "spells",
     "objects"
+   ]
+  },
+  {
+   "name": "Resonant Guitar",
+   "kind": "activation",
+   "activation": "Chord of Protection",
+   "result": "partial",
+   "main": "areas",
+   "work": "barrier",
+   "needs": [
+    "areas",
+    "strike",
+    "speech"
    ]
   },
   {
@@ -6000,6 +6987,17 @@
   {
    "name": "The Deck of Destiny",
    "kind": "activation",
+   "result": "partial",
+   "main": "illusions",
+   "work": "illusion",
+   "needs": [
+    "illusions",
+    "mind"
+   ]
+  },
+  {
+   "name": "The Deck of Destiny",
+   "kind": "activation",
    "result": "none",
    "main": "dying",
    "work": "death",
@@ -6029,6 +7027,15 @@
    ]
   },
   {
+   "name": "Golden Spur",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Empty Hand Marking",
    "kind": "activation",
    "activation": "Reproach",
@@ -6051,6 +7058,16 @@
     "dying",
     "situational",
     "information"
+   ]
+  },
+  {
+   "name": "The Whispering Reeds",
+   "kind": "activation",
+   "result": "partial",
+   "main": "choice",
+   "work": "one of the following",
+   "needs": [
+    "choice"
    ]
   },
   {
@@ -6079,6 +7096,17 @@
     "lasting",
     "reader",
     "speech"
+   ]
+  },
+  {
+   "name": "Exploitative Wealth",
+   "kind": "activation",
+   "activation": "Enforce Competition",
+   "result": "partial",
+   "main": "several",
+   "work": "allies",
+   "needs": [
+    "several"
    ]
   },
   {
@@ -6122,6 +7150,21 @@
    "main": "out-of-combat",
    "work": "1 hour",
    "needs": [
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Hoof Stakes Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas",
+    "triggers",
+    "strike",
+    "several",
+    "reader",
     "out-of-combat"
    ]
   },
@@ -6174,6 +7217,17 @@
    ]
   },
   {
+   "name": "Crooner's Cravat",
+   "kind": "activation",
+   "activation": "Influential Croon",
+   "result": "partial",
+   "main": "mind",
+   "work": "emotion",
+   "needs": [
+    "mind"
+   ]
+  },
+  {
    "name": "Magnetic Suit (Greater)",
    "kind": "consumable",
    "result": "note-only",
@@ -6188,6 +7242,19 @@
    ]
   },
   {
+   "name": "Garrote Bolt",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "strike",
+   "needs": [
+    "strike",
+    "afflictions",
+    "reader",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Camouflage Dye (Lesser)",
    "kind": "consumable",
    "result": "note-only",
@@ -6195,6 +7262,16 @@
    "work": "hide",
    "needs": [
     "visibility"
+   ]
+  },
+  {
+   "name": "Gate Attenuator (Greater)",
+   "kind": "activation",
+   "activation": "Elemental Spell",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -6219,6 +7296,17 @@
    "needs": [
     "several",
     "information"
+   ]
+  },
+  {
+   "name": "Reef Heart (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "conjure",
+   "needs": [
+    "creatures",
+    "out-of-combat"
    ]
   },
   {
@@ -6252,6 +7340,17 @@
    "work": "activate strike",
    "needs": [
     "strike"
+   ]
+  },
+  {
+   "name": "Fan of the Four Winds",
+   "kind": "activation",
+   "result": "partial",
+   "main": "vehicles",
+   "work": "sail",
+   "needs": [
+    "vehicles",
+    "out-of-combat"
    ]
   },
   {
@@ -6376,6 +7475,26 @@
    ]
   },
   {
+   "name": "Indomitable Keepsake (Major)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "strike",
+   "work": "critical hit",
+   "needs": [
+    "strike"
+   ]
+  },
+  {
+   "name": "Vanishing Wayfinder",
+   "kind": "activation",
+   "result": "partial",
+   "main": "speech",
+   "work": "word",
+   "needs": [
+    "speech"
+   ]
+  },
+  {
    "name": "Deteriorating Dust",
    "kind": "consumable",
    "result": "note-only",
@@ -6406,6 +7525,28 @@
    "needs": [
     "creatures",
     "actions",
+    "lasting",
+    "objects",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Elemental Wayfinder (Air)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
+   "name": "Highhelm Stronghold Plate",
+   "kind": "activation",
+   "result": "partial",
+   "main": "areas",
+   "work": "wall of",
+   "needs": [
+    "areas",
     "lasting",
     "objects",
     "out-of-combat"
@@ -6469,6 +7610,16 @@
    "work": "1d12",
    "needs": [
     "reader"
+   ]
+  },
+  {
+   "name": "Skyrider Sword",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "melee strike",
+   "needs": [
+    "strike"
    ]
   },
   {
@@ -6539,6 +7690,18 @@
    ]
   },
   {
+   "name": "Crown of the Master (Greater)",
+   "kind": "activation",
+   "activation": "Imperative Order",
+   "result": "partial",
+   "main": "mind",
+   "work": "dominate",
+   "needs": [
+    "mind",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Spell Echo Shot",
    "kind": "activation",
    "result": "partial",
@@ -6547,6 +7710,19 @@
    "needs": [
     "missing-number",
     "strike"
+   ]
+  },
+  {
+   "name": "Puddle Shove Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "moving",
+   "work": "pushed 15 feet",
+   "needs": [
+    "moving",
+    "areas",
+    "situational",
+    "out-of-combat"
    ]
   },
   {
@@ -6645,6 +7821,17 @@
    ]
   },
   {
+   "name": "Devil's Trident",
+   "kind": "activation",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteract",
+   "needs": [
+    "counteract",
+    "lasting"
+   ]
+  },
+  {
    "name": "Mindsponge",
    "kind": "activation",
    "activation": "Absorb Memories",
@@ -6711,6 +7898,17 @@
    ]
   },
   {
+   "name": "General's Word",
+   "kind": "activation",
+   "activation": "Battlefield Broadcast",
+   "result": "partial",
+   "main": "speech",
+   "work": "telepathy",
+   "needs": [
+    "speech"
+   ]
+  },
+  {
    "name": "Potion of Disguise (Greater)",
    "kind": "consumable",
    "result": "partial",
@@ -6724,6 +7922,16 @@
    ]
   },
   {
+   "name": "Thrice-Fried Mudwings",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "speeds",
+   "work": "fly speed",
+   "needs": [
+    "speeds"
+   ]
+  },
+  {
    "name": "Warding Escutcheon",
    "kind": "activation",
    "result": "note-only",
@@ -6734,6 +7942,16 @@
     "lasting",
     "objects",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Medusa's Scream (Greater)",
+   "kind": "activation",
+   "activation": "Petrifying Gaze",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -6822,6 +8040,26 @@
     "creatures",
     "strike",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Blessed Reformer",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
+   "name": "Blessed Reformer",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "damage dice",
+   "needs": [
+    "strike",
+    "spells"
    ]
   },
   {
@@ -7034,6 +8272,17 @@
    ]
   },
   {
+   "name": "Aeon Stone (Western Star)",
+   "kind": "activation",
+   "activation": "Illusory Disguise",
+   "result": "partial",
+   "main": "illusions",
+   "work": "illusory",
+   "needs": [
+    "illusions"
+   ]
+  },
+  {
    "name": "Anylength Rope (Lesser)",
    "kind": "activation",
    "result": "none",
@@ -7052,6 +8301,17 @@
    "needs": [
     "objects",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Inexplicable Apparatus",
+   "kind": "activation",
+   "activation": "Inexplicable Patch",
+   "result": "partial",
+   "main": "objects",
+   "work": "item returns",
+   "needs": [
+    "objects"
    ]
   },
   {
@@ -7082,6 +8342,17 @@
    ]
   },
   {
+   "name": "Invisibility",
+   "kind": "activation",
+   "activation": "Go Invisible",
+   "result": "partial",
+   "main": "visibility",
+   "work": "become invisible",
+   "needs": [
+    "visibility"
+   ]
+  },
+  {
    "name": "Bargainer's Instrument",
    "kind": "consumable",
    "result": "none",
@@ -7093,6 +8364,16 @@
     "choice",
     "speech",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Sacred Valkyrie Helm",
+   "kind": "activation",
+   "activation": "Storm's Arms",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -7117,6 +8398,16 @@
     "objects",
     "information",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Scarlet Queen",
+   "kind": "activation",
+   "result": "partial",
+   "main": "counteract",
+   "work": "dispel",
+   "needs": [
+    "counteract"
    ]
   },
   {
@@ -7189,6 +8480,20 @@
    ]
   },
   {
+   "name": "One Day's Breath",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "poisons",
+   "needs": [
+    "afflictions",
+    "spells",
+    "situational",
+    "objects",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Emerald Grasshopper (Greater)",
    "kind": "consumable",
    "result": "none",
@@ -7229,6 +8534,18 @@
     "objects",
     "information",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Cursebreak Bulwark",
+   "kind": "activation",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "affliction",
+   "needs": [
+    "afflictions",
+    "counteract",
+    "objects"
    ]
   },
   {
@@ -7276,6 +8593,20 @@
     "counteract",
     "objects",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Shadow's Heart",
+   "kind": "activation",
+   "result": "partial",
+   "main": "illusions",
+   "work": "illusory",
+   "needs": [
+    "illusions",
+    "moving",
+    "strike",
+    "lasting",
+    "reader"
    ]
   },
   {
@@ -7369,6 +8700,27 @@
    ]
   },
   {
+   "name": "Masquerade Scarf (Greater)",
+   "kind": "activation",
+   "activation": "Masquerade",
+   "result": "partial",
+   "main": "illusions",
+   "work": "illusory",
+   "needs": [
+    "illusions"
+   ]
+  },
+  {
+   "name": "Phantom Shroud",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "sustain",
+   "needs": [
+    "lasting"
+   ]
+  },
+  {
    "name": "Paired (Greater)",
    "kind": "activation",
    "result": "builtin:no-effect",
@@ -7417,6 +8769,15 @@
    ]
   },
   {
+   "name": "Faerie Queen's Bower",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Ring of Maniacal Devices (Greater)",
    "kind": "activation",
    "activation": "Fireball Trap",
@@ -7425,6 +8786,17 @@
    "work": "ritual",
    "needs": [
     "spells"
+   ]
+  },
+  {
+   "name": "Symbol of Conflict (Greater)",
+   "kind": "activation",
+   "activation": "Presence",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteract",
+   "needs": [
+    "counteract"
    ]
   },
   {
@@ -7458,6 +8830,38 @@
    "needs": [
     "vehicles",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "The Courtesan",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
+   "name": "Bonmuan Swapping Stone (Major)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleport",
+   "needs": [
+    "moving",
+    "strike",
+    "immunity",
+    "objects"
+   ]
+  },
+  {
+   "name": "Spellender",
+   "kind": "activation",
+   "result": "partial",
+   "main": "counteract",
+   "work": "dispel",
+   "needs": [
+    "counteract"
    ]
   },
   {
@@ -7520,6 +8924,19 @@
    ]
   },
   {
+   "name": "Archivist's Gaze",
+   "kind": "activation",
+   "activation": "Aid from Beyond",
+   "result": "partial",
+   "main": "lasting",
+   "work": "each time the",
+   "needs": [
+    "lasting",
+    "information",
+    "speech"
+   ]
+  },
+  {
    "name": "Strand of the Seven Births",
    "kind": "activation",
    "activation": "Hero-God's Whisper",
@@ -7546,6 +8963,19 @@
    ]
   },
   {
+   "name": "Garrote Shot",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "strike",
+   "needs": [
+    "strike",
+    "afflictions",
+    "reader",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Warning Snare",
    "kind": "consumable",
    "result": "none",
@@ -7556,6 +8986,16 @@
     "information",
     "speech",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Dreadsmoke Thurible",
+   "kind": "activation",
+   "result": "partial",
+   "main": "areas",
+   "work": "smoke",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -7608,6 +9048,21 @@
    ]
   },
   {
+   "name": "Poison Fizz (Lesser)",
+   "kind": "consumable",
+   "result": "note-only",
+   "main": "areas",
+   "work": "mist",
+   "needs": [
+    "areas",
+    "afflictions",
+    "immunity",
+    "situational",
+    "reader",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Condensed Mana",
    "kind": "consumable",
    "result": "none",
@@ -7633,6 +9088,17 @@
     "several",
     "objects",
     "reader"
+   ]
+  },
+  {
+   "name": "Scale of Igroon",
+   "kind": "activation",
+   "result": "partial",
+   "main": "actions",
+   "work": "shield block",
+   "needs": [
+    "actions",
+    "lasting"
    ]
   },
   {
@@ -7771,18 +9237,6 @@
    ]
   },
   {
-   "name": "Kotodama Whistle",
-   "kind": "activation",
-   "activation": "Question the Soul",
-   "result": "note-only",
-   "main": "objects",
-   "work": "object",
-   "needs": [
-    "objects",
-    "speech"
-   ]
-  },
-  {
    "name": "Murderer's Knot",
    "kind": "consumable",
    "result": "partial",
@@ -7868,6 +9322,16 @@
     "visibility",
     "triggers",
     "information"
+   ]
+  },
+  {
+   "name": "Resolute Shield",
+   "kind": "activation",
+   "activation": "Stand Firm",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -8082,6 +9546,19 @@
    ]
   },
   {
+   "name": "Spectacles of Understanding (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "until you",
+   "needs": [
+    "lasting",
+    "objects",
+    "information",
+    "speech"
+   ]
+  },
+  {
    "name": "Addiction Suppressant (Greater)",
    "kind": "consumable",
    "result": "note-only",
@@ -8186,6 +9663,17 @@
    "needs": [
     "choice",
     "information"
+   ]
+  },
+  {
+   "name": "Vine of Roses",
+   "kind": "activation",
+   "result": "partial",
+   "main": "triggers",
+   "work": "triggering creature",
+   "needs": [
+    "triggers",
+    "strike"
    ]
   },
   {
@@ -8419,6 +9907,17 @@
    ]
   },
   {
+   "name": "Psyche Salts (Moderate)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteract",
+   "needs": [
+    "counteract",
+    "situational"
+   ]
+  },
+  {
    "name": "Fortifying Pebble",
    "kind": "consumable",
    "result": "none",
@@ -8480,6 +9979,31 @@
    ]
   },
   {
+   "name": "Jabali's Dice",
+   "kind": "activation",
+   "activation": "Jabali's Gamble",
+   "result": "partial",
+   "main": "removed",
+   "work": "shunted",
+   "needs": [
+    "removed",
+    "areas",
+    "immunity",
+    "several"
+   ]
+  },
+  {
+   "name": "Hungering Maw",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "counteract",
+   "work": "end the effect",
+   "needs": [
+    "counteract",
+    "lasting"
+   ]
+  },
+  {
    "name": "Awakened Silver Shot",
    "kind": "activation",
    "result": "partial",
@@ -8529,6 +10053,16 @@
    ]
   },
   {
+   "name": "Bomb Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
+   ]
+  },
+  {
    "name": "Clockwork Shield (Greater)",
    "kind": "activation",
    "result": "note-only",
@@ -8570,6 +10104,23 @@
    "work": "dim light",
    "needs": [
     "areas",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Madcap Top",
+   "kind": "activation",
+   "activation": "Spin the Top",
+   "result": "partial",
+   "main": "removed",
+   "work": "banishment",
+   "needs": [
+    "removed",
+    "illusions",
+    "moving",
+    "strike",
+    "range",
+    "objects",
     "out-of-combat"
    ]
   },
@@ -8617,6 +10168,20 @@
    ]
   },
   {
+   "name": "Dawnlight (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "senses",
+   "work": "darkvision",
+   "needs": [
+    "senses",
+    "areas",
+    "strike",
+    "counteract",
+    "reader"
+   ]
+  },
+  {
    "name": "Sandalwood Fan",
    "kind": "activation",
    "activation": "Cloud of Leaves",
@@ -8628,6 +10193,16 @@
     "visibility",
     "several",
     "information"
+   ]
+  },
+  {
+   "name": "Heartripper Blade",
+   "kind": "activation",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "stage",
+   "needs": [
+    "afflictions"
    ]
   },
   {
@@ -8689,6 +10264,27 @@
    "needs": [
     "choice",
     "objects"
+   ]
+  },
+  {
+   "name": "Invisibility (Greater)",
+   "kind": "activation",
+   "activation": "Go Invisible",
+   "result": "partial",
+   "main": "visibility",
+   "work": "become invisible",
+   "needs": [
+    "visibility"
+   ]
+  },
+  {
+   "name": "Warrior's Training Ring",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "attack roll",
+   "needs": [
+    "strike"
    ]
   },
   {
@@ -8914,6 +10510,19 @@
    ]
   },
   {
+   "name": "Conch of Otherworldly Seas",
+   "kind": "activation",
+   "activation": "Sounds of the Deep",
+   "result": "partial",
+   "main": "choice",
+   "work": "choose",
+   "needs": [
+    "choice",
+    "information",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Seven-Color Raw Fish Salad",
    "kind": "consumable",
    "result": "none",
@@ -8990,6 +10599,16 @@
    ]
   },
   {
+   "name": "The Mountain Man",
+   "kind": "activation",
+   "result": "partial",
+   "main": "out-of-combat",
+   "work": "1 hour",
+   "needs": [
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Venomed Tongue",
    "kind": "activation",
    "result": "partial",
@@ -9001,6 +10620,18 @@
     "choice",
     "reader",
     "mind"
+   ]
+  },
+  {
+   "name": "Mercurial Mantle",
+   "kind": "activation",
+   "activation": "Wandering Twirl",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleportation",
+   "needs": [
+    "moving",
+    "strike"
    ]
   },
   {
@@ -9050,6 +10681,29 @@
    ]
   },
   {
+   "name": "Lion's Pelt (Leather)",
+   "kind": "activation",
+   "activation": "Contact Ally",
+   "result": "partial",
+   "main": "information",
+   "work": "know",
+   "needs": [
+    "information",
+    "speech"
+   ]
+  },
+  {
+   "name": "Iris of the Sky",
+   "kind": "activation",
+   "activation": "A Wish Granted With Inevitable Fire",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "persistent fire damage",
+   "needs": [
+    "afflictions"
+   ]
+  },
+  {
    "name": "Pinpoint Arrowhead",
    "kind": "consumable",
    "result": "none",
@@ -9072,6 +10726,19 @@
    ]
   },
   {
+   "name": "Assassin's Bracers (Type II)",
+   "kind": "activation",
+   "activation": "Focus on the Doomed",
+   "result": "partial",
+   "main": "actions",
+   "work": "feint",
+   "needs": [
+    "actions",
+    "dying",
+    "situational"
+   ]
+  },
+  {
    "name": "Prankster's Perpetual Pieplate",
    "kind": "activation",
    "activation": "Project Pastry",
@@ -9079,6 +10746,30 @@
    "main": "out-of-combat",
    "work": "submerged",
    "needs": [
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "The Sickness",
+   "kind": "activation",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "plague",
+   "needs": [
+    "afflictions",
+    "choice"
+   ]
+  },
+  {
+   "name": "Razmiri Mask (Silver)",
+   "kind": "activation",
+   "activation": "Call Upon Razmir's Mercy",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "affliction",
+   "needs": [
+    "afflictions",
+    "counteract",
     "out-of-combat"
    ]
   },
@@ -9122,6 +10813,17 @@
    ]
   },
   {
+   "name": "Psyche Salts (Greater)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteract",
+   "needs": [
+    "counteract",
+    "situational"
+   ]
+  },
+  {
    "name": "Carver-cutter (True)",
    "kind": "activation",
    "activation": "Carving Chisel",
@@ -9162,6 +10864,16 @@
    "needs": [
     "areas",
     "objects"
+   ]
+  },
+  {
+   "name": "The Joke",
+   "kind": "activation",
+   "result": "partial",
+   "main": "several",
+   "work": "up to 10 creatures",
+   "needs": [
+    "several"
    ]
   },
   {
@@ -9261,6 +10973,32 @@
    ]
   },
   {
+   "name": "Bonmuan Swapping Stone (Greater)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleport",
+   "needs": [
+    "moving",
+    "strike",
+    "immunity",
+    "objects"
+   ]
+  },
+  {
+   "name": "Dragonfire Halfbow",
+   "kind": "activation",
+   "activation": "Dragon's Arrow",
+   "result": "partial",
+   "main": "creatures",
+   "work": "mount",
+   "needs": [
+    "creatures",
+    "moving",
+    "immunity"
+   ]
+  },
+  {
    "name": "Addiction Suppressant (Major)",
    "kind": "consumable",
    "result": "note-only",
@@ -9299,6 +11037,15 @@
    "name": "Potion of Shared Life",
    "kind": "consumable",
    "result": "note-only",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
+   "name": "Spark Dancer",
+   "kind": "activation",
+   "result": "partial",
    "main": "no-rules",
    "needs": [
     "no-rules"
@@ -9400,6 +11147,16 @@
    "needs": [
     "information",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Gorum's Tear",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "reader",
+   "work": "off-guard",
+   "needs": [
+    "reader"
    ]
   },
   {
@@ -9533,6 +11290,17 @@
    ]
   },
   {
+   "name": "Rod of Negation",
+   "kind": "activation",
+   "result": "partial",
+   "main": "counteract",
+   "work": "dispel",
+   "needs": [
+    "counteract",
+    "reader"
+   ]
+  },
+  {
    "name": "Secret-Keeper's Mask (Reaper of Reputation)",
    "kind": "activation",
    "result": "builtin:no-effect",
@@ -9649,6 +11417,23 @@
    ]
   },
   {
+   "name": "Veiled Figurehead (Greater)",
+   "kind": "activation",
+   "activation": "Veil!",
+   "result": "partial",
+   "main": "illusions",
+   "work": "illusory",
+   "needs": [
+    "illusions",
+    "vehicles",
+    "lasting",
+    "choice",
+    "several",
+    "information",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Skirmisher's Coat",
    "kind": "activation",
    "activation": "Unexpected Armament",
@@ -9705,6 +11490,28 @@
    "result": "none",
    "main": "objects",
    "work": "16 bulk",
+   "needs": [
+    "objects",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Crown of the Fire Eater",
+   "kind": "activation",
+   "result": "partial",
+   "main": "triggers",
+   "work": "triggering attack",
+   "needs": [
+    "triggers",
+    "from-events"
+   ]
+  },
+  {
+   "name": "Cane of the Maelstrom",
+   "kind": "activation",
+   "result": "partial",
+   "main": "objects",
+   "work": "objects",
    "needs": [
     "objects",
     "out-of-combat"
@@ -9822,6 +11629,34 @@
    ]
   },
   {
+   "name": "Guardian Shield",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "conjure",
+   "needs": [
+    "creatures",
+    "actions",
+    "from-events",
+    "lasting",
+    "choice",
+    "several",
+    "objects"
+   ]
+  },
+  {
+   "name": "Cloud Pouch",
+   "kind": "activation",
+   "activation": "Disperse",
+   "result": "partial",
+   "main": "areas",
+   "work": "mist",
+   "needs": [
+    "areas",
+    "lasting"
+   ]
+  },
+  {
    "name": "Chainbreaker (Greater)",
    "kind": "activation",
    "activation": "Liberating Strike",
@@ -9832,6 +11667,16 @@
     "strike",
     "several",
     "reader"
+   ]
+  },
+  {
+   "name": "Headwrap of Wisdom",
+   "kind": "activation",
+   "activation": "Consider the Consequences",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -9846,6 +11691,15 @@
     "choice",
     "several",
     "objects"
+   ]
+  },
+  {
+   "name": "Psychic Warding Bracelet",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -9887,6 +11741,19 @@
    ]
   },
   {
+   "name": "Bloodstride Blade",
+   "kind": "activation",
+   "activation": "Call of the Bloodthirst",
+   "result": "partial",
+   "main": "triggers",
+   "work": "triggering creature",
+   "needs": [
+    "triggers",
+    "strike",
+    "reader"
+   ]
+  },
+  {
    "name": "Conspirator's Cookie",
    "kind": "consumable",
    "result": "partial",
@@ -9909,6 +11776,15 @@
     "triggers",
     "strike",
     "choice"
+   ]
+  },
+  {
+   "name": "Lucky Draw Bandolier (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -9945,6 +11821,16 @@
     "from-events",
     "dying",
     "reader"
+   ]
+  },
+  {
+   "name": "Indomitable Keepsake",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "strike",
+   "work": "critical hit",
+   "needs": [
+    "strike"
    ]
   },
   {
@@ -10049,6 +11935,16 @@
    ]
   },
   {
+   "name": "Gate Attenuator",
+   "kind": "activation",
+   "activation": "Elemental Spell",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Tentacle Potion (Greater)",
    "kind": "consumable",
    "result": "partial",
@@ -10150,6 +12046,18 @@
    ]
   },
   {
+   "name": "Anima Robe (Heroic)",
+   "kind": "activation",
+   "activation": "Who Are They?",
+   "result": "partial",
+   "main": "illusions",
+   "work": "illusory",
+   "needs": [
+    "illusions",
+    "lasting"
+   ]
+  },
+  {
    "name": "Clockwork Disguise",
    "kind": "activation",
    "activation": "Deploy Disguise",
@@ -10209,15 +12117,16 @@
    ]
   },
   {
-   "name": "Potion of Shared Memories",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "lasting",
-   "work": "thereafter",
+   "name": "Forgefather's Seal",
+   "kind": "activation",
+   "activation": "Retributive Rebuff",
+   "result": "partial",
+   "main": "triggers",
+   "work": "triggering creature",
    "needs": [
-    "lasting",
-    "mind",
-    "information"
+    "triggers",
+    "spells",
+    "choice"
    ]
   },
   {
@@ -10292,6 +12201,17 @@
    "needs": [
     "areas",
     "several"
+   ]
+  },
+  {
+   "name": "Curious Teardrop",
+   "kind": "activation",
+   "activation": "Reflect Emotions",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteract",
+   "needs": [
+    "counteract"
    ]
   },
   {
@@ -10398,6 +12318,15 @@
    ]
   },
   {
+   "name": "The Inquisitor",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Periscopic Viewfinder",
    "kind": "consumable",
    "result": "none",
@@ -10428,6 +12357,28 @@
    "work": "returned to life",
    "needs": [
     "dying"
+   ]
+  },
+  {
+   "name": "Shadowed Scale, the Jungle Secret",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "summon",
+   "needs": [
+    "creatures"
+   ]
+  },
+  {
+   "name": "Lion's Pelt (Chain)",
+   "kind": "activation",
+   "activation": "Contact Ally",
+   "result": "partial",
+   "main": "information",
+   "work": "know",
+   "needs": [
+    "information",
+    "speech"
    ]
   },
   {
@@ -10717,6 +12668,17 @@
    ]
   },
   {
+   "name": "Phoenix Fighting Fan",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "strike",
+   "needs": [
+    "strike",
+    "lasting"
+   ]
+  },
+  {
    "name": "Disruption Ammunition",
    "kind": "activation",
    "result": "builtin:no-effect",
@@ -10762,6 +12724,18 @@
    "needs": [
     "reader",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Leydroth Spellbreaker",
+   "kind": "activation",
+   "activation": "Dispelling Blast",
+   "result": "partial",
+   "main": "counteract",
+   "work": "dispelling",
+   "needs": [
+    "counteract",
+    "several"
    ]
   },
   {
@@ -10882,6 +12856,17 @@
    ]
   },
   {
+   "name": "Animate Dreamer",
+   "kind": "activation",
+   "activation": "Animate Object",
+   "result": "partial",
+   "main": "speeds",
+   "work": "levitating",
+   "needs": [
+    "speeds"
+   ]
+  },
+  {
    "name": "Absolute Solvent (Moderate)",
    "kind": "consumable",
    "result": "builtin:no-effect",
@@ -10929,6 +12914,16 @@
    ]
   },
   {
+   "name": "Raven Band",
+   "kind": "activation",
+   "result": "partial",
+   "main": "speech",
+   "work": "speak",
+   "needs": [
+    "speech"
+   ]
+  },
+  {
    "name": "Chair of Inventions",
    "kind": "activation",
    "result": "none",
@@ -10954,11 +12949,12 @@
   {
    "name": "Clockwork Songbird",
    "kind": "activation",
-   "result": "note-only",
-   "main": "lasting",
-   "work": "each time the",
+   "result": "partial",
+   "main": "forms",
+   "work": "in the form of",
    "needs": [
-    "lasting",
+    "forms",
+    "information",
     "speech"
    ]
   },
@@ -11065,6 +13061,17 @@
    ]
   },
   {
+   "name": "Soulfeeding Mask",
+   "kind": "activation",
+   "activation": "Disgorge Soul",
+   "result": "partial",
+   "main": "lasting",
+   "work": "sustain",
+   "needs": [
+    "lasting"
+   ]
+  },
+  {
    "name": "Everair Mask (Major)",
    "kind": "activation",
    "result": "builtin:no-effect",
@@ -11144,6 +13151,16 @@
    ]
   },
   {
+   "name": "Indomitable Keepsake (Greater)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "strike",
+   "work": "critical hit",
+   "needs": [
+    "strike"
+   ]
+  },
+  {
    "name": "Electromuscular Stimulator",
    "kind": "consumable",
    "result": "note-only",
@@ -11211,6 +13228,16 @@
    ]
   },
   {
+   "name": "Medusa's Scream",
+   "kind": "activation",
+   "activation": "Petrifying Gaze",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Vaccine (Lesser)",
    "kind": "consumable",
    "result": "partial",
@@ -11234,6 +13261,16 @@
     "senses",
     "speeds",
     "immunity"
+   ]
+  },
+  {
+   "name": "Empathic Cords",
+   "kind": "activation",
+   "result": "partial",
+   "main": "speech",
+   "work": "message",
+   "needs": [
+    "speech"
    ]
   },
   {
@@ -11405,6 +13442,26 @@
    ]
   },
   {
+   "name": "Pit Illusion Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
+   ]
+  },
+  {
+   "name": "Marking Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
+   ]
+  },
+  {
    "name": "Grimoire of Unknown Necessities",
    "kind": "activation",
    "result": "none",
@@ -11471,6 +13528,19 @@
    "work": "50 bulk",
    "needs": [
     "objects"
+   ]
+  },
+  {
+   "name": "Pheromone Flare (Greater)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "counteract",
+   "work": "ends the effect",
+   "needs": [
+    "counteract",
+    "situational",
+    "lasting",
+    "reader"
    ]
   },
   {
@@ -11653,6 +13723,17 @@
    ]
   },
   {
+   "name": "Anchor of Aquatic Exploration",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "summoning",
+   "needs": [
+    "creatures",
+    "vehicles"
+   ]
+  },
+  {
    "name": "Phoenix Cinder",
    "kind": "consumable",
    "result": "note-only",
@@ -11723,6 +13804,15 @@
    ]
   },
   {
+   "name": "Rime Foil",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Tentacle Potion (Lesser)",
    "kind": "consumable",
    "result": "none",
@@ -11737,6 +13827,17 @@
    ]
   },
   {
+   "name": "Purloining Cloak",
+   "kind": "activation",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleportation",
+   "needs": [
+    "moving",
+    "strike"
+   ]
+  },
+  {
    "name": "Secret-Keeper's Mask (Father Skinsaw)",
    "kind": "activation",
    "result": "note-only",
@@ -11746,6 +13847,28 @@
     "triggers",
     "afflictions",
     "situational"
+   ]
+  },
+  {
+   "name": "Ethereal",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "until you",
+   "needs": [
+    "lasting",
+    "choice"
+   ]
+  },
+  {
+   "name": "Crown of the Fire Eater (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "triggers",
+   "work": "triggering attack",
+   "needs": [
+    "triggers",
+    "from-events"
    ]
   },
   {
@@ -11809,6 +13932,26 @@
     "triggers",
     "dying",
     "lasting"
+   ]
+  },
+  {
+   "name": "Paradise Light",
+   "kind": "activation",
+   "activation": "Sanctum",
+   "result": "partial",
+   "main": "several",
+   "work": "each creature",
+   "needs": [
+    "several"
+   ]
+  },
+  {
+   "name": "Songbird's Brush",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -11939,6 +14082,18 @@
    ]
   },
   {
+   "name": "Elysian Clairglass",
+   "kind": "activation",
+   "activation": "Seek and Speak",
+   "result": "partial",
+   "main": "several",
+   "work": "everyone",
+   "needs": [
+    "several",
+    "speech"
+   ]
+  },
+  {
    "name": "Portable Gaming Hall",
    "kind": "activation",
    "result": "none",
@@ -12006,6 +14161,16 @@
    ]
   },
   {
+   "name": "Fan of Soothing Winds",
+   "kind": "activation",
+   "activation": "Healing Wind",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Rustbringer",
    "kind": "activation",
    "activation": "Rusting Disarm",
@@ -12015,6 +14180,20 @@
    "needs": [
     "triggers",
     "objects",
+    "reader"
+   ]
+  },
+  {
+   "name": "Dinosaur Boots",
+   "kind": "activation",
+   "result": "partial",
+   "main": "forms",
+   "work": "enlarge",
+   "needs": [
+    "forms",
+    "strike",
+    "lasting",
+    "several",
     "reader"
    ]
   },
@@ -12326,6 +14505,22 @@
    ]
   },
   {
+   "name": "Penetrating Ammunition",
+   "kind": "activation",
+   "result": "partial",
+   "main": "forms",
+   "work": "takes the shape",
+   "needs": [
+    "forms",
+    "areas",
+    "strike",
+    "situational",
+    "several",
+    "objects",
+    "reader"
+   ]
+  },
+  {
    "name": "Singing Shortbow",
    "kind": "activation",
    "activation": "Harmonic Shot",
@@ -12338,6 +14533,16 @@
     "reader",
     "mind",
     "speech"
+   ]
+  },
+  {
+   "name": "Blink Blade",
+   "kind": "activation",
+   "result": "partial",
+   "main": "areas",
+   "work": "smoke",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -12360,6 +14565,16 @@
    "work": "on a hit",
    "needs": [
     "strike"
+   ]
+  },
+  {
+   "name": "Ovinrbaane",
+   "kind": "activation",
+   "result": "partial",
+   "main": "mind",
+   "work": "suggestion",
+   "needs": [
+    "mind"
    ]
   },
   {
@@ -12418,6 +14633,17 @@
    "work": "bomb fitted",
    "needs": [
     "objects"
+   ]
+  },
+  {
+   "name": "Enveloping Light",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "at the end of each of your turns",
+   "needs": [
+    "lasting",
+    "reader"
    ]
   },
   {
@@ -12492,6 +14718,15 @@
    ]
   },
   {
+   "name": "Cultist Cowl (Major)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Stepping Stone Shot",
    "kind": "activation",
    "result": "none",
@@ -12501,6 +14736,15 @@
     "moving",
     "strike",
     "objects"
+   ]
+  },
+  {
+   "name": "Wildwood Ink",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -12535,6 +14779,18 @@
    "needs": [
     "by-kind",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Inspiring Spotlight (Mounted)",
+   "kind": "activation",
+   "activation": "Light It Up",
+   "result": "partial",
+   "main": "areas",
+   "work": "darkness",
+   "needs": [
+    "areas",
+    "counteract"
    ]
   },
   {
@@ -12595,6 +14851,17 @@
    ]
   },
   {
+   "name": "Psyche Salts (Lesser)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteract",
+   "needs": [
+    "counteract",
+    "situational"
+   ]
+  },
+  {
    "name": "Elder Seed",
    "kind": "consumable",
    "result": "none",
@@ -12612,6 +14879,17 @@
     "information",
     "speech",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Charlatan's Cape",
+   "kind": "activation",
+   "activation": "Puff of Smoke",
+   "result": "partial",
+   "main": "areas",
+   "work": "smoke",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -12642,6 +14920,16 @@
     "reader",
     "mind",
     "speech"
+   ]
+  },
+  {
+   "name": "Shrapnel Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -12685,6 +14973,17 @@
    ]
   },
   {
+   "name": "Coronet of Stars",
+   "kind": "activation",
+   "result": "partial",
+   "main": "triggers",
+   "work": "triggering creature",
+   "needs": [
+    "triggers",
+    "reader"
+   ]
+  },
+  {
    "name": "Barricade Stone (Cylinder)",
    "kind": "consumable",
    "result": "none",
@@ -12694,6 +14993,17 @@
     "dying",
     "objects",
     "reader"
+   ]
+  },
+  {
+   "name": "Reef Heart",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "conjure",
+   "needs": [
+    "creatures",
+    "out-of-combat"
    ]
   },
   {
@@ -12709,6 +15019,17 @@
    ]
   },
   {
+   "name": "Sack of Hydra's Teeth",
+   "kind": "activation",
+   "activation": "Sow a Tooth",
+   "result": "partial",
+   "main": "creatures",
+   "work": "minion",
+   "needs": [
+    "creatures"
+   ]
+  },
+  {
    "name": "Ember Dust",
    "kind": "consumable",
    "result": "note-only",
@@ -12721,6 +15042,19 @@
    ]
   },
   {
+   "name": "Hellfire Boots",
+   "kind": "activation",
+   "activation": "Devil's Dance",
+   "result": "partial",
+   "main": "moving",
+   "work": "move",
+   "needs": [
+    "moving",
+    "areas",
+    "reader"
+   ]
+  },
+  {
    "name": "Moonlit Chain",
    "kind": "activation",
    "activation": "Dim Sight",
@@ -12730,6 +15064,18 @@
    "needs": [
     "counteract",
     "reader"
+   ]
+  },
+  {
+   "name": "Zuhra's Gloves",
+   "kind": "activation",
+   "activation": "Zuhra's Stratagem",
+   "result": "partial",
+   "main": "areas",
+   "work": "wall of",
+   "needs": [
+    "areas",
+    "lasting"
    ]
   },
   {
@@ -12854,6 +15200,17 @@
    "needs": [
     "forms",
     "strike"
+   ]
+  },
+  {
+   "name": "Crown of the Fire Eater (Major)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "triggers",
+   "work": "triggering attack",
+   "needs": [
+    "triggers",
+    "from-events"
    ]
   },
   {
@@ -13009,6 +15366,16 @@
    ]
   },
   {
+   "name": "Energy Robe of Cold",
+   "kind": "activation",
+   "result": "partial",
+   "main": "speeds",
+   "work": "water walk",
+   "needs": [
+    "speeds"
+   ]
+  },
+  {
    "name": "Alchemical Atomizer",
    "kind": "activation",
    "result": "builtin:no-effect",
@@ -13059,6 +15426,16 @@
    ]
   },
   {
+   "name": "Soulcutter",
+   "kind": "activation",
+   "activation": "Soulcutting Storm",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Armorskin Robes of Fire",
    "kind": "activation",
    "activation": "Elemental Sheath",
@@ -13069,6 +15446,19 @@
     "retaliation",
     "immunity",
     "reader"
+   ]
+  },
+  {
+   "name": "Spectacles of Understanding",
+   "kind": "activation",
+   "result": "partial",
+   "main": "objects",
+   "work": "unfolding",
+   "needs": [
+    "objects",
+    "information",
+    "speech",
+    "out-of-combat"
    ]
   },
   {
@@ -13091,6 +15481,18 @@
    "needs": [
     "afflictions",
     "dying",
+    "information"
+   ]
+  },
+  {
+   "name": "Dazzling Shortbow",
+   "kind": "activation",
+   "activation": "Show Yourself!",
+   "result": "partial",
+   "main": "several",
+   "work": "each creature",
+   "needs": [
+    "several",
     "information"
    ]
   },
@@ -13155,6 +15557,16 @@
   {
    "name": "Soulcutter (Heroic)",
    "kind": "activation",
+   "activation": "Soulcutting Storm",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
+   "name": "Soulcutter (Heroic)",
+   "kind": "activation",
    "activation": "Shame Demon",
    "result": "note-only",
    "main": "immunity",
@@ -13191,6 +15603,20 @@
    ]
   },
   {
+   "name": "Ring of Bestial Friendship",
+   "kind": "activation",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteracted",
+   "needs": [
+    "counteract",
+    "immunity",
+    "mind",
+    "information",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Violin of the Waves",
    "kind": "activation",
    "result": "note-only",
@@ -13223,6 +15649,38 @@
    ]
   },
   {
+   "name": "Miogimo's Mask",
+   "kind": "activation",
+   "result": "partial",
+   "main": "objects",
+   "work": "corpse",
+   "needs": [
+    "objects",
+    "speech"
+   ]
+  },
+  {
+   "name": "Skyrider Sword (Greater)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "melee strike",
+   "needs": [
+    "strike"
+   ]
+  },
+  {
+   "name": "Castrovel's Beacon",
+   "kind": "activation",
+   "activation": "Starlight Burst",
+   "result": "partial",
+   "main": "immunity",
+   "work": "immune",
+   "needs": [
+    "immunity"
+   ]
+  },
+  {
    "name": "Remote Trigger",
    "kind": "activation",
    "result": "none",
@@ -13230,17 +15688,6 @@
    "work": "choose",
    "needs": [
     "choice"
-   ]
-  },
-  {
-   "name": "Coating",
-   "kind": "activation",
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "poisons",
-   "needs": [
-    "afflictions",
-    "objects"
    ]
   },
   {
@@ -13334,6 +15781,17 @@
    ]
   },
   {
+   "name": "Nightmare Cudgel",
+   "kind": "activation",
+   "result": "partial",
+   "main": "strike",
+   "work": "successfully strike",
+   "needs": [
+    "strike",
+    "actions"
+   ]
+  },
+  {
    "name": "Ancestral Embrace",
    "kind": "activation",
    "result": "none",
@@ -13359,6 +15817,18 @@
    ]
   },
   {
+   "name": "Ancestral Embrace",
+   "kind": "activation",
+   "result": "partial",
+   "main": "areas",
+   "work": "difficult terrain",
+   "needs": [
+    "areas",
+    "afflictions",
+    "reader"
+   ]
+  },
+  {
    "name": "Dust of Corpse Animation (Greater)",
    "kind": "consumable",
    "result": "note-only",
@@ -13380,6 +15850,16 @@
     "moving",
     "areas",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Lucky Draw Bandolier",
+   "kind": "activation",
+   "activation": "Secret Ace",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -13434,6 +15914,17 @@
     "immunity",
     "reader",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Fulu of Concealment",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "visibility",
+   "work": "invisibility",
+   "needs": [
+    "visibility",
+    "situational"
    ]
   },
   {
@@ -13509,6 +16000,18 @@
    ]
   },
   {
+   "name": "Ivory Baton",
+   "kind": "activation",
+   "result": "partial",
+   "main": "by-kind",
+   "work": "only constructs",
+   "needs": [
+    "by-kind",
+    "counteract",
+    "mind"
+   ]
+  },
+  {
    "name": "The Cricket",
    "kind": "activation",
    "result": "none",
@@ -13516,6 +16019,27 @@
    "work": "stride up to",
    "needs": [
     "moving"
+   ]
+  },
+  {
+   "name": "Busine of Divine Reinforcements",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "conjure",
+   "needs": [
+    "creatures",
+    "lasting"
+   ]
+  },
+  {
+   "name": "Shining Wayfinder",
+   "kind": "activation",
+   "result": "partial",
+   "main": "areas",
+   "work": "emanation centered",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -13685,6 +16209,16 @@
    "needs": [
     "choice",
     "objects"
+   ]
+  },
+  {
+   "name": "Talonstrike Blade (Greater)",
+   "kind": "activation",
+   "activation": "Grasping Talons",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   }
  ]

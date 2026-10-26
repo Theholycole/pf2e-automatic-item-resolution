@@ -54,7 +54,7 @@ function gapsOf(plan) {
     }
     return [...gaps];
 }
-const resultOf = (plan) => (!plan ? "none" : plan.builtin ? `builtin:${plan.builtin}` : plan.noteOnly ? "note-only" : plan.partial ? "partial" : gapsOf(plan).length ? "gaps" : "resolves");
+const resultOf = (plan) => (!plan ? "none" : plan.builtin && !plan.partial ? `builtin:${plan.builtin}` : plan.noteOnly ? "note-only" : plan.partial ? "partial" : gapsOf(plan).length ? "gaps" : "resolves");
 // (Not automated: every result but "resolves" and the builtins that play — the GM's no-effect is counted, as nothing plays it.)
 const unfinished = (result) => result !== "resolves" && (!result.startsWith("builtin:") || result === "builtin:no-effect");
 

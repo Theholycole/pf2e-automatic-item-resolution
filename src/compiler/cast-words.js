@@ -9,9 +9,10 @@ const ORDINAL = String.raw`(\d+)(?:st|nd|rd|th)`;
 // Names from before PF2e's remaster that item texts still use.
 const LEGACY = { "dimensional lock": "planar seal", "dimension door": "translocate", "planar binding": "binding circle", "remove disease": "cleanse affliction", "remove poison": "cleanse affliction", "magic missile": "force barrage", "true seeing": "truesight", "see invisibility": "see the unseen", "comprehend language": "translate", "shield other": "share life", "plane shift": "interplanar teleport", "feather fall": "gentle landing", "faerie fire": "revealing light", "magic weapon": "runic weapon", "magic fang": "runic body", "burning hands": "breathe fire", "color spray": "dizzying colors", "sound burst": "noise blast", "chill touch": "void warp", "disrupt undead": "vitality lash", "ray of frost": "frostbite", "produce flame": "ignition", "tanglefoot": "tangle vine", "acid splash": "caustic blast" };
 
-// PF2e's spells by name in lower case: { uuid, name, area, targets, ritual, rank, mythic } — from the spells pack's documents
-// or index entries ({ _id | uuid, name, system: { area, target, ritual, level, traits } }). (mythic: the mythic trait, which costs a
-// Mythic Point to cast — src/compiler/spend.js.)
+// PF2e's spells by name in lower case: { uuid, name, area, targets, ritual, rank, mythic, duration, sustained, range } — from the spells
+// pack's documents or index entries ({ _id | uuid, name, system: { area, target, ritual, level, traits, duration, range } }). (mythic: the
+// mythic trait, which costs a Mythic Point to cast — src/compiler/spend.js; duration and range: their words, which a cast's note may only
+// restate — honest.js withCastNotes.)
 export function spellIndex(spells) {
     const index = {};
     for (const spell of spells ?? []) {
@@ -24,7 +25,10 @@ export function spellIndex(spells) {
             targets: Boolean(String(spell.system?.target?.value ?? "").trim()),
             ritual: Boolean(spell.system?.ritual),
             rank: Number(spell.system?.level?.value) || null,
-            mythic: (spell.system?.traits?.value ?? []).includes("mythic")
+            mythic: (spell.system?.traits?.value ?? []).includes("mythic"),
+            duration: String(spell.system?.duration?.value ?? "").trim() || null,
+            sustained: Boolean(spell.system?.duration?.sustained),
+            range: String(spell.system?.range?.value ?? "").trim() || null
         };
     }
     return index;
