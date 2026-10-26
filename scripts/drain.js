@@ -31,7 +31,7 @@ export async function markAfterApplied({ state, targets }) {
     const drain = state?.plan?.drain;
     if (!drain) return [];
     const outcomes = state.plan.resolution?.outcomes ?? {};
-    const user = { actorUuid: state.source?.actorUuid ?? null, name: state.source?.name ?? null };
+    const user = { actorUuid: state.source?.actorUuid ?? null, tokenUuid: state.source?.tokenUuid ?? null, name: state.source?.name ?? null };
     const item = { name: state.ability?.name ?? state.plan.source?.name ?? "The item", uuid: state.ability?.uuid ?? null, img: state.ability?.img ?? null };
     const marked = [];
     for (const target of targets ?? []) {
@@ -40,7 +40,8 @@ export async function markAfterApplied({ state, targets }) {
         const actor = await fromUuid(target.actorUuid).catch(() => null);
         if (!actor?.createEmbeddedDocuments) continue;
         await markOf(actor)?.delete();
-        const [effect] = await actor.createEmbeddedDocuments("Item", [drainMarkSource(drain, { item, user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        // (Its user the Effect's origin, else the creature itself: PF2e wants one.)
+        const [effect] = await actor.createEmbeddedDocuments("Item", [drainMarkSource(drain, { item, user: user.actorUuid ? user : { ...user, actorUuid: actor.uuid }, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         marked.push(effect);
     }
     return marked;

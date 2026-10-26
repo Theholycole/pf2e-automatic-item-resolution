@@ -34,7 +34,7 @@ test("the share: the bleed rolled now (a tick), not a persistent bleed only set;
 
 test("the mark on the creature and its user's temporary Hit Points: PF2e's TempHP, its time from the mark's start", () => {
     const mark = drainMarkSource({ fraction: 0.5, type: "bleed", duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" } }, { item: { name: "Blood-Drinker Blade (Greater)" }, user: { actorUuid: "Actor.user", name: "Vamp" }, worldTime: 12 });
-    assert.deepEqual([mark.name, mark.flags["pf2e-automatic-item-resolution"].drain, mark.system.duration.value, mark.system.start.value], ["Blood-Drinker Blade (Greater): drained", { fraction: 0.5, type: "bleed", userUuid: "Actor.user", userName: "Vamp" }, 1, 12]);
+    assert.deepEqual([mark.name, mark.flags["pf2e-automatic-item-resolution"].drain, mark.system.duration.value, mark.system.start.value, mark.system.context.origin.actor], ["Blood-Drinker Blade (Greater): drained", { fraction: 0.5, type: "bleed", userUuid: "Actor.user", userName: "Vamp" }, 1, 12, "Actor.user"]);
     assert.match(mark.system.description.value, /The next bleed damage it takes gives Vamp half of it \(after resistances\) as temporary Hit Points, until 1 minute after the activation/);
     const temp = drainTempSource(8, { item: { name: "Blood-Drinker Blade (Greater)" }, start: { value: 12, initiative: 20 }, duration: { mode: "fixed", value: 1, unit: "minutes" } });
     assert.deepEqual([temp.system.rules, temp.system.start, temp.system.duration.value], [[{ key: "TempHP", value: 8 }], { value: 12, initiative: 20 }, 1]);

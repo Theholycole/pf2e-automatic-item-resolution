@@ -1821,7 +1821,8 @@ export const cases = {
         await clearSquares(scene, [[19, 11]]);
         const { actor: user, token } = await creature(scene, "Foam Faller", { type: "character", x: 19, y: 11 });
         const chassis = await give(user, "Impact Foam Chassis (Moderate)");
-        await chassis.update({ "system.equipped.carryType": "worn" });
+        // (Worn on the body, as PF2e equips a worn garment: in its slot.)
+        await chassis.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true });
         const fall = easedFall(60, fallEasesOf(user));
         assert(fall.before === 30 && fall.damage === 0 && !fall.prone && fall.reductions[0]?.amount === 30 && fall.reductions[0]?.itemUuid === chassis.uuid, `30 off a 60-foot fall (${JSON.stringify(fall)})`);
         const since = Date.now();

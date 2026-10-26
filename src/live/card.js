@@ -348,12 +348,12 @@ export function foamEffectSource(hp, { item = {}, user = {}, worldTime = 0, init
 
 // Exsanguinate's mark on the creature its card damaged (src/compiler/drain.js, scripts/drain.js): the first damage of its type the creature
 // then takes gives its user that share as temporary Hit Points, until the item's time from now runs out. drain: { fraction, type,
-// duration }; user: its user's { actorUuid, name }.
+// duration }; user: its user's { actorUuid, tokenUuid, name }, the Effect's origin (PF2e requires one).
 const SHARE_WORDS = { 0.5: "half", 1: "all", 2: "twice" };
 export function drainMarkSource(drain, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const share = SHARE_WORDS[drain.fraction] ?? `${drain.fraction} times`;
     const words = `The next ${drain.type ? `${drain.type} ` : ""}damage it takes gives ${user.name ?? "its user"} ${share} of it (after resistances) as temporary Hit Points${drain.duration?.mode === "fixed" ? `, until ${timeText(drain.duration)} after the activation` : ""}`;
-    return ownEffectSource({ name: "drained", img: "icons/svg/blood.svg", words, rules: [], duration: drain.duration, flag: { drain: { fraction: drain.fraction, type: drain.type ?? null, userUuid: user.actorUuid ?? null, userName: user.name ?? null } }, item, user: {}, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: "drained", img: "icons/svg/blood.svg", words, rules: [], duration: drain.duration, flag: { drain: { fraction: drain.fraction, type: drain.type ?? null, userUuid: user.actorUuid ?? null, userName: user.name ?? null } }, item, user: { actorUuid: user.actorUuid ?? null, tokenUuid: user.tokenUuid ?? null }, worldTime, initiative, moduleId });
 }
 
 // Its user's temporary Hit Points from it: PF2e's TempHP (more than it has, else nothing; gone with the Effect), its time counted from the
