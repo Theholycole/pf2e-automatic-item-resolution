@@ -315,7 +315,9 @@ export function fallLine(fall) {
 // damage, for the item's time.
 export function fallEffectSource(fall, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const flag = { ...(fall.shorter ? { shorter: fall.shorter } : {}), ...(fall.noDamage ? { noDamage: true } : {}), ...(fall.landsOnFeet ? { landsOnFeet: true } : {}), source: item.name ?? null };
-    return ownEffectSource({ name: "fall", img: "icons/svg/wing.svg", words: fallLine(fall), rules: [], duration: fall.duration, flag: { fall: true }, extraFlags: { [ENVIRONMENT_ID]: { fall: flag } }, item, user, worldTime, initiative, moduleId });
+    // (Jade Cat's Balance: a roll note on it, as PF2e's own Steady Balance.)
+    const rules = fall.balance ? [{ key: "Note", selector: "acrobatics", predicate: ["action:balance"], title: item.name ?? "Balance", text: fall.balance }] : [];
+    return ownEffectSource({ name: "fall", img: "icons/svg/wing.svg", words: fallLine(fall), rules, duration: fall.duration, flag: { fall: true }, extraFlags: { [ENVIRONMENT_ID]: { fall: flag } }, item, user, worldTime, initiative, moduleId });
 }
 
 // What of the weather it ignores, with its time: "Ignores the weather's fog and mist for 1 minute".

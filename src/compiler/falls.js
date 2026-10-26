@@ -21,6 +21,14 @@ const NO_DAMAGE = /\b(?:you take no damage from the fall|never take falling dama
 // environment module's, 2026-10-26.)
 const ON_FEET = /\bRegardless of whether you take damage or not from the fall, you land on your feet\b/i;
 const FOR = /\b[Ff]or (\d+|one|an?) (round|minute|hour)s?\b/;
+// (What a fall's sentence says besides, 2026-10-26 — words on the fall's Effect, the creature's own to play: Aerial Cloak's "and glide to a space
+// of your choice at the bottom of your fall, which must be within 20 feet of where you would've landed" (glide), Dragonaut's Wingsuit's "Your
+// fall slows to 60 feet per round" (rate); Jade Cat's "you are not Off-Guard when you Balance, and narrow surfaces and uneven ground are not
+// difficult terrain for you" — a roll note on its Balance, as PF2e's own Steady Balance has it (balance: the note's words).)
+const GLIDE = /,? and glide to a space of your choice at the bottom of your fall, which must be within (\d+) feet of where you would've landed\b/i;
+const RATE = /\bYour fall slows to (\d+) feet per round\b/i;
+const BALANCE = /,? you are not Off-Guard when you Balance, and narrow surfaces and uneven ground are not difficult terrain for you\b/i;
+export const BALANCE_NOTE = "You aren't off-guard when you Balance, and narrow surfaces and uneven ground aren't difficult terrain for you.";
 
 // The text → { shorter?, noDamage?, said: [sentences], duration? } or null. duration: the sentence's "For 1 minute …", else a reaction's round.
 export function readFall(text, { reaction = false } = {}) {
@@ -29,6 +37,7 @@ export function readFall(text, { reaction = false } = {}) {
     let noDamage = false;
     let duration = null;
     let onFeet = false;
+    const extra = {};
     for (const sentence of SENTENCES(text)) {
         if (ON_FEET.test(sentence)) {
             onFeet = true;
@@ -40,24 +49,29 @@ export function readFall(text, { reaction = false } = {}) {
         if (!short && !none) continue;
         if (short) shorter = Math.max(shorter ?? 0, Number(short[1]));
         if (none) noDamage = true;
+        const glide = GLIDE.exec(sentence);
+        const rate = RATE.exec(sentence);
+        if (glide) extra.glide = Number(glide[1]);
+        if (rate) extra.rate = Number(rate[1]);
+        if (BALANCE.test(sentence)) extra.balance = BALANCE_NOTE;
         said.push(sentence);
         const time = FOR.exec(sentence);
         if (time && !duration) duration = { mode: "fixed", value: WORDS[time[1].toLowerCase()] ?? Number(time[1]), unit: UNITS[time[2].toLowerCase()], expiry: "turn-start" };
     }
     if (!shorter && !noDamage) return null;
-    return { ...(shorter ? { shorter } : {}), ...(noDamage ? { noDamage: true } : {}), ...(onFeet ? { landsOnFeet: true } : {}), said, duration: duration ?? (reaction ? { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" } : null) };
+    return { ...(shorter ? { shorter } : {}), ...(noDamage ? { noDamage: true } : {}), ...(onFeet ? { landsOnFeet: true } : {}), ...extra, said, duration: duration ?? (reaction ? { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" } : null) };
 }
 
 // The fall in words: "Its falls count as 120 feet shorter; it lands on its feet", "It takes no damage from a fall".
 export function fallText(fall) {
-    const parts = [fall.noDamage ? "it takes no damage from a fall" : null, fall.shorter && !fall.noDamage ? `its falls count as ${fall.shorter} feet shorter` : null, fall.landsOnFeet ? "it lands on its feet" : null].filter(Boolean);
+    const parts = [fall.rate ? `it falls ${fall.rate} feet a round` : null, fall.noDamage ? "it takes no damage from a fall" : null, fall.shorter && !fall.noDamage ? `its falls count as ${fall.shorter} feet shorter` : null, fall.landsOnFeet ? "it lands on its feet" : null, fall.glide ? `it can land in a space of its choice within ${fall.glide} feet of where it would have` : null, fall.balance ? "it isn't off-guard when it Balances, and narrow surfaces and uneven ground aren't difficult terrain for it" : null].filter(Boolean);
     const words = parts.join("; ");
     return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 // (A sentence that says only the fall: no longer a note. One that says more, Jade Cat's Balance and terrain, stays one.)
 const MORE = /\b(?:Off-Guard|Balance|difficult terrain|glide|space|bonus|penalty|check|Speed|slows?)\b/i;
-const onlyFall = (sentence) => !MORE.test(sentence.replace(SHORTER, " ").replace(NO_DAMAGE, " ").replace(FOR, " "));
+const onlyFall = (sentence) => !MORE.test(sentence.replace(GLIDE, " ").replace(BALANCE, " ").replace(RATE, " ").replace(SHORTER, " ").replace(NO_DAMAGE, " ").replace(FOR, " "));
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const RULE = /\b(?:bonus|penalty|saving throws?|saves?|resistance|weakness|Strike|check|DC|attack|Speed|Hit Points|damage|condition|Off-Guard|terrain|space|feet)\b/i;

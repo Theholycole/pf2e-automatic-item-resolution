@@ -21,13 +21,16 @@ const activation = (name, which) => compileActivations(item(name)).find((entry) 
 test("the readings: Tumbler's Belt 120 feet shorter for the round of its reaction, Aerial Cloak 30, Jade Cat 20 for a minute, Dragonaut's Wingsuit no damage for a minute", () => {
     const belt = activation("Tumbler's Belt", "Land With Grace");
     assert.deepEqual([belt.fall, belt.notes, Boolean(belt.partial)], [{ shorter: 120, landsOnFeet: true, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" } }, undefined, false]);
-    assert.equal(activation("Aerial Cloak", "Fall Gently").fall.shorter, 30);
+    // (2026-10-26: what the fall's sentence says besides is in the Effect's words — Aerial Cloak's glide, the Wingsuit's 60 feet a round — and
+    // Jade Cat's Balance a roll note on it, as PF2e's Steady Balance: each whole.)
+    const cloak = activation("Aerial Cloak", "Fall Gently");
+    assert.deepEqual([cloak.fall.shorter, cloak.fall.glide, Boolean(cloak.partial)], [30, 20, false]);
     const cat = compileItem(item("Jade Cat"));
-    assert.deepEqual([cat.fall.shorter, cat.fall.duration.value, cat.fall.duration.unit], [20, 1, "minutes"]);
-    // (Its Balance and terrain stay a note.)
-    assert.match(cat.notes.join(" "), /not Off-Guard when you Balance/);
+    assert.deepEqual([cat.fall.shorter, cat.fall.duration.value, cat.fall.duration.unit, Boolean(cat.partial)], [20, 1, "minutes", false]);
+    assert.deepEqual(fallEffectSource(cat.fall, { item: { name: "Jade Cat" } }).system.rules, [{ key: "Note", selector: "acrobatics", predicate: ["action:balance"], title: "Jade Cat", text: "You aren't off-guard when you Balance, and narrow surfaces and uneven ground aren't difficult terrain for you." }]);
     const wingsuit = activation("Dragonaut's Wingsuit", "Descend");
-    assert.deepEqual([wingsuit.fall.noDamage, wingsuit.fall.duration.unit], [true, "minutes"]);
+    assert.deepEqual([wingsuit.fall.noDamage, wingsuit.fall.rate, wingsuit.fall.duration.unit, Boolean(wingsuit.partial)], [true, 60, "minutes", false]);
+    assert.equal(fallLine(cloak.fall), "Its falls count as 30 feet shorter; it can land in a space of its choice within 20 feet of where it would have for 1 round");
     assert.equal(fallLine(belt.fall), "Its falls count as 120 feet shorter; it lands on its feet for 1 round");
 });
 

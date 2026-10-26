@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 171,
-   "resolves": 781,
+   "resolves": 782,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
-   "partial": 99,
+   "partial": 98,
    "builtin:ways": 27,
    "builtin:item-action": 16,
    "note-only": 117,
@@ -99,8 +99,7 @@
     "none": 25,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "resolves": 66,
-    "partial": 7,
+    "resolves": 67,
     "builtin:no-effect": 7,
     "builtin:reroll": 1,
     "builtin:ways": 2,
@@ -108,6 +107,7 @@
     "builtin:teleport": 3,
     "builtin:cast-spell": 9,
     "note-only": 6,
+    "partial": 6,
     "builtin:objects": 2,
     "builtin:roll-twice": 2
    },
@@ -366,7 +366,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 68,
+   "resolves": 69,
    "gaps": 0,
    "none": 19
   },
@@ -384,13 +384,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 266,
+   "resolves": 267,
    "gaps": 0,
    "none": 22
   },
   "duration": {
    "count": 943,
-   "resolves": 616,
+   "resolves": 617,
    "gaps": 0,
    "none": 13
   }
@@ -1703,8 +1703,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

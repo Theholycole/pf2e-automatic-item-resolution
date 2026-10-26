@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1301,
+  "entries": 1298,
   "results": {
    "none": 621,
-   "partial": 291,
+   "partial": 288,
    "builtin:no-effect": 129,
    "note-only": 260
   },
@@ -12,18 +12,18 @@
    "speeds": 24,
    "counteract": 17,
    "afflictions": 54,
-   "areas": 112,
+   "areas": 111,
    "moving": 88,
    "lasting": 66,
    "visibility": 53,
-   "choice": 40,
+   "choice": 39,
    "mind": 9,
    "strike": 107,
    "spells": 45,
    "information": 23,
    "out-of-combat": 33,
    "actions": 32,
-   "no-rules": 38,
+   "no-rules": 37,
    "senses": 23,
    "objects": 116,
    "reader": 25,
@@ -48,7 +48,7 @@
   },
   "any": {
    "speeds": 30,
-   "areas": 167,
+   "areas": 166,
    "immunity": 74,
    "objects": 393,
    "speech": 124,
@@ -60,16 +60,16 @@
    "triggers": 126,
    "visibility": 55,
    "dying": 78,
-   "choice": 113,
+   "choice": 112,
    "several": 90,
    "mind": 71,
    "strike": 188,
-   "reader": 228,
+   "reader": 227,
    "spells": 82,
    "information": 191,
    "actions": 62,
    "from-events": 38,
-   "no-rules": 38,
+   "no-rules": 37,
    "senses": 29,
    "illusions": 57,
    "removed": 5,
@@ -707,17 +707,6 @@
    ]
   },
   {
-   "name": "Jade Cat",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "reader"
-   ]
-  },
-  {
    "name": "Immovable Arm",
    "kind": "activation",
    "result": "none",
@@ -1037,17 +1026,6 @@
     "afflictions",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Aerial Cloak",
-   "kind": "activation",
-   "activation": "Fall Gently",
-   "result": "partial",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice"
    ]
   },
   {
@@ -1529,16 +1507,6 @@
    "needs": [
     "speeds",
     "objects"
-   ]
-  },
-  {
-   "name": "Dragonaut's Wingsuit",
-   "kind": "activation",
-   "activation": "Descend",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
