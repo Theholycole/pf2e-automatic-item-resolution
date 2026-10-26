@@ -1001,9 +1001,11 @@ test("a partial plan without its Effect's opening flavor among its notes (Bloodg
     assert.equal(withoutFlavorNotes(kept, html), kept);
 });
 
-test("Floating Shield: its own AC bonus as a circumstance bonus to its user's AC for its minute, as if raised; what it can't do and its early end notes", () => {
+test("Floating Shield: its own AC bonus as a circumstance bonus to its user's AC for its minute, as if raised; what it can't do and its early end a note Effect for that minute", () => {
     const [float] = compileActivations(item("Floating Shield"));
     assert.deepEqual(float.plan.resolution.outcomes.success.modifiers, [{ selector: "ac", type: "circumstance", value: 1, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
-    assert.equal(float.plan.partial, true);
-    assert.match(float.plan.notes.join(" "), /Interact to grasp it, ending its floating effect early/);
+    // (2026-10-26: its limits the user's to keep, a note Effect — whole.)
+    const [note] = float.plan.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([Boolean(float.plan.partial), float.plan.notes, note.label, note.duration.value], [false, undefined, "Floating shield", 1]);
+    assert.match(note.text, /Interact to grasp it, ending its floating effect early/);
 });

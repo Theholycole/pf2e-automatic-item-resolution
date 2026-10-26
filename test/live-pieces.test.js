@@ -137,6 +137,17 @@ test("Pharasmin Visor: its user Dazzled until the start of its next turn as it's
     assert.deepEqual([change?.slug, change?.target, change?.duration?.expiry], ["dazzled", "source", "turn-start"]);
 });
 
+test("Death Tusk Helm: its roar's DC its user's doomed and wounded higher (at most 20), and its user's 5 temporary Hit Points for a minute as it's used (2026-10-26)", async () => {
+    const { withConditionDC } = await import("../src/live/scaled.js");
+    const helm = compileActivations(source("Death Tusk Helm"))[0].plan;
+    assert.deepEqual([helm.dcBy, helm.userEffects.map((entry) => [entry.kind, entry.amount, entry.duration.value, entry.duration.unit]), Boolean(helm.partial), helm.notes], [{ slugs: ["doomed", "wounded"], max: 20 }, [["temp-hp", 5, 1, "minutes"]], false, undefined]);
+    assert.deepEqual([[0, 0], [1, 2], [3, 3]].map(([doomed, wounded]) => withConditionDC(helm, (slug) => (slug === "doomed" ? doomed : wounded)).resolution.check.against.value), [16, 19, 20]);
+    const before = foundry.applied.length;
+    await activated(lancer, "Death Tusk Helm");
+    const change = foundry.applied.slice(before).find((entry) => entry.change.op === "tempHp")?.change;
+    assert.deepEqual([change?.amount, change?.target, change?.duration?.unit], [5, "source", "minutes"]);
+});
+
 test("Staff of Sun Wukong's Meteor Slam: its damage and Enfeebled on the creature targeted, and the save card for the others within 10 feet but its wielder", async () => {
     const slam = compileActivations(source("Staff of Sun Wukong"))[0].plan;
     assert.deepEqual([slam.resolution.check.roll, slam.resolution.sharedDamage.components[0].formula, slam.resolution.outcomes.success.effects[0].slug, slam.around[0].radius, slam.around[0].notUser, slam.partial], ["automatic", "10d10[bludgeoning]", "enfeebled", 10, true, undefined]);

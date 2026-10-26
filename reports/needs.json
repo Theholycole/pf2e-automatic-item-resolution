@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1279,
+  "entries": 1276,
   "results": {
    "none": 615,
-   "partial": 278,
+   "partial": 275,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -22,7 +22,7 @@
    "spells": 45,
    "information": 23,
    "out-of-combat": 33,
-   "actions": 31,
+   "actions": 29,
    "no-rules": 37,
    "senses": 23,
    "objects": 115,
@@ -36,7 +36,7 @@
    "immunity": 26,
    "situational": 20,
    "creatures": 53,
-   "dying": 30,
+   "dying": 29,
    "speech": 18,
    "from-events": 7,
    "forms": 24,
@@ -59,15 +59,15 @@
    "moving": 113,
    "triggers": 126,
    "visibility": 52,
-   "dying": 78,
+   "dying": 77,
    "choice": 110,
    "several": 90,
    "mind": 70,
    "strike": 187,
-   "reader": 221,
+   "reader": 220,
    "spells": 82,
    "information": 191,
-   "actions": 61,
+   "actions": 59,
    "from-events": 38,
    "no-rules": 37,
    "senses": 29,
@@ -2371,18 +2371,6 @@
     "actions",
     "immunity",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Death Tusk Helm",
-   "kind": "activation",
-   "activation": "Boar's Last Stand",
-   "result": "partial",
-   "main": "dying",
-   "work": "doomed",
-   "needs": [
-    "dying",
-    "reader"
    ]
   },
   {
@@ -13980,17 +13968,6 @@
    ]
   },
   {
-   "name": "Floating Shield (Greater)",
-   "kind": "activation",
-   "activation": "Float",
-   "result": "partial",
-   "main": "actions",
-   "work": "shield block",
-   "needs": [
-    "actions"
-   ]
-  },
-  {
    "name": "Leaper's Elixir (Lesser)",
    "kind": "consumable",
    "result": "note-only",
@@ -15033,17 +15010,6 @@
     "lasting",
     "mind",
     "information"
-   ]
-  },
-  {
-   "name": "Floating Shield",
-   "kind": "activation",
-   "activation": "Float",
-   "result": "partial",
-   "main": "actions",
-   "work": "shield block",
-   "needs": [
-    "actions"
    ]
   },
   {

@@ -13,3 +13,14 @@ export function scaledByCondition(plan, valueOf) {
     const outcomes = Object.fromEntries(Object.entries(rows).map(([degree, row]) => [degree, row?.effects ? { ...row, effects: row.effects.map((effect) => (effect?.byCondition ? pick(effect) : effect)) } : row]));
     return { ...plan, resolution: { ...plan.resolution, outcomes } };
 }
+
+// A save's DC its user's conditions higher (plan.dcBy, src/compiler/user-conditions.js: Death Tusk Helm's "Increase this DC by the sum of your
+// Doomed and Wounded values (maximum DC 20)"): the plan with that DC, no higher than its maximum; the plan as it was without dcBy.
+export function withConditionDC(plan, valueOf) {
+    const by = plan?.dcBy;
+    const against = plan?.resolution?.check?.against;
+    if (!by || !Number.isFinite(Number(against?.value))) return plan;
+    const raised = Number(against.value) + by.slugs.reduce((sum, slug) => sum + (Number(valueOf(slug)) || 0), 0);
+    const value = Math.min(by.max ?? raised, Math.max(Number(against.value), raised));
+    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...against, value } } } };
+}

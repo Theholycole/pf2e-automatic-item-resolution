@@ -21,7 +21,7 @@ import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, s
 import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
 import { startItemConjure, startItemZone } from "./zones.js";
-import { scaledByCondition } from "../src/live/scaled.js";
+import { scaledByCondition, withConditionDC } from "../src/live/scaled.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { againstRolled, applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
@@ -237,6 +237,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     }
     // (A condition its user takes beside the save, Pharasmin Visor's Dazzled: given as it's used, src/compiler/user-conditions.js.)
     if (plan?.userEffects?.length && actor) await giveUserConditions(plan.userEffects, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user conditions`, error));
+    // (Its save's DC its user's conditions higher, Death Tusk Helm's doomed and wounded: src/live/scaled.js.)
+    if (plan?.dcBy && actor) plan = withConditionDC(plan, (slug) => actor.getCondition?.(slug)?.value ?? 0);
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
     // (A retaliation beside the rest, Thunder Mail's for the next minute: its later card too, kept open — src/compiler/direct-damage.js.)
@@ -500,6 +502,12 @@ async function giveUserConditions(effects, { actor, token, used }) {
     const state = { plan: { item: {} }, ability: { name: used.data.name, uuid: used.data.uuid ?? null }, source: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null, name }, targets: [] };
     const lines = [];
     for (const effect of effects) {
+        // (Its temporary Hit Points, Death Tusk Helm's 5 for a minute: the ability module's tempHp.)
+        if (effect.kind === "temp-hp") {
+            const line = ability?.applyChange ? await ability.applyChange({ op: "tempHp", target: "source", amount: effect.amount, duration: effect.duration ?? null }, state) : null;
+            lines.push(line ?? `${name} gains ${effect.amount} temporary Hit Points${ability?.applyChange ? "" : " (add them by hand: the ability module isn't active)"}`);
+            continue;
+        }
         const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: effect.slug, value: effect.value ?? null, target: "source", duration: effect.duration ?? null }, state) : null;
         lines.push(line ?? `${name} is ${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
     }
