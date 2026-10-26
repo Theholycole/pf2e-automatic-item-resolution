@@ -46,10 +46,11 @@ export function readVolley(text, sentence = null, whole = null) {
     cut(/\s*with an? ([-−]\d+) penalty\b/i, (found) => {
         volley.penalty = -Math.abs(Number(found[1].replace("−", "-")));
     });
-    // (Coldstar Pistols' "Make two Strikes against one target, taking the highest of the two attack rolls and applying it to both attacks": one
-    // roll for both, which PF2e's two Strikes can't be — a note.)
+    // (Coldstar Pistols' "Make two Strikes against one target, taking the highest of the two attack rolls and applying it to both attacks":
+    // volley.twin — one Strike rolled twice, the higher kept (two attack rolls at one modifier are that), its result both Strikes'; on a hit
+    // the second's damage rolled too, scripts/strikes.js. 2026-10-26: a note before.)
     cut(/\s*against one target, taking the highest of the two attack rolls and applying it to both attacks/i, () => {
-        notes.push("Both Strikes are at one target, and the higher of their two attack rolls counts for both.");
+        volley.twin = true;
     });
     const sentences = rest.split(/(?<=[.!?])\s+(?=[A-Z(])/).map((entry) => entry.trim()).filter(Boolean);
     const kept = [];

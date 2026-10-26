@@ -376,3 +376,24 @@ test("Freedom's Flame's Holy Retribution: a creature with a holy weakness takes 
     assert.deepEqual([formula(fiend), formula(ogre)], ["10[untyped]", "15[spirit]"]);
     assert.equal(targetGroups(flame, [{ actor: fiend }, { actor: ogre }]).length, 2);
 });
+
+test("Coldstar Pistols' two Strikes at one target on the higher of two attack rolls: one Strike rolled twice keeping the higher, the second's damage rolled on a hit", async () => {
+    const { strikeRules, strikeLines } = await import("../src/live/strike-card.js");
+    const pistols = planOf("Coldstar Pistols", 1);
+    assert.deepEqual([Boolean(pistols.partial), pistols.strike.uses, pistols.strike.volley.twin, pistols.strike.notes], [false, 1, true, []]);
+    assert.deepEqual(strikeRules(pistols, { weaponId: "gun1", label: "Coldstar Pistols" }).map((rule) => [rule.key, rule.selector, rule.keep]), [["RollTwice", "gun1-attack", "higher"]]);
+    assert.ok(strikeLines(pistols).some((line) => /rises two steps after them/.test(line)));
+    const { secondStrikeDamage } = await import("../scripts/strikes.js");
+    const saved = { game: globalThis.game, ChatMessage: globalThis.ChatMessage };
+    globalThis.game = { user: { settings: { showDamageDialogs: false } } };
+    globalThis.ChatMessage = { create: async () => null, getSpeaker: () => ({}) };
+    try {
+        const rolled = [];
+        const actor = { name: "Onki", system: { actions: [{ type: "strike", item: { id: "other" }, damage: async () => rolled.push("other") }, { type: "strike", item: { id: "gun1" }, damage: async () => rolled.push("damage"), critical: async () => rolled.push("critical") }] } };
+        await secondStrikeDamage(actor, {}, "success", { weaponId: "gun1", item: { name: "Coldstar Pistols" } });
+        await secondStrikeDamage(actor, {}, "criticalSuccess", { weaponId: "gun1", item: { name: "Coldstar Pistols" } });
+        assert.deepEqual(rolled, ["damage", "critical"]);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

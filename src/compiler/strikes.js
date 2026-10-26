@@ -246,7 +246,7 @@ export function compileStrike(item, base, options = {}) {
     if (strike.volley) {
         const said = readVolley(strike.after, strike.sentence, text);
         const { volley: _, ...rest } = strike;
-        strike = { ...rest, after: said.text, sentence: said.sentence || strike.sentence, ...(Object.keys(said.volley).length || strike.uses === null ? { volley: said.volley } : {}), ...(said.notes.length ? { volleyNotes: said.notes } : {}) };
+        strike = { ...rest, after: said.text, sentence: said.sentence || strike.sentence, ...(Object.keys(said.volley).length || strike.uses === null ? { volley: said.volley } : {}), ...(said.notes.length ? { volleyNotes: said.notes } : {}), ...(said.volley.twin ? { uses: 1 } : {}) };
     }
     let riders = hitRiders(strike.after);
     // (A save for the creature the Strike hits: "On a hit, the target must succeed at a DC 22 Fortitude save or be Dazzled";

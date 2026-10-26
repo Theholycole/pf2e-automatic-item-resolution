@@ -80,6 +80,9 @@ export function strikeLines(plan) {
         strike.map === "double" ? "Your multiple attack penalty rises two steps after it (it counts as two attacks)" : null,
         strike.map === "none" ? "It doesn't count toward your multiple attack penalty: the Strike after it is at the step you were at before it" : null,
         strike.map === "held" && !strike.volley?.mapHeld ? "Roll them all at the multiple attack penalty you're at now (the same PF2e button); it rises only after the last" : null,
+        // (Two Strikes on one roll, Coldstar Pistols'.)
+        strike.volley?.twin ? "Its two Strikes at one target are one attack roll, rolled twice and the higher kept; that result is both Strikes'. On a hit, the second Strike's damage is rolled too" : null,
+        strike.volley?.twin ? "Your multiple attack penalty rises two steps after them (they're two attacks)" : null,
         ...(strike.notes ?? []).map((note) => `Also: ${note}`)
     ].filter(Boolean);
 }
@@ -161,6 +164,8 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     }));
     // (A feat's own extra die, Iron Cudgel's Brutal Finish: only with PF2e's roll option for that feat.)
     if (strike.featDie) rules.push({ key: "DamageDice", selector: damageSelector, slug: `${slug}-${strike.featDie.slug}`, ...(label ? { label } : {}), diceNumber: strike.featDie.diceNumber, predicate: [`feat:${strike.featDie.slug}`] });
+    // (Two Strikes on one roll, Coldstar Pistols': the attack rolled twice, the higher kept.)
+    if (strike.volley?.twin) rules.push({ key: "RollTwice", selector: attackSelector, keep: "higher", removeAfterRoll: true });
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });
     // (A precious material for it: PF2e's AdjustStrike on the Strikes it's for.)

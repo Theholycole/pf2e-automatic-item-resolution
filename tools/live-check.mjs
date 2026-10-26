@@ -2238,6 +2238,30 @@ export const cases = {
         }
     },
 
+    // Coldstar Pistols' two Strikes on one roll: the readied Strike's attack rolled twice keeping the higher (PF2e's RollTwice), and on a hit
+    // the second Strike's damage roll posted by itself.
+    async coldstarTwin(scene) {
+        await clearSquares(scene, [[9, 5], [10, 5]]);
+        const { actor: user, token: userToken } = await creature(scene, "Coldstar Gunner", { type: "character", x: 9, y: 5, level: 20 });
+        const { token: foeToken } = await creature(scene, "Coldstar Target", { x: 10, y: 5, alliance: "opposition", ac: 1, hp: 300 });
+        const pistols = await give(user, "Coldstar Pistols");
+        await pistols.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(pistols.uuid, 1);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the twin Strike's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "RollTwice")), "the readied Strike's RollTwice", { timeout: 8000 });
+        await userToken.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        const { attack } = await strike(user, pistols);
+        const d20 = attack.rolls[0]?.dice?.[0]?.results?.length ?? 0;
+        assert(d20 === 2, `the attack rolled twice (${d20} d20 results)`);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit at AC 1 (${attack.flags.pf2e.context.outcome})`);
+        const damage = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll" && message.actor?.id === user.id, { what: "the second Strike's damage roll" });
+        return { d20, outcome: attack.flags.pf2e.context.outcome, damage: damage.rolls[0]?.total };
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);

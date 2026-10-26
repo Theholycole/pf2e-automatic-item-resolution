@@ -63,6 +63,19 @@ async function refundUse(rider, actor) {
     return true;
 }
 
+// The second Strike's damage, at the outcome of the one roll: PF2e's Strike of that weapon, its damage (or critical) roll and message.
+export async function secondStrikeDamage(actor, message, outcome, rider) {
+    const weaponId = rider.weaponId ?? message.item?.id ?? null;
+    const strike = (actor?.system?.actions ?? []).find((action) => action?.type === "strike" && (weaponId ? action.item?.id === weaponId : true) && typeof action.damage === "function");
+    if (!strike) {
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escape(rider.item.name)}</strong>: roll the second Strike's damage by hand (no Strike of it on ${escape(actor?.name)}).</p>` });
+        return null;
+    }
+    // (No damage dialog: PF2e reads it from the event, Shift flipping the user's setting.)
+    const event = { shiftKey: Boolean(game.user?.settings?.showDamageDialogs), ctrlKey: false, metaKey: false };
+    return outcome === "criticalSuccess" ? strike.critical({ event }) : strike.damage({ event });
+}
+
 // One Strike of the readied ones used: the Effect gone with the last, else one fewer left.
 async function useOne(actor, effect, rider) {
     const left = (Number(rider.uses) || 1) - 1;
@@ -98,6 +111,8 @@ export async function strikeWithRider(message) {
         }
         if (at) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.struck`]: [...struck, at] });
         if (volley.selfDamage) await volleyDamage(actor, rider, volley.selfDamage);
+        // (Two Strikes on one roll, Coldstar Pistols': on a hit, the second Strike's damage rolled too — PF2e's own damage roll for that weapon.)
+        if (volley.twin && what === "hit") await secondStrikeDamage(actor, message, context.outcome, rider);
     }
     // (Only a living creature carries it, Ghoul Stiletto's "the next living target struck", src/compiler/hit-auras.js: a hit at an undead or a
     // construct, PF2e's mode of being, isn't the one — nothing spent.)

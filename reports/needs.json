@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1211,
+  "entries": 1210,
   "results": {
    "none": 602,
-   "partial": 228,
+   "partial": 227,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -18,7 +18,7 @@
    "visibility": 46,
    "choice": 37,
    "mind": 8,
-   "strike": 97,
+   "strike": 96,
    "spells": 35,
    "information": 23,
    "out-of-combat": 33,
@@ -63,7 +63,7 @@
    "choice": 107,
    "several": 89,
    "mind": 69,
-   "strike": 176,
+   "strike": 175,
    "reader": 189,
    "spells": 71,
    "information": 190,
@@ -4654,16 +4654,6 @@
     "triggers",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Coldstar Pistols",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack rolls",
-   "needs": [
-    "strike"
    ]
   },
   {
