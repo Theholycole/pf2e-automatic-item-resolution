@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 167,
-   "resolves": 800,
+   "resolves": 801,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
-   "partial": 85,
+   "partial": 84,
    "builtin:ways": 27,
    "builtin:item-action": 16,
    "note-only": 116,
@@ -154,10 +154,10 @@
   "poison": {
    "count": 115,
    "results": {
-    "resolves": 106,
+    "resolves": 107,
     "builtin:ways": 3,
     "builtin:zone": 1,
-    "partial": 4,
+    "partial": 3,
     "note-only": 1
    },
    "mechanisms": {
@@ -337,13 +337,13 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 311,
+   "resolves": 312,
    "gaps": 0,
    "none": 21
   },
   "affliction": {
    "count": 144,
-   "resolves": 135,
+   "resolves": 136,
    "gaps": 0,
    "none": 3
   },
@@ -385,13 +385,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 276,
+   "resolves": 277,
    "gaps": 0,
    "none": 18
   },
   "duration": {
    "count": 943,
-   "resolves": 632,
+   "resolves": 633,
    "gaps": 0,
    "none": 13
   }
@@ -16744,8 +16744,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": "expose"
   },
   {

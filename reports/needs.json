@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1210,
+  "entries": 1209,
   "results": {
    "none": 602,
-   "partial": 227,
+   "partial": 226,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -14,7 +14,7 @@
    "afflictions": 49,
    "areas": 109,
    "moving": 82,
-   "lasting": 63,
+   "lasting": 62,
    "visibility": 46,
    "choice": 37,
    "mind": 8,
@@ -55,7 +55,7 @@
    "out-of-combat": 411,
    "counteract": 79,
    "afflictions": 91,
-   "lasting": 208,
+   "lasting": 207,
    "moving": 106,
    "triggers": 125,
    "visibility": 48,
@@ -7791,16 +7791,6 @@
    "work": "ritual",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Blackfinger Blight",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "lasting",
-   "work": "each round",
-   "needs": [
-    "lasting"
    ]
   },
   {

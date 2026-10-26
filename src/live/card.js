@@ -377,6 +377,13 @@ export function afterEndsMarkSource(entry, { item = {}, user = {}, worldTime = 0
     const words = `When it's no longer ${entry.when}, it becomes ${then}`;
     return ownEffectSource({ name: `after ${entry.when}`, img: "icons/svg/clockwork.svg", words, rules: [], duration: null, flag: { afterEnds: { when: entry.when, then: entry.then } }, item, user, worldTime, initiative, moduleId });
 }
+// A roll at each of an afflicted creature's turns (src/compiler/afflicted-turns.js, scripts/afflicted-turns.js: Blackfinger Blight's flat check
+// or a dropped item): the mark for the affliction's maximum duration.
+export function afflictedTurnsMarkSource(rule, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const words = `At the start of each of its turns while it has ${rule.name}, a DC ${rule.flatDC} flat check: on a failure it drops one random item it's holding`;
+    return ownEffectSource({ name: "a flat check each turn", img: "icons/svg/hazard.svg", words, rules: [], duration: rule.lasts, flag: { afflictedTurns: rule }, item, user, worldTime, initiative, moduleId });
+}
+
 // Its wait for the end of the creature's next turn (src/compiler/guards.js delayedConditions, scripts/later.js: Nap Gas Dispenser's Prone and
 // Unconscious): the mark carrying those conditions; skip, made during its own turn, that turn's end isn't the one.
 export function laterMarkSource(later, { item = {}, user = {}, worldTime = 0, initiative = null, skip = false, moduleId = "pf2e-automatic-item-resolution" } = {}) {

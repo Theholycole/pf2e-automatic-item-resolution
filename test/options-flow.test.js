@@ -397,3 +397,44 @@ test("Coldstar Pistols' two Strikes at one target on the higher of two attack ro
         Object.assign(globalThis, saved);
     }
 });
+
+test("Blackfinger Blight and Astringent Venom: a flat check at each afflicted turn's start, a random held item dropped on a failure", async () => {
+    const consumable = (name) => compileItem(item(name), { spellEffects });
+    for (const name of ["Blackfinger Blight", "Astringent Venom"]) {
+        const plan = consumable(name);
+        assert.deepEqual([Boolean(plan.partial), plan.notes ?? [], plan.afflictedTurns.flatDC, plan.afflictedTurns.lasts.value, plan.afflictedTurns.name], [false, [], 5, 6, name]);
+    }
+    const blight = consumable("Blackfinger Blight");
+    const { markAfflicted, afflictedTurnStart } = await import("../scripts/afflicted-turns.js");
+    const saved = { game: globalThis.game, fromUuid: globalThis.fromUuid, ChatMessage: globalThis.ChatMessage, Roll: globalThis.Roll };
+    const effects = [];
+    const updates = [];
+    const sword = { name: "Longsword", system: { equipped: { carryType: "held" } }, update: async (changes) => updates.push(["Longsword", changes]) };
+    const afflicted = { name: "Blackfinger Blight (Stage 1)", flags: { "pseudo-afflictions": {} } };
+    const actor = { uuid: "Actor.victim", name: "Victim", inventory: { contents: [sword] }, itemTypes: { get effect() { return [afflicted, ...effects]; } }, createEmbeddedDocuments: async (type, sources) => sources.map((source) => { const made = { ...source, delete: async () => effects.splice(effects.indexOf(made), 1) }; effects.push(made); return made; }) };
+    let next = 3;
+    globalThis.Roll = class { constructor() {} async evaluate() { this.total = next; return this; } async toMessage() { return null; } };
+    globalThis.game = { modules: new Map([["pseudo-afflictions", { active: true }]]), combat: null, time: { worldTime: 0 }, user: { isGM: true } };
+    globalThis.fromUuid = async (uuid) => (uuid === actor.uuid ? actor : null);
+    const messages = [];
+    globalThis.ChatMessage = { create: async (data) => messages.push(data.content), getSpeaker: () => ({}) };
+    try {
+        // (A success isn't afflicted: no mark.)
+        await markAfflicted({ state: { plan: blight, source: {} }, targets: [{ actorUuid: actor.uuid, degree: "success" }] });
+        assert.equal(effects.length, 0);
+        await markAfflicted({ state: { plan: blight, source: {} }, targets: [{ actorUuid: actor.uuid, degree: "failure" }] });
+        assert.equal(effects.length, 1);
+        // (A 3: the sword dropped. A 15: kept.)
+        await afflictedTurnStart(actor);
+        assert.deepEqual(updates, [["Longsword", { "system.equipped.carryType": "dropped", "system.equipped.handsHeld": 0 }]]);
+        next = 15;
+        await afflictedTurnStart(actor);
+        assert.equal(updates.length, 1);
+        // (The affliction gone from Pseudo Afflictions: the mark goes too.)
+        afflicted.flags = {};
+        await afflictedTurnStart(actor);
+        assert.equal(effects.length, 0);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

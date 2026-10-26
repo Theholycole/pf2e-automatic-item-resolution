@@ -2267,6 +2267,46 @@ export const cases = {
         return { d20, outcome: attack.flags.pf2e.context.outcome, damage: damage.rolls[0]?.total };
     },
 
+    // Blackfinger Blight: coated on a shortsword, a hit's save card failed (save −30) — the creature marked; at the start of its own turn its
+    // DC 5 flat check to keep hold is rolled (a failure drops its dagger).
+    async blackfingerTurns(scene) {
+        await clearSquares(scene, [[11, 5], [12, 5]]);
+        const { actor: rogue, token: rogueToken } = await creature(scene, "Blight Rogue", { type: "character", x: 11, y: 5, level: 12 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Blight Victim", { x: 12, y: 5, alliance: "opposition", ac: 1, save: -30, hp: 400 });
+        const dagger = await give(foe, "Dagger");
+        await dagger.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const sword = await give(rogue, "Shortsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const blight = await give(rogue, "Blackfinger Blight");
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: rogueToken.id, sceneId: scene.id, actorId: rogue.id, initiative: 20 }, { tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            let since = Date.now();
+            await blight.consume();
+            const card = await messageAfter(since, itemCard("poison"));
+            await game.modules.get(NS).api.live.apply(card.id, { weapon: card.getFlag(NS, "card").weapons.findIndex((entry) => entry.id === sword.id) });
+            await wait(600);
+            await rogueToken.object?.control?.();
+            await target(foeToken);
+            since = Date.now();
+            const { attack } = await strike(rogue, sword);
+            assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+            await rollAndApply(await messageAfter(since, abilitySaveCard, { what: "the poison's save card" }));
+            const mark = () => foe.itemTypes.effect.find((effect) => effect.flags?.[NS]?.afflictedTurns);
+            await until(mark, "the flat check's mark", { timeout: 8000 });
+            since = Date.now();
+            await combat.nextTurn();
+            const flat = await messageAfter(since, (message) => /flat check to keep hold/.test(message.flavor ?? ""), { what: "its turn's flat check", timeout: 8000 });
+            const total = flat.rolls[0]?.total;
+            if (total < 5) await until(() => foe.items.get(dagger.id)?.system.equipped.carryType === "dropped", "the dagger dropped", { timeout: 8000 });
+            return { flat: total, afflicted: foe.itemTypes.effect.filter((effect) => effect.flags?.["pseudo-afflictions"]).map((effect) => effect.name) };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);

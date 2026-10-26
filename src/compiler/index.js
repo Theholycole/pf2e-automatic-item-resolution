@@ -69,6 +69,7 @@ import { withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { readFoam, withFalls } from "./falls.js";
 import { readShieldTemp } from "./shield-temp.js";
+import { withAfflictedTurns } from "./afflicted-turns.js";
 import { withRowReadings } from "./row-readings.js";
 import { withUserConditions } from "./user-conditions.js";
 import { sparkColumnPlan } from "./spark-column.js";
@@ -257,7 +258,7 @@ export function compileItem(given, options = {}) {
     // (An illusion a creature can see through, src/compiler/disbelief.js: Possum's Play's — the GM's disbelief card once it applies.)
     // (A talisman used with a free action or 1, src/compiler/action-ways.js: Golden Liberator's Feather — the ways card.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    return decide(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), given, options);
+    return decide(withAfflictedTurns(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), given?.system?.description?.value), given, options);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
