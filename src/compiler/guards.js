@@ -360,9 +360,10 @@ function conditionalOnly(plan, text) {
 }
 
 // Conditions a row gives later, not now — Nap Gas Dispenser's failure, "At the end of their next turn, they fall Prone and fall
-// Unconscious for 1 minute", which the ability compiler applies at once (and copies to "As failure, but …"): off those rows, and the row's
-// later { at: "turn-end", words, conditions: [{ slug, value, duration }] } — a mark on the creature once the card is applied, those
-// conditions given at the end of its next turn (scripts/later.js; 2026-10-26, a note before).
+// Unconscious for 1 minute", which the ability compiler applies at once (and copies to "As failure, but …"): off those rows, and plan.later
+// [{ degree, at: "turn-end", words, conditions: [{ slug, value, duration }], wake? }] — a mark on the creature once the card is applied,
+// those conditions given at the end of its next turn (scripts/later.js; 2026-10-26, a note before). At the plan, not the rows: the core
+// takes a row's keys it doesn't know for gaps.
 const LATER_CONDITIONS = /\bAt the end of (?:their|its|the creature's|the target's) next turn, (?:they|it|the creature|the target) (?:falls?|becomes?|is|are) ([^.]+)\./;
 const DELAYABLE = ["prone", "unconscious", "asleep", "paralyzed", "stunned", "slowed", "petrified", "blinded", "deafened", "confused", "fascinated", "frightened", "sickened"];
 function delayedConditions(plan, text) {
@@ -389,9 +390,10 @@ function delayedConditions(plan, text) {
     const next = eachRow(plan, (row, degree) => {
         const later = changed[degree];
         if (!later || !(row?.effects ?? []).some((effect) => later.slugs.includes(effect.slug))) return row;
-        return { ...row, effects: row.effects.filter((effect) => !later.slugs.includes(effect.slug)), later: { at: "turn-end", words: later.words, conditions: later.conditions, ...(later.wake ? { wake: later.wake } : {}) } };
+        return { ...row, effects: row.effects.filter((effect) => !later.slugs.includes(effect.slug)) };
     });
-    return next;
+    const entries = Object.entries(changed).filter(([degree]) => plan.resolution.outcomes[degree]).map(([degree, later]) => ({ degree, at: "turn-end", words: later.words, conditions: later.conditions, ...(later.wake ? { wake: later.wake } : {}) }));
+    return entries.length ? { ...next, later: entries } : next;
 }
 
 // Which creatures to target, in src/compiler/item-data.js's words for an aura's damage (Banner of Piercing Shards' "Target each

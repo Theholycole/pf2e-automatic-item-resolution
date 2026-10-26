@@ -1,4 +1,4 @@
-// Live play for a row's later conditions (src/compiler/guards.js delayedConditions: Nap Gas Dispenser's "At the end of their next turn, they
+// Live play for plan.later, a row's later conditions (src/compiler/guards.js delayedConditions: Nap Gas Dispenser's "At the end of their next turn, they
 // fall Prone and fall Unconscious for 1 minute"). Once the ability module's card at the creature is applied (its "applied" hook, on the GM's
 // client), each creature of that degree is marked; at the end of its next turn (PF2e's pf2e.endTurn, on the active GM's client) it gets
 // those conditions — one with a time as an Effect for that time, one without as PF2e's condition — the mark used up. A mark made during the
@@ -21,13 +21,13 @@ export function setUpLater() {
     });
 }
 
-// The card applied: { state, targets: [{ actorUuid, degree }] } — a mark on each creature whose row has later conditions.
+// The card applied: { state, targets: [{ actorUuid, degree }] } — a mark on each creature whose degree has later conditions.
 export async function markLater({ state, targets }) {
-    const outcomes = state?.plan?.resolution?.outcomes ?? {};
+    const entries = state?.plan?.later ?? [];
     const item = { name: state?.ability?.name ?? state?.plan?.source?.name ?? "The item", uuid: state?.ability?.uuid ?? null, img: state?.ability?.img ?? null };
     const marked = [];
     for (const target of targets ?? []) {
-        const later = outcomes[target.degree ?? "success"]?.later;
+        const later = entries.find((entry) => entry.degree === (target.degree ?? "success"));
         const actor = later && target.actorUuid ? await fromUuid(target.actorUuid).catch(() => null) : null;
         if (!actor?.createEmbeddedDocuments) continue;
         const skip = Boolean(game.combat?.started && game.combat.combatant?.actor?.uuid === actor.uuid);

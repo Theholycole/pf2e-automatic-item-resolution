@@ -15,7 +15,7 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 167,
-   "resolves": 799,
+   "resolves": 800,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
    "partial": 85,
@@ -30,8 +30,7 @@
    "builtin:reroll": 3,
    "builtin:objects": 3,
    "builtin:whisper": 1,
-   "builtin:roll-twice": 2,
-   "gaps": 1
+   "builtin:roll-twice": 2
   }
  },
  "byCategory": {
@@ -42,7 +41,7 @@
     "builtin:zone": 27,
     "partial": 39,
     "builtin:ways": 20,
-    "resolves": 222,
+    "resolves": 223,
     "note-only": 59,
     "builtin:readied-bonus": 8,
     "none": 94,
@@ -51,8 +50,7 @@
     "builtin:counteract": 9,
     "builtin:item-action": 1,
     "builtin:conjure": 1,
-    "builtin:objects": 1,
-    "gaps": 1
+    "builtin:objects": 1
    },
    "mechanisms": {
     "casts-spell": 17,
@@ -339,8 +337,8 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 310,
-   "gaps": 1,
+   "resolves": 311,
+   "gaps": 0,
    "none": 21
   },
   "affliction": {
@@ -387,14 +385,14 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 275,
-   "gaps": 1,
+   "resolves": 276,
+   "gaps": 0,
    "none": 18
   },
   "duration": {
    "count": 943,
-   "resolves": 631,
-   "gaps": 1,
+   "resolves": 632,
+   "gaps": 0,
    "none": 13
   }
  },
@@ -531,9 +529,7 @@
    "other": 4
   }
  },
- "gapCounts": {
-  "later": 1
- },
+ "gapCounts": {},
  "rows": [
   {
    "name": "Perfection's First Step",
@@ -26793,11 +26789,9 @@
     "condition",
     "duration"
    ],
-   "result": "gaps",
+   "result": "resolves",
    "kind": "save",
-   "gaps": [
-    "later"
-   ],
+   "gaps": [],
    "live": "save"
   },
   {

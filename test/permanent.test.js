@@ -425,16 +425,15 @@ test("a mount's bleed and quickened condition (Heedless Spurs): the fuller outri
     assert.match(spurs.notes.join(" "), /Target your mount/);
 });
 
-test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and unconscious only later, at the end of its next turn (the row's later, given then)", async () => {
+test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and unconscious only later, at the end of its next turn (plan.later, given then)", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const gas = compileItem(item("Nap Gas Dispenser"), { spellEffects });
     const rows = gas.resolution.outcomes;
     assert.deepEqual([rows.success.modifiers.map((modifier) => `${modifier.selector} ${modifier.value}`), rows.success.effects.map((effect) => effect.slug), Boolean(gas.partial)], [["perception -2"], ["slowed"], false]);
     for (const degree of ["failure", "criticalFailure"]) {
         assert.deepEqual(rows[degree].effects.map((effect) => effect.slug), ["slowed"], `${degree}: slowed now`);
-        assert.deepEqual(rows[degree].later.conditions.map((condition) => `${condition.slug} ${condition.duration?.value ?? "-"} ${condition.duration?.unit ?? "-"}`), ["prone - -", "unconscious 1 minutes"]);
     }
-    assert.deepEqual([rows.failure.later.wake, rows.criticalFailure.later.wake], [undefined, 3]);
+    assert.deepEqual(gas.later.map((entry) => [entry.degree, entry.conditions.map((condition) => `${condition.slug} ${condition.duration?.value ?? "-"} ${condition.duration?.unit ?? "-"}`), entry.wake ?? null]), [["failure", ["prone - -", "unconscious 1 minutes"], null], ["criticalFailure", ["prone - -", "unconscious 1 minutes"], 3]]);
     // Live: marked when the card applies; the end of its turn that's under way doesn't count, the next one gives them.
     const { markLater, laterAtTurnEnd } = await import("../scripts/later.js");
     const saved = { game: globalThis.game, fromUuid: globalThis.fromUuid, ChatMessage: globalThis.ChatMessage };
