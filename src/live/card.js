@@ -377,6 +377,13 @@ export function afterEndsMarkSource(entry, { item = {}, user = {}, worldTime = 0
     const words = `When it's no longer ${entry.when}, it becomes ${then}`;
     return ownEffectSource({ name: `after ${entry.when}`, img: "icons/svg/clockwork.svg", words, rules: [], duration: null, flag: { afterEnds: { when: entry.when, then: entry.then } }, item, user, worldTime, initiative, moduleId });
 }
+// A reward for felling the creature marked (src/compiler/after-ends.js withFelledReward, scripts/felled.js: Doom Switch's Bragging Rights): the
+// mark on the creature for its time, carrying its user and the temporary Hit Points per level.
+export function felledMarkSource(felled, multiplier, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const words = `If ${user.name ?? "its user"} reduces it to 0 Hit Points during this time, ${user.name ?? "its user"} gains temporary Hit Points equal to ${multiplier === 2 ? "twice " : ""}its level for ${timeText(felled.tempLasts)}`;
+    return ownEffectSource({ name: "marked for defeat", img: "icons/svg/target.svg", words, rules: [], duration: felled.lasts, flag: { felled: { userUuid: user.actorUuid ?? null, multiplier, tempLasts: felled.tempLasts } }, item, user, worldTime, initiative, moduleId });
+}
+
 // A roll at each of an afflicted creature's turns (src/compiler/afflicted-turns.js, scripts/afflicted-turns.js: Blackfinger Blight's flat check
 // or a dropped item): the mark for the affliction's maximum duration.
 export function afflictedTurnsMarkSource(rule, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {

@@ -469,12 +469,13 @@ test("a fragment naming its creature without a link (Fossil Fragment (Petrified 
     assert.deepEqual([tree.plan.builtin, tree.plan.creatures[0].from, tree.plan.creatures[0].traits, tree.plan.lasts.value], ["conjure", { name: "Awakened Tree" }, ["minion", "construct", "earth"], 1]);
 });
 
-test("Doom Switch's Bragging Rights: its user's simple melee attack (Strength, simple proficiency) against AC on the ability module's card, PF2e's own Effects on the target by degree — Success or Better, Failure or Worse (its degree choice preset there); the temporary Hit Points by hand", async () => {
+test("Doom Switch's Bragging Rights: its user's simple melee attack (Strength, simple proficiency) against AC on the ability module's card, PF2e's own Effects on the target by degree — Success or Better, Failure or Worse (its degree choice preset there); the temporary Hit Points for felling it plan.felled", async () => {
     const { compileActivations } = await import("../src/compiler/permanent.js");
     const [bragging] = compileActivations(source("Doom Switch"));
     const outcomes = bragging.plan.resolution.outcomes;
     assert.deepEqual([bragging.plan.ownCheck.choose, ...["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => outcomes[degree].nativeEffects[0].label)], [["melee"], "Effect: Bragging Rights (Success or Better)", "Effect: Bragging Rights (Success or Better)", "Effect: Bragging Rights (Failure or Worse)", "Effect: Bragging Rights (Failure or Worse)"]);
-    assert.deepEqual(bragging.plan.notes, ["If you reduce the target to 0 Hit Points during this time, you gain temporary Hit Points equal to twice the target's level for 1 round (by hand).", "On a success, instead: you gain temporary Hit Points equal to the target's level (by hand)."]);
+    // (Its temporary Hit Points for felling the target the card's since 2026-10-26: plan.felled, test/options-flow.test.js.)
+    assert.deepEqual([bragging.plan.notes, bragging.plan.felled.temp], [undefined, { criticalSuccess: 2, success: 1 }]);
     const brawler = foundry.makeActor({ id: "poison-brawler", name: "Brawler", owners: ["player"] });
     foundry.place(brawler, 100, 4600);
     brawler.level = 3;

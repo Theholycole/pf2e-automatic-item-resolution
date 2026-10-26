@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1199,
+  "entries": 1198,
   "results": {
    "none": 596,
-   "partial": 222,
+   "partial": 221,
    "builtin:no-effect": 124,
    "note-only": 257
   },
@@ -38,7 +38,7 @@
    "dying": 29,
    "senses": 17,
    "speech": 18,
-   "from-events": 5,
+   "from-events": 4,
    "forms": 24,
    "retaliation": 3,
    "missing-number": 7,
@@ -64,11 +64,11 @@
    "several": 89,
    "mind": 69,
    "strike": 175,
-   "reader": 185,
+   "reader": 184,
    "spells": 71,
    "information": 190,
    "actions": 56,
-   "from-events": 26,
+   "from-events": 25,
    "no-rules": 36,
    "illusions": 52,
    "removed": 5,
@@ -11479,18 +11479,6 @@
    "needs": [
     "lasting",
     "speech"
-   ]
-  },
-  {
-   "name": "Doom Switch",
-   "kind": "activation",
-   "activation": "Bragging Rights",
-   "result": "partial",
-   "main": "from-events",
-   "work": "hit points equal to the",
-   "needs": [
-    "from-events",
-    "reader"
    ]
   },
   {

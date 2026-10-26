@@ -486,3 +486,30 @@ test("Searing Suture: 1d6 fire at the creature it's applied to, then its flat ch
         assert.deepEqual([plan.builtin, Boolean(plan.partial), plan.ways.map((way) => [way.plan.item.recovery.dc, Boolean(way.plan.item.recovery.ends), way.plan.resolution.sharedDamage.components[0].formula, way.plan.resolution.sharedDamage.components[0].type, Boolean(way.plan.partial)])], ["ways", false, [[dc, false, "1d6", "fire", false], [dc, true, "1d6", "fire", false]]], name);
     }
 });
+
+test("Doom Switch's Bragging Rights: the creature marked for a minute; felled by its user's damage, its user gains temporary Hit Points (twice its level on a critical success)", async () => {
+    const plan = planOf("Doom Switch");
+    assert.deepEqual([Boolean(plan.partial), plan.notes ?? [], plan.felled.temp, plan.felled.lasts.value, plan.felled.tempLasts.unit], [false, [], { criticalSuccess: 2, success: 1 }, 1, "rounds"]);
+    const { markFelled, before } = await import("../scripts/felled.js");
+    const saved = { game: globalThis.game, fromUuid: globalThis.fromUuid, fromUuidSync: globalThis.fromUuidSync, ChatMessage: globalThis.ChatMessage };
+    const marks = [];
+    const given = [];
+    const user = { uuid: "Actor.user", name: "Brag", createEmbeddedDocuments: async (type, sources) => given.push(...sources) };
+    const foe = { uuid: "Actor.foe", name: "Foe", level: 6, system: { attributes: { hp: { value: 12 } } }, itemTypes: { get effect() { return marks; } }, createEmbeddedDocuments: async (type, sources) => sources.map((source) => { const made = { ...source, delete: async () => marks.splice(marks.indexOf(made), 1) }; marks.push(made); return made; }) };
+    globalThis.game = { user: { isGM: true }, combat: null, time: { worldTime: 0 } };
+    globalThis.fromUuid = async (uuid) => ({ "Actor.user": user, "Actor.foe": foe })[uuid] ?? null;
+    globalThis.fromUuidSync = (uuid) => (uuid === foe.uuid ? foe : null);
+    globalThis.ChatMessage = { create: async () => null, getSpeaker: () => ({}) };
+    try {
+        await markFelled({ state: { plan, source: { actorUuid: user.uuid, name: "Brag" }, ability: { name: "Doom Switch" } }, targets: [{ actorUuid: foe.uuid, degree: "criticalSuccess" }] });
+        assert.equal(marks.length, 1);
+        // (Another's damage: nothing.)
+        assert.equal(before(foe, { item: { actor: { uuid: "Actor.other" } } }), null);
+        const after = before(foe, { item: { actor: user } });
+        foe.system.attributes.hp.value = 0;
+        await after();
+        assert.deepEqual([given.map((source) => source.system.rules[0].value), marks.length], [[12], 0]);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

@@ -236,3 +236,33 @@ export function withCastFlatCheck(plan) {
     }
     return next;
 }
+
+// A reward for felling the creature marked (2026-10-26): Doom Switch's Bragging Rights, "Critical Success You and your allies gain a +1 status
+// bonus to attack rolls against the target for 1 minute. If you reduce the target to 0 Hit Points during this time, you gain temporary Hit
+// Points equal to twice the target's level for 1 round. Success As critical success, except you gain temporary Hit Points equal to the
+// target's level." plan.felled { lasts, temp: { criticalSuccess: 2, success: 1 } (times the target's level), tempLasts }: once the card at the
+// creature is applied, the creature is marked for that time; damage its user deals that leaves it at 0 Hit Points gives its user those
+// temporary Hit Points (scripts/felled.js). Before, both were the GM's.
+const FELLED = /\bIf you reduce the target to 0 Hit Points during this time, you gain temporary Hit Points equal to (twice )?the target's level for (\d+|one|an?) (rounds?|minutes?)\./i;
+const FELLED_AS = /\bSuccess As critical success, except you gain temporary Hit Points equal to (twice )?the target's level\./i;
+const DURING = /\bfor (\d+|one|an?) (rounds?|minutes?|hours?)\. If you reduce the target to 0 Hit Points during this time\b/i;
+export function withFelledReward(plan, html) {
+    const outcomes = plan?.resolution?.outcomes;
+    const text = plainOf(html);
+    const felled = FELLED.exec(text);
+    const during = DURING.exec(text);
+    if (!outcomes?.criticalSuccess || !felled || !during) return plan;
+    const as = FELLED_AS.exec(text);
+    const temp = { criticalSuccess: felled[1] ? 2 : 1, ...(as ? { success: as[1] ? 2 : 1 } : {}) };
+    const gone = (entry) => /\breduce the target to 0 Hit Points during this time\b|\bOn a success, instead: you gain temporary Hit Points equal to\b/i.test(said(entry));
+    const notes = (plan.notes ?? []).filter((note) => !gone(note));
+    const rows = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => [degree, row?.manualInstructions ? { ...row, manualInstructions: row.manualInstructions.filter((line) => !gone(line)) } : row]));
+    for (const row of Object.values(rows)) if (row?.manualInstructions && !row.manualInstructions.length) delete row.manualInstructions;
+    const next = { ...plan, notes: notes.length ? notes : undefined, resolution: { ...plan.resolution, outcomes: rows }, felled: { lasts: timeOf(during[1], during[2]), temp, tempLasts: timeOf(felled[2], felled[3]) } };
+    const left = [...notes, ...(next.unread ?? []), ...Object.values(rows).flatMap((row) => row?.manualInstructions ?? [])];
+    if (next.partial && !left.length) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}
