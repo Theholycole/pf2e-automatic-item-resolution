@@ -33,8 +33,8 @@ test("the reading: what the installed item's numbers give, its time, the rest no
     const helm = plan("Dread Helm");
     assert.deepEqual([helm.item.installed.modifiers, helm.item.installed.damage, helm.partial], [[{ selector: "intimidation" }], { type: "mental", radius: 5 }, undefined]);
     const plate = plan("Bone Dreadnought Plate");
-    assert.deepEqual([plate.item.installed.resistance.types, plate.item.installed.duration.value, plate.partial], [["cold", "electricity", "fire", "piercing", "slashing"], 20, true]);
-    assert.match(plate.notes.join(" "), /decrease the remaining duration by 1 minute/);
+    // (Its time a minute shorter for each hit of its types, its Effect's flag — scripts/shorten-on-hit.js, 2026-10-26: whole.)
+    assert.deepEqual([plate.item.installed.resistance.types, plate.item.installed.duration.value, plate.item.installed.shortensOnHit, Boolean(plate.partial), plate.notes], [["cold", "electricity", "fire", "piercing", "slashing"], 20, { value: 1, unit: "minutes", types: ["cold", "electricity", "fire", "piercing", "slashing"] }, false, undefined]);
     const ooze = plan("Ooze Skin");
     assert.deepEqual([ooze.item.installed.modifiers, ooze.item.installed.duration], [[{ selector: "check", predicate: [{ or: ["action:escape", "action:squeeze"] }] }], { from: "level", unit: "rounds" }]);
     assert.match(ooze.notes[0], /grapples or swallows you/);

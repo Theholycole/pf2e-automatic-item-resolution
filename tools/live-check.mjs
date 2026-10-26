@@ -1973,6 +1973,30 @@ export const cases = {
         return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
+    // Bone Dreadnought Plate with a lodestone bomb: its resistance Effect for 20 minutes, a minute shorter after an enemy's slashing hit.
+    async boneShortened(scene) {
+        await clearSquares(scene, [[9, 7], [10, 7]]);
+        const { actor: wearer, token } = await creature(scene, "Bone Plate Wearer", { type: "character", x: 9, y: 7, level: 10 });
+        const { actor: foe } = await creature(scene, "Bone Plate Foe", { x: 10, y: 7, alliance: "opposition" });
+        const plate = await give(wearer, "Bone Dreadnought Plate");
+        await plate.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        const bomb = await give(wearer, "Lodestone Bomb (Moderate)");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(plate.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the plate's card" });
+        const at = card.getFlag(NS, "card").installed.findIndex((entry) => entry.id === bomb.id);
+        await game.modules.get(NS).api.live.apply(card.id, { installedPick: at });
+        const effect = () => wearer.itemTypes.effect.find((entry) => entry.getFlag(NS, "shortensOnHit"));
+        await until(() => effect()?.system.duration.value === 20, "the 20-minute Effect", { timeout: 8000 });
+        const sword = await give(foe, "Longsword");
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        const roll = await new DamageRoll("5[slashing]").evaluate();
+        since = Date.now();
+        await wearer.applyDamage({ damage: roll, token, item: sword, rollOptions: new Set(["origin:enemy"]) });
+        await until(() => effect()?.system.duration.value === 19, `19 minutes left (${effect()?.system.duration.value})`, { timeout: 8000 });
+        return { left: effect().system.duration.value };
+    },
+
     // Death Tusk Helm at wounded 2: its roar's save card at DC 18 (16 and its wounded), and its user's 5 temporary Hit Points as it's used.
     async deathTuskRoar(scene) {
         await clearSquares(scene, [[7, 7], [8, 7]]);

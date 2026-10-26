@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1272,
+  "entries": 1271,
   "results": {
    "none": 615,
-   "partial": 271,
+   "partial": 270,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -14,7 +14,7 @@
    "afflictions": 51,
    "areas": 111,
    "moving": 85,
-   "lasting": 65,
+   "lasting": 64,
    "visibility": 50,
    "choice": 37,
    "mind": 8,
@@ -55,7 +55,7 @@
    "out-of-combat": 418,
    "counteract": 80,
    "afflictions": 93,
-   "lasting": 216,
+   "lasting": 215,
    "moving": 113,
    "triggers": 126,
    "visibility": 52,
@@ -2151,16 +2151,6 @@
    "needs": [
     "strike",
     "objects"
-   ]
-  },
-  {
-   "name": "Bone Dreadnought Plate",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "work": "each time you",
-   "needs": [
-    "lasting"
    ]
   },
   {

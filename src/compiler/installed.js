@@ -60,6 +60,7 @@ export function readInstalled(text) {
     let fastHealing = false;
     let duration = null;
     let lowered = null;
+    let shortensOnHit = null;
     for (const [index, sentence] of sentences.entries()) {
         // ("granting an item bonus to X equal to the acid flask's item bonus", "The mist grants an item bonus to Intimidation checks equal to …",
         // "add the bottled lightning's item bonus to your Athletics checks to …"; Living Leaf Weave's list, its value the next sentence's.)
@@ -111,12 +112,21 @@ export function readInstalled(text) {
         if (/^The armor's normal penalties still apply, based on this altered Strength\.$/i.test(sentence)) said.add(index);
         // (Using it up is the card's.)
         if (/\bThe activation uses up the\b/i.test(sentence)) said.add(index);
+        // (Its time shortened by the hits it resists, Bone Dreadnought Plate's "These effects last for 20 minutes, but each time you're hit by an
+        // attack that deals damage of one of these types, decrease the remaining duration by 1 minute": shortensOnHit, its Effect's flag —
+        // scripts/shorten-on-hit.js, 2026-10-26. And "Once activated, the armor can't be deactivated": nothing to deactivate.)
+        const shortens = /\beach time you're hit by an attack that deals damage of one of these types, decrease the remaining duration by (\d+) (minutes?|rounds?)\.$/i.exec(sentence);
+        if (shortens) {
+            shortensOnHit = { value: Number(shortens[1]), unit: /^min/i.test(shortens[2]) ? "minutes" : "rounds" };
+            said.add(index);
+        }
+        if (/^Once activated, the armor can't be deactivated\.$/i.test(sentence)) said.add(index);
     }
     if (!modifiers.length && !resistance && !damage && !fastHealing) return null;
     // (Its other sentences that say a rule: notes.)
     const RULE = /\b(?:damage|bonus|penalty|Hit Points|resistance|checks?|saves?|DC|Strength|Speed|deactivat\w*|Interact|attack|Strike|grapples?|swallows?|reduce|decrease)\b/i;
     const notes = sentences.filter((sentence, index) => !said.has(index) && RULE.test(sentence));
-    return { name, count: /^two$/i.test(installed[1]) ? 2 : 1, modifiers, ...(resistance ? { resistance } : {}), ...(damage ? { damage } : {}), ...(fastHealing ? { fastHealing: true } : {}), ...(lowered ? { strength: lowered } : {}), duration, notes };
+    return { name, count: /^two$/i.test(installed[1]) ? 2 : 1, modifiers, ...(resistance ? { resistance } : {}), ...(damage ? { damage } : {}), ...(fastHealing ? { fastHealing: true } : {}), ...(lowered ? { strength: lowered } : {}), ...(shortensOnHit && resistance ? { shortensOnHit: { ...shortensOnHit, types: resistance.types } } : {}), duration, notes };
 }
 
 // The plan: the item card's own row, its installed item's numbers given on Apply.

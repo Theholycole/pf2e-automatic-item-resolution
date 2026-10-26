@@ -705,5 +705,6 @@ export function installedEffectSource(installed, entry, { item = {}, user = {}, 
         ...(installed.strength && itemIdOf(item.uuid) ? [{ key: "ItemAlteration", itemId: itemIdOf(item.uuid), mode: "subtract", property: "strength", value: entry.bonus >= installed.strength.at ? installed.strength.more : installed.strength.by }] : [])
     ];
     const duration = installed.duration?.from === "level" ? { mode: "fixed", value: entry.level, unit: installed.duration.unit, expiry: "turn-start" } : installed.duration;
-    return ownEffectSource({ name: "installed", img: "icons/svg/upgrade.svg", words: installedText(installed, entry), rules, duration, flag: { installed: installed.name }, item, user, worldTime, initiative, moduleId });
+    // (Its time shortened by each hit of its types, Bone Dreadnought Plate's: the flag scripts/shorten-on-hit.js looks for.)
+    return ownEffectSource({ name: "installed", img: "icons/svg/upgrade.svg", words: installedText(installed, entry), rules, duration, flag: { installed: installed.name, ...(installed.shortensOnHit ? { shortensOnHit: installed.shortensOnHit } : {}) }, item, user, worldTime, initiative, moduleId });
 }
