@@ -43,9 +43,10 @@ test("the reading: how many Strikes and at whom, what the text says of them, the
     assert.deepEqual(spikes.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), ["immobilized"]);
     const legion = plan("Shield of the Unified Legion");
     assert.deepEqual([legion.strike.volley.each, legion.strike.alteration, legion.resolution.outcomes.success.forcedMovement, legion.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), legion.partial], ["enemy", "force", { kind: "push", distance: 10 }, ["prone"], undefined]);
-    // (Not all of it: the bow's healing next turn, the chair's bonuses against a prone foe — notes.)
+    // (The bow's healing stopped for the next turn: its PF2e toggle off, plan.toggleOff — src/compiler/toggle-off.js, 2026-10-26; the chair's
+    // bonuses against a prone foe still a note.)
     const bow = plan("Splithead Bow");
-    assert.deepEqual([bow.strike.uses, bow.strike.volley, bow.partial], [2, { different: true, within: 50, sight: true, mapHeld: true }, true]);
+    assert.deepEqual([bow.strike.uses, bow.strike.volley, Boolean(bow.partial), bow.toggleOff.option, bow.toggleOff.duration.expiry], [2, { different: true, within: 50, sight: true, mapHeld: true }, false, "splithead-bow-healing", "turn-end"]);
     const chair = plan("Minotaur Chair");
     assert.deepEqual([chair.strike.volley.move, chair.partial, chair.strike.notes.length], ["Stride in a straight line first, through the enemies' spaces", true, 1]);
     // (Two at once whose only other sentence was the multiple attack penalty: no longer partial.)

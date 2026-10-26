@@ -53,6 +53,7 @@ import { appliedAnyway, verifyEffectRules } from "../src/compiler/verify-effect.
 import { isUnloadedSpellgun, restoreUnloaded } from "./generic-items.js";
 import { strikeWithRunes } from "./rune-strikes.js";
 import { chargeSpellstrike, strikeWithSpellstrike } from "./spellstrike.js";
+import { toggleOff } from "./toggle-off.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -237,6 +238,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     }
     // (A condition its user takes beside the save, Pharasmin Visor's Dazzled: given as it's used, src/compiler/user-conditions.js.)
     if (plan?.userEffects?.length && actor) await giveUserConditions(plan.userEffects, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user conditions`, error));
+    // (A healing of the item's own stopped for a while, Splithead Bow's Two-Headed Arrow: its PF2e toggle off, scripts/toggle-off.js.)
+    if (plan?.toggleOff && actor) await toggleOff(plan, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
     // (Its save's DC its user's conditions higher, Death Tusk Helm's doomed and wounded: src/live/scaled.js.)
     if (plan?.dcBy && actor) plan = withConditionDC(plan, (slug) => actor.getCondition?.(slug)?.value ?? 0);
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)

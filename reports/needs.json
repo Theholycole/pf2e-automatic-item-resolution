@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1267,
+  "entries": 1266,
   "results": {
    "none": 615,
-   "partial": 266,
+   "partial": 265,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -14,7 +14,7 @@
    "afflictions": 51,
    "areas": 110,
    "moving": 85,
-   "lasting": 64,
+   "lasting": 63,
    "visibility": 50,
    "choice": 37,
    "mind": 8,
@@ -55,7 +55,7 @@
    "out-of-combat": 418,
    "counteract": 80,
    "afflictions": 93,
-   "lasting": 215,
+   "lasting": 214,
    "moving": 113,
    "triggers": 126,
    "visibility": 52,
@@ -12554,17 +12554,6 @@
     "lasting",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Splithead Bow",
-   "kind": "activation",
-   "activation": "Two-Headed Arrow",
-   "result": "partial",
-   "main": "lasting",
-   "work": "on your next turn",
-   "needs": [
-    "lasting"
    ]
   },
   {

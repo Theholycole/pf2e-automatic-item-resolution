@@ -1973,6 +1973,23 @@ export const cases = {
         return { cast: cast.id, origin: cast.flags.pf2e.origin.uuid };
     },
 
+    // Splithead Bow's Two-Headed Arrow: its PF2e healing toggle off as it's used, back on once its Effect is gone.
+    async splitheadToggle(scene) {
+        await clearSquares(scene, [[11, 7]]);
+        const { actor: archer } = await creature(scene, "Splithead Archer", { type: "character", x: 11, y: 7, level: 8 });
+        const bow = await give(archer, "Splithead Bow");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        const on = () => Boolean(archer.rollOptions?.all?.["splithead-bow-healing"]);
+        await until(on, "the bow's healing on at first", { timeout: 4000 });
+        await game.modules.get(NS).api.live.activate(bow.uuid, 0);
+        await until(() => !on(), "its healing off", { timeout: 8000 });
+        const effect = archer.itemTypes.effect.find((entry) => entry.getFlag(NS, "toggleOff"));
+        assert(effect, "its Effect");
+        await effect.delete();
+        await until(on, "its healing back on", { timeout: 8000 });
+        return { effect: effect.name };
+    },
+
     // Bone Dreadnought Plate with a lodestone bomb: its resistance Effect for 20 minutes, a minute shorter after an enemy's slashing hit.
     async boneShortened(scene) {
         await clearSquares(scene, [[9, 7], [10, 7]]);

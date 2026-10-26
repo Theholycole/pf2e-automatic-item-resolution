@@ -21,6 +21,7 @@ import { fallLine } from "../src/live/card.js";
 import { etchRune, setUpEtching } from "./etching.js";
 import { setUpHPFloor } from "./hp-floor.js";
 import { setUpShortenOnHit } from "./shorten-on-hit.js";
+import { setUpToggleOff } from "./toggle-off.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
@@ -125,6 +126,8 @@ Hooks.once("ready", async () => {
     setUpHPFloor();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)
     setUpShortenOnHit();
+    // (A healing of an item's own back on once its Effect ends: scripts/toggle-off.js.)
+    setUpToggleOff();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

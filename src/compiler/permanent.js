@@ -6,6 +6,7 @@
 
 import { chosenAllyPlan, withAllyEffectThenCard } from "./chosen-ally.js";
 import { moveActionsPlan } from "./move-actions.js";
+import { withToggleOff } from "./toggle-off.js";
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { actionTypeOf, triggerOn } from "./activation.js";
@@ -693,6 +694,8 @@ function compileEach(item, options = {}) {
             }
         }
         // (Not its opening flavor among what it leaves the GM, src/compiler/flavor.js; nor its damage said again, src/compiler/direct-damage.js.)
+        // (A healing of the item's own it stops for a while, src/compiler/toggle-off.js: Splithead Bow's Two-Headed Arrow.)
+        plan = withToggleOff(plan, activation.html, item);
         plan = withActionGate(withNonlethalExempt(withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce })));
 
         const frequency = activation.frequency?.max ? activation.frequency : null;
