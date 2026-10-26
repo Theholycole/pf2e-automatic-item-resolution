@@ -180,8 +180,11 @@ export function readCastWords(html, { spells = null } = {}) {
         // (Its DC in the sentence or the next, or a sentence on the spells' DC: "The DC for any of these spells is 18".)
         // (Or "any save DC is 30", Zuhra's Gloves, anywhere in the text.)
         const dc = leadDC ?? (Number(/\(DC (\d+)\)|\bwith a DC of (\d+)|\bspell DC (?:is |of )?(\d+)|\bThe DC is (\d+)|\bDC (\d+)\b/i.exec(rest + " " + (sentences[index + 1] ?? ""))?.slice(1).find(Boolean)) || Number(/\bThe (?:spell )?DC (?:for (?:any of )?(?:these|the|this) spells? )?is (\d+)|\bany save DC is (\d+)/i.exec(sentences.join(" "))?.slice(1).find(Boolean)) || null);
-        // (And "a counteract bonus of +21", Scarlet Queen.)
-        const attack = Number(/\bcounteract (?:modifier|bonus) (?:is |of |are )?(?:1d20 ?)?\+(\d+)|\+(\d+) (?:counteract )?modifier for the roll|\bspell attack (?:modifier|roll) (?:is |of |are )?\+(\d+)/i.exec(whole)?.slice(1).find(Boolean)) || null;
+        // (And "a counteract bonus of +21", Scarlet Queen; "a +19 modifier to its counteract check", Chalice of Ozem; "a single counteract
+        // check at +25", Leydroth Spellbreaker; "The counteract check is +15", Spellender — or a sentence of its own on the spells' counteract
+        // modifier, Symbol of Conflict's "The counteract DC of these effects is 38, and the counteract modifier is +28".)
+        const COUNTERACT = /\bcounteract (?:modifier|bonus) (?:is |of |are )?(?:1d20 ?)?\+(\d+)|\+(\d+) (?:counteract )?modifier for the roll|\bspell attack (?:modifier|roll) (?:is |of |are )?\+(\d+)|\+(\d+) modifier to (?:its|the) counteract check|\bcounteract check (?:is |at )\+(\d+)|\+(\d+) counteract check modifier/i;
+        const attack = Number((COUNTERACT.exec(whole) ?? COUNTERACT.exec(sentences.filter((other) => /^The counteract\b/.test(other)).join(" ")))?.slice(1).find(Boolean)) || null;
         // (On its user: the words after the list, or after its last spell — "Darkvision or See the Unseen on yourself" is both on
         // you; after an earlier one only that one is, a choice's own.)
         const lastSelf = list.length > 0 && list.at(-1).self && list.slice(0, -1).every((entry) => !entry.self);

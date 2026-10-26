@@ -36,3 +36,15 @@ test("a note-only item checked as having nothing to play counts done — Spyglas
     const eye = first("Spyglass Eye");
     assert.deepEqual([eye.noteOnly, eye.decided, eye.automation.level], [undefined, "checked", "automatic"]);
 });
+
+test("a counteract modifier in other words is the cast's, and saying it again isn't a rule — Chalice of Ozem's +19, Rod of Negation's 1d20+23", () => {
+    const chalice = first("Chalice of Ozem");
+    assert.deepEqual([chalice.attack, chalice.partial], [19, undefined]);
+    const rod = first("Rod of Negation");
+    assert.deepEqual([rod.attack, rod.partial], [23, undefined]);
+});
+
+test("the cast's own rank said again isn't a rule — Cultist Cowl (Major)'s Crisis of Faith heightened to 7th rank", () => {
+    const cowl = first("Cultist Cowl (Major)");
+    assert.deepEqual([cowl.rank, cowl.partial], [7, undefined]);
+});

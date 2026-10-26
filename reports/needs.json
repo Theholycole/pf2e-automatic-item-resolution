@@ -1,44 +1,44 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1356,
+  "entries": 1338,
   "results": {
-   "partial": 429,
+   "partial": 411,
    "none": 554,
    "note-only": 254,
    "builtin:no-effect": 119
   },
   "main": {
-   "no-rules": 42,
+   "no-rules": 41,
    "speeds": 25,
    "areas": 138,
-   "counteract": 34,
-   "afflictions": 57,
+   "counteract": 26,
+   "afflictions": 55,
    "moving": 92,
    "visibility": 51,
    "choice": 31,
    "lasting": 70,
    "strike": 107,
-   "spells": 38,
+   "spells": 36,
    "information": 23,
    "out-of-combat": 36,
    "actions": 32,
    "immunity": 26,
-   "creatures": 65,
-   "mind": 8,
+   "creatures": 64,
+   "mind": 7,
    "objects": 110,
-   "illusions": 51,
+   "illusions": 50,
    "removed": 6,
    "cooldown": 9,
    "vehicles": 21,
    "reader": 18,
-   "triggers": 95,
+   "triggers": 94,
    "situational": 18,
    "dying": 29,
    "senses": 22,
    "speech": 22,
    "from-events": 4,
-   "forms": 27,
+   "forms": 26,
    "several": 26,
    "retaliation": 3,
    "missing-number": 6,
@@ -47,38 +47,38 @@
    "by-kind": 7
   },
   "any": {
-   "no-rules": 42,
+   "no-rules": 41,
    "speeds": 31,
    "areas": 201,
-   "immunity": 88,
-   "objects": 389,
-   "speech": 135,
+   "immunity": 87,
+   "objects": 388,
+   "speech": 134,
    "out-of-combat": 440,
-   "counteract": 110,
-   "afflictions": 106,
-   "lasting": 238,
+   "counteract": 98,
+   "afflictions": 104,
+   "lasting": 237,
    "moving": 120,
-   "triggers": 125,
+   "triggers": 124,
    "visibility": 53,
    "dying": 75,
    "choice": 110,
    "several": 106,
    "strike": 203,
-   "reader": 215,
-   "spells": 78,
-   "information": 201,
+   "reader": 213,
+   "spells": 76,
+   "information": 200,
    "actions": 64,
    "from-events": 29,
    "situational": 88,
-   "creatures": 65,
-   "mind": 69,
-   "illusions": 61,
+   "creatures": 64,
+   "mind": 67,
+   "illusions": 60,
    "removed": 7,
    "range": 6,
    "cooldown": 10,
    "vehicles": 27,
    "senses": 28,
-   "forms": 28,
+   "forms": 27,
    "fortune": 9,
    "retaliation": 3,
    "missing-number": 7,
@@ -1509,18 +1509,6 @@
    ]
   },
   {
-   "name": "Horn of Rust",
-   "kind": "activation",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "immunity"
-   ]
-  },
-  {
    "name": "Drought Powder",
    "kind": "consumable",
    "result": "note-only",
@@ -1616,17 +1604,6 @@
     "strike",
     "situational",
     "several"
-   ]
-  },
-  {
-   "name": "Chalice of Ozem",
-   "kind": "activation",
-   "activation": "Iomedae's Blessing",
-   "result": "partial",
-   "main": "counteract",
-   "work": "dispelling",
-   "needs": [
-    "counteract"
    ]
   },
   {
@@ -3160,17 +3137,6 @@
    ]
   },
   {
-   "name": "Symbol of Conflict",
-   "kind": "activation",
-   "activation": "Presence",
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract"
-   ]
-  },
-  {
    "name": "Pocket Stage",
    "kind": "activation",
    "activation": "Play with Dolls",
@@ -3370,18 +3336,6 @@
     "mind",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Symbol of Conflict (Major)",
-   "kind": "activation",
-   "activation": "Presence",
-   "result": "partial",
-   "main": "creatures",
-   "work": "summon",
-   "needs": [
-    "creatures",
-    "counteract"
    ]
   },
   {
@@ -4998,18 +4952,6 @@
    ]
   },
   {
-   "name": "Ring of Spell Turning",
-   "kind": "activation",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering spell",
-   "needs": [
-    "triggers",
-    "counteract",
-    "reader"
-   ]
-  },
-  {
    "name": "Doomsweeper",
    "kind": "activation",
    "activation": "Clear the Way",
@@ -5320,16 +5262,6 @@
    ]
   },
   {
-   "name": "Elder Sign",
-   "kind": "activation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "dispel",
-   "needs": [
-    "counteract"
-   ]
-  },
-  {
    "name": "Navigator's Feather",
    "kind": "consumable",
    "result": "note-only",
@@ -5524,17 +5456,6 @@
     "strike",
     "counteract",
     "reader"
-   ]
-  },
-  {
-   "name": "Telekinetic Converters",
-   "kind": "activation",
-   "activation": "Mental Fling",
-   "result": "partial",
-   "main": "spells",
-   "work": "cantrip",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -6120,16 +6041,6 @@
     "strike",
     "reader",
     "information"
-   ]
-  },
-  {
-   "name": "Shard of the Third Seal",
-   "kind": "activation",
-   "result": "partial",
-   "main": "spells",
-   "work": "cantrip",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -6987,17 +6898,6 @@
   {
    "name": "The Deck of Destiny",
    "kind": "activation",
-   "result": "partial",
-   "main": "illusions",
-   "work": "illusion",
-   "needs": [
-    "illusions",
-    "mind"
-   ]
-  },
-  {
-   "name": "The Deck of Destiny",
-   "kind": "activation",
    "result": "none",
    "main": "dying",
    "work": "death",
@@ -7821,17 +7721,6 @@
    ]
   },
   {
-   "name": "Devil's Trident",
-   "kind": "activation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract",
-    "lasting"
-   ]
-  },
-  {
    "name": "Mindsponge",
    "kind": "activation",
    "activation": "Absorb Memories",
@@ -8401,16 +8290,6 @@
    ]
   },
   {
-   "name": "Scarlet Queen",
-   "kind": "activation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "dispel",
-   "needs": [
-    "counteract"
-   ]
-  },
-  {
    "name": "Effervescent Ampoule",
    "kind": "consumable",
    "result": "none",
@@ -8534,18 +8413,6 @@
     "objects",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Cursebreak Bulwark",
-   "kind": "activation",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "affliction",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "objects"
    ]
   },
   {
@@ -8789,17 +8656,6 @@
    ]
   },
   {
-   "name": "Symbol of Conflict (Greater)",
-   "kind": "activation",
-   "activation": "Presence",
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract"
-   ]
-  },
-  {
    "name": "Aeon Stone (Eastern Star)",
    "kind": "activation",
    "activation": "Absorb Language",
@@ -8852,16 +8708,6 @@
     "strike",
     "immunity",
     "objects"
-   ]
-  },
-  {
-   "name": "Spellender",
-   "kind": "activation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "dispel",
-   "needs": [
-    "counteract"
    ]
   },
   {
@@ -11290,17 +11136,6 @@
    ]
   },
   {
-   "name": "Rod of Negation",
-   "kind": "activation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "dispel",
-   "needs": [
-    "counteract",
-    "reader"
-   ]
-  },
-  {
    "name": "Secret-Keeper's Mask (Reaper of Reputation)",
    "kind": "activation",
    "result": "builtin:no-effect",
@@ -12947,18 +12782,6 @@
    ]
   },
   {
-   "name": "Clockwork Songbird",
-   "kind": "activation",
-   "result": "partial",
-   "main": "forms",
-   "work": "in the form of",
-   "needs": [
-    "forms",
-    "information",
-    "speech"
-   ]
-  },
-  {
    "name": "Bubbling Scale",
    "kind": "consumable",
    "result": "note-only",
@@ -14568,16 +14391,6 @@
    ]
   },
   {
-   "name": "Ovinrbaane",
-   "kind": "activation",
-   "result": "partial",
-   "main": "mind",
-   "work": "suggestion",
-   "needs": [
-    "mind"
-   ]
-  },
-  {
    "name": "Sluggish Bracelet",
    "kind": "activation",
    "result": "partial",
@@ -14715,15 +14528,6 @@
    "work": "sheet of",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Cultist Cowl (Major)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {

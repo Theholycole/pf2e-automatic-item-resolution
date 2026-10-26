@@ -218,7 +218,7 @@ export function castPlan(item) {
     if (granted.length !== 1) return null;
     const [spell] = granted;
     const sentences = plainSentences(item?.system?.description?.value);
-    const counteract = sentences.map((sentence) => /\bcounteract modifier (?:of )?\+(\d+)|\+(\d+) counteract modifier/i.exec(sentence)).find(Boolean);
+    const counteract = sentences.map((sentence) => /\bcounteract modifier (?:of )?\+(\d+)|\+(\d+) counteract (?:check )?modifier/i.exec(sentence)).find(Boolean);
     const notes = sentences.filter((sentence) => sentence.includes(spell.spell.name) && /\b(?:except|but|though|instead)\b/i.test(sentence));
     return {
         builtin: "cast-spell",

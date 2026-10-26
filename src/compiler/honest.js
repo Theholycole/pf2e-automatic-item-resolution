@@ -320,6 +320,11 @@ const castWords = (note, plan, spell) => {
     let text = said(note);
     const name = plan.spell?.name;
     if (name) text = text.replace(new RegExp(literal(name), "gi"), " ");
+    // (The cast's rank and counteract modifier said again: Dragonfire Halfbow's "heightened to 5th rank", a cantrip "heightened to a spell rank
+    // equal to half your level rounded up" as the spell module casts it, Rod of Negation's "a counteract modifier of 1d20+23".)
+    if (plan.rank) text = text.replace(new RegExp(String.raw`\bheightened to ${plan.rank}(?:st|nd|rd|th)[- ](?:rank|level)\b|\bcounteract rank (?:of )?${plan.rank}(?:st|nd|rd|th)?\b`, "gi"), " ");
+    else text = text.replace(/\bheightened to a spell rank equal to half your level,? rounded up\b/gi, " ");
+    if (plan.attack) text = text.replace(new RegExp(String.raw`(?:\b(?:spell attack roll and )?counteract (?:check |modifier |bonus )*(?:is |of |are |at )?(?:1d20 ?)?\+${plan.attack}|\+${plan.attack} (?:modifier (?:to (?:its|the) counteract check|for the roll)|counteract (?:check )?modifier))\b|\bcounteract DC of these effects is ${plan.attack + 10}\b`, "gi"), " ");
     text = text.replace(/\b(?:\d+(?:st|nd|rd|th)[- ]rank|rank \d+|\d+(?:st|nd|rd|th)[- ]level)\b/gi, " ").replace(/spell attack (?:roll|modifier) of \+\d+/gi, " ").replace(/\b(?:with)?in (?:the spell's )?range(?: of the spells?)?\b/gi, " ");
     for (const own of [spell?.duration, spell?.range]) if (/^\d+ (?:feet|miles?|rounds?|minutes?|hours?|days?)$/i.test(own ?? "")) text = text.replace(new RegExp(String.raw`\b${literal(own)}\b`, "gi"), " ");
     return plan.dc ? text.replace(new RegExp(String.raw`\(?DC ${plan.dc}\)?`, "g"), " ") : text;
