@@ -1997,7 +1997,7 @@ export const cases = {
         const { actor: foe } = await creature(scene, "Bone Plate Foe", { x: 10, y: 7, alliance: "opposition" });
         const plate = await give(wearer, "Bone Dreadnought Plate");
         await plate.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
-        const bomb = await give(wearer, "Lodestone Bomb (Moderate)");
+        const bomb = await give(wearer, "Lodestone Bomb");
         let since = Date.now();
         await game.modules.get(NS).api.live.activate(plate.uuid, 0);
         const card = await messageAfter(since, itemCard("item"), { what: "the plate's card" });
