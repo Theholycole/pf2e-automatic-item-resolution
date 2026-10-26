@@ -2385,6 +2385,25 @@ export const cases = {
         return { die: item.system.damage.die, traits: item.system.traits.value };
     },
 
+    // A longsword etched with Shifting: its rune's card offers PF2e's one-handed melee weapons; a rapier picked — the rapier's numbers on it.
+    async shiftingReshape(scene) {
+        await clearSquares(scene, [[18, 9]]);
+        const { actor: user } = await creature(scene, "Shifting Fencer", { type: "character", x: 18, y: 9, level: 10 });
+        const sword = await give(user, "Longsword");
+        await sword.update({ "system.runes": { potency: 1, striking: 1, property: ["shifting"] } });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(sword.uuid, "rune:shifting:0");
+        const card = await messageAfter(since, itemCard("objects"), { what: "the Shifting card" });
+        const choices = card.getFlag(NS, "card").choices;
+        const rapier = choices.findIndex((choice) => choice.name === "Rapier");
+        assert(rapier >= 0 && !choices.some((choice) => choice.name === "Greatsword"), `one-handed shapes only, the rapier among them (${choices.length})`);
+        await game.modules.get(NS).api.live.apply(card.id, { pick: rapier });
+        await until(() => user.items.get(sword.id)?.system.baseItem === "rapier", "the rapier shape", { timeout: 8000 });
+        const item = user.items.get(sword.id);
+        assert(item.system.traits.value.includes("finesse") && item.system.runes.property.includes("shifting"), `a rapier's traits, its runes kept (${item.system.traits.value.join(",")})`);
+        return { shapes: choices.length, traits: item.system.traits.value };
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);
