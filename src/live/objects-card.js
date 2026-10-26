@@ -17,6 +17,7 @@ export function objectsText(objects, item = {}, stored = null) {
     if (objects.op === "retrieve") return `Out of ${item.name ?? "it"}, into a hand: an item stored in it`;
     if (objects.op === "hand") return objects.self ? `${item.name ?? "It"} to its user's hand` : `To its user's hand: one of its items${limit}`;
     if (objects.op === "don") return `${item.name ?? "It"} worn`;
+    if (objects.op === "reshape") return objects.forms ? `${item.name ?? "It"} takes its other shape (a ${objects.forms.join(" or a ")}), its runes kept` : `${item.name ?? "It"} takes the shape of another melee weapon held in as many hands (picked), its runes kept`;
     if (objects.op === "repair" && objects.amount) return `${objects.amount} Hit Points restored, up to its maximum: one of its user's damaged items${objects.damagedBy ? ` (what the ${objects.damagedBy} did)` : ""}${limit}`;
     if (objects.op === "repair") return `Repaired to its full Hit Points, no longer broken: one of its user's items${limit}`;
     if (objects.op === "reload") return `Reloaded with one of its user's rounds for it: one of its user's weapons with reload ${objects.reload}`;
@@ -37,13 +38,14 @@ export function objectsCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const objects = state.plan.objects;
     // (A stored spell to cast: no item to pick.)
-    const own = objects.self || (objects.op === "cast-stored" && Boolean(state.stored));
+    // (Its own shape changed: the shape picked.)
+    const own = (objects.self && objects.op !== "reshape") || (objects.op === "cast-stored" && Boolean(state.stored));
     const line = `<p class="aar-actions">${escape(objectsText(objects, state.item, state.stored ?? null))}.</p>`;
     const notes = open && (state.plan.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     const picker = own ? ""
         : !state.choices.length ? (open ? `<p class="aar-hint">${escape(state.user.name)} has no item it can take.</p>` : "")
-            : open && canApply ? `<p class="aar-actions">Item: <select data-air-field="pick">${state.choices.map((choice, index) => `<option value="${index}"${index === (state.pick ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
-                : `<p class="aar-actions">Item: ${escape(state.choices[state.pick ?? 0]?.name ?? "")}</p>`;
+            : open && canApply ? `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : "Item"}: <select data-air-field="pick">${state.choices.map((choice, index) => `<option value="${index}"${index === (state.pick ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
+                : `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : "Item"}: ${escape(state.choices[state.pick ?? 0]?.name ?? "")}</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((entry) => `<li>${escape(entry)}</li>`).join("")}</ul>` : "";
     const ready = own || state.choices.length;
     const controls = open && canApply && ready ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open && ready ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";

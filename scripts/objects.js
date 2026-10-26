@@ -51,10 +51,50 @@ export function objectChoices(actor, objects, holderId) {
     return list.map((item) => ({ id: item.id, name: item.name }));
 }
 
+// (The shapes a weapon can take, src/compiler/objects.js op "reshape": its other form — Anchor Spear's — or PF2e's base melee weapons held in as
+// many hands as it is — the Shifting rune's —, by name, its own left out.)
+const RESHAPE_FIELDS = ["system.baseItem", "system.slug", "system.usage.value", "system.range", "system.level.value"];
+export async function reshapeChoices(holder, objects) {
+    const pack = game.packs.get("pf2e.equipment-srd");
+    if (!pack || !holder) return [];
+    const index = await pack.getIndex({ fields: RESHAPE_FIELDS });
+    const weapons = index.filter((row) => row.type === "weapon");
+    const own = holder.system?.baseItem ?? null;
+    if (objects.forms) return objects.forms.map((form) => weapons.find((row) => row.name.toLowerCase() === form && (row.system?.baseItem ?? row.system?.slug) === row.system?.slug)).filter((row) => row && row.system?.slug !== own).map((row) => ({ id: row._id, name: row.name }));
+    const hands = holder.system?.usage?.value ?? null;
+    return weapons.filter((row) => (Number(row.system?.level?.value) || 0) === 0 && !row.system?.range && row.system?.usage?.value === hands && row.system?.slug && row.system?.baseItem === row.system.slug && row.system.slug !== own)
+        .sort((a, b) => a.name.localeCompare(b.name)).map((row) => ({ id: row._id, name: row.name }));
+}
+
+// The weapon in that shape: its base weapon's own numbers and traits — the item's other traits, its runes, name and material kept.
+export async function reshapeWeapon(holder, entryId) {
+    const pack = game.packs.get("pf2e.equipment-srd");
+    const shape = (await pack.getDocument(entryId))?.toObject();
+    if (!shape) throw new Error("That weapon wasn't found in PF2e's equipment.");
+    const index = await pack.getIndex({ fields: RESHAPE_FIELDS });
+    const before = holder.system?.baseItem ? index.find((row) => row.type === "weapon" && row.system?.slug === holder.system.baseItem) : null;
+    const old = before ? new Set((await pack.getDocument(before._id))?.system?.traits?.value ?? []) : new Set();
+    const traits = [...new Set([...(holder.system?.traits?.value ?? []).filter((trait) => !old.has(trait)), ...(shape.system.traits?.value ?? [])])];
+    await holder.update({
+        "system.baseItem": shape.system.baseItem ?? shape.system.slug,
+        "system.damage.die": shape.system.damage.die,
+        "system.damage.damageType": shape.system.damage.damageType,
+        "system.group": shape.system.group,
+        "system.category": shape.system.category,
+        "system.usage.value": shape.system.usage?.value ?? holder.system.usage?.value,
+        "system.bulk.value": shape.system.bulk?.value ?? holder.system.bulk?.value,
+        "system.reload.value": shape.system.reload?.value ?? null,
+        "system.range": shape.system.range ?? null,
+        "system.traits.value": traits
+    });
+    return shape.name;
+}
+
 export async function postObjectsCard({ message, plan, used, actor, token }) {
     const holderId = String(used.data.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? used.data._id ?? null;
     const held = storedOf(actor?.items?.get?.(holderId));
-    const state = createObjectsCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, id: holderId }, user: entryOf(token, actor), choices: objectChoices(actor, plan.objects, holderId), stored: held ? { name: held.name, rank: held.rank } : null });
+    const choices = plan.objects.op === "reshape" ? await reshapeChoices(actor?.items?.get?.(holderId), plan.objects) : objectChoices(actor, plan.objects, holderId);
+    const state = createObjectsCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, id: holderId }, user: entryOf(token, actor), choices, stored: held ? { name: held.name, rank: held.rank } : null });
     return ChatMessage.create({ content: objectsCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
@@ -71,6 +111,15 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
     if (["cast-stored", "ready-stored", "expend-stored"].includes(objects.op)) {
         const line = await storedSpellOp(state, { actor, holder, pick: Number(pick) || 0, targets });
         const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
+        return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+    }
+    // (Its own shape changed, Anchor Spear's and the Shifting rune's: the picked base weapon's numbers on it.)
+    if (objects.op === "reshape") {
+        const shape = state.choices[Number(pick) || 0];
+        if (!holder) throw new Error(`${state.item.name} isn't on ${state.user.name} any more.`);
+        if (!shape) throw new Error(`${state.item.name} has no other shape to take.`);
+        const name = await reshapeWeapon(holder, shape.id);
+        const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [`${holder.name} takes the shape of a ${name.toLowerCase()}, its runes kept`] };
         return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
     }
     const chosen = objects.self ? holder : state.choices[Number(pick) || 0] ? actor.items.get(state.choices[Number(pick) || 0].id) : null;

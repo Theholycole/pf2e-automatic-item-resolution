@@ -2368,6 +2368,23 @@ export const cases = {
         return { before, used, after: record() };
     },
 
+    // Anchor Spear: its card's other shape, a longspear — PF2e's longspear numbers on it (a d8, two hands, reach), its runes kept.
+    async anchorReshape(scene) {
+        await clearSquares(scene, [[17, 9]]);
+        const { actor: user } = await creature(scene, "Anchor Wielder", { type: "character", x: 17, y: 9, level: 10 });
+        const spear = await give(user, "Anchor Spear");
+        const runes = JSON.stringify(spear.system.runes);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(spear.uuid, 0);
+        const card = await messageAfter(since, itemCard("objects"), { what: "the reshape card" });
+        await game.modules.get(NS).api.live.apply(card.id, { pick: 0 });
+        await until(() => user.items.get(spear.id)?.system.baseItem === "longspear", "the longspear shape", { timeout: 8000 });
+        const item = user.items.get(spear.id);
+        assert(item.system.damage.die === "d8" && item.system.usage.value === "held-in-two-hands" && item.system.traits.value.includes("reach"), `a longspear's numbers (${item.system.damage.die}, ${item.system.usage.value}, ${item.system.traits.value.join(",")})`);
+        assert(JSON.stringify(item.system.runes) === runes, "its runes kept");
+        return { die: item.system.damage.die, traits: item.system.traits.value };
+    },
+
     // Amulet of the Hellcat's Invisible Pounce: Invisible on its Effect, gone with its user's next Strike.
     async hellcatPounce(scene) {
         await clearSquares(scene, [[3, 5], [4, 5]]);

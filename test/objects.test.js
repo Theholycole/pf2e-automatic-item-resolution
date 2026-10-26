@@ -123,3 +123,22 @@ test("Archaic Wayfinder: one cantrip cast into it (not a free action's or a reac
     assert.deepEqual([objects.op, objects.store], ["cast-stored", { from: "cast", cantrip: true, maxActions: 3 }]);
     assert.deepEqual([storable(objects.store, { rank: 1, actions: 2, traits: ["cantrip", "fire"] }), storable(objects.store, { rank: 1, actions: 2, traits: ["fire"] }), storable(objects.store, { rank: 1, actions: 0, traits: ["cantrip"] })], [true, false, false]);
 });
+
+test("A weapon's other shape (Anchor Spear's longspear, the Shifting rune's any melee weapon in as many hands): the base weapon's numbers on it, its own traits and runes kept", async () => {
+    const { reshapeChoices, reshapeWeapon } = await import("../scripts/objects.js");
+    const weapon = (id, name, slug, usage, die, traits, extra = {}) => ({ _id: id, name, type: "weapon", system: { slug, baseItem: slug, usage: { value: usage }, range: null, level: { value: 0 }, damage: { die, damageType: "piercing" }, group: "spear", category: "simple", bulk: { value: 1 }, traits: { value: traits }, ...extra } });
+    const rows = [weapon("a", "Spear", "spear", "held-in-one-hand", "d6", ["thrown-20"]), weapon("b", "Longspear", "longspear", "held-in-two-hands", "d8", ["reach"]), weapon("c", "Glaive", "glaive", "held-in-two-hands", "d8", ["deadly-d8", "forceful", "reach"]), weapon("d", "Shortbow", "shortbow", "held-in-one-plus-hands", "d6", [], { range: 60 })];
+    const saved = { game: globalThis.game };
+    globalThis.game = { packs: new Map([["pf2e.equipment-srd", { getIndex: async () => rows, getDocument: async (id) => { const row = rows.find((entry) => entry._id === id); return row ? { system: row.system, toObject: () => structuredClone(row) } : null; } }]]) };
+    try {
+        let updated = null;
+        const anchor = { name: "Anchor Spear", system: { baseItem: "spear", usage: { value: "held-in-one-hand" }, traits: { value: ["magical", "thrown-20"] }, damage: { die: "d6", dice: 3 } }, update: async (changes) => { updated = changes; } };
+        assert.deepEqual(await reshapeChoices(anchor, { op: "reshape", forms: ["longspear", "spear"] }), [{ id: "b", name: "Longspear" }]);
+        assert.equal(await reshapeWeapon(anchor, "b"), "Longspear");
+        assert.deepEqual([updated["system.baseItem"], updated["system.damage.die"], updated["system.usage.value"], updated["system.traits.value"]], ["longspear", "d8", "held-in-two-hands", ["magical", "reach"]]);
+        const shifting = { system: { baseItem: "longspear", usage: { value: "held-in-two-hands" } } };
+        assert.deepEqual((await reshapeChoices(shifting, { op: "reshape", sameHands: true })).map((choice) => choice.name), ["Glaive"]);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

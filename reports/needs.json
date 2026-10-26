@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1179,
+  "entries": 1177,
   "results": {
-   "none": 589,
+   "none": 587,
    "partial": 210,
    "note-only": 257,
    "builtin:no-effect": 123
@@ -24,7 +24,7 @@
    "out-of-combat": 33,
    "actions": 26,
    "no-rules": 36,
-   "objects": 110,
+   "objects": 109,
    "illusions": 43,
    "removed": 4,
    "cooldown": 9,
@@ -38,7 +38,7 @@
    "senses": 17,
    "speech": 18,
    "from-events": 4,
-   "forms": 24,
+   "forms": 23,
    "several": 20,
    "retaliation": 3,
    "missing-number": 7,
@@ -50,7 +50,7 @@
    "speeds": 28,
    "areas": 163,
    "immunity": 69,
-   "objects": 379,
+   "objects": 377,
    "speech": 121,
    "out-of-combat": 408,
    "counteract": 79,
@@ -78,7 +78,7 @@
    "situational": 66,
    "creatures": 53,
    "senses": 23,
-   "forms": 25,
+   "forms": 24,
    "fortune": 9,
    "retaliation": 3,
    "missing-number": 8,
@@ -10755,16 +10755,6 @@
    "name": "Anchor Spear",
    "kind": "activation",
    "result": "none",
-   "main": "objects",
-   "work": "extends into a +2 greater striking longspear",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
-   "name": "Anchor Spear",
-   "kind": "activation",
-   "result": "none",
    "main": "moving",
    "work": "falls to the ground",
    "needs": [
@@ -12390,18 +12380,6 @@
     "triggers",
     "objects",
     "reader"
-   ]
-  },
-  {
-   "name": "Shifting",
-   "kind": "activation",
-   "activation": "Shift Weapon",
-   "result": "none",
-   "main": "forms",
-   "work": "takes the shape",
-   "needs": [
-    "forms",
-    "objects"
    ]
   },
   {
