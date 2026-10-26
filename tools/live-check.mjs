@@ -1679,6 +1679,24 @@ export const cases = {
         return { read };
     },
 
+    // An activation's own wait: Storm Hammer's Electrify kept on the item for 10 minutes, its user told; a second use warns the GM.
+    async activationWait(scene) {
+        await clearSquares(scene, [[16, 18]]);
+        const { actor: user } = await creature(scene, "Hammer Waiter", { type: "character", x: 16, y: 18, level: 9 });
+        const hammer = await give(user, "Storm Hammer");
+        await hammer.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(hammer.uuid, 0);
+        await messageAfter(since, (message) => /usable again in 10 minutes/.test(message.content), { what: "the wait told" });
+        const until = Number(hammer.getFlag(NS, "activationRecharges")?.[0]);
+        assert(until - game.time.worldTime === 600, `600 seconds on the item (${until - game.time.worldTime})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(hammer.uuid, 0);
+        const warning = await messageAfter(since, (message) => /usable again only in 10 minutes/.test(message.content), { what: "the GM's warning" });
+        assert(warning.whisper.length > 0, "whispered");
+        return { until };
+    },
+
     // Golden Liberator's Feather with 1 action: its ways card; the wings' item card gives its user a fly Speed of 50; the buffet's save card
     // follows, Fortitude DC 41 (basic), at the adjacent enemy targeted.
     async featherBuffet(scene) {
