@@ -16,7 +16,12 @@
 // - healing more by its user's condition value, Oracular Crown's "You regain 3d8 Hit Points. The amount of healing increases to 5d8 if you're
 //   cursebound 2, 7d8 if you're cursebound 3, or 9d8 if you're cursebound 4" (2026-10-26): its heal effect's byCondition { slug, formulas },
 //   the formula picked from its user's value as the card applies (src/live/scaled.js).
+// - a save bonus only against persistent damage, Antivenom Potion's "In addition, for 1 minute after drinking the potion, you gain a +1 bonus to
+//   Fortitude saving throws to avoid taking persistent poison damage" (2026-10-26): a note Effect for that minute in place of the whole text's
+//   reminder, its flat check the card's own (plan.item.recovery) — PF2e has no option for a save against persistent damage.
 // Each sentence read is no longer a note. Pure.
+
+const AGAINST_PERSISTENT = /^(?:In addition, )?for (\d+|one|an?) (rounds?|minutes?|hours?) after drinking (?:the|this) potion, you gain an? \+(\d+) (?:(status|item|circumstance) )?bonus to (Fortitude|Reflex|Will) saving throws to avoid taking persistent (\w+) damage\.$/i;
 
 // ("… increases to 5d8 if you're cursebound 2, 7d8 if you're cursebound 3, or 9d8 if you're cursebound 4.")
 const SCALED_HEAL = /^The amount of healing increases to ((?:\d+d\d+ if you're [a-z-]+ \d+(?:,? (?:or )?)?)+)\.$/i;
@@ -148,6 +153,19 @@ export function withRowReadings(plan, html, item = null) {
             const byCondition = { slug: [...slugs][0], formulas: Object.fromEntries(steps.map((step) => [step[3], step[1]])) };
             rows.success = { ...rows.success, effects: rows.success.effects.map((effect) => (effect?.kind === "heal" ? { ...effect, byCondition } : effect)) };
             drop(said(entry));
+        }
+    }
+    // (A save bonus against persistent damage alone: its note Effect, the reminder gone once all else is read — the flat check its recovery.)
+    if (plan.resolution.kind === "check" && plan.item?.recovery && (rows.success?.noteEffects ?? []).some((entry) => entry?.reminder)) {
+        const sentences = plainOf(html).split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
+        const found = sentences.map((sentence) => [sentence, AGAINST_PERSISTENT.exec(sentence)]).find(([, match]) => match);
+        const others = sentences.filter((sentence) => sentence !== found?.[0] && /\b(?:bonus|penalty|damage|save|saving throw|check|DC|Hit Points|condition)\b/i.test(sentence) && !/\battempt an? (?:DC \d+ )?flat check\b|\bflat\|dc:\d+|\bflat check to end\b/i.test(sentence) && !/^\s*Activate\b/.test(sentence));
+        if (found && !others.length) {
+            const [sentence, match] = found;
+            const duration = { mode: "fixed", value: /^\d+$/.test(match[1]) ? Number(match[1]) : 1, unit: UNITS[match[2].toLowerCase().replace(/s$/, "")], expiry: "turn-start", anchor: "effect-start" };
+            const note = { label: `+${match[3]}${match[4] ? ` ${match[4].toLowerCase()}` : ""} to ${match[5]} saves against persistent ${match[6].toLowerCase()} damage`, text: sentence.replace(/^In addition, /i, "").replace(/^./, (first) => first.toUpperCase()), duration };
+            rows.success = { ...rows.success, noteEffects: [...rows.success.noteEffects.filter((entry) => !entry?.reminder), note] };
+            drop(sentence);
         }
     }
     // (Whom it's at, the banner's aura's enemies: the card's target words.)

@@ -15,10 +15,10 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 171,
-   "resolves": 782,
+   "resolves": 783,
    "builtin:readied-bonus": 23,
    "builtin:zone": 118,
-   "partial": 98,
+   "partial": 97,
    "builtin:ways": 27,
    "builtin:item-action": 16,
    "note-only": 117,
@@ -71,9 +71,9 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 123,
+    "resolves": 124,
     "note-only": 11,
-    "partial": 11,
+    "partial": 10,
     "none": 16,
     "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
@@ -336,7 +336,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 303,
+   "resolves": 304,
    "gaps": 0,
    "none": 21
   },
@@ -390,7 +390,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 617,
+   "resolves": 618,
    "gaps": 0,
    "none": 13
   }
@@ -11640,8 +11640,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

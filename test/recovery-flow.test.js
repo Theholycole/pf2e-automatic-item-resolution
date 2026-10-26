@@ -50,9 +50,11 @@ test("the reading: the types and the DC, and what else it says", () => {
     // Its new saving throw against poison isn't read: a note.
     assert.equal(quench.partial, true);
     assert.match(quench.notes.join(" "), /new saving throw against any poison/);
-    // "@Check[flat|dc:10] to end any persistent poison damage" (Antivenom Potion): the note-only plan, now partial.
+    // "@Check[flat|dc:10] to end any persistent poison damage" (Antivenom Potion): its flat check, and (2026-10-26) its +1 to Fortitude saves
+    // against persistent poison damage a note Effect for the minute in place of the whole text's reminder — whole.
     const antivenom = compileItem(source("Antivenom Potion"));
-    assert.deepEqual([antivenom.item.recovery, antivenom.noteOnly, antivenom.partial], [{ types: ["poison"], dc: 10 }, undefined, true]);
+    assert.deepEqual([antivenom.item.recovery, antivenom.noteOnly, antivenom.partial], [{ types: ["poison"], dc: 10 }, undefined, undefined]);
+    assert.deepEqual(antivenom.resolution.outcomes.success.noteEffects.map((note) => [note.label, note.duration.value, note.duration.unit, Boolean(note.reminder)]), [["+1 to Fortitude saves against persistent poison damage", 1, "minutes", false]]);
     // "an immediate flat check to end any persistent bleed effect with the lower DC for particularly effective assistance", on
     // "yourself or an adjacent target" (Cauterizing Torch): the card's drinker choice.
     const torch = compileItem(source("Cauterizing Torch"));

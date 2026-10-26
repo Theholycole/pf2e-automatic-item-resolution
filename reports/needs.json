@@ -1,17 +1,17 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1286,
+  "entries": 1285,
   "results": {
    "none": 616,
-   "partial": 283,
+   "partial": 282,
    "builtin:no-effect": 129,
    "note-only": 258
   },
   "main": {
    "speeds": 24,
    "counteract": 17,
-   "afflictions": 52,
+   "afflictions": 51,
    "areas": 111,
    "moving": 88,
    "lasting": 65,
@@ -54,7 +54,7 @@
    "speech": 124,
    "out-of-combat": 421,
    "counteract": 80,
-   "afflictions": 94,
+   "afflictions": 93,
    "lasting": 216,
    "moving": 116,
    "triggers": 126,
@@ -5960,16 +5960,6 @@
    "work": "hardness",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Antivenom Potion",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "poisons",
-   "needs": [
-    "afflictions"
    ]
   },
   {
