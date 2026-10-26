@@ -451,3 +451,12 @@ test("Liquid Gold: its attached weapon drawn (one of its user's weapons not in h
     ];
     assert.deepEqual(objectChoices({ items: things }, lesser.objects, "vial").map((choice) => choice.name), ["Dueling Pistol"]);
 });
+
+test("Costume Change (Sihedron Ring, Raiment, Skirmisher's Coat): a note Effect for the illusion on its user's clothes, its disbelief the GM's control for creatures with truesight", () => {
+    const costume = (name) => compileActivations(item(name), { spellEffects }).find((entry) => entry.activation.name === "Costume Change").plan;
+    for (const [name, dc] of [["Sihedron Ring", 20], ["Raiment", 25], ["Skirmisher's Coat", 28]]) {
+        const plan = costume(name);
+        assert.deepEqual([Boolean(plan.partial), plan.notes ?? [], plan.disbelief.dc, plan.resolution.outcomes.success.noteEffects.map((note) => note.label)], [false, [], dc, ["Costume"]], name);
+        assert.match(plan.disbelief.when, /truesight/);
+    }
+});

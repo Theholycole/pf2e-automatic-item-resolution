@@ -39,7 +39,7 @@ import { withTemperature } from "./temperature.js";
 import { withFalls } from "./falls.js";
 import { withRaiseShield } from "./raise-shield.js";
 import { withRowReadings } from "./row-readings.js";
-import { withDisbelief } from "./disbelief.js";
+import { appearancePlan, withDisbelief } from "./disbelief.js";
 import { withCooldown } from "./cooldown.js";
 import { withWeatherIgnores } from "./weather.js";
 import { objectsPlan } from "./objects.js";
@@ -527,6 +527,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = moveActionsPlan(activation.html, base) ?? plan;
         // (A condition for a time and another after it, src/compiler/after-ends.js: Heart of Sarnax's Bestow Vim.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = afterEffectPlan(activation.html, base) ?? plan;
+        // (An illusion on its user's clothes, its disbelief the GM's control, src/compiler/disbelief.js: Costume Change.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = appearancePlan(activation.html, base) ?? plan;
         // (Its allies' bonus beside its enemies' save — Horn of the Archon's "Allies in the area gain a +1 status bonus to attack rolls and saving
         // throws for 1 round" — the allies' card first, then the save's: plan.again.)
         // ("In the area" is the save's own emanation; the save's sentences, the allies' notes, are the save card's.)

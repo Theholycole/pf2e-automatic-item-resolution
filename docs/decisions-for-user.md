@@ -30,3 +30,11 @@ Some cards do everything their text says except a clause the text itself leaves 
 
 - **A (suggested):** the card shows the clause as a line saying it's the GM's call, and the entry counts done (as for your 2026-10-25 ruling on GM numbers).
 - **B:** keep them listed, as now.
+
+## 5. A number the text leaves out entirely
+
+A few texts give a check or condition without the number the card needs. Flowing Water (3 grades) has Embody the Truce's "Attempt a counteract check with a counteract rank of 2 to end the effect", with no counteract modifier. The Desert's failure says "Fatigued and enfeebled for 1 minute", with no Enfeebled value, while its critical failure is Enfeebled 2.
+
+- **A (suggested):** a counteract check with no modifier uses GM Core's DC for the item's level minus 10 (Flowing Water (Lesser), level 3: DC 18, so +8). A condition with no value takes 1 when another row gives a higher one (The Desert's failure: Enfeebled 1). The card says the GM may change either number.
+- **B:** the card asks the GM for the number each time (a box on the card).
+- **C:** keep them listed, as now.

@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1207,
+  "entries": 1203,
   "results": {
-   "none": 600,
+   "none": 596,
    "partial": 226,
    "builtin:no-effect": 124,
    "note-only": 257
@@ -36,7 +36,7 @@
    "situational": 16,
    "creatures": 53,
    "dying": 29,
-   "senses": 21,
+   "senses": 17,
    "speech": 18,
    "from-events": 5,
    "forms": 24,
@@ -50,7 +50,7 @@
    "speeds": 28,
    "areas": 163,
    "immunity": 71,
-   "objects": 381,
+   "objects": 380,
    "speech": 123,
    "out-of-combat": 411,
    "counteract": 79,
@@ -70,14 +70,14 @@
    "actions": 56,
    "from-events": 26,
    "no-rules": 36,
-   "illusions": 56,
+   "illusions": 52,
    "removed": 5,
    "range": 4,
    "cooldown": 10,
    "vehicles": 24,
    "situational": 67,
    "creatures": 53,
-   "senses": 27,
+   "senses": 23,
    "forms": 25,
    "fortune": 9,
    "retaliation": 3,
@@ -6568,18 +6568,6 @@
    ]
   },
   {
-   "name": "Sihedron Ring (Greater)",
-   "kind": "activation",
-   "activation": "Costume Change",
-   "result": "none",
-   "main": "senses",
-   "work": "truesight",
-   "needs": [
-    "senses",
-    "illusions"
-   ]
-  },
-  {
    "name": "Dreamer's Butterfly",
    "kind": "activation",
    "activation": "Wake the Dream",
@@ -10071,18 +10059,6 @@
    ]
   },
   {
-   "name": "Sihedron Ring",
-   "kind": "activation",
-   "activation": "Costume Change",
-   "result": "none",
-   "main": "senses",
-   "work": "truesight",
-   "needs": [
-    "senses",
-    "illusions"
-   ]
-  },
-  {
    "name": "Wardrobe Stone (Greater)",
    "kind": "activation",
    "result": "none",
@@ -10174,18 +10150,6 @@
     "lasting",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Skirmisher's Coat",
-   "kind": "activation",
-   "activation": "Costume Change",
-   "result": "none",
-   "main": "senses",
-   "work": "truesight",
-   "needs": [
-    "senses",
-    "illusions"
    ]
   },
   {
@@ -10495,19 +10459,6 @@
     "from-events",
     "dying",
     "reader"
-   ]
-  },
-  {
-   "name": "Raiment",
-   "kind": "activation",
-   "activation": "Costume Change",
-   "result": "none",
-   "main": "senses",
-   "work": "truesight",
-   "needs": [
-    "senses",
-    "illusions",
-    "objects"
    ]
   },
   {

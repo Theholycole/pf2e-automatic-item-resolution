@@ -12,12 +12,17 @@ const SENTENCES = (text) => text.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) 
 
 const WHO = /^(?:Any|A) creature (?:that|who) (.+?) can attempt to disbelieve (?:the|this) illusion(?: \(DC (\d+) Perception\))?\.$/i;
 const DC = /^The DC to disbelieve the illusion is (\d+)\.$/i;
+// (Only some creatures, Costume Change's "Only a creature that's benefiting from truesight or a similar effect can attempt to disbelieve this
+// illusion, with a DC of 20" — 2026-10-26.)
+const ONLY_WHO = /^Only a creature that's benefiting from (truesight) or a similar effect can attempt to disbelieve this illusion, with a DC of (\d+)\.$/i;
 const LASTS = /\billusion\b[^.]*?\bfor up to (\d+|one|an?) (round|minute|hour)s?\b/i;
 const ENDS = /^[^.]*\bimmediately ends the illusion\.$/i;
 
 // The (activation's) html → { dc, statistic, when, lasts?, ends?, said: [sentences] } or null.
 export function readDisbelief(html) {
     const sentences = SENTENCES(plainOf(html));
+    const only = sentences.map((sentence) => [sentence, ONLY_WHO.exec(sentence)]).find(([, match]) => match);
+    if (only) return { dc: Number(only[1][2]), statistic: "perception", when: `is benefiting from ${only[1][1].toLowerCase()} or a similar effect (no other creature can)`, said: [only[0]] };
     const who = sentences.map((sentence) => [sentence, WHO.exec(sentence)]).find(([, match]) => match);
     if (!who) return null;
     const dcSentence = sentences.find((sentence) => DC.test(sentence));
@@ -54,4 +59,24 @@ export function withDisbelief(plan, html) {
         next.automation = { ...(next.automation ?? {}), level: "automatic" };
     }
     return next;
+}
+
+// An illusion on its user's clothes, Costume Change's "You change the shape and appearance of any armor or clothing you wear to appear as
+// ordinary or fancy clothing or armor of your imagining. The actual statistics for what you're wearing doesn't change." (Sihedron Ring,
+// Raiment, Skirmisher's Coat): a note Effect on its user for as long as it keeps it, its disbelief the GM's control (withDisbelief). The
+// activation's html and the plan's base → the plan, or null. 2026-10-26: nothing read before.
+const COSTUME = /\bYou change the shape and appearance of (?:any armor or clothing you wear|this armor|all your clothing),? (?:making them )?(?:to )?appear as ordinary or (?:fancy|fine) (?:clothing or armor|clothes) of your imagining\./i;
+const SAME_STATS = /^(?:The actual statistics for what you're wearing doesn't change|The armor's statistics don't change|This doesn't change the statistics of any armor you're wearing)\.$/i;
+export function appearancePlan(html, base) {
+    const text = plainOf(html);
+    if (!COSTUME.test(text) || !readDisbelief(html)) return null;
+    const left = SENTENCES(text.replace(/^.*?\bEffect\b\s*/s, "")).filter((sentence) => !COSTUME.test(sentence) && !SAME_STATS.test(sentence) && !ONLY_WHO.test(sentence));
+    return {
+        ...base,
+        automation: { level: left.length ? "guided" : "automatic" },
+        targeting: { target: null, range: null, area: null },
+        trigger: { event: "use" },
+        resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [{ label: "Costume", text: "Its armor and clothing look like ordinary or fine clothes or armor of its user's choosing; their statistics don't change (an illusion).", duration: null }] } } },
+        ...(left.length ? { notes: left, partial: true } : {})
+    };
 }
