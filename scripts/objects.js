@@ -22,8 +22,8 @@ const ammoFor = (actor, weapon) => [...(actor?.items ?? [])].find((item) => item
 
 // (A spell an item holds, src/compiler/stored-spell.js: its flag, { source, rank, name }.)
 export const storedOf = (item) => item?.flags?.[MODULE_ID]?.storedSpell ?? null;
-// A spell's numbers for what an item stores: its rank, actions (1–3, else none), traits and target.
-const spellFacts = (spell) => ({ rank: Number(spell?.rank ?? spell?.system?.location?.heightenedLevel ?? spell?.system?.level?.value) || 1, actions: Number(spell?.system?.time?.value) || 0, traits: [...(spell?.system?.traits?.value ?? [])], target: String(spell?.system?.target?.value ?? "") });
+// A spell's numbers for what an item stores: its rank, actions (1–3, the fewest of "1 to 3"; else none), traits and target.
+const spellFacts = (spell) => ({ rank: Number(spell?.rank ?? spell?.system?.location?.heightenedLevel ?? spell?.system?.level?.value) || 1, actions: Number(/\d/.exec(String(spell?.system?.time?.value ?? ""))?.[0]) || 0, traits: [...(spell?.system?.traits?.value ?? [])], target: String(spell?.system?.target?.value ?? "") });
 const scrollSpell = (item) => item?.type === "consumable" && item.system?.spell ? item.system.spell : null;
 // Its user's spells, or scrolls, it can store: { id, name, kind, rank }.
 function storableChoices(actor, store) {

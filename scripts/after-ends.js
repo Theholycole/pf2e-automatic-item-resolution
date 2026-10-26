@@ -115,7 +115,8 @@ export async function selfAttacks({ state, targets }) {
             await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: game.users.filter((user) => user.isGM).map((user) => user.id), content: `<p>${target.name} attacks itself, but has no Strike to roll: apply its damage by hand.</p>` });
             continue;
         }
-        const roll = await strike.damage({ createMessage: true });
+        // (No damage dialog: PF2e reads it from the event, Shift flipping the user's setting.)
+        const roll = await strike.damage({ createMessage: true, event: { shiftKey: Boolean(game.user?.settings?.showDamageDialogs), ctrlKey: false, metaKey: false } });
         if (roll && typeof roll === "object") {
             await actor.applyDamage({ damage: roll, token: token ?? undefined });
             rolls.push(roll);

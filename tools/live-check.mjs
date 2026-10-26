@@ -2217,8 +2217,9 @@ export const cases = {
         const furnace = await give(user, "Furnace of Endings");
         await furnace.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
         const harm = await fromUuid((await game.packs.get("pf2e.spells-srd").getIndex()).find((entry) => entry.name === "Harm").uuid);
-        const spell = harm.toObject();
-        delete spell._id;
+        // (As PF2e's own scroll keeps it: an id and a location of its own.)
+        const spell = { ...harm.toObject(), _id: foundry.utils.randomID() };
+        spell.system.location = { value: null, heightenedLevel: 1 };
         await user.createEmbeddedDocuments("Item", [{ name: "Scroll of Harm (Rank 1)", type: "consumable", system: { category: "scroll", quantity: 1, level: { value: 1 }, spell, traits: { value: ["consumable", "magical", "scroll"], rarity: "common" } } }]);
         let since = Date.now();
         await game.modules.get(NS).api.live.activate(furnace.uuid, 0);
