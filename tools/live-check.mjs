@@ -2263,6 +2263,29 @@ export const cases = {
         return { dc: 11 };
     },
 
+    // Chromatic Robe's Align Energy used twice (a mythic NPC with 2 Mythic Points): fire, then cold — one resistance Effect left, cold 15, its
+    // words saying the others are lost.
+    async chromaticReplace(scene) {
+        await clearSquares(scene, [[13, 5]]);
+        const { actor: user } = await creature(scene, "Chromatic Wearer", { x: 13, y: 5, level: 16 });
+        await user.update({ "system.traits.value": [...(user.system.traits.value ?? []), "mythic"] });
+        await user.update({ "system.resources.mythicPoints.value": 2 });
+        const robe = await give(user, "Chromatic Robe");
+        await robe.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true });
+        for (const resistType of [3, 1]) {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(robe.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what: "the robe's card" });
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0, resistType });
+            await until(() => user.itemTypes.effect.some((effect) => effect.flags?.[NS]?.resist && (effect.system.rules ?? []).some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes(["acid", "cold", "electricity", "fire"][resistType]))), `its resistance (${resistType})`, { timeout: 8000 });
+        }
+        const resists = user.itemTypes.effect.filter((effect) => effect.flags?.[NS]?.resist);
+        // (PF2e keeps a Resistance rule's type as a list.)
+        assert(resists.length === 1 && resists[0].system.rules.some((rule) => [].concat(rule.type).includes("cold") && rule.value === 15), `one Effect, cold 15 (${resists.map((effect) => JSON.stringify(effect.system.rules)).join(" | ")})`);
+        assert(/no resistance from it to the other three types/.test(resists[0].system.description.value), "its words");
+        return { left: user.system.resources.mythicPoints.value };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {
