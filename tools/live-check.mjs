@@ -2239,6 +2239,30 @@ export const cases = {
         return { cast: spellCard.flags["pf2e-automatic-resolution"].castFromItem };
     },
 
+    // Blessed Lantern Flail's Purge Unholy Magic: the readied Strike hits, its Will save card at the creature; a critical failure gives it the
+    // spell module's flat check to Cast a Spell, DC 11 for a minute.
+    async flailFlatCheck(scene) {
+        await clearSquares(scene, [[11, 5], [12, 5]]);
+        const { actor: user, token } = await creature(scene, "Lantern Wielder", { type: "character", x: 11, y: 5, level: 13 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Unholy Caster", { x: 12, y: 5, hp: 300, ac: 5, save: 0, alliance: "opposition", level: 10 });
+        const flail = await give(user, "Blessed Lantern Flail");
+        await flail.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(flail.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await token.object?.control?.();
+        await target(foeToken);
+        since = Date.now();
+        await withDie(15, () => strike(user, flail));
+        const save = await messageAfter(since, abilitySaveCard, { what: "the Will save card", timeout: 10000 });
+        await withDie(1, () => rollAndApply(save));
+        const flat = () => foe.itemTypes.effect.find((effect) => effect.flags?.["pf2e-automatic-resolution"]?.runtime?.castFlatCheck);
+        await until(flat, "the flat check's Effect", { timeout: 8000 });
+        assert(flat().flags["pf2e-automatic-resolution"].runtime.castFlatCheck.dc === 11 && flat().system.duration.unit === "minutes", `DC 11 for a minute (${JSON.stringify(flat().flags["pf2e-automatic-resolution"].runtime.castFlatCheck)} ${flat().system.duration.unit})`);
+        return { dc: 11 };
+    },
+
     // Possum's Play: its user Prone, and once its card applies the GM's disbelief card (Perception DC 18): an enemy's roll of 19 sees through
     // it — named on the card, an Effect on it saying so; a second's roll of 2 is still fooled.
     async possumDisbelief(scene) {

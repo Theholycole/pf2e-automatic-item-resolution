@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1234,
+  "entries": 1233,
   "results": {
    "none": 603,
-   "partial": 245,
+   "partial": 244,
    "builtin:no-effect": 129,
    "note-only": 257
   },
@@ -19,7 +19,7 @@
    "choice": 37,
    "mind": 8,
    "strike": 106,
-   "spells": 36,
+   "spells": 35,
    "information": 23,
    "out-of-combat": 33,
    "actions": 26,
@@ -65,7 +65,7 @@
    "mind": 70,
    "strike": 185,
    "reader": 206,
-   "spells": 72,
+   "spells": 71,
    "information": 191,
    "actions": 56,
    "from-events": 33,
@@ -9855,17 +9855,6 @@
    "needs": [
     "choice",
     "mind"
-   ]
-  },
-  {
-   "name": "Blessed Lantern Flail",
-   "kind": "activation",
-   "activation": "Purge Unholy Magic",
-   "result": "partial",
-   "main": "spells",
-   "work": "to cast a spell",
-   "needs": [
-    "spells"
    ]
   },
   {

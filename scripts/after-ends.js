@@ -4,7 +4,7 @@
 // has none of it left, the active GM's client gives it the next condition for its time, the mark used up.
 
 import { immunityEffect } from "../../pf2e-automatic-ability-resolution/src/live/auras.js";
-import { afterEndsEffectSource, afterEndsMarkSource } from "../src/live/card.js";
+import { afterEndsEffectSource, afterEndsMarkSource, castFlatCheckSource } from "../src/live/card.js";
 import { ABILITY_ID, MODULE_ID, isActiveGM } from "./foundry.js";
 
 const marksOf = (actor, slug) => (actor?.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.afterEnds?.when === slug);
@@ -16,6 +16,7 @@ export function setUpAfterEnds() {
         backlashAfterApplied(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | backlash`, error));
         longerImmunity(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | longer immunity`, error));
         selfAttacks(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | self attack`, error));
+        castFlatChecks(payload ?? {}).catch((error) => console.error(`${MODULE_ID} | flat check to cast`, error));
     });
     Hooks.on("deleteItem", (item) => {
         if (item?.type !== "condition" || !isActiveGM()) return;
@@ -123,4 +124,21 @@ export async function selfAttacks({ state, targets }) {
         }
     }
     return rolls;
+}
+
+// (A flat check to Cast a Spell for the creatures of those degrees, Blessed Lantern Flail's — plan.castFlatCheck: its Effect, which the spell
+// module's casting rules roll.)
+export async function castFlatChecks({ state, targets }) {
+    const checks = state?.plan?.castFlatCheck;
+    if (!checks) return [];
+    const item = { name: state.ability?.name ?? state.plan.source?.name ?? "The item", uuid: state.ability?.uuid ?? null, img: state.ability?.img ?? null };
+    const made = [];
+    for (const target of targets ?? []) {
+        const check = checks[target.degree];
+        const actor = check && target.actorUuid ? await fromUuid(target.actorUuid).catch(() => null) : null;
+        if (!actor?.createEmbeddedDocuments) continue;
+        const [effect] = await actor.createEmbeddedDocuments("Item", [castFlatCheckSource(check, { item, user: { actorUuid: state.source?.actorUuid ?? actor.uuid }, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        made.push(effect);
+    }
+    return made;
 }

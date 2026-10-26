@@ -178,3 +178,37 @@ export function withSaveAfterApplied(plan, html) {
     }
     return next;
 }
+
+// A flat check to Cast a Spell, its DC and time by degree (2026-10-26): Blessed Lantern Flail's Purge Unholy Magic, "Success Until the beginning
+// of your next turn, the creature must succeed at a DC 5 flat check to Cast a Spell. Failure As success, but the effect lasts for 1 minute.
+// Critical Failure As failure, but the DC of the flat check is 11." plan.castFlatCheck { degree: { dc, duration } }: once the card is applied,
+// an Effect on each creature of those degrees that the spell module's casting rules read (its runtime castFlatCheck flag: a failed flat check
+// loses the spell) — scripts/after-ends.js. Its rows' GM lines are no longer.
+const FLAT_SUCCESS = /^\{target\} \(success\): Until the beginning of your next turn, the creature must succeed at a DC (\d+) [Ff]lat(?: check)? to Cast a Spell\.$/;
+const FLAT_FAILURE = /^\{target\} \(failure\): As success, but the effect lasts for (\d+|one|an?) (minutes?|rounds?)\.(?: \(success: [^)]*\))?$/;
+const FLAT_CRITICAL = /^\{target\} \(critical failure\): As failure, but the DC of the flat check is (\d+)\.(?: \(failure: [^)]*\))?$/;
+export function withCastFlatCheck(plan) {
+    const rows = plan?.resolution?.outcomes;
+    if (plan?.resolution?.kind !== "save" || !rows) return plan;
+    const line = (degree, pattern) => (rows[degree]?.manualInstructions ?? []).map((one) => pattern.exec(said(one))).find(Boolean);
+    const success = line("success", FLAT_SUCCESS);
+    if (!success) return plan;
+    const failure = line("failure", FLAT_FAILURE);
+    const critical = failure ? line("criticalFailure", FLAT_CRITICAL) : null;
+    const turn = { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "source-turn" };
+    const longer = failure ? timeOf(failure[1], failure[2]) : null;
+    const checks = { success: { dc: Number(success[1]), duration: turn }, ...(failure ? { failure: { dc: Number(success[1]), duration: longer } } : {}), ...(critical ? { criticalFailure: { dc: Number(critical[1]), duration: longer } } : {}) };
+    const patterns = { success: FLAT_SUCCESS, failure: FLAT_FAILURE, criticalFailure: FLAT_CRITICAL };
+    const outcomes = Object.fromEntries(Object.entries(rows).map(([degree, row]) => {
+        if (!checks[degree] || !row?.manualInstructions) return [degree, row];
+        const kept = row.manualInstructions.filter((one) => !patterns[degree].test(said(one)));
+        return [degree, { ...row, manualInstructions: kept.length ? kept : undefined }];
+    }));
+    const next = { ...plan, castFlatCheck: checks, resolution: { ...plan.resolution, outcomes } };
+    const left = [...(next.notes ?? []), ...(next.unread ?? []), ...Object.values(outcomes).flatMap((row) => row?.manualInstructions ?? [])];
+    if (next.partial && !left.length) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
+}

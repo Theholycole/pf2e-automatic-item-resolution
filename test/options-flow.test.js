@@ -241,3 +241,13 @@ test("Chromatic Robe's Align Energy: a Mythic Point, resistance 15 to the type c
     assert.deepEqual([robe.spend, robe.item.resist[0].value, robe.item.resist[0].replaces, Boolean(robe.partial), robe.unread ?? []], [{ mythicPoints: 1 }, 15, true, false, []]);
     assert.match(resistanceText([{ ...robe.item.resist[0], type: "fire", choose: undefined }]), /^Resistance 15 to fire; no resistance from it to the other three types; until the next daily preparations \(remove it then\) or the next use$/);
 });
+
+test("Blessed Lantern Flail's Purge Unholy Magic: its Strike, then the Will save; a flat check to Cast a Spell by degree that the spell module reads", async () => {
+    const { castFlatCheckSource } = await import("../src/live/card.js");
+    const flail = planOf("Blessed Lantern Flail");
+    const save = flail.strike.save;
+    assert.deepEqual([save.resolution.check.statistic, save.resolution.check.against.value, save.castFlatCheck.success.dc, save.castFlatCheck.criticalFailure.dc, save.castFlatCheck.failure.duration.unit, Boolean(flail.partial)], ["will", 31, 5, 11, "minutes", false]);
+    assert.deepEqual(Object.values(save.resolution.outcomes).map((row) => [row.noteEffects ?? null, row.manualInstructions ?? null]), [[null, null], [null, null], [null, null], [null, null]]);
+    const effect = castFlatCheckSource(save.castFlatCheck.criticalFailure, { item: { name: "Blessed Lantern Flail" } });
+    assert.deepEqual([effect.flags["pf2e-automatic-resolution"].runtime.castFlatCheck, effect.system.duration.value, effect.system.duration.unit], [{ dc: 11 }, 1, "minutes"]);
+});

@@ -390,6 +390,13 @@ export function armedMarkSource(armed, { item = {}, user = {}, worldTime = 0, in
     return ownEffectSource({ name: "armed", img: "icons/svg/fire.svg", words, rules: [], duration: armed.lasts, flag: { armed }, item, user, worldTime, initiative, moduleId });
 }
 
+// A flat check to Cast a Spell on the creature, for its time (src/compiler/after-ends.js withCastFlatCheck: Blessed Lantern Flail): the spell
+// module's casting rules read its runtime flag — flags["pf2e-automatic-resolution"].runtime.castFlatCheck { dc }, its note Effects' own — and
+// roll it as the creature casts, the spell lost on a failure.
+export function castFlatCheckSource(check, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name: `flat check to cast (DC ${check.dc})`, img: "icons/svg/silenced.svg", words: `It must succeed at a DC ${check.dc} flat check to Cast a Spell`, rules: [], duration: check.duration, flag: { castFlatCheck: { dc: check.dc } }, extraFlags: { "pf2e-automatic-resolution": { runtime: { schema: 1, kind: "note-effect", castFlatCheck: { dc: check.dc } } } }, item, user, worldTime, initiative, moduleId });
+}
+
 // What of the weather it ignores, with its time: "Ignores the weather's fog and mist for 1 minute".
 export function weatherLine(entry) {
     const time = entry.duration?.mode === "fixed" ? ` for ${entry.duration.value} ${entry.duration.value === 1 ? entry.duration.unit.replace(/s$/, "") : entry.duration.unit}` : "";

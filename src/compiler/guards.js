@@ -480,7 +480,8 @@ function droppedIn(plan, rows) {
     let partial = false;
     const next = eachRow(plan, (row, degree) => {
         const words = rows[degree];
-        if (!words || NOTHING.test(words) || !emptyRow(row)) return row;
+        // (A row whose result is its flat check to Cast a Spell, plan.castFlatCheck — src/compiler/after-ends.js — isn't empty.)
+        if (!words || NOTHING.test(words) || !emptyRow(row) || plan.castFlatCheck?.[degree]) return row;
         const as = /^As (success|failure|critical failure), (?:but|except|and)\b/i.exec(words);
         const base = as ? rows[DEGREE_KEYS[as[1].replace(/\b\w/g, (letter) => letter.toUpperCase())]] : null;
         partial = true;

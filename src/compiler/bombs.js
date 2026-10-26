@@ -12,6 +12,7 @@
 // persistent fire damage …", "against a prepared spellcaster") is left out, as
 // are saves (the ability module's save card, later). Pure.
 
+import { withCastFlatCheck } from "./after-ends.js";
 import { readBombCloud } from "./bomb-cloud.js";
 import { STAGE_CONDITIONS, readConditions, readDuration } from "../../../pf2e-automatic-ability-resolution/src/compiler/inline.js";
 import { readPenalties } from "../../../pf2e-automatic-ability-resolution/src/compiler/checks.js";
@@ -174,17 +175,20 @@ export function bombSave(item, { scope: given = null } = {}) {
         }
     };
     // (An area the ability compiler read is fine for a burst: the card finds the creatures in it.)
+    // (Or a flat check to Cast a Spell by degree, Blessed Lantern Flail's: src/compiler/after-ends.js withCastFlatCheck, 2026-10-26.)
     const usable = (read) => read?.resolution?.kind === "save" && read.resolution.check?.against?.dc === "fixed" && (!read.targeting?.area || scope.scope === "burst")
-        && Object.values(read.resolution.outcomes ?? {}).some((row) => (row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement || (row?.damage?.mode === "formulas" && (row.damage.formulas ?? []).length));
-    let read = compile(item);
+        && (Boolean(read.castFlatCheck) || Object.values(read.resolution.outcomes ?? {}).some((row) => (row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement || (row?.damage?.mode === "formulas" && (row.damage.formulas ?? []).length)));
+    let read = withCastFlatCheck(compile(item));
     // (Its save's own sentence alone, when the rest of its text keeps the ability compiler from it — Roc-Shaft Arrow's "The target
     // must succeed at a DC 19 Fortitude save or be pushed 10 feet (20 feet on a critical failure)", after its flavor.)
     if (!usable(read)) {
         const sentence = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=[A-Z])/).find((one) => /@Check\[(?:fortitude|reflex|will)\|/i.test(one) && /\bmust (?:succeed at|attempt)\b/i.test(one));
-        if (sentence) read = compile({ ...item, system: { ...(item.system ?? {}), description: { value: `<p>${sentence.trim()}</p>` } } });
+        if (sentence) read = withCastFlatCheck(compile({ ...item, system: { ...(item.system ?? {}), description: { value: `<p>${sentence.trim()}</p>` } } }));
     }
     // (A row "As failure, and …" with what that row has, as the item side's other saves get: Jawbreaker Shield's critical failure.)
-    if (usable(read)) read = asRowCopies(read, text);
+    // (Its flat checks kept across the row copies.)
+    const flatChecks = usable(read) ? read.castFlatCheck ?? null : null;
+    if (usable(read)) read = { ...asRowCopies(read, text), ...(flatChecks ? { castFlatCheck: flatChecks } : {}) };
     const resolution = usable(read)
         ? { check: read.resolution.check, outcomes: read.resolution.outcomes, ...(read.resolution.afflictionHandoff ? { afflictionHandoff: read.resolution.afflictionHandoff } : {}) }
         : plainSave(html, text);
@@ -200,7 +204,8 @@ export function bombSave(item, { scope: given = null } = {}) {
             automation: { level: "automatic" },
             targeting: { target: scope.scope === "target" ? "the creature the bomb hits" : "the creatures the bomb affects", range: null, area: null },
             trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
-            resolution: { kind: "save", ...resolution }
+            resolution: { kind: "save", ...resolution },
+            ...(flatChecks ? { castFlatCheck: flatChecks } : {})
         }
     };
 }
