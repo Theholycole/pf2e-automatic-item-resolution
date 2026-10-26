@@ -5607,11 +5607,13 @@ export const cases = {
         }
     },
 
-    // Ghoul Stiletto: its activation readies the dagger's next Strike; the hit (AC 1) posts the target's DC 17 Fortitude save card and
-    // attaches the 10-foot stench aura to the target's token.
+    // Ghoul Stiletto: its activation readies the dagger's next Strike; a hit at an undead doesn't take it (nothing spent), then the hit at a
+    // living one (AC 1) posts the target's DC 17 Fortitude save card and attaches the 10-foot stench aura to the target's token.
     async ghoulStench(scene) {
         const { actor: rogue, token: rogueToken } = await creature(scene, "Stiletto Rogue", { type: "character", x: 2, y: 13 });
         const { actor: foe, token: foeToken } = await creature(scene, "Stench Bearer", { x: 3, y: 13, ac: 1, alliance: "opposition" });
+        const { actor: undead, token: undeadToken } = await creature(scene, "Stench Undead", { x: 2, y: 14, ac: 1, alliance: "opposition" });
+        await undead.update({ "system.traits.value": ["undead"] });
         const dagger = await give(rogue, "Ghoul Stiletto");
         await dagger.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
         await until(() => rogueToken.object && foeToken.object, "the tokens drawn", { timeout: 5000 });
@@ -5623,6 +5625,11 @@ export const cases = {
             await game.modules.get(NS).api.live.apply(card.id);
             await wait(600);
             await rogueToken.object?.control?.();
+            await target(undeadToken);
+            since = Date.now();
+            const first = await strike(rogue, dagger);
+            if (["success", "criticalSuccess"].includes(first.attack.flags.pf2e.context.outcome)) await messageAfter(since, (message) => /isn't living \(undead\)/.test(message.content), { what: "the undead isn't the one" });
+            assert(rogue.itemTypes.effect.some((effect) => effect.flags?.[NS]?.strikeRider), "the rider still readied");
             await target(foeToken);
             since = Date.now();
             const { attack } = await strike(rogue, dagger);

@@ -4,8 +4,12 @@
 // save or become Sickened 1 (plus Slowed 1 as long as it's sickened on a critical failure)", Ghast Stiletto's "For the next minute, the
 // target creature, as well as any creatures within a @Template[emanation|distance:10], must succeed at …". The weapon's next Strike: on a
 // hit, the creature's save card, and strike.zone — the ability module's zone attached to that creature's token, the same save for the
-// others in it (at a turn's start or end, or there as it starts and on entering). What a critical failure adds while it's sickened, the
-// immunity and a penalty inside are notes. Pure.
+// others in it (at a turn's start or end, or there as it starts and on entering). "The next living target": strike.livingOnly — a hit at a
+// creature that isn't living (PF2e's mode of being) isn't the one, and the rider waits for the next (scripts/strikes.js); "struck", so a miss
+// keeps it too (strike.missKeeps). Ghast's "While
+// within the emanation, the creature takes a –2 circumstance penalty to saves against disease and to recover from the sickened condition":
+// the zone's modifier, as PF2e's own Effect: Stench has it (a disease's save or a Retch). What a critical failure adds while it's sickened
+// beyond those is a note. Pure.
 
 import { compileStrike } from "./strikes.js";
 
@@ -14,6 +18,7 @@ const EMITS = /\bThe creature emits an? [\w ]+? aura in an? @Template\[(?:type:)
 const NEXT_MINUTE = /\bFor the next (minute|\d+ minutes), the target creature, as well as any creatures within an? @Template\[(?:type:)?emanation\|distance:(\d+)[^\]]*\](?:\{[^}]*\})?, must\b/i;
 const SAVE_OR = /\bmust succeed at an? (@Check\[(?:fortitude|reflex|will)\|[^\]]*\])(?:\{[^}]*\})? save or become (@UUID\[[^\]]+\]\{[^}]+\})(?: \(plus ([^)]*?) on a critical failure\))?\./i;
 const UNITS = { minute: "minutes", minutes: "minutes", round: "rounds", rounds: "rounds" };
+const INSIDE_PENALTY = /\bWhile within the emanation, the creature takes an? [–-](\d+) (circumstance|status) penalty to saves against (disease|poison|fear) and to recover from the sickened condition\./i;
 
 // The activation's html, its base, the item → the Strike plan with strike.zone, or null.
 export function hitAuraPlan(html, base, item, options = {}) {
@@ -35,11 +40,12 @@ export function hitAuraPlan(html, base, item, options = {}) {
     const radius = Number(emits ? emits[1] : minute[2]);
     const lasts = emits ? { value: Number(emits[2]), unit: UNITS[emits[3].toLowerCase()] } : { value: /^\d+/.test(minute[1]) ? Number(minute[1].split(" ")[0]) : 1, unit: "minutes" };
     const plain = text.replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const penalty = INSIDE_PENALTY.exec(plain);
     const notes = [
-        ...(next[1] ? ["Only a living creature: the GM's call for any other."] : []),
         ...(save[3] && !plus ? [`On a critical failure, it's also ${save[3].replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1")} (by hand).`] : []),
-        ...[/\bA creature that succeeds at its save is temporarily immune[^.]*\./i, /\bWhile within the emanation, [^.]*\./i].map((pattern) => pattern.exec(plain)?.[0]).filter(Boolean)
+        ...[/\bA creature that succeeds at its save is temporarily immune[^.]*\./i, ...(penalty ? [] : [/\bWhile within the emanation, [^.]*\./i])].map((pattern) => pattern.exec(plain)?.[0]).filter(Boolean)
     ];
+    const modifiers = penalty ? [{ selector: "saving-throw", value: -Number(penalty[1]), type: penalty[2].toLowerCase(), predicate: [{ or: [`item:trait:${penalty[3].toLowerCase()}`, "action:retch"] }] }] : [];
     const zone = {
         area: { type: "emanation", value: radius },
         centre: "self",
@@ -54,8 +60,9 @@ export function hitAuraPlan(html, base, item, options = {}) {
         saves: [{ when: emits ? ["start", "end"] : ["initial", "enter"], plan: { ...saved, trigger: { event: "zone" }, targeting: { target: "a creature in the aura", range: null, area: null } } }],
         damage: [],
         effect: null,
-        modifiers: [],
+        modifiers,
         notes
     };
-    return { ...strike, automation: { level: "guided" }, strike: { ...strike.strike, save: saved, zone }, notes: [...(strike.notes ?? []), ...notes], partial: true };
+    // (Its immunity is read later, src/compiler/immunity.js: with no notes left, the plan is whole.)
+    return { ...strike, ...(notes.length ? { automation: { level: "guided" }, partial: true } : {}), strike: { ...strike.strike, save: saved, zone, missKeeps: true, ...(next[1] ? { livingOnly: true } : {}) }, notes: [...(strike.notes ?? []), ...notes] };
 }

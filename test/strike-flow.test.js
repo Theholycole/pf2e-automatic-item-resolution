@@ -172,12 +172,17 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     const ghoul = compileActivations(source("Ghoul Stiletto"))[0].plan;
     assert.deepEqual([ghoul.strike.own, ghoul.strike.save.resolution.check.against.value, ghoul.strike.zone.area, ghoul.strike.zone.saves[0].when, ghoul.strike.zone.lasts.value], [true, 17, { type: "emanation", value: 10 }, ["start", "end"], 1]);
     assert.deepEqual(compileActivations(source("Ghast Stiletto"))[0].plan.strike.zone.saves[0].when, ["initial", "enter"]);
+    // ("The next living target struck": strike.livingOnly, a miss keeping it too; Ghast's penalty inside to saves against disease and to Retch
+    // as PF2e's Effect: Stench — each whole, 2026-10-26.)
+    const ghast = compileActivations(source("Ghast Stiletto"))[0].plan;
+    assert.deepEqual([ghoul.strike.livingOnly, ghoul.strike.missKeeps, Boolean(ghoul.partial), Boolean(ghast.partial)], [true, true, false, false]);
+    assert.deepEqual(ghast.strike.zone.modifiers, [{ selector: "saving-throw", value: -2, type: "circumstance", predicate: [{ or: ["item:trait:disease", "action:retch"] }] }]);
     assert.match(strikeLines(ghoul).join(" | "), /a 10-foot aura on the target for 1 minutes/);
     // (Its critical failure's "plus Slowed 1 as long as it's sickened": on that row of both saves, the ability module's condition while
     // sickened — not a note.)
     const slowed = (plan) => plan.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "slowed");
     assert.deepEqual([slowed(ghoul.strike.save), slowed(ghoul.strike.zone.saves[0].plan)], [{ kind: "condition", slug: "slowed", value: 1, duration: { mode: "while", condition: "sickened" } }, { kind: "condition", slug: "slowed", value: 1, duration: { mode: "while", condition: "sickened" } }]);
-    assert.ok(!ghoul.notes.some((note) => /Slowed/.test(note)));
+    assert.ok(!(ghoul.notes ?? []).some((note) => /Slowed/.test(note)));
     // Saves for the creatures around the one hit: Dispersing Bullet's push (Fortitude 21, the target left out, the push its rows' from the
     // creature hit — moveFrom "target", the note it was before ability 0.9.2 kept as byHand), Singularity Ammunition's pull and then its blast
     // (7d12 bludgeoning, basic Reflex 28, the target too).

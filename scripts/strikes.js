@@ -98,6 +98,17 @@ export async function strikeWithRider(message) {
         if (at) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.struck`]: [...struck, at] });
         if (volley.selfDamage) await volleyDamage(actor, rider, volley.selfDamage);
     }
+    // (Only a living creature carries it, Ghoul Stiletto's "the next living target struck", src/compiler/hit-auras.js: a hit at an undead or a
+    // construct, PF2e's mode of being, isn't the one — nothing spent.)
+    if (rider.plan.strike?.livingOnly && what === "hit") {
+        const at = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
+        const struck = at ? await fromUuid(at).catch(() => null) : null;
+        const mode = struck?.actor?.modeOfBeing;
+        if (mode && mode !== "living") {
+            await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(struck.name ?? struck.actor.name)} isn't living (${escape(mode)}), so it doesn't take; the next living creature hit does (nothing spent).</p>` });
+            return;
+        }
+    }
     // (Splash for this Strike, the splash trait's — Jistkan War Crossbow's, Drake Rifle's: the creatures within 5 feet of the target take it
     // on a hit, PF2e's damage roll giving the target its own, and the target too on a failure — the bomb card's splash list, ticked, its
     // Apply that splash damage.)

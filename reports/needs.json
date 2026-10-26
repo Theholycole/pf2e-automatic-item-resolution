@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-26",
  "totals": {
-  "entries": 1303,
+  "entries": 1301,
   "results": {
    "none": 621,
-   "partial": 293,
+   "partial": 291,
    "builtin:no-effect": 129,
    "note-only": 260
   },
@@ -44,7 +44,7 @@
    "missing-number": 7,
    "fortune": 7,
    "linked-effect": 1,
-   "by-kind": 8
+   "by-kind": 6
   },
   "any": {
    "speeds": 30,
@@ -54,7 +54,7 @@
    "speech": 124,
    "out-of-combat": 422,
    "counteract": 80,
-   "afflictions": 97,
+   "afflictions": 96,
    "lasting": 217,
    "moving": 116,
    "triggers": 126,
@@ -76,14 +76,14 @@
    "range": 4,
    "cooldown": 11,
    "vehicles": 24,
-   "situational": 78,
+   "situational": 77,
    "creatures": 53,
    "forms": 25,
    "fortune": 10,
    "retaliation": 3,
    "missing-number": 8,
    "linked-effect": 1,
-   "by-kind": 8
+   "by-kind": 6
   }
  },
  "entries": [
@@ -8112,16 +8112,6 @@
    ]
   },
   {
-   "name": "Ghoul Stiletto",
-   "kind": "activation",
-   "result": "partial",
-   "main": "by-kind",
-   "work": "only a living creature",
-   "needs": [
-    "by-kind"
-   ]
-  },
-  {
    "name": "Effervescent Ampoule",
    "kind": "consumable",
    "result": "none",
@@ -8142,18 +8132,6 @@
    "needs": [
     "areas",
     "objects"
-   ]
-  },
-  {
-   "name": "Ghast Stiletto",
-   "kind": "activation",
-   "result": "partial",
-   "main": "by-kind",
-   "work": "only a living creature",
-   "needs": [
-    "by-kind",
-    "afflictions",
-    "situational"
    ]
   },
   {
