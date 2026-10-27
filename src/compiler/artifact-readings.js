@@ -9,6 +9,8 @@ import { spherePlanOf } from "./sphere.js";
 import { cubeWaysOf, inertPlanOf } from "./cube-faces.js";
 import { dragonArmyOf } from "./spectral-army.js";
 import { contractSpellsOf } from "./contract-spells.js";
+import { decoyDoublePlanOf } from "./decoy-double.js";
+import { pairedStonePlanOf } from "./paired-stone.js";
 
 // Each reading: the source names it's for (an activation's "Item: Activation"), whether it reads over the plan read before (by default only
 // none, note-only, or the GM's no-effect), its Requirements line's pattern when it has one, a pattern for each of its effect's sentences —
@@ -95,6 +97,32 @@ const READINGS = [
             /^You use the same number of actions for this activation as the selected spell normally takes\.$/
         ],
         card: (found, _plan, { item, spells, info }) => contractSpellsOf(found, item, spells, info)
+    },
+    {
+        // Shadewither Key's Umbral Double: the double's note Effect, its flat check rolled at each attack and targeted spell (src/compiler/decoy-double.js).
+        names: ["Shadewither Key: Umbral Double"],
+        sentences: [
+            /^You touch the Shadewither Key and command the shadows it casts around you to peel away\.$/,
+            /^The shadows form an umbral double that resembles you in every way except for its fiery red eyes and the expression of wicked delight on its face\.$/,
+            /^The double occupies the same space as you and attempts to intercept any attacks aimed at you\.$/,
+            /^A creature must succeed at a @Check\[flat\|dc:(\d+)\] when targeting you with an attack, spell, or other effect; on a failure, they hit the shadowy double instead of you\.$/,
+            /^The effect lasts for (\d+) (minutes?|rounds?) or until the double is hit, whichever comes first\.$/,
+            /^Once the double is hit, it's destroyed\.$/,
+            /^As long as the double exists, (you don't gain the Shadewither Key's item bonus to Stealth checks)\.$/
+        ],
+        card: (found, _plan, { slug }) => decoyDoublePlanOf(found, slug)
+    },
+    {
+        // Jahan Waystone: the save card at the creatures in the stone's light, those that fail teleported to the paired stone (src/compiler/paired-stone.js).
+        names: ["Jahan Waystone"],
+        sentences: [
+            /^You place your hand on the stone and focus on the stone's light\.$/,
+            /^The stone's glow envelopes all creatures in a (\d+)-foot radius with its light and attempts to teleport the creatures to its paired stone\.$/,
+            /^If there is no open space within (\d+) feet of the target waystone, the teleportation attempt fails\.$/,
+            /^A creature can resist the teleportation with a successful @Check\[will\|dc:(\d+)\]\.$/
+        ],
+        // (Its "Activate (1 minute) envision, Interact": a minute, its components concentrate and manipulate.)
+        card: (found, _plan, { slug, info }) => ({ ...pairedStonePlanOf(found, slug), activation: { time: "1 minute", traits: ["concentrate", "manipulate"] }, item: { activation: { ...(info?.activation ?? {}), time: "1 minute" } } })
     }
 ];
 
@@ -113,6 +141,7 @@ export const hasArtifactReading = (name) => READINGS.some((reading) => named(rea
 // lines; item: its item's whole text, plain (itemHtml: as it is); index: the activation's (a reading for one of several unnamed ones); spells:
 // PF2e's spells by name (options.spells).
 export function withArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", itemHtml = "", index = null, spells = {}, base, info, frequency = null }) {
+    const slug = base?.source?.slug ?? null;
     const readings = READINGS.filter((reading) => named(reading, name) && (reading.index === undefined || reading.index === index) && (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect"));
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
@@ -120,7 +149,7 @@ export function withArtifactReading(plan, { name, words, requirements = null, tr
         if (reading.requirements && !asked) continue;
         if (reading.trigger && !reading.trigger.test(String(trigger ?? "").trim())) continue;
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan, { html, item, itemHtml, requirements: asked, trigger, spells, base, info }) : null;
+        const card = found ? reading.card(found, plan, { html, item, itemHtml, requirements: asked, trigger, spells, slug, base, info }) : null;
         if (!card) continue;
         if (card.keep) {
             const { keep, ...changes } = card;

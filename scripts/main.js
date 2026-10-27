@@ -55,6 +55,8 @@ import { setUpOwnSplash } from "./own-splash.js";
 import { setUpReadiedRefund } from "./strikes.js";
 import { setUpSphere, sphereTouched } from "./sphere.js";
 import { setUpCube } from "./cube.js";
+import { setUpDecoyDouble } from "./decoy-double.js";
+import { setUpPairedStone } from "./paired-stone.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -180,6 +182,10 @@ Hooks.once("ready", async () => {
     setUpSphere();
     // (A cube's walls and the cubes it makes inert, Cube of Nex's: scripts/cube.js.)
     setUpCube();
+    // (A double that takes what's aimed at its user, Shadewither Key's: scripts/decoy-double.js.)
+    setUpDecoyDouble();
+    // (Creatures teleported to a paired stone once its save card is applied, Jahan Waystone's: scripts/paired-stone.js.)
+    setUpPairedStone();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

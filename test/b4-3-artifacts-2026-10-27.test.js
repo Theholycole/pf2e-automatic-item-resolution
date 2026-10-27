@@ -99,3 +99,16 @@ test("Limitless Power's Unleash Power: the cast card of every common divine cant
     assert.match(contractRefusal(plan, record, heal, 5), /today/);
     assert.equal(contractRefusal(plan, withContractCast(record, cantrip, 5), cantrip, 5), null);
 });
+
+test("Shadewither Key's Umbral Double: a note Effect for the minute, its flat check's DC on PF2e's RollOption for the live hook, the key's Stealth bonus suppressed while it lasts", () => {
+    const plan = activation("Shadewither Key", "Umbral Double");
+    const note = plan.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([done(plan), routeOf(plan), note.duration.value, note.duration.unit], [true, "item", 1, "minutes"]);
+    assert.deepEqual(note.rules, [{ key: "RollOption", domain: "all", option: "air-decoy-double:11" }, { key: "AdjustModifier", selector: "stealth", slug: "shadewither-key", suppress: true }]);
+});
+
+test("Jahan Waystone: the save card at the creatures in the stone's 10-foot light, Will DC 45, those that fail teleported to the paired stone (within 30 feet of it)", () => {
+    const [plan] = activations("Jahan Waystone");
+    assert.deepEqual([done(plan), routeOf(plan), plan.resolution.check.statistic, plan.resolution.check.against.value, plan.targeting.area], [true, "save", "will", 45, { type: "emanation", value: 10 }]);
+    assert.deepEqual([plan.pairedStone, plan.activation.time, plan.item.activation.time], [{ within: 30, degrees: ["failure", "criticalFailure"], slug: "jahan-waystone" }, "1 minute", "1 minute"]);
+});
