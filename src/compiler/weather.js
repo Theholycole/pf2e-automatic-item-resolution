@@ -13,6 +13,9 @@ export const plainOf = (html) => String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^
 const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?;])\s+(?=[a-zA-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 
 const FOG = /\bsee clearly through fog and mist\b|\bany creature concealed only by fog or mist is no longer concealed to you\b/i;
+// (Goz Mask's "You ignore Concealment caused by fog, smoke, and other obscuring vapors for 1 minute", 2026-10-27: the weather's fog and mist,
+// the environment module's; smoke and other vapors — a zone's or a spell's — on the Effect's words, its user's own to ignore: more.)
+const VAPORS = /\bYou ignore Concealment caused by fog, smoke, and other obscuring vapors\b/i;
 const ALL_WEATHER = /\bthe weather \(including wind and fog\) doesn't affect your movement or vision\b/i;
 const STRIKE_CLEAR = /\bWhen making a Strike with [\w' -]+?, targets (?:do not|don't) gain concealment from the effects of mist or precipitation\b/i;
 const WIND = /\bcircumstance penalties to attacks (?:of up to [–-](\d+) )?imparted from strong winds are negated\b/i;
@@ -25,8 +28,16 @@ export function readWeatherIgnores(text) {
     let windUpTo = null;
     let weapon = false;
     let duration = null;
+    let more = null;
     for (const sentence of SENTENCES(text)) {
         let read = false;
+        if (VAPORS.test(sentence)) {
+            ignores.add("fog-mist");
+            more = "concealment from smoke and other obscuring vapors too (its own to ignore)";
+            read = true;
+            const time = FOR.exec(sentence);
+            if (time) duration = { mode: "fixed", value: WORDS[time[1].toLowerCase()] ?? Number(time[1]), unit: UNITS[time[2].toLowerCase()], expiry: "turn-start" };
+        }
         if (FOG.test(sentence)) {
             ignores.add("fog-mist");
             read = true;
@@ -51,14 +62,14 @@ export function readWeatherIgnores(text) {
         if (read) said.push(sentence);
     }
     if (!ignores.size) return null;
-    return { ignores: [...ignores], ...(windUpTo ? { windUpTo } : {}), ...(weapon ? { weapon: true } : {}), ...(duration ? { duration } : {}), said };
+    return { ignores: [...ignores], ...(windUpTo ? { windUpTo } : {}), ...(weapon ? { weapon: true } : {}), ...(more ? { more } : {}), ...(duration ? { duration } : {}), said };
 }
 
 // In words: "Fog and mist don't hinder its sight", "The weather doesn't hinder its sight or movement".
 const KEY_WORDS = { sight: "sight penalties", "fog-mist": "fog and mist", precipitation: "rain and snow concealing targets", concealment: "concealment", "wind-ranged": "wind penalties to ranged attacks", "wind-movement": "wind on its movement" };
 export function weatherText(entry) {
     const words = entry.ignores.map((key) => KEY_WORDS[key] ?? key);
-    return `Ignores the weather's ${words.join(", ")}${entry.windUpTo ? ` (wind penalties up to –${entry.windUpTo})` : ""}`;
+    return `Ignores the weather's ${words.join(", ")}${entry.windUpTo ? ` (wind penalties up to –${entry.windUpTo})` : ""}${entry.more ? `; ${entry.more}` : ""}`;
 }
 
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();

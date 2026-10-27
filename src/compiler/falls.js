@@ -23,6 +23,9 @@ const NO_DAMAGE = /\b(?:you take no damage from the fall|never take falling dama
 // environment module's, 2026-10-26.)
 const ON_FEET = /\bRegardless of whether you take damage or not from the fall, you land on your feet\b/i;
 const FOR = /\b[Ff]or (\d+|one|an?) (round|minute|hour)s?\b/;
+// (Diver's Gloves' "You take damage as if the fall were half the distance, to a minimum fall of 5 feet", 2026-10-27: half the damage, as
+// Parachute Mail's halved — the environment module's flag, its words on the Effect —, with the shortest fall it counts.)
+const HALF_DISTANCE = /\bYou take damage as if the fall were half the distance, to a minimum fall of (\d+) feet\b/i;
 // (What a fall's sentence says besides, 2026-10-26 — words on the fall's Effect, the creature's own to play: Aerial Cloak's "and glide to a space
 // of your choice at the bottom of your fall, which must be within 20 feet of where you would've landed" (glide), Dragonaut's Wingsuit's "Your
 // fall slows to 60 feet per round" (rate); Jade Cat's "you are not Off-Guard when you Balance, and narrow surfaces and uneven ground are not
@@ -47,6 +50,13 @@ export function readFall(text, { reaction = false } = {}) {
             said.push(sentence);
             continue;
         }
+        const half = HALF_DISTANCE.exec(sentence);
+        if (half) {
+            extra.halved = true;
+            extra.minFeet = Number(half[1]);
+            said.push(sentence);
+            continue;
+        }
         const short = SHORTER.exec(sentence);
         const none = NO_DAMAGE.test(sentence);
         if (!short && !none) continue;
@@ -66,13 +76,13 @@ export function readFall(text, { reaction = false } = {}) {
         const time = FOR.exec(sentence);
         if (time && !duration) duration = { mode: "fixed", value: WORDS[time[1].toLowerCase()] ?? Number(time[1]), unit: UNITS[time[2].toLowerCase()], expiry: "turn-start" };
     }
-    if (!shorter && !noDamage) return null;
+    if (!shorter && !noDamage && !extra.halved) return null;
     return { ...(shorter ? { shorter } : {}), ...(noDamage ? { noDamage: true } : {}), ...(onFeet ? { landsOnFeet: true } : {}), ...extra, said, duration: duration ?? (reaction ? { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" } : null) };
 }
 
 // The fall in words: "Its falls count as 120 feet shorter; it lands on its feet", "It takes no damage from a fall".
 export function fallText(fall) {
-    const parts = [fall.flutter ? "it flutters in the air until the end of its turn" : null, fall.rate ? `${fall.flutter ? "then " : ""}it falls ${fall.rate} feet a round` : null, fall.noDamage ? "it takes no damage from a fall" : null, fall.halved && !fall.noDamage ? "it takes half the damage from a fall" : null, fall.shorter && !fall.noDamage ? `its falls count as ${fall.shorter} feet shorter` : null, fall.landsOnFeet ? "it lands on its feet" : null, fall.glide ? `it can land in a space of its choice within ${fall.glide} feet of where it would have` : null, fall.balance ? "it isn't off-guard when it Balances, and narrow surfaces and uneven ground aren't difficult terrain for it" : null].filter(Boolean);
+    const parts = [fall.flutter ? "it flutters in the air until the end of its turn" : null, fall.rate ? `${fall.flutter ? "then " : ""}it falls ${fall.rate} feet a round` : null, fall.noDamage ? "it takes no damage from a fall" : null, fall.halved && !fall.noDamage ? `it takes half the damage from a fall${fall.minFeet ? ` (as if it fell half as far, ${fall.minFeet} feet at least)` : ""}` : null, fall.shorter && !fall.noDamage ? `its falls count as ${fall.shorter} feet shorter` : null, fall.landsOnFeet ? "it lands on its feet" : null, fall.glide ? `it can land in a space of its choice within ${fall.glide} feet of where it would have` : null, fall.balance ? "it isn't off-guard when it Balances, and narrow surfaces and uneven ground aren't difficult terrain for it" : null].filter(Boolean);
     const words = parts.join("; ");
     return words.charAt(0).toUpperCase() + words.slice(1);
 }
@@ -82,13 +92,17 @@ const MORE = /\b(?:Off-Guard|Balance|difficult terrain|glide|space|bonus|penalty
 const onlyFall = (sentence) => !MORE.test(sentence.replace(GLIDE, " ").replace(BALANCE, " ").replace(RATE, " ").replace(SHORTER, " ").replace(NO_DAMAGE, " ").replace(FOR, " ").replace(FLUTTER, " "));
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+// (Diver's Gloves: the barrier its words picture, and the Swim after — its user's own move, a line of the card, 2026-10-27.)
+const DIVE = /^The gloves create a hydrodynamic barrier around you, dispersing the damage\b/i;
+const SWIM_AFTER = /^You then Swim with the effects of a critical success for the check\.$/i;
 const RULE = /\b(?:bonus|penalty|saving throws?|saves?|resistance|weakness|Strike|check|DC|attack|Speed|Hit Points|damage|condition|Off-Guard|terrain|space|feet)\b/i;
 
 // The plan (or none), the activation's (or consumable's) html, its base → the plan with plan.fall, the item card's Effect for the
 // environment module; one with nothing read becomes its own card.
 export function withFalls(plan, html, base) {
     const text = plainOf(html);
-    const reaction = /\bTrigger (?:You're|You are) falling\b|\bTrigger You (?:begin to )?fall\b/i.test(text);
+    // (And Diver's Gloves' "Trigger You would take damage from falling into water", 2026-10-27.)
+    const reaction = /\bTrigger (?:You're|You are) falling\b|\bTrigger You (?:begin to )?fall\b|\bTrigger You would take damage from falling\b/i.test(text);
     const read = readFall(text.replace(/^.*?\bEffect\b\s*/s, ""), { reaction });
     if (!read || plan?.fall || plan?.builtin && plan.builtin !== "no-effect") return plan;
     const { said: sentences, ...fall } = read;
@@ -97,8 +111,10 @@ export function withFalls(plan, html, base) {
     const empty = !plan || plan.noteOnly || plan.builtin === "no-effect";
     if (empty) {
         const body = text.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
-        const notes = [...SENTENCES(body).filter((sentence) => !sentences.includes(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence)), ...kept];
-        return { ...base, builtin: undefined, noteOnly: undefined, automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(base?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, fall, ...(notes.length ? { notes, partial: true } : {}) };
+        const rest = SENTENCES(body).filter((sentence) => !sentences.includes(sentence) && !DIVE.test(sentence));
+        const lines = rest.filter((sentence) => SWIM_AFTER.test(sentence)).map(() => "Then its user Swims as on a critical success at the check (its own move on the map).");
+        const notes = [...rest.filter((sentence) => !SWIM_AFTER.test(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence)), ...kept];
+        return { ...base, builtin: undefined, noteOnly: undefined, automation: { level: notes.length ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(base?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, fall, ...(notes.length || lines.length ? { notes: [...lines, ...notes] } : {}), ...(notes.length ? { partial: true } : {}) };
     }
     const notes = (plan.notes ?? []).filter((entry) => !gone(entry));
     const unread = (plan.unread ?? []).filter((entry) => !gone(entry));

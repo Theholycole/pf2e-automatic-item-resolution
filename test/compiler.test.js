@@ -267,8 +267,9 @@ test("an item with a time and nothing else the module reads: a note of its text 
     const result = registry.resolveSync(plan, context(), io());
     assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.effect?.kind]), [["effect", "drinker", "note"]]);
     // With no time, nothing (the GM's). (2026-10-27: Swamp Lily Quilt for Ration Tonic, whose nourishment is now its card's line —
-    // src/compiler/needs.js no longer reads its "fruity scent" as a sense.)
-    assert.equal(compileItem(item("Swamp Lily Quilt")), null);
+    // src/compiler/needs.js no longer reads its "fruity scent" as a sense. Later that day Beckoning Cat Amulet for Swamp Lily Quilt, whose
+    // mud is now the ability module's zone — src/compiler/area-readings.js.)
+    assert.equal(compileItem(item("Beckoning Cat Amulet")), null);
 });
 
 test("a snare: the ability module's zone, a 5-foot square set off once by the first creature to enter it", () => {
@@ -944,8 +945,9 @@ test("narrow bonuses on PF2e's roll options, the narrower words a note (the user
     assert.deepEqual(bonus("Aroma Concealer")[0].slice(0, 2), ["stealth", 2]);
     assert.deepEqual(bonus("Potion of Disguise (Lesser)"), [["deception-dc", 4, "status", "24 hours", "null"]]);
     assert.deepEqual(bonus("Fungal Walk Musk"), [["ac", 1, "item", "1 days", JSON.stringify(["origin:trait:fungus"])]]);
+    // (2026-10-27: Healing Vapor's bonus is its burst's, the ability module's zone for the creatures inside — src/compiler/area-readings.js.)
     const vapor = compileItem({ ...item("Healing Vapor (Major)"), ownerLevel: 10 });
-    assert.deepEqual([vapor.item.recipient, vapor.resolution.outcomes.success.modifiers[0].value], ["targets", 3]);
+    assert.deepEqual([vapor.builtin, vapor.zone.modifiers[0].value, vapor.zone.modifiers[0].predicate], ["zone", 3, [{ or: ["item:trait:disease", "item:trait:poison"] }]]);
 });
 
 test("area buffs for the creatures targeted (Inspiring Spotlight's a zone) and other narrow bonuses: Inspiring Spotlight, Paradise Light, Undead Compendium (attacks against undead by the target's trait), Rhyton of the Radiant Ifrit, Mask of Shifting Monstrosity", () => {
