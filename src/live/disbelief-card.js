@@ -30,13 +30,16 @@ export function createDisbeliefCard({ plan, item, user, worldTime = 0, userDCs =
 
 // A creature's attempt: { name, degree, also } → the next state (seen through on a success or a critical success). also: the second check's,
 // seeing through only when it says so (Wooden Nickel's Crafting); else its own line (the Haversack's Society, the real text read).
+// (A second check that would have seen through, failed, is a try that left it fooled, as a failed Perception is: listed so — Wooden Nickel's
+// Crafting, 2026-10-27. The Haversack's Society isn't a try at the illusion.)
 const degreeWords = (degree) => degree.replace(/([A-Z])/g, " $1").toLowerCase();
 export function withAttempt(state, { name, degree, also = false }) {
     const success = degree === "success" || degree === "criticalSuccess";
     const second = also ? state.plan.disbelief?.also ?? null : null;
     const through = success && (!second || Boolean(second.through));
     const saw = through && !state.saw.includes(name) ? [...state.saw, name] : state.saw;
-    const fooled = !through && !second && !state.fooled.includes(name) && !saw.includes(name) ? [...state.fooled, name] : state.fooled;
+    const tried = !second || Boolean(second.through);
+    const fooled = !through && tried && !state.fooled.includes(name) && !saw.includes(name) ? [...state.fooled, name] : state.fooled;
     const line = second ? `${name} (${nameOf(second.statistic)}): ${degreeWords(degree)}, ${success ? second.what : "no wiser"}` : `${name}: ${degreeWords(degree)}, ${through ? "sees through the illusion" : "still fooled"}`;
     return { ...state, saw, fooled, results: [...state.results, line].slice(-8) };
 }

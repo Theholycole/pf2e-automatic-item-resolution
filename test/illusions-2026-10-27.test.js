@@ -43,10 +43,10 @@ test("Wooden Nickel: against its user's Deception DC, filled in when the card is
     let state = createDisbeliefCard({ plan, item: { name: "Wooden Nickel" }, user: { name: "Rogue" }, worldTime: 0, userDCs: { deception: 27 } });
     assert.deepEqual([state.plan.disbelief.dc, state.plan.disbelief.also.dc, state.until], [27, 27, 600]);
     assert.match(disbeliefText(state.plan.disbelief), /Perception DC 27 \(its user's Deception DC\); Crafting DC 27/);
-    // (A Crafting success sees through it as well; a failure isn't counted as fooled by the illusion.)
+    // (A Crafting success sees through it as well. 2026-10-27: a failure, a try at it as a failed Perception is, leaves it fooled — listed so.)
     state = withAttempt(state, { name: "Merchant", degree: "success", also: true });
     state = withAttempt(state, { name: "Guard", degree: "failure", also: true });
-    assert.deepEqual([state.saw, state.fooled], [["Merchant"], []]);
+    assert.deepEqual([state.saw, state.fooled], [["Merchant"], ["Guard"]]);
     assert.match(state.results[0], /^Merchant \(Crafting\): success, sees what the object truly is/);
     const html = disbeliefCardHTML(state, { canApply: true });
     assert.match(html, /<select data-air-field="check"><option value="0">Perception: disbelieve<\/option><option value="1">Crafting: /);

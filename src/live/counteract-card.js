@@ -108,6 +108,9 @@ function counteractOwnText(counteract) {
         counteract.afflictions?.length ? `a ${list(counteract.afflictions)}` : null
     ].filter(Boolean).join(", or ");
     const how = counteract.pick === "each" ? "each effect" : counteract.pick === "highest" ? "the highest-rank effect" : "one effect";
+    // (Nothing at its rank, Razmiri Mask's Mercy at rank 2: said so, with the rank it starts at — not an empty "one effect ;", 2026-10-27.)
+    const from = (counteract.afflictionsByRank ?? [])[0];
+    if (!what) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: ${from ? `nothing at this rank (a ${list(from.afflictions ?? [])} from rank ${from.rank})` : how}`;
     return `Counteract +${counteract.modifier}, rank ${counteract.rank}: ${how} ${what}${counteract.failToSuccess ? ` (a failure is a success against a ${list(counteract.failToSuccess.traits)})` : ""}`;
 }
 

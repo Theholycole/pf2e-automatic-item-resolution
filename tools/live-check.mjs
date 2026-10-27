@@ -6185,7 +6185,8 @@ export const cases = {
     },
 
     // Elixir of Rejuvenation: its drinker (an NPC at 10 of 50 Hit Points, with Pseudo Afflictions' Viper Venom — PF2e's production builds
-    // have no affliction items) healed to 50 and the venom gone.
+    // have no affliction items) healed to 50 and the venom gone. (Since f53096d its ways card comes first — "Drink it" or "On a dead
+    // creature" —: its first way, then the item card, 2026-10-27.)
     async rejuvenation(scene) {
         const { actor: drinker } = await creature(scene, "Rejuvenated", { x: 8, y: 10, hp: 10 });
         await drinker.update({ "system.attributes.hp.max": 50 });
@@ -6195,9 +6196,12 @@ export const cases = {
         delete venom._id;
         const [affliction] = await drinker.createEmbeddedDocuments("Item", [venom]);
         const elixir = await give(drinker, "Elixir of Rejuvenation");
-        const since = Date.now();
+        let since = Date.now();
         await elixir.consume();
-        const card = await messageAfter(since, itemCard("item"), { what: "the elixir's card" });
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the elixir's ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 0 });
+        const card = await messageAfter(since, itemCard("item"), { what: "the elixir's card (Drink it)" });
         await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
         await until(() => drinker.system.attributes.hp.value === drinker.system.attributes.hp.max, `full Hit Points (${drinker.system.attributes.hp.value}/${drinker.system.attributes.hp.max})`, { timeout: 8000 });
         if (affliction) await until(() => !drinker.items.get(affliction.id), "the affliction removed", { timeout: 8000 });

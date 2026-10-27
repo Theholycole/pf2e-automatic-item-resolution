@@ -295,7 +295,8 @@ const READINGS = [
         card: () => own({ notes: ["Its user calls out its target before firing (a description will do): the round can hit only that creature, and turns to dust on a miss or on touching anything else — no ability can redirect it.", "It knows no more than its user: it hits the creature its user meant, disguised or not, and dissolves at one its user didn't know was the one named (the GM's)."] })
     },
     {
-        // (A magic sense for 10 minutes: PF2e's Sense rule (magicsense) on its user, what it learns of each effect the GM's, in words beside it.)
+        // (A magic sense for 10 minutes: PF2e's Sense rule (magicsense) on its user, what it learns of each effect the GM's, in words beside it —
+        // that note named apart from the sense's Effect, which is "<item>: Magic sense" too, 2026-10-27.)
         name: "Arclord Eye: Open the Eye",
         sentences: [
             /^For the next (\d+) (minutes?), you gain an imprecise magic sense with a range of (\d+) feet\.$/,
@@ -304,7 +305,7 @@ const READINGS = [
             /^Deceptive illusion magic is not detectable by this magic sense\.$/
         ],
         card: ([time]) => own({
-            noteEffects: [{ label: "Magic sense", text: `Its magic sense finds spells, magical effects and magic items within ${time[3]} feet, and it learns each one's rank or level and its traits (the GM tells). Illusion magic meant to deceive escapes it.`, duration: timeOf(time[1], time[2]) }],
+            noteEffects: [{ label: "Magic sense (what it learns)", text: `Its magic sense finds spells, magical effects and magic items within ${time[3]} feet, and it learns each one's rank or level and its traits (the GM tells). Illusion magic meant to deceive escapes it.`, duration: timeOf(time[1], time[2]) }],
             item: { senses: [{ selector: "magicsense", acuity: "imprecise", range: Number(time[3]), duration: timeOf(time[1], time[2]) }] }
         })
     },

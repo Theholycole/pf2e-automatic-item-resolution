@@ -280,3 +280,66 @@ test("Dust of Corpse Animation used by a player: the GM's client asks the player
     }
 });
 
+// --- The smaller ones (bugs 1, 2, 4, 7, 8, 9, 13, 18) --------------------------------------------------------------------------------------------
+
+test("names apart: Arclord Eye's note Effect not the sense's own name; Potion of Shared Life's and Potion of Grounding's actions without the item's name twice", () => {
+    const eye = activation("Arclord Eye", "Open the Eye");
+    const [note] = eye.resolution.outcomes.success.noteEffects;
+    // (The sense's Effect is "<item>: Magic sense", src/live/card.js senseEffectSource; the ability module names a note "<item>: <label>".)
+    assert.equal(note.label, "Magic sense (what it learns)");
+    for (const [name, action] of [["Potion of Shared Life", "Share Life"], ["Potion of Grounding", "Divert Lightning"]]) {
+        const [granted] = compileItem(item(name)).resolution.outcomes.success.noteEffects;
+        assert.equal(granted.label, action, name);
+    }
+});
+
+test("an own Effect's words that end a sentence: no '., from' (Bloodstone Doll's penalty against its user)", async () => {
+    const { ruleEffectSource } = await import("../src/live/card.js");
+    const { afterFreeRules } = await import("../src/live/counteract-card.js");
+    const after = compileItem(item("Bloodstone Doll (Minor)")).item.counteract.afterFree;
+    assert.match(after.words, /lasts\.$/);
+    const effect = ruleEffectSource({ name: after.name, words: after.words, rules: afterFreeRules(after, "Scene.s.Token.user"), duration: after.duration }, { item: { name: "Bloodstone Doll (Minor)" } });
+    assert.match(effect.system.description.value, /while the summon lasts, from <strong>Bloodstone Doll \(Minor\)<\/strong>\.<\/p>$/);
+});
+
+test("Sawtooth Reaper's Bloodmist Whirl readies any Strike its user makes: a fist's hit takes it, the target Off-Guard to it", async () => {
+    const { riderFor, strikeEffectSource } = await import("../src/live/strike-card.js");
+    const whirl = activation("Sawtooth Reaper", "Bloodmist Whirl");
+    assert.equal(whirl.strike.own, undefined);
+    assert.equal(riderFor(whirl, { outcome: "success", options: ["item:melee", "item:category:unarmed", "item:id:fist"] }), "hit");
+    const rules = strikeEffectSource({ state: { plan: whirl, item: { name: "Sawtooth Reaper" }, user: {} }, moduleId: MODULE_ID }).system.rules;
+    assert.deepEqual(rules.find((rule) => rule.key === "EphemeralEffect").selectors, ["strike-attack-roll"]);
+});
+
+test("Concealed while invisible re-tested as the creature changes (PF2e's reevaluateOnUpdate): Candle of Revealing's zone, Limning Gem's outline", () => {
+    const candle = compileItem(item("Candle of Revealing"));
+    const gem = compileItem(item("Limning Gem"));
+    const grants = [...candle.zone.inside.flatMap((entry) => entry.rules), ...gem.item.attackRiders.riders.flatMap((rider) => rider.note.rules ?? [])];
+    assert.equal(grants.length, 3);
+    for (const rule of grants) assert.deepEqual([rule.key, rule.predicate, rule.reevaluateOnUpdate, rule.allowDuplicate], ["GrantItem", ["self:condition:invisible"], true, false]);
+});
+
+test("gone at 0 Hit Points only with Hit Points of its own: PF2e's vehicles and the wind-up cart, not the swan boat", () => {
+    const swan = compileActivations(item("Feather Token (Swan Boat) (Ammunition)"))[0].plan;
+    const cart = compileItem(item("Wind-Up Cart"));
+    const boat = compileActivations(item("Folding Boat"))[0].plan;
+    assert.deepEqual([swan.vanishAtZero, cart.vanishAtZero, boat.vanishAtZero], [undefined, true, true]);
+});
+
+test("a counteract with nothing it can take at its rank says so: Razmiri Mask's Mercy at rank 2", async () => {
+    const { counteractText } = await import("../src/live/counteract-card.js");
+    const mercy = activation("Razmiri Mask (Silver)", "Call Upon Razmir's Mercy");
+    const low = { ...mercy.item.counteract, modifier: 17, rank: 2, afflictions: [] };
+    assert.equal(counteractText(low), "Counteract +17, rank 2: nothing at this rank (a disease or poison from rank 3); counteracted, it's suppressed for 24 hours rather than removed");
+    assert.match(counteractText({ ...low, rank: 5, afflictions: ["curse", "disease", "poison"] }), /^Counteract \+17, rank 5: one effect a curse, disease or poison;/);
+});
+
+test("Wooden Nickel: a failed Crafting, a try at seeing through it, leaves the creature listed as still fooled; the Haversack's Society doesn't", async () => {
+    const { createDisbeliefCard, withAttempt } = await import("../src/live/disbelief-card.js");
+    let nickel = createDisbeliefCard({ plan: compileItem(item("Wooden Nickel")), item: { name: "Wooden Nickel" }, user: { name: "Rogue" }, userDCs: { deception: 25 } });
+    nickel = withAttempt(nickel, { name: "Guard", degree: "failure", also: true });
+    assert.deepEqual(nickel.fooled, ["Guard"]);
+    let haversack = createDisbeliefCard({ plan: compileActivations(item("Misdirecting Haversack"))[0].plan, item: { name: "Misdirecting Haversack" }, user: { name: "Spy" } });
+    haversack = withAttempt(haversack, { name: "Clerk", degree: "failure", also: true });
+    assert.deepEqual(haversack.fooled, []);
+});

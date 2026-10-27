@@ -4,7 +4,8 @@
 //   Lantern (Submersible)'s "The lantern transforms into a Bathysphere for 1 hour". The ability module's conjure builtin, as for a creature
 //   (src/compiler/conjured.js, which leaves vehicles to this): its token beside its user for its time, dismissed from its card (folding the
 //   boat back), gone at 0 Hit Points (broken). Or one the text gives the numbers of, a marker token: Feather Token (Swan Boat)'s boat with "a
-//   Speed of 50 feet" on the water for a day, Wind-Up Cart's "AC 15, Hardness 2, 24 Hit Points" at a speed of 30 feet for its minute.
+//   Speed of 50 feet" on the water for a day (no Hit Points given, so no damage removes it), Wind-Up Cart's "AC 15, Hardness 2, 24 Hit Points"
+//   at a speed of 30 feet for its minute.
 // - A note Effect on the vehicle its user targets ("1 vehicle", src/live/route.js), for its time: Feather Token (Anchor)'s stopped boat for a
 //   day, Kraken Figurehead's spectral tentacles for 10 minutes (an aura the ship's own length: no zone reads a vehicle's length), Feather Token
 //   (Fan)'s and Wind At Your Back's Speed bonus (PF2e's vehicles' Speeds are words no rule changes) — their other way the ways card's (Gust
@@ -115,7 +116,9 @@ export function vehiclePlan(html, base) {
         creatures: [creature],
         max: 1,
         lasts,
-        vanishAtZero: true,
+        // (Gone at 0 Hit Points only with Hit Points of its own — PF2e's vehicle's, the cart's 24: not the swan boat, whose text gives it none
+        // (its marker's 1 is the ability module's stand-in), 2026-10-27.)
+        ...(creature.from || Number(creature.stats?.hp) > 0 ? { vanishAtZero: true } : {}),
         vehicle: true,
         notes: [...lines, ...lastsLine, ...left],
         ...(left.length ? { partial: true } : {})
