@@ -16,8 +16,12 @@ import { oneOff } from "./one-offs.js";
 
 const DECIDED = new Set(["speech", "mind", "information"]);
 const CARD_LINE = new Set(["out-of-combat", "objects"]);
-const COMBAT = /\b(?:Strikes?|attack rolls?|saving throws?|save|AC|temporary Hit Points|teleport\w*|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|drained|stupefied|fatigued|off-guard|quickened|persistent|dies|concealed|invisible|hidden|undetected|the next (?:elixir|potion|mutagen|bomb|Strike|attack))\b|\bextended by \d+%/i;
-const MECHANICAL = /\b\d+d\d+\b|(?:^|\s)[+\-–]\d+\b|\bDC \d+\b|\b(?:damage|Hit Points|Strikes?|attack|teleport\w*|transport\w*|Speed|bonus|penalty|resistance|weakness|saving throws?|save|check|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|dies|concealed|invisible|hidden)\b/i;
+const COMBAT = /\b(?:attack rolls?|saving throws?|save|AC|temporary Hit Points|teleport\w*|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|drained|stupefied|fatigued|off-guard|quickened|persistent|dies|concealed|invisible|hidden|undetected|the next (?:elixir|potion|mutagen|bomb|Strike|attack))\b|\bextended by \d+%/i;
+const MECHANICAL = /\b\d+d\d+\b|(?:^|\s)[+\-–]\d+\b|\bDC \d+\b|\b(?:damage|Hit Points|attack|teleport\w*|transport\w*|Speed|bonus|penalty|resistance|weakness|saving throws?|save|check|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|dies|concealed|invisible|hidden)\b/i;
+// (A Strike only as PF2e writes the action, capitalized: "strike the chime", the verb, isn't one — src/compiler/needs.js, 2026-10-27.)
+const STRIKE = /\bStrikes?\b/;
+const combat = (words) => COMBAT.test(words) || STRIKE.test(words);
+const mechanical = (words) => MECHANICAL.test(words) || STRIKE.test(words);
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 // A unique item or an artifact: special, its own rules built rather than a card's line (the user, 2026-10-27).
 export const isSpecialItem = (item) => item?.system?.traits?.rarity === "unique" || (item?.system?.traits?.value ?? []).includes("artifact");
@@ -53,7 +57,7 @@ function timeOf(text) {
 }
 
 // Its words from its effect on: a consumable's without its Activate line — "Activate 1 minute", "Activate (manipulate)" — or Usage.
-const bodyOf = (kind, text, words) => (kind === "activation" ? words : String(text).replace(/^\s*(?:Usage [^.]*?(?=Activate)\s*)?Activat(?:e|ion)\s*(?:\[[^\]]*\]\s*)?(?:\d+ (?:minutes?|hours?|rounds?)|reaction|free action|[123])?\s*(?:(?:Interact|command|envision|Cast a Spell)\s*)?(?:\([^)]*\))?\s*/i, "").trim() || words);
+const bodyOf = (kind, text, words) => (kind === "activation" ? words : String(text).replace(/^\s*(?:Usage [^.]*?(?=Activate)\s*)?Activat(?:e|ion)\s*(?:\[[^\]]*\]\s*)?(?:\d+ (?:minutes?|hours?|rounds?)|reaction|free action|[123])?\s*(?:(?:Interact|command|envision|Cast a Spell|Strike)\s*)?(?:\([^)]*\))?\s*/i, "").trim() || words);
 
 // Card lines (decided "card-line", "one-off"): a partial plan's notes and GM lines as they are — its unread lines, and an item card row's GM
 // lines, its notes too, as the item card shows neither —; a note-only one's note row kept; else its words the card's line.
@@ -91,7 +95,7 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // (Nothing in its words a card could play — food, refills, ingredients, flavor —: counted done, its card saying so (the user's answer to
     // question 1, 2026-10-26).)
     // (A note-only one only when its words show no number either — Vambrace of Gorum's "+3 … major striking" is a rule the needs' words miss.)
-    if (needs.length === 1 && needs[0] === "no-rules" && (!plan || result === "builtin:no-effect" || (result === "note-only" && !MECHANICAL.test(leftText(entry)) && !/\d/.test(leftText(entry))))) {
+    if (needs.length === 1 && needs[0] === "no-rules" && (!plan || result === "builtin:no-effect" || (result === "note-only" && !mechanical(leftText(entry)) && !/\d/.test(leftText(entry))))) {
         return { ...(base ?? plan ?? {}), ...(plan?.item ? { item: plan.item } : {}), builtin: undefined, noteOnly: undefined, partial: undefined, noRules: true, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: ["It has no rules to play: the card does nothing more."] };
     }
     const lined = !special && needs.some((need) => CARD_LINE.has(need));
@@ -103,7 +107,7 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     const own = String(name ?? "").replace(/:.*$/, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
     const named = own.length > 3 ? words.split(new RegExp(own.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")).join(" ") : words;
     const guarded = named.replace(/\b(?:attempt )?an? (?:skill )?check to Decipher Writing\b/gi, " ");
-    if (lined ? COMBAT.test(guarded) : MECHANICAL.test(guarded)) return plan;
+    if (lined ? combat(guarded) : mechanical(guarded)) return plan;
     const decided = needs.includes("information") ? "information" : needs.find((need) => need === "speech" || need === "mind") ?? (lined ? "card-line" : needs[0]);
     const body = bodyOf(kind, text, words);
     // (Information: whispered to the GM and its user, what it tells filled in by the GM.)

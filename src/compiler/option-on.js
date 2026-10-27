@@ -31,6 +31,8 @@ function untilOf(text) {
     if (/\bUntil the end of (?:your|this|the current) turn\b/i.test(text)) return "turn-end";
     if (/\bThe next (?:attack|Strike)\b[^.]*\bdeals\b/i.test(text)) return "damage";
     if (/\bYou (?:extend or shorten|shorten or extend)\b/i.test(text)) return null;
+    // (Chaplain's Cudgel's "This lasts until this activation is used again": flipped by each use, 2026-10-27.)
+    if (/\bThis lasts until this activation is used again\b/i.test(text)) return null;
     // (Sure-Step Crampons' "until the next time you move", "The bonus lasts until you move from your current spot": off when its
     // user's token moves.)
     if (/\buntil (?:the next time )?you move\b/i.test(text)) return "move";
@@ -41,6 +43,17 @@ function untilOf(text) {
 
 // (Its user's own actions the toggle is for, a line of the card: Kinburi's Sandals of Bounding's two jumps.)
 const JUMPS = /\btake any combination of two High Jumps or Long Jumps\. You don't need to Stride first, and between the two jumps, you need only to come into contact with a physical object before making the second jump\b/i;
+
+// (Chaplain's Cudgel's Bow to a Higher Power: PF2e's toggle gives the holy or unholy trait to its Strikes; the weapon's new shape and the damage
+// after a divine spell, the card's lines — the shape its user's to set as the Shifting rune does, the spell's toggle PF2e's own on the sheet.)
+const DEITY_WEAPON = /\bIt transforms into your deity's favored weapon, as the Shifting rune except that it functions even if the favored weapon is a ranged weapon, a weapon requiring two hands, or both\./i;
+const SPELL_DAMAGE = /\bWhenever you cast a divine spell that takes 2 actions or more to cast, the next Strike you make with this weapon before the end of your next turn gets a status bonus to its damage roll equal to the weapon's number of damage dice\./i;
+function deityNotes(text) {
+    return [
+        "It takes the shape of your deity's favored weapon, as the Shifting rune does but even ranged or two-handed (change it on its sheet); it keeps that shape until this is used again.",
+        ...(SPELL_DAMAGE.test(text) ? ["After you cast a divine spell of 2 or more actions (or one from your deity's divine font), tick its \"cast a two-action spell\" toggle on the sheet: PF2e adds a status bonus to the next Strike's damage equal to its damage dice."] : [])
+    ];
+}
 
 export function optionPlan(item, activation, base) {
     const rule = namedToggle(item, activation?.name);
@@ -57,7 +70,9 @@ export function optionPlan(item, activation, base) {
         trigger: { event: "use" },
         modes: [{ name: activation.name ?? "On", plan: { builtin: "roll-option", option: rule.option, ...(rule.domain ? { domain: rule.domain } : {}), value: until === null ? "flip" : true } }],
         ...(until ? { until } : {}),
-        ...(JUMPS.test(text) ? { notes: ["Take any two High Jumps or Long Jumps, with no Stride first; between them it need only touch some physical object, whatever it is (its own actions)."] } : {})
+        ...(JUMPS.test(text) ? { notes: ["Take any two High Jumps or Long Jumps, with no Stride first; between them it need only touch some physical object, whatever it is (its own actions)."] } : {}),
+        // (Chaplain's Cudgel's: its shape its deity's favored weapon, and the toggle PF2e gives it for a divine spell cast — its user's own on the sheet.)
+        ...(DEITY_WEAPON.test(text) ? { notes: deityNotes(text) } : {})
     };
 }
 

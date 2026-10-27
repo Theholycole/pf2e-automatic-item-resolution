@@ -9,13 +9,13 @@
 import { postEndEarlyAt } from "./end-early.js";
 import { postCounteractAt } from "./counteract.js";
 import { afterEndsEffectSource } from "../src/live/card.js";
-import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
+import { MODULE_KEY, createStrikeCard, degreeAgainst, degreeWords, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord, withFeatDie } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
 import { USES, now } from "./activations.js";
 import { withoutUse } from "../src/live/activations-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, isActiveGM, recover, startInitiative, stateOf } from "./foundry.js";
 import { planFor, withoutAloftProne } from "../src/live/if-target.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -43,6 +43,8 @@ export async function applyStrikeCard(message, choices = {}) {
     const volley = state.plan.strike?.volley;
     const targets = volley?.each ? [...new Set(choices.targets ?? [])] : null;
     if (targets && !targets.length) throw new Error(`Target each ${volley.each} ${volley.area ? `in the ${volley.area}` : "in the area"} first, then ready the Strikes.`);
+    // (One roll at several, Hippopotamus Klar's: that many creatures targeted, one Strike.)
+    if (volley?.oneRoll && (volley.oneRoll.upTo ? targets.length > volley.oneRoll.count : targets.length !== volley.oneRoll.count)) throw new Error(`Target ${volley.oneRoll.upTo ? "up to " : "the "}${volley.oneRoll.count} creatures${volley.oneRoll.adjacent ? " adjacent to each other" : ""}${volley.oneRoll.within ? ` within ${volley.oneRoll.within} feet of the first target` : ""} first, then ready the Strike.`);
     // (One readied Strike at a time: a new one replaces the old.)
     const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]);
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
@@ -55,8 +57,9 @@ export async function applyStrikeCard(message, choices = {}) {
         const actors = aimed.map((token) => token?.actor ?? null).filter(Boolean);
         ready = { ...state, plan: { ...state.plan, strike: { ...state.plan.strike, attack: { ...state.plan.strike.attack, metalTarget: actors.length ? actors.every(isMetalTarget) : null } } } };
     }
-    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state: ready, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: targets.length, targets } : {}) })]);
-    const next = { ...ready, status: "applied", results: [`${strikeHint(ready.plan, state.user.name, { uses: targets ? targets.length : null })}${old.length ? " (The one readied before is gone.)" : ""}`] };
+    const uses = targets && !volley.oneRoll ? targets.length : null;
+    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state: ready, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: uses ?? 1, targets } : {}) })]);
+    const next = { ...ready, status: "applied", results: [`${strikeHint(ready.plan, state.user.name, { uses })}${old.length ? " (The one readied before is gone.)" : ""}`] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 
@@ -122,7 +125,19 @@ export async function strikeWithRider(message) {
     // (Several at once, src/compiler/volley.js: each at a creature it hasn't struck — against each creature in an area, one of those targeted
     // when it was readied; a Strike at another isn't one of them. Each one made deals its user that damage, Caress of the Great Serpent's.)
     const volley = rider.plan.strike?.volley;
-    if (volley) {
+    // (One attack roll at several, Hippopotamus Klar's: its degree against each other creature targeted when it was readied, said first — the
+    // rolled target's own riders follow as for any Strike.)
+    if (volley?.oneRoll) {
+        const at = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
+        const roll = message.rolls?.[0];
+        const natural = roll?.dice?.[0]?.total ?? null;
+        const others = await Promise.all((rider.targets ?? []).filter((uuid) => uuid !== at).map((uuid) => fromUuid(uuid).catch(() => null)));
+        const said = others.filter(Boolean).map((token) => {
+            const degree = degreeAgainst({ total: roll?.total, natural, dc: token.actor?.attributes?.ac?.value ?? token.actor?.system?.attributes?.ac?.value });
+            return `${token.name}: ${degree ? degreeWords(degree) : "compare the roll to its AC by hand"}`;
+        });
+        if (said.length) await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escape(rider.item.name)}</strong>: the same attack roll (${escape(roll?.total ?? "?")}) — ${escape(said.join("; "))}. One damage roll for all: apply it to each one hit (double to one critically hit).</p>` });
+    } else if (volley) {
         const at = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
         const struck = rider.struck ?? [];
         const outside = Boolean(at) && (rider.targets ?? []).length > 0 && !rider.targets.includes(at);
@@ -180,16 +195,25 @@ export async function strikeWithRider(message) {
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike missed; it's spent.${refunded ? " The activation doesn't count against its frequency: its use is given back." : ""}</p>` });
         return;
     }
+    // (A second Strike card after the hit, Splithead Bow's Five-Headed Arrow: its pieces' one roll at the others its user targets then.)
+    const then = rider.plan.strike?.thenStrike;
+    if (then && what === "hit") {
+        const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
+        await postStrikeCard({ message: null, plan: then, used: { data: { name: then.source?.name ?? rider.item.name, uuid: rider.item.uuid ?? null, img: rider.item.img ?? null } }, actor, token: sourceToken?.object ?? sourceToken });
+    }
     // (A maneuver after the hit, Iron Cube's Trip: its own card, PF2e's action at the creature the Strike hit — still targeted.)
     const follow = rider.plan.strike?.follow;
-    if (follow) {
+    if (follow && what === "hit") {
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
-        await postActionCard({ message: null, plan: follow, used: { data: { name: rider.item.name, uuid: rider.item.uuid ?? null } }, actor, token: sourceToken?.object ?? sourceToken });
+        // (A feat's die for its damage, Iron Cube's Slam Down: the Strike's weapon's, when bigger and its user has the feat.)
+        const weapon = follow.featDie ? message.item ?? (message.flags?.pf2e?.origin?.uuid ? await fromUuid(message.flags.pf2e.origin.uuid).catch(() => null) : null) : null;
+        const plan = follow.featDie ? withFeatDie(follow, { hasFeat: Boolean(actor?.rollOptions?.all?.[`feat:${follow.featDie.slug}`]), weaponDie: weapon?.system?.damage?.die ?? null }) : follow;
+        await postActionCard({ message: null, plan, used: { data: { name: rider.item.name, uuid: rider.item.uuid ?? null } }, actor, token: sourceToken?.object ?? sourceToken });
     }
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
     // (A note for the creature hit counts: Magekiller Bullet's curse.)
-    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
+    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !rider.plan.strike?.recover?.[context.outcome] && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}.</p>` });
         return;
@@ -204,6 +228,9 @@ export async function strikeWithRider(message) {
     // (Its Prone only for a creature on the ground, Drake Shot's: src/live/if-target.js.)
     const elevation = Number(targetToken.document?.elevation ?? targetToken.elevation) || 0;
     const lines = await applyRiders({ plan: withoutAloftProne(rider.plan, elevation), degree: context.outcome, user: rider.user, target, item: rider.item });
+    // (Its persistent damage of some types ended on this degree, Extinguishing Ball's: PF2e's conditions deleted — all of them, or one.)
+    const recovery = rider.plan.strike?.recover?.[context.outcome];
+    if (recovery) lines.push(...await recover(targetToken.actor, target.name, recovery));
     // (Pulled out of the creature it hit, Beacon Shot's Athletics check: the end-early card, scripts/end-early.js.)
     if (rider.plan.strike?.endEarly && ["success", "criticalSuccess"].includes(context.outcome)) await postEndEarlyAt({ endEarly: rider.plan.strike.endEarly, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: rider.user, creatures: [{ actorUuid: targetToken.actor.uuid, tokenUuid: targetToken.uuid, name: target.name }] }).catch((error) => console.error(`${MODULE_ID} | end early`, error));
     if (rider.plan.strike?.groundedProne && elevation > 0) lines.push(`${target.name} isn't on the ground: it doesn't fall Prone`);

@@ -41,6 +41,10 @@ const ALTERATION = new RegExp(String.raw`\bAll (?:the )?damage from this Strike 
 // (And Spiritsight Crossbow's Ethereal Shot, "This shot travels through the Ethereal Plane, allowing it to pass through and ignore cover from physical
 // objects within the range of your Ethereal Vision": every cover — the objects that give it within those 60 feet, its target's — 2026-10-26.)
 const IGNORE_COVER = /\bignore the bonus to AC granted to a target in ((?:greater|standard|lesser)(?:,? (?:or )?(?:greater|standard|lesser))*) cover\b|\b(?:This|The) (?:attack|Strike) ignores the target's cover\b|\bThis shot travels through the Ethereal Plane, allowing it to pass through and ignore cover from physical objects within the range of your Ethereal Vision\b/i;
+// (Hardness it ignores, Shatterpoint Ammunition's "On a hit, the damage the ammunition deals ignores the target's Hardness if it's 4 or lower":
+// PF2e subtracts no creature's Hardness itself (only a shield's, on a Shield Block), so the card says it — ignoresHardness, the most it ignores,
+// 2026-10-27.)
+const IGNORE_HARDNESS = /^(?:On a hit, )?the damage the [\w' -]+? deals ignores the target's Hardness if it's (\d+) or lower\.$/i;
 const coverLevels = (words) => (words ? [...new Set(words.toLowerCase().match(/greater|standard|lesser/g))].flatMap((level) => (level === "greater" ? ["greater", "greater-prone"] : [level])) : ["lesser", "standard", "greater", "greater-prone"]);
 // "Your outcome is one degree of success better than what you rolled": PF2e's AdjustDegreeOfSuccess on the attack roll.
 const BETTER = /\b(?:your|the) outcome is one degree of success better than (?:what you rolled|you rolled|it would otherwise be)\b/i;
@@ -119,6 +123,7 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let splash = null;
     let offGuard = false;
     let ignoresCover = null;
+    let ignoresHardness = null;
     let failDice = 0;
     let featDie = null;
     let turnEnds = false;
@@ -211,6 +216,11 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
         const feat = FEAT_DIE.exec(sentence.trim());
         if (feat) {
             featDie = { slug: feat[1].toLowerCase().replace(/[^a-z0-9]+/g, "-"), name: feat[1], diceNumber: 1 };
+            continue;
+        }
+        const hardness = IGNORE_HARDNESS.exec(sentence.trim());
+        if (hardness) {
+            ignoresHardness = Number(hardness[1]);
             continue;
         }
         // (Its user's turn over after the Strike, Brutal Finish's: a line of the card.)
@@ -307,5 +317,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
     if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
     const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(ignoresCover ? { ignoresCover } : {}), ...(failDice ? { failDice } : {}), ...(featDie ? { featDie } : {}), ...(turnEnds ? { turnEnds } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(readied ? { readied } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || ignoresCover || failDice || featDie || turnEnds || failHalf || requires.length || missRefund || readied || reach || map) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(ignoresCover ? { ignoresCover } : {}), ...(ignoresHardness ? { ignoresHardness } : {}), ...(failDice ? { failDice } : {}), ...(featDie ? { featDie } : {}), ...(turnEnds ? { turnEnds } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(readied ? { readied } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || ignoresCover || ignoresHardness || failDice || featDie || turnEnds || failHalf || requires.length || missRefund || readied || reach || map) };
 }

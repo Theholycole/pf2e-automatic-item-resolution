@@ -48,7 +48,8 @@ test("the reading: how many Strikes and at whom, what the text says of them, the
     const bow = plan("Splithead Bow");
     assert.deepEqual([bow.strike.uses, bow.strike.volley, Boolean(bow.partial), bow.toggleOff.option, bow.toggleOff.duration.expiry], [2, { different: true, within: 50, sight: true, mapHeld: true }, false, "splithead-bow-healing", "turn-end"]);
     const chair = plan("Minotaur Chair");
-    assert.deepEqual([chair.strike.volley.move, chair.partial, chair.strike.notes.length], ["Stride in a straight line first, through the enemies' spaces", true, 1]);
+    // (2026-10-27: its prone foe's extras read too, src/compiler/strike-if.js — no note left.)
+    assert.deepEqual([chair.strike.volley.move, chair.partial, chair.strike.notes.length], ["Stride in a straight line first, through the enemies' spaces", undefined, 0]);
     // (Two at once whose only other sentence was the multiple attack penalty: no longer partial.)
     assert.equal(plan("Amphisbaena Handwraps").partial, undefined);
 });

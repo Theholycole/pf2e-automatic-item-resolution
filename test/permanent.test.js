@@ -990,9 +990,10 @@ test("Fulu Compendium's Paralyzing Page: the Spirit-Sealing Fulu's own save at D
 test("saves whose failure is the GM's to carry out, their words on the card: Cauthooj Bagpipes' Throw Song (Will DC 31, the Strike redirected), Planar Ribbon (Reflex DC 42, places swapped; not its trait)", async () => {
     const { routeOf } = await import("../src/live/route.js");
     const song = compileActivations(item("Cauthooj Bagpipes"), { spellEffects })[1].plan;
-    assert.deepEqual([routeOf(song), song.resolution.check.statistic, song.resolution.check.against.value, song.partial], ["save", "will", 31, true]);
-    assert.deepEqual(song.resolution.outcomes.failure.manualInstructions, song.resolution.outcomes.criticalFailure.manualInstructions);
-    assert.match(song.resolution.outcomes.failure.manualInstructions[0], /^\{target\}: The creature redirects the Strike to another creature of your choice\b.*takes a –2 penalty to the Strike \(by hand\)\.$/);
+    // (2026-10-27: the redirect a note Effect on the failing creature for its turn now, src/compiler/redirected-strike.js — no longer the GM's.)
+    assert.deepEqual([routeOf(song), song.resolution.check.statistic, song.resolution.check.against.value, song.partial], ["save", "will", 31, undefined]);
+    assert.deepEqual(song.resolution.outcomes.failure.noteEffects, song.resolution.outcomes.criticalFailure.noteEffects);
+    assert.match(song.resolution.outcomes.failure.noteEffects[0].text, /^Its triggering melee Strike goes to another creature within its reach\b.*takes a –2 penalty to that Strike instead\.$/);
     assert.deepEqual(song.resolution.outcomes.success.manualInstructions, []);
     const ribbon = compileActivations(item("Planar Ribbon"), { spellEffects })[1].plan;
     assert.deepEqual([ribbon.resolution.check.statistic, ribbon.resolution.check.against.value], ["reflex", 42]);

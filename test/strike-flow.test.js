@@ -333,7 +333,8 @@ test("ammunition's hit in other words: \"In addition, the target takes 1d8 persi
     const [shatter] = compileActivations(source("Shatterpoint Ammunition"));
     assert.equal(routeOf(shatter.plan), "strike");
     assert.deepEqual(shatter.plan.strike.damage, [{ diceNumber: 1, dieSize: "d8", category: "persistent", damageType: "sonic" }]);
-    assert.match(shatter.plan.strike.notes.join(" "), /ignores the target's Hardness/);
+    // (2026-10-27: the Hardness it ignores is read now, strike.ignoresHardness — the Strike card's line, no note.)
+    assert.deepEqual([shatter.plan.strike.ignoresHardness, shatter.plan.strike.notes], [4, []]);
     // Garrote Bolt's 2d12 persistent slashing is PF2e's own DamageDice rule: nothing to add.
     assert.equal(compileActivations(source("Garrote Bolt"))[0].plan?.strike?.damage?.length ?? 0, 0);
 });
@@ -582,11 +583,13 @@ test("Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check 
 
 test("Iron Cube: its melee Strike's hit posts PF2e's Trip card at the creature hit, the 2d6 bludgeoning on its success; Serpent's Lash's Reposition after its whip's hit", async () => {
     const cube = compileItem(source("Iron Cube"));
-    assert.deepEqual([routeOf(cube), cube.strike.range, cube.strike.follow.action.slug, cube.strike.follow.action.damage.success.resolution.sharedDamage.components[0].formula, cube.partial], ["strike", "melee", "trip", "2d6", true]);
+    // (2026-10-27: its two-handed weapon a line, Slam Down's die the follow's featDie — src/compiler/strike-lines.js; no longer partial.)
+    assert.deepEqual([routeOf(cube), cube.strike.range, cube.strike.follow.action.slug, cube.strike.follow.action.damage.success.resolution.sharedDamage.components[0].formula, cube.partial], ["strike", "melee", "trip", "2d6", undefined]);
     assert.deepEqual(cube.resolution.outcomes.success.effects, [], "the prone is the Trip's, not the hit's");
     assert.ok(strikeLines(cube).some((line) => /^On a hit: its .*card at the creature hit \(with its damage on a success\)$/.test(line)));
     const [lash] = compileActivations(source("Serpent's Lash"));
-    assert.deepEqual([lash.plan.strike.own, lash.plan.strike.follow.action.slug, lash.plan.strike.follow.notes], [true, "reposition", ["Reposition the creature 5 feet (10 feet on a critical hit)."]]);
+    // (2026-10-27: its distances are PF2e's own Reposition's, the follow's rows — the note said again, gone: src/compiler/strike-lines.js.)
+    assert.deepEqual([lash.plan.strike.own, lash.plan.strike.follow.action.slug, lash.plan.strike.follow.notes, lash.plan.partial], [true, "reposition", undefined, undefined]);
     const card = await useCard("Iron Cube");
     await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
     await settle();

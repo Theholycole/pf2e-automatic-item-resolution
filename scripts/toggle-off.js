@@ -10,7 +10,8 @@ export async function toggleOff(plan, { actor, token, used }) {
     if (!itemId || !actor?.toggleRollOption) return;
     await actor.toggleRollOption("all", plan.toggleOff.option, itemId, false);
     const source = ruleEffectSource({ name: "toggled off", words: plan.toggleOff.words, rules: [], duration: plan.toggleOff.duration }, { item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID });
-    source.flags[MODULE_ID].toggleOff = { option: plan.toggleOff.option, itemId };
+    // (Until its user's next daily preparations, Splithead Bow's Five-Headed Arrow: the Effect gone then, togglesAtRest.)
+    source.flags[MODULE_ID].toggleOff = { option: plan.toggleOff.option, itemId, ...(plan.toggleOff.untilRest ? { untilRest: true } : {}) };
     await actor.createEmbeddedDocuments("Item", [source]);
 }
 
@@ -29,6 +30,9 @@ export async function togglesAtRest(actor) {
         await actor.toggleRollOption("all", item.flags[MODULE_ID].toggleUntilRest, item.id, false);
         await item.unsetFlag(MODULE_ID, "toggleUntilRest");
     }
+    // (And a toggle off until then, Splithead Bow's healing: its Effect deleted, the deleteItem hook turning it back on.)
+    const until = (actor?.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.toggleOff?.untilRest);
+    if (until.length) await actor.deleteEmbeddedDocuments("Item", until.map((effect) => effect.id));
 }
 
 export function setUpToggleOff() {

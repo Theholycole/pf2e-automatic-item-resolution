@@ -37,6 +37,14 @@ function rowText(row) {
     return [...conditions, ...modifiers, ...moved].join(", ");
 }
 
+// When an extra applies, in words: " against a prone target", " on a critical hit", " on a hit (not a critical hit)".
+function whenText(entry) {
+    const conditions = (entry?.predicate ?? []).filter((term) => typeof term === "string" && term.startsWith("target:condition:")).map((term) => term.slice("target:condition:".length).replace(/-/g, " "));
+    const against = conditions.length ? ` against a ${conditions.join(" and ")} target` : "";
+    const critical = entry?.critical === true ? " on a critical hit" : entry?.critical === false ? " on a hit (not a critical hit)" : "";
+    return `${against}${critical}`;
+}
+
 // A die in words: "4d6 mental", "1d4 persistent force", "1d8 precision", "1d6".
 export const dieText = (entry) => [entry.dieSize ? `${entry.diceNumber}${entry.dieSize}` : `${entry.diceNumber} weapon ${entry.diceNumber === 1 ? "die" : "dice"}`, entry.category, entry.damageType].filter(Boolean).join(" ");
 
@@ -64,11 +72,15 @@ export function strikeLines(plan) {
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
         strike.offGuard ? "Its target is Off-Guard to it" : null,
-        ...(strike.options ?? []).map((option) => (/^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
+        ...(strike.options ?? []).map((option) => (option === "ignore-range-penalty" ? "No range increment penalty on it" : /^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
         ...(strike.suppress ?? []).map((penalty) => `No ${penalty} penalty`),
         strike.splash ? `+${strike.splash.value} ${strike.splash.damageType} splash damage` : null,
+        // (Hardness it ignores: PF2e subtracts no creature's Hardness itself.)
+        strike.ignoresHardness ? `Its damage ignores the target's Hardness if that's ${strike.ignoresHardness} or lower (a higher Hardness still applies)` : null,
         strike.runes ? `Its weapon is a +${strike.runes.potency} ${["", "", "greater ", "major "][strike.runes.striking] ?? ""}striking weapon for it (PF2e keeps the weapon's own runes when they're better)` : null,
-        ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage`),
+        ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage${whenText(entry)}`),
+        ...(strike.flat ?? []).map((entry) => `+${entry.value} ${entry.type} damage${entry.perDie ? " per weapon damage die" : ""}${whenText(entry)}`),
+        ...(strike.runeDice ?? []).map((entry) => `No ${entry.rune} rune dice on it${whenText(entry)}: its own above instead`),
         // (Damage in place of the weapon's, Big Rock Bullet's: the card's own roll.)
         strike.instead?.hit ? `On a hit: ${strike.instead.hit.formula} ${strike.instead.hit.type} damage in place of the weapon's (doubled on a critical hit)` : null,
         strike.instead?.failure ? `On a failure (not a critical failure): ${strike.instead.failure.formula} ${strike.instead.failure.type} damage` : null,
@@ -114,6 +126,7 @@ export function strikeHint(plan, name, { uses = null } = {}) {
     const strike = plan.strike ?? {};
     if (strike.hit) return `${name}'s Strike already hit: its damage roll carries it.`;
     const count = uses ?? strike.uses;
+    if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${UNTIL_WORDS[strike.until] ?? "this turn"}, at ${strike.volley.oneRoll.upTo ? "up to " : "the "}${strike.volley.oneRoll.count} creatures targeted when it's readied: its one attack roll is each one's.`;
     if (strike.volley?.each && !count) return `${name}'s next ${strikeWord(plan)}s this turn, one at each ${strike.volley.each} targeted when it's readied, carry it; a miss spends that one.`;
     const which = count > 1 ? `next ${NUMBER_WORDS[count] ?? count} ${strikeWord(plan)}s` : `next ${strikeWord(plan)}`;
     if (strike.volley && count > 1) return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} carry it${strike.volley.each ? `, one at each ${strike.volley.each} targeted` : strike.volley.different ? ", each at a different creature" : ""}; a miss spends that one.`;
@@ -176,8 +189,14 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
         ...(entry.damageType ? { damageType: entry.damageType } : {}),
         ...(entry.category ? { category: entry.category } : {}),
         // (Only against some creatures: Bane Ammunition's type, "target:trait:dragon".)
-        ...(entry.predicate ? { predicate: entry.predicate } : {})
+        ...(entry.predicate ? { predicate: entry.predicate } : {}),
+        // (Only on a hit, or only on a critical hit, Minotaur Chair's prone bleed: PF2e's critical flag — a critical hit's own dice aren't doubled.)
+        ...(typeof entry.critical === "boolean" ? { critical: entry.critical } : {})
     }));
+    // (A bonus to its damage per weapon damage die, Minotaur Chair's against a prone foe: PF2e's FlatModifier of the weapon's dice.)
+    for (const [index, entry] of (strike.flat ?? []).entries()) rules.push({ key: "FlatModifier", selector: damageSelector, slug: `${slug}-flat-${index + 1}`, ...(label ? { label } : {}), type: entry.type, value: entry.perDie ? (entry.value === 1 ? "@weapon.system.damage.dice" : `${entry.value}*@weapon.system.damage.dice`) : entry.value, ...(entry.predicate ? { predicate: entry.predicate } : {}) });
+    // (A property rune's own dice taken off when its own take their place, Minotaur Chair's wounding against a prone foe: PF2e slugs them by the rune.)
+    for (const entry of strike.runeDice ?? []) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "dice-number", value: 0, slug: entry.rune, ...(entry.predicate ? { predicate: entry.predicate } : {}) });
     // (A feat's own extra die, Iron Cudgel's Brutal Finish: only with PF2e's roll option for that feat.)
     if (strike.featDie) rules.push({ key: "DamageDice", selector: damageSelector, slug: `${slug}-${strike.featDie.slug}`, ...(label ? { label } : {}), diceNumber: strike.featDie.diceNumber, predicate: [`feat:${strike.featDie.slug}`] });
     // (Two Strikes on one roll, Coldstar Pistols': the attack rolled twice, the higher kept.)
@@ -254,8 +273,35 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     // (Or the weapon's own dice on a failure: Brutal Finish's.)
     if (outcome === "failure" && plan.strike?.failDice) return "failure";
     if (outcome === "failure" && plan.strike?.failHalf) return "failure";
+    // (Or a failure's own row, Extinguishing Ball's splash nearby: played as a hit's is.)
+    if (outcome === "failure" && plan.strike?.failRow) return "failure";
     return plan.strike?.missKeeps ? "keep" : "spend";
 }
+
+// A maneuver's damage at the Strike's weapon's die, Iron Cube's prone damage with Slam Down (follow.featDie { slug, atLeast }): when its user has
+// the feat and the weapon's die is bigger than the one the text gives, that die in place in its damage plans' formulas; else the follow as it is.
+const FACES = (die) => Number(/^d(\d+)$/.exec(String(die ?? ""))?.[1]) || 0;
+export function withFeatDie(follow, { hasFeat = false, weaponDie = null } = {}) {
+    const feat = follow?.featDie;
+    if (!feat || !hasFeat || FACES(weaponDie) <= FACES(feat.atLeast)) return follow;
+    const bigger = (plan) => (plan?.resolution?.sharedDamage?.components ? { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: plan.resolution.sharedDamage.components.map((component) => ({ ...component, formula: String(component.formula).replace(new RegExp(`(\\d+)${feat.atLeast}\\b`, "g"), `$1${weaponDie}`) })) } } } : plan);
+    const damage = Object.fromEntries(Object.entries(follow.action?.damage ?? {}).map(([degree, plan]) => [degree, bigger(plan)]));
+    return { ...follow, action: { ...follow.action, damage } };
+}
+
+// One attack roll's degree against another creature's AC (Hippopotamus Klar's one roll at two): PF2e's degrees, ±10 a step, a natural 20 a step
+// better and a natural 1 a step worse. → "criticalSuccess" … "criticalFailure", or null without the numbers.
+const STEPS = ["criticalFailure", "failure", "success", "criticalSuccess"];
+export function degreeAgainst({ total, natural = null, dc }) {
+    if (total === null || total === undefined || dc === null || dc === undefined || !Number.isFinite(Number(total)) || !Number.isFinite(Number(dc))) return null;
+    const by = Number(total) - Number(dc);
+    let step = by >= 10 ? 3 : by >= 0 ? 2 : by > -10 ? 1 : 0;
+    if (Number(natural) === 20) step = Math.min(3, step + 1);
+    if (Number(natural) === 1) step = Math.max(0, step - 1);
+    return STEPS[step];
+}
+const DEGREE_WORDS = { criticalSuccess: "a critical hit", success: "a hit", failure: "a miss", criticalFailure: "a critical miss" };
+export const degreeWords = (degree) => DEGREE_WORDS[degree] ?? "unknown";
 
 // The item's id on its actor, from its uuid ("Actor.abc.Item.def" → "def").
 export const itemIdOf = (uuid) => /\.Item\.([A-Za-z0-9]+)$/.exec(String(uuid ?? ""))?.[1] ?? null;
