@@ -207,7 +207,9 @@ export async function strikeWithRider(message) {
     // (After a critical hit, a penalty to the save, Blindpepper Bolt's: the core's own save bonus.)
     const worse = worsened && rider.plan.strike.criticalSaveBonus && context.outcome === "criticalSuccess" ? { ...worsened, resolution: { ...worsened.resolution, check: { ...worsened.resolution.check, bonus: rider.plan.strike.criticalSaveBonus } } } : worsened;
     // (Its conditions longer after a critical hit, Rattling Bolt's 1 minute: each of the save's rows' times then, src/compiler/strikes.js.)
-    const timed = worse && rider.plan.strike.criticalTime && context.outcome === "criticalSuccess" ? criticalTimed(worse, rider.plan.strike.criticalTime) : worse;
+    const longer = worse && rider.plan.strike.criticalTime && context.outcome === "criticalSuccess" ? criticalTimed(worse, rider.plan.strike.criticalTime) : worse;
+    // (Pulled free at a harder DC after a critical hit, Antler Arrow's: its end-early card's tick set, the archer's specialization the card's to untick.)
+    const timed = longer?.endEarly?.how?.criticalDC && context.outcome === "criticalSuccess" ? { ...longer, endEarly: { ...longer.endEarly, critical: true } } : longer;
     // (The save only for a creature its damage harms, Gravebane Ammunition's void healing: no card for another.)
     const fits = !rider.plan.strike?.saveOnly || voidHealed(targetToken.actor);
     if (timed && !fits) lines.push(`${target.name} hasn't void healing: no save.`);

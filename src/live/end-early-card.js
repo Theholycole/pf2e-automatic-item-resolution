@@ -4,13 +4,17 @@
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export function createEndEarlyCard({ endEarly, item, user, creatures }) {
-    return { kind: "end-early", status: "open", plan: { endEarly }, item, user, entries: creatures.map((creature) => ({ ...creature, step: 0, done: false })), results: [] };
+    return { kind: "end-early", status: "open", plan: { endEarly }, item, user, entries: creatures.map((creature) => ({ ...creature, step: 0, done: false })), results: [], ...(endEarly.how.criticalDC ? { critical: Boolean(endEarly.critical) } : {}) };
 }
 
 // What the next try is for an entry: "a DC 10 flat check", "it ends outright", "3 Interact actions spent".
-export function tryWords(endEarly, entry) {
+export const checkDC = (endEarly, critical) => (critical && endEarly.how.criticalDC ? endEarly.how.criticalDC : endEarly.how.dc);
+
+export function tryWords(endEarly, entry, critical = false) {
     // (Or an action of a trait, Blindpepper Bolt's manipulate action.)
     if (endEarly.how.kind === "actions") return `${endEarly.how.count} ${endEarly.how.trait ? `${endEarly.how.trait} ` : "Interact "}action${endEarly.how.count === 1 ? "" : "s"} spent`;
+    // (Or a skill check to pull free, Antler Arrow's Athletics: its DC, the harder one when the card's tick says so.)
+    if (endEarly.how.kind === "check") return `an Interact action: a DC ${checkDC(endEarly, critical)} ${endEarly.how.skill.charAt(0).toUpperCase()}${endEarly.how.skill.slice(1)} check`;
     const step = endEarly.how.steps[entry.step] ?? endEarly.how.steps.at(-1);
     return step === "auto" ? "an Interact action: it ends outright" : `an Interact action: a DC ${step} flat check`;
 }
@@ -20,9 +24,11 @@ export function endEarlyCardHTML(state, { canApply = false } = {}) {
     const endEarly = state.plan.endEarly;
     const what = endEarly.conditions?.length ? endEarly.conditions.join(" or ") : "its effects";
     const left = state.entries.map((entry, index) => [entry, index]).filter(([entry]) => !entry.done);
-    const rows = state.entries.map((entry) => `<li>${escape(entry.name)}: ${entry.done ? "ended" : escape(tryWords(endEarly, entry))}</li>`).join("");
+    const rows = state.entries.map((entry) => `<li>${escape(entry.name)}: ${entry.done ? "ended" : escape(tryWords(endEarly, entry, state.critical))}</li>`).join("");
+    // (The harder DC's tick, set after a critical hit: Antler Arrow's archer with the bow critical specialization.)
+    const harder = endEarly.how.criticalDC && open ? `<p class="aar-actions"><label><input type="checkbox" data-air-field="critical"${state.critical ? " checked" : ""}${canApply ? "" : " disabled"}> After a critical hit by an archer with the bow critical specialization: DC ${endEarly.how.criticalDC}</label></p>` : "";
     const pick = open && canApply && left.length ? `<p class="aar-actions">Creature: <select data-air-field="entry">${left.map(([entry, index]) => `<option value="${index}">${escape(entry.name)}</option>`).join("")}</select></p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply && left.length ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Try to end it</button></footer>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">ending ${escape(what)} early</span></header><ul class="aar-notes">${rows}</ul>${pick}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">ending ${escape(what)} early</span></header><ul class="aar-notes">${rows}</ul>${harder}${pick}${results}${controls}</section>`;
 }

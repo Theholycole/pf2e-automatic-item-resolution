@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1282,
+  "entries": 1281,
   "results": {
-   "partial": 385,
+   "partial": 384,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -17,7 +17,7 @@
    "visibility": 48,
    "lasting": 65,
    "choice": 30,
-   "strike": 98,
+   "strike": 97,
    "spells": 36,
    "information": 23,
    "out-of-combat": 35,
@@ -64,7 +64,7 @@
    "dying": 75,
    "choice": 107,
    "several": 105,
-   "strike": 192,
+   "strike": 191,
    "reader": 210,
    "spells": 75,
    "information": 197,
@@ -6180,16 +6180,6 @@
     "moving",
     "areas",
     "lasting"
-   ]
-  },
-  {
-   "name": "Antler Arrow",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "on a hit",
-   "needs": [
-    "strike"
    ]
   },
   {

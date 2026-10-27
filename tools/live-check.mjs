@@ -6555,6 +6555,39 @@ export const cases = {
         return { formula, check: check.against.value, taken: hp - foe.system.attributes.hp.value };
     },
 
+    // Antler Arrow (2026-10-27): a hit and a failed Reflex save — Immobilized, then the end-early card: its Athletics check (DC 10, or 15 with the
+    // tick a critical hit sets) pulls the creature free, the Immobilized gone.
+    async antlerArrowPull(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Antler Archer", { type: "character", x: 8, y: 16 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Antler Target", { x: 9, y: 16, ac: -20, hp: 200, alliance: "opposition", save: -30 });
+        const bow = await give(archer, "Shortbow");
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const arrows = await give(archer, "Antler Arrow");
+        await arrows.update({ "system.baseItem": "arrows" });
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        since = Date.now();
+        const { attack } = await strike(archer, bow);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the arrow's save card" });
+        since = Date.now();
+        await rollAndApply(save);
+        await until(() => foe.hasCondition("immobilized"), "Immobilized", { timeout: 10000 });
+        const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+        const critical = attack.flags.pf2e.context.outcome === "criticalSuccess";
+        assert(Boolean(ending.getFlag(NS, "card").critical) === critical, `the harder DC ticked only after a critical hit (${critical}, ${ending.getFlag(NS, "card").critical})`);
+        for (let tries = 0; tries < 8 && game.messages.get(ending.id).getFlag(NS, "card").status === "open"; tries++) {
+            await game.modules.get(NS).api.live.apply(ending.id, { entry: 0, critical: false });
+            await wait(800);
+        }
+        await until(() => !foe.hasCondition("immobilized"), `pulled free (${JSON.stringify(game.messages.get(ending.id).getFlag(NS, "card").results)})`, { timeout: 8000 });
+        return { critical, results: game.messages.get(ending.id).getFlag(NS, "card").results };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

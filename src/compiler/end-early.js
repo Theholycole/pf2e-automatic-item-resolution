@@ -37,3 +37,20 @@ export function readRowEndEarly(note, text) {
     if (!row) return null;
     return { how: { kind: "actions", count: COUNT[found[1].toLowerCase()], trait: found[2].toLowerCase() }, conditions: [], degrees: [DEGREES[row[1].toLowerCase()]], said: [said] };
 }
+
+// (Or a skill check to pull free, Antler Arrow's bow critical specialization — "It's stuck to the surface until it pulls the missile free: an
+// Interact action and a DC 10 Athletics check." — and its harder DC after a critical hit, "If the hit with the antler arrow is a critical hit
+// and you have access to the bow critical specialization effect, the DC of the Athletics check increases to 15": how { kind: "check", skill,
+// dc, criticalDC }, the card's tick for that DC (its archer's specialization the card can't see), ending the Immobilized. 2026-10-27.)
+const STUCK = /^It's stuck to the surface until it pulls the missile free: an Interact action and a DC (\d+) (Athletics|Acrobatics) check\.$/i;
+const STUCK_CRITICAL = /^If the hit with the [\w' -]+? is a critical hit and you have access to the bow critical specialization effect, the DC of the (?:Athletics|Acrobatics) check increases to (\d+)\.$/i;
+
+// Notes and the rows' degrees with that condition → { endEarly, said } or null.
+export function readPullFree(notes, degrees) {
+    const sentences = (notes ?? []).map((note) => String(note).trim());
+    const stuck = sentences.map((sentence) => STUCK.exec(sentence)).find(Boolean);
+    if (!stuck || !degrees.length) return null;
+    const critical = sentences.map((sentence) => STUCK_CRITICAL.exec(sentence)).find(Boolean);
+    const said = [stuck[0], ...(critical ? [critical[0]] : [])];
+    return { endEarly: { how: { kind: "check", skill: stuck[2].toLowerCase(), dc: Number(stuck[1]), ...(critical ? { criticalDC: Number(critical[1]) } : {}) }, conditions: ["immobilized"], degrees, said }, said };
+}

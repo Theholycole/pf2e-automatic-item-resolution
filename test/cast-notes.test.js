@@ -213,6 +213,14 @@ test("an aura over PF2e's own aura Effect (2026-10-27): Nightmare's Lament's Fum
     assert.match(cloak.zone.notes.join(" "), /holding its breath .* \(the GM's call\)\.$/);
 });
 
+test("pulling free with a skill check (2026-10-27): Antler Arrow — its save's endEarly for the rows that immobilize, DC 10 Athletics (15 after a critical hit, the card's tick)", async () => {
+    const { tryWords } = await import("../src/live/end-early-card.js");
+    const [{ plan: arrow }] = compileActivations(item("Antler Arrow"), options);
+    const endEarly = arrow.strike.save.endEarly;
+    assert.deepEqual([endEarly.how, endEarly.degrees, endEarly.conditions, arrow.strike.notes, arrow.partial], [{ kind: "check", skill: "athletics", dc: 10, criticalDC: 15 }, ["failure", "criticalFailure"], ["immobilized"], [], undefined]);
+    assert.deepEqual([tryWords(endEarly, { step: 0 }), tryWords(endEarly, { step: 0 }, true)], ["an Interact action: a DC 10 Athletics check", "an Interact action: a DC 15 Athletics check"]);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

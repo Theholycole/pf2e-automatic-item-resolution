@@ -221,12 +221,13 @@ test("Fortune Cord's coins pick its damage type (the card's picker); Dragonscale
     assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => amulet.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [[], ["frightened 1"], ["frightened 2"], ["frightened 4"]]);
 });
 
-test("Antler Arrow: its hit's Reflex save or Immobilized (a bow's critical specialization by name), pulling free a note", () => {
+test("Antler Arrow: its hit's Reflex save or Immobilized (a bow's critical specialization by name), pulling free the end-early card's", () => {
     const arrow = compileActivations(item("Antler Arrow"), { spellEffects })[0].plan;
     assert.equal(arrow.strike.ammo, true);
     assert.deepEqual([arrow.strike.save.resolution.check.statistic, arrow.strike.save.resolution.check.against.value], ["reflex", 16]);
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => arrow.strike.save.resolution.outcomes[degree].effects.map((effect) => effect.slug)), [["immobilized"], ["immobilized"]]);
-    assert.ok(arrow.strike.notes.some((note) => /DC 10 Athletics check/.test(note)));
+    // (Pulling free, since 2026-10-27: the save's endEarly, its Athletics check — test/cast-notes.test.js.)
+    assert.deepEqual([arrow.strike.save.endEarly.how.dc, arrow.strike.notes], [10, []]);
 });
 
 test("activations the ability compiler left to the GM, read: Heartstone's counteract, Pilferer's Gloves, Cloak of Repute, Armbands of the Gorgon, Blood of Iron", async () => {
