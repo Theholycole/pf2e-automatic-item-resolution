@@ -87,8 +87,8 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // (A note-only item checked and found to hold nothing a card could play, src/compiler/notes-checked.js — the user's answer to question 3,
     // 2026-10-26: its note row kept, done.)
     if (result === "note-only" && notesChecked(name ?? plan?.source?.name)) return { ...plan, noteOnly: undefined, decided: "checked", automation: { ...(plan.automation ?? {}), level: "automatic" } };
-    // (Or one nothing read, the same check: its words its card's line, 2026-10-27.)
-    if (result === "none" && notesChecked(name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "checked" });
+    // (Or one nothing read, the same check: its words its card's line, 2026-10-27 — or the GM's no-effect, Prismatic Dust's colour, the same day.)
+    if ((result === "none" || result === "builtin:no-effect") && notesChecked(name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "checked" });
     // (A one-off rule, src/compiler/one-offs.js — the user's answer of 2026-10-27: its card's lines, counted done, kept to build later.)
     // (Its words without the "Trigger" leftText puts before a triggered activation's Effect, for the needs' reading: Belt of Giant Strength's.)
     if (!special && oneOff(name ?? plan?.source?.name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)).replace(/^Trigger (?=\S)/, ""), decided: "one-off" });

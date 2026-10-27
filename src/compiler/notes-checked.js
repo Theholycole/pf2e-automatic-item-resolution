@@ -38,7 +38,22 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27: a targeting flat check's DC, which no PF2e rule sets — PF2e's own Effect: Mummified Bat leaves the same to its words.)
     ["Cat's Eye Elixir", "flat checks to target Hidden creatures within 30 feet at DC 5, and none to target Concealed ones, for its minute: its user's own rolls"],
     // (2026-10-27: a day's food, and immune to it after a week of nothing else until a day of real meals: the table's, out of combat.)
-    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"]
+    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"],
+    // (2026-10-27, the areas' leftovers: a light's look, the map's, an object's, out of combat.)
+    ["Prismatic Dust", "a magical bright light's colour changed for an hour: its look only"],
+    ["Cube of Recall", "a side of the cube attuned to where its user stands (10 minutes): the record its teleport reads later, its user's own"],
+    ["Ruby String", "a single 10-foot-cube demiplane spun over 8 hours, or a create demiplane ritual's cost and secondary checks met: out of combat, a ritual's"],
+    ["Colorful Coating (Blue)", "a loose square firmed to hold twice the weight for a minute, +1 circumstance to Reflex saves against its collapse and +2 to the DC to Force Open it: an object's, its collapse the GM's hazard"],
+    ["Preserving Shot", "a Large or smaller animal it kills preserved as food: out of combat"],
+    ["Explorer's Yurt: Unroll", "a yurt that houses and feeds ten, its light hidden from outside, folded back with an Interact action: out of combat and the map's"],
+    ["Insistent Door Knocker", "a door made through up to 1 foot of a wall, floor or ceiling (none through metal), released with an Interact action: the map's"],
+    ["Insistent Door Knocker (Greater)", "a door made through up to 5 feet of a wall, floor or ceiling (none through metal), released with an Interact action: the map's"],
+    ["Insistent Door Knocker (Major)", "a door made through up to 10 feet of a wall, floor or ceiling (none through metal), released with an Interact action: the map's"],
+    ["Mutator Onyx", "an unattended object's surface (up to a 5-foot cube, Hardness 5 or less) at Hardness 0 for 10 minutes: an object's"],
+    ["Private Workshop", "a 15-foot workshop for Crafting at +1 (PF2e's own Effect: Private Workshop (Using for Crafting)), folded back with an Interact action: out of combat"],
+    ["Sandcastle: Shape the Castle", "a castle of sand up to 120 feet, built over a minute, its walls AC 10, Hardness 10, 40 Hit Points a section, weakness to water 15, Climb DC 15: the map's and its walls' (objects)"],
+    ["Blooming Lotus Seed Pod", "lotus pads floating on a liquid for a minute (the map's), or a lotus whose 8 hours of sleep within 30 feet count as a day's rest, safe from Nightmare: out of combat"],
+    ["Spider Chair: Web Swing", "its user pulled by a web line to a wall, floor or ceiling up to 60 feet away: its own move on the map"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));
