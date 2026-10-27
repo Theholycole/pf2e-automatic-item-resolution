@@ -2966,6 +2966,35 @@ export const cases = {
         return { dc };
     },
 
+    // Pinpoint Arrowhead (2026-10-27): the shortbow picked on the card; its Strike at a target in lesser cover gets the +1 that lowers the
+    // cover one degree (PF2e's FlatModifier on that weapon's ranged Strikes).
+    async pinpointCover(scene) {
+        await clearSquares(scene, [[17, 11], [19, 11]]);
+        const { actor: archer, token: archerToken } = await creature(scene, "Pinpoint Archer", { type: "character", x: 17, y: 11, level: 6 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Pinpoint Mark", { x: 19, y: 11, ac: 18, alliance: "opposition" });
+        await give(foe, "Effect: Cover", "pf2e.other-effects");
+        await until(() => foe.system.attributes.ac.value === 19, `AC 19 in lesser cover (${foe.system.attributes.ac.value})`, { timeout: 4000 });
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Arrows");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        const arrowhead = await give(archer, "Pinpoint Arrowhead");
+        let since = Date.now();
+        await arrowhead.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the arrowhead's card" });
+        const weapons = card.getFlag(NS, "card").weapons ?? [];
+        const index = weapons.findIndex((weapon) => weapon.id === bow.id);
+        assert(index >= 0, `the shortbow offered (${weapons.map((weapon) => weapon.name).join(", ")})`);
+        await game.modules.get(NS).api.live.apply(card.id, { runeWeapon: index });
+        await until(() => archer.itemTypes.effect.some((effect) => effect.system.rules.some((rule) => rule.predicate?.includes(`item:id:${bow.id}`))), "the arrowhead's Effect on the bow", { timeout: 8000 });
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const { attack } = await strike(archer, bow);
+        const modifiers = attack.flags.pf2e.modifiers ?? [];
+        const lowered = modifiers.find((modifier) => modifier.label === "Cover one degree less");
+        assert(lowered?.enabled !== false && lowered?.modifier === 1, `+1 for the cover one degree less (${JSON.stringify(modifiers.map((modifier) => [modifier.label, modifier.modifier, modifier.enabled]))})`);
+        return { modifier: lowered.modifier };
+    },
+
     // Armbands of the Gorgon: the card's picker lists only its user's conditions (slowed, frightened); the one picked is removed, the other stays.
     async armbandsCondition(scene) {
         await clearSquares(scene, [[13, 9]]);

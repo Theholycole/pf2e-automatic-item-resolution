@@ -33,6 +33,16 @@ const QUICKENED = new RegExp(String.raw`\bAfter a successful Strike ${TREATED}, 
 const LEARN = new RegExp(String.raw`\bThe first time you succeed at a Strike against a given creature ${TREATED}, as a free action, you learn one weakness or resistance of that creature; if the creature has multiple weaknesses or resistances, the GM selects which one you learn\.`, "i");
 const LEECH = new RegExp(String.raw`\bWhenever you deal Hit Point damage to a living creature ${TREATED}, you heal yourself half the amount of Hit Point damage dealt\.(?:\s*This cannot heal you above your maximum number of Hit Points\.)?`, "i");
 
+// (Or what the weapon does on its own Strikes while it lasts, PF2e's rules on that weapon — rider.rules: Pinpoint Arrowhead's "When you attempt
+// a ranged Strike with a weapon under the effect of a pinpoint arrowhead, you treat any cover the target has as one degree less": its ranged
+// Strikes +1 against a target in lesser or standard cover and +2 in greater, as the target's AC one degree of cover lower would be — each
+// its own slug, as PF2e keeps one modifier of a slug (found live), 2026-10-27.)
+const PINPOINT = new RegExp(String.raw`\bWhen you attempt a ranged Strike ${TREATED}, you treat any cover the target has as one degree less(?: \(for example, treat standard cover as lesser cover, and lesser cover as no cover\))?\.`, "i");
+const COVER_LESS = [
+    { key: "FlatModifier", selector: "strike-attack-roll", value: 1, slug: "cover-one-degree-less", label: "Cover one degree less", predicate: ["item:ranged", { or: ["target:cover-level:lesser", "target:cover-level:standard"] }] },
+    { key: "FlatModifier", selector: "strike-attack-roll", value: 2, slug: "greater-cover-one-degree-less", label: "Cover one degree less", predicate: ["item:ranged", { or: ["target:cover-level:greater", "target:cover-level:greater-prone"] }] }
+];
+
 // The item's html → { riders, said } (the sentences read), or null.
 export function readAttackRiders(html) {
     const text = String(html ?? "").replace(/<\/?(?:em|i|strong|b)>/g, "");
@@ -56,6 +66,11 @@ export function readAttackRiders(html) {
     if (leech) {
         riders.push({ on: ["dealt"], weapon: true, living: true, heal: { fraction: 0.5 } });
         said.push(...leech[0].split(/(?<=\.)\s+(?=[A-Z])/));
+    }
+    const pinpoint = PINPOINT.exec(text);
+    if (pinpoint) {
+        riders.push({ on: [], weapon: true, rules: COVER_LESS, words: "its ranged Strikes treat the target's cover as one degree less" });
+        said.push(pinpoint[0]);
     }
     const bash = OWN_BASH.exec(text);
     if (bash) {
@@ -94,6 +109,7 @@ export function attackRidersText(riders, weaponName = null) {
     const parts = (riders ?? []).map((rider) => {
         const weapon = weaponName ?? "the weapon picked";
         if (rider.weapon && rider.heal) return `Hit Point damage ${weapon} deals to a living creature heals you half as much`;
+        if (rider.weapon && rider.rules) return `With ${weapon}: ${rider.words}`;
         if (rider.weapon && rider.learn) return `On the first hit with ${weapon} at each creature: one of its weaknesses or resistances, whispered to the GM to tell you`;
         if (rider.weapon && rider.self) return `On a hit with ${weapon}: you are ${rider.self.slug}${rider.self.value ? ` ${rider.self.value}` : ""} for 1 round${rider.self.only ? ` (its extra action only to ${rider.self.only})` : ""}`;
         const when = rider.on.includes("success") ? "a melee hit" : rider.on.includes("criticalSuccess") ? "a melee critical hit" : "a melee miss";

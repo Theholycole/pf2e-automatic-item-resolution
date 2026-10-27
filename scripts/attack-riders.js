@@ -19,7 +19,8 @@ export function attackRidersEffectSource(entry, { item = {}, user = {}, weapon =
         type: "effect",
         img: item.img ?? "icons/svg/sword.svg",
         flags: { [MODULE_ID]: { [WATCH_KEY]: { riders: entry.riders, item: { name: item.name ?? null, uuid: item.uuid ?? null }, user, ...(weapon ? { weapon: { id: weapon.id, name: weapon.name } } : {}) } } },
-        system: { description: { value: `<p>${escape(attackRidersText(entry.riders, weapon?.name ?? null))}, from <strong>${escape(item.name ?? "the item")}</strong>.</p>` }, duration, start: { value: worldTime, initiative }, rules: [] }
+        // (A whetstone's own rules for its weapon, Pinpoint Arrowhead's: on that weapon alone, by its id.)
+        system: { description: { value: `<p>${escape(attackRidersText(entry.riders, weapon?.name ?? null))}, from <strong>${escape(item.name ?? "the item")}</strong>.</p>` }, duration, start: { value: worldTime, initiative }, rules: weapon?.id ? (entry.riders ?? []).flatMap((rider) => rider.rules ?? []).map((rule) => ({ ...rule, predicate: [...(rule.predicate ?? []), `item:id:${weapon.id}`] })) : [] }
     };
 }
 

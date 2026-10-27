@@ -124,13 +124,18 @@ export function snareZone(item, read) {
 // emit a series of thunderous cracks". The zone, gone once set off, its set-off a note to the GM (the ability module's note save) — who
 // hears it is the GM's to tell. Alarm Snare's size: a Tiny creature doesn't set it off, which the zone can't tell (a GM line).
 const ALARM = /\bWhen a Small or larger creature enters the square, the snare makes a noise loud enough that it can be heard by all creatures in the range you designated\./i;
+// (And Flare Snare's "When a Small or larger creature enters the square, this flare shoots into the sky. To creatures with a clear view of the
+// sky, this flare is visible from up to 2 miles away on a clear day or up to 5 miles away on a clear night": who sees it, the GM's.)
+const FLARE = /\bWhen a Small or larger creature enters the square, this flare shoots into the sky\. To creatures with a clear view of the sky, this flare is visible from up to (\d+) miles away on a clear day or up to (\d+) miles away on a clear night\./i;
 const POPDUST = /\bsprinkle \w+ in an empty square adjacent to you\. The first creature that applies pressure to the \w+, such as by moving into that square, causes it to emit a series of thunderous cracks\./i;
 export function alarmZone(item, base) {
     const plain = plainText(item?.system?.description?.value);
-    const alarm = isSnare(item) && ALARM.test(plain);
+    const flare = isSnare(item) ? FLARE.exec(plain) : null;
+    const alarm = (isSnare(item) && ALARM.test(plain)) || !!flare;
     if (!alarm && !(item?.type === "consumable" && POPDUST.test(plain))) return null;
     const range = alarm ? /\bdesignate a range between (\d+) (?:to|and) (\d+) feet\b/i.exec(plain) : null;
-    const note = alarm ? `It makes a noise loud enough for every creature within the range its crafter chose${range ? ` (${range[1]} to ${range[2]} feet)` : ""} to hear it.` : "It gives off a string of loud, thunderous cracks for those around to hear.";
+    const note = flare ? `Its flare shoots up into the sky, seen ${flare[1]} miles off by day or ${flare[2]} miles off on a clear night by those under an open sky.`
+        : alarm ? `It makes a noise loud enough for every creature within the range its crafter chose${range ? ` (${range[1]} to ${range[2]} feet)` : ""} to hear it.` : "It gives off a string of loud, thunderous cracks for those around to hear.";
     return {
         ...base,
         builtin: "zone",

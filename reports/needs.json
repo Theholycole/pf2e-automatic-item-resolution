@@ -1,28 +1,28 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1331,
+  "entries": 1330,
   "results": {
-   "partial": 426,
-   "none": 537,
+   "partial": 427,
+   "none": 535,
    "note-only": 249,
    "builtin:no-effect": 119
   },
   "main": {
    "cast-changes": 25,
    "speeds": 23,
-   "areas": 137,
+   "areas": 136,
    "counteract": 24,
    "afflictions": 61,
    "moving": 85,
-   "visibility": 49,
+   "visibility": 48,
    "choice": 31,
    "lasting": 69,
    "strike": 101,
    "spells": 36,
    "information": 23,
    "out-of-combat": 36,
-   "no-rules": 19,
+   "no-rules": 20,
    "actions": 31,
    "immunity": 27,
    "objects": 114,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 25,
    "speeds": 29,
-   "areas": 202,
+   "areas": 201,
    "immunity": 90,
    "objects": 391,
    "speech": 129,
@@ -60,17 +60,17 @@
    "lasting": 239,
    "moving": 112,
    "triggers": 123,
-   "visibility": 51,
+   "visibility": 50,
    "dying": 76,
    "choice": 110,
    "several": 107,
-   "strike": 196,
+   "strike": 195,
    "reader": 215,
    "spells": 75,
    "information": 199,
    "actions": 63,
    "from-events": 29,
-   "no-rules": 19,
+   "no-rules": 20,
    "situational": 86,
    "creatures": 71,
    "mind": 64,
@@ -10511,17 +10511,6 @@
    ]
   },
   {
-   "name": "Pinpoint Arrowhead",
-   "kind": "consumable",
-   "result": "none",
-   "main": "visibility",
-   "work": "standard cover",
-   "needs": [
-    "visibility",
-    "strike"
-   ]
-  },
-  {
    "name": "Potion of Truespeech",
    "kind": "consumable",
    "result": "builtin:no-effect",
@@ -13961,11 +13950,10 @@
   {
    "name": "Flare Snare",
    "kind": "consumable",
-   "result": "none",
-   "main": "areas",
-   "work": "trip wire",
+   "result": "partial",
+   "main": "no-rules",
    "needs": [
-    "areas"
+    "no-rules"
    ]
   },
   {

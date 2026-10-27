@@ -190,3 +190,16 @@ test("a creature its user picks off-guard to its next melee attack this turn (20
     const [offGuard] = boots.plan.resolution.outcomes.success.effects;
     assert.deepEqual([boots.plan.targeting.target, offGuard.slug, offGuard.scope, offGuard.duration.expiry, boots.plan.trigger.frequency.per], ["1 undead creature", "off-guard", { against: "actor", attacks: "melee", uses: 1 }, "turn-end", "hour"]);
 });
+
+test("a whetstone's own rules on its weapon (2026-10-27): Pinpoint Arrowhead's cover one degree less — +1 to the weapon's ranged Strikes at a target in lesser or standard cover, +2 in greater, by the weapon's id; Flare Snare's flare a note to the GM", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { attackRidersEffectSource } = await import("../scripts/attack-riders.js");
+    const pinpoint = compileItem(item("Pinpoint Arrowhead"), options);
+    const [rider] = pinpoint.item.attackRiders.riders;
+    assert.deepEqual([rider.weapon, rider.rules.map((rule) => rule.value), pinpoint.item.attackRiders.duration.value, pinpoint.partial], [true, [1, 2], 1, undefined]);
+    const source = attackRidersEffectSource(pinpoint.item.attackRiders, { item: { name: "Pinpoint Arrowhead" }, weapon: { id: "bow1", name: "Shortbow" } });
+    assert.deepEqual(source.system.rules.map((rule) => rule.predicate.at(-1)), ["item:id:bow1", "item:id:bow1"]);
+    assert.match(source.system.description.value, /With Shortbow: its ranged Strikes treat the target&#39;s cover as one degree less/);
+    const flare = compileItem(item("Flare Snare"), options);
+    assert.deepEqual([flare.builtin, flare.zone.once, /2 miles off by day or 5 miles/.test(flare.zone.saves[0].note)], ["zone", true, true]);
+});

@@ -14,10 +14,10 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 148,
-   "resolves": 827,
+   "none": 146,
+   "resolves": 828,
    "builtin:readied-bonus": 23,
-   "builtin:zone": 121,
+   "builtin:zone": 122,
    "builtin:ways": 29,
    "builtin:item-action": 16,
    "partial": 75,
@@ -39,12 +39,12 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 28,
-    "resolves": 242,
+    "resolves": 243,
     "builtin:ways": 22,
     "partial": 32,
     "note-only": 59,
     "builtin:readied-bonus": 8,
-    "none": 79,
+    "none": 78,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 9,
@@ -176,8 +176,8 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 7,
-    "builtin:zone": 72,
+    "none": 6,
+    "builtin:zone": 73,
     "note-only": 1,
     "builtin:ways": 1,
     "builtin:whisper": 1
@@ -399,10 +399,10 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 200,
-   "item": 658,
+   "none": 198,
+   "item": 659,
    "fortune": 25,
-   "zone": 121,
+   "zone": 122,
    "save": 134,
    "expose": 89,
    "ways": 29,
@@ -421,10 +421,10 @@
    "other": {
     "cast": 14,
     "zone": 28,
-    "none": 100,
+    "none": 99,
     "ways": 22,
     "save": 86,
-    "item": 229,
+    "item": 230,
     "fortune": 8,
     "teleport": 4,
     "counteract": 9,
@@ -478,8 +478,8 @@
     "item": 1
    },
    "snare": {
-    "none": 7,
-    "zone": 72,
+    "none": 6,
+    "zone": 73,
     "item": 1,
     "ways": 1,
     "whisper": 1
@@ -523,7 +523,7 @@
    }
   },
   "noCard": {
-   "no-plan": 148,
+   "no-plan": 146,
    "triggered": 11,
    "gm": 37,
    "other": 4
@@ -20132,7 +20132,10 @@
     "whetstone"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Potion of Truespeech",
@@ -26768,7 +26771,9 @@
     "visual"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Cytillesh",
