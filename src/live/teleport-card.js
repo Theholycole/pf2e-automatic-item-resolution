@@ -34,6 +34,8 @@ export function teleportText(teleport, { speed = null, weaponRange = null } = {}
 // Its other lines: the farther range after a critical success, its user alone, the damage along the way, line of effect.
 export function teleportLines(teleport) {
     return [
+        // (Its own words for where or how, src/compiler/teleport.js: Headbands of Translocation's other wearer, Fire-Jump Ring's fires.)
+        ...(teleport?.lines ?? []),
         // (Its user's own move, src/compiler/move.js: what it ignores, how it ends.)
         ...(teleport?.move?.lines ?? []),
         // (A creature moved to a space its user picks, src/compiler/placed.js: how near its user, its own lines.)

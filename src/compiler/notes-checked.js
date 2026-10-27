@@ -12,7 +12,11 @@ export const NOTES_CHECKED = new Map([
     ["Coating", "oils and poisons applied with no hands free: its user's own Interact, the oils' and poisons' cards as usual"],
     // (2026-10-27: a jump as one action, no Stride first — its user's own action, which no card can take for them.)
     ["Leaper's Elixir (Lesser)", "High Jump or Long Jump as one action with no Stride first, for its minute: its user's own action"],
-    ["Leaper's Elixir (Greater)", "High Jump or Long Jump as one action with no Stride first, and a longer jump: its user's own action"]
+    ["Leaper's Elixir (Greater)", "High Jump or Long Jump as one action with no Stride first, and a longer jump: its user's own action"],
+    // (2026-10-27: Leaps for a minute — its user's own moves on the map; the fall if it lands on no ground, the environment module's.)
+    ["Frog Chair: Frog Hop", "its Leaps 30 feet in any direction for its minute, landing on solid ground within 30 feet or falling after its next action: its user's own moves"],
+    // (2026-10-27: no PF2e rule sets a spell's range, and the casts are its user's own, not the item's.)
+    ["Compass of Transpositional Awareness: Triangulate", "+30 feet to its user's teleportation spells' ranges, touch ones to 30 feet, for its minute: no rule plays a spell's range, the casts its user's own"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

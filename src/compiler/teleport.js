@@ -31,6 +31,16 @@ const SHOT = /\bat an open space on a surface within (\d+) feet\b[^.]*\.\s*You t
 // shot the ammunition": as far as the range increment of the weapon it's loaded in — teleport.weaponRange, its user's weapon's when the card
 // is made, scripts/teleport.js.)
 const WEAPON_SHOT = /\b(?:When you activate the ammunition, instead of making your Strike against a foe, )?you fire [\w ]+? at any unoccupied square you can see within your weapon(?:'|’)s first range increment and succeed without making an attack roll\.\s*You [^.]*?\bteleporting\b[^.]*?\binto the square where you shot the ammunition\./i;
+// (Or beside the creature the item pairs it with, Headbands of Translocation's "You remove your headband, which teleports you to a space adjacent to
+// the other Invested wearer's location, if you are within 1 mile of each other": from that wearer, the creature targeted — teleport.lines its
+// card's line, 2026-10-27.)
+const OTHER_WEARER = /\bteleports you to a space adjacent to the other Invested wearer's location(?:, if you are within (\d+|one|a) miles? of each other)?/i;
+// (Or out of a fire it Strides into, Fire-Jump Ring's "You Stride (or Burrow or Fly, if you have the corresponding Speed) into any fire large
+// enough to contain you, including magical fires. You vanish into the fire and take no damage from it. You can sense all sufficiently large fires
+// within 100 feet of where you vanish, and you reemerge from any of those fires, either within the fire or adjacent to it. If you end your
+// movement in the fire, it affects you as normal": its Stride its own on the map first, then the card's space within that range of where it
+// vanished — teleport.lines, 2026-10-27.)
+const FIRE_JUMP = /\bYou Stride \(or Burrow or Fly, if you have the corresponding Speed\) into any fire large enough to contain you, including magical fires\.\s*You vanish into the fire and take no damage from it\.\s*You can sense all sufficiently large fires within (\d+) feet of where you vanish, and you reemerge from any of those fires, either within the fire or adjacent to it\.(\s*If you end your movement in the fire, it affects you as normal\.)?/i;
 // (Farther after the triggering save's critical success, Dweomerveil's "If you critically succeeded at the triggering save, you can instead
 // teleport within 45 feet": teleport.critical, the card's tick.)
 const CRITICAL = /^If you critically succeeded at the triggering save, you can instead teleport within (\d+) feet\.$/i;
@@ -55,6 +65,10 @@ const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|r
 // The text (plain) → { within, speedTimes, from, sentence } or null.
 export function readTeleport(text) {
     const plain = String(text ?? "");
+    const wearer = OTHER_WEARER.exec(plain);
+    if (wearer) return { within: 5, speedTimes: null, from: "target", match: wearer, lines: [`The creature targeted: the other invested wearer${wearer[1] ? `, within ${/^\d+$/.test(wearer[1]) && wearer[1] !== "1" ? `${wearer[1]} miles` : "1 mile"} of its user` : ""}`] };
+    const fire = FIRE_JUMP.exec(plain);
+    if (fire) return { within: Number(fire[1]), speedTimes: null, from: "self", match: fire, lines: ["First its own Stride (or Burrow or Fly, with that Speed) into a fire large enough to contain it, magical ones too: it vanishes and takes no damage from that fire (its own move on the map)", `Then Pick a space in or beside any fire large enough within ${fire[1]} feet of where it vanished`, ...(fire[2] ? ["Ending in a fire, that fire affects it as normal"] : [])] };
     const shot = SHOT.exec(plain);
     if (shot) return { within: Number(shot[1]), speedTimes: null, from: "self", match: shot };
     const weaponShot = WEAPON_SHOT.exec(plain);
@@ -96,7 +110,7 @@ export function teleportPlan(html, base, whole = null) {
     // to it": teleport.orSquare — no creature targeted, the space picked within the weapon's range of its user, 2026-10-27.)
     const square = read.from === "target" ? ruled.find((sentence) => /^If you fire at a square, you can teleport to a space that contains that square or an unoccupied space adjacent to it\.$/i.test(sentence)) : null;
     const notes = ruled.filter((sentence) => !OWN_STRIKE(sentence) && sentence !== square);
-    const teleport = { within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), ...(square ? { orSquare: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
+    const teleport = { ...(read.lines?.length ? { lines: read.lines } : {}), within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), ...(square ? { orSquare: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
     return {
         ...base,
         builtin: "teleport",

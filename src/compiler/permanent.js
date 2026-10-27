@@ -34,9 +34,10 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
+import { withOwnMoves } from "./own-moves.js";
 import { isSpecialItem, withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
-import { withFalls } from "./falls.js";
+import { heightWaysPlan, withFalls } from "./falls.js";
 import { withRaiseShield } from "./raise-shield.js";
 import { withRowReadings } from "./row-readings.js";
 import { appearancePlan, withDisbelief } from "./disbelief.js";
@@ -692,8 +693,12 @@ function compileEach(item, options = {}) {
         plan = withMove(plan, activation.html, base);
         // (Protection from heat or cold for its time, src/compiler/temperature.js: Rime Jar's, Slithermaw's Bane's pick.)
         plan = withTemperature(plan, activation.html, base);
+        // (A fall eased by how high it's deployed, src/compiler/falls.js: Parachute Mail's — the height picked on the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = heightWaysPlan(activation.html, base, { own: { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }, whole: html, level: Number(item.system?.level?.value) || 0, type: item.type }) ?? plan;
         // (A fall it eases, src/compiler/falls.js: Tumbler's Belt's 120 feet shorter — the environment module's to apply.)
         plan = withFalls(plan, activation.html, base);
+        // (Its user's own moves as card lines, src/compiler/own-moves.js: Eagle Wing's glide, Pocket Watch of Stethelos' paused time.)
+        plan = withOwnMoves(plan, activation.html, base);
         // (Its user's shield raised, src/compiler/raise-shield.js: Shield of Snakes' Snap Up — PF2e's own Raise a Shield on Apply.)
         plan = withRaiseShield(plan, activation.html, base);
         // (One of its user's items moved or changed, or itself, src/compiler/objects.js: Retrieval Belt, The Forge, Lady's Knife.)

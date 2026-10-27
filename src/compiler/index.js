@@ -65,6 +65,7 @@ import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
+import { withOwnMoves } from "./own-moves.js";
 import { isSpecialItem, withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { readFoam, withFalls } from "./falls.js";
@@ -438,6 +439,8 @@ function compileOne(given, options = {}) {
     plan = withTemperature(plan, html, base);
     // (A fall it eases, src/compiler/falls.js: Tumbler's Belt's 120 feet shorter — the environment module's to apply.)
     plan = withFalls(plan, html, base);
+    // (Its user's own moves as card lines, src/compiler/own-moves.js: Gadget Skates, Emerald Grasshopper's Leap beside its fall.)
+    plan = withOwnMoves(plan, html, base);
     // (One of its user's items to hand, src/compiler/objects.js: Retrieval Prism.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = objectsPlan(html, base, item) ?? plan;
     // (A lit candle's or incense's area while it burns, src/compiler/lit-area.js: Candle of Inflamed Passions' penalty, Incense of Distilled

@@ -111,6 +111,9 @@ export async function offerFallReactions({ token, feet } = {}, { activations, co
         }
         for (const { activation, plan } of activations(item) ?? []) {
             if (plan?.fall && FALLING.test(String(activation?.trigger ?? ""))) offers.push(`${item.name}${activation?.name ? ` (${activation.name})` : ""}: ${fallLine(plan.fall)}`);
+            // (Or one of its ways, Parachute Mail's by the height it's deployed at, 2026-10-27.)
+            const ways = plan?.builtin === "ways" ? (plan.ways ?? []).filter((way) => way.plan?.fall) : [];
+            if (ways.length && FALLING.test(String(activation?.trigger ?? ""))) offers.push(`${item.name}${activation?.name ? ` (${activation.name})` : ""}: ${ways.map((way) => way.name).join(", or ")}`);
         }
     }
     if (!offers.length) return null;
