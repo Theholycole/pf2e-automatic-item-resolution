@@ -79,6 +79,8 @@ test("its user's own counteract numbers when better: Flame Navette's Determinati
     assert.ok(done(navette));
     assert.deepEqual(navette.item.counteract.fromUser, { modifier: "will", better: true, needs: { features: ["determination"] } });
     assert.ok(!navette.item.counteract.notes.some((note) => /Determination feat/.test(note)));
+    // (Only one a day: the immunity tracker's day, src/compiler/one-a-day.js.)
+    assert.deepEqual([navette.item.immunity.slug, navette.item.immunity.duration], ["flame-navette", { value: 1, unit: "days" }]);
     for (const grade of ["Lesser", "Moderate", "Greater"]) {
         const metabolizer = compileItem(item(`Contagion Metabolizer (${grade})`));
         assert.ok(done(metabolizer), grade);
@@ -337,4 +339,23 @@ test("live: Gift of the Poisoned Heart on a dead creature next to its user — b
     assert.ok(names.some((name) => /debilitated$/.test(name)) && names.some((name) => /back from death$/.test(name)), names.join(", "));
     assert.equal(corpse.created.find((entry) => /debilitated$/.test(entry.name)).system.rules.length, 3);
     assert.match(card.content, /Corpse returns to life with 1 Hit Point/);
+});
+
+test("curses that bind a mind: Rose of Loves Lost's Will save (DC 27), a failure Charm with no end (PF2e's Friendly granted) and its daily saves in words; Tablet of Chained Souls' Geas on its user, its clue the GM's line", () => {
+    const rose = compileItem(item("Rose of Loves Lost"));
+    assert.ok(done(rose));
+    assert.deepEqual([routeOf(rose), rose.resolution.check.statistic, rose.resolution.check.against.value, rose.resolution.outcomes.success.noteEffects.length, rose.resolution.outcomes.failure.noteEffects[0].duration, rose.resolution.outcomes.criticalFailure.noteEffects[0].rules[0].key], ["save", "will", 27, 0, null, "GrantItem"]);
+    assert.match(rose.resolution.outcomes.failure.noteEffects[0].text, /Doomed 1/);
+    const tablet = activation("Tablet of Chained Souls", "Spirit Carving");
+    assert.ok(done(tablet));
+    assert.deepEqual([routeOf(tablet), tablet.resolution.outcomes.success.noteEffects[0].label, tablet.notes.length], ["item", "Geas: lay the ghost to rest", 1]);
+});
+
+test("one-offs, their card's lines: Silver Snake Cane's Sword and Serum, Corrosive Ammunition; Memory Palace checked", () => {
+    const cane = compileActivations(item("Silver Snake Cane")).map((entry) => entry.plan);
+    for (const plan of cane.slice(0, 2)) assert.deepEqual([plan.decided, done(plan)], ["one-off", true], plan.source.name);
+    const [corrosive] = compileActivations(item("Corrosive Ammunition")).map((entry) => entry.plan);
+    assert.deepEqual([corrosive.decided, done(corrosive)], ["one-off", true]);
+    const [palace] = compileActivations(item("Memory Palace")).map((entry) => entry.plan);
+    assert.deepEqual([palace.decided, done(palace)], ["checked", true]);
 });

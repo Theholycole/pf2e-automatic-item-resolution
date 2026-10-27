@@ -16,6 +16,8 @@ import { withFirstAidMore } from "./first-aid.js";
 import { withDyingLift } from "./dying-lift.js";
 import { withSleepNotes } from "./sleep-notes.js";
 import { withRevival } from "./revive.js";
+import { withRoseCurse, withTabletGeas } from "./cursed-gifts.js";
+import { withOneADay } from "./one-a-day.js";
 
 // A consumable's plan, its item, how to compile the item again with other html, and its base plan (for one nothing read) → the plan as these
 // read it.
@@ -25,10 +27,12 @@ export function withAfflictionReadings(plan, item, recompile = null, base = null
     const expanded = plan?.noteOnly && recompile ? expandStageRange(item?.system?.description?.value) : null;
     if (expanded) return recompile(expanded) ?? plan;
     const html = item?.system?.description?.value;
-    return withRevival(withFirstAidMore(withTripod(withVaccineStrain(withHiddenSymptom(withPoisonLines(withOwnCounteract(withSaveAgainstOne(withAddictionSuppressed(plan, html), html), html), html), html)), html)), html, base ? base() : null);
+    // (Its base plan only for one nothing read.)
+    const own = !plan && base ? base() : null;
+    return withRoseCurse(withRevival(withFirstAidMore(withTripod(withVaccineStrain(withHiddenSymptom(withPoisonLines(withOneADay(withOwnCounteract(withSaveAgainstOne(withAddictionSuppressed(plan, html), html), html), html), html), html)), html)), html, own), html, own);
 }
 
 // An activation's plan, its item and its entry ({ activation: { name, html } }) → the plan as these read it.
 export function withAfflictionActivations(plan, item, entry) {
-    return withSleepNotes(withDyingLift(withShooedSwarm(withCleanAir(withCumulativeWeakness(withAfflictionHeldOff(plan, item, entry), item, entry), entry))));
+    return withSleepNotes(withDyingLift(withShooedSwarm(withCleanAir(withCumulativeWeakness(withAfflictionHeldOff(withTabletGeas(plan, item, entry), item, entry), item, entry), entry))));
 }

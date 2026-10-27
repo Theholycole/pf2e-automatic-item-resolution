@@ -42,7 +42,10 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27, the afflictions group: a vision the GM shows — its poisoned grain only the text's example.)
     ["Calamity Glass: Mirror, Mirror", "a vision of a likely tragedy within the next 48 hours, accurate but misleading, the mirror's choice (the GM's to show): information"],
     // (2026-10-27: a corpse kept from decay — Raise Dead's window the GM's.)
-    ["Body Recovery Kit", "an hour's work on a corpse dead 3 days or less keeps it so that Raise Dead can return it up to a week after its death: the GM's, out of combat"]
+    ["Body Recovery Kit", "an hour's work on a corpse dead 3 days or less keeps it so that Raise Dead can return it up to a week after its death: the GM's, out of combat"],
+    // (2026-10-27: a building for an hour to store memories in, out of combat; its +2 to Recall Knowledge only on what the GM judges a stored
+    // memory's details — the GM's discretion, the text says.)
+    ["Memory Palace", "an hour as a building for imprinting memories (out of combat); its holder's +2 to Recall Knowledge only on details of a stored memory, the GM's to judge"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));
