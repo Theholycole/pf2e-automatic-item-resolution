@@ -298,3 +298,16 @@ test("Kindler Cameo's Sense Soulheart: what it tells whispered for the GM to fil
     const bolster = plans("Soulheart")[1];
     assert.deepEqual([bolster.item.phantom, bolster.item.spentOnUse, routeOf(bolster)], [{ from: 0, to: 1, kind: "Maiserene", hp: 1, place: "Bastardhall", key: "soulheart-bastardhall" }, true, "item"]);
 });
+
+test("Forgefather's Seal's Stalwart Sacrifice: all Hit Points back (the dead at half), PF2e's Effect, and its user a statue for good", () => {
+    const sacrifice = plans("Forgefather's Seal")[2];
+    assert.deepEqual([sacrifice.resolution.kind, sacrifice.item.recipient, sacrifice.item.restore, sacrifice.item.revive.hp, routeOf(sacrifice)], ["effect", "targets", { hp: "max" }, "half", "item"]);
+    assert.deepEqual(sacrifice.userEffects.map((entry) => entry.slug ?? entry.kind), ["petrified", "note"]);
+    assert.match(sacrifice.userEffects[1].text, /never be restored/);
+    assert.match(sacrifice.notes[0], /Wish ritual/);
+});
+
+test("Soulspark Candle's flames: the 20d8 basic save at each undead in its light (no longer one creature by touch), only while it's lit", () => {
+    const blast = plans("Soulspark Candle")[3];
+    assert.deepEqual([blast.resolution.kind, blast.targeting.area, blast.onlyAgainst, blast.gate, routeOf(blast)], ["save", { type: "emanation", value: 40 }, { traits: ["undead"] }, { lit: true }, "save"]);
+});

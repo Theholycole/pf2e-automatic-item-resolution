@@ -626,6 +626,12 @@ async function giveUserConditions(effects, { actor, token, used }) {
             lines.push(line ?? `${name} gains ${effect.label}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
             continue;
         }
+        // (A note Effect on its user, Forgefather's Seal's statue for good: the ability module's note — 2026-10-27.)
+        if (effect.kind === "note") {
+            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "note", note: { label: effect.label, text: effect.text, duration: effect.duration ?? null } } }, state) : null;
+            lines.push(line ?? `${name}: ${effect.label}${ability?.applyChange ? "" : " (a note to keep by hand: the ability module isn't active)"}`);
+            continue;
+        }
         const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: effect.slug, value: effect.value ?? null, target: "source", duration: effect.duration ?? null }, state) : null;
         lines.push(line ?? `${name} is ${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
     }
@@ -1264,7 +1270,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (Restored outright: Elixir of Rejuvenation's maximum Hit Points — PF2e's healing of what's missing — and its afflictions of a
     // level or lower, PF2e's affliction items, deleted.)
     const restore = state.plan.item?.restore;
-    if (restore?.hp === "max") {
+    // (Not a dead one its revive brings back instead, Forgefather's Seal's Stalwart Sacrifice: 2026-10-27.)
+    const revived = Boolean(state.plan.item?.revive) && isDead(target.actor);
+    if (restore?.hp === "max" && !revived) {
         const hp = target.actor.system?.attributes?.hp ?? {};
         const missing = (Number(hp.max) || 0) - (Number(hp.value) || 0);
         lines.push(missing > 0 ? await heal(target, recipient.name, missing, state) : `${recipient.name} is at its maximum Hit Points already`);
@@ -1276,7 +1284,12 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         lines.push(gone.length ? `${recipient.name}: ${gone.map((affliction) => affliction.name).join(", ")} removed` : `${recipient.name} has no afflictions to remove`);
     }
     // (Brought back to life, Elixir of Rejuvenation given to the dead and Gift of the Poisoned Heart: scripts/revive.js.)
-    if (state.plan.item?.revive) lines.push(...await reviveCreature(target, recipient.name, state.plan.item.revive, state));
+    // (At half its maximum, Stalwart Sacrifice's — and only the dead, when its living ones are restored instead.)
+    if (state.plan.item?.revive && (revived || !restore)) {
+        const max = Number(target.actor.system?.attributes?.hp?.max) || 1;
+        const revive = state.plan.item.revive.hp === "half" ? { ...state.plan.item.revive, hp: Math.max(1, Math.floor(max / 2)) } : state.plan.item.revive;
+        lines.push(...await reviveCreature(target, recipient.name, revive, state));
+    }
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
     if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {
         if (!target.actor?.hasCondition?.(slug)) continue;

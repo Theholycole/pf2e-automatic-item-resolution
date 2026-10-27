@@ -64,6 +64,8 @@
 //   Its undead limned ("All undead creatures in the area are limned in blue, heatless fire …"): a note Effect on each undead targeted (only
 //   those, plan.onlyAgainst; haunts aren't creatures), with its visibility words and its mark — the light's end gives it its minute.
 //   "The candle is lit": plan.gate.lit, refused unless its user has its light (scripts/live.js).
+//   Its flames ("Any undead within the candle's light takes 20d8 fire damage (… basic save)"), the save as read: at each undead in its light
+//   (plan.onlyAgainst, the area its light's), only while it's lit (withCandleBlast).
 // - A bond with a willing creature (withBond): The Marriage's "Choose one adjacent willing creature … you form a magical bond with that creature
 //   that persists until you activate The Marriage again … telepathy to a distance of 120 feet … you know the other's direction from you, distance
 //   from you, and any conditions affecting them. If your bonded target becomes Blinded, Confused, … or Stunned, you can use a reaction to attempt
@@ -123,6 +125,12 @@
 //   to rank 1, and increases each PC's maximum Hit Points by 1 for as long as they remain within Bastardhall while the castle remains cursed."
 //   → plan.item.phantom: the targeted phantom's note Effect (rank 1, for good), each PC's Effect of PF2e's FlatModifier to Hit Points — one
 //   Effect counting every soulheart spent so —, and the soulheart deleted (scripts/live.js).
+// - Life for all around at its user's own cost (withSacrifice): Forgefather's Seal's Stalwart Sacrifice, "Creatures of your choosing within 60
+//   feet recover all their Hit Points. If any of the creatures are dead, they are instead brought back to life with half of their maximum Hit
+//   Points … Once you use this activation, you are turned into a perfect statue … and you can never be restored." → beside PF2e's Effect on each
+//   creature it's given to, item.restore (all its Hit Points) or, dead, item.revive at half its maximum (scripts/revive.js), and its user
+//   Petrified for good with the statue's note Effect (plan.userEffects, as it's used). A Wish-level revival as the only one chosen, and the
+//   seal staying on the statue: lines.
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -682,6 +690,40 @@ function withPhantomBolster(plan, { activation, index }, item) {
     };
 }
 
+// --- Life for all around at its user's own cost ---------------------------------------------------------------------------------------------------
+
+const SACRIFICE = [
+    /^You call upon [A-Z]\w+ to defend your allies and those around you, sacrificing yourself in the process\.$/,
+    /^Creatures of your choosing within (\d+) feet recover all their Hit Points\.$/,
+    /^If any of the creatures are dead, they are instead brought back to life with half of their maximum Hit Points\.$/,
+    /^The chosen creatures also gain a \+(\d+) status bonus to AC and saving throws, and fast healing (\d+) for 1 hour\.$/,
+    /^You can use this ability to bring back to life a creature that requires a (Wish) ritual or divine intervention to raise from the dead, as long as you choose no other creatures within \d+ feet to recover\.$/,
+    /^Once you use this activation, you are turned into a perfect statue made from stone or metal that depicts you in a glorious pose honoring your sacrifice, and you can never be restored\.$/,
+    /^The [\w' -]+? remains on this statue and can be transferred to another suit of armor or a runestone as normal\.$/,
+    /^Effect: [\w' -]+? \([\w' -]+\)$/
+];
+function withSacrifice(plan, { activation }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (plan?.resolution?.kind !== "effect" || !matches(SACRIFICE, sentences) || plan.item?.recipient !== "targets") return plan;
+    const statue = { kind: "note", label: "A statue for good", text: "Turned into a perfect statue of stone or metal, in a glorious pose honoring its sacrifice: Petrified, and it can never be restored. The seal stays on the statue, to be moved to other armor or a runestone as usual.", duration: null };
+    return {
+        ...plan,
+        item: { ...plan.item, restore: { hp: "max" }, revive: { hp: "half", words: "Brought back to life by the seal's sacrifice, with half its maximum Hit Points." } },
+        userEffects: [...(plan.userEffects ?? []), { slug: "petrified" }, statue],
+        notes: [...(plan.notes ?? []), `It can bring back even a creature only a ${SACRIFICE[4].exec(sentences[4])[1]} ritual or divine intervention could raise, when that's the one creature chosen.`]
+    };
+}
+
+// (Its flames at each undead in its light, only while lit: the save the ability compiler read, at "1 creature" by touch before.)
+const BLAST = /^Any (undead) within the candle's light takes @Damage\[\S+\] damage \(@Check\[\w+\|dc:\d+\|basic[^\]]*\]\)\.$/;
+function withCandleBlast(plan, { activation }, item) {
+    const candle = candleOf(item);
+    const said = candle ? sentencesOf(/\bEffect\b\s*(.*)$/s.exec(String(activation.html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "))?.[1] ?? "").map((sentence) => BLAST.exec(sentence)).find(Boolean) : null;
+    if (!said || plan?.resolution?.kind !== "save" || !LIT.test(String(activation.requirements ?? ""))) return plan;
+    const { requirementUnread, ...rest } = plan;
+    return { ...rest, targeting: { target: `each ${said[1]} in the candle's light`, range: null, area: { type: "emanation", value: candle.dim } }, onlyAgainst: { traits: [said[1]] }, gate: { ...(plan.gate ?? {}), lit: true } };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
@@ -690,7 +732,7 @@ export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Nu
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
     let next = plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel, withRitualCast, withCompanionSenses, withMassSuggestion, withRedemption, withGemLink, withReweave, withSenseSoulheart, withPhantomBolster]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel, withRitualCast, withCompanionSenses, withMassSuggestion, withRedemption, withGemLink, withReweave, withSenseSoulheart, withPhantomBolster, withSacrifice, withCandleBlast]) {
         next = reader(plan, entry, item);
         if (next !== plan) break;
     }
