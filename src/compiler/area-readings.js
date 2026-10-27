@@ -768,6 +768,36 @@ const READINGS = [
                 strike: { ...plan.strike, until: "next-turn-start", notes: ["Meanwhile, when it uses Ensnaring Disarm it can also Strike the same target as a free action (its own)."], userRules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", allowDuplicate: true, onDeleteActions: { granter: "cascade", grantee: "cascade" } }], userWords: "Its user is Concealed in the crimson fog until it Strikes or the start of its next turn" }
             };
         }
+    },
+    // --- A light on the weapon, and on what it hits.
+    {
+        // Limning Gem: the weapon's dim light for the whetstone's minute (plan.item.light, on its wielder), and each hit with it a note Effect
+        // on the creature hit — outlined in light, an invisible one only Concealed (PF2e's Concealed granted while it's invisible) — until the
+        // end of its user's next turn, or for the rest of the gem's minute after a critical hit (plan.item.attackRiders, the weapon picked).
+        names: ["Limning Gem"],
+        sentences: [
+            /^This luminescent white gem glows from within, and a weapon it's applied to gains its inner radiance, shedding dim light in a (\d+)-foot radius\.$/,
+            /^Successful Strikes with a weapon affected by a limning gem outline the target in a bright white light; if the target was Invisible, it becomes Concealed instead\.$/,
+            /^This light lasts until the end of your next turn or for the remainder of the limning gem 's duration on a critical hit\.$/
+        ],
+        card: ([glow]) => {
+            const minute = timeOf(1, "minute");
+            const concealed = [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", predicate: ["self:condition:invisible"], allowDuplicate: true, onDeleteActions: { granter: "cascade", grantee: "cascade" } }];
+            const outline = (until) => `Outlined in bright white light ${until}: if it's invisible, it's only concealed.`;
+            return {
+                ...ownRow({}),
+                item: {
+                    light: [{ bright: 0, dim: Number(glow[1]), duration: minute }],
+                    attackRiders: {
+                        duration: minute,
+                        riders: [
+                            { on: ["success"], weapon: true, note: { label: "Outlined in light", text: outline("until the end of its attacker's next turn"), duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }, rules: concealed }, words: "the target outlined in light until the end of your next turn (an invisible one only concealed)" },
+                            { on: ["criticalSuccess"], weapon: true, note: { label: "Outlined in light", text: outline("for as long as the limning gem lasts on the weapon (delete it when that ends)"), duration: null, rules: concealed }, words: "the target outlined in light for the rest of the gem's minute (an invisible one only concealed)" }
+                        ]
+                    }
+                }
+            };
+        }
     }
 ];
 

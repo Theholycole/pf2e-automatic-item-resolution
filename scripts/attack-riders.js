@@ -87,6 +87,8 @@ export async function attackRidersRolled(message) {
             if (rider.target && state.targets.length) lines.push((await ability.applyChange({ op: "condition", slug: rider.target.slug, value: rider.target.value, target: "t0", duration: rider.target.duration }, state)) ?? `${state.targets[0].name}: ${rider.target.slug} ${rider.target.value}`);
             if (rider.self) lines.push((await ability.applyChange({ op: "condition", slug: rider.self.slug, value: rider.self.value, target: "source", duration: rider.self.duration }, state)) ?? `${actor.name}: ${rider.self.slug}${rider.self.value ? ` ${rider.self.value}` : ""}`);
             if (rider.self?.only) lines.push(`its extra action only to ${rider.self.only}`);
+            // (A note Effect on the creature hit, its rules with it: Limning Gem's outline, an invisible creature only concealed — 2026-10-27.)
+            if (rider.note && state.targets.length) lines.push((await ability.applyChange({ op: "effect", target: "t0", effect: { kind: "note", note: rider.note } }, state)) ?? `${state.targets[0].name}: ${rider.note.label}`);
         }
         if (lines.length) await ChatMessage.create({ content: `<p><strong>${escape(watch.item?.name ?? "Item")}</strong>: ${lines.map(escape).join("; ")}.</p>`, speaker: ChatMessage.getSpeaker({ actor }), whisper: game.users.filter((user) => user.isGM).map((user) => user.id) });
     }

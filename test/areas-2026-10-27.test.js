@@ -224,3 +224,12 @@ test("Sawtooth Reaper's Bloodmist Whirl: Concealed on its user's readied Strike 
     assert.deepEqual(source.system.duration, { value: 1, unit: "rounds", expiry: "turn-start", sustained: false });
     assert.match(source.system.description.value, /Concealed in the crimson fog/);
 });
+
+test("Limning Gem: the weapon's dim light for its minute, and each hit with it a note Effect outlining the creature (an invisible one only concealed)", async () => {
+    const gem = compileItem(item("Limning Gem"));
+    const [hit, critical] = gem.item.attackRiders.riders;
+    assert.deepEqual([done(gem), gem.item.light[0].dim, gem.item.attackRiders.duration.value, hit.on, hit.weapon, hit.note.duration.expiry, critical.on, critical.note.duration], [true, 10, 1, ["success"], true, "turn-end", ["criticalSuccess"], null]);
+    assert.deepEqual(hit.note.rules[0].predicate, ["self:condition:invisible"]);
+    const { attackRidersText } = await import("../src/compiler/attack-riders.js");
+    assert.match(attackRidersText([hit], "the dagger"), /^On a hit with the dagger: the target outlined in light/);
+});

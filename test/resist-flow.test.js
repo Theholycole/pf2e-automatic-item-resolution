@@ -182,7 +182,9 @@ test("a light the item its user holds or wears sheds: the item's own wordings, a
     assert.equal(lightText(compileItem(source("One-Hour Flower")).item.light[0]), "Bright light in 30 feet for 1 hour; its radius shrinks by 10 feet every 20 minutes (by hand)");
     assert.equal(lightText(compileActivations(source("Candlecap"))[0].plan.item.light[0]), "Dim light in 20 feet, until put out (its next activation)");
     // Not the weapon a limning gem is applied to ("shedding dim light"), nor Kimanéz Luminescent Toadstool's own glow once planted.
-    assert.equal(compileItem(source("Limning Gem"))?.item?.light, undefined);
+    // (2026-10-27: the gem's weapon light is src/compiler/area-readings.js's now, for the whetstone's minute with its hits' outline — not this
+    // reading's of a light with no time.)
+    assert.deepEqual(compileItem(source("Limning Gem"))?.item?.light, [{ bright: 0, dim: 10, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }]);
     assert.equal(compileItem(source("Kimanéz Luminescent Toadstool"))?.item?.light, undefined);
 });
 
