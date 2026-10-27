@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1285,
+  "entries": 1283,
   "results": {
-   "partial": 388,
+   "partial": 386,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -12,12 +12,12 @@
    "cast-changes": 22,
    "speeds": 22,
    "counteract": 23,
-   "afflictions": 60,
+   "afflictions": 59,
    "moving": 79,
    "visibility": 48,
    "lasting": 65,
    "choice": 30,
-   "strike": 99,
+   "strike": 98,
    "spells": 36,
    "information": 23,
    "out-of-combat": 35,
@@ -56,7 +56,7 @@
    "speech": 129,
    "out-of-combat": 443,
    "counteract": 104,
-   "afflictions": 109,
+   "afflictions": 108,
    "lasting": 231,
    "moving": 106,
    "triggers": 117,
@@ -64,8 +64,8 @@
    "dying": 75,
    "choice": 107,
    "several": 105,
-   "strike": 193,
-   "reader": 212,
+   "strike": 192,
+   "reader": 211,
    "spells": 75,
    "information": 197,
    "actions": 60,
@@ -6352,18 +6352,6 @@
    ]
   },
   {
-   "name": "Void Sickle",
-   "kind": "activation",
-   "activation": "Light Harvest",
-   "result": "partial",
-   "main": "strike",
-   "work": "melee strike",
-   "needs": [
-    "strike",
-    "reader"
-   ]
-  },
-  {
    "name": "Special Ingredient",
    "kind": "consumable",
    "result": "none",
@@ -8503,16 +8491,6 @@
    "needs": [
     "lasting",
     "speech"
-   ]
-  },
-  {
-   "name": "Quenching Potion",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions"
    ]
   },
   {

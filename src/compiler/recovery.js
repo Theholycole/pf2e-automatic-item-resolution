@@ -34,7 +34,13 @@ const PERSISTS = /\bthe (?:powder|salve|remedy) persists for (\d+|one|a) (minute
 // (Or ended outright, no check, Hollow Robes' "All persistent damage you're currently taking ends": every type, { ends: true }.)
 const ENDS = /\bAll persistent damage you're currently taking ends\b/i;
 
-// The text (plain) → { types, dc, ends? } or null. dc: null for the usual one.
+// (And a new save against an affliction of a kind beside it, Quenching Potion's "…, and attempt a new saving throw against any poison affecting
+// you. Poison can't progress to a worse stage due to this saving throw.": { afflictionSave: { traits, noWorse } } — each one Pseudo Afflictions
+// tracks on the creature, its save at its DC, its stage lowered on a success (scripts/foundry.js afflictionSaves), 2026-10-27.)
+const AFFLICTION_SAVE = /,? and attempt a new saving throw against any (poison|disease|curse) affecting you\b/i;
+const NO_WORSE = /^(?:Poisons?|Diseases?|Curses?) can't progress to a worse stage due to this saving throw\.$/i;
+
+// The text (plain) → { types, dc, ends?, afflictionSave? } or null. dc: null for the usual one.
 export function readRecovery(text) {
     const plain = String(text ?? "");
     if (ENDS.test(plain)) return { types: [...TYPES], dc: null, ends: true };
@@ -57,7 +63,9 @@ export function readRecovery(text) {
         const lowered = LOWER_TO.exec(plain);
         const dc = match[1] ? Number(match[1]) : lowered ? Number(lowered[1] ?? lowered[2]) : LOWER.test(plain) ? 10 : null;
         // (Another creature's, the one its user touches: the creatures the presser targets, whoever else the item's Effect is for.)
-        return { types, dc, ...(/^\s*(?:A creature you touch|The creature touched)\b/i.test(sentence) ? { who: "targets" } : {}) };
+        const afflicted = AFFLICTION_SAVE.exec(sentence);
+        const afflictionSave = afflicted ? { traits: [afflicted[1].toLowerCase()], noWorse: sentences.some((other) => NO_WORSE.test(other.trim())) } : null;
+        return { types, dc, ...(/^\s*(?:A creature you touch|The creature touched)\b/i.test(sentence) ? { who: "targets" } : {}), ...(afflictionSave ? { afflictionSave } : {}) };
     }
     return null;
 }
@@ -69,7 +77,9 @@ export function recoveryNotes(text) {
         // (The check's own sentence too when it says more: Searing Suture's "The target creature takes 1d6 fire damage and can
         // immediately attempt …", Quenching Potion's "…, and attempt a new saving throw against any poison affecting you".)
         // (Not the check read by its powder's own type, nor the list of its types: Soothing Powder's, the card's picker.)
-        .filter((sentence) => sentence && !ENDS.test(sentence) && !OWN_TYPE.test(sentence) && !POPULAR.test(sentence) && !PERSISTS.test(sentence) && RULE_WORDS.test(CHECK.test(sentence) ? sentence.replace(CHECK, "").replace(/\bflat check\b|\bpersistent (?:\w+ )?damage\b/gi, "").replace(LOWER_TO, "") : sentence) && !(LOWER.test(sentence) && !CHECK.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
+        // (Nor its new save against an affliction, read with it: Quenching Potion's poison.)
+        .map((sentence) => (CHECK.test(sentence) ? sentence.replace(AFFLICTION_SAVE, "") : sentence))
+        .filter((sentence) => sentence && !ENDS.test(sentence) && !OWN_TYPE.test(sentence) && !POPULAR.test(sentence) && !PERSISTS.test(sentence) && !NO_WORSE.test(sentence) && RULE_WORDS.test(CHECK.test(sentence) ? sentence.replace(CHECK, "").replace(/\bflat check\b|\bpersistent (?:\w+ )?damage\b/gi, "").replace(LOWER_TO, "") : sentence) && !(LOWER.test(sentence) && !CHECK.test(sentence)) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
 }
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });

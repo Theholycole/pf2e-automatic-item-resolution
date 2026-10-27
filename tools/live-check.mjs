@@ -3346,6 +3346,32 @@ export const cases = {
         return { land, fly, duration: effect.system.duration };
     },
 
+    // Quenching Potion (2026-10-27): its new save against the drinker's poison (Pseudo Afflictions' Viper Venom at stage 2, its Fortitude save
+    // at +30): a success lowers it a stage, a critical success two (ending it); the card says which.
+    async quenchPoisonSave(scene) {
+        const { actor: drinker } = await creature(scene, "Poisoned Drinker", { x: 16, y: 12, save: 30 });
+        const pack = game.packs.get("pseudo-afflictions.effects");
+        const entry = pack ? (await pack.getIndex()).find((row) => /Viper Venom/.test(row.name)) : null;
+        assert(entry, "Pseudo Afflictions' Viper Venom");
+        const venom = (await pack.getDocument(entry._id)).toObject();
+        delete venom._id;
+        const [affliction] = await drinker.createEmbeddedDocuments("Item", [venom]);
+        await affliction.update({ "system.badge.value": 2 });
+        await wait(500);
+        const potion = await give(drinker, "Quenching Potion");
+        const since = Date.now();
+        await potion.consume();
+        const card = await messageAfter(since, itemCard("item"), { what: "the potion's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const save = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "saving-throw" && message.speaker?.actor === drinker.id, { what: "the new save" });
+        const outcome = save.flags.pf2e.context.outcome;
+        const stage = () => drinker.items.get(affliction.id)?.system?.badge?.value ?? null;
+        await until(() => (outcome === "criticalSuccess" ? stage() === null : stage() === 1), `stage after a ${outcome} (${stage()})`, { timeout: 8000 });
+        const results = game.messages.get(card.id).getFlag(NS, "card").results;
+        assert(results.some((line) => /Viper Venom/.test(line) && /(ends|stage 1) \(its new save\)/.test(line)), `the card's line (${JSON.stringify(results)})`);
+        return { outcome, stage: stage(), results };
+    },
+
     // Quenching Potion: PF2e's own recovery check for the drinker's persistent fire damage, at DC 10; the DC back to 15 if it stays.
     async quenchRecovery(scene) {
         const { actor: burning } = await creature(scene, "Burning Drinker", { x: 16, y: 11 });

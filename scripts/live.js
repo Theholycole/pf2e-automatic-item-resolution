@@ -17,7 +17,7 @@ import { applyDropCard } from "./drop-held.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { ABILITY_ID, afflictionsOf, CORE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, afflictionSaves, afflictionsOf, CORE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -1117,6 +1117,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const creatures = theirs ? others : [{ actor: target.actor, name: recipient.name }];
         if (!creatures.length) lines.push("Its flat check is for the creature touched: target it and use the card again, or roll it by hand.");
         for (const creature of creatures) lines.push(...await recover(creature.actor, creature.name, picked));
+        // (A new save against its kind of affliction too, Quenching Potion's poisons: scripts/foundry.js.)
+        if (recovery.afflictionSave) for (const creature of creatures) lines.push(...await afflictionSaves(creature.actor, creature.name, recovery.afflictionSave));
     }
     // (Restored outright: Elixir of Rejuvenation's maximum Hit Points — PF2e's healing of what's missing — and its afflictions of a
     // level or lower, PF2e's affliction items, deleted.)

@@ -175,6 +175,38 @@ export async function healCreature({ token, actor }, name, amount, state = {}) {
 
 // The recovery check for each persistent damage of the item's types: PF2e's condition.rollRecovery, which deletes it on a
 // success (without waiting for that, so a moment is given for it). → lines for the card.
+// A new save against each affliction of those traits Pseudo Afflictions tracks on the creature (src/compiler/recovery.js: Quenching Potion's
+// poisons): its save, at its DC; a success lowers the stage one, a critical success two (ended below stage 1, as Pseudo Afflictions ends one);
+// a failure raises it one, a critical failure two, unless noWorse. Its badge changed, Pseudo Afflictions gives the stage's conditions.
+export async function afflictionSaves(actor, name, { traits = [], noWorse = false } = {}) {
+    const found = afflictionsOf(actor).filter((one) => one.document?.flags?.[PSEUDO_AFFLICTIONS]?.save && traits.some((trait) => one.traits.includes(trait) || one.document.traits?.has?.(trait)));
+    if (!found.length) return [`${name} has no ${traits.join(" or ")} affliction: no new save.`];
+    const lines = [];
+    for (const one of found) {
+        const effect = one.document;
+        const save = effect.flags[PSEUDO_AFFLICTIONS].save;
+        const statistic = actor.saves?.[save.type];
+        const stage = Number(effect.system?.badge?.value) || 1;
+        if (!statistic || !Number(save.value)) {
+            lines.push(`${name}: roll a new save against ${one.name} by hand.`);
+            continue;
+        }
+        const roll = await statistic.roll({ dc: { value: Number(save.value) }, skipDialog: true, item: effect });
+        const degree = roll?.degreeOfSuccess ?? null;
+        const change = degree === 3 ? -2 : degree === 2 ? -1 : noWorse ? 0 : degree === 1 ? 1 : degree === 0 ? 2 : 0;
+        if (degree === null) lines.push(`${name}: the save against ${one.name} wasn't rolled.`);
+        else if (change < 0 && stage + change < 1) {
+            await effect.delete();
+            lines.push(`${name}: ${one.name} ends (its new save)`);
+        } else if (change !== 0) {
+            const next = Math.min(stage + change, Number(effect.system?.badge?.max) || stage + change);
+            await effect.update({ "system.badge.value": next });
+            lines.push(`${name}: ${one.name} at stage ${next} (its new save)`);
+        } else lines.push(`${name}: ${one.name} stays at stage ${stage}${noWorse ? " (it can't worsen from this save)" : ""}`);
+    }
+    return lines;
+}
+
 export async function recover(actor, name, recovery) {
     const persistent = () => (actor?.itemTypes?.condition ?? []).filter((condition) => condition.slug === "persistent-damage" && recovery.types.includes(condition.system?.persistent?.damageType));
     const found = persistent();
@@ -184,7 +216,7 @@ export async function recover(actor, name, recovery) {
         await actor.deleteEmbeddedDocuments("Item", found.map((condition) => condition.id));
         return found.map((condition) => `${name}: ${condition.name} ended`);
     }
-    if (!found.length) return [`${name} has no persistent ${recoveryText(recovery).replace(/^.* persistent /, "")}: no flat check.`];
+    if (!found.length) return [`${name} has no persistent ${recoveryText({ ...recovery, afflictionSave: null }).replace(/^.* persistent /, "")}: no flat check.`];
     const lines = [];
     for (const condition of found) {
         // (Its name before a lower DC renames it: "Persistent Damage (1d6 fire)".)

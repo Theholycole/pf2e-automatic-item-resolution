@@ -188,6 +188,23 @@ test("a property rune's DC and dice (2026-10-27): Storm Arrow from a shock-rune 
     assert.equal(round.strike.save.resolution.sharedDamage.components[0].formula, "4d10[void]");
 });
 
+test("lights put out beside a Strike's extra damage (2026-10-27): Void Sickle's Light Harvest — +1d6 void on its next melee Strike, the lights a line of the card", async () => {
+    const { strikeLines } = await import("../src/live/strike-card.js");
+    const [{ plan: sickle }] = compileActivations(item("Void Sickle"), options);
+    assert.deepEqual([sickle.strike.damage[0].damageType, sickle.strike.notes, sickle.partial], ["void", [], undefined]);
+    assert.ok(strikeLines(sickle).includes("Non-magical light sources within 30 feet go out as it's used (turn those lights off on the map)"));
+});
+
+test("a new save against an affliction beside a flat check (2026-10-27): Quenching Potion's poison, which can't worsen from it — recovery.afflictionSave", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { readRecovery, recoveryNotes } = await import("../src/compiler/recovery.js");
+    const { plainText } = await import("../src/compiler/rows.js");
+    const potion = compileItem(item("Quenching Potion"), options);
+    assert.deepEqual([potion.item.recovery.afflictionSave, potion.item.recovery.dc, potion.partial], [{ traits: ["poison"], noWorse: true }, 10, undefined]);
+    const text = plainText(item("Quenching Potion").system.description.value);
+    assert.deepEqual([recoveryNotes(text), readRecovery(text).types], [[], ["acid", "fire", "poison", "void"]]);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

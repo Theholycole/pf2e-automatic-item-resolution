@@ -45,11 +45,10 @@ test("Cinnamon Nostalgia Bun: its flat check against one persistent mental damag
 test("the reading: the types and the DC, and what else it says", () => {
     const quench = compileItem(source("Quenching Potion"));
     assert.equal(routeOf(quench), "item");
-    assert.deepEqual(quench.item.recovery, { types: ["acid", "fire", "poison", "void"], dc: 10 });
-    assert.equal(recoveryText(quench.item.recovery), "A flat check (DC 10) to end persistent acid, fire, poison or void damage");
-    // Its new saving throw against poison isn't read: a note.
-    assert.equal(quench.partial, true);
-    assert.match(quench.notes.join(" "), /new saving throw against any poison/);
+    // (Its new saving throw against poison read too, 2026-10-27: recovery.afflictionSave, nothing left over.)
+    assert.deepEqual(quench.item.recovery, { types: ["acid", "fire", "poison", "void"], dc: 10, afflictionSave: { traits: ["poison"], noWorse: true } });
+    assert.equal(recoveryText(quench.item.recovery), "A flat check (DC 10) to end persistent acid, fire, poison or void damage; then a new save against each poison affecting it (it can't get worse from it)");
+    assert.deepEqual([quench.partial, quench.notes], [undefined, undefined]);
     // "@Check[flat|dc:10] to end any persistent poison damage" (Antivenom Potion): its flat check, and (2026-10-26) its +1 to Fortitude saves
     // against persistent poison damage a note Effect for the minute in place of the whole text's reminder — whole.
     const antivenom = compileItem(source("Antivenom Potion"));

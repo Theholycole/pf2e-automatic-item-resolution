@@ -291,7 +291,7 @@ export function compileStrike(item, base, options = {}) {
     // (The maneuver after it: its own card, not the Strike's riders — Iron Cube's "If this knocks the target Prone" isn't the hit's.)
     const empty = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
     if (follow) return strikePlan({ base, item, strike, text, riders: { success: empty(), criticalSuccess: empty() }, save, extras: { ...extras, notes: extras.notes.filter((note) => !(follow.notes ?? []).includes(note) && !FOLLOW.test(note) && !/^If this knocks the target Prone\b/i.test(note)) }, cast, follow });
-    const plan = withOwnRuleDamage(withSaveOnly(strikePlan({ base, item, strike, riders, save, extras, cast, text }), text), item);
+    const plan = withLightsOut(withOwnRuleDamage(withSaveOnly(strikePlan({ base, item, strike, riders, save, extras, cast, text }), text), item));
     // (A plan of hit notes alone: below any other reading, src/compiler/strikes.js strikeOver.)
     return noted && plan?.strike ? { ...plan, strike: { ...plan.strike, fromNotes: true } } : plan;
 }
@@ -316,6 +316,21 @@ function withOwnRuleDamage(plan, item) {
     const left = notes.filter((note) => !said.includes(note));
     const leftAll = [...left, ...(plan.notes ?? []), ...(plan.unread ?? [])];
     return { ...plan, strike: { ...plan.strike, notes: left, ownRules: said.map((note) => String(note).trim().replace(/^On a hit, the attack deals /i, "").replace(/\.$/, "")) }, ...(plan.partial && !leftAll.length ? { partial: undefined, automation: { level: "automatic" } } : {}) };
+}
+
+// (The lights it puts out beside its Strike's extra damage, Void Sickle's Light Harvest: "All non-magical light sources within 30 feet are
+// immediately extinguished, and the next melee Strike you make with the void sickle before the end of your turn deals an additional 1d6 void
+// damage" — its damage the Strike's, its lights a line of the card, the map's lights to turn off (as a tunnel is drawn on it): strike.lines,
+// 2026-10-27.)
+const LIGHTS_OUT = /^All non-magical light sources within (\d+) feet are immediately extinguished, and the next (?:melee |ranged )?Strike you make with the [\w' -]+? before the end of your turn deals an additional (\d+d\d+) \w+ damage\.$/i;
+function withLightsOut(plan) {
+    const notes = plan?.strike?.notes ?? [];
+    const found = notes.map((note) => [note, LIGHTS_OUT.exec(String(note).trim())]).find(([, match]) => match);
+    const dice = found ? (plan.strike.damage ?? []).some((entry) => `${entry.diceNumber}${entry.dieSize}` === found[1][2]) : false;
+    if (!dice) return plan;
+    const left = notes.filter((note) => note !== found[0]);
+    const leftAll = [...left, ...(plan.notes ?? []), ...(plan.unread ?? [])];
+    return { ...plan, strike: { ...plan.strike, notes: left, lines: [...(plan.strike.lines ?? []), `Non-magical light sources within ${found[1][1]} feet go out as it's used (turn those lights off on the map)`] }, ...(plan.partial && !leftAll.length ? { partial: undefined, automation: { level: "automatic" } } : {}) };
 }
 
 const RUNE_DC = /^If this (?:arrow|bolt|bullet|ammunition) is (?:shot|fired) from a weapon with an? (\w+) property rune, the save DC increases to (\d+), though the attack doesn't benefit from the \1 property rune itself\.$/i;

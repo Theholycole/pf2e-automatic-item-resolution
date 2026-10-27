@@ -43,6 +43,8 @@ export function strikeLines(plan) {
         strike.against?.length ? `Only against a ${strike.against.join(" or ")} creature (another target spends it)` : null,
         // (Damage its own PF2e rules add, Gravebane Ammunition's: said, PF2e's to roll.)
         ...(strike.ownRules ?? []).map((words) => `PF2e's own rules add ${words}`),
+        // (A line of its own beside the Strike, Void Sickle's lights put out.)
+        ...(strike.lines ?? []),
         // (A volley's penalty is its own line.)
         strike.attack && !(strike.volley?.penalty && strike.attack.value === strike.volley.penalty) ? (strike.attack.value < 0 ? `${strike.attack.value} ${strike.attack.type === "untyped" ? "" : `${strike.attack.type} `}penalty to the attack roll` : `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll`) : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,

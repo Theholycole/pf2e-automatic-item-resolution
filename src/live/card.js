@@ -294,7 +294,9 @@ export function recoveryText(recovery) {
     if (recovery.ends) return "All its user's persistent damage ends";
     if (recovery.choose) return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent damage of its type (picked below)`;
     const types = recovery.types.length > 1 ? `${recovery.types.slice(0, -1).join(", ")} or ${recovery.types.at(-1)}` : recovery.types[0];
-    return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent ${types} damage${recovery.who === "targets" ? ", for the creature touched (targeted)" : ""}`;
+    // (And its new save against an affliction, Quenching Potion's poisons.)
+    const save = recovery.afflictionSave ? `; then a new save against each ${recovery.afflictionSave.traits.join(" or ")} affecting it${recovery.afflictionSave.noWorse ? " (it can't get worse from it)" : ""}` : "";
+    return `A flat check${recovery.dc ? ` (DC ${recovery.dc})` : ""} to end persistent ${types} damage${recovery.who === "targets" ? ", for the creature touched (targeted)" : ""}${save}`;
 }
 
 // One of the card's own Effects (its resistance, Speed or vision): PF2e's rules for the item's time (unlimited with none),
