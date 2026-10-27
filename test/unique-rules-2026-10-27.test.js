@@ -250,3 +250,33 @@ test("Oculus of Abaddon: its Will save on every use unless its user is evil; Bin
     assert.deepEqual(failing.system.rules[0].adjustment, { criticalSuccess: "to-failure", success: "to-failure" });
     assert.match(failing.system.description.value, /next Will save is a failure/);
 });
+
+test("Redeemer's Pistol: the foe's pick on the ways card — none of the damage, or resistance 2 + level and the foe Enfeebled 2 with 4 persistent spirit", async () => {
+    const { readiedWords } = await import("../src/live/fortune-card.js");
+    const { before } = await import("../scripts/half-damage.js");
+    const [pistol] = plans("Redeemer's Pistol");
+    assert.deepEqual([pistol.builtin, pistol.trigger.frequency.max, routeOf(pistol), pistol.ways.length], ["ways", 1, "ways", 2]);
+    const [spared, punished] = pistol.ways.map((way) => way.plan);
+    assert.deepEqual([spared.bonus.noDamage, routeOf(spared)], [true, "fortune"]);
+    assert.match(readiedWords(spared), /no damage from the triggering damage/);
+    assert.deepEqual(punished.alsoReadied.bonus.resistance, { type: "all-damage", value: "2 + @actor.level", words: "2 + its level" });
+    assert.match(readiedWords(punished.alsoReadied), /resistance 2 \+ its level to damage/);
+    assert.equal(routeOf(punished), "save");
+    const row = punished.resolution.outcomes.success;
+    assert.deepEqual([row.effects[0].slug, row.effects[0].value, row.effects[0].duration.anchor, punished.resolution.sharedDamage.components[0].formula], ["enfeebled", 2, "target-turn", "4[persistent,spirit]"]);
+    // (The damage as the core's listener sees it, on a creature with that readied Effect: none of it.)
+    const actor = { itemTypes: { effect: [{ flags: { "pf2e-automatic-item-resolution": { fortune: { noDamage: true } } } }] } };
+    const { MODULE_KEY } = await import("../src/live/fortune-card.js");
+    actor.itemTypes.effect[0].flags["pf2e-automatic-item-resolution"] = { [MODULE_KEY]: { noDamage: true } };
+    assert.equal(before(actor, { damage: 12 }).params.damage, 0);
+    assert.equal(before({ itemTypes: { effect: [] } }, { damage: 12 }), null);
+});
+
+test("Eye of the Wise: linked to a gem it touched, its user's Effect with no end — telepathy with the gem's carrier, the last link replaced", () => {
+    const [link] = plans("Eye of the Wise");
+    assert.deepEqual([link.builtin, routeOf(link)], [undefined, "item"]);
+    const [effect] = link.item.ruleEffects;
+    assert.deepEqual([effect.duration, effect.replaces, effect.rules], [null, "gem-link", []]);
+    assert.match(effect.words, /telepathy at any distance/);
+    assert.match(effect.words, /gem is damaged/);
+});

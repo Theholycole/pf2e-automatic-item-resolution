@@ -11,6 +11,8 @@ import { CORE_ID, MODULE_ID } from "./foundry.js";
 
 const cutting = (actor) => (actor?.itemTypes?.effect ?? []).find((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.reduceCrit) ?? null;
 const halving = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.halfDamage);
+// (None of it, Redeemer's Pistol's "You're unharmed by the triggering damage": bonus.noDamage — the roll altered to 0, 2026-10-27.)
+const sparing = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.noDamage);
 const blocking = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.shieldBlock);
 
 export function setUpHalfDamage() {
@@ -47,6 +49,10 @@ export function beforeCritical(actor, params) {
 }
 
 export function before(actor, params) {
+    if (sparing(actor) && params?.damage) {
+        if (typeof params.damage === "number") return params.damage > 0 ? { params: { ...params, damage: 0 } } : null;
+        return typeof params.damage.alter === "function" ? { params: { ...params, damage: params.damage.alter(0, 0) } } : null;
+    }
     if (!halving(actor) || !params?.damage) return null;
     if (typeof params.damage === "number") return params.damage > 0 ? { params: { ...params, damage: Math.floor(params.damage / 2) } } : null;
     if (typeof params.damage.alter !== "function") return null;

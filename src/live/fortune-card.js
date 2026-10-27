@@ -9,7 +9,7 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 
 export const MODULE_KEY = "rollTwice";
 const SAVES = new Set(["saving-throw", "fortitude", "reflex", "will"]);
-export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity || plan.bonus?.halfDamage || plan.bonus?.reduceCrit || plan.bonus?.shieldBlock));
+export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity || plan.bonus?.halfDamage || plan.bonus?.noDamage || plan.bonus?.reduceCrit || plan.bonus?.shieldBlock));
 
 const ROLL_WORDS = { initiative: "initiative roll", "attack-roll": "attack roll", "saving-throw": "saving throw", "skill-check": "skill check", perception: "Perception check", fortitude: "Fortitude save", reflex: "Reflex save", will: "Will save", ac: "AC", check: "check" };
 const actionWords = (predicate) => (predicate?.[0]?.or ?? []).map((option) => String(option).replace(/^action:/, "").replace(/-/g, " ")).join(", ");
@@ -34,11 +34,13 @@ export function bonusWords(bonus) {
     const degree = bonus.degree ? `${nameOf(bonus.degree.selector)}${actionWords(bonus.degree.predicate) ? ` (${actionWords(bonus.degree.predicate)})` : ""}: ${[...new Set(Object.entries(bonus.degree.adjustment).map(([key, value]) => DEGREE_WORDS[value === "to-success" ? "to-success" : key]))].join(", ")}` : null;
     // ("resistance 5 to physical damage", "resistance 5 to mental, poison or spirit damage" — the one that hit.)
     const types = [].concat(bonus.resistance?.type ?? []).filter((type) => type !== "all-damage");
-    const resistance = bonus.resistance ? `resistance ${bonus.resistance.value} to ${types.length ? `${types.length > 1 ? `${types.slice(0, -1).join(", ")} or ${types.at(-1)}` : types[0]} damage` : "damage"}${(bonus.resistanceAlso ?? []).map((entry) => ` (${entry.value} to damage from ${entry.from})`).join("")}` : null;
+    // (Its value by its user's level, Redeemer's Pistol's "2 + your level": PF2e's formula on the rule, its words here — 2026-10-27.)
+    const resistance = bonus.resistance ? `resistance ${bonus.resistance.words ?? bonus.resistance.value} to ${types.length ? `${types.length > 1 ? `${types.slice(0, -1).join(", ")} or ${types.at(-1)}` : types[0]} damage` : "damage"}${(bonus.resistanceAlso ?? []).map((entry) => ` (${entry.value} to damage from ${entry.from})`).join("")}` : null;
     // ("immunity to physical damage": none of it.)
     const immunity = bonus.immunity ? `immunity to ${bonus.immunity.type} damage` : null;
     // (Laurel of the Empath's: half of it.)
-    const halved = bonus.halfDamage ? "half damage from the triggering attack" : null;
+    // (None of it, Redeemer's Pistol's "You're unharmed by the triggering damage": bonus.noDamage, scripts/half-damage.js — 2026-10-27.)
+    const halved = bonus.halfDamage ? "half damage from the triggering attack" : bonus.noDamage ? "no damage from the triggering damage" : null;
     const cut = bonus.reduceCrit ? `the triggering critical hit's damage reduced by ${bonus.reduceCrit.value}, by no more than its doubling added (half of it)` : null;
     // (Arrow-Catching Shield's: PF2e's Shield Block on the damage of the Strike it takes.)
     const blocked = bonus.shieldBlock ? "the Shield Block reaction's effects on its damage if it hits (its raised shield's Hardness, the shield taking the rest)" : null;
@@ -120,7 +122,7 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
         img: img ?? (fortune ? "icons/svg/d20-highlight.svg" : "icons/svg/upgrade.svg"),
         // (Only against what triggered it: what spends it — with resistance or immunity, the damage still to come after a hit; with a
         // bonus to saves, its creature's save.)
-        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.escalate ? { escalate: plan.bonus.escalate } : {}), ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.shieldBlock ? { shieldBlock: true } : {}), ...(plan.bonus?.reduceCrit ? { reduceCrit: plan.bonus.reduceCrit } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage || plan.bonus.reduceCrit || plan.bonus.shieldBlock), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.escalate ? { escalate: plan.bonus.escalate } : {}), ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.noDamage ? { noDamage: true } : {}), ...(plan.bonus?.shieldBlock ? { shieldBlock: true } : {}), ...(plan.bonus?.reduceCrit ? { reduceCrit: plan.bonus.reduceCrit } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage || plan.bonus.noDamage || plan.bonus.reduceCrit || plan.bonus.shieldBlock), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
         system: {
             description: { value: `<p>${escape(readiedWords(plan))}.${(plan.notes ?? []).length ? ` ${escape(plan.notes.join(" "))}` : ""}</p>` },
             duration: { ...duration, sustained: false },

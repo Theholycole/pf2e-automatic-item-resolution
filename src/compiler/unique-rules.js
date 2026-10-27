@@ -100,6 +100,16 @@
 //   Sustains it, its no other actions said. Its mass suggestion (withMassSuggestion): the spell module's Suggestion at DC 36 at every creature
 //   its user targets within a mile, those below 7th level failing it outright (plan.castDegree.belowLevel: PF2e's AdjustDegreeOfSuccess on
 //   them first), its end on one ending it on all and its aim (a tragic fate) lines; Vordakai's Varnhold, lore.
+// - The foe's choice of its own punishment (withRedemption): Redeemer's Pistol's "The foe must choose one of the following options. You're
+//   unharmed by the triggering damage. You gain resistance to all damage against the triggering damage equal to 2 + your level. After the
+//   damaging effect is applied, the enemy becomes Enfeebled 2 until the end of its next turn and takes 4 persistent spirit damage" → the ways
+//   card, the foe's pick: none of the damage (the readied card's bonus.noDamage, scripts/half-damage.js), or the readied card's resistance
+//   (PF2e's formula of its user's level) beside the ability module's card at the enemy, Enfeebled 2 until its next turn ends, and the
+//   persistent spirit damage.
+// - A link through a gem (withGemLink): Eye of the Wise's "You touch the Eye of the Wise to a gem worth at least 10 gp … the carriers of the Eye
+//   of the Wise and of the other gemstone can communicate telepathically with one another over any distance … This connection is broken if the
+//   other gemstone is damaged, if the Eye of the Wise becomes attuned to another gemstone, or if the bearer … dismisses the activation." → its
+//   user's Effect with no end (item.ruleEffects, the last link replaced), its telepathy and its ends in words.
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -562,6 +572,44 @@ function withMassSuggestion(plan, { activation, index }, item) {
     };
 }
 
+// --- The foe's choice of its own punishment ------------------------------------------------------------------------------------------------------
+
+const REDEEMED = /^The protective spirit within the gun imposes a vision of redemption in your foe's mind\. The foe must choose one of the following options\. You're unharmed by the triggering damage\. You gain resistance to all damage against the triggering damage equal to (\d+) \+ your level\. After the damaging effect is applied, the enemy becomes @UUID\[(Compendium\.pf2e\.conditionitems\.Item\.\w+)\]\{(Enfeebled) (\d)\} until the end of its next turn and takes @Damage\[(\d+)\[persistent,(\w+)\]\] damage\.?$/;
+function withRedemption(plan, { activation, index }, item) {
+    const effect = /<strong>\s*Effect\s*<\/strong>\s*([\s\S]*)$/i.exec(String(activation.html ?? ""))?.[1]?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").replace(/\s+\./g, ".").trim();
+    const said = effect ? REDEEMED.exec(effect.replace(/(damage)\s*$/, "$1.")) : null;
+    if (!unread(plan) || !said || !/\benemy within (\d+) feet damages you\b/i.test(String(activation.trigger ?? ""))) return plan;
+    const [, base2, , condition, value, amount, type] = said;
+    const base = keptBase(plan, item, { activation, index });
+    const readied = (bonus, note) => ({ ...base, builtin: "readied-bonus", automation: { level: "automatic" }, targeting: { target: "the user", range: null, area: null }, trigger: { event: "use" }, bonus: { modifiers: [], resistance: null, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], against: true, ...bonus }, notes: [note] });
+    const spared = readied({ noDamage: true }, "Only against the damage that triggered it: none of it.");
+    const resisted = readied({ resistance: { type: "all-damage", value: `${base2} + @actor.level`, words: `${base2} + its level` } }, "Only against the damage that triggered it.");
+    const punished = {
+        ...ownCard({ ...base, targeting: { target: "the enemy that damaged its user", range: null, area: null } }, {}),
+        resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `${amount}[persistent,${type}]`, type: null, category: null }] }, outcomes: { success: { damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] }, effects: [{ kind: "condition", slug: condition.toLowerCase(), value: Number(value), duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } }], modifiers: [], noteEffects: [] } } },
+        notes: ["Apply it at the enemy once the triggering damage is applied."],
+        alsoReadied: resisted
+    };
+    // (The foe's pick, the GM's: said in each way's name, as the ways card shows no notes.)
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, ways: [{ name: "The foe picks: no damage to its user", plan: spared }, { name: `The foe picks: resistance ${base2} + level, then ${condition} ${value} and ${amount} persistent ${type}`, plan: punished }] };
+}
+
+// --- A link through a gem -----------------------------------------------------------------------------------------------------------------------
+
+const GEM_LINK = [
+    /^You touch the [\w' -]+? to a gem worth at least (\d+) gp, whereupon the [\w' -]+? assumes the appearance of the touched gemstone\.$/,
+    /^While this connection is active, the carriers of the [\w' -]+? and of the other gemstone can communicate telepathically with one another over any distance, as long as both are on the same plane\.$/,
+    /^This connection is broken if the other gemstone is damaged, if the [\w' -]+? becomes attuned to another gemstone, or if the bearer of the [\w' -]+? dismisses the activation\.$/
+];
+function withGemLink(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!unread(plan) || !matches(GEM_LINK, sentences)) return plan;
+    const worth = GEM_LINK[0].exec(sentences[0])[1];
+    const words = `Linked to a gem of at least ${worth} gp it touched, ${item.name} now looking like that gem: its carrier and that gem's carrier share telepathy at any distance while on the same plane. It ends if that gem is damaged, if ${item.name} is linked to another gem (its next use), or when its bearer dismisses it (delete this Effect)`;
+    const base = keptBase(plan, item, { activation, index });
+    return { ...ownCard(base, {}), item: { ...base.item, ruleEffects: [{ name: "linked to a gem", words, rules: [], duration: null, replaces: "gem-link" }] } };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
@@ -570,7 +618,7 @@ export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Nu
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
     let next = plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel, withRitualCast, withCompanionSenses, withMassSuggestion]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel, withRitualCast, withCompanionSenses, withMassSuggestion, withRedemption, withGemLink]) {
         next = reader(plan, entry, item);
         if (next !== plan) break;
     }
