@@ -14,7 +14,7 @@
 
 import { applyEndEarlyCard } from "./end-early.js";
 import { applyDropCard } from "./drop-held.js";
-import { withStrikeFormula } from "../src/live/strike-as.js";
+import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
@@ -206,12 +206,31 @@ async function postWhisper({ plan, used, actor, token }) {
     });
 }
 
+// The latest ranged Strike that missed the actor (the recent chat): its attacker's PF2e damage formula for that Strike, or null.
+async function triggeringMissFormula(actor) {
+    const messages = (game.messages?.contents ?? []).slice(-20);
+    const rolls = messages.map((entry) => {
+        const context = entry.flags?.pf2e?.context ?? {};
+        const target = context.target?.actor ?? null;
+        return { message: entry, type: context.type ?? null, outcome: context.outcome ?? null, ranged: (context.options ?? []).includes("item:ranged"), targetActorUuid: target, actorUuid: entry.actor?.uuid ?? null, itemId: entry.item?.id ?? String(entry.flags?.pf2e?.origin?.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? null };
+    });
+    const missed = triggeringMiss(rolls, actor.uuid);
+    const attacker = missed?.message?.actor ?? null;
+    const strike = (attacker?.system?.actions ?? []).find((action) => action?.type === "strike" && action.item?.id === missed.itemId && typeof action.damage === "function");
+    return strike ? await strike.damage({ getFormula: true }).catch(() => null) : null;
+}
+
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
     // (Its moves with ability 0.9.2's hook and moveFrom, else as read before: scripts/placed-moves.js.)
     plan = forAbility(plan);
     // (Damage as its user's own Strike with it would deal, of one type — Sinew-Song's Cutting Cadenza: PF2e's formula for that Strike, src/live/strike-as.js.)
-    if (plan?.strikeDamage && actor) {
+    // (Or the Strike that just missed its user, sent back with its own damage — Turnabout Shield's: the attacker's PF2e formula for it.)
+    if (plan?.strikeDamage?.from === "triggering-miss" && actor) {
+        const formula = await triggeringMissFormula(actor);
+        if (formula) plan = withStrikeFormula(plan, formula);
+        else await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p><strong>${escapeHTML(used?.data?.name ?? "The item")}</strong>: no ranged Strike that missed ${escapeHTML(actor.name)} in the recent chat — roll the triggering Strike's damage by hand on a hit.</p>` });
+    } else if (plan?.strikeDamage && actor) {
         const itemId = used?.data?._id ?? used?.data?.id ?? null;
         const strike = (actor.system?.actions ?? []).find((action) => action.item?.id === itemId);
         const formula = strike?.damage ? await strike.damage({ getFormula: true }).catch(() => null) : null;

@@ -104,9 +104,109 @@ export function withSuppressed(plan, { item, activation, index }) {
     return { ...base, builtin: "ways", automation: { level: "automatic" }, ways: conditions.map((slug) => ({ name: slug === "off-guard" ? "Off-Guard" : capital(slug), html: "", plan: cardOf(slug) })), once: true };
 }
 
+// --- A roll PF2e's own Effect replaces -------------------------------------------------------------------------------------------------------
+
+// (Ancestral Geometry's "Replace the roll with the d20 roll from your ancestor's visitation": its linked PF2e Effect, Effect: Ancestral Geometry, rolls
+// the visitation's 2d20 (kept highest) as its badge and the save's type, and its SubstituteRoll offers that d20 in the noted save's roll dialog,
+// gone once used — the reaction is PF2e's own, builtin "pf2e-rules", no card; what its user does is a line.)
+const SUBSTITUTE = /^Replace the roll with the d20 roll from your ancestor's visitation\.$/i;
+const LINKED_EFFECT = /@UUID\[Compendium\.pf2e\.equipment-effects\.Item\.[A-Za-z0-9]+\]\{(Effect: [^}]+)\}/;
+export function withSubstituteRoll(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const linked = LINKED_EFFECT.exec(String(item?.system?.description?.value ?? ""))?.[1];
+    if (sentences.length !== 1 || !SUBSTITUTE.test(sentences[0]) || !linked || !/\bfortune\b/.test((activation.traits ?? []).join(" "))) return plan;
+    const { targeting, ...base } = keptBase(plan, item, { activation, index });
+    return { ...base, builtin: "pf2e-rules", rules: ["SubstituteRoll"], automation: { level: "automatic" }, notes: [`PF2e's own ${linked} plays it: its badge is the visitation's recorded d20 and it notes the save's type; in a save of that type's roll dialog, pick ${linked.replace(/^Effect: /, "")} to use that d20 in place of the roll (the Effect is gone once it's used).`] };
+}
+
+// --- A missed shot sent back -------------------------------------------------------------------------------------------------------------------
+
+// (Turnabout Shield's "The ammunition enters the shield and is redirected with the same force with which it was originally fired. Make a ranged
+// Strike using the ammunition with an attack modifier of +19, targeting a creature within 60 feet": the item's own attack at +19 against the AC of
+// the creature its presser targets (plan.ownCheck, the save card), its hit's damage the triggering Strike's — plan.strikeDamage { from:
+// "triggering-miss" }, the formula of the latest ranged Strike that missed its user, its weapon's and ammunition's as PF2e gives it, filled in
+// as the card is made (scripts/live.js, src/live/strike-as.js), doubled on a critical hit.)
+const REDIRECTED = /^The ammunition enters the shield and is redirected with the same force with which it was originally fired\.$/i;
+const SHOT_BACK = /^Make a ranged Strike using the ammunition with an attack modifier of \+(\d+), targeting a creature within (\d+) feet\.$/i;
+export function withRedirectedShot(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const shot = sentences.map((sentence) => SHOT_BACK.exec(sentence)).find(Boolean);
+    if (!shot || sentences.length !== 2 || !sentences.some((sentence) => REDIRECTED.test(sentence))) return plan;
+    const modifier = Number(shot[1]);
+    const { targeting, ...base } = keptBase(plan, item, { activation, index });
+    const rows = Object.fromEntries(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => [degree, { ...none() }]));
+    return {
+        ...base,
+        automation: { level: "automatic" },
+        ownCheck: { kind: "attack", modifier },
+        targeting: { target: "1 creature", range: `${shot[2]} feet`, area: null },
+        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier }, outcomes: rows },
+        strikeDamage: { as: null, from: "triggering-miss", rows: { success: 1, criticalSuccess: 2 } }
+    };
+}
+
+// --- A bleed made worse -------------------------------------------------------------------------------------------------------------------------
+
+// (Secret-Keeper's Mask (Father Skinsaw)'s "The DC of flat checks to recover from the persistent bleed damage is increased by 2, and the target
+// creature has a -2 status penalty to Deception, Diplomacy, and Performance checks while it is bleeding and for 1 minute after it ceases bleeding":
+// the item card at the creature its presser targets (item.recipient "targets"), a note Effect lasting while it takes persistent bleed damage
+// (the ability module's whilePersistent) with PF2e's rules — ItemAlteration "pd-recovery-dc" on its bleed (as PF2e's own Toothy Knife raises
+// it) and the FlatModifiers — and the RollOption "air-then-for:1:minutes:bleed", by which scripts/then-for.js gives it the same penalties for
+// the minute after once the bleeding has ended.)
+const SKILL_SLUGS = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery"];
+const MUTILATING = /^The DC of flat checks to recover from the persistent (\w+) damage is increased by (\d+), and the target creature has an? [–-](\d+) (status|circumstance|item) penalty to ([A-Z]\w+(?:,? (?:and )?[A-Z]\w+)*) checks while it is bleeding and for (\d+|one|a) (minutes?|rounds?) after it ceases bleeding\.$/;
+export function withBleedWorse(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const found = sentences.map((sentence) => MUTILATING.exec(sentence)).find(Boolean);
+    if (!found || sentences.some((sentence) => !MUTILATING.test(sentence) && !flavor(sentence))) return plan;
+    const [, type, by, value, kind, skills, count_, unit_] = found;
+    const slugs = skills.split(/,\s*(?:and\s+)?|\s+and\s+/).map((word) => word.trim().toLowerCase());
+    if (!slugs.every((slug) => SKILL_SLUGS.includes(slug))) return plan;
+    const after = { value: count(count_), unit: unit(unit_) };
+    const penalty = slugs.map((selector) => ({ key: "FlatModifier", selector, type: kind.toLowerCase(), value: -Number(value), label: item.name }));
+    const note = {
+        label: "Mutilating wound",
+        text: `While it takes persistent ${type} damage, its flat checks to recover from it are ${by} harder, and it has a −${value} ${kind.toLowerCase()} penalty to ${slugs.map(capital).join(", ").replace(/, (?=[^,]+$)/, " and ")} checks; the penalty stays for ${after.value} ${after.value === 1 ? after.unit.replace(/s$/, "") : after.unit} after the bleeding ends.`,
+        duration: null,
+        whilePersistent: type.toLowerCase(),
+        rules: [{ key: "ItemAlteration", itemType: "condition", mode: "add", property: "pd-recovery-dc", value: Number(by), predicate: [`item:damage:type:${type.toLowerCase()}`] }, ...penalty, { key: "RollOption", option: `air-then-for:${after.value}:${after.unit}:${type.toLowerCase()}` }]
+    };
+    const base = keptBase(plan, item, { activation, index });
+    const card = ownCard({ ...base, targeting: { target: "1 creature", range: null, area: null }, item: { ...base.item, recipient: "targets" } }, { noteEffects: [note] });
+    return { ...card, noteOnly: undefined };
+}
+
+// --- An attacker beguiled ------------------------------------------------------------------------------------------------------------------------
+
+// (Beguiling Crown's reaction, "The creature must succeed at a DC 41 Will save or the attack roll becomes a failure and the target is friendly to you
+// until the end of its turn. On a critical failure, the target becomes friendly to you, drops to their knees, and begs your forgiveness for 1
+// minute or until another creature takes a hostile action against them": the save card at the attacker (the creature its presser targets), its
+// failing rows' note Effects on it — the attack's failure (no damage from it) and its attitude, the user's rulings for what a card can't
+// apply — until the end of its turn, or for the minute.)
+const BEGUILED = /^The creature must succeed at a @Check\[will\|dc:(\d+)[^\]]*\] save or the attack roll becomes a failure and the target is friendly to you until the end of its turn\.$/i;
+const BEGS = /^On a critical failure, the target becomes friendly to you, drops to their knees, and begs your forgiveness for (\d+|one|a) (minutes?|rounds?) or until another creature takes a hostile action against them\.$/i;
+export function withBeguiledAttacker(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const save = sentences.map((sentence) => BEGUILED.exec(sentence)).find(Boolean);
+    const begs = sentences.map((sentence) => BEGS.exec(sentence)).find(Boolean);
+    if (!save || !begs || sentences.length !== 2) return plan;
+    const turn = { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" };
+    const missed = "Its attack roll against the crown's wearer is a failure instead: no damage from it (don't roll it)";
+    const failure = { ...none(), noteEffects: [{ label: "Beguiled", text: `${missed}, and it's friendly to the wearer until the end of its turn.`, duration: turn }] };
+    const criticalFailure = { ...none(), noteEffects: [{ label: "Begging forgiveness", text: `${missed}. It's friendly to the wearer, drops to its knees and begs the wearer's forgiveness for ${count(begs[1])} ${unit(begs[2]).replace(/s$/, count(begs[1]) === 1 ? "" : "s")}, or until another creature takes a hostile action against it.`, duration: { mode: "fixed", value: count(begs[1]), unit: unit(begs[2]), expiry: "turn-start", anchor: "effect-start" } }] };
+    const { targeting, ...base } = keptBase(plan, item, { activation, index });
+    return {
+        ...base,
+        noteOnly: undefined,
+        automation: { level: "automatic" },
+        targeting: { target: "1 creature", range: null, area: null },
+        resolution: { kind: "save", check: { roll: "save", statistic: "will", against: { dc: "fixed", value: Number(save[1]) } }, outcomes: { criticalSuccess: { ...none() }, success: { ...none() }, failure, criticalFailure } }
+    };
+}
+
 // --- The readers, in order --------------------------------------------------------------------------------------------------------------------
 
-const READERS = [withSuppressed];
+const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker];
 
 // The activation's plan → the plan its trigger's effect makes, or the same plan. entry: { activation, index } (compileEach's).
 export function withTriggered(plan, entry, item) {

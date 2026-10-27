@@ -29,8 +29,34 @@ export function formulaAs(formula, type) {
     return terms.length ? `(${terms.join(" + ")})[${type}]` : null;
 }
 
+// (Each instance with its own type kept: "{(1d8 + 4)[piercing],1d6[fire]}" → [{ formula: "1d8 + 4", type: "piercing" }, { formula: "1d6", type: "fire" }] —
+// for a Strike redirected with its own damage, Turnabout Shield's, 2026-10-27.)
+export function formulaInstances(formula) {
+    return instancesOf(formula).map((instance) => {
+        const flavor = /\[([^\]]*)\]\s*\)?\s*$/.exec(instance)?.[1]?.split(",").map((word) => word.trim()) ?? [];
+        return { formula: termsOf(instance), type: flavor.find((word) => !["persistent", "precision", "splash"].includes(word)) ?? null, category: flavor.includes("persistent") ? "persistent" : null };
+    }).filter((entry) => entry.formula);
+}
+
+// The latest Strike that missed its user, Turnabout Shield's trigger: the chat's recent rolls, newest last — [{ type, outcome, ranged, targetActorUuid,
+// actorUuid, itemId }] → that entry, or null. (A ranged attack roll at it that failed or critically failed.)
+export function triggeringMiss(rolls, userUuid) {
+    return [...(rolls ?? [])].reverse().find((roll) => roll?.type === "attack-roll" && ["failure", "criticalFailure"].includes(roll.outcome) && roll.ranged && roll.targetActorUuid === userUuid && roll.actorUuid && roll.actorUuid !== userUuid) ?? null;
+}
+
 // The plan and the Strike's formula → the plan with that damage on its rows (shared, at each row's multiplier, beside the row's own formulas).
 export function withStrikeFormula(plan, formula) {
+    // (Its types kept, plan.strikeDamage.as null: a component for each instance.)
+    if (plan?.strikeDamage && !plan.strikeDamage.as) {
+        const parts = formulaInstances(formula);
+        if (!parts.length) return plan;
+        const components = parts.map((part, index) => ({ id: `strike${index}`, formula: part.formula, type: part.type ?? "untyped", category: part.category }));
+        const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => {
+            const multiplier = plan.strikeDamage.rows[degree];
+            return [degree, multiplier && row ? { ...row, damage: { mode: "shared", multiplier, sourceComponentIds: components.map((component) => component.id) } } : row];
+        }));
+        return { ...plan, resolution: { ...plan.resolution, sharedDamage: { rollOnce: true, components }, outcomes } };
+    }
     const as = plan?.strikeDamage ? formulaAs(formula, plan.strikeDamage.as) : null;
     if (!as) return plan;
     const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => {

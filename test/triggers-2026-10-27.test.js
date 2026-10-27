@@ -142,3 +142,76 @@ test("Sanguine Klar: the klar itself regains the bleed damage typed on its card,
     await settle();
     assert.equal(shield.system.hp.value, 58, "12 typed, at most its Hardness 8");
 });
+
+test("Ancestral Geometry: its reaction is PF2e's own Effect's SubstituteRoll — no card, its use a line", () => {
+    const geometry = activation("Ancestral Geometry");
+    assert.deepEqual([geometry.builtin, geometry.rules, done(geometry), routeOf(geometry)], ["pf2e-rules", ["SubstituteRoll"], true, null]);
+    assert.match(geometry.notes[0], /^PF2e's own Effect: Ancestral Geometry plays it/);
+});
+
+test("Turnabout Shield: the missed shot sent back at +19 against a creature within 60 feet, with the triggering Strike's own damage", async () => {
+    const { formulaInstances, triggeringMiss, withStrikeFormula } = await import("../src/live/strike-as.js");
+    const shield = activation("Turnabout Shield");
+    assert.equal(routeOf(shield), "save");
+    assert.deepEqual([shield.ownCheck, shield.targeting.range, shield.strikeDamage, done(shield)], [{ kind: "attack", modifier: 19 }, "60 feet", { as: null, from: "triggering-miss", rows: { success: 1, criticalSuccess: 2 } }, true]);
+    assert.deepEqual(formulaInstances("{(1d8 + 4)[piercing],1d6[persistent,fire]}"), [{ formula: "1d8 + 4", type: "piercing", category: null }, { formula: "1d6", type: "fire", category: "persistent" }]);
+    const filled = withStrikeFormula(shield, "{(1d8 + 4)[piercing]}");
+    assert.deepEqual(filled.resolution.sharedDamage.components, [{ id: "strike0", formula: "1d8 + 4", type: "piercing", category: null }]);
+    assert.deepEqual([filled.resolution.outcomes.success.damage.multiplier, filled.resolution.outcomes.criticalSuccess.damage.multiplier, filled.resolution.outcomes.failure.damage.mode], [1, 2, "none"]);
+    // (The latest ranged miss at its user, by another creature.)
+    const rolls = [{ type: "attack-roll", outcome: "failure", ranged: true, targetActorUuid: "Actor.me", actorUuid: "Actor.old" }, { type: "attack-roll", outcome: "success", ranged: true, targetActorUuid: "Actor.me", actorUuid: "Actor.hit" }, { type: "attack-roll", outcome: "criticalFailure", ranged: true, targetActorUuid: "Actor.me", actorUuid: "Actor.archer" }, { type: "attack-roll", outcome: "failure", ranged: false, targetActorUuid: "Actor.me", actorUuid: "Actor.melee" }];
+    assert.equal(triggeringMiss(rolls, "Actor.me").actorUuid, "Actor.archer");
+    assert.equal(triggeringMiss(rolls, "Actor.other"), null);
+});
+
+test("Turnabout Shield live: its card's damage is the archer's own Strike's formula", async () => {
+    const archer = foundry.makeActor({ id: "trigger-archer", name: "Archer" });
+    foundry.place(archer, 200, 52000);
+    archer.system.actions = [{ type: "strike", item: { id: "bow" }, damage: async ({ getFormula } = {}) => (getFormula ? "{(1d8 + 4)[piercing]}" : null) }];
+    foundry.makeMessage({ flags: { pf2e: { context: { type: "attack-roll", outcome: "failure", options: ["item:ranged"], target: { actor: reaper.uuid, token: reaper.token.uuid } }, origin: { uuid: `${archer.uuid}.Item.bow`, type: "weapon" } } }, speaker: { actor: archer.id }, actor: archer, token: archer.token.document });
+    const turnabout = foundry.giveItem(reaper, source("Turnabout Shield"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: turnabout.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.plan?.strikeDamage);
+    assert.ok(card, "its card");
+    assert.deepEqual(card.flags[MODULE_ID].card.plan.resolution.sharedDamage.components, [{ id: "strike0", formula: "1d8 + 4", type: "piercing", category: null }]);
+});
+
+test("Secret-Keeper's Mask (Father Skinsaw): a note Effect on the creature bled while it bleeds — its recovery DC 2 higher, −2 status to three skills — and the penalties for the minute after", async () => {
+    const mask = activation("Secret-Keeper's Mask (Father Skinsaw)");
+    assert.deepEqual([routeOf(mask), mask.item.recipient, mask.noteOnly, done(mask)], ["item", "targets", undefined, true]);
+    const note = mask.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([note.whilePersistent, note.duration], ["bleed", null]);
+    assert.deepEqual(note.rules.map((rule) => [rule.key, rule.selector ?? rule.property ?? rule.option, rule.value ?? null]), [["ItemAlteration", "pd-recovery-dc", 2], ["FlatModifier", "deception", -2], ["FlatModifier", "diplomacy", -2], ["FlatModifier", "performance", -2], ["RollOption", "air-then-for:1:minutes:bleed", null]]);
+    const { followThenFor, thenForOf, thenForSource } = await import("../scripts/then-for.js");
+    const effect = { name: "Secret-Keeper's Mask (Father Skinsaw): Mutilating wound", system: { rules: note.rules, description: { value: "<p>…</p>" } } };
+    assert.deepEqual(thenForOf(effect), { value: 1, unit: "minutes", type: "bleed" });
+    const after = thenForSource(effect, thenForOf(effect), { worldTime: 3 });
+    assert.deepEqual([after.system.duration.value, after.system.duration.unit, after.system.rules.map((rule) => rule.selector)], [1, "minutes", ["deception", "diplomacy", "performance"]]);
+    // (Still bleeding — deleted by hand —: nothing after; the bleeding over: the minute's Effect.)
+    const made = [];
+    const saved = globalThis.game;
+    globalThis.game = { ...(saved ?? {}), time: { worldTime: 3 }, combat: null };
+    try {
+        const bleeding = { itemTypes: { condition: [{ slug: "persistent-damage", system: { persistent: { damageType: "bleed" } } }] }, createEmbeddedDocuments: async (type, data) => made.push(...data) };
+        assert.equal(await followThenFor({ ...effect, parent: bleeding }), null);
+        const healed = { itemTypes: { condition: [] }, createEmbeddedDocuments: async (type, data) => { made.push(...data); return data; } };
+        await followThenFor({ ...effect, parent: healed });
+        assert.deepEqual(made.map((entry) => entry.name), ["Secret-Keeper's Mask (Father Skinsaw): Mutilating wound (after)"]);
+    } finally {
+        globalThis.game = saved;
+    }
+});
+
+test("Beguiling Crown's reaction: the attacker's DC 41 Will save — its attack a failure and friendly until the end of its turn, or begging for 1 minute", () => {
+    const crown = activation("Beguiling Crown", 1);
+    assert.equal(routeOf(crown, "Trigger A creature succeeds at an attack roll against you"), "save");
+    assert.deepEqual([crown.resolution.check.statistic, crown.resolution.check.against.value, done(crown), crown.noteOnly], ["will", 41, true, undefined]);
+    const [failure] = crown.resolution.outcomes.failure.noteEffects;
+    assert.deepEqual([failure.label, failure.duration], ["Beguiled", { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" }]);
+    assert.match(failure.text, /^Its attack roll against the crown's wearer is a failure instead: no damage from it/);
+    const [begs] = crown.resolution.outcomes.criticalFailure.noteEffects;
+    assert.deepEqual([begs.duration.value, begs.duration.unit], [1, "minutes"]);
+    assert.deepEqual(crown.resolution.outcomes.success.noteEffects, []);
+});
