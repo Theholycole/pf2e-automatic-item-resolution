@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1245,
+  "entries": 1243,
   "results": {
-   "partial": 351,
+   "partial": 349,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -29,7 +29,7 @@
    "mind": 6,
    "illusions": 50,
    "removed": 6,
-   "areas": 122,
+   "areas": 120,
    "cooldown": 10,
    "vehicles": 21,
    "reader": 17,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 181,
+   "areas": 179,
    "immunity": 89,
    "objects": 386,
    "speech": 120,
@@ -13563,16 +13563,6 @@
   {
    "name": "Blink Blade",
    "kind": "activation",
-   "result": "partial",
-   "main": "areas",
-   "work": "smoke",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
-   "name": "Blink Blade",
-   "kind": "activation",
    "result": "none",
    "main": "moving",
    "work": "teleport",
@@ -13821,17 +13811,6 @@
     "information",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Charlatan's Cape",
-   "kind": "activation",
-   "activation": "Puff of Smoke",
-   "result": "partial",
-   "main": "areas",
-   "work": "smoke",
-   "needs": [
-    "areas"
    ]
   },
   {

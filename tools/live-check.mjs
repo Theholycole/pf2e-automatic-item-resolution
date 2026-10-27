@@ -689,6 +689,34 @@ export const cases = {
         return { seen };
     },
 
+    // Charlatan's Cape (2026-10-27): its Translocate cast, then its user's token moved 30 feet — a smoke zone at the space it left and one at
+    // the space it arrived in, Concealed inside (it's Concealed where it stands).
+    async charlatanSmoke(scene) {
+        return unpaused(async () => {
+            const { actor: user, token: userToken } = await creature(scene, "Charlatan", { type: "character", x: 4, y: 3 });
+            const cape = await give(user, "Charlatan's Cape");
+            await cape.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+            await userToken.object?.control?.();
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(cape.uuid, 0);
+            const card = await messageAfter(since, itemCard("cast"), { what: "the cape's card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(1500);
+            const from = { x: userToken.x, y: userToken.y };
+            await userToken.update({ x: userToken.x + 600 }, { animate: false });
+            // (The ability module's region flags: { zone: { zone, itemUuid, … } }.)
+            const smoke = () => scene.regions.filter((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone?.zone?.concealed && /Charlatan's Cape/.test(region.name));
+            try {
+                await until(() => smoke().length === 2, `two smoke zones (${scene.regions.map((region) => region.name).join(", ")})`, { timeout: 10000 });
+                const places = smoke().map((region) => ({ x: region.shapes[0]?.x, y: region.shapes[0]?.y }));
+                await until(() => user.hasCondition("concealed"), `Concealed in the arrival smoke (${user.itemTypes.condition.map((condition) => condition.slug).join(", ")}; ${user.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+                return { from, places, results: game.messages.get(card.id).getFlag(NS, "card").results };
+            } finally {
+                for (const region of smoke()) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });

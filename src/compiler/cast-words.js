@@ -243,7 +243,9 @@ export function fillCast(plan, html, options = {}) {
         ...(read.self && !plan.self ? { self: true } : {}),
         ...(read.dc && !plan.dc ? { dc: read.dc } : {}),
         ...(read.attack && !plan.attack ? { attack: read.attack } : {}),
-        ...(first.rank && !plan.rank ? { rank: first.rank } : {})
+        ...(first.rank && !plan.rank ? { rank: first.rank } : {}),
+        // (A spell with no target, Translocate's: no creature to target first, 2026-10-27 — the card's needsTargets.)
+        ...(plan.targets === undefined && read.targets === false && !read.area && !plan.self ? { targets: false } : {})
     };
     return Object.keys(filled).length ? { ...plan, ...filled } : plan;
 }

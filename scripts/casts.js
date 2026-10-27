@@ -6,6 +6,7 @@ import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
 import { castRankAt } from "../src/compiler/cast-owner.js";
 import { rememberCastDuration } from "./cast-duration.js";
+import { smokeAfterMove } from "./cast-smoke.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -86,6 +87,8 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         // (By touch, The Winged Serpent's Foresight on another creature: within its caster's reach.)
         const far = beyondRange(chosenSpell(state).touch ? { reach: true } : state.plan.castRange, token, actor, selfOf(state) ? [] : targetTokens);
         if (far.length) throw new Error(`${far.join(", ")} ${far.length === 1 ? "is" : "are"} beyond ${state.item.name}'s range.`);
+        // (Smoke where its user was and where it arrives, Charlatan's Cape's Translocate: watched for before the cast moves it, scripts/cast-smoke.js.)
+        const smoke = state.plan.castSmoke ? smokeAfterMove(state.plan.castSmoke, { actor, token, item: state.item }) : null;
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: targetTokens, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${targetTokens.length && !selfOf(state) ? ` at ${targetTokens.map((target) => target.name).join(", ")}` : ""}.`);
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
@@ -94,6 +97,7 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         // (Healing at the end of each of its user's turns for the item's time: scripts/turn-heal.js.)
         const heals = state.plan.turnHeal ? await rememberTurnHeal(state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor, state.plan.turnHeal, { item: state.item, duration: state.plan.castDuration }) : null;
         if (heals) lines.push(heals);
+        if (smoke) lines.push(smoke);
         // (A bonus with the spell, Psyche Salts': an Effect of PF2e's rules on the creature it's cast on.)
         if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean)));
         // (A condition on its user with the cast, Locket of Sealed Nightmares' fatigued: PF2e's condition on the item's user.)

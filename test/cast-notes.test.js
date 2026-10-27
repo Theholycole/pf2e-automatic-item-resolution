@@ -762,3 +762,16 @@ test("a readied bonus that climbs with each try (2026-10-27): Metronomic Hammer 
     assert.deepEqual([step(1, "failure"), step(2, "failure"), step(3, "failure"), step(2, "success"), step(3, "criticalFailure"), step(3, "failure", "B", "A")], [2, 3, 3, 1, 1, 2]);
     assert.match(readiedWords(plan), /\+1 more with each later trip at the same target \(up to \+3\), back to \+1 after a success or a critical failure/);
 });
+
+test("smoke where its caster was and where it arrives (2026-10-27): Charlatan's Cape's and Blink Blade's Translocate — castSmoke, a Concealed square zone the token's size at each space until the end of its user's next turn", async () => {
+    const { smokeZone } = await import("../scripts/cast-smoke.js");
+    const cape = first("Charlatan's Cape");
+    const blade = first("Blink Blade");
+    for (const plan of [cape, blade]) {
+        assert.equal(plan.partial, undefined);
+        assert.deepEqual(plan.castSmoke.lasts, { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" });
+        assert.deepEqual(plan.castSmoke.notes, ["A strong wind disperses it at once."]);
+    }
+    const zone = smokeZone(cape.castSmoke, 2);
+    assert.deepEqual([zone.area, zone.concealed, zone.centre], [{ type: "square", value: 10 }, true, "snare"]);
+});
