@@ -318,6 +318,18 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     const SOURCES = [[/^fiends and magical attacks by fiends$/i, ["origin:trait:fiend"]], [/^hazardous terrain and environmental hazards$/i, [{ or: ["origin:trait:environmental", "origin:trait:terrain"] }]]];
     const higher = bonus.resistance ? (read_notes ?? []).map((note) => [note, /^Your resistance to damage from (.+?) becomes resistance (\d+)\.$/i.exec(String(note).trim())]).find(([, match]) => match && SOURCES.some(([words]) => words.test(match[1]))) : null;
     if (higher) bonus.resistanceAlso = [{ type: bonus.resistance.type, value: Number(higher[1][2]), predicate: SOURCES.find(([words]) => words.test(higher[1][1]))[1], from: higher[1][1] }];
+    // (What a success at that roll gives, Boots of the Blight's "If you succeed at the saving throw, you become Quickened for 1 minute, but can
+    // use the additional action only to Stride": bonus.onSuccess, given when that roll spends it — scripts/fortune.js; the action it's for a line.)
+    const succeeded = bonus.spend?.length ? (read_notes ?? []).map((note) => [note, /^If you succeed at the (?:saving throw|save|check), you become (Quickened) for (\d+) (minutes?|rounds?), but can use the additional action only to (Stride|Step|Strike|Sustain)\.$/i.exec(String(note).trim())]).find(([, match]) => match) : null;
+    if (succeeded) {
+        const [, slug, count, unit, action] = succeeded[1];
+        bonus.onSuccess = { condition: { slug: slug.toLowerCase(), value: null, duration: { mode: "fixed", value: Number(count), unit: /^min/i.test(unit) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" } }, only: action };
+    }
+    // (A Speed its first use lowers and its second ends, Thrice-Fried Mudwings' "The first time you use this Activation, your fly Speed becomes
+    // 15 feet, or half your Speed, whichever is lower, for the duration. After the second time, your mudwings are shattered entirely, ending the
+    // effect": bonus.speedSteps — the item's Speed Effect on its user changed, then ended, as the reaction is used (scripts/fortune.js).)
+    const stepNote = (read_notes ?? []).map((note) => [note, /^The first time you use this Activation, your (fly|swim|climb|burrow) Speed becomes (\d+) feet, or half your Speed, whichever is lower, for the duration\.$/i.exec(String(note).trim())]).find(([, match]) => match);
+    if (stepNote) bonus.speedSteps = { type: stepNote[1][1].toLowerCase(), feet: Number(stepNote[1][2]), first: `min(${stepNote[1][2]},floor(@actor.system.movement.speeds.land.value/2))`, secondEnds: /\bAfter the second time, [^.]*\bending the effect\./i.test(String(text ?? "")) };
     // (More for an expert, Warrior's Training Ring's "If you are an expert in any weapon, you instead gain a +4 circumstance bonus to the attack
     // roll": the modifier's ifExpert, its user's proficiencies looked at when the card's applied — scripts/fortune.js.)
     const expertNote = bonus.modifiers.length === 1 ? (read_notes ?? []).map((note) => [note, /^If you are an expert in any weapon, you instead gain an? \+(\d+) (circumstance|status|item) bonus to the attack roll\.$/i.exec(String(note).trim())]).find(([, match]) => match && match[2].toLowerCase() === bonus.modifiers[0].type) : null;
@@ -326,7 +338,7 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // what its user took — bonus.shieldShare, scripts/shield-share.js.)
     const shared = bonus.resistance && (base?.item?.type ?? base?.source?.type) === "shield" ? (read_notes ?? []).find((note) => /^You and the shield each take any remaining damage\.$/i.test(String(note).trim())) : null;
     if (shared) bonus.shieldShare = true;
-    const read_ = new Set([...Object.values(onAttack).map((entry) => entry.note), ...(critical ? [critical[0]] : []), ...(higher ? [higher[0]] : []), ...(shared ? [shared] : []), ...(expertNote ? [expertNote[0]] : [])]);
+    const read_ = new Set([...Object.values(onAttack).map((entry) => entry.note), ...(critical ? [critical[0]] : []), ...(higher ? [higher[0]] : []), ...(shared ? [shared] : []), ...(expertNote ? [expertNote[0]] : []), ...(succeeded ? [succeeded[0]] : []), ...(stepNote ? [stepNote[0]] : [])]);
     // (The miss's own words, Deflecting Branch's "If the attack misses, you have knocked it away": the state its other activation's trigger
     // names, no rule here.)
     const notes = (read_notes ?? []).filter((note) => !/^If the attack misses, you have knocked it away\.$/i.test(String(note).trim()) && !read_.has(note) && !(only.length && /^\(This applies only to (?:any )?(?:the )?damage the (?:effect|attack) deals\.\)$/i.test(String(note).trim())) && (!ONLY.test(note) || /\bor an? \+\d|\bif\b|\bunless\b|\binstead\b/i.test(note.replace(ONLY, ""))));

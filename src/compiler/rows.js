@@ -242,9 +242,10 @@ function textHealing(sentences, used = new Set()) {
         // (And Swarmeater's Clasp's "You recover 3d10+8 Hit Points".)
         const self = new RegExp(String.raw`\b(?:you|you [a-z ]{1,40}? and) (?:immediately )?(?:regain|recover) (?:an additional )?${AMOUNT_PARENS} Hit Points?\b|\bYou restore ${AMOUNT_PARENS} Hit Points\b(?! to)|\bhealing (?:you|the wielder|the wearer) for ${AMOUNT_PARENS} Hit Points\b|\band (?:immediately )?restore an additional ${AMOUNT_PARENS} Hit Points\b(?! to)`, "i").exec(sentence);
         // (And another's own words: "Your ally regains 2d8 hit points", The Midwife's "restore to the target 6d8+24 Hit Points", Banner of
-        // the Rising Star's "An ally within the banner's aura with the Dying condition regains 30 Hit Points".)
+        // the Rising Star's "An ally within the banner's aura with the Dying condition regains 30 Hit Points", Coronet of Stars' "The
+        // triggering creature regains 7d8 Hit Points" as src/compiler/item-data.js words it.)
         // (Or the creatures in an area, a Magic+ scepter's healing wave in a cone: each one the presser targets.)
-        const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally)|all creatures within an? \d+-foot (?:cone|burst|emanation|line))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b|\b(?:An?|One|That) ally\b[^.]*?\bregains ${AMOUNT_PARENS} Hit Points?\b|\brestor(?:e|es|ing) to (?:it|the (?:target|creature)|that creature) ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
+        const other = new RegExp(String.raw`\brestor(?:e|es|ing) ${AMOUNT_PARENS} Hit Points to (?:it|them|the (?:target|creature)|that creature|an? (?:willing,? |living,? |adjacent,? )*(?:creature|ally)|all creatures within an? \d+-foot (?:cone|burst|emanation|line))\b|\bYour ally regains ${AMOUNT_PARENS} Hit Points\b|\b(?:An?|One|That) ally\b[^.]*?\bregains ${AMOUNT_PARENS} Hit Points?\b|\bThe triggering (?:creature|ally) regains ${AMOUNT_PARENS} Hit Points?\b|\brestor(?:e|es|ing) to (?:it|the (?:target|creature)|that creature) ${AMOUNT_PARENS} Hit Points\b`, "i").exec(sentence);
         const match = self ?? other;
         // (Tallowheart Mass's "If you consume a portion, you regain …": the eating is the activation, not a condition.)
         // (Nor Lover's Knot's "When you activate a lover's knot, you regain 2d6 Hit Points": the activation itself.)

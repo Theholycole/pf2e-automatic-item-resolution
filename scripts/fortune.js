@@ -41,6 +41,8 @@ export async function applyFortuneCard(message, { targets = [] } = {}) {
         if (onFailure) await actor.createEmbeddedDocuments("Item", [{ name: `${state.item.name}: a failure costs ${failureWords(onFailure)}`, type: "effect", img: state.item.img ?? "icons/svg/hazard.svg", flags: { [MODULE_ID]: { rollAfter: { selector: state.plan.rollTwice.selector, onFailure, item: state.item } } }, system: { description: { value: `<p>If the roll is a failure, ${escape(actor.name)} takes ${escape(failureWords(onFailure))}.</p>` }, duration: { value: 1, unit: "minutes", expiry: "turn-start", sustained: false }, start: { value: game.time.worldTime, initiative: startInitiative(actor) }, rules: [] } }]);
     }
     const results = creatures.map(({ actor, name }) => `${name}: ${readiedWords(forExpert(state, actor).plan)}.`);
+    // (Thrice-Fried Mudwings': the item's Speed Effect on its user lowered the first time, ended the second.)
+    if (state.plan.bonus?.speedSteps) for (const { actor, name } of creatures) results.push(await stepSpeed(actor, name, state));
     if (state.plan.bonus?.breaks) results.push(await breakItem(state.item));
     const next = { ...state, status: "applied", results };
     return message.update({ content: fortuneCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
@@ -70,6 +72,22 @@ function forExpert(state, actor) {
     if (!modifiers.some((modifier) => modifier.ifExpert)) return state;
     const expert = expertIn(actor);
     return { ...state, plan: { ...state.plan, bonus: { ...state.plan.bonus, modifiers: modifiers.map(({ ifExpert, ...modifier }) => (ifExpert && expert ? { ...modifier, value: ifExpert } : modifier)) } } };
+}
+
+// The item's Speed Effect of that kind on its user (src/live/card.js speedEffectSource: its speed flag, the item as its origin): the first use
+// sets its BaseSpeed to the lower value, the second ends it when the text says so. → the card's line.
+async function stepSpeed(actor, name, state) {
+    const steps = state.plan.bonus.speedSteps;
+    const effect = (actor?.itemTypes?.effect ?? []).find((entry) => entry.flags?.[MODULE_ID]?.speed === steps.type && (!state.item.uuid || entry.system?.context?.origin?.item === state.item.uuid));
+    if (!effect) return `${name} has no ${steps.type} Speed from ${state.item.name} to lower.`;
+    const used = Number(effect.flags[MODULE_ID].speedSteps ?? 0);
+    if (used >= 1 && steps.secondEnds) {
+        await effect.delete();
+        return `${name}'s ${steps.type} Speed from ${state.item.name} ends.`;
+    }
+    const rules = (effect.system.rules ?? []).map((rule) => (rule.key === "BaseSpeed" && rule.selector === steps.type ? { ...rule, value: steps.first } : rule));
+    await effect.update({ "system.rules": rules, [`flags.${MODULE_ID}.speedSteps`]: used + 1 });
+    return `${name}'s ${steps.type} Speed from ${state.item.name} is now ${steps.feet} feet or half their Speed, whichever is lower.`;
 }
 
 const failureWords = (onFailure) => `${onFailure.formula} ${onFailure.persistent ? "persistent " : ""}${onFailure.type} damage`;
@@ -106,6 +124,18 @@ export async function fortuneRolled(message) {
         const roll = await new DamageRoll(`${onFailure.formula}[${onFailure.persistent ? `persistent,${onFailure.type}` : onFailure.type}]`).evaluate();
         await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `<strong>${escape(item?.name ?? "Item")}</strong>: a failure — ${escape(failureWords(onFailure))} to ${escape(actor.name)}` });
         await actor.applyDamage({ damage: roll, token: message.token ?? actor.getActiveTokens?.(true, true)?.[0] ?? undefined });
+    }
+    // (A success at that roll gives a condition, Boots of the Blight's Quickened for 1 minute: the ability module's timed condition on its user,
+    // the action it's for in the line.)
+    for (const effect of ["success", "criticalSuccess"].includes(context.outcome) ? spent : []) {
+        const flag = effect.flags[MODULE_ID][MODULE_KEY];
+        if (!flag.onSuccess?.condition) continue;
+        const ability = game.modules.get(ABILITY_ID)?.api?.live;
+        const condition = flag.onSuccess.condition;
+        const token = message.token ?? actor.getActiveTokens?.(true, true)?.[0] ?? null;
+        const state = { plan: {}, ability: { name: flag.item?.name ?? "Item", uuid: flag.item?.uuid ?? null, slug: String(flag.item?.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item" }, source: { actorUuid: actor.uuid, tokenUuid: token?.uuid ?? null, name: actor.name }, targets: [{ id: "t0", actorUuid: actor.uuid, tokenUuid: token?.uuid ?? null, name: token?.name ?? actor.name }] };
+        const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: condition.slug, value: condition.value, target: "t0", duration: condition.duration }, state) : null;
+        await ChatMessage.create({ content: `<p><strong>${escape(flag.item?.name ?? "Item")}</strong>: a success — ${escape(line ?? `${actor.name} ${condition.slug} (by hand: the ability module isn't active)`)}${flag.onSuccess.only ? `; its extra action only to ${escape(flag.onSuccess.only)}` : ""}.</p>`, speaker: ChatMessage.getSpeaker({ actor }) });
     }
     // (A critical success at that roll gives more: Champion's Laurels' temporary Hit Points — the ability module's, with their time.)
     for (const effect of context.outcome === "criticalSuccess" ? spent : []) {

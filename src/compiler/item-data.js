@@ -57,6 +57,10 @@ export function withItemData(html, item) {
     text = text.replace(/\bThis has the effects? of an? DC (\d+) ((?:<em>)?[a-z][a-z' -]+?(?:<\/em>)?) spell\b/gi, (whole, dc, name) => `This has the effect of ${name} (DC ${dc})`);
     // (A swarm sent at the triggering enemy, Wasp Guard's "The swarm flies to the triggering enemy's space and swarms about them,
     // dealing @Damage[1d8[persistent,poison]] damage": that enemy takes it.)
+    // (Coronet of Stars' "The triggering creature receives the effects of Breath of Life, except they recover 7d8 Hit Points": Breath of Life's
+    // healing at the item's dice — the creature's healing, not a cast at the spell's own 4d8; its keeping the creature from dying the core's
+    // recovery from Dying as the healing lands.)
+    text = text.replace(/\bThe triggering creature receives the effects of @UUID\[Compendium\.pf2e\.spells-srd\.Item\.\w+\]\{Breath of Life\}, except they recover (@Damage\[[^\]]*\]\]) Hit Points\./g, "The triggering creature regains $1 Hit Points.");
     text = text.replace(/\bThe \w+ (?:flies|moves|rushes) to the triggering (enemy|creature)'s space and [^,.]*, dealing (@Damage\[[^\]]*\]\])(?: damage)?\./g, (whole, who, damage) => `The triggering ${who} takes ${damage} damage.`);
     // (A save with its failure's damage and a critical failure's exposure, Tarantula Ampoule's effigy: "If the target fails a
     // @Check[fortitude|dc:21] save, it takes @Damage[(1d10+4)[piercing]] damage. If the target critically fails the save, it's also exposed

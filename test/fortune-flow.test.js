@@ -231,7 +231,9 @@ test("resistance to the triggering damage in other words: \"20 resistance to all
 test("another sentence's time isn't the bonus's: a Quickened on success, an immunity (Boots of the Blight, Stone of Encouragement)", () => {
     const boots = compileActivations(source("Boots of the Blight")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
     assert.deepEqual([boots.bonus.modifiers[0].selector, boots.bonus.spend], ["saving-throw", ["saving-throw"]]);
-    assert.match(boots.notes.join(" "), /Quickened for 1 minute/);
+    // (Its Quickened on a success: bonus.onSuccess, given when the save spends it — 2026-10-27; the card's words say it.)
+    assert.deepEqual([boots.bonus.onSuccess.condition.slug, boots.bonus.onSuccess.condition.duration.value, boots.bonus.onSuccess.only, boots.partial], ["quickened", 1, "Stride", undefined]);
+    assert.match(readiedWords(boots), /on a success, quickened for 1 minute \(its extra action only to Stride\)/);
     // "+1 item bonus to the first skill check you attempt within 1 minute. You become temporarily immune …".
     assert.deepEqual(compileActivations(source("Stone of Encouragement"))[0].plan.bonus.spend, ["skill-check"]);
     // Its own sentence's "for the next minute" still is (Fulu of the Stoic Ox).
@@ -427,4 +429,11 @@ test("more for an expert: Warrior's Training Ring's +2 to the attack roll, +4 fo
     const [ring] = compileActivations(source("Warrior's Training Ring"));
     assert.deepEqual([ring.plan.bonus.modifiers[0].value, ring.plan.bonus.modifiers[0].ifExpert, ring.plan.partial], [2, 4, undefined]);
     assert.match(readiedWords(ring.plan), /\(\+4 for an expert in any weapon\)/);
+});
+
+test("a Speed the reaction lowers, then ends: Thrice-Fried Mudwings' fly Speed 15 feet or half the first time, ended the second", () => {
+    const wings = compileItem(source("Thrice-Fried Mudwings"));
+    const reaction = wings.ways[1].plan;
+    assert.deepEqual([reaction.bonus.speedSteps.type, reaction.bonus.speedSteps.feet, reaction.bonus.speedSteps.secondEnds, reaction.partial], ["fly", 15, true, undefined]);
+    assert.match(readiedWords(reaction), /its fly Speed 15 feet or half its Speed the first time, ended the second/);
 });

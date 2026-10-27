@@ -1,16 +1,16 @@
 {
- "generated": "2026-10-26",
+ "generated": "2026-10-27",
  "totals": {
-  "entries": 1307,
+  "entries": 1304,
   "results": {
-   "partial": 383,
+   "partial": 380,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
   },
   "main": {
    "cast-changes": 25,
-   "speeds": 24,
+   "speeds": 23,
    "areas": 135,
    "counteract": 23,
    "afflictions": 57,
@@ -23,7 +23,7 @@
    "information": 23,
    "out-of-combat": 35,
    "no-rules": 10,
-   "actions": 32,
+   "actions": 31,
    "immunity": 25,
    "creatures": 63,
    "mind": 6,
@@ -33,7 +33,7 @@
    "cooldown": 9,
    "vehicles": 21,
    "reader": 18,
-   "triggers": 94,
+   "triggers": 93,
    "situational": 18,
    "dying": 29,
    "senses": 22,
@@ -49,7 +49,7 @@
   },
   "any": {
    "cast-changes": 25,
-   "speeds": 30,
+   "speeds": 29,
    "areas": 198,
    "immunity": 86,
    "objects": 388,
@@ -59,16 +59,16 @@
    "afflictions": 103,
    "lasting": 234,
    "moving": 118,
-   "triggers": 124,
+   "triggers": 123,
    "visibility": 50,
    "dying": 75,
    "choice": 110,
    "several": 106,
    "strike": 196,
-   "reader": 211,
+   "reader": 209,
    "spells": 76,
    "information": 199,
-   "actions": 64,
+   "actions": 63,
    "from-events": 29,
    "no-rules": 10,
    "situational": 82,
@@ -5190,18 +5190,6 @@
   {
    "name": "Boots of the Blight",
    "kind": "activation",
-   "activation": "Swift Sidestep",
-   "result": "partial",
-   "main": "actions",
-   "work": "additional action",
-   "needs": [
-    "actions",
-    "reader"
-   ]
-  },
-  {
-   "name": "Boots of the Blight",
-   "kind": "activation",
    "activation": "Fungal Stride",
    "result": "note-only",
    "main": "areas",
@@ -7671,16 +7659,6 @@
     "situational",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Thrice-Fried Mudwings",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "speeds",
-   "work": "fly speed",
-   "needs": [
-    "speeds"
    ]
   },
   {
@@ -14461,17 +14439,6 @@
     "strike",
     "lasting",
     "objects",
-    "reader"
-   ]
-  },
-  {
-   "name": "Coronet of Stars",
-   "kind": "activation",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering creature",
-   "needs": [
-    "triggers",
     "reader"
    ]
   },

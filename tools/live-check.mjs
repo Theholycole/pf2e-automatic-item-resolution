@@ -6247,6 +6247,49 @@ export const cases = {
         return { untrained, expert };
     },
 
+    // Boots of the Blight's Swift Sidestep: +2 status to the Reflex save; its success (the save's message as PF2e makes it) makes its user
+    // Quickened for 1 minute, the ability module's timed condition.
+    async blightSidestep(scene) {
+        const { actor: walker } = await creature(scene, "Blight Walker", { x: 8, y: 18, level: 12 });
+        const boots = await give(walker, "Boots of the Blight");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(boots.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        assert(/on a success, quickened for 1 minute/.test(card.content), "the card's success line");
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => walker.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")), "the bonus Effect", { timeout: 8000 });
+        const { fortuneRolled } = await import("../scripts/fortune.js");
+        await fortuneRolled({ actor: walker, token: null, flags: { pf2e: { context: { type: "saving-throw", domains: ["saving-throw", "reflex"], options: [], outcome: "success" } } } });
+        await until(() => walker.hasCondition("quickened"), `Quickened (${walker.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 8000 });
+        assert(!walker.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")), "the bonus spent");
+        return { effects: walker.itemTypes.effect.map((effect) => [effect.name, effect.system.duration?.value, effect.system.duration?.unit]) };
+    },
+
+    // Thrice-Fried Mudwings: eaten, a fly Speed Effect; its reaction the first time lowers that fly Speed's rule, the second ends it.
+    async mudwingsSteps(scene) {
+        const { actor: eater } = await creature(scene, "Mudwing Eater", { x: 10, y: 18, level: 12 });
+        const wings = await give(eater, "Thrice-Fried Mudwings");
+        let since = Date.now();
+        await wings.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+        const pick = async (choice, kind) => {
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(ways.id, { choice });
+            const card = await messageAfter(since, itemCard(kind), { what: `way ${choice}'s card` });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(800);
+            return card;
+        };
+        await pick(0, "item");
+        const fly = () => eater.itemTypes.effect.find((effect) => effect.getFlag(NS, "speed") === "fly");
+        await until(() => fly(), "the fly Speed Effect", { timeout: 8000 });
+        await pick(1, "fortune");
+        await until(() => /min\(15/.test(String(fly()?.system.rules.find((rule) => rule.key === "BaseSpeed")?.value)), `fly lowered (${JSON.stringify(fly()?.system.rules)})`, { timeout: 8000 });
+        await pick(1, "fortune");
+        await until(() => !fly(), "the fly Speed ended", { timeout: 8000 });
+        return { ok: true };
+    },
+
     // Medusa's Scream's Petrify at the shield's 30 feet: a creature 40 feet off refused, one 25 feet off cast at.
     async medusaRange(scene) {
         assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");

@@ -1224,13 +1224,13 @@ test("its holder's resistance and a weakness for everyone else around it (src/co
     assert.deepEqual(zone.inside, [{ rules: [{ key: "Resistance", type: "spirit", value: 5 }], who: "own" }, { rules: [{ key: "Weakness", type: "spirit", value: 5 }], who: "others" }]);
 });
 
-test("what its Quickened's extra action is only for, a note Effect beside its Quickened (honest.js withActionLimit): Zealous Banner, Energizing Treat, Quickened Standard; Frenzied Quintessence's rider has it already; not Boots of the Blight's Quickened on a save it doesn't play", () => {
+test("what its Quickened's extra action is only for, a note Effect beside its Quickened (honest.js withActionLimit): Zealous Banner, Energizing Treat, Quickened Standard; Frenzied Quintessence's rider has it already; Boots of the Blight's Quickened on a save its readied card gives (2026-10-27)", () => {
     const [banner] = compileActivations(item("Zealous Banner"));
     const row = banner.plan.resolution.outcomes.success;
     assert.deepEqual([banner.plan.partial, row.noteEffects.find((note) => note.label === "Quickened's extra action")?.duration?.value, /only to Strike/.test(row.noteEffects.find((note) => note.label === "Quickened's extra action")?.text)], [undefined, 1, true]);
     assert.equal(compileItem(item("Energizing Treat")).partial, undefined);
     assert.equal(compileItem(item("Frenzied Quintessence")).partial, undefined);
-    assert.equal(compileActivations(item("Boots of the Blight"))[0].plan.partial, true);
+    assert.equal(compileActivations(item("Boots of the Blight"))[0].plan.partial, undefined);
 });
 
 test("a Craft Requirements paragraph right after result rows is no part of the last row (item-data.js): Whirlwind Vial's critical failure pushed 20 feet and Prone, nothing by hand; Vaccine's Duration after it still read", () => {
@@ -1282,4 +1282,10 @@ test("its user's own condition removed: Invigorating Soap's \"restores 10 Hit Po
     const { readReductions } = await import("../src/compiler/reduce.js");
     assert.deepEqual(compileItem(item("Invigorating Soap")).item.reduce, [{ slug: "fatigued", by: "all" }]);
     assert.deepEqual(readReductions("On a critical failure, the creature is blinded for 1 round, sickened 1, and dazzled until it removes the sickened condition."), []);
+});
+
+test("Coronet of Stars' Breath of Life at its own 7d8: the triggering creature's healing on the card, the creature its presser targets", () => {
+    const [lifeline] = compileActivations(item("Coronet of Stars"));
+    assert.equal(lifeline.plan.builtin, undefined);
+    assert.deepEqual([lifeline.plan.item.recipient, lifeline.plan.targeting.target, lifeline.plan.resolution.outcomes.success.effects[0], lifeline.plan.partial], ["targets", "the triggering creature", { kind: "heal", formula: "7d8" }, undefined]);
 });

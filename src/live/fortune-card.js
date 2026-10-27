@@ -42,9 +42,13 @@ export function bonusWords(bonus) {
     const against = traits.length ? ` against ${traits.join(" or ")} effects` : "";
     // (Resolute Shield's: the shield takes what gets through too.)
     const shared = bonus.shieldShare ? "the shield taking the rest of the damage too" : null;
+    // (Thrice-Fried Mudwings': its Speed lowered the first time, ended the second.)
+    const steps = bonus.speedSteps ? `its ${bonus.speedSteps.type} Speed ${bonus.speedSteps.feet} feet or half its Speed the first time${bonus.speedSteps.secondEnds ? ", ended the second" : ""}` : null;
+    // (Boots of the Blight's: Quickened after a success, its extra action only to Stride.)
+    const success = bonus.onSuccess ? `on a success, ${bonus.onSuccess.condition.slug} for ${bonus.onSuccess.condition.duration.value} ${bonus.onSuccess.condition.duration.value === 1 ? bonus.onSuccess.condition.duration.unit.replace(/s$/, "") : bonus.onSuccess.condition.duration.unit}${bonus.onSuccess.only ? ` (its extra action only to ${bonus.onSuccess.only})` : ""}` : null;
     // (Warrior's Training Ring's more for an expert: "+4 for an expert in any weapon".)
     const expert = first?.ifExpert ? ` (+${first.ifExpert} for an expert in any weapon)` : "";
-    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, degree, shared].filter(Boolean).join(", ");
+    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, degree, shared, success, steps].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
@@ -103,7 +107,7 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
         img: img ?? (fortune ? "icons/svg/d20-highlight.svg" : "icons/svg/upgrade.svg"),
         // (Only against what triggered it: what spends it — with resistance or immunity, the damage still to come after a hit; with a
         // bonus to saves, its creature's save.)
-        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
         system: {
             description: { value: `<p>${escape(readiedWords(plan))}.${(plan.notes ?? []).length ? ` ${escape(plan.notes.join(" "))}` : ""}</p>` },
             duration: { ...duration, sustained: false },
