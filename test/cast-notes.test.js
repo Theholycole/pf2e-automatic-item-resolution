@@ -737,3 +737,16 @@ test("an item that fuses to its user once used (2026-10-27): Sluggish Bracelet â
     assert.equal(plan.resolution.outcomes.success.modifiers[0].value, -10);
     assert.deepEqual([{ key: "FlatModifier", selector: "acrobatics", type: "item", value: 1 }, { key: "FlatModifier", selector: "athletics", value: 1 }].map((rule) => removedBy(rule, plan.item.becomes.removes)), [true, false]);
 });
+
+test("fatigue's penalties ignored until it's fatigued again (2026-10-27): Ring of the Weary Traveler â€” its plan.item.suppress (PF2e's AdjustModifier on 'fatigued') ends once it becomes fatigued again (a RollOption scripts/ends-on-hostile.js reads)", async () => {
+    const { endingOn } = await import("../scripts/ends-on-hostile.js");
+    const { suppressEffectSource } = await import("../src/live/card.js");
+    const plan = first("Ring of the Weary Traveler");
+    assert.deepEqual([plan.partial, plan.noteOnly, plan.unread], [undefined, undefined, undefined]);
+    assert.deepEqual(plan.resolution.outcomes.success.noteEffects ?? [], []);
+    const [entry] = plan.item.suppress;
+    assert.deepEqual([entry.slug, entry.endsOnAgain, entry.duration.value], ["fatigued", true, 10]);
+    const source = suppressEffectSource(entry, { item: { name: "Ring of the Weary Traveler" } });
+    assert.deepEqual(source.system.rules.map((rule) => rule.key), ["AdjustModifier", "RollOption"]);
+    assert.equal(endingOn({ itemTypes: { effect: [{ system: { rules: source.system.rules } }] } }, "fatigued").length, 1);
+});

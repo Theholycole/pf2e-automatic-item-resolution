@@ -636,6 +636,29 @@ export const cases = {
         return { speed: [before, speed()], rules, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Ring of the Weary Traveler (2026-10-27): a fatigued wearer activates it — its AC back to what it was before fatigue (the condition kept);
+    // the fatigue removed and given again, the Effect goes and the -1 is back.
+    async wearyTravelerRing(scene) {
+        const { actor: wearer } = await creature(scene, "Weary Wearer", { x: 3, y: 18 });
+        const ring = await give(wearer, "Ring of the Weary Traveler");
+        await ring.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const ac = () => wearer.system.attributes.ac.value;
+        const fresh = ac();
+        await wearer.increaseCondition("fatigued");
+        await until(() => ac() === fresh - 1, `fatigued's -1 (${ac()})`, { timeout: 5000 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(ring.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the ring's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => ac() === fresh && wearer.hasCondition("fatigued"), `AC ${fresh} with fatigue kept (${ac()}, fatigued ${wearer.hasCondition("fatigued")})`, { timeout: 8000 });
+        const ignored = () => wearer.itemTypes.effect.filter((effect) => /fatigued ignored/i.test(effect.name));
+        assert(ignored().length === 1, `its Effect (${wearer.itemTypes.effect.map((effect) => effect.name).join(", ")})`);
+        await wearer.decreaseCondition("fatigued", { forceRemove: true });
+        await wearer.increaseCondition("fatigued");
+        await until(() => !ignored().length && ac() === fresh - 1, `ended by fatigue again (${ac()}; ${wearer.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+        return { ac: [fresh, ac()] };
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });

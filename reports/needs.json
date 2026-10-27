@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1247,
+  "entries": 1246,
   "results": {
-   "partial": 353,
+   "partial": 352,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -11,7 +11,7 @@
   "main": {
    "cast-changes": 22,
    "speeds": 22,
-   "counteract": 22,
+   "counteract": 21,
    "afflictions": 58,
    "moving": 79,
    "visibility": 45,
@@ -55,7 +55,7 @@
    "objects": 386,
    "speech": 120,
    "out-of-combat": 437,
-   "counteract": 101,
+   "counteract": 100,
    "afflictions": 105,
    "lasting": 226,
    "moving": 106,
@@ -8573,16 +8573,6 @@
     "range",
     "objects",
     "information"
-   ]
-  },
-  {
-   "name": "Ring of the Weary Traveler",
-   "kind": "activation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "suppresses the",
-   "needs": [
-    "counteract"
    ]
   },
   {

@@ -696,7 +696,9 @@ export function suppressText(entry) {
 // Its Effect: PF2e's AdjustModifier suppressing that condition's own modifier.
 export function suppressEffectSource(entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const rule = { key: "AdjustModifier", selectors: entry.selectors, slug: entry.slug, suppress: true };
-    return ownEffectSource({ name: `${entry.slug} ignored`, img: "icons/svg/upgrade.svg", words: suppressText(entry), rules: [rule], duration: entry.duration, flag: { suppress: entry.slug }, item, user, worldTime, initiative, moduleId });
+    // (Ended when the creature gets that condition again, Ring of the Weary Traveler's: scripts/ends-on-hostile.js, src/compiler/fatigue-ignored.js.)
+    const again = entry.endsOnAgain ? [{ key: "RollOption", option: `air-ends-on:${entry.slug}` }] : [];
+    return ownEffectSource({ name: `${entry.slug} ignored`, img: "icons/svg/upgrade.svg", words: `${suppressText(entry)}${entry.endsOnAgain ? `; it ends once it becomes ${entry.slug} again` : ""}`, rules: [rule, ...again], duration: entry.duration, flag: { suppress: entry.slug }, item, user, worldTime, initiative, moduleId });
 }
 
 // A time's first critical failure made a failure, in words: "The first critical failure on Thievery checks to Pick a Lock becomes a
