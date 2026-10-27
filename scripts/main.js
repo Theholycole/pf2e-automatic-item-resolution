@@ -61,6 +61,8 @@ import { setUpSkillSwap } from "./skill-swap.js";
 import { setUpAdjacentBonus } from "./adjacent-bonus.js";
 import { setUpArcaneDrain } from "./arcane-drain.js";
 import { setUpPortals } from "./portals.js";
+import { setUpSouls } from "./souls.js";
+import { setUpPossession } from "./possession.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -198,6 +200,10 @@ Hooks.once("ready", async () => {
     setUpArcaneDrain();
     // (Linked portals, Mountebank's Passage's: scripts/portals.js.)
     setUpPortals();
+    // (Souls a weapon keeps from its kills, Reaper's Grasp's: scripts/souls.js.)
+    setUpSouls();
+    // (An item's essence possessing the creature it hits, Crimson Fulcrum Lens's: scripts/possession.js.)
+    setUpPossession();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

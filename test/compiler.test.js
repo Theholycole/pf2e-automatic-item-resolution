@@ -636,8 +636,9 @@ test("temporary Hit Points or healing from an amount its trigger gave, typed on 
     assert.equal(levelTempText(skin), "Hit Points regained equal to the bleed damage (typed on the card)");
     // (Blood-Drinker Blade (Greater)'s Exsanguinate's half the bleed the creature takes: not typed, src/compiler/drain.js, test/drain.test.js.)
     assert.deepEqual([compileActivations(item("Blood-Drinker Blade (Greater)"))[1].plan.item.levelTemp, compileActivations(item("Blood-Drinker Blade (Greater)"))[1].plan.drain.fraction], [undefined, 0.5]);
-    // (Three and four times too: Reaper's Grasp's soul's level, Shadowpiercer's counteract rank.)
-    assert.deepEqual([entry("Reaper's Grasp", 1).multiplier, entry("Reaper's Grasp", 1).of], [3, "the level of the creature whose soul you chose"]);
+    // (Four times too: Shadowpiercer's counteract rank. 2026-10-27: Reaper's Grasp's three times its soul's level is the souls card's now — the
+    // soul it keeps picked, its level known — test/b4-3-artifacts-2026-10-27.test.js.)
+    assert.deepEqual(compileActivations(item("Reaper's Grasp"))[1].plan.souls, { op: "temp-hp", times: 3 });
     assert.deepEqual([entry("Shadowpiercer").multiplier, entry("Shadowpiercer").of, entry("Shadowpiercer").duration.unit], [4, "the effect's counteract rank", "hours"]);
 });
 

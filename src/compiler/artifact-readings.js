@@ -437,6 +437,55 @@ const READINGS = [
             reroll: { what: "save", keep: "new", who: "target", failed: true, within: { value: Number(within[1]), unit: "hours" }, perCreature: { per: per[1].toLowerCase() } },
             notes: [`Kept for ${within[1]} hours: when the creature that rubbed the claws fails a saving throw, target it and press — its latest failed save is rerolled, the second result taken. Each creature once a ${per[1].toLowerCase()}.`]
         })
+    },
+    {
+        // Reaper's Grasp's Soul Shot and Devour Captured Soul: a soul it keeps released — twice its level in void damage on the next Strike with
+        // it this turn, or three times its level in temporary Hit Points till the end of the next turn (src/live/souls.js, scripts/souls.js:
+        // kills with it store the souls).
+        names: ["Reaper's Grasp: Soul Shot", "Reaper's Grasp: Devour Captured Soul"],
+        over: (plan) => !plan || plan.noteOnly || plan.builtin === "no-effect" || (plan.resolution?.check?.roll === "automatic" && !(plan.resolution.outcomes?.success?.effects ?? []).length),
+        requirements: /^There's at least one soul stored in the reaper's grasp$/,
+        sentences: [
+            /^You channel the necromantic energy of a soul stored in the weapon into (your next attack, increasing the attack's destructive power|a mantle around you, protecting you from harm)\.$/,
+            /^Choose a soul stored in the weapon\.$/,
+            /^(?:The next Strike you make with the reaper's grasp before the end of your turn deals an additional (void) damage equal to (twice) the level of the creature whose soul you chose|You gain temporary Hit Points equal to (three times) the level of the creature whose soul you chose, which last until the end of your next turn)\.$/,
+            /^Using this ability releases the chosen soul, and a skull on the mosaic fades away\.$/
+        ],
+        card: ([, , gives]) => ({
+            builtin: "souls",
+            targeting: { target: null, range: null, area: null },
+            souls: gives[1] ? { op: "strike", type: gives[1].toLowerCase(), times: 2 } : { op: "temp-hp", times: { "three times": 3, twice: 2 }[gives[3].toLowerCase()] ?? 3 },
+            resolution: undefined
+        })
+    },
+    {
+        // Crimson Fulcrum Lens's second activation: its own melee spell attack (+18) at the creature targeted; a hit gives it PF2e's Effect: Crimson
+        // Fulcrum Lens (the invested benefits) and the possession's note Effect, its user no longer invested and the lens inert while it lasts
+        // (plan.possession, scripts/possession.js).
+        names: ["Crimson Fulcrum Lens"],
+        index: 1,
+        sentences: [
+            /^While grasping the lens, make a melee spell attack roll with a modifier of @Check\[crimson-fulcrum-lens\|against:ac\]\{\+(\d+)\}\.$/,
+            /^On a hit, you force the splinter of Nhimbaloth's essence from the lens to possess the target\.$/,
+            /^You're no longer invested in the lens, and the target gains the benefits as though it had invested the lens but can't activate the lens's other abilities\.$/,
+            /^This effect is permanent, but it can be ended by any effect that removes a possession effect\.$/,
+            /^The lens doesn't have any magical abilities until the possession effect ends; when it does, the essence returns to the lens\.$/
+        ],
+        card: ([attack], _plan, { itemHtml, base }) => {
+            const link = /@UUID\[(Compendium\.pf2e\.equipment-effects\.Item\.[A-Za-z0-9]+)\]\{(Effect: Crimson Fulcrum Lens)\}/.exec(String(itemHtml ?? ""));
+            if (!link) return null;
+            const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+            const label = "Possessed by Nhimbaloth's essence";
+            const hit = () => ({ ...none(), nativeEffects: [{ uuid: link[1], label: link[2] }], noteEffects: [{ label, text: "A splinter of Nhimbaloth's essence possesses it: it has the lens's invested benefits (its Effect), though it can't activate the lens. Permanent, until an effect that removes a possession effect ends it (delete this Effect then; the essence returns to the lens).", duration: null }] });
+            return {
+                traits: [...new Set([...(base?.traits ?? []), "attack", "possession"])],
+                targeting: { target: "1 creature", range: "touch", area: null },
+                ownCheck: { kind: "attack", modifier: Number(attack[1]) },
+                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: Number(attack[1]) }, outcomes: { criticalSuccess: hit(), success: hit(), failure: none(), criticalFailure: none() } },
+                possession: { label, itemUuid: base?.source?.uuid ?? null },
+                notes: ["Its user must be grasping the lens; on a hit they're no longer invested in it, and it has no magic until the possession ends."]
+            };
+        }
     }
 ];
 

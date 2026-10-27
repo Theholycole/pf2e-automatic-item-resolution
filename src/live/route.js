@@ -18,6 +18,7 @@ import { isInert, isStructure } from "./cube.js";
 import { isEmbed } from "./embedded-places.js";
 import { isSkillSwap } from "./skill-swap.js";
 import { isPortal } from "./portals.js";
+import { isSouls } from "./souls.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -84,6 +85,8 @@ export function routeOf(plan, text = "") {
     if (isSkillSwap(plan)) return "skill-swap";
     // (Linked portals, Mountebank's Passage's: scripts/portals.js.)
     if (isPortal(plan)) return "portal";
+    // (A soul a weapon keeps released, Reaper's Grasp's: scripts/souls.js.)
+    if (isSouls(plan)) return "souls";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

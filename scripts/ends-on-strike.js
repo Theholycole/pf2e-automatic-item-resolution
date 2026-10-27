@@ -14,7 +14,8 @@ export async function endOnStrike(message) {
     const actor = message.actor;
     // (Or only a Strike with a weapon of a trait, Magnetite Scope's scatter: endsOnStrike { trait }, its options' "item:trait:scatter-10".)
     const options = context.options ?? [];
-    const ends = (flag) => flag === true || (!!flag?.trait && options.some((option) => option === `item:trait:${flag.trait}` || option.startsWith(`item:trait:${flag.trait}-`)));
+    // (Or only a Strike with one weapon, Reaper's Grasp's Soul Shot: endsOnStrike { slug }, its options' "item:slug:reapers-grasp".)
+    const ends = (flag) => flag === true || (!!flag?.trait && options.some((option) => option === `item:trait:${flag.trait}` || option.startsWith(`item:trait:${flag.trait}-`))) || (!!flag?.slug && options.includes(`item:slug:${flag.slug}`));
     const ids = (actor?.itemTypes?.effect ?? []).filter((effect) => ends(effect.flags?.[MODULE_ID]?.endsOnStrike)).map((effect) => effect.id);
     if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
     return ids;

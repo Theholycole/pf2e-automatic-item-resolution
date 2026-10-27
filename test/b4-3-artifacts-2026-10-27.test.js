@@ -14,6 +14,7 @@ import { adjacentBonus, isAdjacent } from "../src/live/adjacent-bonus.js";
 import { drainCandidates, pickDrain } from "../src/live/arcane-drain.js";
 import { portalRegion } from "../src/live/portals.js";
 import { laterRefusal, triggeringRoll, withLaterUse } from "../src/live/reroll-card.js";
+import { soulAmount, soulCounts, soulRules, withSoul, withoutSoul } from "../src/live/souls.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
 import { aroundZone, createInertCard, exemptSpec, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
@@ -218,4 +219,19 @@ test("Old Tillimaquin's Luck of the Mascot: the reroll card kept for 24 hours, t
     assert.equal(laterRefusal(plan.reroll, { at: 0, now: 200, record, actorUuid: "Actor.b" }), null);
     const messages = [{ id: "1", type: "saving-throw", actorUuid: "Actor.a", outcome: "failure" }, { id: "2", type: "saving-throw", actorUuid: "Actor.a", outcome: "success" }];
     assert.equal(triggeringRoll(messages, plan.reroll, { actorUuid: "Actor.a" }), "1");
+});
+
+test("Reaper's Grasp: its kills' souls kept (sapient, living or undead, ten at most); Soul Shot's twice the level in void damage on its next Strike, Devour Captured Soul's three times in temporary Hit Points", () => {
+    const [shot, devour] = activations("Reaper's Grasp");
+    assert.deepEqual([done(shot), done(devour), routeOf(shot), shot.souls, devour.souls], [true, true, "souls", { op: "strike", type: "void", times: 2 }, { op: "temp-hp", times: 3 }]);
+    const record = withSoul([], { name: "Ogre", level: 3 }, 10);
+    assert.deepEqual([soulCounts({ traits: ["mindless", "undead"], modeOfBeing: "undead" }, record, 10), soulCounts({ traits: ["humanoid"], modeOfBeing: "living" }, record, 10), soulCounts({ traits: [], modeOfBeing: "construct" }, record, 10)], [false, true, false]);
+    assert.deepEqual([soulAmount(shot.souls, record[0]), soulAmount(devour.souls, record[0]), withoutSoul(record, 0)], [6, 9, []]);
+    assert.deepEqual(soulRules(shot.souls, 6, "w1"), [{ key: "FlatModifier", selector: "w1-damage", damageType: "void", value: 6, label: "Soul Shot" }]);
+});
+
+test("Crimson Fulcrum Lens's possession: its own melee spell attack (+18), a hit giving the target PF2e's Effect: Crimson Fulcrum Lens and the possession's note Effect (the lens inert while it lasts)", () => {
+    const plan = activations("Crimson Fulcrum Lens")[1];
+    const hit = plan.resolution.outcomes.success;
+    assert.deepEqual([done(plan), routeOf(plan), plan.resolution.check.modifier, hit.nativeEffects[0].label, hit.noteEffects[0].label, plan.possession.label, plan.traits.includes("possession")], [true, "save", 18, "Effect: Crimson Fulcrum Lens", "Possessed by Nhimbaloth's essence", "Possessed by Nhimbaloth's essence", true]);
 });
