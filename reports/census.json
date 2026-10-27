@@ -15,13 +15,13 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 150,
-   "resolves": 824,
+   "resolves": 827,
    "builtin:readied-bonus": 23,
    "builtin:zone": 119,
    "builtin:ways": 29,
    "builtin:item-action": 16,
-   "partial": 76,
-   "note-only": 115,
+   "partial": 75,
+   "note-only": 113,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
    "builtin:no-effect": 37,
@@ -130,12 +130,12 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 104,
+    "resolves": 106,
     "builtin:counteract": 11,
     "builtin:no-effect": 3,
-    "note-only": 12,
     "partial": 13,
     "builtin:ways": 1,
+    "note-only": 10,
     "none": 3,
     "builtin:zone": 2
    },
@@ -262,10 +262,10 @@
    "results": {
     "builtin:readied-bonus": 2,
     "none": 12,
-    "partial": 2,
+    "resolves": 21,
     "note-only": 7,
-    "resolves": 20,
     "builtin:reroll": 2,
+    "partial": 1,
     "builtin:cast-spell": 1
    },
    "mechanisms": {
@@ -367,7 +367,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 69,
+   "resolves": 70,
    "gaps": 0,
    "none": 17
   },
@@ -391,7 +391,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 636,
+   "resolves": 639,
    "gaps": 0,
    "none": 13
   }
@@ -1748,11 +1748,9 @@
     "trigger",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "During this time, you can attempt an Athletics check to High Jump or Long Jump as a single action without the Stride requirement."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -3834,8 +3832,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -27945,8 +27944,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {

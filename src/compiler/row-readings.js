@@ -114,7 +114,9 @@ const CARD_LINES = new Set(["It attempts a Fortitude save to reduce its sickened
 // (A note that's one of those lines: later readings — the mark's — leave the plan whole beside it too.)
 // (Its user's own Strike with the attack it grants, Ring of the Tiger's — withGrantedStrike.)
 const OWN_STRIKE = /^Then Strike with the \w+ \(its user's own action\)\.$/;
-const cardLine = (note) => CARD_LINES.has(said(note)) || OWN_STRIKE.test(said(note));
+// (Its user's own actions the card can't take for them, said as such — Dragonfly Fulu's jump as a single action without the Stride: a line.)
+const OWN_ACTIONS = /\(its own actions\)\.$/;
+const cardLine = (note) => CARD_LINES.has(said(note)) || OWN_STRIKE.test(said(note)) || OWN_ACTIONS.test(said(note));
 export const isCardLine = (note) => cardLine(note);
 const leftOver = (plan) => !(plan.notes ?? []).filter((note) => !cardLine(note)).length && !(plan.unread ?? []).length && !Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length || (row?.unread ?? []).length);
 
@@ -429,6 +431,14 @@ export function withRowReadings(given, html, item = null) {
             drop(said(found));
             if (!notes.includes(STRIDE_FIRST)) notes.push(STRIDE_FIRST);
         }
+    }
+    // (A jump its user makes as one action without its Stride, Dragonfly Fulu's "During this time, you can attempt an Athletics check to High Jump
+    // or Long Jump as a single action without the Stride requirement": its own action, a line of the card — 2026-10-27.)
+    for (const entry of [...notes, ...unread]) {
+        if (!/^During this time, you can attempt an Athletics check to High Jump or Long Jump as a single action without the Stride requirement\.$/i.test(said(entry))) continue;
+        const line = `${said(entry).replace(/^During this time, /i, "For its time, ").replace(/\.$/, "")} (its own actions).`;
+        drop(said(entry));
+        if (!notes.includes(line)) notes.push(line);
     }
     // (An investigator's way to use it, a line of the card.)
     if ([...notes, ...unread].some((entry) => said(entry) === INVESTIGATOR)) {

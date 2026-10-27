@@ -9,7 +9,10 @@ export const NOTES_CHECKED = new Map([
     ["Kotodama Whistle: Question the Soul", "an object's yes-or-no answers: the GM's to give (information)"],
     ["Potion of Shared Memories", "a memory passed on: a mind's, no game numbers"],
     ["Clockwork Songbird", "its song, and an adventure's portal it opens: flavor and the GM's"],
-    ["Coating", "oils and poisons applied with no hands free: its user's own Interact, the oils' and poisons' cards as usual"]
+    ["Coating", "oils and poisons applied with no hands free: its user's own Interact, the oils' and poisons' cards as usual"],
+    // (2026-10-27: a jump as one action, no Stride first — its user's own action, which no card can take for them.)
+    ["Leaper's Elixir (Lesser)", "High Jump or Long Jump as one action with no Stride first, for its minute: its user's own action"],
+    ["Leaper's Elixir (Greater)", "High Jump or Long Jump as one action with no Stride first, and a longer jump: its user's own action"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

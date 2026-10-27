@@ -1,11 +1,11 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1350,
+  "entries": 1347,
   "results": {
-   "partial": 426,
+   "partial": 425,
    "none": 554,
-   "note-only": 251,
+   "note-only": 249,
    "builtin:no-effect": 119
   },
   "main": {
@@ -14,7 +14,7 @@
    "areas": 145,
    "counteract": 24,
    "afflictions": 61,
-   "moving": 91,
+   "moving": 88,
    "visibility": 49,
    "choice": 31,
    "lasting": 69,
@@ -52,14 +52,14 @@
    "speeds": 29,
    "areas": 210,
    "immunity": 90,
-   "objects": 394,
+   "objects": 392,
    "speech": 130,
    "out-of-combat": 447,
    "counteract": 105,
    "afflictions": 111,
    "lasting": 241,
-   "moving": 119,
-   "triggers": 128,
+   "moving": 116,
+   "triggers": 127,
    "visibility": 51,
    "dying": 77,
    "choice": 111,
@@ -775,17 +775,6 @@
     "actions",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Dragonfly Fulu",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "high jump",
-   "needs": [
-    "moving",
-    "triggers"
    ]
   },
   {
@@ -2073,17 +2062,6 @@
    "needs": [
     "triggers",
     "counteract"
-   ]
-  },
-  {
-   "name": "Leaper's Elixir (Greater)",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "moving",
-   "work": "high jump",
-   "needs": [
-    "moving",
-    "objects"
    ]
   },
   {
@@ -14659,17 +14637,6 @@
    "needs": [
     "strike",
     "reader"
-   ]
-  },
-  {
-   "name": "Leaper's Elixir (Lesser)",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "moving",
-   "work": "high jump",
-   "needs": [
-    "moving",
-    "objects"
    ]
   },
   {
