@@ -220,3 +220,31 @@ test("Highhelm War Shields: the critical hit's impaling Grabbed until it Escapes
         assert.equal(plan.notes.length, 2);
     }
 });
+
+test("Extinguishing Ball: no damage, its critical hit ending all persistent acid and fire and its hit one (strike.recover), each degree but a critical failure PF2e's lower recovery DC on a note Effect — its failure's row played too", async () => {
+    const { riderFor } = await import("../src/live/strike-card.js");
+    const ball = activation("Extinguishing Ball");
+    assert.deepEqual([ball.partial, ball.noteOnly, routeOf(ball), ball.strike.noDamage, ball.strike.recover], [undefined, undefined, "strike", true, { criticalSuccess: { types: ["acid", "fire"], ends: true }, success: { types: ["acid", "fire"], ends: true, one: true } }]);
+    const rule = { key: "ItemAlteration", itemType: "condition", mode: "downgrade", property: "pd-recovery-dc", value: 10, predicate: [{ or: ["item:damage:type:acid", "item:damage:type:fire"] }] };
+    for (const degree of ["criticalSuccess", "success", "failure"]) assert.deepEqual(ball.resolution.outcomes[degree].noteEffects[0].rules, [rule], degree);
+    assert.deepEqual([ball.resolution.outcomes.criticalSuccess.noteEffects[0].duration.value, ball.resolution.outcomes.failure.noteEffects[0].duration.anchor], [1, "target-turn"]);
+    assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((outcome) => riderFor(ball, { ranged: true, outcome })), ["hit", "hit", "failure", "spend"]);
+});
+
+test("Decanter of Endless Water's geyser: Hydraulic Push at the creature its stream is aimed at, at its own +15 spell attack — \"subjecting it to the effects of\" a cast", async () => {
+    const { spellIndex } = await import("../src/compiler/index.js");
+    const spells = spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items"));
+    const geyser = compileActivations(item("Decanter of Endless Water"), { spells })[2].plan;
+    assert.deepEqual([geyser.builtin, geyser.partial, geyser.spell.name, geyser.attack, routeOf(geyser)], ["cast-spell", undefined, "Hydraulic Push", 15, "cast"]);
+});
+
+test("Iron Cube: its two-handed weapon's free hand a line; with Slam Down, the Trip card's prone damage at the Strike's weapon's die when bigger than d6 (withFeatDie)", async () => {
+    const { withFeatDie } = await import("../src/live/strike-card.js");
+    const cube = compileItem(item("Iron Cube"));
+    assert.deepEqual([cube.partial, cube.strike.follow.notes, cube.strike.follow.featDie], [undefined, undefined, { slug: "slam-down", name: "Slam Down", atLeast: "d6" }]);
+    assert.ok(cube.strike.lines.some((line) => /Trip needs no free hand/.test(line)));
+    const formula = (follow) => follow.action.damage.success.resolution.sharedDamage.components[0].formula;
+    assert.equal(formula(withFeatDie(cube.strike.follow, { hasFeat: true, weaponDie: "d12" })), "2d12");
+    assert.equal(formula(withFeatDie(cube.strike.follow, { hasFeat: false, weaponDie: "d12" })), "2d6");
+    assert.equal(formula(withFeatDie(cube.strike.follow, { hasFeat: true, weaponDie: "d4" })), "2d6");
+});

@@ -583,7 +583,8 @@ test("Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check 
 
 test("Iron Cube: its melee Strike's hit posts PF2e's Trip card at the creature hit, the 2d6 bludgeoning on its success; Serpent's Lash's Reposition after its whip's hit", async () => {
     const cube = compileItem(source("Iron Cube"));
-    assert.deepEqual([routeOf(cube), cube.strike.range, cube.strike.follow.action.slug, cube.strike.follow.action.damage.success.resolution.sharedDamage.components[0].formula, cube.partial], ["strike", "melee", "trip", "2d6", true]);
+    // (2026-10-27: its two-handed weapon a line, Slam Down's die the follow's featDie — src/compiler/strike-lines.js; no longer partial.)
+    assert.deepEqual([routeOf(cube), cube.strike.range, cube.strike.follow.action.slug, cube.strike.follow.action.damage.success.resolution.sharedDamage.components[0].formula, cube.partial], ["strike", "melee", "trip", "2d6", undefined]);
     assert.deepEqual(cube.resolution.outcomes.success.effects, [], "the prone is the Trip's, not the hit's");
     assert.ok(strikeLines(cube).some((line) => /^On a hit: its .*card at the creature hit \(with its damage on a success\)$/.test(line)));
     const [lash] = compileActivations(source("Serpent's Lash"));

@@ -9,13 +9,13 @@
 import { postEndEarlyAt } from "./end-early.js";
 import { postCounteractAt } from "./counteract.js";
 import { afterEndsEffectSource } from "../src/live/card.js";
-import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
+import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord, withFeatDie } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
 import { USES, now } from "./activations.js";
 import { withoutUse } from "../src/live/activations-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, isActiveGM, recover, startInitiative, stateOf } from "./foundry.js";
 import { planFor, withoutAloftProne } from "../src/live/if-target.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -182,14 +182,17 @@ export async function strikeWithRider(message) {
     }
     // (A maneuver after the hit, Iron Cube's Trip: its own card, PF2e's action at the creature the Strike hit — still targeted.)
     const follow = rider.plan.strike?.follow;
-    if (follow) {
+    if (follow && what === "hit") {
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
-        await postActionCard({ message: null, plan: follow, used: { data: { name: rider.item.name, uuid: rider.item.uuid ?? null } }, actor, token: sourceToken?.object ?? sourceToken });
+        // (A feat's die for its damage, Iron Cube's Slam Down: the Strike's weapon's, when bigger and its user has the feat.)
+        const weapon = follow.featDie ? message.item ?? (message.flags?.pf2e?.origin?.uuid ? await fromUuid(message.flags.pf2e.origin.uuid).catch(() => null) : null) : null;
+        const plan = follow.featDie ? withFeatDie(follow, { hasFeat: Boolean(actor?.rollOptions?.all?.[`feat:${follow.featDie.slug}`]), weaponDie: weapon?.system?.damage?.die ?? null }) : follow;
+        await postActionCard({ message: null, plan, used: { data: { name: rider.item.name, uuid: rider.item.uuid ?? null } }, actor, token: sourceToken?.object ?? sourceToken });
     }
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
     // (A note for the creature hit counts: Magekiller Bullet's curse.)
-    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
+    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !rider.plan.strike?.recover?.[context.outcome] && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}.</p>` });
         return;
@@ -204,6 +207,9 @@ export async function strikeWithRider(message) {
     // (Its Prone only for a creature on the ground, Drake Shot's: src/live/if-target.js.)
     const elevation = Number(targetToken.document?.elevation ?? targetToken.elevation) || 0;
     const lines = await applyRiders({ plan: withoutAloftProne(rider.plan, elevation), degree: context.outcome, user: rider.user, target, item: rider.item });
+    // (Its persistent damage of some types ended on this degree, Extinguishing Ball's: PF2e's conditions deleted — all of them, or one.)
+    const recovery = rider.plan.strike?.recover?.[context.outcome];
+    if (recovery) lines.push(...await recover(targetToken.actor, target.name, recovery));
     // (Pulled out of the creature it hit, Beacon Shot's Athletics check: the end-early card, scripts/end-early.js.)
     if (rider.plan.strike?.endEarly && ["success", "criticalSuccess"].includes(context.outcome)) await postEndEarlyAt({ endEarly: rider.plan.strike.endEarly, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: rider.user, creatures: [{ actorUuid: targetToken.actor.uuid, tokenUuid: targetToken.uuid, name: target.name }] }).catch((error) => console.error(`${MODULE_ID} | end early`, error));
     if (rider.plan.strike?.groundedProne && elevation > 0) lines.push(`${target.name} isn't on the ground: it doesn't fall Prone`);

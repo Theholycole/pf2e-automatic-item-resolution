@@ -272,7 +272,20 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     // (Or the weapon's own dice on a failure: Brutal Finish's.)
     if (outcome === "failure" && plan.strike?.failDice) return "failure";
     if (outcome === "failure" && plan.strike?.failHalf) return "failure";
+    // (Or a failure's own row, Extinguishing Ball's splash nearby: played as a hit's is.)
+    if (outcome === "failure" && plan.strike?.failRow) return "failure";
     return plan.strike?.missKeeps ? "keep" : "spend";
+}
+
+// A maneuver's damage at the Strike's weapon's die, Iron Cube's prone damage with Slam Down (follow.featDie { slug, atLeast }): when its user has
+// the feat and the weapon's die is bigger than the one the text gives, that die in place in its damage plans' formulas; else the follow as it is.
+const FACES = (die) => Number(/^d(\d+)$/.exec(String(die ?? ""))?.[1]) || 0;
+export function withFeatDie(follow, { hasFeat = false, weaponDie = null } = {}) {
+    const feat = follow?.featDie;
+    if (!feat || !hasFeat || FACES(weaponDie) <= FACES(feat.atLeast)) return follow;
+    const bigger = (plan) => (plan?.resolution?.sharedDamage?.components ? { ...plan, resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: plan.resolution.sharedDamage.components.map((component) => ({ ...component, formula: String(component.formula).replace(new RegExp(`(\\d+)${feat.atLeast}\\b`, "g"), `$1${weaponDie}`) })) } } } : plan);
+    const damage = Object.fromEntries(Object.entries(follow.action?.damage ?? {}).map(([degree, plan]) => [degree, bigger(plan)]));
+    return { ...follow, action: { ...follow.action, damage } };
 }
 
 // The item's id on its actor, from its uuid ("Actor.abc.Item.def" → "def").
