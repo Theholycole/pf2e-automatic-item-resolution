@@ -89,8 +89,11 @@ test("the card: its verb and range, again for each action more", () => {
 test("a move said other ways: Umbral Armor's \"allowing you to Stride twice your speed\" and its Concealed after, Nightmare Cudgel's Strides, Dancing Scarf's beside its Concealed", () => {
     const shroud = activation("Umbral Armor", "Shroud Stride");
     assert.deepEqual([shroud.teleport.speedTimes, shroud.teleport.move.lines, shroud.userEffects.map((entry) => [entry.slug, entry.duration.value, entry.duration.expiry]), shroud.partial], [2, ["This movement doesn't trigger reactions and ignores difficult and hazardous terrain"], [["concealed", 1, "turn-start"]], undefined]);
+    // (2026-10-27: Nightmare Cudgel's activation is its minute of Strikes now, the Demoralize card after each hit — its Strides a line of that
+    // card, its user's own moves; src/compiler/book-strikes.js.)
     const cudgel = compileActivations(item("Nightmare Cudgel"))[0].plan;
-    assert.deepEqual([cudgel.teleport.speedTimes, cudgel.partial], [2, true], "its Demoralize after a hit is a note");
+    assert.deepEqual([cudgel.teleport, cudgel.strike.every, cudgel.partial], [undefined, true, undefined]);
+    assert.match(cudgel.strike.lines[0], /Stride twice/);
     const scarf = activation("Dancing Scarf (Greater)", "Swirling Scarf");
     assert.deepEqual([scarf.item.move.speedTimes, scarf.item.move.move.lines, scarf.resolution.outcomes.success.effects[0].slug, scarf.partial], [0.5, ["Or Step"], "concealed", undefined]);
 });

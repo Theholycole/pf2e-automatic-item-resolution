@@ -84,7 +84,8 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // (the zone card's, the counteract card's, the fortune and cast cards' plan.notes), done the same, 2026-10-27.)
     // (Not one whose top-level notes or unread lines no card of its kind shows: a zone's, a counteract's.)
     // (And a conjured creature's: the ability module's conjure card shows its notes — 2026-10-27, Fossil Fragment (Amber Mosquito)'s.)
-    const shown = ["readied-bonus", "cast-spell", "conjure"].includes(plan?.builtin) || !((plan?.notes ?? []).length || (plan?.unread ?? []).length);
+    // (And a fortune's: the fortune card shows them too — 2026-10-27, Gorum's Tear's.)
+    const shown = ["readied-bonus", "cast-spell", "conjure", "roll-twice"].includes(plan?.builtin) || !((plan?.notes ?? []).length || (plan?.unread ?? []).length);
     if (plan?.partial && plan.builtin && plan.builtin !== "no-effect" && shown && !special && oneOff(name ?? plan.source?.name)) return asCardLines(plan, { result: "partial", base, body: null, decided: "one-off" });
     // (A unique item's or an artifact's, its lore all that's left — src/compiler/lore-lines.js, the user's of 2026-10-27: its effects built, its
     // history, look or destruction its card's lines —: done, decided "lore". On a card of its own only when that card shows its notes.)

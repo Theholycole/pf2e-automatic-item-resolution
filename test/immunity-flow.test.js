@@ -72,8 +72,9 @@ test("where a plan holds to it: a save's trigger.immunity (the ability module's 
     // (Not one to the item: Mindrender Baton's "temporarily immune to that character's attempts to remove the effect" — the ability compiler's
     // own reading of it taken off, a note.)
     const [, command] = compileActivations(source("Mindrender Baton"));
-    assert.deepEqual([command.plan.trigger.immunity, command.plan.partial], [undefined, true]);
-    assert.ok(command.plan.notes.some((note) => /^Another character can attempt a @Check\[diplomacy\|dc:32\b/.test(note)), command.plan.notes.join(" / "));
+    // (2026-10-27: that sentence now the words of its failures' note Effects, beside the Controlled they grant — src/compiler/book-strikes.js.)
+    assert.deepEqual([command.plan.trigger.immunity, command.plan.partial, command.plan.notes], [undefined, undefined, undefined]);
+    assert.match(command.plan.resolution.outcomes.failure.noteEffects[0].text, /immune to that creature's tries by skill for 24 hours/);
     // (Nor one to only part of it: Poison Fizz's "temporarily immune to being blinded by poison fizz for 1 hour" — as the whole item's, a creature
     // that only succeeded would get no card for the next fizz — taken off. Since 2026-10-27 not a note but the ability module's
     // trigger.partImmunity: the blinded part only, on a critical failure, from any poison fizz — every grade's key "poison-fizz".)

@@ -10,7 +10,9 @@
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { ownStrikeRules } from "./pf2e-rules.js";
 
-const HOLD = /^On a critical hit, it wraps around the target's (\w+) if it has one, and the target (can't [^.]+?) until the persistent damage ends\.$/i;
+// (Or without "if it has one", Garrote Bolt's "On a critical hit, it wraps around the target's throat, and the target can't breathe until the
+// persistent damage ends", 2026-10-27.)
+const HOLD = /^On a critical hit, it wraps around the target's (\w+)(?: if it has one)?, and the target (can't [^.]+?) until the persistent damage ends\.$/i;
 const SEVERS = /^If the persistent damage kills the target, the [\w' -]+? severs the appendage it's wrapped around\.$/i;
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 

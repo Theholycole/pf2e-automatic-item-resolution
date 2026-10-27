@@ -38,7 +38,8 @@ test("the reading: which roll is rolled twice, from the text or its trigger, and
     assert.equal(compileActivations(source("Energy Shield Tunic")).find((entry) => entry.plan?.builtin === "roll-twice").plan.rollTwice.selector, "saving-throw");
     // A talisman: "you roll your next attack roll twice …, ignoring any circumstance penalties. You then become Off-Guard …".
     const tear = compileItem(source("Gorum's Tear"));
-    assert.deepEqual([tear.builtin, tear.rollTwice.selector, tear.partial], ["roll-twice", "attack-roll", true]);
+    // (2026-10-27: its Off-Guard a one-off, its lines the fortune card's — src/compiler/one-offs.js, src/compiler/book-strikes.js.)
+    assert.deepEqual([tear.builtin, tear.rollTwice.selector, tear.partial, tear.decided], ["roll-twice", "attack-roll", undefined, "one-off"]);
     assert.match(tear.notes.join(" "), /Off-Guard/);
     // Not a fortune for its user: another creature's worse roll, or a damage roll.
     assert.equal(readRollTwice("Effect The caster must roll the spell attack roll twice and take the worse result."), null);

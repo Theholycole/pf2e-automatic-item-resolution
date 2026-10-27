@@ -522,7 +522,10 @@ test("bonuses narrower than PF2e's rolls, on the whole roll for their time: Phan
     const [disguise] = elixir.resolution.outcomes.success.modifiers;
     assert.deepEqual([disguise.selector, disguise.value, disguise.type, disguise.predicate ?? null, `${disguise.duration.value} ${disguise.duration.unit}`, elixir.partial, elixir.unread], ["deception-dc", 4, "status", null, "10 minutes", undefined, undefined]);
     assert.match(elixir.resolution.outcomes.success.noteEffects[0].text, /only against others seeing through that disguise, and its level counts toward that DC even if it's untrained/);
-    assert.deepEqual(summary("Armor Polishing Kit"), ["diplomacy", 1, "circumstance", ["action:make-an-impression"], "24 hours", true, "The bonus is only on soldiers, guards, Gorumites, and other martially minded characters, for whoever wears the armor maintained by this kit."]);
+    // (2026-10-27: Armor Polishing Kit's bonus is now on its note Effect, PF2e's action:make-an-impression and its toggle for a martially minded
+    // character, for whoever wears the armor — src/compiler/book-strikes.js.)
+    const kit = compileItem(item("Armor Polishing Kit"));
+    assert.deepEqual([kit.resolution.outcomes.success.modifiers, kit.resolution.outcomes.success.noteEffects[0].rules[1].predicate, kit.partial], [[], ["action:make-an-impression", "armor-polishing-kit-martial"], undefined]);
 });
 
 test("a condition's penalty ignored for a while: Chilled Fire Noodles' Fatigued penalty to AC and saves for 1 hour, Ring of the Weary Traveler's for 10 minutes — PF2e's AdjustModifier suppressing the fatigued modifier", async () => {
@@ -954,7 +957,9 @@ test("narrow bonuses on PF2e's roll options, the narrower words a note (the user
     // (2026-10-27: Aroma Concealer's bonus against smell is now on its note Effect with its toggle — src/compiler/visibility.js.)
     assert.deepEqual(compileItem(item("Aroma Concealer")).resolution.outcomes.success.noteEffects[0].rules[1].value, 2);
     assert.deepEqual(bonus("Potion of Disguise (Lesser)"), [["deception-dc", 4, "status", "24 hours", "null"]]);
-    assert.deepEqual(bonus("Fungal Walk Musk"), [["ac", 1, "item", "1 days", JSON.stringify(["origin:trait:fungus"])]]);
+    // (2026-10-27: Fungal Walk Musk's bonus is now on its note Effect with its toggle for a fungus creature with no vision's melee attack —
+    // src/compiler/book-strikes.js.)
+    assert.deepEqual(compileItem(item("Fungal Walk Musk")).resolution.outcomes.success.noteEffects[0].rules[1], { key: "FlatModifier", selector: "ac", type: "item", value: 1, predicate: ["fungal-walk-musk-blind-fungus"] });
     // (2026-10-27: Healing Vapor's bonus is its burst's, the ability module's zone for the creatures inside — src/compiler/area-readings.js.)
     const vapor = compileItem({ ...item("Healing Vapor (Major)"), ownerLevel: 10 });
     assert.deepEqual([vapor.builtin, vapor.zone.modifiers[0].value, vapor.zone.modifiers[0].predicate], ["zone", 3, [{ or: ["item:trait:disease", "item:trait:poison"] }]]);
@@ -1220,7 +1225,8 @@ test("a new save at its turns (src/compiler/save-ends.js, the ability's duration
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => pop.resolution.outcomes[degree].modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, /3 Interact actions/.test(modifier.until)])), [[["all-speeds", -10, "item", true]], [["all-speeds", -10, "item", true]]]);
     const [jaw] = compileActivations(item("Jawbreaker Shield"));
     const broken = jaw.plan.strike.save.resolution.outcomes.criticalFailure;
-    assert.deepEqual([broken.noteEffects[0].label, broken.noteEffects[0].saveEnds, broken.manualInstructions], ["Can't Strike with its mouth", { save: "fortitude", dc: null, mode: "end" }, ["{target} (critical failure): You break the target's jaw. As failure."]]);
+    // (2026-10-27: its "As failure." now the failure's own note Effect beside it, no GM line left — src/compiler/book-strikes.js.)
+    assert.deepEqual([broken.noteEffects[0].label, broken.noteEffects[0].saveEnds, broken.manualInstructions, broken.noteEffects[1].label], ["Can't Strike with its mouth", { save: "fortitude", dc: null, mode: "end" }, undefined, "Wounded mouth"]);
 });
 
 test("rows read from plain words (guards.js), a snare's too: Fang Snare's 1 piercing and 2d8 poison damage, Thunder Snare's \"As success, and the target also takes 1 sonic damage\" with the success's deafened, on the creature's own turns; a time only for the conditions before it (Stunning Snare's and Pyronite's Stunned 1 untimed) unless it opens its sentence (Liar's Bangle); Eternal Eruption's coming back by itself a card line, not partial", () => {

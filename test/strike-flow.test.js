@@ -138,8 +138,9 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     // A next Strike: its own damage, until the end of the next turn, only a hit spends it; the crit combination a note.
     const lash = activation("Venom Lash").plan;
     assert.deepEqual([lash.strike.until, lash.strike.missKeeps], ["next-turn-end", true]);
-    assert.deepEqual(lash.strike.damage, [{ diceNumber: 2, dieSize: "d6", category: "persistent", damageType: "poison" }]);
-    assert.match(lash.strike.notes.join(" "), /critically succeeds/);
+    // (2026-10-27: the crit combination no longer a note — its 3d6 on the readied Effect's toggle, src/compiler/book-strikes.js.)
+    assert.deepEqual(lash.strike.damage[0], { diceNumber: 2, dieSize: "d6", category: "persistent", damageType: "poison", predicate: [{ not: "venom-lash-alternate" }] });
+    assert.deepEqual(lash.strike.notes, []);
     // A trigger's Strike that already hit, its dice by the club's striking rune.
     const club = source("Kinetic Club");
     assert.deepEqual(activation("Kinetic Club").plan.strike.damage[0].diceNumber, (Number(club.system.runes?.striking) || 0) >= 2 ? 2 : 1);
