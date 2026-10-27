@@ -144,3 +144,32 @@ test("others' own reactions, lines of the card: Singing Bowl of the Versatile St
         assert.match(strike.strike.lines[0], /^If it hits and deals damage, one grabbed or restrained ally within 60 feet of the target can use a reaction to Escape/);
     }
 });
+
+test("Horned Hand Rests (both): the ways card's 1 action, the legchair's next Strike this turn with the extra force dice and the critical hit's push, and 2 actions, the beam's save", () => {
+    for (const [name, dice, feet] of [["Horned Hand Rests", 2, 5], ["Horned Hand Rests (Greater)", 3, 10]]) {
+        const rests = activation(name);
+        assert.deepEqual([rests.builtin, rests.partial, rests.ways.map((way) => way.name)], ["ways", undefined, ["1 action: momentum", "2 actions: the beam"]], name);
+        const [momentum, beam] = rests.ways.map((way) => way.plan);
+        assert.deepEqual([routeOf(momentum), momentum.strike.damage[0].diceNumber, momentum.strike.damage[0].damageType, momentum.resolution.outcomes.criticalSuccess.forcedMovement.distance, momentum.activation.time], ["strike", dice, "force", feet, "1"], name);
+        assert.deepEqual([beam.resolution.check.statistic, beam.activation.time, beam.notes, beam.partial], ["fortitude", "2", undefined, undefined], name);
+    }
+});
+
+test("Cauthooj Bagpipes' Throw Song: a failed save turns the creature's Strike on another its user picks (or −2 with none in reach) — a note Effect on it for its turn", () => {
+    const song = activation("Cauthooj Bagpipes", "Throw Song");
+    assert.equal(song.partial, undefined);
+    for (const degree of ["failure", "criticalFailure"]) {
+        const row = song.resolution.outcomes[degree];
+        assert.deepEqual([row.manualInstructions, row.noteEffects[0].duration], [undefined, { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" }]);
+        assert.match(row.noteEffects[0].text, /goes to another creature within its reach, picked by whoever used the item; with no other creature in reach, it takes a –2 penalty/);
+    }
+});
+
+test("Undead Compendium: the ways card's pick of the undead, each its +2 to attack rolls (target:trait) and saves (origin:trait) against that kind alone; a lich, with no trait of its own, PF2e's toggle on its note Effect", () => {
+    const book = activation("Undead Compendium");
+    assert.deepEqual([book.builtin, book.partial, book.ways.map((way) => way.name)], ["ways", undefined, ["Ghost", "Ghoul", "Graveknight", "Lich", "Mummy", "Vampire", "Wight", "Zombie"]]);
+    const row = (kind) => book.ways.find((way) => way.name === kind).plan.resolution.outcomes.success;
+    assert.deepEqual(row("Vampire").modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["attack-roll", 2, ["target:trait:vampire"]], ["saving-throw", 2, ["origin:trait:vampire"]]]);
+    assert.deepEqual([row("Lich").modifiers[0].predicate, row("Lich").noteEffects[0].rules[0].option, row("Lich").noteEffects[0].rules[0].toggleable], [["target:trait:undead", "undead-compendium:lich"], "undead-compendium:lich", true]);
+    assert.equal(book.ways[0].plan.unread, undefined);
+});
