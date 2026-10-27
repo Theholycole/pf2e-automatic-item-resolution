@@ -57,6 +57,8 @@ import { setUpPulses } from "./pulse.js";
 import { setUpTransmogrify } from "./transmogrify.js";
 import { setUpTurnAuras } from "./turn-auras.js";
 import { setUpSwaps } from "./swap.js";
+import { setUpGrantedSpells } from "./grimoire.js";
+import { setUpAfterRest } from "./after-rest.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -186,6 +188,10 @@ Hooks.once("ready", async () => {
     setUpTurnAuras();
     // (Places traded after a failed save, Planar Ribbon's: scripts/swap.js.)
     setUpSwaps();
+    // (A spell granted for the day gone at the next rest, with its copies: scripts/grimoire.js.)
+    setUpGrantedSpells();
+    // (A save at a user's next rest, Vile Remnant's nightmares: scripts/after-rest.js.)
+    setUpAfterRest();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

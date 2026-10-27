@@ -197,3 +197,74 @@ test("Wintershot (Heroic)'s Signal Flare: the beacon's light for a minute, or th
     assert.deepEqual([routeOf(shot), shot.strike.own, shot.strike.counteract.counteract], ["strike", true, { rank: 9, modifier: 25, traits: ["darkness"], at: "target" }]);
     assert.equal(fiend.strike.counteract.counteract.modifier, 30);
 });
+
+test("Grimoire of Unknown Necessities: the GM's arcane spell of its user's highest rank, for the day, its copies gone with it", async () => {
+    const { copiesSince, grantProblem, highestRank } = await import("../src/live/grimoire.js");
+    const [grimoire] = activations("Grimoire of Unknown Necessities");
+    assert.deepEqual([grimoire.builtin, routeOf(grimoire), done(grimoire), grimoire.grantSpell], ["grant-spell", "grant-spell", true, { tradition: "arcane", prepared: true, rank: "highest", until: "next-day" }]);
+    assert.equal(highestRank({ slot0: { max: 5 }, slot1: { max: 3 }, slot8: { max: 2 }, slot9: { max: 0 } }), 8);
+    assert.equal(grantProblem({ name: "Disjunction", rank: 9, traditions: ["arcane"] }, { tradition: "arcane", rank: 8 }), "Disjunction is rank 9, not 8 (the highest its user casts)");
+    assert.equal(grantProblem({ name: "Heal", rank: 8, traditions: ["divine", "primal"] }, { tradition: "arcane", rank: 8 }), "Heal isn't an arcane spell");
+    assert.equal(grantProblem({ name: "Maze", rank: 8, traditions: ["arcane"], sourceId: "x" }, { tradition: "arcane", rank: 8, known: ["x"] }), "Maze is already in its user's spellbook");
+    assert.equal(grantProblem({ name: "Maze", rank: 8, traditions: ["arcane"], sourceId: "x" }, { tradition: "arcane", rank: 8, known: [] }), null);
+    assert.deepEqual(copiesSince([{ id: "a", sourceId: "x", createdTime: 5 }, { id: "b", sourceId: "x", createdTime: 1 }, { id: "c", sourceId: "y", createdTime: 9 }], "x", 3).map((one) => one.id), ["a"]);
+});
+
+test("Book of Lost Days' Study Memory: a 40 to Recall Knowledge whispered, Drained 2 held for 2 days, the day it takes a note, refused while drained", () => {
+    const [book] = activations("Book of Lost Days");
+    const row = success(book);
+    assert.deepEqual([routeOf(book), done(book), row.effects[0].slug, row.effects[0].value, row.conditionFloor], ["item", true, "drained", 2, { slug: "drained", value: 2, lifetime: "fixed", duration: { value: 48, unit: "hours" } }]);
+    assert.deepEqual([book.unlessCondition.slug, /total of 40/.test(book.alsoWhisper), row.noteEffects.length], ["drained", true, 1]);
+});
+
+test("Soulcutter's Soulcutting Storm: Weapon Storm at 7th rank, its damage spirit once the spell module takes damageType (partial till then)", () => {
+    const storm = activation("Soulcutter", "Soulcutting Storm");
+    assert.deepEqual([routeOf(storm), storm.partial, storm.castDamageType.type, storm.rank], ["cast", true, "spirit", 7]);
+});
+
+test("Crooner's Cravat's Influential Croon and Stage Magician's Cloak: two casts on the ways card; the smoke's save, its user Quickened; Invisibility and the teleport", () => {
+    const croon = activation("Crooner's Cravat", "Influential Croon");
+    assert.deepEqual([routeOf(croon), done(croon), croon.ways.map((way) => [way.plan.spell.name, way.plan.dc])], ["ways", true, [["Enthrall", 30], ["Subconscious Suggestion", 30]]]);
+    assert.deepEqual([croon.ways[1].plan.castRange.feet, croon.ways[1].plan.castTargets.max], [30, 1]);
+    const see = activation("Stage Magician's Cloak", "Now You See Me...");
+    assert.deepEqual([routeOf(see), done(see), see.targeting.area, see.resolution.check.against.value, see.resolution.outcomes.failure.effects[0].slug], ["save", true, { type: "emanation", value: 10 }, 30, "off-guard"]);
+    assert.deepEqual(see.userEffects.map((effect) => effect.kind ?? effect.slug), ["quickened", "note", "remove"]);
+    const gone = activation("Stage Magician's Cloak", "...Now You Don't");
+    assert.deepEqual([routeOf(gone), done(gone), gone.spell.name, gone.rank, gone.item.move.within], ["cast", true, "Invisibility", 2, 30]);
+});
+
+test("Grail of Twisted Desires: three wines on the ways card, the drink's cast, the secret twist by the day's use", async () => {
+    const { twistedKind, winePlan } = await import("../src/live/grail.js");
+    const [grail] = activations("Grail of Twisted Desires");
+    assert.deepEqual([routeOf(grail), done(grail), grail.ways.length, grail.trigger.frequency.max], ["ways", true, 3, 3]);
+    const kinds = ["ordinary", "restoration", "nightmare"];
+    assert.equal(twistedKind(kinds, "restoration", { roll: 1, use: 1 }), "ordinary");
+    assert.equal(twistedKind(kinds, "restoration", { roll: 2, use: 1 }), "restoration");
+    assert.equal(twistedKind(kinds, "restoration", { roll: 2, use: 2 }), "nightmare");
+    assert.equal(twistedKind(kinds, "restoration", { roll: 1, use: 3, chaotic: true }), "restoration");
+    const wine = grail.ways[2].plan.item.wine;
+    const drink = winePlan({ ...wine.kinds[2], from: "Grail of Twisted Desires" });
+    assert.deepEqual([routeOf(drink), drink.spell.name, drink.rank, drink.self], ["cast", "Nightmare", 4, true]);
+    assert.equal(routeOf(winePlan({ kind: "ordinary", cast: null })), "item");
+});
+
+test("Ring of Bestial Friendship: Charm at 4th rank within 30 feet with its bond and the ring's lasting immunity, then the creature's rage for an hour", () => {
+    const [ring] = activations("Ring of Bestial Friendship");
+    assert.deepEqual([routeOf(ring), done(ring), ring.ways.length], ["ways", true, 2]);
+    const [charm, rage] = ring.ways.map((way) => way.plan);
+    assert.deepEqual([routeOf(charm), charm.rank, charm.castRange.feet, charm.item.immunity.duration.value, charm.userEffects[0].kind], ["cast", 4, 30, 36500, "note"]);
+    const [note] = success(rage).noteEffects;
+    assert.deepEqual([routeOf(rage), rage.item.recipient, note.duration.value, note.rules[1].value, note.rules[1].type], ["item", "targets", 1, 1, "item"]);
+});
+
+test("Azarim's help with a Lie, Vile Remnant's Hear My Words, Fan of the Four Winds: built whole", () => {
+    const lie = activations("Azarim")[2];
+    assert.deepEqual([routeOf(lie), done(lie), lie.ways.map((way) => [routeOf(way.plan), way.plan.action.minimum?.value ?? null, way.plan.action.bonus?.value ?? null])], ["ways", true, [["action", 15, null], ["action", null, 2]]]);
+    const words = activation("Vile Remnant", "Hear My Words");
+    assert.deepEqual([routeOf(words), done(words), words.dc, words.castBonus.rules, words.userEffects[0].duration.value], ["cast", true, 23, [], 7]);
+    const nightmare = words.item.afterRest.plan;
+    assert.deepEqual([nightmare.resolution.check.statistic, nightmare.resolution.check.against.value, nightmare.resolution.outcomes.failure.effects[0].slug, nightmare.resolution.outcomes.failure.effects[0].duration.value], ["will", 23, "stupefied", 24]);
+    const [fan] = activations("Fan of the Four Winds");
+    assert.deepEqual([routeOf(fan), done(fan), fan.ways.map((way) => routeOf(way.plan))], ["ways", true, ["cast", "save"]]);
+    assert.equal(success(fan.ways[1].plan).noteEffects[0].duration.value, 8);
+});

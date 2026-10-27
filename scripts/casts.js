@@ -134,7 +134,11 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             }
             if (!targetTokens.length) lines.push(`Target the creatures in its area to leave out the ${state.plan.castTraits.immune.join(" and ")}s and give the penalty.`);
         }
-        const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
+        // (All its damage of one type, Soulcutter's Soulcutting Storm's spirit: the spell module's damageType, once it takes it — its
+        // castFromItemOptions says so; until then, a line to change it by hand. 2026-10-27.)
+        const typed = state.plan.castDamageType && (game.modules.get(SPELL_ID)?.api?.castFromItemOptions ?? []).includes("damageType") ? { damageType: state.plan.castDamageType.type } : {};
+        if (state.plan.castDamageType && !typed.damageType) lines.push(`All its damage is ${state.plan.castDamageType.type}: change its type by hand on the spell's damage.`);
+        const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item, ...typed });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
         // (Or the chosen spell's own, Cloak of the False Foe's Medium cryptid's hour and Large cryptid's 10 minutes.)

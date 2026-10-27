@@ -454,6 +454,266 @@ const READINGS = [
                 ]
             };
         }
+    },
+    {
+        // Grimoire of Unknown Necessities: the GM's spell for the day — an arcane spell of the highest rank its user casts, not in its spellbook —
+        // put in its user's arcane prepared spellcasting, gone at its next rest or a day on with every copy made of it (plan.grantSpell,
+        // src/live/grimoire.js, scripts/grimoire.js). Its Requirements' rest before preparing, its user's own timing (the card's line); that
+        // the knowledge stays in its user's mind, what the copies' removal plays.
+        name: "Grimoire of Unknown Necessities",
+        sentences: [
+            /^The grimoire provides you with temporary knowledge of a single spell of the highest rank you're capable of casting that you don't already have recorded in it or any of your other spellbooks, chosen by the GM based on their knowledge of the adventure to be particularly useful to you during the upcoming day\.$/,
+            /^A strange quirk of the tome prevents the spell's knowledge from ever traveling further than your own mind\.$/,
+            /^The granted spell is not only removed from the tome's pages at the start of the next day, but is also removed from any other scroll, spellbook, or grimoire the granted spell is copied into, as well as any other way it might have been learned or copied\.$/
+        ],
+        card: () => ({
+            builtin: "grant-spell",
+            targeting: { target: null, range: null, area: null },
+            grantSpell: { tradition: "arcane", prepared: true, rank: "highest", until: "next-day" },
+            notes: ["Used after its user rests and before it prepares its spells (its Requirements): the GM picks a spell useful for the day ahead.", "Its knowledge never leaves its user's mind: at its next rest it's gone from its pages, and every scroll, wand or spellbook copy its user made of it goes too."]
+        })
+    },
+    {
+        // Book of Lost Days' Study Memory (refused while its user is drained, its Requirements): what a total of 40 to Recall Knowledge on the
+        // topic tells, whispered to the GM and its user (the GM fills it in, more context on a success or critical success); its price, Drained
+        // 2 on its user that it can't reduce for 2 days (the core's conditionFloor, the ability module's floor Effect), and the day of memory
+        // the book takes and the day of life, a note Effect on its user (the user's ruling for minds). Its other users' wiped memories, kept
+        // in the book for others: the card's lines.
+        name: "Book of Lost Days: Study Memory",
+        sentences: [
+            /^You open the book while trying to learn information about any topic\.$/,
+            /^The Book of Lost Days permits you to view another's memory, which contains information about that subject commensurate to rolling a total of (\d+) to Recall Knowledge about the topic, with additional context provided on a success or critical success\.$/,
+            /^The price for this knowledge is the memory of a day in your past, and the vitality of a day in your future\.$/,
+            /^You lose the memory of that day completely, and the total of all the knowledge you learned on that date is added to the book's repository of information\.$/,
+            /^The book, not you, chooses which memories are taken, preferring days with concentrated emotional resonance, and thus tends to steal significant life moments\.$/,
+            /^This loss affects only your memories; it has no effect on your level, class, feats, or other character choices\.$/,
+            /^Your natural lifespan is also shortened by 1 day\.$/,
+            /^The loss of this life energy causes you to be (Drained) (\d+)\.$/,
+            /^You can't reduce the drained condition for (\d+) days, after which you can recover normally from the condition\.$/,
+            /^Creatures have occasionally managed to use the Book of Lost Days not to gain others' knowledge but to wipe their minds clean of painful memories or deadly secrets\.$/,
+            /^Their memories aren't destroyed but merely stored in the book, where someone else might later retrieve them\.$/
+        ],
+        card: ([, total, , , , , , drained, days]) => {
+            const row = {
+                ...none(),
+                effects: [condition(drained[1], Number(drained[2]))],
+                conditionFloor: { slug: "drained", value: Number(drained[2]), lifetime: "fixed", duration: { value: Number(days[1]) * 24, unit: "hours" } },
+                noteEffects: [{ label: "Book of Lost Days: a day lost", text: "It has lost the memory of one day of its past — the book's pick, the GM's: a day of strong feeling, often a turning point — and what it learned that day is in the book now. Its level, class, feats and choices stay. Its natural lifespan is a day shorter.", duration: null }]
+            };
+            return {
+                targeting: { target: null, range: null, area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: row } },
+                unlessCondition: { slug: "drained", words: "its Requirements: its user isn't drained" },
+                alsoWhisper: `It views another's memory of the topic it studies: what a total of ${total[1]} to Recall Knowledge on it would tell, with more context as on a success or critical success (the GM tells).`,
+                notes: [`Its price: Drained ${drained[2]}, not reduced for ${days[1]} days (then as normal), a day of memory and a day of life.`, "Others have used it to wipe their own painful memories or deadly secrets: those aren't destroyed but kept in the book, for someone else to find later."]
+            };
+        }
+    },
+    {
+        // Soulcutter's Soulcutting Storm: Weapon Storm at 7th rank (read before), its cone or emanation its user's pick (the spell's own), all
+        // its damage spirit — castDamageType, the spell module's damageType once it takes it (scripts/casts.js; partial till then). A
+        // possessed creature taking none of the damage meant for its possessor: the card's line.
+        name: "Soulcutter: Soulcutting Storm",
+        over: true,
+        sentences: [
+            /^You swing Soulcutter and cast a 7th-rank Weapon Storm to your specifications, but all damage caused by the spell is (spirit) damage\.$/,
+            /^If used to damage a creature that's possessing another creature, this spell does no damage to the possessed creature\.$/
+        ],
+        card: ([storm], plan) => (plan?.builtin === "cast-spell" && plan.spell?.name === "Weapon Storm" ? {
+            keep: true,
+            castDamageType: { type: storm[1], said: `all damage caused by the spell is ${storm[1]} damage` },
+            partial: true,
+            notes: [`All its damage is ${storm[1]} (its cone or emanation its user's pick).`, "Against a creature possessing another, the possessed creature takes none of its damage (don't apply it to the possessed one)."]
+        } : null)
+    },
+    {
+        // Crooner's Cravat's Influential Croon: the ways card, kept open — Enthrall (DC 30), and with that first activation Subconscious
+        // Suggestion (DC 30) on one creature within 30 feet, each the spell module's cast. Its fascinated listeners, the spell's own.
+        name: "Crooner's Cravat: Influential Croon",
+        over: true,
+        sentences: [
+            /^You pour emotion into your vocal performance, projecting an empathetic bond that fascinates listeners\.$/,
+            /^You cast enthrall \(@Check\[will\|dc:(\d+)\] save\)\.$/,
+            /^When you first activate Influential Croon, you can also cast Subconscious Suggestion on one creature within (\d+) feet \(@Check\[will\|dc:(\d+)\] save\)\.$/
+        ],
+        card: ([, enthrall, suggestion], plan, { base, info }) => {
+            if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Enthrall") return null;
+            const cast = (name, spell, dc, extra = {}) => ({ name, html: "", plan: { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, builtin: "cast-spell", spell, rank: null, dc: Number(dc), attack: null, tradition: null, self: false, area: false, targets: true, notes: [], ...extra, item: { ...info } } });
+            return {
+                builtin: "ways",
+                targeting: { target: null, range: null, area: null },
+                notes: ["Its emotion-filled song fascinates its listeners: Enthrall first, then — with that first activation, not a Sustain — Subconscious Suggestion if its user wants."],
+                ways: [
+                    cast("Enthrall", plan.spell, enthrall[1]),
+                    cast("Subconscious Suggestion (with the first activation)", { uuid: "Compendium.pf2e.spells-srd.Item.GP3wewkQXEPrLxYj", name: "Subconscious Suggestion" }, suggestion[2], { targeting: { target: "1 creature", range: `${suggestion[1]} feet`, area: null }, castRange: { feet: Number(suggestion[1]), said: `on one creature within ${suggestion[1]} feet` }, castTargets: { max: 1, said: "on one creature" } })
+                ]
+            };
+        }
+    },
+    {
+        // Stage Magician's Cloak's Now You See Me...: the DC 30 Will save card at every creature in its 10-foot emanation, Off-Guard until the
+        // start of its user's next turn on a failure; its user Quickened for 1 round (its extra action only to Interact, Strike or Stride, a
+        // note Effect) and no longer Concealed, Hidden or undetected (plan.userEffects, as it's used).
+        name: "Stage Magician's Cloak: Now You See Me...",
+        sentences: [
+            /^Distracting colorful smoke blasts outward from the cloak in a (\d+)-foot emanation, causing all creatures in the area to become Off-Guard until the start of your next turn \(@Check\[(will)\|dc:(\d+)\] save\)\.$/,
+            /^If you were previously Concealed, Hidden, or undetected, you lose those conditions\.$/,
+            /^You become Quickened for (\d+) (rounds?) and may use the extra action to Interact, Strike, or Stride\.$/
+        ],
+        card: ([smoke, , quick], plan) => {
+            const offGuard = condition("off-guard", null, { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "source-turn" });
+            const save = savePlan({ name: "Stage Magician's Cloak: Now You See Me...", statistic: smoke[2], dc: Number(smoke[3]), failure: [offGuard], criticalFailure: [offGuard], base: plan });
+            const time = timeOf(quick[1], quick[2]);
+            return {
+                targeting: { target: `all creatures in a ${smoke[1]}-foot emanation`, range: null, area: { type: "emanation", value: Number(smoke[1]) } },
+                resolution: save.resolution,
+                userEffects: [{ slug: "quickened", value: null, duration: time }, { kind: "note", label: "Now You See Me...: its extra action", text: "Its extra action from Quickened is only to Interact, Strike or Stride.", duration: time }, { kind: "remove", slugs: ["concealed", "hidden", "undetected"] }],
+                notes: [`Distracting colorful smoke: target every creature within ${smoke[1]} feet of its user.`]
+            };
+        }
+    },
+    {
+        // Stage Magician's Cloak's ...Now You Don't: Invisibility at 2nd rank on its user (read before), then the teleport card beside it to an
+        // unoccupied space within 30 feet it can see (item.move). Its harmless smoke, and the move failing if it would bring another creature
+        // along: the card's lines.
+        name: "Stage Magician's Cloak: ...Now You Don't",
+        over: true,
+        sentences: [
+            /^Harmless silver smoke issues from the cloak in a (\d+)-foot emanation\.$/,
+            /^You cast a 2nd-rank Invisibility on yourself and are transported, along with all items you're wearing and holding, from your current space to an unoccupied space within (\d+) feet that you can see\.$/,
+            /^If this would bring another creature with you ?[-—–] ?even if you're carrying it in an extradimensional space ?[-—–] ?the transportation part of this effect fails\.$/
+        ],
+        card: ([smoke, moved], plan) => (plan?.builtin === "cast-spell" && plan.spell?.name === "Invisibility" ? {
+            keep: true,
+            item: { ...(plan.item ?? {}), move: { within: Number(moved[1]), speedTimes: null, from: "self", lines: ["With all it's wearing and holding: not if it would bring another creature along, even in an extradimensional space (the move fails then; the Invisibility stays)"] } },
+            notes: [`Harmless silver smoke fills a ${smoke[1]}-foot emanation round its user as it goes.`]
+        } : null)
+    },
+    {
+        // Grail of Twisted Desires: the ways card of its three wines, its user's pick, three times a day; the wine in its user's inventory,
+        // alike whatever it is, its twist the GM's secret d6 (src/live/grail.js, scripts/grail.js): drunk, Restoration at 2nd rank or Nightmare
+        // at 4th on the drinker (the spell module's cast), ordinary wine nothing. Detect Magic showing only that it's magical: the card's line.
+        name: "Grail of Twisted Desires",
+        sentences: [
+            /^The chalice fills with one of three different wines of your choosing, as described below\.$/,
+            /^The wine looks, tastes, and smells the same regardless of which type you choose, and Detect Magic has no effect on the liquid beyond indicating that it is magical\.$/,
+            /^Ordinary wine\.$/,
+            /^Wine that, when imbibed, casts a (\d)(?:st|nd|rd|th)-rank (Restoration) spell on the drinker\.$/,
+            /^Wine that, when imbibed, casts a (\d)(?:st|nd|rd|th)-rank (Nightmare) spell on the drinker\.$/,
+            /^If you aren't chaotic, the first time each day you activate the chalice, there is a one-in-six chance that the liquid you conjure is a different type \(the GM should roll 1d6 as a secret roll\) instead\.$/,
+            /^The second and third times you activate the chalice in the same day, the odds of this happening increase to two-in-six or three-in-six, respectively\.$/,
+            /^If you are chaotic, the chalice always works as intended\.$/
+        ],
+        card: ([, , , restoration, nightmare], _plan, { base, info }) => {
+            const kinds = [
+                { kind: "ordinary", cast: null },
+                { kind: "restoration", cast: { spell: { uuid: "Compendium.pf2e.spells-srd.Item.SnaLVgxZ9ryUFmUr", name: restoration[2] }, rank: Number(restoration[1]) } },
+                { kind: "nightmare", cast: { spell: { uuid: "Compendium.pf2e.spells-srd.Item.Uqj344bezBq3ESdq", name: nightmare[2] }, rank: Number(nightmare[1]) } }
+            ];
+            const way = (name, kind) => ({ name, html: "", plan: { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...ownRow({ notes: ["The wine looks, tastes and smells the same whatever it is; Detect Magic shows only that it's magical."] }), item: { ...info, wine: { kind, kinds, from: "Grail of Twisted Desires", level: Number(info?.level) || 0, index: info?.activation?.index ?? 0 } } } });
+            return {
+                builtin: "ways",
+                once: true,
+                targeting: { target: null, range: null, area: null },
+                notes: ["Unless its user is chaotic, the GM's secret d6 makes it another wine on a 1 (the day's first fill), 1–2 (second) or 1–3 (third)."],
+                ways: [way("Ordinary wine", "ordinary"), way(`Wine of ${restoration[2]} (rank ${restoration[1]})`, "restoration"), way(`Wine of ${nightmare[2]} (rank ${nightmare[1]})`, "nightmare")]
+            };
+        }
+    },
+    {
+        // Ring of Bestial Friendship: the ways card, kept open. Charm at 4th rank on an animal or beast within 30 feet (read before), its mental
+        // bond a note Effect on its user while the charm lasts (the user's ruling for minds), the creature immune to the ring's charm from then
+        // on (the immunity tracker, a hundred years). Then, the charm failed or over: the creature's rage, a note Effect on it for the hour with
+        // PF2e's +1 item bonus to its attack rolls, skill checks and DCs against the ring's wearer (its toggle, on).
+        name: "Ring of Bestial Friendship",
+        over: true,
+        sentences: [
+            /^You cast Charm \(heightened to 4th level\) on an (animal) or (beast) within (\d+) feet\.$/,
+            /^If the spell succeeds, it forms a mental bond between you and the target for the duration of the charm, which allows you to remain aware of the creature's present state, its direction from you, its distance from you, and any conditions affecting it, as long as you are both on the same plane of existence and are both alive\.$/,
+            /^If you fail to affect the creature with this charm ?, or once the charm ends \(such as if it is counteracted, or its duration expires\), the creature becomes enraged and is immune to the ring's charm from that point on\.$/,
+            /^The creature's rage drives it to attack you and grants it a \+(\d) (item) bonus on all checks and DCs to do so for (\d+) (hours?)\.$/
+        ],
+        card: ([kind, , , rage], plan, { base, info }) => {
+            if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Charm") return null;
+            const immunity = { scope: "target", raw: "immune to the ring's charm from that point on.", duration: { value: 36_500, unit: "days" }, degrees: ["criticalSuccess", "success", "failure", "criticalFailure"], against: "all", slug: "ring-of-bestial-friendship" };
+            const charm = { ...plan, notes: [`Only on an ${kind[1]} or a ${kind[2]} within ${kind[3]} feet: target it.`], castRange: { feet: Number(kind[3]), said: `within ${kind[3]} feet` }, userEffects: [{ kind: "note", label: "Ring of Bestial Friendship: bond", text: "While the charm lasts, if it succeeded: aware of the charmed creature's state, its direction and distance, and its conditions, while both are alive on the same plane.", duration: null }], item: { ...(plan.item ?? info), immunity } };
+            delete charm.partial;
+            const time = timeOf(rage[3], rage[4]);
+            const enraged = { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, targeting: { target: "the charmed creature", range: null, area: null }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), noteEffects: [{ label: "Enraged at the ring's wearer", text: `Its rage drives it to attack the ring's wearer: +${rage[1]} ${rage[2]} bonus to its checks and DCs to do so (its toggle on against the wearer).`, duration: time, rules: [{ key: "RollOption", domain: "all", option: "enraged-at-ring-wearer", toggleable: true, value: true, label: "Against the ring's wearer" }, { key: "FlatModifier", selector: ["attack-roll", "skill-check", "spell-dc", "class-dc"], type: rage[2], value: Number(rage[1]), predicate: ["enraged-at-ring-wearer"] }] }] } } }, item: { ...info, recipient: "targets" } };
+            return {
+                builtin: "ways",
+                targeting: { target: null, range: null, area: null },
+                notes: ["Cast the Charm; when it fails, or once it ends (counteracted, or its time up), use its rage on the creature."],
+                ways: [{ name: "Charm", html: "", plan: charm }, { name: "The charm failed or ended: enraged", html: "", plan: enraged }]
+            };
+        }
+    },
+    {
+        // Azarim's reaction to its wielder's Lie: the ways card — Azarim's own Deception check, PF2e's Lie at her +15 when that's higher than
+        // her wielder's (the item-action minimum), or her help, +2 circumstance to the wielder's Lie.
+        name: "Azarim",
+        sentences: [
+            /^Azarim bolsters her user's ability to lie\.$/,
+            /^She can either attempt her own Deception check to resolve her wielder's Lie, or she can assist with her wielder's attempt to Lie and grant a \+(\d) (circumstance) bonus to the Deception check\.$/
+        ],
+        card: ([, help], _plan, { base, info }) => {
+            const lie = (name, action) => ({ name, html: "", plan: { ...base, builtin: "item-action", automation: { level: "automatic" }, targeting: { target: "self", range: null, area: null }, trigger: { event: "use" }, action: { slug: "lie", name: "Lie", targeted: false, basic: null, ...action }, item: { ...info } } });
+            return {
+                builtin: "ways",
+                once: true,
+                targeting: { target: null, range: null, area: null },
+                ways: [lie("Azarim's own Deception (+15)", { bonus: null, minimum: { value: 15, skill: "deception" } }), lie(`Her help: +${help[1]} ${help[2]}`, { bonus: { value: Number(help[1]), type: help[2] } })]
+            };
+        }
+    },
+    {
+        // Vile Remnant's Hear My Words: Enthrall at DC 23 (read before) to its user's design; each creature it's cast on gets a note Effect
+        // while enthralled — failed, it sees and remembers the remnant as something commonplace (castBonus); its user's reminder for the
+        // week (if it doesn't steer them toward undermining their society, no Hear My Words for it that week: the GM's call); and at its
+        // next rest, the DC 23 Will save on waking against Stupefied 1 for 24 hours (plan.item.afterRest, scripts/after-rest.js).
+        name: "Vile Remnant: Hear My Words",
+        over: true,
+        sentences: [
+            /^The vile remnant casts an Enthrall spell \(@Check\[will\|dc:(\d+)[^\]]*\]\) to your specifications\.$/,
+            /^Creatures that fail or critically fail to resist this spell perceive and remember the vile remnant in your hand as something commonplace to the region, such as a farming tool, book, or fresh-baked pie, for as long as they remain enthralled\.$/,
+            /^If you don't take advantage of this to subtly guide any affected creatures toward undermining their society, the vile remnant can't be activated to Hear My Words again by you for (\d+) (weeks?)\.$/,
+            /^Additionally, the next time you sleep, you endure horrific nightmares and must succeed at a @Check\[(will)\|dc:(\d+)[^\]]*\] save upon waking to avoid becoming (Stupefied) (\d+) for (\d+) (hours?) \(this is a mental effect\)\.$/
+        ],
+        card: ([, , week, waking], plan) => {
+            if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Enthrall") return null;
+            const stupefied = condition(waking[3], Number(waking[4]), timeOf(waking[5], waking[6]));
+            const nightmare = savePlan({ name: "Vile Remnant: nightmares", statistic: waking[1], dc: Number(waking[2]), failure: [stupefied], criticalFailure: [stupefied], base: { ...plan, traits: ["mental"] } });
+            return {
+                keep: true,
+                castBonus: { said: "if it failed its save, it sees and remembers the vile remnant as something commonplace while enthralled", duration: { value: 10, unit: "minutes", expiry: "turn-start" }, rules: [] },
+                userEffects: [{ kind: "note", label: "Vile Remnant: its price", text: `Unless it subtly steers the enthralled toward undermining their society, it can't activate Hear My Words again for ${week[1]} ${week[2]} (the GM's call; delete this if it did).`, duration: { mode: "fixed", value: Number(week[1]) * 7, unit: "days", expiry: "turn-start", anchor: "effect-start" } }],
+                item: { ...(plan.item ?? {}), afterRest: { plan: nightmare, words: `horrific nightmares: a DC ${waking[2]} Will save on waking or Stupefied ${waking[4]} for ${waking[5]} hours (mental)` } },
+                notes: ["Those that fail to resist it see and remember the remnant in its user's hand as something commonplace there — a farming tool, a book, a fresh-baked pie — while enthralled (their Effect says so)."]
+            };
+        }
+    },
+    {
+        // Fan of the Four Winds: the ways card once a day — Gust of Wind (read before), or toward a vessel's sail, a note Effect on the vehicle its
+        // presser targets: +10-foot circumstance bonus to its Speed for 8 hours (PF2e's vehicles' Speeds are words no rule changes).
+        name: "Fan of the Four Winds",
+        over: true,
+        sentences: [
+            /^You fan in a direction, and the fan casts Gust of Wind\.$/,
+            /^If this casting is directed toward the sail of a vessel, it instead fills it with swirling air\.$/,
+            /^The vessel gains a \+(\d+)-foot (circumstance) bonus to its Speed for (\d+) (hours?)\.$/
+        ],
+        card: ([, , sail], plan, { base, info }) => {
+            if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Gust of Wind") return null;
+            const cast = { ...plan, notes: [] };
+            delete cast.partial;
+            const vessel = { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, targeting: { target: "1 vehicle", range: null, area: null }, resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: { ...none(), noteEffects: [{ label: "Sail full of swirling air", text: `A +${sail[1]}-foot ${sail[2]} bonus to its Speed.`, duration: timeOf(Number(sail[3]), sail[4]) }] }, failure: none(), criticalFailure: none() } }, notes: ["Fanned toward a vessel's sail: target the vessel."], item: { ...info } };
+            return {
+                builtin: "ways",
+                once: true,
+                targeting: { target: null, range: null, area: null },
+                ways: [{ name: "Gust of Wind", html: "", plan: cast }, { name: "Toward a vessel's sail", html: "", plan: vessel }]
+            };
+        }
     }
 ];
 
@@ -484,6 +744,8 @@ export function withRelicReadings(plan, { name, html, base, info, frequency = nu
             const { keep, ...changes } = card;
             const next = { ...plan, ...changes };
             for (const key of Object.keys(changes)) if (changes[key] === undefined) delete next[key];
+            // (Still partial where another module must add its part: Soulcutting Storm's spirit damage, the spell module's.)
+            if (changes.partial) return { ...next, automation: { ...(next.automation ?? {}), level: "guided" } };
             delete next.partial;
             next.automation = { ...(next.automation ?? {}), level: "automatic" };
             return next;

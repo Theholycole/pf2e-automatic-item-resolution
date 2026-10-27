@@ -15,6 +15,7 @@ import { isTable } from "./table-card.js";
 import { isTake } from "./take-card.js";
 import { isCraft } from "./craft-card.js";
 import { isTransmogrify } from "./transmogrify.js";
+import { isGrantSpell } from "./grimoire.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -72,6 +73,8 @@ export function routeOf(plan, text = "") {
     if (isCraft(plan)) return "craft";
     // (Mutagens made from a creature, or one drunk: scripts/transmogrify.js.)
     if (isTransmogrify(plan)) return "transmogrify";
+    // (A spell the GM grants for the day: scripts/grimoire.js.)
+    if (isGrantSpell(plan)) return "grant-spell";
     // (An ally's condition taken onto its user: scripts/take.js.)
     if (isTake(plan)) return "take";
     // (A lasting area or a snare: the ability module's zone.)

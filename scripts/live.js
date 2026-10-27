@@ -47,6 +47,10 @@ import { placeItemStructure, removeItemStructures } from "./item-structures.js";
 import { itemFormEffectSource, itemFormText, itemIdOf } from "../src/live/item-form.js";
 import { applyTransmogrifyCard, postTransmogrifyCard } from "./transmogrify.js";
 import { mutagenPlan } from "../src/live/transmogrify.js";
+import { applyGrantCard, postGrantCard } from "./grimoire.js";
+import { fillWine } from "./grail.js";
+import { winePlan } from "../src/live/grail.js";
+import { rememberAfterRest } from "./after-rest.js";
 import { impeccableEffect, impeccablePlan } from "../src/live/craft-card.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
@@ -193,7 +197,9 @@ async function cardForUse(message) {
     if (isUnloadedSpellgun(used.data)) return restoreUnloaded(used, message);
     // (With its owner's numbers: Wolf Fang's damage of its user's Strength modifier.)
     // (A transmogrifying mutagen Philosopher's Extractor made: its creature's ability, the GM's pick — src/live/transmogrify.js.)
-    const plan = used.data.flags?.[MODULE_ID]?.transmogrify ? mutagenPlan(used.data.flags[MODULE_ID].transmogrify) : compile({ ...used.data, ...ownerOf(used.actor ?? message.actor) });
+    // (Or a wine Grail of Twisted Desires filled: its spell on the drinker, src/live/grail.js.)
+    const own = used.data.flags?.[MODULE_ID] ?? {};
+    const plan = own.transmogrify ? mutagenPlan(own.transmogrify) : own.wine ? winePlan(own.wine) : compile({ ...used.data, ...ownerOf(used.actor ?? message.actor) });
     const actor = used.actor ?? message.actor;
     if (!actor) return;
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
@@ -317,6 +323,16 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.dcBy && actor) plan = withConditionDC(plan, (slug) => actor.getCondition?.(slug)?.value ?? 0);
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
+    // (Not while its user has a condition its Requirements forbid, Book of Lost Days' "You aren't drained": refused, no card — 2026-10-27.)
+    if (plan?.unlessCondition && actor?.getCondition?.(plan.unlessCondition.slug)) throw new Error(`${used.data.name}: ${plan.unlessCondition.words}, and ${actor.name} is ${plan.unlessCondition.slug}.`);
+    // (What it tells beside its card, Book of Lost Days' memory: whispered to the GM and its user, as information is — 2026-10-27.)
+    if (plan?.alsoWhisper && actor) await postWhisper({ plan: { ...plan, whisper: { text: plan.alsoWhisper } }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | whisper`, error));
+    // (A wine it fills, Grail of Twisted Desires': in its user's inventory, its twist the GM's secret roll — scripts/grail.js; a save at its user's
+    // next rest, Vile Remnant's nightmares — scripts/after-rest.js. 2026-10-27.)
+    for (const [field, run] of [["wine", (entry) => fillWine(entry, { actor, used })], ["afterRest", (entry) => rememberAfterRest(entry, { actor, used })]]) {
+        if (!plan?.item?.[field] || !actor) continue;
+        await run(plan.item[field]).then((line) => ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(line)}</p>` })).catch((error) => console.error(`${MODULE_ID} | ${field}`, error));
+    }
     // (Walls round its user, Lesser Cube of Nex's walls of force — the environment module's — or those it placed removed: scripts/item-structures.js.)
     if ((plan?.item?.structure || plan?.item?.removeStructures) && actor) await (plan.item.structure ? placeItemStructure(plan.item.structure, { actor, token, used }) : removeItemStructures({ token, used })).then((line) => ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(line)}</p>` })).catch((error) => console.error(`${MODULE_ID} | structure`, error));
     // (Damage each round around its user, then a blast, Aroden's Hearthstone's cold: its first card now, the rest at its turns — scripts/pulse.js.)
@@ -348,6 +364,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "craft") return postCraftCard({ message, plan, used, actor, token });
     if (route === "transmogrify") return postTransmogrifyCard({ message, plan, used, actor, token });
+    if (route === "grant-spell") return postGrantCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
     if (route === "take") return postTakeCard({ message, plan, used, actor, token });
     if (route !== "item") return;
@@ -413,6 +430,8 @@ function choicesOf(state, root) {
     if (state.kind === "teleport") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), critical: Boolean(root.querySelector("[data-air-field='critical']")?.checked) };
     // (One of its user's items, picked: scripts/objects.js.)
     // (A stored spell cast at the creatures targeted: src/compiler/stored-spell.js.)
+    // (The spell the GM grants, by name: scripts/grimoire.js.)
+    if (state.kind === "grant-spell") return { spell: String(root.querySelector("[data-air-field='spell']")?.value ?? ""), gm: Boolean(game.user.isGM) };
     // (Mutagens made from the creature targeted, how many; or the ability the GM picks for one drunk: scripts/transmogrify.js.)
     if (state.kind === "transmogrify") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), count: Number(root.querySelector("[data-air-field='count']")?.value ?? state.count ?? 1), gm: Boolean(game.user.isGM), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A formula picked: scripts/craft.js — and whether the GM pressed, for its Requirements.)
@@ -454,6 +473,8 @@ const APPLY = {
     craft: (message, choices) => applyCraftCard(message, choices),
     // (Mutagens made from a creature, and one drunk: scripts/transmogrify.js.)
     transmogrify: (message, choices) => applyTransmogrifyCard(message, choices),
+    // (A spell the GM grants for the day, Grimoire of Unknown Necessities': scripts/grimoire.js.)
+    "grant-spell": (message, choices) => applyGrantCard(message, choices),
     disbelief: (message, choices) => applyDisbeliefCard(message, choices),
     take: (message, choices) => applyTakeCard(message, choices),
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
@@ -573,6 +594,7 @@ async function onRequest(data) {
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
         : state.kind === "craft" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, gm: Boolean(sender.isGM) }
+        : state.kind === "grant-spell" ? { spell: String(data.spell ?? ""), gm: Boolean(sender.isGM) }
         : state.kind === "transmogrify" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, count: Number.isFinite(Number(data.count)) ? Number(data.count) : 1, gm: Boolean(sender.isGM), targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}) }
         : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [], check: data.check === 1 ? 1 : 0 }
@@ -621,6 +643,22 @@ async function giveUserConditions(effects, { actor, token, used }) {
         if (effect.kind === "native") {
             const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "native", uuid: effect.uuid, label: effect.label } }, state) : null;
             lines.push(line ?? `${name} gains ${effect.label}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
+            continue;
+        }
+        // (A note Effect on its user, Stage Magician's Cloak's extra action only to Interact, Strike or Stride: the ability module's note — 2026-10-27.)
+        if (effect.kind === "note") {
+            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "note", note: { label: effect.label, text: effect.text, duration: effect.duration ?? null } } }, state) : null;
+            lines.push(line ?? `${name}: ${effect.text}`);
+            continue;
+        }
+        // (Conditions its user loses, the same cloak's Concealed, Hidden and undetected: PF2e's own, removed — 2026-10-27.)
+        if (effect.kind === "remove") {
+            const gone = [];
+            for (const slug of effect.slugs ?? []) if (actor.getCondition?.(slug)) {
+                await actor.decreaseCondition?.(slug, { forceRemove: true });
+                gone.push(slug);
+            }
+            if (gone.length) lines.push(`${name} is no longer ${gone.join(" or ")}`);
             continue;
         }
         const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: effect.slug, value: effect.value ?? null, target: "source", duration: effect.duration ?? null }, state) : null;
