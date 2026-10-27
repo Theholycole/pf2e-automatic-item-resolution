@@ -6228,6 +6228,50 @@ export const cases = {
         throw new Error(`no critical hit in ${outcomes.length} Strikes (${outcomes.join(", ")})`);
     },
 
+    // Blindpepper Bolt's success row: the creature that succeeds its save may spend one manipulate action wiping its eyes — the end-early card
+    // after the save card, only for that row; pressed, the dazzled ends. Another degree: no end-early card.
+    async blindpepperWipe(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Pepper Wiper Archer", { type: "character", x: 8, y: 12 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Pepper Wiper Target", { x: 9, y: 12, ac: -20, alliance: "opposition", save: 10 });
+        const bow = await give(archer, "Shortbow");
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const degrees = [];
+        for (let attempt = 0; attempt < 8; attempt++) {
+            const old = foe.itemTypes.effect.filter((effect) => /^Blindpepper Bolt/.test(effect.name)).map((effect) => effect.id);
+            if (old.length) await foe.deleteEmbeddedDocuments("Item", old);
+            for (const slug of ["dazzled", "blinded"]) if (foe.hasCondition(slug)) await foe.decreaseCondition(slug, { forceRemove: true });
+            const bolts = await give(archer, "Blindpepper Bolt");
+            await bolts.update({ "system.baseItem": "arrows" });
+            await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": bolts.id });
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(bolts.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            since = Date.now();
+            await strike(archer, bow);
+            const save = await messageAfter(since, abilitySaveCard, { what: "the bolt's save card" });
+            since = Date.now();
+            await rollAndApply(save);
+            await until(() => game.messages.get(save.id).flags["pf2e-automatic-ability-resolution"].card.targets.every((entry) => entry.degree), "rolled");
+            const degree = game.messages.get(save.id).flags["pf2e-automatic-ability-resolution"].card.targets[0].degree;
+            degrees.push(degree);
+            if (degree !== "success") {
+                await wait(1500);
+                assert(!game.messages.contents.some((message) => message.timestamp >= since && itemCard("end-early")(message)), `no end-early card after a ${degree}`);
+                continue;
+            }
+            await until(() => foe.hasCondition("dazzled"), "dazzled on a success", { timeout: 10000 });
+            const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+            assert(/1 manipulate action spent/.test(ending.content), `its try's words (${ending.content})`);
+            await game.modules.get(NS).api.live.apply(ending.id, { entry: 0 });
+            await until(() => !foe.hasCondition("dazzled"), `the dazzled ended (${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 8000 });
+            return { degrees, results: game.messages.get(ending.id).getFlag(NS, "card").results };
+        }
+        throw new Error(`no success in ${degrees.length} saves (${degrees.join(", ")})`);
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

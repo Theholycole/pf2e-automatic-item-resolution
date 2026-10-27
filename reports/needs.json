@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1294,
+  "entries": 1293,
   "results": {
-   "partial": 397,
+   "partial": 396,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -11,7 +11,7 @@
   "main": {
    "cast-changes": 22,
    "speeds": 22,
-   "counteract": 24,
+   "counteract": 23,
    "afflictions": 60,
    "moving": 80,
    "visibility": 48,
@@ -55,9 +55,9 @@
    "objects": 389,
    "speech": 129,
    "out-of-combat": 444,
-   "counteract": 105,
+   "counteract": 104,
    "afflictions": 109,
-   "lasting": 232,
+   "lasting": 231,
    "moving": 107,
    "triggers": 118,
    "visibility": 50,
@@ -10112,17 +10112,6 @@
    "needs": [
     "triggers",
     "speech"
-   ]
-  },
-  {
-   "name": "Blindpepper Bolt",
-   "kind": "activation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "end the effect",
-   "needs": [
-    "counteract",
-    "lasting"
    ]
   },
   {

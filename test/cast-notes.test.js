@@ -118,6 +118,15 @@ test("how a creature ends an item's effect early (2026-10-27): Fire-Douse Snare'
     assert.equal(compileItem(item("Fire-Douse Snare"), options).partial, undefined);
 });
 
+test("a save row's own way out (2026-10-27): Blindpepper Bolt's success, one manipulate action — the save's endEarly for that row alone, its note gone", async () => {
+    const { tryWords } = await import("../src/live/end-early-card.js");
+    const [{ plan: bolt }] = compileActivations(item("Blindpepper Bolt"), options);
+    const endEarly = bolt.strike.save.endEarly;
+    assert.deepEqual([endEarly.how, endEarly.degrees, bolt.partial], [{ kind: "actions", count: 1, trait: "manipulate" }, ["success"], undefined]);
+    assert.equal((bolt.strike.notes ?? []).some((note) => /wipe/.test(String(note))), false);
+    assert.equal(tryWords(endEarly, { step: 0 }), "1 manipulate action spent");
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

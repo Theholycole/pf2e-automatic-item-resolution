@@ -4,7 +4,7 @@
 // { kind: "actions", count }, conditions, said }: the end-early card the item module posts at each creature its card affected
 // (scripts/end-early.js). steps: each try's DC, "auto" when that try ends it outright. Pure.
 
-const COUNT = { one: 1, two: 2, three: 3, four: 4 };
+const COUNT = { an: 1, one: 1, two: 2, three: 3, four: 4 };
 const CONDITIONS = /\b(blinded|dazzled|deafened|clumsy|enfeebled|sickened|frightened|stupefied|fatigued|immobilized|slowed)\b/gi;
 
 export function readEndEarly(text) {
@@ -19,4 +19,21 @@ export function readEndEarly(text) {
     const actions = /\b(?:A creature can use|until the creature or an ally spends) (one|two|three|four) Interact actions? to (?:carefully )?(?:remove|wipe away) the (\w+)\b[^.]*\./i.exec(plain);
     if (actions) return { how: { kind: "actions", count: COUNT[actions[1].toLowerCase()] }, conditions: [], said: [actions[0].replace(/^until /i, "")] };
     return null;
+}
+
+// (Or one row's own way out, Blindpepper Bolt's success: "It can end the effect early if it spends an action, which has the manipulate trait, to
+// wipe down its eyes" — its action, the row's degree from the text before it: endEarly.degrees, the card only for the creatures that rolled it
+// (scripts/end-early.js); how.trait the action's, not an Interact.)
+const ROW_ACTION = /^It can end the effect early if it spends (an|one|two|three) actions?, which (?:has|have) the (manipulate) trait, to [^.]+\.$/i;
+const ROWS = /\b(Critical Success|Critical Failure|Success|Failure)\b/g;
+const DEGREES = { "critical success": "criticalSuccess", success: "success", failure: "failure", "critical failure": "criticalFailure" };
+
+// A note and its item's text (plain) → the end-early for that note's row, or null.
+export function readRowEndEarly(note, text) {
+    const said = String(note ?? "").trim();
+    const found = ROW_ACTION.exec(said);
+    const at = found ? String(text ?? "").indexOf(said) : -1;
+    const row = at >= 0 ? [...String(text).slice(0, at).matchAll(ROWS)].at(-1) : null;
+    if (!row) return null;
+    return { how: { kind: "actions", count: COUNT[found[1].toLowerCase()], trait: found[2].toLowerCase() }, conditions: [], degrees: [DEGREES[row[1].toLowerCase()]], said: [said] };
 }

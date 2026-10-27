@@ -14,6 +14,7 @@ import { itemActionPlan } from "./item-actions.js";
 import { directDamagePlan } from "./direct-damage.js";
 import { hitNotes } from "./hit-notes.js";
 import { EACH_IN, UP_TO, countOf, readVolley } from "./volley.js";
+import { readRowEndEarly } from "./end-early.js";
 
 // "make a melee Strike", "make a weapon or unarmed attack Strike", "make a ranged or melee Strike", "attempt a Strike" (not
 // a creature's own, "makes a beak Strike with a +8 modifier").
@@ -369,6 +370,10 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
     if (lifeless) extras.notes = extras.notes.filter((note) => note !== lifeless);
     // (Its flavor in the hit's words, "On a hit, the rattling transfers into that creature's body": no rule.)
     if (lifeless) extras.notes = extras.notes.filter((note) => !/^On a hit, the [\w ]+? transfers into that creature's body\.$/i.test(String(note).trim()));
+    // (A save row's own way out, Blindpepper Bolt's success: "It can end the effect early if it spends an action, which has the manipulate trait,
+    // to wipe down its eyes" — the save's endEarly, its card for the creatures that rolled that row, src/compiler/end-early.js.)
+    const wipe = save ? extras.notes.map((note) => [note, readRowEndEarly(String(note), text)]).find(([, read]) => read) : null;
+    if (wipe) extras.notes = extras.notes.filter((note) => note !== wipe[0]);
     const extra = extras.read
         ? {
               damage: extras.dice,
@@ -425,7 +430,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
         },
         // (A weapon's own Strike, riders alone or not: Gloaming Arc's "Attempt a melee Strike with the gloaming arc", Growth Gun's "Make a
         // ranged Strike" — only a Strike with it carries them.)
-        strike: { range: strike.range, save: save ? (lifeless ? withLifeless(save.plan) : save.plan) : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(save && criticalTime ? { criticalTime } : {}), ...(worse ? { criticalWorse: [worse[1][1].toLowerCase()] } : {}), ...(penalty ? { criticalSaveBonus: { value: -Number(penalty[1][1]), type: penalty[1][2].toLowerCase() } } : {}), ...(against ? { against } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
+        strike: { range: strike.range, save: save ? { ...(lifeless ? withLifeless(save.plan) : save.plan), ...(wipe ? { endEarly: wipe[1] } : {}) } : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(save && criticalTime ? { criticalTime } : {}), ...(worse ? { criticalWorse: [worse[1][1].toLowerCase()] } : {}), ...(penalty ? { criticalSaveBonus: { value: -Number(penalty[1][1]), type: penalty[1][2].toLowerCase() } } : {}), ...(against ? { against } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
         ...(((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length) || follow?.notes?.length ? { partial: true } : {})
     };
 }

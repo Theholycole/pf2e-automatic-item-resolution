@@ -26,6 +26,8 @@ export async function postEndEarly({ state, targets }) {
     const itemName = state.ability?.name ?? state.plan.source?.name ?? "The item";
     const creatures = [];
     for (const target of targets ?? []) {
+        // (Only the creatures that rolled its row, Blindpepper Bolt's success.)
+        if (endEarly.degrees?.length && !endEarly.degrees.includes(target.degree)) continue;
         const actor = target.actorUuid ? await fromUuid(target.actorUuid).catch(() => null) : null;
         if (!actor || !endedBy(actor, itemName, endEarly.conditions).length) continue;
         creatures.push({ actorUuid: actor.uuid, tokenUuid: target.tokenUuid ?? null, name: target.name ?? actor.name });

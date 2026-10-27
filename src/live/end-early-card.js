@@ -9,7 +9,8 @@ export function createEndEarlyCard({ endEarly, item, user, creatures }) {
 
 // What the next try is for an entry: "a DC 10 flat check", "it ends outright", "3 Interact actions spent".
 export function tryWords(endEarly, entry) {
-    if (endEarly.how.kind === "actions") return `${endEarly.how.count} Interact action${endEarly.how.count === 1 ? "" : "s"} spent`;
+    // (Or an action of a trait, Blindpepper Bolt's manipulate action.)
+    if (endEarly.how.kind === "actions") return `${endEarly.how.count} ${endEarly.how.trait ? `${endEarly.how.trait} ` : "Interact "}action${endEarly.how.count === 1 ? "" : "s"} spent`;
     const step = endEarly.how.steps[entry.step] ?? endEarly.how.steps.at(-1);
     return step === "auto" ? "an Interact action: it ends outright" : `an Interact action: a DC ${step} flat check`;
 }
