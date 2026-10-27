@@ -6,49 +6,49 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1322,
+   "resolves": 1405,
    "builtin:cast-spell": 471,
-   "partial": 49,
-   "none": 152,
+   "none": 95,
    "builtin:focus-point": 48,
    "builtin:counteract": 39,
-   "builtin:readied-bonus": 51,
-   "builtin:reroll": 45,
-   "builtin:ways": 53,
-   "builtin:whisper": 42,
+   "builtin:readied-bonus": 52,
+   "builtin:reroll": 46,
+   "builtin:ways": 66,
+   "builtin:whisper": 49,
    "builtin:table": 8,
-   "builtin:teleport": 33,
-   "builtin:no-effect": 27,
-   "builtin:pf2e-rules": 24,
-   "builtin:zone": 36,
-   "note-only": 30,
-   "builtin:modes": 35,
+   "builtin:teleport": 31,
+   "builtin:pf2e-rules": 23,
+   "builtin:zone": 38,
+   "builtin:modes": 36,
    "builtin:objects": 37,
+   "builtin:item-action": 28,
    "builtin:conjure": 24,
-   "builtin:item-action": 26,
+   "partial": 24,
    "builtin:roll-twice": 15,
+   "note-only": 17,
+   "builtin:no-effect": 15,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 439,
+   "save": 438,
    "cast": 471,
-   "item": 827,
-   "none": 204,
+   "item": 869,
+   "none": 135,
    "focus": 48,
    "counteract": 39,
-   "fortune": 66,
-   "reroll": 45,
-   "ways": 53,
-   "strike": 127,
-   "whisper": 42,
+   "fortune": 67,
+   "reroll": 46,
+   "ways": 66,
+   "strike": 130,
+   "whisper": 49,
    "table": 8,
-   "teleport": 33,
-   "zone": 36,
-   "toggle": 35,
+   "teleport": 31,
+   "zone": 38,
+   "toggle": 36,
    "objects": 37,
+   "action": 28,
    "conjure": 24,
-   "action": 26,
    "coat": 4,
    "later": 3,
    "spellstrike": 9,
@@ -61,26 +61,26 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 794,
+    "resolves": 851,
     "builtin:cast-spell": 344,
-    "none": 116,
+    "none": 71,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
     "builtin:readied-bonus": 33,
-    "builtin:reroll": 34,
-    "builtin:ways": 30,
-    "builtin:whisper": 38,
+    "builtin:reroll": 35,
+    "builtin:ways": 41,
+    "builtin:whisper": 45,
     "builtin:table": 5,
     "builtin:teleport": 18,
-    "builtin:no-effect": 21,
-    "partial": 30,
-    "note-only": 24,
     "builtin:objects": 21,
-    "builtin:zone": 18,
+    "builtin:zone": 20,
+    "builtin:item-action": 16,
     "builtin:conjure": 23,
-    "builtin:modes": 18,
+    "partial": 16,
+    "builtin:modes": 19,
     "builtin:roll-twice": 11,
-    "builtin:item-action": 14,
+    "note-only": 12,
+    "builtin:no-effect": 11,
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1
    }
@@ -88,48 +88,47 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 253,
-    "partial": 14,
+    "resolves": 271,
     "builtin:cast-spell": 81,
     "builtin:reroll": 7,
-    "none": 30,
+    "none": 21,
     "builtin:table": 1,
     "builtin:modes": 13,
-    "builtin:ways": 7,
+    "builtin:ways": 9,
     "builtin:item-action": 9,
     "builtin:zone": 8,
     "builtin:counteract": 2,
     "builtin:readied-bonus": 9,
     "builtin:objects": 6,
     "builtin:pf2e-rules": 2,
+    "partial": 7,
     "note-only": 4,
-    "builtin:teleport": 9,
-    "builtin:no-effect": 3,
+    "builtin:teleport": 7,
     "builtin:roll-twice": 2,
+    "builtin:no-effect": 1,
     "builtin:whisper": 1
    }
   },
   "ammo": {
    "activations": 153,
    "results": {
-    "resolves": 110,
-    "builtin:pf2e-rules": 21,
+    "resolves": 112,
+    "builtin:pf2e-rules": 20,
     "builtin:teleport": 3,
     "builtin:ways": 5,
     "builtin:conjure": 1,
     "builtin:spellstrike": 9,
     "builtin:zone": 1,
-    "builtin:whisper": 2,
-    "partial": 1
+    "builtin:whisper": 2
    }
   },
   "backpack": {
    "activations": 26,
    "results": {
-    "resolves": 12,
+    "resolves": 14,
     "builtin:focus-point": 1,
     "builtin:objects": 6,
-    "none": 3,
+    "none": 1,
     "builtin:cast-spell": 1,
     "builtin:whisper": 1,
     "builtin:table": 2
@@ -139,7 +138,7 @@
    "activations": 163,
    "results": {
     "builtin:cast-spell": 33,
-    "resolves": 93,
+    "resolves": 95,
     "builtin:counteract": 1,
     "builtin:ways": 8,
     "builtin:zone": 5,
@@ -147,11 +146,10 @@
     "builtin:reroll": 4,
     "builtin:item-action": 2,
     "builtin:objects": 2,
-    "partial": 3,
-    "builtin:readied-bonus": 3,
+    "builtin:readied-bonus": 4,
     "builtin:focus-point": 2,
-    "note-only": 1,
     "builtin:roll-twice": 2,
+    "partial": 1,
     "none": 1,
     "builtin:no-effect": 1
    }
@@ -160,7 +158,7 @@
    "activations": 100,
    "results": {
     "builtin:cast-spell": 12,
-    "resolves": 60,
+    "resolves": 62,
     "builtin:zone": 4,
     "builtin:modes": 4,
     "builtin:teleport": 1,
@@ -168,8 +166,7 @@
     "builtin:no-effect": 2,
     "builtin:ways": 3,
     "builtin:counteract": 1,
-    "partial": 1,
-    "none": 2,
+    "none": 1,
     "builtin:objects": 2,
     "builtin:item-action": 1,
     "note-only": 1
@@ -217,7 +214,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -437,9 +434,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Splendid Floodlight",
@@ -448,9 +445,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Magekiller Bullet",
@@ -723,7 +720,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -1032,9 +1029,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "The Peacock",
@@ -1065,9 +1062,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Dawnlight",
@@ -1098,9 +1095,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "builtin:ways",
    "kind": "check",
-   "live": "item"
+   "live": "ways"
   },
   {
    "name": "Illusionist's Hat",
@@ -1450,9 +1447,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Aeon Stone (Rainbow Prism)",
@@ -1836,9 +1833,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Ooze Skin",
@@ -2157,9 +2154,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Hunter's Anthem",
@@ -2707,9 +2704,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Ice Forge",
@@ -2774,9 +2771,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Twisting Twine (Moderate)",
@@ -3094,7 +3091,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -3105,9 +3102,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Final Scalecloak",
@@ -3867,9 +3864,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Belt of Giant Strength",
@@ -4022,7 +4019,7 @@
    "time": "1",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -4176,9 +4173,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Magnifying Glass of Elucidation",
@@ -4363,9 +4360,9 @@
    "time": "3",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Shifter Prosthesis",
@@ -4638,9 +4635,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Empathy Charm",
@@ -5090,9 +5087,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:item-action",
    "kind": null,
-   "live": null
+   "live": "action"
   },
   {
    "name": "Spectacles of Discernment",
@@ -5135,9 +5132,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:reroll",
    "kind": null,
-   "live": null
+   "live": "reroll"
   },
   {
    "name": "Alluring Lantern",
@@ -5588,9 +5585,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Mat of Resilience",
@@ -5599,9 +5596,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Unifying Emblem (Skoan-Quah)",
@@ -5919,9 +5916,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Soaring",
@@ -6241,7 +6238,7 @@
    "time": "2",
    "frequency": "Once per minute",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -6341,9 +6338,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Endless Quiver (Greater)",
@@ -7013,9 +7010,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:modes",
    "kind": null,
-   "live": null
+   "live": "toggle"
   },
   {
    "name": "Spider Lily Tattoo",
@@ -7101,9 +7098,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Motivating Treat Bag",
@@ -7112,9 +7109,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Preordained Spear",
@@ -7420,9 +7417,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Disruption Ammunition (Greater)",
@@ -7707,9 +7704,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Swarmform Collar",
@@ -7751,7 +7748,7 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -8412,9 +8409,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null,
+   "live": "cast",
    "rune": true
   },
   {
@@ -9502,7 +9499,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -9590,9 +9587,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Golden Wings",
@@ -9810,9 +9807,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Fighter's Fork",
@@ -10229,7 +10226,7 @@
    "time": "1",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "save"
   },
@@ -10295,9 +10292,9 @@
    "time": "2 hours",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Essence Forge (Lesser)",
@@ -10537,9 +10534,9 @@
    "time": "2 hours",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Essence Forge (Greater)",
@@ -10911,7 +10908,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -11010,9 +11007,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Icicle",
@@ -11197,7 +11194,7 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -11208,9 +11205,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:readied-bonus",
+   "kind": null,
+   "live": "fortune"
   },
   {
    "name": "Tooth and Claw Tattoo (Major)",
@@ -11241,9 +11238,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Astrolabe of the Falling Stars",
@@ -11263,9 +11260,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Gate Attenuator (Major)",
@@ -11318,9 +11315,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Forge Warden",
@@ -11417,9 +11414,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Carver-cutter (Major)",
@@ -11727,9 +11724,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Chimera Flail",
@@ -12168,7 +12165,7 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -12179,7 +12176,7 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -12333,9 +12330,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Banner of Common Cause",
@@ -12498,7 +12495,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -12663,9 +12660,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "The Whispering Reeds",
@@ -13006,9 +13003,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:pf2e-rules",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Storm Chair",
@@ -13349,9 +13346,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Exploration Lens (Investigating)",
@@ -13360,7 +13357,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -13789,7 +13786,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -14539,8 +14536,8 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
+   "result": "resolves",
+   "kind": "save",
    "live": null
   },
   {
@@ -14715,7 +14712,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -14737,9 +14734,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "partial",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Cauldron of Nightmares",
@@ -14924,9 +14921,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Dream Hunter's Lodge",
@@ -14935,9 +14932,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Thurible of Revelation (Greater)",
@@ -15024,9 +15021,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Sapling Shield (True)",
@@ -15245,9 +15242,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:teleport",
-   "kind": null,
-   "live": "teleport"
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Kortos Diamond",
@@ -15444,9 +15441,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Marvelous Calliope",
@@ -15642,9 +15639,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Cresset of Grisly Interrogation",
@@ -15653,9 +15650,9 @@
    "time": "1 minute",
    "frequency": "three times per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Rusting Carapace",
@@ -15851,9 +15848,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Void Shackles",
@@ -15972,7 +15969,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -16743,7 +16740,7 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -17041,9 +17038,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Serpent Dagger",
@@ -17085,7 +17082,7 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -17096,9 +17093,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Soulspark Candle",
@@ -17327,9 +17324,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Stampede Medallion (Major)",
@@ -17823,9 +17820,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Winder's Ring",
@@ -17878,7 +17875,7 @@
    "time": "free",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -18176,9 +18173,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Lifting Leather",
@@ -18487,9 +18484,9 @@
    "time": "2",
    "frequency": "one per hour",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Laurel of the Empath",
@@ -18608,9 +18605,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Broadleaf Shield",
@@ -19824,9 +19821,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Sihedron Ring",
@@ -20033,9 +20030,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Orm Choker",
@@ -20265,9 +20262,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Branch of the Great Sugi",
@@ -20408,7 +20405,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -21146,9 +21143,9 @@
    "time": "10 minutes",
    "frequency": "once per week",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Deepdread Claw",
@@ -21480,9 +21477,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "The Big Sky",
@@ -21524,9 +21521,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Bomber's Saddle",
@@ -21535,9 +21532,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Stag's Helm",
@@ -21557,9 +21554,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Spellbook of Redundant Enchantment",
@@ -21756,9 +21753,9 @@
    "time": "reaction",
    "frequency": "once per 10 minutes",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Helmsman's Recourse (Major)",
@@ -21789,9 +21786,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Mariner’s Mien (Greater)",
@@ -22450,9 +22447,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Lance of Sun's Radiance",
@@ -22806,9 +22803,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Velicarn's Cursed Coin",
@@ -22993,7 +22990,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -23092,9 +23089,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Mat of Resilience (Greater)",
@@ -23103,9 +23100,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Hippopotamus Klar",
@@ -23490,7 +23487,7 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -24619,9 +24616,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": "cast"
+   "live": "whisper"
   },
   {
    "name": "Elysian Clairglass",
@@ -25324,9 +25321,9 @@
    "time": "reaction",
    "frequency": "once per minute",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Arcing Hand Crossbow",
@@ -25423,9 +25420,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Flowing Water (Lesser)",
@@ -25445,9 +25442,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Bracers of Hammers",
@@ -25742,9 +25739,9 @@
    "time": "2 hours",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Essence Forge (Moderate)",
@@ -26095,7 +26092,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -26217,7 +26214,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -26613,9 +26610,9 @@
    "time": "free",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Cape of Justice",
@@ -26624,9 +26621,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
-   "kind": "check",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Cape of Justice",
@@ -27020,7 +27017,7 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -27538,7 +27535,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -27902,9 +27899,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:teleport",
-   "kind": null,
-   "live": "teleport"
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Ancestral Embrace",
@@ -27990,9 +27987,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Hellhusk Shroud",
@@ -28001,7 +27998,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -28057,7 +28054,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "strike"
   },
@@ -28068,9 +28065,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Floating Shield",
@@ -28465,9 +28462,9 @@
    "time": "free",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Last Hope",

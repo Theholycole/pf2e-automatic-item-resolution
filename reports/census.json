@@ -13,45 +13,44 @@
   },
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 38,
-   "builtin:zone": 139,
-   "resolves": 1058,
+   "builtin:cast-spell": 34,
+   "builtin:zone": 147,
+   "resolves": 1097,
    "builtin:readied-bonus": 24,
-   "builtin:ways": 45,
+   "builtin:ways": 61,
    "builtin:item-action": 19,
    "builtin:conjure": 13,
-   "note-only": 25,
-   "builtin:counteract": 36,
-   "none": 30,
+   "builtin:counteract": 42,
    "builtin:teleport": 8,
    "builtin:fall-foam": 4,
-   "builtin:no-effect": 6,
-   "builtin:reroll": 3,
-   "builtin:whisper": 13,
-   "partial": 13,
+   "builtin:reroll": 4,
+   "builtin:whisper": 14,
    "builtin:table": 1,
    "builtin:objects": 9,
-   "builtin:roll-twice": 2
+   "none": 3,
+   "builtin:roll-twice": 2,
+   "partial": 1,
+   "note-only": 3
   }
  },
  "byCategory": {
   "other": {
    "count": 512,
    "results": {
-    "builtin:cast-spell": 16,
-    "builtin:zone": 37,
-    "resolves": 356,
-    "builtin:ways": 30,
+    "builtin:cast-spell": 12,
+    "builtin:zone": 41,
+    "resolves": 371,
+    "builtin:ways": 40,
     "builtin:readied-bonus": 9,
-    "note-only": 15,
-    "none": 15,
     "builtin:teleport": 5,
     "builtin:conjure": 4,
-    "builtin:counteract": 10,
-    "partial": 5,
+    "builtin:counteract": 13,
+    "builtin:whisper": 7,
     "builtin:item-action": 3,
-    "builtin:whisper": 6,
-    "builtin:objects": 1
+    "none": 3,
+    "builtin:objects": 1,
+    "partial": 1,
+    "note-only": 2
    },
    "mechanisms": {
     "casts-spell": 17,
@@ -73,17 +72,13 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 156,
-    "builtin:ways": 4,
-    "builtin:no-effect": 3,
+    "resolves": 159,
+    "builtin:ways": 5,
+    "builtin:counteract": 5,
     "builtin:cast-spell": 9,
     "builtin:table": 1,
     "builtin:whisper": 2,
-    "note-only": 2,
-    "builtin:counteract": 2,
-    "partial": 1,
-    "builtin:zone": 1,
-    "none": 1
+    "builtin:zone": 1
    },
    "mechanisms": {
     "linked-effect": 55,
@@ -101,18 +96,15 @@
   "talisman": {
    "count": 156,
    "results": {
-    "resolves": 91,
+    "resolves": 102,
     "builtin:readied-bonus": 13,
     "builtin:item-action": 12,
-    "builtin:no-effect": 3,
-    "builtin:reroll": 1,
+    "builtin:reroll": 2,
     "builtin:ways": 2,
     "builtin:counteract": 3,
     "builtin:teleport": 3,
     "builtin:cast-spell": 9,
-    "none": 7,
     "builtin:objects": 8,
-    "note-only": 2,
     "builtin:roll-twice": 2
    },
    "mechanisms": {
@@ -133,14 +125,11 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 125,
+    "resolves": 132,
     "builtin:counteract": 11,
-    "partial": 5,
-    "builtin:ways": 2,
+    "builtin:ways": 3,
     "builtin:whisper": 1,
-    "builtin:zone": 2,
-    "note-only": 2,
-    "none": 1
+    "builtin:zone": 2
    },
    "mechanisms": {
     "condition": 21,
@@ -157,10 +146,9 @@
   "poison": {
    "count": 115,
    "results": {
-    "resolves": 110,
+    "resolves": 111,
     "builtin:ways": 3,
-    "builtin:zone": 1,
-    "partial": 1
+    "builtin:zone": 1
    },
    "mechanisms": {
     "fixed-dc": 112,
@@ -178,9 +166,8 @@
   "snare": {
    "count": 82,
    "results": {
-    "builtin:zone": 77,
-    "none": 2,
-    "builtin:ways": 1,
+    "builtin:zone": 78,
+    "builtin:ways": 2,
     "builtin:whisper": 1,
     "resolves": 1
    },
@@ -236,14 +223,12 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 48,
+    "resolves": 50,
     "builtin:conjure": 8,
     "builtin:cast-spell": 3,
-    "none": 1,
     "builtin:counteract": 2,
     "builtin:ways": 1,
     "builtin:item-action": 1,
-    "partial": 1,
     "note-only": 1
    },
    "mechanisms": {
@@ -267,8 +252,7 @@
     "builtin:whisper": 2,
     "builtin:reroll": 2,
     "builtin:ways": 1,
-    "none": 3,
-    "builtin:zone": 1,
+    "builtin:zone": 4,
     "builtin:cast-spell": 1
    },
    "mechanisms": {
@@ -303,7 +287,7 @@
    "count": 9,
    "results": {
     "resolves": 6,
-    "note-only": 3
+    "builtin:ways": 3
    },
    "mechanisms": {
     "duration": 7,
@@ -315,21 +299,21 @@
  "mechanismCoverage": {
   "heal": {
    "count": 43,
-   "resolves": 38,
+   "resolves": 39,
    "gaps": 0,
    "none": 0
   },
   "temp-hp": {
    "count": 37,
-   "resolves": 31,
+   "resolves": 32,
    "gaps": 0,
    "none": 0
   },
   "damage": {
    "count": 277,
-   "resolves": 194,
+   "resolves": 196,
    "gaps": 0,
-   "none": 1
+   "none": 0
   },
   "linked-effect": {
    "count": 393,
@@ -339,7 +323,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 360,
+   "resolves": 364,
    "gaps": 0,
    "none": 0
   },
@@ -363,79 +347,79 @@
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 65,
+   "resolves": 66,
    "gaps": 0,
    "none": 0
   },
   "trigger": {
    "count": 156,
-   "resolves": 81,
+   "resolves": 91,
    "gaps": 0,
-   "none": 7
+   "none": 0
   },
   "counteract": {
    "count": 79,
-   "resolves": 24,
+   "resolves": 28,
    "gaps": 0,
-   "none": 6
+   "none": 1
   },
   "area": {
    "count": 44,
    "resolves": 27,
    "gaps": 0,
-   "none": 2
+   "none": 0
   },
   "condition": {
    "count": 433,
-   "resolves": 312,
+   "resolves": 316,
    "gaps": 0,
-   "none": 7
+   "none": 2
   },
   "duration": {
    "count": 943,
-   "resolves": 758,
+   "resolves": 783,
    "gaps": 0,
-   "none": 6
+   "none": 0
   }
  },
  "live": {
   "totals": {
-   "cast": 38,
-   "zone": 139,
-   "item": 736,
+   "cast": 34,
+   "zone": 147,
+   "item": 741,
    "fortune": 26,
-   "none": 51,
-   "save": 135,
+   "none": 18,
+   "save": 134,
    "expose": 89,
-   "ways": 45,
+   "ways": 61,
    "action": 19,
    "conjure": 13,
-   "counteract": 36,
+   "counteract": 42,
    "later": 65,
    "teleport": 8,
-   "reroll": 3,
-   "whisper": 13,
-   "coat": 47,
+   "reroll": 4,
+   "whisper": 14,
+   "coat": 48,
    "strike": 13,
    "table": 1,
    "objects": 9
   },
   "byCategory": {
    "other": {
-    "cast": 16,
-    "zone": 37,
-    "none": 24,
-    "ways": 30,
+    "cast": 12,
+    "zone": 41,
+    "none": 12,
+    "ways": 40,
     "save": 88,
-    "item": 269,
+    "item": 267,
     "fortune": 9,
     "teleport": 5,
     "conjure": 4,
-    "counteract": 10,
+    "counteract": 13,
     "strike": 3,
+    "whisper": 7,
     "expose": 3,
     "action": 3,
-    "whisper": 6,
     "objects": 1,
     "coat": 3,
     "later": 1
@@ -443,21 +427,19 @@
    "potion": {
     "item": 100,
     "later": 58,
-    "ways": 4,
-    "none": 4,
+    "ways": 5,
+    "counteract": 5,
     "cast": 9,
     "table": 1,
     "whisper": 2,
     "save": 1,
-    "counteract": 2,
     "zone": 1
    },
    "talisman": {
-    "item": 66,
+    "item": 75,
     "fortune": 15,
     "action": 12,
-    "none": 10,
-    "reroll": 1,
+    "reroll": 2,
     "ways": 2,
     "counteract": 3,
     "teleport": 3,
@@ -471,24 +453,22 @@
     "item": 130,
     "counteract": 11,
     "save": 1,
-    "ways": 2,
+    "ways": 3,
     "whisper": 1,
     "zone": 2,
-    "none": 1,
     "later": 1
    },
    "poison": {
     "expose": 63,
-    "coat": 43,
+    "coat": 44,
     "ways": 3,
     "zone": 1,
     "later": 3,
-    "save": 2
+    "save": 1
    },
    "snare": {
-    "zone": 77,
-    "none": 2,
-    "ways": 1,
+    "zone": 78,
+    "ways": 2,
     "whisper": 1,
     "save": 1
    },
@@ -507,12 +487,11 @@
     "item": 68
    },
    "oil": {
-    "item": 48,
+    "item": 49,
     "conjure": 8,
     "cast": 3,
     "save": 1,
     "later": 1,
-    "none": 1,
     "counteract": 2,
     "ways": 1,
     "action": 1
@@ -524,8 +503,8 @@
     "whisper": 2,
     "reroll": 2,
     "ways": 1,
-    "none": 5,
-    "zone": 1,
+    "zone": 4,
+    "none": 2,
     "later": 1,
     "cast": 1
    },
@@ -534,14 +513,14 @@
     "item": 1
    },
    "toolkit": {
-    "item": 9
+    "item": 6,
+    "ways": 3
    }
   },
   "noCard": {
    "triggered": 11,
-   "no-plan": 30,
    "other": 4,
-   "gm": 6
+   "no-plan": 3
   }
  },
  "gapCounts": {},
@@ -1172,8 +1151,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -1397,7 +1377,10 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Juggernaut Mutagen (Major)",
@@ -1484,7 +1467,9 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Marvelous Miniature (Campfire)",
@@ -1971,8 +1956,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -2103,9 +2089,10 @@
     "trigger",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Sprite Apple (Pink)",
@@ -2175,7 +2162,9 @@
     "trap"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Lucky Rabbit's Foot",
@@ -2651,9 +2640,9 @@
     "heal",
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Ethereal Crescent (Greater)",
@@ -3139,9 +3128,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Magic Wand (5th-Rank Spell)",
@@ -3844,9 +3833,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Oil of Ownership (Lesser)",
@@ -3925,8 +3914,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -4731,7 +4721,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Gnawbone Toxin",
@@ -4804,11 +4796,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The bonus is only while you are in mountainous terrain, where it also protects you from severe cold and adds to saving throws against high altitude."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -5105,7 +5095,10 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Backdraft Bead",
@@ -5715,9 +5708,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Lover's Ink",
@@ -5745,7 +5738,9 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Life-Boosting Oil (Lesser)",
@@ -5942,9 +5937,9 @@
     "casts-spell",
     "strike"
    ],
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Wand of Teeming Ghosts (8th-Rank)",
@@ -6583,9 +6578,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Covenant Tea",
@@ -6911,12 +6906,9 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The bonus is only on soldiers, guards, Gorumites, and other martially minded characters, for whoever wears the armor maintained by this kit.",
-    "This bonus expires after 24 hours, or if the armor is soiled in some way, such as by walking through a sewer or falling in a mud pit."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -7485,8 +7477,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -7687,13 +7680,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Your blood sight is especially accurate, allowing you to also detect creatures whose Hit Points are currently at half or less of their maximum.",
-    "When you detect a creature with blood sight, you get a vague approximation of the value of the creature's bleed damage, dying condition, or wounded condition.",
-    "This approximation can be noticed as \"excessive bleeding,\" a creature being \"near death,\" or some other general sense that doesn't give the exact value."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -7815,7 +7804,9 @@
     "counteract",
     "area"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Effervescent Decoction",
@@ -7830,8 +7821,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -8267,8 +8259,9 @@
     "counteract",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -8849,7 +8842,10 @@
     "teleportation"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Potion of Sonic Resistance (Greater)",
@@ -9003,7 +8999,10 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "War Blood Mutagen (Lesser)",
@@ -9240,7 +9239,9 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "builtin:reroll",
+   "kind": null,
+   "live": "reroll"
   },
   {
    "name": "Retrieval Prism",
@@ -9770,9 +9771,9 @@
     "heal",
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Red-Rib Gill Mask (Moderate)",
@@ -10084,13 +10085,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "For 1 day after you slather this musk on your body, fungus creatures take a -4 penalty to Perception checks to Seek you or otherwise notice you.",
-    "If a fungus creature is mindless, it instead has a -6 penalty.",
-    "The bonus is only against the melee attacks of fungus creatures with no vision."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -10207,9 +10204,9 @@
     "casts-spell",
     "strike"
    ],
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Sloughing Toxin",
@@ -10311,8 +10308,9 @@
     "trigger",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -10730,8 +10728,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -10841,7 +10840,9 @@
    "mechanisms": [
     "area"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Tangibility Resonator (Lesser)",
@@ -11386,7 +11387,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Guardian Rose",
@@ -11617,13 +11621,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The potion starts by granting you resistance against this type of damage.",
-    "Each time you take damage from one of these listed energy types other than the one you currently resist, your skin mutates, causing you to lose the energy resistance previously granted by this potion and gain resistance to the type of energy by which you were most recently damaged, and the potion's duration decreases by 10 minutes.",
-    "The resistance shifts only after you take the damage, so it doesn't apply to the first instance of damage"
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -13131,7 +13131,9 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Ensnaring Disk",
@@ -13816,9 +13818,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Magnetic Suit (Greater)",
@@ -14607,9 +14609,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Firestarter Pellets (Greater)",
@@ -15342,7 +15344,10 @@
     "healing"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Crackling Lightning (8th-Rank Spell)",
@@ -15581,9 +15586,10 @@
     "on-weapon",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "gaps": [],
+   "live": "coat"
   },
   {
    "name": "Follypops",
@@ -15648,7 +15654,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Potion of Undetectability",
@@ -16459,9 +16467,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Mind-Swap Potion",
@@ -17113,9 +17121,9 @@
     "casts-spell",
     "strike"
    ],
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Nightmare Vapor",
@@ -17834,7 +17842,10 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wine of the Blood",
@@ -18043,11 +18054,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The bonus is only while you are in mountainous terrain, where it also protects you from severe cold and adds to saving throws against high altitude."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -18186,13 +18195,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "You also gain that bonus to Perception checks to pierce a hag's disguise and to Recall Knowledge about hags (by hand).",
-    "During this time, weapons you wield count as cold iron for any physical attacks made against hags.",
-    "If such a creature attempts to eat the biscuit, they must succeed at a @Check[fortitude|dc:18|options:inflicts:sickened] save or it fails and wastes the action (and is Sickened 1 on a critical failure)."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -18359,9 +18364,9 @@
     "heal",
     "counteract"
    ],
-   "result": "builtin:no-effect",
+   "result": "builtin:counteract",
    "kind": null,
-   "live": null
+   "live": "counteract"
   },
   {
    "name": "Irritating Seedpod (Lesser)",
@@ -18448,8 +18453,9 @@
     "fixed-dc",
     "counteract"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -20759,7 +20765,9 @@
     "structure"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Baleblood Draft",
@@ -20868,9 +20876,9 @@
     "casts-spell",
     "strike"
    ],
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Wand Of Splintered Sorrows (Rank 2)",
@@ -21255,7 +21263,10 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Scroll of 7th-rank Spell",
@@ -21738,8 +21749,9 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -21873,11 +21885,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The bonus is only while you are in mountainous terrain, where it also protects you from severe cold and adds to saving throws against high altitude."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -22421,11 +22431,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "When you Activate the token, you reduce the triggering recovery check's DC by 1, potentially improving your check's degree of success."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -22955,7 +22963,9 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "builtin:counteract",
+   "kind": null,
+   "live": "counteract"
   },
   {
    "name": "Clockwork Goggles",
@@ -23171,8 +23181,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -23468,7 +23479,10 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Flame Drake Snare",
@@ -23716,9 +23730,10 @@
    "mechanisms": [
     "condition"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Serpent Oil (Moderate)",
@@ -23946,9 +23961,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Vermin Repellent Agent (Lesser)",
@@ -24974,9 +24989,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Anathema Fulu",
@@ -25780,7 +25795,10 @@
     "trigger",
     "duration"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Malleable Mixture (Lesser)",
@@ -25940,7 +25958,9 @@
     "condition",
     "duration"
    ],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Practice Target",
@@ -26635,9 +26655,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Snarling Badger (Lesser)",
@@ -27784,7 +27804,10 @@
     "divine"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Charm of the Ordinary",
@@ -27912,7 +27935,10 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Alloy Orb (Exquisite Standard-Grade)",
@@ -28339,11 +28365,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The bonus is only while you are in mountainous terrain, where it also protects you from severe cold and adds to saving throws against high altitude."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -28519,7 +28543,9 @@
     "damage",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Wand of the Snowfields (5th-Rank Spell)",
@@ -28611,9 +28637,9 @@
     "damage",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Potion of Acid Resistance (Greater)",
@@ -29195,9 +29221,10 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Ethereal Crescent",
@@ -29228,7 +29255,9 @@
     "structure"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Breath of the Mantis God",
@@ -29492,7 +29521,10 @@
    "mechanisms": [
     "trigger"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Essence of Mandragora",
@@ -30342,11 +30374,9 @@
     "damage",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "If the creature has taken fire damage within the last minute, it restores additional Hit Points equal to the amount of fire damage the creature took within the last minute (maximum +10)."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
