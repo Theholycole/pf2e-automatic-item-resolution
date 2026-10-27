@@ -122,3 +122,13 @@ test("an affliction under its own heading, handed over by the activation that na
     const resolution = critical.plan.resolution;
     assert.deepEqual([resolution.check.against.value, resolution.afflictionHandoff.name, resolution.afflictionHandoff.traits, resolution.afflictionHandoff.dc, resolution.outcomes.criticalFailure.affliction.stage], [25, "Sewer Haze", ["disease", "virulent"], 23, 2]);
 });
+
+test("a longer reach for the item's own Strikes: Soulpiercer's Extend, an Effect saying the 15 feet until the end of its user's next turn (PF2e has no rule for it)", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { weaponEffectSource } = await import("../src/live/card.js");
+    const [extend] = activations(item("Soulpiercer"), options);
+    const reach = extend.plan.item.weapon[0];
+    assert.deepEqual([reach.property, reach.value, reach.duration.expiry, extend.plan.partial], ["reach", 15, "turn-end", undefined]);
+    const source = weaponEffectSource(reach, { item: { name: "Soulpiercer", uuid: "Actor.a.Item.b" } });
+    assert.deepEqual([source.system.rules, /reach of 15 feet/.test(source.system.description.value)], [[], true]);
+});

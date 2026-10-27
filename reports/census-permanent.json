@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 925,
+   "resolves": 926,
    "builtin:cast-spell": 474,
    "partial": 128,
-   "none": 402,
+   "none": 401,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
    "builtin:readied-bonus": 47,
@@ -33,8 +33,8 @@
   "live": {
    "save": 436,
    "cast": 474,
-   "item": 628,
-   "none": 509,
+   "item": 629,
+   "none": 508,
    "focus": 47,
    "counteract": 32,
    "fortune": 62,
@@ -87,9 +87,9 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 210,
+    "resolves": 211,
     "partial": 28,
-    "none": 62,
+    "none": 61,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "builtin:table": 1,
@@ -26973,9 +26973,9 @@
    "time": "1",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Soulpiercer",

@@ -586,6 +586,8 @@ export function senseEffectSource(sense, { item = {}, user = {}, worldTime = 0, 
 export function weaponText(adjust) {
     const which = adjust.definition?.includes("item:ranged") ? "ranged" : adjust.definition?.includes("item:melee") ? "melee" : "";
     if (adjust.property === "range-increment") return `+${adjust.value} feet to its ${which ? `${which} ` : ""}weapons' range increment${forTime(adjust.duration)}`;
+    // (A reach PF2e has no rule for: said, measured by its user.)
+    if (adjust.property === "reach") return `The weapon's Strikes have a reach of ${adjust.value} feet${forTime(adjust.duration)} (measure it so: PF2e has no rule for it)`;
     const thrown = /^thrown-(\d+)$/.exec(adjust.value);
     // (The item's own weapon losing a trait: "The weapon loses nonlethal for 1 round".)
     if (adjust.mode === "remove") return `${adjust.own ? "The weapon loses" : `Its ${which ? `${which} ` : ""}weapons lose`} ${adjust.value}${forTime(adjust.duration)}`;
@@ -599,7 +601,7 @@ const ownId = (uuid) => /\.Item\.([A-Za-z0-9]+)$/.exec(String(uuid ?? ""))?.[1] 
 export function weaponEffectSource(adjust, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const definition = adjust.own && ownId(item.uuid) ? [`item:id:${ownId(item.uuid)}`] : adjust.definition ?? [];
     const rule = { key: "AdjustStrike", mode: adjust.mode ?? "add", property: adjust.property, value: adjust.value, definition };
-    return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: [rule], duration: adjust.duration, flag: { weapon: adjust.property }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: adjust.property === "reach" ? [] : [rule], duration: adjust.duration, flag: { weapon: adjust.property }, item, user, worldTime, initiative, moduleId });
 }
 
 // An unarmed attack it grants in words: "A claw unarmed attack (1d6 slashing; agile) until the end of the turn".

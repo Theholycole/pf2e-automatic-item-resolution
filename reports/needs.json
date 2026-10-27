@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1345,
+  "entries": 1344,
   "results": {
    "partial": 425,
-   "none": 552,
+   "none": 551,
    "note-only": 249,
    "builtin:no-effect": 119
   },
@@ -18,7 +18,7 @@
    "visibility": 49,
    "choice": 31,
    "lasting": 69,
-   "strike": 102,
+   "strike": 101,
    "spells": 36,
    "information": 23,
    "out-of-combat": 36,
@@ -64,7 +64,7 @@
    "dying": 77,
    "choice": 111,
    "several": 107,
-   "strike": 199,
+   "strike": 198,
    "reader": 216,
    "spells": 76,
    "information": 199,
@@ -15170,17 +15170,6 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
-   ]
-  },
-  {
-   "name": "Soulpiercer",
-   "kind": "activation",
-   "activation": "Extend",
-   "result": "none",
-   "main": "strike",
-   "work": "strikes with",
-   "needs": [
-    "strike"
    ]
   },
   {

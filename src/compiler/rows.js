@@ -667,7 +667,12 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
         // (Or gaining one for a while, Chain of Command's "The chain of command gains the nonlethal trait for 1 minute": a weapon trait, on that
         // weapon — not an attack's, Possum's Play's "the triggering attack gains the nonlethal trait".)
         const gains = /\bThe (?!target\b|triggering\b)[a-z][\w' -]*? gains the (nonlethal|agile|finesse|forceful|reach|sweep|trip|shove|disarm|grapple|backstab) trait for \d+ (?:rounds?|minutes?|hours?)\b/i.exec(sentence);
+        // (Or a longer reach for its own Strikes, Soulpiercer's "Your Strikes with the soulpiercer have a reach of 15 feet until the end of your next
+        // turn": PF2e has no rule for a character's weapon reach past a trait's 10 feet (it drops a reach-15 trait from a weapon, found live
+        // 2026-10-27), so an Effect saying it for its time, its user's to measure by — property "reach".)
+        const reach = /\bYour Strikes with the [\w' -]+? have a reach of (\d+) feet\b/i.exec(sentence);
         if (range) found.push({ property: "range-increment", value: Number(range[1]), definition: ["item:ranged"], duration: timeIn(sentence, duration) });
+        else if (reach) found.push({ property: "reach", value: Number(reach[1]), own: true, definition: [], duration: timeIn(sentence, duration) });
         else if (thrown) found.push({ property: "weapon-traits", value: `thrown-${thrown[1]}`, definition: ["item:melee"], duration: timeIn(sentence, duration) });
         else if (loses) found.push({ property: "weapon-traits", value: loses[1].toLowerCase(), mode: "remove", own: true, definition: [], duration: timeIn(sentence, duration) });
         else if (gains) found.push({ property: "weapon-traits", value: gains[1].toLowerCase(), mode: "add", own: true, definition: [], duration: timeIn(sentence, duration) });
@@ -676,7 +681,8 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
         // Strike with it, it flies back …" says more.)
         // (But its coming back after a thrown Strike, Dragonbone Arrowhead's ", and when you make a thrown Strike with it, it flies back to your hand
         // after the Strike completes": the weapon's way home, which stays in its user's inventory — no rule.)
-        const after = sentence.slice((range ?? thrown ?? loses ?? gains).index + (range ?? thrown ?? loses ?? gains)[0].length);
+        const read = range ?? reach ?? thrown ?? loses ?? gains;
+        const after = sentence.slice(read.index + read[0].length);
         if (!/,\s*and\b/i.test(after) || /^[^,]*,\s*and when you make a thrown Strike with it, it flies back to your hand after the Strike completes\.$/i.test(after.trim())) used.add(index);
     }
     return found;

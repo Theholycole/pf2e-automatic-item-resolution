@@ -4595,6 +4595,22 @@ export const cases = {
         return { traits: traits() };
     },
 
+    // Soulpiercer's Extend: until the end of its user's next turn its Strikes have a reach of 15 feet (PF2e's reach-15 on the rapier itself).
+    async soulpiercerReach(scene) {
+        const { actor: duelist } = await creature(scene, "Soulpiercer Duelist", { type: "character", x: 9, y: 9, level: 12 });
+        const rapier = await give(duelist, "Soulpiercer");
+        await rapier.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(rapier.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the rapier's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        // (PF2e has no rule for a character's weapon reach of 15 feet: an Effect saying it, for its time.)
+        const effect = () => duelist.itemTypes.effect.find((entry) => entry.getFlag(NS, "weapon") === "reach");
+        await until(() => effect(), "the reach Effect", { timeout: 8000 });
+        assert(/reach of 15 feet/.test(effect().system.description.value) && effect().system.duration.expiry === "turn-end", `its words and time (${effect().system.description.value})`);
+        return { name: effect().name, duration: effect().system.duration };
+    },
+
     // Quick Runner's Shirt: +10-foot item bonus to its user's Speed until the end of the turn.
     async runnersShirt(scene) {
         const { actor: runner } = await creature(scene, "Shirt Runner", { type: "character", x: 12, y: 7 });

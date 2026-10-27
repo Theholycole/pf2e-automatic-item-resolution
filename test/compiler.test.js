@@ -588,8 +588,9 @@ test("activations: a choice of jumps (Blast Boots), temporary Hit Points from th
     const [thirst] = compileActivations(item("Bloodthirsty"));
     assert.deepEqual(thirst.plan.item.levelTemp.map((entry) => [entry.multiplier, entry.duration.value, entry.duration.unit]), [[2, 1, "minutes"]]);
     assert.equal(levelTempText(thirst.plan.item.levelTemp[0]), "Temporary Hit Points equal to twice the level of the creature targeted, for 1 minute");
-    // (Not the weapon's own reach: PF2e's reach-15 is an NPC attack's trait only, which AdjustStrike won't add to a character's weapon.)
-    assert.equal(compileActivations(item("Soulpiercer"))[0].plan?.item?.weapon, undefined);
+    // (Not the weapon's own reach by a rule: PF2e's reach-15 is an NPC attack's trait only, which AdjustStrike won't add to a character's weapon —
+    // an Effect of its words for its time instead, no rules, 2026-10-27.)
+    assert.deepEqual(compileActivations(item("Soulpiercer"))[0].plan?.item?.weapon?.map((entry) => [entry.property, entry.value]), [["reach", 15]]);
     const vision = compileActivations(item("Meloth's Lifedrinker (Level 7)"))[1].plan;
     assert.deepEqual([vision.resolution.check.statistic, vision.resolution.check.basic, vision.resolution.check.against], ["will", true, { dc: "owner", statistic: "class-spell" }]);
     assert.ok(vision.notes.some((note) => /^If the target is reduced to 0 HP by this effect/.test(note)), vision.notes.join(" / "));
