@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1273,
+  "entries": 1271,
   "results": {
-   "partial": 376,
+   "partial": 374,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -19,7 +19,7 @@
    "choice": 30,
    "strike": 94,
    "spells": 36,
-   "information": 23,
+   "information": 21,
    "out-of-combat": 35,
    "no-rules": 17,
    "actions": 29,
@@ -53,7 +53,7 @@
    "areas": 183,
    "immunity": 89,
    "objects": 388,
-   "speech": 128,
+   "speech": 126,
    "out-of-combat": 443,
    "counteract": 103,
    "afflictions": 107,
@@ -67,7 +67,7 @@
    "strike": 188,
    "reader": 208,
    "spells": 75,
-   "information": 197,
+   "information": 195,
    "actions": 60,
    "from-events": 26,
    "no-rules": 17,
@@ -10194,18 +10194,6 @@
    ]
   },
   {
-   "name": "Lion's Pelt (Leather)",
-   "kind": "activation",
-   "activation": "Contact Ally",
-   "result": "partial",
-   "main": "information",
-   "work": "know",
-   "needs": [
-    "information",
-    "speech"
-   ]
-  },
-  {
    "name": "Potion of Truespeech",
    "kind": "consumable",
    "result": "builtin:no-effect",
@@ -11766,18 +11754,6 @@
    "work": "summon",
    "needs": [
     "creatures"
-   ]
-  },
-  {
-   "name": "Lion's Pelt (Chain)",
-   "kind": "activation",
-   "activation": "Contact Ally",
-   "result": "partial",
-   "main": "information",
-   "work": "know",
-   "needs": [
-    "information",
-    "speech"
    ]
   },
   {

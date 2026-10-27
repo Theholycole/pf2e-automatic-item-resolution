@@ -4052,6 +4052,26 @@ export const cases = {
         return { rank, dc };
     },
 
+    // Lion's Pelt (Leather)'s Contact Ally (2026-10-27): the picker's "(if you and the target share an insignia)" choice cast at rank 3 by the
+    // spell module.
+    async lionsPeltRank(scene) {
+        const { actor: wearer, token: wearerToken } = await creature(scene, "Pelt Wearer", { type: "character", x: 10, y: 16, level: 6 });
+        const { token: allyToken } = await creature(scene, "Pelt Ally", { type: "character", x: 11, y: 16 });
+        const pelt = await give(wearer, "Lion's Pelt (Leather)");
+        await wearerToken.object?.control?.();
+        await target(allyToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(pelt.uuid, 0);
+        const castCard = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        assert(/Message \(rank 3\) \(if you and the target share an insignia\)/.test(castCard.content), "the picker's insignia choice");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(castCard.id, { targets: [allyToken.uuid], choice: 1 });
+        const cast = await messageAfter(since, (message) => message.flags?.["pf2e-automatic-resolution"]?.castFromItem, { what: "the spell module's cast", timeout: 15000 });
+        const { rank } = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        assert(rank === 3, `rank 3 (${rank})`);
+        return { rank };
+    },
+
     // The Joke (2026-10-27): Laughing Fit on two creatures at once (up to 10), at half its caster's level and its class DC.
     async jokeTargets(scene) {
         const { actor: reader, token: readerToken } = await creature(scene, "Joke Teller", { x: 6, y: 16, level: 13 });

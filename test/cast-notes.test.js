@@ -283,6 +283,13 @@ test("damage as the item's own Strike would deal it, of another type (2026-10-27
     assert.deepEqual([filled.resolution.sharedDamage.components[0].formula, success.damage.mode, criticalFailure.damage.mode, criticalFailure.damage.shared.multiplier, criticalFailure.damage.formulas.length], ["(4d4 + 4 + 1d6)[sonic]", "shared", "mixed", 2, 1]);
 });
 
+test("a higher rank on a condition its user knows (2026-10-27): Lion's Pelt's Contact Ally — Message at rank 1, or rank 3 if you share an insignia, the picker's", async () => {
+    const [{ plan: contact }] = compileActivations(item("Lion's Pelt (Leather)"), options);
+    assert.deepEqual([contact.choices.map((choice) => [choice.rank, choice.when ?? null]), contact.partial], [[[1, null], [3, "if you and the target share an insignia"]], undefined]);
+    const [{ plan: chain }] = compileActivations(item("Lion's Pelt (Chain)"), options);
+    assert.equal(chain.choices.length, 2);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

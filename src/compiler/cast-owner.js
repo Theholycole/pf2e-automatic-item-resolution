@@ -58,3 +58,13 @@ export function withLevelChoice(plan, spells = {}) {
 
 // The rank for a caster of that level: half of it, rounded as said, at least the minimum.
 export const castRankAt = (castRank, level) => (castRank ? Math.max(castRank.min, castRank.round === "up" ? Math.ceil(Number(level) / 2) : Math.floor(Number(level) / 2)) : null);
+
+// (A higher rank on a condition its user knows, Lion's Pelt's "If you and the target share an insignia, the spell is heightened to 3rd rank": a
+// second choice of the same spell at that rank, its condition on the picker — the user's to pick. plan.rankIf { said }, 2026-10-27.)
+const HEIGHTENED_IF = /^If (you and the target [^,]+), the spell is heightened to (\d+)(?:st|nd|rd|th) rank\.$/i;
+export function withRankIf(plan) {
+    if (plan?.builtin !== "cast-spell" || !plan.spell?.uuid || plan.choices?.length) return plan;
+    const found = (plan.notes ?? []).map((entry) => HEIGHTENED_IF.exec(String(typeof entry === "string" ? entry : entry?.text ?? "").trim())).find(Boolean);
+    if (!found) return plan;
+    return { ...plan, choices: [{ spell: plan.spell, rank: plan.rank ?? null }, { spell: plan.spell, rank: Number(found[2]), when: `if ${found[1]}` }], rankIf: { said: found[0] } };
+}
