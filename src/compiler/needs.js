@@ -102,7 +102,9 @@ export const NEEDS = [
         title: "Ships and vehicles",
         needs: "A ship or vehicle's own statistics and movement (its hull, its heading, its crew): PF2e's vehicle actors, which the card doesn't read yet.",
         where: "item live play",
-        test: /\b(?:ship\b|ship's|ships\b|vehicle\w*|boat\b|hull\b|airship|wagon|cart\b|sails?\b|crew\b|heading\b)\b/i
+        // (Not every marvelous miniature's flavor, "the camping set features the boat, campfire, and horse miniatures": the Campfire, Chest and
+        // Ladder are no boats, 2026-10-27.)
+        test: /\b(?:ship\b|ship's|ships\b|vehicle\w*|(?<!\bfeatures the )boat\b|hull\b|airship|wagon|cart\b|sails?\b|crew\b|heading\b)\b/i
     },
     {
         id: "linked-effect",

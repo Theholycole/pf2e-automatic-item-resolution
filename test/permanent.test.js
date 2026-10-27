@@ -369,7 +369,8 @@ test("quickened with its action's use a note, a banner's ally, a successful Fein
     const at = (name, index = 0) => compileActivations(item(name), { spellEffects })[index].plan;
     // "You become Quickened for 1 minute or until you leave the vehicle, …, and can use the extra action to … or, if …": Quickened.
     const mien = at("Mariner’s Mien (Lesser)");
-    assert.deepEqual([mien.resolution.outcomes.success.effects.map((effect) => effect.slug), mien.partial], [["quickened"], true]);
+    // (2026-10-27: its minute, the extra action's use and its end on leaving the vehicle a note Effect beside it — src/compiler/vehicles.js.)
+    assert.deepEqual([mien.resolution.outcomes.success.effects.map((effect) => effect.slug), mien.partial], [["quickened"], undefined]);
     // "An ally within the banner's aura becomes Quickened for 1 round": the targeted ally, its action's use a note Effect beside it.
     const banner = at("Zealous Banner");
     assert.deepEqual([banner.item.recipient, banner.resolution.outcomes.success.effects[0].slug, banner.partial], ["targets", "quickened", undefined]);

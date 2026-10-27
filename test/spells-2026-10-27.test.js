@@ -163,3 +163,62 @@ test("one-offs of the spells group: their words the card's lines, counted done a
     const scutcheon = compileItem(item("Dragonclaw Scutcheon"), options);
     assert.ok(done(scutcheon) && scutcheon.ways.every((way) => /Dragon Breath/.test(way.plan.notes.at(-1))));
 });
+
+test("a vehicle an item becomes: PF2e's Cutter, Rowboat and Bathysphere conjured beside its user for their time, their other sentences lines", () => {
+    const boat = compileItem(item("Marvelous Miniature (Boat)"), options);
+    assert.deepEqual([boat.builtin, boat.creatures[0].name, boat.creatures[0].from.uuid, boat.lasts.value, boat.lasts.unit, done(boat)], ["conjure", "Cutter", "Compendium.pf2e.vehicles.Actor.Qlvei5jjRXdsXUPo", 24, "hours", true]);
+    const folding = activations("Folding Boat")[0];
+    assert.deepEqual([folding.creatures[0].name, folding.lasts, done(folding)], ["Rowboat", null, true]);
+    assert.ok(folding.notes.some((note) => /revert it to its original shape/.test(note)));
+    const greater = activations("Folding Boat (Greater)")[0];
+    assert.ok(greater.creatures[0].name === "Cutter" && greater.notes.includes("Ethereal sailors pilot and crew it."));
+    const dive = activation("Anglerfish Lantern (Submersible)", "Dive!");
+    assert.deepEqual([dive.creatures[0].name, dive.lasts.value, dive.lasts.unit, done(dive)], ["Bathysphere", 1, "hours", true]);
+});
+
+test("a boat or cart with only its text's numbers: a marker token — the swan boat's swim Speed 50 for a day, the wind-up cart's AC 15 and 24 HP for a minute", () => {
+    const swan = activations("Feather Token (Swan Boat) (Ammunition)")[0];
+    assert.deepEqual([swan.builtin, swan.creatures[0].stats.speeds.swim, swan.lasts.value, done(swan)], ["conjure", 50, 24, true]);
+    assert.ok(!swan.notes.some((note) => /^Strike from/.test(note)));
+    const cart = compileItem(item("Wind-Up Cart"), options);
+    assert.deepEqual([cart.creatures[0].stats.ac, cart.creatures[0].stats.hp, cart.creatures[0].stats.speeds.land, cart.lasts.value, cart.lasts.unit, done(cart)], [15, 24, 30, 1, "minutes", true]);
+});
+
+test("a note Effect on the vehicle its user targets: Feather Token (Anchor)'s day, Kraken Figurehead's tentacles; the presser's targets (route save)", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const anchor = compileItem(item("Feather Token (Anchor)"), options);
+    assert.deepEqual([anchor.targeting.target, routeOf(anchor), done(anchor)], ["1 vehicle", "save", true]);
+    assert.deepEqual(anchor.resolution.outcomes.success.noteEffects[0].duration.value, 24);
+    for (const name of ["Kraken Figurehead", "Kraken Figurehead (Wracking)"]) {
+        const lash = activation(name, "Lash Out!");
+        assert.deepEqual([routeOf(lash), lash.resolution.outcomes.success.noteEffects[0].duration.value, done(lash)], ["save", 10, true], name);
+        assert.match(lash.resolution.outcomes.success.noteEffects[0].text, /Swim/);
+    }
+});
+
+test("two ways: Feather Token (Fan)'s sail bonus or Gust of Wind at DC 20; Wind At Your Back's group Hustle or its vehicle's Speeds", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const fan = compileItem(item("Feather Token (Fan)"), options);
+    assert.deepEqual(fan.ways.map((way) => routeOf(way.plan)), ["save", "cast"]);
+    assert.deepEqual([fan.ways[1].plan.spell.name, fan.ways[1].plan.dc], ["Gust of Wind", 20]);
+    const wind = activations("Wind At Your Back")[0];
+    assert.deepEqual(wind.ways.map((way) => routeOf(way.plan)), ["item", "save"]);
+    assert.match(wind.ways[1].plan.resolution.outcomes.success.noteEffects[0].text, /\+10-foot circumstance bonus to its Speeds \(\+20 feet/);
+    assert.deepEqual(wind.ways[0].plan.resolution.outcomes.success.noteEffects[0].duration.value, 8);
+});
+
+test("About Face! the map's, Mariner's Mien Quickened for its minute with its action's note, the miniatures' camping-set flavor no boat", () => {
+    const about = activation("Aboutface Figurehead", "About Face!");
+    assert.ok(done(about) && /turn its token about/.test(about.notes[0]));
+    for (const name of ["Mariner’s Mien (Greater)", "Mariner’s Mien (Lesser)"]) {
+        const mien = activation(name, "Set the Course");
+        const quickened = mien.resolution.outcomes.success.effects.find((effect) => effect.slug === "quickened");
+        assert.deepEqual([quickened.duration.value, quickened.duration.unit, mien.unread, done(mien)], [1, "minutes", undefined, true], name);
+        assert.match(mien.resolution.outcomes.success.noteEffects.at(-1).text, /Take Control/);
+    }
+    for (const name of ["Marvelous Miniature (Campfire)", "Marvelous Miniature (Chest)", "Marvelous Miniature (Ladder)"]) assert.equal(compileItem(item(name), options).decided, "card-line", name);
+});
+
+test("one-offs of the vehicles: Kraken Figurehead (Wracking)'s Grab Them!, Hongbao of Many Things, Violin of the Waves", () => {
+    assert.deepEqual([activation("Kraken Figurehead (Wracking)", "Grab Them!").decided, activations("Hongbao of Many Things")[0].decided, activations("Violin of the Waves")[0].decided], ["one-off", "one-off", "one-off"]);
+});

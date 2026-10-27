@@ -47,6 +47,7 @@ import { readTypeChoice, withTypeChoices } from "./type-choice.js";
 import { castWordsPlan, fillCast } from "./cast-words.js";
 import { spellPickPlan } from "./spell-picks.js";
 import { anathemaBurnPlan } from "./anathema-burn.js";
+import { vehicleEffectPlan, vehiclePlan, withVehicleQuickened } from "./vehicles.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
@@ -496,6 +497,8 @@ function compileOne(given, options = {}) {
     plan = weakenedAroundPlan(plainText(html), base) ?? plan;
     // (A creature it becomes, src/compiler/conjured.js: Beetle Gel, Marvelous Miniature (Horse).)
     plan = conjuredPlan(html, base, item) ?? plan;
+    // (A vehicle it becomes or acts on, src/compiler/vehicles.js: Marvelous Miniature (Boat)'s Cutter, Feather Token (Anchor)'s stopped boat.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = vehiclePlan(html, base) ?? vehicleEffectPlan(html, base, options.spells ?? {}) ?? plan;
     // (Or one whose numbers it gives, src/compiler/conjured.js statedCreaturePlan: a third-party bottled ooze, a canister's zombie.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = statedCreaturePlan(html, base, item) ?? plan;
     // (One of a kind of PF2e's spells, its user's pick, src/compiler/spell-picks.js: Cantrip Deck's cantrips.)
