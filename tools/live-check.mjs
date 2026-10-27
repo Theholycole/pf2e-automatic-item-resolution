@@ -3628,6 +3628,30 @@ export const cases = {
         return { rank, dc };
     },
 
+    // The Sickness (2026-10-27): at level 13, Spiritual Epidemic (from 15th) refused; Abyssal Plague cast at rank 6 and its class or spell DC.
+    async sicknessLevelChoice(scene) {
+        const { actor: reader, token: readerToken } = await creature(scene, "Sickness Reader", { x: 4, y: 16, level: 13 });
+        const { token: foeToken } = await creature(scene, "Sickness Victim", { x: 5, y: 16, alliance: "opposition" });
+        const card = await give(reader, "The Sickness");
+        await readerToken.object?.control?.();
+        await target(foeToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const castCard = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        assert(/Spiritual Epidemic \(from level 15\)/.test(castCard.content), "the picker's level");
+        let refused = null;
+        await game.modules.get(NS).api.live.apply(castCard.id, { targets: [foeToken.uuid], choice: 1 }).catch((error) => { refused = error.message; });
+        await wait(800);
+        assert(game.messages.get(castCard.id).getFlag(NS, "card").status === "open", `refused below level 15 (${refused})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(castCard.id, { targets: [foeToken.uuid], choice: 0 });
+        const cast = await messageAfter(since, (message) => message.flags?.["pf2e-automatic-resolution"]?.castFromItem, { what: "the spell module's cast", timeout: 15000 });
+        const { rank, dc } = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        const expected = Math.max(reader.system.attributes.classDC?.value ?? 0, reader.system.attributes.spellDC?.value ?? 0);
+        assert(rank === 6 && dc === expected, `rank 6 at DC ${expected} (${rank}, ${dc})`);
+        return { rank, dc };
+    },
+
     // An etched rune's activation from its weapon (a Vorpal longsword): the button on the weapon's row, not on a runestone's;
     // pressed, the Fortitude save card at DC 37 with death on a failure.
     async etchedRune(scene) {

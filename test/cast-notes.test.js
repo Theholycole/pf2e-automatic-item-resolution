@@ -283,3 +283,11 @@ test("a condition on its user with the cast (2026-10-27): Locket of Sealed Night
     const html = castCardHTML({ status: "open", plan: locket, item: { name: "Locket" }, user: { name: "Bard" }, drinker: null, drinkers: [], choice: 0, results: [] });
     assert.match(html, /With it, its user becomes fatigued\./);
 });
+
+test("another spell from a level on (2026-10-27): The Sickness's Abyssal Plague, or Spiritual Epidemic from 15th level, at half its caster's level (at least 6) and its class DC or spell DC", async () => {
+    const { castCardHTML } = await import("../src/live/cast-card.js");
+    const sickness = first("The Sickness");
+    assert.deepEqual([sickness.choices.map((choice) => [choice.spell.name, choice.minLevel ?? null]), sickness.castRank.min, sickness.castDC.from, sickness.partial], [[["Abyssal Plague", null], ["Spiritual Epidemic", 15]], 6, "class-spell", undefined]);
+    const html = castCardHTML({ status: "open", plan: sickness, item: { name: "The Sickness" }, user: { name: "Oracle" }, drinker: null, drinkers: [], choice: 0, results: [] }, { canApply: true });
+    assert.match(html, /Spiritual Epidemic \(from level 15\)/);
+});

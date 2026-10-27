@@ -5,8 +5,11 @@
 // minimum, and at the higher of its class DC and spell DC. And a casting time the activation already is: "but as a two-action spell rather
 // than one that takes 1 minute to cast" on a 2-action activation — plan.castTime { said }. Pure.
 
-const RANK = /\bThe rank of the spell is one-half your level, rounded (down|up) \(minimum (\d+)(?:st|nd|rd|th) (?:level|rank)\)/i;
-const DC = /\b(?:and )?the save DC is your class DC or spell DC(?: \([^)]*\))?/i;
+const RANK = /\bThe rank of the spell is (?:one-)?half your level, rounded (down|up) \(minimum (\d+)(?:st|nd|rd|th) (?:level|rank)\)/i;
+const DC = /\b(?:and )?the save DC is (?:equal to )?your class DC or spell DC(?: \([^)]*\))?/i;
+// (Another spell from a level on, The Sickness's "If you are at least 15th-level, you can instead choose to cast Spiritual Epidemic": a choice
+// beside the cast's own, its level the card's to check.)
+const FROM_LEVEL = /^If you are at least (\d+)(?:st|nd|rd|th)[- ]level, you can instead choose to cast ([A-Z][\w' -]+?)\.$/;
 const TIME = /,?\s*but as a (one|two|three)-action spell rather than one that takes [^.]+? to cast\b/i;
 const ACTIONS = { one: "1", two: "2", three: "3" };
 
@@ -24,6 +27,17 @@ export function withCastOwner(plan) {
         ...(dc ? { castDC: { from: "class-spell", said: dc[0] } } : {}),
         ...(own ? { castTime: { said: own[0] } } : {})
     };
+}
+
+// The plan and PF2e's spells by name (cast-words.js spellIndex) → the plan with a choice from a level on, or the same plan.
+export function withLevelChoice(plan, spells = {}) {
+    if (plan?.builtin !== "cast-spell" || !plan.spell?.uuid) return plan;
+    const notes = (plan.notes ?? []).map((entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim());
+    const found = notes.map((note) => FROM_LEVEL.exec(note)).find(Boolean);
+    const spell = found ? spells[found[2].toLowerCase()] : null;
+    if (!spell) return plan;
+    const own = plan.choices?.length ? plan.choices : [{ spell: plan.spell, rank: plan.rank ?? null }];
+    return { ...plan, choices: [...own, { spell: { uuid: spell.uuid, name: spell.name }, rank: plan.rank ?? null, area: spell.area, targets: spell.targets, minLevel: Number(found[1]) }], levelChoice: { said: found[0] } };
 }
 
 // The rank for a caster of that level: half of it, rounded as said, at least the minimum.

@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1314,
+  "entries": 1313,
   "results": {
-   "partial": 415,
+   "partial": 414,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -12,7 +12,7 @@
    "cast-changes": 22,
    "speeds": 23,
    "counteract": 24,
-   "afflictions": 61,
+   "afflictions": 60,
    "moving": 84,
    "visibility": 48,
    "lasting": 65,
@@ -56,13 +56,13 @@
    "speech": 129,
    "out-of-combat": 446,
    "counteract": 105,
-   "afflictions": 110,
+   "afflictions": 109,
    "lasting": 234,
    "moving": 111,
    "triggers": 121,
    "visibility": 50,
    "dying": 75,
-   "choice": 108,
+   "choice": 107,
    "several": 106,
    "strike": 194,
    "reader": 215,
@@ -10469,17 +10469,6 @@
    "work": "submerged",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Sickness",
-   "kind": "activation",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "plague",
-   "needs": [
-    "afflictions",
-    "choice"
    ]
   },
   {

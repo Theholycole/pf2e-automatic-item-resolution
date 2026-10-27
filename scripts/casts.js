@@ -67,6 +67,9 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
     else {
         const actor = await fromUuid(request.casterUuid).catch(() => null);
         if (!actor) throw new Error("The caster isn't there any more.");
+        // (A spell only from a level on, The Sickness's Spiritual Epidemic from 15th: refused below it.)
+        const minLevel = chosenSpell(state).minLevel;
+        if (minLevel && Number(actor.level) < minLevel) throw new Error(`${chosenSpell(state).spell.name} needs its caster at level ${minLevel} or higher.`);
         // (Its rank and DC from its caster, src/compiler/cast-owner.js: The Inquisitor's half its level, its class DC or spell DC.)
         if (!request.rank && state.plan.castRank) request.rank = castRankAt(state.plan.castRank, actor.level);
         if (!request.dc && state.plan.castDC) {

@@ -64,7 +64,7 @@ export function castCardHTML(state, { canApply = false } = {}) {
     const caster = casterOf(state);
     // (Several spells to choose from: a picker while it's open.)
     const pick = plan.choices?.length > 1 && open && canApply
-        ? `<p class="aar-actions">Spell: <select data-air-field="choice">${plan.choices.map((entry, index) => `<option value="${index}"${index === (state.choice ?? 0) ? " selected" : ""}>${escape(entry.spell.name)}${entry.rank ? ` (rank ${entry.rank})` : ""}</option>`).join("")}</select></p>`
+        ? `<p class="aar-actions">Spell: <select data-air-field="choice">${plan.choices.map((entry, index) => `<option value="${index}"${index === (state.choice ?? 0) ? " selected" : ""}>${escape(entry.spell.name)}${entry.rank ? ` (rank ${entry.rank})` : ""}${entry.minLevel ? ` (from level ${entry.minLevel})` : ""}</option>`).join("")}</select></p>`
         : "";
     const who = state.drinker === null || state.drinker === undefined
         ? `<p class="aar-actions">${selfOf(state) ? `On ${escape(caster.name)}` : needsTargets(plan, chosen) ? "At the targets of whoever applies it" : "Placed or aimed as the spell says"}</p>`
