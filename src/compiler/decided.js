@@ -13,6 +13,7 @@ import { leftToTheGM } from "./honest.js";
 import { leftText, needsOf } from "./needs.js";
 import { notesChecked } from "./notes-checked.js";
 import { oneOff } from "./one-offs.js";
+import { loreOnly } from "./lore-lines.js";
 
 const DECIDED = new Set(["speech", "mind", "information"]);
 const CARD_LINE = new Set(["out-of-combat", "objects"]);
@@ -85,8 +86,13 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // (And a conjured creature's: the ability module's conjure card shows its notes — 2026-10-27, Fossil Fragment (Amber Mosquito)'s.)
     const shown = ["readied-bonus", "cast-spell", "conjure"].includes(plan?.builtin) || !((plan?.notes ?? []).length || (plan?.unread ?? []).length);
     if (plan?.partial && plan.builtin && plan.builtin !== "no-effect" && shown && !special && oneOff(name ?? plan.source?.name)) return asCardLines(plan, { result: "partial", base, body: null, decided: "one-off" });
+    // (A unique item's or an artifact's, its lore all that's left — src/compiler/lore-lines.js, the user's of 2026-10-27: its effects built, its
+    // history, look or destruction its card's lines —: done, decided "lore". On a card of its own only when that card shows its notes.)
+    const sentencesOf = (words) => String(words ?? "").split(/(?<=[.!?])\s+(?=[A-Z@(])/).map((sentence) => sentence.trim()).filter(Boolean);
+    if (special && plan?.partial && (!plan.builtin || plan.builtin === "no-effect" || shown) && loreOnly(name ?? plan.source?.name, leftovers(plan).map(([, line]) => line))) return asCardLines(plan, { result: "partial", base, body: null, decided: "lore" });
     if (result === "resolves" || (result.startsWith("builtin:") && result !== "builtin:no-effect")) return plan;
     const entry = { result, kind, trigger, text, left: plan ? leftovers(plan) : [] };
+    if (special && ["none", "note-only", "builtin:no-effect"].includes(result) && loreOnly(name ?? plan?.source?.name, sentencesOf(leftText(entry)))) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "lore" });
     // (A note-only item checked and found to hold nothing a card could play, src/compiler/notes-checked.js — the user's answer to question 3,
     // 2026-10-26: its note row kept, done.)
     if (result === "note-only" && notesChecked(name ?? plan?.source?.name)) return { ...plan, noteOnly: undefined, decided: "checked", automation: { ...(plan.automation ?? {}), level: "automatic" } };

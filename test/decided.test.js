@@ -89,3 +89,22 @@ test("one-offs on a card of their own (a counteract's, a zone's, a cast's): its 
     assert.deepEqual([serum.decided, serum.partial, routeOf(serum)], ["checked", undefined, "item"]);
     assert.match(serum.notes[0], /sexual characteristics of your choice/);
 });
+
+// (A unique item's or an artifact's lore, src/compiler/lore-lines.js — 2026-10-27: its card's lines once every left-over sentence is listed;
+// a rule beside it keeps it partial.)
+test("lore lines: a special item's history its card's lines once listed, a rule beside it still partial", async () => {
+    const { LORE_LINES } = await import("../src/compiler/lore-lines.js");
+    const { withDecided } = await import("../src/compiler/decided.js");
+    const base = { source: { name: "PFTEST Relic" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] } } } };
+    LORE_LINES.set("PFTEST Relic", [/^It was forged in the first age\.$/]);
+    try {
+        const lore = withDecided({ ...base, partial: true, notes: ["It was forged in the first age."] }, { name: "PFTEST Relic", special: true });
+        assert.deepEqual([lore.decided, lore.partial, lore.notes], ["lore", undefined, ["It was forged in the first age."]]);
+        const ruled = withDecided({ ...base, partial: true, notes: ["It was forged in the first age.", "Its wielder gains a +2 bonus to AC."] }, { name: "PFTEST Relic", special: true });
+        assert.deepEqual([ruled.decided, ruled.partial], [undefined, true]);
+        // (Not an item that isn't special: the ordinary rulings for it.)
+        assert.notEqual(withDecided({ ...base, partial: true, notes: ["It was forged in the first age."] }, { name: "PFTEST Relic", special: false })?.decided, "lore");
+    } finally {
+        LORE_LINES.delete("PFTEST Relic");
+    }
+});
