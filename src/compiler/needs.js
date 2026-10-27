@@ -202,7 +202,11 @@ export const NEEDS = [
         needs: "An effect the user Sustains or Dismisses, one that repeats each round or at each of a creature's turns, or one that waits for a later event (the next time you, until you): turn hooks and the Sustain button, with the card offered again.",
         where: "item live play",
         // (Not "for as long as your desire", Communication Pendants' talk at will: no time to keep, 2026-10-26.)
-        test: /\b(?:Sustain\w*|Dismiss\w*|for as long as(?! your desire)|until you|each time (?:you|it|the)|at the (?:start|end|beginning) of each of (?:your|its) turns|each round|every round|once per round|the next time (?:you|it|the)|when (?:you|it) next|later\b|afterward\w*|after (?:that|it|the effect) ends|when the effect ends|ends? early|ends? (?:if|when) (?:the target|it|you|the creature)|until (?:it|the target|the creature) Escapes|Thereafter|until the end of your rage|on your next turn|on or off|as long as any|end (?:it|the effect|the grab) early|Escape DC|Escape \(DC)\b/i
+        // (Nor what doesn't go on, Atlas Arcane's "This intel is current the moment the phrase is spoken but does not update afterward": nothing
+        // later, 2026-10-27.)
+        // (Nor food that sustains a creature, Campaign Stable's "sufficient feed and water to sustain the horses for 1 day", nor a time to its
+        // user's next daily preparations, Mender's Soup's "24 hours or until you make your next daily preparations": out of combat, 2026-10-27.)
+        test: /\b(?:(?<!\bto )Sustain\w*|Dismiss\w*|for as long as(?! your desire)|until you(?!r next daily preparations| make your next daily preparations)|each time (?:you|it|the)|at the (?:start|end|beginning) of each of (?:your|its) turns|each round|every round|once per round|the next time (?:you|it|the)|when (?:you|it) next|later\b|(?<!\b(?:not|never) \w+ )afterward\w*|after (?:that|it|the effect) ends|when the effect ends|ends? early|ends? (?:if|when) (?:the target|it|you|the creature)|until (?:it|the target|the creature) Escapes|Thereafter|until the end of your rage|on your next turn|on or off|as long as any|end (?:it|the effect|the grab) early|Escape DC|Escape \(DC)\b/i
     },
     {
         id: "choice",

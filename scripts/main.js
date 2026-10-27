@@ -23,6 +23,7 @@ import { setUpHPFloor } from "./hp-floor.js";
 import { setUpDrain } from "./drain.js";
 import { setUpAfterEnds } from "./after-ends.js";
 import { setUpShortenOnHit } from "./shorten-on-hit.js";
+import { setUpDeactivated } from "./deactivated.js";
 import { setUpToggleOff } from "./toggle-off.js";
 import { setUpCastDurations } from "./cast-duration.js";
 import { setUpShieldShare } from "./shield-share.js";
@@ -174,6 +175,8 @@ Hooks.once("ready", async () => {
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)
     setUpShortenOnHit();
+    // (Healing a damage type pauses to the end of the next turn, Troll Hide's: scripts/deactivated.js.)
+    setUpDeactivated();
     // (A healing of an item's own back on once its Effect ends: scripts/toggle-off.js.)
     setUpToggleOff();
     // (A cast's Effects at the item's duration, Dust of Disappearance's minute: scripts/cast-duration.js.)

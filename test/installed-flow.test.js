@@ -83,7 +83,9 @@ test("Dread Helm: +1 to Intimidation from a moderate ampoule, and its 2 mental s
     const elixirs = foundry.giveItem(wearer, { ...source("Elixir of Life (Lesser)"), system: { ...source("Elixir of Life (Lesser)").system, quantity: 3 } });
     await use("Troll Hide", { pick: "Elixir of Life (Lesser)" });
     const regrowth = wearer.itemTypes.effect.find((entry) => entry.flags?.[MODULE_ID]?.installed === "elixir of life" && (entry.system.rules ?? []).some((rule) => rule.key === "FastHealing"));
-    assert.deepEqual([regrowth.system.rules, regrowth.system.duration.value], [[{ key: "FastHealing", value: 5 }], 8]);
+    // (2026-10-27: off while its "deactivated" Effect lasts, after electricity or fire damage — scripts/deactivated.js.)
+    assert.deepEqual([regrowth.system.rules, regrowth.system.duration.value], [[{ key: "FastHealing", value: 5, predicate: [{ not: "self:effect:air-deactivated-troll-hide" }] }], 8]);
+    assert.deepEqual(regrowth.flags[MODULE_ID].deactivatedBy, { types: ["electricity", "fire"], slug: "air-deactivated-troll-hide" });
     assert.equal(elixirs.system.quantity, 1, "two of the three used");
 });
 

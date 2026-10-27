@@ -839,7 +839,7 @@ export function installedText(installed, entry = null) {
     const parts = [
         installed.modifiers.length ? `${bonus} to ${installed.modifiers.map((modifier) => `${modifier.selector}${scopeOf(modifier).length ? ` (${scopeOf(modifier).join(", ")})` : ""}`).join(", ")}` : null,
         installed.resistance ? `resistance ${entry ? entry.splash : "equal to its splash damage"} to ${installed.resistance.types.join(", ")}` : null,
-        installed.fastHealing ? `${entry ? entry.level : "its level in"} Hit Points at the start of each turn` : null,
+        installed.fastHealing ? `${entry ? entry.level : "its level in"} Hit Points at the start of each turn${installed.deactivatedBy ? ` (off to the end of its wearer's next turn after ${installed.deactivatedBy.types.join(" or ")} damage)` : ""}` : null,
         installed.damage ? `${entry ? entry.splash : "its splash damage as"} ${installed.damage.type} damage to each other creature within ${installed.damage.radius} feet` : null,
         installed.strength ? `the armor's Strength requirement ${entry ? `${entry.bonus >= installed.strength.at ? installed.strength.more : installed.strength.by} lower` : `${installed.strength.by} lower (${installed.strength.more} with a +${installed.strength.at} item)`}` : null
     ].filter(Boolean);
@@ -855,11 +855,32 @@ export function installedEffectSource(installed, entry, { item = {}, user = {}, 
     const rules = [
         ...(entry.bonus > 0 ? installed.modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: "item", value: entry.bonus, label, ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })) : []),
         ...(installed.resistance && entry.splash > 0 ? installed.resistance.types.map((type) => ({ key: "Resistance", type, value: entry.splash })) : []),
-        ...(installed.fastHealing && entry.level > 0 ? [{ key: "FastHealing", value: entry.level }] : []),
+        // (Off while its "deactivated" Effect lasts, Troll Hide's after electricity or fire damage: scripts/deactivated.js.)
+        ...(installed.fastHealing && entry.level > 0 ? [{ key: "FastHealing", value: entry.level, ...(installed.deactivatedBy ? { predicate: [{ not: `self:effect:${deactivatedSlug(item)}` }] } : {}) }] : []),
         // (The armor's own Strength requirement lowered: PF2e's ItemAlteration on that armor, by its id.)
         ...(installed.strength && itemIdOf(item.uuid) ? [{ key: "ItemAlteration", itemId: itemIdOf(item.uuid), mode: "subtract", property: "strength", value: entry.bonus >= installed.strength.at ? installed.strength.more : installed.strength.by }] : [])
     ];
     const duration = installed.duration?.from === "level" ? { mode: "fixed", value: entry.level, unit: installed.duration.unit, expiry: "turn-start" } : installed.duration;
     // (Its time shortened by each hit of its types, Bone Dreadnought Plate's: the flag scripts/shorten-on-hit.js looks for.)
-    return ownEffectSource({ name: "installed", img: "icons/svg/upgrade.svg", words: installedText(installed, entry), rules, duration, flag: { installed: installed.name, ...(installed.shortensOnHit ? { shortensOnHit: installed.shortensOnHit } : {}) }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: "installed", img: "icons/svg/upgrade.svg", words: installedText(installed, entry), rules, duration, flag: { installed: installed.name, ...(installed.shortensOnHit ? { shortensOnHit: installed.shortensOnHit } : {}), ...(installed.deactivatedBy && installed.fastHealing ? { deactivatedBy: { types: installed.deactivatedBy.types, slug: deactivatedSlug(item) } } : {}) }, item, user, worldTime, initiative, moduleId });
+}
+
+// Its healing paused by a damage type (installed.deactivatedBy, Troll Hide's electricity or fire): the slug of the Effect that pauses it, and
+// that Effect — to the end of its wearer's next turn (PF2e's "until the end of your next turn"), the FastHealing's predicate off while it
+// lasts. Returns a new source.
+export const deactivatedSlug = (item = {}) => `air-deactivated-${String(item.slug ?? item.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+export function deactivatedEffectSource({ name, slug, types }, { worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return {
+        name: `${name}: deactivated`,
+        type: "effect",
+        img: "icons/svg/downgrade.svg",
+        flags: { [moduleId]: { deactivated: slug } },
+        system: {
+            slug,
+            description: { value: `<p>${escape(name)} is deactivated by ${escape(types.join(" or "))} damage until the end of its wearer's next turn: no healing at that turn's start.</p>` },
+            duration: { value: 1, unit: "rounds", expiry: "turn-end", sustained: false },
+            start: { value: worldTime, initiative },
+            rules: []
+        }
+    };
 }

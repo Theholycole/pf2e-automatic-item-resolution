@@ -294,9 +294,12 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     // (A save its hit then calls for: the card stays open for that second step.)
     const next = state.plan?.thenSave ? { ...after, status: "open", step: "then" } : after;
     // (The card after it — plan.again: Horn of the Archon's enemies' save after its allies' bonus — once it closes.)
+    // (Kept open for its time and pressed again each time, Blakenshipper's Sustain for its minute: again.repeat, again.time, again.when.)
     const again = state.plan?.again;
     if (again?.plan && next.status === "applied") {
-        const card = createExposureCard({ plan: again.plan, item: state.item, user: state.user, later: Boolean(again.later), own: Boolean(again.own), attacker: again.attacker ?? false });
+        const seconds = again.rounds ? Number(again.rounds) * 6 : again.time ? Number(again.time.value) * (SECONDS[again.time.unit] ?? 3600) : null;
+        const repeat = Boolean(again.later && (again.repeat || again.rounds));
+        const card = createExposureCard({ plan: again.plan, item: state.item, user: state.user, later: Boolean(again.later), repeat, until: repeat && seconds ? game.time.worldTime + seconds : null, own: Boolean(again.own), attacker: again.attacker ?? false, when: again.when ?? null });
         await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: message.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
         next.results = [...(next.results ?? []), `${saveText(again.plan)}: its card follows.`].slice(-6);
     }
