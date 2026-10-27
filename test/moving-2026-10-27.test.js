@@ -9,7 +9,7 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { fallEffectSource, fallLine } from "../src/live/card.js";
-import { freeSpacesBeside, teleportLines, teleportText } from "../src/live/teleport-card.js";
+import { freeSpacesBeside, squaresAlong, teleportLines, teleportText } from "../src/live/teleport-card.js";
 import { ONE_OFFS } from "../src/compiler/one-offs.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
@@ -171,4 +171,70 @@ test("the free spaces beside a creature's landing space: touching it, none taken
     // (A Large one beside a Medium space: 12 corners around it; the scene's edge cuts some.)
     assert.equal(freeSpacesBeside(space, { w: 200, h: 200 }, [], { grid }).length, 12);
     assert.equal(freeSpacesBeside(space, { w: 100, h: 100 }, [], { grid, bounds: { x: 500, y: 500, width: 1000, height: 1000 } }).length, 3);
+});
+
+test("what holds a creature or a way in place, words on its user's note Effect: Magnetizing, Immovable Arm, Warding Escutcheon's door (the shield's own numbers, an hour)", () => {
+    const magnet = activation("Magnetizing");
+    assert.ok(done(magnet));
+    assert.match(magnet.resolution.outcomes.success.noteEffects[0].text, /each square is difficult terrain/);
+    assert.match(magnet.notes[0], /^The GM decides/);
+    const arm = activation("Immovable Arm");
+    assert.ok(done(arm));
+    assert.match(arm.resolution.outcomes.success.noteEffects[0].text, /8,000 pounds of pressure or a DC 40 Athletics check to Force Open it moves the arm; a DC 25 Perception check to Seek/);
+    for (const [name, numbers, dc] of [["Warding Escutcheon", "Hardness 10, HP 40, BT 20", 25], ["Warding Escutcheon (Greater)", "Hardness 20, HP 80, BT 40", 43]]) {
+        const door = activation(name);
+        assert.ok(done(door), name);
+        const [note] = door.resolution.outcomes.success.noteEffects;
+        assert.ok(note.text.includes(numbers) && note.text.includes(`DC ${dc} Athletics`), name);
+        assert.deepEqual(note.duration, { mode: "fixed", value: 1, unit: "hours", expiry: "turn-start", anchor: "effect-start" });
+    }
+});
+
+test("stepping stones, oiled feet, the guangu's two Effects: Stepping Stone Shot's lines, Oil of Skating's Balance one degree worse, Guangu of the Steppe's ways", () => {
+    assert.deepEqual(["Stepping Stone Shot", "Stepping Stone Shot (Greater)"].map((name) => /up to (\d+) feet long.*They last until ([^.]+?) unless/.exec(activation(name).notes[0]).slice(1)), [["100", "the end of its user's next turn"], ["250", "1 minute"]]);
+    const oil = compileItemWith(item("Oil of Skating"));
+    assert.ok(done(oil));
+    assert.deepEqual(oil.item.ruleEffects[0].rules, [{ key: "AdjustDegreeOfSuccess", selector: "acrobatics", predicate: ["action:balance"], adjustment: { criticalSuccess: "one-degree-worse", success: "one-degree-worse", failure: "one-degree-worse" } }]);
+    assert.match(oil.item.ruleEffects[0].words, /doubles downhill/);
+    const guangu = activation("Guangu of the Steppe", "The Hammer of Hooves");
+    assert.ok(done(guangu));
+    assert.deepEqual(guangu.ways.map((way) => [way.plan.resolution.applications[0].label, way.plan.resolution.applications[0].duration, way.plan.item.recipient]), [["Effect: The Hammer of Hooves", { value: 10, unit: "minutes" }, "targets"], ["Effect: The Hammer of Hooves (Mount Speed)", { value: 10, unit: "minutes" }, "targets"]]);
+});
+
+test("a Stride's trail, a ride, the tome's Netherworld, a trap near its square, a drenching: Hellfire Boots, Hippogriff in a Jar, Maw of Hungry Shadows, Devil's Trap, Puddle Shove Snare", () => {
+    const boots = activation("Hellfire Boots", "Devil's Dance");
+    assert.ok(done(boots));
+    assert.deepEqual(boots.teleport.move.trail, { formula: "3d6[fire]", lasts: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } });
+    assert.match(teleportLines(boots.teleport).join(" "), /hazardous terrain for 1 minute: 3d6 fire damage/);
+    const jar = compileItemWith(item("Hippogriff in a Jar"));
+    assert.ok(done(jar));
+    assert.deepEqual([jar.teleport.within, jar.teleport.move.verb, jar.teleport.with], [65, "Fly", { count: 1 }]);
+    const maw = activation("Maw of Hungry Shadows");
+    assert.ok(done(maw));
+    assert.match(maw.resolution.outcomes.criticalFailure.noteEffects.at(-1).text, /on the Netherworld; its token leaves the scene\.$/);
+    const trap = compileItemWith(item("Devil's Trap"));
+    assert.ok(done(trap));
+    assert.deepEqual([trap.item.counteract.within, trap.item.counteract.afterFree.words, trap.targeting.range], [35, "It can't use actions with the teleportation trait", 35]);
+    const puddle = compileItemWith(item("Puddle Shove Snare"));
+    assert.ok(done(puddle));
+    const soaked = puddle.zone.saves[0].plan.resolution.outcomes.criticalFailure;
+    assert.deepEqual([soaked.manualInstructions, soaked.modifiers[0].predicate, soaked.forcedMovement.distance], [undefined, ["item:trait:electricity"], 15]);
+    assert.ok(puddle.zone.notes.some((note) => /way the blast of water goes/.test(note)));
+});
+
+test("the squares a straight move crosses: not the one it starts on, a Large token's too", () => {
+    assert.deepEqual(squaresAlong({ x: 0, y: 0 }, { x: 300, y: 0 }, { w: 100, h: 100 }, 100), [{ x: 100, y: 0 }, { x: 200, y: 0 }, { x: 300, y: 0 }]);
+    assert.equal(squaresAlong({ x: 0, y: 0 }, { x: 200, y: 200 }, { w: 100, h: 100 }, 100).at(-1).x, 200);
+    assert.equal(squaresAlong({ x: 0, y: 0 }, { x: 100, y: 0 }, { w: 200, h: 200 }, 100).length, 2);
+});
+
+test("cast lines and the last readings: Bewitching Bloom (Purple Iris)'s Command from the ally, Drop Prone; Starshot Arrow (Greater)'s range lines; Demon-Hunting Bands a one-off", () => {
+    const bloom = activation("Bewitching Bloom (Purple Iris)");
+    assert.deepEqual([bloom.builtin, bloom.spell.name, Boolean(bloom.partial)], ["cast-spell", "Command", false]);
+    assert.deepEqual(bloom.notes, ["Its targets are picked within the spell's range of the ally chosen, not of its user.", "Its command: Drop Prone, paying homage to the ally."]);
+    const star = activation("Starshot Arrow (Greater)");
+    assert.ok(done(star));
+    assert.equal(star.strike.requires.length, 4);
+    const bands = compileItemWith(item("Demon-Hunting Bands"));
+    assert.deepEqual([bands.decided, done(bands)], ["one-off", true]);
 });

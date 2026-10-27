@@ -133,6 +133,12 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         // (Not on a creature: the GM ends it.)
         if (row.kind === "free") {
             lines.push(`${row.name}: ${outcome}, counteracted (end it by hand).`);
+            // (What it keeps the creature picked from after, Devil's Trap's devil: a note Effect on it for that time, 2026-10-27.)
+            const after = state.counteract.afterFree;
+            if (after && target !== state.user) {
+                await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: after.name, words: after.words, duration: after.duration }, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+                lines.push(`${target.name}: ${after.words.charAt(0).toLowerCase()}${after.words.slice(1)} for ${after.duration.value} ${after.duration.value === 1 ? after.duration.unit.replace(/s$/, "") : after.duration.unit}.`);
+            }
             continue;
         }
         // (Moon Radish Soup lowers the condition rather than ending it.)

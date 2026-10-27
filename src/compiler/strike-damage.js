@@ -178,6 +178,17 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
             requires.push(sentence.trim());
             continue;
         }
+        // (And how far, Starshot Arrow (Greater)'s "You can fire at any creature you can detect, regardless of range. The arrow travels instantly,
+        // hitting your target as soon as you fire the arrow. This is a teleportation effect": the card's lines too, 2026-10-27.)
+        if (/^You can fire at any creature you can detect, regardless of range\.$/i.test(sentence.trim())) {
+            requires.push("It can fire at any creature it can detect, however far beyond its weapon's range.");
+            continue;
+        }
+        if (/^The arrow travels instantly, hitting your target as soon as you fire the arrow\.$/i.test(sentence.trim())) {
+            requires.push("The arrow travels instantly, a teleportation effect.");
+            continue;
+        }
+        if (/^This is a teleportation effect\.$/i.test(sentence.trim()) && /\bThe arrow travels instantly\b/i.test(body)) continue;
         // (More reach for the Strike, the Extending rune's "You Strike with the weapon, and you have reach 60 feet for the Strike", Tasset of
         // Flexibility's "Make a Strike with a melee weapon, increasing your reach by 5 feet for that Strike": strike.reach, the card's line —
         // PF2e's own Strike at a creature that far, which PF2e doesn't measure; its intro "giving you an impossible reach" said by it.)

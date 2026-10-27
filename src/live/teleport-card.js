@@ -53,6 +53,28 @@ export function freeSpacesBeside(space, size, occupied = [], { grid, bounds = nu
     return spots.sort((a, b) => far(a) - far(b));
 }
 
+// The squares a token crosses moving in a straight line from start to end (2026-10-27, teleport.move.trail: Hellfire Boots'): start and end its
+// top-left corners, size { w, h } its space in pixels, grid the grid's size → [{ x, y }] the top-left corners of the squares its space passes
+// over on the way, not those it started on, in order.
+export function squaresAlong(start, end, size, grid) {
+    const cells = new Map();
+    const footprint = (x, y) => {
+        const list = [];
+        for (let dx = 0; dx < size.w; dx += grid) for (let dy = 0; dy < size.h; dy += grid) list.push({ x: Math.round((x + dx) / grid) * grid, y: Math.round((y + dy) / grid) * grid });
+        return list;
+    };
+    const first = new Set(footprint(start.x, start.y).map((cell) => `${cell.x},${cell.y}`));
+    const steps = Math.max(1, Math.ceil(Math.hypot(end.x - start.x, end.y - start.y) / (grid / 4)));
+    for (let step = 1; step <= steps; step++) {
+        const at = step / steps;
+        for (const cell of footprint(start.x + (end.x - start.x) * at, start.y + (end.y - start.y) * at)) {
+            const key = `${cell.x},${cell.y}`;
+            if (!first.has(key) && !cells.has(key)) cells.set(key, cell);
+        }
+    }
+    return [...cells.values()];
+}
+
 // Its other lines: the farther range after a critical success, its user alone, the damage along the way, line of effect.
 export function teleportLines(teleport) {
     return [
@@ -60,6 +82,8 @@ export function teleportLines(teleport) {
         ...(teleport?.lines ?? []),
         // (Its user's own move, src/compiler/move.js: what it ignores, how it ends.)
         ...(teleport?.move?.lines ?? []),
+        // (The trail it leaves, Hellfire Boots'.)
+        teleport?.move?.trail ? `Each square it moves through is hazardous terrain for ${teleport.move.trail.lasts.value} ${teleport.move.trail.lasts.value === 1 ? teleport.move.trail.lasts.unit.replace(/s$/, "") : teleport.move.trail.lasts.unit}: ${teleport.move.trail.formula.replace(/\[(\w+)\]/g, " $1")} damage to a creature that moves through it` : null,
         // (A creature moved to a space its user picks, src/compiler/placed.js: how near its user, its own lines.)
         Number.isFinite(teleport?.place?.nearSource) ? `Into a space within ${teleport.place.nearSource} feet of ${teleport.place.by?.name ?? "its user"}` : null,
         teleport?.place?.optional ? `${teleport.place.by?.name ?? "Its user"} can leave it where it is` : null,

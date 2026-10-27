@@ -5,7 +5,7 @@
 // Stride, Step or Leap (src/compiler/move.js): the token moved on the map as a move is.
 
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
-import { createTeleportCard, freeSpacesBeside, teleportCardHTML, teleportRange } from "../src/live/teleport-card.js";
+import { createTeleportCard, freeSpacesBeside, squaresAlong, teleportCardHTML, teleportRange } from "../src/live/teleport-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, damageRollClass, entryOf, spaceOf, stateOf } from "./foundry.js";
 import { smokeZone } from "./cast-smoke.js";
 
@@ -170,6 +170,8 @@ export async function applyTeleportCard(message, { destination = null, targets =
     const results = [summoned ? `${summoned.name} teleports to ${state.user.name}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.` : `${state.user.name} ${done}${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`];
     // (Others along, teleport.with: Bring Me Near's, Blink Blade's target, Transposition Ammunition's.)
     if (teleport.with) results.push(...(await bringAlong(token, start, at, targets, teleport.with)));
+    // (The trail its move leaves, Hellfire Boots': the ability module's zone over the squares it crossed.)
+    if (move?.trail) results.push(await trailZone(move.trail, token, start, at, state.item));
     // (Smoke where it left and where it lands, Blink Blade's: the ability module's zone at each, Concealed inside.)
     if (teleport.smoke) results.push(await smokeAt(teleport.smoke, token, [start, at], state.item));
     // (Damage along the way, Quartz-Coil Rail Transport's: its user and each creature the line between its two spaces crosses.)
@@ -226,4 +228,21 @@ export async function smokeAt(smoke, token, points, item) {
     if (!startZone) return "Smoke at the space it left and the one it landed in: Concealed inside until the end of its next turn (by hand).";
     for (const point of points) await startZone({ item: { name: item.name, uuid: item.uuid ?? null, actor: token.actor }, plan: { builtin: "zone", source: { name: item.name }, zone: smokeZone(smoke, size) }, sourceToken: token, at: { token: { id: null, x: point.x, y: point.y, width: size, height: size, shape: 0 }, scene: token.parent } });
     return "Smoke fills the space it left and the one it landed in.";
+}
+
+// The trail a move leaves (teleport.move.trail { formula, lasts }): one ability module zone over the squares the token crossed — made at the first,
+// its shapes then each of them — hazardous terrain, its damage to a creature entering it, for its time. → the card's line.
+export async function trailZone(trail, token, start, at, item) {
+    const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
+    const size = canvas.grid.size;
+    const cells = squaresAlong(start, at, { w: (Number(token.width) || 1) * size, h: (Number(token.height) || 1) * size }, size);
+    const words = `${trail.formula.replace(/\[(\w+)\]/g, " $1")} damage to a creature moving through`;
+    if (!startZone || !cells.length) return `Each square it moved through is hazardous terrain, ${words} (by hand).`;
+    const zone = { area: { type: "square", value: 5 }, centre: "snare", range: 0, lasts: trail.lasts, untilReused: false, concealed: false, terrain: [], others: false, hazard: { formulas: [trail.formula] }, saves: [], damage: [], effect: null, modifiers: [], notes: [`The squares it moved through: hazardous terrain, ${words}.`] };
+    const scene = token.parent;
+    const before = new Set((scene.regions?.contents ?? [...(scene.regions ?? [])]).map((region) => region.id));
+    await startZone({ item: { name: item.name, uuid: item.uuid ?? null, actor: token.actor }, plan: { builtin: "zone", source: { name: item.name }, zone }, sourceToken: token, at: { token: { id: null, x: cells[0].x, y: cells[0].y, width: 1, height: 1, shape: 0 }, scene } });
+    const region = (scene.regions?.contents ?? [...(scene.regions ?? [])]).find((one) => !before.has(one.id) && one.flags?.[ABILITY_ID]?.zone);
+    if (region && cells.length > 1) await region.update({ shapes: cells.map((cell) => ({ type: "rectangle", x: cell.x + size / 2, y: cell.y + size / 2, width: size, height: size, anchorX: 0.5, anchorY: 0.5, rotation: 0, gridBased: true })) });
+    return `The ${cells.length} square${cells.length === 1 ? "" : "s"} it moved through: hazardous terrain, ${words}.`;
 }

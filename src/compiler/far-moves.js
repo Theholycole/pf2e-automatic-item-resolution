@@ -76,14 +76,51 @@ const TRAVEL = [
     [/^On a success, you arrive (\d+) miles off target using interplanar teleport or halve the distance you're off-target with teleport\s*\.$/i, (match) => `On a success it arrives ${match[1]} miles off target with Interplanar Teleport, or half as far off target with Teleport; ${AWAY}.`],
     [/^On a critical success, you arrive exactly on target\.?$/i, () => "On a critical success it arrives exactly on target."]
 ];
-const TRAVEL_SPELLS = /^(?:Teleport|Interplanar Teleport)$/i;
-const travelLine = (note) => TRAVEL.find(([pattern]) => pattern.test(String(note).trim()));
+// (And where a cast's targets are picked from and what it commands, the bloom's own choices of its user's: Bewitching Bloom (Purple Iris)'s "The
+// bloom casts a 5th-rank Command spell (DC 28) selecting targets within range of the ally. Each target that fails the save must fall Prone and
+// pays homage to your ally" — the spell module's Command, its range from the ally chosen and its command Drop Prone lines of the card.)
+const COMMANDED = [
+    [/^The bloom casts an? \d+(?:st|nd|rd|th)-rank Command spell \(DC \d+\) selecting targets within range of the ally\.$/i, () => "Its targets are picked within the spell's range of the ally chosen, not of its user."],
+    [/^Each target that fails the save must fall Prone and pays homage to your ally\.$/i, () => "Its command: Drop Prone, paying homage to the ally."]
+];
+const CAST_LINES = [[/^(?:Teleport|Interplanar Teleport)$/i, TRAVEL], [/^Command$/i, COMMANDED]];
 export function withTravelCast(plan) {
-    if (plan?.builtin !== "cast-spell" || !plan.partial || !TRAVEL_SPELLS.test(plan.spell?.name ?? "") || !(plan.notes ?? []).length || !plan.notes.every((note) => travelLine(typeof note === "string" ? note : note?.text))) return plan;
+    const lineSet = CAST_LINES.find(([spell]) => spell.test(plan?.spell?.name ?? ""))?.[1];
+    const castLine = (note) => lineSet?.find(([pattern]) => pattern.test(String(note).trim()));
+    if (plan?.builtin !== "cast-spell" || !plan.partial || !lineSet || !(plan.notes ?? []).length || !plan.notes.every((note) => castLine(typeof note === "string" ? note : note?.text))) return plan;
     const lines = plan.notes.map((note) => {
-        const [pattern, words] = travelLine(typeof note === "string" ? note : note.text);
+        const [pattern, words] = castLine(typeof note === "string" ? note : note.text);
         return words(pattern.exec(String(typeof note === "string" ? note : note.text).trim()));
     }).filter(Boolean);
     const { partial, ...rest } = plan;
     return { ...rest, notes: lines, automation: { ...(plan.automation ?? {}), level: "automatic" } };
+}
+
+// A creature sent to another plane on a row (2026-10-27): Maw of Hungry Shadows' critical failure, "As failure, but the shadows also pull the
+// creature into the tome, teleporting it to the Netherworld" — beside that row's own Blinded and Drained 2, the creature off this plane: words
+// on its note Effect, its token leaving the scene the map's (the user's rulings 1 and 2), the GM's line gone. Pure.
+const SENT = /\b(?:teleporting|sending|banishing) (?:it|them|the creature) to (the [A-Z][\w-]+(?: [A-Z][\w-]+)*|another plane)\.?$/;
+export function withPlaneSent(plan) {
+    if (plan?.resolution?.kind !== "save" || !plan.resolution.outcomes?.criticalFailure) return plan;
+    const row = plan.resolution.outcomes.criticalFailure;
+    // (The ability compiler's line, the row it's as said after it: "… to the Netherworld. (failure: The creature is blinded …)".)
+    const bare = (line) => String(line).trim().replace(/\s*\((?:success|failure|critical success): [^)]*\)$/i, "");
+    const lines = (row.manualInstructions ?? []).filter((line) => SENT.test(bare(line)));
+    if (!lines.length || !(row.effects ?? []).length) return plan;
+    // (Its words: the note Effect's guards.js made, else the GM's line's after "As failure, but".)
+    const note = (row.noteEffects ?? []).find((entry) => SENT.test(String(entry.text ?? "").replace(/\s*The GM handles it\.$/, "").trim()));
+    const words = note ? String(note.text).replace(/\s*The GM handles it\.$/, "").trim() : bare(lines[0]).replace(/^\{target\} \([^)]*\):\s*/, "").replace(/^As failure, but /i, "").trim();
+    const where = SENT.exec(words)[1];
+    const text = `${words.charAt(0).toUpperCase()}${words.slice(1).replace(/\.$/, "")}: off this plane, on ${where}; its token leaves the scene.`;
+    const manualInstructions = row.manualInstructions.filter((line) => !lines.includes(line));
+    const { manualInstructions: _, ...rest } = row;
+    const noteEffects = note ? row.noteEffects.map((entry) => (entry === note ? { ...entry, text } : entry)) : [...(row.noteEffects ?? []), { label: "critical failure", text, duration: null }];
+    const outcomes = { ...plan.resolution.outcomes, criticalFailure: { ...rest, ...(manualInstructions.length ? { manualInstructions } : {}), noteEffects } };
+    const next = { ...plan, resolution: { ...plan.resolution, outcomes } };
+    const left = (plan.notes ?? []).length || (plan.unread ?? []).length || Object.values(outcomes).some((one) => (one?.manualInstructions ?? []).length);
+    if (next.partial && !left) {
+        delete next.partial;
+        next.automation = { ...(next.automation ?? {}), level: "automatic" };
+    }
+    return next;
 }

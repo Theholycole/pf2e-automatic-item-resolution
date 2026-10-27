@@ -53,7 +53,8 @@ const WITH_LINES = [
     [/^These creatures must each arrive in unoccupied squares adjacent to the [\w' -]+?; if there's not enough space for both of them, you choose which one is teleported\.$/i, () => "With no room beside it for both, its user picks the one that goes (the first targeted)"],
     [/^The target arrives in a safe, open space of your choosing adjacent to your arrival space\.$/i, () => "Its target lands in a free space beside it (its user can move it to another beside it)"],
     [/^If there's not enough room for everyone, only you are transported\.$/i, () => "With no room for them all, only its user goes"],
-    [/^If there's not enough room for you, the teleportation fails\.$/i, () => "With no room for its user, it fails"]
+    [/^If there's not enough room for you, the teleportation fails\.$/i, () => "With no room for its user, it fails"],
+    [/^Creatures who are still mounted on the [\w' -]+? when it dissolves fall Prone in the space where the [\w' -]+? corpse ends its movement\.$/i, () => "Those still on it when it dissolves, a round after it lands, fall Prone where it ended (dismounting first is their own move)"]
 ];
 // (Smoke where it leaves and where it arrives, Blink Blade's "This teleportation also creates puffs of smoke, as noted with the activation
 // above" — its Translocate's: Concealed inside till the end of its user's next turn, teleport.smoke, scripts/teleport.js.)
@@ -63,6 +64,10 @@ const SMOKE = /^This teleportation also creates puffs of smoke, as noted with th
 // range": the creature targeted moved, teleport.summon, within that range of its user — 2026-10-27.)
 const SUMMON = /\bthe creature to which it is attuned teleports instantly from as far as (\d+|one|a) miles? away to an unoccupied space within (\d+) feet of you\b/i;
 const SUMMON_FAILS = /^The [\w' -]+? has no effect if the attuned creature is dead, on another plane, or outside the range\.$/i;
+// (Or a ride, Hippogriff in a Jar's effigy, "The hippogriff waits up to 1 round and allows two creatures to mount it, then Flies up to 65 feet and
+// waits 1 more round to give the mounted creatures time to dismount": its user's move as a Fly, the other rider along — teleport.move and
+// teleport.with, 2026-10-27; those still on it when it dissolves falling Prone a line, their dismount their own.)
+const RIDE = /\bThe ([\w' -]+?) waits up to 1 round and allows (two|three|four|\d+) creatures to mount it, then Flies up to (\d+) feet and waits 1 more round to give the mounted creatures time to dismount\./i;
 const COUNTS = { two: 2, three: 3, four: 4 };
 const countOf = (words) => COUNTS[String(words).toLowerCase()] ?? Number(words);
 // (Farther after the triggering save's critical success, Dweomerveil's "If you critically succeeded at the triggering save, you can instead
@@ -89,6 +94,8 @@ const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|r
 // The text (plain) → { within, speedTimes, from, sentence } or null.
 export function readTeleport(text) {
     const plain = String(text ?? "");
+    const ride = RIDE.exec(plain);
+    if (ride) return { within: Number(ride[3]), speedTimes: null, from: "self", match: ride, move: { verb: "Fly", lines: [`On the ${ride[1]}: it waits up to a round for ${countOf(ride[2])} creatures to mount, flies, then waits a round for them to dismount`] }, with: { count: countOf(ride[2]) - 1 }, lines: [`Its other rider${countOf(ride[2]) > 2 ? "s go" : " goes"} along: target ${countOf(ride[2]) > 2 ? "them" : "it"} before Pick`] };
     const bring = BRING.exec(plain);
     if (bring) return { within: Number(bring[1]) * 5280, speedTimes: null, from: "self", match: bring, with: { count: countOf(bring[2]) }, lines: [`Up to ${countOf(bring[2])} willing creatures adjacent to it go along: target them before Pick`, `Beyond this map, its token and theirs go to that scene`] };
     const withTarget = WITH_TARGET.exec(plain);
@@ -148,7 +155,7 @@ export function teleportPlan(html, base, whole = null) {
     const notes = ruled.filter((sentence) => !OWN_STRIKE(sentence) && sentence !== square);
     const lines = [...(read.lines ?? []), ...(along ? [`Up to ${countOf(along[1])} willing creatures adjacent to it go along: target them before Pick`] : []), ...sentences.filter((sentence) => (read.with || along) && withLine(sentence)).map((sentence) => withLine(sentence)[1]()), ...(summonFails ? ["Nothing happens if it's dead, on another plane or farther away"] : [])];
     const others = read.with ?? (along ? { count: countOf(along[1]) } : null);
-    const teleport = { ...(lines.length ? { lines } : {}), ...(others ? { with: others } : {}), ...(read.summon ? { summon: true } : {}), ...(smoke ? { smoke: { lasts: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" }, notes: ["A strong wind disperses it at once."] } } : {}), within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), ...(square ? { orSquare: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
+    const teleport = { ...(lines.length ? { lines } : {}), ...(read.move ? { move: read.move } : {}), ...(others ? { with: others } : {}), ...(read.summon ? { summon: true } : {}), ...(smoke ? { smoke: { lasts: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" }, notes: ["A strong wind disperses it at once."] } } : {}), within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), ...(square ? { orSquare: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
     return {
         ...base,
         builtin: "teleport",

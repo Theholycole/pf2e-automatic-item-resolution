@@ -35,7 +35,8 @@ import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
 import { withOwnMoves } from "./own-moves.js";
-import { farMovesPlan, withTravelCast } from "./far-moves.js";
+import { farMovesPlan, withPlaneSent, withTravelCast } from "./far-moves.js";
+import { hoovesPlan, movingNotesPlan } from "./moving-notes.js";
 import { isSpecialItem, withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { heightWaysPlan, withFalls } from "./falls.js";
@@ -702,6 +703,12 @@ function compileEach(item, options = {}) {
         plan = withOwnMoves(plan, activation.html, base);
         // (Off the map, or only objects moved: lines of the card, or whispered — src/compiler/far-moves.js: Homeward Wayfinder, the Paired runes.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = farMovesPlan(activation.html, base) ?? plan;
+        // (A creature sent to another plane on a row, src/compiler/far-moves.js: Maw of Hungry Shadows' critical failure.)
+        plan = withPlaneSent(plan);
+        // (What holds a creature or a way in place, words on its user's note Effect, and stepping stones' lines, src/compiler/moving-notes.js:
+        // Magnetizing, Immovable Arm, Warding Escutcheon's door, Stepping Stone Shot; Guangu of the Steppe's two Effects, the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = movingNotesPlan(activation.html, base, item) ?? plan;
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = hoovesPlan(activation.html, base, { own: { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }, level: Number(item.system?.level?.value) || 0, type: item.type }) ?? plan;
         // (Its user's shield raised, src/compiler/raise-shield.js: Shield of Snakes' Snap Up — PF2e's own Raise a Shield on Apply.)
         plan = withRaiseShield(plan, activation.html, base);
         // (One of its user's items moved or changed, or itself, src/compiler/objects.js: Retrieval Belt, The Forge, Lady's Knife.)
