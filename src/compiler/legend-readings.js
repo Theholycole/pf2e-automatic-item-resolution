@@ -60,6 +60,22 @@ const NONLETHAL_RULES = [{ key: "AdjustStrike", mode: "add", property: "weapon-t
 const NONLETHAL_WORDS = "Its Strikes with the Whisperer of Souls deal nonlethal damage this turn";
 const DEFIES = "The glaive defies a choice only when it has a reason to, a soul it could take for one: the GM's call.";
 
+// (The Doomsday Door's week-long rites, a day at a time: a Mythic Point (plan.spend), or doomed 1 higher (PF2e's condition, stacked), or an
+// assistant's point or the GM's sacrifice — each day its own way, the card open for the week; then, for one, its seventh day's way.)
+const DOWNTIME = "A downtime activity: no other downtime or exploration while it lasts.";
+function doorRite(lines, last, { base, info }) {
+    const day = (words) => `One day of the seven. ${words}`;
+    return {
+        ...ways([
+            { name: "A day: 1 Mythic Point", html: "<p>A day of the rite, for a Mythic Point.</p>", card: { ...own({ notes: [day("It costs its user a Mythic Point."), ...lines, DOWNTIME] }), spend: { mythicPoints: 1 } } },
+            { name: "A day: doomed 1 higher", html: "<p>A day of the rite, its doomed value 1 higher.</p>", card: { ...own({ notes: [day("Its user's doomed value rises by 1."), ...lines, DOWNTIME] }), resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), effects: [{ kind: "condition", slug: "doomed", value: 1, duration: null, stack: { by: 1 } }] } } } } },
+            { name: "A day: an assistant's point or a sacrifice", html: "<p>A day of the rite, paid another way.</p>", card: own({ notes: [day("A creature assisting with the rite spends one of its own Mythic Points (from its sheet), or its user makes a fitting sacrifice in its place, as the GM decides."), ...lines, DOWNTIME] }) },
+            ...(last ? [last] : [])
+        ], { base, info }),
+        once: undefined
+    };
+}
+
 // Each reading: the plan's source name it's for, a pattern for each of its effect's sentences — every sentence must be one, in order — and
 // the card they make (from its matches, the plan read before and the activation's base and item part).
 const READINGS = [
@@ -394,6 +410,118 @@ const READINGS = [
                     strike: { range: "ranged", save: null, ammo: false, notes: [], lines: ["Its damage is the arrow's own."], counteract: { counteract: { rank: Number(counter[1]), modifier: Number(counter[2]), traits: ["darkness"], at: "target", free: { name: "a darkness effect of its user's choice in the area hit" } } } }
                 } }
             ], { base, info });
+        }
+    },
+    {
+        // (Presented to Charg at the Adventure Path's climax, its requirements met: the curse lifted, a line of the card — and the soulheart
+        // destroyed by it, plan.item.destroyed.)
+        name: "Soulheart (Angelic): Defy Charg",
+        sentences: [/^By presenting the angelic soulheart to Charg at the climax of this Adventure Path, you can fully remove the Bastardhall Curse and free all of the souls trapped within!$/],
+        card: () => ({ ...own({ notes: ["Only with Pharasma's and Shelyn's favor earned and Caydserris Arudora defeated, at the Adventure Path's climax.", "Presented to Charg, it fully removes the Bastardhall Curse and frees all of the souls trapped within.", "The soulheart is destroyed by it: Apply removes it."] }), item: { destroyed: true } })
+    },
+    {
+        // (A week's rite, a day at a time — a Mythic Point, or doomed 1 higher (PF2e's condition, stacked), or an assistant's point or the GM's
+        // sacrifice — then attuned and shut: the ways card, open for the week.)
+        name: "Doomsday Door: Attune Door",
+        sentences: [
+            /^You attune the Doomsday Door to a location associated with destruction, such as the heart of an active volcano\.$/,
+            /^You must know the location exists\.$/,
+            /^If it is on a different plane, a planar key must be present\.$/,
+            /^Each day you spend Attuning, you must spend 1 Mythic Point or your doomed condition's value increases by 1\.$/,
+            /^A creature assisting you with the rite can spend a Mythic Point instead, and you can avoid spending a Mythic Point by making an appropriate sacrifice, as determined by the GM\.$/,
+            /^After seven days, the Doomsday Door attunes to your chosen location, then shuts\.$/,
+            /^Until then, this activity can reattune to the door to a different location\.$/,
+            /^You can also use this activation to negate a Doomsday Door ?'s current attunement\.$/
+        ],
+        card: (found, plan, { base, info }) => doorRite([
+            "A place tied to destruction its user knows exists (the heart of an active volcano); on another plane, only with a planar key there.",
+            "After the seventh day the door attunes to it, then shuts. Till then it can be attuned elsewhere instead; this also undoes an attunement."
+        ], null, { base, info })
+    },
+    {
+        // (The same week's rite, then the apocalypse the door releases: whispered to the GM and its user, the GM's to determine.)
+        name: "Doomsday Door: Open Door",
+        sentences: [
+            /^You perform an extended rite to open the Doomsday Door ?\.$/,
+            /^Each day you spend performing the rite, you must spend 1 Mythic Point or your doomed condition's value increases by 1\.$/,
+            /^A creature assisting you with the rite can spend a Mythic Point instead, and you can avoid spending a Mythic Point by making an appropriate sacrifice, as determined by the GM\.$/,
+            /^After 7 days, the Doomsday Door opens, releasing an apocalypse related to the location to which the door is attuned\.$/,
+            /^The consequences are determined by the GM but are always regional and far-reaching\.$/,
+            /^A Doomsday Door attuned to the Void, for example, might release a burst of energy that causes the dead in a radius of hundreds of miles to rise from their graves\.$/
+        ],
+        card: (found, plan, { base, info }) => doorRite(["Only once the door is attuned."], { name: "The seventh day: it opens", html: "<p>The door opens.</p>", card: { builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text: "The Doomsday Door opens, releasing an apocalypse tied to the place it's attuned to: regional and far-reaching, as the GM determines (one attuned to the Void might raise the dead for hundreds of miles around)." } } }, { base, info })
+    },
+    {
+        // (Its own melee spell attack at +21: on a hit, the creature possessed — the lens's own PF2e Effect on it (its benefits, as invested)
+        // and a note Effect of the possession, for good — and its user no longer invested, its Effect gone (plan.uninvest, scripts/uninvest.js).)
+        name: "Ochre Fulcrum Lens",
+        sentences: [
+            /^While grasping the lens, make a melee spell attack roll with a modifier of @Check\[ochre-fulcrum-lens\|against:ac\]\{\+(\d+)\}\.$/,
+            /^On a hit, you force the splinter of Nhimbaloth's essence from the lens to possess the target\.$/,
+            /^You're no longer invested in the lens, and the target gains the benefits as though it had invested the lens but can't activate the lens's other abilities\.$/,
+            /^This effect is permanent, but it can be ended by any effect that removes a possession effect\.$/,
+            /^The lens doesn't have any magical abilities until the possession effect ends; when it does, the essence returns to the lens\.$/
+        ],
+        card: ([attack]) => {
+            const modifier = Number(attack[1]);
+            const effect = "Compendium.pf2e.equipment-effects.Item.5KXsyN9J78glG25I";
+            const possessed = { ...row({ noteEffects: [{ label: "Possessed by Nhimbaloth's splinter", text: "The splinter of Nhimbaloth's essence from the Ochre Fulcrum Lens possesses it: it has the lens's benefits as if it had invested it (the lens's Effect beside this), but can't activate the lens. For good, unless an effect that removes a possession ends it; then the essence returns to the lens (remove both Effects).", duration: null }] }), nativeEffects: [{ uuid: effect, label: "Effect: Ochre Fulcrum Lens" }] };
+            return {
+                targeting: { target: "1 creature", range: "touch", area: null },
+                ownCheck: { kind: "attack", modifier },
+                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier }, outcomes: rowsOf({ criticalSuccess: possessed, success: possessed }) },
+                uninvest: { degrees: ["success", "criticalSuccess"], effect },
+                notes: ["A melee spell attack while grasping the lens.", "While the possession lasts, the lens has no magical abilities: its activations don't work."]
+            };
+        }
+    },
+    {
+        // (Its next initiative rolled three times, the result of its choice kept — a fortune effect: an Effect on its user with PF2e's RollOption
+        // "air-initiative-thrice", scripts/initiative-thrice.js; Performance for initiative its own pick.)
+        name: "The Dance",
+        sentences: [
+            /^Your body begins to move with anticipation, creating a trail of afterimages for a moment\.$/,
+            /^You can roll initiative with a Performance check\.$/,
+            /^Regardless of what skill you use to roll for initiative, roll the check three times and take the result of your choice\.$/,
+            /^This is a fortune effect\.$/
+        ],
+        card: () => own({
+            ruleEffects: [{ name: "initiative three times", words: "Its next initiative roll is rolled three times, the result of its choice kept (a fortune effect)", rules: [{ key: "RollOption", domain: "initiative", option: "air-initiative-thrice" }], duration: fixed(1, "minutes") }],
+            notes: ["It can roll initiative with Performance: pick Performance as its initiative before rolling.", "Trailing afterimages as it moves, for a moment."]
+        })
+    },
+    {
+        // (Its lines of hot wax — the save read before, its Confused (and Slowed 1) an Effect granting them that the scraping ends — and the goo
+        // scraped off (an Interact: plan.item.scrape, scripts/scrape.js): the ways card, open for the fight.)
+        name: "The Waxworks",
+        sentences: [
+            /^You cause two (\d+)-foot lines of hot wax to extend out of the card as you present it\.$/,
+            /^The two lines must both start at you and extend in different directions\.$/,
+            /^If you are at least (\d+)th level, you can create a third line, and if you're at least (\d+)th level you can create a fourth line\.$/,
+            // (Its DC its owner's, the item compiler's stand-in "dc:9003" by now: src/compiler/item-data.js.)
+            /^All creatures in the area must attempt a @Check\[fortitude\|(?:against:class-spell|dc:\d+)\|[^\]]*\] save against your class DC or spell DC\.$/,
+            /^Critical Success The creature is unaffected\.$/,
+            /^Success The creature takes 2d6 persistent fire plus 2d6 persistent mental damage\.$/,
+            /^An affected creature or adjacent ally can reduce both of these values by 1d6 by spending an Interact action to scrape off the goo\.$/,
+            /^Until the damage is reduced to 1d6 per type, the affected creature is also Confused \(this is an emotion and mental effect\)\.$/,
+            /^Failure As success, but 4d6 persistent fire plus 4d6 persistent mental damage\.$/,
+            /^Critical Failure As success, but 6d6 persistent fire plus 6d6 persistent mental damage, and the creature's speed is Slowed 1 until the damage is reduced to 1d6 per type\.$/
+        ],
+        card: ([lines, , more], plan, { base, info }) => {
+            const outcomes = plan?.resolution?.outcomes;
+            if (plan?.resolution?.kind !== "save" || !outcomes?.criticalFailure?.effects?.some((effect) => effect.slug === "slowed")) return null;
+            const grant = (slug, value = null) => ({ key: "GrantItem", uuid: conditionUuid(slug), onDeleteActions: { grantee: "restrict" }, ...(value ? { alterations: [{ mode: "override", property: "badge-value", value }] } : {}) });
+            const wax = (slowed) => ({ label: "Hot wax", text: `${slowed ? "Confused and Slowed 1" : "Confused (an emotion and mental effect)"} while its persistent fire and mental damage from the wax are above 1d6 each: it or an adjacent ally scraping the goo off (an Interact) lowers each by 1d6.`, duration: null, rules: [grant("confused"), ...(slowed ? [grant("slowed", 1)] : [])] });
+            const waxed = (degree, slowed) => ({ ...outcomes[degree], effects: (outcomes[degree].effects ?? []).filter((effect) => !["confused", "slowed"].includes(effect.slug)), noteEffects: [...(outcomes[degree].noteEffects ?? []), wax(slowed)] });
+            const { notes, partial, automation, ...save } = plan;
+            const saved = { ...save, resolution: { ...plan.resolution, outcomes: { ...outcomes, success: waxed("success", false), failure: waxed("failure", false), criticalFailure: waxed("criticalFailure", true) } }, notes: [`Two ${lines[1]}-foot lines, each from its user in a different direction (a third from ${more[1]}th level, a fourth from ${more[2]}th): target every creature in them.`, "A creature immune to emotion or mental effects isn't confused by it: remove its Hot wax Effect."] };
+            return {
+                ...ways([
+                    { name: "Hot wax lines", html: "<p>Lines of hot wax.</p>", card: saved },
+                    { name: "Scrape off the goo (an Interact)", html: "<p>Scrape the goo off a creature.</p>", card: { ...own({ notes: ["The creature with the goo, or an ally next to it, spends an Interact action: target the creature, then Apply."] }), targeting: { target: "the creature with the goo", range: "touch", area: null }, item: { recipient: "targets", scrape: { types: ["fire", "mental"], die: 6, effect: "Hot wax", from: "The Waxworks" } } } }
+                ], { base, info }),
+                once: undefined
+            };
         }
     }
 ];

@@ -16,6 +16,9 @@ import { castPenaltySource, checkGateMet, gateOption, gateText, previewLines } f
 import { sinVulnerabilityOf, sinVulnerable } from "../src/live/sin-vulnerability.js";
 import { periodOf } from "../src/live/activations-card.js";
 import { nightsHitPoints } from "../scripts/rest.js";
+import { diceOf, scrapedFormula } from "../scripts/scrape.js";
+import { THRICE, thriceTotals } from "../scripts/initiative-thrice.js";
+import { uninvests } from "../scripts/uninvest.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const documents = (pack) => readDocuments(path.join(PACKS, pack)).filter((doc) => doc.collection === "items");
@@ -171,4 +174,48 @@ test("Wintershot's Signal Flare: a flare's light for a minute, or the arrow's hi
     const [up, at] = flare.ways.map((way) => way.plan);
     assert.deepEqual([routeOf(up), up.item.placedLight.bright, up.item.placedLight.dim, up.item.placedLight.duration.unit], ["item", 100, 200, "minutes"]);
     assert.deepEqual([routeOf(at), at.strike.counteract.counteract.rank, at.strike.counteract.counteract.modifier, at.strike.counteract.counteract.free.name], ["strike", 7, 26, "a darkness effect of its user's choice in the area hit"]);
+});
+
+test("Soulheart (Angelic)'s Defy Charg and the Doomsday Door's rites: the curse lifted and the soulheart destroyed; each day's cost a way of its own", () => {
+    const defy = activation("Soulheart (Angelic)", "Defy Charg");
+    assert.deepEqual([done(defy), routeOf(defy), defy.item.destroyed], [true, "item", true]);
+    assert.ok(previewLines({ plan: defy }).some((line) => /destroyed/.test(line)));
+    const attune = activation("Doomsday Door", "Attune Door");
+    const open = activation("Doomsday Door", "Open Door");
+    for (const rite of [attune, open]) {
+        assert.deepEqual([done(rite), routeOf(rite), rite.once], [true, "ways", undefined]);
+        const [point, doomed, other] = rite.ways.map((way) => way.plan);
+        assert.deepEqual([point.spend, routeOf(point)], [{ mythicPoints: 1 }, "item"]);
+        assert.deepEqual(rowOf(doomed).effects, [{ kind: "condition", slug: "doomed", value: 1, duration: null, stack: { by: 1 } }]);
+        assert.match(other.notes[0], /as the GM decides/);
+    }
+    assert.deepEqual([attune.ways.length, open.ways.length, routeOf(open.ways[3].plan)], [3, 4, "whisper"]);
+});
+
+test("Ochre Fulcrum Lens: its +21 melee spell attack possesses the creature hit — the lens's Effect on it — and its user is no longer invested", () => {
+    const [, possess] = activations("Ochre Fulcrum Lens");
+    assert.deepEqual([done(possess), routeOf(possess), possess.ownCheck, possess.resolution.check.modifier], [true, "save", { kind: "attack", modifier: 21 }, 21]);
+    assert.deepEqual(rowOf(possess).nativeEffects, [{ uuid: "Compendium.pf2e.equipment-effects.Item.5KXsyN9J78glG25I", label: "Effect: Ochre Fulcrum Lens" }]);
+    assert.deepEqual([rowOf(possess, "failure").nativeEffects, possess.uninvest.degrees], [undefined, ["success", "criticalSuccess"]]);
+    assert.deepEqual([uninvests(possess.uninvest, [{ degree: "failure" }]), uninvests(possess.uninvest, [{ degree: "criticalSuccess" }])], [false, true]);
+});
+
+test("The Dance: its user's next initiative rolled three times, the best set (src/live: scripts/initiative-thrice.js)", () => {
+    const [dance] = activations("The Dance");
+    const [effect] = dance.item.ruleEffects;
+    assert.deepEqual([done(dance), routeOf(dance), effect.rules], [true, "item", [{ key: "RollOption", domain: "initiative", option: THRICE }]]);
+    assert.ok(dance.notes.some((note) => /Performance/.test(note)));
+    assert.deepEqual(thriceTotals(25, 12, [3, 18]), { totals: [25, 16, 31], best: 31 });
+});
+
+test("The Waxworks: its lines' save with Confused (and Slowed 1) on an Effect the goo's scraping ends, and the scraping a way of its own", () => {
+    const [wax] = activations("The Waxworks");
+    assert.deepEqual([done(wax), routeOf(wax), wax.ways.map((way) => routeOf(way.plan))], [true, "ways", ["save", "item"]]);
+    const [lines, scrape] = wax.ways.map((way) => way.plan);
+    assert.deepEqual([lines.partial, rowOf(lines).effects, rowOf(lines).noteEffects[0].rules.map((rule) => rule.uuid)], [undefined, [], ["Compendium.pf2e.conditionitems.Item.yblD8fOR1J8rDwEQ"]]);
+    assert.deepEqual(rowOf(lines, "criticalFailure").noteEffects[0].rules.map((rule) => rule.alterations?.[0]?.value ?? null), [null, 1]);
+    assert.match(rowOf(lines, "failure").damage.formulas[0].formula, /4d6\[persistent,fire\]/);
+    assert.deepEqual([scrape.item.recipient, scrape.item.scrape], ["targets", { types: ["fire", "mental"], die: 6, effect: "Hot wax", from: "The Waxworks" }]);
+    assert.deepEqual([scrapedFormula("4d6", 6), scrapedFormula("1d6", 6), scrapedFormula("2d8", 6), scrapedFormula("2d6+1", 6)], [{ formula: "3d6", dice: 3 }, { formula: null, dice: 0 }, null, null]);
+    assert.deepEqual([diceOf("1d6"), diceOf("0d6"), diceOf("2d6+1")], [1, 0, Infinity]);
 });

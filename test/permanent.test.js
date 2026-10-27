@@ -474,8 +474,11 @@ test("conditions only under if/when come off their rows (Heart of Sarnax, Hex Bl
     assert.ok(!slugs(hex, "criticalFailure").includes("unconscious"), "unconscious only if the damage knocks it out");
     const winter = compileActivations(item("Wintershot"), { spellEffects })[0].plan;
     assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => winter.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.duration.value} ${effect.duration.unit}`)), [["dazzled 2 rounds"], ["dazzled 1 minutes"], ["dazzled 10 minutes"]]);
-    const wax = compileActivations(item("The Waxworks"), { spellEffects })[0].plan;
-    assert.deepEqual(["failure", "criticalFailure"].map((degree) => slugs(wax, degree).includes("confused")), [true, true]);
+    // (Since 2026-10-27 the save is the first way of its ways card, its Confused on the Effect the goo's scraping ends: the failure rows keep the
+    // success's, src/compiler/legend-readings.js.)
+    const wax = compileActivations(item("The Waxworks"), { spellEffects })[0].plan.ways[0].plan;
+    const granted = (plan, degree) => (plan.resolution.outcomes[degree].noteEffects ?? []).flatMap((note) => (note.rules ?? []).map((rule) => rule.uuid));
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => granted(wax, degree).includes("Compendium.pf2e.conditionitems.Item.yblD8fOR1J8rDwEQ")), [true, true]);
     const lament = compileActivations(item("Lamentation of the Faithless"), { spellEffects })[0].plan;
     const blinded = lament.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "blinded");
     assert.deepEqual([blinded.duration.value, blinded.duration.unit, slugs(lament, "criticalFailure").includes("slowed")], [1, "minutes", true]);

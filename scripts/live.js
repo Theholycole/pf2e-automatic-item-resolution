@@ -40,6 +40,7 @@ import { applyWaysCard, postWaysCard } from "./ways.js";
 import { reviveCreature } from "./revive.js";
 import { setOffSinVulnerability } from "./sin-vulnerability.js";
 import { restCreature } from "./rest.js";
+import { scrapeGoo } from "./scrape.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
@@ -51,7 +52,7 @@ import { readProficiencyRequirement, requirementWarning } from "../src/compiler/
 import { gateMet } from "../src/compiler/strike-gate.js";
 import { applyTableCard, postTableCard } from "./table.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
-import { becomeItem } from "./becomes.js";
+import { becomeItem, destroyItem } from "./becomes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
@@ -893,6 +894,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const became = await becomeItem(state.item.uuid, state.plan.item.becomes);
         if (became) lines.push(became);
     }
+    // (Or destroyed by its use, Soulheart (Angelic)'s Defy Charg: scripts/becomes.js destroyItem, 2026-10-27.)
+    if (state.plan.item?.destroyed) {
+        const gone = await destroyItem(state.item.uuid);
+        if (gone) lines.push(gone);
+    }
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const entry of state.plan.item?.ruleEffects ?? []) {
         if (!target.actor) break;
@@ -1235,6 +1241,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     if (state.plan.item?.sinVulnerability) lines.push(...await setOffSinVulnerability(target, recipient.name, state.plan.item.sinVulnerability, state));
     // (A full day's rest at once, Hallajin Key's renewal: PF2e's Rest for the Night and a night's Hit Points more, scripts/rest.js, 2026-10-27.)
     if (state.plan.item?.rest) lines.push(...await restCreature(target, recipient.name, state.plan.item.rest));
+    // (Persistent damage scraped off a die at a time, The Waxworks' goo: scripts/scrape.js, 2026-10-27.)
+    if (state.plan.item?.scrape) lines.push(...await scrapeGoo(target, recipient.name, state.plan.item.scrape));
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
     if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {
         if (!target.actor?.hasCondition?.(slug)) continue;
