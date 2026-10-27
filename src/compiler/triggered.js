@@ -217,6 +217,33 @@ export function withBeguiledAttacker(plan, { item, activation, index }) {
     };
 }
 
+// (And its other activation, "Choose one living creature within 30 feet of you. That creature must succeed at a DC 41 Will saving throw or become helpful
+// to you for the next 24 hours. If they succeed, they become friendly to you for 1 hour. If they critically succeed they're immune to this effect for
+// 1 year": the save card at the creature targeted, each row's attitude a note Effect on it for its time (the user's ruling for attitudes), the
+// critical success's immunity a note Effect for the year; only a living creature, a line of the card.)
+const COMMAND = [/^Choose one (living )?creature within (\d+) feet of you\.$/i, /^That creature must succeed at a @Check\[will\|dc:(\d+)[^\]]*\] saving throw or become helpful to you for the next (\d+) hours\.$/i, /^If they succeed, they become friendly to you for (\d+) hours?\.$/i, /^If they critically succeed they're immune to this effect for (\d+) years?\.$/i];
+export function withBeguilingCommand(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (sentences.length !== COMMAND.length || !COMMAND.every((pattern, at) => pattern.test(sentences[at]))) return plan;
+    const [choose, save, friendly, immune] = COMMAND.map((pattern, at) => pattern.exec(sentences[at]));
+    const hours = (value) => ({ mode: "fixed", value: Number(value), unit: "hours", expiry: "turn-start", anchor: "effect-start" });
+    const helpful = { ...none(), noteEffects: [{ label: "Helpful", text: "Helpful to the crown's wearer.", duration: hours(save[2]) }] };
+    const { targeting, ...base } = keptBase(plan, item, { activation, index });
+    return {
+        ...base,
+        noteOnly: undefined,
+        automation: { level: "automatic" },
+        targeting: { target: "1 creature", range: `${choose[2]} feet`, area: null },
+        resolution: { kind: "save", check: { roll: "save", statistic: "will", against: { dc: "fixed", value: Number(save[1]) } }, outcomes: {
+            criticalSuccess: { ...none(), noteEffects: [{ label: "Immune to the crown", text: "Immune to the crown's command.", duration: { mode: "fixed", value: Number(immune[1]) * 365, unit: "days", expiry: "turn-start", anchor: "effect-start" } }] },
+            success: { ...none(), noteEffects: [{ label: "Friendly", text: "Friendly to the crown's wearer.", duration: hours(friendly[1]) }] },
+            failure: helpful,
+            criticalFailure: helpful
+        } },
+        ...(choose[1] ? { notes: ["Only a living creature (not a construct or undead)."] } : {})
+    };
+}
+
 // --- A spell at its user counteracted -------------------------------------------------------------------------------------------------------------
 
 // GM Core's DCs by level, 0 to 25 (src/compiler/counteract.js's): a counteract modifier the text leaves out is its item's level's, less 10 (the
@@ -605,7 +632,7 @@ export function withStoredCharges(plan, { item, activation, index }) {
 }
 // --- The readers, in order --------------------------------------------------------------------------------------------------------------------
 
-const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell, withAlertWearers, withDrawnStrike, withNoteRule, withAvoidedDeath, withEchoedCall, withTranslocatedStrike, withWeaponCast, withDivertedEnergy, withCollapsedArmor, withStoredCharges];
+const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withBeguilingCommand, withAbsorbedSpell, withAlertWearers, withDrawnStrike, withNoteRule, withAvoidedDeath, withEchoedCall, withTranslocatedStrike, withWeaponCast, withDivertedEnergy, withCollapsedArmor, withStoredCharges];
 
 // The activation's plan → the plan its trigger's effect makes, or the same plan. entry: { activation, index } (compileEach's).
 export function withTriggered(plan, entry, item) {

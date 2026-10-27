@@ -408,3 +408,10 @@ test("Chain of Stars: three +1 striking force shuriken for its user's Strikes fr
         globalThis.fromUuid = saved;
     }
 });
+
+test("Beguiling Crown's command: the DC 41 Will save card at a living creature within 30 feet, its attitudes and its year's immunity on note Effects", () => {
+    const command = activation("Beguiling Crown", 2);
+    assert.equal(routeOf(command, "Choose one living creature"), "save");
+    const rows = command.resolution.outcomes;
+    assert.deepEqual([command.resolution.check.against.value, rows.failure.noteEffects[0].label, rows.failure.noteEffects[0].duration.value, rows.success.noteEffects[0].label, rows.criticalSuccess.noteEffects[0].duration.value, command.targeting.range, done(command)], [41, "Helpful", 24, "Friendly", 365, "30 feet", true]);
+});
