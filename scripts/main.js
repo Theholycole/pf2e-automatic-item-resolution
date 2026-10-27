@@ -32,6 +32,7 @@ import { setUpEndEarly } from "./end-early.js";
 import { setUpSlainWait } from "./slain-wait.js";
 import { setUpPausedItem } from "./paused-item.js";
 import { setUpMarkEnds } from "./mark-ends.js";
+import { setUpDoomHex } from "./doom-hex.js";
 import { setUpDropHeld } from "./drop-held.js";
 import { setUpMoveDamage } from "./move-damage.js";
 import { setUpFootDamage } from "./foot-damage.js";
@@ -198,6 +199,8 @@ Hooks.once("ready", async () => {
     setUpPausedItem();
     // (A mark that ends as its creature dies, Hunter's Dawn's: scripts/mark-ends.js.)
     setUpMarkEnds();
+    // (A curse that holds its creature unconscious for a day, then a save or it dies, Hex Blaster's: scripts/doom-hex.js.)
+    setUpDoomHex();
     // (What a creature drops of what it holds, Deadweight Snare's metal items: scripts/drop-held.js.)
     setUpDropHeld();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)

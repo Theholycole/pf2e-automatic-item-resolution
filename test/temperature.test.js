@@ -51,7 +51,8 @@ test("an activation's protection: Rime Jar's 8 hours (its Fatigued a note), Slit
     const jar = compileActivations(item("Rime Jar"))[0].plan;
     assert.deepEqual([jar.temperature.counts, jar.temperature.duration.value, jar.partial], [{ "extreme-cold": "severe-cold" }, 8, true]);
     const bane = compileActivations(item("Slithermaw's Bane")).find((entry) => entry.activation.name === "Terrain Adaptation").plan;
-    assert.deepEqual([bane.builtin, bane.ways.map((way) => way.name), bane.ways[1].plan.temperature.counts, bane.ways[0].plan.temperature.until, bane.partial], ["ways", ["Heat", "Cold"], { "severe-cold": "mild-cold", "extreme-cold": "mild-cold" }, "Until its user's next daily preparations", true]);
+    // (2026-10-27: its terrain parts built too, no longer notes — its terrain PF2e's ChoiceSet, test/unique-b4-5-2026-10-27.test.js.)
+    assert.deepEqual([bane.builtin, bane.ways.map((way) => way.name), bane.ways[1].plan.temperature.counts, bane.ways[0].plan.temperature.until, bane.partial], ["ways", ["Heat", "Cold"], { "severe-cold": "mild-cold", "extreme-cold": "mild-cold" }, "Until its user's next daily preparations", undefined]);
 });
 
 test("the environment module's API: worn, held and invested items as each needs; a sheet toggle's season; an ally's banner within its aura; the cloak's fatigue hours only where it works", async () => {

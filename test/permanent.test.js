@@ -470,7 +470,8 @@ test("conditions only under if/when come off their rows (Heart of Sarnax, Hex Bl
     const heart = compileActivations(item("Heart of Sarnax"), { spellEffects }).find((entry) => entry.activation.name === "Two Hearts as One").plan.ways[1].plan;
     assert.deepEqual(slugs(heart, "criticalFailure"), ["stunned"], "slowed 2 only after the stun");
     assert.deepEqual([heart.afterEnds[0].when, heart.afterEnds[0].then.slug], ["stunned", "slowed"]);
-    const hex = compileItem(item("Hex Blaster"), { spellEffects }) ?? at("Hex Blaster");
+    // (2026-10-27: the hex an item card marking the creature, its save the card after it, plan.again — test/unique-b4-5-2026-10-27.test.js.)
+    const hex = compileActivations(item("Hex Blaster"), { spellEffects })[0].plan.again.plan;
     assert.ok(!slugs(hex, "criticalFailure").includes("unconscious"), "unconscious only if the damage knocks it out");
     const winter = compileActivations(item("Wintershot"), { spellEffects })[0].plan;
     assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => winter.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.duration.value} ${effect.duration.unit}`)), [["dazzled 2 rounds"], ["dazzled 1 minutes"], ["dazzled 10 minutes"]]);

@@ -172,6 +172,7 @@ export function previewLines(state) {
     for (const attack of plan?.item?.attacks ?? []) lines.push(attackText(attack));
     for (const healing of plan?.item?.fastHealing ?? []) lines.push(fastHealingText(healing));
     if (plan?.item?.creates) lines.push(createsText(plan.item.creates));
+    if (plan?.item?.space) lines.push(spaceText(plan.item.space));
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     // (PF2e's own rules on it, Mirrorblade's flanking.)
     for (const entry of plan?.item?.ruleEffects ?? []) lines.push(`${entry.words}${forTime(entry.duration)}`);
@@ -588,6 +589,22 @@ export function levelTempText(entry) {
     if (entry.from === "amount") return `${entry.heal ? "Hit Points regained" : "Temporary Hit Points"} equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}${entry.of} (typed on the card)${entry.max ? `, at most ${entry.max}` : ""}${!entry.heal && entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
     if (entry.heal) return `Hit Points regained equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted`;
     return `Temporary Hit Points equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted${entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
+}
+
+// A curse of impending doom on an Effect (its RollOption "air-doom-curse:<DC>:<days>", Hex Blaster's: scripts/doom-hex.js) → { dc, days }, or null.
+export function doomCurseOf(effect) {
+    const option = (effect?.system?.rules ?? []).find((rule) => rule?.key === "RollOption" && /^air-doom-curse:\d+:\d+$/.test(String(rule.option ?? "")))?.option;
+    if (!option) return null;
+    const [, dc, days] = option.split(":");
+    return { dc: Number(dc), days: Number(days) };
+}
+
+// An extradimensional space it opens, What Doors We Open's door (plan.item.space { uuid, name, like }): "Opens the Door Within, a space as a
+// Spacious Pouch (Type II)"; and its container, that PF2e item's own data renamed and flagged as the item's (made once, opened after).
+export const spaceText = (space) => `Opens ${space.name}, an extradimensional space as ${/^[aeiou]/i.test(space.like) ? "an" : "a"} ${space.like} (a container in its user's inventory)`;
+export function spaceSource(source, { space, itemUuid, moduleId = "pf2e-automatic-item-resolution" }) {
+    const { _id, ...rest } = source ?? {};
+    return { ...rest, name: space.name, flags: { ...(rest.flags ?? {}), [moduleId]: { ...(rest.flags?.[moduleId] ?? {}), spaceOf: itemUuid } } };
 }
 
 // Fruit it grows in words: "1d4 Verdant Branch Fruit in its user's inventory, each eaten for 2d6+5 Hit Points".

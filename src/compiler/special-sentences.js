@@ -51,6 +51,104 @@ const researchOf = (html) => /Research<\/strong>\s*Accumulate (\d+) RP by making
 
 const READINGS = [
     {
+        // (A hex of impending doom on a creature its user sees, for a minute: the item card marks it; its Will save card (DC 28), kept open for
+        // that minute, is pressed at the end of each of its user's turns they hit it with the hex blaster — one save a turn, however many hits.
+        // Its critical failure's curse: a note Effect whose RollOption "air-doom-curse:<DC>:<days>" scripts/doom-hex.js reads — fallen
+        // Unconscious while cursed, it stays so for a day (unless the curse goes), then a Fortitude save at that DC, death and incapacitation,
+        // or it dies.)
+        name: "Hex Blaster",
+        over: true,
+        sentences: [
+            /^You afflict a creature you can see with a hex of impending doom\.$/,
+            /^The hex lasts for (\d+) (minutes?)\.$/,
+            /^As long as the creature is hexed, when you hit it with a round from the hex blaster, the creature must attempt a @Check\[will\|dc:(\d+)\] save at the end of your turn; the creature attempts a single Will save regardless of the number of times you hit it\.$/,
+            /^Critical Success The creature is unaffected\.$/,
+            /^Success The creature is Frightened (\d+)\.$/,
+            /^It also takes (\d+d\d+) persistent mental damage\.$/,
+            /^Failure The creature is Frightened (\d+)\.$/,
+            /^It also takes (\d+d\d+) persistent mental damage\.$/,
+            /^Critical Failure The creature is frightened (\d+) and Slowed (\d+) for (\d+) (minutes?)\.$/,
+            /^It also takes (\d+d\d+) persistent mental damage and is cursed with a hex of impending doom\.$/,
+            /^If the target falls Unconscious from damage dealt by this Strike or the persistent mental damage, it remains unconscious for (\d+) (days?) or until this curse is removed\.$/,
+            /^After 1 day, if the creature is still unconscious, it must succeed at a @Check\[fortitude\|dc:(\d+)\|traits:death,incapacitation\] save or die; this effect has the death and incapacitation traits\.$/
+        ],
+        card: ([, hex, will, , s1, d1, f2, d2, cf, d4, sleep, fort], plan, { base, info }) => {
+            if (plan?.resolution?.kind !== "save") return null;
+            const lasts = timeOf(hex[1], hex[2]);
+            const frightened = (value) => ({ kind: "condition", slug: "frightened", value: Number(value), duration: null });
+            const persistent = (formula) => ({ mode: "formulas", formulas: [{ formula: `${formula}[persistent,mental]` }], rollScope: "outcome" });
+            const curse = { label: "Hex of impending doom", text: `Cursed: falling Unconscious from the hex blaster's damage or this persistent mental damage, it stays unconscious for ${sleep[1]} ${sleep[2]} or until the curse is removed; after that day, still unconscious, it must succeed at a DC ${fort[1]} Fortitude save (death, incapacitation) or die. Removing the curse ends this Effect.`, rules: [{ key: "RollOption", domain: "all", option: `air-doom-curse:${fort[1]}:${sleep[1]}` }], duration: null };
+            const save = {
+                ...base,
+                automation: { level: "automatic" },
+                trigger: { event: "use" },
+                targeting: { target: "the hexed creature", range: null, area: null },
+                resolution: {
+                    kind: "save",
+                    check: { roll: "save", statistic: "will", basic: false, against: { dc: "fixed", value: Number(will[1]) } },
+                    sharedDamage: null,
+                    outcomes: {
+                        criticalSuccess: none(),
+                        success: { ...none(), damage: persistent(d1[1]), effects: [frightened(s1[1])] },
+                        failure: { ...none(), damage: persistent(d2[1]), effects: [frightened(f2[1])] },
+                        criticalFailure: { ...none(), damage: persistent(d4[1]), effects: [frightened(cf[1]), { kind: "condition", slug: "slowed", value: Number(cf[2]), duration: timeOf(cf[3], cf[4]) }], noteEffects: [curse] }
+                    }
+                }
+            };
+            return {
+                ...ownRow({ target: "1 creature it can see", notes: ["Target the creature to hex, then Apply: it's marked for the minute, and its Will save card waits for the hits."] }),
+                item: { ...info, recipient: "user", mark: { slug: "hex-blaster-hex", duration: lasts } },
+                again: { plan: save, later: true, repeat: true, time: lasts, when: "{user} hits the hexed creature with a round from the hex blaster: press it at the end of that turn (one save a turn, however many hits)" }
+            };
+        }
+    },
+    {
+        // (The creature regarded: its user speaks and understands its language for 24 hours (a note Effect, the user's ruling for speech), the
+        // creature marked for that time (its TokenMark); then, flipping the lenses down while observing it, a secret counteract check +23 (rank
+        // half the item's level) against an illusion, morph or polymorph on it, only to see through — rolled for the GM alone (whisper.secret).)
+        name: "Spectacles of Discernment: Reveal the Truth",
+        sentences: [
+            /^You raise the spectacles to regard a target creature through them; the target must be within (\d+) feet\.$/,
+            /^You immediately gain the ability to speak and understand the language the target creature is currently speaking, or its native language if it's not currently talking, for (\d+) (hours?)\.$/,
+            /^During this time, you can Interact with the spectacles of discernment to flip down a pair of supplementary lenses\.$/,
+            /^When you do so, if you're observing the creature you originally targeted, roll a secret counteract check with a counteract modifier of \+(\d+) against any illusion, morph, or polymorph effect affecting the target, but only for the purpose of determining whether you see through the disguise or not\.$/
+        ],
+        card: ([within, speak, , lenses], plan, { base, info, item }) => {
+            const time = timeOf(speak[1], speak[2]);
+            const rank = Math.ceil((Number(item?.system?.level?.value) || 0) / 2);
+            const own = (card) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...card, item: { ...info, ...(card.item ?? {}) } });
+            const regard = own({
+                ...ownRow({
+                    target: `1 creature within ${within[1]} feet`,
+                    noteEffects: [{ label: "Its language", text: `It speaks and understands the language the marked creature is speaking now, or its native language if it isn't talking, for ${speak[1]} ${speak[2]} (the GM says which).`, duration: time }],
+                    notes: [`Target the creature it regards, within ${within[1]} feet.`]
+                }),
+                item: { ...info, recipient: "user", mark: { slug: "spectacles-of-discernment-mark", duration: time } }
+            });
+            const flip = own({
+                builtin: "whisper",
+                targeting: { target: null, range: null, area: null },
+                whisper: { text: "The spectacles' lenses flipped down at the creature they marked: if its user is observing it, the secret check below says whether they see through an illusion, morph or polymorph on it (it isn't ended).", secret: { formula: `1d20+${lenses[1]}`, words: `Secret counteract check (+${lenses[1]}, counteract rank ${rank}) against any illusion, morph or polymorph effect on the marked creature, only to see through it` } }
+            });
+            return { builtin: "ways", targeting: { target: null, range: null, area: null }, ways: [{ name: "Reveal the Truth", html: "<p>The creature regarded.</p>", plan: regard }, { name: "Flip down the lenses (Interact)", html: "<p>The lenses flipped down.</p>", plan: flip }] };
+        }
+    },
+    {
+        // (The door inside its back cover opens on an extradimensional space as a Spacious Pouch (Type II) is: that container, PF2e's own item, made
+        // on its user the first time and flagged as the grimoire's (item.space, scripts/live.js) — its Bulk held as the pouch's; opened again
+        // after.)
+        name: "What Doors We Open: Open the Door Within",
+        sentences: [
+            /^The inside back cover of What Doors We Open features a realistic depiction of a bejeweled door set in a stone wall\.$/,
+            /^When you Open the Door Within, you open that door to reveal an extradimensional space that otherwise functions identically to an? ([\w ]+\(Type [IV]+\))\.$/
+        ],
+        card: ([, space], plan, { html }) => {
+            const uuid = new RegExp(String.raw`@UUID\[(Compendium\.pf2e\.equipment-srd\.Item\.[A-Za-z0-9]+)\]\{${space[1].replace(/[()]/g, "\\$&")}\}`).exec(String(html ?? ""))?.[1];
+            if (!uuid) return null;
+            return ownRow({ notes: ["Its items go with the grimoire: give the space to whoever takes the book."], item: { space: { uuid, name: "The Door Within", like: space[1] } } });
+        }
+    },
+    {
         // (Speak to the Void: its user's next skill check — the Recall Knowledge it makes now — with Nature and Occultism at legendary proficiency
         // (PF2e's ActiveEffectLike upgrading their ranks on the readied Effect, bonus.rules), its failure 10d6 mental to its user and its critical
         // failure 100 (bonus.after, scripts/fortune.js).)

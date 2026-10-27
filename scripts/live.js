@@ -18,7 +18,7 @@ import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
-import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
+import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, itemsNear, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
@@ -210,6 +210,11 @@ async function postWhisper({ plan, used, actor, token }) {
         const roll = await new Roll("1d20").evaluate();
         const passed = roll.total >= Number(plan.whisper.flat.dc);
         await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), blind: true, content: `<p><strong>${escapeHTML(used.data.name)}</strong>: secret flat check DC ${Number(plan.whisper.flat.dc)}: ${roll.total} — ${passed ? "a success: the answer is as it is" : `a failure. ${escapeHTML(plan.whisper.flat.failure ?? "")}`}</p>` });
+    }
+    // (A secret check of its own, Spectacles of Discernment's counteract to see through: rolled now, for the GM alone — whisper.secret.)
+    if (plan.whisper.secret?.formula) {
+        const roll = await new Roll(String(plan.whisper.secret.formula)).evaluate();
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), blind: true, content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(plan.whisper.secret.words ?? "secret check")}: ${roll.total}.</p>` });
     }
     return ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor, token: token?.document ?? token ?? undefined }),
@@ -999,6 +1004,19 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             const said = await ability.applyChange(entry.heal ? { op: "heal", target: DRINKER_ID, amount } : { op: "tempHp", target: DRINKER_ID, amount, duration: entry.duration ?? null }, abilityState(state));
             lines.push(`${said ?? `${recipient.name}: ${amount} ${entry.heal ? "Hit Points regained" : "temporary Hit Points"}`} (from ${others[0].name}, level ${level})`);
         } else lines.push(`${recipient.name}: ${levelTempText(entry)} — ${others[0] ? `${others[0].name}'s level gives none` : "no creature targeted"}; apply it by hand.`);
+    }
+    // (An extradimensional space it opens, What Doors We Open's: its container made on its user once — PF2e's own pouch, flagged as the item's.)
+    if (state.plan.item?.space && target.actor) {
+        const space = state.plan.item.space;
+        const held = [...(target.actor.items ?? [])].find((entry) => entry.flags?.[MODULE_ID]?.spaceOf === state.item.uuid);
+        if (held) lines.push(`${recipient.name}: ${space.name} is open`);
+        else {
+            const pouch = await fromUuid(space.uuid).catch(() => null);
+            if (pouch) {
+                await target.actor.createEmbeddedDocuments("Item", [spaceSource(pouch.toObject(), { space, itemUuid: state.item.uuid, moduleId: MODULE_ID })]);
+                lines.push(`${recipient.name}: ${space.name} opens, a container in the inventory`);
+            } else lines.push(`${recipient.name}: ${space.name} — no ${space.like} in the compendium; give it a container by hand`);
+        }
     }
     // (Fruit it grows, Verdant Branch's: consumables in its user's inventory, each eaten for its healing — the module's own heal then.)
     if (state.plan.item?.creates && target.actor) {

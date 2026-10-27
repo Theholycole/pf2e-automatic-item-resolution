@@ -13,7 +13,7 @@ import { planFor } from "../src/live/if-target.js";
 import { withAttackModifiers, withNearbyDC, withTargetDC } from "../src/live/scaled.js";
 import { endsFor, hostileAt } from "../src/live/targeted.js";
 import { saveText, withAttackChoice } from "../src/live/poison-card.js";
-import { markText, marksEndingAt } from "../src/live/card.js";
+import { doomCurseOf, markText, marksEndingAt, spaceSource } from "../src/live/card.js";
 import { focusText, poolAfter } from "../src/live/focus-card.js";
 import { readiedRules } from "../src/live/fortune-card.js";
 
@@ -173,4 +173,35 @@ test("Void Mirror: Speak to the Void its skills legendary for the check and a fa
     assert.deepEqual([attitudeOf(3, called.attitudeCheck.degrees), attitudeOf(0, called.attitudeCheck.degrees).alliance], [{ degree: "criticalSuccess", attitude: "helpful", disposition: 1, alliance: "party" }, "opposition"]);
     const rows = become.resolution.outcomes;
     assert.deepEqual([done(become), become.trigger.frequency.per, become.resolution.check.against.value, become.resolution.sharedDamage.components[0].formula, rows.criticalFailure.terminal, rows.criticalFailure.noteEffects[0].duration.value], [true, "century", 40, "10d6+40", { kind: "death" }, 7]);
+});
+
+test("Slithermaw's Bane's Terrain Adaptation: heat or cold, and the terrain its user picks on its Effect (PF2e's ChoiceSet): its difficult terrain ignored, +1 to saves against its hazards", () => {
+    const adapt = compileActivations(item("Slithermaw's Bane"), options).find((entry) => entry.activation.name === "Terrain Adaptation").plan;
+    assert.deepEqual([done(adapt), routeOf(adapt), adapt.ways.map((way) => way.name)], [true, "ways", ["Heat", "Cold"]]);
+    const [heat] = adapt.ways;
+    const note = heat.plan.resolution.outcomes.success.noteEffects.at(-1);
+    assert.deepEqual([heat.plan.partial, heat.plan.temperature.counts["extreme-heat"], note.rules.map((rule) => rule.key), note.rules[0].choices.length], [undefined, "mild-heat", ["ChoiceSet", "ActiveEffectLike", "FlatModifier"], 9]);
+    assert.deepEqual(note.rules[2].predicate, ["environment:{item|flags.pf2e.rulesSelections.terrain}", { or: ["environment", "origin:trait:environmental"] }]);
+});
+
+test("What Doors We Open's door a container as a Spacious Pouch (Type II); Spectacles of Discernment's language and mark, then its secret counteract to see through", () => {
+    const door = compileActivations(item("What Doors We Open"), options).find((entry) => entry.activation.name === "Open the Door Within").plan;
+    assert.deepEqual([done(door), routeOf(door), door.item.space], [true, "item", { uuid: "Compendium.pf2e.equipment-srd.Item.JBMBaN9dZLytfFLQ", name: "The Door Within", like: "Spacious Pouch (Type II)" }]);
+    const made = spaceSource({ _id: "x", name: "Spacious Pouch (Type II)", type: "backpack", system: { bulk: { capacity: 50 } } }, { space: door.item.space, itemUuid: "Actor.a.Item.g" });
+    assert.deepEqual([made._id, made.name, made.type, made.flags["pf2e-automatic-item-resolution"].spaceOf], [undefined, "The Door Within", "backpack", "Actor.a.Item.g"]);
+    const spectacles = compileActivations(item("Spectacles of Discernment"), options).find((entry) => entry.activation.name === "Reveal the Truth").plan;
+    const [regard, flip] = spectacles.ways.map((way) => way.plan);
+    assert.deepEqual([done(spectacles), routeOf(regard), regard.item.mark.duration.value, regard.resolution.outcomes.success.noteEffects[0].duration.unit, routeOf(flip), flip.whisper.secret.formula], [true, "item", 24, "hours", "whisper", "1d20+23"]);
+    assert.match(flip.whisper.secret.words, /counteract rank 7/);
+});
+
+test("Hex Blaster: the creature hexed for a minute, its Will save card kept open for the hits; its critical failure's curse a note Effect the doom hold reads", () => {
+    const [hex] = plans("Hex Blaster");
+    const save = hex.again.plan;
+    assert.deepEqual([done(hex), routeOf(hex), hex.item.mark.duration.value, hex.again.later, hex.again.repeat, hex.again.time.unit], [true, "item", 1, true, true, "minutes"]);
+    const rows = save.resolution.outcomes;
+    assert.deepEqual([save.resolution.check.against.value, rows.success.damage.formulas[0].formula, rows.criticalFailure.effects.map((effect) => [effect.slug, effect.value, effect.duration?.value ?? null])], [28, "1d6[persistent,mental]", [["frightened", 2, null], ["slowed", 1, 1]]]);
+    const [curse] = rows.criticalFailure.noteEffects;
+    assert.deepEqual(doomCurseOf({ system: { rules: curse.rules } }), { dc: 28, days: 1 });
+    assert.equal(doomCurseOf({ system: { rules: [] } }), null);
 });
