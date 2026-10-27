@@ -154,12 +154,11 @@ test("a condition the text puts on the drinker, for its own time, as an automati
     const result = registry.resolveSync(mist, context({ id: "ally", side: "party" }), io());
     assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.slug]), [["condition", "ally", "concealed"]]);
     assert.equal(mist.partial, undefined, "its other sentence only restates the usual rule");
-    // What it can't apply ("the DC to move you … is 40") goes on a note with its text, and the plan is partial.
+    // (What no PF2e rule sets, "the DC to move you … is 40": words on its Effect since 2026-10-27, a note with its text before.)
     const immovable = compileItem(item("Immovable Potion"));
     assert.equal(immovable.resolution.outcomes.success.effects[0].slug, "immobilized");
-    assert.equal(immovable.partial, true);
-    assert.match(immovable.unread[0], /DC to move you/);
-    assert.equal(immovable.resolution.outcomes.success.noteEffects.length, 1);
+    assert.equal(immovable.partial, undefined);
+    assert.match(immovable.item.ruleEffects[0].words, /DC to move it/);
     // Megaphone Mutagen: its benefit on skill checks of auditory actions but Deception and Diplomacy (PF2e's item:trait and
     // check:statistic options), its drawback (a −2 to Fortitude, Deception, Diplomacy and Stealth); its longer range a note.
     const megaphone = compileItem(item("Megaphone Mutagen (Lesser)"));

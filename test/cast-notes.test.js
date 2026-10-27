@@ -315,6 +315,9 @@ test("its user's own doing as lines and words (2026-10-27): Conrasu Coin (Bythos
     const { compileItem } = await import("../src/compiler/index.js");
     const coin = compileItem(item("Conrasu Coin (Bythos)"), options);
     assert.deepEqual([coin.partial, coin.bonus.limits], [undefined, ["With the Nimble Roll feat, if the attack misses, it can Stride up to 20 feet instead (its own move)."]]);
+    // (And Immovable Potion's DC 40 to move it, words on its Effect.)
+    const anchored = compileItem(item("Immovable Potion"), options);
+    assert.deepEqual([anchored.partial, anchored.item.ruleEffects[0].words], [undefined, "The DC to move it from its place, knocking it Prone too, is 40"]);
     const potion = compileItem(item("Sure-Step Potion"), options);
     assert.deepEqual([potion.partial, potion.item.ruleEffects[0].name, potion.item.ruleEffects[0].duration.unit], [undefined, "sure footing", "hours"]);
 });

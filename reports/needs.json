@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1307,
+  "entries": 1306,
   "results": {
-   "partial": 409,
+   "partial": 408,
    "none": 530,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -13,7 +13,7 @@
    "speeds": 22,
    "counteract": 24,
    "afflictions": 60,
-   "moving": 82,
+   "moving": 81,
    "visibility": 48,
    "lasting": 65,
    "choice": 30,
@@ -57,15 +57,15 @@
    "out-of-combat": 444,
    "counteract": 105,
    "afflictions": 109,
-   "lasting": 234,
-   "moving": 109,
+   "lasting": 233,
+   "moving": 108,
    "triggers": 121,
    "visibility": 50,
    "dying": 75,
    "choice": 107,
    "several": 104,
    "strike": 194,
-   "reader": 214,
+   "reader": 213,
    "spells": 75,
    "information": 197,
    "actions": 62,
@@ -7992,18 +7992,6 @@
     "information",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Immovable Potion",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "move you",
-   "needs": [
-    "moving",
-    "lasting",
-    "reader"
    ]
   },
   {

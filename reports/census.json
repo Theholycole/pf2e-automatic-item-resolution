@@ -15,12 +15,12 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 145,
-   "resolves": 830,
+   "resolves": 831,
    "builtin:readied-bonus": 23,
    "builtin:zone": 122,
    "builtin:ways": 29,
    "builtin:item-action": 16,
-   "partial": 74,
+   "partial": 73,
    "note-only": 113,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
@@ -72,9 +72,9 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 128,
+    "resolves": 129,
     "note-only": 10,
-    "partial": 7,
+    "partial": 6,
     "none": 16,
     "builtin:no-effect": 9,
     "builtin:cast-spell": 9,
@@ -385,13 +385,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 281,
+   "resolves": 282,
    "gaps": 0,
    "none": 18
   },
   "duration": {
    "count": 943,
-   "resolves": 640,
+   "resolves": 641,
    "gaps": 0,
    "none": 13
   }
@@ -15548,11 +15548,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "While you are immobilized this way, the DC to move you from your place, including knocking you Prone, is 40."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {

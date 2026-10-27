@@ -920,6 +920,14 @@ function ruleEffectsOf(sentences, duration, used = new Set()) {
         }
         // (Sure footing, which no PF2e rule plays either: Sure-Step Potion's "In addition, you can Step into difficult terrain, and you aren't
         // Off-Guard on uneven ground" — its user's to keep to, on its Effect in words for the item's time, 2026-10-27.)
+        // (And a DC to move it that no PF2e rule sets, Immovable Potion's "While you are immobilized this way, the DC to move you from your place,
+        // including knocking you Prone, is 40": its words, for the GM to use against Shoves, Trips and forced movement.)
+        const anchored = /^While you are immobilized this way, the DC to move you from your place, including knocking you Prone, is (\d+)\.$/i.exec(sentence.trim());
+        if (anchored) {
+            used.add(index);
+            found.push({ name: "anchored", words: `The DC to move it from its place, knocking it Prone too, is ${anchored[1]}`, rules: [], duration });
+            continue;
+        }
         const footing = /^In addition, you can Step into difficult terrain, and you aren't Off-Guard on uneven ground\.$/i.exec(sentence.trim());
         if (footing) {
             used.add(index);
