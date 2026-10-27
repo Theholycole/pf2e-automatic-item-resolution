@@ -1,11 +1,11 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1252,
+  "entries": 1250,
   "results": {
    "partial": 356,
    "none": 528,
-   "note-only": 249,
+   "note-only": 247,
    "builtin:no-effect": 119
   },
   "main": {
@@ -14,7 +14,7 @@
    "counteract": 22,
    "afflictions": 58,
    "moving": 79,
-   "visibility": 47,
+   "visibility": 45,
    "lasting": 64,
    "choice": 30,
    "strike": 93,
@@ -60,7 +60,7 @@
    "lasting": 227,
    "moving": 106,
    "triggers": 114,
-   "visibility": 49,
+   "visibility": 47,
    "dying": 75,
    "choice": 107,
    "several": 101,
@@ -1397,16 +1397,6 @@
    "needs": [
     "information",
     "speech"
-   ]
-  },
-  {
-   "name": "Camouflage Dye (Greater)",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility"
    ]
   },
   {
@@ -6930,16 +6920,6 @@
     "afflictions",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Camouflage Dye (Lesser)",
-   "kind": "consumable",
-   "result": "note-only",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility"
    ]
   },
   {

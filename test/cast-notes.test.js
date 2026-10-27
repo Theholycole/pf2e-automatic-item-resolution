@@ -693,3 +693,16 @@ test("a bonus only against metal (2026-10-27): Lodestone Pellet — its Strike's
     assert.equal(at(null).predicate.includes("target:trait:metal"), true);
     assert.ok(strikeLines(plan).some((line) => /against a creature made of metal or wearing metal armor/.test(line)));
 });
+
+test("hiding in the open until it gives itself away (2026-10-27): Camouflage Dye — words on its Effect for its time in place of the reminder; the Lesser's RollOptions end it on a hostile action or a long move", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { endingOn, isHostileMessage } = await import("../scripts/ends-on-hostile.js");
+    const lesser = compileItem(item("Camouflage Dye (Lesser)"), options).resolution.outcomes.success.noteEffects;
+    assert.deepEqual([lesser.length, lesser[0].label, lesser[0].reminder, lesser[0].duration.value], [1, "Camouflaged", undefined, 10]);
+    assert.deepEqual(lesser[0].rules.map((rule) => rule.option), ["air-ends-on:hostile", "air-ends-on:long-move"]);
+    const greater = compileItem(item("Camouflage Dye (Greater)"), options).resolution.outcomes.success.noteEffects;
+    assert.deepEqual([greater[0].label, greater[0].rules, greater[0].duration.value], ["Camouflaged", [], 1]);
+    const actor = { itemTypes: { effect: [{ id: "e1", system: { rules: lesser[0].rules } }] } };
+    assert.deepEqual([endingOn(actor, "hostile").length, endingOn(actor, "long-move").length, endingOn(actor, "other").length], [1, 1, 0]);
+    assert.deepEqual(["attack-roll", "damage-roll", "skill-check"].map((type) => isHostileMessage({ flags: { pf2e: { context: { type } } } })), [true, true, false]);
+});

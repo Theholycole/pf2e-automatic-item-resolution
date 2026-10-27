@@ -586,6 +586,36 @@ export const cases = {
         return out;
     },
 
+    // Camouflage Dye (Lesser) (2026-10-27): its Camouflaged Effect on its user, Hidden besides; an attack roll by it ends the Effect and its
+    // Hidden. Again, then a 20-foot Stride (more than half a 25-foot Speed) ends it.
+    async camouflageDyeEnds(scene) {
+        return unpaused(async () => {
+            const { actor: user, token: userToken } = await creature(scene, "Camo User", { x: 3, y: 9 });
+            const [fistItem] = await user.createEmbeddedDocuments("Item", [{ name: "Fist", type: "melee", system: { bonus: { value: 8 }, damageRolls: { a: { damage: "1d4", damageType: "bludgeoning" } }, traits: { value: [] } } }]);
+            const { token: foeToken } = await creature(scene, "Camo Foe", { x: 4, y: 9, alliance: "opposition" });
+            const camouflaged = () => user.itemTypes.effect.filter((effect) => /Camouflage Dye/.test(effect.name) && (effect.system.rules ?? []).some((rule) => rule.option === "air-ends-on:hostile"));
+            const dye = async () => {
+                const item = await give(user, "Camouflage Dye (Lesser)");
+                const since = Date.now();
+                await item.consume();
+                const card = await messageAfter(since, itemCard("item"), { what: "the dye's card" });
+                await game.modules.get(NS).api.live.apply(card.id);
+                await until(() => camouflaged().length, `its Camouflaged Effect (${user.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+                await user.increaseCondition("hidden");
+            };
+            await dye();
+            const fist = user.system.actions.find((entry) => entry.item?.id === fistItem.id);
+            await userToken.object?.control?.();
+            await target(foeToken);
+            await fist.variants[0].roll({ event: shift() });
+            await until(() => !camouflaged().length && !user.hasCondition("hidden"), `ended by the attack (${user.itemTypes.effect.map((effect) => effect.name).join(", ")}; hidden ${user.hasCondition("hidden")})`, { timeout: 8000 });
+            await dye();
+            await userToken.update({ x: userToken.x + 400 }, { animate: false });
+            await until(() => !camouflaged().length && !user.hasCondition("hidden"), `ended by the 20-foot move (${user.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+            return { ended: ["attack", "move"] };
+        });
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });
