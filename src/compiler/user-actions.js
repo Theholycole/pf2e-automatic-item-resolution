@@ -13,6 +13,8 @@
 //   shorter immunity to it a note Effect on it.
 // - A mode picked on the card (the ways card): Magnetic Suit's attract or repel — its user's Effect with PF2e's rules, toggles for metal weapons
 //   and objects, then its allies' card —, Captivating Score's positive or negative emotion — each a Will save, an attitude on a note Effect.
+// - A skill picked on the card, for one action (withSkimmed): Possibility Tome's +3 item to Recall Knowledge with the skill or Lore picked
+//   (plan.item.skillPick, src/compiler/skill-pick.js listedSkillPick), its Interact before each check its user's own.
 // - A result "as though by" another action's (withAsThough, in src/compiler/permanent.js beside the skill actions, with the ability module's compiled
 //   actions): Self-Emptying Pocket's Create a Diversion.
 // - What a cast may find, its user's pick (withLocateChoices): Lion's Call's Locate, a line of its cast card.
@@ -57,7 +59,7 @@ function withEntrenched(plan, { item, activation, index }) {
 // Each: the sentences in order (an activation's from its Effect on, a consumable's whole text), its label, words and time.
 const NOTE_RULES = [
     // (Clockwork Shield: an extra reaction this turn and at the start of each of its turns for a minute, only to Shield Block.)
-    { sentences: [/^The shield's gears begin to spin, subtly adjusting the shield's position as you fight\.$/i, /^You gain an extra reaction this turn and at the start of each of your turns for the next minute that you can use only to Shield Block\.$/i], label: "Extra reaction", text: "An extra reaction this turn and at the start of each of its turns, usable only to Shield Block.", duration: () => MINUTE },
+    { sentences: [/^The shield's gears begin to spin, subtly adjusting the shield's position as you fight\.$/i, /^You gain an extra reaction this turn and at the start of each of your turns for the next minute that you can use only to Shield Block\.$/i], label: "Extra reaction", text: "One more reaction now and again as each of its turns starts, for Shield Block only.", duration: () => MINUTE },
     // (Vital Earth: no air or water needed for 24 hours — "doesn't need to breathe", the environment module's breath tracker's word —, and those who treat
     // its wounds need no healer's toolkit, with a bonus to their Medicine check: theirs, no rule on its Effect can give it.)
     { sentences: [/^Life-infused soil from the Plane of Earth, vital earth is glittering dust you inhale that causes you to not need air or water for (\d+) hours\.$/i, /^Also, for this time, your wounds close easily, like molding clay, meaning someone attempting to Administer First Aid or Treat Wounds on you doesn't need a healer's toolkit and gains a \+(\d+) item bonus to the Medicine check\.$/i], label: "Doesn't need to breathe", text: (said) => `It needs no air or water (it doesn't need to breathe). Anyone who Administers First Aid or Treats Wounds on it needs no healer's toolkit and gets a +${said[1][1]} item bonus to that Medicine check.`, duration: (said) => hours(said[0][1]) }

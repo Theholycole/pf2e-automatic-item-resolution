@@ -43,7 +43,7 @@ test("a rule PF2e can't play on a note Effect for its time: Clockwork Shield's e
         const shield = activation(name);
         assert.ok(done(shield), name);
         assert.deepEqual(notes(shield).map((note) => [note.label, note.duration.value, note.duration.unit]), [["Extra reaction", 1, "minutes"]]);
-        assert.match(notes(shield)[0].text, /only to Shield Block\.$/);
+        assert.match(notes(shield)[0].text, /for Shield Block only\.$/);
         assert.deepEqual(shield.trigger.frequency, { max: 1, per: "day", raw: "once per day" });
     }
     const earth = compileItem(item("Vital Earth"));
