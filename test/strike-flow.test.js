@@ -187,7 +187,7 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     // Saves for the creatures around the one hit: Dispersing Bullet's push (Fortitude 21, the target left out, the push its rows' from the
     // creature hit — moveFrom "target", the note it was before ability 0.9.2 kept as byHand), Singularity Ammunition's pull and then its blast
     // (7d12 bludgeoning, basic Reflex 28, the target too).
-    // Blade of Fallen Stars' projectile: the next ranged Strike's extra 6d8 cold, its Faerie Fire a note; Solar Shellflower's construct: its
+    // Blade of Fallen Stars' projectile: the next ranged Strike's extra 6d8 cold, its Faerie Fire cast around the target; Solar Shellflower's construct: its
     // Strikes' extra 3d4 persistent fire for 1 minute (the item's Effect); Essence Forge's healing, its gate a note.
     // (Cover a Strike ignores, 2026-10-26: Golden-Cased Bullet's levels, Arcing Hand Crossbow's all — PF2e's EphemeralEffect suppressing the
     // target's cover bonus, as Alchemist Goggles', for a target in that cover.)
@@ -205,7 +205,8 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     assert.deepEqual([undead.resolution.outcomes.failure.noteEffects.map((note) => note.label), planForTarget(rattling.strike.save, { system: { traits: { value: ["humanoid"] } } }).resolution.outcomes.failure.noteEffects], [["Lifesense lost"], undefined]);
     const blade = compileActivations(source("Blade of Fallen Stars"))[1].plan.strike;
     assert.deepEqual([blade.range, blade.damage.map((entry) => `${entry.diceNumber}${entry.dieSize} ${entry.damageType}`)], ["ranged", ["6d8 cold"]]);
-    assert.match(blade.notes.join(" "), /Faerie Fire/);
+    // (Its Faerie Fire the hit's cast since 2026-10-27, at the creature hit and those within 5 feet: a note before.)
+    assert.deepEqual([blade.cast.name, blade.cast.around, blade.notes], ["Faerie Fire", 5, []]);
     const shellflower = compileActivations(source("Solar Shellflower"))[0].plan.item.strikeDamage[0];
     assert.deepEqual([shellflower.diceNumber, shellflower.dieSize, shellflower.category, shellflower.damageType, shellflower.own, shellflower.duration.value], [3, "d4", "persistent", "fire", true, 1]);
     const forge = compileActivations(source("Essence Forge (Lesser)"))[2].plan;

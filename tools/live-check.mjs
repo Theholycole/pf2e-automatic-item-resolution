@@ -7251,6 +7251,53 @@ export const cases = {
         return { counteract: game.messages.get(counter.id).getFlag(NS, "card").results, stupefied: fey.getCondition("stupefied")?.value ?? null };
     },
 
+    // Blade of Fallen Stars (2026-10-27): its starlight shot's plan (readied on a shortbow here — PF2e 8.6 loads the gun sword's ranged use only
+    // with its rounds), a hit — the spell module's Faerie Fire at the creature hit and the one next to it, not the one 25 feet off.
+    async bladeFallenStarsFaerie(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Star Archer", { type: "character", x: 8, y: 4 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Star Target", { x: 9, y: 4, ac: -20, hp: 300, alliance: "opposition" });
+        const { actor: near } = await creature(scene, "Star Neighbour", { x: 10, y: 4, hp: 100, alliance: "opposition" });
+        const { actor: far } = await creature(scene, "Star Far", { x: 14, y: 4, hp: 100, alliance: "opposition" });
+        const blade = await give(archer, "Blade of Fallen Stars");
+        const entry = (await import(`/modules/${NS}/src/compiler/permanent.js`)).compileActivations({ ...blade.toObject(false), uuid: blade.uuid }).find((one) => one.plan?.strike?.cast?.around);
+        assert(entry, "its starlight shot's plan");
+        const plan = { ...entry.plan, strike: { ...entry.plan.strike, own: false } };
+        const bow = await give(archer, "Shortbow");
+        const arrows = await give(archer, "Arrows");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const { postStrikeCard } = await import(`/modules/${NS}/scripts/strikes.js`);
+        let since = Date.now();
+        await postStrikeCard({ message: null, plan, used: { data: { name: blade.name, uuid: blade.uuid, img: blade.img } }, actor: archer, token: archerToken.object });
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        since = Date.now();
+        await strike(archer, bow);
+        const spellCard = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's Faerie Fire card", timeout: 15000 });
+        let resolve = null;
+        for (const stop = Date.now() + 5000; Date.now() < stop && !resolve; ) {
+            resolve = [...(document.querySelectorAll(`[data-message-id="${spellCard.id}"] button`) ?? [])].find((button) => /Resolve Native Effect/i.test(button.textContent));
+            if (!resolve) await wait(200);
+        }
+        assert(resolve, "the spell card's Resolve Native Effect button");
+        resolve.click();
+        for (const stop = Date.now() + 8000; Date.now() < stop; ) {
+            const dialog = [...document.querySelectorAll("dialog.application, .application.dialog")].find((one) => /Faerie Fire — Apply Effect/.test(one.textContent));
+            const ok = dialog?.querySelector("button[data-action='ok']");
+            if (ok) {
+                ok.click();
+                break;
+            }
+            await wait(200);
+        }
+        const lit = (actor) => actor.itemTypes.effect.some((effect) => /Faerie Fire/.test(effect.name));
+        await until(() => lit(foe) && lit(near), `Faerie Fire on the target and its neighbour (${foe.itemTypes.effect.map((effect) => effect.name)} / ${near.itemTypes.effect.map((effect) => effect.name)})`, { timeout: 15000 });
+        assert(!lit(far), "not on the creature 25 feet off");
+        return { lit: [lit(foe), lit(near), lit(far)] };
+    },
+
     // Silencing Ammunition (2026-10-27): a hit, its DC 25 Will save failed — the spell module's Silence on the target (-2 to that save after a
     // critical hit, said on the hit's line); then the end-early card's tug, a DC 25 Will save (the target's Will raised to pass), and the Silence gone.
     async silencingTug(scene) {

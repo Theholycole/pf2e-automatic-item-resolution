@@ -56,3 +56,19 @@ export function withStrikeCounteract(plan) {
     };
     return { ...plan, strike, ...(plan.partial && !left.length && !(plan.notes ?? []).length ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {}) };
 }
+
+// (A spell's effect around the creature hit, Blade of Fallen Stars' "the projectile also deals 6d8 cold damage and creates a Faerie Fire effect
+// in a 5-foot emanation centered on the target": strike.cast with around — the spell module's cast at the creature hit and every creature
+// within that many feet of it, scripts/strikes.js. 2026-10-27.)
+const AROUND = /^It also creates an? ([A-Z][\w' -]+?) effect in an? (\d+)-foot emanation centered on the target\.$/;
+export function withEffectAround(plan, html) {
+    if (!plan?.strike || plan.strike.cast) return plan;
+    const note = (plan.strike.notes ?? []).find((entry) => AROUND.test(String(entry).trim()));
+    if (!note) return plan;
+    const [, name, feet] = AROUND.exec(String(note).trim());
+    const link = new RegExp(String.raw`@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\}`).exec(String(html ?? ""));
+    if (!link) return plan;
+    const notes = plan.strike.notes.filter((entry) => entry !== note);
+    const left = notes.length || (plan.notes ?? []).length || (plan.unread ?? []).length;
+    return { ...plan, strike: { ...plan.strike, notes, cast: { uuid: link[1], name, rank: null, dc: null, around: Number(feet) } }, ...(plan.partial && !left ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {}) };
+}

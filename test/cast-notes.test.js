@@ -785,3 +785,11 @@ test("a worse save against the spell for a kind (2026-10-27): Radiant Spark's Do
     assert.deepEqual(source.system.rules[0], { key: "AdjustDegreeOfSuccess", selector: "will", adjustment: { criticalSuccess: "one-degree-worse", success: "one-degree-worse", failure: "one-degree-worse" }, label: "Radiant Spark" });
     assert.deepEqual(source.flags["pf2e-automatic-item-resolution"].firstDegree.selector, "will");
 });
+
+test("a spell's effect around the creature hit (2026-10-27): Blade of Fallen Stars' starlight shot — its 6d8 cold and Faerie Fire cast at the creature hit and every creature within 5 feet of it", () => {
+    const plan = compileActivations(item("Blade of Fallen Stars"), options).map((entry) => entry.plan).find((entry) => entry?.strike?.cast);
+    assert.equal(plan.partial, undefined);
+    assert.deepEqual(plan.strike.cast, { uuid: "Compendium.pf2e.spells-srd.Item.HRb2doyaLtaoCfi3", name: "Faerie Fire", rank: null, dc: null, around: 5 });
+    assert.deepEqual(plan.strike.damage.map((entry) => [entry.diceNumber, entry.dieSize, entry.damageType]), [[6, "d8", "cold"]]);
+    assert.deepEqual(plan.strike.notes, []);
+});

@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1242,
+  "entries": 1241,
   "results": {
-   "partial": 348,
+   "partial": 347,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -29,7 +29,7 @@
    "mind": 6,
    "illusions": 50,
    "removed": 6,
-   "areas": 120,
+   "areas": 119,
    "cooldown": 10,
    "vehicles": 21,
    "reader": 17,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 21,
    "speeds": 28,
-   "areas": 179,
+   "areas": 178,
    "immunity": 89,
    "objects": 386,
    "speech": 120,
@@ -1936,16 +1936,6 @@
    "work": "unfold",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Blade of Fallen Stars",
-   "kind": "activation",
-   "result": "partial",
-   "main": "areas",
-   "work": "emanation centered",
-   "needs": [
-    "areas"
    ]
   },
   {
