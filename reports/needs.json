@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1246,
+  "entries": 1245,
   "results": {
-   "partial": 352,
+   "partial": 351,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -22,7 +22,7 @@
    "information": 21,
    "out-of-combat": 35,
    "no-rules": 14,
-   "actions": 29,
+   "actions": 28,
    "immunity": 27,
    "objects": 113,
    "creatures": 71,
@@ -68,7 +68,7 @@
    "reader": 201,
    "spells": 73,
    "information": 195,
-   "actions": 60,
+   "actions": 59,
    "from-events": 26,
    "no-rules": 14,
    "situational": 81,
@@ -6182,16 +6182,6 @@
    "work": "sustain",
    "needs": [
     "lasting"
-   ]
-  },
-  {
-   "name": "Metronomic Hammer",
-   "kind": "activation",
-   "result": "partial",
-   "main": "actions",
-   "work": "trip",
-   "needs": [
-    "actions"
    ]
   },
   {

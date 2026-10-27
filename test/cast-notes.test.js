@@ -750,3 +750,15 @@ test("fatigue's penalties ignored until it's fatigued again (2026-10-27): Ring o
     assert.deepEqual(source.system.rules.map((rule) => rule.key), ["AdjustModifier", "RollOption"]);
     assert.equal(endingOn({ itemTypes: { effect: [{ system: { rules: source.system.rules } }] } }, "fatigued").length, 1);
 });
+
+test("a readied bonus that climbs with each try (2026-10-27): Metronomic Hammer — +1 to Trip this turn, +1 more after each failed Trip at the same target up to +3, back to +1 after a success, a critical failure or another target", async () => {
+    const { climbedValue } = await import("../scripts/fortune.js");
+    const { readiedWords } = await import("../src/live/fortune-card.js");
+    const plan = first("Metronomic Hammer");
+    assert.equal(plan.partial, undefined);
+    const escalate = plan.bonus.escalate;
+    assert.deepEqual([escalate.by, escalate.max, escalate.base, escalate.action], [1, 3, 1, "trip"]);
+    const step = (value, outcome, target = "A", last = "A") => climbedValue(escalate, { value, outcome, target, last });
+    assert.deepEqual([step(1, "failure"), step(2, "failure"), step(3, "failure"), step(2, "success"), step(3, "criticalFailure"), step(3, "failure", "B", "A")], [2, 3, 3, 1, 1, 2]);
+    assert.match(readiedWords(plan), /\+1 more with each later trip at the same target \(up to \+3\), back to \+1 after a success or a critical failure/);
+});

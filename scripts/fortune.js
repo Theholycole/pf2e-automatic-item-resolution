@@ -94,6 +94,22 @@ async function stepSpeed(actor, name, state) {
 
 const failureWords = (onFailure) => `${onFailure.formula} ${onFailure.persistent ? "persistent " : ""}${onFailure.type} damage`;
 
+// A climbing bonus after its roll: { by, max, base, resetOn, sameTarget } — its FlatModifiers' value then, and the target it was at.
+export function climbedValue(escalate, { value, outcome, target, last }) {
+    const start = escalate.sameTarget && last && target && last !== target ? escalate.base : value;
+    if ((escalate.resetOn ?? []).includes(outcome)) return escalate.base;
+    return Math.min(escalate.max, start + escalate.by);
+}
+
+async function climb(effect, context) {
+    const flag = effect.flags[MODULE_ID][MODULE_KEY];
+    const target = context.target?.actor ?? context.target?.token ?? null;
+    const rules = effect.system?.rules ?? [];
+    const value = Number(rules.find((rule) => rule.key === "FlatModifier")?.value) || flag.escalate.base;
+    const next = climbedValue(flag.escalate, { value, outcome: context.outcome, target, last: flag.lastTarget ?? null });
+    await effect.update({ "system.rules": rules.map((rule) => (rule.key === "FlatModifier" ? { ...rule, value: next } : rule)), [`flags.${MODULE_ID}.${MODULE_KEY}.lastTarget`]: target });
+}
+
 export async function fortuneRolled(message) {
     if (!isActiveGM()) return;
     const context = message?.flags?.pf2e?.context;
@@ -116,7 +132,12 @@ export async function fortuneRolled(message) {
         };
         return !predicates.length || predicates.some((rule) => fits(rule.predicate));
     });
-    if (spent.length) await actor.deleteEmbeddedDocuments("Item", spent.map((effect) => effect.id)).catch(() => null);
+    // (One that climbs with each try, Metronomic Hammer's: kept, its bonus raised after a roll that isn't one of its resets — back to its first
+    // after one, or at another target than its last.)
+    const climbing = spent.filter((effect) => effect.flags[MODULE_ID][MODULE_KEY].escalate);
+    for (const effect of climbing) await climb(effect, context);
+    const gone = spent.filter((effect) => !climbing.includes(effect));
+    if (gone.length) await actor.deleteEmbeddedDocuments("Item", gone.map((effect) => effect.id)).catch(() => null);
     // (What a failure at that roll costs, Iris of the Sky's 5 persistent fire: dealt to its user on a failure, the mark gone either way.)
     const after = (actor?.itemTypes?.effect ?? []).filter((effect) => domains.includes(effect.flags?.[MODULE_ID]?.rollAfter?.selector));
     if (after.length) await actor.deleteEmbeddedDocuments("Item", after.map((effect) => effect.id)).catch(() => null);

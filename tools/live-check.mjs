@@ -659,6 +659,36 @@ export const cases = {
         return { ac: [fresh, ac()] };
     },
 
+    // Metronomic Hammer (2026-10-27): its readied +1 to Trip; a failed Trip (a 10 on the die) makes it +2, another +3, then a success (a 20) puts
+    // it back to +1 — its Effect kept for the turn.
+    async metronomicHammer(scene) {
+        const { actor: fighter, token: fighterToken } = await creature(scene, "Metronome Fighter", { type: "character", x: 2, y: 6 });
+        const { token: foeToken } = await creature(scene, "Metronome Target", { x: 3, y: 6, alliance: "opposition", save: 8 });
+        const hammer = await give(fighter, "Metronomic Hammer", "pf2e.equipment-srd");
+        await hammer.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await fighterToken.object?.control?.();
+        await target(foeToken);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(hammer.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the hammer's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const bonus = () => fighter.itemTypes.effect.find((effect) => /Metronomic Hammer/.test(effect.name));
+        const value = () => Number((bonus()?.system.rules ?? []).find((rule) => rule.key === "FlatModifier")?.value);
+        await until(() => value() === 1, `its +1 (${value()})`, { timeout: 8000 });
+        const trip = async (face) => {
+            const at = Date.now();
+            const action = game.pf2e.actions.get?.("trip");
+            await withDie(face, () => (action ? action.use({ actors: [fighter], event: shift() }) : game.pf2e.actions.trip({ actors: [fighter], event: shift() })));
+            const roll = await messageAfter(at, (message) => (message.flags?.pf2e?.context?.options ?? []).includes("action:trip"), { what: "the Trip roll" });
+            return roll.flags.pf2e.context.outcome;
+        };
+        const seen = [];
+        seen.push([await trip(10), await until(() => value() === 2, `+2 after a failure (${value()})`, { timeout: 6000 }).then(() => value())]);
+        seen.push([await trip(10), await until(() => value() === 3, `+3 after another (${value()})`, { timeout: 6000 }).then(() => value())]);
+        seen.push([await trip(20), await until(() => value() === 1, `back to +1 after a success (${value()})`, { timeout: 6000 }).then(() => value())]);
+        return { seen };
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });

@@ -66,7 +66,8 @@ export function readiedWords(plan) {
     const bonus = plan.bonus;
     // (Only against what triggered it: "against what triggered it, this turn".)
     const time = bonus.duration?.expiry === "turn-start" ? "until the start of the next turn" : bonus.duration?.value ? "until the end of the next turn" : "this turn";
-    const until = bonus.lasting ? "for the next such roll, whenever it comes" : bonus.spend?.length ? "for the next such roll" : bonus.against ? `against what triggered it, ${time}` : time === "this turn" ? "until the end of this turn" : time;
+    const climbs = bonus.escalate ? `this turn, +${bonus.escalate.by} more with each later ${bonus.escalate.action} at the same target (up to +${bonus.escalate.max}), back to +${bonus.escalate.base} after a success or a critical failure` : null;
+    const until = climbs ?? (bonus.lasting ? "for the next such roll, whenever it comes" : bonus.spend?.length ? "for the next such roll" : bonus.against ? `against what triggered it, ${time}` : time === "this turn" ? "until the end of this turn" : time);
     // (What the triggering attack's result does to the attacker: "if it misses, the attacker dazzled for 1 round".)
     const miss = bonus.onAttack?.miss?.condition;
     const hit = bonus.onAttack?.hit?.damage;
@@ -109,14 +110,15 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
     const spend = fortune ? [plan.rollTwice.selector] : plan.bonus.spend ?? [];
     // (Kept until its roll comes, whenever: Psychic Warding Bracelet's next save against a mental effect.)
     // (A fortune with a time of its own, Aerekostes's to the end of the next turn: that.)
-    const duration = plan.bonus?.lasting ? { value: -1, unit: "unlimited", expiry: null } : fortune && plan.rollTwice.duration ? plan.rollTwice.duration : fortune || spend.length ? { value: 1, unit: "minutes", expiry: "turn-start" } : plan.bonus.duration;
+    // (One that climbs with each try, Metronomic Hammer's: its own time, the turn.)
+    const duration = plan.bonus?.lasting ? { value: -1, unit: "unlimited", expiry: null } : plan.bonus?.escalate ? plan.bonus.duration : fortune && plan.rollTwice.duration ? plan.rollTwice.duration : fortune || spend.length ? { value: 1, unit: "minutes", expiry: "turn-start" } : plan.bonus.duration;
     return {
         name: `${state.item.name}: ${fortune ? "roll twice" : "bonus"}`,
         type: "effect",
         img: img ?? (fortune ? "icons/svg/d20-highlight.svg" : "icons/svg/upgrade.svg"),
         // (Only against what triggered it: what spends it — with resistance or immunity, the damage still to come after a hit; with a
         // bonus to saves, its creature's save.)
-        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.reduceCrit ? { reduceCrit: plan.bonus.reduceCrit } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage || plan.bonus.reduceCrit), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.escalate ? { escalate: plan.bonus.escalate } : {}), ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.reduceCrit ? { reduceCrit: plan.bonus.reduceCrit } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage || plan.bonus.reduceCrit), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
         system: {
             description: { value: `<p>${escape(readiedWords(plan))}.${(plan.notes ?? []).length ? ` ${escape(plan.notes.join(" "))}` : ""}</p>` },
             duration: { ...duration, sustained: false },

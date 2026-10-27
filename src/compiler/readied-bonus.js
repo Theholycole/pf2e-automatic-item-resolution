@@ -444,3 +444,22 @@ function degreeNotes(text) {
     return body.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => sentence && !UPGRADES.some(([pattern]) => pattern.test(sentence)) && /\b(?:check|save|bonus|penalty|damage|condition|Strike|action)\b/i.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?)\b/.test(sentence));
 }
 
+
+// A readied bonus that climbs with each try at the same target (2026-10-27, docs/needs.md): Metronomic Hammer's "you gain a +1 item bonus to your
+// Athletics check to Trip the target. This item bonus increases by 1 with every subsequent Trip attempt you make with the metronomic hammer
+// against the same target this turn, to a maximum of +3 on your third Trip. The bonus resets to +1 if you successfully Trip the target, if you
+// critically fail to Trip the target, or if your turn ends." → bonus.escalate { by, max, base, resetOn, sameTarget }: its Effect kept for the
+// turn, its bonus raised after each such roll that isn't one of those (scripts/fortune.js), back to its first after one, or at another target.
+const ESCALATE = /^This item bonus increases by (\d+) with every subsequent (\w+) attempt you make with the [\w' -]+? against the same target this turn, to a maximum of \+(\d+) on your \w+ \2\.$/i;
+const RESETS = /^The bonus resets to \+(\d+) if you successfully (\w+) the target, if you critically fail to \2 the target, or if your turn ends\.$/i;
+export function withEscalatingBonus(plan) {
+    if (plan?.builtin !== "readied-bonus" || !plan.bonus) return plan;
+    const notes = (plan.notes ?? []).map((note) => String(note).trim());
+    const up = notes.map((note) => ESCALATE.exec(note)).find(Boolean);
+    const reset = notes.map((note) => RESETS.exec(note)).find(Boolean);
+    if (!up || !reset) return plan;
+    const left = (plan.notes ?? []).filter((note) => !ESCALATE.test(String(note).trim()) && !RESETS.test(String(note).trim()));
+    const escalate = { by: Number(up[1]), max: Number(up[3]), base: Number(reset[1]), action: up[2].toLowerCase(), resetOn: ["success", "criticalSuccess", "criticalFailure"], sameTarget: true };
+    const { notes: _, ...rest } = plan;
+    return { ...rest, ...(left.length ? { notes: left } : {}), bonus: { ...plan.bonus, escalate }, ...(plan.partial && !left.length && !(plan.unread ?? []).length ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {}) };
+}
