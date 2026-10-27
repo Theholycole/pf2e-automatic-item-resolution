@@ -82,7 +82,7 @@ export function vehiclePlan(html, base) {
         }
         if (swan && sentence.includes(swan[1])) {
             const carries = /\bcapable of carrying up to ([^.]+?)\./i.exec(sentence)?.[1];
-            creature = { name: "Swan Boat", count: 1, size: "grg", stats: { speeds: { land: 0, swim: Number(swan[2]) } }, from: null, traits: [], initiative: null };
+            creature = { name: "Swan Boat", count: 1, size: "gargantuan", stats: { speeds: { land: 0, swim: Number(swan[2]) } }, from: null, traits: [], initiative: null };
             lines.push(`A swan-shaped boat that carries up to ${carries}, at a swim Speed of ${swan[2]} feet: a marker of it.`);
             lasts = fixed(Number(swan[3]) * HOURS[swan[4].toLowerCase()], "hours");
             continue;
