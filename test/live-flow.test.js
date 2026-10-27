@@ -127,9 +127,10 @@ test("the item's own row goes through the ability module's applyChange, on the d
     assert.ok(stateOf(card).results.includes("ability applied condition"));
 });
 
-test("no card for an item with no plan (Ration Tonic), nor for PF2e's other messages", async () => {
+// (2026-10-27: Swamp Lily Quilt for Ration Tonic, whose nourishment is now its card's line.)
+test("no card for an item with no plan (Swamp Lily Quilt), nor for PF2e's other messages", async () => {
     const count = foundry.messages.length;
-    await use(valeros, foundry.giveItem(valeros, source("Ration Tonic")));
+    await use(valeros, foundry.giveItem(valeros, source("Swamp Lily Quilt")));
     const check = foundry.makeMessage({ flags: { pf2e: { context: { type: "skill-check" }, origin: { type: "consumable", uuid: "x" } } } });
     await foundry.call("createChatMessage", check);
     await settle();

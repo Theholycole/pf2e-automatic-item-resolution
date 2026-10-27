@@ -25,6 +25,8 @@ import { forTargets, othersTargeting, targetedRecipient, allyAreaPlan, checkGate
 import { allyAreaRow, dropsToOne, itemDuration, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { alarmZone, isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
 import { sentryPlan } from "./sentry.js";
+import { scoutPlan } from "./scout.js";
+import { withAloft } from "./aloft.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { belchedCloudPlan, bubbleCloudPlan, coatedSquarePlan, exhaledSquarePlan, placedChimePlan } from "./covered-square.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -62,7 +64,7 @@ import { withoutFlavor, withoutFlavorNotes } from "./flavor.js";
 import { damageMaterial, withMaterialRider } from "./materials.js";
 import { waysPlan } from "./ways.js";
 import { elementWaysPlan, dragonWaysPlan } from "./bane.js";
-import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
+import { firstDegreeOf, firstDegreeSentence, withOnceBetter } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
@@ -271,7 +273,7 @@ export function compileItem(given, options = {}) {
     // ends a row's modifier early, src/compiler/end-early.js: Crackling Bubble Gum's gum.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
     // (A recovery's own damage first and its lower-level case a second button, src/compiler/recovery.js: Searing Suture.)
-    return decide(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), given, options);
+    return decide(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(withAloft(withOnceBetter(instead ?? compileOne(given, options), text), text)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), given, options);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
@@ -379,6 +381,9 @@ function compileOne(given, options = {}) {
     // (A guard that watches an area for hours, src/compiler/sentry.js: Sentry Fulu — each creature that enters a note to the GM.)
     const sentry = sentryPlan(item, base);
     if (sentry) return { ...sentry, item: itemInfo(item) };
+    // (An object that comes back with what it saw, src/compiler/scout.js: Shortbread Spy — information, whispered.)
+    const scout = scoutPlan(item, base);
+    if (scout) return { ...scout, item: itemInfo(item) };
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     const snare = snareZone(item, read);
     // (Its condition for as long as a persistent damage lasts: Freezing Embrace Snare's clumsy.)

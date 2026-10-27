@@ -17,6 +17,9 @@ export function endingOn(actor, kind) {
 
 // Whether a chat message is one of a creature's hostile actions: an attack roll, a damage roll, or a spell cast.
 export const isHostileMessage = (message) => HOSTILE.has(message?.flags?.pf2e?.context?.type) || Boolean(message?.flags?.pf2e?.casting && message?.flags?.pf2e?.origin?.type === "spell");
+// (Or only an attack or a damage roll, "air-ends-on:attack" — Corpseward Pendant's ward, which a spell that harms no one doesn't end, 2026-10-27.)
+const ATTACKS = new Set(["attack-roll", "spell-attack-roll", "damage-roll"]);
+export const isAttackMessage = (message) => ATTACKS.has(message?.flags?.pf2e?.context?.type);
 
 async function endThem(actor, effects, why, { unhide = true } = {}) {
     const ids = effects.map((effect) => effect.id).filter((id) => actor.items?.get?.(id));
@@ -33,6 +36,8 @@ export function setUpEndsOnHostile() {
         const actor = message.actor ?? ChatMessage.getSpeakerActor?.(message.speaker) ?? null;
         const effects = endingOn(actor, "hostile");
         if (effects.length) endThem(actor, effects, "used a hostile action").catch((error) => console.error(`${MODULE_ID} | ends on hostile`, error));
+        const attacked = isAttackMessage(message) ? endingOn(actor, "attack") : [];
+        if (attacked.length) endThem(actor, attacked, "attacked or dealt damage", { unhide: false }).catch((error) => console.error(`${MODULE_ID} | ends on an attack`, error));
     });
     Hooks.on("createItem", (item) => {
         if (!isActiveGM() || item?.type !== "condition" || !item.slug) return;

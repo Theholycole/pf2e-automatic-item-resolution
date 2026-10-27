@@ -718,6 +718,12 @@ export function suppressEffectSource(entry, { item = {}, user = {}, worldTime = 
 // A time's first critical failure made a failure, in words: "The first critical failure on Thievery checks to Pick a Lock becomes a
 // failure, within 1 minute".
 export function firstDegreeText(first) {
+    // (A failure too, Heartening Missive (Butterfly)'s: "The first failure or critical failure on Diplomacy or Performance checks is one degree
+    // better (a fortune effect), within 24 hours".)
+    if (first.adjustment?.failure) {
+        const skills = [].concat(first.selectors ?? first.selector).map((word) => word.charAt(0).toUpperCase() + word.slice(1));
+        return `The first failure or critical failure on ${skills.join(" or ")} checks is one degree better${first.fortune ? " (a fortune effect)" : ""}${first.duration?.mode === "fixed" ? `, within ${timeText(first.duration)}` : ""}`;
+    }
     const actions = [].concat(first.predicate ?? []).filter((term) => typeof term === "string" && term.startsWith("action:")).map((term) => term.slice(7).split("-").map((word, at) => (at === 0 || !["a", "an", "the", "of"].includes(word) ? word.charAt(0).toUpperCase() + word.slice(1) : word)).join(" "));
     const skill = first.selector.charAt(0).toUpperCase() + first.selector.slice(1);
     const time = first.duration?.mode === "fixed" ? `, within ${timeText(first.duration)}` : "";
@@ -726,7 +732,7 @@ export function firstDegreeText(first) {
 
 // Its Effect: PF2e's AdjustDegreeOfSuccess, which the first roll it changes removes (scripts/first-degree.js).
 export function firstDegreeEffectSource(first, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    return ownEffectSource({ name: "first critical failure", img: "icons/svg/upgrade.svg", words: firstDegreeText(first), rules: firstDegreeRules(first, item.name ?? null), duration: first.duration, flag: { firstDegree: { selector: first.selector, adjustment: first.adjustment } }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: "first critical failure", img: "icons/svg/upgrade.svg", words: firstDegreeText(first), rules: firstDegreeRules(first, item.name ?? null), duration: first.duration, flag: { firstDegree: { selector: first.selector, ...(first.selectors ? { selectors: first.selectors } : {}), adjustment: first.adjustment } }, item, user, worldTime, initiative, moduleId });
 }
 
 // Extra damage on its user's Strikes in words: "+1d4 precision damage on melee Strikes against off-guard creatures for 10 minutes".

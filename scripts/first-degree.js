@@ -14,7 +14,8 @@ export async function firstDegreeRolled(message) {
     const options = new Set(context.options ?? []);
     const spent = (actor?.itemTypes?.effect ?? []).filter((effect) => {
         const flag = effect.flags?.[MODULE_ID]?.firstDegree;
-        if (!flag || !domains.includes(flag.selector) || !flag.adjustment?.[unadjusted]) return false;
+        // (Its checks, one or several: Heartening Missive (Butterfly)'s Diplomacy or Performance.)
+        if (!flag || ![].concat(flag.selectors ?? flag.selector).some((selector) => domains.includes(selector)) || !flag.adjustment?.[unadjusted]) return false;
         // (The roll its rule is for: Pick a Lock, not every Thievery check.)
         const rule = (effect.system?.rules ?? []).find((each) => each.key === "AdjustDegreeOfSuccess");
         return [].concat(rule?.predicate ?? []).every((term) => typeof term !== "string" || options.has(term));

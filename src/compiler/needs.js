@@ -66,14 +66,17 @@ export const NEEDS = [
         title: "Senses",
         needs: "A sense for a time (darkvision, low-light vision, scent, tremorsense, echolocation, lifesense, truesight, see the invisible): PF2e's Sense rule on an Effect, read from the item's words.",
         where: "item reader",
-        test: /\b(?:darkvision|low-light vision|scent\b|tremorsense|echolocation|lifesense|truesight|blindsight|wavesense|see invisib\w*|see through (?:darkness|walls)|(?:precise|imprecise|vague) sense)\b/i
+        // (Not a smell, 2026-10-27: Ration Tonic's "faintly fruity scent", Fiendish Teleportation's "the scent of brimstone".)
+        test: /\b(?:darkvision|low-light vision|(?<!\bfruity )scent\b(?! of\b)|tremorsense|echolocation|lifesense|truesight|blindsight|wavesense|see invisib\w*|see through (?:darkness|walls)|(?:precise|imprecise|vague) sense)\b/i
     },
     {
         id: "speeds",
         title: "Speeds",
         needs: "A Speed of a kind (fly, swim, climb, burrow) or a Speed set or raised beyond a plain bonus: PF2e's BaseSpeed rule on an Effect.",
         where: "item reader",
-        test: /\b(?:(?:fly|swim|climb|burrow|land) Speed|Speed (?:becomes|equal to|of \d+ feet)|walk on (?:water|liquid)|water walk\w*|levitat\w*|hover\w*|gain (?:the )?ability to fly)\b/i
+        // (Not the pace something else moves at, 2026-10-27: Messenger Missive's "Flies at a Speed of 45 feet", Wind-Up Cart's "moves forward at a
+        // speed of 30 feet per round" — an object's own.)
+        test: /\b(?:(?:fly|swim|climb|burrow|land) Speed|Speed (?:becomes|equal to)|(?<!\bat an? )Speed of \d+ feet|walk on (?:water|liquid)|water walk\w*|levitat\w*|hover\w*|gain (?:the )?ability to fly)\b/i
     },
     {
         id: "fortune",

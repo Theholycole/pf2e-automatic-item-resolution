@@ -87,3 +87,57 @@ test("Clockwork Chirper and Sentry Fulu: a placed watch whose set-off is the GM'
     assert.match(sentry.zone.saves[0].note, /password.*Perception DC 20.*DC 15 Perception check to wake.*within 60 feet/);
     assert.ok(sentry.zone.notes.some((note) => /patrols the area along a path they set, at a Speed of 25 feet/.test(note)));
 });
+
+test("an object's own Speed or a smell isn't its user's sense or Speed: Ration Tonic's fruity scent, the missives' and Tracking Fulu's flight — their out-of-combat words the card's lines; Shortbread Spy's sights whispered", async () => {
+    const { NEEDS } = await import("../src/compiler/needs.js");
+    const test = (id, words) => NEEDS.find((need) => need.id === id).test.test(words);
+    assert.equal(test("senses", "faintly fruity scent"), false);
+    assert.equal(test("senses", "the scent of brimstone"), false);
+    assert.equal(test("senses", "you gain scent as an imprecise sense"), true);
+    assert.equal(test("speeds", "Flies at a Speed of 45 feet"), false);
+    assert.equal(test("speeds", "you have a Speed of 30 feet"), true);
+    for (const name of ["Ration Tonic", "Tracking Fulu"]) assert.deepEqual([consumable(name).decided, consumable(name).partial], ["card-line", undefined], name);
+    assert.equal(consumable("Messenger Missive").builtin, "whisper");
+    const spy = consumable("Shortbread Spy");
+    assert.deepEqual([spy.builtin, spy.decided], ["whisper", "information"]);
+    assert.match(spy.whisper.text, /scrambles away at a Speed of 15 feet.*see what the spy saw/);
+});
+
+test("Heartening Missive (Butterfly): its recipient's first failed Diplomacy or Performance check one degree better within 24 hours (a fortune effect), gone with that roll; its 24 hours' immunity", async () => {
+    const { firstDegreeRules } = await import("../src/compiler/first-degree.js");
+    const { firstDegreeText } = await import("../src/live/card.js");
+    const butterfly = consumable("Heartening Missive (Butterfly)");
+    assert.deepEqual([butterfly.noteOnly, butterfly.partial, butterfly.item.recipient, butterfly.targeting.target], [undefined, undefined, "targets", "1 creature"]);
+    const first = butterfly.item.firstDegree;
+    assert.deepEqual([first.selectors, first.adjustment, first.duration.value, first.duration.unit], [["diplomacy", "performance"], { failure: "one-degree-better", criticalFailure: "one-degree-better" }, 24, "hours"]);
+    assert.deepEqual(firstDegreeRules(first).map((rule) => rule.selector), ["diplomacy", "performance"]);
+    assert.equal(firstDegreeText(first), "The first failure or critical failure on Diplomacy or Performance checks is one degree better (a fortune effect), within 24 hours");
+    assert.equal(butterfly.item.immunity.slug, "heartening-missive");
+});
+
+test("floating off the ground: Hovering Potion's climb Speed with its hovering in words for 5 minutes; Feather Token (Balloon)'s 9 rounds for those holding on; Balloon Padding inflated until deflated; Boots of Free Running's walls checked", () => {
+    const hovering = consumable("Hovering Potion");
+    assert.deepEqual([hovering.noteOnly, hovering.partial], [undefined, undefined]);
+    const [speed] = hovering.item.speeds;
+    assert.deepEqual([speed.type, speed.value, speed.duration.value, speed.duration.unit], ["climb", "@actor.system.movement.speeds.land.value", 5, "minutes"]);
+    assert.match(speed.note, /Arrest a Fall as if it had a fly Speed/);
+    const balloon = consumable("Feather Token (Balloon)");
+    const [held] = balloon.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([balloon.noteOnly, balloon.item.recipient, held.duration.value, held.duration.unit], [undefined, "targets", 9, "rounds"]);
+    assert.match(held.text, /rises 20 feet a round for 3 rounds \(60 feet up\), floats in place for 2 rounds/);
+    const padding = activation("Balloon Padding", "Inflate");
+    assert.deepEqual([padding.builtin, padding.source.name, padding.resolution.outcomes.success.noteEffects[0].duration], [undefined, "Balloon Padding: Inflate", null]);
+    assert.match(padding.resolution.outcomes.success.noteEffects[0].text, /5 feet off the ground.*AC 10, Hardness 0/);
+    for (const grade of ["Lesser", "Moderate", "Greater"]) assert.equal(activation(`Boots of Free Running (${grade})`).decided, "checked");
+});
+
+test("Corpseward Pendant: Undetected by undead in words for 10 minutes, ended by its wearer's attack or damage roll; the undead's DC 18 Will card after it, a success's 24 hours' immunity, no card for the living", () => {
+    const pendant = activation("Corpseward Pendant");
+    const [ward] = pendant.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([pendant.noteOnly, ward.duration.value, ward.duration.unit, ward.rules], [undefined, 10, "minutes", [{ key: "RollOption", option: "air-ends-on:attack" }]]);
+    const save = pendant.again.plan;
+    assert.deepEqual([pendant.again.repeat, save.resolution.check.statistic, save.resolution.check.against.value], [true, "will", 18]);
+    assert.deepEqual([save.trigger.immunity.degrees, save.trigger.immunity.duration], [["criticalSuccess", "success"], { value: 24, unit: "hours" }]);
+    assert.equal(planFor(save, { system: { traits: { value: ["humanoid"] } } }), null);
+    assert.equal(planFor(save, { system: { traits: { value: ["undead", "zombie"] } } }), save);
+});

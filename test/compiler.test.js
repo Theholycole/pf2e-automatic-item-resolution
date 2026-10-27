@@ -256,16 +256,18 @@ test("bonuses against what a creature makes, what an effect gives, or ranged att
 });
 
 test("an item with a time and nothing else the module reads: a note of its text on the drinker, counted apart", () => {
-    const plan = compileItem(item("Hovering Potion"));
+    // (2026-10-27: Potion of Passing Fancy for Hovering Potion, whose climb Speed is read now — src/compiler/aloft.js.)
+    const plan = compileItem(item("Potion of Passing Fancy"));
     assert.equal(plan.noteOnly, true);
     const [note] = plan.resolution.outcomes.success.noteEffects;
-    assert.equal(note.label, undefined, "the ability module calls it \"Hovering Potion: note\"");
-    assert.deepEqual([note.duration.value, note.duration.unit], [5, "minutes"]);
+    assert.equal(note.label, undefined, "the ability module calls it \"Potion of Passing Fancy: note\"");
+    assert.deepEqual([note.duration.value, note.duration.unit], [1, "hours"]);
     assert.doesNotMatch(note.text, /^Activate/);
     const result = registry.resolveSync(plan, context(), io());
     assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.effect?.kind]), [["effect", "drinker", "note"]]);
-    // With no time, nothing (the GM's).
-    assert.equal(compileItem(item("Ration Tonic")), null);
+    // With no time, nothing (the GM's). (2026-10-27: Swamp Lily Quilt for Ration Tonic, whose nourishment is now its card's line —
+    // src/compiler/needs.js no longer reads its "fruity scent" as a sense.)
+    assert.equal(compileItem(item("Swamp Lily Quilt")), null);
 });
 
 test("a snare: the ability module's zone, a 5-foot square set off once by the first creature to enter it", () => {
