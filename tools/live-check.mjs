@@ -5247,6 +5247,39 @@ export const cases = {
         }
     },
 
+    // Alarm Snare (2026-10-27): a Tiny creature stepping in doesn't set it off (the ability module's only.minSize); a Medium one does — the GM's
+    // note of its noise, the square gone.
+    async alarmSnareSize(scene) {
+        const { actor: setter, token: setterToken } = await creature(scene, "Alarm Setter", { type: "character", x: 0, y: 12 });
+        const { actor: rat, token: ratToken } = await creature(scene, "Alarm Rat", { x: 4, y: 12, alliance: "opposition" });
+        await rat.update({ "system.traits.size.value": "tiny" });
+        const { token: walkerToken } = await creature(scene, "Alarm Walker", { x: 6, y: 12, alliance: "opposition" });
+        const snare = await give(setter, "Alarm Snare");
+        await setterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        try {
+            await snare.consume();
+            const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Alarm Snare/.test(region.name));
+            await until(() => square(), "the snare's Region", { timeout: 8000 });
+            const shape = square().shapes[0];
+            let since = Date.now();
+            await ratToken.update({ x: shape.x, y: shape.y });
+            await wait(2500);
+            assert(square(), "still set after the Tiny rat");
+            assert(!game.messages.contents.some((message) => message.timestamp >= since && /Alarm Snare/.test(message.content) && /noise loud enough/.test(message.content)), "no noise for the rat");
+            await ratToken.update({ x: shape.x + 300, y: shape.y });
+            since = Date.now();
+            await walkerToken.update({ x: shape.x, y: shape.y });
+            await messageAfter(since, (message) => /Alarm Snare/.test(message.content) && /noise loud enough/.test(message.content), { what: "the GM's note of its noise" });
+            await until(() => !square(), "the square gone once a Medium creature set it off", { timeout: 8000 });
+            return { tiny: "kept", medium: "set off" };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            for (const region of scene.regions.filter((entry) => /Alarm Snare/.test(entry.name))) await region.delete().catch(() => null);
+        }
+    },
+
     // Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check against DC 38 (its Perception at −30): Off-Guard.
     async cunningDodge(scene) {
         const { actor: wearer, token: wearerToken } = await creature(scene, "Dodging Wearer", { type: "character", x: 6, y: 1 });

@@ -9,6 +9,15 @@ import { plainText } from "./rows.js";
 
 const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
 
+// The size a creature must be to set it off (2026-10-27): Alarm Snare's "When a Small or larger creature enters the square", Hoof Stakes Snare's
+// "triggers only when a Large or larger creature enters its square" → PF2e's size slug, for the ability module's zone entries' only.minSize
+// (ability 411cb9f): a smaller creature does nothing there, and the snare stays set.
+const SIZES = { small: "sm", medium: "med", large: "lg", huge: "huge", gargantuan: "grg" };
+const SIZE_GATE = /\b(?:When an?|triggers only when an?) (Small|Medium|Large|Huge|Gargantuan) or larger creature enters (?:the|its) square\b/i;
+export const sizeGate = (plain) => SIZES[SIZE_GATE.exec(String(plain ?? ""))?.[1]?.toLowerCase()] ?? null;
+const SIZE_WORDS = { sm: "Small", med: "Medium", lg: "Large", huge: "Huge", grg: "Gargantuan" };
+const firstTo = (gate) => (gate ? `The first ${SIZE_WORDS[gate]} or larger creature` : "The first creature");
+
 export const isSnare = (item) => item?.type === "consumable" && (item.system?.category === "snare" || (item.system?.traits?.value ?? []).includes("snare") || /\bsnare\b/i.test(item.name ?? ""));
 
 // A snare's outright damage, no save: Boom Snare's "The target and all creatures in adjacent squares take @Damage[1d4[persistent,fire]]
@@ -87,6 +96,7 @@ export function snareZone(item, read) {
     // end-early card once the save card has applied — src/compiler/end-early.js.)
     const endEarly = readEndEarly(plainText(item.system?.description?.value));
     const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}) };
+    const gate = sizeGate(plainText(item.system?.description?.value));
     // (Again for a while after it's set off, Bleeding Spines Snare's "After the initial trigger, the spines retract and protrude again repeatedly
     // for 1 minute, forcing any creature that enters the space or ends its turn in the space to take damage from the spines (attempting the same
     // basic Reflex save)": the area it leaves — zone.then — with the same save for that time, 2026-10-27.)
@@ -106,12 +116,12 @@ export function snareZone(item, read) {
             terrain: [],
             others: false,
             hazard: null,
-            saves: [{ when: ["enter"], plan }],
+            saves: [{ when: ["enter"], plan, ...(gate ? { only: { minSize: gate } } : {}) }],
             damage: [],
             effect: null,
             modifiers: [],
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
-            notes: [then ? "The first creature to enter the square sets it off; then the spines keep striking there." : "The first creature to enter the square sets it off; then it's spent.", ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...leftOnTheGround(item)],
+            notes: [then ? `${firstTo(gate)} to enter the square sets it off; then the spines keep striking there.` : `${firstTo(gate)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...leftOnTheGround(item)],
             once: true,
             ...(then ? { then } : {})
         }
@@ -122,7 +132,7 @@ export function snareZone(item, read) {
 // makes a noise loud enough that it can be heard by all creatures in the range you designated" (100 to 500 feet, chosen as it's made),
 // Popdust's "sprinkle popdust in an empty square adjacent to you. The first creature that applies pressure to the popdust … causes it to
 // emit a series of thunderous cracks". The zone, gone once set off, its set-off a note to the GM (the ability module's note save) — who
-// hears it is the GM's to tell. Alarm Snare's size: a Tiny creature doesn't set it off, which the zone can't tell (a GM line).
+// hears it is the GM's to tell. Alarm Snare's size: a Tiny creature doesn't set it off (only.minSize, ability 411cb9f).
 const ALARM = /\bWhen a Small or larger creature enters the square, the snare makes a noise loud enough that it can be heard by all creatures in the range you designated\./i;
 // (And Flare Snare's "When a Small or larger creature enters the square, this flare shoots into the sky. To creatures with a clear view of the
 // sky, this flare is visible from up to 2 miles away on a clear day or up to 5 miles away on a clear night": who sees it, the GM's.)
@@ -132,6 +142,7 @@ export function alarmZone(item, base) {
     const plain = plainText(item?.system?.description?.value);
     const flare = isSnare(item) ? FLARE.exec(plain) : null;
     const alarm = (isSnare(item) && ALARM.test(plain)) || !!flare;
+    const gate = alarm ? sizeGate(plain) : null;
     if (!alarm && !(item?.type === "consumable" && POPDUST.test(plain))) return null;
     const range = alarm ? /\bdesignate a range between (\d+) (?:to|and) (\d+) feet\b/i.exec(plain) : null;
     const note = flare ? `Its flare shoots up into the sky, seen ${flare[1]} miles off by day or ${flare[2]} miles off on a clear night by those under an open sky.`
@@ -144,14 +155,13 @@ export function alarmZone(item, base) {
         trigger: { event: "use" },
         zone: {
             area: { type: "square", value: 5 }, centre: "placed", range: 5, lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null,
-            saves: [{ when: ["enter"], note }],
+            saves: [{ when: ["enter"], note, ...(gate ? { only: { minSize: gate } } : {}) }],
             damage: [],
             effect: null,
             modifiers: [],
-            notes: [alarm ? "The first Small or larger creature to enter the square sets it off; then it's spent." : "The first creature to step into the square sets it off; then it's spent.", ...(alarm ? ["A Tiny creature doesn't set it off: if one did, the GM places it again."] : [])],
+            notes: [alarm ? `${firstTo(gate)} to enter the square sets it off; then it's spent.` : "The first creature to step into the square sets it off; then it's spent."],
             once: true
-        },
-        ...(alarm ? { partial: true } : {})
+        }
     };
 }
 

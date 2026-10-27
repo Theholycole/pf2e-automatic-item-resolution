@@ -133,12 +133,15 @@ test("a longer reach for the item's own Strikes: Soulpiercer's Extend, an Effect
     assert.deepEqual([source.system.rules, /reach of 15 feet/.test(source.system.description.value)], [[], true]);
 });
 
-test("a square that only makes a noise when set off (2026-10-27): Alarm Snare's and Popdust's zone, gone once a creature enters, its set-off a note to the GM; Alarm Snare's size the GM's", async () => {
+test("a square that only makes a noise when set off (2026-10-27): Alarm Snare's and Popdust's zone, gone once a creature enters, its set-off a note to the GM; Alarm Snare not by a Tiny creature (only.minSize, ability 411cb9f)", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
     const { zoneActions, zoneSetOff } = await import("../../pf2e-automatic-ability-resolution/src/live/zones.js");
     const snare = compileItem(item("Alarm Snare"), options);
-    assert.deepEqual([snare.builtin, snare.zone.once, snare.partial], ["zone", true, true]);
+    assert.deepEqual([snare.builtin, snare.zone.once, snare.partial, snare.zone.saves[0].only], ["zone", true, undefined, { minSize: "sm" }]);
     assert.match(snare.zone.saves[0].note, /\(100 to 500 feet\)/);
+    assert.deepEqual([zoneActions(snare.zone, "tokenEnter", { size: "tiny" }).length, zoneActions(snare.zone, "tokenEnter", { size: "sm" }).map((action) => action.kind)], [0, ["note"]]);
+    // (Hoof Stakes Snare's Large or larger.)
+    assert.deepEqual(compileItem(item("Hoof Stakes Snare"), options).zone.saves[0].only, { minSize: "lg" });
     const popdust = compileItem(item("Popdust"), options);
     const actions = zoneActions(popdust.zone, "tokenEnter", {});
     assert.deepEqual([actions.map((action) => action.kind), zoneSetOff(popdust.zone, actions), popdust.partial], [["note"], true, undefined]);

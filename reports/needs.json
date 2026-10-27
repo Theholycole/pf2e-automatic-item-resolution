@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1330,
+  "entries": 1328,
   "results": {
-   "partial": 427,
+   "partial": 425,
    "none": 535,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -11,7 +11,7 @@
   "main": {
    "cast-changes": 25,
    "speeds": 23,
-   "areas": 136,
+   "areas": 135,
    "counteract": 24,
    "afflictions": 61,
    "moving": 85,
@@ -22,7 +22,7 @@
    "spells": 36,
    "information": 23,
    "out-of-combat": 36,
-   "no-rules": 20,
+   "no-rules": 18,
    "actions": 31,
    "immunity": 27,
    "objects": 114,
@@ -33,7 +33,7 @@
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
-   "triggers": 91,
+   "triggers": 92,
    "situational": 18,
    "dying": 28,
    "senses": 21,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 25,
    "speeds": 29,
-   "areas": 201,
+   "areas": 200,
    "immunity": 90,
    "objects": 391,
    "speech": 129,
@@ -70,7 +70,7 @@
    "information": 199,
    "actions": 63,
    "from-events": 29,
-   "no-rules": 20,
+   "no-rules": 18,
    "situational": 86,
    "creatures": 71,
    "mind": 64,
@@ -2910,15 +2910,6 @@
    "needs": [
     "choice",
     "information"
-   ]
-  },
-  {
-   "name": "Alarm Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -7085,10 +7076,9 @@
    "name": "Hoof Stakes Snare",
    "kind": "consumable",
    "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
+   "main": "triggers",
+   "work": "triggering creature",
    "needs": [
-    "areas",
     "triggers",
     "strike",
     "several",
@@ -13945,15 +13935,6 @@
    "work": "1 week",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Flare Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
