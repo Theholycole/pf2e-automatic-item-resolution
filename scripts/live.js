@@ -15,6 +15,7 @@
 import { applyEndEarlyCard } from "./end-early.js";
 import { applyDropCard } from "./drop-held.js";
 import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
+import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
@@ -228,6 +229,16 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     // (Its moves with ability 0.9.2's hook and moveFrom, else as read before: scripts/placed-moves.js.)
     plan = forAbility(plan);
     // (Damage as its user's own Strike with it would deal, of one type — Sinew-Song's Cutting Cadenza: PF2e's formula for that Strike, src/live/strike-as.js.)
+    // (A die per charge its item stores — Conflagration Club's Explosive Cone, its charges from Absorb Arcana: that many of its type, the charges then
+    // gone; none stored through the card, typed on it as before.)
+    if (spendsCharges(plan) && used?.data?.uuid) {
+        const holder = await fromUuid(used.data.uuid).catch(() => null);
+        const charged = withCharges(plan, holder?.getFlag?.(MODULE_ID, "charges"));
+        if (charged) {
+            plan = charged;
+            await holder.setFlag(MODULE_ID, "charges", { count: 0, type: null });
+        }
+    }
     // (Or the Strike that just missed its user, sent back with its own damage — Turnabout Shield's: the attacker's PF2e formula for it.)
     if (plan?.strikeDamage?.from === "triggering-miss" && actor) {
         const formula = await triggeringMissFormula(actor);

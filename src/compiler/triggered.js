@@ -373,7 +373,18 @@ function chitinShell(text, base) {
     return { ...base, builtin: "ways", automation: { level: "automatic" }, ways: [{ name: "Sprinkled on (8 hours)", html: "", plan: sprinkled }, { name: "Shed Chitin (it would be petrified)", html: "", plan: shed }] };
 }
 
-const USE_READERS = [reflectedSpell, slashedSpell, drunkenSave, backupEye, steadiedInnovation, knottedBleed, chitinShell];
+// (Key of Unwinding's Rewrite Time, a reaction for its minute: "Attempt a Strike with the affected weapon against the triggering enemy. On a success, you
+// deal no damage, but you negate the triggering attack or spell …": a note Effect on its user for the minute with its words — the Strike its own
+// (PF2e's, no damage rolled), the attack's negation and the creature's lost actions the GM's, its Slowed after a second use in a combat its own.)
+const KEY = [/^A key of unwinding is a narrow brass clock hand, its pointed end fashioned into the shape of a key\.$/i, /^When applied to a weapon, a key of unwinding forms a direct link to the Dimension of Time, allowing you to draw on a fragment of temporal power\.$/i, /^For (\d+) minutes?, you gain the Rewrite Time reaction while wielding the attuned weapon\.$/i, /^Rewrite Time \([^)]*\) Trigger You or an ally within your weapon's reach or range increment would be hit by a Strike or a spell attack roll Effect Attempt a Strike with the affected weapon against the triggering enemy\.$/i, /^On a success, you deal no damage, but you negate the triggering attack or spell\.$/i, /^Actions and spell slots used to attempt this attack are lost, and the triggering creature's multiple attack penalty increases as normal, as the results of the action are siphoned into the Dimension of Time\.$/i, /^Any creature attempting to use Rewrite Time more than once per combat becomes Slowed 1 for 1 round after each subsequent use, as their own time begins to leech away\.$/i];
+function rewrittenTime(text, base) {
+    const sentences = usedSentences(text).map((sentence) => sentence.replace(/^Activate\s*(?:\([^)]*\))?\s*/, ""));
+    if (sentences.length !== KEY.length || !KEY.every((pattern, at) => pattern.test(sentences[at]))) return null;
+    const minutes = Number(KEY[2].exec(sentences[2])[1]);
+    return ownCard(base, { noteEffects: [{ label: "Rewrite Time", text: "While it wields the attuned weapon, it has the Rewrite Time reaction (trigger: it or an ally within the weapon's reach or range increment would be hit by a Strike or a spell attack roll): it Strikes the triggering enemy with that weapon (don't roll damage). On a success, the triggering attack or spell is negated — its actions and spell slots are lost, and its multiple attack penalty still rises. After its first use in a combat, each use makes it Slowed 1 for 1 round.", duration: { mode: "fixed", value: minutes, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }] });
+}
+
+const USE_READERS = [reflectedSpell, slashedSpell, drunkenSave, backupEye, steadiedInnovation, knottedBleed, chitinShell, rewrittenTime];
 // A consumable's plan → the plan its trigger's effect makes, or the same plan. base: its base plan; info: its item part (src/compiler/index.js).
 export function withTriggeredUse(plan, item, { base, info }) {
     const text = plainText(item?.system?.description?.value);
@@ -431,6 +442,10 @@ const NOTE_RULES = [
     { sentences: [/^The whispers warn you of the impending danger\.$/i, /^You immediately gain a reaction that you can use only to respond to the triggering action or effect\.$/i], label: "Warned", text: "A reaction now, usable only to respond to the action or effect it was warned of.", duration: THIS_TURN },
     // (Undead Scourge's Sever from the Void, on the undead it hit: no void healing for 1 minute unless that healing counteracts it first.)
     { sentences: [/^You disrupt the undead's connection to void energy\.$/i, /^For 1 minute, the undead damaged with the dagger can't be healed by void energy unless the effect attempting to heal the undead first counteracts the undead scourge's effect, which has a counteract rank of (\d+)(?:st|nd|rd|th) and a DC of (\d+)\.$/i, /^Vitality energy still has the usual effects on the undead\.$/i], label: "Severed from the void", text: (said) => `For 1 minute it can't be healed by void energy, unless the effect healing it first counteracts this (counteract rank ${said[1][1]}, DC ${said[1][2]}); vitality energy still harms it as usual.`, duration: MINUTE, targets: true },
+    // (Auspicious Scepter's Fortunate Strike, on the ally its fortune spell targeted: its next Strike bypasses resistance equal to that spell's rank, one
+    // type — the GM's pick, the most damage through —, until the end of the scepter's wielder's next turn. PF2e's resistance bypass is a rune's, no
+    // rule an Effect can carry: the GM's to apply as that damage lands.)
+    { sentences: [/^Your luck magic lingers, allowing your target to find a weak spot in an enemy's defenses\.$/i, /^The next Strike made by the target of the triggering fortune spell bypasses an amount of resistance equal to the spell's rank\.$/i, /^This benefit is lost if it isn't used by the end of your next turn\.$/i, /^If more than one type of resistance would apply against the attack, the attack bypasses only one\s*[—–-]\s*whichever would result in the highest amount of damage getting through, as determined by the GM\.$/i], label: "A weak spot found", text: "Its next Strike bypasses an amount of its target's resistance equal to the rank of the fortune spell it was given: one type only, whichever lets the most damage through (the GM's call, as the damage is applied). Lost if it isn't used by the end of the scepter's wielder's next turn.", duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }, targets: true },
     // (Victory Plate's record: a victory on the tabard until a later Recall uses it — the creature's trait is what that one picks.)
     { sentences: [/^You direct the armor to commemorate your victory\.$/i, /^The coat of arms on the armor's tabard shifts to incorporate heraldry related to the slain creature, and the victory is recorded within the tabard\.$/i, /^If you have already recorded four victories, choose one to replace with the new victory\.$/i], label: "Victory recorded", text: "A victory over the creature it slew is recorded on the tabard (note its trait: the tabard's other activation gives resistance by it, and that use takes it off). It holds four at most: with four already, its user replaces one (delete that one's Effect).", duration: null }
 ];
@@ -567,9 +582,30 @@ export function withCollapsedArmor(plan, { item, activation, index }) {
     };
 }
 
+// --- Charges stored from a spell, and spent ------------------------------------------------------------------------------------------------------
+
+// (Conflagration Club's Absorb Arcana, "The club gains a number of charges equal to the rank of the spell slot, and the charges are attuned to the
+// damage type matching the spell's trait. If the spell has more than one eligible trait, choose one when the charges are stored" — its trigger's
+// types, "the spell has the acid, cold, electricity, fire, or sonic trait": the ways card, a way for each type, each the objects card's op "charge"
+// on itself — the slot's rank typed, kept on the item (its flag "charges" { count, type }, scripts/objects.js), refused while it has some (its
+// Requirements). Its Explosive Cone's die per charge, typed on its card and its type picked (src/compiler/scaled.js), is filled in from them as
+// its card is made, the charges then gone (scripts/live.js, src/live/charges.js).)
+const ALIGNED = /^You mentally align the [\w' -]+?'s crystals to reverberate with energy from the triggering spell\.$/i;
+const GAINS = /^The [\w' -]+? gains a number of charges equal to the rank of the spell slot, and the charges are attuned to the damage type matching the spell's trait\.$/i;
+const CHOOSE_TRAIT = /^If the spell has more than one eligible trait, choose one when the charges are stored\.$/i;
+const TRAITS = /\bthe spell has the ((?:acid|cold|electricity|fire|sonic|force|mental|poison|spirit|vitality|void)(?:,? (?:or )?(?:acid|cold|electricity|fire|sonic|force|mental|poison|spirit|vitality|void))*) trait\b/i;
+export function withStoredCharges(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const traits = TRAITS.exec(String(activation.trigger ?? ""));
+    if (!traits || sentences.length !== 3 || !ALIGNED.test(sentences[0]) || !GAINS.test(sentences[1]) || !CHOOSE_TRAIT.test(sentences[2]) || !/^The [\w' -]+? has no charges$/i.test(String(activation.requirements ?? ""))) return plan;
+    const types = traits[1].toLowerCase().split(/,\s*(?:or\s+)?|\s+or\s+/).map((type) => type.trim()).filter(Boolean);
+    const base = keptBase(plan, item, { activation, index });
+    const way = (type) => ({ name: `${capital(type)} spell`, html: "", plan: { ...base, builtin: "objects", automation: { level: "automatic" }, targeting: { target: "self", range: null, area: null }, objects: { op: "charge", self: true, typed: "the spell slot's rank", attune: type, onlyWhenEmpty: true } } });
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, ways: types.map(way), once: true };
+}
 // --- The readers, in order --------------------------------------------------------------------------------------------------------------------
 
-const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell, withAlertWearers, withDrawnStrike, withNoteRule, withAvoidedDeath, withEchoedCall, withTranslocatedStrike, withWeaponCast, withDivertedEnergy, withCollapsedArmor];
+const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell, withAlertWearers, withDrawnStrike, withNoteRule, withAvoidedDeath, withEchoedCall, withTranslocatedStrike, withWeaponCast, withDivertedEnergy, withCollapsedArmor, withStoredCharges];
 
 // The activation's plan → the plan its trigger's effect makes, or the same plan. entry: { activation, index } (compileEach's).
 export function withTriggered(plan, entry, item) {

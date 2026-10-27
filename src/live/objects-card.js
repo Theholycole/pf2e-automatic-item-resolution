@@ -20,6 +20,8 @@ export function objectsText(objects, item = {}, stored = null) {
     if (objects.op === "reshape") return objects.forms ? `${item.name ?? "It"} takes its other shape (a ${objects.forms.join(" or a ")}), its runes kept` : `${item.name ?? "It"} takes the shape of another melee weapon held in as many hands (picked), its runes kept`;
     // (Another creature's item damaged, Rustbringer's: the targeted creature's.)
     if (objects.op === "damage") return `${objects.formula}${objects.type && objects.type !== "untyped" ? ` ${objects.type}` : ""} damage to the targeted creature's ${objects.of}${objects.ignoresHardness ? ", ignoring its Hardness" : ""} (rolled, its Hit Points lowered: Broken at its Broken Threshold, destroyed at 0)`;
+    // (Charges stored in itself from a spell, Conflagration Club's Absorb Arcana: the slot's rank typed, of the type picked.)
+    if (objects.op === "charge") return `${item.name ?? "It"} gains charges equal to ${objects.typed} (typed below), attuned to ${objects.attune}${objects.onlyWhenEmpty ? " (only when it has none)" : ""}`;
     // (Itself, by an amount its trigger dealt: Sanguine Klar's bleed damage, typed on the card.)
     if (objects.op === "repair" && objects.typed) return `${item.name ?? "It"} regains Hit Points equal to ${objects.typed} (typed below)${objects.upTo === "hardness" ? ", at most its Hardness" : ""}, up to its maximum`;
     // (The item its talisman is affixed to, once the damage lands: Mending Lattice's, Fortifying Pebble's.)

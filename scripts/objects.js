@@ -7,6 +7,7 @@
 import { storable } from "../src/compiler/stored-spell.js";
 import { ruleEffectSource } from "../src/live/card.js";
 import { createObjectsCard, objectsCardHTML } from "../src/live/objects-card.js";
+import { chargesOf } from "../src/live/charges.js";
 import { FLAG, MODULE_ID, entryOf, isActiveGM, stateOf } from "./foundry.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -159,6 +160,14 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
     } else if (objects.op === "don") {
         await chosen.update({ "system.containerId": null, "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.handsHeld": 0 });
         line = `${state.user.name} wears ${chosen.name}`;
+    } else if (objects.op === "charge") {
+        // (Charges kept on it, Conflagration Club's: its flag, refused while it still has some — its Requirements.)
+        const typed = Math.max(0, Math.floor(Number(amount) || 0));
+        if (!typed) throw new Error(`Type ${objects.typed} first.`);
+        const held = chargesOf(chosen.getFlag?.(MODULE_ID, "charges") ?? chosen.flags?.[MODULE_ID]?.charges);
+        if (objects.onlyWhenEmpty && held) throw new Error(`${chosen.name} still has ${held.count} ${held.type ?? ""} charge${held.count === 1 ? "" : "s"}: it can't take more until they're spent.`);
+        await chosen.setFlag(MODULE_ID, "charges", { count: typed, type: objects.attune ?? null });
+        line = `${chosen.name} holds ${typed} ${objects.attune ?? ""} charge${typed === 1 ? "" : "s"} (its card that spends them takes them)`;
     } else if (objects.op === "repair" && objects.typed) {
         // (By the amount its user typed, at most its Hardness: Sanguine Klar's bleed damage.)
         const typed = Math.max(0, Math.floor(Number(amount) || 0));

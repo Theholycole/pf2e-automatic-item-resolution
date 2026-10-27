@@ -342,3 +342,44 @@ test("Storm Flash's Divert Lightning: immunity to the triggering electricity for
     const spellbook = activation("Spellbook of Redundant Enchantment", "Retain Incantation");
     assert.deepEqual([spellbook.decided, done(spellbook)], ["one-off", true]);
 });
+
+test("Conflagration Club: Absorb Arcana stores the slot's rank as charges of the type picked; Explosive Cone's card takes them as its dice, the charges gone", async () => {
+    const { chargesOf, spendsCharges, withCharges } = await import("../src/live/charges.js");
+    const absorb = activation("Conflagration Club", "Absorb Arcana");
+    assert.deepEqual([routeOf(absorb), absorb.ways.map((way) => way.name)], ["ways", ["Acid spell", "Cold spell", "Electricity spell", "Fire spell", "Sonic spell"]]);
+    assert.deepEqual(absorb.ways[3].plan.objects, { op: "charge", self: true, typed: "the spell slot's rank", attune: "fire", onlyWhenEmpty: true });
+    const cone = activation("Conflagration Club", "Explosive Cone");
+    assert.ok(spendsCharges(cone));
+    const charged = withCharges(cone, { count: 3, type: "fire" });
+    assert.deepEqual([charged.resolution.sharedDamage.components[0].formula, charged.scaled, charged.damageChoices], ["3d6[fire]", undefined, undefined]);
+    assert.deepEqual([withCharges(cone, { count: 0 }), chargesOf({ count: 2, type: "cold" })], [null, { count: 2, type: "cold" }]);
+    // (Live: stored on the club, then its cone's card takes them.)
+    const club = foundry.giveItem(reaper, source("Conflagration Club"));
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: club.uuid, activation: 0, userId: "player" });
+    await settle();
+    const ways = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "ways");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: ways.id, choice: 3, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "objects");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, amount: "3", userId: "player" });
+    await settle();
+    assert.deepEqual(club.getFlag(MODULE_ID, "charges"), { count: 3, type: "fire" });
+    const before = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: club.uuid, activation: 1, userId: "player" });
+    await settle();
+    const blast = foundry.messages.slice(before).find((message) => message.flags?.[MODULE_ID]?.card?.plan?.chargesUsed);
+    assert.ok(blast, "its cone's card");
+    assert.equal(blast.flags[MODULE_ID].card.plan.resolution.sharedDamage.components[0].formula, "3d6[fire]");
+    assert.equal(chargesOf(club.getFlag(MODULE_ID, "charges")), null, "spent");
+});
+
+test("note Effects for their time: Auspicious Scepter's weak spot on the ally targeted until the end of its wielder's next turn; Key of Unwinding's Rewrite Time for its minute", () => {
+    const scepter = activation("Auspicious Scepter", "Fortunate Strike");
+    const note = scepter.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([routeOf(scepter), scepter.item.recipient, note.label, note.duration, done(scepter)], ["item", "targets", "A weak spot found", { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }, true]);
+    const key = consumable("Key of Unwinding");
+    const rewrite = key.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([routeOf(key), key.noteOnly, rewrite.label, rewrite.duration.value, rewrite.duration.unit, done(key)], ["item", undefined, "Rewrite Time", 1, "minutes", true]);
+    assert.match(rewrite.text, /Slowed 1 for 1 round/);
+});
