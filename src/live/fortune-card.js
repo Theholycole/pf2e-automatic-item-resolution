@@ -9,7 +9,7 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 
 export const MODULE_KEY = "rollTwice";
 const SAVES = new Set(["saving-throw", "fortitude", "reflex", "will"]);
-export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity || plan.bonus?.halfDamage || plan.bonus?.reduceCrit || plan.bonus?.shieldBlock));
+export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity || plan.bonus?.halfDamage || plan.bonus?.noDamage || plan.bonus?.reduceCrit || plan.bonus?.shieldBlock));
 
 const ROLL_WORDS = { initiative: "initiative roll", "attack-roll": "attack roll", "saving-throw": "saving throw", "skill-check": "skill check", perception: "Perception check", fortitude: "Fortitude save", reflex: "Reflex save", will: "Will save", ac: "AC", check: "check" };
 const actionWords = (predicate) => (predicate?.[0]?.or ?? []).map((option) => String(option).replace(/^action:/, "").replace(/-/g, " ")).join(", ");
@@ -39,6 +39,8 @@ export function bonusWords(bonus) {
     const immunity = bonus.immunity ? `immunity to ${bonus.immunity.type} damage` : null;
     // (Laurel of the Empath's: half of it.)
     const halved = bonus.halfDamage ? "half damage from the triggering attack" : null;
+    // (Hollow Robes' Hollow Target's: none of it, 2026-10-27.)
+    const zeroed = bonus.noDamage ? "the triggering damage reduced to 0" : null;
     const cut = bonus.reduceCrit ? `the triggering critical hit's damage reduced by ${bonus.reduceCrit.value}, by no more than its doubling added (half of it)` : null;
     // (Arrow-Catching Shield's: PF2e's Shield Block on the damage of the Strike it takes.)
     const blocked = bonus.shieldBlock ? "the Shield Block reaction's effects on its damage if it hits (its raised shield's Hardness, the shield taking the rest)" : null;
@@ -50,7 +52,8 @@ export function bonusWords(bonus) {
     // (Thrice-Fried Mudwings': its Speed lowered the first time, ended the second.)
     const steps = bonus.speedSteps ? `its ${bonus.speedSteps.type} Speed ${bonus.speedSteps.feet} feet or half its Speed the first time${bonus.speedSteps.secondEnds ? ", ended the second" : ""}` : null;
     // (Pyrefeather Cloak's: a flat check to end its persistent fire at once.)
-    const recovery = bonus.recovery ? `a flat check now to end persistent ${bonus.recovery.types.join(" or ")} damage` : null;
+    // (Or all of it ended outright, Hollow Target's: recovery.ends, 2026-10-27.)
+    const recovery = bonus.recovery?.ends ? "all its persistent damage ended" : bonus.recovery ? `a flat check now to end persistent ${bonus.recovery.types.join(" or ")} damage` : null;
     // (Crown of the Fire Eater's: healing just after the damage.)
     const healed = bonus.healAfter ? `then it regains Hit Points equal to its ${bonus.healAfter.type} damage before resistance, at most ${bonus.healAfter.max}` : null;
     // (Scale of Igroon's: ended by its user's next activation or Shield Block.)
@@ -59,7 +62,7 @@ export function bonusWords(bonus) {
     const success = bonus.onSuccess ? `on a success, ${bonus.onSuccess.condition.slug} for ${bonus.onSuccess.condition.duration.value} ${bonus.onSuccess.condition.duration.value === 1 ? bonus.onSuccess.condition.duration.unit.replace(/s$/, "") : bonus.onSuccess.condition.duration.unit}${bonus.onSuccess.only ? ` (its extra action only to ${bonus.onSuccess.only})` : ""}` : null;
     // (Warrior's Training Ring's more for an expert: "+4 for an expert in any weapon".)
     const expert = first?.ifExpert ? ` (+${first.ifExpert} for an expert in any weapon)` : "";
-    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, halved, cut, blocked, degree, shared, success, steps, recovery, healed, ends].filter(Boolean).join(", ");
+    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, halved, zeroed, cut, blocked, degree, shared, success, steps, recovery, healed, ends].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
@@ -120,7 +123,7 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
         img: img ?? (fortune ? "icons/svg/d20-highlight.svg" : "icons/svg/upgrade.svg"),
         // (Only against what triggered it: what spends it — with resistance or immunity, the damage still to come after a hit; with a
         // bonus to saves, its creature's save.)
-        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.escalate ? { escalate: plan.bonus.escalate } : {}), ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.shieldBlock ? { shieldBlock: true } : {}), ...(plan.bonus?.reduceCrit ? { reduceCrit: plan.bonus.reduceCrit } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage || plan.bonus.reduceCrit || plan.bonus.shieldBlock), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.escalate ? { escalate: plan.bonus.escalate } : {}), ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.noDamage ? { noDamage: true } : {}), ...(plan.bonus?.shieldBlock ? { shieldBlock: true } : {}), ...(plan.bonus?.reduceCrit ? { reduceCrit: plan.bonus.reduceCrit } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage || plan.bonus.noDamage || plan.bonus.reduceCrit || plan.bonus.shieldBlock), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
         system: {
             description: { value: `<p>${escape(readiedWords(plan))}.${(plan.notes ?? []).length ? ` ${escape(plan.notes.join(" "))}` : ""}</p>` },
             duration: { ...duration, sustained: false },

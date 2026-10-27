@@ -922,7 +922,8 @@ test("more mythic and healing items: Hollow Robes' persistent damage ended outri
     const { rerollText } = await import("../src/live/reroll-card.js");
     const { focusText } = await import("../src/live/focus-card.js");
     const hollow = compileActivations(item("Hollow Robes"))[1].plan;
-    assert.deepEqual([hollow.item.recovery.ends, hollow.item.recovery.types.length > 10, hollow.spend], [true, true, { mythicPoints: 1 }]);
+    // (2026-10-27, batch 3: its recovery now the readied card's, beside the triggering damage made 0 — test/places-2026-10-27.test.js.)
+    assert.deepEqual([hollow.bonus.recovery.ends, hollow.bonus.recovery.types.length > 10, hollow.spend], [true, true, { mythicPoints: 1 }]);
     assert.ok(!(hollow.notes ?? []).some((note) => /persistent damage you're currently taking ends/.test(note)), "its ending not a note too");
     // (One type ended outright beside the healing typed on the card: Assassin's Skin's bleed.)
     const skin = compileActivations(item("Assassin's Skin"))[0].plan;

@@ -187,3 +187,27 @@ test("the Essence Forges' Craft an Item: a one-off (crafting through Forge Point
         assert.deepEqual([done(forge), forge.decided], [true, "one-off"], grade);
     }
 });
+
+test("Hollow Robes' Hollow Target: the readied card for its Mythic Point — the triggering damage 0 as it's applied (bonus.noDamage), every persistent damage ended at once", async () => {
+    const { isFortune, bonusWords, fortuneEffectSource } = await import("../src/live/fortune-card.js");
+    const { beforeNoDamage } = await import("../scripts/half-damage.js");
+    const hollow = activation("Hollow Robes", "Hollow Target");
+    assert.deepEqual([hollow.builtin, done(hollow), hollow.spend, hollow.bonus.noDamage, hollow.bonus.recovery.ends, hollow.bonus.against, hollow.item.recovery, isFortune(hollow)], ["readied-bonus", true, { mythicPoints: 1 }, true, true, true, undefined, true]);
+    assert.equal(bonusWords(hollow.bonus), "the triggering damage reduced to 0, all its persistent damage ended");
+    const effect = fortuneEffectSource({ state: { plan: hollow, item: { name: "Hollow Robes" }, user: { actorUuid: "Actor.me" } }, moduleId: "pf2e-automatic-item-resolution" });
+    const flags = effect.flags["pf2e-automatic-item-resolution"].rollTwice;
+    assert.deepEqual([flags.noDamage, flags.against.damage], [true, true]);
+    const readied = { itemTypes: { effect: [{ flags: effect.flags }] } };
+    const roll = { total: 31, alter: () => ({ total: 15 }) };
+    assert.deepEqual([beforeNoDamage(readied, { damage: roll }).params.damage, beforeNoDamage(readied, { damage: 12 }).params.damage, beforeNoDamage({ itemTypes: { effect: [] } }, { damage: 12 })], [0, 0, null]);
+});
+
+test("Shadow's Heart: its user's Strike its own, the teleport card beside, and on a hit its duplicate's attack card kept open 3 rounds at +28 for 3d6+16 slashing", () => {
+    const [heart] = activations("Shadow's Heart").map((entry) => entry.plan);
+    assert.deepEqual([done(heart), heart.builtin, routeOf(heart), heart.item.move], [true, undefined, "item", { within: 100, speedTimes: null, from: "self" }]);
+    const { plan: attack, later, repeat, rounds } = heart.again;
+    assert.deepEqual([later, repeat, rounds, routeOf(attack), attack.ownCheck, attack.resolution.check.against], [true, true, 3, "save", { kind: "attack", modifier: 28 }, { dc: "target", statistic: "ac" }]);
+    assert.deepEqual(attack.resolution.sharedDamage.components.map((component) => component.formula), ["(3d6+16)[slashing]"]);
+    assert.deepEqual([attack.resolution.outcomes.criticalSuccess.damage.multiplier, attack.resolution.outcomes.success.damage.multiplier, attack.resolution.outcomes.failure.damage.mode], [2, 1, "none"]);
+    assert.match(heart.notes[2], /AC 35/);
+});

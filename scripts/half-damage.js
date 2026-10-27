@@ -4,19 +4,22 @@
 // Effect (src/live/fortune-card.js, flagged halfDamage), the damage roll is halved by PF2e's own alter(0.5) — a number, rounded down. The
 // Effect is then spent by the damage, as one with resistance is (scripts/fortune.js). And bonus.reduceCrit (Indomitable Keepsake's critical
 // hit reduced by 10, no lower than a normal hit's): the hit's damage less that much, at most half of it — the doubling's part — by
-// alter(1, -N) on its first instance; nothing off a damage PF2e says wasn't a critical hit.
+// alter(1, -N) on its first instance; nothing off a damage PF2e says wasn't a critical hit. And bonus.noDamage (Hollow Robes' Hollow Target,
+// 2026-10-27: "The damage from a critical hit Strike is reduced to 0", or the persistent damage that triggered it): the damage 0.
 
 import { MODULE_KEY } from "../src/live/fortune-card.js";
 import { CORE_ID, MODULE_ID } from "./foundry.js";
 
 const cutting = (actor) => (actor?.itemTypes?.effect ?? []).find((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.reduceCrit) ?? null;
 const halving = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.halfDamage);
+const zeroing = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.noDamage);
 const blocking = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.shieldBlock);
 
 export function setUpHalfDamage() {
     const damage = game.modules.get(CORE_ID)?.api?.patches?.damage;
     if (!damage?.onApply) return console.warn(`${MODULE_ID} | The resolution core's damage listener isn't there: Laurel of the Empath won't halve.`);
     damage.onApply({ module: MODULE_ID, name: "half-damage", before });
+    damage.onApply({ module: MODULE_ID, name: "no-damage", before: beforeNoDamage });
     damage.onApply({ module: MODULE_ID, name: "reduce-critical", before: beforeCritical });
     damage.onApply({ module: MODULE_ID, name: "shield-block", before: beforeShieldBlock });
 }
@@ -44,6 +47,12 @@ export function beforeCritical(actor, params) {
     if ((degree !== undefined && degree !== 3) || typeof params.damage.alter !== "function") return null;
     const cut = criticalCut(params.damage.total, value);
     return cut ? { params: { ...params, damage: params.damage.alter(1, -cut) } } : null;
+}
+
+// (None of the damage the readied Effect is against: 0, as a number.)
+export function beforeNoDamage(actor, params) {
+    if (!zeroing(actor) || params?.damage === undefined || params?.damage === null || params.damage === 0) return null;
+    return { params: { ...params, damage: 0 } };
 }
 
 export function before(actor, params) {

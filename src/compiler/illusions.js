@@ -217,6 +217,74 @@ const READINGS = [
         }
     },
     {
+        // (Batch 3, 2026-10-27: its user's Strike its own; the teleport within 100 feet the teleport card beside (plan.item.move, read before
+        // as the plan's own); and on a hit its illusory duplicate's one action each round for 3 rounds — the later attack card kept open
+        // (plan.again, as src/compiler/self-fighting.js's weapon), at its +28 for 3d6+16 slashing. Its AC and its end by any damaging attack or
+        // save the GM's, lines.)
+        name: "Shadow's Heart",
+        over: true,
+        sentences: [
+            /^\bYou make a melee Strike with shadow's heart and teleport\b.*\bwithin (\d+) feet\.$/,
+            /^\bIf the attack hits, you also leave behind\b.*\bfor up to (\d+) rounds\.$/,
+            /^\bThe illusion has 1 action per round\b.*\bon your turn each round\.$/,
+            /^\bIt uses this action to move up to (\d+) feet\b.*\bwith a \+(\d+) attack modifier, dealing (\d+d\d+(?:\+\d+)?) (\w+) damage\.$/,
+            /^\bThe illusion has an AC of (\d+)\b.*\bsaving throw\.$/
+        ],
+        card: ([teleport, lasts, , attack, ac], plan) => {
+            if (plan?.builtin !== "teleport" || plan.teleport?.within !== Number(teleport[1])) return null;
+            const modifier = Number(attack[2]);
+            const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [], modifiers: [] });
+            const strike = {
+                modelVersion: plan.modelVersion,
+                source: { name: `${plan.source?.name ?? "Shadow's Heart"}: its duplicate's attack` },
+                automation: { level: "automatic" },
+                targeting: { target: "the creature its user's Strike hit", range: null, area: null },
+                trigger: { event: "use" },
+                ownCheck: { kind: "attack", modifier },
+                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `(${attack[3]})[${attack[4].toLowerCase()}]`, type: null, category: null }] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } }
+            };
+            return {
+                keep: true,
+                builtin: undefined,
+                teleport: undefined,
+                partial: undefined,
+                automation: { level: "automatic" },
+                targeting: { target: null, range: null, area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
+                notes: [
+                    `Its user Strikes with it first (its own Strike), then teleports up to ${teleport[1]} feet to a space in its sight (the teleport card).`,
+                    `Only if that Strike hit: its illusory duplicate stays behind for up to ${lasts[1]} rounds, with 1 action on the turn it's made and on its user's turn each round — moving up to ${attack[1]} feet to beside the target, and attacking it if it's there (its attack card, kept open). Missed: close that card.`,
+                    `The duplicate has AC ${ac[1]}; any attack that deals it damage, or anything that calls for its save, destroys it (the GM's): close its card then.`
+                ],
+                item: { ...(plan.item ?? {}), move: plan.teleport },
+                again: { plan: strike, later: true, repeat: true, rounds: Number(lasts[1]), when: "the duplicate's action, on the turn it's made and on its user's turn each round" }
+            };
+        }
+    },
+    {
+        // (Batch 3, 2026-10-27: hollow to the critical hit's damage or the persistent damage that triggered it — the readied card's bonus.noDamage,
+        // the damage 0 as it's applied (scripts/half-damage.js), spent by it —, every persistent damage ended at once (its recovery, read before,
+        // now the readied card's), for its Mythic Point (plan.spend, read before).)
+        name: "Hollow Robes: Hollow Target",
+        over: true,
+        sentences: [/^\bSpend 1 Mythic Point\.$/, /^\bYou momentarily transform yourself into an illusory duplicate\b.*\btriggering damage or Strike\.$/, /^\bThe damage from a critical hit Strike is reduced to 0\.$/, /^\bAll persistent damage you're currently taking ends\.$/],
+        card: (found, plan) => {
+            if (plan?.builtin || !plan?.item?.recovery?.ends || !plan.spend?.mythicPoints) return null;
+            const { recovery, ...item } = plan.item;
+            return {
+                keep: true,
+                builtin: "readied-bonus",
+                resolution: undefined,
+                partial: undefined,
+                automation: { level: "automatic" },
+                targeting: { target: "the user", range: null, area: null },
+                bonus: { modifiers: [], resistance: null, noDamage: true, recovery, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], against: true },
+                notes: ["Only while Empty Robes is in effect.", "Only against what triggered it: a critical hit from a Strike, or the persistent damage it takes."],
+                item
+            };
+        }
+    },
+    {
         name: "Masquerade Scarf (Greater): Masquerade",
         over: true,
         sentences: [
