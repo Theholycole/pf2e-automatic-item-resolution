@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
-import { compileItem } from "../src/compiler/index.js";
+import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { fallEffectSource, fallLine } from "../src/live/card.js";
@@ -17,8 +17,9 @@ const item = (name) => {
     const doc = equipment.find((entry) => entry.name === name);
     return { ...doc, ownerLevel: Number(doc.system.level?.value) || 1 };
 };
-const activations = (name) => compileActivations(item(name)).map((entry) => entry.plan);
-const activation = (name, which) => compileActivations(item(name)).find((entry) => entry.activation.name === which).plan;
+const options = { spells: spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items")) };
+const activations = (name) => compileActivations(item(name), options).map((entry) => entry.plan);
+const activation = (name, which) => compileActivations(item(name), options).find((entry) => entry.activation.name === which).plan;
 const done = (plan) => Boolean(plan) && !plan.partial && !plan.noteOnly && plan.builtin !== "no-effect";
 const success = (plan) => plan.resolution.outcomes.success;
 
@@ -141,4 +142,59 @@ test("Alchemical Atomizer's cloud in a square until its user's next turn, and Bi
     const snare = compileItem(item("Biting Snare"));
     const critical = snare.zone.saves[0].plan.resolution.outcomes.criticalFailure;
     assert.deepEqual([done(snare), critical.manualInstructions, critical.noteEffects[0].rules, critical.noteEffects[0].duration], [true, undefined, [{ key: "FlatModifier", selector: "all-speeds", type: "status", value: -10 }], null]);
+});
+
+test("casts whose notes are the map's, its user's own and an object's: Cloud Pouch, Dragon Pearl, Pipe of Dancing Smoke, Highhelm Stronghold Plate", () => {
+    const pouch = activation("Cloud Pouch", "Disperse");
+    assert.deepEqual([pouch.builtin, done(pouch), pouch.castRange.feet, pouch.notes.length], ["cast-spell", true, 10, 2]);
+    assert.match(pouch.notes[0], /move Mist's area on the map/);
+    const pearl = activation("Dragon Pearl (Draconic Codex)", "Pearlescent Shell");
+    assert.deepEqual([pearl.spell.name, pearl.rank, done(pearl), pearl.notes.length], ["Containment", 8, true, 1]);
+    assert.match(pearl.notes[0], /resistance 15/);
+    const [pipe] = activations("Pipe of Dancing Smoke");
+    assert.deepEqual([pipe.builtin, routeOf(pipe), pipe.spell.name, done(pipe), pipe.trigger.frequency.per], ["cast-spell", "cast", "Mist", true, "day"]);
+    const [plate] = activations("Highhelm Stronghold Plate");
+    assert.deepEqual([plate.spell.name, done(plate), plate.castDuration], ["Wall of Stone", true, { value: 10, unit: "minutes" }]);
+});
+
+test("Zuhra's Gloves: the zuhra's two ways, Weapon Storm at 6th rank or Wall of Metal at DC 30, the wall turning on PF2e's own toggle", async () => {
+    const gloves = activation("Zuhra's Gloves", "Zuhra's Stratagem");
+    assert.deepEqual([gloves.builtin, done(gloves), gloves.ways.map((way) => [way.plan.spell.name, way.plan.rank, way.plan.dc, routeOf(way.plan)])], ["ways", true, [["Weapon Storm", 6, 30, "cast"], ["Wall of Metal", null, 30, "cast"]]]);
+    assert.deepEqual(gloves.ways[1].plan.toggleOn, { option: "wall-of-metal", domain: "saving-throw" });
+    const { toggleOn } = await import("../scripts/toggle-off.js");
+    const calls = [];
+    await toggleOn(gloves.ways[1].plan, { actor: { toggleRollOption: async (...args) => calls.push(args), items: { get: () => null } }, used: { data: { _id: "gloves" } } });
+    assert.deepEqual(calls, [["saving-throw", "wall-of-metal", "gloves", true]]);
+});
+
+test("Rusting Ammunition: its persistent force for 6 rounds at most and the crumbling at 0 Hit Points, a note Effect while it lasts", () => {
+    for (const [name, rounds, cube] of [["Rusting Ammunition (Moderate)", 5, 5], ["Rusting Ammunition (Greater)", 6, 10]]) {
+        const [ammo] = activations(name);
+        const note = success(ammo).noteEffects[0];
+        assert.deepEqual([done(ammo), success(ammo).manualInstructions, note.duration.value, note.whilePersistent], [true, undefined, rounds, "force"], name);
+        assert.match(ammo.notes.at(-1), new RegExp(`${cube}-foot cube`));
+    }
+});
+
+test("walls as zones, their numbers an object's: Limestone Shield's 60-foot wall for a minute, Rampart Shield's rampart for an hour", () => {
+    const wall = activation("Limestone Shield", "Limestone Wall");
+    assert.deepEqual([wall.builtin, done(wall), wall.zone.area, wall.zone.lasts.value, wall.zone.lasts.unit], ["zone", true, { type: "line", value: 60 }, 1, "minutes"]);
+    assert.match(wall.zone.notes[1], /AC 10, Hardness 7, 28 Hit Points/);
+    const [rampart] = activations("Rampart Shield");
+    assert.deepEqual([rampart.builtin, done(rampart), rampart.zone.area, rampart.zone.lasts.value, rampart.zone.lasts.unit], ["zone", true, { type: "line", value: 10 }, 1, "hours"]);
+});
+
+test("Warning Snare's subtle sound for its maker, as Alarm Snare's square; the fulus' week and their counteract card", () => {
+    const snare = compileItem(item("Warning Snare"));
+    assert.deepEqual([snare.builtin, done(snare), snare.zone.once, snare.zone.saves[0].only], ["zone", true, true, { minSize: "sm" }]);
+    assert.match(snare.zone.saves[0].note, /1,000 feet/);
+    for (const [name, what] of [["Fulu of Flood Suppression", "water"], ["Fulu of Fire Suppression", "fire"]]) {
+        const fulu = compileItem(item(name));
+        assert.deepEqual([done(fulu), fulu.item.counteract.modifier, fulu.item.counteract.rank, fulu.item.counteract.free.name, fulu.notes.length], [true, 7, 2, `the magical ${what} effects`, 2], name);
+    }
+});
+
+test("the areas' one-offs, their card's lines: Sidestepping's Phase Through, Golden Goose, Kimanéz Luminescent Toadstool, Doomsweeper's Clear the Way, Shaping Sweet", () => {
+    const plans = [activation("Sidestepping", "Phase Through"), activation("Golden Goose", "Golden Goose"), compileItem(item("Kimanéz Luminescent Toadstool")), activation("Doomsweeper", "Clear the Way"), compileItem(item("Shaping Sweet"))];
+    for (const plan of plans) assert.deepEqual([plan.decided, done(plan)], ["one-off", true], plan.source?.name);
 });

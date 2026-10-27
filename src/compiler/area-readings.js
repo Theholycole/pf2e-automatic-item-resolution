@@ -476,6 +476,197 @@ const READINGS = [
             delete save.partial;
             return { keep: true, drop: true, zone: { ...plan.zone, saves: [{ ...entry, plan: save }] } };
         }
+    },
+    // --- Casts and what their notes leave: the card's lines for the map, its user's own actions and an object's numbers.
+    {
+        // Cloud Pouch's Disperse: Mist in a 20-foot burst within 10 feet (castRange, read before); moving the cloud on a Sustain is the map.
+        names: ["Cloud Pouch: Disperse"],
+        over: (plan) => plan?.builtin === "cast-spell" && plan.spell?.name === "Mist" && plan.castRange?.feet === 10,
+        sentences: [
+            /^You scatter the dust into the air around you, causing it to condense into a cloud in a 20-foot burst within 10 feet, as the Mist spell\.$/,
+            /^You can Sustain the activation to make the cloud Fly (\d+) feet\.$/,
+            /^The cloud lasts 1 minute, and you can Dismiss it\.$/
+        ],
+        card: ([, fly], plan) => ({ keep: true, drop: true, notes: [`Its user can Sustain the activation to move the cloud ${fly[1]} feet (move Mist's area on the map).`, "It lasts Mist's minute; its user can Dismiss it."] })
+    },
+    {
+        // Dragon Pearl's Pearlescent Shell: Containment on its user (the cast, read before); the field's resistance to the type its user picks is
+        // the field's own — an object's, as its Hardness and Hit Points are.
+        names: ["Dragon Pearl (Draconic Codex): Pearlescent Shell"],
+        over: (plan) => plan?.builtin === "cast-spell" && plan.spell?.name === "Containment" && plan.self,
+        sentences: [
+            /^You call protective power from the pearl to form a defensive barrier around yourself\.$/,
+            /^You're affected by an 8th-rank Containment spell, which takes on the appearance of shimmering translucent dragon scales\.$/,
+            /^The field has resistance (\d+) to one damage type related to the dragon the pearl came from\.$/,
+            /^When you activate the pearl, you choose the type from all types the dragon has immunity or resistance to plus a type based on their tradition: force for arcane, spirit for divine, mental for occult, or poison for primal\.$/
+        ],
+        card: ([, , resistance]) => ({ keep: true, drop: true, notes: [`The field (Containment's, around its user) has resistance ${resistance[1]} to one damage type its user picks as it's activated: one the pearl's dragon is immune or resistant to, or by the dragon's tradition force (arcane), spirit (divine), mental (occult) or poison (primal). The field's own numbers, an object's (the GM's).`] })
+    },
+    {
+        // Pipe of Dancing Smoke: its smoke bird's burst with the effects of Mist — Mist cast where the bird bursts (its own range, 120 feet).
+        names: ["Pipe of Dancing Smoke"],
+        sentences: [
+            /^The smoke forms a bird that flies up to (\d+) feet in a direction of your choice\.$/,
+            /^When it collides with a solid object or travels the full range, whichever is shorter, it explodes in a 20-foot burst of smoke with the effects of Mist\.$/
+        ],
+        card: ([bird]) => ({ builtin: "cast-spell", spell: { uuid: "Compendium.pf2e.spells-srd.Item.9XHmC2JgTUIQ1CCm", name: "Mist" }, rank: null, dc: null, attack: null, tradition: null, self: false, targeting: { target: null, range: `${bird[1]} feet`, area: { type: "burst", value: 20 } }, notes: [`A bird of smoke flies up to ${bird[1]} feet in a direction its user picks and bursts where it hits something solid or ends its flight: Mist's burst there (the map).`] })
+    },
+    {
+        // Highhelm Stronghold Plate: Wall of Stone (the cast, read before), for up to 10 minutes (castDuration) — the armor off its wearer
+        // meanwhile its user's own (its sheet), the wall's end the map's.
+        names: ["Highhelm Stronghold Plate"],
+        over: (plan) => plan?.builtin === "cast-spell" && plan.spell?.name === "Wall of Stone",
+        sentences: [
+            /^The plating on your armor explodes off of your body, expands, and reshapes, transforming into a stone structure with the effects of Wall of Stone\.$/,
+            /^While the armor is transformed in this way, you don't gain the benefits of wearing the armor\.$/,
+            /^The armor remains transformed for up to (\d+) (minutes?) or until you Dismiss the effect, at which point the wall of stone disappears and the armor returns to you, donning itself immediately\.$/,
+            /^Crafting Requirements Supply one casting of wall of stone \.$/
+        ],
+        card: ([, , lasts]) => ({
+            keep: true,
+            drop: true,
+            castDuration: { value: Number(lasts[1]), unit: UNITS[lasts[2].toLowerCase()] },
+            notes: [
+                "The armor is the wall: its wearer has none of its benefits meanwhile (set it to carried on the sheet, its user's own).",
+                `The wall lasts up to ${lasts[1]} minutes or until Dismissed; then it's gone and the armor dons itself again (end the wall, put the armor back on).`
+            ]
+        })
+    },
+    {
+        // Zuhra's Gloves' Zuhra's Stratagem: the zuhra's choice (the GM's) — the ways card's two casts at DC 30, Weapon Storm at 6th rank or
+        // Wall of Metal; the wall's own toggle on the gloves (PF2e's "wall-of-metal", its +3 to Reflex DC against Disarm off) turned on with it.
+        names: ["Zuhra's Gloves: Zuhra's Stratagem"],
+        over: (plan) => plan?.builtin === "cast-spell",
+        sentences: [
+            /^You extend the weapon and call out the zuhra's name\.$/,
+            /^They channel their magic through the gloves to assist you with their choice of offense or defense \(as determined by the GM\)\.$/,
+            /^The zuhra makes any choices for the spell, and any save DC is (\d+)\.$/,
+            /^Offense The metal of the gloves wraps around your weapon and channels the zuhra's magic to cast a (\d+)th-rank Weapon Storm spell, replicating the metal weapon\.$/,
+            /^Defense The metal flows off your arms, creating a Wall of Metal\.$/,
+            /^The wall's surface has the same pattern as the gloves\.$/,
+            /^You lose the gloves' item bonus until the barrier ends, at which point the metal returns to your hands and forearms\.$/,
+            /^You can Dismiss the activation\.$/
+        ],
+        card: ([, , dc, storm], plan, { base, info }) => {
+            const lines = ["The zuhra picks offense or defense and makes the spell's choices (the GM's call)."];
+            const cast = (spell, rank, more = {}, notes = []) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use" }, builtin: "cast-spell", spell, rank, dc: Number(dc[1]), attack: null, tradition: null, self: false, targeting: { target: null, range: null, area: null }, ...more, notes: [...lines, ...notes], item: info });
+            const way = (name, plan) => ({ name, html: `<p><strong>Effect</strong> ${name}.</p>`, plan });
+            return {
+                builtin: "ways",
+                once: true,
+                targeting: { target: null, range: null, area: null },
+                ways: [
+                    way(`Offense: Weapon Storm at ${storm[1]}th rank`, cast({ uuid: "Compendium.pf2e.spells-srd.Item.8M03UxGXjYyDFAoy", name: "Weapon Storm" }, Number(storm[1]), {}, ["It replicates the metal weapon its user wields."])),
+                    way("Defense: Wall of Metal", cast({ uuid: "Compendium.pf2e.spells-srd.Item.CB5TlGv5ZghtMifi", name: "Wall of Metal" }, null, { toggleOn: { option: "wall-of-metal", domain: "saving-throw" } }, ["While the wall stands, the gloves give no bonus (their Wall of Metal toggle, turned on); when it ends, the metal returns: switch the toggle off (its user's own).", "Its user can Dismiss it."]))
+                ]
+            };
+        }
+    },
+    {
+        // Rusting Ammunition (both grades): its persistent force damage for 6 rounds at most and the crumbling at 0 Hit Points while it lasts —
+        // a note Effect on the creature hit for those rounds, while it takes that damage (whilePersistent); a metal object's cube, a line.
+        names: ["Rusting Ammunition (Moderate)", "Rusting Ammunition (Greater)"],
+        read: (plan, { html }) => {
+            const text = String(html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+            const rounds = /\bdamage for up to (\d+) rounds\b/.exec(text);
+            const cube = /\bFor an object, the ammunition destroys a (\d+)-foot cube\./.exec(text);
+            const row = plan?.resolution?.outcomes?.success;
+            const gm = row?.manualInstructions ?? [];
+            if (!rounds || !cube || !/\bdeals damage to objects or creatures primarily made of metal\b/.test(text) || gm.length !== 2 || !/crumbles into fine powder/.test(said(gm[0])) || !/destroys a \d+-foot cube/.test(said(gm[1]))) return null;
+            const note = { label: "Rusting", text: `Its persistent force damage lasts ${rounds[1]} rounds at most (remove it then). If it drops to 0 Hit Points while taking it, it crumbles into fine powder; its gear remains.`, duration: timeOf(rounds[1], "rounds"), whilePersistent: "force" };
+            const { manualInstructions, ...kept } = row;
+            return { keep: true, drop: true, resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...kept, noteEffects: [...(kept.noteEffects ?? []), note] } } }, notes: [...(plan.notes ?? []), "Only a creature or object primarily made of metal (the GM's call).", `At a metal object, it destroys a ${cube[1]}-foot cube of it (an object's, the GM's).`] };
+        }
+    },
+    // --- Walls: the ability module's zone where the wall stands, for its time, its numbers its notes — an object's, the GM's (as the ability
+    // module's own walls are).
+    {
+        // Limestone Shield's Limestone Wall: up to 60 feet long, 10 feet high, for a minute.
+        names: ["Limestone Shield: Limestone Wall"],
+        sentences: [
+            /^You set the shield down as it expands up to (\d+) feet wide and (\d+) feet tall\.$/,
+            /^Each square of the wall has AC (\d+), Hardness (\d+), and (\d+) Hit Points, and it's immune to critical hits and precision damage\.$/,
+            /^If a section is destroyed, this effect ends, and your limestone shield is broken\.$/,
+            /^You can Dismiss this activation, which otherwise lasts for (\d+) (minutes?)\.$/
+        ],
+        card: ([wall, square, , lasts]) => zoneCard(zoneOf({
+            area: { type: "line", value: Number(wall[1]) },
+            centre: "placed",
+            lasts: timeOf(lasts[1], lasts[2]),
+            notes: [`A stone wall up to ${wall[1]} feet long and ${wall[2]} feet high, set down beside its user (draw its walls on the map).`, `Each square: AC ${square[1]}, Hardness ${square[2]}, ${square[3]} Hit Points, immune to critical hits and precision damage (an object's, the GM's).`, "A section destroyed ends it, and the shield is broken (the GM's).", "Its user can Dismiss it (end the zone)."]
+        }))
+    },
+    {
+        // Rampart Shield: a 10-foot stone rampart with arrow slits for an hour.
+        names: ["Rampart Shield"],
+        sentences: [
+            /^You transform the shield into a 1-foot-thick, (\d+)-foot-by-\d+-foot stone rampart topped with a battlement and adorned with the flags of Absalom\.$/,
+            /^If any part of the rampart would pass through any creatures or objects, the activation fails\.$/,
+            /^At the center of each 5-foot length of the rampart is an arrow slit\.$/,
+            /^The rampart has AC (\d+), Hardness (\d+), and (\d+) Hit Points\.$/,
+            /^The rampart is immune to critical hits and precision damage\.$/,
+            /^Attacks that would destroy the rampart cause it to instead revert back to its shield form and drop to the ground in an open space below the rampart\.$/,
+            /^When this happens, the shield loses (\d+) Hit Points\.$/,
+            /^You can Dismiss the activation, causing the wall to revert back to its shield form\.$/,
+            /^The shield then returns secured to your arm if you are adjacent to the rampart, or drops to the ground in an open space if you're not adjacent to the rampart\.$/,
+            /^If neither destroyed nor Dismissed, the rampart reverts back to a shield automatically after (\d+) (hours?)\.$/
+        ],
+        card: ([rampart, , , stats, , , loses, , , lasts]) => zoneCard(zoneOf({
+            area: { type: "line", value: Number(rampart[1]) },
+            centre: "placed",
+            lasts: timeOf(lasts[1], lasts[2]),
+            notes: [
+                `A 1-foot-thick stone rampart ${rampart[1]} feet long and high, with a battlement and an arrow slit in each 5 feet, where it passes through no creature or object (draw its walls on the map).`,
+                `AC ${stats[1]}, Hardness ${stats[2]}, ${stats[3]} Hit Points, immune to critical hits and precision damage (an object's, the GM's).`,
+                `Destroyed, it's the shield again, dropped below it, with ${loses[1]} Hit Points less (the GM's).`,
+                "Dismissed, it's the shield again: back on its user's arm if adjacent, else dropped in an open space (end the zone)."
+            ]
+        }))
+    },
+    // --- Snares that only make a noise.
+    {
+        // Warning Snare: Alarm Snare's square (src/compiler/snares.js alarmZone), its sound only for its maker within 1,000 feet, and the
+        // searchers who beat its maker's Craft DC — the GM's note when it's set off.
+        names: ["Warning Snare"],
+        sentences: [
+            /^Using materials specific to the area, you connect a sound-making component to a trip wire or a pressure plate\.$/,
+            /^This snare is like an alarm snare, but its subtle sound blends into ambient noise\.$/,
+            /^You can detect this sound as long as you're within ([\d,]+) feet of the snare and aren't prevented from hearing it\.$/,
+            /^Other creatures in that area who are searching might notice the sound if their Perception check result meets or exceeds your Craft DC\.$/
+        ],
+        card: ([, , heard]) => zoneCard(zoneOf({
+            area: { type: "square", value: 5 },
+            centre: "placed",
+            range: 5,
+            once: true,
+            // (As an alarm snare's: a Small or larger creature sets it off.)
+            saves: [{ when: ["enter"], plan: null, only: { minSize: "sm" }, note: `A creature set off Warning Snare: a subtle sound its maker hears within ${heard[1]} feet, unless kept from hearing; a creature searching nearby notices it if its Perception check meets its maker's Craft DC (the GM's to tell).` }],
+            notes: ["The first Small or larger creature to enter the square sets it off; then it's spent."]
+        }))
+    },
+    // --- Fulus that guard a building for a week, and what they do once wet or burning.
+    {
+        // Fulu of Flood Suppression and of Fire Suppression: the week's slowed water or fire (the GM's, out of combat), and the counteract card
+        // for when it's submersed or catches fire (plan.item.counteract: +7, rank 2, the magical water or fire effects there).
+        names: ["Fulu of Flood Suppression", "Fulu of Fire Suppression"],
+        read: (plan, { html }) => {
+            const text = String(html ?? "").replace(/@Template\[(?:type:)?(\w+)\|distance:(\d+)[^\]]*\]/g, "$2-foot $1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+            const flood = /\bThe fulu slows the spread of flooding water in a (\d+)-foot radius by half, repelling the remaining water away\. If the fulu becomes submersed, as the ink dissolves in the water, it releases a rush of heat in a (\d+)-foot emanation, harmlessly vaporizing non-magical water in this area into steam and attempting to counteract any magical water effects with a \+(\d+) counteract modifier and a counteract rank of (\d+); when this happens, the fulu's duration ends early\./.exec(text);
+            const fire = /\bthis fulu slows the spread of fire in a (\d+)-foot radius by half\. If the fulu itself catches fire, as it burns, it releases a shower of water in a (\d+)-foot cone, automatically putting out non-magical fires in this area and attempting to counteract any magical fire effects with a \+(\d+) counteract modifier and a counteract rank of (\d+); when this happens, the fulu's duration ends early\b/.exec(text);
+            const found = flood ?? fire;
+            if (!found || !plan?.noteOnly || !/\bUsage affixed to a wall Duration 1 week\b/.test(text)) return null;
+            const [, radius, area, modifier, rank] = found;
+            const what = flood ? "water" : "fire";
+            return {
+                ...ownRow({
+                    notes: [
+                        flood ? `Affixed to a wall for a week: flooding water within ${radius} feet spreads half as fast, the rest pushed away (out of combat, the GM's).` : `Affixed to a wall for a week: fire within ${radius} feet spreads half as fast (out of combat, the GM's).`,
+                        flood ? `Submersed, it vaporizes the non-magical water in a ${area}-foot emanation into steam and counteracts the magical water effects there (the counteract card); then its week is over.` : `Catching fire, it showers a ${area}-foot cone with water, putting out the non-magical fires there, and counteracts the magical fire effects there (the counteract card); then its week is over.`
+                    ]
+                }),
+                item: { counteract: { modifier: Number(modifier), rank: Number(rank), conditions: [], traits: [], afflictions: [], free: { name: `the magical ${what} effects` }, pick: "one", notes: [flood ? "When the fulu is submersed." : "When the fulu catches fire."] } }
+            };
+        }
     }
 ];
 
@@ -493,13 +684,14 @@ function matched(reading, sentences) {
 // The plan and the activation's (or consumable's) html → the reading's card, or the same plan. name: its source name; kind "activation"
 // or "consumable"; base, info, frequency: its own (lasting.js activationBase, or a consumable's basePlan and itemInfo).
 export function withAreaReadings(plan, { name, html, kind = "activation", base, info, frequency = null }) {
-    const readings = READINGS.filter((reading) => forName(reading, name) && (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect"));
+    const readings = READINGS.filter((reading) => forName(reading, name) && (reading.read || (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect")));
     if (!readings.length) return plan;
     const words = effectWords(html, kind);
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
-        const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan, { base, info }) : null;
+        // (A reading of its own, over the plan read before and its html: Rusting Ammunition's rows, the fulus' week.)
+        const found = reading.read ? true : matched(reading, sentences);
+        const card = reading.read ? reading.read(plan, { html, base, info }) : found ? reading.card(found, plan, { base, info }) : null;
         if (!card) continue;
         // (Over the plan read before, its own parts kept; drop: what was left is gone, so it's whole.)
         if (card.keep) {

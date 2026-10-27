@@ -15,11 +15,12 @@ export async function toggleOff(plan, { actor, token, used }) {
     await actor.createEmbeddedDocuments("Item", [source]);
 }
 
-// (Its own toggle turned on as it's used, Golden Blade of Mzali's "used Elemental Form": plan.toggleOn.)
+// (Its own toggle turned on as it's used, Golden Blade of Mzali's "used Elemental Form": plan.toggleOn. In its rule's own domain when that isn't
+// "all", Zuhra's Gloves' "wall-of-metal" in saving-throw — 2026-10-27.)
 export async function toggleOn(plan, { actor, used }) {
     const itemId = used.data._id ?? String(used.data.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? null;
     if (!itemId || !actor?.toggleRollOption) return;
-    await actor.toggleRollOption("all", plan.toggleOn.option, itemId, true);
+    await actor.toggleRollOption(plan.toggleOn.domain ?? "all", plan.toggleOn.option, itemId, true);
     // (Until its user's next daily preparations: remembered on the item, turned back then.)
     if (plan.toggleOn.untilRest) await actor.items.get(itemId)?.setFlag(MODULE_ID, "toggleUntilRest", plan.toggleOn.option);
 }
