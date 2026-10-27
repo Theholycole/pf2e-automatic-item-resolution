@@ -11,7 +11,8 @@ export const isDisbelief = (state) => state?.kind === "disbelief";
 // disbelief.also: Misdirecting Haversack's "Society DC 20 reads its real text (Decipher Writing)", 2026-10-27.)
 const STATISTICS = { perception: "Perception", will: "Will" };
 const nameOf = (statistic) => STATISTICS[statistic] ?? `${String(statistic).charAt(0).toUpperCase()}${String(statistic).slice(1)}`;
-const dcWords = (check) => (Number.isFinite(check.dc) ? `DC ${check.dc}${check.against ? ` (its user's ${nameOf(check.against)} DC)` : ""}` : `against its user's ${nameOf(check.against ?? "deception")} DC`);
+// (Or its level's, Illusory Backdrop's: the item gives none, the GM's to change.)
+const dcWords = (check) => (Number.isFinite(check.dc) ? `DC ${check.dc}${check.against ? ` (its user's ${nameOf(check.against)} DC)` : check.dcFrom === "level" ? " (its level's: the item gives none, the GM may change it)" : ""}` : `against its user's ${nameOf(check.against ?? "deception")} DC`);
 export function disbeliefText(disbelief) {
     const also = disbelief.also ? `; ${nameOf(disbelief.also.statistic)} ${dcWords({ against: disbelief.against, ...disbelief.also })} ${disbelief.also.what}` : "";
     return `A creature that ${disbelief.when} can try to disbelieve it: ${nameOf(disbelief.statistic)} ${dcWords(disbelief)}${also}`;

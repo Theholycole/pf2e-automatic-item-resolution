@@ -43,6 +43,7 @@ export const NOTES_CHECKED = new Map([
     // item's to disbelieve.)
     ["Clockwork Disguise: Deploy Disguise", "its plates rearranged into one of its preset armor looks, its own statistics unchanged: an appearance"],
     ["Hand-Hewed Face: Fresh Face", "its user's molded face peeled off, its generic one shown, so it drops a disguise's face at once: an appearance, its Impersonate its own"],
+    ["Illusory Program", "a pamphlet's tiny illusions of a play, fading a day after it's opened: flavor"],
     ["Foe-Sensing Rod", "a weapon that vibrates for an hour while a creature of the chosen trait is within 60 feet, unless it's disguised or hidden with a Deception or Stealth DC of 26 or more: what it senses the GM's to tell"]
 ]);
 

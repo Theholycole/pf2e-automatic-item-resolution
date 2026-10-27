@@ -63,6 +63,8 @@ export const ONE_OFFS = new Map([
     ["Incense Bundle of Annual Blessings", { rule: "after its twelve sticks are offered at their deities' shrines within a week, a misfortune effect on its user is disrupted automatically, once a month for the next 12 months", build: "a card with 12 monthly uses that ends a misfortune Effect (PF2e's RollTwice keeping the lower) on its user" }],
     // (2026-10-27, the illusions group: two creatures trading places — no other item's own swap; Paired's are objects, Enkindled
     // Quintessence's a dragon's.)
+    // (2026-10-27: a counteract at each creature a cast's rays hit — no other item's.)
+    ["Sun Sight", { rule: "beside its Blazing Bolt, it tries to counteract each illusion on every creature a ray hits (rank 5, +19)", build: "after the cast, the counteract card at each creature the rays hit (the presser's targets), listing its illusion Effects, each ticked" }],
     ["Herd Mask", { rule: "its wearer and another wearer of a linked mask within 100 feet trade places; if they're disguised as each other, onlookers get a Perception check against the lower of their two Deception DCs to Impersonate, and on a failure don't notice the swap", build: "the teleport card moving both tokens into each other's spaces, then the disbelief card for the onlookers at the lower of the two wearers' Deception DCs" }]
 ]);
 

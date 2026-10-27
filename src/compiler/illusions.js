@@ -24,7 +24,7 @@ const own = ({ noteEffects = [], effects = [], modifiers = [], notes = [], disbe
     ...(item ? { item } : {})
 });
 // (The GM's disbelief card: Perception against the DC, for a creature that does what the text says.)
-const seeThrough = ({ dc = null, when, lasts = null, ends = null, against = null, also = null }) => ({ dc, statistic: "perception", when, ...(against ? { against } : {}), ...(lasts ? { lasts } : {}), ...(ends ? { ends } : {}), ...(also ? { also } : {}) });
+const seeThrough = ({ dc = null, when, lasts = null, ends = null, against = null, also = null, dcFrom = null }) => ({ dc, statistic: "perception", when, ...(against ? { against } : {}), ...(dcFrom ? { dcFrom } : {}), ...(lasts ? { lasts } : {}), ...(ends ? { ends } : {}), ...(also ? { also } : {}) });
 
 // (What it tells: whispered to the GM and its user, the GM filling in what it shows — the user's ruling, src/compiler/decided.js.)
 const whisper = (text) => ({ builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text } });
@@ -43,6 +43,9 @@ function tentacleWay(grade, name, { base, info }) {
     const card = own({ noteEffects: [{ label: name === "Fortified tail" ? "Fortified tail" : "Tentacle", text, duration }], target: "the drinker" });
     return { name, plan: { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...card, item: { ...info, ...(attacks ? { attacks: attacks.map((attack) => ({ ...attack, duration })) } : {}) } } };
 }
+
+// GM Core's DCs by level, 0 to 25 (as src/compiler/counteract.js has them): an illusion's when the item gives none.
+const LEVEL_DCS = [14, 15, 16, 18, 19, 20, 22, 23, 24, 26, 27, 28, 30, 31, 32, 34, 35, 36, 38, 39, 40, 42, 44, 46, 48, 50];
 
 const SHROUDS = ["Minor", "Lesser", "Moderate", "Greater", "Major"];
 
@@ -117,6 +120,56 @@ const READINGS = [
             noteEffects: [{ label: "Veiled ship", text: "Its ship looks changed in small but noticeable ways of its user's choosing — flags and sails recolored and marked anew, its material another color or quality, wear and damage hidden or added, the figurehead given a face to match —, its size and shape the same. Its user can Dismiss it: remove this Effect.", duration: timeOf(time[1], time[2]) }],
             disbelief: seeThrough({ dc: Number(seen[1]), when: "boards the ship or Seeks to examine it", lasts: lastsOf(time[1], time[2]), ends: "Its user can Dismiss it." })
         })
+    },
+    {
+        // (The greater's: the same ship's looks for 24 hours, and Illusory Disguise on everyone aboard — the creatures its presser targets, each
+        // a note Effect with PF2e's Spell Effect's rules (as the spell module casts it on its caster alone), ended as they leave the ship or the
+        // ship's illusion ends; the GM's disbelief card (DC 33) for the whole of it. In place of the cast read before.)
+        name: "Veiled Figurehead (Greater): Veil!",
+        over: true,
+        sentences: [
+            /^You change the appearance of the ship in minor\b.*\.$/,
+            /^Its general size and shape can't be changed, but\b.*\bsurface details to your liking\.$/,
+            /^Flags and sails can be recolored\b.*\.$/,
+            /^Wear and surface damage\b.*\.$/,
+            /^The figurehead itself shifts to fit the change\b.*\.$/,
+            /^The illusion lasts for (\d+) (hours?) or until you Dismiss this effect\.$/,
+            /^Any creature that boards the ship or uses the Seek action\b.*\bdisbelieves the illusion if it succeeds at a @Check\[perception\|dc:(\d+)[^\]]*\] check\.$/,
+            /^Activating a greater veiled figurehead also extends the illusion to those on the ship\.$/,
+            /^The figurehead casts a Illusory Disguise spell upon them, except it targets everyone on board when activated\b.*\.$/,
+            /^In addition, it can make everyone appear as a specific ancestry\b.*\.$/,
+            /^This effect ends for any target who leaves the ship and ends for all targets if the illusion on the ship ends\.$/,
+            /^A creature that disbelieves the illusion for the ship or any disguised crew member disbelieves the entire illusion\.$/
+        ],
+        card: ([, , , , , time, seen], plan) => (plan?.builtin !== "cast-spell" ? null : own({
+                noteEffects: [{ label: "Veiled crew", text: "Illusory Disguise from the figurehead: its clothes match its ship's new look, and it may look like the one ancestry its user chose for everyone aboard; +4 status to Deception to Impersonate, its level added even if untrained. It ends when it leaves the ship, or when the ship's illusion ends or is Dismissed: remove this Effect.", duration: timeOf(time[1], time[2]), rules: [
+                    { key: "FlatModifier", selector: "deception", type: "status", value: 4, predicate: ["action:impersonate"] },
+                    { key: "FlatModifier", selector: "deception", slug: "illusory-disguise-proficiency", type: "proficiency", value: "@actor.level", predicate: ["action:impersonate"] }
+                ] }],
+                notes: [`Its ship looks changed in small but noticeable ways of its user's choosing — flags and sails recolored and marked anew, its material another color or quality, wear and damage hidden or added, the figurehead given a face to match —, its size and shape the same, for ${time[1]} hours or until its user Dismisses it (the map's).`, "Target everyone on board, its user among them, then Apply: each is disguised to match."],
+                disbelief: seeThrough({ dc: Number(seen[1]), when: "boards the ship or Seeks to examine it or one of the disguised crew", lasts: lastsOf(time[1], time[2]), ends: "One that disbelieves the ship or any disguised crew member disbelieves all of it." }),
+                item: { recipient: "targets" }
+            }))
+    },
+    // (Illusory Disguise cast on its user, the spell module's — with its own disbelief —: what the disguise also hides, its user's choice, and
+    // what ends it early, the card's lines. Over the cast read before, no longer partial for them.)
+    {
+        name: "Aeon Stone (Western Star): Illusory Disguise",
+        over: true,
+        sentences: [
+            /^The western star aeon stone casts a 1st-rank Illusory Disguise to your specifications\.$/,
+            /^If you so choose, the disguise obscures any aeon stones orbiting your head, rendering them invisible until the activation ends\.$/
+        ],
+        card: (found, plan) => (plan?.builtin !== "cast-spell" ? null : { keep: true, notes: ["The disguise is its user's to describe.", "If its user chooses, it also hides the aeon stones circling its head, unseen until the disguise ends."], partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } })
+    },
+    {
+        name: "Masquerade Scarf (Greater): Masquerade",
+        over: true,
+        sentences: [
+            /^You arrange the scarf over your lower face, and it casts a 2nd-rank Illusory Disguise spell on you, which ends immediately if the scarf is removed\.$/,
+            /^You can alter the scarf's appearance or make it invisible as part of the illusory disguise ?, but it can still be felt if touched\.$/
+        ],
+        card: (found, plan) => (plan?.builtin !== "cast-spell" ? null : { keep: true, notes: ["The disguise ends at once if the scarf is taken off: end its Effect then.", "As part of the disguise, the scarf can look different or be unseen, though it can still be felt if touched."], partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } })
     },
     {
         // (Documents made misleading until it's used again: the documents the GM's, the GM's disbelief card for a creature that inspects one,
@@ -238,6 +291,171 @@ const READINGS = [
             /^If you specify a target of "Seltyiel" .*\bthe round would dissolve\.$/
         ],
         card: () => own({ notes: ["Its user calls out its target before firing (a description will do): the round can hit only that creature, and turns to dust on a miss or on touching anything else — no ability can redirect it.", "It knows no more than its user: it hits the creature its user meant, disguised or not, and dissolves at one its user didn't know was the one named (the GM's)."] })
+    },
+    {
+        // (A magic sense for 10 minutes: PF2e's Sense rule (magicsense) on its user, what it learns of each effect the GM's, in words beside it.)
+        name: "Arclord Eye: Open the Eye",
+        sentences: [
+            /^For the next (\d+) (minutes?), you gain an imprecise magic sense with a range of (\d+) feet\.$/,
+            /^This allows you to detect spells, magical effects, and magical items within range\.$/,
+            /^You also learn the rank or level of such magical effects and their traits\.$/,
+            /^Deceptive illusion magic is not detectable by this magic sense\.$/
+        ],
+        card: ([time]) => own({
+            noteEffects: [{ label: "Magic sense", text: `Its magic sense finds spells, magical effects and magic items within ${time[3]} feet, and it learns each one's rank or level and its traits (the GM tells). Illusion magic meant to deceive escapes it.`, duration: timeOf(time[1], time[2]) }],
+            item: { senses: [{ selector: "magicsense", acuity: "imprecise", range: Number(time[3]), duration: timeOf(time[1], time[2]) }] }
+        })
+    },
+    // (The GM's secret counteract against one illusion its user looks at, as Scope of Truth's (see-through.js): words on its user for the 10
+    // minutes a success gives, with the modifier and rank the GM rolls with — its Perception, and half the goggles' level as the PFS note says.)
+    ...["Lesser", "Moderate", "Greater"].map((grade) => ({
+        name: `Clarity Goggles (${grade})`,
+        sentences: [
+            /^You focus on your environment and the creatures around you to see them as they really are\.$/,
+            /^The GM rolls a secret counteract check using your Perception bonus against any illusion effect created by a (\d+)(?:st|nd|rd|th)-rank or lower spell or a creature of (\d+)(?:st|nd|rd|th) level or lower\.$/,
+            /^You must be able to see the illusion, and it must be within (\d+) feet\.$/,
+            /^If the check succeeds, you see through the illusion for (\d+) (minutes?)\.$/,
+            /^PFS Note: The Item Level determines the counteract rank, not the character level\.$/
+        ],
+        card: ([, against, near, time], plan, { info }) => own({
+            noteEffects: [{ label: "Clarity", text: `Against one illusion it can see within ${near[1]} feet — made by a spell of rank ${against[1]} or lower or a creature of level ${against[2]} or lower — the GM rolls a secret counteract check with its Perception modifier, at rank ${Math.max(1, Math.ceil((Number(info?.level) || 0) / 2))} (half the goggles' level). On a success it sees through that illusion for these ${time[1]} minutes; on a failure, remove this Effect.`, duration: timeOf(time[1], time[2]) }]
+        })
+    })),
+    {
+        // (Dust flung over a 10-foot burst: each creature in it, as its presser targets them, coated for a minute — words, PF2e having no rule
+        // that keeps a creature visible —; the illusions it shows up the GM's.)
+        name: "Dust of Appearance",
+        sentences: [
+            /^Stored in a small reed, this powder looks like a fine metallic dust\.$/,
+            /^When you fling it in the air, it coats all creatures in a (\d+)-foot burst centered on a point within (\d+) feet of you\.$/,
+            /^For (\d+) (minutes?), the coated creatures can't be concealed or invisible, nor can they benefit from Mirror Image or similar abilities that create illusory duplicates\.$/,
+            /^Any illusions in the area of (\d+)(?:st|nd|rd|th) level or lower are revealed as such, although this does not end their effect\.$/,
+            /^Activate Interact$/
+        ],
+        card: ([, burst, time, shown]) => own({
+            noteEffects: [{ label: "Coated in dust", text: "Coated in fine metallic dust: it can't be Concealed or Invisible, nor benefit from Mirror Image or other abilities that make illusory duplicates of it.", duration: timeOf(time[1], time[2]) }],
+            notes: [`Fling it at a point within ${burst[2]} feet: target every creature in the ${burst[1]}-foot burst there, then Apply.`, `Illusions of level ${shown[1]} or lower in the burst are shown up as illusions, though they go on (the GM's).`],
+            item: { recipient: "targets" }
+        })
+    },
+    {
+        // (A memory played out around its user while it Sustains it, up to a minute: words on its user for that minute, everyone knowing it's
+        // an illusion; the lyre left an ordinary instrument.)
+        name: "Talespinner's Lyre",
+        sentences: [
+            /^Plucking a talespinner's lyre while focusing on an event you witnessed causes the instrument to create an illusion in a (\d+)-foot emanation\b.*\.$/,
+            /^You can Sustain the Activation for up to (\d+) (minutes?) to keep it playing\.$/,
+            /^The scene reproduces only what's in its area\b.*\.$/,
+            /^The scene is realistic, but all observers can clearly tell it's an illusion\.$/,
+            /^Observers can't interact with the scene directly\b.*\bwithout altering its contents\.$/,
+            /^For example, no one could see something you didn't\b.*\.$/,
+            /^Once the magic is used, the lyre remains as a non-magical virtuoso instrument\.$/
+        ],
+        card: ([area, time]) => own({
+            noteEffects: [{ label: "Remembered scene", text: `A memory of an event it witnessed plays out in real time as an illusion in a ${area[1]}-foot emanation, with sights, sounds and smells — only what was in that area. Everyone can tell it's an illusion; no one can touch, taste or change it, but onlookers may use skill checks (Perception, Sense Motive) to learn more of what it shows, never what its user didn't perceive. It plays while its user Sustains it, up to ${time[1]} minute${Number(time[1]) === 1 ? "" : "s"}: remove this Effect when it stops.`, duration: timeOf(time[1], time[2]) }],
+            notes: ["Used, the lyre stays an ordinary (non-magical) virtuoso instrument."]
+        })
+    },
+    {
+        // (A scene for an hour where its user sets the backdrop down: the map's; the GM's disbelief card for a creature that touches or Seeks
+        // it — the item gives no DC, so its level's (the user's rule for a number the text leaves out, 2026-10-26), the GM's to change.)
+        name: "Illusory Backdrop: Set the Scene",
+        sentences: [
+            /^You unfold the illusory backdrop, placing it on the edge of three contiguous 5-foot squares in a straight line\.$/,
+            /^The illusion then emanates in a (\d+)-foot cone from the center of the line, facing straight away from the panel\.$/,
+            /^The illusion contains a scene that includes up to (\d+) discrete objects\b.*\.$/,
+            /^The scene is static and lasts for (\d+) (hours?), though that duration restarts if the backdrop is refolded and then unfolded again\.$/,
+            /^The appearance of the illusion is determined when the illusory backdrop is crafted and can't be changed\.$/
+        ],
+        card: ([, cone, objects, time], plan, { info }) => own({
+            notes: [`Unfolded along the edge of three squares in a line, its fixed scene (up to ${objects[1]} objects, foliage or furniture) fills a ${cone[1]}-foot cone straight out from the panel's middle, for ${time[1]} hour — begun again if it's folded and unfolded (the map's).`],
+            disbelief: seeThrough({ dc: LEVEL_DCS[Math.max(0, Math.min(25, Number(info?.level) || 0))], when: "touches the scene or Seeks to examine it", lasts: lastsOf(time[1], time[2]), dcFrom: "level" })
+        })
+    },
+    {
+        // (An illusory copy of what it just stole, left behind: the GM's, gone after 10 minutes or once anyone examines or handles it.)
+        name: "Secret-Keeper's Mask (Gray Master)",
+        sentences: [
+            /^You create an illusory duplicate of the item you just stole\.$/,
+            /^This duplicate has the appropriate appearance and weight, but\b.*\.$/,
+            /^The illusion vanishes after (\d+) (minutes?), or earlier if anyone examines or manipulates the illusory duplicate\b.*\.$/
+        ],
+        card: ([, , time]) => own({ notes: [`An illusory copy of the item it just stole is left in its place, of the right look and weight but with no sound or smell (the GM's).`, `The copy vanishes after ${time[1]} minutes, or as soon as anyone examines or handles it.`] })
+    },
+    {
+        // (A stage grown where its user sets it down: a structure, the map's; its illusory set dressing and trimmings, its lines.)
+        name: "Pocket Stage: Play with Dolls",
+        sentences: [
+            /^You place the miniature theater on the ground, filling it with any set dressing and up to (\w+) figures you choose\.$/,
+            /^Then, you tap a rhythm on the miniature, causing it to grow into a modest stage (\d+) feet wide and (\d+) feet deep\.$/,
+            /^It's dressed with the decorations you selected, and simple mannequins wear the costumes you chose\.$/,
+            /^A wooden proscenium arch frames the stage\b.*\.$/,
+            /^As a magical structure, the stage has the structure trait\.$/,
+            /^All the stage's set dressing is illusory and disappears if taken more than (\d+) feet from the stage\.$/,
+            /^The costumes are physical but with illusory embellishments that fade at the same range\b.*\.$/
+        ],
+        card: ([figures, size, , , , range]) => own({ notes: [`Set on the ground with the set dressing and up to ${figures[1]} costumed figures its user picks, it grows into a ${size[1]}-by-${size[2]}-foot stage with a proscenium arch and curtained wings, its mannequins in the costumes (a magical structure: the map's).`, `Its set dressing is illusory and vanishes more than ${range[1]} feet from the stage; the costumes are real, their illusory trimmings fading at that range to plain white smocks.`] })
+    },
+    {
+        // (A ballroom for the night: a structure, the map's; its music, dancers and end at its user's command words, its lines.)
+        name: "Pocket Gala",
+        sentences: [
+            /^You place the figurine on the ground, and a harmonious note rings out\b.*\.$/,
+            /^The ballroom is (\d+) feet long, (\d+) feet wide, and features a ceiling that rises to a height of (\d+) feet\.$/,
+            /^Elegant double doors on either end of the ballroom allow entry\.$/,
+            /^Inside, the ballroom is fully stocked with tables and chairs along both sides\.$/,
+            /^A feasting table in the center of each seating area provides enough food and drink for up to (\d+) guests\b.*\.$/,
+            /^While inside, you can utter a command word to call forth music\b.*\.$/,
+            /^Repeating the command word can alter the dynamics of the music\b.*\.$/,
+            /^A second command word produces a set of masked, illusory dancers\b.*\.$/,
+            /^When there's no music, the illusory guests chatter among themselves\b.*\.$/,
+            /^An illusory dancer will gladly dance with anyone who asks\.$/,
+            /^Repeating the command word dismisses the dancers\.$/,
+            /^You can utter a third command word declaring the gala over\b.*\.$/,
+            /^As it reverts, the illusory dancers clap and cheer\b.*\.$/,
+            /^If you don't revert the ballroom on your own, it automatically returns to its original state at the next sunrise\.$/
+        ],
+        card: ([, size, , , guests]) => own({ notes: [`Set on the ground, it grows into a ${size[1]}-by-${size[2]}-foot ballroom ${size[3]} feet high, with double doors at each end, tables and chairs, food and drink for up to ${guests[1]} guests and unseen servants for their basic needs (a structure: the map's).`, "Inside, its user's command words call up music (and change or stop it), call up or send away masked illusory dancers — they dance with anyone who asks, and chatter in a nonsense tongue when there's no music —, and end the gala; at the next sunrise it ends by itself."] })
+    },
+    // (A statue's look for an hour: Illusory Disguise's bonus (PF2e's own Spell Effect's rules) and Oaken Resilience's resistance and weakness at
+    // its rank, each on its own note Effect with its rules for that hour; Speak with Plants and the standing-still bonus in its words.)
+    ...[["Tales in Timber", 2], ["Tales in Timber (Greater)", 4], ["Tales in Timber (Major)", 6]].map(([armor, oaken]) => ({
+        name: `${armor}: Statue Disguise`,
+        sentences: [
+            /^The armor makes you look like a wooden statue version of one of the creatures depicted on the armor for (\d+) (hours?)\.$/,
+            /^This is a 3rd-rank Illusory Disguise, but it can make you look like any creature depicted on the armor\.$/,
+            /^This doesn't change your size or the capabilities of your body\b.*\.$/,
+            /^You can Dismiss the activation\.$/,
+            /^This disguise is just real enough to make you somewhat closer to a creature of wood\.$/,
+            oaken === 2 ? /^You're affected by two spells while it lasts: Oaken Resilience and Speak with Plants\.$/ : new RegExp(String.raw`^You're affected by two spells while it lasts: ${oaken}th-rank Oaken Resilience and Speak with Plants\.$`),
+            /^If you stand still, you gain a \+(\d+) item bonus to Deception checks and DCs to appear as an inanimate wooden statue\b.*\.$/
+        ],
+        card: ([time, , , , , , still]) => own({ noteEffects: [
+            { label: "Statue disguise", text: `It looks like a wooden statue of one of the creatures carved on the armor (Illusory Disguise at rank 3, any creature shown there), scaled to its own size, its size and body unchanged: +4 status to Deception to Impersonate, its level added even if untrained. It can speak with plants (Speak with Plants). Standing still, it has a +${still[1]} item bonus to Deception checks and DCs to pass as a lifeless statue, beside that bonus. Its user can Dismiss it: remove this Effect and Oaken Resilience's.`, duration: timeOf(time[1], time[2]), rules: [
+                { key: "FlatModifier", selector: "deception", type: "status", value: 4, predicate: ["action:impersonate"] },
+                { key: "FlatModifier", selector: "deception", slug: "illusory-disguise-proficiency", type: "proficiency", value: "@actor.level", predicate: ["action:impersonate"] }
+            ] },
+            { label: "Oaken Resilience", text: `Bark-tough skin (Oaken Resilience at rank ${oaken}): resistance ${2 * Math.floor(oaken / 2)} to bludgeoning and piercing, weakness ${3 * Math.floor(oaken / 2)} to fire. After it takes fire damage, it can Dismiss this part as a free action (remove this Effect).`, duration: timeOf(time[1], time[2]), rules: [
+                { key: "Resistance", type: ["bludgeoning", "piercing"], value: 2 * Math.floor(oaken / 2) },
+                { key: "Weakness", type: "fire", value: 3 * Math.floor(oaken / 2) }
+            ] }
+        ] })
+    })),
+    {
+        // (Dream and sleep magic shown on its user: +1 status to Identify Magic for a round for each onlooker its presser targets (its user too),
+        // only for dream or sleep magic in its words — PF2e's roll can't tell; what it shows the GM's, and the ally who may activate it a line.)
+        name: "Dreamer's Butterfly: Wake the Dream",
+        sentences: [
+            /^By touching the two halves of the tattoo together, the wings expand to show a small illusory rendition of any effects with the dream or sleep traits you are currently subject to\.$/,
+            /^Onlookers \(including yourself\) gain a \+(\d+) status bonus to checks to Identify Magic of any spells or magical effects with the dream or sleep traits for (\d+) (rounds?)\.$/,
+            /^Special An adjacent ally can also Activate this effect\b.*\bif you are willing or Unconscious\.$/
+        ],
+        card: ([, bonus]) => own({
+            modifiers: [{ selector: "skill-check", value: Number(bonus[1]), type: "status", predicate: ["action:identify-magic"], duration: timeOf(bonus[2], bonus[3]) }],
+            noteEffects: [{ label: "Dream shown", text: `Its +${bonus[1]} status bonus to Identify Magic is only for spells and magical effects with the dream or sleep trait.`, duration: timeOf(bonus[2], bonus[3]) }],
+            notes: ["The wings show a small illusion of each dream or sleep effect on its user (the GM's to describe): target the onlookers who see it, its user among them, then Apply.", "An adjacent ally can activate it too, touching the halves together, if its user is willing or Unconscious."],
+            item: { recipient: "targets" }
+        })
     }
 ];
 

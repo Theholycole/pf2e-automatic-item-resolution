@@ -128,3 +128,68 @@ test("Trustworthy Round: its called target the card's lines; Herd Mask's swap a 
     assert.deepEqual([activations("Herd Mask")[0].decided, done(activations("Herd Mask")[0])], ["one-off", true]);
     for (const plan of [activation("Clockwork Disguise", "Deploy Disguise"), activation("Hand-Hewed Face", "Fresh Face"), compileItem(item("Foe-Sensing Rod"))]) assert.deepEqual([plan.decided, done(plan)], ["checked", true], plan.source.name);
 });
+
+test("Arclord Eye's Open the Eye: PF2e's magicsense (imprecise, 30 feet) for 10 minutes, what it learns the GM's in words beside it", () => {
+    const plan = activation("Arclord Eye", "Open the Eye");
+    assert.deepEqual([done(plan), plan.item.senses.map((sense) => [sense.selector, sense.acuity, sense.range, sense.duration.value])], [true, [["magicsense", "imprecise", 30, 10]]]);
+    assert.match(row(plan).noteEffects[0].text, /meant to deceive escapes it/);
+});
+
+test("Clarity Goggles: the GM's secret counteract in words on its user for the 10 minutes, at half the goggles' level as its rank (the PFS note)", () => {
+    const ranks = ["Lesser", "Moderate", "Greater"].map((grade) => activations(`Clarity Goggles (${grade})`)[0]);
+    assert.deepEqual(ranks.map((plan) => [done(plan), /at rank (\d+)/.exec(row(plan).noteEffects[0].text)[1], row(plan).noteEffects[0].duration.value]), [[true, "4", 10], [true, "7", 10], [true, "10", 10]]);
+    assert.match(row(ranks[0]).noteEffects[0].text, /rank 3 or lower or a creature of level 8 or lower/);
+});
+
+test("Sun Sight's counteract at what its rays hit a one-off beside the cast; Illusory Program checked as flavor", () => {
+    const sun = activations("Sun Sight")[0];
+    assert.deepEqual([sun.builtin, sun.decided, done(sun)], ["cast-spell", "one-off", true]);
+    assert.deepEqual([compileItem(item("Illusory Program")).decided, done(compileItem(item("Illusory Program")))], ["checked", true]);
+});
+
+test("Dust of Appearance: each creature its presser targets in the burst coated for a minute (words: no Concealed, Invisible or duplicates); the illusions shown up the GM's", () => {
+    const plan = compileItem(item("Dust of Appearance"));
+    assert.deepEqual([done(plan), plan.item.recipient, row(plan).noteEffects[0].duration.value, row(plan).noteEffects[0].duration.unit, plan.item.uses.autoDestroy], [true, "targets", 1, "minutes", true]);
+    assert.match(plan.notes[1], /level 3 or lower/);
+});
+
+test("Talespinner's Lyre, Illusory Backdrop, Secret-Keeper's Mask, Pocket Stage, Pocket Gala: illusions seen for what they are, the map's and the GM's — the backdrop's disbelief at its level's DC, the GM's to change", () => {
+    const lyre = compileItem(item("Talespinner's Lyre"));
+    assert.deepEqual([done(lyre), row(lyre).noteEffects[0].duration.value, lyre.disbelief], [true, 1, undefined]);
+    assert.match(row(lyre).noteEffects[0].text, /while its user Sustains it/);
+    const backdrop = activation("Illusory Backdrop", "Set the Scene");
+    assert.deepEqual([done(backdrop), backdrop.disbelief.dc, backdrop.disbelief.dcFrom, backdrop.disbelief.lasts], [true, 27, "level", { value: 1, unit: "hours" }]);
+    assert.match(disbeliefText(backdrop.disbelief), /Perception DC 27 \(its level's: the item gives none, the GM may change it\)$/);
+    for (const plan of [activations("Secret-Keeper's Mask (Gray Master)")[0], activation("Pocket Stage", "Play with Dolls"), activations("Pocket Gala")[0]]) assert.deepEqual([done(plan), plan.notes.length, plan.disbelief], [true, 2, undefined], plan.source.name);
+    assert.match(activations("Pocket Gala")[0].notes[0], /60-by-45-foot ballroom 20 feet high/);
+});
+
+test("Tales in Timber's Statue Disguise: Illusory Disguise's rules and Oaken Resilience's at each armor's rank, on two note Effects for the hour", () => {
+    for (const [name, rank] of [["Tales in Timber", 2], ["Tales in Timber (Greater)", 4], ["Tales in Timber (Major)", 6]]) {
+        const plan = activation(name, "Statue Disguise");
+        const [statue, oaken] = row(plan).noteEffects;
+        assert.deepEqual([done(plan), statue.duration.value, statue.duration.unit, statue.rules.map((rule) => [rule.selector, rule.type]), oaken.rules.map((rule) => [rule.key, rule.value])], [true, 1, "hours", [["deception", "status"], ["deception", "proficiency"]], [["Resistance", rank], ["Weakness", 3 * rank / 2]]], name);
+        assert.match(statue.text, /Speak with Plants/);
+    }
+});
+
+test("Dreamer's Butterfly's Wake the Dream: +1 status to Identify Magic for a round on each onlooker targeted, only for dream or sleep magic in its words", () => {
+    const plan = activation("Dreamer's Butterfly", "Wake the Dream");
+    assert.deepEqual([done(plan), plan.item.recipient, row(plan).modifiers], [true, "targets", [{ selector: "skill-check", value: 1, type: "status", predicate: ["action:identify-magic"], duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "effect-start" } }]]);
+    assert.match(row(plan).noteEffects[0].text, /dream or sleep trait/);
+});
+
+test("Veiled Figurehead (Greater)'s Veil!: in place of the cast, Illusory Disguise's rules on everyone aboard its presser targets for 24 hours, and the GM's disbelief card (DC 33) for the whole illusion", () => {
+    const plan = activation("Veiled Figurehead (Greater)", "Veil!");
+    assert.deepEqual([done(plan), plan.builtin, routeOf(plan), plan.item.recipient, plan.disbelief.dc, plan.disbelief.lasts, plan.trigger.frequency.per], [true, undefined, "item", "targets", 33, { value: 24, unit: "hours" }, "day"]);
+    const [crew] = row(plan).noteEffects;
+    assert.deepEqual([crew.duration.value, crew.rules.length], [24, 2]);
+    assert.match(plan.notes[1], /Target everyone on board/);
+});
+
+test("Illusory Disguise cast on its user: Aeon Stone (Western Star)'s hidden aeon stones and Masquerade Scarf (Greater)'s scarf the cast card's lines, no longer partial", () => {
+    for (const plan of [activation("Aeon Stone (Western Star)", "Illusory Disguise"), activation("Masquerade Scarf (Greater)", "Masquerade")]) {
+        assert.deepEqual([plan.builtin, plan.spell.name, done(plan), plan.notes.length], ["cast-spell", "Illusory Disguise", true, 2], plan.source.name);
+    }
+    assert.match(activation("Masquerade Scarf (Greater)", "Masquerade").notes[0], /taken off/);
+});
