@@ -69,6 +69,8 @@ function leftovers(plan) {
         if (!node || typeof node !== "object" || seen.has(node)) return;
         seen.add(node);
         for (const key of ["notes", "unread", "noteEffects"]) if (Array.isArray(node[key])) for (const entry of node[key]) if (said(entry)) out.push([key, said(entry)]);
+        // (An item action's rule after PF2e's own action, its card's line — Binding Coil's escape DC, Crying Angel Pendant's stabilized 1 Hit Point: 2026-10-27.)
+        if (typeof node.action?.after === "string" && node.action.after.trim()) out.push(["after", node.action.after.trim()]);
         if (node.resolution?.outcomes) for (const [degree, row] of Object.entries(node.resolution.outcomes)) for (const line of leftToTheGM(row)) out.push([`gm:${degree}`, line]);
         for (const value of Object.values(node)) if (value && typeof value === "object") walk(value);
     };

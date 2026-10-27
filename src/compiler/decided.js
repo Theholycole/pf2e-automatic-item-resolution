@@ -17,7 +17,7 @@ import { oneOff } from "./one-offs.js";
 const DECIDED = new Set(["speech", "mind", "information"]);
 const CARD_LINE = new Set(["out-of-combat", "objects"]);
 const COMBAT = /\b(?:Strikes?|attack rolls?|saving throws?|save|AC|temporary Hit Points|teleport\w*|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|drained|stupefied|fatigued|off-guard|quickened|persistent|dies|concealed|invisible|hidden|undetected|the next (?:elixir|potion|mutagen|bomb|Strike|attack))\b|\bextended by \d+%/i;
-const MECHANICAL = /\b\d+d\d+\b|(?:^|\s)[+\-–]\d+\b|\bDC \d+\b|\b\d+ (?:feet|foot)\b|\b(?:damage|Hit Points|Strikes?|attack|teleport\w*|transport\w*|Speed|bonus|penalty|resistance|weakness|saving throws?|save|check|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|dies|concealed|invisible|hidden)\b/i;
+const MECHANICAL = /\b\d+d\d+\b|(?:^|\s)[+\-–]\d+\b|\bDC \d+\b|\b(?:damage|Hit Points|Strikes?|attack|teleport\w*|transport\w*|Speed|bonus|penalty|resistance|weakness|saving throws?|save|check|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|dies|concealed|invisible|hidden)\b/i;
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 // A unique item or an artifact: special, its own rules built rather than a card's line (the user, 2026-10-27).
 export const isSpecialItem = (item) => item?.system?.traits?.rarity === "unique" || (item?.system?.traits?.value ?? []).includes("artifact");
@@ -31,6 +31,8 @@ function leftovers(plan) {
         if (!node || typeof node !== "object" || seen.has(node)) return;
         seen.add(node);
         for (const key of ["notes", "unread", "noteEffects"]) if (Array.isArray(node[key])) for (const entry of node[key]) if (said(entry)) out.push([key, said(entry)]);
+        // (An item action's rule after PF2e's own action, its card's line — Binding Coil's escape DC, Crying Angel Pendant's stabilized 1 Hit Point: 2026-10-27.)
+        if (typeof node.action?.after === "string" && node.action.after.trim()) out.push(["after", node.action.after.trim()]);
         if (node.resolution?.outcomes) for (const [degree, row] of Object.entries(node.resolution.outcomes)) for (const line of leftToTheGM(row)) out.push([`gm:${degree}`, line]);
         for (const value of Object.values(node)) if (value && typeof value === "object") walk(value);
     };
@@ -95,7 +97,12 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     const lined = !special && needs.some((need) => CARD_LINE.has(need));
     if (!needs.length || !needs.every((need) => DECIDED.has(need) || (lined && CARD_LINE.has(need)))) return plan;
     const words = leftText(entry);
-    if (lined ? COMBAT.test(words) : MECHANICAL.test(words)) return plan;
+    // (Not the item's own name — Mortar of Hidden Meaning's "hidden" —, nor PF2e's Decipher Writing still to attempt, Comprehension Elixir's
+    // "you still need to attempt a skill check to Decipher Writing": its user's own action. A range — telepathy 100 feet, a mind within 30
+    // feet — is no number to apply either: since 2026-10-27 no longer MECHANICAL's.)
+    const own = String(name ?? "").replace(/:.*$/, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
+    const guarded = words.split(own && own.length > 3 ? new RegExp(own.replace(/[.*+?^${}()|[\]\\]/g, "\\    if (lined ? COMBAT.test(words) : MECHANICAL.test(words)) return plan;"), "gi") : /(?!)/).join(" ").replace(/\b(?:attempt )?an? (?:skill )?check to Decipher Writing\b/gi, " ");
+    if (lined ? COMBAT.test(guarded) : MECHANICAL.test(guarded)) return plan;
     const decided = needs.includes("information") ? "information" : needs.find((need) => need === "speech" || need === "mind") ?? (lined ? "card-line" : needs[0]);
     const body = bodyOf(kind, text, words);
     // (Information: whispered to the GM and its user, what it tells filled in by the GM.)

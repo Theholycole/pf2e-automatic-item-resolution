@@ -25,30 +25,30 @@ How an item is sorted: the words its card leaves over (its notes, unread sentenc
 | [Illusions and disbelief](#illusions) | 50 | 60 | 0 | item live play |
 | [Ships and vehicles](#vehicles) | 21 | 27 | 2 | item live play |
 | [A second linked Effect](#linked-effect) | 0 | 0 | 0 | item reader |
-| [Moving creatures and the user](#moving) | 77 | 104 | 20 | item live play |
+| [Moving creatures and the user](#moving) | 77 | 104 | 24 | item live play |
 | [Light, darkness, smoke, terrain and walls](#areas) | 118 | 177 | 15 | ability module + item live play |
-| [Triggers](#triggers) | 85 | 114 | 1 | item live play |
+| [Triggers](#triggers) | 86 | 115 | 1 | item live play |
 | [Changes to a Strike](#strike) | 92 | 184 | 19 | item reader + item live play |
-| [Actions and feats for the user](#actions) | 28 | 59 | 1 | item live play |
+| [Actions and feats for the user](#actions) | 32 | 64 | 3 | item live play |
 | [Numbers from another roll](#from-events) | 4 | 26 | 0 | item live play |
 | [Afflictions and persistent damage](#afflictions) | 54 | 101 | 5 | ability module + item live play |
-| [Dying, unconscious and death](#dying) | 29 | 75 | 2 | core + item live play |
+| [Dying, unconscious and death](#dying) | 30 | 76 | 2 | core + item live play |
 | [Spells and the user's resources](#spells) | 34 | 73 | 0 | spell module + item live play |
 | [Counteracting and ending effects](#counteract) | 7 | 86 | 0 | item live play |
-| [Immunities and resistances by situation](#immunity) | 26 | 85 | 4 | item reader |
+| [Immunities and resistances by situation](#immunity) | 26 | 86 | 4 | item reader |
 | [Bonuses only in some situations](#situational) | 15 | 78 | 1 | item reader |
 | [Range, reach and areas made larger](#range) | 0 | 6 | 0 | core |
-| [Sustained, repeating and later effects](#lasting) | 63 | 220 | 8 | item live play |
-| [Choices on the card](#choice) | 23 | 97 | 6 | item live play |
+| [Sustained, repeating and later effects](#lasting) | 63 | 222 | 8 | item live play |
+| [Choices on the card](#choice) | 23 | 97 | 8 | item live play |
 | [Several creatures at once](#several) | 23 | 100 | 0 | item live play |
-| [Objects and the item itself](#objects) | 25 | 293 | 1 | item live play |
+| [Objects and the item itself](#objects) | 25 | 295 | 2 | item live play |
 | [A spell cast with the item's changes](#cast-changes) | 21 | 21 | 0 | item live play + spell module |
-| [Plain results the reader doesn't parse yet](#reader) | 17 | 194 | 13 | item reader |
+| [Plain results the reader doesn't parse yet](#reader) | 17 | 196 | 13 | item reader |
 | [Minds, attitudes and behaviour](#mind) | 5 | 60 | 2 | item reader |
-| [Information](#information) | 10 | 179 | 2 | item live play |
-| [Messages, speech and sound](#speech) | 7 | 99 | 0 | item reader |
+| [Information](#information) | 10 | 179 | 4 | item live play |
+| [Messages, speech and sound](#speech) | 7 | 100 | 1 | item reader |
 | [Out of combat and the environment](#out-of-combat) | 7 | 360 | 1 | item reader |
-| [Nothing to automate](#no-rules) | 14 | 14 | 31 | none |
+| [Nothing to automate](#no-rules) | 8 | 8 | 19 | none |
 
 ## The worklist
 
@@ -58,20 +58,20 @@ What to build, biggest first: each need with the PF2e entries whose main need it
 |---|---:|---:|---:|---|---|
 | [Light, darkness, smoke, terrain and walls](#areas) | 118 | 13 | 15 | ability module + item live play | "wall" 21, "radius" 15, "difficult terrain" 13, "cube" 10 |
 | [Changes to a Strike](#strike) | 92 | 6 | 19 | item reader + item live play | "attack roll" 13, "strike" 12, "make a strike" 6, "on a hit" 6 |
-| [Triggers](#triggers) | 85 | 9 | 1 | item live play | "Trigger: you hit a …" 4, "Trigger: the triggering strike …" 3, "Trigger: you gain an …" 3, "triggering creature" 3 |
-| [Moving creatures and the user](#moving) | 77 | 8 | 20 | item live play | "teleport" 33, "high jump" 6, "falls to the ground" 5, "move" 4 |
+| [Triggers](#triggers) | 86 | 9 | 1 | item live play | "Trigger: you hit a …" 4, "Trigger: the triggering strike …" 3, "Trigger: you gain an …" 3, "triggering creature" 3 |
+| [Moving creatures and the user](#moving) | 77 | 8 | 24 | item live play | "teleport" 33, "high jump" 6, "falls to the ground" 5, "move" 4 |
 | [Creatures it makes or controls](#creatures) | 71 | 8 | 10 | ability module + item live play | "summon" 14, "minion" 10, "conjured" 8, "conjure" 8 |
 | [Sustained, repeating and later effects](#lasting) | 63 | 10 | 8 | item live play | "until you" 15, "sustain" 11, "dismiss" 10, "later" 8 |
 | [Afflictions and persistent damage](#afflictions) | 54 | 2 | 5 | ability module + item live play | "poison" 13, "affliction" 9, "disease" 8, "curse" 7 |
 | [Illusions and disbelief](#illusions) | 50 | 4 | 0 | item live play | "illusory" 18, "illusion" 15, "disguise" 10, "disguised" 5 |
 | [Hidden, undetected, invisible, cover](#visibility) | 45 | 2 | 2 | core + item live play | "hide" 8, "undetected" 7, "standard cover" 4, "concealed" 4 |
 | [Spells and the user's resources](#spells) | 34 | 13 | 0 | spell module + item live play | "ritual" 12, "cantrips" 5, "mythic point" 3, "spell slots" 3 |
-| [Dying, unconscious and death](#dying) | 29 | 3 | 2 | core + item live play | "dead" 10, "dies" 4, "death" 4, "doomed" 3 |
-| [Actions and feats for the user](#actions) | 28 | 4 | 1 | item live play | "grapple" 4, "administer first aid" 3, "can use an interact action" 3, "feint" 3 |
+| [Actions and feats for the user](#actions) | 32 | 4 | 3 | item live play | "grapple" 6, "administer first aid" 3, "can use an interact action" 3, "feint" 3 |
+| [Dying, unconscious and death](#dying) | 30 | 3 | 2 | core + item live play | "dead" 10, "dies" 4, "death" 4, "doomed" 3 |
 | [Immunities and resistances by situation](#immunity) | 26 | 2 | 4 | item reader | "immune" 15, "weakness to" 2, "resist this" 2, "resistance 5" 2 |
 | [Forms and size](#forms) | 25 | 0 | 0 | item reader | "transform into" 6, "polymorph" 4, "enlarge" 3, "takes the shape" 3 |
-| [Objects and the item itself](#objects) | 25 | 6 | 1 | item live play | "objects" 3, "don" 3, "crumbles" 3, "corpse" 3 |
-| [Choices on the card](#choice) | 23 | 6 | 6 | item live play | "of your choice" 6, "choose" 5, "one of the following" 4, "choose which" 2 |
+| [Objects and the item itself](#objects) | 25 | 6 | 2 | item live play | "objects" 3, "don" 3, "crumbles" 3, "corpse" 3 |
+| [Choices on the card](#choice) | 23 | 6 | 8 | item live play | "of your choice" 6, "choose" 5, "one of the following" 4, "choose which" 2 |
 | [Several creatures at once](#several) | 23 | 7 | 0 | item live play | "creatures within" 7, "ally" 6, "allies" 4, "each creature" 4 |
 | [Speeds](#speeds) | 22 | 2 | 0 | item reader | "speed of 45 feet" 6, "water walk" 3, "hovering" 2, "fly speed" 2 |
 | [Ships and vehicles](#vehicles) | 21 | 4 | 2 | item live play | "boat" 7, "ship" 6, "vehicle" 4, "sail" 2 |
@@ -80,10 +80,10 @@ What to build, biggest first: each need with the PF2e entries whose main need it
 | [Plain results the reader doesn't parse yet](#reader) | 17 | 6 | 13 | item reader | "enfeebled" 5, "1d6" 2, "fatigued" 2, "2d10" 2 |
 | [Bonuses only in some situations](#situational) | 15 | 0 | 1 | item reader | "bonus is only against" 4 |
 | [Use limits of its own](#cooldown) | 10 | 0 | 0 | item reader | "can't be activated again" 6, "can't activate it again" 2 |
-| [Information](#information) | 10 | 6 | 2 | item live play | "recall knowledge" 3, "knows" 3 |
+| [Information](#information) | 10 | 6 | 4 | item live play | "recall knowledge" 3, "knows" 3 |
 | [Results for some creatures only](#by-kind) | 7 | 0 | 0 | item reader | "only constructs" 2 |
 | [Counteracting and ending effects](#counteract) | 7 | 5 | 0 | item live play | "counteract" 7 |
-| [Messages, speech and sound](#speech) | 7 | 6 | 0 | item reader | "word" 2, "speak" 2 |
+| [Messages, speech and sound](#speech) | 7 | 6 | 1 | item reader | "word" 2, "speak" 2 |
 | [Out of combat and the environment](#out-of-combat) | 7 | 7 | 1 | item reader | "1 hour" 2 |
 | [Creatures taken out of play](#removed) | 6 | 0 | 0 | item live play | "shunted" 3, "into the future" 2 |
 | [Numbers the text doesn't give](#missing-number) | 6 | 0 | 0 | item reader | "unless the gm determines otherwise" 5 |
@@ -141,12 +141,12 @@ By the first place each main need's work lies: the item module's reader (src/com
 
 | Where | PF2e entries (main need) | Needs |
 |---|---:|---|
-| item live play | 446 | creatures taken out of play; damage back at attackers; illusions and disbelief; ships and vehicles; moving creatures and the user; triggers; actions and feats for the user; numbers from another roll; counteracting and ending effects; sustained, repeating and later effects; choices on the card; several creatures at once; objects and the item itself; a spell cast with the item's changes; information |
+| item live play | 451 | creatures taken out of play; damage back at attackers; illusions and disbelief; ships and vehicles; moving creatures and the user; triggers; actions and feats for the user; numbers from another roll; counteracting and ending effects; sustained, repeating and later effects; choices on the card; several creatures at once; objects and the item itself; a spell cast with the item's changes; information |
 | item reader | 265 | forms and size; results for some creatures only; numbers the text doesn't give; use limits of its own; senses; speeds; fortune and rerolls on a later roll; a second linked effect; changes to a strike; immunities and resistances by situation; bonuses only in some situations; plain results the reader doesn't parse yet; minds, attitudes and behaviour; messages, speech and sound; out of combat and the environment |
 | ability module | 243 | creatures it makes or controls; light, darkness, smoke, terrain and walls; afflictions and persistent damage |
-| core | 74 | hidden, undetected, invisible, cover; dying, unconscious and death; range, reach and areas made larger |
+| core | 75 | hidden, undetected, invisible, cover; dying, unconscious and death; range, reach and areas made larger |
 | spell module | 34 | spells and the user's resources |
-| none | 14 | nothing to automate |
+| none | 8 | nothing to automate |
 
 ## Who can do it
 
@@ -155,10 +155,10 @@ By every need an entry has (not only its main one):
 | | PF2e entries |
 |---|---:|
 | The item module's reader alone (new readings, no new live play) | 58 |
-| The item module alone (its reader and its live play) | 583 |
-| Another module too (the ability module, the core or the spell module, asked of their session) | 479 |
+| The item module alone (its reader and its live play) | 588 |
+| Another module too (the ability module, the core or the spell module, asked of their session) | 480 |
 | A decision of yours still open for some part | 0 |
-| Nothing to automate | 14 |
+| Nothing to automate | 8 |
 
 ## By need
 
@@ -757,7 +757,7 @@ A second PF2e Effect the text links, applied only when the text says (another st
 
 The user or a target moved on the map. The move card (the teleport card) already moves its user (a Stride, Step, Leap or teleport within a range) and a creature to a space its user picks (ability 0.9.2's hook); what's left: objects brought to hand, falls and their damage, jumps (High Jump, Long Jump), several creatures moved at once, travel off the map, and moves tied to another event. *Where: item live play.*
 
-77 entries (and 20 of the modules' items).
+77 entries (and 24 of the modules' items).
 
 **"teleport"**: 33 (2 only this need)
 
@@ -1056,7 +1056,7 @@ A lasting area that changes the map: light or darkness, smoke or fog that concea
 
 A card offered when its trigger happens (an attack against the user, a Strike, a fall, a save, a condition gained, damage taken): live hooks on PF2e's chat messages and actor updates that watch for the event, then post the card. *Where: item live play.*
 
-85 entries (and 1 of the modules' items).
+86 entries (and 1 of the modules' items).
 
 **"Trigger: you hit a …"**: 4 (0 only this need)
 
@@ -1088,6 +1088,11 @@ A card offered when its trigger happens (an attack against the user, a Strike, a
 - Warmaster's Baton (Greater) (Rally Forth): nothing read; *only this need*
 - Warmaster's Baton (Rally Forth): nothing read; *only this need*
 
+**"triggering attack"**: 2 (1 only this need)
+
+- Suit of Armoire: nothing read; *only this need*
+- Ulfen Shieldbreaker (Battering Blow): partial; also actions and feats for the user
+
 **"Trigger: you succeed at …"**: 2 (0 only this need)
 
 - Oily Button: nothing read; also actions and feats for the user
@@ -1118,7 +1123,7 @@ A card offered when its trigger happens (an attack against the user, a Strike, a
 - Victory Plate: nothing read; also choices on the card
 - Victory Plate (Greater): nothing read; also choices on the card
 
-**Other wordings**: 58 (7 only this need)
+**Other wordings**: 57 (6 only this need)
 
 - Aeon Stone (Olivine Pendeloque) (Still Earth) ("Trigger: you become confused …"): partial; also changes to a strike, counteracting and ending effects
 - Ancestral Embrace ("Trigger: ancestral embrace reduces …"): the GM's; also spells and the user's resources, objects and the item itself, out of combat and the environment
@@ -1169,7 +1174,6 @@ A card offered when its trigger happens (an attack against the user, a Strike, a
 - Spellbook of Redundant Enchantment (Retain Incantation) ("Trigger: you quickly divert …"): nothing read; *only this need*
 - Spellslasher ("Trigger: you are the …"): the GM's; also counteracting and ending effects
 - Starless Scope ("Trigger: you attempt to …"): nothing read; also changes to a strike, spells and the user's resources, objects and the item itself
-- Suit of Armoire ("triggering attack"): nothing read; *only this need*
 - The Hollow Star ("Trigger: you speak in …"): nothing read; also changes to a strike, objects and the item itself, messages, speech and sound
 - The Juggler ("Trigger: you grab the …"): nothing read; *only this need*
 - The Publican ("Trigger: you improve the …"): nothing read; also minds, attitudes and behaviour
@@ -1325,10 +1329,12 @@ A change to the triggering or the next Strike (damage added on a hit, ignoring c
 
 The user takes an action or uses a feat through the item (Certain Strike, a Shove, Administer First Aid, an extra reaction, an action with a trait): PF2e's own action for it posted from the card, or the feat's effect read. *Where: item live play.*
 
-28 entries (and 1 of the modules' items).
+32 entries (and 3 of the modules' items).
 
-**"grapple"**: 4 (0 only this need)
+**"grapple"**: 6 (0 only this need)
 
+- Binding Coil: partial; also sustained, repeating and later effects, objects and the item itself
+- Binding Coil (Greater): partial; also sustained, repeating and later effects, objects and the item itself
 - Bottled Roc: nothing read; also several creatures at once, plain results the reader doesn't parse yet
 - Magnetic Suit: note only; also bonuses only in some situations, choices on the card, several creatures at once, objects and the item itself
 - Magnetic Suit (Greater): note only; also bonuses only in some situations, choices on the card, several creatures at once, objects and the item itself
@@ -1362,6 +1368,16 @@ The user takes an action or uses a feat through the item (Certain Strike, a Shov
 - Immovable Rod: nothing read; *only this need*
 - Philosopher's Stone: the GM's; also information, out of combat and the environment
 
+**"demoralize"**: 2 (0 only this need)
+
+- Admonishing Band: partial; also immunities and resistances by situation, messages, speech and sound
+- Cape of Justice (Force Shuriken): partial; also plain results the reader doesn't parse yet
+
+**"as part of the same activity"**: 2 (0 only this need)
+
+- Artevil Suspension: nothing read; also afflictions and persistent damage, plain results the reader doesn't parse yet
+- Curled Cure Gel: partial; also plain results the reader doesn't parse yet
+
 **"extra reaction"**: 2 (0 only this need)
 
 - Clockwork Shield: note only; also sustained, repeating and later effects
@@ -1372,12 +1388,10 @@ The user takes an action or uses a feat through the item (Certain Strike, a Shov
 - Mat of Resilience (Greater) (Sturdy Foundation): nothing read; also dying, unconscious and death, plain results the reader doesn't parse yet
 - Mat of Resilience (Sturdy Foundation): nothing read; also dying, unconscious and death, plain results the reader doesn't parse yet
 
-**Other wordings**: 7 (2 only this need)
+**Other wordings**: 5 (2 only this need)
 
-- Artevil Suspension ("as part of the same activity"): nothing read; also afflictions and persistent damage, plain results the reader doesn't parse yet
 - Bastion of the Inheritor ("additional action"): note only; *only this need*
 - Battle Medic's Baton ("battle medicine"): note only; also immunities and resistances by situation, out of combat and the environment
-- Cape of Justice (Force Shuriken) ("demoralize"): partial; also plain results the reader doesn't parse yet
 - Self-Emptying Pocket (Beguiling Presence) ("as though by a successful"): partial; *only this need*
 - Taljjae's Mask (The Nobleman) ("disarm"): nothing read; also objects and the item itself
 - Venomed Tongue ("create a diversion"): partial; also afflictions and persistent damage, choices on the card, plain results the reader doesn't parse yet, minds, attitudes and behaviour
@@ -1486,7 +1500,7 @@ Suppressing, delaying or ending a poison, disease, curse or addiction, an extra 
 
 Dying, wounded, doomed, stabilizing, falling unconscious, returning to life: the core's dying API and PF2e's conditions at the moment they change. *Where: core + item live play.*
 
-29 entries (and 2 of the modules' items).
+30 entries (and 2 of the modules' items).
 
 **"dead"**: 10 (0 only this need)
 
@@ -1521,15 +1535,16 @@ Dying, wounded, doomed, stabilizing, falling unconscious, returning to life: the
 - Spider Lily Tattoo (Reveal Tattoo): nothing read; *only this need*
 - Urn of Ashes (Doom the Urn): partial; also out of combat and the environment
 
+**"stabilizes"**: 3 (0 only this need)
+
+- Crying Angel Pendant: partial; also plain results the reader doesn't parse yet
+- Potion of Passing Fancy: note only; also out of combat and the environment
+- Silver Tripod: note only; also sustained, repeating and later effects, information
+
 **"dying"**: 2 (0 only this need)
 
 - Ambrosia of Undying Hope: note only; also immunities and resistances by situation, sustained, repeating and later effects, plain results the reader doesn't parse yet, out of combat and the environment
 - Restful Salve: nothing read; also objects and the item itself, out of combat and the environment
-
-**"stabilizes"**: 2 (0 only this need)
-
-- Potion of Passing Fancy: note only; also out of combat and the environment
-- Silver Tripod: note only; also sustained, repeating and later effects, information
 
 **Other wordings**: 4 (1 only this need)
 
@@ -1805,7 +1820,7 @@ An effect the user Sustains or Dismisses, one that repeats each round or at each
 
 A choice the user makes when using it (a damage type, a mode, a creature, a direction, one of a list): a picker on the card that sets what the card does. *Where: item live play.*
 
-23 entries (and 6 of the modules' items).
+23 entries (and 8 of the modules' items).
 
 **"of your choice"**: 6 (1 only this need)
 
@@ -1901,7 +1916,7 @@ Allies or several creatures each getting a result, or a number of targets the ca
 
 What the card targets or changes isn't a creature: a lock, door, rope, container, an unattended object's Hardness and Hit Points, the item turning into another item or making one, its ammunition, charges or runes. Needs object targets on the card and item updates (create, transform, repair). *Where: item live play.*
 
-25 entries (and 1 of the modules' items).
+25 entries (and 2 of the modules' items).
 
 **"objects"**: 3 (2 only this need)
 
@@ -2042,7 +2057,7 @@ A creature's attitude, truthfulness, memory, beliefs or compelled behaviour: no 
 
 Something the user learns: a location, an identity, a creature's statistics, a memory shown, a translation, a direction. An information card whispered to the GM and the user (the user's rule for spells), with what the GM fills in. *Where: item live play.*
 
-10 entries (and 2 of the modules' items).
+10 entries (and 4 of the modules' items).
 
 **"recall knowledge"**: 3 (3 only this need)
 
@@ -2068,7 +2083,7 @@ Something the user learns: a location, an identity, a creature's statistics, a m
 
 Messages, languages, telepathy, sounds and silence: note Effects or chat messages, little to apply. *Where: item reader.*
 
-7 entries.
+7 entries (and 1 of the modules' items).
 
 **"word"**: 2 (2 only this need)
 
@@ -2111,35 +2126,29 @@ Hours or days, rest, travel, crafting, downtime, weather, air and water, food: w
 
 No rule a card could play: food, refills, ingredients, flavor. *Where: none.*
 
-14 entries (and 31 of the modules' items).
+8 entries (and 19 of the modules' items).
 
-**Its own text**: 14 (0 only this need)
+**Its own text**: 8 (0 only this need)
 
-- Admonishing Band: partial
-- Binding Coil: partial
-- Binding Coil (Greater): partial
 - Collar of the Eternal Bond (Eidolon's Freedom): note only
-- Crying Angel Pendant: partial
-- Curled Cure Gel: partial
 - Deck of illusions: partial
 - Gearblade: partial
 - Lucky Draw Bandolier (Greater): partial
 - Lucky Draw Bandolier (Secret Ace): partial
 - Potion of Shared Life: note only
 - Psychic Warding Bracelet: partial
-- Ulfen Shieldbreaker (Battering Blow): partial
 - Vambrace of Gorum (Blade of Iron): note only
 
 ## The installed modules' items
 
 Counts by module and main need; the names are in `.cache/needs-third-party.json`.
 
-| Module | Entries | creatures | visibility | senses | fortune | vehicles | moving | areas | triggers | strike | actions | afflictions | dying | immunity | situational | lasting | choice | objects | reader | mind | information | out-of-combat | no-rules |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| battlezoo-bestiary-pf2e | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| pf2e-team-plus-alchemists | 88 | 7 | 2 | 1 | 1 | 0 | 13 | 6 | 0 | 12 | 1 | 3 | 1 | 2 | 0 | 6 | 1 | 1 | 6 | 0 | 2 | 1 | 22 |
-| pf2e-team-plus-barbarians | 10 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 5 |
-| pf2e-team-plus-inventors | 24 | 0 | 0 | 1 | 0 | 0 | 6 | 4 | 0 | 5 | 0 | 0 | 0 | 1 | 0 | 0 | 4 | 0 | 1 | 2 | 0 | 0 | 0 |
-| pf2e-team-plus-magic | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 1 |
-| pf2e-team-plus-tian-xia | 17 | 1 | 0 | 1 | 0 | 2 | 0 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 2 |
+| Module | Entries | creatures | visibility | senses | fortune | vehicles | moving | areas | triggers | strike | actions | afflictions | dying | immunity | situational | lasting | choice | objects | reader | mind | information | speech | out-of-combat | no-rules |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| battlezoo-bestiary-pf2e | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| pf2e-team-plus-alchemists | 88 | 7 | 2 | 1 | 1 | 0 | 17 | 6 | 0 | 12 | 3 | 3 | 1 | 2 | 0 | 6 | 3 | 2 | 6 | 0 | 4 | 1 | 1 | 10 |
+| pf2e-team-plus-barbarians | 10 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 5 |
+| pf2e-team-plus-inventors | 24 | 0 | 0 | 1 | 0 | 0 | 6 | 4 | 0 | 5 | 0 | 0 | 0 | 1 | 0 | 0 | 4 | 0 | 1 | 2 | 0 | 0 | 0 | 0 |
+| pf2e-team-plus-magic | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
+| pf2e-team-plus-tian-xia | 17 | 1 | 0 | 1 | 0 | 2 | 0 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 2 |
 

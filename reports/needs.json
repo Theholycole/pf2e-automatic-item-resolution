@@ -19,8 +19,8 @@
    "strike": 92,
    "choice": 23,
    "spells": 34,
-   "no-rules": 14,
-   "actions": 28,
+   "no-rules": 8,
+   "actions": 32,
    "immunity": 26,
    "creatures": 71,
    "mind": 5,
@@ -31,9 +31,9 @@
    "cooldown": 10,
    "vehicles": 21,
    "reader": 17,
-   "triggers": 85,
+   "triggers": 86,
    "situational": 15,
-   "dying": 29,
+   "dying": 30,
    "senses": 20,
    "speech": 7,
    "from-events": 4,
@@ -50,25 +50,25 @@
    "cast-changes": 21,
    "speeds": 28,
    "areas": 177,
-   "immunity": 85,
-   "objects": 293,
-   "speech": 99,
+   "immunity": 86,
+   "objects": 295,
+   "speech": 100,
    "out-of-combat": 360,
    "counteract": 86,
    "afflictions": 101,
-   "lasting": 220,
+   "lasting": 222,
    "moving": 104,
-   "triggers": 114,
+   "triggers": 115,
    "visibility": 47,
-   "dying": 75,
+   "dying": 76,
    "choice": 97,
    "several": 100,
    "strike": 184,
-   "reader": 194,
+   "reader": 196,
    "spells": 73,
-   "actions": 59,
+   "actions": 64,
    "from-events": 26,
-   "no-rules": 14,
+   "no-rules": 8,
    "information": 179,
    "creatures": 71,
    "situational": 78,
@@ -1283,9 +1283,12 @@
    "tier": "general",
    "level": 4,
    "result": "partial",
-   "main": "no-rules",
+   "main": "actions",
+   "work": "demoralize",
    "needs": [
-    "no-rules"
+    "actions",
+    "immunity",
+    "speech"
    ]
   },
   {
@@ -2968,9 +2971,11 @@
    "level": 6,
    "activation": "Battering Blow",
    "result": "partial",
-   "main": "no-rules",
+   "main": "triggers",
+   "work": "triggering attack",
    "needs": [
-    "no-rules"
+    "triggers",
+    "actions"
    ]
   },
   {
@@ -3615,9 +3620,11 @@
    "tier": "general",
    "level": 7,
    "result": "partial",
-   "main": "no-rules",
+   "main": "actions",
+   "work": "as part of the same activity",
    "needs": [
-    "no-rules"
+    "actions",
+    "reader"
    ]
   },
   {
@@ -4537,9 +4544,11 @@
    "tier": "general",
    "level": 2,
    "result": "partial",
-   "main": "no-rules",
+   "main": "dying",
+   "work": "stabilize",
    "needs": [
-    "no-rules"
+    "dying",
+    "reader"
    ]
   },
   {
@@ -9690,9 +9699,12 @@
    "tier": "general",
    "level": 13,
    "result": "partial",
-   "main": "no-rules",
+   "main": "actions",
+   "work": "grapple",
    "needs": [
-    "no-rules"
+    "actions",
+    "lasting",
+    "objects"
    ]
   },
   {
@@ -12160,9 +12172,12 @@
    "tier": "general",
    "level": 6,
    "result": "partial",
-   "main": "no-rules",
+   "main": "actions",
+   "work": "grapple",
    "needs": [
-    "no-rules"
+    "actions",
+    "lasting",
+    "objects"
    ]
   },
   {
