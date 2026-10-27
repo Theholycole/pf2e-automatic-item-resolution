@@ -184,3 +184,46 @@ test("live: Flame Navette takes its user's Will save only with Determination and
     assert.deepEqual([infused.modifier, infused.rank], [21, 6]);
     assert.ok(infused.notes.some((note) => /own rank 6 and modifier \+21: higher than the item's/.test(note)));
 });
+
+test("what its user only learns isn't an affliction to play: Gaze of the Mantis's and Secret-Keeper's Mask (Blackfingers)'s information whispered, Origin Unguent's test of two objects a line of its card; Calamity Glass's vision checked", async () => {
+    const { needsOf } = await import("../src/compiler/needs.js");
+    assert.deepEqual(needsOf({ result: "builtin:no-effect", kind: "activation", text: "Effect You twist the mask's eye and peer at an object. You know whether the object is poison or has been poisoned." }), ["objects", "information"]);
+    const gaze = activation("Gaze of the Mantis", "Target Sense");
+    const [mask] = compileActivations(item("Secret-Keeper's Mask (Blackfingers)")).map((entry) => entry.plan);
+    for (const plan of [gaze, mask]) assert.deepEqual([plan.builtin, plan.decided, routeOf(plan)], ["whisper", "information", "whisper"]);
+    assert.match(gaze.whisper.text, /Red Mantis contract/);
+    const unguent = compileItem(item("Origin Unguent"));
+    assert.deepEqual([unguent.decided, done(unguent)], ["card-line", true]);
+    const glass = activation("Calamity Glass", "Mirror, Mirror");
+    assert.deepEqual([glass.decided, done(glass)], ["checked", true]);
+});
+
+test("a symptom hidden for an hour: Snake Oil's note Effect on the creature it's put on, and the GM's disbelief card for a creature that Seeks to look closer (DC 17)", () => {
+    const oil = compileItem(item("Snake Oil"));
+    assert.ok(done(oil));
+    assert.deepEqual([oil.disbelief.dc, oil.disbelief.statistic, oil.disbelief.lasts, oil.item.recipient], [17, "perception", { value: 1, unit: "hours" }, "drinker"]);
+    assert.deepEqual([oil.resolution.outcomes.success.noteEffects.length, oil.resolution.outcomes.success.noteEffects[0].duration.value], [1, 1]);
+});
+
+test("a poison's stages written as a range: Unending Itch's five alike, Pseudo Afflictions' to play; its own lines and Taster's Folly's on the poison card, Taster's Folly's onset read", () => {
+    const itch = compileItem(item("Unending Itch"));
+    assert.ok(done(itch));
+    const handoff = itch.resolution.afflictionHandoff;
+    assert.deepEqual([handoff.stages.length, handoff.stages.every((stage) => stage.damage[0] === "1d6[poison]" && stage.duration.value === 1), handoff.dc, handoff.maximumDuration], [5, true, 34, { value: 5, unit: "minutes" }]);
+    assert.equal(itch.notes.length, 4);
+    assert.match(itch.notes.join(" "), /DC 34 Perception/);
+    assert.match(itch.notes.join(" "), /in secret/);
+    const folly = compileItem(item("Taster's Folly"));
+    assert.ok(done(folly));
+    assert.deepEqual(folly.resolution.afflictionHandoff.onset, { value: 10, unit: "minutes" });
+    assert.equal(folly.notes.length, 4);
+    assert.match(folly.notes.join(" "), /can't be ended while the poison lasts/);
+});
+
+test("a spell's weakness added to a curse's: Arboreal's Revenge's Arboreal's Grace — on its wielder PF2e's own Spell Effect with weakness 8 to fire, on another creature the cast", () => {
+    const grace = activation("Arboreal's Revenge", "Arboreal's Grace");
+    assert.ok(done(grace));
+    assert.deepEqual([grace.builtin, grace.ways.length, grace.ways[0].plan.resolution.applications[0].uuid, grace.ways[0].plan.resolution.applications[0].recipients, grace.ways[1].plan.builtin, grace.ways[1].plan.spell.name], ["ways", 2, "Compendium.pf2e.spell-effects.Item.mCb9mWAmgWPQrkTY", "self", "cast-spell", "Oaken Resilience"]);
+    assert.equal(routeOf(grace.ways[0].plan), "item");
+    assert.equal(grace.ways[1].plan.notes, undefined);
+});
