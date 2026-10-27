@@ -37,6 +37,14 @@ function rowText(row) {
     return [...conditions, ...modifiers, ...moved].join(", ");
 }
 
+// When an extra applies, in words: " against a prone target", " on a critical hit", " on a hit (not a critical hit)".
+function whenText(entry) {
+    const conditions = (entry?.predicate ?? []).filter((term) => typeof term === "string" && term.startsWith("target:condition:")).map((term) => term.slice("target:condition:".length).replace(/-/g, " "));
+    const against = conditions.length ? ` against a ${conditions.join(" and ")} target` : "";
+    const critical = entry?.critical === true ? " on a critical hit" : entry?.critical === false ? " on a hit (not a critical hit)" : "";
+    return `${against}${critical}`;
+}
+
 // A die in words: "4d6 mental", "1d4 persistent force", "1d8 precision", "1d6".
 export const dieText = (entry) => [entry.dieSize ? `${entry.diceNumber}${entry.dieSize}` : `${entry.diceNumber} weapon ${entry.diceNumber === 1 ? "die" : "dice"}`, entry.category, entry.damageType].filter(Boolean).join(" ");
 
@@ -70,7 +78,9 @@ export function strikeLines(plan) {
         // (Hardness it ignores: PF2e subtracts no creature's Hardness itself.)
         strike.ignoresHardness ? `Its damage ignores the target's Hardness if that's ${strike.ignoresHardness} or lower (a higher Hardness still applies)` : null,
         strike.runes ? `Its weapon is a +${strike.runes.potency} ${["", "", "greater ", "major "][strike.runes.striking] ?? ""}striking weapon for it (PF2e keeps the weapon's own runes when they're better)` : null,
-        ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage`),
+        ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage${whenText(entry)}`),
+        ...(strike.flat ?? []).map((entry) => `+${entry.value} ${entry.type} damage${entry.perDie ? " per weapon damage die" : ""}${whenText(entry)}`),
+        ...(strike.runeDice ?? []).map((entry) => `No ${entry.rune} rune dice on it${whenText(entry)}: its own above instead`),
         // (Damage in place of the weapon's, Big Rock Bullet's: the card's own roll.)
         strike.instead?.hit ? `On a hit: ${strike.instead.hit.formula} ${strike.instead.hit.type} damage in place of the weapon's (doubled on a critical hit)` : null,
         strike.instead?.failure ? `On a failure (not a critical failure): ${strike.instead.failure.formula} ${strike.instead.failure.type} damage` : null,
@@ -178,8 +188,14 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
         ...(entry.damageType ? { damageType: entry.damageType } : {}),
         ...(entry.category ? { category: entry.category } : {}),
         // (Only against some creatures: Bane Ammunition's type, "target:trait:dragon".)
-        ...(entry.predicate ? { predicate: entry.predicate } : {})
+        ...(entry.predicate ? { predicate: entry.predicate } : {}),
+        // (Only on a hit, or only on a critical hit, Minotaur Chair's prone bleed: PF2e's critical flag — a critical hit's own dice aren't doubled.)
+        ...(typeof entry.critical === "boolean" ? { critical: entry.critical } : {})
     }));
+    // (A bonus to its damage per weapon damage die, Minotaur Chair's against a prone foe: PF2e's FlatModifier of the weapon's dice.)
+    for (const [index, entry] of (strike.flat ?? []).entries()) rules.push({ key: "FlatModifier", selector: damageSelector, slug: `${slug}-flat-${index + 1}`, ...(label ? { label } : {}), type: entry.type, value: entry.perDie ? (entry.value === 1 ? "@weapon.system.damage.dice" : `${entry.value}*@weapon.system.damage.dice`) : entry.value, ...(entry.predicate ? { predicate: entry.predicate } : {}) });
+    // (A property rune's own dice taken off when its own take their place, Minotaur Chair's wounding against a prone foe: PF2e slugs them by the rune.)
+    for (const entry of strike.runeDice ?? []) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "dice-number", value: 0, slug: entry.rune, ...(entry.predicate ? { predicate: entry.predicate } : {}) });
     // (A feat's own extra die, Iron Cudgel's Brutal Finish: only with PF2e's roll option for that feat.)
     if (strike.featDie) rules.push({ key: "DamageDice", selector: damageSelector, slug: `${slug}-${strike.featDie.slug}`, ...(label ? { label } : {}), diceNumber: strike.featDie.diceNumber, predicate: [`feat:${strike.featDie.slug}`] });
     // (Two Strikes on one roll, Coldstar Pistols': the attack rolled twice, the higher kept.)

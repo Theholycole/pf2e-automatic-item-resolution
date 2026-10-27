@@ -112,3 +112,35 @@ test("ammunition that only lands somewhere, its range increment where it lands (
     assert.deepEqual([arrow.builtin, arrow.decided], ["whisper", "information"]);
     assert.match(arrow.whisper.text, /can Seek as though they were at the point of impact/);
 });
+
+test("Minotaur Chair: against a prone foe, +1 circumstance damage per weapon die and the wounding rune's bleed 1d12 (3d6 on a critical hit) in place of its own — PF2e's rules on the readied Strike, predicated on target:condition:prone", async () => {
+    const { strikeRules, strikeLines } = await import("../src/live/strike-card.js");
+    const chair = activation("Minotaur Chair");
+    assert.deepEqual([chair.partial, chair.strike.notes, chair.strike.volley.each], [undefined, [], "enemy"]);
+    const rules = strikeRules(chair, { label: "Minotaur Chair" });
+    const prone = ["target:condition:prone"];
+    assert.deepEqual(rules.filter((rule) => rule.key === "DamageDice").map((rule) => [rule.diceNumber, rule.dieSize, rule.category, rule.damageType, rule.critical, rule.predicate]), [[1, "d12", "persistent", "bleed", false, prone], [3, "d6", "persistent", "bleed", true, prone]]);
+    assert.deepEqual(rules.filter((rule) => rule.key === "FlatModifier").map((rule) => [rule.type, rule.value, rule.predicate]), [["circumstance", "@weapon.system.damage.dice", prone]]);
+    assert.deepEqual(rules.filter((rule) => rule.key === "DamageAlteration").map((rule) => [rule.slug, rule.property, rule.value, rule.predicate]), [["wounding", "dice-number", 0, prone]]);
+    assert.ok(strikeLines(chair).includes("+3d6 persistent bleed damage against a prone target on a critical hit"));
+});
+
+test("granted for a while: Potion of Grounding's Divert Lightning (PF2e's action on its minute's note Effect), Falconsight Eye's second range increment free of penalty (PF2e's ignore-range-penalty:2)", () => {
+    const potion = compileItem(item("Potion of Grounding"));
+    const [note] = potion.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([potion.noteOnly, potion.partial, note.duration.value, note.duration.unit, note.rules], [undefined, undefined, 1, "minutes", [{ key: "GrantItem", uuid: "Compendium.pf2e.actionspf2e.Item.s2RrhZx1f1X4YnYV", allowDuplicate: false }]]);
+    const eye = activation("Falconsight Eye");
+    const [sight] = eye.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([eye.noteOnly, sight.duration.value, sight.rules], [undefined, 1, [{ key: "RollOption", domain: "ranged-attack-roll", option: "ignore-range-penalty:2" }]]);
+    assert.match(sight.text, /^You can close your eyes as a free action/);
+});
+
+test("others' own reactions, lines of the card: Singing Bowl of the Versatile Stance's stance change; Chainbreaker's Liberating Strike, its ally's Escape after the hit", () => {
+    const bowl = activation("Singing Bowl of the Versatile Stance");
+    assert.deepEqual([bowl.partial, routeOf(bowl), bowl.notes.length], [undefined, "item", 2]);
+    for (const name of ["Chainbreaker", "Chainbreaker (Greater)"]) {
+        const strike = activation(name, "Liberating Strike");
+        assert.deepEqual([strike.partial, routeOf(strike), strike.strike.own, strike.item.activation.frequency.per], [undefined, "strike", true, "day"], name);
+        assert.match(strike.strike.lines[0], /^If it hits and deals damage, one grabbed or restrained ally within 60 feet of the target can use a reaction to Escape/);
+    }
+});
