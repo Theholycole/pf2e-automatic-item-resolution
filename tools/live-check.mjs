@@ -6781,6 +6781,28 @@ export const cases = {
         return { results: game.messages.get(ending.id).getFlag(NS, "card").results };
     },
 
+    // Sinew-Song's Cutting Cadenza (2026-10-27): its DC 37 Reflex save card at a creature in its cone — a critical failure takes double its user's
+    // Strike damage with the sickle, all sonic, and 4d6 persistent bleed.
+    async sinewSongCadenza(scene) {
+        const { actor: user } = await creature(scene, "Cadenza Player", { type: "character", x: 14, y: 20, level: 17 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Cadenza Target", { x: 15, y: 20, hp: 400, alliance: "opposition", save: -30 });
+        const bow = await give(user, "Sinew-Song");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(bow.uuid, 0);
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the cadenza's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        const shared = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.sharedDamage?.components?.[0]?.formula ?? "";
+        assert(/\[sonic\]$/.test(shared) && /d4/.test(shared), `the Strike's damage, all sonic (${shared})`);
+        const hp = foe.system.attributes.hp.value;
+        await rollAndApply(save);
+        await until(() => foe.system.attributes.hp.value < hp, `the damage (${hp} → ${foe.system.attributes.hp.value})`, { timeout: 8000 });
+        await until(() => foe.itemTypes.condition.some((condition) => condition.slug === "persistent-damage" && condition.system.persistent?.damageType === "bleed"), "persistent bleed", { timeout: 8000 });
+        return { shared, taken: hp - foe.system.attributes.hp.value };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

@@ -271,6 +271,18 @@ test("a pause of the item's own extra damage, which no rule plays (2026-10-27): 
     assert.match(claw.notes[0], /doesn't deal additional void damage/);
 });
 
+test("damage as the item's own Strike would deal it, of another type (2026-10-27): Sinew-Song's Cutting Cadenza — strikeDamage sonic, its rows' multipliers; the live formula all sonic beside the bleed", async () => {
+    const { withStrikeFormula, formulaAs } = await import("../src/live/strike-as.js");
+    const [{ plan: cadenza }] = compileActivations(item("Sinew-Song"), options);
+    assert.deepEqual([cadenza.strikeDamage, cadenza.resolution.outcomes.success.manualInstructions, cadenza.partial], [{ as: "sonic", rows: { success: 1, failure: 1, criticalFailure: 2 } }, undefined, undefined]);
+    assert.equal(formulaAs("{(4d4 + 4)[slashing],1d6[sonic]}", "sonic"), "(4d4 + 4 + 1d6)[sonic]");
+    // (PF2e's readable form, its DamageRoll's formula.)
+    assert.deepEqual([formulaAs("3d4 slashing + 1d6 sonic", "sonic"), formulaAs("(3d4 + 4) slashing + 1d6 sonic", "sonic")], ["(3d4 + 1d6)[sonic]", "((3d4 + 4) + 1d6)[sonic]"]);
+    const filled = withStrikeFormula(cadenza, "{(4d4 + 4)[slashing],1d6[sonic]}");
+    const { success, criticalFailure } = filled.resolution.outcomes;
+    assert.deepEqual([filled.resolution.sharedDamage.components[0].formula, success.damage.mode, criticalFailure.damage.mode, criticalFailure.damage.shared.multiplier, criticalFailure.damage.formulas.length], ["(4d4 + 4 + 1d6)[sonic]", "shared", "mixed", 2, 1]);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

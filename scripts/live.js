@@ -14,6 +14,7 @@
 
 import { applyEndEarlyCard } from "./end-early.js";
 import { applyDropCard } from "./drop-held.js";
+import { withStrikeFormula } from "../src/live/strike-as.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
@@ -208,6 +209,14 @@ async function postWhisper({ plan, used, actor, token }) {
 export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
     // (Its moves with ability 0.9.2's hook and moveFrom, else as read before: scripts/placed-moves.js.)
     plan = forAbility(plan);
+    // (Damage as its user's own Strike with it would deal, of one type — Sinew-Song's Cutting Cadenza: PF2e's formula for that Strike, src/live/strike-as.js.)
+    if (plan?.strikeDamage && actor) {
+        const itemId = used?.data?._id ?? used?.data?.id ?? null;
+        const strike = (actor.system?.actions ?? []).find((action) => action.item?.id === itemId);
+        const formula = strike?.damage ? await strike.damage({ getFormula: true }).catch(() => null) : null;
+        if (formula) plan = withStrikeFormula(plan, formula);
+        else await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p><strong>${escapeHTML(used?.data?.name ?? "The item")}</strong>: no Strike with it on ${escapeHTML(actor.name)} — roll its Strike's damage (all ${escapeHTML(plan.strikeDamage.as)}) by hand.</p>` });
+    }
     // (A save against its user's own class or spell DC, src/compiler/item-data.js: that DC, as it is now. Without one, the GM rolls it.)
     if (hasOwnerDC(plan)) {
         const filled = fillOwnerDCs(plan, ownerDCsOf(actor));
