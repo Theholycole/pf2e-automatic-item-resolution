@@ -444,8 +444,8 @@ test("a cast said again in other words (2026-10-27): Talonstrike Blade's 'on the
     assert.deepEqual([shortbow.plan.castRange.feet, shortbow.plan.castRange.area, shortbow.plan.partial], [60, 10, undefined]);
     const [brilliant] = activations(item("Brilliant (Greater)"), options);
     assert.deepEqual([brilliant.plan.builtin, brilliant.plan.partial], ["counteract", undefined]);
-    // (Songbird's Brush keeps its good-aligned creatures, the GM's: partial.)
-    assert.equal(first("Songbird's Brush").partial, true);
+    // (Songbird's Brush's good-aligned creatures: left out of the cast as its holy ones since 2026-10-27, src/compiler/adventure-readings.js — done.)
+    assert.deepEqual([first("Songbird's Brush").partial, first("Songbird's Brush").castTraits.immune], [undefined, ["holy"]]);
 });
 
 test("one cast of several the words name (2026-10-27): Spark Dancer's Fireball or Lightning Bolt at 7th rank, its user's pick on the card", () => {

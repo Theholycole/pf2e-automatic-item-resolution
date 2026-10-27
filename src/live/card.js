@@ -477,6 +477,14 @@ export function castDegreeEffectSource(castDegree, spellName, { item = {}, user 
     return ownEffectSource({ name: `worse ${save}`, img: "icons/svg/downgrade.svg", words: `Its next ${save}${spellName ? ` (against ${spellName})` : ""} is one degree of success worse`, rules: [{ key: "AdjustDegreeOfSuccess", selector: castDegree.selector, adjustment: castDegree.adjustment, ...(item.name ? { label: item.name } : {}) }], duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { firstDegree: { selector: castDegree.selector, adjustment: castDegree.adjustment } }, item, user, worldTime, initiative, moduleId });
 }
 
+// All of the spell's damage of one type, at its user's option (Sacred Valkyrie Helm's electricity Weapon Storm, src/compiler/adventure-readings.js
+// plan.castDamage): PF2e's DamageAlteration on its caster for that spell's damage (its slug), to the end of its next turn — long enough for the
+// cast's damage roll.
+export function castDamageSource(castDamage, spellName, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const slug = String(spellName ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return ownEffectSource({ name: `${spellName} deals ${castDamage.type}`, img: "icons/svg/lightning.svg", words: `All of its ${spellName}'s damage is ${castDamage.type} damage`, rules: [{ key: "DamageAlteration", mode: "override", property: "damage-type", selectors: ["spell-damage"], value: castDamage.type, predicate: [`item:slug:${slug}`] }], duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" }, flag: { castDamage: castDamage.type }, item, user, worldTime, initiative, moduleId });
+}
+
 // A note Effect of the item's on a creature: its words for a time (Awakened Silver Shot's "can't use Change Shape", scripts/counteract.js).
 export function itemNoteSource({ name, words, duration = null, img = "icons/svg/cancel.svg" }, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return ownEffectSource({ name, img, words, rules: [], duration, flag: { note: true }, item, user, worldTime, initiative, moduleId });

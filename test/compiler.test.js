@@ -1154,8 +1154,9 @@ test("resolved only when the card does all of it (src/compiler/honest.js): a GM 
     // (Floppy Rag Doll's success: "can't use reactions until the end your turn" — a note Effect until the end of its user's turn, the plan resolved.)
     const [doll] = compileActivations(item("Floppy Rag Doll"));
     assert.deepEqual([doll.plan.partial, doll.plan.resolution.outcomes.success.manualInstructions, doll.plan.resolution.outcomes.success.noteEffects?.[0]?.duration], [undefined, undefined, { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }]);
-    // (Timeflaying Blade's creature hurled into the future: the GM's, partial.)
-    assert.equal(compileActivations(item("Timeflaying Blade"))[0].plan.partial, true);
+    // (Timeflaying Blade's creature hurled into the future: note Effects on it for its time since 2026-10-27, src/compiler/adventure-readings.js —
+    // no longer partial.)
+    assert.equal(compileActivations(item("Timeflaying Blade"))[0].plan.partial, undefined);
     assert.deepEqual(leftToTheGM({ manualInstructions: ["{target} (critical success): The creature is unaffected."] }), []);
     assert.deepEqual(leftToTheGM({ effects: [{ kind: "condition", slug: "clumsy", value: 1 }], manualInstructions: ["{target} (failure, the rest by hand): The target is Clumsy 1 and can't use reactions until the beginning of your next turn."] }), []);
 });

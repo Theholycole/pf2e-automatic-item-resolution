@@ -130,7 +130,8 @@ test("a figurine's rat a minion for its hour, a week's wait once slain: Pyrite R
 
 test("the card's lines: Cresset of Grisly Interrogation's kept head (its questions, another group's, untouched)", () => {
     const [kept, questions] = activations("Cresset of Grisly Interrogation").map((entry) => entry.plan);
-    assert.deepEqual([done(kept), kept.notes.length, questions.noteOnly], [true, 3, true]);
+    // (Its questions, another group's: since the merge of 2026-10-27 the rest group's, done.)
+    assert.deepEqual([done(kept), kept.notes.length, done(questions)], [true, 3, true]);
     assert.match(kept.notes[0], /10 minutes/);
 });
 

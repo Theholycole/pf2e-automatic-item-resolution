@@ -7,6 +7,7 @@
 
 import { rangeWords } from "../compiler/cast-range.js";
 import { castNoteText } from "../compiler/cast-note.js";
+import { effectSource } from "./card.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -79,6 +80,15 @@ export const darkLightWords = (plan) => (plan?.darkLight ? `Its ${plan.darkLight
 // The cast card's line for a kineticist's own numbers (src/compiler/cast-changes.js castImpulse).
 export const impulseWords = "A kineticist whose kinetic elements include the spell's casts it with its impulse DC and attack modifier where they're better.";
 
+// PF2e's own Effects made with the cast (src/compiler/adventure-readings.js plan.castLinks, Assassin's Bracers' Focus on the Doomed): its
+// user's and the creature it designates — in words, and each one's source from its compendium Effect, its TokenMark at that creature.
+export const castLinksWords = (links) => `With it: ${links.map((link) => `${link.label} on ${link.on === "user" ? "its user" : "the creature targeted"}`).join(", ")} (PF2e's Effects)`;
+export function castLinkSource(template, link, { markUuid = null, item = {}, user = {}, worldTime = 0, initiative = null } = {}) {
+    const source = effectSource(template, { item, user, worldTime, initiative });
+    if (link.mark && markUuid) source.system.rules = (source.system.rules ?? []).map((rule) => (rule?.key === "TokenMark" ? { ...rule, uuid: markUuid } : rule));
+    return source;
+}
+
 export function castCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const plan = state.plan;
@@ -98,7 +108,7 @@ export function castCardHTML(state, { canApply = false } = {}) {
             ? `<p class="aar-actions">Drinker: <select data-air-field="drinker">${state.drinkers.map((entry, index) => `<option value="${index}"${index === state.drinker ? " selected" : ""}>${escape(entry.name)}${index === 0 ? " (self)" : ""}</option>`).join("")}</select></p>`
             : `<p class="aar-actions">Drinker: ${escape(caster.name)}</p>`;
     // (And its lines, what's its user's, the map's or the GM's to do — src/compiler/cast-changes.js castLines — before its notes.)
-    const said = [...(plan.castLines ?? []), ...(plan.notes ?? [])];
+    const said = [...(plan.castLines ?? []), ...(plan.castLinks?.length ? [castLinksWords(plan.castLinks)] : []), ...(plan.castDamage ? [`All of its damage is ${plan.castDamage.type} damage (PF2e's DamageAlteration on its caster)`] : []), ...(plan.notes ?? [])];
     const notes = open && said.length ? `<ul class="aar-notes">${said.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const label = plan.choices?.length > 1 && open ? "the chosen spell" : chosen.spell.name ?? "the spell";

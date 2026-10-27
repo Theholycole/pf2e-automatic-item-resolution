@@ -142,12 +142,11 @@ test("Elixir of the Peaks: its bonus and cold protection kept, the mountains and
     }
 });
 
-test("Splendid Floodlight: both activations one card's lines (a one-off)", () => {
+// (Since the merge of 2026-10-27: its first activation, the light, this group's one-off; its second, the gels, the rest group's ways card.)
+test("Splendid Floodlight: the light a one-off, the gels the rest group's ways card", () => {
     assert.ok(ONE_OFFS.has("Splendid Floodlight"));
-    for (const entry of activations("Splendid Floodlight")) {
-        assert.ok(done(entry.plan));
-        assert.equal(entry.plan.decided, "one-off");
-    }
+    const [light, gels] = activations("Splendid Floodlight").map((entry) => entry.plan);
+    assert.deepEqual([done(light), light.decided, done(gels), gels.builtin], [true, "one-off", true, "ways"]);
 });
 
 test("Bonmuan Swapping Stone: two ways — thrown at a space, its user teleported within 100 feet; hurled at a creature, a ranged Strike whose hit brings it beside its user unless its Will save resists", () => {

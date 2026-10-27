@@ -1,7 +1,7 @@
 // Live play for items that cast a spell PF2e has no Effect for (src/live/cast-card.js): the spell module casts it
 // through PF2e (its api.castFromItem), so its own cast handling resolves it as any cast.
 
-import { castCardHTML, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
+import { castCardHTML, castLinkSource, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
@@ -10,7 +10,7 @@ import { impulseNumbers } from "../src/compiler/cast-changes.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
 import { arrivalAfterMove } from "./cast-arrival.js";
-import { castDegreeEffectSource, castPenaltySource, itemNoteSource } from "../src/live/card.js";
+import { castDamageSource, castDegreeEffectSource, castPenaltySource, itemNoteSource } from "../src/live/card.js";
 import { castNoteText } from "../src/compiler/cast-note.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
@@ -59,6 +59,26 @@ export async function giveCastBonus(state, actors) {
     return lines;
 }
 
+// PF2e's own Effects with the cast (plan.castLinks, Assassin's Bracers'): each made from its compendium Effect on its user, or on the one creature
+// the presser targets — the user's TokenMark at it. → the card's lines.
+async function giveCastLinks(state, { user, designated }) {
+    const lines = [];
+    for (const link of state.plan.castLinks) {
+        const template = (await fromUuid(link.uuid).catch(() => null))?.toObject?.();
+        const actors = link.on === "user" ? [user] : designated.map((token) => token.actor);
+        if (!template) {
+            lines.push(`${link.label}: apply it by hand (PF2e's Effect wasn't found).`);
+            continue;
+        }
+        for (const actor of actors.filter(Boolean)) {
+            const source = castLinkSource(template, link, { markUuid: designated[0]?.document?.uuid ?? designated[0]?.uuid ?? null, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null });
+            await actor.createEmbeddedDocuments("Item", [source]);
+            lines.push(`${actor.name} gains ${template.name}.`);
+        }
+    }
+    return lines;
+}
+
 // targets: the token uuids of whoever pressed Apply, for a spell aimed at others; choice: the spell picked of several.
 export async function applyCastCard(message, { drinker = null, targets = [], choice = null } = {}) {
     let state = stateOf(message);
@@ -97,6 +117,12 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             }
         }
         const token = request.casterTokenUuid ? await fromUuid(request.casterTokenUuid).catch(() => null) : null;
+        // (The creature its linked Effects are for, Assassin's Bracers' designated one: one, the presser's target, within its distance.)
+        const forTarget = (state.plan.castLinks ?? []).find((link) => link.on === "target");
+        const designated = forTarget ? (await Promise.all((Array.isArray(targets) ? targets : []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean) : [];
+        if (forTarget && designated.length !== 1) throw new Error("Target the one creature it designates first.");
+        const tooFar = forTarget?.within ? beyondRange({ feet: forTarget.within }, token, actor, designated) : [];
+        if (tooFar.length) throw new Error(`${tooFar.join(", ")} is beyond ${forTarget.within} feet.`);
         const targetTokens = (await Promise.all(request.targetUuids.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
         if (needsTargets(state.plan, chosenSpell(state)) && !targetTokens.length) throw new Error("Target the creatures first.");
         // (Up to so many targets, The Joke's 10: refused beyond that.)
@@ -122,16 +148,23 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         let castTargets = targetTokens;
         if (state.plan.castTraits) {
             const traitsOf = (target) => [...(target.actor?.traits ?? new Set(target.actor?.system?.traits?.value ?? []))];
-            const immune = targetTokens.filter((target) => state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait)));
+            // (Or its user itself, Dragonfire Halfbow's "You and your mount are immune": its own token left out — castTraits.user.)
+            const own = (target) => Boolean(state.plan.castTraits.user) && (target.uuid ?? target.document?.uuid) === (token?.uuid ?? token?.document?.uuid ?? request.casterTokenUuid);
+            const immune = targetTokens.filter((target) => own(target) || state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait)));
             castTargets = targetTokens.filter((target) => !immune.includes(target));
-            for (const target of immune) lines.push(`${target.name} is immune (${state.plan.castTraits.immune.join(" or ")}): left out of the cast.`);
+            for (const target of immune) lines.push(`${target.name} is immune (${own(target) ? "its user" : state.plan.castTraits.immune.join(" or ")}): left out of the cast.`);
             for (const penalty of state.plan.castTraits.penalties) {
                 for (const target of castTargets.filter((one) => one.actor && penalty.traits.some((trait) => traitsOf(one).includes(trait)))) {
                     await target.actor.createEmbeddedDocuments("Item", [castPenaltySource(penalty, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
                     lines.push(`${target.name}: ${penalty.value} ${penalty.type} to its ${penalty.selector} saves against it.`);
                 }
             }
-            if (!targetTokens.length) lines.push(`Target the creatures in its area to leave out the ${state.plan.castTraits.immune.join(" and ")}s and give the penalty.`);
+            if (!targetTokens.length) lines.push(`Target the creatures in its area to leave out ${[...state.plan.castTraits.immune.map((trait) => `the ${trait}s`), ...(state.plan.castTraits.user ? ["its user"] : [])].join(" and ")}${state.plan.castTraits.penalties.length ? " and give the penalty" : ""}.`);
+        }
+        // (All its damage of one type, Sacred Valkyrie Helm's: PF2e's DamageAlteration on its caster for that spell, before it's cast.)
+        if (state.plan.castDamage) {
+            await actor.createEmbeddedDocuments("Item", [castDamageSource(state.plan.castDamage, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null })]);
+            lines.push(`All of its ${spellName}'s damage is ${state.plan.castDamage.type} damage.`);
         }
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
@@ -157,6 +190,8 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             await postCounteractAt({ counteract: dark, item: state.item, user: state.user, drinkers: [] });
             lines.push(`If it meets magical darkness: its counteract card follows (rank ${dark.rank ?? "the spell's + 1"}, +${dark.modifier}).`);
         }
+        // (PF2e's own Effects with it, Assassin's Bracers': its user's and the designated creature's.)
+        if (state.plan.castLinks?.length) lines.push(...await giveCastLinks(state, { user: state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) ?? actor : actor, designated }));
         // (A bonus with the spell, Psyche Salts': an Effect of PF2e's rules on the creature it's cast on.)
         if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean)));
         // (A condition on its user with the cast, Locket of Sealed Nightmares' fatigued: PF2e's condition on the item's user.)

@@ -131,6 +131,12 @@ export async function applyActionCard(message, { targets = [], choice = null } =
         if (Number.isFinite(own) && action.minimum.value > own + (ownBonus?.value ?? 0)) modifiers.push(new Modifier({ label: `${state.item.name} (+${action.minimum.value})`, slug: sluggify(state.item.name), modifier: action.minimum.value - own, type: "untyped" }));
         else if (Number.isFinite(own) && ownBonus) modifiers.push(new Modifier({ label: state.item.name, slug: sluggify(state.item.name), modifier: ownBonus.value, type: ownBonus.type }));
     }
+    // (At mythic proficiency, Spindle Key's Breach for a Mythic Point: its user's level + 10 in place of the check's own proficiency bonus — the
+    // difference, as scripts/rerolls.js gives a reroll's.)
+    if (action.mythic && Modifier) {
+        const proficiency = Number((actor.getStatistic?.(action.statistic)?.modifiers ?? []).find((entry) => entry.slug === "proficiency" && entry.enabled !== false)?.modifier) || 0;
+        modifiers.push(new Modifier({ label: `${state.item.name} (mythic proficiency)`, slug: "mythic-proficiency", modifier: (Number(actor.level) || 0) + 10 - proficiency, type: "untyped" }));
+    }
     // (No roll dialog on the GM's client: the GM is rolling the user's check.)
     const event = typeof KeyboardEvent === "function" ? new KeyboardEvent("keydown", { shiftKey: game.user.settings?.showCheckDialogs !== false }) : undefined;
     // (The variant the item is for, Lady's Blessing Oil's stabilize, when PF2e's action has it.)
