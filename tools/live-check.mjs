@@ -616,6 +616,26 @@ export const cases = {
         });
     },
 
+    // Sluggish Bracelet (2026-10-27): activated, its wearer's -10-foot Speed for 1 minute and the bracelet fused — its Acrobatics bonus gone
+    // and a -5-foot status penalty to Speed on its own rules (25 → 10 feet); activated again, nothing more changes.
+    async sluggishBracelet(scene) {
+        const { actor: wearer } = await creature(scene, "Sluggish Wearer", { x: 3, y: 15 });
+        const bracelet = await give(wearer, "Sluggish Bracelet");
+        await bracelet.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const speed = () => Number(wearer.system.movement?.speeds?.land?.value ?? wearer.system.attributes.speed?.total);
+        const before = speed();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(bracelet.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the bracelet's card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const live = () => wearer.items.get(bracelet.id);
+        await until(() => live()?.getFlag(NS, "became"), "the bracelet fused", { timeout: 8000 });
+        const rules = live().system.rules;
+        assert(!rules.some((rule) => [].concat(rule.selector).includes("acrobatics")) && rules.some((rule) => [].concat(rule.selector).includes("land-speed") && rule.value === -5 && rule.type === "status"), `its rules (${JSON.stringify(rules)})`);
+        await until(() => speed() === before - 15, `Speed ${before} - 15 (${speed()})`, { timeout: 8000 });
+        return { speed: [before, speed()], rules, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });
@@ -7081,6 +7101,48 @@ export const cases = {
         await until(() => plain.hasCondition("enfeebled"), `Enfeebled 1 instead (${plain.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
         const enfeebled = plain.itemTypes.effect.find((effect) => /Enfeebled/.test(effect.name));
         return { counteract: game.messages.get(counter.id).getFlag(NS, "card").results, enfeebled: enfeebled ? `${enfeebled.system.duration.value} ${enfeebled.system.duration.unit}` : null };
+    },
+
+    // Awakened Cold Iron Shot (2026-10-27): a hit on a demon whose Effect is on an ally nearby — the counteract card lists the creatures near
+    // (not the demon), the ally picked, the demon's Effect on it found and counteracted; a hit on a fey with no Effect on anyone — Stupefied 1.
+    async awakenedColdIronShot(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Iron Archer", { type: "character", x: 8, y: 16 });
+        const { actor: demon, token: demonToken } = await creature(scene, "Iron Demon", { x: 9, y: 16, ac: -20, hp: 200, alliance: "opposition" });
+        const { actor: fey, token: feyToken } = await creature(scene, "Iron Fey", { x: 9, y: 17, ac: -20, hp: 200, alliance: "opposition" });
+        const { actor: ally } = await creature(scene, "Iron Charmed", { x: 7, y: 16 });
+        await demon.update({ "system.traits.value": ["demon", "fiend"] });
+        await fey.update({ "system.traits.value": ["fey"] });
+        await ally.createEmbeddedDocuments("Item", [{ name: "Spell Effect: Charm", type: "effect", system: { level: { value: 1 }, duration: { value: -1, unit: "unlimited" }, context: { origin: { actor: demon.uuid } } } }]);
+        const bow = await give(archer, "Shortbow");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        await archerToken.object?.control?.();
+        const shoot = async (token) => {
+            const shots = await give(archer, "Awakened Cold Iron Shot");
+            await shots.update({ "system.baseItem": "arrows" });
+            await bow.update({ "system.selectedAmmoId": shots.id });
+            await target(token);
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(shots.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            since = Date.now();
+            await strike(archer, bow);
+            return since;
+        };
+        let since = await shoot(demonToken);
+        const counter = await messageAfter(since, itemCard("counteract"), { what: "the counteract card", timeout: 10000 });
+        const drinkers = counter.getFlag(NS, "card").drinkers;
+        assert(!drinkers.some((entry) => entry.actorUuid === demon.uuid), `not the demon itself (${drinkers.map((entry) => entry.name)})`);
+        const pick = drinkers.findIndex((entry) => entry.actorUuid === ally.uuid);
+        assert(pick >= 0, `the charmed ally listed (${drinkers.map((entry) => entry.name)})`);
+        await game.modules.get(NS).api.live.apply(counter.id, { drinker: pick });
+        await until(() => game.messages.get(counter.id).getFlag(NS, "card").rows?.length === 1, `the demon's Effect found (${JSON.stringify(game.messages.get(counter.id).getFlag(NS, "card").rows)})`, { timeout: 8000 });
+        await game.modules.get(NS).api.live.apply(counter.id, { rows: [{ ticked: true, dc: 5, rank: 1 }] });
+        await until(() => !ally.itemTypes.effect.some((effect) => effect.name === "Spell Effect: Charm"), "the charm counteracted", { timeout: 8000 });
+        since = await shoot(feyToken);
+        await until(() => fey.hasCondition("stupefied"), `Stupefied 1 instead (${fey.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+        return { counteract: game.messages.get(counter.id).getFlag(NS, "card").results, stupefied: fey.getCondition("stupefied")?.value ?? null };
     },
 
     // Silencing Ammunition (2026-10-27): a hit, its DC 25 Will save failed — the spell module's Silence on the target (-2 to that save after a

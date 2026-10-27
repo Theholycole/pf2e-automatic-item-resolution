@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 957,
+   "resolves": 958,
    "builtin:cast-spell": 474,
-   "partial": 110,
+   "partial": 109,
    "none": 383,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
@@ -61,7 +61,7 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 558,
+    "resolves": 559,
     "builtin:cast-spell": 346,
     "none": 265,
     "builtin:focus-point": 45,
@@ -69,7 +69,7 @@
     "builtin:readied-bonus": 33,
     "note-only": 104,
     "builtin:reroll": 34,
-    "partial": 55,
+    "partial": 54,
     "builtin:table": 4,
     "builtin:teleport": 14,
     "builtin:no-effect": 65,
@@ -25695,7 +25695,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },

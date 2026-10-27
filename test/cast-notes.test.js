@@ -726,3 +726,14 @@ test("a counteract check at the hit (2026-10-27): Awakened Silver Shot — polym
     const card = createCounteractCard({ counteract, item: { name: "Awakened Silver Shot" }, user: { actorUuid: "Actor.me", name: "Me" }, drinkers: [{ actorUuid: "Actor.were", name: "Were" }], only: true });
     assert.deepEqual(card.drinkers.map((entry) => entry.name), ["Were"]);
 });
+
+test("an item that fuses to its user once used (2026-10-27): Sluggish Bracelet — its -10-foot Speed for 1 minute, then item.becomes: its Acrobatics bonus gone and a -5-foot status penalty to Speed on the item's own rules", async () => {
+    const { routeOf } = await import("../src/live/route.js");
+    const { removedBy } = await import("../scripts/becomes.js");
+    const plan = first("Sluggish Bracelet");
+    assert.equal(plan.partial, undefined);
+    assert.equal(routeOf(plan), "item");
+    assert.deepEqual(plan.item.becomes.adds, [{ key: "FlatModifier", selector: "land-speed", type: "status", value: -5 }]);
+    assert.equal(plan.resolution.outcomes.success.modifiers[0].value, -10);
+    assert.deepEqual([{ key: "FlatModifier", selector: "acrobatics", type: "item", value: 1 }, { key: "FlatModifier", selector: "athletics", value: 1 }].map((rule) => removedBy(rule, plan.item.becomes.removes)), [true, false]);
+});

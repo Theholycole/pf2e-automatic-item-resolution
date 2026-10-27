@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1248,
+  "entries": 1247,
   "results": {
-   "partial": 354,
+   "partial": 353,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -15,7 +15,7 @@
    "afflictions": 58,
    "moving": 79,
    "visibility": 45,
-   "lasting": 64,
+   "lasting": 63,
    "choice": 30,
    "strike": 92,
    "spells": 34,
@@ -57,7 +57,7 @@
    "out-of-combat": 437,
    "counteract": 101,
    "afflictions": 105,
-   "lasting": 227,
+   "lasting": 226,
    "moving": 106,
    "triggers": 114,
    "visibility": 47,
@@ -13600,16 +13600,6 @@
     "moving",
     "areas",
     "triggers"
-   ]
-  },
-  {
-   "name": "Sluggish Bracelet",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "work": "thereafter",
-   "needs": [
-    "lasting"
    ]
   },
   {

@@ -45,6 +45,7 @@ import { readProficiencyRequirement, requirementWarning } from "../src/compiler/
 import { gateMet } from "../src/compiler/strike-gate.js";
 import { applyTableCard, postTableCard } from "./table.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
+import { becomeItem } from "./becomes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
@@ -812,6 +813,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const card = createExposureCard({ plan: again.plan, item: state.item, user: recipient, later: Boolean(later), repeat, until: repeat && seconds ? (Number(game.time.worldTime) || 0) + seconds : null, own: Boolean(again.own), attacker: again.attacker ?? false, when: again.when ?? null, ends: again.ends ?? null });
         await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: target.actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
         lines.push(`${recipient.name}: ${again.own ? "its own save's card" : later ? "its save card for later" : "its save card"} follows`);
+    }
+    // (The item itself changed for good once used, Sluggish Bracelet's fusing: scripts/becomes.js.)
+    if (state.plan.item?.becomes) {
+        const became = await becomeItem(state.item.uuid, state.plan.item.becomes);
+        if (became) lines.push(became);
     }
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const entry of state.plan.item?.ruleEffects ?? []) {
