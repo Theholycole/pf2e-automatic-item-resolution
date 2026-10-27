@@ -25,6 +25,15 @@
 // - Fungal Walk Musk, Armor Polishing Kit, Exploration Lens (Investigating): a bonus only in some situations — PF2e's FlatModifier predicated
 //   on a toggle for it on a note Effect for its time (as src/compiler/situational.js's), in place of the row's modifier; what PF2e can't play
 //   (the fungus creatures' Perception penalty, the armor soiled), its words.
+// - Changes to a Strike: Jawbreaker Shield's bash (its failure's −2 to mouth Strikes, a toggle with PF2e's jaws and fangs, on a note Effect for
+//   24 hours); Corpsecaller Round's tether to the Void (a note Effect for the day); Venom Lash's Envenom (3d6 on a critical hit with its
+//   alternate critical specialization, a toggle on the readied Effect); Mantis Embrace's death trait (PF2e's AdjustStrike on the readied
+//   Effect); Boughshatter's Splintering Strike (the core's ignoreResistance against plants, fungi and wood creatures; its splinters a one-off);
+//   Nightmare Cudgel's and Whip of Compliance's Strikes for a while (strike.every: each hit carries it, none spends it — the Demoralize card
+//   after each hit, the Will save and its Suggestion); Ankylostar's sweep (up to three Strikes in the cone, or the Shove card, the ways card);
+//   Soulfeeding Mask's Devour Soul (Quickened once the creature takes its damage: plan.userAfter, src/live/user-after.js; 50 vitality for an
+//   undead, plan.ifTarget); Moonkeep Lily's week (a note Effect); Bomber's Saddle's payload, a one-off (src/compiler/one-offs.js, its own key —
+//   its first activation another reading's), its words the card's lines.
 // - Necrobinding Serum: coated as an injury poison; on its undead's save, the success's –1 status penalty to attack rolls against its user (a
 //   toggle on a note Effect till the start of its user's next turn), the failures' attitude by kind — a note Effect for a mindless undead's
 //   8 or 24 hours, another for the others' 10 minutes or hour (plan.ifTarget, src/live/if-target.js) — and none for a creature that isn't undead.
@@ -33,6 +42,8 @@
 import { effectWords, sentencesOf } from "./lasting.js";
 import { timeOf, zoneOf } from "./area-readings.js";
 import { plainText } from "./rows.js";
+import { itemActionPlan } from "./item-actions.js";
+import { oneOff } from "./one-offs.js";
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const whole = (plan) => {
@@ -60,6 +71,26 @@ function situationNote(plan, note, extra = {}) {
     const { unread: _unread, ...rest } = plan;
     return whole({ ...rest, ...extra, resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...success, modifiers: [], noteEffects: [...(success.noteEffects ?? []).filter((entry) => !entry.reminder), note] } } } });
 }
+// (A Strike card of the item's own: its attack the save family's, as src/compiler/strikes.js makes it.)
+const strikeCard = (base, info, frequency, strike) => ({
+    ...base,
+    automation: { level: "automatic" },
+    targeting: { target: "the creature the Strike hits", range: null, area: null },
+    trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free", ...(frequency ? { frequency } : {}) },
+    resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+    strike: { range: null, save: null, own: true, damage: [], attack: null, alteration: null, unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: false, notes: [], ...strike },
+    item: info
+});
+// (A Strike plan's own parts changed, its notes the lines given: whole once nothing else is left.)
+function strikeWith(plan, strike, extra = {}) {
+    const next = { ...plan, ...extra, strike: { ...plan.strike, ...strike } };
+    const left = [...(next.strike.notes ?? []), ...(next.notes ?? []), ...(next.unread ?? []), ...Object.values(next.resolution?.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? []), ...Object.values(next.strike.save?.resolution?.outcomes ?? {}).flatMap((row) => row?.manualInstructions ?? [])];
+    return left.length ? next : whole(next);
+}
+const withoutLines = (row) => {
+    const { manualInstructions: _lines, ...rest } = row ?? none();
+    return rest;
+};
 // (A consumable's ways card: each way its own plan.)
 const waysCard = (base, info, ways) => ({ ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, item: info });
 // (A zone card of its own, as area-readings.js's.)
@@ -414,6 +445,279 @@ const READINGS = [
                 ]
             });
         }
+    },
+    {
+        names: ["Jawbreaker Shield"],
+        over: (plan) => Boolean(plan?.strike?.save?.resolution?.outcomes?.failure?.manualInstructions?.length),
+        sentences: [
+            /^You make a shield bash Strike as a reaction against the attacker\.$/,
+            /^On a hit, the target attempts a @Check\[fortitude\|dc:\d+\] save\.$/,
+            /^The effects of the saving throw are determined after the effects of the triggering Strike are resolved\.$/,
+            /^Success The target is unaffected\.$/,
+            /^Failure You wound the target's mouth\.$/,
+            /^It takes 1d6 bleed and takes a [-–](\d+) status penalty to attack and damage rolls with jaws, fangs, or similar Strikes for (\d+) hours\.$/,
+            /^Critical Failure You break the target's jaw\.$/,
+            /^As failure, and the creature can't make Strikes using its mouth for \d+ minutes?\.$/,
+            /^At the end of its turn, it can attempt a Fortitude save to regain the ability to make Strikes using its mouth\.$/
+        ],
+        card: ([, , , , , wound], plan) => {
+            const save = plan.strike.save;
+            const outcomes = save.resolution.outcomes;
+            // (PF2e's own jaws and fangs Strikes by their selectors, as src/compiler/throat.js's; another Strike with its mouth, a beak or
+            // mandibles, its toggle — status penalties don't stack, so none counts twice.)
+            const value = -Number(wound[1]);
+            const wounded = {
+                label: "Wounded mouth",
+                text: `–${wound[1]} status penalty to attack and damage rolls with jaws, fangs or similar Strikes using its mouth (its toggle on for one that's neither jaws nor fangs).`,
+                duration: timeOf(wound[2], "hours"),
+                rules: [
+                    toggle("jawbreaker-mouth", "A Strike with its mouth"),
+                    { key: "FlatModifier", selector: ["jaws-attack", "fangs-attack"], type: "status", value },
+                    { key: "FlatModifier", selector: ["jaws-damage", "fangs-damage"], type: "status", value },
+                    bonus("strike-attack-roll", "status", value, ["jawbreaker-mouth"]),
+                    bonus("strike-damage", "status", value, ["jawbreaker-mouth"])
+                ]
+            };
+            const next = { ...outcomes, failure: { ...withoutLines(outcomes.failure), noteEffects: [...(outcomes.failure.noteEffects ?? []), wounded] }, criticalFailure: { ...withoutLines(outcomes.criticalFailure), noteEffects: [...(outcomes.criticalFailure.noteEffects ?? []), wounded] } };
+            return strikeWith(plan, { save: { ...save, resolution: { ...save.resolution, outcomes: next } }, lines: [...(plan.strike.lines ?? []), "At the attacker; its save's results come after the triggering Strike is resolved, so none of them is on that Strike"] });
+        }
+    },
+    {
+        names: ["Corpsecaller Round"],
+        over: (plan) => Boolean(plan?.strike?.save?.resolution?.outcomes?.failure?.manualInstructions?.length),
+        words: (html) => plainText(html).replace(/^(?:Ammunition round\s+)?Activate\s+(?:\d\s+)?Interact\s+/, ""),
+        sentences: [
+            /^This bullet is crafted entirely from obsidian and engraved with hair-thin runes\.$/,
+            /^When an activated corpsecaller round hits a target, the struck creature is called to the grave\.$/,
+            /^It takes 4d10 void damage with a @Check\[fortitude\|dc:\d+\] saving throw\.$/,
+            /^Critical Success The foe is unaffected\.$/,
+            /^Success The foe takes half damage\.$/,
+            /^Failure The foe takes full damage and is Doomed 1\.$/,
+            /^If the foe dies within the next (\d+) hours, its corpse is tethered to the Void, making it easier to raise as an undead\.$/,
+            /^Creatures using the create undead ritual on the foe's corpse receive a \+(\d+) circumstance bonus to their primary and secondary skill checks for the ritual\.$/,
+            /^Critical Failure As failure, except the foe takes double damage and is Doomed 2\.$/
+        ],
+        card: ([, , , , , , dies, ritual], plan) => {
+            const save = plan.strike.save;
+            const outcomes = save.resolution.outcomes;
+            const tethered = { label: "Tethered to the Void", text: `If it dies within this time, its corpse is easier to raise as an undead: +${ritual[1]} circumstance bonus to the primary and secondary checks of a create undead ritual on it.`, duration: timeOf(dies[1], "hours") };
+            const next = { ...outcomes, failure: { ...withoutLines(outcomes.failure), noteEffects: [tethered] }, criticalFailure: { ...withoutLines(outcomes.criticalFailure), noteEffects: [tethered] } };
+            // (Its "called to the grave" is the hit's picture: its save below.)
+            return strikeWith(plan, { save: { ...save, resolution: { ...save.resolution, outcomes: next } }, notes: [] });
+        }
+    },
+    {
+        names: ["Venom Lash: Envenom"],
+        over: (plan) => plan?.strike?.damage?.length === 1 && plan.strike.damage[0].category === "persistent",
+        sentences: [
+            /^You temporarily fill the flail's stingers with venom\.$/,
+            /^The next successful Strike you make with it before the end of your next turn deals (\d+d\d+) persistent poison damage to the target\.$/,
+            /^If the Strike critically succeeds and if you would apply persistent poison damage with this weapon's alternate critical specialization, you combine the two effects to deal (\d+)d(\d+) persistent poison damage to the target\.$/
+        ],
+        // (PF2e doubles the Strike's persistent dice on a critical hit; with the flail's own 1d6 in place of its critical specialization, the
+        // two together are the text's 3d6 — the readied Effect's toggle for that, its dice not doubled then.)
+        card: ([, , combined], plan) => {
+            const [venom] = plan.strike.damage;
+            const alternate = "venom-lash-alternate";
+            return strikeWith(plan, {
+                damage: [
+                    { ...venom, predicate: [{ not: alternate }] },
+                    { ...venom, critical: false, predicate: [alternate] },
+                    { ...venom, diceNumber: Number(combined[1]), dieSize: `d${combined[2]}`, critical: true, predicate: [alternate] }
+                ],
+                userRules: [...(plan.strike.userRules ?? []), toggle(alternate, "Venom Lash: its alternate critical specialization (poison)")],
+                notes: [],
+                lines: [...(plan.strike.lines ?? []), `On a critical hit with the flail's alternate critical specialization: tick its toggle on the readied Effect before the damage roll — ${combined[1]}d${combined[2]} persistent poison in all, in place of both`]
+            });
+        }
+    },
+    ...["Mantis Embrace", "Mantis Embrace (Greater)"].map((name) => ({
+        names: [`${name}: Crushing Embrace`],
+        over: (plan) => (plan?.strike?.damage ?? []).some((entry) => entry.category === "precision") && (plan.strike.notes ?? []).length === 3,
+        sentences: [
+            /^You Strike the creature you are grappling with a melee weapon or unarmed attack\.$/,
+            /^This Strike deals an additional \d+d6 precision damage and gains the death trait\.$/,
+            /^The body of a creature that is slain by Crushing Embrace is so gruesomely damaged that the creature's body cannot be affected by any effect that requires an intact body to function, such as the Talking Corpse spell\.$/
+        ],
+        // (Its death trait: PF2e's AdjustStrike on the readied Effect, for its melee Strikes while it lasts.)
+        card: (_found, plan) => strikeWith(plan, {
+            notes: [],
+            requires: [...(plan.strike.requires ?? []), "The creature its user is grappling"],
+            userRules: [...(plan.strike.userRules ?? []), { key: "AdjustStrike", mode: "add", property: "traits", value: "death", definition: ["item:melee"] }],
+            lines: [...(plan.strike.lines ?? []), "It has the death trait", "A creature it slays can't have its body used by an effect that needs an intact body, such as Talking Corpse"]
+        })
+    })),
+    {
+        names: ["Boughshatter: Splintering Strike"],
+        over: (plan) => Boolean(plan?.strike) && (plan.strike.notes ?? []).length === 3,
+        sentences: [
+            /^Make a Strike with the morningstar that deals an extra die of weapon damage\.$/,
+            /^If you make this Strike against a fungus, plant, or creature with the wood trait, the Strike ignores (\d+) points of the target's resistances to bludgeoning and piercing damage, if any\.$/,
+            /^By damaging such a creature, the morningstar causes the target's flesh to explode in a shower of splinters\b.*\.$/,
+            /^You and the target are unaffected by these splinters\.$/
+        ],
+        // (Its splinters' cone from the creature hit, a one-off: src/compiler/one-offs.js — the rest of its notes the Strike card's.)
+        card: ([, ignores], plan) => strikeWith(plan, {
+            ignoreResistance: { value: Number(ignores[1]), types: ["bludgeoning", "piercing"], predicate: [{ or: ["target:trait:fungus", "target:trait:plant", "target:trait:wood"] }] },
+            notes: (plan.strike.notes ?? []).filter((note) => !/\bthe Strike ignores \d+ points of the target's resistances\b/.test(String(note))),
+            lines: [...(plan.strike.lines ?? []), `Against a fungus, a plant or a wood creature, its damage ignores ${ignores[1]} of the target's resistance to bludgeoning and piercing`]
+        })
+    },
+    {
+        names: ["Nightmare Cudgel"],
+        over: (plan) => plan?.builtin === "teleport" && (plan.notes ?? []).length === 1,
+        sentences: [
+            /^You initiate an intimidating walk, thumping the cudgel menacingly against your palm\.$/,
+            /^As part of activating this item, you can Stride twice\.$/,
+            /^For the next minute, whenever you successfully Strike a creature with the nightmare cudgel ?, you can use a free action to attempt an Intimidation check to Demoralize the struck creature\.$/
+        ],
+        card: (_found, plan, { base, info, frequency, options }) => {
+            const demoralize = itemActionPlan("<p>You attempt to Demoralize the creature.</p>", { ...base, activation: { time: "free", traits: [] } }, options);
+            if (!demoralize?.action) return null;
+            return strikeCard(base, { ...info, ...(plan.item ?? {}) }, frequency, {
+                every: true,
+                until: "minute",
+                missKeeps: true,
+                follow: demoralize,
+                lines: ["As part of activating it, its user can Stride twice first (its own moves on the map)", "Its Demoralize after each hit is a free action: its user can skip it"]
+            });
+        }
+    },
+    {
+        names: ["Whip of Compliance"],
+        over: (plan) => !plan,
+        sentences: [
+            /^Until the end of your current turn, any animals you Strike with the whip must attempt a @Check\[will\|dc:(\d+)\]\.$/,
+            /^On a failed or critically failed saving throw, the whip casts a (\d)(?:st|nd|rd|th)-rank Suggestion spell on the animal with a base duration of 1 round, and the spell loses the linguistic trait\.$/,
+            /^The course of action must still fulfill suggestion's requirements\.$/,
+            /^If you can cast spells, you can expend one of your spells of (\d)(?:st|nd|rd|th) level or higher as a part of activating the whip; if you do so, the suggestions this turn have their normal base duration\.$/
+        ],
+        // (Suggestion's own Will save is the whip's: a failure its course of action for the round — or, with a spell expended, the spell's own
+        // minute, an hour on a critical failure. An incapacitation effect, as the spell is.)
+        card: ([will, rank, , expend], _plan, { base, info, frequency }) => {
+            const suggested = (duration) => ({ label: "Following a suggestion", text: `As a ${rank[1]}th-rank Suggestion that isn't linguistic: it follows the course of action its attacker suggests, which must seem logical to it and can't be self-destructive or obviously against its interest; it ends early once a finite suggestion is done or it turns self-destructive or plainly harmful.`, duration });
+            const save = (failure, critical) => ({
+                ...base,
+                rank: Number(rank[1]),
+                traits: [...new Set([...(base.traits ?? []), "incapacitation", "mental"])],
+                activation: { time: "free", traits: [] },
+                automation: { level: "automatic" },
+                targeting: { target: "the animal the Strike hits", range: null, area: null },
+                trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
+                resolution: { kind: "save", check: { roll: "save", statistic: "will", basic: false, against: { dc: "fixed", value: Number(will[1]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: { ...none(), noteEffects: [suggested(failure)] }, criticalFailure: { ...none(), noteEffects: [suggested(critical)] } } }
+            });
+            const way = (name, failure, critical) => ({ name, html: `<p><strong>Effect</strong> ${name}.</p>`, plan: strikeCard(base, info, frequency, { every: true, until: "turn-end", missKeeps: true, against: ["animal"], save: save(failure, critical), lines: ["Its Strikes at animals this turn: each hit's Will save, a failure's Suggestion as the whip casts it"] }) });
+            return {
+                ...base,
+                builtin: "ways",
+                automation: { level: "automatic" },
+                targeting: { target: null, range: null, area: null },
+                trigger: { event: "use", ...(frequency ? { frequency } : {}) },
+                ways: [
+                    way("Its suggestions for 1 round", timeOf(1, "round"), timeOf(1, "round")),
+                    way(`A ${expend[1]}th-rank or higher spell expended: their normal time`, timeOf(1, "minute"), timeOf(1, "hour"))
+                ],
+                item: info
+            };
+        }
+    },
+    {
+        names: ["Ankylostar"],
+        over: (plan) => plan?.builtin === "no-effect",
+        sentences: [
+            /^The ankylostar's length extends as you swing the club in a wide arc\.$/,
+            /^You Strike up to (three|\d) creatures in a (\d+)-foot cone; this counts as one attack for the purpose of calculating your multiple attack penalty\.$/,
+            /^Alternatively, you Shove up to (?:three|\d) creatures in a \d+-foot cone, rolling a separate Athletics check for each creature\.$/
+        ],
+        card: ([, sweep], plan, { base, info, frequency, options }) => {
+            const count = { three: 3 }[sweep[1]] ?? Number(sweep[1]);
+            const cone = Number(sweep[2]);
+            const own = { ...info, ...(plan?.item ?? {}) };
+            const shove = itemActionPlan("<p>You attempt to Shove the creature.</p>", base, options);
+            if (!shove?.action) return null;
+            const strikes = strikeCard(base, own, null, { range: "melee", uses: count, volley: { different: true, cone, mapHeld: true }, lines: ["They count as one attack for its multiple attack penalty: roll each at the same penalty"] });
+            return {
+                ...base,
+                builtin: "ways",
+                automation: { level: "automatic" },
+                targeting: { target: null, range: null, area: null },
+                trigger: { event: "use", ...(frequency ? { frequency } : {}) },
+                ways: [
+                    { name: `Strike up to ${count} creatures in the ${cone}-foot cone`, html: `<p><strong>Effect</strong> Strike up to ${count} creatures in a ${cone}-foot cone.</p>`, plan: strikes },
+                    { name: `Shove up to ${count} creatures in the ${cone}-foot cone`, html: `<p><strong>Effect</strong> Shove up to ${count} creatures in a ${cone}-foot cone.</p>`, plan: { ...shove, notes: [...(shove.notes ?? []), `Up to ${count} creatures in the ${cone}-foot cone, an Athletics check for each: use PF2e's Shove again for each other one, at the same multiple attack penalty`], item: own } }
+                ],
+                item: own
+            };
+        }
+    },
+    {
+        names: ["Soulfeeding Mask: Devour Soul"],
+        over: (plan) => plan?.resolution?.kind === "save" && (plan.notes ?? []).length === 1 && !plan.userAfter,
+        sentences: [
+            /^The soulfeeding mask ?'s eyes and jaw open wide\b.*\bwithin \d+ feet\.$/,
+            /^That creature takes (\d+) void damage with a @Check\[fortitude\|dc:\d+\|basic[^\]]*\] save\.$/,
+            /^If the target is undead or otherwise has void healing, this activation loses the death and void traits and gains the vitality trait, and the target takes (\d+) vitality damage with a @Check\[fortitude\|dc:\d+\|basic[^\]]*\] save\.$/,
+            /^If the target takes any damage, you become Quickened for (\d+) minutes? and can use the extra action each round for only Stride actions, unless the damage killed the creature, in which case you can also use the extra action each round for Strike actions as well\.$/
+        ],
+        card: ([, , vitality, quick], plan) => {
+            const { notes: _notes, ...rest } = plan;
+            return whole({
+                ...rest,
+                // (Any damage, by its basic save: a success or worse.)
+                userAfter: { degrees: ["success", "failure", "criticalFailure"], slug: "quickened", duration: timeOf(quick[1], "minutes"), words: "Quickened from Devour Soul: the extra action only to Stride", slainWords: "Quickened from Devour Soul, whose damage slew the creature: the extra action only to Stride or Strike" },
+                // (An undead takes vitality damage instead; one with void healing that isn't undead, the GM's pick of the type.)
+                ifTarget: [...(plan.ifTarget ?? []), { traits: ["undead"], formula: `${vitality[1]}[vitality]` }],
+                notes: ["A creature with void healing that isn't undead (a rare few) takes the vitality damage too: change the damage's type for it."]
+            });
+        }
+    },
+    {
+        names: ["Moonkeep Lily"],
+        over: (plan) => !plan,
+        sentences: [
+            /^These magical flowers are infused with the power to counteract the curse of the werecreature\.$/,
+            /^Intentionally growing these flowers is nearly impossible\b.*\.$/,
+            /^They occasionally grow in places where a particular powerful werecreature is buried\b.*\.$/,
+            /^This thin, white lily has stamens that end in small, round portions resembling the moon\.$/,
+            /^When you eat the flower, you gain the flower's protection for (\d+) weeks?\.$/,
+            /^During this time, your curse of the werecreature becomes partially inert\.$/,
+            /^Your jaws Strike doesn't inflict the curse of the werecreature during this time\.$/
+        ],
+        card: ([, , , , week], _plan, { base, info }) => ({
+            ...base,
+            automation: { level: "automatic" },
+            trigger: { event: "use" },
+            targeting: { target: null, range: null, area: null },
+            resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), noteEffects: [{ label: "Moonkeep lily", text: "Its curse of the werecreature is partly inert: its jaws Strike doesn't pass on the curse.", duration: timeOf(7 * Number(week[1]), "days") }] } } },
+            item: info
+        })
+    },
+    {
+        // (Its second activation only — its first, a bomb dropped, another reading's: a one-off under a key of its own.)
+        names: ["Bomber's Saddle"],
+        over: (plan) => !plan && Boolean(oneOff("Bomber's Saddle (payload)")),
+        sentences: [
+            /^You drop the saddle's entire payload, scattering the bombs below\.$/,
+            /^Make a single ranged Strike against an AC of (\d+)\.$/,
+            /^The AC increases by 1 for every 5 feet above the target area you are\.$/,
+            /^On a failure, the bombs fly away wildly and deal no damage\.$/,
+            /^On a successful attack roll, the bombs fall and shatter, starting in the target area and moving in a line of 5-foot spaces up to (\d+) feet long for six bombs, one bomb per space\.$/,
+            /^The bombs don't directly hit any creatures; instead, creatures take splash damage from the bombs as usual, but combine the splash damage from multiple overlapping bombs together before applying weaknesses or resistances\.$/,
+            /^Apply any effects normally applied to splash damage when throwing a bomb \(such as the effects of the Calculated Splash feat\)\.$/
+        ],
+        card: ([, ac, , , line], _plan, { base, info, frequency }) => ({
+            ...base,
+            automation: { level: "automatic" },
+            targeting: { target: null, range: null, area: null },
+            trigger: { event: "use", ...(frequency ? { frequency } : {}) },
+            resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
+            notes: [
+                `All its bombs (two to six) dropped at once: one ranged Strike against AC ${ac[1]}, 1 higher for every 5 feet its user is above the target area. A failure: they fly off and deal nothing.`,
+                `A hit: they shatter in a line of 5-foot squares from the target area, one bomb a square (${line[1]} feet for six). None hits a creature directly; each creature takes the splash of the bombs around it, those that overlap added up before its weaknesses and resistances, with what adds to a bomb's splash (Calculated Splash).`
+            ],
+            decided: "one-off",
+            item: info
+        })
     }
 ];
 
@@ -429,13 +733,13 @@ function matched(reading, sentences) {
 
 // The plan and the activation's (or consumable's) html → the reading's card, or the same plan. name: its source name; kind "activation" or
 // "consumable"; base, info, frequency: its own (lasting.js activationBase, or a consumable's basePlan and itemInfo); item: the item.
-export function withBookStrikes(plan, { name, html, kind = "activation", base, info, frequency = null, item = null }) {
+export function withBookStrikes(plan, { name, html, kind = "activation", base, info, frequency = null, item = null, options = {} }) {
     const readings = READINGS.filter((reading) => reading.names.includes(name) && (!reading.over || reading.over(plan)));
     if (!readings.length) return plan;
     for (const reading of readings) {
         const words = reading.words ? reading.words(html) : effectWords(html, kind);
         const found = matched(reading, words ? sentencesOf(words) : []);
-        const card = found ? reading.card(found, plan, { base, info, frequency, item, html }) : null;
+        const card = found ? reading.card(found, plan, { base, info, frequency, item, html, options }) : null;
         if (card) return card;
     }
     return plan;

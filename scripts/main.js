@@ -53,6 +53,7 @@ import { setUpFelled } from "./felled.js";
 import { setUpImplosion } from "./implosion.js";
 import { setUpOwnSplash } from "./own-splash.js";
 import { setUpReadiedRefund } from "./strikes.js";
+import { setUpUserAfter } from "./user-after.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -211,6 +212,8 @@ Hooks.once("ready", async () => {
     setUpEndsOn();
     // (Penalties for a while after a persistent damage ends, Secret-Keeper's Mask (Father Skinsaw)'s: scripts/then-for.js.)
     setUpThenFor();
+    // (What its user gets once its card is applied, by the creature's result, Soulfeeding Mask's Quickened: scripts/user-after.js.)
+    setUpUserAfter();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

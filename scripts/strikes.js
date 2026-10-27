@@ -108,6 +108,8 @@ export async function secondStrikeDamage(actor, message, outcome, rider) {
 
 // One Strike of the readied ones used: the Effect gone with the last, else one fewer left.
 async function useOne(actor, effect, rider) {
+    // (Every Strike for a while, strike.every — Nightmare Cudgel's minute: kept till its time is up, its damage roll's wait over.)
+    if (rider.plan?.strike?.every) return effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.awaiting`]: false });
     const left = (Number(rider.uses) || 1) - 1;
     // (A readied one made: marked so, so that its going isn't taken for its time running out — setUpReadiedRefund.)
     if (left <= 0 && rider.plan?.strike?.readied) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.made`]: true });

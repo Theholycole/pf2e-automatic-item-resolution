@@ -115,7 +115,9 @@ test("a cast in words: the spell by its name, its rank, DC, counteract modifier,
     assert.equal(castWordsPlan(source("Elder Seed"), { spells }), null);
     // (2026-10-27: Track Teleportation whispered to the GM and its user, src/compiler/far-moves.js — still no cast.)
     assert.notEqual(compileActivations(source("Compass of Transpositional Awareness"), { spells }).find((entry) => entry.activation.name === "Track Teleportation").plan?.builtin ?? null, "cast-spell");
-    assert.equal(castOf("Whip of Compliance")?.builtin ?? null, null);
+    // (2026-10-27: Whip of Compliance's Suggestion its Strike card's save rows, not a cast — the ways card, src/compiler/book-strikes.js.)
+    assert.equal(castOf("Whip of Compliance")?.builtin ?? null, "ways");
+    assert.ok(castOf("Whip of Compliance").ways.every((way) => way.plan.builtin !== "cast-spell"));
     // "The creature is targeted with Death Knell (DC 20)", "You generate the effects of a Vitality Lash cantrip, heightened to 3rd rank",
     // "You're the subject of the Sanctuary spell", "Cast Bless or Heal, each once per day."
     assert.deepEqual([castOf("Plate of Yled").spell.name, castOf("Plate of Yled").dc, castOf("Plate of Yled").self], ["Death Knell", 20, false]);

@@ -156,3 +156,126 @@ test("Necrobinding Serum: coated as an injury poison; its rows by the undead's k
     assert.deepEqual(hours(vampire, "criticalFailure"), ["1 hours"]);
     assert.match(planFor(plan, vampire).resolution.outcomes.failure.noteEffects[0].text, /a mental effect/);
 });
+
+test("Jawbreaker Shield: its failures' −2 to mouth Strikes a note Effect for 24 hours (PF2e's jaws and fangs, a toggle for the rest); its save's timing a line", () => {
+    const plan = activation("Jawbreaker Shield");
+    assert.ok(done(plan));
+    const { failure, criticalFailure } = plan.strike.save.resolution.outcomes;
+    for (const row of [failure, criticalFailure]) {
+        assert.equal(row.manualInstructions, undefined);
+        const wounded = row.noteEffects.find((note) => note.label === "Wounded mouth");
+        assert.deepEqual([wounded.duration.value, wounded.duration.unit], [24, "hours"]);
+        assert.deepEqual(wounded.rules.filter((rule) => rule.key === "FlatModifier").map((rule) => [rule.selector, rule.value, rule.predicate ?? null]), [[["jaws-attack", "fangs-attack"], -2, null], [["jaws-damage", "fangs-damage"], -2, null], ["strike-attack-roll", -2, ["jawbreaker-mouth"]], ["strike-damage", -2, ["jawbreaker-mouth"]]]);
+    }
+    assert.ok(criticalFailure.noteEffects.some((note) => note.saveEnds?.save === "fortitude"));
+    assert.match(plan.strike.lines.join(" "), /after the triggering Strike/);
+});
+
+test("Corpsecaller Round: its failures' tether to the Void a note Effect for 24 hours, no GM lines left", () => {
+    const plan = activation("Corpsecaller Round");
+    assert.ok(done(plan));
+    const { failure, criticalFailure } = plan.strike.save.resolution.outcomes;
+    for (const row of [failure, criticalFailure]) {
+        assert.equal(row.manualInstructions, undefined);
+        assert.deepEqual([row.noteEffects[0].label, row.noteEffects[0].duration.value, row.noteEffects[0].duration.unit], ["Tethered to the Void", 24, "hours"]);
+    }
+    assert.deepEqual([failure.effects[0].slug, criticalFailure.effects[0].value], ["doomed", 2]);
+    assert.deepEqual(plan.strike.notes, []);
+});
+
+test("Venom Lash's Envenom: 2d6 persistent poison on its hit, 3d6 on a critical hit with its alternate critical specialization's toggle (PF2e's doubling otherwise)", () => {
+    const plan = activation("Venom Lash", "Envenom");
+    assert.ok(done(plan));
+    assert.deepEqual(plan.strike.damage.map((entry) => [entry.diceNumber, entry.critical ?? null, JSON.stringify(entry.predicate)]), [[2, null, JSON.stringify([{ not: "venom-lash-alternate" }])], [2, false, JSON.stringify(["venom-lash-alternate"])], [3, true, JSON.stringify(["venom-lash-alternate"])]]);
+    assert.equal(plan.strike.userRules[0].option, "venom-lash-alternate");
+    assert.deepEqual(plan.strike.notes, []);
+});
+
+test("Mantis Embrace's Crushing Embrace: the death trait on the readied Effect (PF2e's AdjustStrike), at the creature grappled; the body a line", () => {
+    for (const name of ["Mantis Embrace", "Mantis Embrace (Greater)"]) {
+        const plan = activation(name, "Crushing Embrace");
+        assert.ok(done(plan), name);
+        assert.deepEqual(plan.strike.userRules, [{ key: "AdjustStrike", mode: "add", property: "traits", value: "death", definition: ["item:melee"] }], name);
+        assert.deepEqual([plan.strike.notes, plan.strike.requires], [[], ["The creature its user is grappling"]], name);
+        assert.match(plan.strike.lines.join(" "), /Talking Corpse/, name);
+    }
+});
+
+test("Boughshatter's Splintering Strike: the core's ignoreResistance against plants, fungi and wood creatures; its splinters a one-off", async () => {
+    const { ignoredResistanceFlag } = await import("../src/live/strike-card.js");
+    const plan = activation("Boughshatter", "Splintering Strike");
+    assert.ok(done(plan));
+    assert.ok(oneOff("Boughshatter: Splintering Strike"));
+    assert.deepEqual(plan.strike.ignoreResistance, { value: 10, types: ["bludgeoning", "piercing"], predicate: [{ or: ["target:trait:fungus", "target:trait:plant", "target:trait:wood"] }] });
+    assert.ok(!plan.strike.notes.some((note) => /ignores 10 points/.test(note)));
+    // (Live: the readied Effect carries the core's flag, the weapon's own Strikes only; a shot's is on the shot.)
+    assert.deepEqual(ignoredResistanceFlag(plan.strike, { weaponId: "abc" })["pf2e-resolution-core"].ignoreResistance.predicate.at(-1), "item:id:abc");
+    assert.deepEqual(ignoredResistanceFlag(plan.strike, { ammoId: "shot" }), {});
+    assert.deepEqual(ignoredResistanceFlag({ ignoreResistance: { value: 20, types: ["piercing"] } }, {}), {});
+});
+
+test("every Strike for a while (strike.every): Nightmare Cudgel's minute with the Demoralize card after each hit, Whip of Compliance's animals this turn", async () => {
+    const { riderFor, strikeHint } = await import("../src/live/strike-card.js");
+    const cudgel = activation("Nightmare Cudgel");
+    assert.ok(done(cudgel));
+    assert.equal(routeOf(cudgel), "strike");
+    assert.deepEqual([cudgel.strike.every, cudgel.strike.until, cudgel.strike.follow.action.slug, cudgel.trigger.frequency.per], [true, "minute", "demoralize", "day"]);
+    assert.match(cudgel.strike.lines[0], /Stride twice/);
+    assert.equal(riderFor(cudgel, { outcome: "failure" }), "keep");
+    assert.equal(riderFor(cudgel, { outcome: "success" }), "hit");
+    assert.match(strikeHint(cudgel, "Bob"), /for the next minute each carry it on a hit; none spends it/);
+    const whip = activation("Whip of Compliance");
+    assert.ok(done(whip));
+    assert.equal(routeOf(whip), "ways");
+    const [short, long] = whip.ways.map((way) => way.plan);
+    for (const plan of [short, long]) {
+        assert.deepEqual([plan.strike.every, plan.strike.against, plan.strike.save.resolution.check.against.value], [true, ["animal"], 25]);
+        assert.ok(plan.strike.save.traits.includes("incapacitation"));
+        // (A Strike at another creature keeps it.)
+        assert.equal(riderFor(plan, { outcome: "success", options: ["target:trait:humanoid"] }), "keep");
+        assert.equal(riderFor(plan, { outcome: "success", options: ["target:trait:animal"] }), "hit");
+    }
+    const time = (plan, degree) => { const { value, unit } = plan.strike.save.resolution.outcomes[degree].noteEffects[0].duration; return `${value} ${unit}`; };
+    assert.deepEqual([time(short, "failure"), time(short, "criticalFailure"), time(long, "failure"), time(long, "criticalFailure")], ["1 rounds", "1 rounds", "1 minutes", "1 hours"]);
+});
+
+test("Ankylostar's sweep: the ways card, up to three Strikes in the 15-foot cone at one multiple attack penalty, or PF2e's Shove", () => {
+    const [, sweep] = activations("Ankylostar");
+    const plan = sweep.plan;
+    assert.ok(done(plan));
+    assert.equal(routeOf(plan), "ways");
+    const [strikes, shove] = plan.ways.map((way) => way.plan);
+    assert.deepEqual([strikes.strike.uses, strikes.strike.volley, strikes.strike.range], [3, { different: true, cone: 15, mapHeld: true }, "melee"]);
+    assert.deepEqual([shove.builtin, shove.action.slug], ["item-action", "shove"]);
+});
+
+test("Soulfeeding Mask's Devour Soul: its user Quickened for the minute once the creature takes its damage (plan.userAfter), 50 vitality at an undead", async () => {
+    const { userAfterEarned, userAfterSource } = await import("../src/live/user-after.js");
+    const plan = activation("Soulfeeding Mask", "Devour Soul");
+    assert.ok(done(plan));
+    assert.equal(routeOf(plan), "save");
+    assert.deepEqual(plan.userAfter.degrees, ["success", "failure", "criticalFailure"]);
+    const undead = planFor(plan, { system: { traits: { value: ["undead"] } } });
+    assert.equal(undead.resolution.sharedDamage.components[0].formula, "50[vitality]");
+    assert.deepEqual(userAfterEarned(plan.userAfter, [{ degree: "criticalSuccess", hp: 40 }]), { earned: false, slain: false });
+    assert.deepEqual(userAfterEarned(plan.userAfter, [{ degree: "failure", hp: 0 }]), { earned: true, slain: true });
+    const source = userAfterSource(plan.userAfter, { slain: true, item: { name: "Soulfeeding Mask: Devour Soul" } });
+    assert.deepEqual([source.name, source.system.duration.value, source.system.duration.unit, source.system.rules[0].key], ["Soulfeeding Mask: Devour Soul: Quickened", 1, "minutes", "GrantItem"]);
+    assert.match(source.system.description.value, /Stride or Strike/);
+    assert.match(userAfterSource(plan.userAfter, { item: { name: "Mask" } }).system.description.value, /only to Stride,/);
+});
+
+test("the rest: Garrote Bolt's throat (persistent-hold.js), Moonkeep Lily's week, and the one-offs — Gyroscopic Stabilizer, Unexpected Armament, Bomber's Saddle's payload (its first activation left alone)", () => {
+    const bolt = activation("Garrote Bolt");
+    assert.ok(done(bolt));
+    assert.deepEqual([bolt.resolution.outcomes.criticalSuccess.noteEffects[0].whilePersistent, bolt.strike.ownRules], ["slashing", ["2d12 persistent slashing damage"]]);
+    const lily = compileItem(item("Moonkeep Lily"));
+    assert.ok(done(lily));
+    assert.deepEqual([lily.resolution.outcomes.success.noteEffects[0].duration.value, lily.resolution.outcomes.success.noteEffects[0].duration.unit], [7, "days"]);
+    for (const plan of [activation("Gyroscopic Stabilizer"), activation("Skirmisher's Coat", "Unexpected Armament")]) assert.deepEqual([plan.decided, plan.builtin, done(plan)], ["one-off", undefined, true], plan.source.name);
+    const [dropped, payload] = activations("Bomber's Saddle");
+    assert.deepEqual([payload.plan.decided, done(payload.plan)], ["one-off", true]);
+    assert.match(payload.plan.notes[0], /against AC 10/);
+    assert.equal(dropped.plan?.decided, undefined);
+    assert.ok(oneOff("Bomber's Saddle (payload)") && !oneOff("Bomber's Saddle"));
+});

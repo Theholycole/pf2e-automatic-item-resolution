@@ -1221,7 +1221,8 @@ test("a new save at its turns (src/compiler/save-ends.js, the ability's duration
     assert.deepEqual(["failure", "criticalFailure"].map((degree) => pop.resolution.outcomes[degree].modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, /3 Interact actions/.test(modifier.until)])), [[["all-speeds", -10, "item", true]], [["all-speeds", -10, "item", true]]]);
     const [jaw] = compileActivations(item("Jawbreaker Shield"));
     const broken = jaw.plan.strike.save.resolution.outcomes.criticalFailure;
-    assert.deepEqual([broken.noteEffects[0].label, broken.noteEffects[0].saveEnds, broken.manualInstructions], ["Can't Strike with its mouth", { save: "fortitude", dc: null, mode: "end" }, ["{target} (critical failure): You break the target's jaw. As failure."]]);
+    // (2026-10-27: its "As failure." now the failure's own note Effect beside it, no GM line left — src/compiler/book-strikes.js.)
+    assert.deepEqual([broken.noteEffects[0].label, broken.noteEffects[0].saveEnds, broken.manualInstructions, broken.noteEffects[1].label], ["Can't Strike with its mouth", { save: "fortitude", dc: null, mode: "end" }, undefined, "Wounded mouth"]);
 });
 
 test("rows read from plain words (guards.js), a snare's too: Fang Snare's 1 piercing and 2d8 poison damage, Thunder Snare's \"As success, and the target also takes 1 sonic damage\" with the success's deafened, on the creature's own turns; a time only for the conditions before it (Stunning Snare's and Pyronite's Stunned 1 untimed) unless it opens its sentence (Liar's Bangle); Eternal Eruption's coming back by itself a card line, not partial", () => {

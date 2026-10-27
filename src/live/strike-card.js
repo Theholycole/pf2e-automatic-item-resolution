@@ -122,6 +122,7 @@ export function strikeLines(plan) {
 const RANGE_WORDS = { melee: "melee Strike", ranged: "ranged Strike" };
 export const strikeWord = (plan) => (plan.strike?.unarmed ? "unarmed Strike" : RANGE_WORDS[plan.strike?.range] ?? "Strike");
 const UNTIL_WORDS = { "turn-end": "this turn", "next-turn-end": "before the end of the next turn", "next-turn-start": "before the start of the next turn", minute: "within a minute" };
+const EVERY_WORDS = { "turn-end": "for the rest of this turn", "next-turn-end": "until the end of the next turn", "next-turn-start": "until the start of the next turn", minute: "for the next minute" };
 
 // The card's hint: which Strike carries it and what spends it.
 // (uses: how many it readied, a volley at each creature targeted.)
@@ -129,6 +130,8 @@ const NUMBER_WORDS = { 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: 
 export function strikeHint(plan, name, { uses = null } = {}) {
     const strike = plan.strike ?? {};
     if (strike.hit) return `${name}'s Strike already hit: its damage roll carries it.`;
+    // (2026-10-27: every Strike for a while, strike.every — Nightmare Cudgel's minute, Whip of Compliance's turn: none spends it.)
+    if (strike.every) return `${name}'s ${strikeWord(plan)}s ${EVERY_WORDS[strike.until] ?? "this turn"} each carry it on a hit; none spends it.`;
     const count = uses ?? strike.uses;
     if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${UNTIL_WORDS[strike.until] ?? "this turn"}, at ${strike.volley.oneRoll.upTo ? "up to " : "the "}${strike.volley.oneRoll.count} creatures targeted when it's readied: its one attack roll is each one's.`;
     if (strike.volley?.each && !count) return `${name}'s next ${strikeWord(plan)}s this turn, one at each ${strike.volley.each} targeted when it's readied, carry it; a miss spends that one.`;
@@ -245,13 +248,22 @@ const DURATIONS = {
 // The Effect on the user that marks the readied Strike, until the end of the turn (or as long as the text says). Its flag
 // counts the Strikes left (uses) and whether a hit's damage roll is still to come (awaiting); a volley's, the creatures targeted for it
 // (targets) and those it has struck (struck).
+// (2026-10-27: resistance its damage ignores in part, Boughshatter's 10 against plants, fungi and wood creatures — strike.ignoreResistance { value,
+// types, predicate }: the resolution core's flag on the readied Effect, which the core stamps onto its user's Strike damage rolls that fit its
+// predicate while it lasts — the weapon's own Strikes only. Ammunition's is on the shot itself, scripts/strikes.js.)
+export function ignoredResistanceFlag(strike, { weaponId = null, ammoId = null } = {}) {
+    const entry = strike?.ignoreResistance;
+    if (!entry || ammoId || !entry.predicate) return {};
+    return { "pf2e-resolution-core": { ignoreResistance: { ...entry, predicate: [...entry.predicate, ...(weaponId ? [`item:id:${weaponId}`] : [])] } } };
+}
+
 export function strikeEffectSource({ state, img = null, worldTime = 0, initiative = null, moduleId, weaponId = null, ammoId = null, uses = null, targets = null }) {
     const strike = state.plan.strike ?? {};
     return {
         name: `${state.item.name}: next ${strikeWord(state.plan)}`,
         type: "effect",
         img: img ?? "icons/svg/sword.svg",
-        flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, ammoId, uses: uses ?? strike.uses ?? 1, awaiting: Boolean(strike.hit), ...(strike.volley ? { targets: targets ?? [], struck: [] } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, ammoId, uses: uses ?? strike.uses ?? 1, awaiting: Boolean(strike.hit), ...(strike.volley ? { targets: targets ?? [], struck: [] } : {}) } }, ...ignoredResistanceFlag(strike, { weaponId, ammoId }) },
         system: {
             description: { value: `<p>${escape(strikeHint(state.plan, "Its user", { uses }))} ${escape(strikeLines(state.plan).join("; "))}.</p>` },
             duration: { ...(DURATIONS[strike.until] ?? DURATIONS["turn-end"]), sustained: false },
@@ -273,7 +285,8 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     if (ammoId && options.some((option) => /(?:^|:)ammo:id:/.test(option)) && !options.some((option) => option === `ammo:id:${ammoId}` || option.endsWith(`:ammo:id:${ammoId}`))) return null;
     if (plan.strike?.unarmed && !options.includes("item:category:unarmed")) return null;
     // (Only against a kind of creature, Carver-cutter's plants: another creature's Strike spends it, no riders.)
-    if (plan.strike?.against?.length && !plan.strike.against.some((trait) => options.includes(`target:trait:${trait}`))) return "spend";
+    // (2026-10-27: every Strike for a while, strike.every — Whip of Compliance's animals this turn: another creature's Strike keeps it.)
+    if (plan.strike?.against?.length && !plan.strike.against.some((trait) => options.includes(`target:trait:${trait}`))) return plan.strike.every ? "keep" : "spend";
     if (outcome === "success" || outcome === "criticalSuccess") return "hit";
     // (A failure that still deals damage in place of the weapon's: Big Rock Bullet's.)
     if (outcome === "failure" && plan.strike?.instead?.failure) return "failure";
@@ -282,7 +295,8 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     if (outcome === "failure" && plan.strike?.failHalf) return "failure";
     // (Or a failure's own row, Extinguishing Ball's splash nearby: played as a hit's is.)
     if (outcome === "failure" && plan.strike?.failRow) return "failure";
-    return plan.strike?.missKeeps ? "keep" : "spend";
+    // (Every Strike for a while, strike.every: a miss keeps it too.)
+    return plan.strike?.missKeeps || plan.strike?.every ? "keep" : "spend";
 }
 
 // A maneuver's damage at the Strike's weapon's die, Iron Cube's prone damage with Slam Down (follow.featDie { slug, atLeast }): when its user has
