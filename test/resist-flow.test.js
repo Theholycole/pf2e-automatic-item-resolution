@@ -372,10 +372,11 @@ test("a talisman of one dragon: Dragonclaw Scutcheon's immunity to the picked ty
 test("resistance to all damage but some (Silhouette Cloak): PF2e's Resistance with exceptions and doubled against non-magical; its reaction the first activation's resistance until the end of the turn, the light trait's exception a note", () => {
     const [shadow, fold] = compileActivations(source("Silhouette Cloak"));
     const [resist] = shadow.plan.item.resist;
-    assert.deepEqual([resist.type, resist.value, resist.exceptions, resist.doubleVs], ["all-damage", 20, ["force", "ghost-touch"], ["non-magical"]]);
-    assert.deepEqual(resistanceEffectSource([resist], { item: { name: "Silhouette Cloak" } }).system.rules, [{ key: "Resistance", type: "all-damage", value: 20, exceptions: ["force", "ghost-touch"], doubleVs: ["non-magical"] }]);
-    assert.ok(shadow.plan.unread.some((sentence) => /light trait/.test(sentence)), "the light trait's exception a note");
-    assert.equal(resistanceText(fold.plan.item.resist), "Resistance 20 to all damage except force and ghost touch, double against non magical until the end of the turn");
+    // (2026-10-27: the light trait's exception read too, PF2e's "light" — src/compiler/silhouette.js; its other rules a note Effect.)
+    assert.deepEqual([resist.type, resist.value, resist.exceptions, resist.doubleVs], ["all-damage", 20, ["force", "ghost-touch", "light"], ["non-magical"]]);
+    assert.deepEqual(resistanceEffectSource([resist], { item: { name: "Silhouette Cloak" } }).system.rules, [{ key: "Resistance", type: "all-damage", value: 20, exceptions: ["force", "ghost-touch", "light"], doubleVs: ["non-magical"] }]);
+    assert.equal(shadow.plan.unread, undefined);
+    assert.equal(resistanceText(fold.plan.item.resist), "Resistance 20 to all damage except force, ghost touch and light, double against non magical until the end of the turn");
     // (Its exceptions in parentheses, Phase Spike's during its Stride.)
     const [stride] = compileActivations(source("Phase Spike"));
     assert.equal(resistanceText(stride.plan.item.resist), "Resistance 10 to all damage except force, spirit and ghost touch, double against non magical until the end of the turn");

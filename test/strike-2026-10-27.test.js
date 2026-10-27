@@ -173,3 +173,23 @@ test("Undead Compendium: the ways card's pick of the undead, each its +2 to atta
     assert.deepEqual([row("Lich").modifiers[0].predicate, row("Lich").noteEffects[0].rules[0].option, row("Lich").noteEffects[0].rules[0].toggleable], [["target:trait:undead", "undead-compendium:lich"], "undead-compendium:lich", true]);
     assert.equal(book.ways[0].plan.unread, undefined);
 });
+
+test("Silhouette Cloak (both activations): its resistance the card's Effect with the light trait among its exceptions, the rest of the shadow form a note Effect with PF2e's BaseSpeed land and climb 40 — the reaction's until the end of the turn", () => {
+    const [form, fold] = compileActivations(item("Silhouette Cloak")).map((entry) => entry.plan);
+    for (const plan of [form, fold]) {
+        assert.deepEqual([plan.partial, plan.unread, plan.notes, plan.item.resist[0].exceptions, plan.item.resist[0].doubleVs], [undefined, undefined, undefined, ["force", "ghost-touch", "light"], ["non-magical"]]);
+        const [note] = plan.resolution.outcomes.success.noteEffects;
+        assert.deepEqual(note.rules, [{ key: "BaseSpeed", selector: "land", value: 40 }, { key: "BaseSpeed", selector: "climb", value: 40 }]);
+        assert.match(note.text, /Other creatures can't attempt Strength-based skill checks against you\. You can't use actions except Climb, Step, or Stride/);
+    }
+    assert.deepEqual([form.resolution.outcomes.success.noteEffects[0].duration, fold.resolution.outcomes.success.noteEffects[0].duration.expiry], [null, "turn-end"]);
+});
+
+test("the Impossible rune: its Strike at a creature beyond reach or range, PF2e's ignore-range-penalty, its penalties unticked by its user; Spined Shield's spine a one-off", async () => {
+    const { strikeLines, strikeRules } = await import("../src/live/strike-card.js");
+    const strike = activation("Impossible");
+    assert.deepEqual([strike.partial, routeOf(strike), strike.strike.options], [undefined, "strike", ["ignore-range-penalty"]]);
+    assert.deepEqual(strikeRules(strike).filter((rule) => rule.key === "RollOption").map((rule) => rule.option), ["ignore-range-penalty"]);
+    assert.ok(strikeLines(strike).includes("No range increment penalty on it"));
+    assert.deepEqual([activation("Spined Shield").decided, activation("Spined Shield").partial], ["one-off", undefined]);
+});

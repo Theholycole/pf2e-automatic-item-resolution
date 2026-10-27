@@ -72,7 +72,7 @@ export function strikeLines(plan) {
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
         strike.offGuard ? "Its target is Off-Guard to it" : null,
-        ...(strike.options ?? []).map((option) => (/^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
+        ...(strike.options ?? []).map((option) => (option === "ignore-range-penalty" ? "No range increment penalty on it" : /^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
         ...(strike.suppress ?? []).map((penalty) => `No ${penalty} penalty`),
         strike.splash ? `+${strike.splash.value} ${strike.splash.damageType} splash damage` : null,
         // (Hardness it ignores: PF2e subtracts no creature's Hardness itself.)
