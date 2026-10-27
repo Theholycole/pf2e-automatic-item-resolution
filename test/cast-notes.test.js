@@ -302,6 +302,12 @@ test("a toxin's or disease's stage lowered, one of its choices (2026-10-27): Hea
     assert.deepEqual([siphon.ways.length, siphon.ways[2].plan.item.afflictionStage, siphon.notes, siphon.partial], [3, { traits: ["poison", "disease"], by: 1, min: 1 }, undefined, undefined]);
 });
 
+test("an opening sentence saying what the item is made of, flavor (2026-10-27): Alchemist's Damper — its kickback ignored, its mercury tube no note", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const damper = compileItem(item("Alchemist's Damper"), options);
+    assert.deepEqual([damper.strike.suppress, damper.strike.notes, damper.partial], [["kickback"], [], undefined]);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

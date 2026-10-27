@@ -36,7 +36,9 @@ export function flavorSentence(html) {
     // senses and makes you more acutely aware of blood." (Blood Sight Elixir) — "This …" or "These …", with no link, number or rule word.)
     if (!/<strong>\s*Effect\s*<\/strong>/i.test(text)) {
         const opening = /<hr\s*\/?>\s*<p>((?:(?!<\/p>)[\s\S])*)<\/p>/i.exec(text)?.[1] ?? null;
-        const first = opening ? /^\s*((?:This|These)\b[^.!?]*[.!?])(?=\s+\S)/.exec(opening)?.[1] ?? null : null;
+        // (Or "A …"/"An …" saying what it's made of, Alchemist's Damper's "A glass tube of mercury is contained within this golden clasp that's
+        // fitted in front of a firearm's trigger.", 2026-10-27.)
+        const first = opening ? /^\s*((?:This|These|An?)\b[^.!?]*[.!?])(?=\s+\S)/.exec(opening)?.[1] ?? null : null;
         if (!first || /<strong>|@|\d/.test(first)) return null;
         const plain = first.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
         return RULE_WORDS.test(plain) ? null : plain;
