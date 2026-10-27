@@ -1513,6 +1513,44 @@ export const cases = {
         });
     },
 
+    // Static Snare (2026-10-27): a critically failed save — 1 persistent electricity, PF2e's Effect: Static Snare and the Dusted note Effect, both
+    // lasting while it takes that damage (ability cf8d902); the persistent electricity gone, both go.
+    async staticSnarePersistent(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Static Setter", { type: "character", x: 0, y: 3 });
+            const { actor: walker, token: walkerToken } = await creature(scene, "Static Walker", { x: 6, y: 3, alliance: "opposition", hp: 100, save: -30 });
+            const snare = await give(setter, "Static Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Static Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                const since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const save = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+                await rollAndApply(save);
+                const flagged = () => walker.itemTypes.effect.filter((effect) => effect.flags?.["pf2e-automatic-ability-resolution"]?.whilePersistent === "electricity");
+                await until(() => flagged().length === 2, `both Effects while the persistent electricity lasts (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+                const saves = walker.saves.reflex.mod;
+                const persistent = walker.itemTypes.condition.find((condition) => condition.slug === "persistent-damage" && condition.system?.persistent?.damageType === "electricity");
+                assert(persistent, "its persistent electricity");
+                const names = flagged().map((effect) => effect.name);
+                await persistent.delete();
+                await until(() => !flagged().length, `both gone with the damage (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+                return { names, reflexWhile: saves, reflexAfter: walker.saves.reflex.mod };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Static Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Poison Barbs Snare (2026-10-27): a failed save, the barbs' note Effect; a 10-foot step gives nothing, a 20-foot move (more than half a 25-foot
     // Speed) 1d4 poison damage; the end-early card's 3 Interact actions remove the barbs.
     async poisonBarbsMove(scene) {

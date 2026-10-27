@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1254,
+  "entries": 1253,
   "results": {
-   "partial": 357,
+   "partial": 356,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -36,7 +36,7 @@
    "triggers": 85,
    "situational": 16,
    "dying": 29,
-   "senses": 21,
+   "senses": 20,
    "speech": 14,
    "from-events": 4,
    "forms": 26,
@@ -50,14 +50,14 @@
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 182,
+   "areas": 181,
    "immunity": 89,
    "objects": 388,
    "speech": 120,
-   "out-of-combat": 438,
+   "out-of-combat": 437,
    "counteract": 103,
-   "afflictions": 106,
-   "lasting": 228,
+   "afflictions": 105,
+   "lasting": 227,
    "moving": 106,
    "triggers": 114,
    "visibility": 49,
@@ -71,7 +71,7 @@
    "actions": 60,
    "from-events": 26,
    "no-rules": 14,
-   "situational": 83,
+   "situational": 82,
    "creatures": 71,
    "mind": 61,
    "illusions": 60,
@@ -79,7 +79,7 @@
    "range": 6,
    "cooldown": 12,
    "vehicles": 27,
-   "senses": 28,
+   "senses": 27,
    "forms": 27,
    "fortune": 9,
    "retaliation": 3,
@@ -1782,21 +1782,6 @@
    "work": "cast the spell",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Static Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "senses",
-   "work": "precise sense",
-   "needs": [
-    "senses",
-    "areas",
-    "afflictions",
-    "situational",
-    "lasting",
-    "out-of-combat"
    ]
   },
   {

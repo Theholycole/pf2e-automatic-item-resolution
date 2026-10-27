@@ -193,6 +193,35 @@ function stakedRows(read, html) {
     return { read: { ...read, resolution: { ...read.resolution, outcomes: rows } }, endEarly: { how: { kind: "actions", count, helped: true }, conditions: [], said: [until] } };
 }
 
+// (While its persistent damage lasts, Static Snare's failure: "The target takes 1 persistent electricity damage and takes a -1 circumstance penalty
+// to saving throws against electricity effects for as long as the persistent electricity damage lasts. Effect: Static Snare", its critical
+// failure "As failure, and the target attracts nearby dirt and dust. If the target is or becomes Invisible, it's merely Hidden to creatures that
+// have sight as a precise sense. This effect lasts as long as the persistent electricity damage does.": PF2e's Effect on those rows, and on the
+// critical failure a note Effect granting Hidden while it's Invisible — both whilePersistent, gone with the last of that damage (ability
+// cf8d902). 2026-10-27.)
+const STATIC = /\bFailure The target takes @Damage\[\d+\[persistent,(\w+)\]\] damage and takes an? [–-]\d+ circumstance penalty to saving throws against \1 effects for as long as the persistent \1 damage lasts\.\s*@UUID\[(Compendium\.pf2e\.equipment-effects\.Item\.[A-Za-z0-9]+)\]\{(Effect: [^}]+)\}/i;
+const DUSTED = /\bCritical Failure As failure, and the target attracts nearby dirt and dust\. If the target is or becomes @UUID\[[^\]]+\]\{Invisible\}, it's merely @UUID\[(Compendium\.pf2e\.conditionitems\.Item\.[A-Za-z0-9]+)\]\{Hidden\} to creatures that have sight as a precise sense\. This effect lasts as long as the persistent (\w+) damage does\./i;
+const STATIC_LINE = /^\{target\} \((?:critical )?failure(?:, the rest by hand)?\): (?:The target takes \d+ persistent \w+ damage and takes|As failure, and the target attracts nearby dirt and dust)\b/i;
+function staticRows(read, html) {
+    const charged = STATIC.exec(html);
+    const outcomes = read?.resolution?.outcomes;
+    if (!charged || !outcomes?.failure) return null;
+    const type = charged[1].toLowerCase();
+    const dusted = DUSTED.exec(html);
+    const native = { uuid: charged[2], label: charged[3], whilePersistent: type };
+    const row = (given, extra = []) => {
+        const { manualInstructions, ...rest } = given;
+        const kept = (manualInstructions ?? []).filter((entry) => !STATIC_LINE.test(String(entry?.text ?? entry).trim()));
+        return { ...rest, ...(kept.length ? { manualInstructions: kept } : {}), nativeEffects: [...(rest.nativeEffects ?? []).filter((effect) => effect.uuid !== native.uuid), native], ...(extra.length ? { noteEffects: [...(rest.noteEffects ?? []), ...extra] } : {}) };
+    };
+    const rows = { ...outcomes, failure: row(outcomes.failure) };
+    if (outcomes.criticalFailure) {
+        const dust = dusted && dusted[2].toLowerCase() === type ? [{ label: "Dusted (Hidden)", text: "Dust clings to it: while it's Invisible, it's Hidden, not Undetected, to creatures with sight as a precise sense.", rules: [{ key: "GrantItem", uuid: dusted[1], predicate: ["self:condition:invisible"], reevaluateOnUpdate: true, allowDuplicate: false }], reveals: "hidden", whilePersistent: type }] : [];
+        rows.criticalFailure = dusted ? row(outcomes.criticalFailure, dust) : outcomes.criticalFailure;
+    }
+    return { read: { ...read, resolution: { ...read.resolution, outcomes: rows } } };
+}
+
 // The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage, or its attack.)
 export function snareZone(item, read) {
     // (Not a square stepped into: Fire Box's "Anyone who opens the box triggers …" — its save card at those its cone reaches, src/compiler/opened.js.)
@@ -218,8 +247,10 @@ export function snareZone(item, read) {
     // (Barbs that hurt each long Stride, Poison Barbs Snare's: a note Effect on its failing rows, src/compiler/snares.js barbedRows.)
     const barbs = barbedRows(read, whole);
     const greased = barbs ? null : greasedRows(read, whole);
-    const staked = barbs || greased ? null : stakedRows(read, String(item.system?.description?.value ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
-    const plan = { ...markedRows(barbs?.read ?? greased?.read ?? staked?.read ?? read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(staked ? { endEarly: staked.endEarly } : endEarly ?? barbs?.endEarly ? { endEarly: greased?.byDegree && endEarly ? { ...endEarly, byDegree: { ...(endEarly.byDegree ?? {}), ...greased.byDegree } } : endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
+    const raw = String(item.system?.description?.value ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const staked = barbs || greased ? null : stakedRows(read, raw);
+    const charged = barbs || greased || staked ? null : staticRows(read, raw);
+    const plan = { ...markedRows(barbs?.read ?? greased?.read ?? staked?.read ?? charged?.read ?? read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(staked ? { endEarly: staked.endEarly } : endEarly ?? barbs?.endEarly ? { endEarly: greased?.byDegree && endEarly ? { ...endEarly, byDegree: { ...(endEarly.byDegree ?? {}), ...greased.byDegree } } : endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
     const cap = sizeCap(plainText(item.system?.description?.value));
     const only = gate || cap || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(cap ? { maxSize: cap } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};

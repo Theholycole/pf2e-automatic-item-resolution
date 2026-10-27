@@ -665,3 +665,15 @@ test("ammunition in the throat (2026-10-27): Stonethroat Ammunition — its succ
     assert.deepEqual([criticalFailure.noteEffects[0].label, criticalFailure.effects[0].slug], ["Throat blocked", "enfeebled"]);
     assert.equal([success, failure, criticalFailure].some((row) => row.manualInstructions), false);
 });
+
+test("while its persistent damage lasts (2026-10-27): Static Snare — PF2e's Effect on its failure rows and the critical failure's Hidden-while-Invisible note Effect, both whilePersistent electricity", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const snare = compileItem(item("Static Snare"), options);
+    assert.equal(snare.partial, undefined);
+    const { failure, criticalFailure, success } = snare.zone.saves[0].plan.resolution.outcomes;
+    assert.deepEqual(failure.nativeEffects, [{ uuid: "Compendium.pf2e.equipment-effects.Item.2ytxPqhGyLtEjYxW", label: "Effect: Static Snare", whilePersistent: "electricity" }]);
+    assert.deepEqual(criticalFailure.nativeEffects.map((effect) => effect.whilePersistent), ["electricity"]);
+    assert.deepEqual([criticalFailure.noteEffects[0].whilePersistent, criticalFailure.noteEffects[0].rules[0].predicate], ["electricity", ["self:condition:invisible"]]);
+    assert.equal(success.nativeEffects, undefined);
+    assert.equal([failure, criticalFailure].some((row) => row.manualInstructions), false);
+});
