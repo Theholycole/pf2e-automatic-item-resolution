@@ -28,6 +28,7 @@ import { setUpCastDurations } from "./cast-duration.js";
 import { setUpShieldShare } from "./shield-share.js";
 import { setUpTurnHeals } from "./turn-heal.js";
 import { setUpEndEarly } from "./end-early.js";
+import { setUpPreventCondition } from "./prevent-condition.js";
 import { setUpHalfDamage } from "./half-damage.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
@@ -176,6 +177,7 @@ Hooks.once("ready", async () => {
     setUpTurnHeals();
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     setUpEndEarly();
+    setUpPreventCondition();
     // (Half the triggering attack's damage, Laurel of the Empath's: scripts/half-damage.js.)
     setUpHalfDamage();
     try {

@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1328,
+  "entries": 1325,
   "results": {
-   "partial": 425,
-   "none": 535,
+   "partial": 426,
+   "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
   },
@@ -14,11 +14,11 @@
    "areas": 135,
    "counteract": 24,
    "afflictions": 61,
-   "moving": 85,
+   "moving": 84,
    "visibility": 48,
    "choice": 31,
    "lasting": 69,
-   "strike": 101,
+   "strike": 100,
    "spells": 36,
    "information": 23,
    "out-of-combat": 36,
@@ -33,9 +33,9 @@
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
-   "triggers": 92,
+   "triggers": 90,
    "situational": 18,
-   "dying": 28,
+   "dying": 29,
    "senses": 21,
    "speech": 19,
    "from-events": 4,
@@ -52,23 +52,23 @@
    "speeds": 29,
    "areas": 200,
    "immunity": 90,
-   "objects": 391,
+   "objects": 390,
    "speech": 129,
    "out-of-combat": 447,
    "counteract": 105,
    "afflictions": 110,
-   "lasting": 239,
-   "moving": 112,
-   "triggers": 123,
+   "lasting": 238,
+   "moving": 111,
+   "triggers": 121,
    "visibility": 50,
-   "dying": 76,
+   "dying": 75,
    "choice": 110,
    "several": 107,
-   "strike": 195,
+   "strike": 194,
    "reader": 215,
    "spells": 75,
    "information": 199,
-   "actions": 63,
+   "actions": 62,
    "from-events": 29,
    "no-rules": 18,
    "situational": 86,
@@ -1006,13 +1006,11 @@
    "name": "Urn of Ashes",
    "kind": "activation",
    "activation": "Doom the Urn",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: the ashes in …",
+   "result": "partial",
+   "main": "dying",
+   "work": "doomed",
    "needs": [
-    "triggers",
     "dying",
-    "objects",
     "out-of-combat"
    ]
   },
@@ -5634,17 +5632,6 @@
     "actions",
     "dying",
     "situational"
-   ]
-  },
-  {
-   "name": "Windstep Sheath",
-   "kind": "consumable",
-   "result": "none",
-   "main": "strike",
-   "work": "strike",
-   "needs": [
-    "strike",
-    "actions"
    ]
   },
   {
@@ -13722,18 +13709,6 @@
    ]
   },
   {
-   "name": "Immortal Bastion",
-   "kind": "activation",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you avoid gaining …",
-   "needs": [
-    "triggers",
-    "dying",
-    "lasting"
-   ]
-  },
-  {
    "name": "Paradise Light",
    "kind": "activation",
    "activation": "Sanctum",
@@ -15714,16 +15689,6 @@
     "by-kind",
     "counteract",
     "mind"
-   ]
-  },
-  {
-   "name": "The Cricket",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "work": "stride up to",
-   "needs": [
-    "moving"
    ]
   },
   {

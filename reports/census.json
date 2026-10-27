@@ -14,8 +14,8 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 146,
-   "resolves": 828,
+   "none": 145,
+   "resolves": 829,
    "builtin:readied-bonus": 23,
    "builtin:zone": 122,
    "builtin:ways": 29,
@@ -39,12 +39,12 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 28,
-    "resolves": 243,
+    "resolves": 244,
     "builtin:ways": 22,
     "partial": 32,
     "note-only": 59,
     "builtin:readied-bonus": 8,
-    "none": 78,
+    "none": 77,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 9,
@@ -399,8 +399,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 198,
-   "item": 659,
+   "none": 197,
+   "item": 660,
    "fortune": 25,
    "zone": 122,
    "save": 134,
@@ -421,10 +421,10 @@
    "other": {
     "cast": 14,
     "zone": 28,
-    "none": 99,
+    "none": 98,
     "ways": 22,
     "save": 86,
-    "item": 230,
+    "item": 231,
     "fortune": 8,
     "teleport": 4,
     "counteract": 9,
@@ -523,7 +523,7 @@
    }
   },
   "noCard": {
-   "no-plan": 146,
+   "no-plan": 145,
    "triggered": 11,
    "gm": 37,
    "other": 4
@@ -10880,7 +10880,10 @@
     "whetstone"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Chilled Fire Noodles (Greater)",

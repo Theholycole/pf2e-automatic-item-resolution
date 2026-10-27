@@ -38,6 +38,9 @@ const LEECH = new RegExp(String.raw`\bWhenever you deal Hit Point damage to a li
 // Strikes +1 against a target in lesser or standard cover and +2 in greater, as the target's AC one degree of cover lower would be — each
 // its own slug, as PF2e keeps one modifier of a slug (found live), 2026-10-27.)
 const PINPOINT = new RegExp(String.raw`\bWhen you attempt a ranged Strike ${TREATED}, you treat any cover the target has as one degree less(?: \(for example, treat standard cover as lesser cover, and lesser cover as no cover\))?\.`, "i");
+// (Or only its user's own action with it, Windstep Sheath's "When you use the Quick Draw feat with a weapon under the effect of a windstep
+// sheath, you can also Step as part of that action, either immediately before or after your Strike": the watch Effect's words, no rule.)
+const WINDSTEP = new RegExp(String.raw`\bWhen you use the ${LINK}Quick Draw\}? feat ${TREATED}, you can also Step as part of that action, either immediately before or after your Strike\.`, "i");
 const COVER_LESS = [
     { key: "FlatModifier", selector: "strike-attack-roll", value: 1, slug: "cover-one-degree-less", label: "Cover one degree less", predicate: ["item:ranged", { or: ["target:cover-level:lesser", "target:cover-level:standard"] }] },
     { key: "FlatModifier", selector: "strike-attack-roll", value: 2, slug: "greater-cover-one-degree-less", label: "Cover one degree less", predicate: ["item:ranged", { or: ["target:cover-level:greater", "target:cover-level:greater-prone"] }] }
@@ -66,6 +69,11 @@ export function readAttackRiders(html) {
     if (leech) {
         riders.push({ on: ["dealt"], weapon: true, living: true, heal: { fraction: 0.5 } });
         said.push(...leech[0].split(/(?<=\.)\s+(?=[A-Z])/));
+    }
+    const windstep = WINDSTEP.exec(text);
+    if (windstep) {
+        riders.push({ on: [], weapon: true, rules: [], words: "Quick Draw with it may also Step, just before or after the Strike (its own action)" });
+        said.push(windstep[0]);
     }
     const pinpoint = PINPOINT.exec(text);
     if (pinpoint) {

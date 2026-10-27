@@ -79,6 +79,7 @@ import { choiceOptionPlan, optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan, spotlightPlan, emanationBonusPlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
 import { offGuardNextPlan } from "./off-guard-next.js";
+import { preventConditionPlan } from "./prevent-condition.js";
 import { DRAGON_TYPES, readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { counteractLeaves, readCounteract, withCounteractLeaves } from "./counteract.js";
 import { pickedSentence, skillPickOf } from "./skill-pick.js";
@@ -633,6 +634,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = perceptionCheckPlan(activation.html, base, item, options) ?? plan;
         // (A creature its user picks off-guard to its next attack this turn, src/compiler/off-guard-next.js: Boots of the Dead's One of You.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = offGuardNextPlan(activation.html, base) ?? plan;
+        // (A condition its user avoids gaining, src/compiler/prevent-condition.js: Immortal Bastion's Doomed or Wounded, Urn of Ashes' Doomed.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = preventConditionPlan(activation.html, base) ?? plan;
         // (A square it covers for a while, with a save on entering, src/compiler/covered-square.js: Spider Gun's Web Shot.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = coveredSquarePlan(activation.html, base, item, options) ?? plan;
         // (Walls it raises, with a save in their space, src/compiler/covered-square.js: Alkenstar Phalanx — over the save read alone.)

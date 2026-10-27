@@ -59,7 +59,11 @@ const OWN_ACTS = [
     [[/^You Mount the creature wearing the [\w' -]+?\s*\.$/i], () => "Mount the creature wearing it (its own action on the map)."],
     [[/^You dismount, moving off your mount into a space adjacent to it\.$/i], () => "Dismount into a space adjacent to its mount (its own move on the map)."],
     [[/^You use your chair to Stride up to your chair's speed\.$/i, /^If you have a composition cantrip that is currently active, you Sustain it as a free action\.$/i], () => "Stride up to the chair's Speed, and Sustain an active composition cantrip as a free action (its own actions)."],
-    [[/^You can attempt the jump normally\.$/i, /^It doesn't automatically fail\.$/i], () => "The jump it attempts doesn't automatically fail for want of a 10-foot Stride first (its own action)."]
+    [[/^You can attempt the jump normally\.$/i, /^It doesn't automatically fail\.$/i], () => "The jump it attempts doesn't automatically fail for want of a 10-foot Stride first (its own action)."],
+    // (The Cricket's "Stride up to three times your Speed. You can Burrow, Climb, Fly, or Swim instead …. This movement doesn't trigger reactions
+    // and you can move through creatures' spaces …", after its glowing feet.)
+    [[/^Your feet begin to glow\b[^.]*\.$/i, /^Stride up to three times your Speed\.$/i, /^You can Burrow, Climb, Fly, or Swim instead of Striding if you have the corresponding movement type\.$/i, /^This movement doesn't trigger reactions and you can move through creatures' spaces as if they weren't there during this movement\.$/i],
+        () => "Stride (or Burrow, Climb, Fly or Swim, with that Speed) up to three times its Speed, triggering no reactions and moving through creatures' spaces (its own move on the map)."]
 ];
 export function ownMovePlan(html, base) {
     const sentences = SENTENCES(plainOf(html).replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, ""));

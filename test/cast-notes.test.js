@@ -206,3 +206,25 @@ test("a whetstone's own rules on its weapon (2026-10-27): Pinpoint Arrowhead's c
     const flare = compileItem(item("Flare Snare"), options);
     assert.deepEqual([flare.builtin, flare.zone.once, /2 miles off by day or 5 miles/.test(flare.zone.saves[0].note)], ["zone", true, true]);
 });
+
+test("own actions as card lines and whetstone words (2026-10-27): The Cricket's long Stride, Windstep Sheath's Step with Quick Draw on the weapon picked", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { compileItem } = await import("../src/compiler/index.js");
+    const cricket = activations(item("The Cricket"), options).find((entry) => entry.plan?.notes?.length).plan;
+    assert.match(cricket.notes[0], /^Stride .* up to three times its Speed, triggering no reactions .*\(its own move on the map\)\.$/);
+    const sheath = compileItem(item("Windstep Sheath"), options);
+    const [rider] = sheath.item.attackRiders.riders;
+    assert.deepEqual([rider.weapon, rider.rules, sheath.partial], [true, [], undefined]);
+    assert.match(rider.words, /^Quick Draw .* Step, .*\(its own action\)$/);
+});
+
+test("a condition its user avoids gaining once (2026-10-27): Immortal Bastion's Doomed or Wounded, Urn of Ashes' Doomed (the urn's own doom a line) — a readied Effect flagged prevents", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { ruleEffectSource } = await import("../src/live/card.js");
+    const bastion = activations(item("Immortal Bastion"), options).find((entry) => entry.plan?.item?.ruleEffects)?.plan;
+    const [entry] = bastion.item.ruleEffects;
+    assert.deepEqual([entry.prevents, entry.duration.unit, bastion.partial], [["doomed", "wounded"], "rounds", undefined]);
+    assert.deepEqual(ruleEffectSource(entry, { item: { name: "Immortal Bastion" } }).flags["pf2e-automatic-item-resolution"].prevents, ["doomed", "wounded"]);
+    const urn = activations(item("Urn of Ashes"), options).find((one) => one.plan?.item?.ruleEffects)?.plan;
+    assert.deepEqual([urn.item.ruleEffects[0].prevents, urn.partial], [["doomed"], true]);
+});

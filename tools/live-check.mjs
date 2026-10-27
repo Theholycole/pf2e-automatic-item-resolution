@@ -5280,6 +5280,36 @@ export const cases = {
         }
     },
 
+    // Immortal Bastion (2026-10-27): readied, its user's next Wounded increase (1 → 2) is cancelled and the Effect used up; the one after goes
+    // through.
+    async bastionPrevents(scene) {
+        const { actor: user } = await creature(scene, "Bastion Bearer", { type: "character", x: 9, y: 12, level: 12 });
+        await user.increaseCondition("wounded");
+        const value = () => user.getCondition?.("wounded")?.value ?? 0;
+        await until(() => value() === 1, "Wounded 1 to start", { timeout: 4000 });
+        const bastion = await give(user, "Immortal Bastion");
+        await bastion.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(bastion.uuid, 1);
+        const card = await messageAfter(since, itemCard("item"), { what: "the bastion's card" });
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        const ready = () => user.itemTypes.effect.find((effect) => (effect.flags?.[NS]?.prevents ?? []).includes("wounded"));
+        await until(ready, "the readied Effect", { timeout: 8000 });
+        since = Date.now();
+        await user.increaseCondition("wounded");
+        await messageAfter(since, (message) => /Immortal Bastion/.test(message.content) && /doesn't gain or increase Wounded/.test(message.content), { what: "the note that it held" });
+        await until(() => !ready(), "the Effect used up", { timeout: 4000 });
+        assert(value() === 1, `still Wounded 1 (${value()})`);
+        await user.increaseCondition("wounded");
+        await until(() => value() === 2, "the next increase goes through", { timeout: 4000 });
+        // (And a condition it doesn't have yet: the same readied flag, its Doomed never made.)
+        await user.createEmbeddedDocuments("Item", [{ name: `Immortal Bastion: ${PREFIX} prevents`, type: "effect", flags: { [NS]: { prevents: ["doomed"] } }, system: { duration: { value: 1, unit: "rounds", expiry: "turn-start", sustained: false }, rules: [] } }]);
+        await user.increaseCondition("doomed");
+        await wait(1000);
+        assert(!user.hasCondition("doomed"), "no Doomed made");
+        return { held: 1, after: value(), doomed: false };
+    },
+
     // Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check against DC 38 (its Perception at −30): Off-Guard.
     async cunningDodge(scene) {
         const { actor: wearer, token: wearerToken } = await creature(scene, "Dodging Wearer", { type: "character", x: 6, y: 1 });
