@@ -39,6 +39,7 @@ import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { reviveCreature } from "./revive.js";
 import { setOffSinVulnerability } from "./sin-vulnerability.js";
+import { restCreature } from "./rest.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
@@ -1232,6 +1233,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     if (state.plan.item?.revive) lines.push(...await reviveCreature(target, recipient.name, state.plan.item.revive, state));
     // (A demon's sin vulnerability set off, Soulcutter (Heroic)'s Shame Demon: scripts/sin-vulnerability.js, 2026-10-27.)
     if (state.plan.item?.sinVulnerability) lines.push(...await setOffSinVulnerability(target, recipient.name, state.plan.item.sinVulnerability, state));
+    // (A full day's rest at once, Hallajin Key's renewal: PF2e's Rest for the Night and a night's Hit Points more, scripts/rest.js, 2026-10-27.)
+    if (state.plan.item?.rest) lines.push(...await restCreature(target, recipient.name, state.plan.item.rest));
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
     if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {
         if (!target.actor?.hasCondition?.(slug)) continue;

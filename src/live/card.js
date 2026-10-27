@@ -190,6 +190,8 @@ export function previewLines(state) {
     if (plan?.item?.restore) lines.push(restoreText(plan.item.restore));
     // (A demon's sin vulnerability set off, src/live/sin-vulnerability.js: Soulcutter (Heroic)'s Shame Demon.)
     if (plan?.item?.sinVulnerability) lines.push(`Sets off the sin vulnerability of the ${(plan.item.sinVulnerability.only ?? []).join(" or ") || "creature"} targeted (its own damage, rolled), and whispers to its user what sets it off`);
+    // (A full day's rest at once, scripts/rest.js: Hallajin Key's.)
+    if (plan?.item?.rest) lines.push(`Each creature targeted rests as for ${plan.item.rest.day ? "a full day (PF2e's Rest for the Night, and a night's Hit Points more)" : "a night (PF2e's Rest for the Night)"}, its daily preparations made again`);
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
     if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)

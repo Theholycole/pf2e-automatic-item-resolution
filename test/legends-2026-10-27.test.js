@@ -6,6 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
+import { BASIC_ACTIONS, compileBasicActions } from "../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
@@ -14,11 +15,12 @@ import { ownEffectsToEnd } from "../src/live/ends-own.js";
 import { castPenaltySource, checkGateMet, gateOption, gateText, previewLines } from "../src/live/card.js";
 import { sinVulnerabilityOf, sinVulnerable } from "../src/live/sin-vulnerability.js";
 import { periodOf } from "../src/live/activations-card.js";
+import { nightsHitPoints } from "../scripts/rest.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const documents = (pack) => readDocuments(path.join(PACKS, pack)).filter((doc) => doc.collection === "items");
 const equipment = documents("equipment");
-const options = { spells: spellIndex(documents("spells")) };
+const options = { spells: spellIndex(documents("spells")), basicActions: compileBasicActions(documents("actions").filter((doc) => BASIC_ACTIONS.includes(doc.system?.slug))) };
 const item = (name) => {
     const doc = equipment.find((entry) => entry.name === name);
     return { ...doc, ownerLevel: Number(doc.system.level?.value) || 1 };
@@ -135,4 +137,38 @@ test("Soulcutter (Heroic): Soulcutting Storm's spirit damage an Effect of PF2e's
     assert.deepEqual([sin.name, sin.formula], ["Rejection Vulnerability", "2d6[mental]"]);
     assert.match(sin.text, /takes 2d6 mental damage/);
     assert.deepEqual([sinVulnerable(["demon", "fiend"], ["demon"]), sinVulnerable(["devil"], ["demon"]), sinVulnerabilityOf([{ name: "Claw", type: "melee" }])], [true, false, null]);
+});
+
+test("Hallajin Key: a full day's rest for each ally targeted (PF2e's Rest for the Night and a night's Hit Points more), its trip home a line", () => {
+    const [, , rest, home] = activations("Hallajin Key");
+    assert.deepEqual([done(rest), routeOf(rest), rest.item.recipient, rest.item.rest, rest.targeting.area.value], [true, "item", "targets", { day: true }, 60]);
+    assert.ok(rest.notes.some((note) => /5 of the key's charges/.test(note)));
+    assert.deepEqual([nightsHitPoints({ con: 3, level: 7 }), nightsHitPoints({ con: -1, level: 4 })], [21, 4]);
+    assert.ok(previewLines({ plan: rest }).some((line) => /full day/.test(line)));
+    assert.deepEqual([done(home), routeOf(home), home.trigger.frequency.per], [true, "item", "day"]);
+    assert.match(home.notes[0], /Ardis Scholars' manor/);
+});
+
+test("Miogimo's Mask: its two forms on the ways card, each ending the other; Talking Corpse on the soul fragment", () => {
+    const [form, , corpse] = activations("Miogimo's Mask");
+    assert.deepEqual([done(form), routeOf(form), form.ways.map((way) => way.name)], [true, "ways", ["Angelic form", "Demonic form"]]);
+    assert.deepEqual(form.ways[0].plan.item.endsOwn.names, ["Miogimo's Mask (Demonic form): Demonic form"]);
+    assert.match(form.ways[1].plan.item.ruleEffects[0].words, /chaotic evil/);
+    assert.deepEqual([done(corpse), routeOf(corpse), corpse.notes, corpse.targets], [true, "cast", undefined, false]);
+});
+
+test("Taljjae's Mask (The Nobleman): an unattended object a line, one a creature holds PF2e's Disarm at 100 feet, a critical failure a failure", () => {
+    const [mask] = activations("Taljjae's Mask (The Nobleman)");
+    assert.deepEqual([done(mask), routeOf(mask), mask.ways.map((way) => routeOf(way.plan))], [true, "ways", ["item", "action"]]);
+    const { action } = mask.ways[1].plan;
+    assert.deepEqual([action.slug, action.targeted, action.degree, Boolean(action.basic?.resolution), mask.ways[1].plan.targeting.range], ["disarm", true, { criticalFailure: "failure" }, true, "100 feet"]);
+    assert.match(action.after, /Only a critical success takes the object/);
+});
+
+test("Wintershot's Signal Flare: a flare's light for a minute, or the arrow's hit counteracting a darkness at rank 7", () => {
+    const flare = activation("Wintershot", "Signal Flare");
+    assert.deepEqual([done(flare), routeOf(flare), flare.trigger.frequency.per], [true, "ways", "day"]);
+    const [up, at] = flare.ways.map((way) => way.plan);
+    assert.deepEqual([routeOf(up), up.item.placedLight.bright, up.item.placedLight.dim, up.item.placedLight.duration.unit], ["item", 100, 200, "minutes"]);
+    assert.deepEqual([routeOf(at), at.strike.counteract.counteract.rank, at.strike.counteract.counteract.modifier, at.strike.counteract.counteract.free.name], ["strike", 7, 26, "a darkness effect of its user's choice in the area hit"]);
 });

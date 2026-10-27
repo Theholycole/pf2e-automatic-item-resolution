@@ -296,6 +296,105 @@ const READINGS = [
             if (!immunity) return null;
             return { ...own({ notes: ["Target the demon (one Soulcutter can see or hear), then Apply."] }), targeting: { target: "a demon", range: `${target[1]} feet`, area: null }, item: { recipient: "targets", sinVulnerability: { only: ["demon"] }, immunity } };
         }
+    },
+    {
+        // (A full day's rest for the allies within 60 feet, at 5 of its charges: the item card at each ally targeted, PF2e's Rest for the Night
+        // and a night's Hit Points more (plan.item.rest, scripts/rest.js).)
+        name: "Hallajin Key",
+        sentences: [
+            /^Lumna briefly transforms all allies within (\d+) feet into energy, renewing them as if they had spent a full day resting\.$/,
+            /^These allies regain Hit Points and recover from conditions as if they had 24 hours of rest\.$/,
+            /^They can make their daily preparations again, with access to all their spell slots and any other daily abilities, even if they already used or expended them\.$/,
+            /^Daily preparations happen as part of this activation, even if it would normally require an hour of study, prayer, or communion\.$/
+        ],
+        card: ([within]) => ({
+            ...own({ notes: [`Target its allies within ${within[1]} feet, then Apply.`, "It costs 5 of the key's charges.", "Their daily preparations are made again now, with no hour of study, prayer or communion: their players prepare as at any daily preparations."] }),
+            targeting: { target: "its allies", range: null, area: { type: "emanation", value: Number(within[1]) } },
+            item: { recipient: "targets", rest: { day: true } }
+        })
+    },
+    {
+        // (Home to the Ardis Scholars' manor with every living creature within 60 feet, at 2 of its charges: off this map, a line of the card.)
+        name: "Hallajin Key",
+        sentences: [/^Lumna returns the key and all living creatures within (\d+) feet to the Ardis Scholars' manor\.$/],
+        card: ([within]) => ({
+            ...own({ notes: [`Lumna takes the key and every living creature within ${within[1]} feet to the Ardis Scholars' manor: off this map, their tokens go to that scene.`, "It costs 2 of the key's charges."] }),
+            targeting: { target: null, range: null, area: { type: "emanation", value: Number(within[1]) } }
+        })
+    },
+    {
+        // (One form or the other, each an Effect on its wearer saying what alignment it shows, ending the other's: the ways card.)
+        name: "Miogimo's Mask",
+        sentences: [/^You switch the mask to its other form\.$/],
+        card: (found, plan, { base, info }) => {
+            const forms = [["Angelic form", "silvery and angelic", "lawful good", "evil and neutral"], ["Demonic form", "gold-skinned and demonic", "chaotic evil", "good and neutral"]];
+            const names = forms.map(([way]) => `Miogimo's Mask (${way}): ${way}`);
+            return ways(forms.map(([way, face, shows, targets]) => ({ name: way, html: `<p>The mask's ${face} face.</p>`, card: own({ ruleEffects: [{ name: way, words: `Its mask shows its ${face} face: to a creature detecting its alignment, it seems ${shows}; its Crisis of Faith can target only ${targets} creatures`, rules: [], duration: null }], endsOwn: { label: "other form", names: names.filter((one) => one !== `Miogimo's Mask (${way}): ${way}`) } }) })), { base, info });
+        }
+    },
+    {
+        // (Talking Corpse on the soul fragment in the mask: no body, its answers telepathic — the cast card's lines.)
+        name: "Miogimo's Mask",
+        sentences: [/^You cast Talking Corpse on the soul fragment, except you communicate telepathically and don't require the fragment's body to speak\.$/],
+        card: (found, plan) => {
+            if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Talking Corpse") return null;
+            return {
+                keep: true,
+                notes: undefined,
+                partial: undefined,
+                automation: { level: "automatic" },
+                targets: false,
+                castLines: ["Only with a soul fragment in the mask.", "On the soul fragment itself: no body is needed, and it answers telepathically."]
+            };
+        }
+    },
+    {
+        // (An object pulled to its hand from 100 feet: unattended, the map's; held by a creature, PF2e's own Disarm at it — only a critical success
+        // takes it, a critical failure a failure (action.degree) — the ways card.)
+        name: "Taljjae's Mask (The Nobleman)",
+        sentences: [
+            /^You hold out a hand and attempt to take something that doesn't belong to you\.$/,
+            /^You telekinetically attracts an unattended, unsecured object of up to (\d+) Bulk within (\d+) feet\.$/,
+            /^If the object is in a creature's possession, you must critically succeed at an attempt to Disarm that creature, but you can't critically fail\.$/
+        ],
+        card: ([, object], plan, { base, info, options }) => {
+            const [bulk, feet] = [object[1], object[2]];
+            const basic = options.basicActions?.disarm;
+            if (!basic || basic.builtin) return null;
+            return ways([
+                { name: "An unattended object", html: `<p>An unattended, unsecured object of up to ${bulk} Bulk within ${feet} feet.</p>`, card: own({ notes: [`An unattended, unsecured object of up to ${bulk} Bulk within ${feet} feet flies to its hand: move it to its inventory.`] }) },
+                { name: "Held by a creature: Disarm", html: `<p>Disarm the creature holding it, from up to ${feet} feet away.</p>`, card: {
+                    builtin: "item-action",
+                    targeting: { target: "the creature targeted", range: `${feet} feet`, area: null },
+                    action: { slug: "disarm", name: "Disarm", targeted: true, degree: { criticalFailure: "failure" }, after: `Telekinetic, at a creature within ${feet} feet. Only a critical success takes the object (up to ${bulk} Bulk): it flies to its hand rather than falling. A critical failure is a failure.`, basic }
+                } }
+            ], { base, info });
+        }
+    },
+    {
+        // (Its flare straight up — a light of 100 feet bright and 100 more dim for a minute, plan.item.placedLight — or the arrow at a target,
+        // its hit's counteract card against a darkness in the area hit (rank 7, +26; strike.counteract): the ways card.)
+        name: "Wintershot: Signal Flare",
+        sentences: [
+            /^You pull back Wintershot's string and fire an arrow straight upward\.$/,
+            /^The arrow soars to a height of (\d+) feet, or until it strikes a solid surface like a ceiling\.$/,
+            /^When it reaches its apex, it explodes in a brilliant burst, creating a (\d+)-foot radius area of bright light and dim light in the next (\d+) feet\.$/,
+            /^In the night sky, this beacon can be seen clearly for miles\.$/,
+            /^The beacon remains lit for up to 1 minute in a color of your choice\.$/,
+            /^Alternately, you can fire a Signal Flare like a normal arrow to attempt to strike a Target - if it hits, the arrow inflicts normal damage and attempts to counteract one darkness effect of your choice that affects the area you hit with a counteract rank of (\d+)(?:st|nd|rd|th) and a counteract modifier of \+(\d+)\.$/
+        ],
+        card: ([, height, burst, , , counter], plan, { base, info }) => {
+            const none4 = Object.fromEntries(DEGREES.map((degree) => [degree, none()]));
+            return ways([
+                { name: "Flare, straight up", html: "<p>The arrow fired straight up bursts into light.</p>", card: { ...own({ notes: [`It bursts ${height[1]} feet up, or where it strikes a ceiling, in a color its user picks (set the light's color); at night it's seen for miles.`] }), item: { placedLight: { bright: Number(burst[1]), dim: Number(burst[1]) + Number(burst[2]), duration: fixed(1, "minutes") } } } },
+                { name: "At a target", html: "<p>The arrow fired at a target, counteracting a darkness where it hits.</p>", card: {
+                    targeting: { target: "the creature the Strike hits", range: null, area: null },
+                    trigger: { event: "strike", on: ["success", "criticalSuccess"] },
+                    resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: none4 },
+                    strike: { range: "ranged", save: null, ammo: false, notes: [], lines: ["Its damage is the arrow's own."], counteract: { counteract: { rank: Number(counter[1]), modifier: Number(counter[2]), traits: ["darkness"], at: "target", free: { name: "a darkness effect of its user's choice in the area hit" } } } }
+                } }
+            ], { base, info });
+        }
     }
 ];
 
@@ -311,11 +410,12 @@ function matched(reading, sentences) {
 
 // The plan (any: a reading is built over what was read before) and its effect's words → the reading's card, or the same plan. name: its
 // source name; base, info, frequency: its own (src/compiler/lasting.js activationBase).
-export function withLegendReading(plan, { name, words, base, info, frequency = null }) {
+// (options: the compile options — the ability module's compiled actions, options.basicActions.)
+export function withLegendReading(plan, { name, words, base, info, frequency = null, options = {} }) {
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of READINGS.filter((entry) => entry.name === name)) {
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan, { base, info }) : null;
+        const card = found ? reading.card(found, plan, { base, info, options }) : null;
         if (!card) continue;
         // (Over the plan read before, its own parts kept: Orb of Dragonkind's cast of dominate.)
         if (card.keep) {
