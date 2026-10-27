@@ -12,14 +12,15 @@ import { pausedAfter } from "../src/live/conjured.js";
 import { planFor } from "../src/live/if-target.js";
 import { withNearbyDC } from "../src/live/scaled.js";
 import { endsFor, hostileAt } from "../src/live/targeted.js";
-import { saveText } from "../src/live/poison-card.js";
+import { saveText, withAttackChoice } from "../src/live/poison-card.js";
+import { markText, marksEndingAt } from "../src/live/card.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
 const options = { spells: spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items")) };
 const item = (name) => {
     const doc = equipment.find((entry) => entry.name === name);
-    return { ...doc, ownerLevel: Number(doc.system.level?.value) || 1 };
+    return { ...doc, ownerLevel: Number(doc.system.level?.value) || 1, ownerAbilities: { str: 4, dex: 3, con: 2, int: 1, wis: 1, cha: 1 } };
 };
 const plans = (name) => compileActivations(item(name), options).map((entry) => entry.plan);
 const done = (plan) => Boolean(plan) && !plan.partial && !plan.noteOnly && plan.builtin !== "no-effect";
@@ -71,4 +72,21 @@ test("Passage Pane: its user's Religion check locks it on (a note Effect on them
     assert.deepEqual([done(rift), routeOf(rift), rift.trigger.frequency.per, open.label, open.duration.value, open.duration.unit], [true, "item", "week", "Rift to the Boneyard", 24, "hours"]);
     assert.deepEqual([done(close), routeOf(close), close.item.endsOwn, close.noRules], [true, "item", { label: "Rift to the Boneyard" }, undefined]);
     assert.equal(saveText(lock), "DC 40 Religion check");
+});
+
+test("Hunter's Dawn: the javelin's three ways (its user's thrown attack with the club's +3, the gazelle at as many creatures as actions), its mark until death or another, Locate once a day", () => {
+    const [javelin, mark] = plans("Hunter's Dawn");
+    assert.deepEqual([routeOf(javelin), javelin.ways.map((way) => way.plan.thenSave.maxTargets), javelin.ways.map((way) => way.plan.activation.time)], ["ways", [1, 2, 3], ["1", "2", "3"]]);
+    const [one] = javelin.ways;
+    assert.deepEqual([one.plan.ownCheck, one.plan.resolution.sharedDamage.components[0].formula, one.plan.thenSave.resolution.sharedDamage.components[0].formula, one.plan.targeting.range], [{ kind: "attack", modifier: null, choose: ["thrown"], within: 60, itemBonus: 3 }, "3d6+4", "2d6+4", "60 feet"]);
+    // (Its ghost touch alone left: the ability module's damage roll options, requested.)
+    assert.deepEqual([javelin.partial, one.plan.damageOptions], [true, ["item:rune:property:ghost-touch"]]);
+    const attack = withAttackChoice(one.plan, { attackChoices: [{ kind: "thrown", label: "Thrown", modifier: 20 }], attackChoice: 0, attackPenalty: 0 });
+    assert.equal(attack.resolution.check.modifier, 23);
+    const [marking, locate] = mark.ways;
+    assert.deepEqual([done(mark), routeOf(marking.plan), marking.plan.item.mark.slug, marking.plan.item.mark.endsOnDeath, routeOf(locate.plan), locate.plan.rank, locate.frequency.per], [true, "item", "hunters-dawn-mark", true, "cast", 5, "day"]);
+    assert.match(markText(marking.plan.item.mark), /until it dies or another is marked; dispelling it takes a counteract check against DC 46$/);
+    // (Its mark gone as its creature dies: the mark Effects at that creature's tokens.)
+    const effects = [{ id: "m", flags: { "pf2e-automatic-item-resolution": { markEndsOnDeath: true } }, system: { rules: [{ key: "TokenMark", uuid: "Scene.s.Token.t" }] } }, { id: "n", flags: { "pf2e-automatic-item-resolution": { mark: "x" } }, system: { rules: [{ key: "TokenMark", uuid: "Scene.s.Token.t" }] } }];
+    assert.deepEqual([marksEndingAt(effects, ["Scene.s.Token.t"]), marksEndingAt(effects, ["Scene.s.Token.u"])], [["m"], []]);
 });

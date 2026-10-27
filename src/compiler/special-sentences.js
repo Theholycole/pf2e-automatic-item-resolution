@@ -23,11 +23,92 @@ const ownCheck = ({ statistic, dc, rows, notes = [] }) => ({
     ...(notes.length ? { notes } : {})
 });
 
+// (Its user's own Strength modifier, as live play gives it — unknown, PF2e's own formula term.)
+const strOf = (item) => (Number.isFinite(Number(item?.ownerAbilities?.str)) ? Number(item.ownerAbilities.str) : null);
+const plus = (dice, str) => (str === null ? `${dice}+@actor.abilities.str.mod` : str ? `${dice}${str > 0 ? "+" : ""}${str}` : dice);
+const COUNT = ["one", "two", "three"];
+
 const PANE_NEEDS = "Only while the mirror's mounted firmly on a solid surface and its user is bonded with it.";
 const RIFT = "Rift to the Boneyard";
 const LOCKED = "Locked on";
 
 const READINGS = [
+    {
+        // (A conjured javelin's ranged Strike — a javelin's, with the club's +3 and its damage dice — and its gazelle's leap to as many creatures
+        // near the one hit as the actions spent: the ways card's three ways, each its user's thrown attack (Dexterity and simple weapon
+        // proficiency, +3 item) at a creature within 60 feet, its hit's second step the gazelle's damage at up to that many creatures its
+        // presser targets within 20 feet of the first (thenSave, maxTargets). The javelin's ghost touch needs the ability module to roll the
+        // damage with the rune's roll option (requested): partial for that alone.)
+        name: "Hunter's Dawn",
+        sentences: [
+            /^You swing Hunter's Dawn and launch a magically conjured javelin at a target within (\d+) feet, making a ranged Strike\.$/,
+            /^The javelin has the statistics of a javelin but gains the magical properties of Hunter's Dawn and disappears immediately after hitting or missing its target\.$/,
+            /^On a successful hit, you deal damage \((\d+d\d+) (\w+), due to the atlatl's greater striking rune, plus your Strength modifier\); in addition, a gazelle leaps from the hit target to one or more targets within (\d+) feet of the first, dealing (\d+d\d+) (\w+) damage plus your Strength modifier\.$/,
+            /^The number of additional targets hit in this way is equal to the number of actions you spend to activate this ability \(one additional target if you used one action, two additional targets for two actions, and so forth\)\.$/
+        ],
+        card: ([launch, , hit], plan, { item, base }) => {
+            const str = strOf(item);
+            const potency = Number(item?.system?.runes?.potency) || 0;
+            const way = (actions) => {
+                const gazelle = {
+                    ...base,
+                    automation: { level: "automatic" },
+                    targeting: { target: `up to ${COUNT[actions - 1]} creature${actions === 1 ? "" : "s"} within ${hit[3]} feet of the one hit`, range: null, area: null },
+                    trigger: { event: "use" },
+                    maxTargets: actions,
+                    resolution: { kind: "check", check: { roll: "automatic" }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: plus(hit[4], str), type: hit[5].toLowerCase(), category: null }] }, outcomes: { success: { damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] }, effects: [], modifiers: [] } } },
+                    damageOptions: ["item:rune:property:ghost-touch"]
+                };
+                const hitRow = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [], modifiers: [] });
+                return {
+                    name: `${actions} action${actions === 1 ? "" : "s"}: the javelin and ${COUNT[actions - 1]} gazelle leap${actions === 1 ? "" : "s"}`,
+                    plan: {
+                        ...base,
+                        automation: { level: "automatic" },
+                        activation: { ...(base?.activation ?? {}), time: String(actions) },
+                        targeting: { target: "1 creature", range: `${launch[1]} feet`, area: null },
+                        trigger: { event: "use" },
+                        ownCheck: { kind: "attack", modifier: null, choose: ["thrown"], within: Number(launch[1]), ...(potency ? { itemBonus: potency } : {}) },
+                        resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: null }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: plus(hit[1], str), type: hit[2].toLowerCase(), category: null }] }, outcomes: { criticalSuccess: hitRow(2), success: hitRow(1), failure: none(), criticalFailure: none() } },
+                        damageOptions: ["item:rune:property:ghost-touch"],
+                        thenSave: gazelle,
+                        notes: [
+                            `A conjured javelin, gone once it hits or misses: its user's thrown attack${potency ? ` with the club's +${potency}` : ""}.`,
+                            `On a hit, the gazelle leaps on: target up to ${COUNT[actions - 1]} other creature${actions === 1 ? "" : "s"} within ${hit[3]} feet of the one hit, then press its step (nothing on a miss).`,
+                            "Ghost touch: an incorporeal creature's resistance doesn't hold against it (by hand until the ability module rolls the rune's option)."
+                        ],
+                        partial: true
+                    }
+                };
+            };
+            return { builtin: "ways", targeting: { target: null, range: null, area: null }, once: true, ways: [1, 2, 3].map(way), partial: true };
+        }
+    },
+    {
+        // (The creature hit marked — its user's TokenMark, until a new one's marked or it dies, its dispelling the GM's at DC 46 —, and once a day
+        // 5th-rank Locate on it however far: the ways card's two ways, the Locate's own once a day (way.frequency).)
+        name: "Hunter's Dawn",
+        sentences: [
+            /^The target is marked\.$/,
+            /^Once per day, you can cast a (\d+)(?:st|nd|rd|th)-rank Locate spell on the marked target, regardless of its distance from you or your ability to cast spells\.$/,
+            /^This effect persists until it is dispelled \(counterspell DC (\d+)\), the creature dies, or a new target is marked\.$/
+        ],
+        card: ([, locate, persists], plan, { base, info, html }) => {
+            const uuid = /@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{Locate\}/.exec(String(html ?? ""))?.[1];
+            if (!uuid) return null;
+            const slug = "hunters-dawn-mark";
+            const mark = { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...ownRow({ target: "the creature hit" }), item: { ...info, recipient: "user", mark: { slug, duration: null, endsOnDeath: true, words: `until it dies or another is marked; dispelling it takes a counteract check against DC ${persists[1]}` } } };
+            const cast = { ...base, automation: { level: "automatic" }, trigger: { event: "use", frequency: { max: 1, per: "day", raw: "once per day" } }, builtin: "cast-spell", spell: { uuid, name: "Locate" }, rank: Number(locate[1]), dc: null, attack: null, tradition: null, self: false, area: false, targets: true, targeting: { target: "the marked creature", range: null, area: null }, notes: ["Target the marked creature: Locate reaches it however far away it is, whether or not its user can cast spells."], item: { ...info } };
+            return {
+                builtin: "ways",
+                targeting: { target: null, range: null, area: null },
+                ways: [
+                    { name: "Mark the creature hit", html: "<p>The target is marked.</p>", plan: mark },
+                    { name: `Cast ${locate[1]}th-rank Locate on the marked creature (once per day)`, html: `<p>${locate[0]}</p>`, plan: cast, frequency: { max: 1, per: "day", raw: "once per day" } }
+                ]
+            };
+        }
+    },
     {
         // (Its user's Religion check: a success locks the mirror onto the place they focus on, only they seeing it — their note Effect until it
         // opens its rift there.)
@@ -73,5 +154,8 @@ const READINGS = [
     }
 ];
 
-// The plan and its activation's { name, words, base, info, frequency } → the reading's card, or the same plan.
-export const withSpecialSentences = (plan, given) => withSentenceReadings(READINGS, plan, given);
+// The plan and its activation's { name, words, html, base, info, frequency, item } → the reading's card, or the same plan.
+export function withSpecialSentences(plan, given) {
+    const own = READINGS.map((reading) => ({ ...reading, card: (found, read) => reading.card(found, read, given) }));
+    return withSentenceReadings(own, plan, given);
+}

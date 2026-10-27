@@ -781,16 +781,25 @@ export function strikeDamageText(extra) {
 // The creature its bonuses are against, src/compiler/marked.js: "Marks the creature targeted (its bonuses against it alone) for 7 days".
 // (Or the creatures, mark.several — Rhyton of the Radiant Ifrit's toasted ones, src/compiler/situational.js: "Marks the creatures targeted
 // (its bonuses against them alone) for 1 hour".)
+// (And how it ends besides, mark.words — Hunter's Dawn's "until it dies or another is marked", 2026-10-27.)
 export function markText(mark, name = null) {
-    if (mark.several) return `Marks ${name ?? "the creatures targeted"} (its bonuses against them alone)${forTime(mark.duration)}`;
-    return `Marks ${name ?? "the creature targeted"} (its bonuses against that creature alone)${forTime(mark.duration)}`;
+    const ends = mark.words ? `, ${mark.words}` : "";
+    if (mark.several) return `Marks ${name ?? "the creatures targeted"} (its bonuses against them alone)${forTime(mark.duration)}${ends}`;
+    return `Marks ${name ?? "the creature targeted"} (its bonuses against that creature alone)${forTime(mark.duration)}${ends}`;
 }
 
 // The mark's Effect on its user: PF2e's TokenMark at that creature's token, which its bonuses' target:mark predicates read.
 // (Several: tokens, one TokenMark at each, the same slug.)
+// (Gone once its creature dies, mark.endsOnDeath — scripts/mark-ends.js: Hunter's Dawn's, 2026-10-27.)
 export function markEffectSource(mark, { token, tokens = null, name = null, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const marked = tokens?.length ? tokens : [token];
-    return ownEffectSource({ name: `${name ?? "creature"} marked`, img: "icons/svg/target.svg", words: markText(mark, name), rules: marked.map((uuid) => ({ key: "TokenMark", slug: mark.slug, uuid })), duration: mark.duration, flag: { mark: mark.slug }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: `${name ?? "creature"} marked`, img: "icons/svg/target.svg", words: markText(mark, name), rules: marked.map((uuid) => ({ key: "TokenMark", slug: mark.slug, uuid })), duration: mark.duration, flag: { mark: mark.slug, ...(mark.endsOnDeath ? { markEndsOnDeath: true } : {}) }, item, user, worldTime, initiative, moduleId });
+}
+
+// Its user's mark Effects ([{ id, flags, system: { rules } }]) at any of those tokens (their uuids) that end as their creature dies → their ids.
+export function marksEndingAt(effects, tokenUuids, moduleId = "pf2e-automatic-item-resolution") {
+    const at = new Set(tokenUuids ?? []);
+    return (effects ?? []).filter((effect) => effect?.flags?.[moduleId]?.markEndsOnDeath && (effect.system?.rules ?? []).some((rule) => rule?.key === "TokenMark" && at.has(rule.uuid))).map((effect) => effect.id);
 }
 
 // Its Effect: PF2e's DamageDice on Strike damage (a FlatModifier for a number), with its predicate.

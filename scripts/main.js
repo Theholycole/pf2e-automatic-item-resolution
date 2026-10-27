@@ -31,6 +31,7 @@ import { setUpTurnHeals } from "./turn-heal.js";
 import { setUpEndEarly } from "./end-early.js";
 import { setUpSlainWait } from "./slain-wait.js";
 import { setUpPausedItem } from "./paused-item.js";
+import { setUpMarkEnds } from "./mark-ends.js";
 import { setUpDropHeld } from "./drop-held.js";
 import { setUpMoveDamage } from "./move-damage.js";
 import { setUpFootDamage } from "./foot-damage.js";
@@ -195,6 +196,8 @@ Hooks.once("ready", async () => {
     setUpSlainWait((item) => compileActivations(dataOf(item), options()));
     // (An item that gives none of its other benefits while the creature it became is out, Horns of Naraga: invested again once it's gone.)
     setUpPausedItem();
+    // (A mark that ends as its creature dies, Hunter's Dawn's: scripts/mark-ends.js.)
+    setUpMarkEnds();
     // (What a creature drops of what it holds, Deadweight Snare's metal items: scripts/drop-held.js.)
     setUpDropHeld();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)

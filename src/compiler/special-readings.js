@@ -5,10 +5,10 @@
 import { withHostileEnds } from "./hostile-ends.js";
 import { withSpecialSentences } from "./special-sentences.js";
 
-// The plan, and its activation's { name (its source name), html, text (plain), words (its effect's), base, info, frequency } → the plan with
+// The plan, and its activation's { name (its source name), html, text (plain), words (its effect's), base, info, frequency, item } → the plan with
 // its item's own rules, or the same plan.
-export function withSpecialReadings(plan, { name, html, text, words, base, info, frequency }) {
-    let next = withSpecialSentences(plan, { name, words, html, base, info, frequency });
+export function withSpecialReadings(plan, { name, html, text, words, base, info, frequency, item }) {
+    let next = withSpecialSentences(plan, { name, words, html, base, info, frequency, item });
     next = withHostileEnds(next, text, name);
     return next;
 }

@@ -194,7 +194,9 @@ export function withAttackChoice(plan, state) {
     const choice = state?.attackChoices?.[state.attackChoice ?? 0];
     if (!plan?.ownCheck?.choose || !choice) return plan;
     const penalty = Number(state.attackPenalty) || 0;
-    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, statistic: `${choice.kind} attack${penalty ? ` (–${penalty} for distance)` : ""}`, modifier: choice.modifier - penalty } } };
+    // (The weapon's own item bonus on top, Hunter's Dawn's conjured javelin with the club's +3: ownCheck.itemBonus, 2026-10-27.)
+    const bonus = Number(plan.ownCheck.itemBonus) || 0;
+    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, statistic: `${choice.kind} attack${bonus ? ` (+${bonus} item)` : ""}${penalty ? ` (–${penalty} for distance)` : ""}`, modifier: choice.modifier + bonus - penalty } } };
 }
 
 // The attack's penalty for its target's distance in feet → { penalty, words } or { out } past six range increments.

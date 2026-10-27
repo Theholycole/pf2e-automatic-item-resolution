@@ -329,7 +329,7 @@ function creaturesOf(item, entry, plan) {
 function specialOf(item, entry, plan) {
     if (!isSpecialItem(item)) return plan;
     const { base, info, frequency } = activationBase(item, entry);
-    const next = withSpecialReadings(plan, { name: base.source.name, html: entry.activation?.html, text: plainText(entry.activation?.html), words: effectWords(entry.activation?.html, "activation"), base, info, frequency });
+    const next = withSpecialReadings(plan, { name: base.source.name, html: entry.activation?.html, text: plainText(entry.activation?.html), words: effectWords(entry.activation?.html, "activation"), base, info, frequency, item });
     return next === plan || !(next?.partial || next?.noteOnly) ? next : decideActivation(item, entry, next);
 }
 

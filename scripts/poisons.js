@@ -200,6 +200,8 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const names = tokens.map((token) => token.name ?? token.actor?.name).join(", ");
     const lines = [];
     // (Its second step, the save its hit calls for — src/compiler/thrown.js plan.thenSave: at the creature hit, then the card closes.)
+    // (At no more creatures than it reaches, Hunter's Dawn's gazelle: thenSave.maxTargets, 2026-10-27.)
+    if (state.step === "then" && Number(state.plan?.thenSave?.maxTargets) > 0 && tokens.length > Number(state.plan.thenSave.maxTargets)) throw new Error(`${state.item.name}: target up to ${state.plan.thenSave.maxTargets} creature${Number(state.plan.thenSave.maxTargets) === 1 ? "" : "s"} for its second step.`);
     if (state.step === "then" && state.plan?.thenSave) {
         if (postCard && actor) {
             await postCard({ plan: state.plan.thenSave, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: `${state.item.name} hit` });
