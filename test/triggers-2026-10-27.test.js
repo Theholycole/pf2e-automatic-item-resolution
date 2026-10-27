@@ -383,3 +383,28 @@ test("note Effects for their time: Auspicious Scepter's weak spot on the ally ta
     assert.deepEqual([routeOf(key), key.noteOnly, rewrite.label, rewrite.duration.value, rewrite.duration.unit, done(key)], ["item", undefined, "Rewrite Time", 1, "minutes", true]);
     assert.match(rewrite.text, /Slowed 1 for 1 round/);
 });
+
+test("Chain of Stars: three +1 striking force shuriken for its user's Strikes from the creature hit, each gone after its attack roll", async () => {
+    const { objectsText } = await import("../src/live/objects-card.js");
+    const { spendMadeAfterAttack } = await import("../scripts/objects.js");
+    const chain = consumable("Chain of Stars");
+    assert.equal(routeOf(chain), "objects");
+    assert.deepEqual([chain.objects.weapon, chain.objects.potency, chain.objects.striking, chain.objects.quantity, chain.objects.damageType, chain.objects.vanishAfterAttack, done(chain), chain.notes], ["shuriken", 1, 1, 3, "force", true, true, undefined]);
+    assert.match(objectsText(chain.objects), /^3 \+1 striking shurikens of force for its user, each gone after its attack roll: Strike with them — up to 3 Strikes, each at a different creature and not the one it hit, as though from that creature's space/);
+    // (A miss's attack roll or a hit's damage roll with one: one fewer; with the last, gone — a hit's attack roll leaves it for its damage.)
+    let quantity = 2;
+    let deleted = false;
+    const weapon = { flags: { [MODULE_ID]: { made: { vanishAfterAttack: true } } }, get system() { return { quantity }; }, update: async (changes) => { quantity = changes["system.quantity"]; }, delete: async () => { deleted = true; } };
+    const saved = globalThis.fromUuid;
+    globalThis.fromUuid = async () => weapon;
+    try {
+        assert.equal(await spendMadeAfterAttack({ flags: { pf2e: { context: { type: "attack-roll", outcome: "success" }, origin: { uuid: "Actor.a.Item.s" } } } }), null);
+        assert.equal(quantity, 2);
+        await spendMadeAfterAttack({ flags: { pf2e: { context: { type: "attack-roll", outcome: "failure" }, origin: { uuid: "Actor.a.Item.s" } } } });
+        assert.equal(quantity, 1);
+        await spendMadeAfterAttack({ flags: { pf2e: { context: { type: "damage-roll", sourceType: "attack" }, origin: { uuid: "Actor.a.Item.s" } } } });
+        assert.equal(deleted, true);
+    } finally {
+        globalThis.fromUuid = saved;
+    }
+});
