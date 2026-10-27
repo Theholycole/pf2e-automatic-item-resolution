@@ -70,8 +70,10 @@ function asCardLines(plan, { result, base, body, decided }) {
         const resolution = gm.length ? { ...rest.resolution, outcomes: { ...rest.resolution.outcomes, success: { ...own, manualInstructions: (own.manualInstructions ?? []).filter((line) => !gm.includes(said(line))) } } } : rest.resolution;
         return { ...rest, ...(resolution ? { resolution } : {}), ...(lines.length ? { notes: [...(rest.notes ?? []), ...lines] } : {}), decided, automation: { ...(plan.automation ?? {}), level: "automatic" } };
     }
-    return { ...(base ?? {}), ...(plan && result === "builtin:no-effect" ? { source: plan.source, activation: plan.activation, item: plan.item } : {}), builtin: undefined, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan?.trigger ?? base?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: [body], decided };
+    // (The GM's no-effect's own source, activation and item part where it has them — its base's where it doesn't, 2026-10-27.)
+    return { ...(base ?? {}), ...(plan && result === "builtin:no-effect" ? ownParts(plan) : {}), builtin: undefined, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan?.trigger ?? base?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: [body], decided };
 }
+const ownParts = (plan) => Object.fromEntries(["source", "activation", "item"].filter((key) => plan[key] !== undefined).map((key) => [key, plan[key]]));
 
 // The plan, its item's plain text and its base, and whether it's an activation (its text from Effect on) → the plan as decided, or as it was.
 // special: a unique item's or an artifact's (no card-line ruling).
@@ -87,8 +89,8 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // (A note-only item checked and found to hold nothing a card could play, src/compiler/notes-checked.js — the user's answer to question 3,
     // 2026-10-26: its note row kept, done.)
     if (result === "note-only" && notesChecked(name ?? plan?.source?.name)) return { ...plan, noteOnly: undefined, decided: "checked", automation: { ...(plan.automation ?? {}), level: "automatic" } };
-    // (Or one nothing read, the same check: its words its card's line, 2026-10-27.)
-    if (result === "none" && notesChecked(name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "checked" });
+    // (Or one nothing read, the same check: its words its card's line, 2026-10-27. And the GM's no-effect, Philosopher's Stone's — read as nothing.)
+    if ((result === "none" || result === "builtin:no-effect") && notesChecked(name ?? plan?.source?.name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "checked" });
     // (A one-off rule, src/compiler/one-offs.js — the user's answer of 2026-10-27: its card's lines, counted done, kept to build later.)
     // (Its words without the "Trigger" leftText puts before a triggered activation's Effect, for the needs' reading: Belt of Giant Strength's.)
     if (!special && oneOff(name ?? plan?.source?.name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)).replace(/^Trigger (?=\S)/, ""), decided: "one-off" });

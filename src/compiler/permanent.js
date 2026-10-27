@@ -142,6 +142,7 @@ import { onOffPlan } from "./on-off.js";
 import { withEffectThenCard } from "./effect-then-card.js";
 import { withRuneSteps } from "./rune-steps.js";
 import { withTriggered } from "./triggered.js";
+import { withUserActions } from "./user-actions.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
@@ -320,7 +321,8 @@ function withNamedOptions(item, entry, options) {
 
 function decideActivation(item, entry, read) {
     // (A trigger's own effect first, src/compiler/triggered.js: Lost Ember's Off-Guard or Confused suppressed.)
-    const plan = withTriggered(read, entry, item);
+    // (Then its user's own action or rule as its sentences say, src/compiler/user-actions.js: Bastion of the Inheritor's entrench bonus.)
+    const plan = withUserActions(withTriggered(read, entry, item), entry, item);
     const { activation } = entry;
     const base = activationBasePlan(item, entry);
     const next = withDecided(plan, { text: plainText(activation.html), base, kind: "activation", trigger: Boolean(activation.trigger), name: base.source.name, special: isSpecialItem(item) });

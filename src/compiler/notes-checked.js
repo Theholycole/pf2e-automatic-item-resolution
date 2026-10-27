@@ -38,7 +38,17 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27: a targeting flat check's DC, which no PF2e rule sets — PF2e's own Effect: Mummified Bat leaves the same to its words.)
     ["Cat's Eye Elixir", "flat checks to target Hidden creatures within 30 feet at DC 5, and none to target Concealed ones, for its minute: its user's own rolls"],
     // (2026-10-27: a day's food, and immune to it after a week of nothing else until a day of real meals: the table's, out of combat.)
-    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"]
+    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"],
+    // (2026-10-27, actions: what's left is its user's own action, an object's or the map's — the needs' "actions" words an Interact or Force Open
+    // its user or another creature takes, no card's to roll.)
+    ["Rope of Climbing (Lesser)", "the rope animated for a minute, crawling 10 feet a round along a surface to where its user points, and its commands (stop, fasten, detach, knot) its user's Interact: an object's moves on the map"],
+    ["Rope of Climbing (Moderate)", "the rope animated for a minute, crawling 10 feet a round along a surface to where its user points, and its commands (stop, fasten, detach, knot) its user's Interact: an object's moves on the map"],
+    ["Rope of Climbing (Greater)", "the rope animated for a minute, crawling 10 feet a round along a surface to where its user points, and its commands (stop, fasten, detach, knot) its user's Interact: an object's moves on the map"],
+    ["Immovable Rod", "the rod anchored where it is until its button is pushed again, moved only by 8,000 pounds of force or a DC 40 Athletics check to Force Open it: an object's, and the creature's own action"],
+    ["Philosopher's Stone", "broken open with Force Open (DC 35), its quicksilver makes an infused Elixir of Life (True) an Elixir of Rejuvenation with an Interact, or silver or gold over a month of downtime: crafting and downtime, its user's own"],
+    ["Watchful Portrait", "hung up, its user sees through its eyes from within 500 feet for 10 minutes (a creature notices with a DC 30 Perception check), then it's a plain painting: what's seen the GM's"],
+    ["Accolade Robe: Review", "an item drawn from the robe's storage, then a Recall Knowledge: its user's own Interact and check"],
+    ["Accolade Robe (Greater): Review", "an item drawn from the robe's storage, then a Recall Knowledge (once a minute as a free action): its user's own Interact and check"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

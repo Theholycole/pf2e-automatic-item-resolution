@@ -85,6 +85,11 @@ const LESS = /\bthe affixed object takes (\d+) less damage\b/i;
 // (Itself mended by what its trigger dealt, Sanguine Klar's "The sanguine klar regains a number of Hit Points equal to the bleed damage, up to an amount
 // equal to its Hardness" — op "repair", self, typed: the amount typed on the card, at most its Hardness, 2026-10-27.)
 const SELF_REGAIN = /\bThe [\w' -]+? regains a number of Hit Points equal to the (\w+) damage, up to an amount equal to its Hardness\b/i;
+// (An instrument pulled into its user's hands, Instrument Harness's Ready to Play: "Your harness ripples, pulling the required instrument into your
+// hands. You Interact to draw the required instrument, but this manipulate action doesn't trigger reactions" — op "hand", one of its user's items
+// not in hand, picked; no reactions to that Interact a line of the card (read.line), 2026-10-27.)
+const HARNESS = /\bYour harness ripples, pulling the required instrument into your hands\./i;
+const NO_REACTIONS = /^You Interact to draw the required instrument, but this manipulate action doesn't trigger reactions\.$/i;
 const RULE = /\b(?:bonus|penalty|saving throws?|saves?|resistance|weakness|Strike|check|DC|attack|Speed|Hit Points|damage|condition|can't be activated again|can be activated again|can't Retrieve Item again)\b/i;
 const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 
@@ -116,6 +121,8 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     // one of its user's weapons not in hand, picked on the card, 2026-10-26.)
     const attached = DRAW_ATTACHED.exec(text);
     if (attached) return { op: "hand", weapon: true, ...(attached[1] ? { load: true } : {}), said: attached[0] };
+    const harness = HARNESS.exec(text);
+    if (harness) return { op: "hand", said: harness[0], also: SENTENCES(text).find((sentence) => NO_REACTIONS.test(sentence)) ?? null, line: "Drawing it this way doesn't trigger reactions" };
     const picked = PICKED_HAND.exec(text);
     if (picked) {
         const bulk = picked[1] ?? ATTUNED_BULK.exec(String(whole ?? ""))?.[1] ?? null;
@@ -168,11 +175,11 @@ export function objectsPlan(html, base, item = {}) {
     const formLine = (sentence) => FORM_LINES.find(([pattern]) => pattern.test(sentence));
     const formLines = read.op === "reshape" ? SENTENCES(body).map((sentence) => formLine(sentence)?.[1](formLine(sentence)[0].exec(sentence))).filter(Boolean) : [];
     const notes = SENTENCES(body).filter((sentence) => !sentence.includes(read.said) && !(read.also && (sentence.includes(read.also) || read.also.includes(sentence))) && !(read.op === "reshape" && formLine(sentence)) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
-    const { said, also, ...objects } = read;
+    const { said, also, line, ...objects } = read;
     // (The GM's share of a number the card applies — Rust Scrub's "The GM determines what portion of damage to an item was caused by rust if
     // that value isn't known": your ruling for numbers left to the GM, the text's applied and the GM may change it — a card line.)
     const share = /^The GM determines what portion of damage to an item was caused by (\w+) if that value isn't known\.$/i;
-    const lines = [...notes.filter((note) => share.test(note)).map((note) => `The GM may lower it to what the ${share.exec(note)[1]} did, when that isn't known.`), ...formLines.map((line) => `${line}.`)];
+    const lines = [...notes.filter((note) => share.test(note)).map((note) => `The GM may lower it to what the ${share.exec(note)[1]} did, when that isn't known.`), ...formLines.map((entry) => `${entry}.`), ...(line ? [`${line}.`] : [])];
     const rules = notes.filter((note) => !share.test(note));
     return {
         ...base,
