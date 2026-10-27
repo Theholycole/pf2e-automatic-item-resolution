@@ -321,7 +321,9 @@ export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, i
     // (Ended by its creature's next Strike, Amulet of the Hellcat's Invisible: entry.endsOnStrike, scripts/ends-on-strike.js.)
     // (The conditions it keeps its creature from gaining once, Immortal Bastion's: entry.prevents, scripts/prevent-condition.js; its healing at
     // each turn's start, Infernal Health's: entry.turnHeal, scripts/turn-heal.js.)
-    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}) }, item, user, worldTime, initiative, moduleId });
+    // (Gone at its creature's next daily preparations, and in place of the item's earlier one, Terrain Adaptation's: entry.untilRest,
+    // entry.replaces — scripts/until-rest.js.)
+    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.untilRest ? { untilRest: true } : {}), ...(entry.replaces ? { replaces: true } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // Protection from heat or cold in words, with its time and its terms: "Severe heat counts as mild heat for 24 hours".
@@ -333,7 +335,7 @@ export function temperatureLine(temperature) {
 // Its Effect: the environment module's flag (flags.<environment>.temperature { counts, fatigueHours?, source }), read as the creature feels the
 // temperature, for the item's time.
 export function temperatureEffectSource(temperature, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    return ownEffectSource({ name: "temperature", img: "icons/svg/sun.svg", words: temperatureLine(temperature), rules: [], duration: temperature.duration, flag: { temperature: true }, extraFlags: { [ENVIRONMENT_ID]: { temperature: temperatureFlag(temperature, item.name ?? "an item") } }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: "temperature", img: "icons/svg/sun.svg", words: temperatureLine(temperature), rules: [], duration: temperature.duration, flag: { temperature: true, ...(temperature.untilRest ? { untilRest: true } : {}), ...(temperature.replaces ? { replaces: true } : {}) }, extraFlags: { [ENVIRONMENT_ID]: { temperature: temperatureFlag(temperature, item.name ?? "an item") } }, item, user, worldTime, initiative, moduleId });
 }
 
 // A fall it eases in words, with its time: "Its falls count as 120 feet shorter for 1 round".

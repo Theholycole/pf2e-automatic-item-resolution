@@ -366,6 +366,9 @@ const READINGS = [
         })
     }
 ];
+// (Graymist's reaction, the same words as Shadowmist Cape's — an artifact cape, 2026-10-27: the same reading, its note Effect on the creature
+// that missed.)
+READINGS.push({ ...READINGS.find((entry) => entry.name === "Shadowmist Cape"), name: "Graymist" });
 
 // Whether a reading is for this source name.
 export const hasVisibilityReading = (name) => READINGS.some((entry) => entry.name === name);

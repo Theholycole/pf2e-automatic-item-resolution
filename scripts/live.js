@@ -66,6 +66,7 @@ import { toggleOff, toggleOn } from "./toggle-off.js";
 import { endOnStrike } from "./ends-on-strike.js";
 import { plateShield } from "./shield-temp.js";
 import { endSpeedPenalties, granterOf, sparedBy } from "./speed-penalties.js";
+import { replacedBy } from "./until-rest.js";
 import { degreeOf } from "../src/compiler/consumables.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -893,6 +894,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const entry of state.plan.item?.ruleEffects ?? []) {
         if (!target.actor) break;
+        // (In place of its earlier one, Terrain Adaptation's: scripts/until-rest.js.)
+        const replaced = entry.replaces ? replacedBy(target.actor, { itemUuid: state.item.uuid, name: entry.name }) : [];
+        if (replaced.length) await target.actor.deleteEmbeddedDocuments("Item", replaced);
         await target.actor.createEmbeddedDocuments("Item", [ruleEffectSource(entry, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${entry.words}`);
     }
@@ -936,6 +940,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (Protection from heat or cold for its time, src/compiler/temperature.js: an Effect the environment module reads.)
     const temperature = state.plan.temperature;
     if (temperature?.counts && target.actor) {
+        const replaced = temperature.replaces ? replacedBy(target.actor, { itemUuid: state.item.uuid, kind: "temperature" }) : [];
+        if (replaced.length) await target.actor.deleteEmbeddedDocuments("Item", replaced);
         await target.actor.createEmbeddedDocuments("Item", [temperatureEffectSource(temperature, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${temperatureLine(temperature)}`);
     }
@@ -1180,6 +1186,17 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             if (entry.unlessMagical && sparedBy(granterOf(creature.actor, slug), entry.unlessMagical)) {
                 lines.push(`${creature.name} stays ${slug} (${granterOf(creature.actor, slug).name}: magical, level ${entry.unlessMagical} or higher)`);
                 continue;
+            }
+            // (The effect giving it ending too, Cayden's Tankard's "Any effect causing these conditions ends": the Effect that grants it deleted —
+            // PF2e's grantedBy —, the item it came from, lower in level, kept from making it again for a while, a line.)
+            if (entry.granter === "ends") {
+                const granter = granterOf(creature.actor, slug);
+                if (granter) {
+                    const origin = granter.system?.context?.origin?.item ? await fromUuid(granter.system.context.origin.item).catch(() => null) : null;
+                    await granter.delete();
+                    const below = origin && Number(origin.level ?? origin.system?.level?.value) < Number(state.plan.item?.level ?? 0);
+                    lines.push(`${creature.name}: ${granter.name} ends${below && entry.granterWeeks ? ` (${origin.name} can't produce it again for ${entry.granterWeeks} week${entry.granterWeeks === 1 ? "" : "s"})` : ""}`);
+                }
             }
             const line = await lowerCondition(creature.actor, creature.name, slug, entry.by);
             // (Of a list it ends — Cayden's Tankard's six — only the ones there.)

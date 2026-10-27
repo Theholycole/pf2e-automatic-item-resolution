@@ -93,7 +93,7 @@ export async function postExposureCard({ message, plan, used, actor, token, late
     const repeat = later && repeatsLater(text);
     const time = repeat ? itemDuration(text) : null;
     const until = time ? game.time.worldTime + time.value * (SECONDS[time.unit] ?? 3600) : null;
-    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until, own: isOwnSave(plan, text), attacker: /\bcreature (?:that|who) touches you\b/i.test(text) ? "touch" : ATTACKER.test(text), attackChoices: plan.ownCheck?.choose ? attackChoices(actor, plan.ownCheck.choose, { atLeast: plan.ownCheck.atLeast ?? null }) : null });
+    const state = createExposureCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), later, repeat, until, own: plan.ownSave === true || isOwnSave(plan, text), attacker: /\bcreature (?:that|who) touches you\b/i.test(text) ? "touch" : ATTACKER.test(text), attackChoices: plan.ownCheck?.choose ? attackChoices(actor, plan.ownCheck.choose, { atLeast: plan.ownCheck.atLeast ?? null }) : null });
     return ChatMessage.create({ content: exposureCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 

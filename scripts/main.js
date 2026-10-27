@@ -40,6 +40,7 @@ import { setUpHalfDamage } from "./half-damage.js";
 import { setUpHealAfter } from "./heal-after.js";
 import { setUpEndsOn } from "./ends-on.js";
 import { setUpThenFor } from "./then-for.js";
+import { setUpUntilRest } from "./until-rest.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
@@ -211,6 +212,8 @@ Hooks.once("ready", async () => {
     setUpEndsOn();
     // (Penalties for a while after a persistent damage ends, Secret-Keeper's Mask (Father Skinsaw)'s: scripts/then-for.js.)
     setUpThenFor();
+    // (Effects until their creature's next daily preparations, Terrain Adaptation's: scripts/until-rest.js.)
+    setUpUntilRest();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

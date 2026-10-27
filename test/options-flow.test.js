@@ -471,7 +471,9 @@ test("Break Bonds and Cayden's Tankard: the Speed penalties ended with the condi
     const bonds = planOf("Spleen Bloodstone of Arazni", 1);
     const tankard = planOf("Cayden's Tankard", 1);
     assert.deepEqual([Boolean(bonds.partial), bonds.notes ?? [], bonds.item.speedPenaltiesEnd, bonds.item.reduce.every((entry) => entry.unlessMagical === 12)], [false, [], { unlessMagical: 12 }, true]);
-    assert.deepEqual([Boolean(tankard.partial), tankard.notes ?? [], tankard.item.speedPenaltiesEnd], [false, [], { type: "circumstance", targets: true }]);
+    // (2026-10-27, src/compiler/artifact-readings.js: the Tankard's other sentences its card's lines now — its targets, an Escape still needed,
+    // its use while paralyzed —, and the Effects giving the conditions ended too.)
+    assert.deepEqual([Boolean(tankard.partial), tankard.notes.length, tankard.item.speedPenaltiesEnd, tankard.item.reduce.every((entry) => entry.granter === "ends")], [false, 3, { type: "circumstance", targets: true }, true]);
     const { endSpeedPenalties, sparedBy } = await import("../scripts/speed-penalties.js");
     const made = (name, rules, extra = {}) => { const effect = { name, system: { rules, ...extra }, updated: null, deleted: false, update: async (changes) => { effect.updated = changes; }, delete: async () => { effect.deleted = true; } }; return effect; };
     const mud = made("Mud", [{ key: "FlatModifier", selector: "land-speed", value: -10, type: "circumstance" }]);
