@@ -93,7 +93,7 @@ function withHalted(plan, item, entry) {
     if (!found) return null;
     const level = Number(item.system?.level?.value) || 0;
     const modifier = levelModifier(level);
-    const suppress = { value: count(found[3]), unit: unitOf(found[4]), words: "halted: its penalties don't apply and this time doesn't count toward its duration; it resumes where it left off once this ends" };
+    const suppress = { value: count(found[3]), unit: unitOf(found[4]), words: "halted: its penalties don't apply and this time doesn't count toward its duration; it picks up where it stopped once this is over" };
     return activationPlan(plan, item, entry, { modifier, rank: Math.max(1, Math.ceil(level / 2)), conditions: [], traits: [], afflictions: [found[1].toLowerCase(), found[2].toLowerCase()].sort(), pick: "one", within: 5, suppress, notes: [`Its counteract modifier +${modifier}: the item gives none, so its level's DC less 10 (the GM's call).`] });
 }
 

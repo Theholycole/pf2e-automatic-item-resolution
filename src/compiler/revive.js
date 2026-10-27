@@ -57,7 +57,7 @@ export function withRevival(plan, html, base = null) {
     if (raised) {
         const { notes: _notes, partial: _partial, ...drink } = plan;
         const time = /week/i.test(raised[1]) ? "a week" : raised[1];
-        const back = revivePlan({ ...drink, item: { ...drink.item, restore: undefined } }, { hp: Number(raised[2]), words: "Back from death with no spell slots, Focus Points or other daily resources" }, { notes: [`Only a creature dead for ${time} or less (the GM's).`] });
+        const back = revivePlan({ ...drink, item: { ...drink.item, restore: undefined } }, { hp: Number(raised[2]), words: "Back from death without its daily resources: no spell slots or Focus Points, nor any other" }, { notes: [`Only a creature dead for ${time} or less (the GM's).`] });
         return { ...drink, builtin: "ways", automation: { level: "automatic" }, ways: [{ name: "Drink it", html: "", plan: { ...drink, automation: { level: "automatic" } } }, { name: "On a dead creature", html: "", plan: back }], once: true };
     }
     if (!plan && base && GIFT.test(text.replace(GIFT_FLAVOR, "").trim()) && GIFT_FLAVOR.test(text)) {
