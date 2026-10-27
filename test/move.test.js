@@ -59,7 +59,8 @@ test("not a move: a Trigger that's a Stride, a Strike along the way a line of th
     assert.deepEqual([sword.teleport.move.verb, sword.partial], ["Fly", undefined]);
     assert.ok(sword.notes.some((note) => /\bmelee Strike\b.*\(its own actions\)\.$/.test(note)));
     const claw = compileItem(item("Lion Claw"));
-    assert.deepEqual([claw.builtin, claw.teleport.move.verb, claw.partial], ["teleport", "Stride", true]);
+    // (2026-10-27: its Strike and its staying Undetected lines of the move card now, src/compiler/visibility.js.)
+    assert.deepEqual([claw.builtin, claw.teleport.move.verb, claw.partial], ["teleport", "Stride", undefined]);
 });
 
 test("the move beside the rest: Phase Spike's resistance during its Stride; Invisible Chain Shirt's Concealed, its hostile-action end a note Effect (2026-10-26)", () => {

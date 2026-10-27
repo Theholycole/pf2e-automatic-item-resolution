@@ -508,7 +508,9 @@ test("bonuses narrower than PF2e's rolls, on the whole roll for their time: Phan
         const [bonus] = plan.resolution.outcomes.success.modifiers;
         return [bonus.selector, bonus.value, bonus.type, bonus.predicate ?? null, `${bonus.duration.value} ${bonus.duration.unit}`, plan.partial, plan.unread[0]];
     };
-    assert.deepEqual(summary("Phantom Roll"), ["stealth", 1, "item", null, "24 hours", true, "The bonus is only for Stealth checks during the Avoid Notice exploration activity."]);
+    // (2026-10-27: Phantom Roll's bonus is now on its note Effect, PF2e's own action:avoid-notice or its toggle — src/compiler/visibility.js.)
+    const roll = compileItem(item("Phantom Roll"));
+    assert.deepEqual([roll.resolution.outcomes.success.modifiers, roll.resolution.outcomes.success.noteEffects[0].rules[1].predicate, roll.partial], [[], [{ or: ["action:avoid-notice", "phantom-roll-avoid-notice"] }], undefined]);
     // (2026-10-27: Infiltrator's Elixir's narrower words are now words on its note Effect for the 10 minutes, its disguise with them — the user's
     // note-Effect rule, src/compiler/rule-words.js; its bonus still on the whole Deception DC.)
     const elixir = compileItem(item("Infiltrator's Elixir"));
@@ -941,7 +943,8 @@ test("narrow bonuses on PF2e's roll options, the narrower words a note (the user
     assert.deepEqual(bonus("Oozepick"), [["thievery", 2, "item", "1 hours", JSON.stringify([{ or: ["action:pick-a-lock", "action:disable-a-device"] }])]]);
     assert.deepEqual(bonus("Conspirator's Cookie")[0].slice(0, 4), ["diplomacy", 1, "item", "1 hours"]);
     assert.deepEqual(bonus("Mender's Soup"), [["crafting", 1, "item", "24 hours", JSON.stringify(["action:repair"])]]);
-    assert.deepEqual(bonus("Aroma Concealer")[0].slice(0, 2), ["stealth", 2]);
+    // (2026-10-27: Aroma Concealer's bonus against smell is now on its note Effect with its toggle — src/compiler/visibility.js.)
+    assert.deepEqual(compileItem(item("Aroma Concealer")).resolution.outcomes.success.noteEffects[0].rules[1].value, 2);
     assert.deepEqual(bonus("Potion of Disguise (Lesser)"), [["deception-dc", 4, "status", "24 hours", "null"]]);
     assert.deepEqual(bonus("Fungal Walk Musk"), [["ac", 1, "item", "1 days", JSON.stringify(["origin:trait:fungus"])]]);
     const vapor = compileItem({ ...item("Healing Vapor (Major)"), ownerLevel: 10 });

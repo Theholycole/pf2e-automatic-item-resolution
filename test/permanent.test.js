@@ -712,7 +712,8 @@ test("a save's degrees in sentences (Gearblade: DC 36 Reflex, 3d12 bludgeoning o
     assert.deepEqual(pinch.plan.resolution.sharedDamage.components.map((component) => component.formula), ["1[slashing]"]);
     const [shadowmist] = compileActivations(item("Shadowmist Cape"), { spellEffects });
     assert.deepEqual([shadowmist.plan.resolution.check.statistic, shadowmist.plan.resolution.check.against], ["stealth", { dc: "target", statistic: "perception" }]);
-    assert.deepEqual([shadowmist.plan.resolution.outcomes.success.effects, shadowmist.plan.resolution.outcomes.success.manualInstructions], [[], ["{source} (success): you're Hidden from that creature until the end of your next turn or until right after you use a hostile action against that creature (by hand)."]], "its user's, not the creature's");
+    // (2026-10-27: its Hidden now words on the creature that missed, a note Effect, its GM line gone — src/compiler/visibility.js.)
+    assert.deepEqual([shadowmist.plan.resolution.outcomes.success.effects, shadowmist.plan.resolution.outcomes.success.manualInstructions, shadowmist.plan.resolution.outcomes.success.noteEffects[0].label], [[], undefined, "Lost in the mist"], "its user's, not the creature's");
     const [opus] = compileActivations(item("Storyteller's Opus"), { spellEffects });
     assert.equal(opus.plan.resolution.check.statistic, "deception");
 });

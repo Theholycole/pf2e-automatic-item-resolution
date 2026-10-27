@@ -5,6 +5,9 @@
 
 const DICE_STEP = /\bdamage\b[^.]*?\bincreases? to (\d+d\d+) if [^.]*?\bhas an? greater striking rune,? (?:or|and) (?:to )?(\d+d\d+) if [^.]*?\bmajor striking rune\b[^.]*\./i;
 const FLAT_STEP = /\b(?:The )?(\w+) damage increases to (\d+) \1 damage with a greater striking rune and (\d+) \1 damage with a major striking rune\./i;
+// (Or its first part beside a die, Guiding Starknife's "This damage increases to 6 piercing plus 1d4 spirit with a greater striking rune and to
+// 8 piercing plus 1d4 spirit with a major striking rune": the same flat step, 2026-10-27.)
+const PLUS_STEP = /\bThis (damage) increases to (\d+) \w+ plus [^.]*? with a greater striking rune and to (\d+) \w+ plus [^.]*? with a major striking rune\./i;
 // (Any sentence of a step by the striking rune — the Strike reader's own "If the club has a greater striking rune, increase the additional
 // damage to 2d6" too: the item's rune decides it, not a rule left out.)
 // (And a step by its potency rune, Screaming Pinion's "If the screaming pinion has a +3 potency rune, the DC increases to 35".)
@@ -46,7 +49,7 @@ export function withRuneSteps(given, text, item) {
     const striking = Number(item?.system?.runes?.striking) || 0;
     const plain = String(text ?? "");
     const dice = DICE_STEP.exec(plain);
-    const flat = !dice ? FLAT_STEP.exec(plain) : null;
+    const flat = !dice ? FLAT_STEP.exec(plain) ?? PLUS_STEP.exec(plain) : null;
     if (!plan?.resolution || (!dice && !flat)) return plan;
     const sentence = (dice ?? flat)[0];
     const step = striking >= 3 ? (dice ? { dice: dice[2] } : { flat: Number(flat[3]) }) : striking >= 2 ? (dice ? { dice: dice[1] } : { flat: Number(flat[2]) }) : null;

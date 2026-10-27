@@ -38,7 +38,21 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27: a targeting flat check's DC, which no PF2e rule sets — PF2e's own Effect: Mummified Bat leaves the same to its words.)
     ["Cat's Eye Elixir", "flat checks to target Hidden creatures within 30 feet at DC 5, and none to target Concealed ones, for its minute: its user's own rolls"],
     // (2026-10-27: a day's food, and immune to it after a week of nothing else until a day of real meals: the table's, out of combat.)
-    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"]
+    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"],
+    // (2026-10-27, the visibility group's: what each sees, tells or hides is the GM's and the map's, no number a card applies.)
+    ["Ring of Observation (Lesser)", "a minute of focusing (one concentrate action each) to feel whether creatures within 30 feet that aren't Hidden from its wearer are watching it: the GM's to say (information)"],
+    ["Ring of Observation (Moderate)", "10 minutes of focusing (one concentrate action each) to feel whether creatures within 60 feet that aren't Hidden from its wearer are watching it: the GM's to say (information)"],
+    ["Ring of Observation (Greater)", "an hour of focusing (one concentrate action each) to feel whether creatures within 120 feet that aren't Hidden from its wearer are watching it: the GM's to say (information)"],
+    ["Ectoplasmic Tracer", "incorporeal spirits in its 15-foot cone marked for 1d4 days, +2 to Track them and 10 minutes' scraping to remove it: tracking out of combat, the GM's"],
+    ["Lover's Ink", "a hidden message, revealed by more ink and 3 Interact actions, or spotted by a DC 25 Seek: an object and a message, the GM's"],
+    ["Parchment of Secrets", "a secret message hidden in the letters until someone taps the symbol: an object and a message"],
+    ["Moonlit Ink", "a stamp that fades from sight until an hour of moonlight, or a DC 25 Perception check: an object, the GM's"],
+    ["Tlil Mask", "a minute of seeing through small living plants within 60 feet (no concealment, Hiding or Sneaking by them alone against its wearer): the map's and the GM's"],
+    ["Tlil Mask (Greater)", "10 minutes of seeing through small living plants within 60 feet (no concealment, Hiding or Sneaking by them alone against its wearer): the map's and the GM's"],
+    ["Silent Bell: Ring in the Quiet", "a 20-foot cube no sound passes into or out of for 10 minutes, lips still read through it: sound and the map"],
+    ["Twilight Tattoo: Fade", "the tattoo unseen and undetectable by magic for a day, Dismissed at will: an appearance"],
+    ["Ally's Kerchief: Identify Allies", "a symbol glowing over its wearer that only matching kerchiefs' wearers see: recognition, no game numbers"],
+    ["Mirrorblade: Scryshield", "an hour unseen by scrying, and the scrying within 30 feet learned (detect scrying), ended by sheathing, dropping or attacking with the blade: information out of combat"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));
