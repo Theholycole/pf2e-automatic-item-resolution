@@ -193,3 +193,30 @@ test("the Impossible rune: its Strike at a creature beyond reach or range, PF2e'
     assert.ok(strikeLines(strike).includes("No range increment penalty on it"));
     assert.deepEqual([activation("Spined Shield").decided, activation("Spined Shield").partial], ["one-off", undefined]);
 });
+
+test("Chaplain's Cudgel's Bow to a Higher Power: PF2e's own toggle flipped by each use (its holy or unholy trait on the Strikes), the deity's weapon's shape and the spell's damage toggle lines of the card", () => {
+    const bow = activation("Chaplain's Cudgel", "Bow to a Higher Power");
+    assert.deepEqual([bow.builtin, bow.partial, bow.modes[0].plan], ["modes", undefined, { builtin: "roll-option", option: "chaplains-cudgel:bow-to-a-higher-power", value: "flip" }]);
+    assert.match(bow.notes[0], /^It takes the shape of your deity's favored weapon/);
+    assert.match(bow.notes[1], /tick its "cast a two-action spell" toggle/);
+});
+
+test("Morphing Weapon's Reshape: the ways card's benefit for the Strike — more reach, one of three damage types, PF2e's Disarm after the hit, a status bonus of the weapon's dice", async () => {
+    const { strikeRules } = await import("../src/live/strike-card.js");
+    const reshape = compileActivations(item("Morphing Weapon"))[0].plan;
+    assert.deepEqual([reshape.builtin, reshape.partial, reshape.ways.map((way) => way.name)], ["ways", undefined, ["Reach", "Shift: bludgeoning", "Shift: piercing", "Shift: slashing", "Take", "Weigh"]]);
+    const way = (name) => reshape.ways.find((entry) => entry.name === name).plan;
+    assert.deepEqual([way("Reach").strike.reach, way("Shift: piercing").strike.alteration, way("Take").strike.follow.action.slug], [{ more: 5 }, "piercing", "disarm"]);
+    assert.deepEqual(strikeRules(way("Weigh")).filter((rule) => rule.key === "FlatModifier").map((rule) => [rule.type, rule.value]), [["status", "@weapon.system.damage.dice"]]);
+    assert.deepEqual(strikeRules(way("Shift: piercing")).filter((rule) => rule.key === "DamageAlteration").map((rule) => rule.value), ["piercing"]);
+});
+
+test("Highhelm War Shields: the critical hit's impaling Grabbed until it Escapes (its wielder's Athletics DC), PF2e's persistent bleed of the blades' dice, its can't-end and Escape DC on a note Effect while it bleeds", () => {
+    for (const [grade, dice, dc] of [["Lesser", 2, 25], ["Moderate", 3, 31], ["Greater", 4, 43]]) {
+        const plan = activation(`Highhelm War Shield (${grade})`);
+        const row = plan.resolution.outcomes.success;
+        assert.deepEqual([plan.partial, row.manualInstructions, row.damage.formulas[0].formula, row.effects[0].duration], [undefined, undefined, `${dice}[persistent,bleed]`, { mode: "until-escape", escape: { ownerDC: "athletics" } }], grade);
+        assert.deepEqual([row.noteEffects[0].whilePersistent, new RegExp(`DC ${dc} once`).test(row.noteEffects[0].text)], ["bleed", true], grade);
+        assert.equal(plan.notes.length, 2);
+    }
+});

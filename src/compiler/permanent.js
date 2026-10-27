@@ -73,8 +73,10 @@ import { withMomentumWays } from "./momentum-ways.js";
 import { withRedirectedStrike } from "./redirected-strike.js";
 import { withKindWays } from "./kind-ways.js";
 import { withSilhouette } from "./silhouette.js";
+import { withImpaled } from "./impaled.js";
 import { othersActionsPlan } from "./others-actions.js";
 import { anywhereStrikePlan } from "./anywhere-strike.js";
+import { benefitWaysPlan } from "./benefit-ways.js";
 import { withRangeFree } from "./range-free.js";
 import { songWaysPlan } from "./songs.js";
 import { isBareFigurine, ownerDCs, withItemData } from "./item-data.js";
@@ -227,6 +229,7 @@ const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), ca
 // The readings of 2026-10-27's Strike group, outermost in an activation's chain (after the readers of the notes they take): one of two effects
 // by the actions spent, the 1-action one a Strike's (src/compiler/momentum-ways.js: Horned Hand Rests); a bonus against the kind of creature
 // its user selects (src/compiler/kind-ways.js: Undead Compendium); a flat shadow's form (src/compiler/silhouette.js: Silhouette Cloak); a
+// creature impaled on a shield's blades (src/compiler/impaled.js: Highhelm War Shields); a
 // Strike turned on another on a failed save (src/compiler/redirected-strike.js: Cauthooj Bagpipes' Throw Song); what a Strike gains against a
 // foe in a condition (src/compiler/strike-if.js: Minotaur Chair); a Strike card's notes that are its user's to do, its lines
 // (src/compiler/strike-lines.js); and a hit's note Effect that holds its Strike card's notes (src/compiler/hit-note-held.js).
@@ -235,7 +238,8 @@ function strikeGroupReadings(plan, entry, item) {
     const momentum = withMomentumWays(plan, html);
     const kinds = withKindWays(momentum, item?.system?.description?.value);
     const form = withSilhouette(kinds, plainText(html), plainText(item?.system?.description?.value));
-    return withHitNoteHeld(withStrikeLines(withStrikeIf(withRedirectedStrike(form))));
+    const impaled = withImpaled(form, item?.system?.description?.value);
+    return withHitNoteHeld(withStrikeLines(withStrikeIf(withRedirectedStrike(impaled))));
 }
 
 // Each activation → { activation, plan } (plan null when nothing is read). options: as compileItem's.
@@ -718,6 +722,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = othersActionsPlan(activation.html, base, item) ?? plan;
         // (A Strike beyond its weapon's reach or range, free of penalties, src/compiler/anywhere-strike.js: the Impossible rune.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = anywhereStrikePlan(activation.html, base) ?? plan;
+        // (A Strike with one of several benefits its user picks, src/compiler/benefit-ways.js: Morphing Weapon's Reshape — the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = benefitWaysPlan(activation.html, base, { ...options, item }) ?? plan;
         // (No range penalty out to an increment for a while, src/compiler/range-free.js: Falconsight Eye — PF2e's roll option on its note Effect.)
         plan = withRangeFree(plan, plainText(activation.html));
         // (A tattoo of one animal, src/compiler/bane.js: Tooth and Claw Tattoo's attack — the animal picked on the ways card.)
