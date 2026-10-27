@@ -14,7 +14,9 @@ const USER_ID = "source";
 
 // The resource the point is: a Focus Point, or a Mythic Point — a Hero Point under the world setting (scripts/spend.js). → { key, word }.
 // (Or an alchemist's versatile vials, PF2e's special resource: { key, word, slug }, its slug for PF2e's updateResource.)
-const resourceOf = (focus) => (focus?.resource === "mythic" ? costResource() : focus?.resource === "versatile-vials" ? { key: "versatileVials", word: "versatile vial", slug: "versatile-vials" } : { key: "focus", word: "Focus Point" });
+// (Or its infused reagents, PF2e's crafting resource: system.resources.crafting.infusedReagents — Red Hand's Satchel, 2026-10-27.)
+const resourceOf = (focus) => (focus?.resource === "mythic" ? costResource() : focus?.resource === "versatile-vials" ? { key: "versatileVials", word: "versatile vial", slug: "versatile-vials" } : focus?.resource === "infused-reagents" ? { key: "crafting.infusedReagents", word: "batch of infused reagents" } : { key: "focus", word: "Focus Point" });
+const poolOf = (actor, key) => String(key).split(".").reduce((value, part) => value?.[part], actor?.system?.resources ?? {}) ?? null;
 
 export async function postFocusCard({ message, plan, used, actor, token }) {
     const state = { ...createFocusCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: entryOf(token, actor) }), word: resourceOf(plan.focus).word };
@@ -28,8 +30,8 @@ export async function applyFocusCard(message) {
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const focus = state.plan.focus;
     const { key, word, slug } = resourceOf(focus);
-    const pool = actor.system?.resources?.[key] ?? null;
-    const after = poolAfter(pool, focus.amount);
+    const pool = poolOf(actor, key);
+    const after = poolAfter(pool, focus.amount, { overMax: Boolean(focus.overMax) });
     const lines = [];
     if (after.reason === "no-pool") lines.push(key === "focus" ? `${state.user.name} has no focus pool: nothing gained.` : `${state.user.name} can't have ${word}s: nothing gained.`);
     else if (after.reason === "full") lines.push(key === "focus" ? `${state.user.name}'s focus pool is full (${after.value} of ${after.max}): no Focus Point gained.` : `${state.user.name}'s ${word}s are full (${after.value} of ${after.max}): no ${word} gained.`);
@@ -40,11 +42,14 @@ export async function applyFocusCard(message) {
         else await actor.update({ [`system.resources.${key}.value`]: after.value });
         lines.push(`${state.user.name} gains ${after.gained} ${word}${after.gained === 1 ? "" : "s"} (${after.value} of ${after.max})${focus.only ? `, only to ${focus.only}` : ""}.`);
         // (The started encounter the creature is in, whichever one the GM is viewing.)
-        const found = focus.lost === "turn-end" ? encounterOf(actor) : null;
+        // (Or at the end of its next turn, Red Hand's Satchel's reagents: one turn's end passed over when it's gained on its own turn.)
+        const found = ["turn-end", "next-turn-end"].includes(focus.lost) ? encounterOf(actor) : null;
         if (found) {
-            await actor.setFlag(MODULE_ID, GRANT, { before, gained: after.gained, combatId: found.combat.id, combatantId: found.combatant.id, item: state.item.name, key, word });
-            lines.push("Unspent at the end of the turn, it's taken back.");
+            const skip = focus.lost === "next-turn-end" && found.combat.combatant?.id === found.combatant.id ? 1 : 0;
+            await actor.setFlag(MODULE_ID, GRANT, { before, gained: after.gained, combatId: found.combat.id, combatantId: found.combatant.id, item: state.item.name, key, word, ...(skip ? { skip } : {}) });
+            lines.push(focus.lost === "next-turn-end" ? "Unused at the end of its next turn, it's taken back." : "Unspent at the end of the turn, it's taken back.");
         } else if (focus.lost === "turn-end") lines.push("Not in an encounter: take it back by hand if it isn't spent this turn.");
+        else if (focus.lost === "next-turn-end") lines.push("Not in an encounter: take it back by hand if it isn't used by the end of its next turn.");
         // (Its reminder, until the end of the turn when it's lost then, else for the round.)
         const applyChange = game.modules.get(ABILITY_ID)?.api?.live?.applyChange;
         if (applyChange && focus.only) {
@@ -63,12 +68,14 @@ export async function loseUnspentFocus(combatant, encounter) {
     const actor = combatant?.actor;
     const grant = actor?.getFlag?.(MODULE_ID, GRANT);
     if (!grant) return null;
+    // (Kept past this turn's end, the one it was gained in: lost at the next — Red Hand's Satchel's.)
+    if (Number(grant.skip) > 0 && grant.combatId === encounter?.id) return actor.setFlag(MODULE_ID, GRANT, { ...grant, skip: Number(grant.skip) - 1 });
     await actor.unsetFlag(MODULE_ID, GRANT);
     // (Another encounter's: its turn is gone, nothing to take back now.)
     if (grant.combatId !== encounter?.id) return null;
     // (A Mythic or Hero Point's: its own resource.)
     const key = grant.key ?? "focus";
-    const pool = actor.system?.resources?.[key] ?? null;
+    const pool = poolOf(actor, key);
     const lost = unspent(grant, pool);
     if (!lost) return null;
     await actor.update({ [`system.resources.${key}.value`]: (Number(pool.value) || 0) - lost });

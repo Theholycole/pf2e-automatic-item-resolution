@@ -11,18 +11,20 @@ export function createFocusCard({ plan, item, user }) {
 // What it gives, in words: "1 Focus Point, only to cast a witch hex spell; lost at the end of the turn if not spent".
 // (word: the point's name, "Focus Point" — or a Mythic Point's, "Mythic Point" or "Hero Point" as the world setting has it.)
 // (Or an alchemist's versatile vial, Alchemist's Haversack's: "versatile vial".)
-export const pointWord = (focus, word = null) => word ?? (focus?.resource === "mythic" ? "Mythic Point" : focus?.resource === "versatile-vials" ? "versatile vial" : "Focus Point");
+// (Or a batch of an alchemist's infused reagents, Red Hand's Satchel's: "batch of infused reagents", 2026-10-27.)
+export const pointWord = (focus, word = null) => word ?? (focus?.resource === "mythic" ? "Mythic Point" : focus?.resource === "versatile-vials" ? "versatile vial" : focus?.resource === "infused-reagents" ? "batch of infused reagents" : "Focus Point");
 export function focusText(focus, word = null) {
     const points = `${focus.amount} ${pointWord(focus, word)}${focus.amount === 1 ? "" : "s"}`;
-    return [focus.only ? `${points}, only to ${focus.only}` : points, focus.lost === "turn-end" ? "lost at the end of the turn if not spent" : null].filter(Boolean).join("; ");
+    return [focus.only ? `${points}, only to ${focus.only}` : points, focus.lost === "turn-end" ? "lost at the end of the turn if not spent" : focus.lost === "next-turn-end" ? "lost at the end of its next turn if not used" : null].filter(Boolean).join("; ");
 }
 
-// The pool after the gain: { value, gained } — none without a pool, none over its maximum.
-export function poolAfter(pool, amount) {
+// The pool after the gain: { value, gained } — none without a pool, none over its maximum (unless overMax: Red Hand's Satchel's additional
+// batch, past its daily count).
+export function poolAfter(pool, amount, { overMax = false } = {}) {
     const max = Number(pool?.max) || 0;
     const value = Number(pool?.value) || 0;
     if (max <= 0) return { value, gained: 0, max, reason: "no-pool" };
-    const next = Math.min(max, value + amount);
+    const next = overMax ? value + amount : Math.min(max, value + amount);
     return { value: next, gained: next - value, max, reason: next === value ? "full" : null };
 }
 

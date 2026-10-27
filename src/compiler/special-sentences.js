@@ -5,6 +5,7 @@
 // and its closing (that Effect ended, item.endsOwn). Pure.
 
 import { withSentenceReadings } from "./lasting.js";
+import { LEVEL_DCS } from "./counteract.js";
 
 const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours" };
 const timeOf = (value, unit) => ({ mode: "fixed", value: Number(value), unit: UNITS[String(unit).toLowerCase()], expiry: "turn-start", anchor: "effect-start" });
@@ -33,6 +34,49 @@ const RIFT = "Rift to the Boneyard";
 const LOCKED = "Locked on";
 
 const READINGS = [
+    {
+        // (3rd-rank Circle of Protection against undead in place of an alignment, a 10-foot emanation around the athame: a zone on its user for a
+        // minute, each creature inside +1 status to AC against undead creatures' attacks and to saves against their effects, +3 against a summoned
+        // undead's attacks and (its toggle) an undead's effect that directly controls it; a summoned undead entering attempts a Will save at the
+        // athame's level DC to come in. That save only for summoned undead needs the ability module's all-traits filter (requested): partial.)
+        name: "Spiral Athame",
+        over: true,
+        sentences: [
+            /^You point the Spiral Athame to the sky and pray, warding creatures against undead\.$/,
+            /^This has the effect of (\d)(?:st|nd|rd|th)-rank Circle of Protection, except it wards against undead creatures rather than creatures of a specified alignment, and the emanation is centered on the Spiral Athame ?\.$/
+        ],
+        card: ([, rank], plan, { item }) => {
+            if (plan?.builtin !== "cast-spell" || Number(rank[1]) !== 3) return null;
+            const dc = LEVEL_DCS[Math.max(0, Math.min(25, Number(item?.system?.level?.value) || 0))];
+            const toggle = "spiral-athame-ward:controlling";
+            const keep = { kind: "save", check: { roll: "save", statistic: "will", basic: false, against: { dc: "fixed", value: dc } }, sharedDamage: null, outcomes: { criticalSuccess: none(), success: none(), failure: { ...none(), noteEffects: [{ label: "Kept out of the ward", text: "This summoned undead can't willingly enter the Spiral Athame's ward; its later tries use this result.", duration: timeOf(1, "minute") }] }, criticalFailure: { ...none(), noteEffects: [{ label: "Kept out of the ward", text: "This summoned undead can't willingly enter the Spiral Athame's ward; its later tries use this result.", duration: timeOf(1, "minute") }] } } };
+            return {
+                builtin: "zone",
+                actions: null,
+                targeting: { target: null, range: null, area: { type: "emanation", value: 10 } },
+                partial: true,
+                automation: { level: "guided" },
+                zone: {
+                    area: { type: "emanation", value: 10 },
+                    centre: "self",
+                    range: null,
+                    lasts: timeOf(1, "minute"),
+                    untilReused: false, concealed: false, terrain: [], others: false, hazard: null, damage: [], effect: null, modifiers: [],
+                    saves: [{ when: ["enter"], only: { traits: ["undead"], all: ["undead", "summoned"] }, plan: { modelVersion: plan.modelVersion, source: plan.source, rank: 3, traits: ["divine", "necromancy"], trigger: { event: "zone" }, targeting: { target: "a summoned undead entering", range: null, area: null }, automation: { level: "automatic" }, resolution: keep } }],
+                    inside: [{ rules: [
+                        { key: "FlatModifier", slug: "spiral-athame-ward", selector: ["ac", "saving-throw"], type: "status", value: 1, predicate: ["origin:trait:undead"] },
+                        { key: "FlatModifier", slug: "spiral-athame-ward-summoned", selector: "ac", type: "status", value: 3, predicate: ["origin:trait:undead", "origin:trait:summoned"] },
+                        { key: "RollOption", domain: "saving-throw", option: toggle, toggleable: true, label: "Against an undead's effect that directly controls it", value: false },
+                        { key: "FlatModifier", slug: "spiral-athame-ward-controlling", selector: "saving-throw", type: "status", value: 3, predicate: ["origin:trait:undead", toggle] }
+                    ] }],
+                    notes: [
+                        "A 10-foot ward around the athame's holder for 1 minute: inside, +1 status to AC against undead's attacks and to saves against their effects; +3 against a summoned undead's attack, and (switch it on) against an undead's effect directly controlling the creature.",
+                        `A summoned undead entering attempts a DC ${dc} Will save (the athame's level DC: the GM may change it); failing, it can't willingly enter, its later tries using that result. Only a summoned one attempts it (until the ability module filters by both traits).`
+                    ]
+                }
+            };
+        }
+    },
     {
         // (A conjured javelin's ranged Strike — a javelin's, with the club's +3 and its damage dice — and its gazelle's leap to as many creatures
         // near the one hit as the actions spent: the ways card's three ways, each its user's thrown attack (Dexterity and simple weapon

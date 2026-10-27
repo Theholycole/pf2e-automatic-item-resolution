@@ -17,10 +17,16 @@ const LOST = /\b(?:if (?:it's |it is )?not used|if you don't spend (?:this|that|
 // Point is — the same card, 2026-10-27.)
 const VIAL = /\bYou pull an? versatile vial from the [\w' -]+?\.(?:\s*It's as effective as the vials you create at the start of the day\b[^.]*\.)?/i;
 
+// (Or a batch of infused reagents, Red Hand's Satchel's "You pull one additional batch of infused reagents from the satchel's secondary
+// compartment. If you fail to use these reagents by the end of your next turn, they're lost": PF2e's crafting resource one higher, past its
+// daily count (overMax), the unused one taken back at the end of its user's next turn — 2026-10-27.)
+const REAGENTS = /\bYou pull one additional batch of infused reagents from the [\w' -]+?\.\s*If you fail to use these reagents by the end of your next turn, they're lost\./i;
+
 // The activation's text (its block) → { amount, only, lost } or null.
 export function readFocusGain(html) {
     const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
     if (VIAL.test(text)) return { amount: 1, only: null, lost: null, resource: "versatile-vials" };
+    if (REAGENTS.test(text)) return { amount: 1, only: null, lost: "next-turn-end", resource: "infused-reagents", overMax: true };
     const match = GAIN.exec(text);
     if (!match) return null;
     // (Spent at once on a spell, or a point given elsewhere: not a gain to play.)

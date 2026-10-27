@@ -14,6 +14,7 @@ import { withNearbyDC } from "../src/live/scaled.js";
 import { endsFor, hostileAt } from "../src/live/targeted.js";
 import { saveText, withAttackChoice } from "../src/live/poison-card.js";
 import { markText, marksEndingAt } from "../src/live/card.js";
+import { focusText, poolAfter } from "../src/live/focus-card.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -89,4 +90,22 @@ test("Hunter's Dawn: the javelin's three ways (its user's thrown attack with the
     // (Its mark gone as its creature dies: the mark Effects at that creature's tokens.)
     const effects = [{ id: "m", flags: { "pf2e-automatic-item-resolution": { markEndsOnDeath: true } }, system: { rules: [{ key: "TokenMark", uuid: "Scene.s.Token.t" }] } }, { id: "n", flags: { "pf2e-automatic-item-resolution": { mark: "x" } }, system: { rules: [{ key: "TokenMark", uuid: "Scene.s.Token.t" }] } }];
     assert.deepEqual([marksEndingAt(effects, ["Scene.s.Token.t"]), marksEndingAt(effects, ["Scene.s.Token.u"])], [["m"], []]);
+});
+
+test("Spiral Athame: its Circle of Protection against undead a 10-foot ward around its holder for a minute, the bonuses inside, a summoned undead's Will save at the door", () => {
+    const [, ward] = plans("Spiral Athame");
+    assert.deepEqual([routeOf(ward), ward.zone.centre, ward.zone.area, ward.zone.lasts.value, ward.zone.lasts.unit], ["zone", "self", { type: "emanation", value: 10 }, 1, "minutes"]);
+    const rules = ward.zone.inside[0].rules;
+    assert.deepEqual(rules.filter((rule) => rule.key === "FlatModifier").map((rule) => [rule.value, rule.predicate]), [[1, ["origin:trait:undead"]], [3, ["origin:trait:undead", "origin:trait:summoned"]], [3, ["origin:trait:undead", "spiral-athame-ward:controlling"]]]);
+    const [save] = ward.zone.saves;
+    assert.deepEqual([save.when, save.only, save.plan.resolution.check.statistic, save.plan.resolution.check.against.value], [["enter"], { traits: ["undead"], all: ["undead", "summoned"] }, "will", 44]);
+    // (Its save for summoned undead alone waits for the ability module's all-traits filter: partial for that.)
+    assert.equal(ward.partial, true);
+});
+
+test("Red Hand's Satchel: one more batch of infused reagents past its daily count, lost unused at the end of its user's next turn", () => {
+    const [satchel] = plans("Red Hand's Satchel");
+    assert.deepEqual([done(satchel), routeOf(satchel), satchel.focus, satchel.trigger.frequency.per], [true, "focus", { amount: 1, only: null, lost: "next-turn-end", resource: "infused-reagents", overMax: true }, "day"]);
+    assert.equal(focusText(satchel.focus), "1 batch of infused reagents; lost at the end of its next turn if not used");
+    assert.deepEqual([poolAfter({ value: 4, max: 4 }, 1, { overMax: true }), poolAfter({ value: 4, max: 4 }, 1).reason, poolAfter({ value: 0, max: 0 }, 1, { overMax: true }).reason], [{ value: 5, gained: 1, max: 4, reason: null }, "full", "no-pool"]);
 });
