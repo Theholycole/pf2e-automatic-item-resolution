@@ -37,7 +37,9 @@ test("the reading: the action, its bonus, whether it's aimed; not when the item 
     assert.deepEqual(readItemAction(source("Coldstar Pistols").system.description.value)?.bonus, { value: 4, type: "circumstance" });
     // A total of its own (+7 "regardless"), a DC of its own: not PF2e's plain action.
     assert.equal(readItemAction(source("Neophyte's Fipple").system.description.value), null);
-    assert.equal(readItemAction(source("Lady's Blessing Oil").system.description.value), null);
+    // (2026-10-27: Lady's Blessing Oil's own DC is read now, every sentence of it — test/actions-2026-10-27.test.js —: First Aid's stabilize
+    // 5 lower, not PF2e's plain action.)
+    assert.deepEqual(readItemAction(source("Lady's Blessing Oil").system.description.value)?.dc, { less: 5 });
 });
 
 test("Onyx Panther: PF2e's Sneak with its +1 item bonus, no target needed", async () => {
@@ -289,5 +291,6 @@ test("a degree the item changes, and what its lines leave (2026-10-27): Ensnarin
     assert.deepEqual([Object.keys(hammers.plan.action.damage), hammers.plan.action.damage.criticalSuccess.resolution.outcomes.success.damage.multiplier, hammers.plan.partial], [["success", "criticalSuccess"], 2, undefined]);
     const coil = compileActivations(source("Binding Coil"))[0]?.plan ?? null;
     const coilPlan = coil ?? (await import("../src/compiler/index.js")).compileItem(source("Binding Coil"));
-    assert.equal(coilPlan.partial, true);
+    // (2026-10-27: its Escape DC is read now — on the grab's rows, test/actions-2026-10-27.test.js —, its user's move a line: no longer partial.)
+    assert.deepEqual([coilPlan.partial, coilPlan.action.escape], [undefined, { dc: 20 }]);
 });

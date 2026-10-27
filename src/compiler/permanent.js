@@ -147,6 +147,7 @@ import { withEffectThenCard } from "./effect-then-card.js";
 import { withRuneSteps } from "./rune-steps.js";
 import { withTriggered } from "./triggered.js";
 import { withAfflictionActivations } from "./affliction-readings.js";
+import { withAsThough, withUserActions } from "./user-actions.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
@@ -349,7 +350,8 @@ function withNamedOptions(item, entry, options) {
 
 function decideActivation(item, entry, read) {
     // (A trigger's own effect first, src/compiler/triggered.js: Lost Ember's Off-Guard or Confused suppressed.)
-    const plan = withTriggered(read, entry, item);
+    // (Then its user's own action or rule as its sentences say, src/compiler/user-actions.js: Bastion of the Inheritor's entrench bonus.)
+    const plan = withUserActions(withTriggered(read, entry, item), entry, item);
     const { activation } = entry;
     const base = activationBasePlan(item, entry);
     const next = withDecided(plan, { text: plainText(activation.html), base, kind: "activation", trigger: Boolean(activation.trigger), name: base.source.name, special: isSpecialItem(item) });
@@ -622,8 +624,9 @@ function compileEach(item, options = {}) {
             if (row && !row.noteOnly) plan = row;
         }
         if (!plan && options.spellEffects) plan = castPlan(part);
-        // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
-        if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(part, options) ?? plan;
+        // (A cast in other words, by the spell's name: src/compiler/cast-words.js — over the GM's no-effect too, Lion's Call's Locate, unless it
+        // counteracts — the counteract card's, Draconal Mask's —, 2026-10-27.)
+        if ((!plan || plan.noteOnly || (plan.builtin === "no-effect" && !readCounteract(activation.html, { level: item.system?.level?.value }))) && options.spells) plan = castWordsPlan(part, options) ?? plan;
         // (One spell of several its words name, Spark Dancer's "casts either Fireball or Lightning Bolt, depending on …": the words' choices,
         // 2026-10-27.)
         else if (plan?.builtin === "cast-spell" && !plan.choices?.length && options.spells) {
@@ -656,6 +659,8 @@ function compileEach(item, options = {}) {
         plan = rageOver(plan, ragePlan(plainText(activation.html), base));
         // (A skill action taken with it, src/compiler/item-actions.js: Bronze Bull Pendant's Shove.)
         plan = itemActionOver(plan, itemActionPlan(activation.html, base, { ...options, item }));
+        // (A result as though by another action's, src/compiler/user-actions.js: Self-Emptying Pocket's Create a Diversion.)
+        plan = withAsThough(plan, activation.html, item, options);
         // (A check with the item's own modifier, src/compiler/own-checks.js: Tentacle Cannon's Grapple at +13.)
         plan = ownCheckOver(plan, ownCheckPlan(plainText(activation.html), base, options));
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)

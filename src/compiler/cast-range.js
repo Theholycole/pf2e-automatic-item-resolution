@@ -11,7 +11,10 @@ const FORMS = [
     [/\bThe range of this \w+ is (planetary)\b/i, (match) => ({ words: match[1].toLowerCase() })],
     // (A burst's own range, Dazzling Shortbow's "Each creature in a 10-foot burst within 60 feet is affected by Revealing Light" (the spell's is
     // 120): area, its radius, so a creature in the burst at its edge isn't refused, 2026-10-27.)
-    [/\bin an? (\d+)-foot (?:burst|radius) within (\d+) feet\b/i, (match) => ({ feet: Number(match[2]), area: Number(match[1]) })]
+    [/\bin an? (\d+)-foot (?:burst|radius) within (\d+) feet\b/i, (match) => ({ feet: Number(match[2]), area: Number(match[1]) })],
+    // (A longer range for a place of one kind, Conch of Otherworldly Seas' Sounds of the Deep: "Provided you choose a location that's underwater, you
+    // can extend the spell's range to 1 mile" — its words, the place its user's to pick, 2026-10-27.)
+    [/\bProvided you choose a location that's (underwater), you can extend the spell's range to (\d+) (miles?)\b/i, (match) => ({ words: `${match[2]} ${match[3]} (to a location ${match[1]})` })]
 ];
 
 export function withCastRange(plan, spell = null) {

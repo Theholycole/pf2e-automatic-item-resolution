@@ -15,10 +15,10 @@ export const ACTION_SLUGS = Object.freeze({
     "gather information": "gather-information", "grab an edge": "grab-an-edge", grapple: "grapple", hide: "hide", "high jump": "high-jump", lie: "lie", "long jump": "long-jump",
     "make an impression": "make-an-impression", "palm an object": "palm-an-object", perform: "perform", "pick a lock": "pick-a-lock", "recall knowledge": "recall-knowledge",
     reposition: "reposition", request: "request", seek: "seek", "sense direction": "sense-direction", "sense motive": "sense-motive", shove: "shove", sneak: "sneak", squeeze: "squeeze",
-    steal: "steal", swim: "swim", track: "track", "treat wounds": "treat-wounds", trip: "trip", "tumble through": "tumble-through"
+    steal: "steal", swim: "swim", track: "track", "treat poison": "treat-poison", "treat wounds": "treat-wounds", trip: "trip", "tumble through": "tumble-through"
 });
 // The actions aimed at one creature: the presser's target is the DC's and the row's.
-export const TARGETED = new Set(["administer-first-aid", "create-a-diversion", "demoralize", "disarm", "feint", "grapple", "reposition", "request", "coerce", "make-an-impression", "shove", "steal", "trip", "treat-wounds"]);
+export const TARGETED = new Set(["administer-first-aid", "create-a-diversion", "demoralize", "disarm", "feint", "grapple", "reposition", "request", "coerce", "make-an-impression", "shove", "steal", "trip", "treat-poison", "treat-wounds"]);
 
 const NAMES = Object.keys(ACTION_SLUGS).sort((a, b) => b.length - a.length).map((name) => name.replace(/ /g, "\\s+")).join("|");
 const BONUS = String.raw`with an? \+(\d+) (item|circumstance|status) bonus`;
@@ -80,10 +80,100 @@ function extraAction(entry) {
 const OWN_BONUS = /\b(?:If you use|With) your own \w+ modifier,? you (?:gain|get) an? \+(\d+) (item|circumstance|status) bonus to (?:your|the) check\b/i;
 const AT_LEAST = new RegExp(String.raw`\buse an? \+(\d+) (Athletics|Acrobatics|Thievery|Deception|Intimidation|Stealth|Diplomacy) modifier for your (${NAMES}) instead of your \w+ modifier if it is higher than your own\b`, "i");
 
+// (Binding Coil's "This has a Grapple's normal effects, except that the DC to Escape is 20 and you can move without freeing the creature as long as
+// you don't move further away from it": its Escape DC on the grab, its user's own move a line — 2026-10-27.)
+const ESCAPE_DC = /^This has a Grapple's normal effects, except that the DC to Escape is (\d+) and you can move without freeing the creature as long as you don't move further away from it\.$/i;
+// (Venomed Tongue's "You use Deception to Create a Diversion, Feint, or Lie. Choose one target against whom your Deception check succeeded; that
+// target takes 2d6 persistent poison damage" — one of the three, picked on the card, its damage at the creature targeted on a success; the whole
+// of its Effect read, over the ability compiler's partial check — action.whole, itemActionOver. 2026-10-27.)
+const USE_SKILL_TO = (names) => new RegExp(String.raw`^You use (Deception|Intimidation|Diplomacy|Athletics) to ((?:${names})(?:,\s*(?:${names}))*,?\s+or\s+(?:${names}))\.$`, "i");
+const SUCCEEDED_TAKES = /^Choose one target against whom your (?:Deception|Intimidation|Diplomacy|Athletics) check succeeded; that target takes (\d+d\d+) (persistent )?(\w+) damage\.$/i;
+
+// An item used within its user's own action (2026-10-27, docs/needs.md "Actions and feats for the user"): "Activate Administer First Aid … You can
+// Activate the item as part of the same activity you use to Administer First Aid to stabilize a creature" — every sentence after the first (its
+// flavor) read, else nothing (action.within: none left over):
+// - Lady's Blessing Oil's lower DC, "reduced to the creature's recovery roll DC, rather than 5 + the recovery roll DC" (action.dc { less: 5 }), and
+//   "if you roll a failure on the check, you get a critical failure instead" (action.degree);
+// - Yarrow-Root Bandage's "you can Administer First Aid to stop bleeding and dying as part of the same activity with only one Medicine check …
+//   the DC … is equal to the 5 + the higher of the two DCs" (action.both, dc { more: 5 }: the stabilize DC's, the bleed's the GM's when higher —
+//   a line), the bleed after it as PF2e's stop bleeding: a success's assisted recovery (flat check DC 10), a critical failure's bleed at once;
+// - Curled Cure Gel's "If you successfully Treat Wounds, you can also reduce the value of one of the targets' Clumsy, Enfeebled, or Stupefied
+//   conditions by 1" (action.reduce: the highest of them, a line saying its user may pick another) and its 24 hours' immunity for the creature
+//   treated, success or not (action.immunity, scripts/immunity.js);
+// - Artevil Suspension's ingested poison a stage lower on a success, never below stage 1, and Sickened 2 when it is (action.stage).
+// What the card does, in words: action.after, its lines. Live play: scripts/item-actions.js.
+const WITHIN_ACTIONS = "Administer First Aid|Treat Wounds|Treat Poison";
+const WITHIN_FIRST = new RegExp(String.raw`^Activate (${WITHIN_ACTIONS}) (.+)$`);
+const WITHIN = new RegExp(String.raw`^(?:You can Activate the item|You can administer the [\w' -]+? orally, Activating the item|Activating the item is) (?:as )?part of the same activity you use to (${WITHIN_ACTIONS})(?: to (stabilize|stop bleeding on) a creature(?: who's also dying)?)?\.$`, "i");
+const WITHIN_RULES = [
+    [/^If you use [\w' -]+?, the DC of the check to Administer First Aid is reduced to the creature's recovery roll DC, rather than 5 \+ the recovery roll DC\.$/i, () => ({ dc: { less: 5 }, line: "Its DC is the creature's recovery roll DC, 5 lower than usual" })],
+    [/^However, if you roll a failure on the check, you get a critical failure instead\.$/i, () => ({ degree: { failure: "criticalFailure" }, line: "and a failure is a critical failure" })],
+    [/^When you do, you can Administer First Aid to stop bleeding and dying as part of the same activity with only one Medicine check\.$/i, () => ({ both: true, line: "One Medicine check both stabilizes it and stops its bleeding" })],
+    [/^However, the DC for the Medicine check is equal to the 5 \+ the higher of the two DCs to Administer First Aid\.$/i, () => ({ dc: { more: 5 }, line: "at 5 more than the stabilize DC (the GM may use 5 more than the bleed's DC instead, when that's higher)" })],
+    [/^If you successfully Treat Wounds, you can also reduce the value of one of the targets' (\w+), (\w+), or (\w+) conditions by (\d+)\.$/i, (said) => ({ reduce: { choose: [said[1], said[2], said[3]].map((slug) => slug.toLowerCase()), by: Number(said[4]) }, line: `On a success it also lowers the highest of its ${said[1]}, ${said[2]} or ${said[3]} by ${said[4]} (its user may pick another instead: change it on the sheet)` })],
+    [/^The target of your Treat Wounds is then temporarily immune to [\w' -]+? for (\d+) (hours?|minutes?|days?), whether or not your attempt to Treat Wounds was successful\.$/i, (said, sentence) => ({ immunity: { value: Number(said[1]), unit: `${said[2].toLowerCase().replace(/s$/, "")}s`, raw: sentence }, line: `The creature treated is then immune to it for ${said[1]} ${said[2].toLowerCase()}, success or not` })],
+    [/^If you succeed at your Medicine check to Treat Poison against an? (ingested|inhaled|contact|injury) poison, you can reduce the stage of the toxin by one stage, though this can't reduce the stage below stage 1 or cure the poison entirely\.$/i, (said) => ({ stage: { by: 1, min: 1, vector: said[1].toLowerCase() }, line: `On a success its ${said[1].toLowerCase()} poison drops a stage, never below stage 1` })],
+    [/^If you do, the creature becomes (Sickened|Fatigued|Enfeebled|Drained|Clumsy) (\d+) as its body purges the toxin\.$/i, (said) => ({ stageThen: { slug: said[1].toLowerCase(), value: Number(said[2]) }, line: `and then it's ${said[1]} ${said[2]}` })],
+    [/^An? [\w' -]+? doesn't work unless the poison was administered through (ingestion|injury|inhalation|contact); for instance, .+ won't work\.$/i, (said) => ({ line: `Only against a poison given by ${said[1].toLowerCase()} (one that could be but wasn't doesn't count): the GM's to say` })]
+];
+function readWithinActivity(text, item) {
+    const sentences = String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    const first = WITHIN_FIRST.exec(sentences[0] ?? "");
+    const within = sentences.length > 2 ? WITHIN.exec(sentences[1]) : null;
+    // (Its first sentence after the action's name its flavor: no rule word in it.)
+    if (!first || !within || within[1].toLowerCase() !== first[1].toLowerCase() || /\d|\b(?:check|DC|bonus|penalty|damage|immune|stage|condition)\b/i.test(first[2])) return null;
+    const read = [];
+    for (const sentence of sentences.slice(2)) {
+        const rule = WITHIN_RULES.find(([pattern]) => pattern.test(sentence));
+        if (!rule) return null;
+        read.push(rule[1](rule[0].exec(sentence), sentence));
+    }
+    const name = first[1];
+    const slug = ACTION_SLUGS[name.toLowerCase()];
+    const parts = Object.assign({}, ...read.map(({ line, ...part }) => part));
+    const { immunity, stageThen, ...rest } = parts;
+    const variant = within[2] ? (/^stop/i.test(within[2]) && !rest.both ? "stop-bleeding" : "stabilize") : null;
+    const lines = read.map((entry) => entry.line).filter(Boolean);
+    const after = lines.reduce((words, line) => (!words ? line : /^(?:and|at)\b/.test(line) ? `${words}, ${line}` : `${words}. ${line}`), "");
+    return {
+        slug,
+        name,
+        bonus: null,
+        targeted: TARGETED.has(slug),
+        within: true,
+        ...(variant ? { variant } : {}),
+        ...rest,
+        ...(rest.stage && stageThen ? { stage: { ...rest.stage, then: stageThen } } : {}),
+        ...(immunity ? { immunity: { scope: "target", raw: immunity.raw, duration: { value: immunity.value, unit: immunity.unit }, degrees: ["criticalSuccess", "success", "failure", "criticalFailure"], against: "all", slug: item?.system?.slug ?? String(item?.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") } } : {}),
+        ...(after ? { after: `${after}.` } : {})
+    };
+}
+
+// Its Effect "You use Deception to A, B, or C" then the damage at the one it succeeded against, every sentence after its flavor read → the action
+// of several, its damage on a success, or null.
+function readUsedSkillTo(text) {
+    const effect = /\bEffect\b\s*(.*)$/s.exec(String(text ?? ""))?.[1] ?? "";
+    const sentences = effect.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    const at = sentences.findIndex((sentence) => USE_SKILL_TO(NAMES).test(sentence));
+    const takes = at >= 0 ? SUCCEEDED_TAKES.exec(sentences[at + 1] ?? "") : null;
+    // (Before it, its flavor only; nothing after the damage.)
+    if (!takes || sentences.length !== at + 2 || sentences.slice(0, at).some((sentence) => /\d|\b(?:check|DC|bonus|penalty|damage|immune|condition|Strike)\b/i.test(sentence))) return null;
+    const used = USE_SKILL_TO(NAMES).exec(sentences[at]);
+    const names = [...used[2].matchAll(new RegExp(NAMES, "gi"))].map(([name]) => name.replace(/\s+/g, " "));
+    const slugs = names.map((name) => ACTION_SLUGS[name.toLowerCase()]).filter(Boolean);
+    if (slugs.length !== names.length || slugs.length < 2) return null;
+    return { slug: slugs[0], name: names[0], slugs, names, bonus: null, statistic: used[1].toLowerCase(), targeted: true, whole: true, succeededTakes: { formula: takes[1], type: takes[3].toLowerCase(), persistent: Boolean(takes[2]) }, after: `On a success, the creature targeted takes ${takes[1]} ${takes[2] ? "persistent " : ""}${takes[3].toLowerCase()} damage (target the one it succeeded against).` };
+}
+
 // The text → { slug, name, bonus: { value, type } | null, targeted, after } or null.
 // item: the item, for its own runes (Blade of the Rabbit Prince's potency as its item bonus).
 export function readItemAction(html, item = null) {
     if (EXTRA[item?.system?.slug ?? ""]) return extraAction(EXTRA[item.system.slug]);
+    // (Used within its user's own action, every sentence read: readWithinActivity.)
+    const within = readWithinActivity(plainText(String(html ?? "")).replace(/\bCraft Requirements\b.*$/i, ""), item);
+    if (within) return within;
+    const used = readUsedSkillTo(plainText(String(html ?? "")).replace(/\bCraft Requirements\b.*$/i, ""));
+    if (used) return used;
     const raw = String(html ?? "");
     if (/@UUID\[[^\]]*\]\{Effect:/i.test(raw)) return null;
     const text = plainText(raw).replace(/\bCraft Requirements\b.*$/i, "");
@@ -195,8 +285,11 @@ export function readItemAction(html, item = null) {
     // (What a success adds, Medic's Shield's "On a success, they gain 6d6+20 Hit Points, can immediately Stand as a free action, and
     // become Quickened for 1 round": its healing and condition on that degree and the better one; the rest stays on the card.)
     const gains = lines.map(successGains).find(Boolean) ?? null;
-    const after = lines.join(" ").trim();
-    return { slug, name, bonus, targeted: TARGETED.has(slug), ...(gains ? { riders: gains } : {}), ...(after ? { after } : {}) };
+    // (An inline Escape with its DC, "[[/act escape dc=20]]", as its name: the DC is said in words beside it.)
+    const after = lines.join(" ").replace(/\b[Ee]scape dc=\d+\b/g, "Escape").trim();
+    // (A grapple whose Escape DC is the item's, Binding Coil's: action.escape, its rows' Grabbed and Restrained ended by an Escape against it.)
+    const escape = slug === "grapple" ? ESCAPE_DC.exec(after) : null;
+    return { slug, name, bonus, targeted: TARGETED.has(slug), ...(gains ? { riders: gains } : {}), ...(escape ? { escape: { dc: Number(escape[1]) } } : {}), ...(after ? { after } : {}) };
 }
 
 // Damage the action's success deals, a number its owner's gave (src/compiler/item-data.js withOwnerNumbers): Bracers of
@@ -266,7 +359,10 @@ function withRiders(basic, riders = []) {
 const AFTER_LINES = [/\b(?:do not|don't) need to have a hand free\b|\beven if you don't have a hand free\b/i, /\b(?:don't|do not) take (?:a|any) penalt(?:y|ies)\b|\btakes? no penalty\b/i, /\bcan affect even a mindless\b/i, /^You can Activate the item as part of the same activity\b/i, /\b(?:uses the same|counts toward your) multiple attack penalty\b/i, /^(?:Attempt|Make|Roll) an? \w+ check to [A-Z][\w ]*? (?:the|a|an)\b[^.]*\.$/, /^You (?:Administer First Aid|Seek|Grapple|Trip|Disarm|Shove|Demoralize|Feint)\b[^.]*\.$/, /^If you find a hidden creature or object, you can Point Out as a free action\.$/, /\byour target can be up to two sizes larger than you\b/i, /^The foe can be as far as\b/i, /^If you Strike with the weapon before the end of your turn\b/i,
     // (Its user's own movement or Strikes, a line it keeps to: Onyx Panther's full Speed while Sneaking, Blast Boots' longer jumps, The Bear's
     // Strike while grappling with a weapon.)
-    /^You can move your full Speed \(instead of half\) on this Sneak action\b/i, /\byou move your full Speed during the Climb\b/i, /\byou can increase the (?:vertical|horizontal) distance of your (?:High|Long) Jump by up to \d+ feet\b/i, /^If you Grapple using a weapon, you can Strike with the weapon only if\b/i];
+    /^You can move your full Speed \(instead of half\) on this Sneak action\b/i, /\byou move your full Speed during the Climb\b/i, /\byou can increase the (?:vertical|horizontal) distance of your (?:High|Long) Jump by up to \d+ feet\b/i, /^If you Grapple using a weapon, you can Strike with the weapon only if\b/i,
+    // (A temporary immunity to its user's Demoralize it doesn't give, Admonishing Band's with the Warning Shot feat: no card keeps that one, its user
+    // does — 2026-10-27.)
+    /^If you already have the Warning Shot feat, the target doesn't become temporarily immune to your Demoralize, potentially allowing you to Demoralize them again\.$/i];
 // (A degree the item changes, Ensnaring Disk's "If you roll a critical failure on this check, you get a failure instead", Jug of Fond
 // Remembrance's "If you fail but don't critically fail this check, you get a success instead": action.degree, the outcome the card acts on —
 // scripts/item-actions.js. And a condition on its user after it, the Jug's "You're then Stupefied 1 for 3 rounds": action.selfAfter.)
@@ -281,12 +377,15 @@ export function selfAfterOf(after) {
     return match ? { slug: match[1].toLowerCase(), value: Number(match[2]), duration: { mode: "fixed", value: Number(match[3]), unit: /^min/i.test(match[4]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" } } : null;
 }
 export function actionLeaves(action) {
+    // (Used within its user's own action, every sentence read: its after its card's lines, readWithinActivity; or its whole Effect, readUsedSkillTo.)
+    if (action?.within || action?.whole) return [];
     const sentences = String(action?.after ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
     return sentences.filter((sentence) => {
         if (AFTER_LINES.some((line) => line.test(sentence))) return false;
         if (successGains(sentence) || degreeRider(sentence)) return false;
         if (action.damage && (SUCCESS_DAMAGE.test(sentence) || SUCCESS_DICE.test(sentence) || CRITICAL_DOUBLE.test(sentence) || /^If you succeed, you crush the creature\b/i.test(sentence))) return false;
         if (DEGREE_ADJUST.some(([line]) => line.test(sentence)) || SELF_AFTER.test(sentence)) return false;
+        if (action.escape && ESCAPE_DC.test(sentence)) return false;
         if (action.bonus && /\bgain an? \+\d+ (?:item|circumstance|status) bonus\b/i.test(sentence) && !/\bif\b/i.test(sentence)) return false;
         return true;
     });
@@ -296,13 +395,16 @@ export function actionLeaves(action) {
 export function itemActionPlan(html, base, options = {}) {
     const read = readItemAction(html, options.item ?? null);
     if (!read) return null;
-    const damage = degreeDamage(html, base);
+    const takes = read.succeededTakes ? directDamagePlan(`The target takes ${read.succeededTakes.formula} ${read.succeededTakes.persistent ? "persistent " : ""}${read.succeededTakes.type} damage.`, { ...base, activation: base.activation ?? null }) : null;
+    const damage = takes ? { success: takes, criticalSuccess: takes } : degreeDamage(html, base);
     const degree = degreeAdjustOf(read.after);
     const selfAfter = selfAfterOf(read.after);
     const action = { ...read, ...(damage ? { damage } : {}), ...(Object.keys(degree).length ? { degree } : {}), ...(selfAfter ? { selfAfter } : {}) };
+    // (Its own Escape DC on the grab's Grabbed and Restrained: Binding Coil's.)
+    const escaped = (basic) => (!basic || !read.escape ? basic : { ...basic, resolution: { ...basic.resolution, outcomes: Object.fromEntries(Object.entries(basic.resolution.outcomes).map(([degree, row]) => [degree, { ...row, effects: (row.effects ?? []).map((effect) => (effect.kind === "condition" && ["grabbed", "restrained"].includes(effect.slug) && effect.recipient !== "self" ? { ...effect, duration: { ...(effect.duration ?? { mode: "until-escape" }), escape: { dc: read.escape.dc } } } : effect)) }])) } });
     const compiled = (slug) => {
         const basic = options.basicActions?.[slug] ?? null;
-        return basic && !basic.builtin ? basic : null;
+        return basic && !basic.builtin ? escaped(basic) : null;
     };
     // (One of several: each one's rows, by slug.)
     const basics = action.slugs ? Object.fromEntries(action.slugs.map((slug) => [slug, compiled(slug)])) : null;
@@ -311,4 +413,5 @@ export function itemActionPlan(html, base, options = {}) {
 }
 
 // The plan to keep: the action over nothing, a note alone or the GM's fallback.
-export const itemActionOver = (plan, action) => (action && (!plan || plan.noteOnly || plan.builtin === "no-effect") ? action : plan);
+// (Or over a partial reading when the action read its whole Effect, Venomed Tongue's: action.whole.)
+export const itemActionOver = (plan, action) => (action && (!plan || plan.noteOnly || plan.builtin === "no-effect" || (action.action?.whole && plan.partial)) ? action : plan);

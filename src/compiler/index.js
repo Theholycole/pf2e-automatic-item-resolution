@@ -100,6 +100,7 @@ import { withWeatherIgnores } from "./weather.js";
 import { withActionWays } from "./action-ways.js";
 import { objectsPlan } from "./objects.js";
 import { withTriggeredUse } from "./triggered.js";
+import { withUserActionsUse } from "./user-actions.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { withSpitOut } from "./spit-out.js";
 import { withOpenedTrap } from "./opened.js";
@@ -245,7 +246,8 @@ const retaliateAfter = (plan) => (plan?.item?.resist?.length ? withRetaliateAfte
 function decide(read, given, options) {
     if (!handlesItem(given, options)) return read;
     // (A trigger's own effect first, src/compiler/triggered.js: Reflecting Shard's Spell Riposte, Spellslasher's Spellslash.)
-    const plan = withTriggeredUse(read, given, { base: basePlan(given), info: itemInfo(given) });
+    // (Then its user's own action or rule as its sentences say, src/compiler/user-actions.js: Vital Earth's air.)
+    const plan = withUserActionsUse(withTriggeredUse(read, given, { base: basePlan(given), info: itemInfo(given) }), given, { base: basePlan(given), info: itemInfo(given), options });
     const next = withDecided(plan, { text: plainText(given?.system?.description?.value), base: basePlan(given), kind: "consumable", name: given.name, special: isSpecialItem(given) });
     return next && next !== plan && !next.item ? { ...next, item: itemInfo(given) } : next;
 }

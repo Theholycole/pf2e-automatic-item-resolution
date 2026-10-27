@@ -47,13 +47,13 @@ function baseOf(item, { activation, index }) {
 }
 // (The plan's own base when it has one: its source, item part and trigger kept.)
 // (A builtin no-effect's has none of them: the activation's own.)
-function keptBase(plan, item, entry) {
+export function keptBase(plan, item, entry) {
     const own = baseOf(item, entry);
     if (!plan) return own;
     const frequency = plan.trigger?.frequency ?? own.trigger.frequency;
     return { ...own, modelVersion: plan.modelVersion ?? own.modelVersion, source: plan.source ?? own.source, rank: plan.rank ?? own.rank, traits: plan.traits ?? own.traits, activation: plan.activation ?? own.activation, trigger: { event: "use", ...(frequency ? { frequency } : {}) }, item: plan.item?.activation ? plan.item : { ...own.item, ...(plan.item ?? {}) } };
 }
-const ownCard = (base, row, notes = []) => ({ ...base, automation: { level: "automatic" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), ...row } } }, ...(notes.length ? { notes } : {}) });
+export const ownCard = (base, row, notes = []) => ({ ...base, automation: { level: "automatic" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), ...row } } }, ...(notes.length ? { notes } : {}) });
 
 // --- A condition suppressed -------------------------------------------------------------------------------------------------------------------
 
