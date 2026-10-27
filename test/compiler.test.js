@@ -461,8 +461,8 @@ test("Lockpicker's Oil: its user's status bonus to Thievery checks to Pick a Loc
     const [bonus] = oil.resolution.outcomes.success.modifiers;
     assert.deepEqual([bonus.selector, bonus.value, bonus.type, bonus.predicate, bonus.duration.value, bonus.duration.unit], ["thievery", 2, "status", ["action:pick-a-lock"], 1, "minutes"]);
     assert.deepEqual(oil.item.firstDegree, { selector: "thievery", adjustment: { criticalFailure: "one-degree-better" }, predicate: ["action:pick-a-lock"], duration: bonus.duration });
-    assert.deepEqual(oil.unread, ["Anyone else attempting to Pick that Lock within the minute gains the bonus too."]);
-    assert.equal(oil.partial, true);
+    // (Anyone else's bonus at that lock: since 2026-10-27 a line of its card, counted done — an object's, the user's answer — src/compiler/decided.js.)
+    assert.deepEqual([oil.unread, oil.notes, oil.partial, oil.decided], [undefined, ["Anyone else attempting to Pick that Lock within the minute gains the bonus too."], undefined, "card-line"]);
     assert.equal(firstDegreeText(oil.item.firstDegree), "The first critical failure on Thievery checks to Pick a Lock becomes a failure, within 1 minute");
     const effect = firstDegreeEffectSource(oil.item.firstDegree, { item: { name: "Lockpicker's Oil (Greater)" } });
     assert.deepEqual(effect.system.rules, [{ key: "AdjustDegreeOfSuccess", selector: "thievery", adjustment: { criticalFailure: "one-degree-better" }, predicate: ["action:pick-a-lock"], label: "Lockpicker's Oil (Greater)" }]);

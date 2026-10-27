@@ -71,11 +71,18 @@ function asCardLines(plan, { result, base, body, decided }) {
 // special: a unique item's or an artifact's (no card-line ruling).
 export function withDecided(plan, { text = "", base = null, kind = "consumable", trigger = false, name = null, special = false } = {}) {
     const result = resultOf(plan);
+    // (A one-off rule of a card of its own — a zone, a counteract, a readied bonus, a cast, partial —: its notes are that card's lines already
+    // (the zone card's, the counteract card's, the fortune and cast cards' plan.notes), done the same, 2026-10-27.)
+    // (Not one whose top-level notes or unread lines no card of its kind shows: a zone's, a counteract's.)
+    const shown = ["readied-bonus", "cast-spell"].includes(plan?.builtin) || !((plan?.notes ?? []).length || (plan?.unread ?? []).length);
+    if (plan?.partial && plan.builtin && plan.builtin !== "no-effect" && shown && !special && oneOff(name ?? plan.source?.name)) return asCardLines(plan, { result: "partial", base, body: null, decided: "one-off" });
     if (result === "resolves" || (result.startsWith("builtin:") && result !== "builtin:no-effect")) return plan;
     const entry = { result, kind, trigger, text, left: plan ? leftovers(plan) : [] };
     // (A note-only item checked and found to hold nothing a card could play, src/compiler/notes-checked.js — the user's answer to question 3,
     // 2026-10-26: its note row kept, done.)
     if (result === "note-only" && notesChecked(name ?? plan?.source?.name)) return { ...plan, noteOnly: undefined, decided: "checked", automation: { ...(plan.automation ?? {}), level: "automatic" } };
+    // (Or one nothing read, the same check: its words its card's line, 2026-10-27.)
+    if (result === "none" && notesChecked(name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "checked" });
     // (A one-off rule, src/compiler/one-offs.js — the user's answer of 2026-10-27: its card's lines, counted done, kept to build later.)
     if (!special && oneOff(name ?? plan?.source?.name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "one-off" });
     const needs = needsOf(entry);

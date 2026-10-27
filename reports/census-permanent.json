@@ -6,19 +6,19 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1042,
+   "resolves": 1049,
    "builtin:cast-spell": 474,
    "partial": 102,
-   "none": 321,
+   "none": 317,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
    "builtin:readied-bonus": 47,
-   "note-only": 123,
+   "note-only": 122,
    "builtin:reroll": 45,
    "builtin:whisper": 25,
    "builtin:table": 7,
    "builtin:teleport": 28,
-   "builtin:no-effect": 72,
+   "builtin:no-effect": 70,
    "builtin:ways": 35,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 27,
@@ -33,8 +33,8 @@
   "live": {
    "save": 434,
    "cast": 474,
-   "item": 707,
-   "none": 418,
+   "item": 713,
+   "none": 412,
    "focus": 47,
    "counteract": 32,
    "fortune": 62,
@@ -61,9 +61,9 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 619,
+    "resolves": 623,
     "builtin:cast-spell": 346,
-    "none": 221,
+    "none": 217,
     "builtin:focus-point": 45,
     "builtin:counteract": 28,
     "builtin:readied-bonus": 33,
@@ -111,11 +111,10 @@
    "activations": 153,
    "results": {
     "partial": 16,
-    "resolves": 71,
+    "resolves": 73,
     "builtin:pf2e-rules": 22,
     "none": 22,
     "builtin:teleport": 3,
-    "builtin:no-effect": 2,
     "note-only": 3,
     "builtin:spellstrike": 9,
     "builtin:ways": 4,
@@ -139,11 +138,11 @@
    "results": {
     "builtin:cast-spell": 33,
     "partial": 12,
-    "resolves": 73,
+    "resolves": 74,
     "builtin:counteract": 1,
     "builtin:ways": 5,
     "builtin:zone": 4,
-    "note-only": 7,
+    "note-only": 6,
     "builtin:teleport": 2,
     "builtin:no-effect": 4,
     "builtin:reroll": 4,
@@ -391,9 +390,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Persona Mask (Greater)",
@@ -7407,9 +7406,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Cowl of Keys",
@@ -7429,9 +7428,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Graverose Garland",
@@ -10579,9 +10578,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Singing Stone",
@@ -18938,9 +18937,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
+   "result": "resolves",
+   "kind": "check",
+   "live": "item",
    "rune": true
   },
   {
@@ -22194,9 +22193,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Oathlamp of Accord",
@@ -26501,7 +26500,7 @@
    "time": "1",
    "frequency": "one per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },

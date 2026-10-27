@@ -66,8 +66,9 @@ test("where a plan holds to it: a save's trigger.immunity (the ability module's 
     // (The same immunity said again in another degree's paragraph joins it: Pheromone Flare's critical success, and its failure's "After this,
     // it becomes temporarily immune for 24 hours" with the critical failure that's "As failure"; not its success, a new save every 10 minutes.)
     const flare = compileItem(source("Pheromone Flare (Lesser)"));
-    // (Partial still: its fascination until the animal reaches the flare, and a new save every 10 minutes, are the GM's lines.)
-    assert.deepEqual([flare.zone.saves[0].plan.trigger.immunity.degrees, flare.partial], [["criticalSuccess", "failure", "criticalFailure"], true]);
+    // (Its fascination until the animal reaches the flare, and a new save every 10 minutes, are the GM's lines: since 2026-10-27 a one-off rule,
+    // its card's lines, counted done — src/compiler/one-offs.js, the user's answer —, no longer partial.)
+    assert.deepEqual([flare.zone.saves[0].plan.trigger.immunity.degrees, flare.partial, flare.decided], [["criticalSuccess", "failure", "criticalFailure"], undefined, "one-off"]);
     // (Not one to the item: Mindrender Baton's "temporarily immune to that character's attempts to remove the effect" — the ability compiler's
     // own reading of it taken off, a note.)
     const [, command] = compileActivations(source("Mindrender Baton"));

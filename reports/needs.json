@@ -1,23 +1,23 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1097,
+  "entries": 1076,
   "results": {
-   "partial": 329,
-   "none": 446,
-   "note-only": 224,
-   "builtin:no-effect": 98
+   "partial": 319,
+   "none": 441,
+   "note-only": 223,
+   "builtin:no-effect": 93
   },
   "main": {
    "cast-changes": 21,
    "speeds": 22,
-   "counteract": 21,
+   "counteract": 7,
    "afflictions": 54,
    "moving": 77,
    "visibility": 45,
    "lasting": 63,
-   "choice": 30,
    "strike": 92,
+   "choice": 23,
    "spells": 34,
    "no-rules": 14,
    "actions": 28,
@@ -51,27 +51,27 @@
    "speeds": 28,
    "areas": 177,
    "immunity": 85,
-   "objects": 298,
+   "objects": 293,
    "speech": 99,
    "out-of-combat": 360,
-   "counteract": 100,
+   "counteract": 86,
    "afflictions": 101,
-   "lasting": 226,
+   "lasting": 220,
    "moving": 104,
    "triggers": 114,
    "visibility": 47,
    "dying": 75,
-   "choice": 107,
-   "several": 101,
+   "choice": 97,
+   "several": 100,
    "strike": 184,
-   "reader": 198,
+   "reader": 194,
    "spells": 73,
    "actions": 59,
    "from-events": 26,
    "no-rules": 14,
    "information": 179,
-   "situational": 81,
    "creatures": 71,
+   "situational": 78,
    "mind": 60,
    "illusions": 60,
    "removed": 7,
@@ -183,19 +183,6 @@
     "choice",
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Persona Mask (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Assume Role",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice"
    ]
   },
   {
@@ -382,21 +369,6 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
-   ]
-  },
-  {
-   "name": "Pheromone Flare (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "partial",
-   "main": "counteract",
-   "work": "ends the effect",
-   "needs": [
-    "counteract",
-    "situational",
-    "lasting",
-    "reader"
    ]
   },
   {
@@ -1698,21 +1670,6 @@
    ]
   },
   {
-   "name": "Pheromone Flare (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "partial",
-   "main": "counteract",
-   "work": "ends the effect",
-   "needs": [
-    "counteract",
-    "situational",
-    "lasting",
-    "reader"
-   ]
-  },
-  {
    "name": "Soulheart (Greater)",
    "kind": "activation",
    "tier": "special",
@@ -2855,19 +2812,6 @@
    "needs": [
     "immunity",
     "objects"
-   ]
-  },
-  {
-   "name": "Serum of Sex Shift",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "none",
-   "main": "counteract",
-   "work": "counteracted",
-   "needs": [
-    "counteract",
-    "choice"
    ]
   },
   {
@@ -4199,37 +4143,11 @@
    "tier": "adventure",
    "level": 17,
    "result": "none",
-   "main": "choice",
-   "work": "pick a",
-   "needs": [
-    "choice",
-    "objects"
-   ]
-  },
-  {
-   "name": "Cowl of Keys",
-   "kind": "activation",
-   "tier": "adventure",
-   "level": 17,
-   "result": "none",
    "main": "areas",
    "work": "wall",
    "needs": [
     "areas",
     "objects"
-   ]
-  },
-  {
-   "name": "Disruption Ammunition (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "builtin:no-effect",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract",
-    "lasting"
    ]
   },
   {
@@ -4805,7 +4723,6 @@
    "work": "bonus is only against",
    "needs": [
     "situational",
-    "choice",
     "objects",
     "out-of-combat"
    ]
@@ -5662,19 +5579,6 @@
    ]
   },
   {
-   "name": "Reflecting Shield",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "activation": "Reflect Spell",
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteracted",
-   "needs": [
-    "counteract"
-   ]
-  },
-  {
    "name": "Heedless Spurs",
    "kind": "activation",
    "tier": "adventure",
@@ -5873,19 +5777,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "Persona Mask",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "activation": "Assume Role",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice"
    ]
   },
   {
@@ -6882,18 +6773,6 @@
    "needs": [
     "dying",
     "spells"
-   ]
-  },
-  {
-   "name": "Absolute Solvent (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "builtin:no-effect",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract"
    ]
   },
   {
@@ -9833,19 +9712,6 @@
    ]
   },
   {
-   "name": "Hungering Maw",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 17,
-   "result": "partial",
-   "main": "counteract",
-   "work": "end the effect",
-   "needs": [
-    "counteract",
-    "lasting"
-   ]
-  },
-  {
    "name": "Cooperative Waffles (Greater)",
    "kind": "consumable",
    "tier": "general",
@@ -10197,19 +10063,6 @@
    ]
   },
   {
-   "name": "Lockpicker's Oil (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "partial",
-   "main": "choice",
-   "work": "pick a",
-   "needs": [
-    "choice",
-    "objects"
-   ]
-  },
-  {
    "name": "Sea Retrieval Line",
    "kind": "activation",
    "tier": "general",
@@ -10464,20 +10317,6 @@
     "afflictions",
     "counteract",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Malleable",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Reconfigure Armor",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "objects"
    ]
   },
   {
@@ -11191,7 +11030,6 @@
    "work": "bonus is only against",
    "needs": [
     "situational",
-    "choice",
     "objects",
     "out-of-combat"
    ]
@@ -11638,18 +11476,6 @@
    ]
   },
   {
-   "name": "Absolute Solvent (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 18,
-   "result": "builtin:no-effect",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract"
-   ]
-  },
-  {
    "name": "Kizidhar's Shield",
    "kind": "activation",
    "tier": "general",
@@ -11792,19 +11618,6 @@
    "needs": [
     "areas",
     "several"
-   ]
-  },
-  {
-   "name": "Curious Teardrop",
-   "kind": "activation",
-   "tier": "general",
-   "level": 16,
-   "activation": "Reflect Emotions",
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract"
    ]
   },
   {
@@ -12247,19 +12060,6 @@
    ]
   },
   {
-   "name": "Disruption Ammunition",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "builtin:no-effect",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract",
-    "lasting"
-   ]
-  },
-  {
    "name": "Twilight Tattoo",
    "kind": "activation",
    "tier": "general",
@@ -12300,20 +12100,6 @@
    "needs": [
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Leydroth Spellbreaker",
-   "kind": "activation",
-   "tier": "general",
-   "level": 17,
-   "activation": "Dispelling Blast",
-   "result": "partial",
-   "main": "counteract",
-   "work": "dispelling",
-   "needs": [
-    "counteract",
-    "several"
    ]
   },
   {
@@ -12475,18 +12261,6 @@
    "work": "levitating",
    "needs": [
     "speeds"
-   ]
-  },
-  {
-   "name": "Absolute Solvent (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 12,
-   "result": "builtin:no-effect",
-   "main": "counteract",
-   "work": "counteract",
-   "needs": [
-    "counteract"
    ]
   },
   {
@@ -13098,21 +12872,6 @@
    "needs": [
     "moving",
     "triggers"
-   ]
-  },
-  {
-   "name": "Pheromone Flare (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 17,
-   "result": "partial",
-   "main": "counteract",
-   "work": "ends the effect",
-   "needs": [
-    "counteract",
-    "situational",
-    "lasting",
-    "reader"
    ]
   },
   {
@@ -14486,20 +14245,6 @@
    ]
   },
   {
-   "name": "Moonlit Chain",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Dim Sight",
-   "result": "note-only",
-   "main": "counteract",
-   "work": "suppress the",
-   "needs": [
-    "counteract",
-    "reader"
-   ]
-  },
-  {
    "name": "Zuhra's Gloves",
    "kind": "activation",
    "tier": "general",
@@ -14903,19 +14648,6 @@
    "needs": [
     "areas",
     "strike"
-   ]
-  },
-  {
-   "name": "Lockpicker's Oil",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "partial",
-   "main": "choice",
-   "work": "pick a",
-   "needs": [
-    "choice",
-    "objects"
    ]
   },
   {
@@ -15621,19 +15353,6 @@
    "needs": [
     "areas",
     "information"
-   ]
-  },
-  {
-   "name": "Lockpicker's Oil (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 15,
-   "result": "partial",
-   "main": "choice",
-   "work": "pick a",
-   "needs": [
-    "choice",
-    "objects"
    ]
   }
  ]

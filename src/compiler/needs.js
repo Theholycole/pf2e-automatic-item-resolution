@@ -210,7 +210,8 @@ export const NEEDS = [
         needs: "A choice the user makes when using it (a damage type, a mode, a creature, a direction, one of a list): a picker on the card that sets what the card does.",
         where: "item live play",
         // (Not a creature's memory its user decides, Unmemorable Mantle's "You decide whether or not the creature recalls the interaction": a mind's, 2026-10-26.)
-        test: /\b(?:of your choice|you choose|choose (?:a|an|one|whether|which|the|to|between)|pick (?:a|an|one)|one of the following|you decide(?! whether or not the creature recalls)|(?:you )?select (?:a|one))\b/i
+        // (Nor PF2e's Pick a Lock, Lockpicker's Oil's: an action, 2026-10-27.)
+        test: /\b(?:of your choice|you choose|choose (?:a|an|one|whether|which|the|to|between)|pick (?:a|an|one)(?! Lock\b)|one of the following|you decide(?! whether or not the creature recalls)|(?:you )?select (?:a|one))\b/i
     },
     {
         id: "several",

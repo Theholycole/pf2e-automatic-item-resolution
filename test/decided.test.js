@@ -73,3 +73,15 @@ test("one-offs: Baleblood Draft's next-elixir rule a line of its card, kept to b
     assert.deepEqual([draft.decided, draft.partial, draft.builtin], ["one-off", undefined, undefined]);
     assert.match(draft.notes[0], /duration extended by 50%/);
 });
+
+test("one-offs on a card of their own (a counteract's, a zone's, a cast's): its notes its lines already — Reflecting Shield, Pheromone Flare, Leydroth Spellbreaker; a checked one nothing read, Serum of Sex Shift", () => {
+    const reflect = activation("Reflecting Shield", "Reflect Spell");
+    assert.deepEqual([reflect.decided, reflect.partial, reflect.builtin], ["one-off", undefined, "counteract"]);
+    assert.ok(reflect.item.counteract.notes.some((note) => /turned back on its caster/.test(note)));
+    const flare = compileItem(item("Pheromone Flare (Lesser)"));
+    assert.deepEqual([flare.decided, flare.partial, flare.builtin], ["one-off", undefined, "zone"]);
+    assert.equal(activation("Leydroth Spellbreaker", "Dispelling Blast").decided, "one-off");
+    const serum = compileItem(item("Serum of Sex Shift"));
+    assert.deepEqual([serum.decided, serum.partial, routeOf(serum)], ["checked", undefined, "item"]);
+    assert.match(serum.notes[0], /sexual characteristics of your choice/);
+});

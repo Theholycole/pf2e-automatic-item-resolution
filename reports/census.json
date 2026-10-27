@@ -14,17 +14,17 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 125,
-   "resolves": 880,
+   "none": 124,
+   "resolves": 887,
    "builtin:readied-bonus": 23,
    "builtin:zone": 121,
    "builtin:ways": 30,
    "builtin:item-action": 16,
-   "partial": 60,
+   "partial": 57,
    "note-only": 101,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
-   "builtin:no-effect": 26,
+   "builtin:no-effect": 23,
    "builtin:teleport": 7,
    "builtin:fall-foam": 4,
    "builtin:reroll": 3,
@@ -73,11 +73,11 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 135,
+    "resolves": 139,
     "note-only": 9,
     "partial": 4,
-    "none": 14,
-    "builtin:no-effect": 7,
+    "none": 13,
+    "builtin:no-effect": 4,
     "builtin:cast-spell": 9,
     "builtin:whisper": 1,
     "builtin:counteract": 2,
@@ -239,13 +239,13 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 38,
+    "resolves": 41,
     "builtin:conjure": 6,
     "note-only": 8,
     "none": 4,
     "builtin:cast-spell": 2,
     "builtin:counteract": 2,
-    "partial": 6
+    "partial": 3
    },
    "mechanisms": {
     "linked-effect": 17,
@@ -377,9 +377,9 @@
   },
   "counteract": {
    "count": 79,
-   "resolves": 16,
+   "resolves": 20,
    "gaps": 0,
-   "none": 8
+   "none": 7
   },
   "area": {
    "count": 44,
@@ -403,8 +403,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 166,
-   "item": 683,
+   "none": 162,
+   "item": 687,
    "fortune": 25,
    "zone": 121,
    "save": 135,
@@ -441,9 +441,9 @@
     "coat": 3
    },
    "potion": {
-    "item": 89,
+    "item": 93,
     "later": 58,
-    "none": 21,
+    "none": 17,
     "cast": 9,
     "whisper": 1,
     "save": 1,
@@ -533,9 +533,9 @@
    }
   },
   "noCard": {
-   "no-plan": 125,
+   "no-plan": 124,
    "triggered": 11,
-   "gm": 26,
+   "gm": 23,
    "other": 4
   }
  },
@@ -5463,7 +5463,10 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Irritating Seedpod",
@@ -13399,9 +13402,10 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Golden Spur",
@@ -19648,11 +19652,9 @@
     "oil"
    ],
    "mechanisms": [],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Anyone else attempting to Pick that Lock within the minute gains the bonus too."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -22819,9 +22821,10 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Roc-Shaft Arrow (Greater)",
@@ -24277,9 +24280,10 @@
    "mechanisms": [
     "counteract"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Potion of Cold Resistance (Lesser)",
@@ -29505,11 +29509,9 @@
     "oil"
    ],
    "mechanisms": [],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Anyone else attempting to Pick that Lock within the minute gains the bonus too."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -30683,11 +30685,9 @@
     "oil"
    ],
    "mechanisms": [],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "Anyone else attempting to Pick that Lock within the minute gains the bonus too."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {

@@ -1,5 +1,5 @@
 // Note-only items checked one by one (the user's answer to question 3, 2026-10-26): an item whose card only puts its text on a note Effect
-// counts done once its text has been checked for anything a card could play — a number, a condition, a Speed or another rule — and nothing
+// (or one nothing reads, its words then its card's line) counts done once its text has been checked for anything a card could play — a number, a condition, a Speed or another rule — and nothing
 // was found. Those with something to play are built instead; these are the ones checked and found to have none, by the plan's source name
 // (an activation's "Item: Activation"), each with what its note holds. Pure.
 
@@ -12,7 +12,11 @@ export const NOTES_CHECKED = new Map([
     ["Coating", "oils and poisons applied with no hands free: its user's own Interact, the oils' and poisons' cards as usual"],
     // (2026-10-27: a jump as one action, no Stride first — its user's own action, which no card can take for them.)
     ["Leaper's Elixir (Lesser)", "High Jump or Long Jump as one action with no Stride first, for its minute: its user's own action"],
-    ["Leaper's Elixir (Greater)", "High Jump or Long Jump as one action with no Stride first, and a longer jump: its user's own action"]
+    ["Leaper's Elixir (Greater)", "High Jump or Long Jump as one action with no Stride first, and a longer jump: its user's own action"],
+    // (2026-10-27: one nothing read, its words its card's line — src/compiler/decided.js.)
+    ["Serum of Sex Shift", "its drinker's sex characteristics changed for good, can't be counteracted: an appearance, no game numbers"],
+    ["Persona Mask: Assume Role", "the mask's look changed to a dramatic character: an appearance (its Performance bonus is the mask's own)"],
+    ["Persona Mask (Greater): Assume Role", "the mask's look changed to a dramatic character: an appearance (its Performance bonus is the mask's own)"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));
