@@ -5,12 +5,18 @@
 // minimum, and at the higher of its class DC and spell DC. And a casting time the activation already is: "but as a two-action spell rather
 // than one that takes 1 minute to cast" on a 2-action activation — plan.castTime { said }. Pure.
 
-const RANK = /\bThe rank of the spell is (?:one-)?half your level, rounded (down|up) \(minimum (\d+)(?:st|nd|rd|th) (?:level|rank)\)/i;
-const DC = /\b(?:and )?the save DC is (?:equal to )?your class DC or spell DC(?: \([^)]*\))?/i;
+// (And The Winged Serpent's "The level of this spell is one-half your level rounded down (minimum 9th)", The Joke's with no comma.)
+const RANK = /\bThe (?:rank|level) of (?:the|this) spell is (?:one-)?half your level,? rounded (down|up) \(minimum (\d+)(?:st|nd|rd|th)(?: (?:level|rank))?\)/i;
+// (Or its class DC alone, The Betrayal's "the save DC is your class DC".)
+const DC = /\b(?:and )?the save DC is (?:equal to )?your (class DC or spell DC|class DC|spell DC)(?: \([^)]*\))?/i;
+const DC_FROM = { "class dc or spell dc": "class-spell", "class dc": "class", "spell dc": "spell" };
 // (Another spell from a level on, The Sickness's "If you are at least 15th-level, you can instead choose to cast Spiritual Epidemic": a choice
 // beside the cast's own, its level the card's to check.)
 const FROM_LEVEL = /^If you are at least (\d+)(?:st|nd|rd|th)[- ]level, you can instead choose to cast ([A-Z][\w' -]+?)\.$/;
 const TIME = /,?\s*but as a (one|two|three)-action spell rather than one that takes [^.]+? to cast\b/i;
+// (More targets than the spell's own, The Joke's "You cast Laughing Fit on up to 10 creatures in range of the spell": plan.castTargets { max },
+// the card's to keep to — scripts/casts.js refuses more, 2026-10-27.)
+const TARGETS = /\bon up to (\d+) creatures(?: in range of the spell)?/i;
 const ACTIONS = { one: "1", two: "2", three: "3" };
 
 export function withCastOwner(plan) {
@@ -19,13 +25,15 @@ export function withCastOwner(plan) {
     const rank = !plan.rank ? notes.map((note) => RANK.exec(note)).find(Boolean) : null;
     const dc = !plan.dc ? notes.map((note) => DC.exec(note)).find(Boolean) : null;
     const time = notes.map((note) => TIME.exec(note)).find(Boolean);
+    const targets = notes.map((note) => TARGETS.exec(note)).find(Boolean);
     const own = time && ACTIONS[time[1].toLowerCase()] === String(plan.item?.activation?.time ?? plan.activation?.time ?? "") ? time : null;
-    if (!rank && !dc && !own) return plan;
+    if (!rank && !dc && !own && !targets) return plan;
     return {
         ...plan,
         ...(rank ? { castRank: { round: rank[1].toLowerCase(), min: Number(rank[2]), said: rank[0] } } : {}),
-        ...(dc ? { castDC: { from: "class-spell", said: dc[0] } } : {}),
-        ...(own ? { castTime: { said: own[0] } } : {})
+        ...(dc ? { castDC: { from: DC_FROM[dc[1].toLowerCase()], said: dc[0] } } : {}),
+        ...(own ? { castTime: { said: own[0] } } : {}),
+        ...(targets ? { castTargets: { max: Number(targets[1]), said: targets[0] } } : {})
     };
 }
 

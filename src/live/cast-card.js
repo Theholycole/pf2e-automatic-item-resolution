@@ -58,7 +58,7 @@ export function castCardHTML(state, { canApply = false } = {}) {
     const plan = state.plan;
     const chosen = chosenSpell(state);
     // (Its rank and DC from its caster, The Inquisitor's: in words until it's cast.)
-    const numbers = [chosen.rank ? `rank ${chosen.rank}` : plan.castRank ? `rank half its caster's level, rounded ${plan.castRank.round} (at least ${plan.castRank.min})` : null, plan.dc ? `DC ${plan.dc}` : plan.castDC ? "DC its caster's class DC or spell DC, the higher" : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange)].filter(Boolean).join(", ");
+    const numbers = [chosen.rank ? `rank ${chosen.rank}` : plan.castRank ? `rank half its caster's level, rounded ${plan.castRank.round} (at least ${plan.castRank.min})` : null, plan.dc ? `DC ${plan.dc}` : plan.castDC ? (plan.castDC.from === "class-spell" ? "DC its caster's class DC or spell DC, the higher" : `DC its caster's ${plan.castDC.from} DC`) : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange), plan.castTargets ? `up to ${plan.castTargets.max} targets` : null].filter(Boolean).join(", ");
     // (A condition on its user with the cast, Locket of Sealed Nightmares': a line of its own, with several spells too.)
     const self = plan.castSelf ? `<p class="aar-actions">With it, its user becomes ${escape(plan.castSelf.slug)}${plan.castSelf.value ? ` ${escape(plan.castSelf.value)}` : ""}.</p>` : "";
     const caster = casterOf(state);

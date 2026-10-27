@@ -3652,6 +3652,27 @@ export const cases = {
         return { rank, dc };
     },
 
+    // The Joke (2026-10-27): Laughing Fit on two creatures at once (up to 10), at half its caster's level and its class DC.
+    async jokeTargets(scene) {
+        const { actor: reader, token: readerToken } = await creature(scene, "Joke Teller", { x: 6, y: 16, level: 13 });
+        const { token: first } = await creature(scene, "Joke Listener A", { x: 7, y: 16, alliance: "opposition" });
+        const { token: second } = await creature(scene, "Joke Listener B", { x: 7, y: 17, alliance: "opposition" });
+        const card = await give(reader, "The Joke");
+        await readerToken.object?.control?.();
+        await target(first, second);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const castCard = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        assert(/up to 10 targets/.test(castCard.content), "the card's words");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(castCard.id, { targets: [first.uuid, second.uuid] });
+        const cast = await messageAfter(since, (message) => message.flags?.["pf2e-automatic-resolution"]?.castFromItem, { what: "the spell module's cast", timeout: 15000 });
+        const { rank, dc, targets } = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        const expected = reader.system.attributes.classDC?.value ?? 0;
+        assert(rank === 6 && dc === expected && expected > 0 && targets.length === 2, `rank 6, class DC ${expected}, 2 targets (${rank}, ${dc}, ${targets.length})`);
+        return { rank, dc, targets: targets.length };
+    },
+
     // An etched rune's activation from its weapon (a Vorpal longsword): the button on the weapon's row, not on a runestone's;
     // pressed, the Fortitude save card at DC 37 with death on a failure.
     async etchedRune(scene) {

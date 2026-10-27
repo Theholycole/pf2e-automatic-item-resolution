@@ -359,9 +359,9 @@ const NOT_A_RULE = /^(?:As normal with the spell\b|Its statistics improve\b|When
 const literal = (words) => words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const castWords = (note, plan, spell) => {
     let text = said(note);
-    for (const words of [...(plan.castDuration?.said ?? []), plan.castRange?.said, plan.turnHeal?.said, plan.castBonus?.said, plan.castRank?.said, plan.castDC?.said, plan.castTime?.said, plan.castSelf?.said, plan.levelChoice?.said].filter(Boolean)) text = text.replace(words, " ");
+    for (const words of [...(plan.castDuration?.said ?? []), plan.castRange?.said, plan.turnHeal?.said, plan.castBonus?.said, plan.castRank?.said, plan.castDC?.said, plan.castTime?.said, plan.castSelf?.said, plan.levelChoice?.said, plan.castTargets?.said].filter(Boolean)) text = text.replace(words, " ");
     // (Its caster's DC said again beside each spell: The Sickness's "Abyssal Plague (your class DC or spell DC)".)
-    if (plan.castDC) text = text.replace(/\(your class DC or spell DC\)/gi, " ");
+    if (plan.castDC) text = text.replace(/\(your class DC(?: or spell DC)?(?: (?:Fortitude|Reflex|Will))?\)/gi, " ");
     const name = plan.spell?.name;
     if (name) text = text.replace(new RegExp(literal(name), "gi"), " ");
     // (Its other choices, and what picks one: Spark Dancer's "either Fireball or Lightning Bolt, depending on whether the current core would deal

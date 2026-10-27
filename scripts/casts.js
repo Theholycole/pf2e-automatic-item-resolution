@@ -74,12 +74,15 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (!request.rank && state.plan.castRank) request.rank = castRankAt(state.plan.castRank, actor.level);
         if (!request.dc && state.plan.castDC) {
             const dcs = ownerDCsOf(actor);
-            const best = Math.max(0, ...[dcs.class, dcs.spell].filter((value) => Number(value) > 0));
+            const from = state.plan.castDC.from;
+            const best = Math.max(0, ...[from !== "spell" ? dcs.class : null, from !== "class" ? dcs.spell : null].filter((value) => Number(value) > 0));
             if (best > 0) request.dc = best;
         }
         const token = request.casterTokenUuid ? await fromUuid(request.casterTokenUuid).catch(() => null) : null;
         const targetTokens = (await Promise.all(request.targetUuids.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
         if (needsTargets(state.plan, chosenSpell(state)) && !targetTokens.length) throw new Error("Target the creatures first.");
+        // (Up to so many targets, The Joke's 10: refused beyond that.)
+        if (state.plan.castTargets && targetTokens.length > state.plan.castTargets.max) throw new Error(`Target up to ${state.plan.castTargets.max} creatures.`);
         const far = beyondRange(state.plan.castRange, token, actor, selfOf(state) ? [] : targetTokens);
         if (far.length) throw new Error(`${far.join(", ")} ${far.length === 1 ? "is" : "are"} beyond ${state.item.name}'s range.`);
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: targetTokens, item: request.item });

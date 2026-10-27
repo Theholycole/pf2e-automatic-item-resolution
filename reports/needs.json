@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1313,
+  "entries": 1311,
   "results": {
-   "partial": 414,
+   "partial": 412,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -40,7 +40,7 @@
    "speech": 19,
    "from-events": 4,
    "forms": 26,
-   "several": 25,
+   "several": 23,
    "retaliation": 3,
    "missing-number": 6,
    "fortune": 7,
@@ -63,7 +63,7 @@
    "visibility": 50,
    "dying": 75,
    "choice": 107,
-   "several": 106,
+   "several": 104,
    "strike": 194,
    "reader": 215,
    "spells": 75,
@@ -73,7 +73,7 @@
    "no-rules": 17,
    "situational": 86,
    "creatures": 71,
-   "mind": 64,
+   "mind": 63,
    "illusions": 60,
    "removed": 7,
    "range": 6,
@@ -5954,17 +5954,6 @@
    ]
   },
   {
-   "name": "The Betrayal",
-   "kind": "activation",
-   "result": "partial",
-   "main": "several",
-   "work": "allies",
-   "needs": [
-    "several",
-    "mind"
-   ]
-  },
-  {
    "name": "Mutagenic Renovator",
    "kind": "consumable",
    "result": "partial",
@@ -10564,16 +10553,6 @@
    "needs": [
     "areas",
     "objects"
-   ]
-  },
-  {
-   "name": "The Joke",
-   "kind": "activation",
-   "result": "partial",
-   "main": "several",
-   "work": "up to 10 creatures",
-   "needs": [
-    "several"
    ]
   },
   {

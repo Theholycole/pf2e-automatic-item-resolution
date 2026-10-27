@@ -291,3 +291,14 @@ test("another spell from a level on (2026-10-27): The Sickness's Abyssal Plague,
     const html = castCardHTML({ status: "open", plan: sickness, item: { name: "The Sickness" }, user: { name: "Oracle" }, drinker: null, drinkers: [], choice: 0, results: [] }, { canApply: true });
     assert.match(html, /Spiritual Epidemic \(from level 15\)/);
 });
+
+test("harrow cards' rank and DC in other words (2026-10-27): The Winged Serpent's 'level of this spell … (minimum 9th)', The Betrayal's class DC alone, The Joke's Laughing Fit on up to 10 creatures", async () => {
+    const { castCardHTML } = await import("../src/live/cast-card.js");
+    assert.equal(first("The Winged Serpent").castRank.min, 9);
+    const betrayal = first("The Betrayal");
+    assert.deepEqual([betrayal.castRank.min, betrayal.castDC.from], [6, "class"]);
+    const joke = first("The Joke");
+    assert.deepEqual([joke.castTargets.max, joke.castDC.from, joke.partial], [10, "class", undefined]);
+    const html = castCardHTML({ status: "open", plan: joke, item: { name: "The Joke" }, user: { name: "Bard" }, drinker: null, drinkers: [], choice: 0, results: [] });
+    assert.match(html, /DC its caster&#39;s class DC, up to 10 targets/);
+});
