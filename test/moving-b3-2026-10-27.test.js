@@ -203,3 +203,67 @@ test("Beloved's Bracelets' Grant Mythic Power: a Mythic Point spent, the silver 
     assert.match(row(grant).noteEffects[0].text, /skill check at mythic proficiency/);
     assert.match(grant.notes[0], /maximum Mythic Points are 1 lower/);
 });
+
+test("Admirer's Bouquet handed over: its +1 kept on the ally, how long and the new save its words on the ally's Effect", () => {
+    const bouquet = activations("Admirer's Bouquet")[1].plan;
+    assert.ok(done(bouquet));
+    assert.equal(bouquet.unread, undefined);
+    assert.equal(row(bouquet).modifiers[0].selector, "saving-throw");
+    assert.match(row(bouquet).noteEffects[0].text, /new save against that effect at once, with this \+1 — once a day/);
+});
+
+test("Gourd Home's shrinking: the night's pocket space a line of the card", () => {
+    const gourd = activations("Gourd Home")[1].plan;
+    assert.ok(done(gourd));
+    assert.match(gourd.notes[0], /extradimensional space for 8 hours/);
+    assert.match(gourd.notes[0], /inactive for 24 hours/);
+});
+
+test("Paradise Light's Sanctum: its fast healing PF2e's inside the zone, the hostile-action save a Note there and a line", () => {
+    const sanctum = activation("Paradise Light", "Sanctum");
+    assert.ok(done(sanctum));
+    const [rules] = sanctum.zone.inside;
+    assert.deepEqual(rules.rules[0], { key: "FastHealing", value: 2 });
+    assert.equal(rules.rules[1].key, "Note");
+    assert.match(rules.rules[1].text, /DC 28 Will save/);
+    assert.deepEqual(sanctum.zone.modifiers.map((modifier) => modifier.selector), ["will", "wis-based"]);
+    assert.equal(sanctum.zone.notes.length, 2);
+});
+
+test("Elysian Clairglass's Seek and Speak and Mariner's Astrolabe's Calculate: what they show whispered to the GM and the user", () => {
+    const glass = activation("Elysian Clairglass", "Seek and Speak");
+    assert.ok(done(glass));
+    assert.equal(glass.builtin, "whisper");
+    assert.equal(glass.spell, undefined);
+    assert.match(glass.whisper.text, /Clairaudience and Clairvoyance/);
+    const astrolabe = activation("Mariner's Astrolabe", "Calculate");
+    assert.ok(done(astrolabe));
+    assert.match(astrolabe.whisper.text, /\+1 item bonus to checks to identify celestial bodies/);
+});
+
+test("Effervescent Decoction: its hour of bubbles words on its drinker's Effect", () => {
+    const decoction = consumable("Effervescent Decoction");
+    assert.ok(done(decoction));
+    const note = row(decoction).noteEffects[0];
+    assert.deepEqual([note.duration.value, note.duration.unit], [1, "hours"]);
+    assert.match(note.text, /rises 10 feet a round/);
+});
+
+test("Dupe's Gold Nugget: its target's leaden limbs for 2 rounds, a Fortitude save card kept for each Stride, a failure −10 feet for that Stride", () => {
+    const nugget = consumable("Dupe's Gold Nugget");
+    assert.ok(done(nugget));
+    assert.equal(nugget.item.recipient, "targets");
+    assert.deepEqual([row(nugget).noteEffects[0].duration.value, row(nugget).noteEffects[0].duration.unit], [2, "rounds"]);
+    const stride = nugget.again.plan.resolution;
+    assert.deepEqual(stride.check.against, { dc: "fixed", value: 23 });
+    assert.deepEqual(stride.outcomes.failure.modifiers[0], { selector: "land-speed", value: -10, type: "status", duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } });
+    assert.deepEqual(nugget.again.time, { value: 2, unit: "rounds" });
+    assert.match(nugget.again.when, /Strides/);
+});
+
+test("Marvelous Calliope unfolded: +1 to Performance while it's up, its narrower words and its folding on its user's Effect", () => {
+    const calliope = activations("Marvelous Calliope")[0].plan;
+    assert.ok(done(calliope));
+    assert.deepEqual(row(calliope).modifiers, [{ selector: "performance", value: 1, type: "item", duration: null }]);
+    assert.match(row(calliope).noteEffects[0].text, /Performance checks to play it/);
+});

@@ -20,6 +20,8 @@ const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?
 // (PF2e's own: its manacles' Effect, the legs or wrists its ChoiceSet asks for; its Off-Guard condition.)
 const MANACLES = { uuid: "Compendium.pf2e.equipment-effects.Item.OJg3cA6viR3sA3jB", label: "Effect: Manacles" };
 const OFF_GUARD = "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg";
+// (Until the end of the creature's own turn: a Stride's penalty.)
+const THIS_TURN = { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" };
 // (Dimension Door's range, for a creature its stone brings beside its thrower: from wherever it was hit.)
 const DIMENSION_DOOR = 120;
 
@@ -264,6 +266,110 @@ const READINGS = [
             spend: { mythicPoints: 1 },
             item: { recipient: "targets" }
         })
+    },
+    {
+        // (Its +1 to saves against emotion and mental effects read before, PF2e's own on the ally targeted: how long it lasts and the new save
+        // its handing over allows, words on that ally's Effect.)
+        names: ["Admirer's Bouquet"],
+        over: (plan) => (plan?.resolution?.outcomes?.success?.modifiers ?? []).some((modifier) => modifier.selector === "saving-throw") && plan.item?.recipient === "targets",
+        sentences: [
+            /^You hand the admirer's bouquet to the triggering ally\.$/,
+            /^The triggering ally gains a \+(\d+) item bonus to saves against emotion and mental effects\.$/,
+            /^The bonus ends once the ally no longer carries the bouquet \(end it by hand\)\.$/,
+            /^If they're currently suffering from a debilitating emotion or mental effect as the result of a saving throw made during the previous turn, they can immediately attempt a new saving throw against that effect upon being given the bouquet\b/,
+            /^An admirer's bouquet can allow for a new saving throw in this way only once per day\.$/
+        ],
+        card: ([, [, bonus]], plan) => keptWithNote(plan, { label: "Admirer's bouquet", text: `It carries the admirer's bouquet: a +${bonus} item bonus to saves against emotion and mental effects while it does (remove this Effect once it doesn't). Given it while a debilitating emotion or mental effect from a save it made during the previous turn holds it, it can attempt a new save against that effect at once, with this +${bonus} — once a day for the bouquet.`, duration: null }, [/^The bonus ends once the ally no longer carries\b/, /^If they're currently suffering from a debilitating emotion\b/, /^An admirer's bouquet can allow for a new saving throw\b/])
+    },
+    {
+        // (Its house shrunk to a gourd, its room a pocket for the night: out of combat and the map's, lines of the card.)
+        names: ["Gourd Home"],
+        sentences: [
+            /^By rapping on the door from either outside or inside, you cause the gourd home to shrink back into its normal size and appear to be a non-magical gourd sitting on the ground\.$/,
+            /^For the following (\d+) hours, the interior of the gourd home becomes an extradimensional space whose size appears unchanged to those within\.$/,
+            /^If anyone outside picks up or damages the gourd, or if anyone inside the gourd home attempts to exit, all creatures within the gourd home immediately reappear in the area surrounding the gourd, and the gourd home becomes inactive for (\d+) hours\.$/
+        ],
+        card: ([, [, hours], [, inactive]]) => ownRow({ notes: [`Rapped on its door (from inside or out, its house on earth or soil): it shrinks to what looks like a plain gourd on the ground, its room an extradimensional space for ${hours} hours that looks the same size to those within. Anyone outside picking up or damaging the gourd, or anyone inside trying to leave, puts everyone inside back around the gourd, and it's inactive for ${inactive} hours (the map's, out of combat).`] })
+    },
+    {
+        // (Its two scrying spells at once and its user's voice through them: what it shows whispered to the GM and its user — the information
+        // ruling —, over the cast of one of them.)
+        names: ["Elysian Clairglass: Seek and Speak"],
+        over: (plan) => plan?.builtin === "cast-spell",
+        sentences: [
+            /^The Elysian clairglass casts clairaudience and clairvoyance on the area you are currently observing with it\.$/,
+            /^As long as you're holding the Elysian clairglass ?, you can speak through the floating eye or ear created by its spells\b/
+        ],
+        card: () => ({ builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text: "Clairaudience and Clairvoyance on the area its user is watching through the clairglass: the GM tells what it hears and sees there for the spells' time. While holding the clairglass, its user can speak through their floating eye or ear, as a whisper only one creature in range hears, a booming voice they all hear, or anything between." }, decided: "information", spell: undefined, rank: undefined, dc: undefined, attack: undefined, tradition: undefined, self: undefined, area: undefined, targets: undefined, notes: undefined, partial: undefined })
+    },
+    {
+        // (Its hour of bubbles: what it can do and what a bubble does, words on its drinker's Effect; a bubble's rise, the map's.)
+        names: ["Effervescent Decoction"],
+        sentences: [
+            /^This bubbly potion is purportedly made from winds gathered from the Mana Wastes and distilled into a liquor\.$/,
+            /^For (\d+|one|an?) (hours?|minutes?) after you imbibe the decoction, you can belch fizzy foam around willing creatures or unattended objects, surrounding them with a pink bubble\.$/,
+            /^Once per minute, you can belch a bubble by using two Interact actions\.$/,
+            /^This has effects similar to a Levitate spell, except you can't control the bubbles; they rise (\d+) feet per round on their own\.$/,
+            /^The bubble is sturdy enough to resist minor bumps or heavy winds, but if the item or creature takes any damage, the bubble pops, causing the levitation effect to end\.$/,
+            /^If the creature surrounded by the bubble uses a move action rather than just ride within the bubble, the bubble also pops\.$/
+        ],
+        card: ([, [, value, unit], , [, rise]]) => ownRow({ target: "the drinker", noteEffects: [{ label: "Bubble belching", text: `Once a minute, with two Interact actions, it can belch a pink bubble around a willing creature or an unattended object: Levitate's effects, but not steered — it rises ${rise} feet a round on its own (raise the token: the map's), sturdy against bumps and wind. It pops, ending the levitation, when what's inside takes any damage, or when a creature inside uses a move action rather than riding along.`, duration: timeOf(value, unit) }] })
+    },
+    {
+        // (Its hit's target: each Stride for 2 rounds needs a Fortitude save — its own card, kept for the rounds, a failure −10 feet for that
+        // Stride; its leaden limbs, words on its Effect.)
+        names: ["Dupe's Gold Nugget"],
+        sentences: [
+            /^Trigger You hit with a ranged Strike with the affixed weapon Requirements You're an expert with the affixed weapon\.$/,
+            /^This nugget of gold and lead amalgam is attached to the weapon by thick, twisted wire or chain\.$/,
+            /^When activated, the target's limbs become like lead weights\.$/,
+            /^For (\d+) (rounds?|minutes?), each time the target Strides it must attempt a @Check\[fortitude\|dc:(\d+)\] save\.$/,
+            /^On a failure, it takes a -(\d+)-foot status penalty to its Speed for that Stride \(to a minimum Speed of (\d+) feet\)\.$/,
+            /^On a critical success, the dupe's gold nugget effect ends early\.$/
+        ],
+        card: ([, , , [, value, unit, dc], [, feet, least]], _plan, { base }) => {
+            const time = timeOf(value, unit);
+            const slowed = { ...none(), modifiers: [{ selector: "land-speed", value: -Number(feet), type: "status", duration: THIS_TURN }] };
+            const stride = { ...ownCheck(base, { name: "Leaden Stride", statistic: "fortitude", dc: Number(dc), rows: { outcomes: { criticalSuccess: none(), success: none(), failure: slowed, criticalFailure: slowed } } }), notes: [`A failure: −${feet} feet to its Speed for this Stride (${least} feet at least). A critical success ends the nugget's effect: remove its Effect.`] };
+            return {
+                ...ownRow({ target: "the creature hit", noteEffects: [{ label: "Leaden limbs", text: `Its limbs are like lead: each time it Strides, it first attempts a DC ${dc} Fortitude save (its card) — a failure, −${feet} feet status to its Speed for that Stride (${least} feet at least); a critical success ends this.`, duration: time }], notes: ["Its user is an expert with the affixed weapon, and the hit was a ranged Strike with it."] }),
+                again: { ...again(stride, "{user} Strides"), time: { value: time.value, unit: time.unit } },
+                item: { recipient: "targets" }
+            };
+        }
+    },
+    {
+        // (A minute's reckoning by the stars: what it tells whispered to the GM and its user; its bonus to identify the stars, which no PF2e
+        // option names, the GM's to add.)
+        names: ["Mariner's Astrolabe: Calculate"],
+        sentences: [
+            /^Astrolabes can be used for navigation in unfamiliar or featureless locations\.$/,
+            /^To use an astrolabe, the holder must be trained in Survival\.$/,
+            /^By spending 1 minute to measure the height of the stars and planets, a holder who knows the time and date can determine the latitude, and a holder who knows their latitude can determine the date and time\.$/,
+            /^An astrolabe also grants a \+(\d+) item bonus to checks to identify celestial bodies\.$/,
+            /^A standard astrolabe functions only on steady ground\.$/,
+            /^A mariner's astrolabe contains additional stabilizers that make it suitable for use on moving surfaces, such as the deck of a ship\.$/
+        ],
+        card: ([, , , [, bonus]]) => ({ builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text: `A minute's measuring of the stars and planets (its holder trained in Survival, even on a moving deck): knowing the time and date, it learns its latitude; knowing its latitude, the date and time — the GM tells. Its +${bonus} item bonus to checks to identify celestial bodies is the GM's to add (PF2e has no option for them).` }, decided: "information" })
+    },
+    {
+        // (The whistle unfolded into its calliope: +1 to Performance while it's set up (PF2e's whole roll, the user's ruling for a narrow bonus),
+        // the bonus's narrower words and its collapse on its user's Effect; where it stands, the map's.)
+        names: ["Marvelous Calliope"],
+        sentences: [
+            /^You blow a tune upon the slide whistle, causing the whistle to expand\.$/,
+            /^The whistle sprouts from one into several, and then creates a large wooden frame and keyboard\.$/,
+            /^By the time the unfolding is complete, the whistle fully transforms into a calliope, a wagon-sized contraption consisting of several steam whistles played like an organ\.$/,
+            /^The calliope is heavy and anchored in place\.$/,
+            /^You have a \+(\d+) item bonus to Performance checks to play the calliope\.$/,
+            /^The calliope has a tendency to produce music for a few seconds after you cease playing it, adding a jaunty and overlong conclusion to your music\.$/,
+            /^If you use an Interact action to pull the small metal ring on the underside of the marvelous calliope ?, the calliope collapses back down into a slide whistle\.$/
+        ],
+        card: ([, , , , [, bonus]]) => {
+            const row = ownRow({ noteEffects: [{ label: "Calliope unfolded", text: `Its calliope stands unfolded, wagon-sized, heavy and anchored in place, its music running on a few seconds after playing stops. The +${bonus} item bonus is to Performance checks to play it. Pulling the ring underneath (an Interact) folds it back into a slide whistle: remove this Effect then.`, duration: null }], notes: ["Place the wagon-sized calliope where it unfolds (the map's)."] });
+            const success = row.resolution.outcomes.success;
+            return { ...row, resolution: { ...row.resolution, outcomes: { success: { ...success, modifiers: [{ selector: "performance", value: Number(bonus), type: "item", duration: null }] } } } };
+        }
     }
 ];
 // (PF2e's Superior Manacles' freeing, its six successful DC 42 Thievery checks: the shackles "function as superior manacles".)
