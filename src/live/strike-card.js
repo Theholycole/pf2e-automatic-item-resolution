@@ -65,6 +65,8 @@ export function strikeLines(plan) {
         ...(strike.ownRules ?? []).map((words) => `PF2e's own rules add ${words}`),
         // (A line of its own beside the Strike, Void Sickle's lights put out.)
         ...(strike.lines ?? []),
+        // (What its user has until then, its readied Effect's own rules: Sawtooth Reaper's fog.)
+        strike.userWords ?? null,
         // (A volley's penalty is its own line.)
         strike.attack && !(strike.volley?.penalty && strike.attack.value === strike.volley.penalty) ? (strike.attack.value < 0 ? `${strike.attack.value} ${strike.attack.type === "untyped" ? "" : `${strike.attack.type} `}penalty to the attack roll` : `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll${strike.attack.against === "metal" ? ` against a creature made of metal or wearing metal armor${strike.attack.metalTarget === true ? " (its target is)" : strike.attack.metalTarget === false ? " (its target isn't: only against a metal creature)" : ""}` : ""}`) : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
@@ -227,6 +229,9 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     if (strike.runes) for (const [property, value] of [["runes-potency", strike.runes.potency], ["runes-striking", strike.runes.striking]]) {
         if (value) rules.push({ key: "ItemAlteration", itemType: "weapon", mode: "upgrade", property, value, predicate: ammoId ? [`item:ammo:id:${ammoId}`] : range ? [`item:${range}`] : [] });
     }
+    // (Its user's own while the Strike is readied, Sawtooth Reaper's Bloodmist Whirl: Concealed until it Strikes — the Effect's, gone with it,
+    // 2026-10-27.)
+    for (const rule of strike.userRules ?? []) rules.push({ ...rule });
     return rules;
 }
 

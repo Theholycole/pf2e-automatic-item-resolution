@@ -300,7 +300,7 @@ export function compileItem(given, options = {}) {
 // readers before and the user's rulings left.)
 function areasOf(plan, given) {
     if (!hasAreaReading(given?.name)) return plan;
-    return withAreaReadings(plan, { name: given.name, html: given.system?.description?.value, kind: "consumable", base: basePlan(given), info: itemInfo(given) });
+    return withAreaReadings(plan, { name: given.name, html: given.system?.description?.value, kind: "consumable", base: basePlan(given), info: itemInfo(given), item: given });
 }
 
 // (Sustained, repeating and later effects the readers before left whole, src/compiler/lasting.js: a note Effect and the card's lines — last,

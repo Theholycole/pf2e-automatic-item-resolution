@@ -295,7 +295,7 @@ function lastingOf(item, entry, plan) {
 function areasOf(item, entry, plan) {
     const { base, info, frequency } = activationBase(item, entry);
     if (!hasAreaReading(base.source.name)) return plan;
-    return withAreaReadings(plan, { name: base.source.name, html: entry.activation?.html, kind: "activation", base, info, frequency });
+    return withAreaReadings(plan, { name: base.source.name, html: entry.activation?.html, kind: "activation", base, info, frequency, item });
 }
 
 // (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of

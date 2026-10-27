@@ -667,6 +667,107 @@ const READINGS = [
                 item: { counteract: { modifier: Number(modifier), rank: Number(rank), conditions: [], traits: [], afflictions: [], free: { name: `the magical ${what} effects` }, pick: "one", notes: [flood ? "When the fulu is submersed." : "When the fulu catches fire."] } }
             };
         }
+    },
+    // --- Snares that leave their contents, or harm what's carried.
+    {
+        // Caltrop Snare: set off by the first creature to enter, it flings PF2e's Caltrops into its square (or the adjacent one its setter
+        // chose): the caltrops' own square then (zone.then), its DC 14 Acrobatics check at the creature there as they land and the first to
+        // move in after — 1d4 piercing, 1 persistent bleed and PF2e's Effect: Caltrops on a failure.
+        names: ["Caltrop Snare"],
+        sentences: [
+            /^This snare consists of a hidden canister of Caltrops attached to a trip wire\.$/,
+            /^When the snare is triggered, it flings the caltrops into either the snare's square or a square adjacent to the snare\.$/,
+            /^You choose which square when you set up the snare\.$/,
+            /^If the caltrops scatter into the same square as a creature, that creature must attempt the Acrobatics check immediately\.$/
+        ],
+        card: (_found, _plan, { base }) => {
+            const missed = () => ({ ...none(), damage: { mode: "formulas", formulas: [{ formula: "1d4[piercing]" }, { formula: "1[persistent,bleed]" }], rollScope: "target" }, nativeEffects: [{ uuid: "Compendium.pf2e.equipment-effects.Item.5DaEI4I7cVdOD507", label: "Caltrops" }] });
+            const check = { ...base, source: { ...(base?.source ?? {}), name: "Caltrop Snare: caltrops" }, automation: { level: "automatic" }, targeting: { target: "the creature in the caltrops' square", range: null, area: null }, trigger: { event: "zone" }, resolution: { kind: "save", check: { roll: "save", statistic: "acrobatics", basic: false, against: { dc: "fixed", value: 14 } }, sharedDamage: null, outcomes: { criticalSuccess: none(), success: none(), failure: missed(), criticalFailure: missed() } } };
+            return zoneCard(zoneOf({
+                area: { type: "square", value: 5 },
+                centre: "placed",
+                range: 5,
+                once: true,
+                notes: ["The first creature to enter the square sets it off; then it's spent, its caltrops in the square."],
+                then: {
+                    area: { type: "square", value: 5 },
+                    lasts: null,
+                    concealed: false,
+                    terrain: [],
+                    saves: [{ when: ["initial", "enter"], plan: check }],
+                    notes: ["Caltrops: a DC 14 Acrobatics check for a creature there as they land or moving in (failed: 1d4 piercing and 1 persistent bleed, its Speed 5 feet lower while it bleeds).", "Its setter may have picked the adjacent square instead: move the zone there.", "Once a creature takes damage from them, the rest are safe (end the zone); plucked free with an Interact action, the bleed's DC is lower (PF2e's Effect: Caltrops)."]
+                }
+            }));
+        }
+    },
+    {
+        // Rusting Snare: its damage is to one of the creature's metal items, not to it — the Reflex save's rows a note Effect each of what the
+        // item takes (an object's: PF2e has no card for an item's Hit Points), its scraping and the item's numbers lines of the zone.
+        names: ["Rusting Snare"],
+        over: (plan) => plan?.builtin === "zone" && plan.zone?.saves?.length === 1 && plan.zone.saves[0].plan?.resolution?.kind === "save",
+        sentences: [
+            /^This snare emits puffs of oxidizing chemicals that rapidly degrade metal items; skymetals and most precious metals are immune\.$/,
+            /^The chemicals affect a non-magical metal item of up to 1 Bulk that the triggering creature is holding or openly wearing \(determined randomly if the creature is holding or wearing more than one\)\.$/,
+            /^The triggering creature must attempt a @Check\[reflex\|dc:\d+\] saving throw\.$/,
+            /^The snare deals (\d+d\d+) damage to the item; this damage ignores the item's Hardness and might deal persistent damage on a failed Reflex save\.$/,
+            /^The creature, or an adjacent creature, can attempt to scrape off the chemicals as an Interact action to prevent the persistent damage; doing so reduces the DC of the flat check to end persistent damage to (\d+) and grants an immediate flat check\.$/,
+            /^Thin iron or steel items, such as weapons, typically have 20 HP and a Broken Threshold of 10, and thicker iron or steel items, such as most suits of armor, typically have 36 HP and a Broken Threshold of 18\.$/,
+            /^Other materials' statistics can be found on pages 577-579 of the Core Rulebook\.$/,
+            /^Critical Success The object is unaffected\.$/,
+            /^Success The object takes full damage\.$/,
+            /^Failure The object takes full damage as well as (\d+d\d+) persistent\.$/,
+            /^Critical Failure The object takes double damage as well as (\d+d\d+) persistent\.$/
+        ],
+        card: ([, , , dealt, scrape, , , , , failed, critical], plan) => {
+            const [entry] = plan.zone.saves;
+            const item = "one non-magical metal item of up to 1 Bulk it holds or openly wears (a random one of several; not skymetal or most precious metals)";
+            const note = (label, text, duration) => ({ label, text, duration });
+            const rows = {
+                criticalSuccess: none(),
+                success: { ...none(), noteEffects: [note("Rusting item", `Its ${item} takes ${dealt[1]} damage, ignoring its Hardness (roll it and apply it to the item: an object's).`, THIS_TURN)] },
+                failure: { ...none(), noteEffects: [note("Rusting item", `Its ${item} takes ${dealt[1]} damage, ignoring its Hardness, and ${failed[1]} persistent damage until a flat check ends it (the item's, an object's). Scraping the chemicals off (an Interact action, by it or a creature beside it) lowers that flat check's DC to ${scrape[1]} and attempts one at once.`, null)] },
+                criticalFailure: { ...none(), noteEffects: [note("Rusting item", `Its ${item} takes double ${dealt[1]} damage, ignoring its Hardness, and ${critical[1]} persistent damage until a flat check ends it (the item's, an object's). Scraping the chemicals off (an Interact action, by it or a creature beside it) lowers that flat check's DC to ${scrape[1]} and attempts one at once.`, null)] }
+            };
+            const { sharedDamage, ...resolution } = entry.plan.resolution;
+            const save = { ...entry.plan, partial: undefined, automation: { level: "automatic" }, resolution: { ...resolution, sharedDamage: null, outcomes: rows } };
+            delete save.partial;
+            return { keep: true, drop: true, zone: { ...plan.zone, saves: [{ ...entry, plan: save }], notes: ["The first creature to enter the square sets it off; then it's spent.", "Thin iron or steel items (weapons): 20 Hit Points, Broken Threshold 10; thicker ones (most armor): 36, Broken Threshold 18; other materials as PF2e's tables (the GM's)."] } };
+        }
+    },
+    {
+        // Thundercrasher: its next shot turns the earth and stone around where it lands into difficult terrain — the zone placed there, its
+        // scatter's radius, the surfaces it can soften the GM's call.
+        names: ["Thundercrasher"],
+        sentences: [
+            /^You overload the thundercrasher to emit chaotic sonic frequencies that soften earth and stone\.$/,
+            /^When you next fire the thundercrasher it also partially liquefies any natural earth or stone surfaces within range of its scatter trait, making the area difficult terrain\.$/
+        ],
+        card: (_found, _plan, { item }) => {
+            const scatter = Number(/^scatter-(\d+)$/.exec((item?.system?.traits?.value ?? []).find((trait) => /^scatter-\d+$/.test(trait)) ?? "")?.[1]);
+            if (!Number.isFinite(scatter)) return null;
+            return zoneCard(zoneOf({
+                area: { type: "burst", value: scatter },
+                centre: "placed",
+                terrain: DIFFICULT,
+                notes: [`Where its user's next shot with it lands: the natural earth or stone within its scatter's ${scatter} feet turns to mud (place the zone there; which surfaces, the GM's call).`, "No time of its own: it lasts until the ground is firm again (end the zone then)."]
+            }));
+        }
+    },
+    {
+        // Sawtooth Reaper's Bloodmist Whirl: its next Strike's Off-Guard is the strike card's; the fog's Concealed on its user, on the same
+        // readied Strike's Effect (strike.userRules), until it Strikes or the round is up; the free Strike after Ensnaring Disarm its own.
+        names: ["Sawtooth Reaper: Bloodmist Whirl"],
+        read: (plan) => {
+            const notes = plan?.strike?.notes ?? [];
+            const fog = notes.find((note) => /^A crimson fog from the whirled chain conceals you for 1 round or until you Strike \(Concealed, by hand\)\.$/.test(said(note)));
+            const free = notes.find((note) => /^When you use Ensnaring Disarm, you can also Strike the same target as a free action\.$/.test(said(note)));
+            if (!plan.strike.offGuard || !fog || !free || notes.length !== 2) return null;
+            return {
+                keep: true,
+                drop: true,
+                strike: { ...plan.strike, until: "next-turn-start", notes: ["Meanwhile, when it uses Ensnaring Disarm it can also Strike the same target as a free action (its own)."], userRules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", allowDuplicate: true, onDeleteActions: { granter: "cascade", grantee: "cascade" } }], userWords: "Its user is Concealed in the crimson fog until it Strikes or the start of its next turn" }
+            };
+        }
     }
 ];
 
@@ -683,7 +784,7 @@ function matched(reading, sentences) {
 
 // The plan and the activation's (or consumable's) html → the reading's card, or the same plan. name: its source name; kind "activation"
 // or "consumable"; base, info, frequency: its own (lasting.js activationBase, or a consumable's basePlan and itemInfo).
-export function withAreaReadings(plan, { name, html, kind = "activation", base, info, frequency = null }) {
+export function withAreaReadings(plan, { name, html, kind = "activation", base, info, frequency = null, item = null }) {
     const readings = READINGS.filter((reading) => forName(reading, name) && (reading.read || (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect")));
     if (!readings.length) return plan;
     const words = effectWords(html, kind);
@@ -691,7 +792,7 @@ export function withAreaReadings(plan, { name, html, kind = "activation", base, 
     for (const reading of readings) {
         // (A reading of its own, over the plan read before and its html: Rusting Ammunition's rows, the fulus' week.)
         const found = reading.read ? true : matched(reading, sentences);
-        const card = reading.read ? reading.read(plan, { html, base, info }) : found ? reading.card(found, plan, { base, info }) : null;
+        const card = reading.read ? reading.read(plan, { html, base, info, item }) : found ? reading.card(found, plan, { base, info, item }) : null;
         if (!card) continue;
         // (Over the plan read before, its own parts kept; drop: what was left is gone, so it's whole.)
         if (card.keep) {

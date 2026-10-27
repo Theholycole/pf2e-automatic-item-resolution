@@ -945,7 +945,8 @@ test("next-Strike riders: Hyldarf's Fang's venom a coat of the gun itself (its u
     assert.deepEqual([routeOf(reaper), reaper.strike.offGuard, reaper.strike.own], ["strike", true, true]);
     assert.deepEqual(strikeRules(reaper, { weaponId: "reaper0000000001" }).filter((rule) => rule.key === "EphemeralEffect"), [{ key: "EphemeralEffect", affects: "target", selectors: ["reaper0000000001-attack"], uuid: "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg" }]);
     assert.ok(strikeLines(reaper).includes("Its target is Off-Guard to it"));
-    assert.ok(reaper.strike.notes.some((note) => /Concealed, by hand/.test(note)), "the fog a note");
+    // (2026-10-27: the fog is its user's Concealed on the readied Strike's Effect now, until it Strikes — src/compiler/area-readings.js.)
+    assert.deepEqual([reaper.strike.userRules[0].key, reaper.strike.until], ["GrantItem", "next-turn-start"]);
     const scope = compileActivations(item("Scope of Limning"), { spellEffects })[0].plan;
     const glow = scope.resolution.outcomes.success.noteEffects[0];
     assert.deepEqual([routeOf(scope), glow.duration.value, glow.duration.unit, /can't be Concealed/.test(glow.text)], ["strike", 1, "rounds", true]);

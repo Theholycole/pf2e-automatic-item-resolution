@@ -198,3 +198,29 @@ test("the areas' one-offs, their card's lines: Sidestepping's Phase Through, Gol
     const plans = [activation("Sidestepping", "Phase Through"), activation("Golden Goose", "Golden Goose"), compileItem(item("Kimanéz Luminescent Toadstool")), activation("Doomsweeper", "Clear the Way"), compileItem(item("Shaping Sweet"))];
     for (const plan of plans) assert.deepEqual([plan.decided, done(plan)], ["one-off", true], plan.source?.name);
 });
+
+test("snares that leave their contents or harm what's carried: Caltrop Snare's caltrops (zone.then), Rusting Snare's damage to the item, not the creature", () => {
+    const caltrop = compileItem(item("Caltrop Snare"));
+    const check = caltrop.zone.then.saves[0];
+    assert.deepEqual([caltrop.builtin, done(caltrop), caltrop.zone.once, check.when, check.plan.resolution.check.statistic, check.plan.resolution.check.against.value], ["zone", true, true, ["initial", "enter"], "acrobatics", 14]);
+    assert.deepEqual([check.plan.resolution.outcomes.failure.damage.formulas, check.plan.resolution.outcomes.failure.nativeEffects[0].label], [[{ formula: "1d4[piercing]" }, { formula: "1[persistent,bleed]" }], "Caltrops"]);
+    const rusting = compileItem(item("Rusting Snare"));
+    const rows = rusting.zone.saves[0].plan.resolution.outcomes;
+    assert.deepEqual([done(rusting), rows.success.damage.mode, rows.failure.damage.mode, rows.criticalFailure.noteEffects.length], [true, "none", "none", 1]);
+    assert.match(rows.criticalFailure.noteEffects[0].text, /double 2d6 damage, ignoring its Hardness, and 2d6 persistent/);
+});
+
+test("Thundercrasher's next shot softens the ground: a zone of its scatter's 10 feet where the shot lands", () => {
+    const [crasher] = activations("Thundercrasher");
+    assert.deepEqual([crasher.builtin, done(crasher), crasher.zone.area, crasher.zone.centre, crasher.zone.terrain, crasher.trigger.frequency.per], ["zone", true, { type: "burst", value: 10 }, "placed", [{ movement: ["walk"], difficulty: 2 }], "hour"]);
+});
+
+test("Sawtooth Reaper's Bloodmist Whirl: Concealed on its user's readied Strike Effect until it Strikes or its next turn starts", async () => {
+    const whirl = activation("Sawtooth Reaper", "Bloodmist Whirl");
+    assert.deepEqual([done(whirl), whirl.strike.offGuard, whirl.strike.until, whirl.strike.userRules[0].key], [true, true, "next-turn-start", "GrantItem"]);
+    const { strikeEffectSource } = await import("../src/live/strike-card.js");
+    const source = strikeEffectSource({ state: { plan: whirl, item: { name: "Sawtooth Reaper" }, user: {} }, moduleId: "pf2e-automatic-item-resolution" });
+    assert.ok(source.system.rules.some((rule) => rule.key === "GrantItem" && rule.uuid.endsWith("DmAIPqOBomZ7H95W")));
+    assert.deepEqual(source.system.duration, { value: 1, unit: "rounds", expiry: "turn-start", sustained: false });
+    assert.match(source.system.description.value, /Concealed in the crimson fog/);
+});
