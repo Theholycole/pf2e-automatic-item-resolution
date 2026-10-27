@@ -98,3 +98,53 @@ test("Philosopher's Extractor's Essence Transmogrification: up to 10 mutagens fr
     assert.equal(withOwnDC("<p>@Check[reflex|dc:34|basic] save; DC 34 to Escape</p>", 41), "<p>@Check[reflex|dc:41|basic] save; DC 41 to Escape</p>");
     assert.deepEqual([transformDC(0), transformDC(1), transformDC(3)], [null, 2, 4]);
 });
+
+test("Runewell of Lust's Exit the Eye: the teleport card to a space within 30 feet of the anima focus, the token targeted", () => {
+    const [exit] = activations("Runewell of Lust");
+    assert.deepEqual([exit.builtin, routeOf(exit), done(exit), exit.teleport.within, exit.teleport.from], ["teleport", "teleport", true, 30, "target"]);
+    assert.equal(exit.teleport.lines.length, 2);
+});
+
+test("Freedom's Flame's Break Free: a Mythic Point, and +3 status to the new save of each creature targeted within 120 feet", () => {
+    const free = activation("Freedom's Flame", "Break Free");
+    assert.deepEqual([routeOf(free), done(free), free.spend, free.item.recipient, free.targeting.range], ["item", true, { mythicPoints: 1 }, "targets", "120 feet"]);
+    const [note] = success(free).noteEffects;
+    assert.deepEqual(note.rules, [{ key: "FlatModifier", selector: "saving-throw", type: "status", value: 3, removeAfterRoll: "if-enabled" }]);
+});
+
+test("Retribution's Vengeful Slice: the Strike card with Retribution itself, once per round, its 120 feet as if within reach", () => {
+    const [slice] = activations("Retribution");
+    assert.deepEqual([routeOf(slice), done(slice), slice.strike.own, slice.trigger.event, slice.trigger.frequency.per], ["strike", true, true, "strike", "round"]);
+    assert.match(slice.strike.lines[0], /120 feet/);
+});
+
+test("Clockwork Sun's Set Cycle: a sunny day's light to a mile, and its two saves at creatures' turns while it's lit", async () => {
+    const { auraFits } = await import("../src/live/turn-auras.js");
+    const [sun] = activations("Clockwork Sun");
+    assert.deepEqual([routeOf(sun), done(sun), sun.notes.length], ["item", true, 3]);
+    const [lit] = sun.item.ruleEffects;
+    assert.deepEqual(lit.rules, [{ key: "TokenLight", value: { bright: 5280, dim: 5280 } }]);
+    const [glare, pain] = lit.turnAuras;
+    assert.deepEqual([glare.radius, glare.at, glare.plan.resolution.check.statistic, glare.plan.resolution.check.against.value, glare.plan.resolution.outcomes.failure.effects[0].slug, glare.plan.resolution.outcomes.criticalFailure.effects[0].slug], [20, "end", "fortitude", 43, "dazzled", "blinded"]);
+    assert.deepEqual([pain.radius, pain.at, pain.plan.resolution.check.statistic, pain.plan.resolution.outcomes.failure.effects[0].value, pain.plan.resolution.outcomes.criticalFailure.effects[0].value], [5280, "start", "will", 1, 2]);
+    // (Who each one calls for.)
+    assert.equal(auraFits(glare, { at: "end", distance: 15 }), true);
+    assert.equal(auraFits(glare, { at: "end", distance: 25 }), false);
+    assert.equal(auraFits(glare, { at: "end", distance: 15, effects: ["effect-avert-gaze"] }), false);
+    assert.equal(auraFits(glare, { at: "end", distance: 15, conditions: ["blinded"] }), false);
+    assert.equal(auraFits(glare, { at: "start", distance: 15 }), false);
+    assert.equal(auraFits(glare, { at: "end", distance: 0, self: true }), false);
+    assert.equal(auraFits(pain, { at: "start", distance: 900, abilities: ["sunlight-powerlessness"] }), true);
+    assert.equal(auraFits(pain, { at: "start", distance: 900, abilities: ["darkvision"] }), false);
+});
+
+test("Lesser Cube of Nex: six faces on the ways card — zones with counteracts and crossing saves, Wall of Force's walls, dismissed", () => {
+    const [cube] = activations("Lesser Cube of Nex");
+    assert.deepEqual([routeOf(cube), done(cube), cube.ways.length, cube.trigger.frequency.per], ["ways", true, 6, "hour"]);
+    const [gas, nonliving, living, magic, force, dismissed] = cube.ways.map((way) => way.plan);
+    assert.deepEqual([gas.zone.area, gas.zone.untilReused, gas.item.counteract.modifier, gas.item.counteract.rank], [{ type: "square", value: 10 }, true, 20, 10]);
+    assert.deepEqual([magic.item.counteract.modifier, magic.item.counteract.free.name], [20, "magical effect"]);
+    assert.deepEqual([nonliving.zone.saves[0].when, nonliving.zone.saves[0].only, nonliving.zone.saves[0].plan.resolution.check.against.value], [["enter"], { traits: ["undead", "construct"] }, 30]);
+    assert.equal(living.zone.saves[0].plan.resolution.outcomes.failure.noteEffects[0].duration.unit, "rounds");
+    assert.deepEqual([routeOf(force), force.item.structure.stats, routeOf(dismissed), dismissed.item.removeStructures], ["item", { hardness: 30, hp: 60, bt: 0 }, "item", true]);
+});

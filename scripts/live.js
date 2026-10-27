@@ -43,6 +43,7 @@ import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyCraftCard, postCraftCard } from "./craft.js";
 import { startPulse } from "./pulse.js";
+import { placeItemStructure, removeItemStructures } from "./item-structures.js";
 import { applyTransmogrifyCard, postTransmogrifyCard } from "./transmogrify.js";
 import { mutagenPlan } from "../src/live/transmogrify.js";
 import { impeccableEffect, impeccablePlan } from "../src/live/craft-card.js";
@@ -315,6 +316,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.dcBy && actor) plan = withConditionDC(plan, (slug) => actor.getCondition?.(slug)?.value ?? 0);
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
+    // (Walls round its user, Lesser Cube of Nex's walls of force — the environment module's — or those it placed removed: scripts/item-structures.js.)
+    if ((plan?.item?.structure || plan?.item?.removeStructures) && actor) await (plan.item.structure ? placeItemStructure(plan.item.structure, { actor, token, used }) : removeItemStructures({ token, used })).then((line) => ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(line)}</p>` })).catch((error) => console.error(`${MODULE_ID} | structure`, error));
     // (Damage each round around its user, then a blast, Aroden's Hearthstone's cold: its first card now, the rest at its turns — scripts/pulse.js.)
     if (plan?.item?.pulse && actor) await startPulse(plan.item.pulse, { actor, token, item: { name: used.data.name, uuid: used.data.uuid ?? null } }).then((line) => ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(line)}</p>` })).catch((error) => console.error(`${MODULE_ID} | pulse`, error));
     // (A retaliation beside the rest, Thunder Mail's for the next minute: its later card too, kept open — src/compiler/direct-damage.js.)

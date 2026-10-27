@@ -321,7 +321,8 @@ export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, i
     // (Ended by its creature's next Strike, Amulet of the Hellcat's Invisible: entry.endsOnStrike, scripts/ends-on-strike.js.)
     // (The conditions it keeps its creature from gaining once, Immortal Bastion's: entry.prevents, scripts/prevent-condition.js; its healing at
     // each turn's start, Infernal Health's: entry.turnHeal, scripts/turn-heal.js.)
-    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}) }, item, user, worldTime, initiative, moduleId });
+    // (The saves it calls for at creatures' turns near its bearer, Clockwork Sun's illumination: entry.turnAuras, scripts/turn-auras.js.)
+    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}), ...(entry.turnAuras ? { turnAuras: entry.turnAuras, from: item.name ?? null } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // Protection from heat or cold in words, with its time and its terms: "Severe heat counts as mild heat for 24 hours".
