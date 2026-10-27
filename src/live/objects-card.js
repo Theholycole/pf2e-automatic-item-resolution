@@ -32,6 +32,8 @@ export function objectsText(objects, item = {}, stored = null) {
     if (objects.op === "reload" && objects.recalled) return `The round it just missed with back in it, loaded: the firearm it's affixed to (one of its user's weapons with reload ${objects.reload}), no other round spent`;
     if (objects.op === "reload") return `Reloaded with one of its user's rounds for it: one of its user's weapons with reload ${objects.reload}`;
     // ("A +1 striking dagger in its user's hand, the last one gone: Strike with it".)
+    // (Any item of a kind, The Wanderer's: picked of PF2e's, for its time.)
+    if (objects.op === "create" && objects.choose?.any) return `Any common permanent item of its user's choice${objects.choose.any.maxBulk ? ` of Light Bulk or less` : ""}, of level ${objects.choose.any.levelsBelow ? `its user's level −${objects.choose.any.levelsBelow}` : "its user's"} or lower, in hand (picked)${objects.lasts ? ` for ${objects.lasts.value} ${objects.lasts.value === 1 ? objects.lasts.unit.replace(/s$/, "") : objects.lasts.unit}` : ""}${objects.whileAttended ? ", gone once it's dropped" : ""}`;
     if (objects.op === "create" && objects.choose) {
         const runes = (potency, striking) => (potency ? `+${potency}${striking ? ` ${["", "", "greater ", "major "][striking]}striking` : ""}` : "non-magical");
         return `A ${runes(objects.potency, objects.striking)} weapon of its user's choice in hand (picked)${objects.ammo ? `, with ${objects.ammo} pieces of its ammunition if it takes some` : ""}${objects.then ? `; ${runes(objects.then.potency, objects.then.striking)} after ${objects.then.after.value} minute` : ""}${objects.untilRest ? "; it crumbles at its user's next daily preparations" : ""}`;
@@ -62,12 +64,23 @@ export function objectsCardHTML(state, { canApply = false } = {}) {
     const theirs = objects.whose === "target";
     const picker = own ? ""
         : !state.choices.length ? (open ? `<p class="aar-hint">${theirs ? `Target the creature whose ${escape(objects.of)} it is, then Apply.` : `${escape(state.user.name)} has no item it can take.`}</p>` : "")
-            : open && canApply ? `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : objects.choose ? "Weapon" : theirs && state.owner ? `${escape(state.owner.name)}'s ${escape(objects.of)}` : "Item"}: <select data-air-field="pick">${state.choices.map((choice, index) => `<option value="${index}"${index === (state.pick ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
-                : `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : objects.choose ? "Weapon" : "Item"}: ${escape(state.choices[state.pick ?? 0]?.name ?? "")}</p>`;
+            : open && canApply ? `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : objects.choose?.any ? "Item" : objects.choose ? "Weapon" : theirs && state.owner ? `${escape(state.owner.name)}'s ${escape(objects.of)}` : "Item"}: <select data-air-field="pick">${state.choices.map((choice, index) => `<option value="${index}"${index === (state.pick ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
+                : `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : objects.choose?.any ? "Item" : objects.choose ? "Weapon" : "Item"}: ${escape(state.choices[state.pick ?? 0]?.name ?? "")}</p>`;
     // (An amount its user types, Sanguine Klar's bleed damage.)
     const typed = objects.typed && open && canApply ? `<p class="aar-actions">${escape(objects.typed.charAt(0).toUpperCase() + objects.typed.slice(1))}: <input type="number" min="0" step="1" data-air-field="amount" value="${escape(state.amount ?? "")}"></p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((entry) => `<li>${escape(entry)}</li>`).join("")}</ul>` : "";
     const ready = own || state.choices.length || theirs;
     const controls = open && canApply && ready ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open && ready ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${line}${notes}${picker}${typed}${results}${controls}</section>`;
+}
+
+// Any item of PF2e's equipment its user may pick, by the item's terms (2026-10-27, The Wanderer's "any Common permanent magic item, weapon,
+// or piece of gear of a level no higher than your level -2" of Light Bulk): rows of PF2e's index { _id, name, type, system } → [{ id, name }],
+// by name — permanent kinds, of that rarity, at most that level below its user's, no heavier than that Bulk. Pure.
+const PERMANENT = new Set(["weapon", "armor", "shield", "equipment", "backpack"]);
+export function anyItemChoices(rows, any, userLevel) {
+    const most = Number(userLevel) - (Number(any?.levelsBelow) || 0);
+    return [...(rows ?? [])].filter((row) => PERMANENT.has(row.type) && (row.system?.traits?.rarity ?? "common") === (any?.rarity ?? "common") && (Number(row.system?.level?.value) || 0) <= most
+        && (!Number.isFinite(Number(any?.maxBulk)) || (Number(row.system?.bulk?.value) || 0) <= Number(any.maxBulk)) && !(row.system?.traits?.value ?? []).includes("artifact"))
+        .sort((a, b) => a.name.localeCompare(b.name)).map((row) => ({ id: row._id, name: `${row.name} (level ${Number(row.system?.level?.value) || 0})` }));
 }

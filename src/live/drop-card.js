@@ -20,7 +20,9 @@ export function looksMetal(item) {
     return false;
 }
 
-// creatures: [{ actorUuid, tokenUuid, name, held: [{ id, name, metal }] }].
+// creatures: [{ actorUuid, tokenUuid, name, held: [{ id, name, metal }], take? }].
+// (One item its user picks of what a creature has, The Crows' and The Juggler's — dropHeld.one: none ticked till it's picked; a creature
+// whose degree takes it, into its user's hand — take —, the others dropping it, 2026-10-27.)
 export function createDropCard({ dropHeld, item, user, creatures }) {
     return {
         kind: "drop",
@@ -28,22 +30,33 @@ export function createDropCard({ dropHeld, item, user, creatures }) {
         plan: { dropHeld },
         item,
         user,
-        entries: creatures.map((creature) => ({ ...creature, held: creature.held.map((one) => ({ ...one, ticked: dropHeld.metallic ? Boolean(one.metal) : true })) })),
+        entries: creatures.map((creature) => ({ ...creature, held: creature.held.map((one) => ({ ...one, ticked: dropHeld.one ? false : dropHeld.metallic ? Boolean(one.metal) : true })) })),
         results: []
     };
+}
+
+// The items a creature has that the card lists (pure, of plain data: { id, name, type, carryType, bulk, inContainer }): what it holds — or,
+// dropHeld.attended, what it holds, wears or carries outside a container, held first —, no heavier than dropHeld.maxBulk (light Bulk 0.1).
+export function listedItems(items, dropHeld) {
+    const physical = (items ?? []).filter((one) => ["weapon", "armor", "shield", "equipment", "consumable", "treasure", "backpack", "ammo"].includes(one.type));
+    const fits = (one) => !Number.isFinite(Number(dropHeld?.maxBulk)) || (Number(one.bulk) || 0) <= Number(dropHeld.maxBulk);
+    const kept = physical.filter((one) => fits(one) && (dropHeld?.attended ? !one.inContainer && ["held", "worn", "dropped"].includes(one.carryType) : one.carryType === "held"));
+    return [...kept.filter((one) => one.carryType === "held"), ...kept.filter((one) => one.carryType !== "held")];
 }
 
 export function dropCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const metallic = state.plan.dropHeld?.metallic;
+    const one = state.plan.dropHeld?.one;
     const rows = state.entries.map((entry, at) => {
         const items = entry.held.length
-            ? entry.held.map((one, index) => `<label><input type="checkbox" data-air-drop="${at}:${index}"${one.ticked ? " checked" : ""}${open && canApply ? "" : " disabled"}> ${escape(one.name)}</label>`).join(" ")
-            : "holds nothing";
-        return `<li>${escape(entry.name)}: ${items}</li>`;
+            ? entry.held.map((item, index) => `<label><input type="checkbox" data-air-drop="${at}:${index}"${item.ticked ? " checked" : ""}${open && canApply ? "" : " disabled"}> ${escape(item.name)}</label>`).join(" ")
+            : one ? "has nothing it could be" : "holds nothing";
+        return `<li>${escape(entry.name)}${one ? ` (${entry.take ? "into its user's hand" : "dropped"})` : ""}: ${items}</li>`;
     }).join("");
     const hint = metallic && open ? `<p class="aar-hint">Ticked: what looks metal by its material or kind; the GM's to change.</p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Drop the ticked items</button></footer>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${metallic ? "drops the metal items it holds" : "drops what it holds"}</span></header><ul class="aar-notes">${rows}</ul>${hint}${results}${controls}</section>`;
+    const pickHint = one && open ? `<p class="aar-hint">Tick the one item ${escape(state.user?.name ?? "its user")} picked${state.plan.dropHeld.maxBulk ? ` (${state.plan.dropHeld.maxBulk} Bulk or less)` : ""}.</p>` : "";
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${one ? "Move the ticked item" : "Drop the ticked items"}</button></footer>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${one ? "one item it picks" : metallic ? "drops the metal items it holds" : "drops what it holds"}</span></header><ul class="aar-notes">${rows}</ul>${hint}${pickHint}${results}${controls}</section>`;
 }

@@ -99,3 +99,43 @@ test("Deck of Harrowed Tales casts Gate; Slithermaw's Bane (Heroic)'s Terrain Ad
     assert.deepEqual([made.flags["pf2e-automatic-item-resolution"].untilRest, made.flags["pf2e-automatic-item-resolution"].replaces, made.system.duration.unit], [true, true, "unlimited"]);
     assert.equal(temperatureEffectSource(forest.temperature, { item: { name: "x" } }).flags["pf2e-automatic-item-resolution"].untilRest, true);
 });
+
+test("The Beating: Pernicious Poltergeist at its user's rank and DC, its burst difficult terrain beside it (the cast's zone)", () => {
+    const [beating] = activations("The Beating");
+    assert.deepEqual([done(beating), beating.castRank.min, beating.castDC.from, beating.castZone.zone.area, beating.castZone.zone.terrain, beating.castZone.zone.range, routeOf(beating)], [true, 6, "class-spell", { type: "burst", value: 10 }, [{ movement: ["walk"], difficulty: 2 }], 60, "cast"]);
+});
+
+test("The Crows and The Juggler: one object of what a creature has, into its user's hand or on the ground by degree (the drop card)", async () => {
+    const [crows] = activations("The Crows");
+    assert.deepEqual([done(crows), crows.dropHeld.degrees, crows.dropHeld.take, crows.dropHeld.maxBulk, crows.resolution.check.statistic, routeOf(crows), rowsOf(crows).failure.noteEffects[0].duration.anchor], [true, ["criticalSuccess", "success"], ["criticalSuccess"], 2, "thievery", "save", "target-turn"]);
+    assert.ok(Object.values(rowsOf(crows)).every((row) => !row.manualInstructions));
+    const [juggler] = activations("The Juggler");
+    assert.deepEqual([done(juggler), juggler.dropHeld.take, juggler.dropHeld.maxBulk, routeOf(juggler)], [true, ["success"], 1, "save"]);
+    const { createDropCard, dropCardHTML, listedItems } = await import("../src/live/drop-card.js");
+    const items = [{ id: "a", name: "Greatsword", type: "weapon", carryType: "held", bulk: 2 }, { id: "b", name: "Maul", type: "weapon", carryType: "worn", bulk: 3 }, { id: "c", name: "Potion", type: "consumable", carryType: "worn", bulk: 0.1 }, { id: "d", name: "Gem", type: "treasure", carryType: "worn", bulk: 0, inContainer: true }, { id: "e", name: "Feat", type: "feat" }];
+    assert.deepEqual(listedItems(items, crows.dropHeld).map((one) => one.id), ["a", "c"]);
+    const card = createDropCard({ dropHeld: crows.dropHeld, item: { name: "The Crows" }, user: { name: "Kyra" }, creatures: [{ actorUuid: "Actor.o", name: "Ogre", held: [{ id: "a", name: "Greatsword" }], take: true }] });
+    assert.deepEqual([card.entries[0].held[0].ticked, /into its user's hand/.test(dropCardHTML(card, { canApply: true })), /Move the ticked item/.test(dropCardHTML(card, { canApply: true }))], [false, true, true]);
+});
+
+test("The Rakshasa: its user healed, its pledged follower's Hit Points lost by its user's level (temporary Hit Points if it dies), its immunity the follower's", () => {
+    const [rakshasa] = activations("The Rakshasa");
+    assert.deepEqual([done(rakshasa), rowsOf(rakshasa).success.effects[0].kind, rakshasa.item.hpLoss.amount, rakshasa.item.hpLoss.killedTemp, rakshasa.item.immunity.on, rakshasa.unread, routeOf(rakshasa)], [true, "heal", { level: 1 }, { level: 1 }, "targets", undefined, "item"]);
+    assert.equal((rowsOf(rakshasa).success.noteEffects ?? []).length, 0);
+});
+
+test("The Wanderer: any common permanent item of Light Bulk two levels below its user's in hand for a minute (the objects card's pick)", async () => {
+    const [wanderer] = activations("The Wanderer");
+    assert.deepEqual([done(wanderer), wanderer.objects.op, wanderer.objects.choose.any, wanderer.objects.lasts, wanderer.objects.whileAttended, routeOf(wanderer)], [true, "create", { rarity: "common", levelsBelow: 2, maxBulk: 0.1 }, { value: 1, unit: "minutes" }, true, "objects"]);
+    const { anyItemChoices, objectsText } = await import("../src/live/objects-card.js");
+    const rows = [
+        { _id: "1", name: "Wayfinder", type: "equipment", system: { level: { value: 2 }, traits: { rarity: "common", value: [] }, bulk: { value: 0.1 } } },
+        { _id: "2", name: "Dagger", type: "weapon", system: { level: { value: 0 }, traits: { rarity: "common", value: [] }, bulk: { value: 0.1 } } },
+        { _id: "3", name: "Longsword", type: "weapon", system: { level: { value: 0 }, traits: { rarity: "common", value: [] }, bulk: { value: 1 } } },
+        { _id: "4", name: "Rare Ring", type: "equipment", system: { level: { value: 2 }, traits: { rarity: "rare", value: [] }, bulk: { value: 0 } } },
+        { _id: "5", name: "Potion", type: "consumable", system: { level: { value: 1 }, traits: { rarity: "common", value: [] }, bulk: { value: 0.1 } } },
+        { _id: "6", name: "High Ring", type: "equipment", system: { level: { value: 9 }, traits: { rarity: "common", value: [] }, bulk: { value: 0 } } }
+    ];
+    assert.deepEqual(anyItemChoices(rows, wanderer.objects.choose.any, 10).map((one) => one.id), ["2", "1"]);
+    assert.match(objectsText(wanderer.objects), /level its user's level −2 or lower, in hand \(picked\) for 1 minute, gone once it's dropped/);
+});

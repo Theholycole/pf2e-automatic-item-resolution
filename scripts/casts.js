@@ -13,6 +13,7 @@ import { arrivalAfterMove } from "./cast-arrival.js";
 import { castDegreeEffectSource, castPenaltySource, itemNoteSource } from "../src/live/card.js";
 import { castNoteText } from "../src/compiler/cast-note.js";
 import { rememberTurnHeal } from "./turn-heal.js";
+import { startItemZone } from "./zones.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -160,6 +161,12 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         // (A bonus with the spell, Psyche Salts': an Effect of PF2e's rules on the creature it's cast on.)
         if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean)));
         // (A condition on its user with the cast, Locket of Sealed Nightmares' fatigued: PF2e's condition on the item's user.)
+        // (A zone over the spell's area beside it, The Beating's difficult terrain: the ability module's, placed once the spell is cast —
+        // src/compiler/artifact-readings.js castZone.)
+        if (state.plan.castZone) {
+            await startItemZone({ plan: { ...state.plan.castZone, item: state.plan.item }, used: { data: { name: state.item.name, uuid: state.item.uuid ?? null } }, actor, token }).catch((error) => console.error(`${MODULE_ID} | cast zone`, error));
+            lines.push(`Place ${state.plan.castZone.zone?.terrain?.length ? "its difficult terrain" : "its zone"} over ${spellName}'s area.`);
+        }
         if (state.plan.castSelf) {
             const user = state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor;
             if (user?.increaseCondition) {

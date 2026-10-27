@@ -634,6 +634,28 @@ async function conditionUuid(slug) {
 }
 
 // The creatures of the token uuids a presser targeted: [{ token, actor, name }].
+// A creature's Hit Points lost by its user's level ({ level: multiple } or a number), PF2e's final damage; dead or dying after it (0 Hit
+// Points), its user's temporary Hit Points by its level too (killedTemp), the higher kept → the card's lines.
+async function loseHitPoints(creature, hpLoss, { user, userName }) {
+    const level = Number(user?.level) || 0;
+    const amountOf = (value) => (Number.isFinite(Number(value)) ? Number(value) : Math.max(0, Math.floor(level * (Number(value?.level) || 0))));
+    const amount = amountOf(hpLoss.amount);
+    if (!creature.actor?.applyDamage || !(amount > 0)) return [`${creature.name} loses ${amount} Hit Points (by hand).`];
+    await creature.actor.applyDamage({ damage: amount, token: creature.token?.object ?? creature.token ?? undefined, final: true });
+    const lines = [`${creature.name} loses ${amount} Hit Points`];
+    const left = Number(creature.actor.system?.attributes?.hp?.value);
+    // (Killed: a creature other than a character at 0 Hit Points; a character only once its Dying reaches its maximum.)
+    const dying = creature.actor.system?.attributes?.dying ?? {};
+    const dead = left === 0 && (creature.actor.type !== "character" || (Number(dying.value) > 0 && Number(dying.value) >= Number(dying.max ?? 4)));
+    if (dead && hpLoss.killedTemp && user) {
+        const temp = amountOf(hpLoss.killedTemp);
+        const now = Number(user.system?.attributes?.hp?.temp) || 0;
+        if (temp > now) await user.update({ "system.attributes.hp.temp": temp });
+        lines.push(`${creature.name} is killed by it: ${userName} gains ${temp} temporary Hit Points${temp > now ? "" : ` (it has ${now} already)`}`);
+    }
+    return lines;
+}
+
 async function targetedCreatures(uuids) {
     const tokens = await Promise.all((Array.isArray(uuids) ? uuids : []).map((uuid) => fromUuid(uuid).catch(() => null)));
     return tokens.filter((token) => token?.actor).map((token) => ({ token, actor: token.actor, name: token.name ?? token.actor.name }));
@@ -696,7 +718,10 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     // (Or its flat check, the creature its user touches: Nettle Balm's.)
     const byLevel = (state.plan.item?.levelTemp ?? []).some((entry) => entry.from !== "amount");
     const marks = Boolean(state.plan.item?.mark);
-    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks ? await targetedCreatures(targets) : [];
+    const hpLoss = state.plan.item?.hpLoss ?? null;
+    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks || hpLoss ? await targetedCreatures(targets) : [];
+    // (Hit Points lost by a creature of its user's choice, The Rakshasa's pledged follower: that one targeted.)
+    if (hpLoss && others.length !== 1) throw new Error(`Target the one creature that loses the Hit Points (${hpLoss.who ?? "the creature"}) first, then press Apply.`);
     // (The creature its bonuses are against, src/compiler/marked.js: that one targeted.)
     if (marks && !state.plan.item.mark.several && others.length !== 1) throw new Error("Target the one creature it's against first, then press Apply.");
     // (Or the creatures, mark.several — Rhyton of the Radiant Ifrit's toasted ones: one or more.)
@@ -1214,6 +1239,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (The Speed penalties it ends with them, scripts/speed-penalties.js: its user's, and the creatures targeted when the text says so.)
     const speedEnds = state.plan.item?.speedPenaltiesEnd;
     if (speedEnds) for (const creature of [{ actor: target.actor, name: recipient.name }, ...(speedEnds.targets ? others : [])]) lines.push(...await endSpeedPenalties(creature.actor, creature.name, speedEnds));
+    // (Hit Points the creature targeted loses, by its user's level — PF2e's final damage, which nothing lowers — and, if that kills it,
+    // temporary Hit Points for its user: The Rakshasa's, plan.item.hpLoss — src/compiler/artifact-readings.js.)
+    if (state.plan.item?.hpLoss) for (const creature of others) lines.push(...await loseHitPoints(creature, state.plan.item.hpLoss, { user: target.actor, userName: recipient.name }));
     // (Its flat check to end persistent damage: PF2e's own recovery roll for each of those types, at the text's DC when it's
     // lower — Quenching Potion's 10 — then the condition's own DC again if it stays.)
     if (state.plan.item?.recovery) {

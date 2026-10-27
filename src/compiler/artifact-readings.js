@@ -357,6 +357,118 @@ const READINGS = [
             return { builtin: "ways", once: true, targeting: { target: null, range: null, area: null }, ways: terrains.flatMap((terrain) => sides.map((side) => way(terrain, side))), notes: ["Its save bonus holds where the scene or region is of that terrain (PF2e's environment types)."] };
         }
     },
+    {
+        // (Its user healed twice its level, read before, and its pledged follower's Hit Points lost by its level, nothing lowering them —
+        // plan.item.hpLoss, PF2e's final damage at the creature targeted (scripts/live.js) —, its user's temporary Hit Points by its level if
+        // that kills it; the follower's 24 hours' immunity its own (immunity.on "targets").)
+        name: "The Rakshasa",
+        sentences: [
+            /^You regain (?:\d+ Hit Points|Hit Points equal to twice your level), and a pledged follower of your choice loses Hit Points equal to your level \(no effects apply that would decrease this Hit Point loss\)\.$/,
+            /^If this loss kills your pledged follower, you also gain temporary Hit Points equal to your level\.$/,
+            /^The pledged follower is temporarily immune to this activation for (\d+) hours\.$/
+        ],
+        card: (found, plan) => {
+            const row = plan?.resolution?.outcomes?.success;
+            if (!row || !(row.effects ?? []).some((effect) => effect.kind === "heal") || !plan.item?.immunity) return null;
+            return {
+                keep: true,
+                resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...row, noteEffects: (row.noteEffects ?? []).filter((entry) => !entry.reminder) } } },
+                item: { ...plan.item, hpLoss: { amount: { level: 1 }, killedTemp: { level: 1 }, who: "a pledged follower of its user's choice" }, immunity: { ...plan.item.immunity, on: "targets" } },
+                notes: ["Target one of its user's pledged followers (named as The Rakshasa was invested: one, two from 15th level, three from 18th)."],
+                unread: undefined,
+                partial: undefined,
+                automation: { level: "automatic" }
+            };
+        }
+    },
+    {
+        // (Pernicious Poltergeist cast at its user's rank and DC, read before, and its area difficult terrain beside it: the ability module's
+        // zone placed over the spell's 10-foot burst once it's cast, for the spell's minute — plan.castZone, scripts/casts.js.)
+        name: "The Beating",
+        sentences: [
+            /^You wave the card to conjure up dozens of violent ghostly figures; you cast Pernicious Poltergeist, and the area of the spell is treated as difficult terrain in addition to its normal effects\.$/,
+            /^The rank of the spell is one-half your level, rounded down \(minimum 6th level\), and the save DC is your class DC or spell DC\.(?:\s*@Check\[[^\]]*\])*$/
+        ],
+        card: (found, plan) => {
+            if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Pernicious Poltergeist" || !plan.castRank || !plan.castDC) return null;
+            const zone = { area: { type: "burst", value: 10 }, centre: "placed", range: 60, lasts: timeOf(1, "minute"), untilReused: false, concealed: false, terrain: [{ movement: ["walk"], difficulty: 2 }], others: false, hazard: null, saves: [], damage: [], effect: null, modifiers: [], notes: ["Difficult terrain over Pernicious Poltergeist's area: it goes when the spell does."] };
+            return {
+                keep: true,
+                castZone: { builtin: "zone", zone, source: plan.source, automation: { level: "automatic" }, trigger: { event: "use" } },
+                notes: ["Its rank is half its user's level, rounded down (6th at least), its DC its user's class DC or spell DC.", "Its 10-foot burst is difficult terrain too: placed over it once it's cast."],
+                partial: undefined,
+                automation: { level: "automatic" }
+            };
+        }
+    },
+    {
+        // (An object of 2 Bulk or less teleported from a creature: its user's Thievery against that creature's Reflex DC, read before, and the
+        // drop card after it — the object its user picks of what the creature has, into its user's hand on a critical success, on the ground on
+        // a success (plan.dropHeld one, take: scripts/drop-held.js) —; a failure's faltering grip a note Effect on it to the end of its turn.)
+        name: "The Crows",
+        sentences: [
+            /^You hold the card in your hand, and with a flick of the wrist it vanishes, only to be replaced by an object of your choice within (\d+) feet\.$/,
+            /^The object must be (\d+) Bulk or less\.$/,
+            /^If that object is unattended, it teleports into your hand automatically\.$/,
+            /^If the object is attended by a creature, you must make a @Check\[thievery\|defense:reflex\] check against the creature's Reflex DC\.$/,
+            /^Critical Success The object teleports into your hand\.$/,
+            /^Success The object vanishes from the target's possession and lands on the ground at a point at a midway point between you two\.$/,
+            /^Failure The object does not vanish, but the creature's grip on it falters and if it doesn't spend an Interact action on its next turn to grip the item, it drops to the ground\.$/,
+            /^Critical Failure You fail to manipulate the object entirely\.$/
+        ],
+        card: ([within, bulk], plan) => {
+            const check = plan?.resolution?.check;
+            if (plan?.resolution?.kind !== "check" || check?.statistic !== "thievery" || check.against?.statistic !== "reflex") return null;
+            const clean = (row) => ({ ...row, manualInstructions: undefined });
+            const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => [degree, clean(row)]));
+            outcomes.failure = { ...outcomes.failure, noteEffects: [note("Faltering grip", "Its grip on the object The Crows reached for falters: unless it spends an Interact action this turn to grip it, it drops it at the end of the turn.", { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" })] };
+            for (const degree of Object.keys(outcomes)) if (!outcomes[degree].manualInstructions) delete outcomes[degree].manualInstructions;
+            return {
+                keep: true,
+                targeting: { ...plan.targeting, range: `${within[1]} feet` },
+                resolution: { ...plan.resolution, outcomes },
+                dropHeld: { degrees: ["criticalSuccess", "success"], take: ["criticalSuccess"], one: true, attended: true, maxBulk: Number(bulk[1]), said: "the object" },
+                notes: [`An unattended object within ${within[1]} feet (${bulk[1]} Bulk or less) teleports into its user's hand, no check: move it to their sheet.`, "Target the creature that has the object; after the check, tick the object on the next card."],
+                partial: undefined,
+                automation: { level: "automatic" }
+            };
+        }
+    },
+    {
+        // (An item of 1 Bulk or less that falls within reach, or a thrown weapon that missed, caught: the drop card at the creature it came from,
+        // into its user's hand — the automatic row's only work, plan.dropHeld take.)
+        name: "The Juggler",
+        sentences: [
+            /^You grab the triggering item\.$/,
+            /^If all of your hands are full \(including any extra free hands from The Juggler\), you must immediately release an item, which can include the triggering item\.$/
+        ],
+        card: (found, plan, { text }) => {
+            const bulk = /\bTrigger an item of (\d+) Bulk or less falls within your reach\b/.exec(text) ?? /\bof (\d+) Bulk or less\b/.exec(text);
+            return {
+                targeting: { target: "the creature the item came from", range: null, area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
+                dropHeld: { degrees: ["success"], take: ["success"], one: true, attended: true, ...(bulk ? { maxBulk: Number(bulk[1]) } : {}), said: "the triggering item" },
+                notes: ["Target the creature the item fell from (or whose thrown weapon missed), then tick the item on the next card.", "With every hand full (The Juggler's extra free hands too), its user releases an item at once, the caught one if they like."]
+            };
+        }
+    },
+    {
+        // (An item of PF2e's in its user's hand for a minute, any common permanent one of Light Bulk at most two levels below its user's: the
+        // objects card's pick (scripts/objects.js), gone when the minute's up or it's dropped.)
+        name: "The Wanderer",
+        sentences: [
+            /^You do a quick bit of legerdemain with The Wanderer ?\.$/,
+            /^As the card appears to disappear from your hand, it's immediately replaced by an object of Light bulk in your hand\.$/,
+            /^The object can be any Common permanent magic item, weapon, or piece of gear of a level no higher than your level -(\d+)\.$/,
+            /^The item exists for (\d+) (minutes?|rounds?|hours?), or until it is no longer attended by you, at which point the item vanishes and The Wanderer reappears in your possession\.$/
+        ],
+        card: ([, , below, lasts]) => ({
+            builtin: "objects",
+            targeting: { target: null, range: null, area: null },
+            objects: { op: "create", choose: { any: { rarity: "common", levelsBelow: Number(below[1]), maxBulk: 0.1 } }, lasts: { value: Number(lasts[1]), unit: UNITS[lasts[2].toLowerCase()] }, whileAttended: true },
+            notes: ["The Wanderer seems to vanish from its user's hand while the object lasts, and is back with them once it's gone."]
+        })
+    },
 ];
 
 // Whether a reading is for this source name (an activation's "Item: Activation").
