@@ -12,7 +12,11 @@ export const NOTES_CHECKED = new Map([
     ["Coating", "oils and poisons applied with no hands free: its user's own Interact, the oils' and poisons' cards as usual"],
     // (2026-10-27: a jump as one action, no Stride first — its user's own action, which no card can take for them.)
     ["Leaper's Elixir (Lesser)", "High Jump or Long Jump as one action with no Stride first, for its minute: its user's own action"],
-    ["Leaper's Elixir (Greater)", "High Jump or Long Jump as one action with no Stride first, and a longer jump: its user's own action"]
+    ["Leaper's Elixir (Greater)", "High Jump or Long Jump as one action with no Stride first, and a longer jump: its user's own action"],
+    // (2026-10-27: a targeting flat check's DC, which no PF2e rule sets — PF2e's own Effect: Mummified Bat leaves the same to its words.)
+    ["Cat's Eye Elixir", "flat checks to target Hidden creatures within 30 feet at DC 5, and none to target Concealed ones, for its minute: its user's own rolls"],
+    // (2026-10-27: a day's food, and immune to it after a week of nothing else until a day of real meals: the table's, out of combat.)
+    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

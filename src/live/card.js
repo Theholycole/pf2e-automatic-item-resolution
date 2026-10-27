@@ -740,13 +740,18 @@ export function strikeDamageText(extra) {
 }
 
 // The creature its bonuses are against, src/compiler/marked.js: "Marks the creature targeted (its bonuses against it alone) for 7 days".
+// (Or the creatures, mark.several — Rhyton of the Radiant Ifrit's toasted ones, src/compiler/situational.js: "Marks the creatures targeted
+// (its bonuses against them alone) for 1 hour".)
 export function markText(mark, name = null) {
+    if (mark.several) return `Marks ${name ?? "the creatures targeted"} (its bonuses against them alone)${forTime(mark.duration)}`;
     return `Marks ${name ?? "the creature targeted"} (its bonuses against that creature alone)${forTime(mark.duration)}`;
 }
 
 // The mark's Effect on its user: PF2e's TokenMark at that creature's token, which its bonuses' target:mark predicates read.
-export function markEffectSource(mark, { token, name = null, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
-    return ownEffectSource({ name: `${name ?? "creature"} marked`, img: "icons/svg/target.svg", words: markText(mark, name), rules: [{ key: "TokenMark", slug: mark.slug, uuid: token }], duration: mark.duration, flag: { mark: mark.slug }, item, user, worldTime, initiative, moduleId });
+// (Several: tokens, one TokenMark at each, the same slug.)
+export function markEffectSource(mark, { token, tokens = null, name = null, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const marked = tokens?.length ? tokens : [token];
+    return ownEffectSource({ name: `${name ?? "creature"} marked`, img: "icons/svg/target.svg", words: markText(mark, name), rules: marked.map((uuid) => ({ key: "TokenMark", slug: mark.slug, uuid })), duration: mark.duration, flag: { mark: mark.slug }, item, user, worldTime, initiative, moduleId });
 }
 
 // Its Effect: PF2e's DamageDice on Strike damage (a FlatModifier for a number), with its predicate.

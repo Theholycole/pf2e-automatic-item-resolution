@@ -127,7 +127,7 @@ test("a spell slot an activation costs (the module's own wording): the lowest sl
     assert.equal(pressed.card.flags[MODULE_ID].card.status, "open", "nothing applied");
 });
 
-test("a candy's Secondary Effect, a use after the first: Ginger Chew's ways card — its use (PF2e's Effect) and, later, its secondary effect's own card, sickened lowered by 1; Crackling Bubble Gum's pop, Cinnamon Seers' reroll; one with nothing a card plays stays a note (Scholar's Drop)", async () => {
+test("a candy's Secondary Effect, a use after the first: Ginger Chew's ways card — its use (PF2e's Effect) and, later, its secondary effect's own card, sickened lowered by 1; Crackling Bubble Gum's pop, Cinnamon Seers' reroll; Scholar's Drop's too since 2026-10-27", async () => {
     const chew = compileItem(source("Ginger Chew"));
     assert.deepEqual([routeOf(chew), chew.ways.map((way) => [way.name, routeOf(way.plan)])], ["ways", [["Its use", "item"], ["Its secondary effect", "item"]]]);
     assert.deepEqual(chew.ways[1].plan.item.reduce, [{ slug: "sickened", by: 1 }]);
@@ -136,9 +136,10 @@ test("a candy's Secondary Effect, a use after the first: Ginger Chew's ways card
     // (Energizing Pill's reaction: the condition just gained, of its Trigger's, lowered by 1 — the card's picker, no note.)
     const pill = compileItem(source("Energizing Pill"));
     assert.deepEqual([pill.partial, pill.ways[1].plan.item.reduce, pill.ways[1].plan.notes], [undefined, [{ choose: ["clumsy", "drained", "enfeebled", "frightened", "sickened", "slowed", "stupefied"], by: 1 }], undefined]);
+    // (2026-10-27: Scholar's Drop's secondary effect is read since — Fatigued's penalties suppressed and the immunity after, its second way,
+    // src/compiler/immune-after.js; test/rules-2026-10-27.test.js.)
     const drop = compileItem(source("Scholar's Drop"));
-    assert.equal(drop.builtin, undefined);
-    assert.match(drop.notes.at(-1), /^Secondary effect: Requirements You're fatigued/);
+    assert.deepEqual([drop.builtin, drop.ways[1].plan.item.suppress[0].slug], ["ways", "fatigued"]);
     const sick = foundry.makeActor({ id: "ways-sick", name: "Queasy", owners: ["player"], conditions: ["sickened"] });
     foundry.place(sick, 0, 29500);
     sick.conditions.set("sickened", 2);

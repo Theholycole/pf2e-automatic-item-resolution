@@ -642,7 +642,9 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     const marks = Boolean(state.plan.item?.mark);
     const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks ? await targetedCreatures(targets) : [];
     // (The creature its bonuses are against, src/compiler/marked.js: that one targeted.)
-    if (marks && others.length !== 1) throw new Error("Target the one creature it's against first, then press Apply.");
+    if (marks && !state.plan.item.mark.several && others.length !== 1) throw new Error("Target the one creature it's against first, then press Apply.");
+    // (Or the creatures, mark.several — Rhyton of the Radiant Ifrit's toasted ones: one or more.)
+    if (marks && state.plan.item.mark.several && !others.length) throw new Error("Target the creatures it's against first, then press Apply.");
     // (Temporary Hit Points from a creature's level: that creature targeted.)
     if (byLevel && !others.length) throw new Error("Target the creature first (the one its trigger names), then press Apply.");
     // ("Creatures of your choice": none targeted is its user alone.)
@@ -967,8 +969,10 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const mark = state.plan.item.mark;
         const old = (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.mark === mark.slug);
         if (old.length) await target.actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
-        await target.actor.createEmbeddedDocuments("Item", [markEffectSource(mark, { token: others[0].token.uuid, name: others[0].name, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
-        lines.push(`${recipient.name}: ${markText(mark, others[0].name)}`);
+        const marked = mark.several ? others.filter((entry) => entry.token) : [others[0]];
+        const names = marked.map((entry) => entry.name).join(", ");
+        await target.actor.createEmbeddedDocuments("Item", [markEffectSource(mark, { token: marked[0].token.uuid, tokens: marked.map((entry) => entry.token.uuid), name: names, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+        lines.push(`${recipient.name}: ${markText(mark, names)}`);
     }
     for (const extra of state.plan.item?.strikeDamage ?? []) {
         if (!target.actor) break;
