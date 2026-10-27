@@ -27,7 +27,7 @@ import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, s
 import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
 import { startItemConjure, startItemZone } from "./zones.js";
-import { scaledByCondition, withConditionDC, withNearbyDC } from "../src/live/scaled.js";
+import { scaledByCondition, withConditionDC, withNearbyDC, withTargetDC } from "../src/live/scaled.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { againstRolled, applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
@@ -307,6 +307,16 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.dcBy && actor) plan = withConditionDC(plan, (slug) => actor.getCondition?.(slug)?.value ?? 0);
     // (Its save's DC higher for each item of a name near its user, Flawed Orb of Gold Dragonkind's Orb Shards: src/live/scaled.js.)
     if (plan?.dcNear && token) plan = withNearbyDC(plan, itemsNear(token, plan.dcNear.name, plan.dcNear.within));
+    // (Its user's check at the highest DC of the creature its presser targets, with their best statistic — Spear of the Destroyer's Flame's tie to
+    // the living Commander: src/live/scaled.js.)
+    if (plan?.dcFromTarget && actor) {
+        const aimed = [...(game.user?.targets ?? [])].filter((target) => target.actor && target.actor !== actor);
+        if (aimed.length !== 1) throw new Error(`${used.data.name}: target the one creature whose DCs it's against first.`);
+        const statisticsOf = (creature, slugs, read) => Object.fromEntries(slugs.map((slug) => [slug, read(creature.getStatistic?.(slug))]));
+        const next = withTargetDC(plan, statisticsOf(aimed[0].actor, plan.dcFromTarget.statistics ?? [], (statistic) => statistic?.dc?.value), statisticsOf(actor, plan.bestOf ?? [], (statistic) => statistic?.mod ?? statistic?.check?.mod));
+        if (!next) throw new Error(`${used.data.name}: ${aimed[0].name} has none of those DCs.`);
+        plan = next;
+    }
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
     // (A retaliation beside the rest, Thunder Mail's for the next minute: its later card too, kept open — src/compiler/direct-damage.js.)

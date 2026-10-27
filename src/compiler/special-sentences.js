@@ -33,7 +33,129 @@ const PANE_NEEDS = "Only while the mirror's mounted firmly on a solid surface an
 const RIFT = "Rift to the Boneyard";
 const LOCKED = "Locked on";
 
+const stun = (value) => ({ ...none(), effects: [{ kind: "condition", slug: "stunned", value, duration: null }] });
+
+// (PF2e's statistic slugs: a Lore skill's "warfare-lore".)
+const statisticSlug = (words) => String(words).trim().toLowerCase().replace(/\s+(?:save|check)$/, "").replace(/\s+/g, "-");
+const COMMANDER = "Commander of Flame";
+const COMMANDER_TEXT = "The Army of Fire follows its orders as long as the army can see and hear it, whatever language it speaks; it senses the army's presence and can give orders as the spear's holder does. It still needs the spear in hand to muster the army. If it doesn't hold the spear for 1 week, the spear returns to Cuetzmonquali.";
+
 const READINGS = [
+    {
+        // (Two activations in one block — PF2e's text runs the second's Activate line on in the first's paragraph: tying its user's soul to the spear,
+        // once a day, and mustering the Army of Fire, once a week — the ways card's ways, each its own frequency (way.frequency). Against a living
+        // Commander: its user's best of the four, against the highest of the Commander's four DCs (plan.bestOf, plan.dcFromTarget: scripts/live.js,
+        // the Commander targeted), rolled on its user — a success its Commander of Flame Effect, a failure the Commander knowing it for 24 hours.
+        // With none living: that Effect at once. The muster's teleports: the army's tokens or its user's, on the map.)
+        name: "Spear of the Destroyer's Flame",
+        sentences: [
+            /^You attempt to tie your soul to the spear\.$/,
+            /^If the current Commander of Flame still lives, you must attempt either an? ((?:Will|Fortitude|Reflex) save), ([\w ]+? check), ([\w ]+? check), or ([\w ]+? check)\.$/,
+            /^The DC of this check is equal to the current Commander's (\w+) DC, ([\w ]+?) DC, ([\w ]+?) DC, or ([\w ]+?) DC, whichever is highest\.$/,
+            /^On a success, you become the Commander of Flame\.$/,
+            /^On a failure, the current Commander knows your name and appearance and is aware of your exact location for (\d+) (hours?)\.$/,
+            /^Activate 1 hour \(envision, Interact\) Frequency (once per week) Effect You use the spear's power to muster the Army of Fire\.$/,
+            /^You can choose to either call the Army of Fire to your location or move yourself to the army's location\.$/,
+            /^When calling the army, you select an area you can see within (\d+) feet\.$/,
+            /^The army is instantly teleported to the location you select, spreading out as necessary to arrive safely\.$/,
+            /^When moving yourself, you instantly teleport yourself to a location within (\d+) feet of the army\.$/,
+            /^The army is composed of souls given form as burning humanoids, elementals, spirits, and undead\.$/
+        ],
+        card: ([, attempt, dcs, , failure, muster, , call, , move], plan, { base, info }) => {
+            const own = (card) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...card, item: { ...info, ...(card.item ?? {}) } });
+            const becomes = [{ label: COMMANDER, text: COMMANDER_TEXT, duration: null }];
+            const known = [{ label: "Known to the Commander", text: `The current Commander of Flame knows its name and appearance and is aware of its exact location for ${failure[1]} ${failure[2]}.`, duration: timeOf(failure[1], failure[2]) }];
+            const stats = attempt.slice(1, 5).map(statisticSlug);
+            const against = ownCheck({ statistic: stats[0], dc: 0, rows: { criticalSuccess: becomes, success: becomes, failure: known, criticalFailure: known }, notes: ["Target the living Commander of Flame first: the DC is the highest of their four, rolled with its user's best of the four."] });
+            const day = { max: 1, per: "day", raw: "once per day" };
+            const tie = (name, card) => ({ name, html: "<p>You attempt to tie your soul to the spear.</p>", plan: own({ ...card, activation: { ...(base?.activation ?? {}), time: "1 minute" } }), frequency: day, frequencyKey: "tie" });
+            return {
+                builtin: "ways",
+                targeting: { target: null, range: null, area: null },
+                ways: [
+                    tie("Tie its soul: against the living Commander", { ...against, bestOf: stats, dcFromTarget: { statistics: dcs.slice(1, 5).map(statisticSlug) } }),
+                    tie("Tie its soul: no Commander living", ownRow({ noteEffects: becomes })),
+                    {
+                        name: "Muster the Army of Fire (once per week)",
+                        html: `<p>${muster[0].replace(/^Activate 1 hour \(envision, Interact\) Frequency once per week Effect /, "")}</p>`,
+                        frequency: { max: 1, per: "week", raw: muster[1] },
+                        plan: own({ ...ownRow({ notes: [
+                            `Call the army: it teleports at once to an area its user can see within ${call[1]} feet, spreading out to arrive safely (put its tokens there).`,
+                            `Or move itself: its user teleports at once to a spot within ${move[1]} feet of the army (move its token there).`,
+                            "The army: souls given form as burning humanoids, elementals, spirits and undead."
+                        ] }), activation: { ...(base?.activation ?? {}), time: "1 hour" } })
+                    }
+                ]
+            };
+        }
+    },
+    {
+        // (PF2e's Retributive Strike as its user's own: the ally the enemy damaged gains resistance to all damage, 2 + its user's level, against
+        // that damage — the fortune card's readied bonus for the creature targeted, gone with the damage —; its melee Strike at the enemy in reach,
+        // and its champion feats' benefits (PF2e's own toggle on its sheet), its user's own.)
+        name: "Piereta",
+        sentences: [/^Piereta makes a Retributive Strike, resolved as though you had used the ability, including any benefits from champion feats you have\.$/],
+        card: (found, plan, { item }) => {
+            const level = Number(item?.ownerLevel);
+            if (!Number.isFinite(level)) return null;
+            return {
+                builtin: "readied-bonus",
+                targeting: { target: "the ally the enemy damaged", range: null, area: null },
+                bonus: { modifiers: [], resistance: { type: "all-damage", value: level + 2 }, against: true, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], recipient: "target" },
+                notes: [
+                    "Retributive Strike's trigger: an enemy damages its user's ally, both within 15 feet of its user (its champion's aura). Target that ally, then Apply: its resistance is against that damage.",
+                    "If the enemy is within reach, its user makes a melee Strike against it (their own Strike, with any champion feats' benefits — PF2e's Retributive Strike toggle on its sheet)."
+                ]
+            };
+        }
+    },
+    {
+        // (Its partner back from death at full Hit Points, keeping the spells prepared and the points in its pools it had: the revival on its user
+        // (item.revive hp "max", keepPools — scripts/revive.js); its long-term debilitations kept, and the look it takes on, note Effects.)
+        name: "Briar",
+        sentences: [
+            /^Briar resurrects its partner\.$/,
+            /^The partner returns to life with full Hit Points and the same spells prepared and points in their pools they had when they died, but still suffering from any long-term debilitations of the old body\.$/,
+            /^The target is also permanently changed in some way that shifts their appearance slightly toward that of Nyrissa's, such as a green streak in the hair, a few thorny growths on the body, or a slight greenish cast to their skin\.$/
+        ],
+        card: () => ownRow({
+            noteEffects: [{ label: "Touched by Nyrissa", text: "Its look has shifted for good a little toward Nyrissa's: a green streak in the hair, a few thorny growths, or a slight greenish cast to the skin (its player picks).", duration: null }],
+            item: { recipient: "user", revive: { hp: "max", keepPools: true, words: "Back from death by Briar with full Hit Points, the spells prepared and the points in its pools it had when it died; it still has any long-term debilitations of its old body" } }
+        })
+    },
+    {
+        // (Its first Strike at Nyrissa in a round: its partner's +4 item bonus to saves against her spells for a minute — the item card's Effect,
+        // its TokenMark at her, the bonus predicated on her as the save's origin — then her Fortitude save card, DC 50: Stunned 1, or 3 on a
+        // critical failure; no other creature's.)
+        name: "Briar",
+        over: true,
+        sentences: [
+            /^The target must attempt a @Check\[fortitude\|dc:(\d+)\] save\.$/,
+            /^Success The target is unaffected\.$/,
+            /^Failure The target is Stunned (\d+)\.$/,
+            /^Critical Failure The target is Stunned (\d+)\.$/,
+            /^Briar's partner gains a \+(\d+) item bonus to all saving throws against Nyrissa's spells for (\d+) (minutes?|rounds?)\.$/
+        ],
+        card: ([save, , failure, critical, bonus], plan, { base }) => {
+            if (plan?.resolution?.kind !== "save") return null;
+            const slug = "briar-nyrissa";
+            const duration = timeOf(bonus[2], bonus[3]);
+            const nyrissa = {
+                ...base,
+                automation: { level: "automatic" },
+                trigger: { event: "use" },
+                targeting: { target: "Nyrissa", range: null, area: null },
+                ifTarget: [{ named: "nyrissa", lacks: true, immune: true }],
+                resolution: { kind: "save", check: { roll: "save", statistic: "fortitude", basic: false, against: { dc: "fixed", value: Number(save[1]) } }, sharedDamage: null, outcomes: { criticalSuccess: none(), success: none(), failure: stun(Number(failure[1])), criticalFailure: stun(Number(critical[1])) } }
+            };
+            return {
+                ...ownRow({ target: "Nyrissa", notes: ["Target Nyrissa, the creature struck: the bonus is against her spells, then her save's card follows."] }),
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), modifiers: [{ selector: "saving-throw", value: Number(bonus[1]), type: "item", duration, predicate: [`origin:mark:${slug}`, "item:type:spell"] }] } } },
+                again: { plan: nyrissa, later: false },
+                item: { recipient: "user", mark: { slug, duration } }
+            };
+        }
+    },
     {
         // (3rd-rank Circle of Protection against undead in place of an alignment, a 10-foot emanation around the athame: a zone on its user for a
         // minute, each creature inside +1 status to AC against undead creatures' attacks and to saves against their effects, +3 against a summoned

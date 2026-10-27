@@ -34,6 +34,19 @@ export function withNearbyDC(plan, count) {
     return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...against, value: Number(against.value) + Number(count) * (Number(near.each) || 1) } } } };
 }
 
+// Its user's own check at the highest DC of the creature targeted, with its best statistic of several (plan.dcFromTarget { statistics },
+// plan.bestOf, src/compiler/special-sentences.js: Spear of the Destroyer's Flame's "Will save, Diplomacy check, Intimidation check, or Warfare
+// Lore check … equal to the current Commander's Will DC, … whichever is highest"): dcs, the creature's DCs by statistic; mods, its user's
+// modifiers → the plan with that DC and statistic; the plan as it was without them.
+export function withTargetDC(plan, dcs, mods = {}) {
+    const from = plan?.dcFromTarget;
+    if (!from || plan.resolution?.check?.against?.dc !== "fixed") return plan;
+    const values = (from.statistics ?? []).map((slug) => Number(dcs?.[slug])).filter(Number.isFinite);
+    if (!values.length) return null;
+    const best = (plan.bestOf ?? []).filter((slug) => Number.isFinite(Number(mods?.[slug]))).sort((a, b) => Number(mods[b]) - Number(mods[a]))[0] ?? plan.resolution.check.statistic;
+    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, statistic: best, against: { ...plan.resolution.check.against, value: Math.max(...values) } } } };
+}
+
 // Its hit's damage gone, an ignition failed (Oil's flat check, plan.ownCheck.ignite): the plan with its success rows dealing none.
 export function withoutHitDamage(plan) {
     const none = { mode: "none", multiplier: 0, sourceComponentIds: [] };

@@ -10,7 +10,7 @@ import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { pausedAfter } from "../src/live/conjured.js";
 import { planFor } from "../src/live/if-target.js";
-import { withNearbyDC } from "../src/live/scaled.js";
+import { withNearbyDC, withTargetDC } from "../src/live/scaled.js";
 import { endsFor, hostileAt } from "../src/live/targeted.js";
 import { saveText, withAttackChoice } from "../src/live/poison-card.js";
 import { markText, marksEndingAt } from "../src/live/card.js";
@@ -108,4 +108,34 @@ test("Red Hand's Satchel: one more batch of infused reagents past its daily coun
     assert.deepEqual([done(satchel), routeOf(satchel), satchel.focus, satchel.trigger.frequency.per], [true, "focus", { amount: 1, only: null, lost: "next-turn-end", resource: "infused-reagents", overMax: true }, "day"]);
     assert.equal(focusText(satchel.focus), "1 batch of infused reagents; lost at the end of its next turn if not used");
     assert.deepEqual([poolAfter({ value: 4, max: 4 }, 1, { overMax: true }), poolAfter({ value: 4, max: 4 }, 1).reason, poolAfter({ value: 0, max: 0 }, 1, { overMax: true }).reason], [{ value: 5, gained: 1, max: 4, reason: null }, "full", "no-pool"]);
+});
+
+test("Briar: its partner back from death at full Hit Points with its pools; its first Strike at Nyrissa a +4 to saves against her spells, then her DC 50 save; its casts without the next tier's words", () => {
+    const all = plans("Briar");
+    const [back, nyrissa] = all.slice(8);
+    assert.deepEqual([done(back), routeOf(back), back.item.recipient, back.item.revive.hp, back.item.revive.keepPools, back.trigger.frequency.per], [true, "item", "user", "max", true, "month"]);
+    const [bonus] = nyrissa.resolution.outcomes.success.modifiers;
+    assert.deepEqual([done(nyrissa), routeOf(nyrissa), bonus.value, bonus.type, bonus.predicate, bonus.duration.value, nyrissa.item.mark.slug], [true, "item", 4, "item", ["origin:mark:briar-nyrissa", "item:type:spell"], 1, "briar-nyrissa"]);
+    const save = nyrissa.again.plan;
+    assert.deepEqual([save.resolution.check.against.value, save.resolution.outcomes.failure.effects[0].value, save.resolution.outcomes.criticalFailure.effects[0].value], [50, 1, 3]);
+    assert.equal(planFor(save, { name: "Owlbear", system: { traits: { value: ["animal"] } } }), null);
+    assert.equal(planFor(save, { name: "Nyrissa", system: { traits: { value: ["fey"] } } }), save);
+    // (The casts' blocks ran into the next tier's words: not their card's lines.)
+    assert.deepEqual([all[0].notes, all[5].notes], [undefined, undefined]);
+});
+
+test("Piereta: its Retributive Strike's resistance, 2 + its user's level, for the ally the enemy damaged against that damage", () => {
+    const [retribution] = plans("Piereta");
+    assert.deepEqual([done(retribution), routeOf(retribution), retribution.bonus.resistance, retribution.bonus.against, retribution.bonus.recipient, retribution.trigger.frequency.per], [true, "fortune", { type: "all-damage", value: 22 }, true, "target", "minute"]);
+});
+
+test("Spear of the Destroyer's Flame: tying its user's soul (its best of four against the living Commander's highest DC, or at once with none), mustering the Army of Fire", () => {
+    const [spear] = plans("Spear of the Destroyer's Flame");
+    assert.deepEqual([done(spear), routeOf(spear), spear.ways.map((way) => way.frequency.per), spear.ways.map((way) => way.frequencyKey ?? null)], [true, "ways", ["day", "day", "week"], ["tie", "tie", null]]);
+    const [against, alone] = spear.ways.map((way) => way.plan);
+    assert.deepEqual([routeOf(against, "x"), against.ownSave, against.bestOf, against.dcFromTarget.statistics], ["save", true, ["will", "diplomacy", "intimidation", "warfare-lore"], ["will", "diplomacy", "intimidation", "warfare-lore"]]);
+    assert.deepEqual([against.resolution.outcomes.success.noteEffects[0].label, against.resolution.outcomes.failure.noteEffects[0].duration.value, alone.resolution.outcomes.success.noteEffects[0].label], ["Commander of Flame", 24, "Commander of Flame"]);
+    const rolled = withTargetDC(against, { will: 38, diplomacy: 41, intimidation: 36 }, { will: 20, diplomacy: 25, intimidation: 18, "warfare-lore": 27 });
+    assert.deepEqual([rolled.resolution.check.against.value, rolled.resolution.check.statistic], [41, "warfare-lore"]);
+    assert.equal(withTargetDC(against, {}, {}), null);
 });

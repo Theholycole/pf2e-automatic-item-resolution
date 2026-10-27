@@ -10,5 +10,16 @@ import { withSpecialSentences } from "./special-sentences.js";
 export function withSpecialReadings(plan, { name, html, text, words, base, info, frequency, item }) {
     let next = withSpecialSentences(plan, { name, words, html, base, info, frequency, item });
     next = withHostileEnds(next, text, name);
+    next = withoutNextTier(next, name);
     return next;
+}
+
+// (Briar's casts, whose blocks run on into the next Sharpness Point tier's words, "8 Sharpness Points Briar becomes a +4 major striking …":
+// that tier's runes and statistics are the item's own, not this cast's, and its "Briar casts … on its partner" the cast itself — not its card's
+// lines.)
+const TIER = /^(?:Briar casts (?:an? )?(?:\d+(?:st|nd|rd|th)-rank )?[\w' ]+ on its partner\.\s*)?\d+ Sharpness Points Briar becomes\b|^Its statistics improve as follows\./;
+function withoutNextTier(plan, name) {
+    if (name !== "Briar" || plan?.builtin !== "cast-spell" || !(plan.notes ?? []).some((note) => TIER.test(String(note)))) return plan;
+    const notes = plan.notes.filter((note) => !TIER.test(String(note)));
+    return { ...plan, notes: notes.length ? notes : undefined };
 }

@@ -35,7 +35,8 @@ export async function applyWaysCard(message, { choice = null } = {}, postCardFor
     const data = state.item.data ?? { name: state.item.name, system: {} };
     const used = { data: { ...data, name: `${state.item.name} (${way.name})`, system: { ...(data.system ?? {}), description: { value: way.html } } }, actor };
     // (A way used so often, Hunter's Dawn's Locate once a day: its own uses on the item, as an activation's are — the GM warned past them.)
-    if (way.frequency?.max && state.item.uuid) await countWay(state.item.uuid, `${way.plan?.item?.activation?.index ?? 0}:${index}`, way.frequency, `${state.item.name} (${way.name})`);
+    // (Ways that share their uses by a key, Spear of the Destroyer's Flame's two ties of its soul: frequencyKey.)
+    if (way.frequency?.max && state.item.uuid) await countWay(state.item.uuid, `${way.plan?.item?.activation?.index ?? 0}:${way.frequencyKey ?? index}`, way.frequency, `${state.item.name} (${way.name})`);
     await postCardFor({ message: null, plan: way.plan, used, actor, token });
     // (Used once, a snare's crafted choice: closed.)
     const next = { ...state, choice: index, ...(state.plan.once ? { status: "applied" } : {}), results: [...state.results, `${way.name}: ${way.plan.builtin === "zone" ? "placed" : "its card"}.`] };

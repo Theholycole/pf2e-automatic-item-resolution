@@ -1018,8 +1018,10 @@ test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage t
     assert.deepEqual([rust.plan.resolution.sharedDamage.components[0].formula, rust.plan.resolution.check.basic, rust.plan.resolution.outcomes.failure.damage.formulas[0].formula], ["8d6[untyped]", true, "2d6[persistent,untyped]"]);
     const [hope] = compileActivations(item("Last Hope"));
     assert.deepEqual([hope.plan.scaled.die, hope.plan.resolution.sharedDamage.components[0].formula, hope.plan.resolution.check.against.value], ["d10", "1d10[vitality]", 37]);
+    // (2026-10-27: Briar's partner's +4 to saves against Nyrissa's spells first, its item card; her save the card after it, plan.again —
+    // test/unique-b4-5-2026-10-27.test.js.)
     const briar = compileActivations(item("Briar"))[9];
-    assert.deepEqual(["failure", "criticalFailure"].map((degree) => briar.plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["stunned 1"], ["stunned 3"]]);
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => briar.plan.again.plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["stunned 1"], ["stunned 3"]]);
     // (Key to the Stomach's Cleanse Affliction "to remove a poison": the counteract card for one poison on its user, +15 at rank 5.)
     const [key] = compileActivations(item("Key to the Stomach"));
     assert.deepEqual([key.plan.builtin, key.plan.item.counteract.modifier, key.plan.item.counteract.rank, key.plan.item.counteract.afflictions], ["counteract", 15, 5, ["poison"]]);

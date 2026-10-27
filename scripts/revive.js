@@ -8,7 +8,9 @@ import { itemNoteSource } from "../src/live/card.js";
 import { MODULE_ID } from "./foundry.js";
 
 // Dead: PF2e's dead status, or no Hit Points and not dying (an NPC at 0).
-export const isDead = (actor) => Boolean(actor?.statuses?.has?.("dead")) || (Number(actor?.system?.attributes?.hp?.value ?? 1) <= 0 && !actor?.hasCondition?.("dying"));
+// (Or dying at its most, a character's death — Briar's "Trigger Briar's partner dies", 2026-10-27.)
+export const isDead = (actor) => Boolean(actor?.statuses?.has?.("dead")) || (Number(actor?.system?.attributes?.hp?.value ?? 1) <= 0 && !actor?.hasCondition?.("dying"))
+    || (Number(actor?.getCondition?.("dying")?.value) > 0 && Number(actor.getCondition("dying").value) >= (Number(actor?.system?.attributes?.dying?.max) || 4));
 
 // target: { actor, token }; revive: { hp, words, debilitation? { days, words, rules } }. → the card's lines.
 export async function reviveCreature(target, name, revive, state) {
@@ -24,9 +26,11 @@ export async function reviveCreature(target, name, revive, state) {
     }
     if (actor.statuses?.has?.("dead")) await actor.toggleStatusEffect?.("dead", { active: false });
     for (const slug of ["dying", "unconscious"]) if (actor.hasCondition?.(slug)) await actor.decreaseCondition(slug, { forceRemove: true });
+    // (At full Hit Points and with its pools as they were, Briar's partner: revive.hp "max", revive.keepPools.)
     const focus = actor.system?.resources?.focus;
-    await actor.update({ "system.attributes.hp.value": revive.hp, ...(Number(focus?.value) > 0 ? { "system.resources.focus.value": 0 } : {}) });
+    const hp = revive.hp === "max" ? Number(actor.system?.attributes?.hp?.max) || 1 : revive.hp;
+    await actor.update({ "system.attributes.hp.value": hp, ...(!revive.keepPools && Number(focus?.value) > 0 ? { "system.resources.focus.value": 0 } : {}) });
     await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: "back from death", words: revive.words, duration: null }, context)]);
-    lines.unshift(`${name} returns to life with ${revive.hp} Hit Point${revive.hp === 1 ? "" : "s"}.`);
+    lines.unshift(`${name} returns to life with ${revive.hp === "max" ? "full Hit Points" : `${hp} Hit Point${hp === 1 ? "" : "s"}`}.`);
     return lines;
 }
