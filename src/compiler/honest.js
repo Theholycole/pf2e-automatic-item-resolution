@@ -302,9 +302,20 @@ export function withZoneUntraced(plan, text) {
         for (const note of added) if (!notes.includes(note)) notes.push(note);
         return added.length ? { ...save, plan: { ...save.plan, notes: [...(save.plan?.notes ?? []), ...added] } } : save;
     });
+    // (And a rule with no number the check above traces by — Fire-Douse Snare's "can use an Interact action to attempt a flat check", Grease Snare's
+    // "must roll twice and use the worse result whenever attempting a Thievery check", Rusting Snare's "this damage ignores the item's Hardness":
+    // its sentence, unless the plan says it.)
+    const json = JSON.stringify(plan).toLowerCase();
+    const sentences = String(text ?? "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
+    for (const sentence of sentences.filter((one) => ZONE_RULE.test(one) && !SKIP.test(one) && !json.includes(one.toLowerCase().slice(0, 50)))) {
+        if (notes.includes(sentence)) continue;
+        notes.push(sentence);
+        partial = true;
+    }
     if (!partial && !notes.length) return plan;
     return { ...plan, zone: { ...plan.zone, saves, notes: [...(plan.zone.notes ?? []), ...notes] }, ...(partial ? { partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } } : {}) };
 }
+const ZONE_RULE = /\bInteract actions?\b|\bflat check\b|\broll twice and use the worse\b|\bignores? the (?:item's|object's) Hardness\b|\bdeals? [^.]*\bdamage to the item\b/i;
 
 // A clause the text itself leaves to the GM's discretion (the user's answer to question 4, 2026-10-26): Dr. Ushernacht's Astonishing Ink's "At
 // the GM's discretion, the astonishing ink takes a -4 circumstance penalty …", Vorpal's "This kills any creature except ones that don't require a

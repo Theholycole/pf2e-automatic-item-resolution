@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1333,
+  "entries": 1339,
   "results": {
-   "partial": 409,
+   "partial": 415,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -11,11 +11,11 @@
   "main": {
    "cast-changes": 25,
    "speeds": 23,
-   "areas": 143,
+   "areas": 147,
    "counteract": 24,
    "afflictions": 61,
    "moving": 91,
-   "visibility": 48,
+   "visibility": 49,
    "choice": 31,
    "lasting": 68,
    "strike": 102,
@@ -43,29 +43,29 @@
    "several": 26,
    "retaliation": 3,
    "missing-number": 6,
-   "fortune": 6,
+   "fortune": 7,
    "linked-effect": 1,
    "by-kind": 8
   },
   "any": {
    "cast-changes": 25,
    "speeds": 29,
-   "areas": 206,
+   "areas": 212,
    "immunity": 88,
-   "objects": 392,
+   "objects": 393,
    "speech": 130,
-   "out-of-combat": 440,
+   "out-of-combat": 441,
    "counteract": 105,
-   "afflictions": 107,
-   "lasting": 235,
+   "afflictions": 109,
+   "lasting": 236,
    "moving": 119,
-   "triggers": 127,
-   "visibility": 50,
+   "triggers": 128,
+   "visibility": 51,
    "dying": 75,
    "choice": 111,
-   "several": 106,
+   "several": 107,
    "strike": 199,
-   "reader": 212,
+   "reader": 215,
    "spells": 76,
    "information": 199,
    "actions": 63,
@@ -81,7 +81,7 @@
    "vehicles": 27,
    "senses": 28,
    "forms": 27,
-   "fortune": 9,
+   "fortune": 10,
    "retaliation": 3,
    "missing-number": 7,
    "linked-effect": 1,
@@ -2233,6 +2233,17 @@
    "work": "1 hour",
    "needs": [
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Fire-Douse Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas",
+    "reader"
    ]
   },
   {
@@ -5318,6 +5329,19 @@
    ]
   },
   {
+   "name": "Grease Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "fortune",
+   "work": "roll twice",
+   "needs": [
+    "fortune",
+    "areas",
+    "triggers",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Gingerbread House",
    "kind": "activation",
    "result": "none",
@@ -6326,6 +6350,19 @@
    ]
   },
   {
+   "name": "Rusting Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas",
+    "afflictions",
+    "objects",
+    "reader"
+   ]
+  },
+  {
    "name": "Hollow Robes",
    "kind": "activation",
    "activation": "Empty Robes",
@@ -6391,6 +6428,17 @@
    "work": "sustain",
    "needs": [
     "lasting"
+   ]
+  },
+  {
+   "name": "Glittering Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "visibility",
+   "work": "invisibility",
+   "needs": [
+    "visibility",
+    "areas"
    ]
   },
   {
@@ -9115,6 +9163,20 @@
    ]
   },
   {
+   "name": "Poison Barbs Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas",
+    "afflictions",
+    "lasting",
+    "several",
+    "reader"
+   ]
+  },
+  {
    "name": "Hippogriff in a Jar",
    "kind": "consumable",
    "result": "none",
@@ -9904,6 +9966,16 @@
    "needs": [
     "actions",
     "lasting"
+   ]
+  },
+  {
+   "name": "Dust Pods",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
    ]
   },
   {
