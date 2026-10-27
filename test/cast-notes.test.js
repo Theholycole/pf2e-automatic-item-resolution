@@ -82,9 +82,11 @@ test("a bonus beside the cast: Psyche Salts (Moderate)'s +2 item bonus to saves 
     assert.deepEqual([salts.attack, salts.castBonus.modifiers[0].selector, salts.castBonus.modifiers[0].value, salts.castBonus.modifiers[0].predicate, salts.partial], [17, "saving-throw", 2, ["item:trait:mental"], undefined]);
 });
 
-test("a zone's save checked for what it leaves (2026-10-27): Tar Rocket Snare's partial save makes the zone partial; Spark Wafer's column for a round is the zone's own", async () => {
+test("a zone's save checked for what it leaves (2026-10-27): Biting Snare's Speed penalty until it's healed makes the zone partial (Tar Rocket Snare's once, its critical failure's push read since); Spark Wafer's column for a round is the zone's own", async () => {
     const { compileItem } = await import("../src/compiler/index.js");
-    assert.equal(compileItem(item("Tar Rocket Snare"), options).partial, true);
+    assert.equal(compileItem(item("Biting Snare"), options).partial, true);
+    const rocket = compileItem(item("Tar Rocket Snare"), options);
+    assert.deepEqual([rocket.partial, rocket.zone.saves[0].plan.resolution.outcomes.criticalFailure.forcedMovement.distance], [undefined, 10]);
     assert.equal(compileItem(item("Spark Wafer"), options).partial, undefined);
     // (An example isn't a rule: Trip Snare's "For example, three trip snares …".)
     assert.equal(compileItem(item("Trip Snare"), options).partial, undefined);

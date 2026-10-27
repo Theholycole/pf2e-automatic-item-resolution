@@ -572,6 +572,11 @@ const RULED = /\d|\b(?:damage|blinded|clumsy|confused|dazzled|deafened|doomed|dr
 function asFailureBut(plan, text) {
     const match = /\bCritical Failure As failure, but ([^.]+)\./.exec(String(text ?? ""));
     if (!match || RULED.test(match[1]) || plan?.resolution?.kind !== "save") return plan;
+    // (Its "but" told in the sentences after it, and read there: Tar Rocket Snare's "As failure, but the creature takes a direct hit. It takes 2d6
+    // bludgeoning damage and is pushed 10 feet …" — damage or a push the critical failure has and the failure hasn't, 2026-10-27.)
+    const { failure, criticalFailure } = plan.resolution.outcomes ?? {};
+    const more = (criticalFailure?.damage?.mode && criticalFailure.damage.mode !== "none" && (!failure?.damage || failure.damage.mode === "none")) || (criticalFailure?.forcedMovement && !failure?.forcedMovement);
+    if (more) return plan;
     const words = `${match[1].charAt(0).toUpperCase()}${match[1].slice(1)}.`;
     const changed = eachRow(plan, (row, degree) => (degree === "criticalFailure" && ![...(row?.noteEffects ?? []).map((note) => note.text), ...(row?.manualInstructions ?? [])].some((said) => said?.includes(words) || said?.includes(match[1])) ? { ...row, noteEffects: [...(row?.noteEffects ?? []), { label: "critical failure", text: `${words} The GM handles it.`, duration: null }] } : row));
     return changed === plan ? plan : { ...changed, partial: true };

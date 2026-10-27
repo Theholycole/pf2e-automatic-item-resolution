@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1300,
+  "entries": 1299,
   "results": {
-   "partial": 402,
+   "partial": 401,
    "none": 530,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -29,7 +29,7 @@
    "mind": 6,
    "illusions": 50,
    "removed": 6,
-   "areas": 131,
+   "areas": 130,
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 194,
+   "areas": 193,
    "immunity": 90,
    "objects": 390,
    "speech": 129,
@@ -15483,16 +15483,6 @@
     "triggers",
     "spells",
     "counteract"
-   ]
-  },
-  {
-   "name": "Tar Rocket Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas"
    ]
   },
   {
