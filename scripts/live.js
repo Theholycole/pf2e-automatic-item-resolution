@@ -278,8 +278,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (unmet) await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p>${escapeHTML(unmet)}</p>` }).catch((error) => console.error(`${MODULE_ID} | requirement warning`, error));
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     // (An item that also counteracts on its drinker — Panacea Fruit heals too: its counteract card beside its own.)
-    // (Its cost, a Mythic Point, the main card's alone: src/compiler/spend.js.)
-    if (route !== "counteract" && plan?.item?.counteract) await postCounteractCard({ message, plan: { ...plan, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | counteract card`, error));
+    // (Its cost, a Mythic Point, the main card's alone: src/compiler/spend.js. And its temporary immunity, scripts/immunity.js — 2026-10-27.)
+    if (route !== "counteract" && plan?.item?.counteract) await postCounteractCard({ message, plan: { ...plan, spend: undefined, item: { ...plan.item, immunity: undefined } }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | counteract card`, error));
     // (A cost with no card to apply it on — a zone, a conjured creature, a spell cast into ammunition: spent now, or refused.)
     if (plan?.spend && ["zone", "conjure", "spellstrike"].includes(route)) {
         checkSpend(actor, plan.spend, used.data.name);

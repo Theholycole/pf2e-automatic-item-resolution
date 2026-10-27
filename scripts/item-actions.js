@@ -4,7 +4,7 @@
 // the ability module's row for that action and degree goes on the target (scripts/foundry.js applyRiders).
 
 import { actionCardHTML, actionText, chosenAction, createActionCard, outcomeText } from "../src/live/action-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, healCreature, lowerAfflictionStage, recover, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, afflictionsOf, applyRiders, entryOf, healCreature, lowerAfflictionStage, recover, stateOf } from "./foundry.js";
 
 const sluggify = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -31,6 +31,28 @@ function stabilizeDC(target) {
     return { value: 5 + (Number(dying.recoveryDC) || 10) + Number(dying.value) };
 }
 
+// (2026-10-27: PF2e's action-system Stop Bleeding and Treat Poison have no DC of their own either, so their rolls had no degree.)
+// Stop Bleeding's DC: its persistent bleed's own (PF2e 8.6's condition system.persistent.dc, 15 unless something set it) — the rules' "DC of the
+// effect that caused the bleed", which the condition doesn't keep —, the highest when it bleeds more than once.
+const isBleed = (condition) => condition.slug === "persistent-damage" && condition.system?.persistent?.damageType === "bleed";
+function bleedDC(target) {
+    const dcs = (target?.itemTypes?.condition ?? []).filter(isBleed).map((condition) => Number(condition.system.persistent.dc) || 15);
+    return dcs.length ? { value: Math.max(...dcs) } : null;
+}
+// Treat Poison's DC: the poison's (scripts/foundry.js afflictionsOf: Pseudo Afflictions' save DC, PF2e's affliction item's), the highest of those
+// the item may treat (only: Artevil Suspension's ingested one).
+function poisonDC(target, only = null) {
+    const dcs = afflictionsOf(target).filter((one) => (one.traits.includes("poison") || one.document?.traits?.has?.("poison")) && (!only || only(one))).map((one) => one.dc).filter((dc) => Number.isFinite(dc) && dc > 0);
+    return dcs.length ? { value: Math.max(...dcs) } : null;
+}
+// (A poison given that way when its traits say a vector: Artevil Suspension's ingested one.)
+const VECTORS = ["ingested", "inhaled", "contact", "injury"];
+const ofVector = (vector) => (one) => {
+    const traits = [...(one.traits ?? []), ...(one.document?.traits ? [...one.document.traits] : [])];
+    const vectors = VECTORS.filter((entry) => traits.includes(entry));
+    return !vectors.length || vectors.includes(vector);
+};
+
 // A check's degree against a DC: by 10 either way a critical, a natural 20 one better and a natural 1 one worse.
 const DEGREES = ["criticalFailure", "failure", "success", "criticalSuccess"];
 function degreeAgainst(total, dc, natural = null) {
@@ -53,7 +75,6 @@ async function giveCondition(actor, token, { slug, value, duration = null }, sta
 // What the item does after its user's own action (src/compiler/item-actions.js readWithinActivity), by the outcome: Yarrow-Root Bandage's bleed as
 // PF2e's stop bleeding — a success's assisted recovery (the flat check at DC 10), a critical failure's bleed at once —; Curled Cure Gel's highest
 // of its conditions lowered; Artevil Suspension's poison a stage lower (Pseudo Afflictions' badge), then its Sickened 2. → lines for the card.
-const VECTORS = ["ingested", "inhaled", "contact", "injury"];
 async function withinResults(action, outcome, token, state) {
     const actor = token?.actor;
     if (!actor || !outcome) return [];
@@ -78,12 +99,7 @@ async function withinResults(action, outcome, token, state) {
     }
     if (action.stage && won) {
         // (Its vector when its traits say one: only a poison given that way.)
-        const only = (one) => {
-            const traits = [...(one.traits ?? []), ...(one.document?.traits ? [...one.document.traits] : [])];
-            const vectors = VECTORS.filter((vector) => traits.includes(vector));
-            return !vectors.length || vectors.includes(action.stage.vector);
-        };
-        const lowered = await lowerAfflictionStage(actor, name, { traits: ["poison"], by: action.stage.by, min: action.stage.min, only });
+        const lowered = await lowerAfflictionStage(actor, name, { traits: ["poison"], by: action.stage.by, min: action.stage.min, only: ofVector(action.stage.vector) });
         lines.push(...lowered);
         if (lowered.lowered && action.stage.then) lines.push(await giveCondition(actor, token, action.stage.then, state));
     }
@@ -121,14 +137,25 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     const variant = action.variant && [...(pf2eAction.variants?.keys?.() ?? [])].includes(action.variant) ? action.variant : variantFor(pf2eAction, targetToken?.actor ?? null);
     // (PF2e's action-system First Aid has no stabilize DC of its own: the rule's, 5 + the target's recovery DC + its dying value — less or more as
     // the item says, Lady's Blessing Oil's 5 lower, Yarrow-Root Bandage's 5 higher.)
-    const stabilize = action.slug === "administer-first-aid" && variant === "stabilize" ? stabilizeDC(targetToken?.actor) : null;
-    const difficultyClass = stabilize ? { value: stabilize.value - (Number(action.dc?.less) || 0) + (Number(action.dc?.more) || 0) } : null;
+    // (Nor a Stop Bleeding or Treat Poison DC, 2026-10-27: its bleed's, its poison's — and for Yarrow-Root Bandage's one check at both, the
+    // higher of its stabilize DC and its bleed's.)
+    const patient = targetToken?.actor ?? null;
+    const firstAid = action.slug === "administer-first-aid";
+    const stabilize = firstAid && variant === "stabilize" ? stabilizeDC(patient) : null;
+    const bleed = firstAid && (variant === "stop-bleeding" || action.both) ? bleedDC(patient) : null;
+    const poison = action.slug === "treat-poison" ? poisonDC(patient, action.stage?.vector ? ofVector(action.stage.vector) : null) : null;
+    const higher = (...dcs) => (dcs.some(Boolean) ? { value: Math.max(...dcs.filter(Boolean).map((dc) => dc.value)) } : null);
+    const base = firstAid && variant === "stabilize" ? (action.both ? higher(stabilize, bleed) : stabilize) : firstAid && variant === "stop-bleeding" ? bleed : poison;
+    const difficultyClass = base ? { value: base.value - (Number(action.dc?.less) || 0) + (Number(action.dc?.more) || 0) } : null;
+    // (Rolled with no DC to give it: why, for the card's line.)
+    const patientName = targetToken?.name ?? patient?.name ?? "The creature";
+    const noDC = difficultyClass ? null : firstAid && variant === "stabilize" ? `${patientName} isn't dying` : firstAid && variant === "stop-bleeding" ? `${patientName} has no persistent bleed` : action.slug === "treat-poison" ? `${patientName} has no poison with a DC to treat${action.stage?.vector ? ` (${/^[aeiou]/.test(action.stage.vector) ? "an" : "a"} ${action.stage.vector} one)` : ""}` : null;
     const results = await pf2eAction.use({ actors: [actor], ...(targetToken ? { target: targetToken.object ?? targetToken.actor } : {}), modifiers, ...(action.statistic ? { statistic: action.statistic } : {}), ...(variant ? { variant } : {}), ...(difficultyClass ? { difficultyClass } : {}), ...(event ? { event } : {}) });
     const rolled = results?.[0]?.outcome ?? null;
     // (A degree the item changes, Ensnaring Disk's critical failure made a failure: the outcome the card acts on, said.)
     const outcome = rolled ? action.degree?.[rolled] ?? rolled : null;
     const lines = [];
-    if (!outcome) lines.push(`${actionText(action)}: no result (cancelled).`);
+    if (!outcome) lines.push(results?.[0] && noDC ? `${actionText(action)}: no result — ${noDC}, so PF2e's roll has no DC (compare it by hand).` : `${actionText(action)}: no result (cancelled).`);
     else {
         lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}${outcome !== rolled ? ` (${outcomeText(rolled)} rolled, made ${outcomeText(outcome)} by ${state.item.name})` : ""}.`);
         // (What its success does more for that variant, Crying Angel Pendant's, src/compiler/first-aid.js: its Hit Point healed while the target's

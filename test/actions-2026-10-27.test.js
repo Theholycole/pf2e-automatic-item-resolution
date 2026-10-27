@@ -106,7 +106,8 @@ test("used within its user's own action, every sentence read: Lady's Blessing Oi
     assert.deepEqual([oil.slug, oil.variant, oil.dc, oil.degree, oil.within], ["administer-first-aid", "stabilize", { less: 5 }, { failure: "criticalFailure" }, true]);
     const bandage = readItemAction(html("Yarrow-Root Bandage"));
     assert.deepEqual([bandage.slug, bandage.variant, bandage.both, bandage.dc], ["administer-first-aid", "stabilize", true, { more: 5 }]);
-    assert.match(bandage.after, /the GM may use 5 more than the bleed's DC instead/);
+    // (2026-10-27: the bleed's DC is its condition's now, so the higher of the two is the card's, not the GM's.)
+    assert.match(bandage.after, /at 5 more than the higher of its stabilize DC and its bleed's\.$/);
     const gel = readItemAction(html("Curled Cure Gel"), item("Curled Cure Gel"));
     assert.deepEqual([gel.slug, gel.reduce, gel.immunity.slug, gel.immunity.duration], ["treat-wounds", { choose: ["clumsy", "enfeebled", "stupefied"], by: 1 }, "curled-cure-gel", { value: 24, unit: "hours" }]);
     const suspension = readItemAction(html("Artevil Suspension"));

@@ -98,8 +98,9 @@ const SUCCEEDED_TAKES = /^Choose one target against whom your (?:Deception|Intim
 // - Lady's Blessing Oil's lower DC, "reduced to the creature's recovery roll DC, rather than 5 + the recovery roll DC" (action.dc { less: 5 }), and
 //   "if you roll a failure on the check, you get a critical failure instead" (action.degree);
 // - Yarrow-Root Bandage's "you can Administer First Aid to stop bleeding and dying as part of the same activity with only one Medicine check …
-//   the DC … is equal to the 5 + the higher of the two DCs" (action.both, dc { more: 5 }: the stabilize DC's, the bleed's the GM's when higher —
-//   a line), the bleed after it as PF2e's stop bleeding: a success's assisted recovery (flat check DC 10), a critical failure's bleed at once;
+//   the DC … is equal to the 5 + the higher of the two DCs" (action.both, dc { more: 5 }: the higher of the stabilize DC and the bleed's — its
+//   condition's DC since 2026-10-27, scripts/item-actions.js), the bleed after it as PF2e's stop bleeding: a success's assisted recovery (flat
+//   check DC 10), a critical failure's bleed at once;
 // - Curled Cure Gel's "If you successfully Treat Wounds, you can also reduce the value of one of the targets' Clumsy, Enfeebled, or Stupefied
 //   conditions by 1" (action.reduce: the highest of them, a line saying its user may pick another) and its 24 hours' immunity for the creature
 //   treated, success or not (action.immunity, scripts/immunity.js);
@@ -112,7 +113,7 @@ const WITHIN_RULES = [
     [/^If you use [\w' -]+?, the DC of the check to Administer First Aid is reduced to the creature's recovery roll DC, rather than 5 \+ the recovery roll DC\.$/i, () => ({ dc: { less: 5 }, line: "Its DC is the creature's recovery roll DC, 5 lower than usual" })],
     [/^However, if you roll a failure on the check, you get a critical failure instead\.$/i, () => ({ degree: { failure: "criticalFailure" }, line: "and a failure is a critical failure" })],
     [/^When you do, you can Administer First Aid to stop bleeding and dying as part of the same activity with only one Medicine check\.$/i, () => ({ both: true, line: "One Medicine check both stabilizes it and stops its bleeding" })],
-    [/^However, the DC for the Medicine check is equal to the 5 \+ the higher of the two DCs to Administer First Aid\.$/i, () => ({ dc: { more: 5 }, line: "at 5 more than the stabilize DC (the GM may use 5 more than the bleed's DC instead, when that's higher)" })],
+    [/^However, the DC for the Medicine check is equal to the 5 \+ the higher of the two DCs to Administer First Aid\.$/i, () => ({ dc: { more: 5 }, line: "at 5 more than the higher of its stabilize DC and its bleed's" })],
     [/^If you successfully Treat Wounds, you can also reduce the value of one of the targets' (\w+), (\w+), or (\w+) conditions by (\d+)\.$/i, (said) => ({ reduce: { choose: [said[1], said[2], said[3]].map((slug) => slug.toLowerCase()), by: Number(said[4]) }, line: `On a success it also lowers the highest of its ${said[1]}, ${said[2]} or ${said[3]} by ${said[4]} (its user may pick another instead: change it on the sheet)` })],
     [/^The target of your Treat Wounds is then temporarily immune to [\w' -]+? for (\d+) (hours?|minutes?|days?), whether or not your attempt to Treat Wounds was successful\.$/i, (said, sentence) => ({ immunity: { value: Number(said[1]), unit: `${said[2].toLowerCase().replace(/s$/, "")}s`, raw: sentence }, line: `The creature treated is then immune to it for ${said[1]} ${said[2].toLowerCase()}, success or not` })],
     [/^If you succeed at your Medicine check to Treat Poison against an? (ingested|inhaled|contact|injury) poison, you can reduce the stage of the toxin by one stage, though this can't reduce the stage below stage 1 or cure the poison entirely\.$/i, (said) => ({ stage: { by: 1, min: 1, vector: said[1].toLowerCase() }, line: `On a success its ${said[1].toLowerCase()} poison drops a stage, never below stage 1` })],
