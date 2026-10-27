@@ -34,8 +34,13 @@ function untilOf(text) {
     // (Sure-Step Crampons' "until the next time you move", "The bonus lasts until you move from your current spot": off when its
     // user's token moves.)
     if (/\buntil (?:the next time )?you move\b/i.test(text)) return "move";
+    // (Kinburi's Sandals of Bounding's "The sandals' item bonus increases to +2 for these jumps": the jumps this activation takes, this turn.)
+    if (/\bfor these jumps\b/i.test(text)) return "turn-end";
     return undefined;
 }
+
+// (Its user's own actions the toggle is for, a line of the card: Kinburi's Sandals of Bounding's two jumps.)
+const JUMPS = /\btake any combination of two High Jumps or Long Jumps\. You don't need to Stride first, and between the two jumps, you need only to come into contact with a physical object before making the second jump\b/i;
 
 export function optionPlan(item, activation, base) {
     const rule = namedToggle(item, activation?.name);
@@ -51,7 +56,8 @@ export function optionPlan(item, activation, base) {
         targeting: { target: "self", range: null, area: null },
         trigger: { event: "use" },
         modes: [{ name: activation.name ?? "On", plan: { builtin: "roll-option", option: rule.option, ...(rule.domain ? { domain: rule.domain } : {}), value: until === null ? "flip" : true } }],
-        ...(until ? { until } : {})
+        ...(until ? { until } : {}),
+        ...(JUMPS.test(text) ? { notes: ["Take any two High Jumps or Long Jumps, with no Stride first; between them it need only touch some physical object, whatever it is (its own actions)."] } : {})
     };
 }
 

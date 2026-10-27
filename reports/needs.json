@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1295,
+  "entries": 1294,
   "results": {
    "partial": 397,
-   "none": 530,
+   "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
   },
@@ -13,7 +13,7 @@
    "speeds": 22,
    "counteract": 24,
    "afflictions": 60,
-   "moving": 81,
+   "moving": 80,
    "visibility": 48,
    "lasting": 65,
    "choice": 30,
@@ -50,15 +50,15 @@
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 191,
+   "areas": 190,
    "immunity": 90,
-   "objects": 390,
+   "objects": 389,
    "speech": 129,
    "out-of-combat": 444,
    "counteract": 105,
    "afflictions": 109,
    "lasting": 232,
-   "moving": 108,
+   "moving": 107,
    "triggers": 118,
    "visibility": 50,
    "dying": 75,
@@ -5654,19 +5654,6 @@
    "needs": [
     "areas",
     "lasting"
-   ]
-  },
-  {
-   "name": "Kinburi's Sandals of Bounding",
-   "kind": "activation",
-   "activation": "Light-Footed Bound",
-   "result": "none",
-   "main": "moving",
-   "work": "high jump",
-   "needs": [
-    "moving",
-    "areas",
-    "objects"
    ]
   },
   {

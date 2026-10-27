@@ -366,3 +366,10 @@ test("a readied bonus its user's own doing ends (2026-10-27): Scale of Igroon's 
     const immovable = activations(item("Immovable"), options).find((entry) => entry.plan?.item?.ruleEffects).plan;
     assert.deepEqual([immovable.partial, /DC 40 Athletics check to Force Open/.test(immovable.item.ruleEffects[0].words)], [undefined, true]);
 });
+
+test("an item's own PF2e toggle for these jumps (2026-10-27): Kinburi's Sandals of Bounding's Light-Footed Bound, its +2 till the turn's end, the two jumps its user's own", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const [bound] = activations(item("Kinburi's Sandals of Bounding"), options);
+    assert.deepEqual([bound.plan.builtin, bound.plan.modes[0].plan.option, bound.plan.until, bound.plan.partial], ["modes", "light-footed-bound", "turn-end", undefined]);
+    assert.match(bound.plan.notes[0], /two High Jumps or Long Jumps.*\(its own actions\)\.$/);
+});
