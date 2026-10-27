@@ -1,6 +1,8 @@
 // The objects card (src/compiler/objects.js): what an item does to one of its user's items, or to itself — stored in it, out of it into a
 // hand, to a hand, worn, repaired, a weapon made in the hand, a weapon reloaded — the item picked on the card from the user's own (its choices, made when the card is posted). Pure.
 
+import { pauseWords } from "./shield-repair.js";
+
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 export const isObjects = (plan) => plan?.builtin === "objects" && Boolean(plan.objects?.op);
 
@@ -28,6 +30,8 @@ export function objectsText(objects, item = {}, stored = null) {
     if (objects.op === "repair" && objects.affixed && objects.less) return `${objects.amount} of the damage the item it's affixed to just took taken back (${objects.amount} Hit Points restored, no more than it took): pick that item once the damage lands`;
     if (objects.op === "repair" && objects.affixed && objects.negates) return `The damage negated: the item it's affixed to repaired to its full Hit Points, no longer broken — pick that item once the damage lands`;
     if (objects.op === "repair" && objects.amount) return `${objects.amount} Hit Points restored, up to its maximum: one of its user's damaged items${objects.damagedBy ? ` (what the ${objects.damagedBy} did)` : ""}${limit}`;
+    // (Within its user's reach, its own or another's, up to a level, even a destroyed one — Forgefather's Seal's Seal of Mending, 2026-10-27.)
+    if (objects.op === "repair" && objects.reach) return `Repaired to its full Hit Points${objects.destroyed ? ", even if destroyed" : ""}, no longer broken: an item of its user's or of a creature within its reach${Number.isFinite(objects.maxLevel) ? `, of level ${objects.maxLevel} or lower` : ""}${objects.pauses ? `; then ${pauseWords(objects.pauses)}` : ""}`;
     if (objects.op === "repair") return `Repaired to its full Hit Points, no longer broken: one of its user's items${limit}`;
     if (objects.op === "reload" && objects.recalled) return `The round it just missed with back in it, loaded: the firearm it's affixed to (one of its user's weapons with reload ${objects.reload}), no other round spent`;
     if (objects.op === "reload") return `Reloaded with one of its user's rounds for it: one of its user's weapons with reload ${objects.reload}`;

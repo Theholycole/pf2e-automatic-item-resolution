@@ -310,6 +310,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
     // (A retaliation beside the rest, Thunder Mail's for the next minute: its later card too, kept open — src/compiler/direct-damage.js.)
     if (plan?.alsoRetaliation && route !== "later") await postExposureCard({ message, plan: { ...plan.alsoRetaliation, item: plan.item, spend: undefined }, used, actor, token, later: true }).catch((error) => console.error(`${MODULE_ID} | retaliation card`, error));
+    // (A readied bonus beside the rest, Forgefather's Seal's blow absorbed beside its Earthquake: the readied card too — src/compiler/unique-rules.js, 2026-10-27.)
+    if (plan?.alsoReadied && route !== "fortune") await postFortuneCard({ message, plan: { ...plan.alsoReadied, source: plan.source, item: plan.item, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | readied card`, error));
     // (Its user's move beside the rest, Phase Spike's Stride with its resistance: the teleport card's as a move, src/compiler/move.js.)
     if (plan?.item?.move && route !== "teleport") await postTeleportCard({ message, plan: { ...plan, builtin: "teleport", teleport: plan.item.move, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | move card`, error));
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });

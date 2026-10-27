@@ -18,6 +18,17 @@
 //   PF2e's BattleForm rule: Avatar's own statistics (Huge; its level + 25 for AC; temporary Hit Points 30; darkvision; Athletics +35; its attacks at +33)
 //   with the item's Speeds and Strikes, the extra poison dice a DamageDice on the blowgun; walking on air and ignoring difficult terrain, the
 //   map's, its words.
+// - A blow absorbed beside a cast (withAbsorbedBlow): Forgefather's Seal's Retributive Rebuff, "The attack's damage is reduced by 100 and you
+//   cast Earthquake (DC 40), centered directly on the triggering creature" → the cast as read, and plan.alsoReadied: the readied card's
+//   resistance 100 to all damage against the triggering attack, spent by that damage (scripts/fortune.js), posted beside the cast card
+//   (scripts/live.js). Where its area goes and how big — "from as small as the size of the creature and up to a 60-foot burst" — the
+//   map's: lines of the cast card.
+// - An item mended outright (withMended): Forgefather's Seal's Seal of Mending, "repair an item within reach … restores the item to full Hit
+//   Points, even if the item was destroyed … magic items and artifacts of its level or lower" → the objects card's repair (op "repair",
+//   reach: its user's items and those of the creatures within its reach, up to the item's level), and "the seal's ability to automatically
+//   repair shields becomes inactive until the next time you make your daily preparations": objects.pauses, an Effect on its user until then
+//   that its shields' repair at each turn's start waits for (src/compiler/shield-repair.js, scripts/shield-repair.js). Most of the item
+//   there to mend: the GM's call, a line.
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -116,10 +127,49 @@ function withOwnAvatar(plan, { activation, index }, item) {
     return { ...ownCard({ ...rest, rank: 10, traits: [...new Set([...(base.traits ?? []), "polymorph"])] }, { noteEffects: [{ label: "Avatar", text, duration: MINUTE, rules }] }), noteOnly: undefined };
 }
 
+// --- A blow absorbed beside a cast ---------------------------------------------------------------------------------------------------------
+
+const ABSORBED = /^The attack's damage is reduced by (\d+) and you cast ([A-Z][\w' -]+?) \(DC (\d+)\), centered directly on the triggering creature\.$/;
+const AREA_PICKED = /^You decide the area of the [\w' -]+? when you Cast the Spell, from as small as the size of the creature and up to an? (\d+)-foot burst\.$/;
+const ABSORBS = /^The [\w' -]+? glows and your armor shakes as it absorbs the blow\.$/;
+function withAbsorbedBlow(plan, { activation }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const absorbed = sentences.map((sentence) => ABSORBED.exec(sentence)).find(Boolean);
+    if (plan?.builtin !== "cast-spell" || !absorbed || plan.spell?.name !== absorbed[2] || Number(plan.dc) !== Number(absorbed[3]) || !/\bhit by an attack\b/i.test(String(activation.trigger ?? ""))) return plan;
+    const area = sentences.map((sentence) => AREA_PICKED.exec(sentence)).find(Boolean);
+    if (!sentences.every((sentence) => ABSORBED.test(sentence) || AREA_PICKED.test(sentence) || ABSORBS.test(sentence))) return plan;
+    const notes = (plan.notes ?? []).filter((note) => !ABSORBED.test(String(note).trim()) && !AREA_PICKED.test(String(note).trim()));
+    const lines = [`Centered on the creature that hit its user${area ? `: lay its area from that creature's size up to a ${area[1]}-foot burst` : ""}.`];
+    const readied = { builtin: "readied-bonus", automation: { level: "automatic" }, targeting: { target: "the user", range: null, area: null }, trigger: { event: "use" }, bonus: { modifiers: [], resistance: { type: "all-damage", value: Number(absorbed[1]) }, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], against: true }, notes: [`Only against the attack that hit: its damage ${absorbed[1]} less.`] };
+    const { partial, ...rest } = plan;
+    return { ...rest, ...(notes.length ? { notes } : { notes: undefined }), castLines: [...(plan.castLines ?? []), ...lines], alsoReadied: readied, ...(notes.length ? { partial } : { automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
+}
+
+// --- An item mended outright ---------------------------------------------------------------------------------------------------------------
+
+const MEND = [
+    /^You call upon (?:on )?the restorative powers of the [\w' -]+? to repair an item within reach\.$/,
+    /^The [\w' -]+? instantly restores the item to full Hit Points, even if the item was destroyed, using the effects of the Remake spell, so long as the majority of the item is available for the repair\.$/,
+    /^The [\w' -]+? can restore even magic items and artifacts of its level or lower\.$/,
+    /^Once you have used this ability, the [\w' -]+?'s ability to automatically repair shields becomes inactive until the next time you make your daily preparations\.$/
+];
+function withMended(plan, { activation, index }, item) {
+    if (!matches(MEND, sentencesOf(effectOf(activation.html)))) return plan;
+    const level = Number(item.system?.level?.value) || 0;
+    return {
+        ...keptBase(plan, item, { activation, index }),
+        builtin: "objects",
+        automation: { level: "automatic" },
+        targeting: { target: "self", range: null, area: null },
+        objects: { op: "repair", reach: true, destroyed: true, maxLevel: level, pauses: { what: "shield-repair", untilRest: true } },
+        notes: ["Only while most of the item is there to mend (the GM's call), as Remake needs."]
+    };
+}
+
 // The plan, its entry ({ activation, index }) and item → the plan with the item's own rule built, or the same plan.
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended]) {
         const next = reader(plan, entry, item);
         if (next !== plan) return next;
     }

@@ -28,6 +28,7 @@ import { setUpToggleOff } from "./toggle-off.js";
 import { setUpCastDurations } from "./cast-duration.js";
 import { setUpShieldShare } from "./shield-share.js";
 import { setUpTurnHeals } from "./turn-heal.js";
+import { setUpShieldRepair } from "./shield-repair.js";
 import { setUpEndEarly } from "./end-early.js";
 import { setUpSlainWait } from "./slain-wait.js";
 import { setUpDropHeld } from "./drop-held.js";
@@ -188,6 +189,8 @@ Hooks.once("ready", async () => {
     setUpShieldShare();
     // (Healing at the end of each of its user's turns beside a cast, Enveloping Light's: scripts/turn-heal.js.)
     setUpTurnHeals();
+    // (Its wearer's shields repaired at each turn's start, Forgefather's Seal's — until its Seal of Mending stops it: scripts/shield-repair.js.)
+    setUpShieldRepair();
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     setUpEndEarly();
     // (A conjured creature slain that its item then waits for, a Wondrous Figurine's week: scripts/slain-wait.js.)

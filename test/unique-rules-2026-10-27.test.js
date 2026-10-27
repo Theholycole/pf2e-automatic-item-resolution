@@ -66,3 +66,36 @@ test("Ancestral Embrace: Avatar with the armor's own Speeds and Strikes — PF2e
     assert.match(note.text, /ignores difficult terrain/);
     assert.equal(routeOf(avatar), "item");
 });
+
+test("Forgefather's Seal's Retributive Rebuff: Earthquake at DC 40 on the attacker, and the readied card's resistance 100 against the attack beside it", async () => {
+    const { routeOf: route } = await import("../src/live/route.js");
+    const [rebuff] = plans("Forgefather's Seal");
+    assert.deepEqual([rebuff.builtin, rebuff.spell.name, rebuff.dc, rebuff.partial, rebuff.notes], ["cast-spell", "Earthquake", 40, undefined, undefined]);
+    assert.match(rebuff.castLines.at(-1), /60-foot burst/);
+    assert.deepEqual([rebuff.alsoReadied.builtin, rebuff.alsoReadied.bonus.resistance, rebuff.alsoReadied.bonus.against], ["readied-bonus", { type: "all-damage", value: 100 }, true]);
+    assert.equal(route(rebuff), "cast");
+    assert.equal(route(rebuff.alsoReadied), "fortune");
+});
+
+test("Forgefather's Seal's Seal of Mending: an item within reach remade to full Hit Points up to level 24, the shields' repair stopped till its next rest", async () => {
+    const { objectsText } = await import("../src/live/objects-card.js");
+    const { pauseEffectSource } = await import("../src/live/shield-repair.js");
+    const mending = plans("Forgefather's Seal")[1];
+    assert.deepEqual([mending.builtin, mending.partial, mending.objects.op, mending.objects.reach, mending.objects.maxLevel, mending.objects.pauses], ["objects", undefined, "repair", true, 24, { what: "shield-repair", untilRest: true }]);
+    assert.equal(routeOf(mending), "objects");
+    const words = objectsText(mending.objects, { name: "Forgefather's Seal" });
+    assert.match(words, /even if destroyed/);
+    assert.match(words, /within its reach, of level 24 or lower/);
+    assert.match(words, /don't recover Hit Points at the start of its turns until its next daily preparations/);
+    const pause = pauseEffectSource(mending.objects.pauses, { item: { name: "Forgefather's Seal" }, user: {} });
+    assert.deepEqual([pause.flags["pf2e-automatic-item-resolution"].pauses, pause.flags["pf2e-automatic-item-resolution"].untilRest, pause.system.duration.unit], ["shield-repair", true, "unlimited"]);
+});
+
+test("Forgefather's Seal's passive: its wearer's held shields recover 10 Hit Points at each turn's start, a destroyed one not, never past the maximum", async () => {
+    const { readShieldRepair, shieldRepairs } = await import("../src/compiler/shield-repair.js");
+    const repair = readShieldRepair(item("Forgefather's Seal").system.description.value);
+    assert.deepEqual(repair, { hp: 10 });
+    assert.equal(readShieldRepair(item("Ancestral Embrace").system.description.value), null);
+    const shields = [{ id: "a", name: "Steel Shield", hp: { value: 15, max: 20 } }, { id: "b", name: "Tower Shield", hp: { value: 0, max: 20 } }, { id: "c", name: "Buckler", hp: { value: 6, max: 6 } }, { id: "d", name: "Sturdy", hp: { value: 30, max: 100 } }];
+    assert.deepEqual(shieldRepairs(shields, repair).map((entry) => [entry.id, entry.to]), [["a", 20], ["d", 40]]);
+});
