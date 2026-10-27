@@ -126,7 +126,7 @@ export function strikeHint(plan, name, { uses = null } = {}) {
     const strike = plan.strike ?? {};
     if (strike.hit) return `${name}'s Strike already hit: its damage roll carries it.`;
     const count = uses ?? strike.uses;
-    if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${UNTIL_WORDS[strike.until] ?? "this turn"}, at the ${strike.volley.oneRoll.count} creatures targeted when it's readied: its one attack roll is each one's.`;
+    if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${UNTIL_WORDS[strike.until] ?? "this turn"}, at ${strike.volley.oneRoll.upTo ? "up to " : "the "}${strike.volley.oneRoll.count} creatures targeted when it's readied: its one attack roll is each one's.`;
     if (strike.volley?.each && !count) return `${name}'s next ${strikeWord(plan)}s this turn, one at each ${strike.volley.each} targeted when it's readied, carry it; a miss spends that one.`;
     const which = count > 1 ? `next ${NUMBER_WORDS[count] ?? count} ${strikeWord(plan)}s` : `next ${strikeWord(plan)}`;
     if (strike.volley && count > 1) return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} carry it${strike.volley.each ? `, one at each ${strike.volley.each} targeted` : strike.volley.different ? ", each at a different creature" : ""}; a miss spends that one.`;

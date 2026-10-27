@@ -44,7 +44,7 @@ export async function applyStrikeCard(message, choices = {}) {
     const targets = volley?.each ? [...new Set(choices.targets ?? [])] : null;
     if (targets && !targets.length) throw new Error(`Target each ${volley.each} ${volley.area ? `in the ${volley.area}` : "in the area"} first, then ready the Strikes.`);
     // (One roll at several, Hippopotamus Klar's: that many creatures targeted, one Strike.)
-    if (volley?.oneRoll && targets.length !== volley.oneRoll.count) throw new Error(`Target the ${volley.oneRoll.count} creatures${volley.oneRoll.adjacent ? " adjacent to each other" : ""} first, then ready the Strike.`);
+    if (volley?.oneRoll && (volley.oneRoll.upTo ? targets.length > volley.oneRoll.count : targets.length !== volley.oneRoll.count)) throw new Error(`Target ${volley.oneRoll.upTo ? "up to " : "the "}${volley.oneRoll.count} creatures${volley.oneRoll.adjacent ? " adjacent to each other" : ""}${volley.oneRoll.within ? ` within ${volley.oneRoll.within} feet of the first target` : ""} first, then ready the Strike.`);
     // (One readied Strike at a time: a new one replaces the old.)
     const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]);
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
@@ -194,6 +194,12 @@ export async function strikeWithRider(message) {
         const refunded = rider.plan.strike?.missRefund ? await refundUse(rider, actor) : false;
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike missed; it's spent.${refunded ? " The activation doesn't count against its frequency: its use is given back." : ""}</p>` });
         return;
+    }
+    // (A second Strike card after the hit, Splithead Bow's Five-Headed Arrow: its pieces' one roll at the others its user targets then.)
+    const then = rider.plan.strike?.thenStrike;
+    if (then && what === "hit") {
+        const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
+        await postStrikeCard({ message: null, plan: then, used: { data: { name: then.source?.name ?? rider.item.name, uuid: rider.item.uuid ?? null, img: rider.item.img ?? null } }, actor, token: sourceToken?.object ?? sourceToken });
     }
     // (A maneuver after the hit, Iron Cube's Trip: its own card, PF2e's action at the creature the Strike hit — still targeted.)
     const follow = rider.plan.strike?.follow;

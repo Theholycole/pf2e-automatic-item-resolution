@@ -276,3 +276,13 @@ test("Hippopotamus Klar's Engulfing Jaws: one melee Strike at the two creatures 
     assert.deepEqual([degreeAgainst({ total: 30, natural: 12, dc: 20 }), degreeAgainst({ total: 22, natural: 12, dc: 20 }), degreeAgainst({ total: 15, natural: 12, dc: 20 }), degreeAgainst({ total: 9, natural: 2, dc: 20 })], ["criticalSuccess", "success", "failure", "criticalFailure"]);
     assert.deepEqual([degreeAgainst({ total: 19, natural: 20, dc: 20 }), degreeAgainst({ total: 25, natural: 1, dc: 20 }), degreeAgainst({ total: null, dc: 20 })], ["success", "failure", null]);
 });
+
+test("Splithead Bow's Five-Headed Arrow: the bow's Strike, its hit posting the pieces' Strike card — one roll at up to four creatures within 30 feet of the first (oneRoll) — and its healing off until the next daily preparations (toggleOff untilRest)", async () => {
+    const { strikeHint, strikeLines } = await import("../src/live/strike-card.js");
+    const arrow = activation("Splithead Bow", "Five-Headed Arrow");
+    assert.deepEqual([arrow.partial, routeOf(arrow), arrow.strike.own, arrow.toggleOff], [undefined, "strike", true, { option: "splithead-bow-healing", words: "No Hit Points from it until your next daily preparations", duration: null, untilRest: true }]);
+    const pieces = arrow.strike.thenStrike;
+    assert.deepEqual([routeOf(pieces), pieces.strike.range, pieces.strike.volley.oneRoll], ["strike", "ranged", { count: 4, upTo: true, within: 30 }]);
+    assert.match(strikeHint(pieces, "Ilse"), /at up to 4 creatures targeted when it's readied/);
+    assert.ok(strikeLines(pieces).some((line) => /^One Strike at up to 4 creatures targeted within 30 feet of the first target/.test(line)));
+});

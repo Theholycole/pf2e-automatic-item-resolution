@@ -79,6 +79,7 @@ import { othersActionsPlan } from "./others-actions.js";
 import { anywhereStrikePlan } from "./anywhere-strike.js";
 import { benefitWaysPlan } from "./benefit-ways.js";
 import { extinguishPlan } from "./extinguish.js";
+import { splitArrowPlan } from "./split-arrow.js";
 import { withRangeFree } from "./range-free.js";
 import { songWaysPlan } from "./songs.js";
 import { isBareFigurine, ownerDCs, withItemData } from "./item-data.js";
@@ -729,6 +730,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = benefitWaysPlan(activation.html, base, { ...options, item }) ?? plan;
         // (Ammunition that douses persistent damage by its attack roll's degree, src/compiler/extinguish.js: Extinguishing Ball.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = extinguishPlan(activation.html, base) ?? plan;
+        // (A Strike whose hit splits into one more roll at several others, src/compiler/split-arrow.js: Splithead Bow's Five-Headed Arrow.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = splitArrowPlan(activation.html, base, item) ?? plan;
         // (No range penalty out to an increment for a while, src/compiler/range-free.js: Falconsight Eye — PF2e's roll option on its note Effect.)
         plan = withRangeFree(plan, plainText(activation.html));
         // (A tattoo of one animal, src/compiler/bane.js: Tooth and Claw Tattoo's attack — the animal picked on the ways card.)
