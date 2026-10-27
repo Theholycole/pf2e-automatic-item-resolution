@@ -139,3 +139,56 @@ test("The Wanderer: any common permanent item of Light Bulk two levels below its
     assert.deepEqual(anyItemChoices(rows, wanderer.objects.choose.any, 10).map((one) => one.id), ["2", "1"]);
     assert.match(objectsText(wanderer.objects), /level its user's level −2 or lower, in hand \(picked\) for 1 minute, gone once it's dropped/);
 });
+
+test("Blood-Drinker's Drink Blood: twice the felled creature's level in temporary Hit Points, three times while its user holds Fleshrender too", async () => {
+    const drink = activation("Blood-Drinker", "Drink Blood");
+    assert.deepEqual([done(drink), drink.item.levelTemp[0].multiplier, drink.item.levelTemp[0].ifHeld, drink.unread, routeOf(drink)], [true, 2, { name: "Fleshrender", multiplier: 3 }, undefined, "item"]);
+    const { levelTempText } = await import("../src/live/card.js");
+    assert.match(levelTempText(drink.item.levelTemp[0]), /three times while it holds Fleshrender too\), for 1 minute$/);
+});
+
+test("Guiding Chisel: a building of up to ten 10-foot cubes, the structure card's three square shapes, hewn stone with a stone door, the last one replaced", async () => {
+    const [chisel] = activations("Guiding Chisel");
+    assert.deepEqual([done(chisel), routeOf(chisel), chisel.structure.sizes, chisel.structure.kind, chisel.structure.within, chisel.structure.replaces], [true, "structure", [{ feet: 30, height: 10 }, { feet: 20, height: 20 }, { feet: 10, height: 100 }], "wall-hewn", 1000, true]);
+    const { createStructureCard, sizeText, structureCardHTML, structureTemplate } = await import("../src/live/structure-card.js");
+    const state = createStructureCard({ plan: chisel, item: { name: "Guiding Chisel", uuid: "Item.c" }, user: { name: "Dwarf", actorUuid: "Actor.d" } });
+    assert.deepEqual([sizeText(chisel.structure.sizes[1]), /Place it/.test(structureCardHTML(state, { canApply: true }))], ["A 20-foot-square building, 20 feet high (8 cubes)", true]);
+    assert.deepEqual(structureTemplate(state, { x: 500, y: 300 }, 2), { name: "Guiding Chisel's building", at: { x: 500, y: 300 }, shape: "square", feet: 10, height: 100, kind: "wall-hewn", door: { kind: "door-stone", side: "south" }, pushOut: true, source: { actorUuid: "Actor.d", itemUuid: "Item.c", name: "Guiding Chisel" } });
+});
+
+test("Guiding Star Orb's embedded place on its user, in place of the last; the soulhearts' maximum Hit Points for each PC, the soulheart destroyed", () => {
+    const embed = activation("Guiding Star Orb", "Embed Location");
+    assert.deepEqual([done(embed), embed.item.ruleEffects[0].replaces, routeOf(embed)], [true, true, "item"]);
+    for (const [name, value] of [["Soulheart (Major)", 3], ["Soulheart (Greater)", 2]]) {
+        const bolster = activation(name, "Bolster Maiserene Phantom");
+        assert.deepEqual([done(bolster), bolster.item.recipient, bolster.item.destroyed, bolster.item.ruleEffects[0].rules[0], routeOf(bolster)], [true, "targets", true, { key: "FlatModifier", selector: "hp", value, label: "Soulheart" }, "item"], name);
+    }
+    assert.equal(activations("Phoenix Fighting Fan")[1].item.destroyed, true);
+});
+
+test("Flame of the Radiant Spark: claimed, a candle's blue light on its user (one at a time); spent, 6th-rank Raise Dead, the flame gone", () => {
+    const flame = compileItem(item("Flame of The Radiant Spark"), { spells });
+    assert.deepEqual([done(flame), flame.builtin, flame.ways.map((way) => routeOf(way.plan)), routeOf(flame)], [true, "ways", ["item", "cast"], "ways"]);
+    const [claim, spend] = flame.ways.map((way) => way.plan);
+    assert.deepEqual([claim.item.ruleEffects[0].rules[0].key, claim.item.ruleEffects[0].replaces, spend.spell.name, spend.rank, spend.castEndsRule], ["TokenLight", "any", "Raise Dead", 6, "Flame of the Radiant Spark"]);
+});
+
+test("Whispering Remnant's Enthrall: what the enthralled see a note on its user, its waking's DC 30 Will save its own card for later; Liver Bloodstone's Bless for the minute", () => {
+    const words = activation("Whispering Remnant", "Hear My Words");
+    assert.deepEqual([done(words), words.spell.name, words.dc, words.castAgain.own, words.castAgain.plan.resolution.check.against.value, words.castAgain.plan.resolution.outcomes.failure.effects[0].slug, words.castAgain.plan.resolution.outcomes.failure.effects[0].duration.value], [true, "Enthrall", 30, true, 30, "stupefied", 24]);
+    assert.match(words.castNote.text, /commonplace/);
+    const fervor = activation("Liver Bloodstone of Arazni", "Arazni's Fervor");
+    assert.deepEqual([done(fervor), fervor.spell.name, fervor.castDuration.value], [true, "Bless", 1]);
+});
+
+test("Starless Scope's look: its user's +2 to Recall Knowledge and the DC 27 Will save's starlight (its penalty, the incorporeal trait gone or Slowed 1); Horn of Rust's spells and its tetanus after the shards' damage", async () => {
+    const look = activations("Starless Scope")[1];
+    const rows = rowsOf(look);
+    assert.deepEqual([done(look), look.userEffects[0].kind, look.userEffects[0].rules[0].predicate, rows.success.noteEffects[0].rules.length, rows.failure.noteEffects[0].rules.map((rule) => rule.key), rows.criticalFailure.noteEffects[0].rules[0].value, rows.criticalFailure.noteEffects[0].duration.unit, (rows.failure.effects ?? []).length], [true, "rules", ["action:recall-knowledge"], 1, ["FlatModifier", "ActorTraits", "GrantItem"], -2, "minutes", 0]);
+    const [spells_, aura] = activations("Horn of Rust");
+    assert.deepEqual([done(spells_), spells_.choices.map((choice) => [choice.spell.name, choice.rank]), spells_.castDC.from], [true, [["Divine Lance", null], ["Noxious Vapors", 1], ["Shatter", 2], ["Stinking Cloud", 3]], "spell"]);
+    const after = aura.zone.saves[0].plan.afterDamage;
+    assert.deepEqual([done(aura), after.degrees, after.plan.resolution.check.against.value, after.plan.resolution.afflictionHandoff.onset, after.plan.resolution.afflictionHandoff.stages.map((stage) => stage.text)], [true, ["success", "failure", "criticalFailure"], 19, { value: 10, unit: "days" }, ["Clumsy 1 (1 week)", "Clumsy 2 and can't speak (1 day)", "Paralyzed with spasms (1 day)", "death"]]);
+    const { afterDamagePlans } = await import("../scripts/after-damage.js");
+    assert.deepEqual(afterDamagePlans(after, [{ tokenUuid: "Token.a", degree: "failure" }, { tokenUuid: "Token.b", degree: "criticalSuccess" }]).map((entry) => entry.plan.struckToken), ["Token.a"]);
+});

@@ -41,6 +41,7 @@ import { setUpHealAfter } from "./heal-after.js";
 import { setUpEndsOn } from "./ends-on.js";
 import { setUpThenFor } from "./then-for.js";
 import { setUpUntilRest } from "./until-rest.js";
+import { setUpAfterDamage } from "./after-damage.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
@@ -214,6 +215,8 @@ Hooks.once("ready", async () => {
     setUpThenFor();
     // (Effects until their creature's next daily preparations, Terrain Adaptation's: scripts/until-rest.js.)
     setUpUntilRest();
+    // (A save card after another's damage, Horn of Rust's tetanus: scripts/after-damage.js.)
+    setUpAfterDamage();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

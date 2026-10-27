@@ -323,7 +323,7 @@ export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, i
     // each turn's start, Infernal Health's: entry.turnHeal, scripts/turn-heal.js.)
     // (Gone at its creature's next daily preparations, and in place of the item's earlier one, Terrain Adaptation's: entry.untilRest,
     // entry.replaces — scripts/until-rest.js.)
-    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.untilRest ? { untilRest: true } : {}), ...(entry.replaces ? { replaces: true } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}) }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.untilRest ? { untilRest: true } : {}), ...(entry.replaces ? { replaces: entry.replaces === "any" ? "any" : true } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // Protection from heat or cold in words, with its time and its terms: "Severe heat counts as mild heat for 24 hours".
@@ -589,7 +589,9 @@ export function levelTempText(entry) {
     // (From an amount typed on the card: "Temporary Hit Points equal to half the damage dealt (typed on the card), at most 10, for 1 minute".)
     if (entry.from === "amount") return `${entry.heal ? "Hit Points regained" : "Temporary Hit Points"} equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}${entry.of} (typed on the card)${entry.max ? `, at most ${entry.max}` : ""}${!entry.heal && entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
     if (entry.heal) return `Hit Points regained equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted`;
-    return `Temporary Hit Points equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted${entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
+    // (Blood-Drinker's "three times" while its user holds Fleshrender: entry.ifHeld.)
+    const held = entry.ifHeld ? ` (${TIMES_WORDS[entry.ifHeld.multiplier] ?? `${entry.ifHeld.multiplier} times`} while it holds ${entry.ifHeld.name} too)` : "";
+    return `Temporary Hit Points equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted${held}${entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
 }
 
 // Fruit it grows in words: "1d4 Verdant Branch Fruit in its user's inventory, each eaten for 2d6+5 Hit Points".

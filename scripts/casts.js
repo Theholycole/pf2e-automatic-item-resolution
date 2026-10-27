@@ -4,7 +4,7 @@
 import { castCardHTML, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
-import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, creaturesNear, destroyUsedItem, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
 import { castRankAt } from "../src/compiler/cast-owner.js";
 import { impulseNumbers } from "../src/compiler/cast-changes.js";
 import { rememberCastDuration } from "./cast-duration.js";
@@ -14,6 +14,7 @@ import { castDegreeEffectSource, castPenaltySource, itemNoteSource } from "../sr
 import { castNoteText } from "../src/compiler/cast-note.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 import { startItemZone } from "./zones.js";
+import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -167,6 +168,21 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             await startItemZone({ plan: { ...state.plan.castZone, item: state.plan.item }, used: { data: { name: state.item.name, uuid: state.item.uuid ?? null } }, actor, token }).catch((error) => console.error(`${MODULE_ID} | cast zone`, error));
             lines.push(`Place ${state.plan.castZone.zone?.terrain?.length ? "its difficult terrain" : "its zone"} over ${spellName}'s area.`);
         }
+        // (What the cast spends on its caster, Flame of the Radiant Spark's flame: its Effect of that name, plan.castEndsRule.)
+        if (state.plan.castEndsRule) {
+            const caster = state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor;
+            const ids = (caster?.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.ruleEffect === state.plan.castEndsRule).map((effect) => effect.id);
+            if (ids.length) await caster.deleteEmbeddedDocuments("Item", ids);
+            lines.push(ids.length ? `${caster.name}'s ${state.plan.castEndsRule} is spent.` : `${caster?.name ?? state.user.name} had no ${state.plan.castEndsRule} to spend: remove it by hand if it's there.`);
+        }
+        // (Its user's own save later beside the cast, Whispering Remnant's nightmares on waking: plan.castAgain, the save card kept for then.)
+        if (state.plan.castAgain?.plan) {
+            const card = createExposureCard({ plan: state.plan.castAgain.plan, item: state.item, user: state.user, later: true, own: Boolean(state.plan.castAgain.own), when: state.plan.castAgain.when ?? null });
+            await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
+            lines.push(`${state.user.name}: its own save's card for later follows.`);
+        }
+        // (The item consumed by the cast, Phoenix Fighting Fan's Raise Dead: plan.item.destroyed.)
+        if (state.plan.item?.destroyed) lines.push(await destroyUsedItem(state.item));
         if (state.plan.castSelf) {
             const user = state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor;
             if (user?.increaseCondition) {
