@@ -12,6 +12,7 @@ import { compileActivations } from "../src/compiler/permanent.js";
 import { ONE_OFFS } from "../src/compiler/one-offs.js";
 import { NOTES_CHECKED } from "../src/compiler/notes-checked.js";
 import { netsUnder } from "../scripts/falls.js";
+import { attackChoices } from "../scripts/poisons.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -147,4 +148,58 @@ test("Splendid Floodlight: both activations one card's lines (a one-off)", () =>
         assert.ok(done(entry.plan));
         assert.equal(entry.plan.decided, "one-off");
     }
+});
+
+test("Bonmuan Swapping Stone: two ways — thrown at a space, its user teleported within 100 feet; hurled at a creature, a ranged Strike whose hit brings it beside its user unless its Will save resists", () => {
+    for (const [grade, dc] of [["Lesser", 28], ["Moderate", 31], ["Greater", 37], ["Major", 43]]) {
+        const stone = consumable(`Bonmuan Swapping Stone (${grade})`);
+        assert.ok(done(stone), grade);
+        assert.equal(stone.builtin, "ways");
+        assert.equal(stone.once, true);
+        const [throwAt, hurl] = stone.ways.map((way) => way.plan);
+        assert.deepEqual([throwAt.builtin, throwAt.teleport.within], ["teleport", 100]);
+        assert.deepEqual(hurl.ownCheck, { kind: "attack", modifier: null, choose: ["ranged-proficiency"], increment: 15 });
+        assert.deepEqual(hurl.thenSave.resolution.check.against, { dc: "fixed", value: dc });
+        assert.equal(hurl.thenSave.resolution.check.statistic, "will");
+        assert.deepEqual(hurl.thenSave.placed.rows, { failure: { within: 120 }, criticalFailure: { within: 120 } });
+        assert.equal(hurl.thenSave.placed.nearSource, 5);
+        assert.ok(hurl.thenSave.traits.includes("teleportation"));
+        assert.equal(stone.spell, undefined);
+    }
+    // (Live: Dexterity and the best of its simple, martial and advanced ranks; a creature with none, its best ranged Strike.)
+    const pc = { level: 10, system: { abilities: { dex: { mod: 4 } }, proficiencies: { attacks: { simple: { rank: 2 }, martial: { rank: 3 }, advanced: { rank: 0 } } }, actions: [] } };
+    assert.deepEqual(attackChoices(pc, ["ranged-proficiency"]).map((choice) => [choice.kind, choice.modifier]), [["ranged-proficiency", 20]]);
+    const npc = { level: 5, system: { abilities: {}, actions: [{ item: { isRanged: true }, totalModifier: 13 }] } };
+    assert.deepEqual(attackChoices(npc, ["ranged-proficiency"]).map((choice) => [choice.kind, choice.modifier]), [["ranged", 13]]);
+});
+
+test("Dream Hunter's Lodge's Oneiric Expedition: its Mythic Point spent, the night's journey a line of the card", () => {
+    const trip = activation("Dream Hunter's Lodge", "Oneiric Expedition");
+    assert.ok(done(trip));
+    assert.deepEqual(trip.spend, { mythicPoints: 1 });
+    assert.match(trip.notes[0], /8 hours later it's back in the Dimension of Dreams/);
+});
+
+test("Runescribed Disk: its move action triggers no reactions, a line of the card", () => {
+    const disk = consumable("Runescribed Disk");
+    assert.ok(done(disk));
+    assert.match(disk.notes[0], /triggers no reactions/);
+});
+
+test("Witchwyrd Beacon: its attunement a note Effect with no end of its own, the site's link a line", () => {
+    const [attune, link] = activations("Witchwyrd Beacon").map((entry) => entry.plan);
+    assert.ok(done(attune));
+    assert.equal(row(attune).noteEffects[0].duration, null);
+    assert.match(row(attune).noteEffects[0].text, /senses whenever that beacon is activated/);
+    assert.ok(done(link));
+    assert.match(link.notes[0], /without line of sight/);
+});
+
+test("Beloved's Bracelets' Grant Mythic Power: a Mythic Point spent, the silver wearer's one mythic-proficiency skill check on its note Effect", () => {
+    const grant = activation("Beloved's Bracelets", "Grant Mythic Power");
+    assert.ok(done(grant));
+    assert.deepEqual(grant.spend, { mythicPoints: 1 });
+    assert.equal(grant.item.recipient, "targets");
+    assert.match(row(grant).noteEffects[0].text, /skill check at mythic proficiency/);
+    assert.match(grant.notes[0], /maximum Mythic Points are 1 lower/);
 });

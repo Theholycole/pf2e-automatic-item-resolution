@@ -20,6 +20,8 @@ const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?
 // (PF2e's own: its manacles' Effect, the legs or wrists its ChoiceSet asks for; its Off-Guard condition.)
 const MANACLES = { uuid: "Compendium.pf2e.equipment-effects.Item.OJg3cA6viR3sA3jB", label: "Effect: Manacles" };
 const OFF_GUARD = "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg";
+// (Dimension Door's range, for a creature its stone brings beside its thrower: from wherever it was hit.)
+const DIMENSION_DOOR = 120;
 
 // The card's parts: a row for its user or the creatures targeted (a note Effect, PF2e's own Effects), and its lines.
 const ownRow = ({ noteEffects = [], nativeEffects = [], notes = [], target = null }) => ({
@@ -164,6 +166,104 @@ const READINGS = [
             if (!bonus || !plan.temperature || !(plan.unread ?? []).some((line) => narrow.test(said(line)))) return null;
             return keptWithNote(plan, { label: "Mountain elixir", text: `Only while it's in mountainous terrain: its +${bonus.value} item bonus to Athletics checks to Climb, High Jump and Long Jump, its protection from the cold, and +${bonus.value} to its saving throws against high altitude's effects (the GM's to add: PF2e has no option for them).`, duration: bonus.duration }, [narrow]);
         }
+    },
+    {
+        // (Two ways, the stone used up by either: thrown at a space within 100 feet, its user teleported there (the teleport card, as Dimension
+        // Door does it); or hurled at a creature, its user's ranged Strike at its highest ranged proficiency, a hit teleporting the creature beside
+        // its user unless it resists — the Will save after the hit, a failure the space its user picks (plan.placed, scripts/placed-moves.js).)
+        names: [/^Bonmuan Swapping Stone \((?:Lesser|Moderate|Greater|Major)\)$/],
+        over: (plan) => plan?.builtin === "cast-spell" && plan.spell?.name === "Dimension Door",
+        sentences: [
+            /^This small, opalescent stone glows with a light that constantly shifts between colors\.$/,
+            /^When you activate the stone, you throw it into a space within (\d+) feet\.$/,
+            /^The stone then casts Dimension Door on you and transports you to itself\.$/,
+            /^This destroys the stone\.$/,
+            /^You can instead hurl the stone at a creature in an attempt to bring that creature closer to you\.$/,
+            /^Make a ranged Strike against a creature using your highest proficiency with a ranged weapon\.$/,
+            /^The swapping stone has a range increment of (\d+) feet\.$/,
+            /^On a hit, the stone shatters against the creature, casting dimension door on the creature and causing it to instantly teleport to a space adjacent to you\.$/,
+            /^An unwilling creature can resist this teleportation with a successful @Check\[will\|dc:(\d+)\|traits:teleportation\] save\.$/
+        ],
+        card: ([, [, within], , , , , [, increment], , [, dc]], _plan, { base, info }) => {
+            const way = (fields) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...fields, item: { ...info } });
+            const resist = { ...base, source: { ...base.source, name: `${base.source.name}: Dimension Door` }, traits: [...(base.traits ?? []), "teleportation"], automation: { level: "automatic" }, targeting: { target: "the creature hit", range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "save", check: { roll: "save", statistic: "will", basic: false, against: { dc: "fixed", value: Number(dc) } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } }, placed: { rows: { failure: { within: DIMENSION_DOOR }, criticalFailure: { within: DIMENSION_DOOR } }, nearSource: 5, teleport: true, lines: ["Teleported by Dimension Door into a space beside the stone's thrower"] }, notes: ["A willing creature needn't resist: take its row as a failure."] };
+            const hurl = way({
+                targeting: { target: "1 creature", range: `${increment} feet`, area: null },
+                ownCheck: { kind: "attack", modifier: null, choose: ["ranged-proficiency"], increment: Number(increment) },
+                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: null }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+                thenSave: resist,
+                notes: ["Its ranged Strike: Dexterity and its user's highest proficiency with a ranged weapon, range increment " + `${increment} feet. A hit shatters it on the creature: the Will save follows.`]
+            });
+            const throwAt = way({ builtin: "teleport", targeting: { target: "self", range: null, area: null }, teleport: { within: Number(within), lines: [`Thrown into a space within ${within} feet, it casts Dimension Door on its user and takes it there; the stone's gone`] } });
+            return { builtin: "ways", targeting: { target: null, range: null, area: null }, once: true, ways: [
+                { name: `Thrown at a space: Dimension Door takes its user there (within ${within} feet)`, html: `<p><strong>Effect</strong> Thrown into a space within ${within} feet: Dimension Door takes its user to it.</p>`, plan: throwAt },
+                { name: "Hurled at a creature: a hit brings it beside its user", html: "<p><strong>Effect</strong> A ranged Strike at a creature: on a hit, it's teleported beside its user unless it resists.</p>", plan: hurl }
+            ], notes: undefined, partial: undefined, spell: undefined, rank: undefined, dc: undefined, attack: undefined, tradition: undefined, self: undefined };
+        }
+    },
+    {
+        // (A Mythic Point spent, and a night's travel to the Dimension of Dreams: out of combat, its card's lines.)
+        names: ["Dream Hunter's Lodge: Oneiric Expedition"],
+        sentences: [
+            /^Spend 1 Mythic Point\.$/,
+            /^You and all creatures inside the lodge fall into a magical slumber, and the lodge disappears from existence\.$/,
+            /^After (\d+) hours, the lodge reappears in the Dimension of Dreams \(or in the Universe, if the lodge was already in the Dimension of Dreams\), as if transported there by an Interplanar Teleport spell\.$/,
+            /^Upon arrival, creatures inside the lodge awaken, fully rested \(but this effect does not increase the number of times per day you can do your daily preparations\)\.$/
+        ],
+        card: ([, , [, hours]]) => ({ ...ownRow({ notes: [`Its user and every creature inside sleep and the lodge vanishes; ${hours} hours later it's back in the Dimension of Dreams (or the Universe, from there), as by Interplanar Teleport, and they wake fully rested — no extra daily preparations (out of combat: the GM takes them to that scene).`] }), spend: { mythicPoints: 1 } })
+    },
+    {
+        // (Its own move action, the one that set it off, no reactions: its user's own move, a line.)
+        names: ["Runescribed Disk"],
+        sentences: [
+            /^Trigger You use an action with the move trait Requirements You're an expert in Acrobatics\.$/,
+            /^This decorative silver disk is inscribed with magical runes, similar in appearance to a miniature teleportation circle\b/,
+            /^When you activate the disk, you flicker out of sight, seeming to teleport directly to your destination as you accelerate your flow of time dramatically for the duration of your move action\.$/,
+            /^Your movement doesn't trigger reactions\.$/
+        ],
+        card: () => ownRow({ notes: ["The move action that set it off (its user expert in Acrobatics) triggers no reactions: so fast it seems to teleport to where it ends (its own move on the map)."] })
+    },
+    {
+        // (Attuned to the beacon: words on its user's Effect, no end of its own; what it senses, the GM's.)
+        names: ["Witchwyrd Beacon"],
+        sentences: [
+            /^By touching the witchwyrd beacon and focusing on it for 10 minutes, you attune yourself to it\.$/,
+            /^Up to four creatures can be attuned to a single witchwyrd beacon at any one time - to attune another creature, one of the previous four must become unattuned\.$/,
+            /^You can break your attunement to a witchwyrd beacon by Dismissing the effect\.$/,
+            /^The attunement automatically ends if the attuned creature dies or if the attuned creature attunes themselves to a different witchwyrd beacon ?\.$/,
+            /^The effect can also be dispelled normally\.$/,
+            /^You can sense whenever the witchwyrd beacon you are attuned to is activated in any way\.$/
+        ],
+        card: () => ownRow({ noteEffects: [{ label: "Attuned to the beacon", text: "Attuned to its witchwyrd beacon (four creatures at most): it senses whenever that beacon is activated in any way (the GM tells it). It ends when it Dismisses it, dies or attunes to another beacon, or when it's dispelled.", duration: null }] })
+    },
+    {
+        // (The beacon linked to its site: a teleport's accuracy, out of combat — its card's lines.)
+        names: ["Witchwyrd Beacon"],
+        sentences: [
+            /^You place the witchwyrd beacon on a flat, stable, and immobile surface, then adjust its rings to link it to the site\.$/,
+            /^Once linked, any creature can use a teleportation effect to target the witchwyrd beacon directly, regardless of line of sight\.$/,
+            /^You can Translocate or Gate to the beacon as if you could see its location, and if you travel to it via an effect like Interplanar Teleport, the beacon eliminates the imprecision of the spell\.$/,
+            /^The beacon doesn't change the range of effects, only their accuracy\.$/,
+            /^Once the beacon is used in this manner, it loses its link and must be reactivated again to grant this benefit to attuned creatures\.$/
+        ],
+        card: () => ownRow({ notes: ["Linked to the site where it's set down: any creature's teleportation can aim at the beacon without line of sight — Translocate or Gate to it as if its place were seen, Interplanar Teleport without its imprecision, no range longer. Once used so, the link's gone until it's linked again (the GM's, out of combat)."] })
+    },
+    {
+        // (A Mythic Point spent into the silver bracelet: its wearer's one skill check at mythic proficiency, words on its Effect till it's used;
+        // the golden wearer's lower maximum and the bracelet's return, lines.)
+        names: ["Beloved's Bracelets: Grant Mythic Power"],
+        sentences: [
+            /^The wearer of the golden bracelet imbues the silver bracelet with a portion of their mythic power by spending 1 Mythic Point\.$/,
+            /^Until the silver bracelet is no longer imbued with mythic power, the maximum number of Mythic Points the wearer of the golden bracelet can have is reduced by 1\.$/,
+            /^Whenever the wearer of the silver bracelet would attempt a skill check, they can choose to make the check at mythic proficiency\.$/,
+            /^If they do, the silver bracelet loses its mythic power and the wearer of the golden bracelet is immediately aware of this\b/,
+            /^If the creature who had invested in the silver bracelet dies before expending the mythic power in it, the silver bracelet immediately teleports into the possession of the wearer of the golden bracelet\b/
+        ],
+        card: () => ({
+            ...ownRow({ target: "the silver bracelet's wearer", noteEffects: [{ label: "Silver bracelet's mythic power", text: "Its silver bracelet holds mythic power: once, it can make a skill check at mythic proficiency (its pick, before rolling). Then the power's gone — remove this Effect —, and the golden bracelet's wearer knows at once, wherever it is.", duration: null }], notes: ["Target the silver bracelet's wearer. Meanwhile its user's maximum Mythic Points are 1 lower (its sheet's).", "If the silver bracelet's wearer dies with the power unspent, the bracelet appears in its user's possession, wherever it is."] }),
+            spend: { mythicPoints: 1 },
+            item: { recipient: "targets" }
+        })
     }
 ];
 // (PF2e's Superior Manacles' freeing, its six successful DC 42 Thievery checks: the shackles "function as superior manacles".)
