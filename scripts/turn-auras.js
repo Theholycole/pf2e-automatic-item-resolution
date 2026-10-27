@@ -7,6 +7,9 @@ import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { auraFits } from "../src/live/turn-auras.js";
 import { ABILITY_ID, MODULE_ID, isActiveGM, spaceOf } from "./foundry.js";
 
+// (A name as PF2e slugs it: an NPC's ability often has no slug of its own.)
+const slugOf = (name) => String(name ?? "").toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 // The Effects with auras on a token's actor, still lasting.
 const aurasOf = (actor) => (actor?.itemTypes?.effect ?? []).filter((effect) => (effect.flags?.[MODULE_ID]?.turnAuras ?? []).length && !(effect.isExpired ?? effect.system?.expired));
 
@@ -17,7 +20,7 @@ async function checkAuras(combatant, at) {
     if (!token || !actor || !postCard || !canvas?.ready) return;
     const placeable = token.object ?? token;
     const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };
-    const facts = { at, conditions: (actor.conditions?.contents ?? actor.itemTypes?.condition ?? []).map((condition) => condition.slug), effects: (actor.itemTypes?.effect ?? []).map((effect) => effect.slug).filter(Boolean), abilities: [...(actor.itemTypes?.action ?? []), ...(actor.itemTypes?.feat ?? [])].map((entry) => entry.slug ?? entry.system?.slug).filter(Boolean) };
+    const facts = { at, conditions: (actor.conditions?.contents ?? actor.itemTypes?.condition ?? []).map((condition) => condition.slug), effects: (actor.itemTypes?.effect ?? []).map((effect) => effect.slug).filter(Boolean), abilities: [...(actor.itemTypes?.action ?? []), ...(actor.itemTypes?.feat ?? [])].flatMap((entry) => [entry.slug ?? entry.system?.slug, slugOf(entry.name)]).filter(Boolean) };
     for (const bearer of canvas.tokens.placeables) {
         if (!bearer.actor) continue;
         for (const effect of aurasOf(bearer.actor)) {

@@ -57,7 +57,7 @@ async function makeMutagens(state, actor, { targets = [], count = 1 }) {
     const made = Math.max(1, Math.min(most, Math.round(Number(count) || 1)));
     const data = creatureData(creature);
     // (The creature's own entry where it came from a compendium, so it's found again once its token is gone.)
-    const uuid = creature.sourceId ?? creature._stats?.compendiumSource ?? creature.uuid;
+    const uuid = creature._stats?.compendiumSource ?? creature.uuid;
     await actor.createEmbeddedDocuments("Item", [mutagenSource({ name: data.name, uuid, level: data.level }, { count: made, level: Number(state.plan.item?.level) || 0, moduleId: MODULE_ID, from: state.item.name })]);
     return [`${made} Transmogrifying Mutagen${made === 1 ? "" : "s"} (${data.name}) in ${state.user.name}'s inventory (an hour's work; enough of its body for that many is the GM's call).`];
 }
