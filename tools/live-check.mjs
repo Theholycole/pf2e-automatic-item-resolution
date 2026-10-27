@@ -6629,6 +6629,31 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Aeon Stone (Pale Lavender Ellipsoid) (2026-10-27): after its counteract, the DC 5 flat check — raised to 21 on this card so it fails — turns
+    // the invested stone into an Aeon Stone (Consumed), still invested.
+    async paleLavenderBurnout(scene) {
+        const { actor: wearer, token } = await creature(scene, "Lavender Wearer", { type: "character", x: 18, y: 18, level: 13 });
+        const stone = await give(wearer, "Aeon Stone (Pale Lavender Ellipsoid)");
+        await stone.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        await token.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(stone.uuid, 0);
+        const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        assert(/Then a flat check \(DC 5\); if it fails, the item turns into Aeon Stone \(Consumed\)/.test(card.content), "the card's flat-check line");
+        const state = card.getFlag(NS, "card");
+        await card.update({ [`flags.${NS}.card.counteract.burnout.dc`]: 21 });
+        if (state.step === "find") {
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+            await wait(500);
+        }
+        const rows = game.messages.get(card.id).getFlag(NS, "card").rows;
+        await game.modules.get(NS).api.live.apply(card.id, { rows: rows.map((row) => ({ ticked: true, dc: 5, rank: 1 })) });
+        const consumed = () => wearer.items.find((entry) => entry.name === "Aeon Stone (Consumed)");
+        await until(() => consumed() && !wearer.items.get(stone.id), "the stone consumed", { timeout: 10000 });
+        assert(consumed().system.equipped.invested === true, "still invested");
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Draconal Mask's Dragons See the Truth: the triggering illusion counteracted (the GM's DC and rank), then the spell module casts Truesight on
     // its wearer, its Effects set to 1 minute.
     async draconalTruesight(scene) {

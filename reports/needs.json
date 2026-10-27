@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1319,
+  "entries": 1318,
   "results": {
-   "partial": 420,
+   "partial": 419,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -16,7 +16,7 @@
    "moving": 84,
    "visibility": 48,
    "choice": 31,
-   "lasting": 69,
+   "lasting": 68,
    "strike": 100,
    "spells": 36,
    "information": 23,
@@ -57,7 +57,7 @@
    "out-of-combat": 447,
    "counteract": 105,
    "afflictions": 110,
-   "lasting": 238,
+   "lasting": 237,
    "moving": 111,
    "triggers": 121,
    "visibility": 50,
@@ -3085,16 +3085,6 @@
    "work": "move up to",
    "needs": [
     "moving",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Aeon Stone (Pale Lavender Ellipsoid)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "work": "each time you",
-   "needs": [
     "lasting"
    ]
   },

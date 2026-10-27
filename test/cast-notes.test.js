@@ -255,3 +255,13 @@ test("a cast's rank and DC from its caster (2026-10-27): The Inquisitor's Mind P
     const html = castCardHTML({ status: "open", plan: inquisitor, item: { name: "The Inquisitor" }, user: { name: "Cleric" }, drinker: null, drinkers: [], choice: 0, results: [] });
     assert.match(html, /rank half its caster&#39;s level, rounded down \(at least 5\), DC its caster&#39;s class DC or spell DC, the higher/);
 });
+
+test("an item spent by a flat check after its use (2026-10-27): Aeon Stone (Pale Lavender Ellipsoid)'s DC 5, into an Aeon Stone (Consumed) on a failure; the card says it", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { counteractCardHTML } = await import("../src/live/counteract-card.js");
+    const [stone] = activations(item("Aeon Stone (Pale Lavender Ellipsoid)"), options);
+    const { burnout } = stone.plan.item.counteract;
+    assert.deepEqual([burnout.dc, burnout.becomes.name, stone.plan.partial], [5, "Aeon Stone (Consumed)", undefined]);
+    const html = counteractCardHTML({ status: "open", step: "pick", drinkers: [], drinker: 0, user: { name: "Wizard" }, item: { name: "Aeon Stone" }, counteract: stone.plan.item.counteract, rows: [], results: [] });
+    assert.match(html, /Then a flat check \(DC 5\); if it fails, the item turns into Aeon Stone \(Consumed\)\./);
+});

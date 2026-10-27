@@ -39,6 +39,12 @@ const THEN_CONDITION = /^You're then (Sickened|Fatigued|Stupefied|Drained|Enfeeb
 // (A spell's effects on its user after it, Draconal Mask's "You then gain the effects of truesight for 1 minute": counteract.thenSpell, cast by
 // the spell module for that time once the card's rolled.)
 const THEN_SPELL = /^You then gain the effects of ([a-z][a-z' -]+?) for (\d+) (rounds?|minutes?|hours?)\.$/i;
+// (A flat check each time it's used, the item spent on a failure: Aeon Stone (Pale Lavender Ellipsoid)'s DC 5 check after each activation,
+// which failed turns the stone into a dull gray one for good — PF2e's Aeon Stone (Consumed), the remaster's dull gray stone:
+// counteract.burnout { dc, becomes }, scripts/counteract.js after the card, 2026-10-27.)
+const BURNOUT = /^Each time you activate this [\w' -]+?\s*, attempt a @Check\[flat\|dc:(\d+)\]\.$/i;
+const BURNT = /^On a failure, the stone permanently turns into a dull gray aeon stone\s*\.$/i;
+export const CONSUMED_STONE = { uuid: "Compendium.pf2e.equipment-srd.Item.CVTbxCY85nLoHYuw", name: "Aeon Stone (Consumed)" };
 export function readCounteract(html, { level = 0, extras: withExtras = true } = {}) {
     const read = readCounteractOwn(html, { level });
     if (!read || !withExtras || read.endsConditions || /\bthe item gives none\b/.test((read.notes ?? []).join(" "))) return read;
@@ -55,10 +61,12 @@ export function readCounteract(html, { level = 0, extras: withExtras = true } = 
     const all = [...(read.notes ?? []), ...extras];
     const then = all.map((sentence) => [sentence, THEN_CONDITION.exec(String(sentence).trim())]).find(([, match]) => match);
     const spell = all.map((sentence) => [sentence, THEN_SPELL.exec(String(sentence).trim())]).find(([, match]) => match);
-    const notes = all.filter((sentence) => sentence !== then?.[0] && sentence !== spell?.[0]);
+    // (The burnout's flat check, its failure in the text's next sentence.)
+    const burnout = all.map((sentence) => [sentence, BURNOUT.exec(String(sentence).trim())]).find(([sentence, match]) => match && sentences.some((one, index) => one.includes(String(sentence).slice(0, 30)) && BURNT.test(sentences[index + 1] ?? "")));
+    const notes = all.filter((sentence) => sentence !== then?.[0] && sentence !== spell?.[0] && sentence !== burnout?.[0]);
     const { notes: _, ...rest } = read;
     const thenSpell = spell ? { name: spell[1][1], value: Number(spell[1][2]), unit: /^min/i.test(spell[1][3]) ? "minutes" : /^hour/i.test(spell[1][3]) ? "hours" : "rounds" } : null;
-    return { ...rest, ...(then ? { then: { slug: then[1][1].toLowerCase(), value: Number(then[1][2]) } } : {}), ...(thenSpell ? { thenSpell } : {}), ...(notes.length ? { notes } : {}) };
+    return { ...rest, ...(then ? { then: { slug: then[1][1].toLowerCase(), value: Number(then[1][2]) } } : {}), ...(thenSpell ? { thenSpell } : {}), ...(burnout ? { burnout: { dc: Number(burnout[1][1]), becomes: CONSUMED_STONE } } : {}), ...(notes.length ? { notes } : {}) };
 }
 
 // The counteract's notes that are lines of its card, not rules it leaves: what to tick or give on it, the GM's numbers (the user's answer 5),

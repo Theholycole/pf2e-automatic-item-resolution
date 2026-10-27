@@ -136,6 +136,25 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         await actor.increaseCondition(then.slug, { value: then.value });
         lines.push(`${target.name} is then ${then.slug} ${then.value}.`);
     }
+    // (A flat check each time it's used, the item spent on a failure: Aeon Stone (Pale Lavender Ellipsoid)'s, into an Aeon Stone (Consumed).)
+    const burnout = state.counteract.burnout;
+    if (burnout) lines.push(await burnOut(state, burnout));
     const next = { ...state, rows: chosen, status: "applied", results: lines };
     return message.update({ content: counteractCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// The flat check, PF2e's own roll in the chat; on a failure the item is replaced on its owner by the one it becomes (its worn and invested
+// state kept). → the card's line.
+async function burnOut(state, burnout) {
+    const item = state.item?.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
+    const roll = await new Roll("1d20").evaluate();
+    await roll.toMessage({ speaker: item?.actor ? ChatMessage.getSpeaker({ actor: item.actor }) : undefined, flavor: `${state.item.name}: flat check (DC ${burnout.dc})` });
+    if (roll.total >= burnout.dc) return `Its flat check: ${roll.total}, DC ${burnout.dc}, a success; ${state.item.name} keeps its power.`;
+    const source = (await fromUuid(burnout.becomes.uuid).catch(() => null))?.toObject?.() ?? null;
+    if (!item?.actor || !source) return `Its flat check: ${roll.total}, DC ${burnout.dc}, a failure: it turns into ${burnout.becomes.name} (by hand).`;
+    delete source._id;
+    source.system = { ...source.system, equipped: { ...(source.system?.equipped ?? {}), ...(item.system?.equipped ?? {}) } };
+    await item.actor.createEmbeddedDocuments("Item", [source]);
+    await item.delete();
+    return `Its flat check: ${roll.total}, DC ${burnout.dc}, a failure: ${state.item.name} is now ${burnout.becomes.name}.`;
 }

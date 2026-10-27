@@ -87,7 +87,10 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
     // (And a spell's effects on its user after it, Draconal Mask's Truesight for 1 minute.)
     const spell = state.counteract.thenSpell;
     const thenLine = [...(state.counteract.then ? [`Then ${state.counteract.then.slug} ${state.counteract.then.value}, whatever the result.`] : []), ...(spell ? [`Then its user gains the effects of ${spell.name} for ${spell.value} ${spell.value === 1 ? spell.unit.replace(/s$/, "") : spell.unit} (the spell module casts it).`] : [])];
-    const listed = [...thenLine, ...(state.counteract.notes ?? [])];
+    // (And its flat check after it, Aeon Stone (Pale Lavender Ellipsoid)'s DC 5: the item becomes another on a failure.)
+    const burnout = state.counteract.burnout;
+    const burnLine = burnout ? [`Then a flat check (DC ${burnout.dc}); if it fails, the item turns into ${burnout.becomes.name}.`] : [];
+    const listed = [...thenLine, ...burnLine, ...(state.counteract.notes ?? [])];
     const notes = open && listed.length ? `<ul class="aar-notes">${listed.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     let body = "";
     let button = "";
