@@ -127,6 +127,15 @@ test("a save row's own way out (2026-10-27): Blindpepper Bolt's success, one man
     assert.equal(tryWords(endEarly, { step: 0 }), "1 manipulate action spent");
 });
 
+test("a snare's mark on the creature (2026-10-27): Marking Snare's failure and critical failure each leave a 24-hour note Effect of the +2 to Track it", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const snare = compileItem(item("Marking Snare"), options);
+    const outcomes = snare.zone.saves[0].plan.resolution.outcomes;
+    const marks = ["success", "failure", "criticalFailure"].map((degree) => (outcomes[degree].noteEffects ?? []).filter((note) => note.label === "Marked").length);
+    assert.deepEqual([marks, outcomes.failure.manualInstructions, outcomes.failure.noteEffects[0].duration.value, snare.partial], [[0, 1, 1], undefined, 24, undefined]);
+    assert.match(outcomes.failure.noteEffects[0].text, /\+2 circumstance bonus to Track this creature/);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

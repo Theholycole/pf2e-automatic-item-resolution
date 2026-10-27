@@ -224,10 +224,7 @@ test("resistance to the triggering damage in other words: \"20 resistance to all
     const scapular = compileActivations(source("Scapular of Shields")).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
     assert.deepEqual(scapular.bonus.resistance, { type: "all-damage", value: 20 });
     assert.deepEqual(compileActivations(source("Mantle of Amazing Health"))[0].plan.bonus.resistance, { type: "all-damage", value: 10 });
-    // "When you activate it, …, and you reduce the damage from the triggering critical hit by 10": its limit a note.
-    const keepsake = compileItem(source("Indomitable Keepsake"));
-    assert.deepEqual(keepsake.bonus.resistance, { type: "all-damage", value: 10 });
-    assert.match(keepsake.notes.join(" "), /only reduces the additional damage from a critical hit/);
+    // ("you reduce the damage from the triggering critical hit by 10" with its limit to the critical hit's extra: bonus.reduceCrit, below.)
 });
 
 test("another sentence's time isn't the bonus's: a Quickened on success, an immunity (Boots of the Blight, Stone of Encouragement)", () => {
@@ -455,4 +452,17 @@ test("half the triggering attack's damage: Laurel of the Empath's reaction, its 
     const actor = { itemTypes: { effect: [{ flags: { [MODULE_ID]: { rollTwice: { halfDamage: true } } } }] } };
     assert.deepEqual(before(actor, { damage: 15 }).params.damage, 7);
     assert.equal(before({ itemTypes: { effect: [] } }, { damage: 15 }), null);
+});
+
+test("Indomitable Keepsake (2026-10-27): the triggering critical hit cut by 10 once, by no more than half of it — bonus.reduceCrit, not resistance", async () => {
+    const keepsake = compileItem(source("Indomitable Keepsake"));
+    assert.deepEqual([keepsake.bonus.resistance, keepsake.bonus.reduceCrit, keepsake.partial], [null, { value: 10 }, undefined]);
+    const { beforeCritical, criticalCut } = await import("../scripts/half-damage.js");
+    assert.deepEqual([criticalCut(30, 10), criticalCut(12, 10), criticalCut(1, 10)], [10, 6, 0]);
+    const flags = { "pf2e-automatic-item-resolution": { rollTwice: { reduceCrit: { value: 10 } } } };
+    const actor = { itemTypes: { effect: [{ flags }] } };
+    const roll = (total, degreeOfSuccess) => ({ total, options: { degreeOfSuccess }, alter: (multiplier, addend) => ({ total: total * multiplier + addend }) });
+    assert.equal(beforeCritical(actor, { damage: roll(14, 3) }).params.damage.total, 7);
+    assert.equal(beforeCritical(actor, { damage: roll(14, 2) }), null);
+    assert.equal(beforeCritical(actor, { damage: 25 }).params.damage, 15);
 });

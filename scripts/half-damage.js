@@ -1,17 +1,38 @@
 // Live play for bonus.halfDamage (src/compiler/readied-bonus.js: Laurel of the Empath's "You take half damage from the triggering attack").
 // The core's applyDamage listener (its patches.damage.onApply) sees the damage before PF2e applies it: on a creature with that readied
 // Effect (src/live/fortune-card.js, flagged halfDamage), the damage roll is halved by PF2e's own alter(0.5) — a number, rounded down. The
-// Effect is then spent by the damage, as one with resistance is (scripts/fortune.js).
+// Effect is then spent by the damage, as one with resistance is (scripts/fortune.js). And bonus.reduceCrit (Indomitable Keepsake's critical
+// hit reduced by 10, no lower than a normal hit's): the hit's damage less that much, at most half of it — the doubling's part — by
+// alter(1, -N) on its first instance; nothing off a damage PF2e says wasn't a critical hit.
 
 import { MODULE_KEY } from "../src/live/fortune-card.js";
 import { CORE_ID, MODULE_ID } from "./foundry.js";
 
+const cutting = (actor) => (actor?.itemTypes?.effect ?? []).find((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.reduceCrit) ?? null;
 const halving = (actor) => (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]?.halfDamage);
 
 export function setUpHalfDamage() {
     const damage = game.modules.get(CORE_ID)?.api?.patches?.damage;
     if (!damage?.onApply) return console.warn(`${MODULE_ID} | The resolution core's damage listener isn't there: Laurel of the Empath won't halve.`);
     damage.onApply({ module: MODULE_ID, name: "half-damage", before });
+    damage.onApply({ module: MODULE_ID, name: "reduce-critical", before: beforeCritical });
+}
+
+// How much comes off a critical hit's total: the value, at most half of it.
+export const criticalCut = (total, value) => Math.max(0, Math.min(Number(value) || 0, Math.floor((Number(total) || 0) / 2)));
+
+export function beforeCritical(actor, params) {
+    const effect = cutting(actor);
+    if (!effect || !params?.damage) return null;
+    const { value } = effect.flags[MODULE_ID][MODULE_KEY].reduceCrit;
+    if (typeof params.damage === "number") {
+        const cut = criticalCut(params.damage, value);
+        return cut ? { params: { ...params, damage: params.damage - cut } } : null;
+    }
+    const degree = params.damage.options?.degreeOfSuccess;
+    if ((degree !== undefined && degree !== 3) || typeof params.damage.alter !== "function") return null;
+    const cut = criticalCut(params.damage.total, value);
+    return cut ? { params: { ...params, damage: params.damage.alter(1, -cut) } } : null;
 }
 
 export function before(actor, params) {

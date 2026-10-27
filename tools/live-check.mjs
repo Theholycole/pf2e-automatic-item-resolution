@@ -1121,6 +1121,28 @@ export const cases = {
         return { hp: [hp, wearer.system.attributes.hp.value] };
     },
 
+    // Indomitable Keepsake (2026-10-27): readied, a critical hit of 30 is cut by 10 (to 20), and one of 12 by 6 only (to its normal hit's 6).
+    async keepsakeCritical(scene) {
+        const { actor: wearer } = await creature(scene, "Keepsake Wearer", { x: 18, y: 13, level: 20, hp: 100 });
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        const taken = [];
+        for (const [formula, expected] of [["(2 * 15)[piercing]", 20], ["(2 * 6)[piercing]", 6]]) {
+            const keepsake = await give(wearer, "Indomitable Keepsake");
+            const since = Date.now();
+            await keepsake.consume();
+            const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+            assert(/critical hit's damage reduced by 10/.test(card.content), `the card's words (${card.content})`);
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => wearer.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")?.reduceCrit), "the readied Effect", { timeout: 8000 });
+            const hp = wearer.system.attributes.hp.value;
+            await wearer.applyDamage({ damage: await new DamageRoll(formula, {}, { degreeOfSuccess: 3 }).evaluate(), token: wearer.getActiveTokens(true, true)[0] });
+            await until(() => !wearer.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")), "the Effect spent", { timeout: 8000 });
+            taken.push(hp - wearer.system.attributes.hp.value);
+            assert(taken.at(-1) === expected, `${formula} taken as ${expected}: ${taken.at(-1)}`);
+        }
+        return { taken };
+    },
+
     // Crown of the Fire Eater (2026-10-27): readied, 20 fire damage leaves 5 past its resistance 15, then it regains 15 (the lower of 15 and the
     // 20 before resistance): 60 → 55 → 70.
     async crownFireEater(scene) {
@@ -5553,6 +5575,40 @@ export const cases = {
             } finally {
                 canvas.regions.placeRegion = placing;
                 for (const region of scene.regions.filter((entry) => /Trip Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
+    // Marking Snare (2026-10-27): a creature failing its Reflex save is marked — a 24-hour note Effect of the +2 to Track it (and Blinded too on a
+    // critical failure).
+    async markingSnareMark(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Marking Setter", { type: "character", x: 0, y: 18 });
+            const { actor: walker, token: walkerToken } = await creature(scene, "Marking Walker", { x: 8, y: 18, alliance: "opposition", save: -20 });
+            const snare = await give(setter, "Marking Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Marking Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                const since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const card = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+                await rollAndApply(card);
+                const mark = () => walker.itemTypes.effect.find((effect) => /Marked/.test(effect.name) || /Track this creature/.test(effect.system?.description?.value ?? ""));
+                await until(() => mark(), `the mark's note Effect (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+                const duration = mark().system.duration;
+                assert(duration.value === 24 && duration.unit === "hours", `24 hours (${JSON.stringify(duration)})`);
+                return { degree: game.messages.get(card.id).flags["pf2e-automatic-ability-resolution"].card.targets?.[0]?.degree, mark: mark().name, blinded: walker.hasCondition("blinded") };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Marking Snare/.test(entry.name))) await region.delete().catch(() => null);
             }
         });
     },

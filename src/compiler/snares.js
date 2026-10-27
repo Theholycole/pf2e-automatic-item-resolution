@@ -86,6 +86,29 @@ function attackSnare(item) {
     };
 }
 
+// (A mark left on the creature, Marking Snare's "Either type of marking grants a +2 circumstance bonus to Track the creature for up to 24 hours or
+// until the dye or scent is washed off …" and its rows' "The snare marks the creature": a note Effect for that time on each row that marks it —
+// a bonus to others' Track checks against it, not PF2e's to play — and the row's line gone. 2026-10-27.)
+const MARKING = /\bEither type of marking grants a \+(\d+) circumstance bonus to Track the creature for up to (\d+) hours or until ([^.(]+?)(?: \(([^)]*)\))?\./i;
+const MARKS = /^(?:\{target\}(?: \([^)]*\))?:\s*)?The snare marks the creature\.$/i;
+function markedRows(read, text) {
+    const marking = MARKING.exec(text);
+    const outcomes = read.resolution?.outcomes;
+    if (!marking || !outcomes) return read;
+    const [, bonus, hours, until, needs] = marking;
+    const note = { label: "Marked", text: `Marked by the snare (a dye or a scent, as its maker chose): a +${bonus} circumstance bonus to Track this creature, until ${until}${needs ? ` (${needs})` : ""}.`, duration: { mode: "fixed", value: Number(hours), unit: "hours", expiry: "turn-start", anchor: "effect-start" } };
+    const rows = [...String(text).matchAll(/\b(Critical Success|Critical Failure|Success|Failure) (.*?)(?= (?:Critical Success|Critical Failure|Success|Failure) |$)/g)];
+    const LABELS = { criticalSuccess: "Critical Success", success: "Success", failure: "Failure", criticalFailure: "Critical Failure" };
+    const marked = (degree) => rows.some(([, label, row]) => label === LABELS[degree] && /^The snare marks the creature\b/.test(row));
+    const next = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => {
+        if (!row || !marked(degree)) return [degree, row];
+        const kept = (row.manualInstructions ?? []).filter((line) => !MARKS.test(String(line?.text ?? line).trim()));
+        const { manualInstructions, ...rest } = row;
+        return [degree, { ...rest, ...(kept.length ? { manualInstructions: kept } : {}), noteEffects: [...(row.noteEffects ?? []), note] }];
+    }));
+    return { ...read, resolution: { ...read.resolution, outcomes: next } };
+}
+
 // The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage, or its attack.)
 export function snareZone(item, read) {
     if (isSnare(item) && read?.resolution?.kind !== "save") {
@@ -105,7 +128,7 @@ export function snareZone(item, read) {
     const whole = plainText(item.system?.description?.value);
     const setArea = /\bYou set this snare up in an? (\d+)-foot-by-\1-foot area\./i.exec(whole);
     const traitGate = /\bThe first creature with the ([a-z]+) trait that steps into the area\b/i.exec(whole)?.[1]?.toLowerCase() ?? null;
-    const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
+    const plan = { ...markedRows(read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
     const cap = sizeCap(plainText(item.system?.description?.value));
     const only = gate || cap || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(cap ? { maxSize: cap } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};

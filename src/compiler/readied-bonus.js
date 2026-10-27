@@ -176,7 +176,7 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
         return { modifiers, resistance: resist ? { type: "all-damage", value: Number(resist[1]) } : null, duration: durationOf(sentence), spend, notes, ...(other && !GAIN.exec(sentence) ? { recipient: "target" } : {}) };
     }
     // (Only an item used one way: Toadskin Salve's two reactions, Thrice-Fried Mudwings' meal and its reaction aren't one card.)
-    return (plain.match(/\bActivate\b/g) ?? []).length <= 1 ? readResistMoment(sentences, triggered) : null;
+    return (plain.match(/\bActivate\b/g) ?? []).length <= 1 ? onlyCritExtra(readResistMoment(sentences, triggered), sentences) : null;
 }
 
 // Resistance against the hit that triggered it, and nothing else: Deflecting Parry's "You gain resistance 5 to physical
@@ -202,6 +202,15 @@ const IMMUNE_MOMENT = new RegExp(String.raw`\byou gain immunity to (${TYPE_WORDS
 // (The item broken by it, or destroyed if it was already: Worldscale Shield's "The worldscale shield breaks. If it was already broken,
 // it is destroyed." — scripts/fortune.js.)
 const BREAKS = /\bThe [\w' -]+? breaks\. If it was already broken, it is destroyed\./i;
+// (Only the critical hit's extra damage, Indomitable Keepsake's "This effect only reduces the additional damage from a critical hit; it can't reduce
+// the damage below the amount it would deal on a normal hit": not resistance — once off the hit's damage, at most its doubling's half —
+// bonus.reduceCrit { value }, scripts/half-damage.js, 2026-10-27.)
+const CRIT_EXTRA = /^This effect only reduces the additional damage from a critical hit; it can't reduce the damage below the amount it would deal on a normal hit\.$/i;
+function onlyCritExtra(read, sentences) {
+    const said = sentences.find((sentence) => CRIT_EXTRA.test(sentence.trim()));
+    if (!read?.resistance || read.resistance.type !== "all-damage" || !said || !/\bcritical hit\b/i.test(read.notes?.[0] ?? "")) return read;
+    return { ...read, resistance: null, reduceCrit: { value: read.resistance.value }, notes: read.notes.filter((note) => note.trim() !== said.trim()) };
+}
 function readResistMoment(sentences, triggered) {
     if (!triggered) return null;
     const breaks = sentences.some((sentence) => BREAKS.test(sentence) || /^If it was already broken, it is destroyed\.$/i.test(sentence.trim()));
