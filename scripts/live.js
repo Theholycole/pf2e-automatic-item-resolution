@@ -14,7 +14,8 @@
 
 import { applyEndEarlyCard } from "./end-early.js";
 import { applyDropCard } from "./drop-held.js";
-import { withStrikeFormula } from "../src/live/strike-as.js";
+import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
+import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
@@ -196,14 +197,31 @@ async function cardForUse(message) {
 // What an item tells its user (an information item, src/compiler/decided.js): whispered to the GM and the user's owners, the GM to fill in
 // what it shows — the user's ruling, as for spells.
 async function postWhisper({ plan, used, actor, token }) {
-    const owners = (game.users ?? []).filter((user) => user.isGM || actor?.testUserPermission?.(user, "OWNER")).map((user) => user.id);
+    // (And the players of the creatures near who wear one too, Name Pendant's: whisper.alsoTo { slug, within }.)
+    const also = plan.whisper.alsoTo?.slug && token ? (await Promise.all(creaturesNear(token, plan.whisper.alsoTo.within).map((entry) => fromUuid(entry.actorUuid).catch(() => null)))).filter((other) => other && other.uuid !== actor?.uuid && [...(other.items ?? [])].some((entry) => entry.system?.slug === plan.whisper.alsoTo.slug && entry.system?.equipped?.carryType === "worn")) : [];
+    const owners = (game.users ?? []).filter((user) => user.isGM || actor?.testUserPermission?.(user, "OWNER") || also.some((other) => other.testUserPermission?.(user, "OWNER"))).map((user) => user.id);
     const who = token?.name ?? actor?.name ?? "its user";
+    const told = also.length ? `, and ${also.map((other) => other.name).join(", ")}'s` : "";
     return ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor, token: token?.document ?? token ?? undefined }),
         whisper: owners,
-        content: `<section class="pf2e-aar-card pf2e-air-card" data-air-status="applied"><header><strong>${escapeHTML(used.data.name)}</strong><span class="aar-check">used by ${escapeHTML(who)}</span></header><p>${escapeHTML(plan.whisper.text)}</p><p class="aar-hint">Whispered to the GM and ${escapeHTML(who)}'s player: the GM says what it tells.</p></section>`,
+        content: `<section class="pf2e-aar-card pf2e-air-card" data-air-status="applied"><header><strong>${escapeHTML(used.data.name)}</strong><span class="aar-check">used by ${escapeHTML(who)}</span></header><p>${escapeHTML(plan.whisper.text)}</p><p class="aar-hint">Whispered to the GM and ${escapeHTML(who)}'s player${escapeHTML(told)}${also.length ? " players" : ""}: the GM says what it tells.</p></section>`,
         flags: { [MODULE_ID]: { whisper: { item: used.data.name, actorUuid: actor?.uuid ?? null } } }
     });
+}
+
+// The latest ranged Strike that missed the actor (the recent chat): its attacker's PF2e damage formula for that Strike, or null.
+async function triggeringMissFormula(actor) {
+    const messages = (game.messages?.contents ?? []).slice(-20);
+    const rolls = messages.map((entry) => {
+        const context = entry.flags?.pf2e?.context ?? {};
+        const target = context.target?.actor ?? null;
+        return { message: entry, type: context.type ?? null, outcome: context.outcome ?? null, ranged: (context.options ?? []).includes("item:ranged"), targetActorUuid: target, actorUuid: entry.actor?.uuid ?? null, itemId: entry.item?.id ?? String(entry.flags?.pf2e?.origin?.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? null };
+    });
+    const missed = triggeringMiss(rolls, actor.uuid);
+    const attacker = missed?.message?.actor ?? null;
+    const strike = (attacker?.system?.actions ?? []).find((action) => action?.type === "strike" && action.item?.id === missed.itemId && typeof action.damage === "function");
+    return strike ? await strike.damage({ getFormula: true }).catch(() => null) : null;
 }
 
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
@@ -211,7 +229,22 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     // (Its moves with ability 0.9.2's hook and moveFrom, else as read before: scripts/placed-moves.js.)
     plan = forAbility(plan);
     // (Damage as its user's own Strike with it would deal, of one type — Sinew-Song's Cutting Cadenza: PF2e's formula for that Strike, src/live/strike-as.js.)
-    if (plan?.strikeDamage && actor) {
+    // (A die per charge its item stores — Conflagration Club's Explosive Cone, its charges from Absorb Arcana: that many of its type, the charges then
+    // gone; none stored through the card, typed on it as before.)
+    if (spendsCharges(plan) && used?.data?.uuid) {
+        const holder = await fromUuid(used.data.uuid).catch(() => null);
+        const charged = withCharges(plan, holder?.getFlag?.(MODULE_ID, "charges"));
+        if (charged) {
+            plan = charged;
+            await holder.setFlag(MODULE_ID, "charges", { count: 0, type: null });
+        }
+    }
+    // (Or the Strike that just missed its user, sent back with its own damage — Turnabout Shield's: the attacker's PF2e formula for it.)
+    if (plan?.strikeDamage?.from === "triggering-miss" && actor) {
+        const formula = await triggeringMissFormula(actor);
+        if (formula) plan = withStrikeFormula(plan, formula);
+        else await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p><strong>${escapeHTML(used?.data?.name ?? "The item")}</strong>: no ranged Strike that missed ${escapeHTML(actor.name)} in the recent chat — roll the triggering Strike's damage by hand on a hit.</p>` });
+    } else if (plan?.strikeDamage && actor) {
         const itemId = used?.data?._id ?? used?.data?.id ?? null;
         const strike = (actor.system?.actions ?? []).find((action) => action.item?.id === itemId);
         const formula = strike?.damage ? await strike.damage({ getFormula: true }).catch(() => null) : null;
@@ -353,7 +386,7 @@ function choicesOf(state, root) {
     if (state.kind === "teleport") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), critical: Boolean(root.querySelector("[data-air-field='critical']")?.checked) };
     // (One of its user's items, picked: scripts/objects.js.)
     // (A stored spell cast at the creatures targeted: src/compiler/stored-spell.js.)
-    if (state.kind === "objects") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    if (state.kind === "objects") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), ...(root.querySelector("[data-air-field='amount']") ? { amount: root.querySelector("[data-air-field='amount']").value } : {}) };
     if (state.kind === "table") return {};
     // (The creature picked for an end-early try, and a skill check's harder-DC tick: scripts/end-early.js.)
     if (state.kind === "end-early") return { entry: root.querySelector("[data-air-field='entry']") ? Number(root.querySelector("[data-air-field='entry']").value) : null, ...(root.querySelector("[data-air-field='critical']") ? { critical: Boolean(root.querySelector("[data-air-field='critical']").checked) } : {}) };
@@ -501,7 +534,7 @@ async function onRequest(data) {
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
-        : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}) }
         : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], critical: Boolean(data.critical) }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }

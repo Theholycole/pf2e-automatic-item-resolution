@@ -44,7 +44,8 @@ test("the reading: outright damage to the creature it names, its conditions, and
     // A talisman: "the creature you damaged takes 1d6 bleed damage and is off-guard until …": bleed persistent, off-guard too.
     const knot = compileItem(source("Murderer's Knot"));
     assert.deepEqual([knot.directDamage.category, knot.directDamage.type], ["persistent", "bleed"]);
-    assert.deepEqual(knot.resolution.outcomes.success.effects.map((effect) => effect.slug), ["off-guard"]);
+    // (2026-10-27: its Off-Guard lasts while the bleed does — a note Effect with PF2e's GrantItem and whilePersistent, test/triggers-2026-10-27.test.js.)
+    assert.deepEqual([knot.resolution.outcomes.success.effects, knot.resolution.outcomes.success.noteEffects[0].whilePersistent], [[], "bleed"]);
     // Not outright: a save's degrees, a Strike's hit, an area.
     assert.equal(readDirectDamage("Effect The target must attempt a DC 20 Fortitude save. Success The creature takes 2d6 acid damage."), null);
     assert.equal(readDirectDamage("Effect Make a Strike. On a successful hit, the target takes an additional 1d6 force damage."), null);

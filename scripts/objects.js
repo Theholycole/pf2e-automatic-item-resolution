@@ -7,6 +7,7 @@
 import { storable } from "../src/compiler/stored-spell.js";
 import { ruleEffectSource } from "../src/live/card.js";
 import { createObjectsCard, objectsCardHTML } from "../src/live/objects-card.js";
+import { chargesOf } from "../src/live/charges.js";
 import { FLAG, MODULE_ID, entryOf, isActiveGM, stateOf } from "./foundry.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -19,6 +20,8 @@ const itemsOf = (actor) => [...(actor?.items ?? [])].filter((item) => PHYSICAL.h
 const loadedOf = (weapon) => [...(weapon?.subitems ?? [])].filter((entry) => entry.isOfType?.("ammo") || entry.type === "ammo").reduce((sum, entry) => sum + (Number(entry.quantity ?? entry.system?.quantity) || 0), 0);
 const capacityOf = (weapon) => Number(weapon?.system?.ammo?.capacity) || 1;
 const ammoFor = (actor, weapon) => [...(actor?.items ?? [])].find((item) => item.type === "ammo" && (Number(item.quantity ?? item.system?.quantity) || 0) > 0 && (item.isAmmoFor?.(weapon) ?? false)) ?? null;
+// (Its user's ammunition for it run out — the missed round was its last: that stack, to give the round back to.)
+const spentAmmoFor = (actor, weapon) => [...(actor?.items ?? [])].find((item) => item.type === "ammo" && (item.isAmmoFor?.(weapon) ?? false)) ?? null;
 
 // (A spell an item holds, src/compiler/stored-spell.js: its flag, { source, rank, name }.)
 export const storedOf = (item) => item?.flags?.[MODULE_ID]?.storedSpell ?? null;
@@ -46,7 +49,7 @@ export function objectChoices(actor, objects, holderId) {
         : objects.op === "retrieve" ? items.filter((item) => item.system?.containerId === holderId)
             : objects.op === "hand" ? items.filter((item) => !held(item) && fits(item, objects) && (!objects.weapon || item.type === "weapon"))
                 : objects.op === "repair" ? items.filter((item) => Number(item.system?.hp?.max) > 0 && Number(item.system?.hp?.value) < Number(item.system?.hp?.max) && fits(item, objects))
-                    : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && ammoFor(actor, item))
+                    : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && (ammoFor(actor, item) || (objects.recalled && spentAmmoFor(actor, item))))
                         : [];
     return list.map((item) => ({ id: item.id, name: item.name }));
 }
@@ -111,7 +114,7 @@ export async function postObjectsCard({ message, plan, used, actor, token }) {
 const handsFor = (item) => (/two-hands/.test(String(item.system?.usage?.value ?? "")) ? 2 : 1);
 
 // On the active GM's client: { pick, targets } → the item updated, the card applied.
-export async function applyObjectsCard(message, { pick = 0, targets = [] } = {}) {
+export async function applyObjectsCard(message, { pick = 0, targets = [], amount = null } = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "objects" || state.status !== "open") return null;
     const actor = state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : null;
@@ -123,6 +126,8 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
         const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
         return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
     }
+    // (Another creature's item damaged, Rustbringer's disarmed weapon: src/compiler/objects.js op "damage".)
+    if (objects.op === "damage") return damageTheirItem(message, state, { pick: Number(pick) || 0, targets });
     // (Its own shape changed, Anchor Spear's and the Shifting rune's: the picked base weapon's numbers on it.)
     if (objects.op === "reshape") {
         const shape = state.choices[Number(pick) || 0];
@@ -133,7 +138,9 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
         return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
     }
     const chosen = objects.self ? holder : state.choices[Number(pick) || 0] ? actor.items.get(state.choices[Number(pick) || 0].id) : null;
-    if (!chosen) throw new Error(objects.self ? `${state.item.name} isn't on ${state.user.name} any more.` : `Pick one of ${state.user.name}'s items first.`);
+    // (A weapon made by a talisman used up as it's made, Chain of Stars': no holder needed.)
+    const spentMaker = objects.op === "create" && objects.self && !holder && state.plan.item?.type === "consumable";
+    if (!chosen && !spentMaker) throw new Error(objects.self ? `${state.item.name} isn't on ${state.user.name} any more.` : `Pick one of ${state.user.name}'s items first.`);
     // (Still fit for it: the item may have moved since the card was posted.)
     if (!objects.self && !objectChoices(actor, objects, state.item.id).some((choice) => choice.id === chosen.id)) throw new Error(`${chosen.name} can't be taken now.`);
     let line;
@@ -155,6 +162,24 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
     } else if (objects.op === "don") {
         await chosen.update({ "system.containerId": null, "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.handsHeld": 0 });
         line = `${state.user.name} wears ${chosen.name}`;
+    } else if (objects.op === "charge") {
+        // (Charges kept on it, Conflagration Club's: its flag, refused while it still has some — its Requirements.)
+        const typed = Math.max(0, Math.floor(Number(amount) || 0));
+        if (!typed) throw new Error(`Type ${objects.typed} first.`);
+        const held = chargesOf(chosen.getFlag?.(MODULE_ID, "charges") ?? chosen.flags?.[MODULE_ID]?.charges);
+        if (objects.onlyWhenEmpty && held) throw new Error(`${chosen.name} still has ${held.count} ${held.type ?? ""} charge${held.count === 1 ? "" : "s"}: it can't take more until they're spent.`);
+        await chosen.setFlag(MODULE_ID, "charges", { count: typed, type: objects.attune ?? null });
+        line = `${chosen.name} holds ${typed} ${objects.attune ?? ""} charge${typed === 1 ? "" : "s"} (its card that spends them takes them)`;
+    } else if (objects.op === "repair" && objects.typed) {
+        // (By the amount its user typed, at most its Hardness: Sanguine Klar's bleed damage.)
+        const typed = Math.max(0, Math.floor(Number(amount) || 0));
+        if (!typed) throw new Error(`Type ${objects.typed} first.`);
+        const max = Number(chosen.system?.hp?.max) || 0;
+        const before = Number(chosen.system?.hp?.value) || 0;
+        const cap = objects.upTo === "hardness" ? Number(chosen.system?.hardness) || 0 : typed;
+        const after = Math.min(max, before + Math.min(typed, cap));
+        await chosen.update({ "system.hp.value": after });
+        line = `${chosen.name} regains ${after - before} Hit Points (${typed} typed${objects.upTo === "hardness" ? `, at most its Hardness ${cap}` : ""}): ${after}/${max}`;
     } else if (objects.op === "repair" && objects.amount) {
         // (By an amount, Rust Scrub's 2d4: rolled, up to its maximum.)
         const max = Number(chosen.system?.hp?.max) || 0;
@@ -168,33 +193,91 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
         await chosen.update({ "system.hp.value": max });
         line = `${chosen.name} is repaired (${max} Hit Points), no longer broken`;
     } else if (objects.op === "reload") {
-        // (One round of its user's ammunition for it: PF2e's own attach, as the weapon's reload button does.)
-        const ammo = ammoFor(actor, chosen);
+        // (One round of its user's ammunition for it: PF2e's own attach, as the weapon's reload button does. Recalled, Persistent Lodestone's: the round
+        // it missed with given back first, so none of its user's is spent.)
+        const ammo = ammoFor(actor, chosen) ?? (objects.recalled ? spentAmmoFor(actor, chosen) : null);
         if (!ammo) throw new Error(`${state.user.name} has no ammunition for ${chosen.name}.`);
+        if (objects.recalled) await ammo.update({ "system.quantity": (Number(ammo.quantity ?? ammo.system?.quantity) || 0) + 1 });
         await chosen.attach(ammo, { quantity: 1, stack: true });
-        line = `${chosen.name} is reloaded with ${ammo.name}`;
+        line = objects.recalled ? `${chosen.name} is loaded again with the ${ammo.name} it missed with` : `${chosen.name} is reloaded with ${ammo.name}`;
     } else if (objects.op === "create") {
         // (The last one this item made, gone first when a new one replaces it.)
-        const madeBy = (item) => item.flags?.[MODULE_ID]?.made?.by === holder.id;
+        // (Its holder spent by then — a talisman used up, Chain of Stars': its name and id from the card.)
+        const holderId = holder?.id ?? state.item.id;
+        const holderName = holder?.name ?? state.item.name;
+        const madeBy = (item) => item.flags?.[MODULE_ID]?.made?.by === holderId;
         const old = objects.replaces ? actor.items.filter(madeBy).map((item) => item.id) : [];
         if (old.length) await actor.deleteEmbeddedDocuments("Item", old);
         // (Picked from its groups, Armory Bracelet's: PF2e's weapon by its id.)
         const picked = objects.choose ? state.choices[Number(pick) || 0] : null;
         if (objects.choose && !picked) throw new Error(`Pick the weapon first.`);
         const source = picked ? await weaponSourceById(picked.id) : await weaponSource(objects.weapon);
-        source.name = `${source.name} (${holder.name})`;
+        source.name = `${source.name} (${holderName})`;
         source.system.runes = { ...(source.system.runes ?? {}), potency: Number(objects.potency) || 0, striking: Number(objects.striking) || 0 };
+        // (Several of them, of another damage type: Chain of Stars' three force shuriken.)
+        if (Number(objects.quantity) > 1) source.system.quantity = Number(objects.quantity);
+        if (objects.damageType) source.system.damage = { ...(source.system.damage ?? {}), damageType: objects.damageType };
         source.system.equipped = { ...(source.system.equipped ?? {}), carryType: "held", handsHeld: /two-hands/.test(String(source.system.usage?.value ?? "")) ? 2 : 1 };
         // (Its runes lower after a time, and it crumbles at its user's next daily preparations: scripts/expiring.js, setUpMadeWeapons.)
         const then = objects.then ? { downgradeAt: game.time.worldTime + (Number(objects.then.after.value) || 1) * 60, downgrade: { potency: objects.then.potency, striking: objects.then.striking } } : {};
-        source.flags = { ...(source.flags ?? {}), [MODULE_ID]: { made: { by: holder.id, from: holder.name, ...(objects.whileHeld ? { whileHeld: true } : {}), ...(objects.untilRest ? { untilRest: true } : {}), ...then } } };
+        source.flags = { ...(source.flags ?? {}), [MODULE_ID]: { made: { by: holderId, from: holderName, ...(objects.whileHeld ? { whileHeld: true } : {}), ...(objects.untilRest ? { untilRest: true } : {}), ...(objects.vanishAfterAttack ? { vanishAfterAttack: true } : {}), ...then } } };
         const [made] = await actor.createEmbeddedDocuments("Item", [source]);
         // (Its ammunition with it, when it takes some: PF2e's ammunition of its kind.)
         const ammo = objects.ammo && made.system?.ammo?.baseType ? await ammoSource(made.system.ammo.baseType) : null;
-        if (ammo) await actor.createEmbeddedDocuments("Item", [{ ...ammo, system: { ...ammo.system, quantity: objects.ammo }, flags: { ...(ammo.flags ?? {}), [MODULE_ID]: { made: { by: holder.id, from: holder.name, ...(objects.untilRest ? { untilRest: true } : {}) } } } }]);
-        line = `${made.name} is in ${state.user.name}'s hand${ammo ? `, with ${objects.ammo} ${ammo.name}` : ""}${old.length ? ", the last one gone" : ""}${objects.then ? `; after ${objects.then.after.value} minute it becomes ${objects.then.potency ? `+${objects.then.potency}${objects.then.striking ? ` ${["", "", "greater ", "major "][objects.then.striking]}striking` : ""}` : "non-magical"}` : ""}${objects.untilRest ? ", until its user's next daily preparations" : ""}: Strike with it`;
+        if (ammo) await actor.createEmbeddedDocuments("Item", [{ ...ammo, system: { ...ammo.system, quantity: objects.ammo }, flags: { ...(ammo.flags ?? {}), [MODULE_ID]: { made: { by: holderId, from: holderName, ...(objects.untilRest ? { untilRest: true } : {}) } } } }]);
+        line = `${Number(objects.quantity) > 1 ? `${objects.quantity} ` : ""}${made.name} ${Number(objects.quantity) > 1 ? "are" : "is"} in ${state.user.name}'s hand${objects.damageType ? ` (${objects.damageType} damage${objects.vanishAfterAttack ? ", each gone after its attack" : ""})` : ""}${ammo ? `, with ${objects.ammo} ${ammo.name}` : ""}${old.length ? ", the last one gone" : ""}${objects.then ? `; after ${objects.then.after.value} minute it becomes ${objects.then.potency ? `+${objects.then.potency}${objects.then.striking ? ` ${["", "", "greater ", "major "][objects.then.striking]}striking` : ""}` : "non-magical"}` : ""}${objects.untilRest ? ", until its user's next daily preparations" : ""}: Strike with it`;
     } else throw new Error(`${state.item.name}: nothing to do (${objects.op}).`);
     const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
+    return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// The targeted creature's items of that kind: the ones it dropped (PF2e's carryType "dropped") when there are any, else all — those PF2e keeps
+// Hit Points for first (a plain weapon's are 0: its own material table's, which PF2e leaves out).
+export function theirItems(actor, kind) {
+    const all = itemsOf(actor).filter((item) => item.type === kind);
+    const dropped = all.filter((item) => item.system?.equipped?.carryType === "dropped");
+    const pool = dropped.length ? dropped : all;
+    const kept = pool.filter((item) => Number(item.system?.hp?.max) > 0);
+    return (kept.length ? kept : pool).map((item) => ({ id: item.id, name: item.name }));
+}
+
+// Its Hit Points after the damage, its Hardness ignored (or not), and what it is then: broken at its Broken Threshold, destroyed at 0. Pure.
+export function damagedItem(hp, total, { hardness = 0, ignoresHardness = true } = {}) {
+    const before = Number(hp?.value) || 0;
+    const taken = Math.max(0, (Number(total) || 0) - (ignoresHardness ? 0 : Number(hardness) || 0));
+    const after = Math.max(0, before - taken);
+    return { before, after, taken, state: after === 0 ? "destroyed" : after <= (Number(hp?.brokenThreshold) || 0) ? "broken" : null };
+}
+
+// (The first Apply finds the targeted creature's item, or lists several for a second; then the roll, its Hit Points lowered.)
+async function damageTheirItem(message, state, { pick, targets }) {
+    const objects = state.plan.objects;
+    let choices = state.choices ?? [];
+    let owner = state.owner ?? null;
+    if (!choices.length || !owner) {
+        const token = targets?.[0] ? await fromUuid(targets[0]).catch(() => null) : null;
+        const actor = token?.actor ?? null;
+        if (!actor) throw new Error(`Target the creature whose ${objects.of} it is first.`);
+        choices = theirItems(actor, objects.of);
+        if (!choices.length) throw new Error(`${token.name ?? actor.name} has no ${objects.of}.`);
+        owner = { actorUuid: actor.uuid, name: token.name ?? actor.name };
+        if (choices.length > 1) {
+            const listed = { ...state, choices, owner, pick: 0 };
+            return message.update({ content: objectsCardHTML(listed, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: listed });
+        }
+    }
+    const actor = await fromUuid(owner.actorUuid).catch(() => null);
+    const chosen = actor?.items?.get?.(choices[pick]?.id ?? choices[0]?.id) ?? null;
+    if (!chosen) throw new Error(`That ${objects.of} isn't on ${owner.name} any more.`);
+    const roll = await new Roll(objects.formula).evaluate();
+    const hp = chosen.system?.hp ?? {};
+    const result = damagedItem(hp, roll.total, { hardness: chosen.system?.hardness, ignoresHardness: objects.ignoresHardness });
+    const kept = Number(hp.max) > 0;
+    if (kept) await chosen.update({ "system.hp.value": result.after });
+    const taken = `${result.taken}${objects.type && objects.type !== "untyped" ? ` ${objects.type}` : ""} damage (rolled ${objects.formula} = ${roll.total}${objects.ignoresHardness ? ", its Hardness ignored" : ""})`;
+    // (No Hit Points PF2e keeps for it: the damage said, the GM's to mark by its material.)
+    const line = kept ? `${owner.name}'s ${chosen.name} takes ${taken}: ${result.after}/${Number(hp.max) || 0} Hit Points${result.state ? `, ${result.state}` : ""}` : `${owner.name}'s ${chosen.name} takes ${taken}; PF2e keeps no Hit Points for it, so the GM marks it by its material`;
+    const next = { ...state, status: "applied", choices, owner, pick, results: [line] };
     return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 
@@ -233,7 +316,26 @@ async function weaponSource(weapon) {
 }
 
 // (A weapon made to last while it's held, Necklace of Knives': gone once it's out of the hand — dropped, stowed or worn.)
+// (A made weapon gone after its attack, Chain of Stars' shuriken: one fewer after each attack with it — a miss's attack roll, a hit's damage roll, so
+// that PF2e still has the weapon to roll the hit's damage with —, deleted after the last; on the active GM's client.)
+export async function spendMadeAfterAttack(message) {
+    const context = message?.flags?.pf2e?.context;
+    const missed = context?.type === "attack-roll" && ["failure", "criticalFailure"].includes(context.outcome);
+    const struck = context?.type === "damage-roll" && context.sourceType === "attack";
+    if (!missed && !struck) return null;
+    const uuid = message.flags.pf2e.origin?.uuid ?? null;
+    const weapon = uuid ? await fromUuid(uuid).catch(() => null) : null;
+    if (!weapon?.flags?.[MODULE_ID]?.made?.vanishAfterAttack) return null;
+    const quantity = Number(weapon.system?.quantity) || 1;
+    if (quantity > 1) return weapon.update({ "system.quantity": quantity - 1 });
+    return weapon.delete();
+}
+
 export function setUpMadeWeapons() {
+    Hooks.on("createChatMessage", (message) => {
+        if (!isActiveGM()) return;
+        spendMadeAfterAttack(message).catch((error) => console.error(`${MODULE_ID} | a made weapon after its attack`, error));
+    });
     // (Made until its user's next daily preparations, Armory Bracelet's weapon and ammunition: gone at PF2e's Rest for the Night.)
     Hooks.on("pf2e.restForTheNight", (actor) => {
         if (!isActiveGM()) return;

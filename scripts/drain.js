@@ -63,13 +63,19 @@ export async function markAfterApplied({ state, targets }) {
         const degree = target.degree ?? "success";
         if (!DAMAGED.has(degree) || outcomes[degree]?.damage?.mode === "none" || !target.actorUuid) continue;
         const actor = await fromUuid(target.actorUuid).catch(() => null);
-        if (!actor?.createEmbeddedDocuments) continue;
-        await markOf(actor)?.delete();
-        // (Its user the Effect's origin, else the creature itself: PF2e wants one.)
-        const [effect] = await actor.createEmbeddedDocuments("Item", [drainMarkSource(drain, { item, user: user.actorUuid ? user : { ...user, actorUuid: actor.uuid }, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
-        marked.push(effect);
+        const effect = await markDrained(actor, drain, { item, user });
+        if (effect) marked.push(effect);
     }
     return marked;
+}
+
+// One creature marked: its old mark replaced. (Also the Strike's hit, Reaper's Toll's Reaper's Claim — scripts/strikes.js.)
+export async function markDrained(actor, drain, { item, user }) {
+    if (!actor?.createEmbeddedDocuments) return null;
+    await markOf(actor)?.delete();
+    // (Its user the Effect's origin, else the creature itself: PF2e wants one.)
+    const [effect] = await actor.createEmbeddedDocuments("Item", [drainMarkSource(drain, { item, user: user.actorUuid ? user : { ...user, actorUuid: actor.uuid }, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+    return effect ?? null;
 }
 
 // (PF2e applies the damage to a copy of the creature with the attack's context: its Hit Points afterwards are the creature's own.)

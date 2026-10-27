@@ -24,6 +24,8 @@ const TARGET_TAKES = new RegExp(String.raw`^In addition, (?:the target|it) (?:al
 const FAIL_DICE = /^On a failure, you deal damage equal to (one|two|three|\d+) weapon damage (?:die|dice)\.?$/i;
 const FEAT_DIE = /^With the ([A-Z][\w' -]+?) feat, one more weapon damage die on a hit and on a failure\.$/;
 const TURN_ENDS = /^After the Strike, your turn ends\.$/;
+const DRAIN_HIT = /^If your Strike hits, you gain temporary Hit Points equal to (half|twice|double) the damage dealt, which last for (\d+|one|a|an) (minutes?|rounds?)\.$/i;
+const FROM_SPACE = /\bas though you were in the space of the triggering creature\b/i;
 // (Half its extra damage on a failure, Energizing Lattice's "If your Strike fails, but doesn't critically fail, the target still takes half
 // the force damage": failHalf, that type's extra dice — scripts/strikes.js, the ability module's card at half.)
 const FAIL_HALF = /^If your Strike fails, but doesn't critically fail, the target still takes half the (\w+) damage\.?$/i;
@@ -131,6 +133,9 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     let missRefund = false;
     let readied = false;
     let reach = null;
+    let drain = null;
+    const lines = [];
+    const isStrikeSentence = (sentence) => Boolean(strikeSentence) && sentence.includes(strikeSentence.trim().slice(0, 40));
     // (What it says of the multiple attack penalty — PF2e's own buttons, the user's to pick: "held" until all are rolled, "double" (two attacks),
     // "none" — the card's line.)
     let map = null;
@@ -203,6 +208,20 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
             continue;
         }
         if (/^You extend your weapon, giving you an impossible reach\.$|^The [\w' -]+? helps you stretch farther than you normally could\.$/i.test(sentence.trim())) continue;
+        // (Temporary Hit Points from the damage the hit deals, Reaper's Toll's Reaper's Claim: "If your Strike hits, you gain temporary Hit Points
+        // equal to half the damage dealt, which last for 1 minute" — drain, the creature hit marked so that what its damage roll takes off it, after
+        // resistances, gives its user that share (scripts/strikes.js, scripts/drain.js), 2026-10-27.)
+        const drained = DRAIN_HIT.exec(sentence.trim());
+        if (drained) {
+            drain = { fraction: { half: 0.5, twice: 2, double: 2 }[drained[1].toLowerCase()], type: null, duration: { mode: "fixed", value: COUNT[drained[2].toLowerCase()] ?? Number(drained[2]), unit: /^min/i.test(drained[3]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" } };
+            continue;
+        }
+        // (Struck as though from another creature's space, Reaper's Toll's "as though you were in the space of the triggering creature": the reach
+        // the user measures from there, a line of the card — the map's.)
+        if (isStrikeSentence(sentence) && FROM_SPACE.test(sentence) && /^Make an? (?:melee )?Strike with (?:the )?[\w' -]+? as though you were in the space of the triggering creature\.$/i.test(sentence.trim())) {
+            lines.push("It Strikes as though it stood in the space of the creature that triggered it: measure the reach from there (the map's)");
+            continue;
+        }
         // (A miss that gives its use back, Hydra Head Club's "If your Strike misses, the activation does not count against the hydra head club's
         // activation frequency": missRefund — scripts/strikes.js takes the use off the item's record.)
         // (A Strike readied, Flashblade's (its words src/compiler/item-data.js's): until the start of its user's next turn, its use given back if
@@ -328,5 +347,5 @@ export function readStrikeExtras(text, { item = null, strikeSentence = null, own
     const halfOf = failHalfType ? dice.find((entry) => entry.damageType === failHalfType && entry.dieSize) : null;
     if (failHalfType && !halfOf) notes.push(`If your Strike fails, but doesn't critically fail, the target still takes half the ${failHalfType} damage.`);
     const failHalf = halfOf ? { formula: `${halfOf.diceNumber}${halfOf.dieSize}`, type: failHalfType } : null;
-    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(ignoresCover ? { ignoresCover } : {}), ...(ignoresHardness ? { ignoresHardness } : {}), ...(failDice ? { failDice } : {}), ...(featDie ? { featDie } : {}), ...(turnEnds ? { turnEnds } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(readied ? { readied } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || ignoresCover || ignoresHardness || failDice || featDie || turnEnds || failHalf || requires.length || missRefund || readied || reach || map) };
+    return { dice, attack, alteration, degree, ...(material ? { material } : {}), ...(runes ? { runes } : {}), ...(options.length ? { options } : {}), ...(suppress.length ? { suppress } : {}), ...(splash ? { splash } : {}), ...(offGuard ? { offGuard } : {}), ...(ignoresCover ? { ignoresCover } : {}), ...(ignoresHardness ? { ignoresHardness } : {}), ...(failDice ? { failDice } : {}), ...(featDie ? { featDie } : {}), ...(turnEnds ? { turnEnds } : {}), ...(failHalf ? { failHalf } : {}), ...(requires.length ? { requires } : {}), ...(missRefund ? { missRefund } : {}), ...(readied ? { readied } : {}), ...(reach ? { reach } : {}), ...(map ? { map } : {}), ...(drain ? { drain } : {}), ...(lines.length ? { lines } : {}), notes, read: Boolean(dice.length || attack || alteration || material || degree || runes || options.length || suppress.length || splash || offGuard || ignoresCover || ignoresHardness || failDice || featDie || turnEnds || failHalf || requires.length || missRefund || readied || reach || map || drain) };
 }

@@ -64,7 +64,11 @@ const USING = /\busing (Athletics|Acrobatics|Thievery|Deception|Intimidation|Ste
 // Items whose words the readers don't take, by slug — see docs/mechanics.md:
 //   { slugs: ["trip", "disarm"], bonus?: { value, type }, statistic?: "thievery" }   one of several actions, picked on the card;
 //   { slug: "shove", minimum: { value: 5, skill: "athletics" } }                     an action at the item's modifier when higher.
-export const EXTRA = Object.freeze({});
+export const EXTRA = Object.freeze({
+    // (2026-10-27: Uzunjati Storytelling Amulet's Enamoring Story, "You attempt to Make an Impression or Request, using a Performance check instead of a
+    // Diplomacy check" — its trigger's anecdote the user's own.)
+    "uzunjati-storytelling-amulet": { slugs: ["make-an-impression", "request"], statistic: "performance" }
+});
 function extraAction(entry) {
     const slugs = entry.slugs ?? [entry.slug];
     const names = slugs.map((slug) => Object.entries(ACTION_SLUGS).find(([, value]) => value === slug)?.[0] ?? slug).map((name) => name.replace(/\b\w/g, (letter) => letter.toUpperCase()));

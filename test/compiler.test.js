@@ -612,7 +612,8 @@ test("temporary Hit Points or healing from an amount its trigger gave, typed on 
     const knuckles = entry("Bloodknuckles");
     assert.deepEqual([knuckles.from, knuckles.of, knuckles.multiplier, knuckles.max, knuckles.duration.value, knuckles.duration.unit], ["amount", "the triggering bleed damage", 1, 10, 1, "minutes"]);
     assert.equal(levelTempText(knuckles), "Temporary Hit Points equal to the triggering bleed damage (typed on the card), at most 10, for 1 minute");
-    assert.deepEqual([entry("Reaper's Toll").of, entry("Reaper's Toll").multiplier], ["the damage dealt", 0.5]);
+    // (2026-10-27: Reaper's Toll's half the damage dealt is its Strike's hit's now, strike.drain — test/triggers-2026-10-27.test.js —, not typed.)
+    assert.deepEqual([compileActivations(item("Reaper's Toll"))[0].plan.item.levelTemp, compileActivations(item("Reaper's Toll"))[0].plan.strike.drain.fraction], [undefined, 0.5]);
     assert.deepEqual([entry("Vampiric Scythe", 1).multiplier, compileActivations(item("Vampiric Scythe"))[1].plan.notes ?? []], [0.5, []]);
     const briolette = entry("Aeon Stone (Azure Briolette)");
     assert.deepEqual([briolette.of, briolette.multiplier, briolette.duration.unit, briolette.duration.expiry], ["the spell's rank", 2, "rounds", "turn-start"]);

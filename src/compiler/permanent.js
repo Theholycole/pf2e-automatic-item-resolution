@@ -127,6 +127,7 @@ import { withUserConditions } from "./user-conditions.js";
 import { onOffPlan } from "./on-off.js";
 import { withEffectThenCard } from "./effect-then-card.js";
 import { withRuneSteps } from "./rune-steps.js";
+import { withTriggered } from "./triggered.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
@@ -295,7 +296,9 @@ function withNamedOptions(item, entry, options) {
     return { ...entry, plan: { ...plan, ways: plan.ways.map((way) => ({ ...way, plan: { ...way.plan, item: { ...(way.plan.item ?? {}), ...(own.item?.activation ? { activation: own.item.activation } : {}) } } })) } };
 }
 
-function decideActivation(item, entry, plan) {
+function decideActivation(item, entry, read) {
+    // (A trigger's own effect first, src/compiler/triggered.js: Lost Ember's Off-Guard or Confused suppressed.)
+    const plan = withTriggered(read, entry, item);
     const { activation, index } = entry;
     const base = { modelVersion: MODEL_VERSION, source: { name: `${item.name}${activation.name ? `: ${activation.name}` : ""}`, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type }, rank: 1, traits: [...(item.system?.traits?.value ?? [])], activation: { time: activation.time ?? null, traits: activation.traits ?? [] } };
     const next = withDecided(plan, { text: plainText(activation.html), base, kind: "activation", trigger: Boolean(activation.trigger), name: base.source.name, special: isSpecialItem(item) });

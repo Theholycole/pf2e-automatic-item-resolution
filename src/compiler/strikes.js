@@ -477,6 +477,10 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.reach ? { reach: extras.reach } : {}),
               // (What it says of the multiple attack penalty: the card's line.)
               ...(extras.map ? { map: extras.map } : {}),
+              // (Temporary Hit Points from the damage its hit deals, Reaper's Toll's: the creature hit marked, scripts/strikes.js.)
+              ...(extras.drain ? { drain: extras.drain } : {}),
+              // (Lines of the card about the map: Reaper's Toll's reach from another creature's space.)
+              ...(extras.lines ? { lines: extras.lines } : {}),
               // (The item's own weapon, unless it's unarmed Strikes it gives.)
               own: item?.type === "weapon" && !strike.unarmed,
               ...(strike.ammo ? { ammo: true } : {}),
@@ -512,6 +516,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
 // save": not a save at whoever's targeted, Strike or no Strike).
 export function strikeOver(plan, strike) {
     if (!strike) return plan;
+    // (Its hit's temporary Hit Points over the row that typed their amount, Reaper's Toll's "half the damage dealt": the Strike plays both.)
+    if (strike.strike?.drain && (plan?.levelTemp ?? []).some((entry) => entry.from === "amount" && /^the damage dealt$/i.test(entry.of ?? ""))) return strike;
     // (Hit notes alone give way to any other reading but a note.)
     if (strike.strike?.fromNotes) return !plan || plan.noteOnly || plan.builtin === "no-effect" ? strike : plan;
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") return strike;

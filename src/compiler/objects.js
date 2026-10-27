@@ -63,6 +63,28 @@ const BLADE_REPLACED = /\bremains a physical object until the next time you use 
 const KNIFE = /\bYou pluck a miniature knife from the [\w' -]+?, and it grows into a normal (?:stone, steel, or wooden )?(dagger) for as long as you hold it\b/i;
 const STRIKING = { undefined: 0, "": 1, greater: 2, major: 3 };
 const RELOAD = /\bYou reload a weapon with reload (\d+)\b/i;
+// (Weapons made for Strikes from where its hit landed, Chain of Stars': "three +1 striking shuriken made from magical force materialize in the target's
+// space and split off to attack other creatures. Attempt up to three shuriken Strikes that must each target a different creature and can't target the
+// creature you hit to trigger this talisman. These Strikes use your attack modifier but originate from the hit creature's space. These attacks count
+// toward your multiple attack penalty, but the penalty doesn't increase until after all three attacks have been made. The shuriken deal force damage
+// instead of their normal type, and each shuriken vanishes after its attack" — op "create": PF2e's shuriken, that many, those runes, force damage,
+// each gone after its attack roll (scripts/objects.js); whom and from where they Strike, and the multiple attack penalty, lines of the card. 2026-10-27.)
+const MATERIALIZE = /\b(three|two|four) \+(\d) (?:(greater|major) )?striking (shuriken|daggers?|darts?) made from magical (force) materialize in the target's space and split off to attack other creatures\b/i;
+const MADE_STRIKES = [/^Attempt up to (?:three|two|four) [\w-]+ Strikes that must each target a different creature and can't target the creature you hit to trigger this talisman\.$/i, /^These Strikes use your attack modifier but originate from the hit creature's space\.$/i, /^These attacks count toward your multiple attack penalty, but the penalty doesn't increase until after all (?:three|two|four) attacks have been made\.$/i, /^The [\w-]+ deal (\w+) damage instead of their normal type, and each [\w-]+ vanishes after its attack\.$/i];
+const RECALLED = /\bthe ammunition from your missed shot is immediately recalled to your firearm, allowing you to fire again without reloading\b/i;
+// (Damage to another creature's item, ignoring its Hardness, 2026-10-27: Rustbringer's Rusting Disarm, "Flakes of acid-laden rust are deposited on
+// the disarmed weapon. The weapon takes @Damage[2d6[untyped]] damage, ignoring the weapon's Hardness" — op "damage" { formula, type, of, whose:
+// "target", ignoresHardness }: the targeted creature's weapon, picked when it has several, its Hit Points lowered by the roll (scripts/objects.js).)
+const ITEM_DAMAGE = /\bThe (weapon|armor|shield) takes (?:@Damage\[(\d+d\d+(?:\+\d+)?)\[(\w+)\]\]|(\d+d\d+(?:\+\d+)?)(?: (\w+))?) damage, ignoring the \1's Hardness\b/i;
+const DISARMED = /^Flakes of [\w-]+ rust are deposited on the disarmed weapon\.$/i;
+// (The affixed item negated and mended, Mending Lattice's "it negates the damage and instantly and completely repairs the affixed item"; or 10 of
+// its damage taken back, Fortifying Pebble's "the affixed object takes 10 less damage" — op "repair" of its user's damaged items, the one it's
+// affixed to picked once the damage lands, 2026-10-27.)
+const MENDED = /\bit negates the damage and instantly and completely repairs the affixed item\b/i;
+const LESS = /\bthe affixed object takes (\d+) less damage\b/i;
+// (Itself mended by what its trigger dealt, Sanguine Klar's "The sanguine klar regains a number of Hit Points equal to the bleed damage, up to an amount
+// equal to its Hardness" — op "repair", self, typed: the amount typed on the card, at most its Hardness, 2026-10-27.)
+const SELF_REGAIN = /\bThe [\w' -]+? regains a number of Hit Points equal to the (\w+) damage, up to an amount equal to its Hardness\b/i;
 const RULE = /\b(?:bonus|penalty|saving throws?|saves?|resistance|weakness|Strike|check|DC|attack|Speed|Hit Points|damage|condition|can't be activated again|can be activated again|can't Retrieve Item again)\b/i;
 const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 
@@ -104,8 +126,27 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     if (blade) return { op: "create", self: true, weapon: blade[3].toLowerCase(), potency: Number(blade[1] ?? 0), striking: blade[1] ? STRIKING[(blade[2] ?? "").toLowerCase()] : 0, ...(BLADE_REPLACED.test(text) ? { replaces: true } : {}), said: blade[0], also: BLADE_REPLACED.exec(text)?.[0] ?? null };
     const knife = KNIFE.exec(text);
     if (knife) return { op: "create", self: true, weapon: knife[1].toLowerCase(), potency: 0, striking: 0, whileHeld: true, said: knife[0], also: null };
+    const made = MATERIALIZE.exec(text);
+    if (made && MADE_STRIKES.every((pattern) => SENTENCES(text).some((sentence) => pattern.test(sentence)))) {
+        const count = { two: 2, three: 3, four: 4 }[made[1].toLowerCase()];
+        const kind = made[4].toLowerCase().replace(/s$/, "");
+        return { op: "create", self: true, weapon: kind, potency: Number(made[2]), striking: STRIKING[(made[3] ?? "").toLowerCase()], quantity: count, damageType: made[5].toLowerCase(), vanishAfterAttack: true, strikes: { count, different: true, notHit: true, fromHit: true, mapHeld: true }, said: made[0], also: MADE_STRIKES.map((pattern) => SENTENCES(text).find((sentence) => pattern.test(sentence))).join(" ") };
+    }
     const reload = RELOAD.exec(text);
     if (reload) return { op: "reload", reload: reload[1], said: reload[0] };
+    // (The missed round back in the firearm, Persistent Lodestone's "the ammunition from your missed shot is immediately recalled to your firearm, allowing
+    // you to fire again without reloading" — its Usage "affixed to a firearm with a reload of 1": op "reload", recalled — that round given back to its
+    // user's ammunition and loaded, no other spent (scripts/objects.js), 2026-10-27.)
+    const recalled = RECALLED.exec(text);
+    const usage = /\baffixed to a firearm with a reload of (\d+)\b/i.exec(String(whole ?? ""));
+    if (recalled && usage) return { op: "reload", reload: usage[1], recalled: true, said: recalled[0] };
+    const damaged = ITEM_DAMAGE.exec(text);
+    if (damaged) return { op: "damage", of: damaged[1].toLowerCase(), formula: damaged[2] ?? damaged[4], type: (damaged[3] ?? damaged[5] ?? "untyped").toLowerCase(), whose: "target", ignoresHardness: true, said: damaged[0], also: SENTENCES(text).find((sentence) => DISARMED.test(sentence)) ?? null };
+    if (MENDED.test(text)) return { op: "repair", affixed: true, negates: true, said: MENDED.exec(text)[0] };
+    const regain = SELF_REGAIN.exec(text);
+    if (regain) return { op: "repair", self: true, typed: `the ${regain[1].toLowerCase()} damage`, upTo: "hardness", said: regain[0] };
+    const less = LESS.exec(text);
+    if (less) return { op: "repair", amount: less[1], affixed: true, less: true, said: less[0] };
     const by = REPAIR_BY.exec(text);
     if (by) return { op: "repair", amount: by[1].replace(/\s+/g, ""), ...(by[2] ? { damagedBy: by[2].toLowerCase() } : {}), said: by[0] };
     if (REPAIR.test(text)) {
@@ -126,7 +167,7 @@ export function objectsPlan(html, base, item = {}) {
     // (Its forms' own words, Twining Staff's: lines of the card, or said with the line after them.)
     const formLine = (sentence) => FORM_LINES.find(([pattern]) => pattern.test(sentence));
     const formLines = read.op === "reshape" ? SENTENCES(body).map((sentence) => formLine(sentence)?.[1](formLine(sentence)[0].exec(sentence))).filter(Boolean) : [];
-    const notes = SENTENCES(body).filter((sentence) => !sentence.includes(read.said) && !(read.also && sentence.includes(read.also)) && !(read.op === "reshape" && formLine(sentence)) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
+    const notes = SENTENCES(body).filter((sentence) => !sentence.includes(read.said) && !(read.also && (sentence.includes(read.also) || read.also.includes(sentence))) && !(read.op === "reshape" && formLine(sentence)) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
     const { said, also, ...objects } = read;
     // (The GM's share of a number the card applies — Rust Scrub's "The GM determines what portion of damage to an item was caused by rust if
     // that value isn't known": your ruling for numbers left to the GM, the text's applied and the GM may change it — a card line.)

@@ -91,6 +91,8 @@ export function strikeLines(plan) {
         hit ? `On a hit: ${hit}` : null,
         critical && critical !== hit ? `On a critical hit: ${critical}` : null,
         strike.save ? `On a hit: ${saveText(strike.save)} for the target${strike.saveOnly === "void-healing" ? " (one with void healing)" : ""}` : null,
+        // (Temporary Hit Points from the damage the hit deals, Reaper's Toll's: the creature hit marked, scripts/strikes.js.)
+        strike.drain ? `On a hit: its user gains ${{ 0.5: "half", 2: "twice" }[strike.drain.fraction] ?? `${strike.drain.fraction} times`} the damage the Strike deals the creature hit (after its resistances) as temporary Hit Points${strike.drain.duration?.mode === "fixed" ? `, for ${strike.drain.duration.value} ${strike.drain.duration.value === 1 ? strike.drain.duration.unit.replace(/s$/, "") : strike.drain.duration.unit}` : ""}` : null,
         strike.save && strike.criticalDC ? `After a critical hit, its DC is ${strike.criticalDC}` : null,
         strike.save && strike.criticalSaveBonus ? `After a critical hit, ${strike.criticalSaveBonus.value} ${strike.criticalSaveBonus.type} to that save` : null,
         strike.save && (strike.criticalWorse ?? []).length ? `After a critical hit, ${strike.criticalWorse.join(" and ")} on the save's success too (only its critical success escapes)` : null,

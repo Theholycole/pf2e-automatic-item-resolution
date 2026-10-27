@@ -84,6 +84,7 @@ import { withDisbelief } from "./disbelief.js";
 import { withWeatherIgnores } from "./weather.js";
 import { withActionWays } from "./action-ways.js";
 import { objectsPlan } from "./objects.js";
+import { withTriggeredUse } from "./triggered.js";
 import { withPlacedCheck, withPlacedSave } from "./placed.js";
 import { withSpitOut } from "./spit-out.js";
 import { withOpenedTrap } from "./opened.js";
@@ -225,8 +226,10 @@ const retaliateAfter = (plan) => (plan?.item?.resist?.length ? withRetaliateAfte
 
 // (A consumable's plan as the user decided, src/compiler/decided.js: its own base and item part when nothing was read.)
 // (Only the items this module handles: not the spell module's scrolls, wands and catalysts.)
-function decide(plan, given, options) {
-    if (!handlesItem(given, options)) return plan;
+function decide(read, given, options) {
+    if (!handlesItem(given, options)) return read;
+    // (A trigger's own effect first, src/compiler/triggered.js: Reflecting Shard's Spell Riposte, Spellslasher's Spellslash.)
+    const plan = withTriggeredUse(read, given, { base: basePlan(given), info: itemInfo(given) });
     const next = withDecided(plan, { text: plainText(given?.system?.description?.value), base: basePlan(given), kind: "consumable", name: given.name, special: isSpecialItem(given) });
     return next && next !== plan && !next.item ? { ...next, item: itemInfo(given) } : next;
 }
