@@ -332,7 +332,8 @@ const READINGS = [
             if (plan?.resolution?.kind !== "save" || !plan.ifTarget || counteract?.rank !== Number(halo[1]) || counteract?.modifier !== Number(halo[2])) return null;
             const notes = (plan.notes ?? []).filter((note) => !said(note).startsWith("The halo then melts"));
             const left = notes.length || (plan.unread ?? []).length || Object.values(plan.resolution.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length);
-            return { keep: true, notes: notes.length ? notes : undefined, ...(left ? {} : { partial: undefined, automation: { level: "automatic" } }) };
+            // (On its user alone: "any one affliction you are currently suffering".)
+            return { keep: true, notes: notes.length ? notes : undefined, item: { ...plan.item, counteract: { ...counteract, self: true } }, ...(left ? {} : { partial: undefined, automation: { level: "automatic" } }) };
         }
     },
     {

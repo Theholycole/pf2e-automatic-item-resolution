@@ -26,7 +26,7 @@ const row = (plan) => plan.resolution.outcomes.success;
 
 test("an affliction counteracted after a save: Golden Gloves' Heaven's Wings, its counteract card beside the save card, the sentence no longer a note", () => {
     const wings = activation("Golden Gloves", "Heaven's Wings");
-    assert.deepEqual([done(wings), routeOf(wings), wings.notes, wings.item.counteract.rank, wings.item.counteract.modifier, wings.item.counteract.afflictions], [true, "save", undefined, 9, 31, ["curse", "disease", "poison"]]);
+    assert.deepEqual([done(wings), routeOf(wings), wings.notes, wings.item.counteract.rank, wings.item.counteract.modifier, wings.item.counteract.afflictions, wings.item.counteract.self], [true, "save", undefined, 9, 31, ["curse", "disease", "poison"], true]);
     assert.equal(wings.ifTarget[0].bonus.value, -2);
 });
 
