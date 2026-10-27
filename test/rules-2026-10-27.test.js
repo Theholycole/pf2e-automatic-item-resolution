@@ -148,8 +148,10 @@ test("a counteract on the magical effect or item: Rod of Cancellation's modifier
     assert.ok(rod.item.counteract.notes.some((note) => /Sphere of Annihilation/.test(note)));
     const cloth = activation("Cloth of Nullification", "Nullify Magic");
     assert.deepEqual([cloth.partial, cloth.item.counteract.modifier, cloth.item.counteract.notes.length], [undefined, 32, 3]);
-    // (Not a darkness counteract beside a light: Splendid Floodlight's still reads nothing.)
-    assert.equal(compileActivations(item("Splendid Floodlight"))[0].plan, null);
+    // (Not a darkness counteract beside a light: Splendid Floodlight's isn't the counteract card — since 2026-10-27 a one-off, its words the card's
+    // lines, src/compiler/one-offs.js.)
+    const floodlight = compileActivations(item("Splendid Floodlight"))[0].plan;
+    assert.deepEqual([floodlight.builtin, floodlight.decided], [undefined, "one-off"]);
 });
 
 test("a whetstone's cone at its wielder's kill, kept for later, its failing rows' frightened floors — Penultimate Heartbeat", () => {

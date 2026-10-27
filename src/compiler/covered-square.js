@@ -524,6 +524,10 @@ export function spotlightPlan(html, base) {
 // 30 foot emanation, temporarily altering the landscape into an soothing meadow for 1 minute. Creatures in the area gain a +1 item bonus to Will
 // saves and Wisdom-based skill checks, and have fast healing 2." The ability module's zone on its user's token, its modifiers for each creature
 // inside; the fast healing inside and the rest, notes.
+// (2026-10-27: its fast healing PF2e's FastHealing for those inside, zone.inside; and its "A creature in the area that attempts to take a hostile
+// action must succeed at a DC 28 Will save or the hostile action is prevented …" a Note on their attack rolls and skill checks there — the
+// words of a rule PF2e can't play, on what those inside carry — and a line of the zone card: the plan whole then.)
+const HOSTILE = /^A creature in the area that attempts to take a hostile action must succeed at a @Check\[will\|dc:(\d+)\] save or the hostile action is prevented and the actions they would've spent are wasted\.$/i;
 const CONJURED_AREA = /\bYou conjure [^.]*? in an? (\d+)[- ]foot emanation\b[^.]*? for (\d+) (minutes?|rounds?)\./i;
 const IN_AREA = /\bCreatures in the area gain (an? \+\d+ (?:item|status|circumstance) bonus to [^.,]+?)(?:, and have fast healing (\d+))?\./i;
 export function emanationBonusPlan(html, base) {
@@ -535,6 +539,11 @@ export function emanationBonusPlan(html, base) {
     const modifiers = (allyAreaRow(`You and allies within 5 feet of you gain ${inside[1]} for ${area[2]} ${unit}.`)?.row?.modifiers ?? []).map(({ duration, ...modifier }) => modifier);
     if (!modifiers.length) return null;
     const rest = plain.slice(inside.index + inside[0].length).split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter((sentence) => /\b(?:save|DC|damage|bonus|penalty|actions?|hostile)\b/i.test(sentence));
+    const hostile = rest.map((sentence) => HOSTILE.exec(sentence)).find(Boolean) ?? null;
+    const left = rest.filter((sentence) => !HOSTILE.test(sentence));
+    const meadow = hostile ? `A hostile action attempted in this area first needs a DC ${hostile[1]} Will save: on a failure it's prevented and its actions are spent` : null;
+    const rules = [...(inside[2] ? [{ key: "FastHealing", value: Number(inside[2]) }] : []), ...(meadow ? [{ key: "Note", selector: ["attack-roll", "skill-check"], title: base?.source?.name ?? "Sanctum", text: `${meadow}.` }] : [])];
+    const whole = Boolean(hostile) && !left.length;
     return {
         ...base,
         builtin: "zone",
@@ -553,9 +562,10 @@ export function emanationBonusPlan(html, base) {
             damage: [],
             effect: null,
             modifiers,
-            notes: [...(inside[2] ? [`Each creature in it also has fast healing ${inside[2]} while it's there (by hand).`] : []), ...rest]
+            ...(whole && rules.length ? { inside: [{ rules }] } : {}),
+            notes: whole ? [...(inside[2] ? [`Each creature in it has fast healing ${inside[2]} while it's there.`] : []), `${meadow} (the GM rolls it as the action's attempted).`] : [...(inside[2] ? [`Each creature in it also has fast healing ${inside[2]} while it's there (by hand).`] : []), ...rest]
         },
         notes: undefined,
-        partial: true
+        ...(whole ? { automation: { level: "automatic" } } : { partial: true })
     };
 }

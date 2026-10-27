@@ -15,6 +15,8 @@ export const NOTES_CHECKED = new Map([
     ["Leaper's Elixir (Greater)", "High Jump or Long Jump as one action with no Stride first, and a longer jump: its user's own action"],
     // (2026-10-27: one nothing read, its words its card's line — src/compiler/decided.js.)
     ["Serum of Sex Shift", "its drinker's sex characteristics changed for good, can't be counteracted: an appearance, no game numbers"],
+    // (2026-10-27: its cake's slower Serum of Sex Shift, paused and taken up again by its eater.)
+    ["Euphorium", "a Serum of Sex Shift eaten bite by bite, its change paused where its eater likes (reverting after a day) or taken up again: an appearance, no game numbers"],
     ["Persona Mask: Assume Role", "the mask's look changed to a dramatic character: an appearance (its Performance bonus is the mask's own)"],
     ["Persona Mask (Greater): Assume Role", "the mask's look changed to a dramatic character: an appearance (its Performance bonus is the mask's own)"],
     // (2026-10-27: Leaps for a minute — its user's own moves on the map; the fall if it lands on no ground, the environment module's.)

@@ -1016,7 +1016,9 @@ test("Admirer's Bouquet handed to the triggering ally: its +1 item bonus to save
     const bouquet = compileActivations(item("Admirer's Bouquet"), { spellEffects })[1].plan;
     assert.deepEqual([routeOf(bouquet), bouquet.item.recipient, bouquet.targeting.target], ["item", "targets", "the triggering ally"]);
     assert.deepEqual(bouquet.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.duration, modifier.predicate]), [["saving-throw", 1, "item", null, [{ or: ["item:trait:emotion", "item:trait:mental"] }]]]);
-    assert.equal(bouquet.unread[0], "The bonus ends once the ally no longer carries the bouquet (end it by hand).");
+    // (2026-10-27: its end and the new save no longer unread — words on the ally's note Effect, src/compiler/moving-readings.js.)
+    assert.equal(bouquet.unread, undefined);
+    assert.match(bouquet.resolution.outcomes.success.noteEffects[0].text, /remove this Effect once it doesn't/);
     const { modifierText } = await import("../src/live/card.js");
     assert.equal(modifierText(bouquet.resolution.outcomes.success.modifiers[0]), "+1 item to saving-throw (against emotion or mental effects)");
 });

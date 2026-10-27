@@ -101,7 +101,7 @@ export async function postExposureCard({ message, plan, used, actor, token, late
 const sign = (value) => (value >= 0 ? `+${value}` : `${value}`);
 // (atLeast: the item's own modifier when its text says "or your own spell attack modifier, whichever is higher" — Urn of
 // Ashes' +15: the higher of the two, the item's alone with no spell attack.)
-function attackChoices(actor, kinds, { atLeast = null } = {}) {
+export function attackChoices(actor, kinds, { atLeast = null } = {}) {
     const best = (values) => Math.max(...values.map(Number).filter(Number.isFinite));
     const spell = best((actor?.spellcasting?.contents ?? []).map((entry) => entry?.statistic?.check?.mod));
     const firearm = best((actor?.system?.actions ?? []).filter((action) => (action?.item?.group ?? action?.item?.system?.group) === "firearm").map((action) => action.totalModifier));
@@ -112,6 +112,11 @@ function attackChoices(actor, kinds, { atLeast = null } = {}) {
     const rank = Number(actor?.system?.proficiencies?.attacks?.simple?.rank ?? NaN);
     const dex = Number(actor?.system?.abilities?.dex?.mod ?? NaN);
     const thrown = Number.isFinite(rank) && Number.isFinite(dex) ? dex + (rank > 0 ? Number(actor.level ?? 0) + 2 * rank : 0) : NaN;
+    // (Its highest proficiency with a ranged weapon, a Bonmuan Swapping Stone's Strike — src/compiler/moving-readings.js, 2026-10-27: its Dexterity
+    // modifier and the best of its simple, martial and advanced weapon ranks; a creature with no proficiencies, its best ranged Strike.)
+    const ranks = ["simple", "martial", "advanced"].map((category) => Number(actor?.system?.proficiencies?.attacks?.[category]?.rank)).filter(Number.isFinite);
+    const top = ranks.length ? Math.max(...ranks) : NaN;
+    const proficient = Number.isFinite(top) && Number.isFinite(dex) ? dex + (top > 0 ? Number(actor.level ?? 0) + 2 * top : 0) : NaN;
     // (A simple melee weapon's, Doom Switch's — src/compiler/effect-strike.js: its user's Strength modifier and simple weapon proficiency; a
     // creature with no proficiencies, its best melee Strike.)
     const str = Number(actor?.system?.abilities?.str?.mod ?? NaN);
@@ -122,6 +127,8 @@ function attackChoices(actor, kinds, { atLeast = null } = {}) {
         ...(kinds.includes("melee") && !Number.isFinite(melee) && Number.isFinite(meleeStrike) ? [{ kind: "melee", label: `Melee attack ${sign(meleeStrike)}`, modifier: meleeStrike }] : []),
         ...(kinds.includes("thrown") && Number.isFinite(thrown) ? [{ kind: "thrown", label: `Thrown (simple weapon) ${sign(thrown)}`, modifier: thrown }] : []),
         ...(kinds.includes("thrown") && !Number.isFinite(thrown) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
+        ...(kinds.includes("ranged-proficiency") && Number.isFinite(proficient) ? [{ kind: "ranged-proficiency", label: `Ranged (highest proficiency) ${sign(proficient)}`, modifier: proficient }] : []),
+        ...(kinds.includes("ranged-proficiency") && !Number.isFinite(proficient) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
         ...(kinds.includes("spell") && Number.isFinite(spell) ? [{ kind: "spell", label: `Spell attack ${sign(spell)}`, modifier: spell }] : []),
         ...(kinds.includes("firearm") && Number.isFinite(firearm) ? [{ kind: "firearm", label: `Firearm attack ${sign(firearm)}`, modifier: firearm }] : []),
         ...(kinds.includes("ranged") && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : [])
@@ -139,7 +146,7 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     if (Number.isInteger(checkChoice) && state.plan?.checkChoices?.[checkChoice]) state = { ...state, checkChoice };
     // (A spellgun's attack, as picked; with none its user has, the GM rolls it.)
     if (Number.isInteger(attackChoice) && state.attackChoices?.[attackChoice]) state = { ...state, attackChoice };
-    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.includes("thrown") ? "attack to throw it with" : state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
+    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.some((kind) => kind === "thrown" || kind === "ranged-proficiency") ? "attack to throw it with" : state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
     // (The damage picked: Necklace of Fireballs' bead.)
     if (Number.isInteger(damageChoice) && state.plan?.damageChoices?.[damageChoice]) state = { ...state, damageChoice };
     // (Its damage's amount, typed: Twisting Gale's Strike damage, Conflagration Club's charges.)
