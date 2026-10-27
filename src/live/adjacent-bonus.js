@@ -1,4 +1,4 @@
-// A bonus for each adjacent enemy (2026-10-27, src/compiler/artifact-readings.js: Vambrace of Gorum's Blade of Iron, "+1 circumstance bonus to
+// A bonus for each adjacent enemy (2026-10-27, src/compiler/whole-artifacts.js: Vambrace of Gorum's Blade of Iron, "+1 circumstance bonus to
 // AC for each adjacent enemy (up to a +4 bonus)"): its user's Effect, flagged adjacentEnemies { per, max, type, selector }, its one FlatModifier
 // set to the count as it changes (scripts/adjacent-bonus.js). Pure.
 

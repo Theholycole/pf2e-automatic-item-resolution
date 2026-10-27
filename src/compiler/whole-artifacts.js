@@ -461,7 +461,7 @@ const READINGS = [
     {
         // Crimson Fulcrum Lens's second activation: its own melee spell attack (+18) at the creature targeted; a hit gives it PF2e's Effect: Crimson
         // Fulcrum Lens (the invested benefits) and the possession's note Effect, its user no longer invested and the lens inert while it lasts
-        // (plan.possession, scripts/possession.js).
+        // (plan.possession, scripts/lens-possession.js).
         names: ["Crimson Fulcrum Lens"],
         index: 1,
         sentences: [
@@ -552,13 +552,13 @@ function matched(reading, sentences) {
 }
 
 // Whether a source name has a reading here.
-export const hasArtifactReading = (name) => READINGS.some((reading) => named(reading, name));
+export const hasWholeArtifactReading = (name) => READINGS.some((reading) => named(reading, name));
 
 // The plan (null, note-only or the GM's no-effect — or any, for a reading over it) and its effect's words → the reading's card, or the same
 // plan. name: its source name; base, info, frequency: its own (src/compiler/lasting.js activationBase); requirements, trigger: its activation's
 // lines; item: its item's whole text, plain (itemHtml: as it is); index: the activation's (a reading for one of several unnamed ones); spells:
 // PF2e's spells by name (options.spells).
-export function withArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", itemHtml = "", index = null, spells = {}, ownerLevel = null, base, info, frequency = null }) {
+export function withWholeArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", itemHtml = "", index = null, spells = {}, ownerLevel = null, base, info, frequency = null }) {
     const slug = base?.source?.slug ?? null;
     const readings = READINGS.filter((reading) => named(reading, name) && (reading.index === undefined || reading.index === index) && (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect"));
     const sentences = words ? sentencesOf(words) : [];

@@ -15,7 +15,7 @@
 // cast arcane or occult spells", held.)
 const TALISMAN = { slug: "talisman-of-the-sphere", name: "Talisman of the Sphere", by: 10, traditions: ["arcane", "occult"] };
 
-// The reading's matches (src/compiler/artifact-readings.js: its eight sentences), its Requirements line's and its item's whole text → the
+// The reading's matches (src/compiler/whole-artifacts.js: its eight sentences), its Requirements line's and its item's whole text → the
 // card's parts.
 export function spherePlanOf(found, requirements, item = "") {
     const [take, , , fail, keep, sustain, moved, lost] = found;

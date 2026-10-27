@@ -10,7 +10,7 @@
 const isCantrip = (spell) => (spell.traits ?? []).includes("cantrip") && !(spell.traits ?? []).includes("focus");
 const byName = (a, b) => a.name.localeCompare(b.name);
 
-// The reading's matches (src/compiler/artifact-readings.js), the item's whole text, options.spells and its item part → the cast card, or null.
+// The reading's matches (src/compiler/whole-artifacts.js), the item's whole text, options.spells and its item part → the cast card, or null.
 export function contractSpellsOf([cast], item, spells, info) {
     const selection = /\bselect one weapon in your possession, an? (common) (divine) cantrip, and one common divine spell of each spell rank except 10th\b/i.exec(String(item ?? ""));
     const list = Object.values(spells ?? {});

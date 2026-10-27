@@ -1,4 +1,4 @@
-// Two of its user's skills' proficiency ranks swapped for a while (2026-10-27, src/compiler/artifact-readings.js: The Trader's "select two
+// Two of its user's skills' proficiency ranks swapped for a while (2026-10-27, src/compiler/whole-artifacts.js: The Trader's "select two
 // skills. Your proficiency rank with those two skills swaps for 1 hour"): the card's two picks, and its Effect's PF2e rules — ActiveEffectLike
 // overrides of each skill's rank with the other's, as they are when it's used. Pure.
 

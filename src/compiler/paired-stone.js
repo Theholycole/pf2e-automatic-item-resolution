@@ -8,7 +8,7 @@
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 
-// The reading's matches (src/compiler/artifact-readings.js) and the item's slug → the card's parts.
+// The reading's matches (src/compiler/whole-artifacts.js) and the item's slug → the card's parts.
 export function pairedStonePlanOf([, glow, open, resist], slug) {
     return {
         targeting: { target: `each creature within ${glow[1]} feet of the stone`, range: null, area: { type: "emanation", value: Number(glow[1]) } },

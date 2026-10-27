@@ -43,7 +43,7 @@ test("the reading: what's rerolled, which result is kept, and what isn't read", 
     assert.deepEqual(compileActivations(source("Redsand Hourglass")).find((entry) => entry.plan?.builtin === "reroll").plan.reroll.bonus, { value: 4, type: "circumstance" });
     assert.equal(compileActivations(source("Navaratna of the Solar Ruby")).find((entry) => entry.plan?.builtin === "reroll").plan.reroll.who, "companion");
     // A table's reroll, allies' after the user's own: not read. (2026-10-27: Old Tillimaquin's later blessing is now its own card, kept for its
-    // 24 hours — src/compiler/artifact-readings.js — not this reading's: test/b4-3-artifacts-2026-10-27.test.js.)
+    // 24 hours — src/compiler/whole-artifacts.js — not this reading's: test/b4-3-artifacts-2026-10-27.test.js.)
     for (const name of ["Pistol of Wonder"]) assert.equal(compileActivations(source(name)).some((entry) => entry.plan?.builtin === "reroll"), false, name);
     assert.equal(readReroll(source("Old Tillimaquin").system.description.value), null);
     assert.equal(readReroll(source("Beckoning Cat Amulet").system.description.value), null);

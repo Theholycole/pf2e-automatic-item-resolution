@@ -1,4 +1,4 @@
-// Souls a weapon keeps (2026-10-27, src/compiler/artifact-readings.js: Reaper's Grasp, "Whenever the reaper's grasp kills a sapient living or
+// Souls a weapon keeps (2026-10-27, src/compiler/whole-artifacts.js: Reaper's Grasp, "Whenever the reaper's grasp kills a sapient living or
 // undead creature, a portion of that creature's soul is drawn inexorably into the weapon … to a maximum of 10 souls. … Keep track of the level
 // of each creature whose souls are stored"): its record on the weapon, [{ name, level }]; a kill that counts; the soul spent by Soul Shot (twice
 // its level in void damage on the next Strike with it this turn) or Devour Captured Soul (three times its level in temporary Hit Points till

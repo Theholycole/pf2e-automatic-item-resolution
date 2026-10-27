@@ -1,4 +1,4 @@
-// A creature's spell or slot of a tradition lost (2026-10-27, src/compiler/artifact-readings.js: Belimarius's Invidious Halberd's Absorb
+// A creature's spell or slot of a tradition lost (2026-10-27, src/compiler/whole-artifacts.js: Belimarius's Invidious Halberd's Absorb
 // Arcana, "it loses an arcane spell (or lose an unused arcane spell slot) as if it'd cast that spell. The spell or slot lost is randomly
 // determined from the highest rank available, starting at 6th rank and working down"): which one, from its spellcasting entries. Pure.
 

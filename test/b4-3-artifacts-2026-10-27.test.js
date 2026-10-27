@@ -1,5 +1,5 @@
 // Unique items and artifacts built whole (2026-10-27, the fourth batch's third list; the user: their unique effects all automated): the readings
-// of src/compiler/artifact-readings.js and the mechanisms they feed — Sphere of Annihilation's sphere card (src/live/sphere-card.js) first.
+// of src/compiler/whole-artifacts.js and the mechanisms they feed — Sphere of Annihilation's sphere card (src/live/sphere-card.js) first.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";

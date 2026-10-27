@@ -10,7 +10,7 @@
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const UNITS = { minute: "minutes", minutes: "minutes", round: "rounds", rounds: "rounds" };
 
-// The reading's matches (src/compiler/artifact-readings.js) and the item's slug → the card's parts.
+// The reading's matches (src/compiler/whole-artifacts.js) and the item's slug → the card's parts.
 export function decoyDoublePlanOf(found, slug) {
     const [, , , check, lasts, , stealth] = found;
     const dc = Number(check[1]);

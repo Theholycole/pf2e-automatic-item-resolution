@@ -1,4 +1,4 @@
-// A weapon's poison reservoir (2026-10-27, src/compiler/artifact-readings.js: Reaper's Lancet, "a hidden reservoir … large enough to hold only
+// A weapon's poison reservoir (2026-10-27, src/compiler/whole-artifacts.js: Reaper's Lancet, "a hidden reservoir … large enough to hold only
 // 3 doses at a time. Any sort of injury-delivered poison can be placed in it, though all doses must be of the same poison" and its reaction,
 // "You poison the creature you hit with the poison currently in the reservoir"): its record on the weapon { poison: { name, uuid, plan }, doses },
 // filled from its user's own injury poisons, a dose spent on each creature it poisons. Pure.

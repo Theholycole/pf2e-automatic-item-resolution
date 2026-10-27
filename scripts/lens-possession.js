@@ -1,4 +1,4 @@
-// Live play for an item's essence possessing the creature it hits (2026-10-27, src/compiler/artifact-readings.js: Crimson Fulcrum Lens's
+// Live play for an item's essence possessing the creature it hits (2026-10-27, src/compiler/whole-artifacts.js: Crimson Fulcrum Lens's
 // second activation): once the ability module's attack card is applied with a hit ("applied" hook, sent on to the active GM's client), the
 // lens is no longer invested and is inert (scripts/activations.js refuses it) while the possession lasts — the creature's note Effect of it,
 // beside the lens's own Effect of its invested benefits. When that note Effect is gone (ended by whatever removes a possession effect), the
@@ -34,7 +34,7 @@ async function onDeleted(effect) {
     }
 }
 
-export function setUpPossession() {
+export function setUpLensPossession() {
     Hooks.on(`${ABILITY_ID}.applied`, (payload) => {
         if (!payload?.state?.plan?.possession) return;
         const item = payload.state.ability?.uuid ?? payload.state.item?.uuid ?? null;

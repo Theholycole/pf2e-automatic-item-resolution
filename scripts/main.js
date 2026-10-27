@@ -62,7 +62,7 @@ import { setUpAdjacentBonus } from "./adjacent-bonus.js";
 import { setUpArcaneDrain } from "./arcane-drain.js";
 import { setUpPortals } from "./portals.js";
 import { setUpSouls } from "./souls.js";
-import { setUpPossession } from "./possession.js";
+import { setUpLensPossession } from "./lens-possession.js";
 import { setUpReservoir } from "./reservoir.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
@@ -203,8 +203,8 @@ Hooks.once("ready", async () => {
     setUpPortals();
     // (Souls a weapon keeps from its kills, Reaper's Grasp's: scripts/souls.js.)
     setUpSouls();
-    // (An item's essence possessing the creature it hits, Crimson Fulcrum Lens's: scripts/possession.js.)
-    setUpPossession();
+    // (An item's essence possessing the creature it hits, Crimson Fulcrum Lens's: scripts/lens-possession.js.)
+    setUpLensPossession();
     // (A weapon's poison reservoir, Reaper's Lancet's: scripts/reservoir.js.)
     setUpReservoir();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)

@@ -1,4 +1,4 @@
-// Two linked portals an item makes (2026-10-27, src/compiler/artifact-readings.js: Mountebank's Passage's Doorway to Onyx and Doorway to Pearl):
+// Two linked portals an item makes (2026-10-27, src/compiler/whole-artifacts.js: Mountebank's Passage's Doorway to Onyx and Doorway to Pearl):
 // each a Region on a square its user picks within range, Foundry's own teleportToken behaviour taking a token that moves in out through the
 // other colour's portal; the previous one of its colour gone, both gone at its user's next daily preparations (scripts/portals.js). Pure.
 

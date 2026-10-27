@@ -1,4 +1,4 @@
-// Places an item keeps for teleportation (2026-10-27, src/compiler/artifact-readings.js: Guiding Star Orb (Heroic)'s Embed Location, "The
+// Places an item keeps for teleportation (2026-10-27, src/compiler/whole-artifacts.js: Guiding Star Orb (Heroic)'s Embed Location, "The
 // Guiding Star Orb can have up to three locations embedded at a time; if this activity is used a fourth time, the new location replaces the
 // oldest stored one"): its record on the item, [{ scene, sceneName, x, y, at }], newest last. Pure.
 

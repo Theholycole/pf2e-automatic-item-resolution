@@ -12,7 +12,7 @@ const shared = (multiplier, effects = []) => ({ damage: { mode: "shared", multip
 const UNTIL_NEXT_TURN_END = { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "effect-start" };
 const TYPES = ["bludgeoning", "piercing", "slashing"];
 
-// The reading's matches (src/compiler/artifact-readings.js), the plan read before (the Arrive's save) and { base, info } → its changes.
+// The reading's matches (src/compiler/whole-artifacts.js), the plan read before (the Arrive's save) and { base, info } → its changes.
 export function dragonArmyOf(found, plan, { base }) {
     const [summon, , stride, , , , gargantuan, arrive, , emanation, charge, through, prone] = found;
     const traits = arrive[1].split(/,\s*/).map((trait) => trait.trim().toLowerCase());
