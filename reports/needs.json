@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1266,
+  "entries": 1265,
   "results": {
-   "partial": 369,
+   "partial": 368,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -21,7 +21,7 @@
    "spells": 36,
    "information": 21,
    "out-of-combat": 35,
-   "no-rules": 15,
+   "no-rules": 14,
    "actions": 29,
    "immunity": 27,
    "objects": 113,
@@ -70,7 +70,7 @@
    "information": 195,
    "actions": 60,
    "from-events": 26,
-   "no-rules": 15,
+   "no-rules": 14,
    "situational": 83,
    "creatures": 71,
    "mind": 61,
@@ -5445,15 +5445,6 @@
     "situational",
     "mind",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Orb of Dragonkind",
-   "kind": "activation",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {

@@ -39,7 +39,8 @@ function readDragonType(text) {
     if (!DRAGON_TYPE.test(text) || !/\bdeals (\d+d\d+) damage \(@Check/i.test(text)) return null;
     const either = /\bin either an? @Template\[(?:type:)?(cone|line)\|distance:(\d+)\](?:\{[^}]*\})? or an? @Template\[(?:type:)?(cone|line)\|distance:(\d+)\](?:\{[^}]*\})? \(your choice\)/i.exec(text);
     const html = text.replace(DRAGON_TYPE, "").replace(/\bdeals (\d+d\d+) damage \(@Check/i, "deals @Damage[$1[untyped]] damage (@Check");
-    return { html, types: DRAGON_TYPES.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)}`, type })), notes: ["The damage type is the orb's dragon's Breath Weapon's (picked on the card).", ...(either ? [`Its area: a ${either[2]}-foot ${either[1]} or a ${either[4]}-foot ${either[3]}, its user's choice (place the other by hand).`] : [])] };
+    // (Both lines of the card, not rules left: the type its picker's, the area its user's to aim and target — 2026-10-27.)
+    return { html, types: DRAGON_TYPES.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)}`, type })), lines: ["The damage type is the orb's dragon's Breath Weapon's (picked on the card).", ...(either ? [`Its area: a ${either[2]}-foot ${either[1]} or a ${either[4]}-foot ${either[3]}, its user's choice (target the creatures in the one aimed).`] : [])] };
 }
 
 // The activation's html → { html (the list left out), types: [{ label, type }], notes? } or null.
@@ -62,7 +63,7 @@ export function withTypeChoices(plan, choice) {
     if (!choice || components.length !== 1) return plan;
     const formula = String(components[0].formula ?? "");
     const typed = (type) => (/\[[\w,]+\]$/.test(formula) ? formula.replace(/\[([\w,]+)\]$/, (whole, inside) => `[${inside.split(",").map((part) => (TYPES.split("|").includes(part) || part === "untyped" ? type : part)).join(",")}]`) : `${formula}[${type}]`);
-    return { ...plan, damageChoices: choice.types.map(({ label, type }) => ({ label, formula: typed(type), ...(choice.criticalPersistent ? { criticalPersistent: `${choice.criticalPersistent}[persistent,${type}]` } : {}) })), ...(choice.notes ? { notes: [...(plan.notes ?? []), ...choice.notes], partial: true } : {}) };
+    return { ...plan, damageChoices: choice.types.map(({ label, type }) => ({ label, formula: typed(type), ...(choice.criticalPersistent ? { criticalPersistent: `${choice.criticalPersistent}[persistent,${type}]` } : {}) })), ...(choice.notes ? { notes: [...(plan.notes ?? []), ...choice.notes], partial: true } : {}), ...(choice.lines ? { notes: [...(plan.notes ?? []), ...(choice.notes ?? []), ...choice.lines] } : {}) };
 }
 
 // Damage of its user's choice of two types, each degree's row giving both, Bloodburn Censer's "the smoke deals your choice of fire or
