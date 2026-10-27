@@ -65,6 +65,9 @@ import { withCastSmoke } from "./cast-smoke.js";
 import { withGrowingBleed } from "./growing-bleed.js";
 import { withGrabAbility } from "./grab-ability.js";
 import { withHitNoteHeld } from "./hit-note-held.js";
+import { withStrikeLines } from "./strike-lines.js";
+import { compelledHitWays } from "./compelled-hit.js";
+import { withPersistentHold } from "./persistent-hold.js";
 import { songWaysPlan } from "./songs.js";
 import { isBareFigurine, ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
@@ -226,8 +229,9 @@ export function compileActivations(item, options = {}) {
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    // (And outermost, a hit's note Effect that holds its Strike card's notes, src/compiler/hit-note-held.js: after the readers of those notes.)
-    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withHitNoteHeld(withGrabAbility(withGrowingBleed(withEffectAround(withCastSmoke(withEscalatingBonus(withFatigueIgnored(withFuses(withStrikeCounteract(withLodgedThroat(withPinningWays(withActionPenalty(withStrikeDamage(withPausedPassive(decideActivation(item, entry, withCounteractLeaves(withCastNotes(withGmCalls(withZoneUntraced(withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withExtraWay(withInsteadWay(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(withFelledReward(withCastFlatCheck(withSaveAfterApplied(withAfterApplied(withAfterEnds(withSlain(ownerDCs(entry.plan), entry.activation.html)), entry.activation.html), entry.activation.html)), entry.activation.html), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), entry.activation.html), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)), plainText(entry.activation.html))), options, item))), item), plainText(entry.activation?.html)))))), plainText(entry.activation?.html))))), entry.activation?.html)))) })).map((entry) => withNamedOptions(item, entry, options)).filter((entry) => !playedBySpellModule(entry, share, item)));
+    // (And outermost, a Strike card's notes that are its user's to do, its lines — src/compiler/strike-lines.js —, and a hit's note Effect that
+    // holds its Strike card's notes, src/compiler/hit-note-held.js: after the readers of those notes.)
+    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withHitNoteHeld(withStrikeLines(withGrabAbility(withGrowingBleed(withEffectAround(withCastSmoke(withEscalatingBonus(withFatigueIgnored(withFuses(withStrikeCounteract(withLodgedThroat(withPinningWays(withActionPenalty(withStrikeDamage(withPausedPassive(decideActivation(item, entry, withCounteractLeaves(withCastNotes(withGmCalls(withZoneUntraced(withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withExtraWay(withInsteadWay(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(withFelledReward(withCastFlatCheck(withSaveAfterApplied(withAfterApplied(withAfterEnds(withSlain(ownerDCs(entry.plan), entry.activation.html)), entry.activation.html), entry.activation.html)), entry.activation.html), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), entry.activation.html), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)), plainText(entry.activation.html))), options, item))), item), plainText(entry.activation?.html)))))), plainText(entry.activation?.html))))), entry.activation?.html))))) })).map((entry) => withNamedOptions(item, entry, options)).filter((entry) => !playedBySpellModule(entry, share, item)));
 }
 
 // (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of
@@ -686,6 +690,8 @@ function compileEach(item, options = {}) {
         if (shieldForm && (!plan || plan.noteOnly || plan.builtin === "no-effect")) plan = { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } }, shieldForm };
         // (Ammunition made against one type of creature, src/compiler/bane.js: Bane Ammunition — the type picked on the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = baneWaysPlan(activation.html, base, part, options) ?? plan;
+        // (A hit that compels its creature's next action, src/compiler/compelled-hit.js: Mindlock Shot — the action picked on the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = compelledHitWays(activation.html, base) ?? plan;
         // (A tattoo of one animal, src/compiler/bane.js: Tooth and Claw Tattoo's attack — the animal picked on the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = tattooWaysPlan(activation.html, base, item) ?? plan;
         // (A short teleport for its user, src/compiler/teleport.js: Dweomerveil's Dimension Leap — the space picked on the canvas.)
@@ -777,6 +783,8 @@ function compileEach(item, options = {}) {
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = failureNotesPlan(activation.html, base) ?? plan;
         // (Activated ammunition whose own PF2e rules do it, src/compiler/pf2e-rules.js: Elemental Ammunition.)
         if (!plan || plan.strike?.fromNotes) plan = pf2eRulesPlan(item, base, plainText(activation.html)) ?? plan;
+        // (Its critical hit's hold for as long as that persistent damage lasts, src/compiler/persistent-hold.js: Garrote Shot — the Strike card's.)
+        plan = withPersistentHold(plan, item, plainText(activation.html));
         // (A counteract on its user, src/compiler/counteract.js — Heartstone's "attempts to counteract one disease affecting you": the
         // consumables' counteract card.)
         const counteract = readCounteract(activation.html, { level: item.system?.level?.value });

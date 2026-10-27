@@ -55,7 +55,7 @@ function timeOf(text) {
 }
 
 // Its words from its effect on: a consumable's without its Activate line — "Activate 1 minute", "Activate (manipulate)" — or Usage.
-const bodyOf = (kind, text, words) => (kind === "activation" ? words : String(text).replace(/^\s*(?:Usage [^.]*?(?=Activate)\s*)?Activat(?:e|ion)\s*(?:\[[^\]]*\]\s*)?(?:\d+ (?:minutes?|hours?|rounds?)|reaction|free action|[123])?\s*(?:(?:Interact|command|envision|Cast a Spell)\s*)?(?:\([^)]*\))?\s*/i, "").trim() || words);
+const bodyOf = (kind, text, words) => (kind === "activation" ? words : String(text).replace(/^\s*(?:Usage [^.]*?(?=Activate)\s*)?Activat(?:e|ion)\s*(?:\[[^\]]*\]\s*)?(?:\d+ (?:minutes?|hours?|rounds?)|reaction|free action|[123])?\s*(?:(?:Interact|command|envision|Cast a Spell|Strike)\s*)?(?:\([^)]*\))?\s*/i, "").trim() || words);
 
 // Card lines (decided "card-line", "one-off"): a partial plan's notes and GM lines as they are — its unread lines, and an item card row's GM
 // lines, its notes too, as the item card shows neither —; a note-only one's note row kept; else its words the card's line.

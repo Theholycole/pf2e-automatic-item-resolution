@@ -587,7 +587,8 @@ test("Iron Cube: its melee Strike's hit posts PF2e's Trip card at the creature h
     assert.deepEqual(cube.resolution.outcomes.success.effects, [], "the prone is the Trip's, not the hit's");
     assert.ok(strikeLines(cube).some((line) => /^On a hit: its .*card at the creature hit \(with its damage on a success\)$/.test(line)));
     const [lash] = compileActivations(source("Serpent's Lash"));
-    assert.deepEqual([lash.plan.strike.own, lash.plan.strike.follow.action.slug, lash.plan.strike.follow.notes], [true, "reposition", ["Reposition the creature 5 feet (10 feet on a critical hit)."]]);
+    // (2026-10-27: its distances are PF2e's own Reposition's, the follow's rows — the note said again, gone: src/compiler/strike-lines.js.)
+    assert.deepEqual([lash.plan.strike.own, lash.plan.strike.follow.action.slug, lash.plan.strike.follow.notes, lash.plan.partial], [true, "reposition", undefined, undefined]);
     const card = await useCard("Iron Cube");
     await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
     await settle();

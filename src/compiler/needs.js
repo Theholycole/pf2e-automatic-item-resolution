@@ -135,8 +135,9 @@ export const NEEDS = [
         needs: "A change to the triggering or the next Strike (damage added on a hit, ignoring cover or concealment, a critical effect, reach, the multiple attack penalty), or a Strike the item makes with numbers of its own. Needs an Effect for the next Strike (roll options, DamageDice, AdjustStrike) that ends after it, or a Strike card.",
         where: "item reader + item live play",
         // (The action as PF2e writes it, "Strike" capitalized — "your Strike", "make a melee Strike", "Retributive Strike" —: "strike the
-        // chime", "strike two links together", the verb, aren't one; the rest in any case. 2026-10-27.)
-        test: anyOf(/\b(?:Strikes? (?:with|against|up to)|[A-Za-z][a-z]+ Strike)\b/, /\b(?:attack rolls?\b|on a (?:critical )?hit\b|critical hits?\b|score a critical|damage rolls?\b|multiple attack penalty|reach (?:increases|of|by)|the attack (?:deals|gains|ignores)|ignores? (?:the target's )?(?:cover|concealment|circumstance bonus to AC)|uses the [\w' ]+ statistics|range increment|damage dice?\b|damage die\b|martial (?:ranged |melee )?weapon)\b/i)
+        // chime", "strike two links together", the verb, aren't one; the rest in any case. Nor where a shot lands, "within your first range
+        // increment" (Burrowing Bolt's tunnel): no change to the Strike. 2026-10-27.)
+        test: anyOf(/\b(?:Strikes? (?:with|against|up to)|[A-Za-z][a-z]+ Strike)\b/, /\b(?:attack rolls?\b|on a (?:critical )?hit\b|critical hits?\b|score a critical|damage rolls?\b|multiple attack penalty|reach (?:increases|of|by)|the attack (?:deals|gains|ignores)|ignores? (?:the target's )?(?:cover|concealment|circumstance bonus to AC)|uses the [\w' ]+ statistics|(?<!\bwithin (?:your|the) (?:first|second|third) )range increment|damage dice?\b|damage die\b|martial (?:ranged |melee )?weapon)\b/i)
     },
     {
         id: "actions",
@@ -272,7 +273,7 @@ export const NEEDS = [
         where: "item reader",
         question: "Messages, languages, telepathy and sounds: a chat message or note Effect, counted done?",
         decided: "2026-10-25: A note Effect for the item's time; counted done.",
-        test: /\b(?:message\w*|speak\w*|language\w*|telepath\w*|voice\w*|\bwords?\b|music\w*|song\w*|silent\w*|silence\w*|whisper\w*|sounds?\b|noise\w*)\b/i
+        test: /\b(?:message\w*|speak\w*|language\w*|telepath\w*|voice\w*|\bwords?\b|music\w*|song\w*|silent(?!ly)\w*|silence\w*|whisper\w*|sounds?\b|noise\w*)\b/i
     },
     {
         id: "out-of-combat",
@@ -289,9 +290,9 @@ export const NEED_IDS = NEEDS.map((need) => need.id);
 
 // The text an item's card leaves over: its notes, unread lines, GM lines and note Effects; for one nothing reads (note-only, none, the GM's),
 // its own text — an activation's from "Effect" on (its Trigger kept), with its Craft Requirements left out.
-// (Or from after its Activate line when that's the Strike that fires it, a feather token's "Activate Strike from a ranged weapon When
-// activated, …": its user's own Strike, not a change to one — 2026-10-27.)
-const FIRED = /^\s*Activat(?:e|ion)\s+Strike from an? (?:ranged|melee|thrown) weapon\s+/;
+// (Or from after its Activate line when it has no Effect heading: a feather token's "Activate Strike from a ranged weapon When activated, …" —
+// the Strike that fires it, its user's own, not a change to one —, Fate Shot's "Activate (concentrate) Fate shot is …" — 2026-10-27.)
+const FIRED = /^\s*Activat(?:e|ion)\s+(?:\d+ (?:minutes?|hours?|rounds?)\s+)?(?:(?:Strike from an? (?:ranged|melee|thrown) weapon|Interact|command|envision)(?:,\s*(?:Interact|command|envision))*\s*)?(?:\([^)]*\)[;:,]?\s*)?(?=[A-Z])/;
 export function leftText(entry) {
     if (entry.result === "partial" || entry.result === "gaps") return entry.left.map(([, line]) => line).join(" ");
     const text = String(entry.text ?? "").replace(/\bCraft Requirements\b.*$/s, "");

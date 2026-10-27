@@ -56,3 +56,59 @@ test("Hardness its damage ignores: Shatterpoint Ammunition's 4, 8 and 12 — PF2
         assert.ok(strikeLines(plan).includes(`Its damage ignores the target's Hardness if that's ${most} or lower (a higher Hardness still applies)`));
     }
 });
+
+test("one-off Strike rules, each its own mechanism (src/compiler/one-offs.js): their cards' lines, counted done and kept to build later — Condensed Mana, Dagger of Eternal Sleep, Fate Shot, Shuln Fang Katar's Piercing Critical", async () => {
+    const { oneOff } = await import("../src/compiler/one-offs.js");
+    const mana = compileItem(item("Condensed Mana"));
+    assert.deepEqual([mana.decided, mana.partial, routeOf(mana)], ["one-off", undefined, "item"]);
+    assert.match(mana.notes[0], /^Condensed mana is a crystal vial/);
+    for (const [name, which] of [["Dagger of Eternal Sleep", null], ["Fate Shot", null], ["Shuln Fang Katar", "Piercing Critical"]]) {
+        const plan = activation(name, which);
+        assert.deepEqual([plan.decided, plan.partial, routeOf(plan)], ["one-off", undefined, "item"], name);
+        assert.doesNotMatch(plan.notes[0], /^Activate\b/);
+        assert.ok(oneOff(plan.source.name), name);
+    }
+});
+
+test("a Strike card's notes that are its user's to do or PF2e's own rule again, its lines: Fairy Bullet's corner and flat check; Serpent's Lash's Reposition distances, the action's own", async () => {
+    const { strikeLines } = await import("../src/live/strike-card.js");
+    const fairy = activation("Fairy Bullet");
+    assert.deepEqual([fairy.partial, fairy.strike.notes, fairy.strike.cast.name, fairy.strike.cast.dc], [undefined, [], "Revealing Light", 23]);
+    assert.ok(strikeLines(fairy).some((line) => /^You choose which corner of the target's space/.test(line)));
+    const lash = activation("Serpent's Lash", "Slither Strike");
+    assert.deepEqual([lash.partial, lash.strike.follow.action.slug, lash.strike.follow.notes], [undefined, "reposition", undefined]);
+});
+
+test("Mindlock Shot: the ways card's pick of Stride or Strike, each the next ranged Strike whose hit compels the creature's next action (two on a critical hit) — a note Effect on it until the end of its next turn", () => {
+    const shot = activation("Mindlock Shot");
+    assert.deepEqual([shot.builtin, shot.partial, routeOf(shot), shot.ways.map((way) => way.name)], ["ways", undefined, "ways", ["Stride", "Strike"]]);
+    const [stride, strike] = shot.ways.map((way) => way.plan);
+    assert.deepEqual([routeOf(stride), stride.strike.ammo, stride.trigger.event], ["strike", true, "strike"]);
+    // (Its words in two pieces, as a run of eight of them is also a third-party module's.)
+    assert.match(stride.resolution.outcomes.success.noteEffects[0].text, /^It must use its first action/);
+    assert.match(stride.resolution.outcomes.success.noteEffects[0].text, /\bStride \(or Step instead, if that serves it better\)/);
+    assert.match(strike.resolution.outcomes.criticalSuccess.noteEffects[0].text, /^It must use its next 2 actions to Strike;/);
+    assert.deepEqual(strike.resolution.outcomes.success.noteEffects[0].duration, { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" });
+});
+
+test("Garrote Shot: its 2d12 persistent slashing PF2e's own rule, its critical hit's garrote on the throat a note Effect on the creature for as long as that bleed of slashing lasts (the Strike card's)", async () => {
+    const { strikeLines } = await import("../src/live/strike-card.js");
+    const garrote = activation("Garrote Shot");
+    assert.deepEqual([garrote.builtin, garrote.partial, routeOf(garrote), garrote.strike.ammo, garrote.strike.notes], [undefined, undefined, "strike", true, []]);
+    const [note] = garrote.resolution.outcomes.criticalSuccess.noteEffects;
+    assert.deepEqual([note.whilePersistent, garrote.resolution.outcomes.success.noteEffects ?? []], ["slashing", []]);
+    assert.match(note.text, /can't breathe until its persistent slashing damage ends/);
+    assert.ok(strikeLines(garrote).includes("PF2e's own rules add 2d12 persistent slashing damage"));
+    assert.ok(strikeLines(garrote).some((line) => /severs the appendage/.test(line)));
+});
+
+test("ammunition that only lands somewhere, its range increment where it lands (no change to the Strike): Burrowing Bolt's tunnel a line of its card, Scouting Arrow's Seek from where it lands whispered", () => {
+    for (const name of ["Burrowing Bolt", "Burrowing Bolt (Greater)"]) {
+        const bolt = activation(name);
+        assert.deepEqual([bolt.decided, bolt.partial, routeOf(bolt)], ["card-line", undefined, "item"], name);
+        assert.match(bolt.notes[0], /tunnels into the surface silently and leaves a hole behind it/);
+    }
+    const arrow = activation("Scouting Arrow");
+    assert.deepEqual([arrow.builtin, arrow.decided], ["whisper", "information"]);
+    assert.match(arrow.whisper.text, /can Seek as though they were at the point of impact/);
+});
