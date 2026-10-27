@@ -3517,20 +3517,22 @@ export const cases = {
         return { land, fly, duration: effect.system.duration };
     },
 
-    // Heartripper Blade's siphon (2026-10-27): its ways card's third way lowers its wielder's poison (Pseudo Afflictions' Viper Venom) from stage 2
+    // Heartripper Blade's siphon (2026-10-27): its ways card's third way lowers its wielder's poison (Pseudo Afflictions' Cytillesh Oil) from stage 2
     // to 1 — and not below stage 1 the next time.
     async heartripperStage(scene) {
         const { actor: wielder } = await creature(scene, "Heartripper Wielder", { type: "character", x: 16, y: 14, level: 5 });
         const pack = game.packs.get("pseudo-afflictions.effects");
-        const entry = pack ? (await pack.getIndex()).find((row) => /Viper Venom/.test(row.name)) : null;
-        assert(entry, "Pseudo Afflictions' Viper Venom");
+        const entry = pack ? (await pack.getIndex()).find((row) => /Cytillesh Oil/.test(row.name)) : null;
+        assert(entry, "Pseudo Afflictions' Cytillesh Oil (3 stages)");
         const venom = (await pack.getDocument(entry._id)).toObject();
         delete venom._id;
         const [affliction] = await wielder.createEmbeddedDocuments("Item", [venom]);
-        await affliction.update({ "system.badge.value": 2 });
+        await wait(800);
+        await wielder.items.get(affliction.id).update({ "system.badge.value": 2 });
+        const stage = () => wielder.items.get(affliction.id)?.system?.badge?.value ?? null;
+        await until(() => stage() === 2, `stage 2 to start from (${stage()}, max ${wielder.items.get(affliction.id)?.system?.badge?.max})`, { timeout: 5000 });
         const blade = await give(wielder, "Heartripper Blade");
         await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
-        const stage = () => wielder.items.get(affliction.id)?.system?.badge?.value ?? null;
         const results = [];
         for (const expected of [1, 1]) {
             let since = Date.now();
@@ -3547,13 +3549,13 @@ export const cases = {
         return { results };
     },
 
-    // Quenching Potion (2026-10-27): its new save against the drinker's poison (Pseudo Afflictions' Viper Venom at stage 2, its Fortitude save
+    // Quenching Potion (2026-10-27): its new save against the drinker's poison (Pseudo Afflictions' Cytillesh Oil at stage 2, its Fortitude save
     // at +30): a success lowers it a stage, a critical success two (ending it); the card says which.
     async quenchPoisonSave(scene) {
         const { actor: drinker } = await creature(scene, "Poisoned Drinker", { x: 16, y: 12, save: 30 });
         const pack = game.packs.get("pseudo-afflictions.effects");
-        const entry = pack ? (await pack.getIndex()).find((row) => /Viper Venom/.test(row.name)) : null;
-        assert(entry, "Pseudo Afflictions' Viper Venom");
+        const entry = pack ? (await pack.getIndex()).find((row) => /Cytillesh Oil/.test(row.name)) : null;
+        assert(entry, "Pseudo Afflictions' Cytillesh Oil (3 stages)");
         const venom = (await pack.getDocument(entry._id)).toObject();
         delete venom._id;
         const [affliction] = await drinker.createEmbeddedDocuments("Item", [venom]);
@@ -3569,7 +3571,7 @@ export const cases = {
         const stage = () => drinker.items.get(affliction.id)?.system?.badge?.value ?? null;
         await until(() => (outcome === "criticalSuccess" ? stage() === null : stage() === 1), `stage after a ${outcome} (${stage()})`, { timeout: 8000 });
         const results = game.messages.get(card.id).getFlag(NS, "card").results;
-        assert(results.some((line) => /Viper Venom/.test(line) && /(ends|stage 1) \(its new save\)/.test(line)), `the card's line (${JSON.stringify(results)})`);
+        assert(results.some((line) => /Cytillesh Oil/.test(line) && /(ends|stage 1) \(its new save\)/.test(line)), `the card's line (${JSON.stringify(results)})`);
         return { outcome, stage: stage(), results };
     },
 
@@ -6899,7 +6901,15 @@ export const cases = {
         const { attack } = await strike(archer, bow);
         assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (${attack.flags.pf2e.context.outcome})`);
         const song = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-ability-resolution"]?.card) && /Song of Soothing/.test(message.content), { what: "the song's card", timeout: 10000 });
-        await rollAndApply(song);
+        // (No roll on it: its Apply.)
+        let apply = null;
+        for (const stop = Date.now() + 8000; Date.now() < stop && !apply; ) {
+            const found = document.querySelector(`[data-message-id="${song.id}"] [data-aar-action="apply"]`);
+            if (found && !found.disabled) apply = found;
+            else await wait(200);
+        }
+        assert(apply, "the song card's Apply");
+        apply.click();
         await until(() => ally.system.attributes.hp.value > hp && ally.itemTypes.effect.some((effect) => effect.name === "Effect: Song of Soothing"), `the ally healed and given the Effect (${hp} → ${ally.system.attributes.hp.value}; ${ally.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
         return { healed: ally.system.attributes.hp.value - hp };
     },
