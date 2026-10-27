@@ -38,7 +38,11 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27: a targeting flat check's DC, which no PF2e rule sets — PF2e's own Effect: Mummified Bat leaves the same to its words.)
     ["Cat's Eye Elixir", "flat checks to target Hidden creatures within 30 feet at DC 5, and none to target Concealed ones, for its minute: its user's own rolls"],
     // (2026-10-27: a day's food, and immune to it after a week of nothing else until a day of real meals: the table's, out of combat.)
-    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"]
+    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"],
+    // (2026-10-27, the small needs' group.)
+    ["Collar of the Eternal Bond: Eidolon's Freedom", "for 5 minutes its user and eidolon may be any distance apart, past 150 feet the eidolon unmanifesting as it ends: distances on the map, nothing for a card"],
+    ["Ghostly Portal Paint", "a 5-by-10-foot wall section passable to corporeal creatures and objects for 10 minutes, what's inside at its end (or an incorporeal creature in the wall) moved to the nearest exit: the map's walls"],
+    ["Ghost Ink", "writing that goes invisible, glowing red near heat (or another light its maker picks), found by a DC 25 Perception check to Seek and read on a critical success: a page's ink out of combat, the GM's"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));
