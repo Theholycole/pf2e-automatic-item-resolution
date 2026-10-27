@@ -52,6 +52,19 @@ const BLADE_REPLACED = /\bremains a physical object until the next time you use 
 const KNIFE = /\bYou pluck a miniature knife from the [\w' -]+?, and it grows into a normal (?:stone, steel, or wooden )?(dagger) for as long as you hold it\b/i;
 const STRIKING = { undefined: 0, "": 1, greater: 2, major: 3 };
 const RELOAD = /\bYou reload a weapon with reload (\d+)\b/i;
+// (Damage to another creature's item, ignoring its Hardness, 2026-10-27: Rustbringer's Rusting Disarm, "Flakes of acid-laden rust are deposited on
+// the disarmed weapon. The weapon takes @Damage[2d6[untyped]] damage, ignoring the weapon's Hardness" — op "damage" { formula, type, of, whose:
+// "target", ignoresHardness }: the targeted creature's weapon, picked when it has several, its Hit Points lowered by the roll (scripts/objects.js).)
+const ITEM_DAMAGE = /\bThe (weapon|armor|shield) takes (?:@Damage\[(\d+d\d+(?:\+\d+)?)\[(\w+)\]\]|(\d+d\d+(?:\+\d+)?)(?: (\w+))?) damage, ignoring the \1's Hardness\b/i;
+const DISARMED = /^Flakes of [\w-]+ rust are deposited on the disarmed weapon\.$/i;
+// (The affixed item negated and mended, Mending Lattice's "it negates the damage and instantly and completely repairs the affixed item"; or 10 of
+// its damage taken back, Fortifying Pebble's "the affixed object takes 10 less damage" — op "repair" of its user's damaged items, the one it's
+// affixed to picked once the damage lands, 2026-10-27.)
+const MENDED = /\bit negates the damage and instantly and completely repairs the affixed item\b/i;
+const LESS = /\bthe affixed object takes (\d+) less damage\b/i;
+// (Itself mended by what its trigger dealt, Sanguine Klar's "The sanguine klar regains a number of Hit Points equal to the bleed damage, up to an amount
+// equal to its Hardness" — op "repair", self, typed: the amount typed on the card, at most its Hardness, 2026-10-27.)
+const SELF_REGAIN = /\bThe [\w' -]+? regains a number of Hit Points equal to the (\w+) damage, up to an amount equal to its Hardness\b/i;
 const RULE = /\b(?:bonus|penalty|saving throws?|saves?|resistance|weakness|Strike|check|DC|attack|Speed|Hit Points|damage|condition|can't be activated again|can be activated again|can't Retrieve Item again)\b/i;
 const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
 
@@ -93,6 +106,13 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     if (knife) return { op: "create", self: true, weapon: knife[1].toLowerCase(), potency: 0, striking: 0, whileHeld: true, said: knife[0], also: null };
     const reload = RELOAD.exec(text);
     if (reload) return { op: "reload", reload: reload[1], said: reload[0] };
+    const damaged = ITEM_DAMAGE.exec(text);
+    if (damaged) return { op: "damage", of: damaged[1].toLowerCase(), formula: damaged[2] ?? damaged[4], type: (damaged[3] ?? damaged[5] ?? "untyped").toLowerCase(), whose: "target", ignoresHardness: true, said: damaged[0], also: SENTENCES(text).find((sentence) => DISARMED.test(sentence)) ?? null };
+    if (MENDED.test(text)) return { op: "repair", affixed: true, negates: true, said: MENDED.exec(text)[0] };
+    const regain = SELF_REGAIN.exec(text);
+    if (regain) return { op: "repair", self: true, typed: `the ${regain[1].toLowerCase()} damage`, upTo: "hardness", said: regain[0] };
+    const less = LESS.exec(text);
+    if (less) return { op: "repair", amount: less[1], affixed: true, less: true, said: less[0] };
     const by = REPAIR_BY.exec(text);
     if (by) return { op: "repair", amount: by[1].replace(/\s+/g, ""), ...(by[2] ? { damagedBy: by[2].toLowerCase() } : {}), said: by[0] };
     if (REPAIR.test(text)) {

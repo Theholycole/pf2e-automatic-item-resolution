@@ -77,7 +77,8 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // 2026-10-26: its note row kept, done.)
     if (result === "note-only" && notesChecked(name ?? plan?.source?.name)) return { ...plan, noteOnly: undefined, decided: "checked", automation: { ...(plan.automation ?? {}), level: "automatic" } };
     // (A one-off rule, src/compiler/one-offs.js — the user's answer of 2026-10-27: its card's lines, counted done, kept to build later.)
-    if (!special && oneOff(name ?? plan?.source?.name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "one-off" });
+    // (Its words without the "Trigger" leftText puts before a triggered activation's Effect, for the needs' reading: Belt of Giant Strength's.)
+    if (!special && oneOff(name ?? plan?.source?.name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)).replace(/^Trigger (?=\S)/, ""), decided: "one-off" });
     const needs = needsOf(entry);
     // (Nothing in its words a card could play — food, refills, ingredients, flavor —: counted done, its card saying so (the user's answer to
     // question 1, 2026-10-26).)

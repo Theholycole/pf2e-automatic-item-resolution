@@ -111,7 +111,7 @@ export async function postObjectsCard({ message, plan, used, actor, token }) {
 const handsFor = (item) => (/two-hands/.test(String(item.system?.usage?.value ?? "")) ? 2 : 1);
 
 // On the active GM's client: { pick, targets } → the item updated, the card applied.
-export async function applyObjectsCard(message, { pick = 0, targets = [] } = {}) {
+export async function applyObjectsCard(message, { pick = 0, targets = [], amount = null } = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "objects" || state.status !== "open") return null;
     const actor = state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : null;
@@ -123,6 +123,8 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
         const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
         return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
     }
+    // (Another creature's item damaged, Rustbringer's disarmed weapon: src/compiler/objects.js op "damage".)
+    if (objects.op === "damage") return damageTheirItem(message, state, { pick: Number(pick) || 0, targets });
     // (Its own shape changed, Anchor Spear's and the Shifting rune's: the picked base weapon's numbers on it.)
     if (objects.op === "reshape") {
         const shape = state.choices[Number(pick) || 0];
@@ -155,6 +157,16 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
     } else if (objects.op === "don") {
         await chosen.update({ "system.containerId": null, "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.handsHeld": 0 });
         line = `${state.user.name} wears ${chosen.name}`;
+    } else if (objects.op === "repair" && objects.typed) {
+        // (By the amount its user typed, at most its Hardness: Sanguine Klar's bleed damage.)
+        const typed = Math.max(0, Math.floor(Number(amount) || 0));
+        if (!typed) throw new Error(`Type ${objects.typed} first.`);
+        const max = Number(chosen.system?.hp?.max) || 0;
+        const before = Number(chosen.system?.hp?.value) || 0;
+        const cap = objects.upTo === "hardness" ? Number(chosen.system?.hardness) || 0 : typed;
+        const after = Math.min(max, before + Math.min(typed, cap));
+        await chosen.update({ "system.hp.value": after });
+        line = `${chosen.name} regains ${after - before} Hit Points (${typed} typed${objects.upTo === "hardness" ? `, at most its Hardness ${cap}` : ""}): ${after}/${max}`;
     } else if (objects.op === "repair" && objects.amount) {
         // (By an amount, Rust Scrub's 2d4: rolled, up to its maximum.)
         const max = Number(chosen.system?.hp?.max) || 0;
@@ -195,6 +207,56 @@ export async function applyObjectsCard(message, { pick = 0, targets = [] } = {})
         line = `${made.name} is in ${state.user.name}'s hand${ammo ? `, with ${objects.ammo} ${ammo.name}` : ""}${old.length ? ", the last one gone" : ""}${objects.then ? `; after ${objects.then.after.value} minute it becomes ${objects.then.potency ? `+${objects.then.potency}${objects.then.striking ? ` ${["", "", "greater ", "major "][objects.then.striking]}striking` : ""}` : "non-magical"}` : ""}${objects.untilRest ? ", until its user's next daily preparations" : ""}: Strike with it`;
     } else throw new Error(`${state.item.name}: nothing to do (${objects.op}).`);
     const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
+    return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// The targeted creature's items of that kind: the ones it dropped (PF2e's carryType "dropped") when there are any, else all — those PF2e keeps
+// Hit Points for first (a plain weapon's are 0: its own material table's, which PF2e leaves out).
+export function theirItems(actor, kind) {
+    const all = itemsOf(actor).filter((item) => item.type === kind);
+    const dropped = all.filter((item) => item.system?.equipped?.carryType === "dropped");
+    const pool = dropped.length ? dropped : all;
+    const kept = pool.filter((item) => Number(item.system?.hp?.max) > 0);
+    return (kept.length ? kept : pool).map((item) => ({ id: item.id, name: item.name }));
+}
+
+// Its Hit Points after the damage, its Hardness ignored (or not), and what it is then: broken at its Broken Threshold, destroyed at 0. Pure.
+export function damagedItem(hp, total, { hardness = 0, ignoresHardness = true } = {}) {
+    const before = Number(hp?.value) || 0;
+    const taken = Math.max(0, (Number(total) || 0) - (ignoresHardness ? 0 : Number(hardness) || 0));
+    const after = Math.max(0, before - taken);
+    return { before, after, taken, state: after === 0 ? "destroyed" : after <= (Number(hp?.brokenThreshold) || 0) ? "broken" : null };
+}
+
+// (The first Apply finds the targeted creature's item, or lists several for a second; then the roll, its Hit Points lowered.)
+async function damageTheirItem(message, state, { pick, targets }) {
+    const objects = state.plan.objects;
+    let choices = state.choices ?? [];
+    let owner = state.owner ?? null;
+    if (!choices.length || !owner) {
+        const token = targets?.[0] ? await fromUuid(targets[0]).catch(() => null) : null;
+        const actor = token?.actor ?? null;
+        if (!actor) throw new Error(`Target the creature whose ${objects.of} it is first.`);
+        choices = theirItems(actor, objects.of);
+        if (!choices.length) throw new Error(`${token.name ?? actor.name} has no ${objects.of}.`);
+        owner = { actorUuid: actor.uuid, name: token.name ?? actor.name };
+        if (choices.length > 1) {
+            const listed = { ...state, choices, owner, pick: 0 };
+            return message.update({ content: objectsCardHTML(listed, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: listed });
+        }
+    }
+    const actor = await fromUuid(owner.actorUuid).catch(() => null);
+    const chosen = actor?.items?.get?.(choices[pick]?.id ?? choices[0]?.id) ?? null;
+    if (!chosen) throw new Error(`That ${objects.of} isn't on ${owner.name} any more.`);
+    const roll = await new Roll(objects.formula).evaluate();
+    const hp = chosen.system?.hp ?? {};
+    const result = damagedItem(hp, roll.total, { hardness: chosen.system?.hardness, ignoresHardness: objects.ignoresHardness });
+    const kept = Number(hp.max) > 0;
+    if (kept) await chosen.update({ "system.hp.value": result.after });
+    const taken = `${result.taken}${objects.type && objects.type !== "untyped" ? ` ${objects.type}` : ""} damage (rolled ${objects.formula} = ${roll.total}${objects.ignoresHardness ? ", its Hardness ignored" : ""})`;
+    // (No Hit Points PF2e keeps for it: the damage said, the GM's to mark by its material.)
+    const line = kept ? `${owner.name}'s ${chosen.name} takes ${taken}: ${result.after}/${Number(hp.max) || 0} Hit Points${result.state ? `, ${result.state}` : ""}` : `${owner.name}'s ${chosen.name} takes ${taken}; PF2e keeps no Hit Points for it, so the GM marks it by its material`;
+    const next = { ...state, status: "applied", choices, owner, pick, results: [line] };
     return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 

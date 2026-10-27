@@ -87,3 +87,58 @@ test("the triggering effect suppressed: Aeon Stone (Olivine Pendeloque)'s Still 
     const dim = activation("Moonlit Chain", "Dim Sight");
     assert.deepEqual([dim.noteOnly, dim.resolution.outcomes.success.noteEffects[0].label, dim.resolution.outcomes.success.noteEffects[0].rules], [undefined, "Dazzled suppressed", undefined]);
 });
+
+test("an item's Hit Points: Rustbringer's damage to the disarmed creature's weapon, its Hardness ignored; Mending Lattice's and Fortifying Pebble's affixed item mended", async () => {
+    const { objectsText } = await import("../src/live/objects-card.js");
+    const rust = activation("Rustbringer", "Rusting Disarm");
+    assert.equal(routeOf(rust), "objects");
+    assert.deepEqual(rust.objects, { op: "damage", of: "weapon", formula: "2d6", type: "untyped", whose: "target", ignoresHardness: true });
+    assert.deepEqual(activation("Rustbringer (Greater)", "Rusting Disarm").objects.formula, "4d6");
+    assert.equal(activation("Rustbringer (Greater)", "Rusting Disarm").objects.type, "acid");
+    assert.ok(done(rust) && !rust.notes, "the rust's flakes its flavor, the weapon the targeted creature's");
+    assert.match(objectsText(rust.objects), /^2d6 damage to the targeted creature's weapon, ignoring its Hardness/);
+    const lattice = consumable("Mending Lattice");
+    assert.deepEqual([routeOf(lattice), lattice.objects, done(lattice)], ["objects", { op: "repair", affixed: true, negates: true }, true]);
+    const pebble = consumable("Fortifying Pebble");
+    assert.deepEqual([pebble.objects, done(pebble)], [{ op: "repair", amount: "10", affixed: true, less: true }, true]);
+    assert.match(objectsText(pebble.objects), /^10 of the damage the item it's affixed to just took taken back/);
+});
+
+test("an item's Hit Points after damage: its Hardness ignored or not, broken at its Broken Threshold, destroyed at 0", async () => {
+    const { damagedItem } = await import("../scripts/objects.js");
+    assert.deepEqual(damagedItem({ value: 20, max: 20, brokenThreshold: 10 }, 7, { hardness: 5 }), { before: 20, after: 13, taken: 7, state: null });
+    assert.deepEqual(damagedItem({ value: 12, max: 20, brokenThreshold: 10 }, 7, { hardness: 5, ignoresHardness: false }), { before: 12, after: 10, taken: 2, state: "broken" });
+    assert.deepEqual(damagedItem({ value: 5, max: 20, brokenThreshold: 10 }, 9), { before: 5, after: 0, taken: 9, state: "destroyed" });
+});
+
+test("Rustbringer live: the targeted creature's weapon takes the rolled damage, its Hit Points lowered", async () => {
+    const flail = foundry.giveItem(reaper, source("Rustbringer"));
+    const sword = foundry.giveItem(victim, source("Longsword"));
+    await sword.update({ "system.hp": { value: 20, max: 20, brokenThreshold: 10 }, "system.equipped.carryType": "dropped" });
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: flail.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "objects");
+    assert.ok(card, "the objects card");
+    assert.match(card.content, /Target the creature whose weapon it is, then Apply/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", targets: [victim.token.uuid] });
+    await settle();
+    assert.equal(sword.system.hp.value, 13, "the fake roll's 7, its Hardness ignored");
+    assert.match(card.flags[MODULE_ID].card.results[0], /^Victim's Longsword takes 7 damage \(rolled 2d6 = 7, its Hardness ignored\): 13\/20 Hit Points$/);
+});
+
+test("Sanguine Klar: the klar itself regains the bleed damage typed on its card, at most its Hardness", async () => {
+    const klar = activation("Sanguine Klar");
+    assert.deepEqual([routeOf(klar), klar.objects, done(klar)], ["objects", { op: "repair", self: true, typed: "the bleed damage", upTo: "hardness" }, true]);
+    assert.deepEqual(activation("Sanguine Klar (Greater)").objects, klar.objects);
+    const shield = foundry.giveItem(reaper, source("Sanguine Klar"));
+    await shield.update({ "system.hp.value": 50 });
+    const count = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "activate", itemUuid: shield.uuid, activation: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "objects");
+    assert.match(card.content, /data-air-field="amount"/);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player", amount: "12" });
+    await settle();
+    assert.equal(shield.system.hp.value, 58, "12 typed, at most its Hardness 8");
+});

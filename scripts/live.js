@@ -353,7 +353,7 @@ function choicesOf(state, root) {
     if (state.kind === "teleport") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), critical: Boolean(root.querySelector("[data-air-field='critical']")?.checked) };
     // (One of its user's items, picked: scripts/objects.js.)
     // (A stored spell cast at the creatures targeted: src/compiler/stored-spell.js.)
-    if (state.kind === "objects") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    if (state.kind === "objects") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), ...(root.querySelector("[data-air-field='amount']") ? { amount: root.querySelector("[data-air-field='amount']").value } : {}) };
     if (state.kind === "table") return {};
     // (The creature picked for an end-early try, and a skill check's harder-DC tick: scripts/end-early.js.)
     if (state.kind === "end-early") return { entry: root.querySelector("[data-air-field='entry']") ? Number(root.querySelector("[data-air-field='entry']").value) : null, ...(root.querySelector("[data-air-field='critical']") ? { critical: Boolean(root.querySelector("[data-air-field='critical']").checked) } : {}) };
@@ -500,7 +500,7 @@ async function onRequest(data) {
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
-        : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}) }
         : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], critical: Boolean(data.critical) }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
