@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
-import { compileItem } from "../src/compiler/index.js";
+import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { needsOf } from "../src/compiler/needs.js";
 import { routeOf } from "../src/live/route.js";
@@ -118,4 +118,13 @@ test("healing a damage type pauses: Troll Hide's installed elixirs, off to the e
     assert.match(effect.system.description.value, /off to the end of its wearer&#39;s next turn after electricity or fire damage/);
     const paused = deactivatedEffectSource({ name: "Troll Hide", slug: "air-deactivated-troll-hide", types: ["electricity", "fire"] }, { moduleId: "m" });
     assert.deepEqual([paused.system.slug, paused.system.duration, paused.flags.m.deactivated], ["air-deactivated-troll-hide", { value: 1, unit: "rounds", expiry: "turn-end", sustained: false }, "air-deactivated-troll-hide"]);
+});
+
+test("a tornado down its line: Tornado Trompo's DC 38 Reflex save, Whirlwind's 5d10 in one pass, a failure's fall 5 more and Prone (doubled on a critical failure)", () => {
+    const [fly, tornado] = compileActivations(item("Tornado Trompo"), { spells: spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items")) }).map((entry) => entry.plan);
+    assert.equal(fly.builtin, "cast-spell");
+    const { check, sharedDamage, outcomes } = tornado.resolution;
+    assert.deepEqual([tornado.builtin, tornado.partial, tornado.targeting.area, check.statistic, check.against.value, sharedDamage.components.map((entry) => entry.formula)], [undefined, undefined, { type: "line", value: 120 }, "reflex", 38, ["5d10[bludgeoning]", "5[bludgeoning]"]]);
+    assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => [outcomes[degree].damage.multiplier, outcomes[degree].damage.sourceComponentIds.length, outcomes[degree].effects.map((effect) => effect.slug)]), [[0, 0, []], [0.5, 1, []], [1, 2, ["prone"]], [2, 2, ["prone"]]]);
+    assert.deepEqual([tornado.trigger.frequency.per, tornado.requirementUnread, routeOf(tornado)], ["day", "A string is wrapped around the top", "save"]);
 });

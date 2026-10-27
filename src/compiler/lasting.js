@@ -252,6 +252,37 @@ const READINGS = [
         card: () => ownRow({ noteEffects: [{ label: "Translate", text: "Understands the meaning of every language it sees, as 2nd-rank Translate (not codes, nor language couched in metaphor) — not language it hears —, until it folds up the spectacles or no longer has them invested (remove this Effect then).", duration: null }] })
     },
     {
+        // (A tornado down a 120-foot line, Whirlwind's effects in one pass and not Sustained: a save card at the creatures in its path — not
+        // the spell's cylinder, which the cast would give. Whirlwind's 8th-rank 5d10 bludgeoning, half on a success; on a failure each rises 10
+        // feet, 20 on a critical failure (double damage), and falls when the tornado ends at the line's end — PF2e's falling damage, half the
+        // distance, so 5 more, and Prone; doubled with the critical failure's, 10. Over the cast read before (with PF2e's spells), its frequency
+        // and requirement kept.)
+        name: "Tornado Trompo",
+        over: true,
+        sentences: [
+            /^You call upon the top's power and give the string a powerful pull\.$/,
+            /^The top travels across the ground in a (\d+)-foot line\.$/,
+            /^As it does, it unleashes a powerful vortex of winds, becoming a tornado temporarily\.$/,
+            /^This tornado has the effects of Whirlwind except that it's not limited by being used outside or in a cramped space and can't be sustained\.$/,
+            /^Creatures in the tornado's path must attempt a @Check\[reflex\|dc:(\d+)\] save to determine the effects of the tornado\.$/,
+            /^The tornado ends after traveling its full distance, causing any creatures that rose in the air due to a failed save to begin falling immediately\.$/
+        ],
+        card: ([, line, , , save], plan) => {
+            const row = (multiplier, ids, prone = false) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ids }, effects: prone ? [{ kind: "condition", slug: "prone", value: null, duration: null }] : [] });
+            return {
+                targeting: { target: "the creatures in the tornado's path", range: null, area: { type: "line", value: Number(line[1]) } },
+                resolution: {
+                    kind: "save",
+                    check: { roll: "save", statistic: "reflex", basic: false, against: { dc: "fixed", value: Number(save[1]) } },
+                    sharedDamage: { rollOnce: true, components: [{ id: "0", formula: "5d10[bludgeoning]", type: null, category: null }, { id: "1", formula: "5[bludgeoning]", type: null, category: null }] },
+                    outcomes: { criticalSuccess: row(0, []), success: row(0.5, ["0"]), failure: row(1, ["0", "1"], true), criticalFailure: row(2, ["0", "1"], true) }
+                },
+                notes: [`The top travels the ${line[1]}-foot line along the ground as a tornado with Whirlwind's effects, at its 8th rank — inside or out, cramped or not, and not Sustained —, each creature in its path saving once.`, "On a failure a creature rises 10 feet (20 on a critical failure) and falls when the tornado ends: its rows' falling damage (half the distance) and Prone. One that can fly doesn't fall: take those off it."],
+                ...(plan.requirementUnread ? { requirementUnread: plan.requirementUnread } : {})
+            };
+        }
+    },
+    {
         // (Its Sustain's 5 temporary Hit Points for its user and allies again, for the minute: plan.again — the same card, 5 in place of 15,
         // kept open and pressed at each Sustain; its linked Effects' TempHP the same numbers.)
         name: "Blakenshipper: Be the Band",
