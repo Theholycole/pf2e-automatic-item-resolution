@@ -176,3 +176,17 @@ test("Soulspark Candle: lit, a 40-foot zone around its user with PF2e's deity ru
     assert.deepEqual([note.duration, note.rules[0].option], [null, "limned-in-candlelight"]);
     assert.match(note.text, /Concealed rather than Undetected/);
 });
+
+test("The Marriage: a bond with the willing creature targeted, both sides' Effects; its condition countered by the counteract card, the user's on a failure", async () => {
+    const { bondCounteract, bondEffectSource, bondOf, bondWords, counteredBy } = await import("../src/live/bond-card.js");
+    const [marriage] = plans("The Marriage");
+    assert.deepEqual([marriage.builtin, marriage.trigger.frequency.max, routeOf(marriage)], ["bond", 1, "bond"]);
+    assert.deepEqual(marriage.bond, { reach: 5, telepathy: 120, conditions: ["blinded", "confused", "controlled", "fascinated", "frightened", "slowed", "stunned"], counter: { modifier: "class-dc", rank: 10, failCopies: true } });
+    const source = bondEffectSource(marriage.bond, { item: { name: "The Marriage", uuid: "Item.m" }, user: { actorUuid: "Actor.u" }, self: "Kyra", other: "Seelah", partner: "Actor.s", role: "user" });
+    assert.deepEqual([bondOf(source).item, bondOf(source).partner, bondOf(source).role, source.system.duration.unit], ["Item.m", "Actor.s", "user", "unlimited"]);
+    assert.match(bondWords(marriage.bond, { self: "Kyra", other: "Seelah", role: "user" }), /telepathy within 120 feet/);
+    assert.equal(counteredBy({ ...bondOf(source), role: "partner" }, "frightened"), "frightened");
+    assert.equal(counteredBy({ ...bondOf(source), role: "partner" }, "sickened"), null);
+    assert.equal(counteredBy(bondOf(source), "frightened"), null);
+    assert.deepEqual(bondCounteract(bondOf(source), "stunned", 24), { conditions: ["stunned"], modifier: 24, rank: 10, failCopies: true, endsBond: "Item.m", notes: [] });
+});

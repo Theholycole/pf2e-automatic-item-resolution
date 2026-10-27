@@ -64,6 +64,14 @@
 //   Its undead limned ("All undead creatures in the area are limned in blue, heatless fire …"): a note Effect on each undead targeted (only
 //   those, plan.onlyAgainst; haunts aren't creatures), with its visibility words and its mark — the light's end gives it its minute.
 //   "The candle is lit": plan.gate.lit, refused unless its user has its light (scripts/live.js).
+// - A bond with a willing creature (withBond): The Marriage's "Choose one adjacent willing creature … you form a magical bond with that creature
+//   that persists until you activate The Marriage again … telepathy to a distance of 120 feet … you know the other's direction from you, distance
+//   from you, and any conditions affecting them. If your bonded target becomes Blinded, Confused, … or Stunned, you can use a reaction to attempt
+//   to counter the condition … The modifier on this counter check is equal to your class DC – 10. If you fail to counter the condition, that
+//   condition also afflicts you, and the bond with the other still ends." → builtin "bond", plan.bond: the bond card (src/live/bond-card.js,
+//   scripts/bonds.js) gives both an Effect for the bond (the last bond of the item's gone), and when PF2e gives the bonded creature one of those
+//   conditions its user gets the counteract card for it — its class DC − 10, the item's rank (half its level), the condition its user's too on a
+//   failure, the bond over either way. Being willing is the creatures' own; awareness and telepathy are the Effects' words.
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -349,13 +357,33 @@ function withLimned(plan, { activation, index }, item) {
     return { ...ownCard({ ...base, targeting: { target: "each undead in the candle's light", range: null, area: { type: "emanation", value: candle.dim } } }, { noteEffects: [{ label: "Limned in blue fire", text, duration: null, rules: [{ key: "RollOption", domain: "all", option: LIMN_MARK }] }] }), atTarget: true, onlyAgainst: { traits: ["undead"] }, gate: { lit: true }, notes: ["Target the undead in the candle's light (haunts aren't affected)."] };
 }
 
+// --- A bond with a willing creature ----------------------------------------------------------------------------------------------------------------
+
+const BOND = [
+    /^Choose one adjacent willing creature\.$/,
+    /^By brushing [\w' -]+? against their body, you form a magical bond with that creature that persists until you activate [\w' -]+? again to form a bond with a different creature\.$/,
+    /^While the bond persists, you and the other creature can communicate via telepathy to a distance of (\d+) feet\.$/,
+    /^As long as you and the target are on the same plane of existence and are both alive, you each remain aware of the other's state\s*[-–—]\s*you know the other's direction from you, distance from you, and any conditions affecting them\.$/,
+    /^If your bonded target becomes ((?:[A-Z][a-z]+, )+or [A-Z][a-z]+), you can use a reaction to attempt to counter the condition affecting the target, which also ends the bond between you and the target\.$/,
+    /^The modifier on this counter check is equal to your class DC\s*[-–]\s*10\.$/,
+    /^If you fail to counter the condition, that condition also afflicts you, and the bond with the other still ends\.$/
+];
+function withBond(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!unread(plan) || !matches(BOND, sentences)) return plan;
+    const telepathy = Number(BOND[2].exec(sentences[2])[1]);
+    const conditions = BOND[4].exec(sentences[4])[1].split(/,\s*(?:or\s+)?/).map((name) => name.trim().toLowerCase()).filter(Boolean);
+    const rank = Math.max(1, Math.ceil((Number(item.system?.level?.value) || 0) / 2));
+    return { ...keptBase(plan, item, { activation, index }), builtin: "bond", automation: { level: "automatic" }, targeting: { target: "1 adjacent willing creature", range: "touch", area: null }, bond: { reach: 5, telepathy, conditions, counter: { modifier: "class-dc", rank, failCopies: true } } };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
 // The plan, its entry ({ activation, index }) and item → the plan with the item's own rule built, or the same plan.
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond]) {
         const next = reader(plan, entry, item);
         if (next !== plan) return next;
     }
