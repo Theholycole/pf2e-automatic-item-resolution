@@ -11,7 +11,19 @@
 //   "targets"): both drinkers.
 // - A readied bonus's own setup: Psychic Warding Bracelet's 10 minutes to tie on, its strands falling off after the save it's spent by, and
 //   untying it with an Interact — its user's own time and hands, lines of the fortune card (which shows plan.notes).
+// And on an activation's plan (src/compiler/permanent.js), as its last reading:
+// - Damage to whoever touches its user while the activation lasts, src/compiler/touch-retaliation.js.
+// - Resistance ignored in part: Awakened Adamantine Shot's "The shot ignores the first 20 resistance a creature has to physical damage, all
+//   damage, or piercing or bludgeoning damage. Against a construct or creature who already has a resistance bypassed by adamantine, or a weakness
+//   to adamantine, the shot shatters the target's defenses, causing them to become Off-Guard for 1 minute instead." Its Strike card with the
+//   shot loaded (strike.ammo); strike.ignoreResistance { value, types } — set on the shot as the resolution core's flag (its ignoreResistance,
+//   core 321af5b) when the card is applied (scripts/strikes.js), which the core stamps onto that Strike's damage roll: each of the creature's
+//   resistances of those types counts as that much lower. Off-Guard for the minute on a hit at a construct or a creature adamantine gets past
+//   (a weakness to it, or a resistance it's an exception to): plan.ifTarget, as Moonlit Spellgun's silver (src/live/if-target.js). Its rarity's
+//   sentence a line of the card.
 // Pure.
+
+import { withTouchRetaliation } from "./touch-retaliation.js";
 
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 const plain = (html) => String(html ?? "").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -92,4 +104,43 @@ function withSetupLines(plan) {
 // A consumable's plan, the item and its base (a plan maker, for one nothing read) → the plan as these read it.
 export function withSmallNeeds(plan, item, base) {
     return withSetupLines(withSharedReaction(withRecallBonus(plan, item, base), item));
+}
+
+const IGNORES = /\bThe shot ignores the first (\d+) resistance a creature has to ((?:[a-z]+ damage, )*[a-z]+ damage,? or [a-z]+(?: or [a-z]+)?) damage\./i;
+const SHATTERS = /\bAgainst a construct or creature who already has a resistance bypassed by (\w+), or a weakness to \1, the shot [^.]*?\bOff-Guard for (\d+) (minutes?|rounds?) instead\./i;
+const RESIST_TYPES = { all: "all-damage" };
+const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+function withAwakenedShot(plan, html) {
+    if (!plan?.noteOnly || plan.item?.type !== "ammo") return plan;
+    const text = plain(html);
+    const ignores = IGNORES.exec(text);
+    const shatters = SHATTERS.exec(text);
+    if (!ignores || !shatters) return plan;
+    const types = ignores[2].split(/,\s*(?:or\s+)?|\s+or\s+/).map((words) => words.replace(/\s*damage$/i, "").trim().toLowerCase()).filter(Boolean).map((type) => RESIST_TYPES[type] ?? type);
+    const material = shatters[1].toLowerCase();
+    const offGuard = { kind: "condition", slug: "off-guard", value: null, duration: { mode: "fixed", value: Number(shatters[2]), unit: /^min/i.test(shatters[3]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" } };
+    const hit = ["success", "criticalSuccess"];
+    const { noteOnly, resolution, ...rest } = plan;
+    return {
+        ...rest,
+        automation: { level: "automatic" },
+        targeting: { target: "the creature the Strike hits", range: null, area: null },
+        trigger: { event: "strike", on: hit, cost: "free" },
+        resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+        strike: {
+            range: "ranged", save: null, ammo: true, notes: [],
+            ignoreResistance: { value: Number(ignores[1]), types },
+            lines: [
+                `Its damage counts the target's ${types.slice(0, -1).join(", ")} or ${types.at(-1)} resistance as ${ignores[1]} lower (the resolution core).`,
+                `A construct, or a creature ${material} gets past (a weakness to it, or a resistance it's an exception to), is Off-Guard for ${shatters[2]} ${Number(shatters[2]) === 1 ? offGuard.duration.unit.replace(/s$/, "") : offGuard.duration.unit} on a hit instead.`,
+                ...(/\bthis version of awakened metal shot is uncommon\b/i.test(text) ? ["It's uncommon, as adamantine is."] : [])
+            ]
+        },
+        ifTarget: [...hit.map((degree) => ({ material, degree, effects: [offGuard] })), ...hit.map((degree) => ({ traits: ["construct"], degree, effects: [offGuard] }))]
+    };
+}
+
+// An activation's plan and its html → the plan as these read it.
+export function withActivationNeeds(plan, html) {
+    return withAwakenedShot(withTouchRetaliation(plan, html), html);
 }

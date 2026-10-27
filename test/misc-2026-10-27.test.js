@@ -45,13 +45,15 @@ test("more one-offs, and note-only items checked: card lines, counted done", () 
         compileItem(item("Feather Token (Whip)")), activation("Prankster's Perpetual Pieplate", "Project Pastry"), compileItem(item("Neophyte's Fipple")),
         activation("Kraken Figurehead", "Grab Them!"), activation("Animate Dreamer", "Unleash Spell"), compileItem(item("Iron Equalizer")),
         compileItem(item("Octopus Potion (Lesser)")), compileItem(item("Octopus Potion (Moderate)")), compileItem(item("Octopus Potion (Greater)")),
-        compileItem(item("Reactive Flash")), activation("Chimera Flail", "Pouncing Whirl"), activation("Wildwood Ink (Greater)"), activation("Wildwood Ink (Major)")
+        compileItem(item("Reactive Flash")), activation("Chimera Flail", "Pouncing Whirl"), activation("Wildwood Ink (Greater)"), activation("Wildwood Ink (Major)"),
+        activation("Ulfen Shieldbreaker", "Battering Blow"), compileItem(item("Electromuscular Stimulator")), activation("Sanguine Ammunition")
     ];
     for (const plan of plans) {
         assert.equal(plan.decided, "one-off", plan.source?.name);
         assert.ok(done(plan), plan.source?.name);
     }
-    // (Its Stride still the teleport card's, Wildwood Ink's cast still One with Plants for its hour.)
+    // (Its Stride still the teleport card's, Wildwood Ink's cast still One with Plants for its hour, Battering Blow's Trip PF2e's own.)
+    assert.deepEqual([activation("Ulfen Shieldbreaker", "Battering Blow").builtin, activation("Ulfen Shieldbreaker", "Battering Blow").action.slug], ["item-action", "trip"]);
     assert.equal(activation("Chimera Flail", "Pouncing Whirl").builtin, "teleport");
     assert.deepEqual([activation("Wildwood Ink (Greater)").spell.name, activation("Wildwood Ink (Greater)").castDuration.value], ["One with Plants", 1]);
     for (const plan of [activation("Collar of the Eternal Bond", "Eidolon's Freedom"), compileItem(item("Ghostly Portal Paint")), compileItem(item("Ghost Ink"))]) {
@@ -95,4 +97,21 @@ test("a readied bonus's own setup as its card's lines: Psychic Warding Bracelet'
     assert.deepEqual(bracelet.bonus.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.predicate]), [["saving-throw", 2, ["item:trait:mental"]]]);
     assert.equal(bracelet.notes.length, 3);
     assert.match(bracelet.notes[0], /^Tying it on takes its user 10 minutes\b/);
+});
+
+test("resistance ignored in part: Awakened Adamantine Shot's Strike card, the core's flag for 20 of four resistances, Off-Guard instead at a construct or a creature adamantine gets past", async () => {
+    const { planFor } = await import("../src/live/if-target.js");
+    const shot = activation("Awakened Adamantine Shot");
+    assert.ok(done(shot));
+    assert.deepEqual([shot.trigger.event, shot.strike.ammo, shot.strike.range], ["strike", true, "ranged"]);
+    assert.deepEqual(shot.strike.ignoreResistance, { value: 20, types: ["physical", "all-damage", "piercing", "bludgeoning"] });
+    const offGuard = (plan, degree) => (plan.resolution.outcomes[degree].effects ?? []).filter((effect) => effect.slug === "off-guard").map((effect) => [effect.duration.value, effect.duration.unit]);
+    const construct = { system: { traits: { value: ["construct"] }, attributes: { weaknesses: [], resistances: [] } } };
+    const weak = { system: { traits: { value: ["fiend"] }, attributes: { weaknesses: [{ type: "adamantine", value: 5 }], resistances: [] } } };
+    const resisting = { system: { traits: { value: ["giant"] }, attributes: { weaknesses: [], resistances: [{ type: "physical", value: 10, exceptions: ["adamantine"] }] } } };
+    const plain = { system: { traits: { value: ["humanoid"] }, attributes: { weaknesses: [], resistances: [{ type: "physical", value: 10, exceptions: [] }] } } };
+    for (const actor of [construct, weak, resisting]) assert.deepEqual(offGuard(planFor(shot, actor), "success"), [[1, "minutes"]]);
+    assert.deepEqual(offGuard(planFor(shot, plain), "success"), []);
+    assert.deepEqual(offGuard(planFor(shot, plain), "criticalSuccess"), []);
+    assert.match(shot.strike.lines[1], /Off-Guard for 1 minute on a hit instead\.$/);
 });
