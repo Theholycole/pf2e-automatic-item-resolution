@@ -936,6 +936,14 @@ function ruleEffectsOf(sentences, duration, used = new Set()) {
             found.push({ name: "anchored", words: `It can be moved only by a creature that succeeds at a DC ${forceOpen[1] ?? forceOpen[2]} Athletics check to Force Open its armor`, rules: [], duration });
             continue;
         }
+        // (A longer range for its auditory actions, which no PF2e rule plays either: Megaphone Mutagen's "The range of your actions and spells
+        // with the auditory trait increases by 10 feet" — words on its Effect, 2026-10-27.)
+        const louder = /^The range of your actions and spells with the auditory trait increases by (\d+) feet\.$/i.exec(sentence.trim());
+        if (louder) {
+            used.add(index);
+            found.push({ name: "louder", words: `Its actions and spells with the auditory trait have ${louder[1]} feet more range`, rules: [], duration });
+            continue;
+        }
         const footing = /^In addition, you can Step into difficult terrain, and you aren't Off-Guard on uneven ground\.$/i.exec(sentence.trim());
         if (footing) {
             used.add(index);

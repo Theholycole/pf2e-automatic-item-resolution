@@ -129,6 +129,38 @@ function markedRows(read, text) {
     return { ...read, resolution: { ...read.resolution, outcomes: next } };
 }
 
+// (Greased, Grease Snare's failure: "For 1 minute, the creature is clumsy 1 and must roll twice and use the worse result whenever attempting a
+// Thievery check. If the target rolls a failure at a Thievery check, it gets a critical failure instead. This is a misfortune effect.", its
+// critical failure "As failure, but the effects last for 1 hour instead of 1 minute, and removing the grease from the triggering creature
+// requires a 1-minute activity instead of three Interact actions": a note Effect on those rows for the clumsy's time with PF2e's RollTwice
+// (keep lower) and AdjustDegreeOfSuccess on Thievery; the critical failure's way to end it a 1-minute activity (endEarly.byDegree). And its
+// squares, "The square with the snare, as well as three adjacent squares you determine when you set the snare, become difficult terrain when
+// a creature triggers the snare": the area it leaves (zone.then), a 10-foot square of difficult terrain, until wiped. 2026-10-27.)
+const GREASED = /\bFailure For (\d+) (minutes?|rounds?|hours?), the creature is clumsy 1 and must roll twice and use the worse result whenever attempting an? (\w+) check\. If the target rolls a failure at an? \3 check, it gets a critical failure instead\. This is a misfortune effect\./i;
+const GREASED_LONGER = /\bCritical Failure As failure, but the effects last for (\d+) (minutes?|rounds?|hours?) instead of \d+ (?:minutes?|rounds?|hours?), and removing the grease from the triggering creature requires a (\d+)-minute activity instead of three Interact actions\./i;
+const GREASED_SQUARES = /\bThe square with the snare, as well as three adjacent squares you determine when you set the snare, become difficult terrain when a creature triggers the snare\./i;
+const unitOf = (unit) => (/^min/i.test(unit) ? "minutes" : /^hour/i.test(unit) ? "hours" : "rounds");
+function greasedRows(read, text) {
+    const greased = GREASED.exec(text);
+    const outcomes = read?.resolution?.outcomes;
+    if (!greased || !outcomes?.failure) return null;
+    const longer = GREASED_LONGER.exec(text);
+    const skill = greased[3].toLowerCase();
+    const time = (value, unit) => ({ mode: "fixed", value: Number(value), unit: unitOf(unit), expiry: "turn-start", anchor: "effect-start" });
+    const name = `${skill.charAt(0).toUpperCase()}${skill.slice(1)}`;
+    const note = (duration) => ({ label: "Greased", text: `It rolls twice and takes the worse result on ${name} checks, and a failure at one is a critical failure instead (misfortune).`, duration, rules: [{ key: "RollTwice", selector: skill, keep: "lower" }, { key: "AdjustDegreeOfSuccess", selector: skill, adjustment: { failure: "one-degree-worse" } }] });
+    const rows = { ...outcomes, failure: { ...outcomes.failure, noteEffects: [...(outcomes.failure.noteEffects ?? []), note(time(greased[1], greased[2]))] } };
+    if (longer && outcomes.criticalFailure) rows.criticalFailure = { ...outcomes.criticalFailure, noteEffects: [...(outcomes.criticalFailure.noteEffects ?? []), note(time(longer[1], longer[2]))] };
+    const notes = (read.notes ?? []).filter((entry) => !/^(?:Critical )?Failure (?:For \d+|As failure, but the effects last)\b/i.test(String(entry).trim()));
+    const squares = GREASED_SQUARES.test(text);
+    return {
+        // (Its sentences, said: what the zone's untraced check finds them in.)
+        read: { ...read, resolution: { ...read.resolution, outcomes: rows }, notes: notes.length ? notes : undefined, greased: { said: [greased[0], ...(longer ? [longer[0]] : []), ...(squares ? [GREASED_SQUARES.exec(text)[0]] : [])] } },
+        byDegree: longer ? { criticalFailure: { kind: "activity", minutes: Number(longer[3]) } } : null,
+        then: squares ? { area: { type: "square", value: 10 }, lasts: null, concealed: false, terrain: [{ movement: ["walk"], difficulty: 2 }], notes: ["The snare's square and three squares beside it, as its setter chose them: move the area if they're others.", "Three Interact actions wipe the grease from one square."] } : null
+    };
+}
+
 // The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage, or its attack.)
 export function snareZone(item, read) {
     // (Not a square stepped into: Fire Box's "Anyone who opens the box triggers …" — its save card at those its cone reaches, src/compiler/opened.js.)
@@ -153,7 +185,8 @@ export function snareZone(item, read) {
     const traitGate = /\bThe first creature with the ([a-z]+) trait that steps into the area\b/i.exec(whole)?.[1]?.toLowerCase() ?? null;
     // (Barbs that hurt each long Stride, Poison Barbs Snare's: a note Effect on its failing rows, src/compiler/snares.js barbedRows.)
     const barbs = barbedRows(read, whole);
-    const plan = { ...markedRows(barbs?.read ?? read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ?? barbs?.endEarly ? { endEarly: endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
+    const greased = barbs ? null : greasedRows(read, whole);
+    const plan = { ...markedRows(barbs?.read ?? greased?.read ?? read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ?? barbs?.endEarly ? { endEarly: greased?.byDegree && endEarly ? { ...endEarly, byDegree: { ...(endEarly.byDegree ?? {}), ...greased.byDegree } } : endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
     const cap = sizeCap(plainText(item.system?.description?.value));
     const only = gate || cap || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(cap ? { maxSize: cap } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};
@@ -197,7 +230,7 @@ export function snareZone(item, read) {
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
             notes: [burst && ["cone", "line"].includes(burst.area.type) ? `${firstTo(gate, cap)} to enter the square sets it off: its ${burst.area.value}-foot ${burst.area.type} aims back the way that creature came, and everyone in it attempts the save; then it's spent.` : burst ? `${firstTo(gate, cap)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save${setter ? ` (that creature on a card of its own, ${setter.slug} for longer)` : ""}; then it's spent.` : then ? `${firstTo(gate, cap)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate, cap)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
             once: true,
-            ...(then ? { then } : {})
+            ...(then ?? greased?.then ? { then: then ?? greased.then } : {})
         }
     }, container);
 }

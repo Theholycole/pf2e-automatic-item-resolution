@@ -1420,6 +1420,53 @@ export const cases = {
         });
     },
 
+    // Grease Snare (2026-10-27): a critically failed save — Clumsy 1 and the Greased note Effect (RollTwice keep lower and the worse degree on
+    // Thievery) for an hour; its squares' area of difficult terrain left behind; the end-early card's try a 1-minute activity, which ends both.
+    async greaseSnareGreased(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Grease Setter", { type: "character", x: 0, y: 15 });
+            const { actor: walker, token: walkerToken } = await creature(scene, "Grease Walker", { x: 6, y: 15, alliance: "opposition", save: -30 });
+            const snare = await give(setter, "Grease Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const regions = () => scene.regions.filter((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Grease Snare/.test(region.name));
+                await until(() => regions().length, "the snare's Region", { timeout: 8000 });
+                const placed = regions()[0].shapes[0];
+                await regions()[0].update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = regions()[0].shapes[0];
+                const first = regions()[0].id;
+                let since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const save = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+                since = Date.now();
+                await rollAndApply(save);
+                // (PF2e keeps RollTwice's selector as a list.)
+                const greased = () => walker.itemTypes.effect.find((effect) => /Grease Snare/.test(effect.name) && (effect.system.rules ?? []).some((rule) => rule.key === "RollTwice" && [rule.selector].flat().includes("thievery") && rule.keep === "lower"));
+                await until(() => greased() && walker.hasCondition("clumsy"), `Greased and Clumsy (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+                const adjust = (greased().system.rules ?? []).find((rule) => rule.key === "AdjustDegreeOfSuccess");
+                assert(adjust?.adjustment?.failure === "one-degree-worse", `its worse degree (${JSON.stringify(adjust)})`);
+                const left = () => regions().find((region) => region.id !== first);
+                await until(() => left(), `the greased area (${regions().map((region) => region.name).join(", ")})`, { timeout: 10000 });
+                const terrain = (left().behaviors ?? []).some((behavior) => /terrain/i.test(behavior.type ?? ""));
+                const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+                assert(/1-minute activity spent/.test(ending.content), `its critical failure's way (${ending.content.replace(/<[^>]+>/g, " ").slice(0, 300)})`);
+                // (Its hour of Clumsy an Effect that grants it, for that hour — ability 1c792ce, 2026-10-27.)
+                const clumsy = walker.itemTypes.effect.find((effect) => /Grease Snare: Clumsy/.test(effect.name));
+                assert(clumsy?.system.duration.unit === "hours" && clumsy.system.duration.value === 1, `its Clumsy for 1 hour (${walker.itemTypes.effect.map((effect) => `${effect.name} ${JSON.stringify(effect.system.duration)}`).join(", ")})`);
+                await game.modules.get(NS).api.live.apply(ending.id, { entry: 0 });
+                await until(() => !walker.itemTypes.effect.some((effect) => /Grease Snare/.test(effect.name)) && !walker.hasCondition("clumsy"), `the grease and its Clumsy removed (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+                return { terrain, area: left().shapes[0]?.width ?? null, behaviors: (left().behaviors ?? []).map((behavior) => behavior.type), results: game.messages.get(ending.id).getFlag(NS, "card").results };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Grease Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Poison Barbs Snare (2026-10-27): a failed save, the barbs' note Effect; a 10-foot step gives nothing, a 20-foot move (more than half a 25-foot
     // Speed) 1d4 poison damage; the end-early card's 3 Interact actions remove the barbs.
     async poisonBarbsMove(scene) {

@@ -15,12 +15,12 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 145,
-   "resolves": 835,
+   "resolves": 839,
    "builtin:readied-bonus": 23,
    "builtin:zone": 121,
    "builtin:ways": 29,
    "builtin:item-action": 16,
-   "partial": 70,
+   "partial": 66,
    "note-only": 113,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
@@ -219,8 +219,7 @@
   "mutagen": {
    "count": 68,
    "results": {
-    "resolves": 64,
-    "partial": 4
+    "resolves": 68
    },
    "mechanisms": {
     "linked-effect": 60,
@@ -392,7 +391,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 641,
+   "resolves": 645,
    "gaps": 0,
    "none": 13
   }
@@ -13257,11 +13256,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The range of your actions and spells with the auditory trait increases by 20 feet."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -14605,11 +14602,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The range of your actions and spells with the auditory trait increases by 15 feet."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -14931,11 +14926,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The range of your actions and spells with the auditory trait increases by 10 feet."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -27517,11 +27510,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The range of your actions and spells with the auditory trait increases by 40 feet."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {

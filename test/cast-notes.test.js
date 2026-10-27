@@ -604,3 +604,20 @@ test("a penalty to the triggering action (2026-10-27): Stifling Shield's Silence
     assert.match(criticalFailure.noteEffects[0].text, /disrupted/);
     assert.equal(criticalFailure.manualInstructions, undefined);
 });
+
+test("greased (2026-10-27): Grease Snare's failure and critical failure — a note Effect with PF2e's RollTwice and worse degree on Thievery for the clumsy's time, the critical failure's 1-minute activity to end it, its squares difficult terrain once set off", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { tryWords } = await import("../src/live/end-early-card.js");
+    const snare = compileItem(item("Grease Snare"), options);
+    assert.equal(snare.partial, undefined);
+    const save = snare.zone.saves[0].plan;
+    const { failure, criticalFailure, success } = save.resolution.outcomes;
+    assert.deepEqual(failure.noteEffects[0].rules, [{ key: "RollTwice", selector: "thievery", keep: "lower" }, { key: "AdjustDegreeOfSuccess", selector: "thievery", adjustment: { failure: "one-degree-worse" } }]);
+    assert.deepEqual([failure.noteEffects[0].duration.value, failure.noteEffects[0].duration.unit, criticalFailure.noteEffects[0].duration.unit], [1, "minutes", "hours"]);
+    assert.equal(success.noteEffects, undefined);
+    assert.deepEqual(save.endEarly.byDegree, { criticalFailure: { kind: "activity", minutes: 1 } });
+    assert.equal(tryWords(save.endEarly, { step: 0, degree: "criticalFailure" }), "a 1-minute activity spent");
+    assert.equal(tryWords(save.endEarly, { step: 0, degree: "failure" }), "3 Interact actions spent");
+    assert.deepEqual([snare.zone.then.area, snare.zone.then.terrain], [{ type: "square", value: 10 }, [{ movement: ["walk"], difficulty: 2 }]]);
+    assert.deepEqual(snare.zone.notes, ["The first creature to enter the square sets it off; then it's spent."]);
+});

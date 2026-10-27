@@ -160,11 +160,13 @@ test("a condition the text puts on the drinker, for its own time, as an automati
     assert.equal(immovable.partial, undefined);
     assert.match(immovable.item.ruleEffects[0].words, /DC to move it/);
     // Megaphone Mutagen: its benefit on skill checks of auditory actions but Deception and Diplomacy (PF2e's item:trait and
-    // check:statistic options), its drawback (a −2 to Fortitude, Deception, Diplomacy and Stealth); its longer range a note.
+    // check:statistic options), its drawback (a −2 to Fortitude, Deception, Diplomacy and Stealth); its longer range words on its Effect
+    // (no PF2e rule plays it; 2026-10-27, a note before).
     const megaphone = compileItem(item("Megaphone Mutagen (Lesser)"));
     assert.deepEqual(megaphone.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value]), [["skill-check", 1], ["fortitude", -2], ["deception", -2], ["diplomacy", -2], ["stealth", -2]]);
     assert.deepEqual(megaphone.resolution.outcomes.success.modifiers[0].predicate, ["item:trait:auditory", { nor: ["check:statistic:deception", "check:statistic:diplomacy"] }]);
-    assert.equal(megaphone.partial, true);
+    assert.equal(megaphone.partial, undefined);
+    assert.deepEqual(megaphone.item.ruleEffects.map((entry) => [entry.name, entry.words]), [["louder", "Its actions and spells with the auditory trait have 10 feet more range"]]);
 });
 
 test("an item's time in other words: \"The duration is\", \"with a duration of\", rolled", () => {

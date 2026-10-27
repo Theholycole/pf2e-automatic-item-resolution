@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1263,
+  "entries": 1258,
   "results": {
-   "partial": 366,
+   "partial": 361,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -37,29 +37,29 @@
    "situational": 16,
    "dying": 29,
    "senses": 21,
-   "speech": 18,
+   "speech": 14,
    "from-events": 4,
    "forms": 26,
    "several": 23,
    "retaliation": 3,
    "missing-number": 6,
-   "fortune": 7,
+   "fortune": 6,
    "linked-effect": 1,
    "by-kind": 7
   },
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 183,
+   "areas": 182,
    "immunity": 89,
    "objects": 388,
-   "speech": 124,
-   "out-of-combat": 443,
+   "speech": 120,
+   "out-of-combat": 440,
    "counteract": 103,
    "afflictions": 106,
    "lasting": 228,
    "moving": 106,
-   "triggers": 116,
+   "triggers": 115,
    "visibility": 49,
    "dying": 75,
    "choice": 107,
@@ -81,7 +81,7 @@
    "vehicles": 27,
    "senses": 28,
    "forms": 27,
-   "fortune": 10,
+   "fortune": 9,
    "retaliation": 3,
    "missing-number": 7,
    "linked-effect": 1,
@@ -5206,19 +5206,6 @@
    ]
   },
   {
-   "name": "Grease Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "fortune",
-   "work": "roll twice",
-   "needs": [
-    "fortune",
-    "areas",
-    "triggers",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Gingerbread House",
    "kind": "activation",
    "result": "none",
@@ -6690,17 +6677,6 @@
    ]
   },
   {
-   "name": "Megaphone Mutagen (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "speech",
-   "work": "voice",
-   "needs": [
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Potion of Disguise (Lesser)",
    "kind": "consumable",
    "result": "partial",
@@ -7470,16 +7446,6 @@
    ]
   },
   {
-   "name": "Megaphone Mutagen (Moderate)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "speech",
-   "work": "voice",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Guiding Chisel",
    "kind": "activation",
    "result": "none",
@@ -7570,16 +7536,6 @@
     "objects",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Megaphone Mutagen (Lesser)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "speech",
-   "work": "voice",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -13653,17 +13609,6 @@
     "areas",
     "objects",
     "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Megaphone Mutagen (Major)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "speech",
-   "work": "voice",
-   "needs": [
-    "speech",
     "out-of-combat"
    ]
   },

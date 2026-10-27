@@ -63,7 +63,8 @@ export async function applyEndEarlyCard(message, { entry = null, critical = null
     // (Its degree's own way, Glittering Snare's rows: src/live/end-early-card.js howFor.)
     const endEarly = { ...state.plan.endEarly, how: howFor(state.plan.endEarly, one) };
     const lines = [];
-    let ends = endEarly.how.kind === "actions";
+    // (Or a longer activity, Grease Snare's critical failure's 1-minute one: spent, it ends.)
+    let ends = endEarly.how.kind === "actions" || endEarly.how.kind === "activity";
     let step = one.step;
     const harder = typeof critical === "boolean" ? critical : Boolean(state.critical);
     // (A skill check to pull free, Antler Arrow's Athletics: PF2e's own check of the creature at that DC.)
@@ -90,7 +91,7 @@ export async function applyEndEarlyCard(message, { entry = null, critical = null
         const effects = endedBy(actor, state.item.name, endEarly.conditions, endEarly.effects);
         if (effects.length) await actor.deleteEmbeddedDocuments("Item", effects.map((effect) => effect.id));
         else for (const slug of endEarly.conditions ?? []) if (actor.hasCondition?.(slug)) await actor.decreaseCondition(slug, { forceRemove: true });
-        lines.push(`${one.name}: ${endEarly.conditions?.length ? endEarly.conditions.join(" and ") : "its effects"} from ${state.item.name} ended${endEarly.how.kind === "actions" ? ` (${tryWords(endEarly, one)})` : endEarly.how.kind === "check" ? ` (a DC ${checkDC(endEarly, harder)} ${endEarly.how.save ?? endEarly.how.skill} ${endEarly.how.save ? "save" : "check"})` : ""}.`);
+        lines.push(`${one.name}: ${endEarly.conditions?.length ? endEarly.conditions.join(" and ") : "its effects"} from ${state.item.name} ended${["actions", "activity"].includes(endEarly.how.kind) ? ` (${tryWords(endEarly, one)})` : endEarly.how.kind === "check" ? ` (a DC ${checkDC(endEarly, harder)} ${endEarly.how.save ?? endEarly.how.skill} ${endEarly.how.save ? "save" : "check"})` : ""}.`);
     }
     const entries = state.entries.map((other, at) => (at === index ? { ...other, step, done: ends } : other));
     const next = { ...state, entries, ...(endEarly.how.criticalDC ? { critical: harder } : {}), status: entries.every((other) => other.done) ? "applied" : "open", results: [...state.results, ...lines].slice(-8) };
