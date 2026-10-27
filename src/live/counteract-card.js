@@ -137,6 +137,8 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
         body = whom + (state.rows.length
             ? `${state.counteract.free ? `<p class="aar-actions">Its DC and rank${Number.isFinite(state.counteract.rank) ? "" : `, and the item's counteract rank <input type="number" data-air-ownrank value="${escape(state.ownRank ?? "")}" style="width:3em"${canApply ? "" : " disabled"}>`}:</p><ul class="aar-targets">` : `<p class="aar-actions">On ${escape(who.name)}${state.counteract.pick === "one" ? " (tick one)" : ""}:</p><ul class="aar-targets">`}${state.rows.map((row, index) => `<li class="aar-target"><label><input type="checkbox" data-air-row="${index}"${row.ticked ? " checked" : ""}${canApply ? "" : " disabled"}> ${escape(row.name)}</label>${row.ends ? " (ends outright)" : ` DC <input type="number" data-air-dc="${index}" value="${row.dc ?? ""}" style="width:3.5em"${canApply ? "" : " disabled"}> ${row.save ? `(its ${escape(row.save)} save)` : `rank <input type="number" data-air-rank="${index}" value="${row.rank ?? ""}" style="width:3em"${canApply ? "" : " disabled"}>`}${state.counteract.outrightBelow && row.kind === "condition" ? ` <label><input type="checkbox" data-air-outright="${index}"${row.outright ? " checked" : ""}${canApply ? "" : " disabled"}> its source over ${state.counteract.outrightBelow.levels} levels below yours: countered outright</label>` : ""}`}</li>`).join("")}</ul>`
             : `<p class="aar-hint">${escape(who.name)} has ${state.counteract.save ? "no affliction this saves against" : "nothing this counteracts"}.</p>`);
+        // (The damage that set it off, for what it turns back, Herald's Ring's Reflect Sound: typed here, its source the creature targeted.)
+        if (state.counteract.reflect && state.rows.length) body += `<p class="aar-actions">The ${escape(state.counteract.reflect.type)} damage it took <input type="number" data-air-amount value="${escape(state.amount ?? "")}" style="width:4em"${canApply ? "" : " disabled"}>; target its source.</p>`;
         button = state.rows.length ? (state.counteract.save ? "Roll the save" : "Counteract") : "";
     }
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
@@ -145,6 +147,15 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
 }
 
 export { DEGREE_WORDS };
+
+// What the damage that set it off becomes by the counteract's result (counteract.reflect { type, byDegree }, Herald's Ring's Reflect Sound,
+// 2026-10-27): degree 0 … 3 and the damage taken → { back (to its source), negated (given back to its user), regain (its use given back) }.
+const DEGREE_KEYS = ["criticalFailure", "failure", "success", "criticalSuccess"];
+export function reflection(reflect, degree, amount) {
+    const taken = Math.max(0, Math.floor(Number(amount) || 0));
+    const rule = reflect?.byDegree?.[DEGREE_KEYS[degree]] ?? {};
+    return { back: Math.floor(taken * (Number(rule.back) || 0)), negated: Math.floor(taken * (Number(rule.negated) || 0)), regain: Boolean(rule.regain) };
+}
 
 // What a success keeps the creature picked from, against its user alone (counteract.afterFree { against: "user", penalty }, Bloodstone Doll's
 // summoned creature's –2 status penalty to attack rolls against its user): PF2e's TokenMark of its user's token on the Effect, the penalty

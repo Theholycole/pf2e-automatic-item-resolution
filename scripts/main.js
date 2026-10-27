@@ -52,6 +52,7 @@ import { setUpAfflictedTurns } from "./afflicted-turns.js";
 import { setUpFelled } from "./felled.js";
 import { setUpUninvest } from "./uninvest.js";
 import { setUpInitiativeThrice } from "./initiative-thrice.js";
+import { setUpHitCounteract } from "./hit-counteract.js";
 import { setUpImplosion } from "./implosion.js";
 import { setUpOwnSplash } from "./own-splash.js";
 import { setUpReadiedRefund } from "./strikes.js";
@@ -176,6 +177,8 @@ Hooks.once("ready", async () => {
     setUpUninvest();
     // (An initiative rolled three times, the best kept, The Dance's: scripts/initiative-thrice.js.)
     setUpInitiativeThrice();
+    // (A counteract card at the creature an attack hit, kept for when it tries to get away, Halcyon Heart's net: scripts/hit-counteract.js.)
+    setUpHitCounteract();
     // (An item's own attack's splash, Lady's Chalice's: scripts/own-splash.js.)
     setUpOwnSplash();
     // (A readied Strike never made, Flashblade's: its activation's use given back, scripts/strikes.js.)

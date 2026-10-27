@@ -697,7 +697,8 @@ test("an item thrown as a Strike PF2e can't roll: its user's thrown attack again
     assert.deepEqual([chalice.plan.splash, chalice.plan.notes, chalice.plan.partial], [{ value: 2, damageType: "spirit", selfOnlyIf: ["evil", "unholy"] }, undefined, undefined]);
     const [net] = compileActivations(item("Halcyon Heart"), { spellEffects });
     assert.deepEqual([net.plan.resolution.outcomes.success.effects.map((effect) => effect.slug), net.plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value])], [["off-guard"], ["off-guard", "immobilized"], [["all-speeds", -10]]]);
-    assert.match(net.plan.notes.join(" "), /The Escape DC is 44, and the net has a counteract rank of 9 and a counteract modifier of \+38\./);
+    // (Its Escape DC and counteract read since 2026-10-27, src/compiler/legend-readings.js: the riders until it Escapes, the counteract card on a hit.)
+    assert.deepEqual([net.plan.resolution.outcomes.success.effects[0].duration.escape.dc, net.plan.heldCounteract.counteract.rank, net.plan.heldCounteract.counteract.modifier], [44, 9, 38]);
     const [razors] = compileActivations(item("Rod of Razors"), { spellEffects });
     // (Its deadly d10 a component of the critical hit's alone, not doubled; its adamantine in the damage's flavor; volley and its range increment
     // the attack's penalty for distance.)

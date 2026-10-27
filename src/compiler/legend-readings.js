@@ -523,6 +523,124 @@ const READINGS = [
                 once: undefined
             };
         }
+    },
+    {
+        // (Its net thrown, read before: its riders now until the creature Escapes at DC 44 (the ability module's escape), a demon's Escapes rolled
+        // twice keeping the lower (PF2e's RollTwice on a note Effect, plan.ifTarget), and on a hit the counteract card at the creature for its
+        // teleportation and planar travel (rank 9, +38; rolled twice, the higher kept, against a demon — plan.heldCounteract, scripts/hit-counteract.js).)
+        name: "Halcyon Heart",
+        sentences: [
+            /^You pull the net off the halcyon heart and throw it at a creature within (\d+) feet, using your attack bonus for a ranged simple weapon\.$/,
+            /^On a hit, the net grows and envelops the creature, which becomes Off-Guard and takes a -10-foot circumstance penalty to its Speeds until it Escapes, and on a critical hit, it's also Immobilized until it Escapes\.$/,
+            /^The net also attempts to counteract teleportation effects and planar travel of the creature it's entrapping\.$/,
+            /^The Escape DC is (\d+), and the net has a counteract rank of (\d+) and a counteract modifier of \+(\d+)\.$/,
+            /^If the target is a demon or connected to a demon, they must roll twice and take the lower result on all attempts to Escape \(this is a misfortune effect\), and for counter act checks, the net rolls twice and takes the higher result \(this is a fortune effect\)\.$/,
+            /^You can't Perform with the halcyon heart while it doesn't have its net\.$/,
+            /^So long as the net doesn't contain a creature, you can restore it with a single action, which has the concentrate trait\.$/
+        ],
+        card: ([, , , numbers], plan) => {
+            const outcomes = plan?.resolution?.outcomes;
+            if (!plan?.ownCheck || !outcomes?.criticalSuccess?.effects?.some((effect) => effect.slug === "immobilized")) return null;
+            const escape = { dc: Number(numbers[1]) };
+            const held = (row) => ({ ...row, effects: (row.effects ?? []).map((effect) => (effect.kind === "condition" ? { ...effect, duration: effect.duration ? { ...effect.duration, escape } : { mode: "until-escape", escape } } : effect)), modifiers: (row.modifiers ?? []).map((modifier) => ({ ...modifier, escape })) });
+            const misfortune = { label: "Netted demon", text: "It rolls twice and takes the lower result on every attempt to Escape the halcyon heart's net (a misfortune effect). Remove this once it escapes.", duration: null, rules: [{ key: "RollTwice", selector: ["skill-check", "attack-roll"], keep: "lower", predicate: ["action:escape"] }] };
+            return {
+                keep: true,
+                notes: [
+                    "A demon only, for the misfortune and the fortune: one tied to a demon (its deity a demon lord, a demonic bloodline) counts too, by the GM's call.",
+                    "Its net gone, the halcyon heart can't be used to Perform. While the net holds no creature, its user can restore it with a single action (concentrate)."
+                ],
+                partial: undefined,
+                automation: { level: "automatic" },
+                resolution: { ...plan.resolution, outcomes: { ...outcomes, criticalSuccess: held(outcomes.criticalSuccess), success: held(outcomes.success) } },
+                ifTarget: [...(plan.ifTarget ?? []), ...["success", "criticalSuccess"].map((degree) => ({ traits: ["demon"], degree, noteEffects: [misfortune] }))],
+                heldCounteract: { degrees: ["success", "criticalSuccess"], counteract: { rank: Number(numbers[2]), modifier: Number(numbers[3]), traits: ["teleportation"], fortuneVs: ["demon"], free: { name: "its teleportation or planar travel, when it tries one while netted" } } }
+            };
+        }
+    },
+    {
+        // (Its counteract at the sonic effect that hurt its user, read before: by its result the damage turned back on its source and negated, or
+        // its use given back — counteract.reflect and counteract.regain, scripts/counteract.js.)
+        name: "Herald's Ring: Reflect Sound",
+        sentences: [
+            // (Its two sentences one by now, src/compiler/item-data.js: "… counteract the effect with a counteract modifier of +23.")
+            /^You use the herald's ring to reflect a portion of the sonic damage back at its source by attempting to counteract the effect with a counteract modifier of \+(\d+)\.$/,
+            /^Critical Success All of the damage is reflected back on its source\.$/,
+            /^Success Half of the damage is reflected back at its source, and the other half is negated\.$/,
+            /^Failure Half of the damage is reflected back at the source, and you take the rest of the damage\.$/,
+            /^Critical Failure None of the damage is reflected, but the herald's ring does absorb enough energy so that you can activate it again today\.$/
+        ],
+        card: (found, plan) => {
+            const counteract = plan?.item?.counteract;
+            if (plan?.builtin !== "counteract" || !counteract?.free) return null;
+            const reflect = { type: "sonic", byDegree: { criticalSuccess: { back: 1 }, success: { back: 0.5, negated: 0.5 }, failure: { back: 0.5 }, criticalFailure: { regain: true } } };
+            return {
+                keep: true,
+                partial: undefined,
+                automation: { level: "automatic" },
+                item: { ...plan.item, counteract: { ...counteract, free: { name: "the sonic effect that hurt it" }, reflect, regain: { index: plan.item.activation?.index ?? null, frequency: plan.item.activation?.frequency ?? plan.trigger?.frequency ?? null }, notes: [
+                    "The effect's DC and rank: the GM's to give. Type the sonic damage it took and target the effect's source.",
+                    "A critical success turns all of it back on the source; a success half (the other half negated, given back); a failure half (its user takes the rest); a critical failure none, but the ring can be activated again today."
+                ] } }
+            };
+        }
+    },
+    {
+        // (The shot called back and reloaded — whole, a line; fragmented, the creatures it's lodged in targeted: 15 persistent bleed each and their
+        // Clumsy 2 from the fragments gone (PF2e's condition 2 lower) — the ways card.)
+        name: "Shot of the First Vault: Reload Order",
+        sentences: [
+            /^You recall the shot of the First Vault ?, which automatically reloads itself into your weapon\.$/,
+            /^If the shot had fragmented, the fragments violently dislodge themselves, dealing (\d+) persistent bleed damage to each creature in which they were embedded\.$/,
+            /^The fragments then unite to re-form the shot of the First Vault ?, which automatically reloads itself into your weapon\.$/
+        ],
+        card: ([, torn], plan, { base, info }) => ways([
+            { name: "Whole: it flies back", html: "<p>The shot flies back and reloads itself.</p>", card: own({ notes: ["The shot flies back to its user and reloads itself into its ranged weapon."] }) },
+            { name: "Fragmented: the fragments tear out", html: "<p>The fragments tear themselves out.</p>", card: {
+                targeting: { target: "each creature with its fragments in it", range: null, area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), damage: { mode: "formulas", formulas: [{ formula: `${torn[1]}[persistent,bleed]` }], rollScope: "target" }, effects: [{ kind: "condition", slug: "clumsy", value: null, duration: null, stack: { by: -2 } }] } } },
+                notes: ["Target every creature the fragments are lodged in: each takes the bleed, and the Clumsy 2 the fragments gave it ends.", "The fragments re-form the shot, which reloads itself into its user's ranged weapon."]
+            } }
+        ], { base, info })
+    },
+    {
+        // (Its user's Strike with the shot, and unless the attack critically fails the creature's DC 45 Reflex save (incapacitation) — the Strike
+        // card's save on a hit and on a failure too (strike.failRow); its rows a far push the map's, Axis or the First Vault a note Effect on it.)
+        name: "Shot of the First Vault: Vault Deposit",
+        sentences: [
+            /^You line up a perfectly aimed attack directly toward the First Vault\.$/,
+            /^You Strike a creature, then the shot of the First Vault attempts to bring your target with it as it returns to the First Vault\.$/,
+            /^Unless your attack roll is a critical failure, the creature must attempt a @Check\[reflex\|dc:(\d+)\] save; this effect has the incapacitation trait\.$/,
+            /^Regardless, the shot of the First Vault returns to the First Vault\.$/,
+            /^Critical Success The creature is unaffected\.$/,
+            /^Success The creature is moved 1d20×50 feet in the direction you fired\.$/,
+            /^If this causes it to hit a solid object, it takes 50 bludgeoning damage\.$/,
+            /^Failure The creature is transported to a random location on the plane of Axis\.$/,
+            /^Critical Failure The creature is transported to the First Vault\.$/,
+            /^Unless it is capable of eluding Abadar's precautions, it is likely unable to escape the Vault on its own\.$/
+        ],
+        card: ([, , reflex], plan, { base, info }) => {
+            const none4 = Object.fromEntries(DEGREES.map((degree) => [degree, none()]));
+            const away = (label, text) => row({ noteEffects: [{ label, text, duration: null }] });
+            const save = {
+                ...base,
+                traits: [...(base.traits ?? []), "incapacitation"],
+                automation: { level: "automatic" },
+                targeting: { target: "the creature the Strike targeted", range: null, area: null },
+                trigger: { event: "use" },
+                resolution: { kind: "save", check: { ...check("reflex", Number(reflex[1])) }, sharedDamage: null, outcomes: rowsOf({
+                    success: away("Hurled by the shot", "Hurled 1d20×50 feet the way the shot was fired (roll 1d20, times 50): move it. If that slams it into a solid object, it takes 50 bludgeoning damage (the item's damage link)."),
+                    failure: away("Sent to Axis", "Transported to a random place on the plane of Axis: off this map, its token leaves the scene."),
+                    criticalFailure: away("In the First Vault", "Transported into the First Vault: off this map, its token leaves the scene. Unless it can elude Abadar's precautions, it likely can't escape the Vault on its own.")
+                }) }
+            };
+            return {
+                targeting: { target: "the creature the Strike targets", range: null, area: null },
+                trigger: { event: "strike", on: ["success", "criticalSuccess", "failure"] },
+                resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: none4 },
+                strike: { range: "ranged", save, failRow: true, ammo: false, notes: [], lines: ["Only with the shot loaded in its ranged weapon (at hand for a weapon of reload 0).", "Its save follows a hit or a failure, not a critical failure.", "Whatever happens, the shot returns to the First Vault: take it off its user's sheet."] }
+            };
+        }
     }
 ];
 

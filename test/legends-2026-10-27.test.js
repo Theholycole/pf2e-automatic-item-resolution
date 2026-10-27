@@ -19,6 +19,10 @@ import { nightsHitPoints } from "../scripts/rest.js";
 import { diceOf, scrapedFormula } from "../scripts/scrape.js";
 import { THRICE, thriceTotals } from "../scripts/initiative-thrice.js";
 import { uninvests } from "../scripts/uninvest.js";
+import { heldBy } from "../scripts/hit-counteract.js";
+import { reflection, createCounteractCard, counteractCardHTML } from "../src/live/counteract-card.js";
+import { planFor } from "../src/live/if-target.js";
+import { riderFor } from "../src/live/strike-card.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const documents = (pack) => readDocuments(path.join(PACKS, pack)).filter((doc) => doc.collection === "items");
@@ -218,4 +222,41 @@ test("The Waxworks: its lines' save with Confused (and Slowed 1) on an Effect th
     assert.deepEqual([scrape.item.recipient, scrape.item.scrape], ["targets", { types: ["fire", "mental"], die: 6, effect: "Hot wax", from: "The Waxworks" }]);
     assert.deepEqual([scrapedFormula("4d6", 6), scrapedFormula("1d6", 6), scrapedFormula("2d8", 6), scrapedFormula("2d6+1", 6)], [{ formula: "3d6", dice: 3 }, { formula: null, dice: 0 }, null, null]);
     assert.deepEqual([diceOf("1d6"), diceOf("0d6"), diceOf("2d6+1")], [1, 0, Infinity]);
+});
+
+test("Halcyon Heart's net: its riders until the creature Escapes at DC 44, a demon's Escapes rolled twice keeping the lower, and the counteract card on a hit", () => {
+    const [net] = activations("Halcyon Heart");
+    assert.deepEqual([done(net), routeOf(net), net.partial], [true, "save", undefined]);
+    const critical = rowOf(net, "criticalSuccess");
+    assert.deepEqual(critical.effects.map((effect) => [effect.slug, effect.duration.mode, effect.duration.escape.dc]), [["off-guard", "until-escape", 44], ["immobilized", "until-escape", 44]]);
+    assert.deepEqual(rowOf(net).modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.escape.dc]), [["all-speeds", -10, 44]]);
+    // (A demon's: the misfortune note Effect on a hit, PF2e's RollTwice on its Escapes.)
+    const demon = planFor(net, { system: { traits: { value: ["demon", "fiend"] } } });
+    assert.deepEqual(demon.resolution.outcomes.success.noteEffects[0].rules, [{ key: "RollTwice", selector: ["skill-check", "attack-roll"], keep: "lower", predicate: ["action:escape"] }]);
+    assert.equal(planFor(net, { system: { traits: { value: ["humanoid"] } } }).resolution.outcomes.success.noteEffects, undefined);
+    assert.deepEqual([net.heldCounteract.counteract.rank, net.heldCounteract.counteract.modifier, net.heldCounteract.counteract.fortuneVs], [9, 38, ["demon"]]);
+    assert.deepEqual(heldBy(net.heldCounteract, [{ degree: "failure", actorUuid: "a" }, { degree: "success", actorUuid: "b" }]).map((target) => target.actorUuid), ["b"]);
+});
+
+test("Herald's Ring's Reflect Sound: the damage turned back and negated by the counteract's result, its use given back on a critical failure", () => {
+    const reflect = activation("Herald's Ring", "Reflect Sound");
+    const { counteract } = reflect.item;
+    assert.deepEqual([done(reflect), routeOf(reflect), counteract.modifier, counteract.regain.index, counteract.regain.frequency.per], [true, "counteract", 23, 1, "day"]);
+    assert.deepEqual([3, 2, 1, 0].map((degree) => reflection(counteract.reflect, degree, 31)), [{ back: 31, negated: 0, regain: false }, { back: 15, negated: 15, regain: false }, { back: 15, negated: 0, regain: false }, { back: 0, negated: 0, regain: true }]);
+    const card = createCounteractCard({ counteract, item: { name: "Herald's Ring" }, user: { actorUuid: "u", name: "Hero" } });
+    assert.match(counteractCardHTML(card, { canApply: true }), /data-air-amount/);
+});
+
+test("Shot of the First Vault: its fragments torn out (15 persistent bleed, Clumsy 2 lower), and Vault Deposit's Strike with the DC 45 Reflex save unless it critically fails", () => {
+    const reload = activation("Shot of the First Vault", "Reload Order");
+    assert.deepEqual([done(reload), routeOf(reload), reload.ways.map((way) => routeOf(way.plan))], [true, "ways", ["item", "save"]]);
+    const torn = rowOf(reload.ways[1].plan);
+    assert.deepEqual([torn.damage.formulas[0].formula, torn.effects[0].slug, torn.effects[0].stack], ["15[persistent,bleed]", "clumsy", { by: -2 }]);
+    const deposit = activation("Shot of the First Vault", "Vault Deposit");
+    assert.deepEqual([done(deposit), routeOf(deposit), deposit.partial], [true, "strike", undefined]);
+    const { save } = deposit.strike;
+    assert.deepEqual([save.resolution.check.statistic, save.resolution.check.against.value, save.traits.includes("incapacitation")], ["reflex", 45, true]);
+    assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => (save.resolution.outcomes[degree].noteEffects ?? []).map((note) => note.label)), [[], ["Hurled by the shot"], ["Sent to Axis"], ["In the First Vault"]]);
+    // (Its save on a hit and on a failure, not on a critical failure.)
+    assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((outcome) => riderFor(deposit, { ranged: true, outcome })), ["hit", "hit", "failure", "spend"]);
 });

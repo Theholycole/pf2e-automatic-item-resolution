@@ -4,10 +4,12 @@
 // DC and rank the card shows (the GM's where PF2e didn't know), and removes what it counteracts.
 
 import { rememberCastDuration } from "./cast-duration.js";
-import { DEGREE_WORDS, afterFreeRules, counteractCandidates, counteractCardHTML, counteractResult, counteracts, createCounteractCard } from "../src/live/counteract-card.js";
+import { DEGREE_WORDS, afterFreeRules, counteractCandidates, counteractCardHTML, counteractResult, counteracts, createCounteractCard, reflection } from "../src/live/counteract-card.js";
+import { withoutUse } from "../src/live/activations-card.js";
+import { USES, now } from "./activations.js";
 import { itemNoteSource, ruleEffectSource } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { FLAG, MODULE_ID, afflictionsOf, creatureOf, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, afflictionsOf, creatureOf, damageRollClass, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
 export async function postCounteractCard({ message, plan, used, actor, token }) {
     const named = plan.item?.counteract;
@@ -115,7 +117,7 @@ async function castAfter(thenSpell, state) {
     return `Then ${actor.name} gains the effects of ${entry.name}${lasts ? ` — ${lasts.replace(/^It lasts/, "it lasts").replace(/\.$/, "")}` : ""}.`;
 }
 
-export async function applyCounteractCard(message, { drinker = null, rows = null, ownRank = null } = {}) {
+export async function applyCounteractCard(message, { drinker = null, rows = null, ownRank = null, amount = null, targets = [] } = {}) {
     let state = stateOf(message);
     if (!state || state.kind !== "counteract" || state.status !== "open") return null;
     if (state.step === "find") {
@@ -162,7 +164,10 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
             lines.push(`${row.name}: countered outright (its source more than ${state.counteract.outrightBelow.levels} levels below its user's).`);
             continue;
         }
-        const roll = await new Roll(`1d20 + ${state.counteract.modifier}`).evaluate();
+        // (Rolled twice, the higher kept, against some kinds — Halcyon Heart's net against a demon, a fortune effect: counteract.fortuneVs, the
+        // creature's traits, 2026-10-27.)
+        const twice = (state.counteract.fortuneVs ?? []).some((trait) => (state.counteract.struckTraits ?? []).includes(trait));
+        const roll = await new Roll(`${twice ? "2d20kh" : "1d20"} + ${state.counteract.modifier}`).evaluate();
         await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: counteract ${row.name} (DC ${row.dc}, rank ${row.rank})` });
         const natural = Number(roll.dice?.[0]?.total ?? NaN);
         let { degree, removed } = counteractResult({ total: roll.total, natural: Number.isFinite(natural) ? natural : null, dc: row.dc, ours, theirs: row.rank });
@@ -171,6 +176,11 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         const raised = degree === 1 && upFor.some((trait) => (state.counteract.struckTraits ?? []).includes(trait));
         if (raised) ({ degree, removed } = { degree: 2, removed: counteracts(2, ours, row.rank) });
         const outcome = `${roll.total} against DC ${row.dc}: ${DEGREE_WORDS[degree] ?? "no result"}${raised ? " (a failure, a success against it)" : ""}`;
+        // (Its damage turned back by the result, Herald's Ring's Reflect Sound: reflectDamage.)
+        if (row.kind === "free" && state.counteract.reflect) {
+            lines.push(`${row.name}: ${outcome}.`, ...await reflectDamage(state, degree, { amount, targets }));
+            continue;
+        }
         if (!removed) {
             lines.push(`${row.name}: ${outcome}, not counteracted.`);
             continue;
@@ -305,4 +315,39 @@ async function burnOut(state, burnout) {
     await item.actor.createEmbeddedDocuments("Item", [source]);
     await item.delete();
     return `Its flat check: ${roll.total}, DC ${burnout.dc}, a failure: ${state.item.name} is now ${burnout.becomes.name}.`;
+}
+
+// The damage that set it off, by the counteract's degree (counteract.reflect, Herald's Ring's Reflect Sound, 2026-10-27): what turns back dealt
+// to its source (the creature targeted) through PF2e, what's negated given back to its user's Hit Points, and on a critical failure its use
+// given back for the day (counteract.regain: the activation's index and frequency). → the card's lines.
+async function reflectDamage(state, degree, { amount, targets }) {
+    const { back, negated, regain } = reflection(state.counteract.reflect, degree, amount);
+    const type = state.counteract.reflect.type;
+    const lines = [];
+    if (!(Number(amount) > 0) && (back || negated || degree > 0)) lines.push(`Give the ${type} damage it took to turn it back (none was given).`);
+    const source = back > 0 && targets?.[0] ? await fromUuid(targets[0]).catch(() => null) : null;
+    const DamageRoll = damageRollClass();
+    if (back > 0 && source?.actor && DamageRoll) {
+        const roll = await new DamageRoll(`${back}[${type}]`).evaluate();
+        await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: source.actor }), flavor: `${state.item.name}: ${back} ${type} damage turned back` });
+        await source.actor.applyDamage({ damage: roll, token: source });
+        lines.push(`${source.name ?? source.actor.name} takes ${back} ${type} damage, turned back.`);
+    } else if (back > 0) lines.push(`${back} ${type} damage turns back on its source: target it (or deal it by hand).`);
+    if (negated > 0) {
+        const { actor } = await creatureOf(state.user);
+        const hp = actor?.system?.attributes?.hp;
+        if (hp) {
+            const healed = Math.min(negated, Math.max(0, (Number(hp.max) || 0) - (Number(hp.value) || 0)));
+            await actor.update({ "system.attributes.hp.value": (Number(hp.value) || 0) + healed });
+            lines.push(`${state.user.name}: ${negated} of the damage negated (${healed} Hit Points back).`);
+        }
+    }
+    if (regain && state.counteract.regain && state.item.uuid) {
+        const item = await fromUuid(state.item.uuid).catch(() => null);
+        if (item?.setFlag) {
+            await item.setFlag(MODULE_ID, USES, withoutUse(item.getFlag(MODULE_ID, USES) ?? {}, state.counteract.regain.index, state.counteract.regain.frequency, now(item.actor)));
+            lines.push(`${item.name} absorbs enough energy: it can be activated again today.`);
+        }
+    }
+    return lines;
 }

@@ -179,9 +179,9 @@ test("Herald's Ring's Reflect Sound: the triggering effect counteracted at +23 (
     const reflect = compileActivations(source("Herald's Ring"))[1];
     assert.equal(routeOf(reflect.plan), "counteract");
     const counteract = reflect.plan.item.counteract;
-    assert.deepEqual([counteract.modifier, counteract.rank, counteract.free.name], [23, 7, "the effect"]);
-    assert.deepEqual(counteract.notes.map((note) => note.split(":")[0]), ["Critical success", "Success", "Failure", "Critical failure"]);
-    assert.match(counteract.notes[1], /^Success: Half of the damage is reflected back at its source, and the other half is negated \(by hand\)\.$/);
+    // (Each degree's damage turned back by the card itself since 2026-10-27, src/compiler/legend-readings.js: counteract.reflect.)
+    assert.deepEqual([counteract.modifier, counteract.rank, counteract.free.name], [23, 7, "the sonic effect that hurt it"]);
+    assert.deepEqual([counteract.reflect.byDegree.success, counteract.reflect.byDegree.criticalFailure], [{ back: 0.5, negated: 0.5 }, { regain: true }]);
 });
 
 test("Flame Navette (Determination): one condition on its user ends outright, no numbers; a spell or magical Effect is counteracted at +22, rank 8; no one else offered", async () => {
