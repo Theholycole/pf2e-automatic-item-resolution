@@ -11,6 +11,9 @@ import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { ONE_OFFS } from "../src/compiler/one-offs.js";
 import { routeOf } from "../src/live/route.js";
+import { attackRidersText } from "../src/compiler/attack-riders.js";
+import { fakeFoundry } from "./support/fake-foundry.mjs";
+import { attackRidersEffectSource, weaponDamageDealt } from "../scripts/attack-riders.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -162,4 +165,29 @@ test("the user's rulings for the rest: one-offs' card lines, and notes checked a
     assert.deepEqual(activations("Toshigami Blossom").slice(0, 2).map((plan) => plan.decided), [undefined, undefined]);
     const checked = [...["Lesser", "Moderate", "Greater"].map((grade) => activations(`Ring of Observation (${grade})`)[0]), ...["Tlil Mask", "Tlil Mask (Greater)"].map((name) => activations(name)[0]), activation("Silent Bell", "Ring in the Quiet"), activation("Twilight Tattoo", "Fade"), activation("Ally's Kerchief", "Identify Allies"), activation("Mirrorblade", "Scryshield"), ...["Ectoplasmic Tracer", "Lover's Ink", "Parchment of Secrets", "Moonlit Ink"].map((name) => compileItem(item(name), options))];
     for (const plan of checked) assert.deepEqual([plan.decided, done(plan)], ["checked", true], plan.source?.name);
+});
+
+test("Oil of Revelation: the first creature its weapon damages within the hour glows for a minute — the attack riders' watch on the weapon picked", () => {
+    const oil = compileItem(item("Oil of Revelation"), options);
+    assert.deepEqual([oil.noteOnly, oil.item.attackRiders.duration.value, oil.item.attackRiders.duration.unit], [undefined, 1, "hours"]);
+    const [rider] = oil.item.attackRiders.riders;
+    assert.deepEqual([rider.on, rider.weapon, rider.once, rider.note.label, rider.note.duration.value, rider.note.duration.unit], [["dealt"], true, true, "Glowing wound", 1, "minutes"]);
+    assert.match(attackRidersText(oil.item.attackRiders.riders, "Longsword"), /^The first creature Longsword damages: its wound glows/);
+});
+
+test("the glow on the creature damaged, the oil gone after: weaponDamageDealt on PF2e's damage-taken message, the weapon's alone", async () => {
+    const foundry = await fakeFoundry();
+    foundry.actAs("gm");
+    const oil = compileItem(item("Oil of Revelation"), options);
+    const user = foundry.makeActor({ id: "revelation-user", name: "Oiler" });
+    const foe = foundry.makeActor({ id: "revelation-foe", name: "Unseen Foe" });
+    const [watch] = await user.createEmbeddedDocuments("Item", [attackRidersEffectSource(oil.item.attackRiders, { item: { name: "Oil of Revelation", uuid: null }, user: { actorUuid: user.uuid, name: user.name }, weapon: { id: "blade1", name: "Longsword" } })]);
+    const damage = (weapon, hp) => ({ flags: { pf2e: { context: { type: "damage-taken" }, appliedDamage: { uuid: foe.uuid, isHealing: false, updates: [{ path: "system.attributes.hp.value", value: hp }] }, origin: { actor: user.uuid, uuid: `${user.uuid}.Item.${weapon}` } } } });
+    await weaponDamageDealt(damage("other", 5));
+    assert.equal(foe.created.length, 0, "another weapon's damage");
+    await weaponDamageDealt(damage("blade1", 6));
+    assert.deepEqual(foe.created.map((entry) => [entry.name, entry.system.duration.value, entry.system.duration.unit]), [["Oil of Revelation: Glowing wound", 1, "minutes"]]);
+    assert.ok(!user.created.includes(watch), "the oil spent");
+    await weaponDamageDealt(damage("blade1", 4));
+    assert.equal(foe.created.length, 1, "the first creature only");
 });

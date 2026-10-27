@@ -5,6 +5,7 @@
 // riders, its weapon's alone: Analysis Eye's weaknesses and resistances to the GM, Leeching Fangs' healing from the damage dealt.
 
 import { attackRidersText } from "../src/compiler/attack-riders.js";
+import { itemNoteSource } from "../src/live/card.js";
 import { ABILITY_ID, MODULE_ID, isActiveGM } from "./foundry.js";
 
 export const WATCH_KEY = "attackRiders";
@@ -94,6 +95,8 @@ export async function attackRidersRolled(message) {
 
 // Hit Point damage a whetstone's weapon dealt, PF2e's damage-taken message (its origin the weapon, by its id): Leeching Fangs' healing for
 // its user, half as much — to a living creature only; PF2e's healing stops at the maximum.
+// (Or a note Effect on the creature it damages, Oil of Revelation's glowing wound for its minute — rider.note; once: the first creature only,
+// the oil spent then, its watch Effect gone. 2026-10-27.)
 export async function weaponDamageDealt(message) {
     if (!isActiveGM()) return;
     const flags = message?.flags?.pf2e;
@@ -114,5 +117,13 @@ export async function weaponDamageDealt(message) {
             await actor.applyDamage({ damage: -amount, token: actor.getActiveTokens?.(true, true)?.[0] ?? undefined });
             await ChatMessage.create({ content: `<p><strong>${escape(watch.item?.name ?? "Item")}</strong>: ${escape(actor.name)} heals ${amount}, half the ${dealt} Hit Point damage dealt to ${escape(target?.name ?? "the creature")}.</p>`, speaker: ChatMessage.getSpeaker({ actor }), whisper: gmIds() });
         }
+        let spent = false;
+        for (const rider of (watch.riders ?? []).filter((entry) => entry.on.includes("dealt") && entry.note)) {
+            if (dealt < 1 || !target?.createEmbeddedDocuments) continue;
+            await target.createEmbeddedDocuments("Item", [itemNoteSource({ name: rider.note.label, words: rider.note.text.replace(/\.$/, ""), duration: rider.note.duration ?? null }, { item: watch.item ?? {}, user: watch.user ?? {}, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            await ChatMessage.create({ content: `<p><strong>${escape(watch.item?.name ?? "Item")}</strong>: ${escape(target.name ?? "the creature")}: ${escape(rider.note.label)}${rider.once ? " (used up)" : ""}.</p>`, speaker: ChatMessage.getSpeaker({ actor }) });
+            if (rider.once) spent = true;
+        }
+        if (spent) await actor.deleteEmbeddedDocuments("Item", [effect.id]);
     }
 }

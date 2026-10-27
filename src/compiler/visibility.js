@@ -106,6 +106,16 @@ const READINGS = [
         })
     })),
     {
+        // (The first creature the coated weapon damages within the hour glows for a minute: the attack riders' watch on the weapon picked,
+        // its note Effect on that creature, the oil spent — scripts/attack-riders.js weaponDamageDealt.)
+        name: "Oil of Revelation",
+        sentences: [/^This bright oil, first created by humans\b.*\.$/, /^The first time a weapon coated\b.*\bdamages a creature, the wound glows\b.*\bfor (\d+|an?|one) (minutes?|rounds?)\.$/, /^If the creature is Invisible, the light's position\b.*\brather than undetected\.$/, /^The light also negates the Concealed condition\b.*\.$/, /^If the coated weapon doesn't damage\b.*\bwithin (\d+|an?|one) (hours?|minutes?)\b.*\bsloughs off\b.*\.$/],
+        card: ([, glows, , , lasts]) => ownRow({
+            notes: ["Pick the weapon it coats: the first creature that weapon damages before the oil sloughs off gets the glow."],
+            item: { attackRiders: { riders: [{ on: ["dealt"], weapon: true, once: true, note: { label: "Glowing wound", text: "Its wound glows: while Invisible it's only Hidden, not Undetected, to those that couldn't see it, and lighting doesn't make it Concealed.", duration: time(glows[1], glows[2]) } }], duration: time(lasts[1], lasts[2]) } }
+        })
+    },
+    {
         // (The creature in the square pinpointed to the end of its user's turn.)
         name: "Powder",
         sentences: [/^A bag of powder contains\b.*\.$/, /^In addition to other uses for powder\b.*\.$/, /^You can throw the powder\b.*\badjacent square\b.*\.$/, /^If there's a creature in that square\b.*\bObserved until the end of your turn\b.*\.$/, /^The powder quickly falls away\b.*\.$/],
