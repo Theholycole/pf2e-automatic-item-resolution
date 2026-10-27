@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 937,
+   "resolves": 938,
    "builtin:cast-spell": 474,
    "partial": 128,
-   "none": 390,
+   "none": 389,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
    "builtin:readied-bonus": 47,
@@ -31,10 +31,10 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 436,
+   "save": 437,
    "cast": 474,
    "item": 640,
-   "none": 497,
+   "none": 496,
    "focus": 47,
    "counteract": 32,
    "fortune": 62,
@@ -61,9 +61,9 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 553,
+    "resolves": 554,
     "builtin:cast-spell": 346,
-    "none": 269,
+    "none": 268,
     "builtin:focus-point": 45,
     "builtin:counteract": 28,
     "builtin:readied-bonus": 33,
@@ -15132,9 +15132,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Whispering Wire",

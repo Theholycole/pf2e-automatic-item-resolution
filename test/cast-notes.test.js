@@ -183,3 +183,10 @@ test("its user's own actions as the whole of an activation (2026-10-27): Swiftmo
     assert.ok(lines.every((plan) => plan && /\(its own (?:actions?|action on the map|move on the map)\)\.$/.test(plan.notes[0]) && !plan.partial && !plan.noteOnly));
     assert.equal(lines[0].notes[0], "Mount the creature wearing it (its own action on the map).");
 });
+
+test("a creature its user picks off-guard to its next melee attack this turn (2026-10-27): Boots of the Dead's One of You, the core's scope", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const [boots] = activations(item("Boots of the Dead"), options);
+    const [offGuard] = boots.plan.resolution.outcomes.success.effects;
+    assert.deepEqual([boots.plan.targeting.target, offGuard.slug, offGuard.scope, offGuard.duration.expiry, boots.plan.trigger.frequency.per], ["1 undead creature", "off-guard", { against: "actor", attacks: "melee", uses: 1 }, "turn-end", "hour"]);
+});

@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1332,
+  "entries": 1331,
   "results": {
    "partial": 426,
-   "none": 538,
+   "none": 537,
    "note-only": 249,
    "builtin:no-effect": 119
   },
@@ -35,7 +35,7 @@
    "reader": 18,
    "triggers": 91,
    "situational": 18,
-   "dying": 29,
+   "dying": 28,
    "senses": 21,
    "speech": 19,
    "from-events": 4,
@@ -61,11 +61,11 @@
    "moving": 112,
    "triggers": 123,
    "visibility": 51,
-   "dying": 77,
-   "choice": 111,
+   "dying": 76,
+   "choice": 110,
    "several": 107,
    "strike": 196,
-   "reader": 216,
+   "reader": 215,
    "spells": 75,
    "information": 199,
    "actions": 63,
@@ -8333,19 +8333,6 @@
    "work": "doff",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Boots of the Dead",
-   "kind": "activation",
-   "activation": "One of You",
-   "result": "none",
-   "main": "dying",
-   "work": "dead",
-   "needs": [
-    "dying",
-    "choice",
-    "reader"
    ]
   },
   {

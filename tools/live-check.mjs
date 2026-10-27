@@ -5748,6 +5748,28 @@ export const cases = {
         return { refused };
     },
 
+    // Boots of the Dead's One of You (2026-10-27): the undead targeted Off-Guard to its user's next melee attack this turn (the core's scope).
+    async bootsOfTheDead(scene) {
+        const { actor: user } = await creature(scene, "Dead Boots Walker", { type: "character", x: 6, y: 9 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Dead Boots Zombie", { x: 7, y: 9, alliance: "opposition" });
+        await foe.update({ "system.traits.value": [...new Set([...(foe.system.traits?.value ?? []), "undead"])] });
+        const boots = await give(user, "Boots of the Dead");
+        await target(foeToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(boots.uuid, 0);
+        const card = await messageAfter(since, (message) => message.flags?.[NS]?.card || message.flags?.["pf2e-automatic-ability-resolution"]?.card, { what: "the boots' card" });
+        since = Date.now();
+        if (card.flags?.[NS]?.card) await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = card.flags?.["pf2e-automatic-ability-resolution"]?.card ? card : await messageAfter(since, abilitySaveCard, { what: "the Off-Guard's card" });
+        await applyAbilityCard(save);
+        // (The core's scope: an Effect on its user marking the zombie, Off-Guard to its melee Strikes, once.)
+        const scoped = () => user.itemTypes.effect.find((effect) => effect.flags?.["pf2e-automatic-ability-resolution"]?.scopedOffGuard?.target === foeToken.uuid);
+        await until(scoped, "the zombie Off-Guard to it", { timeout: 8000 });
+        const flag = scoped().flags["pf2e-automatic-ability-resolution"].scopedOffGuard;
+        assert(flag.melee === true && flag.uses === 1 && scoped().system.duration.expiry === "turn-end", `melee, once, this turn (${JSON.stringify(flag)})`);
+        return { flag };
+    },
+
     // Broken Tusk Pendant: the ways card's +2 (the pendant's animal) — its readied bonus's card, then the Effect with +2 item to AC.
     async brokenTuskWays(scene) {
         const { actor: user } = await creature(scene, "Tusk Bearer", { type: "character", x: 6, y: 14 });

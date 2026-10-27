@@ -78,6 +78,7 @@ import { effectStrikePlan } from "./effect-strike.js";
 import { choiceOptionPlan, optionPlan } from "./option-on.js";
 import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan, spotlightPlan, emanationBonusPlan } from "./covered-square.js";
 import { perceptionCheckPlan } from "./perception-check.js";
+import { offGuardNextPlan } from "./off-guard-next.js";
 import { DRAGON_TYPES, readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { counteractLeaves, readCounteract, withCounteractLeaves } from "./counteract.js";
 import { pickedSentence, skillPickOf } from "./skill-pick.js";
@@ -630,6 +631,8 @@ function compileEach(item, options = {}) {
         if (rune && (!plan || plan.noteOnly)) plan = runeLoanPlan(base);
         // (A creature's Perception check against the item's DC, src/compiler/perception-check.js: Mercurial Mantle's Cunning Dodge.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = perceptionCheckPlan(activation.html, base, item, options) ?? plan;
+        // (A creature its user picks off-guard to its next attack this turn, src/compiler/off-guard-next.js: Boots of the Dead's One of You.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = offGuardNextPlan(activation.html, base) ?? plan;
         // (A square it covers for a while, with a save on entering, src/compiler/covered-square.js: Spider Gun's Web Shot.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = coveredSquarePlan(activation.html, base, item, options) ?? plan;
         // (Walls it raises, with a save in their space, src/compiler/covered-square.js: Alkenstar Phalanx — over the save read alone.)
