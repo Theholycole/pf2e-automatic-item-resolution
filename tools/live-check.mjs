@@ -6526,6 +6526,26 @@ export const cases = {
         return { hp: hp() };
     },
 
+    // Locket of Sealed Nightmares (2026-10-27): Hallucination cast at the creature targeted, and its user fatigued.
+    async locketFatigued(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: user, token } = await creature(scene, "Locket Opener", { type: "character", x: 10, y: 18, level: 17 });
+        const { token: foeToken } = await creature(scene, "Locket Dreamer", { x: 11, y: 18, alliance: "opposition" });
+        const locket = await give(user, "Locket of Sealed Nightmares");
+        await locket.update({ "system.equipped.invested": true }).catch(() => null);
+        await token.object?.control?.();
+        await target(foeToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(locket.uuid, 0);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        assert(/With it, its user becomes fatigued\./.test(card.content), "the card's words");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid], choice: 0 });
+        await messageAfter(since, (message) => message.flags?.["pf2e-automatic-resolution"]?.castFromItem, { what: "the spell module's cast", timeout: 15000 });
+        await until(() => user.hasCondition("fatigued"), "its user fatigued", { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Psyche Salts (Moderate): Clear Mind cast on the drinker, and PF2e's +2 item bonus to saves against mental effects for 10 minutes on them.
     async psycheSaltsBonus(scene) {
         assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");

@@ -275,3 +275,11 @@ test("a cast's own time, not sustained or sustained longer (2026-10-27): the Eth
     assert.deepEqual([shroud.castDuration.value, shroud.castDuration.sustained, shroud.partial], [10, true, undefined]);
     assert.equal(lastsWords(shroud.castDuration), "lasts 10 minutes at most, while its user Sustains it (end it sooner if they stop)");
 });
+
+test("a condition on its user with the cast (2026-10-27): Locket of Sealed Nightmares' fatigued beside its 9th-rank Hallucination, Sleep or Weird", async () => {
+    const { castCardHTML } = await import("../src/live/cast-card.js");
+    const locket = first("Locket of Sealed Nightmares");
+    assert.deepEqual([locket.castSelf.slug, locket.choices.length, locket.partial], ["fatigued", 3, undefined]);
+    const html = castCardHTML({ status: "open", plan: locket, item: { name: "Locket" }, user: { name: "Bard" }, drinker: null, drinkers: [], choice: 0, results: [] });
+    assert.match(html, /With it, its user becomes fatigued\./);
+});

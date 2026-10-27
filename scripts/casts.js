@@ -89,6 +89,14 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (heals) lines.push(heals);
         // (A bonus with the spell, Psyche Salts': an Effect of PF2e's rules on the creature it's cast on.)
         if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean)));
+        // (A condition on its user with the cast, Locket of Sealed Nightmares' fatigued: PF2e's condition on the item's user.)
+        if (state.plan.castSelf) {
+            const user = state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor;
+            if (user?.increaseCondition) {
+                await user.increaseCondition(state.plan.castSelf.slug, state.plan.castSelf.value ? { value: state.plan.castSelf.value } : {});
+                lines.push(`${user.name} is ${state.plan.castSelf.slug}${state.plan.castSelf.value ? ` ${state.plan.castSelf.value}` : ""}.`);
+            }
+        }
     }
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: castCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

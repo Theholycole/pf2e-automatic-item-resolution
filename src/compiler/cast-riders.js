@@ -36,3 +36,15 @@ export function withCastBonus(plan) {
     }
     return plan;
 }
+
+// (A condition on its user with the cast, Locket of Sealed Nightmares' "You become fatigued and cast one of the following spells …": plan.castSelf
+// { slug, value, said }, PF2e's condition on its user once the spell's cast — scripts/casts.js, 2026-10-27.)
+const BECOME = /^You become (fatigued|stupefied|drained|enfeebled|clumsy|sickened|frightened)(?: (\d+))? and (?=cast\b)/i;
+export function withCastSelf(plan) {
+    if (plan?.builtin !== "cast-spell" || plan.castSelf) return plan;
+    for (const note of (plan.notes ?? []).map((entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim())) {
+        const found = BECOME.exec(note);
+        if (found) return { ...plan, castSelf: { slug: found[1].toLowerCase(), value: found[2] ? Number(found[2]) : null, said: found[0].trim() } };
+    }
+    return plan;
+}

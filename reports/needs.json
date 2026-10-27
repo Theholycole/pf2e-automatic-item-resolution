@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1315,
+  "entries": 1314,
   "results": {
-   "partial": 416,
+   "partial": 415,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -15,8 +15,8 @@
    "afflictions": 61,
    "moving": 84,
    "visibility": 48,
-   "choice": 31,
    "lasting": 65,
+   "choice": 30,
    "strike": 100,
    "spells": 36,
    "information": 23,
@@ -54,7 +54,7 @@
    "immunity": 90,
    "objects": 390,
    "speech": 129,
-   "out-of-combat": 447,
+   "out-of-combat": 446,
    "counteract": 105,
    "afflictions": 110,
    "lasting": 234,
@@ -62,7 +62,7 @@
    "triggers": 121,
    "visibility": 50,
    "dying": 75,
-   "choice": 109,
+   "choice": 108,
    "several": 106,
    "strike": 194,
    "reader": 215,
@@ -158,17 +158,6 @@
     "visibility",
     "areas",
     "dying"
-   ]
-  },
-  {
-   "name": "Locket of Sealed Nightmares",
-   "kind": "activation",
-   "result": "partial",
-   "main": "choice",
-   "work": "one of the following",
-   "needs": [
-    "choice",
-    "out-of-combat"
    ]
   },
   {

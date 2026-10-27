@@ -59,6 +59,8 @@ export function castCardHTML(state, { canApply = false } = {}) {
     const chosen = chosenSpell(state);
     // (Its rank and DC from its caster, The Inquisitor's: in words until it's cast.)
     const numbers = [chosen.rank ? `rank ${chosen.rank}` : plan.castRank ? `rank half its caster's level, rounded ${plan.castRank.round} (at least ${plan.castRank.min})` : null, plan.dc ? `DC ${plan.dc}` : plan.castDC ? "DC its caster's class DC or spell DC, the higher" : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange)].filter(Boolean).join(", ");
+    // (A condition on its user with the cast, Locket of Sealed Nightmares': a line of its own, with several spells too.)
+    const self = plan.castSelf ? `<p class="aar-actions">With it, its user becomes ${escape(plan.castSelf.slug)}${plan.castSelf.value ? ` ${escape(plan.castSelf.value)}` : ""}.</p>` : "";
     const caster = casterOf(state);
     // (Several spells to choose from: a picker while it's open.)
     const pick = plan.choices?.length > 1 && open && canApply
@@ -74,5 +76,5 @@ export function castCardHTML(state, { canApply = false } = {}) {
     const label = plan.choices?.length > 1 && open ? "the chosen spell" : chosen.spell.name ?? "the spell";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Cast ${escape(label)}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to cast it.</p>` : "";
     const heading = plan.choices?.length > 1 && open ? plan.choices.map((entry) => entry.spell.name).join(" or ") : chosen.spell.name ?? "a spell";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${escape(heading)}${numbers && !(plan.choices?.length > 1 && open) ? ` (${escape(numbers)})` : ""}</span></header>${pick}${who}${notes}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${escape(heading)}${numbers && !(plan.choices?.length > 1 && open) ? ` (${escape(numbers)})` : ""}</span></header>${pick}${who}${self}${notes}${results}${controls}</section>`;
 }
