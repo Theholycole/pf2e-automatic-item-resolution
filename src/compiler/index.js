@@ -81,6 +81,7 @@ import { withOwnMoves } from "./own-moves.js";
 import { withOiledFeet } from "./moving-notes.js";
 import { isSpecialItem, withDecided } from "./decided.js";
 import { effectWords, hasLastingReading, withLastingReading } from "./lasting.js";
+import { hasCreatureReading, withCreatureReading } from "./creature-readings.js";
 import { withConsumableRules } from "./item-rules.js";
 import { withTemperature } from "./temperature.js";
 import { readFoam, withFalls } from "./falls.js";
@@ -292,7 +293,7 @@ export function compileItem(given, options = {}) {
     // (And after, a PF2e action its user has while its effect lasts, src/compiler/granted-action.js: Potion of Grounding's Divert Lightning; a
     // Strike card's notes that are its user's to do, its lines, src/compiler/strike-lines.js: Iron Cube's two-handed weapon and Slam Down; a ward
     // against summoned creatures, src/compiler/warding-seal.js: Portable Seal.)
-    return withWardingSeal(withStrikeLines(withGrantedAction(lastingOf(withConsumableRules(decide(withImplosion(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(withCastNote(withRuleWords(withAloft(withOnceBetter(instead ?? compileOne(given, options), text), text), text), given?.system?.description?.value, options.spells ?? {})), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), text), given, options), given, () => ({ ...basePlan(given), item: itemInfo(given) })), given), given?.system?.description?.value)), given?.system?.description?.value);
+    return creaturesOf(withWardingSeal(withStrikeLines(withGrantedAction(lastingOf(withConsumableRules(decide(withImplosion(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(withCastNote(withRuleWords(withAloft(withOnceBetter(instead ?? compileOne(given, options), text), text), text), given?.system?.description?.value, options.spells ?? {})), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), text), given, options), given, () => ({ ...basePlan(given), item: itemInfo(given) })), given), given?.system?.description?.value)), given?.system?.description?.value), given);
 }
 
 // (Sustained, repeating and later effects the readers before left whole, src/compiler/lasting.js: a note Effect and the card's lines — last,
@@ -300,6 +301,13 @@ export function compileItem(given, options = {}) {
 function lastingOf(plan, given) {
     if (!hasLastingReading(given?.name)) return plan;
     return withLastingReading(plan, { name: given.name, words: effectWords(given.system?.description?.value, "consumable"), base: basePlan(given), info: itemInfo(given) });
+}
+
+// (Creatures it makes or controls, src/compiler/creature-readings.js: Dust of Corpse Animation's undead, a Galvasphere's zombie — last, over
+// what the readers before left whole.)
+function creaturesOf(plan, given) {
+    if (!hasCreatureReading(given?.name)) return plan;
+    return withCreatureReading(plan, { name: given.name, words: effectWords(given.system?.description?.value, "consumable"), html: given.system?.description?.value, base: basePlan(given), info: itemInfo(given) });
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
