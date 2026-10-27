@@ -5,8 +5,10 @@
 // area … can attempt a … check to disbelieve the illusion", Wooden Nickel's Perception "against your Deception DC" (plan.disbelief.against:
 // its user's DC, read when the card is posted) with its Crafting check that "will also reveal the item's true nature" (plan.disbelief.also,
 // the card's second check). Beside it, as lasting.js reads its own: a note Effect for the illusion's time on its user (the user's ruling for
-// a rule PF2e can't play), the card's lines for its user's own choices, the map and objects. Every sentence of its effect one of the
-// reading's own, none dropped. Pure.
+// a rule PF2e can't play), the card's lines for its user's own choices, the map and objects. And the items whose "disguise" or "illusion" is
+// no illusion of theirs to disbelieve, or one seen for what it is: words on a note Effect, PF2e's own rules on one (Tales in Timber's
+// Illusory Disguise and Oaken Resilience), a whisper (Glasses of Sociability), a ways card (Tentacle Potion's fortified tail). Every
+// sentence of its effect one of the reading's own, none dropped. Pure.
 
 import { activationBase, effectWords, sentencesOf } from "./lasting.js";
 
