@@ -797,10 +797,12 @@ test("third-party bonuses read from their own packs (their words not kept here):
     if (voice) assert.deepEqual(mods(voice)[0], [["performance", 2, "item", "1 hours", "null"]]);
 });
 
-test("a bonus with three scopes (Hagbane Biscuit): the +1 status bonus to saves against hags read by PF2e's origin trait for 10 minutes, its Perception and Recall Knowledge parts and the cold iron by hand", () => {
+test("a bonus with three scopes (Hagbane Biscuit): the +1 status bonus to saves against hags read by PF2e's origin trait for 10 minutes, its Perception and Recall Knowledge parts and the cold iron on its note Effect (2026-10-27)", () => {
     const plan = compileItem(item("Hagbane Biscuit"));
     assert.deepEqual(plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.value]), [["saving-throw", 1, "status", ["origin:trait:hag"], 10]]);
-    assert.ok(plan.unread.some((line) => /\(by hand\)\.$/.test(line)) && plan.unread.some((line) => /cold iron/.test(line)));
+    // (2026-10-27, batch 3: its Perception and Recall Knowledge parts and the cold iron no longer by hand — PF2e's toggles and AdjustStrike on
+    // its note Effect, src/compiler/illusions.js; test/places-2026-10-27.test.js.)
+    assert.deepEqual([plan.unread, plan.partial], [undefined, undefined]);
 });
 
 test("a bonus to its user's AC against an attack already rolled (Animal-Turning Fulu): the reroll card's latest attack roll at its user, its degree again against that much higher an AC, its miss's Concealed a note", async () => {
@@ -920,7 +922,8 @@ test("more mythic and healing items: Hollow Robes' persistent damage ended outri
     const { rerollText } = await import("../src/live/reroll-card.js");
     const { focusText } = await import("../src/live/focus-card.js");
     const hollow = compileActivations(item("Hollow Robes"))[1].plan;
-    assert.deepEqual([hollow.item.recovery.ends, hollow.item.recovery.types.length > 10, hollow.spend], [true, true, { mythicPoints: 1 }]);
+    // (2026-10-27, batch 3: its recovery now the readied card's, beside the triggering damage made 0 — test/places-2026-10-27.test.js.)
+    assert.deepEqual([hollow.bonus.recovery.ends, hollow.bonus.recovery.types.length > 10, hollow.spend], [true, true, { mythicPoints: 1 }]);
     assert.ok(!(hollow.notes ?? []).some((note) => /persistent damage you're currently taking ends/.test(note)), "its ending not a note too");
     // (One type ended outright beside the healing typed on the card: Assassin's Skin's bleed.)
     const skin = compileActivations(item("Assassin's Skin"))[0].plan;

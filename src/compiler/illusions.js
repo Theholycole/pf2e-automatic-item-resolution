@@ -165,6 +165,126 @@ const READINGS = [
         card: (found, plan) => (plan?.builtin !== "cast-spell" ? null : { keep: true, notes: ["The disguise is its user's to describe.", "If its user chooses, it also hides the aeon stones circling its head, unseen until the disguise ends."], partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } })
     },
     {
+        // (Batch 3, 2026-10-27: Illusory Scene cast at once, its burst on its user — the cast card's lines, over the cast read before.)
+        name: "Fan of Falling Words: Whispered World",
+        over: true,
+        sentences: [/^\bYou manifest the tapestry of your words\b.*\.$/, /^\bThe fan casts Illusory Scene to your specifications\b.*\.$/, /^\bWhile this only takes 3 actions\b.*\bno range\b.*\bburst\b.*\bcentered on you\.$/],
+        card: (found, plan) => (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Illusory Scene" ? null : { keep: true, notes: ["The scene is its user's to describe: the image painted on the fan, come to life.", "Cast in the activation's 3 actions, not the spell's 10 minutes, with no range: its 50-foot burst is centred on its user (place the spell's area there)."], partial: undefined, automation: { level: "automatic" } })
+    },
+    {
+        // (Batch 3, 2026-10-27: a hag's disguise seen through and lore about hags — PF2e's toggles for those beside its saves against hags,
+        // read before, its weapons cold iron against hags as PF2e's Greenwatcher has it, on one note Effect for the 10 minutes; and a hag's or
+        // a changeling's eating it the save card instead (plan.item.unlessKind, src/compiler/drinker-kind.js's), its success the biscuit's.)
+        name: "Hagbane Biscuit",
+        over: true,
+        sentences: [
+            /^\bThis gingerbread biscuit is stamped\b.*\.$/,
+            /^\bWhen you eat the biscuit\b.*\bfor (\d+) (minutes?), granting you a \+(\d) status bonus\b.*\bhag's disguise\b.*\bRecall Knowledge about hags\b.*\bsaving throws\b.*\bhags' abilities and spells\.$/,
+            /^\bDuring this time, weapons you wield\b.*\bcold iron\b.*\bagainst hags\.$/,
+            /^\bThe biscuit tastes especially bitter\b.*\bhag bloodline\)\.$/,
+            /^\bIf such a creature attempts\b.*\bthe biscuit\b.*@Check\[fortitude\|dc:(\d+)[^\]]*\] save\b.*\bSickened (\d) on a critical failure\)\.$/
+        ],
+        card: ([, eat, , , bitter], plan) => {
+            const row = plan?.resolution?.outcomes?.success;
+            if (!plan?.partial || !row || !(row.modifiers ?? []).some((modifier) => modifier.selector === "saving-throw")) return null;
+            const value = Number(eat[3]);
+            const toggle = (option, label) => ({ key: "RollOption", domain: "all", option, toggleable: true, label });
+            const note = {
+                label: "Hagbane Biscuit",
+                text: `+${value} status bonus to Perception checks to see through a hag's disguise and to Recall Knowledge checks about hags (its toggles on for those), beside its saves against hags. Its weapons and unarmed attacks count as cold iron against hags.`,
+                duration: timeOf(eat[1], eat[2]),
+                rules: [
+                    toggle("hagbane-disguise", "Seeing through a hag's disguise"),
+                    { key: "FlatModifier", selector: "perception", type: "status", value, predicate: ["hagbane-disguise"] },
+                    toggle("hagbane-lore", "Recalling Knowledge about hags"),
+                    { key: "FlatModifier", selector: "skill-check", type: "status", value, predicate: ["hagbane-lore"] },
+                    { key: "AdjustStrike", mode: "add", property: "materials", value: "cold-iron", predicate: ["target:trait:hag"] }
+                ]
+            };
+            const eaten = { ...row, noteEffects: [note] };
+            const wasted = { ...none(), effects: [], modifiers: [] };
+            const sick = { ...none(), modifiers: [], effects: [{ kind: "condition", slug: "sickened", value: Number(bitter[2]), duration: null }] };
+            const save = { modelVersion: plan.modelVersion, source: plan.source, rank: plan.rank, traits: plan.traits, activation: plan.activation, automation: { level: "automatic" }, targeting: { target: "the eater", range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "save", check: { roll: "save", statistic: "fortitude", basic: false, against: { dc: "fixed", value: Number(bitter[1]) } }, sharedDamage: null, outcomes: { criticalSuccess: eaten, success: eaten, failure: wasted, criticalFailure: sick } } };
+            return {
+                keep: true,
+                unread: undefined,
+                partial: undefined,
+                automation: { level: "automatic" },
+                resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: eaten } },
+                notes: [`Another hag-related eater without the hag or changeling trait — a sorcerer of the hag bloodline, say — must succeed at the same DC ${bitter[1]} Fortitude save first, or the biscuit fails, its action wasted (Sickened ${bitter[2]} on a critical failure): the GM's call.`],
+                item: { ...(plan.item ?? {}), unlessKind: { traits: ["hag", "changeling"], save, works: true } }
+            };
+        }
+    },
+    {
+        // (Batch 3, 2026-10-27: its user's Strike its own; the teleport within 100 feet the teleport card beside (plan.item.move, read before
+        // as the plan's own); and on a hit its illusory duplicate's one action each round for 3 rounds — the later attack card kept open
+        // (plan.again, as src/compiler/self-fighting.js's weapon), at its +28 for 3d6+16 slashing. Its AC and its end by any damaging attack or
+        // save the GM's, lines.)
+        name: "Shadow's Heart",
+        over: true,
+        sentences: [
+            /^\bYou make a melee Strike\b.*\band teleport\b.*\bwithin (\d+) feet\.$/,
+            /^\bIf the attack hits, you also leave behind\b.*\bfor up to (\d+) rounds\.$/,
+            /^\bThe illusion has 1 action per round\b.*\bon your turn each round\.$/,
+            /^\bIt uses this action to move up to (\d+) feet\b.*\bwith a \+(\d+) attack modifier, dealing (\d+d\d+(?:\+\d+)?) (\w+) damage\.$/,
+            /^\bThe illusion has an AC of (\d+)\b.*\bsaving throw\.$/
+        ],
+        card: ([teleport, lasts, , attack, ac], plan) => {
+            if (plan?.builtin !== "teleport" || plan.teleport?.within !== Number(teleport[1])) return null;
+            const modifier = Number(attack[2]);
+            const hit = (multiplier) => ({ damage: { mode: "shared", multiplier, sourceComponentIds: ["0"] }, effects: [], modifiers: [] });
+            const strike = {
+                modelVersion: plan.modelVersion,
+                source: { name: `${plan.source?.name ?? "Shadow's Heart"}: its duplicate's attack` },
+                automation: { level: "automatic" },
+                targeting: { target: "the creature its user's Strike hit", range: null, area: null },
+                trigger: { event: "use" },
+                ownCheck: { kind: "attack", modifier },
+                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `(${attack[3]})[${attack[4].toLowerCase()}]`, type: null, category: null }] }, outcomes: { criticalSuccess: hit(2), success: hit(1), failure: none(), criticalFailure: none() } }
+            };
+            return {
+                keep: true,
+                builtin: undefined,
+                teleport: undefined,
+                partial: undefined,
+                automation: { level: "automatic" },
+                targeting: { target: null, range: null, area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
+                notes: [
+                    `Its user Strikes with it first (its own Strike), then teleports up to ${teleport[1]} feet to a space in its sight (the teleport card).`,
+                    `Only if that Strike hit: its illusory duplicate stays behind for up to ${lasts[1]} rounds, with 1 action on the turn it's made and on its user's turn each round — moving up to ${attack[1]} feet to beside the target, and attacking it if it's there (its attack card, kept open). Missed: close that card.`,
+                    `The duplicate has AC ${ac[1]}; any attack that deals it damage, or anything that calls for its save, destroys it (the GM's): close its card then.`
+                ],
+                item: { ...(plan.item ?? {}), move: plan.teleport },
+                again: { plan: strike, later: true, repeat: true, rounds: Number(lasts[1]), when: "the duplicate's action, on the turn it's made and on its user's turn each round" }
+            };
+        }
+    },
+    {
+        // (Batch 3, 2026-10-27: hollow to the critical hit's damage or the persistent damage that triggered it — the readied card's bonus.noDamage,
+        // the damage 0 as it's applied (scripts/half-damage.js), spent by it —, every persistent damage ended at once (its recovery, read before,
+        // now the readied card's), for its Mythic Point (plan.spend, read before).)
+        name: "Hollow Robes: Hollow Target",
+        over: true,
+        sentences: [/^\bSpend 1 Mythic Point\.$/, /^\bYou momentarily transform yourself into an illusory duplicate\b.*\btriggering damage or Strike\.$/, /^\bThe damage from a critical hit\b.*\breduced to 0\.$/, /^\bAll persistent damage you're currently taking ends\.$/],
+        card: (found, plan) => {
+            if (plan?.builtin || !plan?.item?.recovery?.ends || !plan.spend?.mythicPoints) return null;
+            const { recovery, ...item } = plan.item;
+            return {
+                keep: true,
+                builtin: "readied-bonus",
+                resolution: undefined,
+                partial: undefined,
+                automation: { level: "automatic" },
+                targeting: { target: "the user", range: null, area: null },
+                bonus: { modifiers: [], resistance: null, noDamage: true, recovery, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], against: true },
+                notes: ["Only while Empty Robes is in effect.", "Only against what triggered it: a critical hit from a Strike, or the persistent damage it takes."],
+                item
+            };
+        }
+    },
+    {
         name: "Masquerade Scarf (Greater): Masquerade",
         over: true,
         sentences: [

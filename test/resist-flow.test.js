@@ -124,9 +124,10 @@ test("other senses with their acuity and range: Blood Sight Elixir's bloodsense 
     assert.equal(compileItem(source("Blood Sight Elixir (Major)")).item.senses[0].acuity, "precise");
     assert.equal(senseText(lesser.item.senses[0]), "Imprecise bloodsense 60 feet for 10 minutes");
     assert.deepEqual(senseEffectSource(lesser.item.senses[0], { item: { name: "Blood Sight Elixir (Lesser)" } }).system.rules, [{ key: "Sense", selector: "bloodsense", acuity: "imprecise", range: 60 }]);
-    // (Its range sentence, which says what the sense detects, read with it: not a note. The major elixir's approximations stay one.)
+    // (Its range sentence, which says what the sense detects, read with it: not a note. The major elixir's approximations were one; since
+    // 2026-10-27 they're words on its note Effect, src/compiler/visibility.js.)
     assert.deepEqual([lesser.partial, lesser.unread], [undefined, undefined]);
-    assert.equal(compileItem(source("Blood Sight Elixir (Major)")).partial, true);
+    assert.equal(compileItem(source("Blood Sight Elixir (Major)")).partial, undefined);
 });
 
 test("PF2e's own rules on its user (item.ruleEffects): Mirrorblade's 10 minutes of not being Off-Guard to flanking creatures — flanking.offGuardable false, as PF2e's Deny Advantage sets it; Apply puts the Effect on its user", async () => {

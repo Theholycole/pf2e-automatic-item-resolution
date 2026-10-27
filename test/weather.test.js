@@ -20,7 +20,9 @@ const item = (name) => {
 test("Ixamè's Eye: fog and mist ignored for a minute, its Effect flagged weatherIgnores (not the environment module's own weather mark); a hider's fate the GM's", () => {
     const eye = compileItem(item("Ixamè's Eye"));
     assert.deepEqual(eye.weatherIgnores, { ignores: ["fog-mist"], duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" } });
-    assert.deepEqual([eye.partial, eye.notes.length], [true, 1]);
+    // (2026-10-27, batch 3: a hider's fate the GM's in words on its note Effect in place of the reminder, no longer a note — src/compiler/visibility.js.)
+    assert.deepEqual([eye.partial, eye.notes, eye.resolution.outcomes.success.noteEffects.length], [undefined, undefined, 1]);
+    assert.match(eye.resolution.outcomes.success.noteEffects[0].text, /Hiding or Sneaking in that fog no longer is/);
     const source = weatherEffectSource(eye.weatherIgnores, { item: { name: "Ixamè's Eye" } });
     assert.deepEqual([source.flags["pf2e-automatic-environment-resolution"].weatherIgnores, source.flags["pf2e-automatic-environment-resolution"].weather], [{ ignores: ["fog-mist"], source: "Ixamè's Eye" }, undefined]);
     assert.equal(weatherLine(eye.weatherIgnores), "Ignores the weather's fog and mist for 1 minute");
