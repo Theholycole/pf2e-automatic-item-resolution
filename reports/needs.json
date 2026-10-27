@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1237,
+  "entries": 1236,
   "results": {
-   "partial": 343,
+   "partial": 342,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -13,7 +13,7 @@
    "speeds": 22,
    "counteract": 21,
    "afflictions": 57,
-   "moving": 78,
+   "moving": 77,
    "visibility": 45,
    "lasting": 63,
    "choice": 30,
@@ -58,7 +58,7 @@
    "counteract": 100,
    "afflictions": 104,
    "lasting": 226,
-   "moving": 105,
+   "moving": 104,
    "triggers": 114,
    "visibility": 47,
    "dying": 75,
@@ -536,16 +536,6 @@
    "work": "submerged",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Scizore of the Crab",
-   "kind": "activation",
-   "result": "partial",
-   "main": "moving",
-   "work": "move",
-   "needs": [
-    "moving"
    ]
   },
   {

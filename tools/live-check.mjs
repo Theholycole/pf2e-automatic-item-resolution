@@ -3035,6 +3035,44 @@ export const cases = {
         }
     },
 
+    // Scizore of the Crab (2026-10-27): after a hit with it, its grab — the foe Grabbed, its Escape against the wielder's Athletics DC; an Escape
+    // that beats it (a 20 on the die) ends it.
+    async scizoreGrab(scene) {
+        await clearSquares(scene, [[7, 9], [8, 9]]);
+        const { actor: user, token: userToken } = await creature(scene, "Scizore Wielder", { type: "character", x: 7, y: 9 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Scizore Target", { x: 8, y: 9, ac: -20, hp: 200, alliance: "opposition" });
+        const claw = await give(user, "Scizore of the Crab");
+        await claw.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await userToken.object?.control?.();
+        await target(foeToken);
+        await strike(user, claw);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(claw.uuid, 0);
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")) || Boolean(message.flags?.["pf2e-automatic-ability-resolution"]?.card), { what: "the grab's card" });
+        since = Date.now();
+        if (card.getFlag(NS, "card")) await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = card.flags?.["pf2e-automatic-ability-resolution"]?.card ? card : await messageAfter(since, abilitySaveCard, { what: "the ability card", timeout: 8000 });
+        let button = null;
+        for (const stop = Date.now() + 8000; Date.now() < stop && !button; ) {
+            const found = document.querySelector(`[data-message-id="${save.id}"] [data-aar-action="apply"]`);
+            if (found && !found.disabled) button = found;
+            else await wait(200);
+        }
+        assert(button, "the ability card's Apply");
+        button.click();
+        const dc = user.skills.athletics.dc.value;
+        const grab = () => foe.itemTypes.effect.find((effect) => /Grabbed/.test(effect.name) && Number(effect.flags?.["pf2e-automatic-ability-resolution"]?.escape?.dc) > 0);
+        await until(() => grab() && foe.hasCondition("grabbed"), `Grabbed with an Escape DC (${foe.itemTypes.effect.map((effect) => `${effect.name} ${JSON.stringify(effect.flags?.["pf2e-automatic-ability-resolution"]?.escape ?? null)}`)})`, { timeout: 10000 });
+        const escapeDC = Number(grab().flags["pf2e-automatic-ability-resolution"].escape.dc);
+        assert(escapeDC === dc, `its Escape DC the wielder's Athletics DC (${escapeDC} vs ${dc})`);
+        const action = game.pf2e.actions.get?.("escape");
+        // (Escaping its grabber: PF2e measures it against the creature targeted's Athletics DC.)
+        await target(userToken);
+        await withDie(20, () => (action ? action.use({ actors: [foe], event: shift() }) : game.pf2e.actions.escape({ actors: [foe], event: shift() })));
+        await until(() => !grab(), `the grab ended by its Escape (${foe.itemTypes.effect.map((effect) => effect.name)})`, { timeout: 10000 });
+        return { escapeDC, athleticsDC: dc };
+    },
+
     // Nightmare's Lament's Fuming Cloak (2026-10-27): its wielder gets PF2e's Aura: Fuming Cloak and the zone around it; the foe beside it starting
     // its turn there gets the DC 23 Fortitude save's card — failed, Sickened 2 and immune for a minute; its wielder's own turn start gives none,
     // nor the foe's next (immune).

@@ -137,7 +137,8 @@ export const startInitiative = (actor) => {
 export function ownerDCsOf(actor) {
     const number = (value) => (Number(value) > 0 ? Number(value) : null);
     const attributes = actor?.system?.attributes ?? {};
-    return { class: number(attributes.classDC?.value), spell: number(attributes.spellDC?.value) };
+    // (And its Athletics DC: a grab's Escape DC, Scizore of the Crab's "This functions as the Grab creature ability".)
+    return { class: number(attributes.classDC?.value), spell: number(attributes.spellDC?.value), athletics: number(actor?.skills?.athletics?.dc?.value) };
 }
 
 // A condition lowered by an amount (PF2e's decreaseCondition, once for each step), or removed ("all").

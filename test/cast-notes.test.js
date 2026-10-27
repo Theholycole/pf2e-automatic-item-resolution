@@ -831,3 +831,13 @@ test("creatures of a kind immune to the cast and others worse off (2026-10-27): 
     assert.deepEqual([penalty.traits, penalty.selector, penalty.type, penalty.value], [["demon"], "will", "item", -2]);
     assert.deepEqual(castPenaltySource(penalty, "Vibrant Pattern", { item: { name: "Castrovel's Beacon" } }).system.rules, [{ key: "FlatModifier", selector: "will", type: "item", value: -2, label: "Castrovel's Beacon" }]);
 });
+
+test("a grab that works as the Grab creature ability (2026-10-27): Scizore of the Crab — Grabbed until the end of its user's next turn, its Escape against its user's Athletics DC (filled in as the card is made), the move-away end a note", async () => {
+    const { fillOwnerDCs } = await import("../src/compiler/item-data.js");
+    const [{ plan }] = compileActivations(item("Scizore of the Crab"), options);
+    assert.equal(plan.partial, undefined);
+    const grab = plan.resolution.outcomes.success.effects.find((effect) => effect.slug === "grabbed");
+    assert.deepEqual(grab.duration.escape, { ownerDC: "athletics" });
+    assert.equal(fillOwnerDCs(plan, { athletics: 24 }).plan.resolution.outcomes.success.effects[0].duration.escape.dc, 24);
+    assert.match(plan.resolution.outcomes.success.noteEffects[0].text, /moves away/);
+});
