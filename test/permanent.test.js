@@ -308,9 +308,10 @@ test("temporary Hit Points, a penalty, a resistance and later words: Razmiri Way
     const bangles = at("Bangles of Crowns", 1).resolution.outcomes.success.effects[0];
     assert.deepEqual([bangles.amount, bangles.duration.value, bangles.duration.unit], [15, 1, "minutes"]);
     // "… for 1 minute, but the calming urges impose a -1 status penalty to your attack rolls": the penalty, the suppression a note.
-    const stone = at("Aeon Stone (Olivine Pendeloque)");
+    // (2026-10-27: the suppression read too, src/compiler/triggered.js — a way for each condition, each with the penalty; no longer partial.)
+    const stone = at("Aeon Stone (Olivine Pendeloque)").ways[0].plan;
     assert.deepEqual(stone.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.unit]), [["attack-roll", -1, "minutes"]]);
-    assert.equal(stone.partial, true);
+    assert.equal(stone.partial, undefined);
     // "+1 item bonus to Diplomacy checks and checks of the skill associated with your phrase": Diplomacy, the other the card's pick
     // (src/compiler/skill-pick.js).
     const words = at("Words of Wisdom (Lesser)");

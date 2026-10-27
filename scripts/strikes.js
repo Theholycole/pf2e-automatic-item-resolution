@@ -7,6 +7,7 @@
 // weapon for a Strike with it ("item:id:…").
 
 import { postEndEarlyAt } from "./end-early.js";
+import { markDrained } from "./drain.js";
 import { postCounteractAt } from "./counteract.js";
 import { afterEndsEffectSource } from "../src/live/card.js";
 import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
@@ -186,12 +187,15 @@ export async function strikeWithRider(message) {
         const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
         await postActionCard({ message: null, plan: follow, used: { data: { name: rider.item.name, uuid: rider.item.uuid ?? null } }, actor, token: sourceToken?.object ?? sourceToken });
     }
+    // (Temporary Hit Points from the damage the hit deals, Reaper's Toll's Reaper's Claim — src/compiler/strike-damage.js: the creature hit marked
+    // before its damage roll, scripts/drain.js giving its user that share of what the damage takes off it, after its resistances.)
+    const drained = rider.plan.strike?.drain && what === "hit" ? await drainOnHit({ drain: rider.plan.strike.drain, message, context, actor, rider }) : null;
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
     // (A note for the creature hit counts: Magekiller Bullet's curse.)
     if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
-        await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}.</p>` });
+        await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}${drained ? `; ${escape(drained)}` : ""}.</p>` });
         return;
     }
     const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;
@@ -204,6 +208,7 @@ export async function strikeWithRider(message) {
     // (Its Prone only for a creature on the ground, Drake Shot's: src/live/if-target.js.)
     const elevation = Number(targetToken.document?.elevation ?? targetToken.elevation) || 0;
     const lines = await applyRiders({ plan: withoutAloftProne(rider.plan, elevation), degree: context.outcome, user: rider.user, target, item: rider.item });
+    if (drained) lines.push(drained);
     // (Pulled out of the creature it hit, Beacon Shot's Athletics check: the end-early card, scripts/end-early.js.)
     if (rider.plan.strike?.endEarly && ["success", "criticalSuccess"].includes(context.outcome)) await postEndEarlyAt({ endEarly: rider.plan.strike.endEarly, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: rider.user, creatures: [{ actorUuid: targetToken.actor.uuid, tokenUuid: targetToken.uuid, name: target.name }] }).catch((error) => console.error(`${MODULE_ID} | end early`, error));
     if (rider.plan.strike?.groundedProne && elevation > 0) lines.push(`${target.name} isn't on the ground: it doesn't fall Prone`);
@@ -294,6 +299,21 @@ export async function strikeWithRider(message) {
     const hitCounteract = rider.plan.strike?.counteract;
     if (hitCounteract) lines.push(await counteractOnHit(hitCounteract, { rider, actor, targetToken, message }));
     await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(lines.join("; ") || "the Strike hit")}.</p>` });
+}
+
+// The creature the Strike hit marked for its user's share of the damage it then takes (src/compiler/strike-damage.js drain) → the hit's line.
+async function drainOnHit({ drain, message, context, actor, rider }) {
+    const targetUuid = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
+    const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
+    const share = { 0.5: "half", 2: "twice" }[drain.fraction] ?? `${drain.fraction} times`;
+    if (!targetToken?.actor) return `it had no target: ${actor.name} gains ${share} the damage it deals as temporary Hit Points (by hand)`;
+    const user = { actorUuid: actor.uuid, tokenUuid: rider.user?.tokenUuid ?? null, name: actor.name };
+    const marked = await markDrained(targetToken.actor, drain, { item: { name: rider.item.name, uuid: rider.item.uuid ?? null, img: rider.item.img ?? null }, user }).catch((error) => {
+        console.error(`${MODULE_ID} | drain on hit`, error);
+        return null;
+    });
+    const name = targetToken.name ?? targetToken.actor.name;
+    return marked ? `the damage roll ${name} takes gives ${actor.name} ${share} of it as temporary Hit Points` : `${actor.name} gains ${share} the damage it deals ${name} as temporary Hit Points (by hand)`;
 }
 
 // An Effect's traits, its spell's too (a battle form's polymorph).
