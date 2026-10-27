@@ -6,17 +6,18 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1448,
-   "builtin:cast-spell": 475,
+   "resolves": 1458,
+   "builtin:cast-spell": 472,
    "builtin:focus-point": 49,
    "builtin:counteract": 39,
    "builtin:readied-bonus": 54,
    "builtin:reroll": 46,
-   "builtin:ways": 86,
+   "builtin:ways": 93,
    "builtin:whisper": 51,
    "builtin:table": 8,
-   "none": 37,
-   "builtin:teleport": 31,
+   "builtin:craft": 2,
+   "none": 24,
+   "builtin:teleport": 32,
    "builtin:zone": 41,
    "builtin:pf2e-rules": 23,
    "builtin:modes": 36,
@@ -24,31 +25,35 @@
    "builtin:item-action": 28,
    "builtin:conjure": 25,
    "builtin:roll-twice": 15,
-   "note-only": 10,
    "builtin:found-item": 1,
-   "builtin:no-effect": 6,
-   "partial": 9,
+   "note-only": 8,
+   "builtin:no-effect": 4,
+   "builtin:deck": 1,
+   "partial": 6,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1,
    "builtin:structure": 1,
    "gaps": 5,
    "builtin:bond": 1,
+   "builtin:transmogrify": 1,
+   "builtin:grant-spell": 1,
    "builtin:feat-use": 1
   },
   "live": {
-   "save": 446,
-   "cast": 475,
-   "item": 886,
+   "save": 447,
+   "cast": 472,
+   "item": 890,
    "focus": 49,
    "counteract": 39,
    "fortune": 69,
    "reroll": 46,
-   "ways": 86,
-   "strike": 131,
+   "ways": 93,
+   "strike": 132,
    "whisper": 51,
    "table": 8,
-   "none": 68,
-   "teleport": 31,
+   "craft": 2,
+   "none": 52,
+   "teleport": 32,
    "zone": 41,
    "toggle": 36,
    "objects": 41,
@@ -57,10 +62,13 @@
    "found": 1,
    "coat": 4,
    "later": 3,
+   "deck": 1,
    "spellstrike": 9,
    "take": 1,
    "structure": 1,
    "bond": 1,
+   "transmogrify": 1,
+   "grant-spell": 1,
    "feat-use": 1
   },
   "withFrequency": 1734,
@@ -70,45 +78,49 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 884,
-    "builtin:cast-spell": 349,
+    "resolves": 891,
+    "builtin:cast-spell": 346,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
     "builtin:readied-bonus": 34,
     "builtin:reroll": 35,
-    "builtin:ways": 53,
+    "builtin:ways": 58,
     "builtin:whisper": 47,
     "builtin:table": 5,
-    "none": 27,
-    "builtin:teleport": 18,
+    "builtin:craft": 2,
+    "none": 19,
+    "builtin:teleport": 19,
     "builtin:objects": 24,
     "builtin:zone": 22,
     "builtin:item-action": 16,
     "builtin:conjure": 24,
     "builtin:modes": 19,
     "builtin:roll-twice": 11,
-    "note-only": 8,
     "builtin:found-item": 1,
-    "builtin:no-effect": 4,
-    "partial": 5,
+    "note-only": 6,
+    "builtin:deck": 1,
+    "builtin:no-effect": 2,
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1,
     "builtin:structure": 1,
+    "partial": 2,
     "gaps": 4,
-    "builtin:bond": 1
+    "builtin:bond": 1,
+    "builtin:transmogrify": 1,
+    "builtin:grant-spell": 1
    }
   },
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 279,
+    "resolves": 282,
     "builtin:cast-spell": 81,
     "builtin:reroll": 7,
     "builtin:zone": 9,
-    "builtin:ways": 17,
+    "builtin:ways": 19,
     "builtin:table": 1,
     "builtin:modes": 13,
-    "none": 10,
+    "none": 5,
     "builtin:item-action": 9,
     "builtin:counteract": 2,
     "builtin:readied-bonus": 10,
@@ -874,9 +886,9 @@
    "time": "3 days",
    "frequency": "4 times per year",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:craft",
    "kind": null,
-   "live": null
+   "live": "craft"
   },
   {
    "name": "Aroden's Hearthstone",
@@ -885,9 +897,9 @@
    "time": "3",
    "frequency": "once per month",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Pendant of the Occult (Greater)",
@@ -1414,9 +1426,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:teleport",
    "kind": null,
-   "live": null
+   "live": "teleport"
   },
   {
    "name": "Twisting Gale",
@@ -1921,9 +1933,9 @@
    "time": "1",
    "frequency": "three times per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Four-Ways Dogslicer",
@@ -4514,7 +4526,7 @@
    "time": "1 hour",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -5253,9 +5265,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Freedom's Flame",
@@ -5916,9 +5928,9 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "strike"
   },
   {
    "name": "Faultline Hammer",
@@ -7924,9 +7936,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:deck",
    "kind": null,
-   "live": null
+   "live": "deck"
   },
   {
    "name": "Sky Serpent Bolt",
@@ -8232,9 +8244,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Unmemorable Mantle (Major)",
@@ -9686,9 +9698,9 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Azarim",
@@ -10974,9 +10986,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Stage Magician's Cloak",
@@ -12980,9 +12992,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Life Shot (Major)",
@@ -13324,9 +13336,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Sihedron Ring (Greater)",
@@ -16167,9 +16179,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Spellstrike Ammunition (Type V)",
@@ -18373,9 +18385,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Nexian Sealing Blade (Greater)",
@@ -18960,9 +18972,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
-   "kind": "save",
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Lion's Shield",
@@ -20218,7 +20230,7 @@
    "time": "1",
    "frequency": "once per round",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -20989,9 +21001,9 @@
    "time": "free",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Staff of Sun Wukong",
@@ -22359,9 +22371,9 @@
    "time": "3",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:craft",
    "kind": null,
-   "live": null
+   "live": "craft"
   },
   {
    "name": "Philosopher's Extractor",
@@ -22370,9 +22382,9 @@
    "time": "1 hour",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:transmogrify",
+   "kind": null,
+   "live": "transmogrify"
   },
   {
    "name": "Containment Contraption",
@@ -23773,9 +23785,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:grant-spell",
    "kind": null,
-   "live": null
+   "live": "grant-spell"
   },
   {
    "name": "Spellstrike Ammunition (Type VIII)",
@@ -27326,9 +27338,9 @@
    "time": "1",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Wintershot (Heroic)",
@@ -27568,9 +27580,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "cast"
+   "live": "ways"
   },
   {
    "name": "Amulet of the Hellcat",

@@ -22,7 +22,10 @@ const first = (name) => compileActivations(item(name), options)[0].plan;
 test("a cast's note adding a rule makes it partial — The Courtesan's Impersonate one degree better against lower-level creatures (The Winged Serpent's 10 minutes, its example once, played since)", () => {
     const courtesan = first("The Courtesan");
     assert.equal(courtesan.builtin, "cast-spell");
-    assert.equal(courtesan.partial, true);
+    // (2026-10-27: its Impersonate a degree better is the cast's own Effect now, castBonus with PF2e's AdjustDegreeOfSuccess —
+    // src/compiler/relic-readings.js, the unique items built whole; no longer partial.)
+    assert.equal(courtesan.partial, undefined);
+    assert.equal(courtesan.castBonus.rules[1].key, "AdjustDegreeOfSuccess");
 });
 
 test("a note only restating the spell doesn't — Satchel of Numberless Seeds' Protector Tree within its own 30 feet", () => {

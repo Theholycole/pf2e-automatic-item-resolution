@@ -13,7 +13,8 @@ export async function postTableCard({ message, plan, used, actor, token }) {
 
 // A RollTable it links (Rod of Wonder's): Foundry's draw, its chat message the table's own; the row drawn → { text, plan? }, its words
 // compiled as the item's use (compileRow: scripts/live.js's compiler, passed in).
-async function drawLinked(state, compileRow) {
+// (Exported for the Deck of Many Things' draws, scripts/deck.js — 2026-10-27.)
+export async function drawLinked(state, compileRow) {
     const table = await fromUuid(state.plan.table.uuid).catch(() => null);
     if (!table?.draw) throw new Error(`${state.item.name}'s ${state.plan.table.name} table isn't there: roll it by hand.`);
     const { results = [] } = await table.draw({ displayChat: true });

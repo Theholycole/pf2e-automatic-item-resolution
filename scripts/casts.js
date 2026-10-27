@@ -44,10 +44,11 @@ export function beyondRange(castRange, casterToken, actor, targets) {
 // The cast's bonus beside the spell (src/compiler/cast-riders.js castBonus) on each creature it's cast on: PF2e's FlatModifier rules for its
 // time. → the card's lines.
 export async function giveCastBonus(state, actors) {
-    const { modifiers, said, ifKnows } = state.plan.castBonus;
+    // (Or PF2e's own rules for it, The Courtesan's degree better to Impersonate: castBonus.rules, its time castBonus.duration — 2026-10-27.)
+    const { modifiers = [], said, ifKnows, rules = null } = state.plan.castBonus;
     // (Only for a caster who already has that spell or ritual, the Oculus of Abaddon's Binding Circle: none otherwise — 2026-10-27.)
     if (ifKnows && !actors.some((actor) => (actor.itemTypes?.spell ?? []).some((spell) => spell.name.toLowerCase() === ifKnows.toLowerCase()))) return [`No ${said.replace(/^(?:and|with) /i, "")}: its caster doesn't know ${ifKnows}.`];
-    const time = modifiers[0].duration;
+    const time = state.plan.castBonus.duration ?? modifiers[0].duration;
     const words = said.replace(/^(?:and|with) /i, "");
     const lines = [];
     for (const actor of actors) {
@@ -57,7 +58,7 @@ export async function giveCastBonus(state, actors) {
             img: state.item.img ?? "icons/svg/upgrade.svg",
             flags: { [MODULE_ID]: { castBonus: true } },
             system: { description: { value: `<p>${words.charAt(0).toUpperCase()}${words.slice(1)} (${state.item.name}).</p>` }, duration: { value: time.value, unit: time.unit, expiry: time.expiry ?? "turn-start", sustained: false }, start: { value: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null }, tokenIcon: { show: true },
-                rules: modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: modifier.type, value: modifier.value, label: state.item.name, ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })) }
+                rules: rules ?? modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: modifier.type, value: modifier.value, label: state.item.name, ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })) }
         }]);
         lines.push(`${actor.name} gains ${words}.`);
     }
@@ -197,7 +198,11 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             await actor.createEmbeddedDocuments("Item", [ruleEffectSource(state.plan.castCaster, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
             lines.push(`${actor.name}: ${state.plan.castCaster.words}.`);
         }
-        const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
+        // (All its damage of one type, Soulcutter's Soulcutting Storm's spirit: the spell module's damageType, once it takes it — its
+        // castFromItemOptions says so; until then, a line to change it by hand. 2026-10-27.)
+        const typed = state.plan.castDamageType && (game.modules.get(SPELL_ID)?.api?.castFromItemOptions ?? []).includes("damageType") ? { damageType: state.plan.castDamageType.type } : {};
+        if (state.plan.castDamageType && !typed.damageType) lines.push(`All its damage is ${state.plan.castDamageType.type}: change its type by hand on the spell's damage.`);
+        const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item, ...typed });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
         // (Or the chosen spell's own, Cloak of the False Foe's Medium cryptid's hour and Large cryptid's 10 minutes.)

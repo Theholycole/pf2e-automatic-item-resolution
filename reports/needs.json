@@ -1,112 +1,76 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 99,
+  "entries": 72,
   "results": {
-   "none": 39,
-   "partial": 36,
-   "note-only": 13,
-   "builtin:no-effect": 6,
+   "none": 26,
+   "partial": 26,
+   "note-only": 11,
+   "builtin:no-effect": 4,
    "gaps": 5
   },
   "main": {
-   "areas": 17,
-   "lasting": 2,
-   "creatures": 13,
-   "choice": 3,
-   "triggers": 6,
-   "visibility": 3,
+   "areas": 13,
+   "creatures": 12,
+   "triggers": 5,
+   "visibility": 2,
    "moving": 4,
-   "spells": 4,
-   "strike": 9,
-   "cast-changes": 5,
+   "strike": 8,
+   "cast-changes": 3,
    "afflictions": 1,
    "fortune": 2,
-   "objects": 3,
-   "information": 3,
-   "immunity": 2,
-   "mind": 2,
-   "counteract": 2,
+   "choice": 2,
+   "counteract": 1,
    "out-of-combat": 1,
-   "vehicles": 1,
    "dying": 3,
-   "several": 2,
+   "several": 1,
    "actions": 1,
    "situational": 2,
+   "spells": 3,
    "senses": 1,
-   "by-kind": 1,
-   "forms": 3,
+   "information": 1,
    "reader": 1,
    "retaliation": 1,
-   "no-rules": 1
+   "forms": 2,
+   "no-rules": 1,
+   "objects": 1
   },
   "any": {
-   "areas": 28,
-   "range": 3,
-   "out-of-combat": 25,
-   "lasting": 21,
-   "several": 12,
-   "objects": 27,
-   "reader": 24,
-   "counteract": 9,
-   "creatures": 13,
-   "choice": 6,
-   "strike": 23,
+   "areas": 23,
+   "lasting": 17,
+   "objects": 21,
+   "counteract": 6,
+   "creatures": 12,
+   "strike": 21,
+   "several": 9,
    "moving": 6,
-   "mind": 13,
-   "information": 19,
-   "triggers": 7,
+   "range": 2,
+   "reader": 18,
+   "mind": 7,
+   "triggers": 6,
    "afflictions": 7,
-   "visibility": 3,
-   "spells": 13,
-   "cast-changes": 5,
-   "immunity": 13,
+   "visibility": 2,
+   "cast-changes": 3,
+   "immunity": 9,
+   "choice": 4,
    "fortune": 2,
-   "speech": 7,
-   "vehicles": 1,
+   "out-of-combat": 16,
+   "information": 11,
+   "spells": 12,
+   "speech": 6,
    "dying": 6,
    "situational": 6,
    "actions": 2,
-   "senses": 3,
+   "senses": 2,
    "from-events": 4,
-   "by-kind": 1,
-   "forms": 3,
    "retaliation": 1,
+   "forms": 2,
    "speeds": 1,
    "no-rules": 1,
    "illusions": 1
   }
  },
  "entries": [
-  {
-   "name": "Aroden's Hearthstone",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "range",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Aroden's Hearthstone",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "none",
-   "main": "lasting",
-   "work": "each round",
-   "needs": [
-    "lasting",
-    "several",
-    "objects",
-    "reader"
-   ]
-  },
   {
    "name": "Cube of Nex",
    "kind": "activation",
@@ -150,19 +114,6 @@
    ]
   },
   {
-   "name": "Runewell of Lust",
-   "kind": "activation",
-   "tier": "special",
-   "level": 23,
-   "activation": "Exit the Eye",
-   "result": "none",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice"
-   ]
-  },
-  {
    "name": "Hunter's Dawn",
    "kind": "activation",
    "tier": "special",
@@ -197,21 +148,6 @@
    ]
   },
   {
-   "name": "Grail of Twisted Desires",
-   "kind": "activation",
-   "tier": "special",
-   "level": 10,
-   "result": "none",
-   "main": "creatures",
-   "work": "conjure",
-   "needs": [
-    "creatures",
-    "choice",
-    "reader",
-    "information"
-   ]
-  },
-  {
    "name": "Reaper's Lancet",
    "kind": "activation",
    "tier": "special",
@@ -241,23 +177,6 @@
    ]
   },
   {
-   "name": "Book of Lost Days",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "activation": "Study Memory",
-   "result": "note-only",
-   "main": "lasting",
-   "work": "later",
-   "needs": [
-    "lasting",
-    "reader",
-    "mind",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Sphere of Annihilation",
    "kind": "activation",
    "tier": "special",
@@ -268,19 +187,6 @@
    "needs": [
     "moving",
     "lasting"
-   ]
-  },
-  {
-   "name": "Freedom's Flame",
-   "kind": "activation",
-   "tier": "special",
-   "level": 21,
-   "activation": "Break Free",
-   "result": "none",
-   "main": "spells",
-   "work": "mythic point",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -295,19 +201,6 @@
     "strike",
     "lasting",
     "reader"
-   ]
-  },
-  {
-   "name": "Retribution",
-   "kind": "activation",
-   "tier": "special",
-   "level": 21,
-   "activation": "Vengeful Slice",
-   "result": "none",
-   "main": "strike",
-   "work": "strike with",
-   "needs": [
-    "strike"
    ]
   },
   {
@@ -424,18 +317,6 @@
    ]
   },
   {
-   "name": "Deck of Many Things",
-   "kind": "activation",
-   "tier": "special",
-   "level": 22,
-   "result": "none",
-   "main": "objects",
-   "work": "don",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
    "name": "Belimarius's Invidious Halberd",
    "kind": "activation",
    "tier": "special",
@@ -449,31 +330,6 @@
     "strike",
     "spells",
     "reader"
-   ]
-  },
-  {
-   "name": "The Vision",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "recall knowledge",
-   "needs": [
-    "information"
-   ]
-  },
-  {
-   "name": "The Fiend",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "immunity",
-   "work": "immune",
-   "needs": [
-    "immunity",
-    "information"
    ]
   },
   {
@@ -518,37 +374,6 @@
     "moving",
     "areas",
     "immunity"
-   ]
-  },
-  {
-   "name": "Vile Remnant",
-   "kind": "activation",
-   "tier": "special",
-   "level": 7,
-   "activation": "Hear My Words",
-   "result": "partial",
-   "main": "immunity",
-   "work": "resist this",
-   "needs": [
-    "immunity",
-    "lasting",
-    "objects",
-    "reader",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Azarim",
-   "kind": "activation",
-   "tier": "special",
-   "level": 7,
-   "result": "none",
-   "main": "mind",
-   "work": "lie",
-   "needs": [
-    "mind"
    ]
   },
   {
@@ -621,35 +446,6 @@
    ]
   },
   {
-   "name": "Stage Magician's Cloak",
-   "kind": "activation",
-   "tier": "special",
-   "level": 13,
-   "activation": "Now You See Me...",
-   "result": "partial",
-   "main": "visibility",
-   "work": "undetected",
-   "needs": [
-    "visibility",
-    "areas",
-    "reader"
-   ]
-  },
-  {
-   "name": "Stage Magician's Cloak",
-   "kind": "activation",
-   "tier": "special",
-   "level": 13,
-   "activation": "...Now You Don't",
-   "result": "partial",
-   "main": "areas",
-   "work": "smoke",
-   "needs": [
-    "areas",
-    "objects"
-   ]
-  },
-  {
    "name": "Portable Seal (Moderate)",
    "kind": "consumable",
    "tier": "general",
@@ -672,32 +468,6 @@
    "main": "out-of-combat",
    "work": "1 hour",
    "needs": [
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Crooner's Cravat",
-   "kind": "activation",
-   "tier": "special",
-   "level": 13,
-   "activation": "Influential Croon",
-   "result": "partial",
-   "main": "mind",
-   "work": "emotion",
-   "needs": [
-    "mind"
-   ]
-  },
-  {
-   "name": "Fan of the Four Winds",
-   "kind": "activation",
-   "tier": "special",
-   "level": 4,
-   "result": "partial",
-   "main": "vehicles",
-   "work": "sail",
-   "needs": [
-    "vehicles",
     "out-of-combat"
    ]
   },
@@ -788,17 +558,6 @@
    ]
   },
   {
-   "name": "The Courtesan",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
    "name": "Strand of the Seven Births",
    "kind": "activation",
    "tier": "adventure",
@@ -851,19 +610,6 @@
    "work": "shield block",
    "needs": [
     "actions"
-   ]
-  },
-  {
-   "name": "The Publican",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you improve the …",
-   "needs": [
-    "triggers",
-    "mind"
    ]
   },
   {
@@ -963,35 +709,6 @@
    ]
   },
   {
-   "name": "Lesser Cube of Nex",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "areas",
-   "work": "cube",
-   "needs": [
-    "areas",
-    "counteract",
-    "lasting",
-    "objects"
-   ]
-  },
-  {
-   "name": "Clockwork Sun",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Set Cycle",
-   "result": "partial",
-   "main": "by-kind",
-   "work": "that are vulnerable to",
-   "needs": [
-    "by-kind",
-    "reader"
-   ]
-  },
-  {
    "name": "The Owl",
    "kind": "activation",
    "tier": "special",
@@ -1034,32 +751,6 @@
    "needs": [
     "strike",
     "lasting"
-   ]
-  },
-  {
-   "name": "Planar Ribbon",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "several",
-   "work": "allies",
-   "needs": [
-    "several"
-   ]
-  },
-  {
-   "name": "Staff of Sun Wukong",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Close at Hand",
-   "result": "none",
-   "main": "objects",
-   "work": "negligible bulk",
-   "needs": [
-    "objects",
-    "out-of-combat"
    ]
   },
   {
@@ -1153,38 +844,6 @@
    ]
   },
   {
-   "name": "Philosopher's Extractor",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "activation": "Accelerated Synthesis",
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "know",
-   "needs": [
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Philosopher's Extractor",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "activation": "Essence Transmogrification",
-   "result": "note-only",
-   "main": "forms",
-   "work": "polymorph",
-   "needs": [
-    "forms",
-    "senses",
-    "immunity",
-    "several",
-    "mind",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "In the Shadows of Toil",
    "kind": "activation",
    "tier": "special",
@@ -1194,20 +853,6 @@
    "work": "fatigued",
    "needs": [
     "reader"
-   ]
-  },
-  {
-   "name": "Grimoire of Unknown Necessities",
-   "kind": "activation",
-   "tier": "special",
-   "level": 16,
-   "result": "none",
-   "main": "objects",
-   "work": "don",
-   "needs": [
-    "objects",
-    "information",
-    "out-of-combat"
    ]
   },
   {
@@ -1387,40 +1032,10 @@
    "level": 15,
    "activation": "Soulcutting Storm",
    "result": "partial",
-   "main": "cast-changes",
+   "main": "objects",
+   "work": "don",
    "needs": [
-    "cast-changes"
-   ]
-  },
-  {
-   "name": "Wintershot (Heroic)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Signal Flare",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "strike",
-    "counteract"
-   ]
-  },
-  {
-   "name": "Ring of Bestial Friendship",
-   "kind": "activation",
-   "tier": "special",
-   "level": 9,
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteracted",
-   "needs": [
-    "counteract",
-    "immunity",
-    "mind",
-    "information",
-    "out-of-combat"
+    "objects"
    ]
   },
   {

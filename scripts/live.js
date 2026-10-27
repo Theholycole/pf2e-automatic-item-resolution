@@ -46,6 +46,18 @@ import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./telepo
 import { applyStructureCard, pickStructurePoint, postStructureCard } from "./structure.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
+import { applyCraftCard, postCraftCard } from "./craft.js";
+import { startPulse } from "./pulse.js";
+import { placeItemStructure, removeItemStructures } from "./item-structures.js";
+import { itemFormEffectSource, itemFormText, itemIdOf } from "../src/live/item-form.js";
+import { applyTransmogrifyCard, postTransmogrifyCard } from "./transmogrify.js";
+import { mutagenPlan } from "../src/live/transmogrify.js";
+import { applyGrantCard, postGrantCard } from "./grimoire.js";
+import { fillWine } from "./grail.js";
+import { winePlan } from "../src/live/grail.js";
+import { rememberAfterRest } from "./after-rest.js";
+import { applyDeckCard, postDeckCard, setUpDecks } from "./deck.js";
+import { impeccableEffect, impeccablePlan } from "../src/live/craft-card.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
 import { applyFeatUseCard, postFeatUseCard } from "./feat-uses.js";
@@ -86,6 +98,8 @@ const deleted = new Map();
 export function setUpLivePlay({ compileItem, compileActivations = null, claims = null, runeRiders = null }) {
     compile = compileItem;
     setUpActivations({ compileActivations, postCardFor });
+    // (The Deck of Many Things' cards drawn anyway once its hour is up: scripts/deck.js.)
+    setUpDecks(postCardFor, rowCompiler("Deck of Many Things"));
     // (An item no longer invested: what lasted only while it was, Obsidian Goggles' darkvision, ends.)
     Hooks.on("updateItem", (item, changes) => {
         if (!isActiveGM() || changes?.system?.equipped?.invested !== false || !item.actor) return;
@@ -196,7 +210,10 @@ async function cardForUse(message) {
     // (A generic spellgun with no spell in it: back in the inventory, as nothing happened.)
     if (isUnloadedSpellgun(used.data)) return restoreUnloaded(used, message);
     // (With its owner's numbers: Wolf Fang's damage of its user's Strength modifier.)
-    const plan = compile({ ...used.data, ...ownerOf(used.actor ?? message.actor) });
+    // (A transmogrifying mutagen Philosopher's Extractor made: its creature's ability, the GM's pick — src/live/transmogrify.js.)
+    // (Or a wine Grail of Twisted Desires filled: its spell on the drinker, src/live/grail.js.)
+    const own = used.data.flags?.[MODULE_ID] ?? {};
+    const plan = own.transmogrify ? mutagenPlan(own.transmogrify) : own.wine ? winePlan(own.wine) : compile({ ...used.data, ...ownerOf(used.actor ?? message.actor) });
     const actor = used.actor ?? message.actor;
     if (!actor) return;
     const token = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
@@ -261,6 +278,8 @@ async function triggeringMissFormula(actor) {
 export async function postCardFor({ message, plan, used, actor, token, origin = {}, userId = null }) {
     // (Its moves with ability 0.9.2's hook and moveFrom, else as read before: scripts/placed-moves.js.)
     plan = forAbility(plan);
+    // (An impeccable item, one Philosopher's Extractor made: its rolls at their maximum, its times doubled, no drawback — src/live/craft-card.js.)
+    if (used?.data?.flags?.[MODULE_ID]?.impeccable) plan = impeccablePlan(plan);
     // (Damage as its user's own Strike with it would deal, of one type — Sinew-Song's Cutting Cadenza: PF2e's formula for that Strike, src/live/strike-as.js.)
     // (A die per charge its item stores — Conflagration Club's Explosive Cone, its charges from Absorb Arcana: that many of its type, the charges then
     // gone; none stored through the card, typed on it as before.)
@@ -360,6 +379,20 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     }
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
+    // (Not while its user has a condition its Requirements forbid, Book of Lost Days' "You aren't drained": refused, no card — 2026-10-27.)
+    if (plan?.unlessCondition && actor?.getCondition?.(plan.unlessCondition.slug)) throw new Error(`${used.data.name}: ${plan.unlessCondition.words}, and ${actor.name} is ${plan.unlessCondition.slug}.`);
+    // (What it tells beside its card, Book of Lost Days' memory: whispered to the GM and its user, as information is — 2026-10-27.)
+    if (plan?.alsoWhisper && actor) await postWhisper({ plan: { ...plan, whisper: { text: plan.alsoWhisper } }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | whisper`, error));
+    // (A wine it fills, Grail of Twisted Desires': in its user's inventory, its twist the GM's secret roll — scripts/grail.js; a save at its user's
+    // next rest, Vile Remnant's nightmares — scripts/after-rest.js. 2026-10-27.)
+    for (const [field, run] of [["wine", (entry) => fillWine(entry, { actor, used })], ["afterRest", (entry) => rememberAfterRest(entry, { actor, used })]]) {
+        if (!plan?.item?.[field] || !actor) continue;
+        await run(plan.item[field]).then((line) => ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(line)}</p>` })).catch((error) => console.error(`${MODULE_ID} | ${field}`, error));
+    }
+    // (Walls round its user, Lesser Cube of Nex's walls of force — the environment module's — or those it placed removed: scripts/item-structures.js.)
+    if ((plan?.item?.structure || plan?.item?.removeStructures) && actor) await (plan.item.structure ? placeItemStructure(plan.item.structure, { actor, token, used }) : removeItemStructures({ token, used })).then((line) => ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(line)}</p>` })).catch((error) => console.error(`${MODULE_ID} | structure`, error));
+    // (Damage each round around its user, then a blast, Aroden's Hearthstone's cold: its first card now, the rest at its turns — scripts/pulse.js.)
+    if (plan?.item?.pulse && actor) await startPulse(plan.item.pulse, { actor, token, item: { name: used.data.name, uuid: used.data.uuid ?? null } }).then((line) => ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(line)}</p>` })).catch((error) => console.error(`${MODULE_ID} | pulse`, error));
     // (A retaliation beside the rest, Thunder Mail's for the next minute: its later card too, kept open — src/compiler/direct-damage.js.)
     if (plan?.alsoRetaliation && route !== "later") await postExposureCard({ message, plan: { ...plan.alsoRetaliation, item: plan.item, spend: undefined }, used, actor, token, later: true }).catch((error) => console.error(`${MODULE_ID} | retaliation card`, error));
     // (A save its user makes as it's used, the Oculus of Abaddon's price: the ability module's card at its user, unless it's evil — src/compiler/unique-rules.js, 2026-10-27.)
@@ -394,6 +427,10 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "structure") return postStructureCard({ message, plan, used, actor, token });
     if (route === "whisper") return postWhisper({ plan, used, actor, token });
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
+    if (route === "craft") return postCraftCard({ message, plan, used, actor, token });
+    if (route === "transmogrify") return postTransmogrifyCard({ message, plan, used, actor, token });
+    if (route === "grant-spell") return postGrantCard({ message, plan, used, actor, token });
+    if (route === "deck") return postDeckCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
     if (route === "take") return postTakeCard({ message, plan, used, actor, token });
     if (route === "feat-use") return postFeatUseCard({ message, plan, used, actor, token });
@@ -462,6 +499,14 @@ function choicesOf(state, root) {
     if (state.kind === "teleport") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), critical: Boolean(root.querySelector("[data-air-field='critical']")?.checked) };
     // (One of its user's items, picked: scripts/objects.js.)
     // (A stored spell cast at the creatures targeted: src/compiler/stored-spell.js.)
+    // (The deck's cards declared, a card's choice, and whether the GM pressed: scripts/deck.js.)
+    if (state.kind === "deck") return { count: Number(root.querySelector("[data-air-field='count']")?.value ?? 1), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? 0), gm: Boolean(game.user.isGM) };
+    // (The spell the GM grants, by name: scripts/grimoire.js.)
+    if (state.kind === "grant-spell") return { spell: String(root.querySelector("[data-air-field='spell']")?.value ?? ""), gm: Boolean(game.user.isGM) };
+    // (Mutagens made from the creature targeted, how many; or the ability the GM picks for one drunk: scripts/transmogrify.js.)
+    if (state.kind === "transmogrify") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), count: Number(root.querySelector("[data-air-field='count']")?.value ?? state.count ?? 1), gm: Boolean(game.user.isGM), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    // (A formula picked: scripts/craft.js — and whether the GM pressed, for its Requirements.)
+    if (state.kind === "craft") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), gm: Boolean(game.user.isGM) };
     if (state.kind === "objects") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), ...(root.querySelector("[data-air-field='amount']") ? { amount: root.querySelector("[data-air-field='amount']").value } : {}) };
     if (state.kind === "table") return {};
     // (The creature picked for an end-early try, and a skill check's harder-DC tick: scripts/end-early.js.)
@@ -486,6 +531,9 @@ function choicesOf(state, root) {
     return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), recoveryType: Number(root.querySelector("[data-air-field='recoveryType']")?.value ?? state.recoveryType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), runeChoice: Number(root.querySelector("[data-air-field='runeChoice']")?.value ?? state.runeChoice ?? 0), skillPick: Number(root.querySelector("[data-air-field='skillPick']")?.value ?? state.skillPick ?? 0), installedPick: Number(root.querySelector("[data-air-field='installedPick']")?.value ?? state.installedPick ?? 0), potionPick: Number(root.querySelector("[data-air-field='potionPick']")?.value ?? state.potionPick ?? 0), ...(root.querySelector("[data-air-field='amount']") ? { amount: root.querySelector("[data-air-field='amount']").value } : {}), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
 }
 
+// A drawn row's words compiled as the item's use, a consumable's of that text (the table card's and the deck's).
+const rowCompiler = (name) => (html) => compile?.({ name, type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null;
+
 const APPLY = {
     bomb: (message, choices) => applyBombCard(message, choices),
     poison: (message, choices) => applyPoisonCard(message, choices),
@@ -502,6 +550,12 @@ const APPLY = {
     teleport: (message, choices) => applyTeleportCard(message, choices),
     structure: (message, choices) => applyStructureCard(message, choices),
     objects: (message, choices) => applyObjectsCard(message, choices),
+    // (An item made from a known formula, Aroden's Hearthstone's and Philosopher's Extractor's: scripts/craft.js.)
+    craft: (message, choices) => applyCraftCard(message, choices),
+    // (Mutagens made from a creature, and one drunk: scripts/transmogrify.js.)
+    transmogrify: (message, choices) => applyTransmogrifyCard(message, choices),
+    // (A spell the GM grants for the day, Grimoire of Unknown Necessities': scripts/grimoire.js.)
+    "grant-spell": (message, choices) => applyGrantCard(message, choices),
     disbelief: (message, choices) => applyDisbeliefCard(message, choices),
     take: (message, choices) => applyTakeCard(message, choices),
     "feat-use": (message, choices) => applyFeatUseCard(message, choices),
@@ -513,6 +567,8 @@ const APPLY = {
     "drop": (message, choices) => applyDropCard(message, choices),
     // (A RollTable's row drawn: compiled as the item's use, a consumable's of that text.)
     table: (message, choices) => applyTableCard(message, choices, postCardFor, (html) => compile?.({ name: stateOf(message)?.item?.name ?? "Table", type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null),
+    // (The Deck of Many Things' draws, each card's words compiled as a table row's: scripts/deck.js.)
+    deck: (message, choices) => applyDeckCard(message, choices, postCardFor, rowCompiler(stateOf(message)?.item?.name ?? "Deck")),
     item: (message, choices) => applyCard(message, choices)
 };
 // (What its use costs — a Mythic Point, or a Hero Point under the world setting, src/compiler/spend.js and scripts/spend.js: checked before
@@ -636,6 +692,10 @@ async function onRequest(data) {
         : state.kind === "found" ? { name: typeof data.name === "string" ? data.name : "" }
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
+        : state.kind === "craft" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, gm: Boolean(sender.isGM) }
+        : state.kind === "grant-spell" ? { spell: String(data.spell ?? ""), gm: Boolean(sender.isGM) }
+        : state.kind === "deck" ? { count: Number.isFinite(Number(data.count)) ? Number(data.count) : 1, choice: Number.isInteger(data.choice) ? data.choice : 0, gm: Boolean(sender.isGM) }
+        : state.kind === "transmogrify" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, count: Number.isFinite(Number(data.count)) ? Number(data.count) : 1, gm: Boolean(sender.isGM), targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}) }
         : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [], check: data.check === 1 ? 1 : 0 }
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], critical: Boolean(data.critical) }
@@ -684,10 +744,12 @@ async function giveUserConditions(effects, { actor, token, used }) {
             lines.push(`${name}: ${effect.words}`);
             continue;
         }
-        // (A note Effect of its own, with PF2e's rules — Jax's judgment on her Dominate's save: the ability module's note Effect, 2026-10-27.)
+        // (A note Effect on its user — the ability module's note: Jax's judgment on her Dominate's save, with PF2e's rules (effect.note); Forgefather's
+        // Seal's statue for good and Stage Magician's Cloak's extra action (effect.label, text, duration). Three groups built it, 2026-10-27.)
         if (effect.kind === "note") {
-            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "note", note: effect.note } }, state) : null;
-            lines.push(line ?? `${name}: ${effect.note?.label ?? "a note"}${ability?.applyChange ? "" : " (add it by hand: the ability module isn't active)"}`);
+            const note = effect.note ?? { label: effect.label, text: effect.text, duration: effect.duration ?? null };
+            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "note", note } }, state) : null;
+            lines.push(line ?? `${name}: ${note.label ?? "a note"}${ability?.applyChange ? "" : " (add it by hand: the ability module isn't active)"}`);
             continue;
         }
         // (PF2e's own Effect on its user beside a zone, Arctic Worm Chitin Shield's Effect: Misty Chill: the ability module's native Effect,
@@ -697,10 +759,14 @@ async function giveUserConditions(effects, { actor, token, used }) {
             lines.push(line ?? `${name} gains ${effect.label}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
             continue;
         }
-        // (A note Effect on its user, Forgefather's Seal's statue for good: the ability module's note — 2026-10-27.)
-        if (effect.kind === "note") {
-            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "note", note: { label: effect.label, text: effect.text, duration: effect.duration ?? null } } }, state) : null;
-            lines.push(line ?? `${name}: ${effect.label}${ability?.applyChange ? "" : " (a note to keep by hand: the ability module isn't active)"}`);
+        // (Conditions its user loses, the same cloak's Concealed, Hidden and undetected: PF2e's own, removed — 2026-10-27.)
+        if (effect.kind === "remove") {
+            const gone = [];
+            for (const slug of effect.slugs ?? []) if (actor.getCondition?.(slug)) {
+                await actor.decreaseCondition?.(slug, { forceRemove: true });
+                gone.push(slug);
+            }
+            if (gone.length) lines.push(`${name} is no longer ${gone.join(" or ")}`);
             continue;
         }
         const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: effect.slug, value: effect.value ?? null, target: "source", duration: effect.duration ?? null }, state) : null;
@@ -1255,6 +1321,19 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             lines.push(`${recipient.name}: ${shieldFormText(form)}`);
         }
     }
+    // (The item's own other form, Staff of Sun Wukong's needle — an Effect with PF2e's ItemAlteration on it; activated again, its own form: src/live/item-form.js.)
+    const otherForm = state.plan.item?.itemForm;
+    if (otherForm && target.actor) {
+        const itemId = itemIdOf(state.item.uuid);
+        const current = (target.actor.itemTypes?.effect ?? []).filter((effect) => itemId && effect.flags?.[MODULE_ID]?.itemForm === itemId);
+        if (current.length) {
+            await target.actor.deleteEmbeddedDocuments("Item", current.map((effect) => effect.id));
+            lines.push(`${recipient.name}: ${state.item.name} is its own form again`);
+        } else {
+            await target.actor.createEmbeddedDocuments("Item", [itemFormEffectSource(otherForm, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${recipient.name}: ${itemFormText(otherForm)}`);
+        }
+    }
     // (Fast healing: Infernal Health's 25 a turn — an Effect with PF2e's FastHealing rule.)
     for (const healing of state.plan.item?.fastHealing ?? []) {
         if (!target.actor) break;
@@ -1496,8 +1575,8 @@ async function nativeEffect(actor, name, change, state) {
         flags: { [MODULE_ID]: { card: true, ...(state.plan.item?.immunity?.after ? { immunityAfter: state.plan.item.immunity } : {}) } }
     });
     source._stats = { ...(source._stats ?? {}), compendiumSource: change.effect.uuid };
-    await actor.createEmbeddedDocuments("Item", [source]);
-    return `${name} gains ${template.name}`;
+    await actor.createEmbeddedDocuments("Item", [state.plan?.impeccable ? impeccableEffect(source) : source]);
+    return `${name} gains ${template.name}${state.plan?.impeccable ? " (impeccable: twice as long, no drawback)" : ""}`;
 }
 
 // Whether the item's light (src/live/card.js lightEffectSource) is on its user: an Effect of its, flagged light.
