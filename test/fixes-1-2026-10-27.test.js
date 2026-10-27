@@ -224,3 +224,59 @@ test("Awakened Adamantine Shot: the core's ignoreResistance on the readied Strik
     await roll("attack-roll", "failure", mine);
     assert.deepEqual([readied().length, found(mine)], [0, []]);
 });
+
+// --- A creature its user picks, on that user's client (bug 6) ------------------------------------------------------------------------------------
+
+test("Dust of Corpse Animation used by a player: the GM's client asks the player's for the creature, and makes the one picked (one that fits)", async () => {
+    const { answerPick } = await import("../scripts/creature-pick.js");
+    const game = globalThis.game;
+    const player = game.users.get("player");
+    const conjured = [];
+    const zombie = { _id: "fix1zombie000001", uuid: "Compendium.pf2e.pathfinder-monster-core.Actor.fix1zombie000001", name: "Zombie Shambler", type: "npc", system: { details: { level: { value: -1 } }, traits: { value: ["undead", "zombie", "mindless"] } } };
+    const pack = { documentName: "Actor", collection: "pf2e.pathfinder-monster-core", metadata: { packageName: "pf2e", name: "pathfinder-monster-core" }, getIndex: async () => [zombie] };
+    const hadPacks = "packs" in game;
+    game.packs = { filter: (test) => [pack].filter(test), get: () => null };
+    foundry.ability.live.startConjure = async (options) => {
+        conjured.push(options);
+        return [];
+    };
+    player.active = true;
+    try {
+        const necromancer = creature("fix1-necromancer", "Necromancer");
+        const use = async (uuid, from = "player") => {
+            const given = foundry.giveItem(necromancer, source("Dust of Corpse Animation"));
+            const data = given.toObject();
+            const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: given.uuid, sourceId: data._stats.compendiumSource, type: given.type } } }, speaker: { actor: necromancer.id }, actor: necromancer, token: necromancer.token.document });
+            message.author = player;
+            const emitted = foundry.emitted.length;
+            await foundry.call("createChatMessage", message);
+            await settle();
+            const asked = foundry.emitted.slice(emitted).find((entry) => entry.data?.action === "pick-creature");
+            assert.ok(asked, "asked of the player's client");
+            assert.deepEqual([asked.data.userId, asked.data.pick.maxLevel, asked.data.pick.any], ["player", 3, ["skeleton", "zombie"]]);
+            // (The player's answer, as their client sends it back.)
+            await foundry.socket(SOCKET)({ action: "picked-creature", ask: asked.data.ask, from, uuid });
+            await settle();
+            // (One from someone else isn't taken: the player's own, none picked, ends the wait.)
+            if (from !== "player") {
+                assert.equal(conjured.length, 1, "still waiting for the player");
+                await foundry.socket(SOCKET)({ action: "picked-creature", ask: asked.data.ask, from: "player", uuid: null });
+                await settle();
+            }
+        };
+        await use(zombie.uuid);
+        assert.deepEqual(conjured.map((entry) => [entry.plan.creatures[0].name, entry.plan.creatures[0].from.uuid, entry.plan.pick]), [["Zombie Shambler", zombie.uuid, undefined]]);
+        // (Not one of the list, or from another user: nothing made.)
+        await use("Compendium.pf2e.pathfinder-monster-core.Actor.notInTheList001");
+        await use(zombie.uuid, "gm");
+        assert.equal(conjured.length, 1);
+        // (On the player's own client, the ask for another user is no one's to answer here.)
+        assert.equal(answerPick({ action: "pick-creature", userId: "someone-else" }), true);
+        assert.equal(answerPick({ action: "apply" }), false);
+    } finally {
+        delete player.active;
+        delete foundry.ability.live.startConjure;
+        if (!hadPacks) delete game.packs;
+    }
+});
+

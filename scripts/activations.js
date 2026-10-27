@@ -125,7 +125,7 @@ export async function activate(itemUuid, index, userId = game.user.id) {
     await endOnActivate(item.actor);
     // (The activation's card, named for it; its text the activation's own block.)
     const used = { data: { ...entry.data, name, system: { ...entry.data.system, description: { value: entry.activation.html } } }, actor: item.actor };
-    const card = await postCardFor({ message: null, plan: entry.plan, used, actor: item.actor, token });
+    const card = await postCardFor({ message: null, plan: entry.plan, used, actor: item.actor, token, userId });
     if (frequency?.max) await item.setFlag(MODULE_ID, USES, withUse(record, entry.index, frequency, at));
     // (Its wait from now — rolled when it's dice, "1d4 rounds" — for it and the activations it shares the wait with.)
     if (recharge) {
