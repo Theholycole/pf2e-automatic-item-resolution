@@ -29,8 +29,31 @@ export function formulaAs(formula, type) {
     return terms.length ? `(${terms.join(" + ")})[${type}]` : null;
 }
 
+// Each instance with its own type, PF2e's "{(1d6 + 6)[bludgeoning],1d6[fire]}" → [{ formula: "1d6 + 6", type: "bludgeoning", category: null },
+// { formula: "1d6", type: "fire", … }]: a Strike's damage kept as it is (Dinosaur Boots' Trample, 2026-10-27). Its readable form has no types:
+// fallback's.
+const NOT_TYPES = new Set(["persistent", "precision", "splash"]);
+export function formulaParts(formula, fallback = null) {
+    return instancesOf(formula).map((instance) => {
+        const flavor = /\[([^\]]*)\]\s*\)?\s*$/.exec(instance)?.[1] ?? "";
+        const words = flavor.split(",").map((word) => word.trim().toLowerCase()).filter(Boolean);
+        return { formula: termsOf(instance), type: words.filter((word) => !NOT_TYPES.has(word)).at(-1) ?? fallback, category: words.includes("persistent") ? "persistent" : null };
+    }).filter((part) => part.formula && part.type);
+}
+
 // The plan and the Strike's formula → the plan with that damage on its rows (shared, at each row's multiplier, beside the row's own formulas).
+// (Its types kept when it gives none to turn it all into, strikeDamage.as null: each instance a component of its own.)
 export function withStrikeFormula(plan, formula) {
+    if (plan?.strikeDamage && !plan.strikeDamage.as) {
+        const parts = formulaParts(formula, plan.strikeDamage.fallback ?? null);
+        if (!parts.length) return plan;
+        const ids = parts.map((_, index) => `strike${index}`);
+        const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => {
+            const multiplier = plan.strikeDamage.rows[degree];
+            return [degree, multiplier && row ? { ...row, damage: { mode: "shared", multiplier, sourceComponentIds: ids } } : row];
+        }));
+        return { ...plan, resolution: { ...plan.resolution, sharedDamage: { rollOnce: true, components: parts.map((part, index) => ({ id: ids[index], ...part })) }, outcomes } };
+    }
     const as = plan?.strikeDamage ? formulaAs(formula, plan.strikeDamage.as) : null;
     if (!as) return plan;
     const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => {

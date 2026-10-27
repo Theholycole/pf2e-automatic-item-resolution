@@ -11,6 +11,7 @@ import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, healCreature, lowe
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { targetGroups } from "../src/live/if-target.js";
 import { withoutHitDamage } from "../src/live/scaled.js";
+import { withStrikeFormula } from "../src/live/strike-as.js";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
 export async function postPoisonCard({ message, plan, used, actor, token }) {
@@ -175,6 +176,15 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const otherKind = against.length && state.step !== "then" ? tokens.filter((token) => !against.some((trait) => traitsOf(token).has(trait))) : [];
     if (otherKind.length) throw new Error(`${otherKind.map((token) => token.name ?? token.actor?.name).join(", ")} ${otherKind.length === 1 ? "isn't" : "aren't"} ${against.join(" or ")}: ${state.item.name} works only against ${against.join(" or ")} creatures.`);
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
+    // (Damage as its user's Strike of that slug deals it now, Dinosaur Boots' Trample with the foot its Effect gives: PF2e's formula, each
+    // instance its own type — src/live/strike-as.js.)
+    const bySlug = state.plan?.strikeDamage?.slug;
+    if (bySlug && state.step !== "then") {
+        const strike = (actor?.system?.actions ?? []).find((action) => action?.slug === bySlug);
+        const formula = strike?.damage ? await strike.damage({ getFormula: true }).catch(() => null) : null;
+        if (!formula) throw new Error(`${state.user.name} has no ${state.plan.strikeDamage.label ?? bySlug} Strike now (its Effect gone?): roll its damage by hand.`);
+        state = { ...state, plan: withStrikeFormula(state.plan, formula) };
+    }
     const sourceToken = state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null;
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
     const names = tokens.map((token) => token.name ?? token.actor?.name).join(", ");

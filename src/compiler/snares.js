@@ -13,7 +13,8 @@ const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
 // "triggers only when a Large or larger creature enters its square" → PF2e's size slug, for the ability module's zone entries' only.minSize
 // (ability 411cb9f): a smaller creature does nothing there, and the snare stays set.
 const SIZES = { small: "sm", medium: "med", large: "lg", huge: "huge", gargantuan: "grg" };
-const SIZE_GATE = /\b(?:When an?|triggers only when an?) (Small|Medium|Large|Huge|Gargantuan) or larger creature enters (?:the|its) square\b/i;
+// (Or the square beneath its perch, Clockwork Chirper's "until a Small or larger creature enters the square beneath its perch".)
+const SIZE_GATE = /\b(?:When an?|triggers only when an?|until an?) (Small|Medium|Large|Huge|Gargantuan) or larger creature enters (?:the|its) square\b/i;
 export const sizeGate = (plain) => SIZES[SIZE_GATE.exec(String(plain ?? ""))?.[1]?.toLowerCase()] ?? null;
 // (Or that size or smaller, Trip Snare's "A Medium or smaller creature that enters this snare's square": only.maxSize, ability 4461e8f.)
 const SIZE_CAP = /\bAn? (Tiny|Small|Medium|Large|Huge) or smaller creature (?:that )?enters\b/i;
@@ -334,14 +335,21 @@ const ALARM = /\bWhen a Small or larger creature enters the square, the snare ma
 // sky, this flare is visible from up to 2 miles away on a clear day or up to 5 miles away on a clear night": who sees it, the GM's.)
 const FLARE = /\bWhen a Small or larger creature enters the square, this flare shoots into the sky\. To creatures with a clear view of the sky, this flare is visible from up to (\d+) miles away on a clear day or up to (\d+) miles away on a clear night\./i;
 const POPDUST = /\bsprinkle \w+ in an empty square adjacent to you\. The first creature that applies pressure to the \w+, such as by moving into that square, causes it to emit a series of thunderous cracks\./i;
+// (And Clockwork Chirper's "remains immobile and silent until a Small or larger creature enters the square beneath its perch, at which point it
+// springs into action. Once activated, it flies around making a loud chirping sound that can be heard up to 500 feet away. The bird then follows
+// the creature that activated it for up to one hour …": its chirps and its following that creature for the hour the GM's note, the bird's own
+// numbers in it — an object's, 2026-10-27.)
+const CHIRPER = /\bThe Tiny clockwork remains immobile and silent until a Small or larger creature enters the square beneath its perch, at which point it springs into action\. Once activated, it flies around making a loud chirping sound that can be heard up to (\d+) feet away\. The bird then follows the creature that activated it for up to one hour or until it is destroyed, doing its best to stay just above the creature and out of reach, and continuing its string of loud chirps\. The bird is an object with a Speed (\d+) feet, and a fly Speed of (\d+) feet\. It has AC (\d+), Hardness (\d+), HP (\d+) \(BT (\d+)\) and object immunities\. Once broken, it can no longer fly\. It can't attack or otherwise damage other creatures\. After an hour has passed after its activation, the clockwork chirper falls into a pile of useless components\./i;
 export function alarmZone(item, base) {
     const plain = plainText(item?.system?.description?.value);
     const flare = isSnare(item) ? FLARE.exec(plain) : null;
-    const alarm = (isSnare(item) && ALARM.test(plain)) || !!flare;
+    const chirper = isSnare(item) ? CHIRPER.exec(plain) : null;
+    const alarm = (isSnare(item) && ALARM.test(plain)) || !!flare || !!chirper;
     const gate = alarm ? sizeGate(plain) : null;
     if (!alarm && !(item?.type === "consumable" && POPDUST.test(plain))) return null;
     const range = alarm ? /\bdesignate a range between (\d+) (?:to|and) (\d+) feet\b/i.exec(plain) : null;
-    const note = flare ? `Its flare shoots up into the sky, seen ${flare[1]} miles off by day or ${flare[2]} miles off on a clear night by those under an open sky.`
+    const note = chirper ? `It springs into action, flying about with loud chirps heard up to ${chirper[1]} feet away, and follows that creature for up to 1 hour (or until destroyed), just above it and out of its reach. The bird is an object: Speed ${chirper[2]} feet, fly Speed ${chirper[3]} feet, AC ${chirper[4]}, Hardness ${chirper[5]}, HP ${chirper[6]} (BT ${chirper[7]}), object immunities; broken, it can no longer fly. It can't attack or harm anyone, and after the hour it falls to pieces.`
+        : flare ? `Its flare shoots up into the sky, seen ${flare[1]} miles off by day or ${flare[2]} miles off on a clear night by those under an open sky.`
         : alarm ? `It makes a noise loud enough for every creature within the range its crafter chose${range ? ` (${range[1]} to ${range[2]} feet)` : ""} to hear it.` : "It gives off a string of loud, thunderous cracks for those around to hear.";
     return {
         ...base,

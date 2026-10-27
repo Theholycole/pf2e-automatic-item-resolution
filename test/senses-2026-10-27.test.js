@@ -51,3 +51,39 @@ test("Dawnlight: its light spells a rank higher against darkness, the counteract
     assert.deepEqual(major.darkLight.spells.map((uuid) => major.choices.find((choice) => choice.spell.uuid === uuid).spell.name), ["Light", "Holy Light"]);
     assert.equal(major.darkLight.flash.resolution.check.against.value, 28);
 });
+
+test("Dinosaur Boots: PF2e's own Effect (Enlarge's numbers and the foot), not a cast of Enlarge; its Trample a basic Reflex card for the minute, with the foot Strike's damage as PF2e rolls it", async () => {
+    const { withStrikeFormula } = await import("../src/live/strike-as.js");
+    const boots = activation("Dinosaur Boots");
+    assert.equal(boots.builtin, undefined);
+    assert.equal(boots.partial, undefined);
+    assert.deepEqual(boots.resolution.applications.map((entry) => [entry.label, entry.recipients]), [["Effect: Dinosaur Boots", "self"]]);
+    assert.deepEqual([boots.again.later, boots.again.repeat, boots.again.time], [true, undefined, { value: 1, unit: "minutes" }]);
+    const trample = boots.again.plan;
+    assert.deepEqual([trample.resolution.check.statistic, trample.resolution.check.basic, trample.resolution.check.against.value], ["reflex", true, 27]);
+    assert.equal(trample.strikeDamage.slug, "dinosaur-boots-foot-attack");
+    // (The Greater's Trample each time, and its Huge a line.)
+    const greater = activation("Dinosaur Boots (Greater)");
+    assert.equal(greater.again.repeat, true);
+    assert.equal(greater.again.plan.strikeDamage.slug, "dinosaur-boots-foot-attack");
+    assert.ok(greater.notes.some((note) => /Huge/.test(note)));
+    // (The foot's damage as PF2e gives it, each instance its own type: halved on a success, doubled on a critical failure.)
+    const filled = withStrikeFormula(trample, "{(1d6 + 6)[bludgeoning],1d6[fire]}");
+    assert.deepEqual(filled.resolution.sharedDamage.components.map((component) => [component.formula, component.type]), [["1d6 + 6", "bludgeoning"], ["1d6", "fire"]]);
+    assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => filled.resolution.outcomes[degree].damage.multiplier), [0, 0.5, 1, 2]);
+    assert.deepEqual(filled.resolution.outcomes.failure.damage.sourceComponentIds, ["strike0", "strike1"]);
+});
+
+test("Clockwork Chirper and Sentry Fulu: a placed watch whose set-off is the GM's note — the chirper's square set off by a Small or larger creature once, its bird's numbers in the note; the sentry's 20-foot burst for 8 hours, each creature entering", () => {
+    const chirper = consumable("Clockwork Chirper");
+    assert.equal(chirper.builtin, "zone");
+    assert.equal(chirper.partial, undefined);
+    const [set] = chirper.zone.saves;
+    assert.deepEqual([set.when, set.only, set.plan, chirper.zone.once], [["enter"], { minSize: "sm" }, undefined, true]);
+    assert.match(set.note, /heard up to 500 feet away.*follows that creature for up to 1 hour.*fly Speed 25 feet, AC 15, Hardness 5, HP 10 \(BT 5\)/);
+    const sentry = consumable("Sentry Fulu");
+    assert.deepEqual([sentry.builtin, sentry.partial, sentry.noteOnly], ["zone", undefined, undefined]);
+    assert.deepEqual([sentry.zone.area, sentry.zone.lasts.value, sentry.zone.lasts.unit, sentry.zone.once], [{ type: "burst", value: 20 }, 8, "hours", undefined]);
+    assert.match(sentry.zone.saves[0].note, /password.*Perception DC 20.*DC 15 Perception check to wake.*within 60 feet/);
+    assert.ok(sentry.zone.notes.some((note) => /patrols the area along a path they set, at a Speed of 25 feet/.test(note)));
+});

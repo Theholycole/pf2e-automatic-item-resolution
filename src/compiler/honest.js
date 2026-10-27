@@ -298,12 +298,15 @@ export function withZoneUntraced(plan, text) {
     const { saves: _, burst: __, ...own } = plan.zone;
     // (A sentence one of its cards traces isn't left by the others: Piercing Whistle Snare's longer deafness, its setter's card's, not its burst's.)
     const entries = [...(plan.zone.saves ?? []), ...(plan.zone.burst?.plan ? [plan.zone.burst] : [])];
+    // (Not a set-off that only sends the GM its note — an alarm's noise, Clockwork Chirper's chirps and numbers: no card of its own to trace,
+    // 2026-10-27.)
     const checks = entries.map((save) => {
+        if (!save.plan && save.note) return { checked: null, added: [], note: true };
         if (save.plan?.partial) partial = true;
         const checked = withUntracedRules({ ...save.plan, zoneOwn: own }, text);
         return { checked, added: (checked?.notes ?? []).filter((entry) => !(save.plan?.notes ?? []).includes(entry)) };
     });
-    const untraced = (entry) => checks.every(({ added }) => added.includes(entry));
+    const untraced = (entry) => checks.filter((check) => !check.note).every(({ added }) => added.includes(entry));
     const traced = (save, at) => {
         const { checked } = checks[at];
         const added = checks[at].added.filter(untraced);

@@ -24,6 +24,7 @@ import { asAbility } from "./ability-shape.js";
 import { forTargets, othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf, withStatedHealing } from "./consumables.js";
 import { allyAreaRow, dropsToOne, itemDuration, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { alarmZone, isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
+import { sentryPlan } from "./sentry.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { belchedCloudPlan, bubbleCloudPlan, coatedSquarePlan, exhaledSquarePlan, placedChimePlan } from "./covered-square.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -375,6 +376,9 @@ function compileOne(given, options = {}) {
     // (A square that only makes a noise when set off, src/compiler/snares.js: Alarm Snare, Popdust — the set-off a note to the GM.)
     const alarm = alarmZone(item, base);
     if (alarm) return { ...alarm, item: itemInfo(item) };
+    // (A guard that watches an area for hours, src/compiler/sentry.js: Sentry Fulu — each creature that enters a note to the GM.)
+    const sentry = sentryPlan(item, base);
+    if (sentry) return { ...sentry, item: itemInfo(item) };
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     const snare = snareZone(item, read);
     // (Its condition for as long as a persistent damage lasts: Freezing Embrace Snare's clumsy.)
