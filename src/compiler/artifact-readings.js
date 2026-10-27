@@ -486,6 +486,61 @@ const READINGS = [
                 notes: ["Its user must be grasping the lens; on a hit they're no longer invested in it, and it has no magic until the possession ends."]
             };
         }
+    },
+    {
+        // The Hollow Star's reaction to its user's linguistic spell or effect: Aklo spoken, +1 item to its spell attack roll and the saves against
+        // it 1 worse (its spell DC 1 higher, as the targets' −1 item penalty), for the rest of the turn — a note Effect with PF2e's rules, only for
+        // linguistic ones (their trait's roll option).
+        names: ["The Hollow Star"],
+        index: 0,
+        trigger: /^You cast a spell or use an effect that has the linguistic trait$/,
+        sentences: [
+            /^You speak in (Aklo) when using the linguistic spell or effect, even if you don't normally speak Aklo\.$/,
+            /^If the spell or effect requires a spell attack roll, you gain a \+(\d) item bonus to the roll\.$/,
+            /^If the spell or effect can be resisted with a saving throw, all saves against the effect suffer a [-–](\d) item penalty\.$/
+        ],
+        card: ([tongue, bonus, penalty]) => ({
+            targeting: { target: null, range: null, area: null },
+            resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [{
+                label: "Words of the Hollow Star",
+                text: `Its linguistic spell or effect this turn is spoken in ${tongue[1]}, even if it doesn't speak ${tongue[1]}: +${bonus[1]} item bonus to its spell attack roll, and the saves against it take a −${penalty[1]} item penalty (its DC ${penalty[1]} higher).`,
+                duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end" },
+                rules: [{ key: "FlatModifier", selector: "spell-attack-roll", type: "item", value: Number(bonus[1]), predicate: ["item:trait:linguistic"] }, { key: "FlatModifier", selector: "spell-dc", type: "item", value: Number(penalty[1]), predicate: ["item:trait:linguistic"] }]
+            }] } } }
+        })
+    },
+    {
+        // The Hollow Star's aberration: the ability module's conjured creature its user picks — a common aberration of level 3 or lower — with
+        // Summon Animal's parameters (summoned, a minion, Sustained up to a minute).
+        names: ["The Hollow Star"],
+        index: 2,
+        sentences: [
+            /^The Hollow Star conjures an aberration to fight for you\.$/,
+            /^This works like (Summon Animal), except you summon a (common) creature that has the (aberration) trait and whose level is (\d+) or lower\.$/
+        ],
+        card: ([, like]) => ({
+            builtin: "conjure",
+            targeting: { target: "self", range: null, area: null },
+            creatures: [{ name: "Aberration", count: 1, size: null, stats: null, from: null, traits: ["summoned", "minion"], initiative: null }],
+            pick: { any: [like[3].toLowerCase()], maxLevel: Number(like[4]), rarity: like[2].toLowerCase() },
+            max: 1,
+            lasts: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" },
+            vanishAtZero: true,
+            notes: [`Its user picks a ${like[2].toLowerCase()} ${like[3].toLowerCase()} of level ${like[4]} or lower.`, `${like[1]}'s parameters: summoned, it acts when its user Sustains the activation (2 actions); it goes if they stop, after a minute at most.`]
+        })
+    },
+    {
+        // Reaper's Lancet: its reservoir's poison for the creature it damaged — the reservoir card (src/live/reservoir.js, scripts/reservoir.js)
+        // filling it from its user's injury poisons (one poison, 3 doses at most, the item's own words) and spending a dose on the creature
+        // targeted, that poison's save card at it.
+        names: ["Reaper's Lancet"],
+        trigger: /^You damage a creature with Reaper's Lancet$/,
+        sentences: [/^You poison the creature you hit with the poison currently in the reservoir\.$/],
+        card: (_found, _plan, { item }) => {
+            const room = /\blarge enough to hold only (\d+) doses at a time\b/i.exec(item ?? "");
+            if (!room || !/\bAny sort of injury-delivered poison can be placed in it, though all doses must be of the same poison\b/i.test(item ?? "")) return null;
+            return { builtin: "reservoir", targeting: { target: "the creature it hit", range: null, area: null }, reservoir: { max: Number(room[1]), delivery: "injury" }, notes: ["Filling the reservoir takes 1 minute; after a dose is spent, the reservoir coats the blade anew (its next dose)."] };
+        }
     }
 ];
 

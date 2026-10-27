@@ -15,6 +15,7 @@ import { drainCandidates, pickDrain } from "../src/live/arcane-drain.js";
 import { portalRegion } from "../src/live/portals.js";
 import { laterRefusal, triggeringRoll, withLaterUse } from "../src/live/reroll-card.js";
 import { soulAmount, soulCounts, soulRules, withSoul, withoutSoul } from "../src/live/souls.js";
+import { fillable } from "../src/live/reservoir.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
 import { aroundZone, createInertCard, exemptSpec, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
@@ -234,4 +235,17 @@ test("Crimson Fulcrum Lens's possession: its own melee spell attack (+18), a hit
     const plan = activations("Crimson Fulcrum Lens")[1];
     const hit = plan.resolution.outcomes.success;
     assert.deepEqual([done(plan), routeOf(plan), plan.resolution.check.modifier, hit.nativeEffects[0].label, hit.noteEffects[0].label, plan.possession.label, plan.traits.includes("possession")], [true, "save", 18, "Effect: Crimson Fulcrum Lens", "Possessed by Nhimbaloth's essence", "Possessed by Nhimbaloth's essence", true]);
+});
+
+test("The Hollow Star: its reaction's note Effect for the turn (+1 item to linguistic spell attacks, their DC 1 higher), and its conjured aberration (a common one of level 3 or lower, picked)", () => {
+    const [words, , summon] = activations("The Hollow Star");
+    const note = words.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([done(words), routeOf(words), note.rules.map((rule) => [rule.selector, rule.value, rule.predicate[0]])], [true, "item", [["spell-attack-roll", 1, "item:trait:linguistic"], ["spell-dc", 1, "item:trait:linguistic"]]]);
+    assert.deepEqual([done(summon), routeOf(summon), summon.pick, summon.lasts.value, summon.trigger.frequency.per], [true, "conjure", { any: ["aberration"], maxLevel: 3, rarity: "common" }, 1, "day"]);
+});
+
+test("Reaper's Lancet: its reservoir card — filled from its user's injury poisons, one poison and 3 doses at most — poisoning the creature targeted with a dose", () => {
+    const [plan] = activations("Reaper's Lancet");
+    assert.deepEqual([done(plan), routeOf(plan), plan.reservoir], [true, "reservoir", { max: 3, delivery: "injury" }]);
+    assert.deepEqual([fillable(null, { name: "Giant Wasp Venom" }, 3, 5), fillable({ poison: { name: "Giant Wasp Venom" }, doses: 2 }, { name: "Giant Wasp Venom" }, 3, 5), fillable({ poison: { name: "Giant Wasp Venom" }, doses: 1 }, { name: "Black Adder Venom" }, 3, 5)], [3, 1, 0]);
 });

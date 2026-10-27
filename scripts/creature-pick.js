@@ -14,15 +14,16 @@ async function creatureIndex() {
     const packs = game.packs.filter((pack) => pack.documentName === "Actor" && pack.metadata.packageName === "pf2e" && CORE_PACKS.has(pack.metadata.name));
     const entries = [];
     for (const pack of packs) {
-        const index = await pack.getIndex({ fields: ["system.details.level.value", "system.traits.value", "type"] });
-        for (const entry of index) entries.push({ uuid: entry.uuid ?? `Compendium.${pack.collection}.Actor.${entry._id}`, name: entry.name, level: Number(entry.system?.details?.level?.value), traits: entry.system?.traits?.value ?? [], type: entry.type });
+        const index = await pack.getIndex({ fields: ["system.details.level.value", "system.traits.value", "system.traits.rarity", "type"] });
+        for (const entry of index) entries.push({ uuid: entry.uuid ?? `Compendium.${pack.collection}.Actor.${entry._id}`, name: entry.name, level: Number(entry.system?.details?.level?.value), traits: entry.system?.traits?.value ?? [], rarity: entry.system?.traits?.rarity ?? "common", type: entry.type });
     }
     indexCache = entries;
     return entries;
 }
 
 export async function pickConjured(plan, itemName) {
-    const entries = pickCandidates(await creatureIndex(), plan.pick);
+    // (Of a rarity only, The Hollow Star's common aberration.)
+    const entries = pickCandidates((await creatureIndex()).filter((entry) => !plan.pick?.rarity || entry.rarity === plan.pick.rarity), plan.pick);
     if (!entries.length) {
         ui.notifications.warn(`${itemName}: no creature in the compendiums fits.`);
         return null;

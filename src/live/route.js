@@ -19,6 +19,7 @@ import { isEmbed } from "./embedded-places.js";
 import { isSkillSwap } from "./skill-swap.js";
 import { isPortal } from "./portals.js";
 import { isSouls } from "./souls.js";
+import { isReservoir } from "./reservoir.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -87,6 +88,8 @@ export function routeOf(plan, text = "") {
     if (isPortal(plan)) return "portal";
     // (A soul a weapon keeps released, Reaper's Grasp's: scripts/souls.js.)
     if (isSouls(plan)) return "souls";
+    // (A weapon's poison reservoir, Reaper's Lancet's: scripts/reservoir.js.)
+    if (isReservoir(plan)) return "reservoir";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)
