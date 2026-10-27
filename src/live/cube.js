@@ -17,6 +17,14 @@ export function squareCellsAround(token, feet, { size, gridFeet = 5 }) {
 // A zone of the item module's own centre "around" (a square round its user): the ability module's zone of those squares.
 export const aroundZone = (zone, token, grid) => (zone?.centre === "around" && zone.area?.type === "square" ? { ...zone, centre: "snare", area: { type: "squares", cells: squareCellsAround(token, zone.area.value, grid) } } : zone);
 
+// The core's selective terrain for a zone whose difficult terrain spares some traits (zone.exceptTraits, The Eye of the Slumberer's water
+// creatures): creatures [{ actorUuid, traits }] on its scene → { actions, default, creatures } (src/patch-logic.js selectiveDifficulty).
+export function exemptSpec(zone, creatures) {
+    const actions = [...new Set((zone.terrain ?? []).flatMap((entry) => entry.movement ?? ["walk"]))];
+    const difficulty = Math.max(1, ...(zone.terrain ?? []).map((entry) => Number(entry.difficulty) || 2));
+    return { actions, default: difficulty, creatures: creatures.filter((creature) => (creature.traits ?? []).some((trait) => (zone.exceptTraits ?? []).includes(trait))).map((creature) => ({ actorUuid: creature.actorUuid, difficulty: 1 })) };
+}
+
 // Whether an item is one the inert card names (its names, any case; "cube of force" also "Cube of Force").
 export const namedInert = (inert, itemName) => (inert?.names ?? []).some((name) => String(name).toLowerCase() === String(itemName ?? "").toLowerCase());
 

@@ -8,9 +8,10 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { compileActivations } from "../src/compiler/permanent.js";
 import { spellIndex } from "../src/compiler/index.js";
 import { contractChoices, contractRefusal, withContractCast } from "../src/live/contract-spells.js";
+import { withPlace } from "../src/live/embedded-places.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
-import { aroundZone, createInertCard, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
+import { aroundZone, createInertCard, exemptSpec, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -111,4 +112,24 @@ test("Jahan Waystone: the save card at the creatures in the stone's 10-foot ligh
     const [plan] = activations("Jahan Waystone");
     assert.deepEqual([done(plan), routeOf(plan), plan.resolution.check.statistic, plan.resolution.check.against.value, plan.targeting.area], [true, "save", "will", 45, { type: "emanation", value: 10 }]);
     assert.deepEqual([plan.pairedStone, plan.activation.time, plan.item.activation.time], [{ within: 30, degrees: ["failure", "criticalFailure"], slug: "jahan-waystone" }, "1 minute", "1 minute"]);
+});
+
+test("The Eye of the Slumberer's Vortex: a 30-foot zone placed on the Eye, difficult terrain for swimming — the water trait's creatures spared by the core's selective terrain — until used again", () => {
+    const plan = activation("The Eye of the Slumberer", "Vortex");
+    assert.deepEqual([done(plan), routeOf(plan), plan.zone.area, plan.zone.centre, plan.zone.untilReused, plan.zone.terrain, plan.zone.exceptTraits], [true, "zone", { type: "emanation", value: 30 }, "placed", true, [{ movement: ["swim"], difficulty: 2 }], ["water"]]);
+    assert.deepEqual(exemptSpec(plan.zone, [{ actorUuid: "Actor.eel", traits: ["animal", "water"] }, { actorUuid: "Actor.pc", traits: ["humanoid"] }]), { actions: ["swim"], default: 2, creatures: [{ actorUuid: "Actor.eel", difficulty: 1 }] });
+});
+
+test("Guiding Star Orb (Heroic)'s Embed Location: its user's place kept on the orb, three at most, the oldest replaced", () => {
+    const plan = activation("Guiding Star Orb (Heroic)", "Embed Location");
+    assert.deepEqual([done(plan), routeOf(plan), plan.embed.max], [true, "embed", 3]);
+    const four = [1, 2, 3, 4].reduce((record, n) => withPlace(record, { sceneName: `s${n}` }, plan.embed.max), []);
+    assert.deepEqual(four.map((place) => place.sceneName), ["s2", "s3", "s4"]);
+});
+
+test("Phoenix Necklace: the willing creatures targeted get a note Effect whose toggle gives their Strikes the nonlethal trait, no penalty; it ends when the necklace is used again", () => {
+    const [plan] = activations("Phoenix Necklace");
+    const note = plan.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([done(plan), routeOf(plan), plan.item.recipient, plan.item.endsPrevious, note.duration], [true, "item", "targets", "Nonlethal without penalty", null]);
+    assert.deepEqual(note.rules[1], { key: "AdjustStrike", mode: "add", property: "weapon-traits", value: "nonlethal", predicate: ["phoenix-necklace-nonlethal"] });
 });

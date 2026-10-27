@@ -3,13 +3,13 @@
 // that export, the GM places it by hand. And a creature the item becomes (the conjure builtin, src/compiler/conjured.js):
 // the ability module's conjured token beside its user (its api.live.startConjure), or the GM's by hand.
 
-import { ABILITY_ID, MODULE_ID } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, MODULE_ID } from "./foundry.js";
 import { effectSource } from "../src/live/card.js";
 import { lightZone } from "./placed-light.js";
 import { pickConjured } from "./creature-pick.js";
 import { conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
 import { SLAIN } from "./slain-wait.js";
-import { aroundZone } from "../src/live/cube.js";
+import { aroundZone, exemptSpec } from "../src/live/cube.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -27,7 +27,11 @@ export async function startItemZone({ plan, used, actor, token }) {
         const own = plan.zone?.centre === "around" ? token?.document ?? token : null;
         const grid = own?.parent?.grid?.size ? { size: own.parent.grid.size, gridFeet: own.parent.grid.distance ?? 5 } : null;
         const zone = grid ? aroundZone(plan.zone, { x: Number(own.x), y: Number(own.y), w: Math.max(1, Number(own.width) || 1) * grid.size, h: Math.max(1, Number(own.height) || 1) * grid.size }, grid) : plan.zone;
+        const before = Date.now();
         const started = await startZone({ item, plan: zone === plan.zone ? plan : { ...plan, zone }, sourceToken: token?.document ?? token });
+        // (Its difficult terrain not for creatures of some traits, The Eye of the Slumberer's water creatures: the core's selective terrain on its
+        // Regions' movement cost — those creatures on the scene now at their normal cost.)
+        if (plan.zone?.exceptTraits?.length) await exceptTerrain(plan.zone, item, (token?.document ?? token)?.parent, before).catch((error) => console.error(`${MODULE_ID} | selective terrain`, error));
         // (Its light at the zone, Spark Wafer's: scripts/placed-light.js.)
         if (plan.zone?.light) await lightZone(plan.zone.light, plan.zone.lasts, { scene: (token?.document ?? token)?.parent ?? canvas.scene, item }).catch((error) => console.error(`${MODULE_ID} | zone light`, error));
         return started;
@@ -38,6 +42,18 @@ export async function startItemZone({ plan, used, actor, token }) {
         whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id),
         content: `<p><strong>${used.data.name}</strong>: ${what} (the ability module's zones aren't there to place it).</p>`
     });
+}
+
+// The zone's Regions made since then (the ability module's, for this item): each movement-cost behaviour flagged with the core's selective
+// terrain — its own difficulty for everyone, none for the creatures on the scene with one of those traits (src/live/cube.js exemptSpec).
+async function exceptTerrain(zone, item, scene, since) {
+    if (!scene) return;
+    const regions = (scene.regions?.contents ?? [...(scene.regions ?? [])]).filter((region) => region.flags?.[ABILITY_ID]?.zone?.itemUuid === item.uuid && Number(region.flags[ABILITY_ID].zone.createdAt) >= since);
+    const creatures = (scene.tokens?.contents ?? [...(scene.tokens ?? [])]).filter((token) => token.actor).map((token) => ({ actorUuid: token.actor.uuid, traits: [...(token.actor.traits ?? new Set(token.actor.system?.traits?.value ?? []))] }));
+    const spec = exemptSpec(zone, creatures);
+    for (const region of regions) {
+        for (const behavior of region.behaviors?.contents ?? [...(region.behaviors ?? [])]) if (behavior.type === "modifyMovementCost") await behavior.setFlag(CORE_ID, "selectiveTerrain", spec);
+    }
 }
 
 // The made creatures as the item's text has them (src/live/conjured.js conjuredChanges): its creature type traded for the traits the item

@@ -123,6 +123,75 @@ const READINGS = [
         ],
         // (Its "Activate (1 minute) envision, Interact": a minute, its components concentrate and manipulate.)
         card: (found, _plan, { slug, info }) => ({ ...pairedStonePlanOf(found, slug), activation: { time: "1 minute", traits: ["concentrate", "manipulate"] }, item: { activation: { ...(info?.activation ?? {}), time: "1 minute" } } })
+    },
+    {
+        // The Eye of the Slumberer's Vortex: the ability module's zone round the Eye (placed on it), difficult terrain for swimming, the water trait's
+        // creatures exempt (zone.exceptTraits, the core's selective terrain: scripts/zones.js), until used again.
+        names: ["The Eye of the Slumberer: Vortex"],
+        requirements: /^You're wearing the Amulet of the Slumberer\s*, you're within (\d+) feet of the Eye of the Slumberer\s*, and the Eye is within water$/,
+        sentences: [
+            /^The water around the Eye churns violently in a (\d+)-foot emanation, becoming difficult terrain for (swimming) creatures that don't have the (water) trait\.$/,
+            /^You can use this action again to Dismiss this effect\.$/
+        ],
+        card: ([churns], _plan, { requirements }) => ({
+            builtin: "zone",
+            actions: null,
+            targeting: { target: null, range: `${requirements[1]} feet`, area: { type: "emanation", value: Number(churns[1]) } },
+            zone: {
+                area: { type: "emanation", value: Number(churns[1]) },
+                centre: "placed",
+                range: Number(requirements[1]),
+                lasts: null,
+                untilReused: true,
+                concealed: false,
+                terrain: [{ movement: ["swim"], difficulty: 2 }],
+                exceptTraits: [churns[3].toLowerCase()],
+                others: false,
+                hazard: null,
+                saves: [],
+                damage: [],
+                effect: null,
+                modifiers: [],
+                notes: [`Place it on the Eye: the water churns in a ${churns[1]}-foot emanation round it, difficult terrain for swimming creatures without the ${churns[3]} trait.`, "Its user ends it by using the action again.", `Its user must wear the Amulet of the Slumberer, be within ${requirements[1]} feet of the Eye, and the Eye must be in water.`]
+            }
+        })
+    },
+    {
+        // Guiding Star Orb (Heroic)'s Embed Location: its user's place recorded on the orb, three at most (src/live/embedded-places.js).
+        names: ["Guiding Star Orb (Heroic): Embed Location"],
+        sentences: [
+            /^By focusing, the Guiding Star Orb embeds your current location within\.$/,
+            /^Thereafter, anyone who touches the Guiding Star Orb while casting a spell with the teleportation trait to travel to this location arrives precisely, without any inaccuracy at all\.$/,
+            /^The Guiding Star Orb can have up to (three|two|\d+) locations embedded at a time; if this activity is used a (fourth|third|\w+) time, the new location replaces the oldest stored one\.$/
+        ],
+        card: ([, , most]) => ({
+            builtin: "embed-location",
+            targeting: { target: null, range: null, area: null },
+            embed: { max: { two: 2, three: 3 }[most[1].toLowerCase()] ?? Number(most[1]), line: "A teleportation spell cast touching the orb to one of these arrives there precisely, with no inaccuracy (the GM's map of the journey)." }
+        })
+    },
+    {
+        // Phoenix Necklace: nonlethal attacks without their penalty for the willing creatures its user targets — each one's note Effect with PF2e's
+        // toggle that gives its Strikes the nonlethal trait (AdjustStrike), no penalty taken; until its user uses it again (plan.item.endsPrevious:
+        // scripts/activations.js removes the Effects it gave before).
+        names: ["Phoenix Necklace"],
+        index: 0,
+        sentences: [
+            /^You select any number of willing creatures you can see within (\d+) feet, including yourself\.$/,
+            /^The selected creatures can make nonlethal attacks without taking a penalty to their attack rolls\.$/,
+            /^This effect remains in place until you remove the necklace or use this activation again\.$/
+        ],
+        card: ([within], _plan, { info }) => ({
+            targeting: { target: `any number of willing creatures within ${within[1]} feet, its user too`, range: `${within[1]} feet`, area: null },
+            resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [{
+                label: "Nonlethal without penalty",
+                text: "It can make nonlethal attacks with no penalty to their attack rolls: tick \"Nonlethal attacks\" (this Effect's toggle) and its Strikes have the nonlethal trait. It lasts until the necklace's wearer takes it off or uses this again.",
+                duration: null,
+                rules: [{ key: "RollOption", domain: "all", option: "phoenix-necklace-nonlethal", toggleable: true, label: "Nonlethal attacks" }, { key: "AdjustStrike", mode: "add", property: "weapon-traits", value: "nonlethal", predicate: ["phoenix-necklace-nonlethal"] }]
+            }] } } },
+            notes: [`Target the willing creatures it chooses within ${within[1]} feet (its user too, if it likes).`, "Taking the necklace off ends it for them all: delete their Effects then."],
+            item: { recipient: "targets", endsPrevious: "Nonlethal without penalty" }
+        })
     }
 ];
 

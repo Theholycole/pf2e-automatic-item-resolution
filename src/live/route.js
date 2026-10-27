@@ -15,6 +15,7 @@ import { isTable } from "./table-card.js";
 import { isTake } from "./take-card.js";
 import { isSphere } from "./sphere-card.js";
 import { isInert, isStructure } from "./cube.js";
+import { isEmbed } from "./embedded-places.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -75,6 +76,8 @@ export function routeOf(plan, text = "") {
     // (Walls of the environment module's round its user, Cube of Nex's walls of force; an item made inert, its other activation's: scripts/cube.js.)
     if (isStructure(plan)) return "structure";
     if (isInert(plan)) return "inert";
+    // (A place its user embeds, Guiding Star Orb (Heroic)'s: scripts/embedded-places.js.)
+    if (isEmbed(plan)) return "embed";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

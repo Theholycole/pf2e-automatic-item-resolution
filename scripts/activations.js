@@ -89,6 +89,15 @@ async function activateFromSheet(item, index) {
     return null;
 }
 
+// The Effects of that name on every creature in the world and on the scenes' unlinked tokens: deleted.
+async function endPrevious(effectName) {
+    const actors = [...(game.actors?.contents ?? []), ...(game.scenes?.contents ?? []).flatMap((scene) => (scene.tokens?.contents ?? []).filter((token) => !token.actorLink && token.actor).map((token) => token.actor))];
+    for (const actor of actors) {
+        const gone = (actor.itemTypes?.effect ?? []).filter((effect) => effect.name === effectName);
+        if (gone.length) await actor.deleteEmbeddedDocuments("Item", gone.map((effect) => effect.id)).catch(() => null);
+    }
+}
+
 // One activation (on the active GM's client): its card, and its use counted on the item. userId: who pressed it (the GM
 // or an owner of the item's actor, checked by the socket's handler).
 export async function activate(itemUuid, index, userId = game.user.id) {
@@ -125,6 +134,8 @@ export async function activate(itemUuid, index, userId = game.user.id) {
     const token = item.actor.getActiveTokens?.(true)?.[0] ?? null;
     // (A readied bonus its creature's other activations end, Scale of Igroon's: scripts/ends-on.js.)
     await endOnActivate(item.actor);
+    // (What it gave last time ends as it's used again, Phoenix Necklace's nonlethal attacks: its note Effects of that label, on any creature.)
+    if (entry.plan.item?.endsPrevious) await endPrevious(`${name}: ${entry.plan.item.endsPrevious}`);
     // (The activation's card, named for it; its text the activation's own block.)
     const used = { data: { ...entry.data, name, system: { ...entry.data.system, description: { value: entry.activation.html } } }, actor: item.actor };
     const card = await postCardFor({ message: null, plan: entry.plan, used, actor: item.actor, token });
