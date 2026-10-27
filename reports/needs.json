@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1346,
+  "entries": 1345,
   "results": {
    "partial": 425,
-   "none": 553,
+   "none": 552,
    "note-only": 249,
    "builtin:no-effect": 119
   },
@@ -33,7 +33,7 @@
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
-   "triggers": 92,
+   "triggers": 91,
    "situational": 18,
    "dying": 29,
    "senses": 22,
@@ -56,10 +56,10 @@
    "speech": 130,
    "out-of-combat": 447,
    "counteract": 105,
-   "afflictions": 111,
+   "afflictions": 110,
    "lasting": 241,
    "moving": 116,
-   "triggers": 126,
+   "triggers": 125,
    "visibility": 51,
    "dying": 77,
    "choice": 111,
@@ -7802,17 +7802,6 @@
     "moving",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Devil's Trident",
-   "kind": "activation",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: the target must …",
-   "needs": [
-    "triggers",
-    "afflictions"
    ]
   },
   {

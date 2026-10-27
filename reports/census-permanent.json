@@ -6,10 +6,10 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 924,
+   "resolves": 925,
    "builtin:cast-spell": 474,
    "partial": 128,
-   "none": 403,
+   "none": 402,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
    "builtin:readied-bonus": 47,
@@ -31,10 +31,10 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 435,
+   "save": 436,
    "cast": 474,
    "item": 628,
-   "none": 510,
+   "none": 509,
    "focus": 47,
    "counteract": 32,
    "fortune": 62,
@@ -87,9 +87,9 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 209,
+    "resolves": 210,
     "partial": 28,
-    "none": 63,
+    "none": 62,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
     "builtin:table": 1,
@@ -14051,9 +14051,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Devil's Trident",

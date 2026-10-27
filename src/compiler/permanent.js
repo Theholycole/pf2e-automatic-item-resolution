@@ -124,9 +124,37 @@ export function readFrequency(text) {
 
 // The item's activations: [{ name, time, traits, frequency, trigger, requirements, html }] — html is its block (its
 // Activate line to the next one), which the ability compiler reads as an ability's.
+// (An affliction under a heading of its own after the activations — Devil's Trident's "<h3>Sewer Haze</h3>", its traits, Saving Throw, Onset
+// and stages: the block of the activation that names it, in the inline form an ability's affliction takes ("<p><strong>Sewer Haze</strong>
+// (disease, virulent)</p>" and its lines) — 2026-10-27, its activation read nothing before.)
+const HEADED_AFFLICTION = /<h[1-6]>\s*([^<]+?)\s*<\/h[1-6]>\s*<section class="traits">([\s\S]*?)<\/section>([\s\S]*?<strong>\s*Saving Throw\s*<\/strong>[\s\S]*?)(?=<h[1-6]\b|<hr\b|$)/gi;
+function headedAfflictions(text) {
+    return [...String(text ?? "").matchAll(HEADED_AFFLICTION)].map((match) => {
+        const traits = [...match[2].matchAll(/<p>\s*([^<]+?)\s*<\/p>/g)].map((trait) => trait[1].trim().toLowerCase());
+        if (!traits.some((trait) => /^(?:disease|poison|curse|ingested|inhaled|contact|injury)$/.test(trait))) return null;
+        const lines = match[3].replace(/^\s*<p>(?!\s*<strong>)[\s\S]*?<\/p>\s*/, "");
+        return { name: match[1].trim(), html: `<p><strong>${match[1].trim()}</strong> (${traits.join(", ")})</p>${lines}` };
+    }).filter(Boolean);
+}
+
+// The affliction an activation hands over from a heading of its own (splitActivations' headedAffliction): its own name and traits, and the
+// exposure's DC when the activation gives one ("succeed at a DC 25 Fortitude save or become infected with sewer haze" — the disease's DC 23
+// is its stages').
+function withHeadedAffliction(plan, activation) {
+    const headed = activation.headedAffliction;
+    const handoff = plan?.resolution?.afflictionHandoff;
+    if (!headed || !handoff) return plan;
+    const exposure = new RegExp(String.raw`@Check\[(\w+)\|dc:(\d+)[^\]]*\] save or become infected with ${headed.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i").exec(activation.html);
+    const slug = headed.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes ?? {}).map(([degree, row]) => [degree, row?.affliction ? { ...row, affliction: { ...row.affliction, name: headed.name } } : row]));
+    const check = exposure ? { ...plan.resolution.check, statistic: exposure[1].toLowerCase(), against: { ...plan.resolution.check.against, value: Number(exposure[2]) } } : plan.resolution.check;
+    return { ...plan, resolution: { ...plan.resolution, check, outcomes, afflictionHandoff: { ...handoff, name: headed.name, slug, traits: headed.traits } } };
+}
+
 export function splitActivations(html) {
     const text = String(html ?? "");
     const starts = [...text.matchAll(/<strong>\s*Activat(?:e|ion)\b/gi)].map((match) => match.index);
+    const headed = headedAfflictions(text);
     return starts.map((start, index) => {
         // (To a section heading after it, if one comes first: Essence Forge's "<h2>Essence Forge Crafting</h2>" table isn't its last activation's.)
         const whole = text.slice(start, starts[index + 1] ?? text.length);
@@ -137,7 +165,10 @@ export function splitActivations(html) {
         // (Nor an affliction's stat block after it that it doesn't name: Sweet Hag's Eye's Sickeningly Sweet, the eye eaten, isn't its Meltaway
         // Mint's save — 2026-10-26.)
         const affliction = /<p>\s*<strong>([^<]+)<\/strong>\s*\([a-z, ]*\b(?:ingested|inhaled|contact|injury|poison|disease|curse)\b[a-z, ]*\)[\s\S]*?<strong>\s*Saving Throw\s*<\/strong>/i.exec(cut);
-        const block = affliction && affliction.index > 0 && !new RegExp(`\\b${affliction[1].trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(plainText(cut.slice(0, affliction.index))) ? cut.slice(0, affliction.index) : cut;
+        const own = affliction && affliction.index > 0 && !new RegExp(`\\b${affliction[1].trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(plainText(cut.slice(0, affliction.index))) ? cut.slice(0, affliction.index) : cut;
+        // (One under its own heading that this activation names: given to it.)
+        const named = headed.find((entry) => new RegExp(`\\b${entry.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(plainText(own)) && !own.includes(entry.html));
+        const block = named ? `${own}${named.html}` : own;
         const head = /<strong>\s*Activat(?:e|ion)\s*(?:[—–-]\s*([^<]*?))?\s*<\/strong>([\s\S]*?)(?=<\/p>|<br|<hr|<strong>|$)/i.exec(block);
         const glyph = /<span class="action-glyph">\s*([^<\s]+)\s*<\/span>/i.exec(head?.[2] ?? "")?.[1]?.toLowerCase();
         const words = plainText(head?.[2] ?? "");
@@ -151,7 +182,8 @@ export function splitActivations(html) {
             frequency: readFrequency(field(block, "Frequency")),
             trigger: field(block, "Trigger"),
             requirements: field(block, "Requirements?"),
-            html: block
+            html: block,
+            ...(named ? { headedAffliction: { name: named.name, traits: [...named.html.matchAll(/\(([^)]*)\)<\/p>/g)][0]?.[1]?.split(", ") ?? [] } } : {})
         };
     });
 }
@@ -747,6 +779,7 @@ function compileEach(item, options = {}) {
         plan = withToggleOn(withFormExtras(plan), activation.html, item);
         plan = withActionGate(withNonlethalExempt(withoutDamageRestated(withoutFlavorNotes(plan, activation.html), { reduce })));
 
+        plan = withHeadedAffliction(plan, activation);
         const frequency = activation.frequency?.max ? activation.frequency : null;
         // (Granted to the creatures the presser targets: who and how far, for the simulator; its linked Effects theirs, not its user's.)
         const others = targetedRecipient(plan, plainText(activation.html));

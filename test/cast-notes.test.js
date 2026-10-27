@@ -115,3 +115,10 @@ test("how a creature ends an item's effect early (2026-10-27): Fire-Douse Snare'
     const { compileItem } = await import("../src/compiler/index.js");
     assert.equal(compileItem(item("Fire-Douse Snare"), options).partial, undefined);
 });
+
+test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const [critical] = activations(item("Devil's Trident"), options);
+    const resolution = critical.plan.resolution;
+    assert.deepEqual([resolution.check.against.value, resolution.afflictionHandoff.name, resolution.afflictionHandoff.traits, resolution.afflictionHandoff.dc, resolution.outcomes.criticalFailure.affliction.stage], [25, "Sewer Haze", ["disease", "virulent"], 23, 2]);
+});
