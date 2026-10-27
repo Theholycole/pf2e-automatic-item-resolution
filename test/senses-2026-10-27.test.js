@@ -258,3 +258,19 @@ test("Penetrating Ammunition's line Strike: a one-off (no other item's Strike is
     assert.deepEqual([ammo.builtin, ammo.partial, ammo.decided], ["pf2e-rules", undefined, "one-off"]);
     assert.match(oneOff("Penetrating Ammunition").rule, /60-foot line/);
 });
+
+test("a weapon fighting on its own — Animated's Set Free, Vine Whip's rooted whip: its Strike card kept open, at the text's modifier and the weapon's potency, the weapon's dice and type with no Strength (and an elemental rune's 1d6); its flat check after", async () => {
+    const { withWeaponStrike } = await import("../src/live/self-fighting.js");
+    const animated = activation("Animated", "Set Free");
+    assert.deepEqual([animated.noteOnly, animated.partial, animated.again.later, animated.again.repeat], [undefined, undefined, true, true]);
+    const strike = animated.again.plan;
+    assert.deepEqual(strike.selfFighting, { base: 24, flat: 6, wait: { value: 10, unit: "minutes" }, index: 0 });
+    const weapon = { _source: { system: { damage: { dice: 1 } } }, system: { runes: { potency: 2, striking: 2, property: ["flaming", "animated"] }, damage: { dice: 3, die: "d8", damageType: "slashing" } } };
+    const filled = withWeaponStrike(strike, weapon);
+    assert.equal(filled.resolution.check.modifier, 26);
+    assert.deepEqual(filled.resolution.sharedDamage.components.map((component) => [component.formula, component.type]), [["3d8", "slashing"], ["1d6", "fire"]]);
+    assert.deepEqual(filled.resolution.outcomes.criticalSuccess.damage, { mode: "shared", multiplier: 2, sourceComponentIds: ["weapon", "rune0"] });
+    const vine = activation("Vine Whip");
+    assert.deepEqual([vine.noteOnly, vine.again.plan.selfFighting.base], [undefined, 22]);
+    assert.ok(vine.notes.some((note) => /soil or sand/.test(note)));
+});

@@ -12,6 +12,10 @@ import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { targetGroups } from "../src/live/if-target.js";
 import { withoutHitDamage } from "../src/live/scaled.js";
 import { withStrikeFormula } from "../src/live/strike-as.js";
+import { withWeaponStrike } from "../src/live/self-fighting.js";
+
+// (scripts/activations.js's flag of when each activation is usable again: not imported, as that module reaches this one.)
+const WAITS = "activationRecharges";
 
 // The poison card, for an injury poison's Use (scripts/live.js has read the item and its plan).
 export async function postPoisonCard({ message, plan, used, actor, token }) {
@@ -178,6 +182,12 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     const actor = await fromUuid(state.user.actorUuid).catch(() => null);
     // (Damage as its user's Strike of that slug deals it now, Dinosaur Boots' Trample with the foot its Effect gives: PF2e's formula, each
     // instance its own type — src/live/strike-as.js.)
+    // (A weapon fighting on its own, Animated's: its Strike from the weapon's potency and dice — src/live/self-fighting.js.)
+    if (state.plan?.selfFighting && state.step !== "then") {
+        const weapon = state.item?.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
+        if (!weapon) throw new Error(`${state.item.name} isn't there any more: roll its Strike by hand.`);
+        state = { ...state, plan: withWeaponStrike(state.plan, weapon) };
+    }
     const bySlug = state.plan?.strikeDamage?.slug;
     if (bySlug && state.step !== "then") {
         const strike = (actor?.system?.actions ?? []).find((action) => action?.slug === bySlug);
@@ -299,6 +309,21 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
             await actor.deleteEmbeddedDocuments("Item", held.map((effect) => effect.id));
             lines.push(`${state.user.name}: ${state.ends.label} ends.`);
         }
+    }
+    // (Its flat check once it has acted, Animated's DC 6: a failure ends it, and its activation waits its minutes from now — scripts/activations.js.)
+    const fighting = state.plan?.selfFighting;
+    if (fighting?.flat) {
+        const flat = await new Roll("1d20").evaluate();
+        await flat.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: flat check (DC ${fighting.flat})` });
+        if (flat.total < fighting.flat) {
+            const weapon = state.item?.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
+            const seconds = Number(fighting.wait?.value ?? 10) * (fighting.wait?.unit === "rounds" ? 6 : 60);
+            if (weapon?.setFlag) await weapon.setFlag(MODULE_ID, WAITS, { ...(weapon.getFlag(MODULE_ID, WAITS) ?? {}), [fighting.index ?? 0]: game.time.worldTime + seconds });
+            lines.push(`Flat check ${flat.total} (DC ${fighting.flat}): it stops and falls to the ground; usable again in ${fighting.wait?.value ?? 10} ${fighting.wait?.unit ?? "minutes"}.`);
+            const over = { ...state, status: "applied", results: [...state.results, ...lines].slice(-6) };
+            return message.update({ content: exposureCardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
+        }
+        lines.push(`Flat check ${flat.total} (DC ${fighting.flat}): it fights on.`);
     }
     const after = afterExposure(state, lines, game.time.worldTime);
     // (A save its hit then calls for: the card stays open for that second step.)
