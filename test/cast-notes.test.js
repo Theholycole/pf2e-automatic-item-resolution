@@ -265,6 +265,12 @@ test("barbs that hurt each long Stride (2026-10-27): Poison Barbs Snare — its 
     assert.deepEqual([movedFarEnough(15, 25), movedFarEnough(10, 25), movedFarEnough(12.5, 25)], [true, false, false]);
 });
 
+test("a pause of the item's own extra damage, which no rule plays (2026-10-27): Skeletal Claw — its 10 temporary Hit Points the card's, the pause a line of it", async () => {
+    const [{ plan: claw }] = compileActivations(item("Skeletal Claw"), options);
+    assert.deepEqual([claw.resolution.outcomes.success.effects[0].amount, claw.partial], [10, undefined]);
+    assert.match(claw.notes[0], /doesn't deal additional void damage/);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

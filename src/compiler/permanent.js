@@ -214,7 +214,7 @@ export function compileActivations(item, options = {}) {
     // (A temporary immunity after its use, src/compiler/immunity.js — held to, or a note.)
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
-    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: decideActivation(item, entry, withCounteractLeaves(withCastNotes(withGmCalls(withZoneUntraced(withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withExtraWay(withInsteadWay(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(withFelledReward(withCastFlatCheck(withSaveAfterApplied(withAfterApplied(withAfterEnds(withSlain(ownerDCs(entry.plan), entry.activation.html)), entry.activation.html), entry.activation.html)), entry.activation.html), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), entry.activation.html), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)), plainText(entry.activation.html))), options, item))) })).map((entry) => withNamedOptions(item, entry, options)).filter((entry) => !playedBySpellModule(entry, share, item)));
+    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: withPausedPassive(decideActivation(item, entry, withCounteractLeaves(withCastNotes(withGmCalls(withZoneUntraced(withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withExtraWay(withInsteadWay(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(withFelledReward(withCastFlatCheck(withSaveAfterApplied(withAfterApplied(withAfterEnds(withSlain(ownerDCs(entry.plan), entry.activation.html)), entry.activation.html), entry.activation.html)), entry.activation.html), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), entry.activation.html), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)), plainText(entry.activation.html))), options, item))), item) })).map((entry) => withNamedOptions(item, entry, options)).filter((entry) => !playedBySpellModule(entry, share, item)));
 }
 
 // (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of
@@ -896,4 +896,17 @@ function rowPlanFor(item, base) {
         // (PF2e's own rules on its user, with no reading of their own: plan.item.ruleEffects.)
         ...(row?.ruleEffects ? { ruleEffects: row.ruleEffects } : {})
     };
+}
+
+// (A pause of the item's own extra damage, Skeletal Claw's "As long as any of these temporary Hit Points remain, the skeletal claw doesn't deal
+// additional void damage": that damage is no rule PF2e's data plays (the item has no DamageDice), its user's to add by hand — so its pause is a
+// line of the card, nothing to apply. 2026-10-27.)
+const PAUSED = /^As long as any of these temporary Hit Points remain, the [\w' -]+? doesn't deal additional (\w+) damage\.$/i;
+function withPausedPassive(plan, item) {
+    const notes = (plan?.notes ?? []).map((note) => String(typeof note === "string" ? note : note?.text ?? "").trim());
+    const paused = notes.find((note) => PAUSED.test(note));
+    if (!paused || !plan.partial || (item?.system?.rules ?? []).some((rule) => rule?.key === "DamageDice")) return plan;
+    const others = notes.filter((note) => note !== paused);
+    if (others.length || (plan.unread ?? []).length || Object.values(plan.resolution?.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length)) return plan;
+    return { ...plan, partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } };
 }

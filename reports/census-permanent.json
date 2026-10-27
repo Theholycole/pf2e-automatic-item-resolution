@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 949,
+   "resolves": 950,
    "builtin:cast-spell": 474,
-   "partial": 120,
+   "partial": 119,
    "none": 384,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
@@ -87,8 +87,8 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 212,
-    "partial": 26,
+    "resolves": 213,
+    "partial": 25,
     "none": 61,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
@@ -6038,7 +6038,7 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "save"
   },
