@@ -4597,6 +4597,29 @@ export const cases = {
         return { conditions: foe.itemTypes.condition.map((condition) => condition.slug) };
     },
 
+    // Worm Vial's Eat (2026-10-27): a creature 10 feet away critically failing its DC 30 Reflex save takes the swallowing's doubled damage and 10
+    // more from its 20-foot fall (at least 2 × 12 + 10), Prone; then the card to spit it out within 30 feet, its user picking the space.
+    async wormVialSpit(scene) {
+        const { actor: user } = await creature(scene, "Worm Opener", { type: "character", x: 10, y: 19 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Worm Meal", { x: 12, y: 19, hp: 200, alliance: "opposition", save: -30 });
+        const vial = await give(user, "Worm Vial");
+        let since = Date.now();
+        await vial.consume();
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the vial's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        const hp = foe.system.attributes.hp.value;
+        since = Date.now();
+        await rollAndApply(save);
+        await until(() => foe.hasCondition("prone"), `Prone from the fall (${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 10000 });
+        await until(() => hp - foe.system.attributes.hp.value >= 34, `at least 34 damage (${hp} → ${foe.system.attributes.hp.value})`, { timeout: 8000 });
+        const place = await messageAfter(since, itemCard("teleport"), { what: "the card to spit it out" });
+        const state = place.getFlag(NS, "card");
+        assert(state.plan.teleport.within === 30 && /Worm Meal/.test(state.user.name), `within 30 feet, the creature spat out (${JSON.stringify([state.user.name, state.plan.teleport])})`);
+        return { taken: hp - foe.system.attributes.hp.value, degree: game.messages.get(save.id).flags["pf2e-automatic-ability-resolution"].card.targets?.[0]?.degree };
+    },
+
     // Zealous Banner: the ally targeted Quickened for 1 round.
     async zealousBanner(scene) {
         const { actor: bearer } = await creature(scene, "Banner Bearer", { type: "character", x: 2, y: 12 });

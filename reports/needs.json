@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1291,
+  "entries": 1290,
   "results": {
-   "partial": 394,
+   "partial": 393,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -13,7 +13,7 @@
    "speeds": 22,
    "counteract": 23,
    "afflictions": 60,
-   "moving": 80,
+   "moving": 79,
    "visibility": 48,
    "lasting": 65,
    "choice": 30,
@@ -58,7 +58,7 @@
    "counteract": 104,
    "afflictions": 109,
    "lasting": 231,
-   "moving": 107,
+   "moving": 106,
    "triggers": 118,
    "visibility": 50,
    "dying": 75,
@@ -8813,16 +8813,6 @@
    "needs": [
     "triggers",
     "mind"
-   ]
-  },
-  {
-   "name": "Worm Vial",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "20-foot fall",
-   "needs": [
-    "moving"
    ]
   },
   {

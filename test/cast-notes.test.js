@@ -136,6 +136,15 @@ test("a snare's mark on the creature (2026-10-27): Marking Snare's failure and c
     assert.match(outcomes.failure.noteEffects[0].text, /\+2 circumstance bonus to Track this creature/);
 });
 
+test("a creature swallowed, then spat out to fall (2026-10-27): Worm Vial's Eat — its critical failure doubled, the 20-foot fall's 10 bludgeoning and Prone, the spit a placed move within 30 feet, its 15-foot range", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const vial = compileItem(item("Worm Vial"), options);
+    const { failure, criticalFailure } = vial.resolution.outcomes;
+    assert.deepEqual([failure.damage.formulas.map((entry) => entry.formula), criticalFailure.damage.formulas.map((entry) => entry.formula)], [["(3d6+9)[bludgeoning]", "10[bludgeoning]"], ["2*(3d6+9)[bludgeoning]", "10[bludgeoning]"]]);
+    assert.deepEqual([failure.effects.map((effect) => effect.slug), vial.placed.rows, vial.targeting.range, vial.partial], [["prone"], { failure: { within: 30 }, criticalFailure: { within: 30 } }, "15 feet", undefined]);
+    assert.match(vial.notes.join(" "), /^Or Burrow instead: the worm tunnels up to 80 feet \(40 through solid stone\)/);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);
