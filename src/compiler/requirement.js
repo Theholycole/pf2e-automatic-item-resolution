@@ -5,7 +5,8 @@
 
 const RANKS = { trained: 1, expert: 2, master: 3, legendary: 4 };
 const SKILLS = ["acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation", "medicine", "nature", "occultism", "performance", "religion", "society", "stealth", "survival", "thievery"];
-const REQUIREMENT = /\bRequirements? You(?:'re| are) (?:an? )?(trained|expert|master|legendary) in ([A-Za-z ]+?)(?=\.|,| Effect\b| This\b| A\b| An\b| The\b| In\b|$)/;
+// (Or Prerequisites, Wooden Nickel's "Prerequisites You are a master in Deception", 2026-10-27.)
+const REQUIREMENT = /\b(?:Requirements?|Prerequisites?) You(?:'re| are) (?:an? )?(trained|expert|master|legendary) in ([A-Za-z ]+?)(?=\.|,| Effect\b| This\b| A\b| An\b| The\b| In\b|$)/;
 
 // (Or its class: Accompaniment Cloak's "Requirements You are a bard", Hexing Jar's "You are a witch" — the class alone; what more it says,
 // "a cleric who worships the deity tied to the robe", the GM's.)

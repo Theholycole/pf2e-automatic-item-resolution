@@ -53,7 +53,13 @@ export const NOTES_CHECKED = new Map([
     ["Private Workshop", "a 15-foot workshop for Crafting at +1 (PF2e's own Effect: Private Workshop (Using for Crafting)), folded back with an Interact action: out of combat"],
     ["Sandcastle: Shape the Castle", "a castle of sand up to 120 feet, built over a minute, its walls AC 10, Hardness 10, 40 Hit Points a section, weakness to water 15, Climb DC 15: the map's and its walls' (objects)"],
     ["Blooming Lotus Seed Pod", "lotus pads floating on a liquid for a minute (the map's), or a lotus whose 8 hours of sleep within 30 feet count as a day's rest, safe from Nightmare: out of combat"],
-    ["Spider Chair: Web Swing", "its user pulled by a web line to a wall, floor or ceiling up to 60 feet away: its own move on the map"]
+    ["Spider Chair: Web Swing", "its user pulled by a web line to a wall, floor or ceiling up to 60 feet away: its own move on the map"],
+    // (2026-10-27, the illusions group: a disguise's look changed, or what a weapon senses — the "disguise" in their words no illusion of the
+    // item's to disbelieve.)
+    ["Clockwork Disguise: Deploy Disguise", "its plates rearranged into one of its preset armor looks, its own statistics unchanged: an appearance"],
+    ["Hand-Hewed Face: Fresh Face", "its user's molded face peeled off, its generic one shown, so it drops a disguise's face at once: an appearance, its Impersonate its own"],
+    ["Illusory Program", "a pamphlet's tiny illusions of a play, fading a day after it's opened: flavor"],
+    ["Foe-Sensing Rod", "a weapon that vibrates for an hour while a creature of the chosen trait is within 60 feet, unless it's disguised or hidden with a Deception or Stealth DC of 26 or more: what it senses the GM's to tell"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

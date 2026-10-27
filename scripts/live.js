@@ -402,7 +402,8 @@ function choicesOf(state, root) {
     // (The held items ticked to drop: scripts/drop-held.js.)
     if (state.kind === "drop") return { ticked: [...root.querySelectorAll("[data-air-drop]")].filter((box) => box.checked).map((box) => box.dataset.airDrop) };
     // (The creatures trying to disbelieve an illusion: the GM's targets.)
-    if (state.kind === "disbelief") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    // (And its second check, when it has one: Misdirecting Haversack's Society.)
+    if (state.kind === "disbelief") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), check: Number(root.querySelector("[data-air-field='check']")?.value ?? 0) };
     // (An ally's condition taken: the ally targeted.)
     if (state.kind === "take") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A bonus for the creature targeted: the presser's targets.)
@@ -546,7 +547,7 @@ async function onRequest(data) {
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}) }
-        : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [], check: data.check === 1 ? 1 : 0 }
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], critical: Boolean(data.critical) }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null, outright: Boolean(row?.outright) })) : null, ...(data.ownRank !== undefined ? { ownRank: data.ownRank === null ? null : String(data.ownRank) } : {}) }

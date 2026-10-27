@@ -569,7 +569,7 @@ export function resistanceEffectSource(resist, { item = {}, user = {}, worldTime
 }
 
 // A vision in words: "Darkvision until the start of the next turn", "Greater darkvision".
-const SENSE_WORDS = { darkvision: "Darkvision", "greater-darkvision": "Greater darkvision", "low-light-vision": "Low-light vision", bloodsense: "Bloodsense", tremorsense: "Tremorsense", scent: "Scent", lifesense: "Lifesense", echolocation: "Echolocation", wavesense: "Wavesense", thoughtsense: "Thoughtsense", "motion-sense": "Motion sense" };
+const SENSE_WORDS = { darkvision: "Darkvision", "greater-darkvision": "Greater darkvision", "low-light-vision": "Low-light vision", bloodsense: "Bloodsense", tremorsense: "Tremorsense", scent: "Scent", lifesense: "Lifesense", echolocation: "Echolocation", wavesense: "Wavesense", thoughtsense: "Thoughtsense", "motion-sense": "Motion sense", magicsense: "Magic sense" };
 export function senseText(sense) {
     // (One its user ends: "until deactivated (its next activation) or no longer invested".)
     const time = sense.duration?.mode === "fixed" ? (sense.duration.anchor === "source-turn" ? ` until the ${sense.duration.expiry === "turn-end" ? "end" : "start"} of the next turn` : ` for ${timeText(sense.duration)}`) : sense.toggle ? ` until deactivated (its next activation)${sense.invested ? " or no longer invested" : ""}` : "";
