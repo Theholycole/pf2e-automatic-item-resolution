@@ -32,6 +32,7 @@ import { setUpDropHeld } from "./drop-held.js";
 import { setUpMoveDamage } from "./move-damage.js";
 import { setUpFootDamage } from "./foot-damage.js";
 import { setUpEndsOnHostile } from "./ends-on-hostile.js";
+import { setUpBleedGrows } from "./bleed-grows.js";
 import { setUpPreventCondition } from "./prevent-condition.js";
 import { setUpHalfDamage } from "./half-damage.js";
 import { setUpHealAfter } from "./heal-after.js";
@@ -191,6 +192,8 @@ Hooks.once("ready", async () => {
     setUpFootDamage();
     // (An Effect ended by its creature's hostile action or long move, Camouflage Dye's: scripts/ends-on-hostile.js.)
     setUpEndsOnHostile();
+    // (A persistent bleed that grows with each failure to stop it, Bloodgorger Scythe's: scripts/bleed-grows.js.)
+    setUpBleedGrows();
     setUpPreventCondition();
     // (Half the triggering attack's damage, Laurel of the Empath's: scripts/half-damage.js.)
     setUpHalfDamage();

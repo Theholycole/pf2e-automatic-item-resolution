@@ -2960,6 +2960,54 @@ export const cases = {
         }
     },
 
+    // Bloodgorger Scythe's Root in Blood (2026-10-27): after a hit with the scythe, 1 persistent bleed on the foe and its note Effect; the foe's
+    // turn ends with the bleed (its recovery not rolled, a failure), and at the start of its next turn the bleed is 2.
+    async bloodgorgerRootInBlood(scene) {
+        await clearSquares(scene, [[7, 7], [8, 7]]);
+        const { actor: user, token: userToken } = await creature(scene, "Scythe Wielder", { type: "character", x: 7, y: 7 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Scythe Target", { x: 8, y: 7, ac: -20, hp: 200, alliance: "opposition" });
+        const scythe = await give(user, "Bloodgorger Scythe");
+        await scythe.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 20 }, { tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            await userToken.object?.control?.();
+            await target(foeToken);
+            await strike(user, scythe);
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(scythe.uuid, 0);
+            const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")) || Boolean(message.flags?.["pf2e-automatic-ability-resolution"]?.card), { what: "Root in Blood's card" });
+            since = Date.now();
+            if (card.getFlag(NS, "card")) await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+            const save = card.flags?.["pf2e-automatic-ability-resolution"]?.card ? card : await messageAfter(since, abilitySaveCard, { what: "the ability card", timeout: 8000 }).catch(() => null);
+            // (An automatic check: no roll, its Apply.)
+            if (save) {
+                let button = null;
+                for (const stop = Date.now() + 8000; Date.now() < stop && !button; ) {
+                    const found = document.querySelector(`[data-message-id="${save.id}"] [data-aar-action="apply"]`);
+                    if (found && !found.disabled) button = found;
+                    else await wait(200);
+                }
+                assert(button, "the ability card's Apply");
+                button.click();
+            }
+            const bleed = () => foe.itemTypes.condition.find((condition) => condition.slug === "persistent-damage" && condition.system?.persistent?.damageType === "bleed");
+            await until(() => bleed() && foe.itemTypes.effect.some((effect) => /Scythe tree/.test(effect.name)), `1 persistent bleed and its Effect (${foe.itemTypes.condition.map((condition) => condition.name)} / ${foe.itemTypes.effect.map((effect) => effect.name)})`, { timeout: 10000 });
+            const first = String(bleed().system.persistent.formula);
+            await combat.nextTurn();
+            await wait(800);
+            await combat.nextTurn();
+            await wait(800);
+            await combat.nextTurn();
+            await until(() => bleed() && String(bleed().system.persistent.formula) === "2", `the bleed raised to 2 (${bleed()?.system.persistent.formula})`, { timeout: 8000 });
+            return { formulas: [first, String(bleed().system.persistent.formula)] };
+        } finally {
+            await combat.delete().catch(() => null);
+        }
+    },
+
     // Nightmare's Lament's Fuming Cloak (2026-10-27): its wielder gets PF2e's Aura: Fuming Cloak and the zone around it; the foe beside it starting
     // its turn there gets the DC 23 Fortitude save's card — failed, Sickened 2 and immune for a minute; its wielder's own turn start gives none,
     // nor the foe's next (immune).

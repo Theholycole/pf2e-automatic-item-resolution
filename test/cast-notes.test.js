@@ -793,3 +793,14 @@ test("a spell's effect around the creature hit (2026-10-27): Blade of Fallen Sta
     assert.deepEqual(plan.strike.damage.map((entry) => [entry.diceNumber, entry.dieSize, entry.damageType]), [[6, "d8", "cold"]]);
     assert.deepEqual(plan.strike.notes, []);
 });
+
+test("a persistent bleed that grows with each failure (2026-10-27): Bloodgorger Scythe's Root in Blood — 1 persistent bleed (not plain bleed), its note Effect while the bleed lasts, raised by 1 a failed turn up to 3", async () => {
+    const { grown, growingOf } = await import("../scripts/bleed-grows.js");
+    const [{ plan }] = compileActivations(item("Bloodgorger Scythe"), options);
+    assert.equal(plan.partial, undefined);
+    const row = plan.resolution.outcomes.success;
+    assert.deepEqual([row.damage.formulas, plan.resolution.sharedDamage], [[{ formula: "1[persistent,bleed]" }], null]);
+    assert.deepEqual([row.noteEffects[0].whilePersistent, row.noteEffects[0].rules[0].option], ["bleed", "air-bleed-grows:bleed:1:3"]);
+    assert.deepEqual([grown("1", 1, 3), grown("2", 1, 3), grown("3", 1, 3), grown("1d6", 1, 3)], ["2", "3", "3", null]);
+    assert.deepEqual(growingOf({ itemTypes: { effect: [{ system: { rules: row.noteEffects[0].rules } }] } }).map(({ type, by, max }) => [type, by, max]), [["bleed", 1, 3]]);
+});
