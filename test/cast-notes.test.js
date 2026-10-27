@@ -352,3 +352,13 @@ test("a snare's save for everyone around its square (2026-10-27): Shrapnel Snare
     const bomb = compileItem(item("Bomb Snare"), options);
     assert.deepEqual([bomb.zone.burst.area, bomb.zone.burst.from], [{ type: "emanation", value: 5 }, "creature"]);
 });
+
+test("a readied bonus its user's own doing ends (2026-10-27): Scale of Igroon's Stealth bonus, ended by another activation or a Shield Block; the Immovable rune's Force Open DC in words", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { readiedWords } = await import("../src/live/fortune-card.js");
+    const scale = activations(item("Scale of Igroon"), options).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.deepEqual([scale.bonus.endsOn, scale.partial], [{ activate: true, shieldBlock: true }, undefined]);
+    assert.match(readiedWords(scale), /ending if it Activates another item or uses Shield Block/);
+    const immovable = activations(item("Immovable"), options).find((entry) => entry.plan?.item?.ruleEffects).plan;
+    assert.deepEqual([immovable.partial, /DC 40 Athletics check to Force Open/.test(immovable.item.ruleEffects[0].words)], [undefined, true]);
+});

@@ -101,7 +101,7 @@ test("the reading: a bonus for a moment — the roll that triggered it, or the t
     // "Until the start of your next turn, you gain a +4 item bonus to Stealth checks to Hide and Sneak".
     const scale = compileActivations(source("Scale of Igroon"))[0].plan.bonus;
     assert.deepEqual([scale.modifiers[0].predicate, scale.duration.expiry], [[{ or: ["action:hide", "action:sneak"] }], "turn-start"]);
-    assert.equal(readiedWords(compileActivations(source("Scale of Igroon"))[0].plan), "+4 item bonus to Stealth check (hide, sneak), until the start of the next turn");
+    assert.equal(readiedWords(compileActivations(source("Scale of Igroon"))[0].plan), "+4 item bonus to Stealth check (hide, sneak), ending if it Activates another item or uses Shield Block, until the start of the next turn");
     // Not one: after the roll ("You would miss …", "If this causes the Strike to miss"), a lasting one, an ally's.
     assert.equal(readReadiedBonus("Trigger You would miss with an attack made with a bow Effect You gain a +2 circumstance bonus to your attack roll, possibly turning a miss into a hit."), null);
     assert.equal(compileItem(source("Animal-Turning Fulu"))?.builtin === "readied-bonus", false);

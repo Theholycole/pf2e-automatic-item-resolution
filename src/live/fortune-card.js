@@ -50,11 +50,13 @@ export function bonusWords(bonus) {
     const recovery = bonus.recovery ? `a flat check now to end persistent ${bonus.recovery.types.join(" or ")} damage` : null;
     // (Crown of the Fire Eater's: healing just after the damage.)
     const healed = bonus.healAfter ? `then it regains Hit Points equal to its ${bonus.healAfter.type} damage before resistance, at most ${bonus.healAfter.max}` : null;
+    // (Scale of Igroon's: ended by its user's next activation or Shield Block.)
+    const ends = bonus.endsOn ? "ending if it Activates another item or uses Shield Block" : null;
     // (Boots of the Blight's: Quickened after a success, its extra action only to Stride.)
     const success = bonus.onSuccess ? `on a success, ${bonus.onSuccess.condition.slug} for ${bonus.onSuccess.condition.duration.value} ${bonus.onSuccess.condition.duration.value === 1 ? bonus.onSuccess.condition.duration.unit.replace(/s$/, "") : bonus.onSuccess.condition.duration.unit}${bonus.onSuccess.only ? ` (its extra action only to ${bonus.onSuccess.only})` : ""}` : null;
     // (Warrior's Training Ring's more for an expert: "+4 for an expert in any weapon".)
     const expert = first?.ifExpert ? ` (+${first.ifExpert} for an expert in any weapon)` : "";
-    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, halved, degree, shared, success, steps, recovery, healed].filter(Boolean).join(", ");
+    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, halved, degree, shared, success, steps, recovery, healed, ends].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
@@ -113,7 +115,7 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
         img: img ?? (fortune ? "icons/svg/d20-highlight.svg" : "icons/svg/upgrade.svg"),
         // (Only against what triggered it: what spends it — with resistance or immunity, the damage still to come after a hit; with a
         // bonus to saves, its creature's save.)
-        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
         system: {
             description: { value: `<p>${escape(readiedWords(plan))}.${(plan.notes ?? []).length ? ` ${escape(plan.notes.join(" "))}` : ""}</p>` },
             duration: { ...duration, sustained: false },

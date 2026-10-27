@@ -928,6 +928,14 @@ function ruleEffectsOf(sentences, duration, used = new Set()) {
             found.push({ name: "anchored", words: `The DC to move it from its place, knocking it Prone too, is ${anchored[1]}`, rules: [], duration });
             continue;
         }
+        // (Or how hard it is to move, the Immovable rune's "While you're immobilized in this way, you can be moved only if a creature succeeds at a
+        // DC 40 Athletics check to Force Open your armor": words too.)
+        const forceOpen = /^While you're immobilized in this way, you can be moved only if a creature succeeds at a (?:@Check\[athletics\|dc:(\d+)\]|DC (\d+) Athletics) check to Force Open your armor\.$/i.exec(sentence.trim());
+        if (forceOpen) {
+            used.add(index);
+            found.push({ name: "anchored", words: `It can be moved only by a creature that succeeds at a DC ${forceOpen[1] ?? forceOpen[2]} Athletics check to Force Open its armor`, rules: [], duration });
+            continue;
+        }
         const footing = /^In addition, you can Step into difficult terrain, and you aren't Off-Guard on uneven ground\.$/i.exec(sentence.trim());
         if (footing) {
             used.add(index);

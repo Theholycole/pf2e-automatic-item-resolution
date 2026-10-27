@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1299,
+  "entries": 1297,
   "results": {
-   "partial": 401,
+   "partial": 399,
    "none": 530,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -22,7 +22,7 @@
    "information": 23,
    "out-of-combat": 35,
    "no-rules": 17,
-   "actions": 31,
+   "actions": 29,
    "immunity": 27,
    "objects": 114,
    "creatures": 71,
@@ -57,7 +57,7 @@
    "out-of-combat": 444,
    "counteract": 105,
    "afflictions": 109,
-   "lasting": 233,
+   "lasting": 232,
    "moving": 108,
    "triggers": 118,
    "visibility": 50,
@@ -68,7 +68,7 @@
    "reader": 213,
    "spells": 75,
    "information": 197,
-   "actions": 62,
+   "actions": 60,
    "from-events": 26,
    "no-rules": 17,
    "situational": 86,
@@ -8795,17 +8795,6 @@
   {
    "name": "Scale of Igroon",
    "kind": "activation",
-   "result": "partial",
-   "main": "actions",
-   "work": "shield block",
-   "needs": [
-    "actions",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Scale of Igroon",
-   "kind": "activation",
    "result": "none",
    "main": "triggers",
    "work": "Trigger: you reflect the …",
@@ -12581,16 +12570,6 @@
     "moving",
     "strike",
     "reader"
-   ]
-  },
-  {
-   "name": "Immovable",
-   "kind": "activation",
-   "result": "partial",
-   "main": "actions",
-   "work": "force open",
-   "needs": [
-    "actions"
    ]
   },
   {

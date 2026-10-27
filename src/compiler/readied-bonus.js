@@ -386,6 +386,14 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
         bonus.healAfter = { type: healAfter[1][1].toLowerCase(), max: Number(healAfter[1][2]) };
         notes.splice(notes.indexOf(healAfter[0]), 1);
     }
+    // (Ended early by its user's own doing, Scale of Igroon's "This bonus ends if you Activate another ability or use the Shield Block reaction":
+    // bonus.endsOn { activate, shieldBlock } — scripts/ends-on.js, at its user's next item activation or Shield Block, 2026-10-27.)
+    const ENDS_ON = /^This bonus ends if you Activate another ability or use the Shield Block reaction\.$/i;
+    const endsOn = notes.find((note) => ENDS_ON.test(String(note).trim()));
+    if (endsOn) {
+        bonus.endsOn = { activate: true, shieldBlock: true };
+        notes.splice(notes.indexOf(endsOn), 1);
+    }
     const limits = notes.filter((note) => LIMIT.test(String(note).trim()) || FEAT_MOVE.test(String(note).trim()));
     if (limits.length) bonus.limits = limits.map((note) => String(note).trim()).map((note) => (FEAT_MOVE.test(note) ? note.replace(FEAT_MOVE, "With the $1 feat, if the attack misses, it can Stride up to $2 feet instead (its own move).") : note));
     const kept = (animal ? notes.filter((note) => !ANIMAL.test(String(note).trim())) : notes).filter((note) => !limits.includes(note));

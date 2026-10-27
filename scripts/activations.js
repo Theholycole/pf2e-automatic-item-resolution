@@ -11,6 +11,7 @@ import { chargeSpellstrike } from "./spellstrike.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
 import { MODULE_ID, SOCKET, encounterOf, isActiveGM, ownerOf } from "./foundry.js";
+import { endOnActivate } from "./ends-on.js";
 
 export const USES = "activationUses";
 // (When each activation is usable again after its own wait, trigger.recharge: { [index]: worldTime }.)
@@ -120,6 +121,8 @@ export async function activate(itemUuid, index, userId = game.user.id) {
         });
     }
     const token = item.actor.getActiveTokens?.(true)?.[0] ?? null;
+    // (A readied bonus its creature's other activations end, Scale of Igroon's: scripts/ends-on.js.)
+    await endOnActivate(item.actor);
     // (The activation's card, named for it; its text the activation's own block.)
     const used = { data: { ...entry.data, name, system: { ...entry.data.system, description: { value: entry.activation.html } } }, actor: item.actor };
     const card = await postCardFor({ message: null, plan: entry.plan, used, actor: item.actor, token });

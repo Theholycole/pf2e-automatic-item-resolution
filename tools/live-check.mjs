@@ -1178,6 +1178,32 @@ export const cases = {
         });
     },
 
+    // Scale of Igroon (2026-10-27): its +4 Stealth Effect ended by its user's next activation (the scale's other one), and again by a Shield
+    // Block (PF2e's applyDamage with shieldBlockRequest).
+    async scaleIgroonEnds(scene) {
+        const { actor: user } = await creature(scene, "Igroon Bearer", { type: "character", x: 16, y: 11, level: 18 });
+        const scale = await give(user, "Scale of Igroon");
+        await scale.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const ready = async () => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(scale.uuid, 0);
+            const card = await messageAfter(since, itemCard("fortune"), { what: "the readied card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await until(() => effect(), "the Stealth Effect", { timeout: 8000 });
+            return card;
+        };
+        const effect = () => user.itemTypes.effect.find((entry) => entry.getFlag(NS, "rollTwice")?.endsOn);
+        const card = await ready();
+        assert(/ending if it Activates another item or uses Shield Block/.test(card.content), "the card's words");
+        await game.modules.get(NS).api.live.activate(scale.uuid, 1);
+        await until(() => !effect(), "ended by another activation", { timeout: 8000 });
+        await ready();
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await user.applyDamage({ damage: await new DamageRoll("5[slashing]").evaluate(), token: user.getActiveTokens(true, true)[0], shieldBlockRequest: true });
+        await until(() => !effect(), "ended by the Shield Block", { timeout: 8000 });
+        return { ended: 2 };
+    },
+
     // Potion of Resistance: the type picked on the card (fire, the fourth) — PF2e's Resistance 5 to fire for an hour.
     async resistTypePick(scene) {
         const { actor: drinker } = await creature(scene, "Resistance Drinker", { x: 16, y: 14 });
