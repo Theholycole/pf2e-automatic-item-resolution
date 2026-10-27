@@ -3,6 +3,7 @@
 // its user — a note Effect's name, as the ability module gives it, "<item>: <label>" (scripts/live.js applyCard). Pure.
 
 export const endsOwnName = (itemName, label) => `${itemName}: ${label}`;
-export const endsOwnText = (endsOwn) => `Ends its ${endsOwn.label} Effect (the one its other activation gave)`;
+// (Or the Effects of its other ways by their names, endsOwn.names: The Silent Hag's sense given before, ended by the next — 2026-10-27.)
+export const endsOwnText = (endsOwn) => (endsOwn.names?.length ? `Ends its ${endsOwn.label} Effect (the one another of its ways gave)` : `Ends its ${endsOwn.label} Effect (the one its other activation gave)`);
 // Its user's Effects ([{ id, name }]) that end → their ids.
-export const ownEffectsToEnd = (effects, itemName, label) => (effects ?? []).filter((effect) => effect?.name === endsOwnName(itemName, label)).map((effect) => effect.id);
+export const ownEffectsToEnd = (effects, itemName, label, names = null) => (effects ?? []).filter((effect) => (names?.length ? names.includes(effect?.name) : effect?.name === endsOwnName(itemName, label))).map((effect) => effect.id);

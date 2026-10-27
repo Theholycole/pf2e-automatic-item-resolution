@@ -465,7 +465,10 @@ export function weatherEffectSource(entry, { item = {}, user = {}, worldTime = 0
 
 // A penalty against the spell it casts for creatures of a kind (Castrovel's Beacon's demons, src/compiler/cast-riders.js withCastTraits): PF2e's
 // FlatModifier on that save for the spell's minute.
+// (Or rules of its own in place of the penalty, penalty.rules with its name and words: Orb of Dragonkind's dragon without its status bonus to
+// saves against magic, 2026-10-27.)
 export function castPenaltySource(penalty, spellName, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    if (Array.isArray(penalty.rules)) return ownEffectSource({ name: penalty.name ?? "against the spell", img: "icons/svg/downgrade.svg", words: `${penalty.words ?? penalty.name}${spellName ? ` against ${spellName}` : ""}`, rules: penalty.rules.map((rule) => ({ ...rule })), duration: { mode: "fixed", ...penalty.duration }, flag: { castPenalty: true }, item, user, worldTime, initiative, moduleId });
     const save = `${penalty.selector.charAt(0).toUpperCase()}${penalty.selector.slice(1)} saves`;
     return ownEffectSource({ name: `${penalty.value} to ${save}`, img: "icons/svg/downgrade.svg", words: `${penalty.value} ${penalty.type} penalty to ${save}${spellName ? ` against ${spellName}` : ""}`, rules: [{ key: "FlatModifier", selector: penalty.selector, type: penalty.type, value: penalty.value, ...(item.name ? { label: item.name } : {}) }], duration: { mode: "fixed", ...penalty.duration }, flag: { castPenalty: true }, item, user, worldTime, initiative, moduleId });
 }

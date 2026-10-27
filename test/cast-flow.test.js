@@ -188,7 +188,8 @@ test("more casts in words: rank pairs, lists with their ranks and DCs, by rune, 
     assert.deepEqual(pick(castOf("Monarch")), [["Dream Message", 4, null]]);
     const reeds = compileActivations(source("The Whispering Reeds"), { spells }).find((entry) => entry.plan?.builtin === "cast-spell").plan;
     assert.deepEqual(pick(reeds).map(([name, rank]) => `${name}@${rank}`), ["Wave of Despair@null", "Fear@3", "Paranoia@null", "Phantasmal Killer@null"]);
-    assert.match(reeds.notes[0], /one target within 30 feet only/, "its own limits a note");
+    // (Its own limit a line of the cast card since 2026-10-27, Wave of Despair at one creature in place of its cone: src/compiler/legend-readings.js.)
+    assert.match(reeds.castLines[0], /one creature within 30 feet only/, "its own limits a line");
     // "If your last action was to Cast a prepared Spell with the plant or wood trait, you … obtain the effect of a 2nd-rank Oaken
     // Resilience spell": what it needs a note, on its user.
     const leaves = castOf("Verdant Leaves");

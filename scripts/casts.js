@@ -122,13 +122,15 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         let castTargets = targetTokens;
         if (state.plan.castTraits) {
             const traitsOf = (target) => [...(target.actor?.traits ?? new Set(target.actor?.system?.traits?.value ?? []))];
-            const immune = targetTokens.filter((target) => state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait)));
+            // (Or only those of a kind, Orb of Dragonkind's dragon: the others left out — 2026-10-27.)
+            const only = state.plan.castTraits.only ?? [];
+            const immune = targetTokens.filter((target) => state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait)) || (only.length && !only.some((trait) => traitsOf(target).includes(trait))));
             castTargets = targetTokens.filter((target) => !immune.includes(target));
-            for (const target of immune) lines.push(`${target.name} is immune (${state.plan.castTraits.immune.join(" or ")}): left out of the cast.`);
+            for (const target of immune) lines.push(only.length && !state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait)) ? `${target.name} isn't a ${only.join(" or ")}: left out of the cast.` : `${target.name} is immune (${state.plan.castTraits.immune.join(" or ")}): left out of the cast.`);
             for (const penalty of state.plan.castTraits.penalties) {
                 for (const target of castTargets.filter((one) => one.actor && penalty.traits.some((trait) => traitsOf(one).includes(trait)))) {
                     await target.actor.createEmbeddedDocuments("Item", [castPenaltySource(penalty, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
-                    lines.push(`${target.name}: ${penalty.value} ${penalty.type} to its ${penalty.selector} saves against it.`);
+                    lines.push(penalty.words ? `${target.name}: ${penalty.words.charAt(0).toLowerCase()}${penalty.words.slice(1)}.` : `${target.name}: ${penalty.value} ${penalty.type} to its ${penalty.selector} saves against it.`);
                 }
             }
             if (!targetTokens.length) lines.push(`Target the creatures in its area to leave out the ${state.plan.castTraits.immune.join(" and ")}s and give the penalty.`);

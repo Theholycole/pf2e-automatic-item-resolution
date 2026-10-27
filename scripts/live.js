@@ -737,8 +737,8 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
 
 // The item's own Effect its other activation gave (plan.item.endsOwn), deleted on the creature it's for: a line for the card.
 async function endOwnEffect(actor, name, state) {
-    const { label } = state.plan.item.endsOwn;
-    const ids = ownEffectsToEnd(actor?.itemTypes?.effect ?? [], state.item.name, label);
+    const { label, names = null } = state.plan.item.endsOwn;
+    const ids = ownEffectsToEnd(actor?.itemTypes?.effect ?? [], state.item.name, label, names);
     if (!ids.length) return `${name} has no ${label} Effect from ${state.item.name} to end.`;
     await actor.deleteEmbeddedDocuments("Item", ids);
     return `${name}: ${label} ends.`;
