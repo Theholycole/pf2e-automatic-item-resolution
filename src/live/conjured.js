@@ -59,3 +59,14 @@ export function pausedAfter(paused, goneId, present = () => true) {
     const left = (paused?.actorIds ?? []).filter((id) => id !== goneId && present(id));
     return left.length ? { keep: { ...paused, actorIds: left } } : { restore: paused?.invested !== false };
 }
+
+// A called creature's attitude by its user's check (plan.attitudeCheck, Void Mirror's Call from the Void: helpful on a critical success,
+// indifferent on a success, hostile on a failure): PF2e's degree index (0 critical failure … 3 critical success) and the plan's degrees →
+// { degree, attitude, disposition, alliance } — its token's side and its actor's alliance.
+const DEGREES = ["criticalFailure", "failure", "success", "criticalSuccess"];
+const SIDES = { helpful: { disposition: 1, alliance: "party" }, friendly: { disposition: 1, alliance: "party" }, indifferent: { disposition: 0, alliance: null }, unfriendly: { disposition: -1, alliance: "opposition" }, hostile: { disposition: -1, alliance: "opposition" } };
+export function attitudeOf(index, degrees = {}) {
+    const degree = DEGREES[Math.max(0, Math.min(3, Number(index) || 0))];
+    const attitude = degrees[degree] ?? "indifferent";
+    return { degree, attitude, ...(SIDES[attitude] ?? SIDES.indifferent) };
+}

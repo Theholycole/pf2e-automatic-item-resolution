@@ -8,13 +8,14 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
-import { pausedAfter } from "../src/live/conjured.js";
+import { attitudeOf, pausedAfter } from "../src/live/conjured.js";
 import { planFor } from "../src/live/if-target.js";
 import { withAttackModifiers, withNearbyDC, withTargetDC } from "../src/live/scaled.js";
 import { endsFor, hostileAt } from "../src/live/targeted.js";
 import { saveText, withAttackChoice } from "../src/live/poison-card.js";
 import { markText, marksEndingAt } from "../src/live/card.js";
 import { focusText, poolAfter } from "../src/live/focus-card.js";
+import { readiedRules } from "../src/live/fortune-card.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -160,4 +161,16 @@ test("The Uprising: a 20-foot burst of grabbing figures for a minute, its user's
     assert.deepEqual([grabs.when, grabs.only, grabs.plan.resolution.outcomes.success.damage.mode, mob.zone.damage[0]], [["end"], { lacks: { conditions: ["grabbed"] } }, "none", { when: "end", only: { conditions: ["grabbed"] }, formulas: ["1d6[bludgeoning]"] }]);
     // (Its user's unarmed attack modifier, filled in as it's used.)
     assert.equal(withAttackModifiers(mob, { unarmed: 31 }).zone.saves[0].plan.resolution.check.modifier, 31);
+});
+
+test("Void Mirror: Speak to the Void its skills legendary for the check and a failure's mental damage; Call from the Void its picked creature's attitude by its user's check, its return a save; Become the Void's rows", () => {
+    const [speak, call, become] = plans("Void Mirror");
+    assert.deepEqual([done(speak), routeOf(speak), speak.trigger.frequency.per, speak.bonus.rules.map((rule) => rule.path), speak.bonus.after], [true, "fortune", "month", ["system.skills.nature.rank", "system.skills.occultism.rank"], { failure: { formula: "10d6", type: "mental" }, criticalFailure: { formula: "100", type: "mental" } }]);
+    assert.ok(readiedRules(speak).some((rule) => rule.key === "ActiveEffectLike" && rule.value === 4));
+    const [called, returned] = call.ways.map((way) => way.plan);
+    assert.deepEqual([done(call), call.trigger.frequency?.per ?? call.ways[0].plan.trigger.frequency?.per, routeOf(called), called.pick, called.attitudeCheck.degrees, called.attitudeCheck.stunned], [true, "year", "conjure", { any: ["aberration", "beast", "fungus", "ooze", "plant"], maxLevel: 24 }, { criticalSuccess: "helpful", success: "indifferent", failure: "hostile", criticalFailure: "hostile" }, 3]);
+    assert.deepEqual([routeOf(returned, "x"), returned.dcFromUser, returned.trigger.immunity.duration, returned.trigger.immunity.degrees], ["save", "occultism", { value: 24, unit: "hours" }, ["criticalSuccess", "success"]]);
+    assert.deepEqual([attitudeOf(3, called.attitudeCheck.degrees), attitudeOf(0, called.attitudeCheck.degrees).alliance], [{ degree: "criticalSuccess", attitude: "helpful", disposition: 1, alliance: "party" }, "opposition"]);
+    const rows = become.resolution.outcomes;
+    assert.deepEqual([done(become), become.trigger.frequency.per, become.resolution.check.against.value, become.resolution.sharedDamage.components[0].formula, rows.criticalFailure.terminal, rows.criticalFailure.noteEffects[0].duration.value], [true, "century", 40, "10d6+40", { kind: "death" }, 7]);
 });

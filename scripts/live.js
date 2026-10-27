@@ -318,6 +318,12 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         const unarmed = (actor.system?.actions ?? []).find((action) => action?.slug === "basic-unarmed" || action?.item?.slug === "basic-unarmed" || action?.item?.system?.category === "unarmed");
         plan = withAttackModifiers(plan, { unarmed: unarmed?.totalModifier });
     }
+    // (A save against its user's own skill DC, Void Mirror's return of the creature it called: their Occultism DC as it is now — plan.dcFromUser.)
+    if (plan?.dcFromUser && actor && plan.resolution?.check?.against?.dc === "fixed") {
+        const dc = Number(actor.getStatistic?.(plan.dcFromUser)?.dc?.value);
+        if (!Number.isFinite(dc)) throw new Error(`${used.data.name}: ${actor.name} has no ${plan.dcFromUser} DC.`);
+        plan = { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...plan.resolution.check.against, value: dc } } } };
+    }
     // (Its user's check at the highest DC of the creature its presser targets, with their best statistic — Spear of the Destroyer's Flame's tie to
     // the living Commander: src/live/scaled.js.)
     if (plan?.dcFromTarget && actor) {

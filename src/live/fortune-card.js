@@ -9,7 +9,8 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 
 export const MODULE_KEY = "rollTwice";
 const SAVES = new Set(["saving-throw", "fortitude", "reflex", "will"]);
-export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity || plan.bonus?.halfDamage || plan.bonus?.reduceCrit || plan.bonus?.shieldBlock));
+// (Or PF2e's own rules for the roll, bonus.rules — Void Mirror's Speak to the Void, its skills legendary for it: 2026-10-27.)
+export const isFortune = (plan) => (plan?.builtin === "roll-twice" && Boolean(plan.rollTwice?.selector)) || (plan?.builtin === "readied-bonus" && Boolean(plan.bonus?.modifiers?.length || plan.bonus?.degree || plan.bonus?.resistance || plan.bonus?.immunity || plan.bonus?.halfDamage || plan.bonus?.reduceCrit || plan.bonus?.shieldBlock || plan.bonus?.rules?.length));
 
 const ROLL_WORDS = { initiative: "initiative roll", "attack-roll": "attack roll", "saving-throw": "saving throw", "skill-check": "skill check", perception: "Perception check", fortitude: "Fortitude save", reflex: "Reflex save", will: "Will save", ac: "AC", check: "check" };
 const actionWords = (predicate) => (predicate?.[0]?.or ?? []).map((option) => String(option).replace(/^action:/, "").replace(/-/g, " ")).join(", ");
@@ -59,7 +60,9 @@ export function bonusWords(bonus) {
     const success = bonus.onSuccess ? `on a success, ${bonus.onSuccess.condition.slug} for ${bonus.onSuccess.condition.duration.value} ${bonus.onSuccess.condition.duration.value === 1 ? bonus.onSuccess.condition.duration.unit.replace(/s$/, "") : bonus.onSuccess.condition.duration.unit}${bonus.onSuccess.only ? ` (its extra action only to ${bonus.onSuccess.only})` : ""}` : null;
     // (Warrior's Training Ring's more for an expert: "+4 for an expert in any weapon".)
     const expert = first?.ifExpert ? ` (+${first.ifExpert} for an expert in any weapon)` : "";
-    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, halved, cut, blocked, degree, shared, success, steps, recovery, healed, ends].filter(Boolean).join(", ");
+    // (Its own rules in words, bonus.words; and what a failure at that roll costs, bonus.after — Void Mirror's Speak to the Void.)
+    const after = bonus.after ? [bonus.after.failure ? `on a failure, its user takes ${bonus.after.failure.formula} ${bonus.after.failure.type} damage` : null, bonus.after.criticalFailure ? `on a critical failure ${bonus.after.criticalFailure.formula} ${bonus.after.criticalFailure.type}` : null].filter(Boolean).join(", ") : null;
+    return [bonus.words ?? null, first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, halved, cut, blocked, degree, shared, success, steps, recovery, healed, ends, after].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
@@ -101,7 +104,8 @@ export function readiedRules(plan) {
         // (A higher one against some sources, a warding tattoo's against fiends: its own Resistance, predicated.)
         ...(plan.bonus.resistanceAlso ?? []).map((entry) => ({ key: "Resistance", type: entry.type, value: entry.value, predicate: entry.predicate })),
         ...(plan.bonus.immunity ? [{ key: "Immunity", type: plan.bonus.immunity.type }] : []),
-        ...(plan.bonus.degree ? [{ key: "AdjustDegreeOfSuccess", selector: plan.bonus.degree.selector, adjustment: plan.bonus.degree.adjustment, ...(label ? { label } : {}), ...(plan.bonus.degree.predicate ? { predicate: plan.bonus.degree.predicate } : {}) }] : [])
+        ...(plan.bonus.degree ? [{ key: "AdjustDegreeOfSuccess", selector: plan.bonus.degree.selector, adjustment: plan.bonus.degree.adjustment, ...(label ? { label } : {}), ...(plan.bonus.degree.predicate ? { predicate: plan.bonus.degree.predicate } : {}) }] : []),
+        ...(plan.bonus.rules ?? []).map((rule) => ({ ...rule }))
     ];
 }
 
@@ -120,7 +124,7 @@ export function fortuneEffectSource({ state, img = null, worldTime = 0, initiati
         img: img ?? (fortune ? "icons/svg/d20-highlight.svg" : "icons/svg/upgrade.svg"),
         // (Only against what triggered it: what spends it — with resistance or immunity, the damage still to come after a hit; with a
         // bonus to saves, its creature's save.)
-        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.escalate ? { escalate: plan.bonus.escalate } : {}), ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.shieldBlock ? { shieldBlock: true } : {}), ...(plan.bonus?.reduceCrit ? { reduceCrit: plan.bonus.reduceCrit } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage || plan.bonus.reduceCrit || plan.bonus.shieldBlock), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { item: state.item, user: state.user, selector: spend[0] ?? null, spend, ...(plan.bonus?.escalate ? { escalate: plan.bonus.escalate } : {}), ...(plan.bonus?.onCritical ? { onCritical: plan.bonus.onCritical } : {}), ...(plan.bonus?.onSuccess ? { onSuccess: plan.bonus.onSuccess } : {}), ...(plan.bonus?.shieldShare ? { shieldShare: { uuid: state.item.uuid ?? null, name: state.item.name } } : {}), ...(plan.bonus?.halfDamage ? { halfDamage: true } : {}), ...(plan.bonus?.shieldBlock ? { shieldBlock: true } : {}), ...(plan.bonus?.reduceCrit ? { reduceCrit: plan.bonus.reduceCrit } : {}), ...(plan.bonus?.healAfter ? { healAfter: plan.bonus.healAfter } : {}), ...(plan.bonus?.endsOn ? { endsOn: plan.bonus.endsOn } : {}), ...(plan.bonus?.after ? { after: plan.bonus.after } : {}), ...(plan.bonus?.against ? { against: { damage: Boolean(plan.bonus.resistance || plan.bonus.immunity || plan.bonus.halfDamage || plan.bonus.reduceCrit || plan.bonus.shieldBlock), save: plan.bonus.modifiers.some((modifier) => SAVES.has(modifier.selector)), ...(plan.bonus.onAttack ? { onAttack: plan.bonus.onAttack } : {}) } } : {}) } } },
         system: {
             description: { value: `<p>${escape(readiedWords(plan))}.${(plan.notes ?? []).length ? ` ${escape(plan.notes.join(" "))}` : ""}</p>` },
             duration: { ...duration, sustained: false },

@@ -148,6 +148,17 @@ export async function fortuneRolled(message) {
         await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `<strong>${escape(item?.name ?? "Item")}</strong>: a failure — ${escape(failureWords(onFailure))} to ${escape(actor.name)}` });
         await actor.applyDamage({ damage: roll, token: message.token ?? actor.getActiveTokens?.(true, true)?.[0] ?? undefined });
     }
+    // (What a failure at that roll costs its user, bonus.after by degree — Void Mirror's Speak to the Void's 10d6 mental, 100 on a critical
+    // failure: 2026-10-27.)
+    for (const effect of spent) {
+        const cost = effect.flags[MODULE_ID][MODULE_KEY].after?.[context.outcome];
+        if (!cost) continue;
+        const DamageRoll = damageRollClass();
+        const roll = await new DamageRoll(`${cost.formula}[${cost.type}]`).evaluate();
+        const item = effect.flags[MODULE_ID][MODULE_KEY].item;
+        await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `<strong>${escape(item?.name ?? "Item")}</strong>: ${context.outcome === "criticalFailure" ? "a critical failure" : "a failure"} — ${escape(`${cost.formula} ${cost.type}`)} damage to ${escape(actor.name)}` });
+        await actor.applyDamage({ damage: roll, token: message.token ?? actor.getActiveTokens?.(true, true)?.[0] ?? undefined });
+    }
     // (A success at that roll gives a condition, Boots of the Blight's Quickened for 1 minute: the ability module's timed condition on its user,
     // the action it's for in the line.)
     for (const effect of ["success", "criticalSuccess"].includes(context.outcome) ? spent : []) {

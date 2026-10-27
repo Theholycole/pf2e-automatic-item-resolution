@@ -46,7 +46,142 @@ const NO_BONUSES = "It can't benefit from circumstance or status bonuses";
 // (Its user's unarmed Strike against a creature's DC: the check at their unarmed attack modifier, filled in live — check.attackFrom, scripts/live.js.)
 const unarmedCheck = (against, rows, base) => ({ modelVersion: base?.modelVersion, source: base?.source, rank: 1, traits: ["attack"], automation: { level: "automatic" }, trigger: { event: "zone" }, targeting: { target: "a creature in the area", range: null, area: null }, resolution: { kind: "check", check: { roll: "skill", statistic: "unarmed", against: { dc: "target", statistic: against }, modifier: null, attackFrom: "unarmed" }, sharedDamage: rows.sharedDamage ?? null, outcomes: rows.outcomes } });
 
+const RESEARCHED = (dc, rank) => `Only once its user has Researched this ritual: 12 RP from DC ${dc} Occultism checks (${rank}).`;
+const researchOf = (html) => /Research<\/strong>\s*Accumulate (\d+) RP by making @Check\[occultism\|dc:(\d+)\] \((\w+)\) checks/i.exec(String(html ?? ""));
+
 const READINGS = [
+    {
+        // (Speak to the Void: its user's next skill check — the Recall Knowledge it makes now — with Nature and Occultism at legendary proficiency
+        // (PF2e's ActiveEffectLike upgrading their ranks on the readied Effect, bonus.rules), its failure 10d6 mental to its user and its critical
+        // failure 100 (bonus.after, scripts/fortune.js).)
+        name: "Void Mirror",
+        sentences: [
+            /^The first activation ritual is known as "Speak to the Void" and allows the user to contact an intelligence in a distant part of the universe, provided the mirror shows that location \(regardless of distance\)\.$/,
+            /^This alien intelligence infuses the user's mind with answers, allowing the user to Recall Knowledge using Nature or Occultism as if they were legendary proficiency with the skill \(including the \+8 proficiency bonus\)\.$/,
+            /^If this check fails, the character takes (\d+d\d+) (\w+) damage \((\d+) \w+ damage on a critical failure\) as the imparted knowledge does more harm than good\.$/
+        ],
+        card: ([, , fails], plan, { html }) => {
+            const research = researchOf(html);
+            const type = fails[2].toLowerCase();
+            return {
+                builtin: "readied-bonus",
+                targeting: { target: "self", range: null, area: null },
+                bonus: {
+                    modifiers: [],
+                    rules: ["nature", "occultism"].map((skill) => ({ key: "ActiveEffectLike", mode: "upgrade", path: `system.skills.${skill}.rank`, value: 4 })),
+                    duration: { value: 1, unit: "minutes", expiry: "turn-start" },
+                    spend: ["skill-check"],
+                    after: { failure: { formula: fails[1], type }, criticalFailure: { formula: fails[3], type } },
+                    words: "Nature and Occultism at legendary proficiency (+8) for the Recall Knowledge it makes now"
+                },
+                notes: [
+                    ...(research ? [RESEARCHED(research[2], research[3])] : []),
+                    "Only about a place the mirror shows, however far away. Its user Recalls Knowledge now with Nature or Occultism (PF2e's own check), the GM's DC."
+                ]
+            };
+        }
+    },
+    {
+        // (Call from the Void: an alien creature of its user's pick — an aberration, beast, fungus, ooze or plant of its user's level + 4 or lower —
+        // the conjure card's, its user's Occultism check against that creature's Will DC rolled first (plan.attitudeCheck, scripts/zones.js): its
+        // attitude by the degree (helpful, indifferent, hostile: its side and a note Effect on it), its user Stunned 3 on a critical failure.
+        // Returning it: the ways card's second way, its Will save against its user's Occultism DC (plan.dcFromUser), a success its 24 hours'
+        // immunity.)
+        name: "Void Mirror",
+        over: true,
+        sentences: [
+            /^The second activation ritual is known as "Call from the Void\." The user performs a 1-hour-long rite before the Void Mirror ?, during which they indicate a type of (aberration), (beast), (fungus), (ooze), or (plant) creature that's an alien life form from the planet the user is currently located on\.$/,
+            /^The target creature must be a level equal to or less than the user's level \+(\d+)\.$/,
+            /^As the rite ends, the user attempts an @Check\[(\w+)\|defense:(\w+)\] check against the target creature's \w+ DC\.$/,
+            /^Critical Success The creature is drawn across the universe to appear in a space adjacent to the Void Mirror ?\.$/,
+            /^The creature's initial attitude toward the user is (helpful), but this attitude can shift quickly if the creature realizes its goals and personality differs dramatically from the user's, or if the user makes a request of the creature that's against its nature\.$/,
+            /^As long both the creature and the user are within (\d+) feet of the Void Mirror ?, the user can return the creature to its original location by Dismissing this activation\.$/,
+            /^The creature can attempt a (Will) save against the user's (Occultism) DC to resist being returned; if it succeeds, it's temporarily immune for (\d+) (hours?)\.$/,
+            /^Success As critical success, but the creature is (indifferent) upon arrival\.$/,
+            /^Failure As critical success, but the creature is (hostile) upon arrival\.$/,
+            /^Critical Failure As failure, but magical feedback from the failed activation causes the user to become Stunned (\d+)\.$/
+        ],
+        card: ([kinds, above, check, , helpful, near, resist, indifferent, hostile, stunned], plan, { base, info, item, html }) => {
+            const level = Number(item?.ownerLevel);
+            if (!Number.isFinite(level)) return null;
+            const research = researchOf(html);
+            const own = (card) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...card, item: { ...info, ...(card.item ?? {}) } });
+            const call = own({
+                builtin: "conjure",
+                targeting: { target: "self", range: null, area: null },
+                creatures: [{ name: "Called creature", count: 1, size: null, stats: null, from: null, traits: [], initiative: "roll" }],
+                pick: { any: kinds.slice(1, 6), maxLevel: level + Number(above[1]) },
+                attitudeCheck: { statistic: check[1].toLowerCase(), against: check[2].toLowerCase(), degrees: { criticalSuccess: helpful[1], success: indifferent[1], failure: hostile[1], criticalFailure: hostile[1] }, stunned: Number(stunned[1]) },
+                max: 1,
+                lasts: null,
+                vanishAtZero: false,
+                notes: [
+                    ...(research ? [RESEARCHED(research[2], research[3])] : []),
+                    "An hour's rite before the mirror: its user picks the alien creature, from the planet they're on; it appears beside the mirror (move its token there).",
+                    `Before it comes, its user's ${check[1]} check against its ${check[2]} DC sets its attitude: helpful on a critical success, indifferent on a success, hostile on a failure (and Stunned ${stunned[1]} for its user on a critical failure).`,
+                    "Helpful, it can turn quickly if its goals and nature differ dramatically from its user's, or at a request against its nature (the GM's)."
+                ]
+            });
+            const returned = own({
+                targeting: { target: "the called creature", range: null, area: null },
+                dcFromUser: resist[2].toLowerCase(),
+                trigger: { event: "use", immunity: { scope: "target", raw: `It's temporarily immune to being returned for ${resist[3]} ${resist[4]}.`, duration: { value: Number(resist[3]), unit: resist[4].toLowerCase().replace(/s?$/, "s") }, degrees: ["criticalSuccess", "success"], against: "all", slug: "void-mirror-return" } },
+                resolution: { kind: "save", check: { roll: "save", statistic: resist[1].toLowerCase(), basic: false, against: { dc: "fixed", value: 0 } }, sharedDamage: null, outcomes: { criticalSuccess: none(), success: none(), failure: { ...none(), noteEffects: [{ label: "Returned", text: "Sent back across the universe to where it came from: dismiss its token (the conjure card's Dismiss).", duration: null }] }, criticalFailure: { ...none(), noteEffects: [{ label: "Returned", text: "Sent back across the universe to where it came from: dismiss its token (the conjure card's Dismiss).", duration: null }] } } },
+                notes: [`Only while both it and its user are within ${near[1]} feet of the mirror. Target it: its ${resist[1]} save against its user's ${resist[2]} DC.`]
+            });
+            return { builtin: "ways", targeting: { target: null, range: null, area: null }, ways: [{ name: "Call from the Void", html: "<p>The rite's end: the creature called.</p>", plan: call }, { name: "Return it (Dismiss)", html: "<p>The creature returned.</p>", plan: returned }] };
+        }
+    },
+    {
+        // (Become the Void: seven days' rite, its check unnamed — Occultism at the mirror's level DC (the GM may change it) —; transformed on a
+        // success, the form the GM's, a note Effect for good; 10d6+40 bludgeoning on a failure; slain on a critical failure (the row's death),
+        // Tchekuth incubating in the body for 7 days.)
+        name: "Void Mirror",
+        sentences: [
+            /^The third activation ritual is known as "Become the Void" and requires the user to continue performing the rite for (\d+) consecutive days \(as if they were performing a multi-day ritual\)\.$/,
+            /^If the user fails to perform this rite for one of these 7 consecutive days, they immediately suffer the critical failure effect below\.$/,
+            /^Critical Success The user's body, mind, and soul are infused with alien energies drawn from the Dark Tapestry, which transforms the user into an aberration of a level no higher than their current level \+(\d+)\.$/,
+            /^This new form could be an existing aberration or a unique one of the GM's creation\.$/,
+            /^The user retains their memories and spellcasting ability \(including any rituals they know\) but becomes chaotic evil and loses all other abilities they possessed in their previous form\.$/,
+            /^Success As critical success, but the aberration the user transforms into can be of a level no higher than half the user's current level\.$/,
+            /^Failure The user's attempt to change is a painful mistake that deals (\d+d\d+\+\d+) (\w+) damage as their body twists, bends and breaks\.$/,
+            /^Ultimately, they are not transformed\.$/,
+            /^Critical Failure The user is slain, but their body shifts and transforms into a brand new creature as the bodiless alien intelligence Tchekuth incubates within the user's flesh, mind and soul\.$/,
+            /^This transformation takes another (\d+) days to complete but can be halted indefinitely if the Void Mirror is placed in a specially constructed frame aimed at the body's location \(regardless of any solid object between the mirror and the body\)\.$/,
+            /^Slowing or stopping this transformation via other means requires complex rituals or divine intervention, subject to the GM's whim\.$/,
+            /^After 7 days, the body completes its transformation and Tchekuth rises once more as a physical threat\.$/
+        ],
+        card: ([rite, , above, , , , hurt, , , incubates], plan, { item, html }) => {
+            const level = Number(item?.ownerLevel);
+            if (!Number.isFinite(level)) return null;
+            const dc = LEVEL_DCS[Math.max(0, Math.min(25, Number(item?.system?.level?.value) || 0))];
+            const research = researchOf(html);
+            const form = (most) => [{ label: "Become the Void", text: `Transformed into an aberration of level ${most} or lower — an existing one or one of the GM's making: it keeps its memories and spellcasting (its rituals too), becomes chaotic evil, and loses all its other abilities.`, duration: null }];
+            const card = ownCheck({
+                statistic: "occultism",
+                dc,
+                rows: { criticalSuccess: form(level + Number(above[1])), success: form(Math.floor(level / 2)) },
+                notes: [
+                    ...(research ? [RESEARCHED(research[2], research[3])] : []),
+                    `The rite takes ${rite[1]} consecutive days; missing one of them means the critical failure's effect at once (apply that row).`,
+                    `Its check isn't named: Occultism at the mirror's level DC ${dc} (the GM may change it).`
+                ]
+            });
+            const outcomes = card.resolution.outcomes;
+            return {
+                ...card,
+                resolution: {
+                    ...card.resolution,
+                    sharedDamage: { rollOnce: true, components: [{ id: "0", formula: hurt[1], type: hurt[2].toLowerCase(), category: null }] },
+                    outcomes: {
+                        ...outcomes,
+                        failure: { ...outcomes.failure, damage: { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] } },
+                        criticalFailure: { ...outcomes.criticalFailure, terminal: { kind: "death" }, noteEffects: [{ label: "Tchekuth incubates", text: `Slain: its body is becoming a new creature as the alien intelligence Tchekuth incubates in it. In ${incubates[1]} days Tchekuth rises; the Void Mirror in a specially built frame aimed at the body halts it while it's there (any other way takes complex rituals or divine help, the GM's).`, duration: days(Number(incubates[1])) }] }
+                    }
+                }
+            };
+        }
+    },
     {
         // (A mob of shadowy figures in a 20-foot burst within 120 feet, for a minute: a zone, its user's unarmed Strike against each creature's
         // Fortitude DC as it rises (Grabbed for the minute or until it Escapes against its user's class DC, and 3d6 bludgeoning), again at the end
