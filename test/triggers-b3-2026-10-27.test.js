@@ -10,6 +10,8 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { gateMet } from "../src/compiler/strike-gate.js";
+import { WINDING_KEY } from "../src/compiler/trigger-readings.js";
+import { oneOff } from "../src/compiler/one-offs.js";
 import { breathes, planFor, sunlightVulnerable } from "../src/live/if-target.js";
 import { raisedResult, rerollText, triggeringRoll } from "../src/live/reroll-card.js";
 import { routeOf } from "../src/live/route.js";
@@ -136,6 +138,67 @@ test("numbers from another roll: Cindergrass Poultice's typed fire damage, Grisl
     assert.equal(routeOf(branch), "save");
     assert.deepEqual([branch.ownCheck, branch.targeting.range, branch.strikeDamage.from], [{ kind: "attack", modifier: null, choose: ["proficiency"] }, "60 feet", "triggering-miss"]);
     assert.equal(activation("Deflecting Branch", 0).builtin, "readied-bonus", "its first activation as it was");
+});
+
+test("rules on note Effects: a troop's banner and second reaction, a creature coerced, a faultline, a brand, a slick grip, immunity, a feather's day", () => {
+    const note = (plan) => plan.resolution.outcomes.success.noteEffects;
+    const banner = activation("Banner of Common Cause", "Pass the Banner");
+    assert.ok(done(banner));
+    assert.equal(banner.item.recipient, "targets");
+    assert.deepEqual(note(banner)[0].rules, [{ key: "RollTwice", selector: "will", keep: "higher", removeAfterRoll: true }]);
+    for (const name of ["Warmaster's Baton", "Warmaster's Baton (Greater)"]) {
+        const baton = activation(name, "Rally Forth");
+        assert.ok(done(baton), name);
+        assert.deepEqual([baton.item.recipient, note(baton)[0].duration.expiry], ["targets", "turn-end"]);
+    }
+    const marking = activation("Empty Hand Marking", "Reproach");
+    assert.ok(done(marking));
+    assert.match(note(marking)[0].text, /up to 1d4 days/);
+    const hammer = activation("Faultline Hammer", "Create Faultline");
+    assert.ok(done(hammer));
+    assert.match(note(hammer)[0].text, /4 more\.$/, "its +1 striking earthbreaker's two dice, doubled");
+    const fades = ["Golden Branding Iron", "Golden Branding Iron (Greater)", "Golden Branding Iron (Major)"].map((name) => {
+        const iron = consumable(name);
+        assert.ok(done(iron) && iron.item.recipient === "targets", name);
+        return note(iron)[0].duration?.value ?? null;
+    });
+    assert.deepEqual(fades, [30, 365, null]);
+    const button = consumable("Oily Button");
+    assert.ok(done(button));
+    assert.deepEqual([button.item.recipient, note(button)[0].duration.anchor, note(button)[0].duration.expiry], ["targets", "target-turn", "turn-end"]);
+    assert.match(note(button)[0].text, /\+4 circumstance instead of \+2/);
+    const toga = activation("Choral Toga", "Elysium's Gasp");
+    assert.ok(done(toga));
+    assert.deepEqual([note(toga)[0].rules, note(toga)[0].duration.value, note(toga)[0].duration.unit], [[{ key: "Immunity", type: "inhaled" }], 1, "minutes"]);
+    assert.equal(activation("Choral Toga", "Elysium's Breath").noteOnly, true, "its other activation as it was");
+    const feather = consumable("Navigator's Feather");
+    assert.ok(done(feather));
+    const [twice, guided] = note(feather);
+    assert.deepEqual(twice.rules, [{ key: "RollTwice", selector: "survival", keep: "higher", removeAfterRoll: true, predicate: [{ or: ["action:sense-direction", "action:track"] }] }]);
+    assert.deepEqual([guided.duration.value, guided.duration.unit, guided.rules.map((rule) => rule.predicate[0])], [24, "hours", ["action:sense-direction", "action:track"]]);
+    const token = activation("Drumish Pearl Token", "Subversive Friendship");
+    assert.ok(done(token));
+    assert.equal(routeOf(token), "ways");
+    assert.deepEqual(token.ways.map((way) => [way.plan.item.recipient, way.plan.resolution.outcomes.success.noteEffects[0].duration?.value ?? null]), [["targets", null], ["targets", 10]]);
+});
+
+test("card lines and one-offs: Sensei's Parasol's redirected Strike, Festrem Mortu's curse; Winder's Ring, Ice Forge, Martyr's Shield and Last Word Stone", () => {
+    const parasol = activation("Sensei's Parasol", "Defensive Redirection");
+    assert.ok(done(parasol));
+    assert.match(parasol.notes[0], /the GM rolls that creature's Strike again/);
+    const grimoire = activation("Festrem Mortu");
+    assert.ok(done(grimoire));
+    assert.deepEqual(grimoire.resolution.outcomes.success.effects.map((effect) => [effect.kind, effect.amount]), [["temp-hp", 10]]);
+    assert.match(grimoire.notes[0], /^Out of combat: .*Fortitude DC 20/);
+    assert.deepEqual(reminders(grimoire), []);
+    // (Winder's Ring's winding key: its one-off under a key of its own — the ring's spy, its other activation, left as it was.)
+    assert.ok(oneOff(WINDING_KEY));
+    assert.equal(oneOff("Winder's Ring"), null);
+    const key = activation("Winder's Ring", 0);
+    assert.deepEqual([key.decided, done(key)], ["one-off", true]);
+    assert.match(key.notes[0], /half the usual time/);
+    assert.equal(activation("Winder's Ring", 1).builtin, "conjure");
+    for (const plan of [activation("Ice Forge", "Expand Forge"), activation("Martyr's Shield (Hellbreakers)", "Self Sacrifice"), consumable("Last Word Stone")]) assert.deepEqual([plan.decided, done(plan)], ["one-off", true], plan.source.name);
 });
 
 // --- Live: the reroll cards, against the stand-in for Foundry. ----------------------------------------------------------------------------------

@@ -18,9 +18,19 @@
 //   (plan.drain immediate, scripts/drain.js), its Sickened 1 at the creature struck as the card is applied (scripts/strikes.js), and the card
 //   only after a critical hit with it (plan.gate.strike.critical); Deflecting Branch's reflected shot, "Make a ranged attack against the
 //   creature using your highest proficiency with a ranged weapon" — its user's attack at that proficiency (ownCheck.choose "proficiency"),
-//   the knocked-away attack's damage (plan.strikeDamage from the triggering miss). Pure.
+//   the knocked-away attack's damage (plan.strikeDamage from the triggering miss).
+// - Rules PF2e can't play, on a note Effect for its time (the user's ruling, 2026-10-25): a troop's banner kept up (its rout check's Will save
+//   rolled twice, PF2e's RollTwice), a troop's second reaction (Warmaster's Baton), a creature coerced for 1d4 days (Empty Hand Marking), a
+//   faultline in a struck shield (Faultline Hammer), a target branded with a sigil (Golden Branding Iron), a slick grip after a Disarm (Oily
+//   Button), an attitude made helpful (Drumish Pearl Token, a way for each attitude before), immunity to inhaled poisons (Choral Toga, PF2e's
+//   Immunity), a Survival check rolled twice and a day's bonus (Navigator's Feather).
+// - Card lines: a missed Strike sent at another creature (Sensei's Parasol, the GM rolling its new Strike), a curse after five days' use (Festrem
+//   Mortu, out of combat). And Winder's Ring's flat check, a one-off rule (src/compiler/one-offs.js, its own key: the ring's other activation
+//   shares its source name). Pure.
 
+import { withDecided } from "./decided.js";
 import { sentencesOf } from "./lasting.js";
+import { plainText } from "./rows.js";
 
 const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours", day: "days", days: "days" };
 const timeOf = (value, unit) => ({ mode: "fixed", value: Number(value), unit: UNITS[String(unit).toLowerCase()], expiry: "turn-start", anchor: "effect-start" });
@@ -210,8 +220,182 @@ const READINGS = [
             resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: null }, outcomes: Object.fromEntries(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => [degree, none()])) },
             strikeDamage: { as: null, from: "triggering-miss", rows: { success: 1, criticalSuccess: 2 } }
         })
+    },
+    // --- Rules on note Effects.
+    {
+        // (The troop's rout check for its fallen leader: its next Will save rolled twice, the better kept.)
+        name: "Banner of Common Cause: Pass the Banner",
+        sentences: [
+            /^A member of the troop you're leading picks up and displays the banner, maintaining the troop's cohesion\.$/,
+            /^When attempting its rout check due to losing its leader, the troop rolls its Will save twice and uses the better result\.$/
+        ],
+        card: () => ownRow({ target: "the troop its user leads", targets: true, noteEffects: [{ label: "Banner passed", text: "One of the troop holds up the fallen leader's banner: its rout check for losing its leader, a Will save, is rolled twice and the better kept.", duration: null, rules: [{ key: "RollTwice", selector: "will", keep: "higher", removeAfterRoll: true }] }] })
+    },
+    {
+        // (A second reaction, at once against the enemy that triggered it.)
+        name: /^Warmaster's Baton(?: \(Greater\))?: Rally Forth$/,
+        sentences: [/^The troop under your command gains a second reaction that they must immediately use against the triggering enemy\.$/],
+        card: () => ownRow({ target: "the troop its user commands", targets: true, noteEffects: [{ label: "Second reaction", text: "A second reaction this turn, to be used at once against the enemy that triggered it.", duration: THIS_TURN }] })
+    },
+    {
+        // (The coerced creature's compliance up to 1d4 days, the GM's secret roll.)
+        name: "Empty Hand Marking: Reproach",
+        sentences: [/^The maximum duration of the target's compliance increases to (\d+d\d+) days, rather than (\d+) day\.$/],
+        card: ([[, dice, usual]]) => ownRow({ target: "the creature Coerced", targets: true, noteEffects: [{ label: "Compliance lengthened", text: `Coerced by its user, it may comply for up to ${dice} days (the GM rolls them in secret) instead of ${usual} day.`, duration: null }] })
+    },
+    {
+        // (Until the end of its user's next turn, Strikes at the struck shield or object deal razing's extra damage — the hammer's own Strike too.)
+        name: "Faultline Hammer: Create Faultline",
+        sentences: [
+            /^Until the end of your next turn, any weapon that Strikes the object deals additional damage as though the weapon had the razing trait\.$/,
+            /^The triggering Strike also deals this additional damage\.$/
+        ],
+        card: (found, plan, { item }) => {
+            const dice = 1 + (Number(item?.system?.runes?.striking) || 0);
+            return ownRow({
+                target: "the creature holding the struck shield or object",
+                targets: true,
+                notes: ["Target the creature holding the shield or object struck; a faultline in an unattended object is the map's."],
+                noteEffects: [{ label: "Faultline", text: `A faultline runs through the shield or object struck: until the end of the hammer wielder's next turn, any weapon Striking it deals it additional damage as a razing weapon does (twice the weapon's damage dice) — the hammer's own triggering Strike too, ${2 * dice} more.`, duration: NEXT_TURN_END }]
+            });
+        }
+    },
+    {
+        // (A sigil on the creature hit, seen only by its user and up to 6 allies, for a month, a year or for good.)
+        name: /^Golden Branding Iron(?: \((?:Greater|Major)\))?$/,
+        sentences: [
+            /^Trigger You hit a target with a ranged Strike with the affixed weapon Requirements You're an expert with the affixed weapon\.$/,
+            /^This talisman is a gold-plated brand that can be affixed to a ranged weapon's stock\.$/,
+            /^When you activate a golden branding iron, you mark the target with your magical sigil\.$/,
+            /^You harmlessly place your unique magical sigil, which is about 1 square inch in size, anywhere on the target creature, as long as the location is visible to you\.$/,
+            /^The mark is only visible to you and up to (\d+) of your allies\.$/,
+            /^The mark can be scrubbed or scraped off with (\d+) minutes of work\.$/,
+            /^(?:It fades naturally over the course of an? (month|year)|It never fades naturally)\.$/
+        ],
+        card: ([, , , , seen, scrubbed, fades]) => {
+            const days = { month: 30, year: 365 }[String(fades[1] ?? "").toLowerCase()] ?? null;
+            return ownRow({
+                target: "the creature hit",
+                targets: true,
+                notes: ["Its user, expert with the ranged weapon it's affixed to, activates it as that weapon's Strike hits: target the creature hit."],
+                noteEffects: [{ label: "Branded", text: `Its user's magical sigil, about an inch across, is somewhere on it its user could see, visible only to its user and up to ${seen[1]} of their allies. ${scrubbed[1]} minutes' work scrubs or scrapes it off (delete this then). ${days ? `It fades over a ${fades[1].toLowerCase()}.` : "It never fades."}`, duration: days ? timeOf(days, "days") : null }]
+            });
+        }
+    },
+    {
+        // (Its opponent's slick grip after its user's Disarm: the penalty until the end of its next turn, its user's next Disarms at +4.)
+        name: "Oily Button",
+        sentences: [
+            /^Usage affixed to armor Activat(?:e|ion)\b.*?\bTrigger You succeed at an Athletics check to Disarm Requirements You are an expert in Athletics\.$/,
+            /^A thin sheen of slick oil covers this gaudy button\.$/,
+            /^When you activate the oily button, your attempts to Disarm your opponent of an item before the start of the opponent's next turn gain a \+(\d+) circumstance bonus instead of \+(\d+), and the [-–−](\d+) circumstance penalty to attacks with the item or other checks requiring a firm grasp on the item lasts until the end of its next turn or until it uses an Interact action to adjust its grip\.$/
+        ],
+        card: ([, , [, bonus, usual, penalty]]) => ownRow({
+            target: "the creature Disarmed",
+            targets: true,
+            notes: ["Its user, expert in Athletics, activates it as its Disarm succeeds: target that opponent."],
+            noteEffects: [{ label: "Slick grip", text: `Its grip on the item it was nearly Disarmed of is slick: −${penalty} circumstance to attacks with that item and to checks needing a firm grasp on it until the end of its next turn, or until it Interacts to adjust its grip (delete this then). Until the start of its next turn, its disarmer's attempts to Disarm it of that item get +${bonus} circumstance instead of +${usual}.`, duration: TARGET_TURN_END }]
+        })
+    },
+    {
+        // (Its user's attitude toward it made helpful: for good from indifferent or better; from unfriendly or hostile, 10 minutes, then it knows.)
+        name: "Drumish Pearl Token: Subversive Friendship",
+        sentences: [
+            /^You automatically increase the target's attitude to helpful\.$/,
+            /^If the target's initial attitude was unfriendly or hostile, they revert to this attitude after (\d+) (minutes?|hours?) and realize they've been manipulated by you\.$/,
+            /^Afterward, they might decide to act against you\.$/
+        ],
+        card: ([, reverts], plan, context) => {
+            const helpful = (text, duration) => wayPlan(ownRow({ target: "the creature Made an Impression on", targets: true, noteEffects: [{ label: "Helpful", text, duration }] }), context);
+            return {
+                builtin: "ways",
+                once: true,
+                targeting: { target: null, range: null, area: null },
+                ways: [
+                    { name: "It was indifferent or better", html: "", plan: helpful("Its attitude toward the token's wearer is helpful.", null) },
+                    { name: "It was unfriendly or hostile", html: "", plan: helpful(`Its attitude toward the token's wearer is helpful for ${reverts[1]} ${reverts[2]}; then it's back to the attitude it had and knows it was manipulated — it may act against the wearer.`, timeOf(reverts[1], reverts[2])) }
+                ]
+            };
+        }
+    },
+    {
+        // (Immune to inhaled poisons for the minute: PF2e's Immunity on its user's Effect.)
+        name: "Choral Toga: Elysium's Gasp",
+        sentences: [/^Purifying gusts of sweet-scented air swirl around you, making you immune to (inhaled) poisons for (\d+) (minutes?|rounds?|hours?)\.$/],
+        card: ([[, kind, value, unit]]) => ({ ...ownRow({ noteEffects: [{ label: "Immune to inhaled poisons", text: `Sweet air swirls around it: immune to ${kind} poisons.`, duration: timeOf(value, unit), rules: [{ key: "Immunity", type: kind }] }] }), noteOnly: undefined })
+    },
+    {
+        // (The triggering Sense Direction or Track rolled twice, the higher kept; then +1 circumstance to both for a day, each on its own terms.)
+        name: "Navigator's Feather",
+        sentences: [
+            /^Trigger You would roll a Survival check to Sense Direction or Track but haven't rolled yet Requirements You're trained in Survival\.$/,
+            /^This jaunty feather is affixed to headgear and can guide you in times of trouble, twisting to point in different directions\.$/,
+            /^When you activate the talisman, you roll the triggering Survival check to Sense Direction or Track twice, and use the higher result\.$/,
+            /^For (\d+) hours, you gain a \+(\d+) circumstance bonus to Survival checks to Sense Direction, so long as you're navigating toward the same destination as when you activated the talisman, and a \+(\d+) circumstance bonus to Survival checks to Track, so long as you continue to Track the same creature as when you activated the talisman\.$/,
+            /^After \d+ hours, the feather disintegrates, becoming mundane dust that blows away on the breeze\.$/
+        ],
+        card: ([, , , [, hours, direction, track]]) => ({
+            ...ownRow({
+                noteEffects: [
+                    { label: "Rolled twice", text: "Its Survival check to Sense Direction or Track now is rolled twice, the higher kept.", duration: null, rules: [{ key: "RollTwice", selector: "survival", keep: "higher", removeAfterRoll: true, predicate: [{ or: ["action:sense-direction", "action:track"] }] }] },
+                    { label: "Guided", text: `+${direction} circumstance to Survival checks to Sense Direction while it heads for the same destination, and +${track} circumstance to Survival checks to Track while it follows the same creature (it's for the ones it activated the feather for).`, duration: timeOf(hours, "hours"), rules: [{ key: "FlatModifier", selector: "survival", type: "circumstance", value: Number(direction), predicate: ["action:sense-direction"] }, { key: "FlatModifier", selector: "survival", type: "circumstance", value: Number(track), predicate: ["action:track"] }] }
+                ]
+            }),
+            noteOnly: undefined
+        })
+    },
+    // --- Card lines.
+    {
+        // (The missed melee Strike made again at another creature or object within the attacker's reach: the GM rolls it.)
+        name: "Sensei's Parasol: Defensive Redirection",
+        sentences: [
+            /^You redirect the missed Strike to target a creature or object within the triggering creature's reach\.$/,
+            /^The triggering creature rolls a new Strike against the new target to determine the results of the redirected attack\.$/
+        ],
+        card: () => ownRow({ notes: ["The melee Strike that missed its user is redirected: its user picks a creature or object within the attacker's reach, and the GM rolls that creature's Strike again at the new target."] })
+    },
+    {
+        // (Its 10 temporary Hit Points read already; the curse after five days of preparing from it, out of combat, a line.)
+        name: "Festrem Mortu",
+        over: (plan) => (plan?.resolution?.outcomes?.success?.effects ?? []).some((effect) => effect?.kind === "temp-hp"),
+        sentences: [
+            /^You draw void energy from the triggering spell\.$/,
+            /^You gain \d+ temporary hit points that last for \d+ hours?\.$/,
+            /^Special If this grimoire is used to prepare spells (\w+) days in succession by the same caster, that caster is subjected to the curse of the ravenous\.$/,
+            /^Curse of the Ravenous This hideous curse kills through constant hunger\.$/,
+            /^You become gaunt and repeatedly gnash your teeth\.$/,
+            /^Saving Throw @Check\[fortitude\|dc:(\d+)\] Effect No matter how much you eat, you aren't satiated\.$/,
+            /^After (\d+) days?, you begin starving\.$/,
+            /^Each week, you receive a new saving throw against the curse\.$/
+        ],
+        card: ([, , days, , , save, starving], plan) => ({
+            keep: true,
+            partial: undefined,
+            unread: undefined,
+            automation: { ...(plan.automation ?? {}), level: "automatic" },
+            resolution: { ...plan.resolution, outcomes: withoutReminder(plan.resolution.outcomes) },
+            notes: [`Out of combat: a caster who prepares spells from it ${days[1]} days running meets the curse of the ravenous (Fortitude DC ${save[1]}, the GM's): never sated, starving after ${starving[1]} day${starving[1] === "1" ? "" : "s"}, a new save each week.`]
+        })
+    },
+    // --- A one-off rule (src/compiler/one-offs.js), under its own key.
+    {
+        // (The winding key's flat check, the ring out until its user's next daily preparations on a failure: Winder's Ring's own rule.)
+        name: "Winder's Ring",
+        sentences: [
+            /^The winder's ring extends a winding key that fits any clockwork contraption or creature, allowing you to fully wind a clockwork device or creature in half the usual time\.$/,
+            /^When you activate a winder's ring in this way, attempt a @Check\[flat\|dc:\d+\]\.$/,
+            /^On a failure, the winder's ring exhausts itself, and you can't activate it again until the next time you make your daily preparations\.$/
+        ],
+        card: (found, plan, { html, base, info, frequency }) => {
+            const decided = withDecided(null, { text: plainText(html), base: { ...base, item: info, ...(frequency ? { trigger: { event: "use", frequency } } : {}) }, kind: "activation", name: WINDING_KEY });
+            if (!decided) return null;
+            const { item: _item, ...rest } = decided;
+            return rest;
+        }
     }
 ];
+// (The one-off's key: its activation has no name of its own, and the ring's other one shares "Winder's Ring".)
+export const WINDING_KEY = "Winder's Ring: winding key";
 
 const named = (reading, name) => (reading.name instanceof RegExp ? reading.name.test(String(name ?? "")) : reading.name === name);
 // Whether a reading is for this source name (its words aren't worth reading otherwise).
