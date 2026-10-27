@@ -10,6 +10,9 @@ import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { conjuredChanges, pickCandidates, pickedPlan } from "../src/live/conjured.js";
+import { ownEffectsToEnd } from "../src/live/ends-own.js";
+import { SPIDER_SWARM } from "../src/compiler/creature-readings.js";
+import { createItemCard, previewLines } from "../src/live/card.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -83,4 +86,45 @@ test("an Animated Broom with no Strike for menial tasks: Cordelia's Construct Ke
     // (Its Strikes are its melee items: gone.)
     const broom = activations("Cordelia's Construct Key")[1].creatures[0];
     assert.deepEqual(conjuredChanges({ traits: ["construct", "mindless"], immunities: [], weaknesses: [], size: "sm", items: [{ id: "m1", type: "melee" }, { id: "a1", type: "action" }] }, broom), { update: {}, deleteIds: ["m1"] });
+});
+
+test("merged into the statuette and called forth: Hosteling Statuette's Petrified and Tiny note Effect on its companion, ended by its other activation", () => {
+    const [merge, call] = activations("Hosteling Statuette");
+    const note = merge.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([merge.item.recipient, call.item.recipient], ["targets", "targets"]);
+    assert.deepEqual([done(merge), routeOf(merge), note.label, note.duration, note.rules], [true, "item", "Statuette form", null, [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.dTwPJuKgBQCMxixg", inMemoryOnly: true }, { key: "CreatureSize", value: "tiny" }]]);
+    assert.deepEqual([done(call), routeOf(call), call.item.endsOwn, call.item.activation.index], [true, "item", { label: "Statuette form" }, 1]);
+    assert.ok(previewLines(createItemCard({ plan: call, item: { name: "Hosteling Statuette" }, user: { name: "Wolf", actorUuid: "Actor.w" } })).includes("Ends its Statuette form Effect (the one its other activation gave)"));
+    // (Its note Effect's name as the ability module gives it: the item's, then its label.)
+    assert.deepEqual(ownEffectsToEnd([{ id: "e1", name: "Hosteling Statuette: Statuette form" }, { id: "e2", name: "Hosteling Statuette: other" }, { id: "e3", name: "Statuette form" }], "Hosteling Statuette", "Statuette form"), ["e1"]);
+});
+
+test("attuned over 10 minutes, out of combat: Whistle of Calling's first activation is its card's line, its second still the teleport card", () => {
+    const [attune, call] = activations("Whistle of Calling");
+    assert.deepEqual([done(attune), routeOf(attune), attune.notes.length, call.builtin], [true, "item", 1, "teleport"]);
+    assert.match(attune.notes[0], /one at a time/);
+});
+
+test("a swim Speed, or more of the one it has: Waverider Barding's ways card, each a note Effect of PF2e's rules for 10 minutes", () => {
+    const barding = activations("Waverider Barding")[0];
+    assert.deepEqual([done(barding), routeOf(barding), barding.once, barding.ways.map((way) => way.name)], [true, "ways", true, ["It has no swim Speed", "It has a swim Speed"]]);
+    const [none, has] = barding.ways.map((way) => way.plan);
+    const bonus = has.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([none.item.recipient, none.item.speeds.map((speed) => [speed.type, speed.value, speed.duration.value]), has.item.recipient, bonus.rules, bonus.duration.value, routeOf(none), routeOf(has)], ["targets", [["swim", 30, 10]], "targets", [{ key: "FlatModifier", selector: "swim-speed", type: "item", value: 10 }], 10, "item", "item"]);
+});
+
+test("a swarm for a minute: Swarmform Collar's note Effect (Large, the swarm trait, a Spider Swarm's resistances and weaknesses) and its swarming attack's card kept open", () => {
+    const collar = activations("Swarmform Collar")[0];
+    const note = collar.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([done(collar), routeOf(collar), collar.item.recipient, note.duration.value, note.rules.slice(0, 2)], [true, "item", "targets", 1, [{ key: "CreatureSize", value: "large" }, { key: "ActorTraits", add: ["swarm"] }]]);
+    assert.deepEqual([collar.again.later, collar.again.repeat, collar.again.time, collar.again.plan.resolution.check.against.value, collar.again.plan.resolution.check.basic, collar.again.plan.damageChoices.map((choice) => choice.formula)], [true, true, { value: 1, unit: "minutes" }, 23, true, ["1d8[bludgeoning]", "1d8[piercing]", "1d8[slashing]"]]);
+    // (The resistances and weaknesses as PF2e's Spider Swarm has them.)
+    const swarm = readDocuments(path.join(PACKS, "pathfinder-monster-core")).find((doc) => doc.collection === "actors" && doc.name === "Spider Swarm");
+    assert.deepEqual(SPIDER_SWARM, { resistances: swarm.system.attributes.resistances.map(({ type, value }) => ({ type, value })), weaknesses: swarm.system.attributes.weaknesses.map(({ type, value }) => ({ type, value })) });
+});
+
+test("one-offs, their card's lines: Barding Saddle's heavy barding, Familiar Morsel's familiar ability", () => {
+    const saddle = activation("Barding Saddle", "Ready for Battle");
+    const morsel = compileItem(item("Familiar Morsel"));
+    for (const plan of [saddle, morsel]) assert.deepEqual([plan.decided, done(plan), plan.notes.length], ["one-off", true, 1]);
 });

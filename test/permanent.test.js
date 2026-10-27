@@ -416,9 +416,12 @@ test("Demoralize at the target and the enemies around it (Shrieking Skull), afte
 test("a moment's resistance with its type first (Sparkshade Parasol) and a companion's swim Speed (Waverider Barding)", () => {
     const parasol = compileActivations(item("Sparkshade Parasol"), { spellEffects })[0].plan;
     assert.deepEqual([parasol.builtin, parasol.bonus.resistance], ["readied-bonus", { type: "fire", value: 20 }]);
+    // (2026-10-27: the bonus to a swim Speed it already had is the ways card's second way, src/compiler/creature-readings.js — the swim Speed its
+    // first, no longer partial.)
     const barding = compileActivations(item("Waverider Barding"), { spellEffects })[0].plan;
-    assert.deepEqual([barding.item.recipient, barding.item.speeds.map((speed) => [speed.type, speed.value])], ["targets", [["swim", 30]]]);
-    assert.equal(barding.partial, true, "the bonus to a swim Speed it already had: a note");
+    const first = barding.ways[0].plan;
+    assert.deepEqual([first.item.recipient, first.item.speeds.map((speed) => [speed.type, speed.value])], ["targets", [["swim", 30]]]);
+    assert.equal(barding.partial, undefined);
 });
 
 test("a mount's bleed and quickened condition (Heedless Spurs): the fuller outright reading over the ability compiler's damage alone", () => {

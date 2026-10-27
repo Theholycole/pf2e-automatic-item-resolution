@@ -24,8 +24,10 @@ const MINION = "A minion: it acts when its user commands it (1 action for 2 of i
 const SUSTAIN_MOST = timeOf(10, "minutes");
 
 // The card's parts: a row of its own for its user (a note Effect), and its lines; a conjured creature; a choice of ways, each a plan.
-const ownRow = ({ noteEffects = [], notes = [] }) => ({
-    targeting: { target: null, range: null, area: null },
+// (Its companion's, the creatures its presser targets — the item card's recipient "targets", as the module's other companion items.)
+const COMPANION = { recipient: "targets" };
+const ownRow = ({ noteEffects = [], notes = [], target = null }) => ({
+    targeting: { target, range: null, area: null },
     resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), ...(noteEffects.length ? { noteEffects } : {}) } } },
     ...(notes.length ? { notes } : {})
 });
@@ -41,6 +43,13 @@ const conjure = ({ creatures, lasts = null, notes = [], pick = null, needs = nul
     notes
 });
 const creature = (fields) => ({ count: 1, size: null, stats: null, from: null, traits: [], initiative: null, ...fields });
+// (A way of the ways card: its own plan, as the activation's.)
+const wayPlan = ({ item: own, ...card }, { base, info }) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...card, item: { ...info, ...(own ?? {}) } });
+const ways = (list, { once = true } = {}) => ({ builtin: "ways", targeting: { target: null, range: null, area: null }, ...(once ? { once: true } : {}), ways: list });
+// (PF2e's Spider Swarm's resistances and weaknesses, Monster Core's: what Swarmform Collar's swarm gains — test/creatures-2026-10-27.test.js
+// holds them to the stat block.)
+export const SPIDER_SWARM = { resistances: [{ type: "bludgeoning", value: 2 }, { type: "piercing", value: 5 }, { type: "slashing", value: 5 }], weaknesses: [{ type: "area-damage", value: 5 }, { type: "splash-damage", value: 5 }] };
+const basicRows = () => Object.fromEntries([["criticalSuccess", 0], ["success", 0.5], ["failure", 1], ["criticalFailure", 2]].map(([degree, multiplier]) => [degree, { damage: { mode: "shared", multiplier, sourceComponentIds: multiplier ? ["0"] : [] }, effects: [] }]));
 
 // Each reading: the source name it's for (an activation's "Item: Activation"; a pattern for an item's grades), a pattern for each of its
 // effect's sentences — every sentence must be one, in order — and the card they make (from its matches and the item's html).
@@ -123,28 +132,17 @@ const READINGS = [
             /^The zombie is your minion and performs the actions you choose when you Command it\.$/,
             /^If you don't Command it, it takes no action, twitching in place as the electricity that animates it slowly expends itself\.$/
         ],
-        card: ([, animates], plan, { base, info }) => {
-            const way = (size) => ({
-                ...base,
-                automation: { level: "automatic" },
-                trigger: { event: "use" },
-                ...conjure({
-                    creatures: [creature({ name: "Galvaheart Zombie", size, from: { name: "Zombie Shambler" }, traits: ["minion", "construct"], replaceType: true, removeTraits: ["unholy"], immunities: ["vitality"], own: { dropWeaknesses: ["vitality"] } })],
-                    lasts: timeOf(animates[1], animates[2]),
-                    notes: [
-                        "Inserted into an adjacent intact humanoid corpse: its token goes where the corpse is.",
-                        "A zombie shambler's statistics, but a construct, not undead or unholy, and vitality energy can't harm it.",
-                        `${MINION} Not commanded, it takes no action.`
-                    ]
-                }),
-                item: info
-            });
-            return {
-                builtin: "ways",
-                targeting: { target: null, range: null, area: null },
-                once: true,
-                ways: [{ name: "A Medium corpse", html: "<p>A Medium galvaheart zombie.</p>", plan: way("medium") }, { name: "A Small corpse", html: "<p>A Small galvaheart zombie.</p>", plan: way("small") }]
-            };
+        card: ([, animates], plan, context) => {
+            const way = (size) => wayPlan(conjure({
+                creatures: [creature({ name: "Galvaheart Zombie", size, from: { name: "Zombie Shambler" }, traits: ["minion", "construct"], replaceType: true, removeTraits: ["unholy"], immunities: ["vitality"], own: { dropWeaknesses: ["vitality"] } })],
+                lasts: timeOf(animates[1], animates[2]),
+                notes: [
+                    "Inserted into an adjacent intact humanoid corpse: its token goes where the corpse is.",
+                    "A zombie shambler's statistics, but a construct, not undead or unholy, and vitality energy can't harm it.",
+                    `${MINION} Not commanded, it takes no action.`
+                ]
+            }), context);
+            return ways([{ name: "A Medium corpse", html: "<p>A Medium galvaheart zombie.</p>", plan: way("medium") }, { name: "A Small corpse", html: "<p>A Small galvaheart zombie.</p>", plan: way("small") }]);
         }
     },
     {
@@ -175,6 +173,90 @@ const READINGS = [
                     ...hours(lasts)
                 ]
             });
+        }
+    },
+    {
+        // (Merged into the statuette: Petrified and Tiny until it's called forth — a note Effect of PF2e's rules on its companion, with no time.)
+        name: "Hosteling Statuette",
+        sentences: [
+            /^You touch your companion, merging it into the statuette and ending the activation with the statuette in your hand \(or on the ground in your space if you don't have a hand free\)\.$/,
+            /^While in statuette form, your companion has the Petrified condition, and its size is Tiny\.$/
+        ],
+        card: () => ({
+            ...ownRow({
+                target: "your companion",
+                noteEffects: [{ label: "Statuette form", text: "Merged into the statuette: Petrified, and Tiny, until it's called forth again (the statuette's other activation ends this Effect).", rules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.dTwPJuKgBQCMxixg", inMemoryOnly: true }, { key: "CreatureSize", value: "tiny" }], duration: null }],
+                notes: ["Its token is the statuette now: in its user's hand, or on the ground in their space with no hand free (move or hide it)."]
+            }),
+            item: COMPANION
+        })
+    },
+    {
+        // (Called forth: its statuette form ended — plan.item.endsOwn, the Effect the other activation gave — beside its user.)
+        name: "Hosteling Statuette",
+        sentences: [/^You call forth your companion from the statuette, causing it to unmerge and appear in an unoccupied space adjacent to you\.$/],
+        card: () => ({ ...ownRow({ target: "your companion", notes: ["It unmerges into an unoccupied space adjacent to its user: put its token there."] }), item: { ...COMPANION, endsOwn: { label: "Statuette form" } } })
+    },
+    {
+        // (Attuned to a companion or a willing mount over 10 minutes, out of combat: the card's lines.)
+        name: "Whistle of Calling",
+        sentences: [
+            /^You blow the whistle at different tones in the presence of a companion or another allied creature willing to be your mount\.$/,
+            /^At the end of the (\d+) minutes, the whistle is attuned to that creature\.$/,
+            /^The whistle can be attuned to only one creature at any time, but you can attune it to a new one with another \d+-minute activation\.$/
+        ],
+        card: ([, minutes]) => ownRow({ notes: [`After ${minutes[1]} minutes of whistling near its companion, or another ally willing to be its mount, the whistle is attuned to that creature — one at a time, a new attunement replacing the last. Its other activation calls that creature.`] })
+    },
+    {
+        // (A swim Speed of 30 feet for 10 minutes — the item card's Speed —, or +10 feet to the one it has — a note Effect of PF2e's rule: the
+        // ways card, for its companion, over the ability compiler's note, partial.)
+        name: "Waverider Barding",
+        over: true,
+        sentences: [
+            /^You trace a finger along the wave patterns on the barding, granting your companion a swim Speed of (\d+) feet for (\d+) (minutes?|rounds?|hours?)\.$/,
+            /^If your companion already had a swim Speed, it gains a \+(\d+)-foot item bonus to its swim Speed for \d+ (?:minutes?|rounds?|hours?) instead\.$/,
+            /^Even if the companion doesn't have the mount special ability, it can still Swim while being ridden\.$/
+        ],
+        card: ([granted, bonus], plan, context) => {
+            const duration = timeOf(granted[2], granted[3]);
+            const line = "Even without the mount special ability, it can Swim while ridden.";
+            return ways([
+                { name: "It has no swim Speed", html: `<p>A swim Speed of ${granted[1]} feet.</p>`, plan: wayPlan({ ...ownRow({ target: "your companion", notes: [line] }), item: { ...COMPANION, speeds: [{ type: "swim", value: Number(granted[1]), duration }] } }, context) },
+                { name: "It has a swim Speed", html: `<p>+${bonus[1]} feet to its swim Speed.</p>`, plan: wayPlan({ ...ownRow({ target: "your companion", noteEffects: [{ label: "Swim Speed", text: `A +${bonus[1]}-foot item bonus to its swim Speed. ${line}`, rules: [{ key: "FlatModifier", selector: "swim-speed", type: "item", value: Number(bonus[1]) }], duration }] }), item: COMPANION }, context) }
+            ]);
+        }
+    },
+    {
+        // (A swarm for a minute: a note Effect of PF2e's rules on its companion — Large, the swarm trait, a Spider Swarm's
+        // resistances and weaknesses —, and its swarming attack's save card kept open for that minute, pressed each time it's used (plan.again),
+        // its damage type the companion's unarmed attacks', picked on the card.)
+        name: "Swarmform Collar",
+        sentences: [
+            /^You touch the collar and your companion splits into a swarm of hundreds of identical Tiny versions of itself for (\d+) (minutes?|rounds?)\.$/,
+            /^Its space becomes Large, it gains the weaknesses and resistances of a Spider Swarm, and the swarm trait, though it doesn't gain swarm mind, as it's controlled by a single mind\.$/,
+            /^Its unarmed attacks are replaced with a single-action swarming attack that deals (\d+d\d+) damage of the type normally inflicted by the companion's unarmed attacks to any foe in its space, with a @Check\[reflex\|dc:(\d+)\|basic[^\]]*\] save\.$/,
+            /^While in swarm form, your companion can take the Support action but can't perform its advanced maneuver\.$/,
+            /^Its other statistics don't change\.$/,
+            /^If the companion is reduced to 0 Hit Points while in swarm form, the companion immediately recombines into its original form in an available space, in addition to the usual effects of being reduced to 0 Hit Points\.$/
+        ],
+        card: ([splits, , attack], plan, { base }) => {
+            const duration = timeOf(splits[1], splits[2]);
+            const rules = [{ key: "CreatureSize", value: "large" }, { key: "ActorTraits", add: ["swarm"] }, ...SPIDER_SWARM.resistances.map((entry) => ({ key: "Resistance", ...entry })), ...SPIDER_SWARM.weaknesses.map((entry) => ({ key: "Weakness", ...entry }))];
+            const types = ["bludgeoning", "piercing", "slashing"];
+            const swarming = {
+                ...base,
+                source: { ...base.source, name: `${base.source.name}: Swarm Attack` },
+                automation: { level: "automatic" },
+                targeting: { target: "each foe in its space", range: null, area: null },
+                trigger: { event: "use" },
+                resolution: { kind: "save", check: { roll: "save", statistic: "reflex", basic: true, against: { dc: "fixed", value: Number(attack[2]) } }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `${attack[1]}[${types[0]}]`, type: null, category: null }] }, outcomes: basicRows() },
+                damageChoices: types.map((type) => ({ label: `${type.charAt(0).toUpperCase()}${type.slice(1)} (its unarmed attacks' type)`, formula: `${attack[1]}[${type}]` }))
+            };
+            return {
+                ...ownRow({ target: "your companion", noteEffects: [{ label: "Swarm form", text: `A swarm of Tiny copies of itself: Large, with the swarm trait (no swarm mind) and a Spider Swarm's resistances and weaknesses. Its unarmed attacks are replaced by its swarming attack (1 action: ${attack[1]} damage of their type to each foe in its space, basic Reflex DC ${attack[2]} — its card stays open). It can Support but not use its advanced maneuver. At 0 Hit Points it recombines in an available space: remove this Effect.`, rules, duration }] }),
+                again: { plan: swarming, later: true, repeat: true, time: { value: duration.value, unit: duration.unit }, when: "{user} uses its swarming attack (1 action), at the foes in its space" },
+                item: COMPANION
+            };
         }
     },
     {

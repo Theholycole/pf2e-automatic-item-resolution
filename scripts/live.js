@@ -17,6 +17,7 @@ import { applyDropCard } from "./drop-held.js";
 import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource } from "../src/live/card.js";
+import { ownEffectsToEnd } from "../src/live/ends-own.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
@@ -722,6 +723,15 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     return message.update({ content: cardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 
+// The item's own Effect its other activation gave (plan.item.endsOwn), deleted on the creature it's for: a line for the card.
+async function endOwnEffect(actor, name, state) {
+    const { label } = state.plan.item.endsOwn;
+    const ids = ownEffectsToEnd(actor?.itemTypes?.effect ?? [], state.item.name, label);
+    if (!ids.length) return `${name} has no ${label} Effect from ${state.item.name} to end.`;
+    await actor.deleteEmbeddedDocuments("Item", ids);
+    return `${name}: ${label} ends.`;
+}
+
 // Its user's held shield raised with PF2e's own Raise a Shield (its Effect: Raise a Shield): a line for the card.
 async function raiseShieldFor(state) {
     const { actor } = await creatureOf(state.user);
@@ -743,6 +753,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     const user = await creatureOf(state.user);
     const target = await creatureOf(recipient);
     if (!target.actor) throw new Error(`${recipient.name} isn't there any more.`);
+    // (The item's own Effect its other activation gave, ended on the creature first: Hosteling Statuette's statuette form as its companion's
+    // called forth, src/live/ends-own.js.)
+    const ended = state.plan.item?.endsOwn ? await endOwnEffect(target.actor, recipient.name, state) : null;
     // (A shield's own temporary Hit Points, Ablative Shield Plating's: the Effect for the shield it plates, scripts/shield-temp.js.)
     if (state.plan.item?.shieldTemp) return [await plateShield(state, target.actor, recipient.name)];
     // (Its wait for a kind of damage, Flame Layer Balm's: the mark on the wearer for its time, scripts/armed.js.)
@@ -784,7 +797,7 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (Healing by its user's condition value, Oracular Crown's cursebound: that value's formula, src/live/scaled.js.)
     const scaled = scaledByCondition(state.plan, (slug) => user.actor?.getCondition?.(slug)?.value ?? user.actor?.conditions?.bySlug?.(slug)?.[0]?.value ?? 0);
     const result = await core.registry.resolve(scaled, context, io);
-    const lines = [...rolledLines];
+    const lines = [...(ended ? [ended] : []), ...rolledLines];
     // (Left at 1 Hit Point instead of 0, The Survivor's and Immortal Bastion's: its Hit Points to 1, the Dying PF2e gave it ended with no Wounded
     // for it — before the healing or temporary Hit Points.)
     if (state.plan.item?.dropToOne && target.actor) {

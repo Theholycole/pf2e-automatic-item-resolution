@@ -3,6 +3,7 @@
 // Foundry, so it is tested in Node. The card wears the ability module's
 // classes (pf2e-aar-card, aar-*), so both modules' cards look alike.
 
+import { endsOwnText } from "./ends-own.js";
 import { skillPickRules } from "../compiler/skill-pick.js";
 import { firstDegreeRules } from "../compiler/first-degree.js";
 import { reshapeText } from "./reshape.js";
@@ -208,6 +209,8 @@ export function previewLines(state) {
         else if (effect.kind === "heal") lines.push(`Heals ${amount} Hit Points`);
     }
     for (const modifier of row.modifiers ?? []) lines.push(modifierText(modifier));
+    // (The item's own Effect its other activation gave, ended: Hosteling Statuette's statuette form, src/live/ends-own.js.)
+    if (plan?.item?.endsOwn) lines.push(endsOwnText(plan.item.endsOwn));
     for (const note of row.noteEffects ?? []) lines.push(plan.partial ? `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""}: the rest is the GM's to apply` : `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""} (nothing else to apply)`);
     // (A reduction's own notes are above, as "Also: …".)
     if (!plan?.reduce) for (const note of plan?.notes ?? []) lines.push(note);

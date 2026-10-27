@@ -60,7 +60,12 @@ export const ONE_OFFS = new Map([
     // (2026-10-27: a creature thrown 10 feet where its user picks, or tossed straight up to land in its square, after the Stride and Strike.)
     ["Hodag Leather: Hodag Toss", { rule: "after its user's Stride and a successful Strike, a successful Athletics check against the creature's Fortitude DC throws it 10 feet in a straight line its user picks (1d6 bludgeoning if into a solid object) or straight up to land in its own square (1d6 bludgeoning), Prone either way", build: "a ways card on the success: thrown to a space its user picks (placed.js) and Prone, or tossed up with the 1d6 and Prone" }],
     // (2026-10-27: a misfortune ended outright, once a month for a year, after a week of offerings.)
-    ["Incense Bundle of Annual Blessings", { rule: "after its twelve sticks are offered at their deities' shrines within a week, a misfortune effect on its user is disrupted automatically, once a month for the next 12 months", build: "a card with 12 monthly uses that ends a misfortune Effect (PF2e's RollTwice keeping the lower) on its user" }]
+    ["Incense Bundle of Annual Blessings", { rule: "after its twelve sticks are offered at their deities' shrines within a week, a misfortune effect on its user is disrupted automatically, once a month for the next 12 months", build: "a card with 12 monthly uses that ends a misfortune Effect (PF2e's RollTwice keeping the lower) on its user" }],
+    // (2026-10-27, creatures and companions: each its own item's — checked with tools' grep of every PF2e item's text.)
+    // (A saddle that unfolds into heavy barding on its mount, and folds back by the same activation.)
+    ["Barding Saddle: Ready for Battle", { rule: "the saddle unfolds into heavy barding worn by its mount, its benefits and restrictions too (none if the mount already wears barding); the same activation folds it back into a saddle", build: "PF2e's Heavy Barding of the mount's size made and worn on the mount, deleted again by the next activation" }],
+    // (A familiar ability for an hour, the one the morsel was keyed to when made.)
+    ["Familiar Morsel", { rule: "the familiar fed it gains the familiar ability the morsel was keyed to for 1 hour; none if it doesn't meet that ability's requirements or already has one from a morsel", build: "a pick of PF2e's familiar abilities (its familiar-abilities pack), that ability granted to the familiar by an Effect for 1 hour, refused while it has another morsel's" }]
 ]);
 
 export const oneOff = (name) => ONE_OFFS.get(String(name ?? "")) ?? null;
