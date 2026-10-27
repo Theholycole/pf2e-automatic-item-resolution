@@ -20,7 +20,16 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27: Leaps for a minute — its user's own moves on the map; the fall if it lands on no ground, the environment module's.)
     ["Frog Chair: Frog Hop", "its Leaps 30 feet in any direction for its minute, landing on solid ground within 30 feet or falling after its next action: its user's own moves"],
     // (2026-10-27: no PF2e rule sets a spell's range, and the casts are its user's own, not the item's.)
-    ["Compass of Transpositional Awareness: Triangulate", "+30 feet to its user's teleportation spells' ranges, touch ones to 30 feet, for its minute: no rule plays a spell's range, the casts its user's own"]
+    ["Compass of Transpositional Awareness: Triangulate", "+30 feet to its user's teleportation spells' ranges, touch ones to 30 feet, for its minute: no rule plays a spell's range, the casts its user's own"],
+    // (2026-10-27, the lasting ones: what goes on is the map's, an object's or the GM's.)
+    ["Bracelet of Buoyancy: Float", "rising 60 feet as each of its user's turns ends, up to the surface (the map's), then 10 minutes of not diving or sinking, a creature pulling it under first needing a DC 17 Athletics check (the GM's, when one tries)"],
+    ["War Mage's Buckler: Spell Amp", "the shield floating up to 30 feet away for a minute as its user's spells' point of origin, range and cover from there (no PF2e rule moves a spell's origin), Dismissed back to hand or ended when the shield breaks"],
+    ["Trackless (Greater)", "the rune's +4 to the DC to track extended to up to 10 creatures within 20 feet for 8 hours: tracking's DC is the GM's (no PF2e rule for it)"],
+    ["Kaiju Fulu", "a structure as hard as standard-grade adamantine against the damage that sets it off and any for an hour after: a building's, not a creature's"],
+    ["Instant Spy", "an hour of sound recorded and played back once within a day, what it hears the GM's: sound and an object"],
+    ["Colorful Coating (Indigo)", "a surface or object's Hardness 2 lower and 1d4 acid damage to it each round for a minute: an object's, the GM's"],
+    ["Banquet of Hungry Ghosts", "four willing undead fed: friendly to its user for 24 hours unless angered, their hunger sated, and talk with them after a morsel: their attitude and speech"],
+    ["Feast of Hungry Ghosts", "one willing undead fed: friendly to its user for 24 hours unless angered, its hunger sated, and talk with it after a morsel: its attitude and speech"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));
