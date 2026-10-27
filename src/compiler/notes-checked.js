@@ -103,7 +103,13 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27, the small needs' group.)
     ["Collar of the Eternal Bond: Eidolon's Freedom", "for 5 minutes its user and eidolon may be any distance apart, past 150 feet the eidolon unmanifesting as it ends: distances on the map, nothing for a card"],
     ["Ghostly Portal Paint", "a 5-by-10-foot wall section passable to corporeal creatures and objects for 10 minutes, what's inside at its end (or an incorporeal creature in the wall) moved to the nearest exit: the map's walls"],
-    ["Ghost Ink", "writing that goes invisible, glowing red near heat (or another light its maker picks), found by a DC 25 Perception check to Seek and read on a critical success: a page's ink out of combat, the GM's"]
+    ["Ghost Ink", "writing that goes invisible, glowing red near heat (or another light its maker picks), found by a DC 25 Perception check to Seek and read on a critical success: a page's ink out of combat, the GM's"],
+    // (2026-10-27, the adventure books' lasting entries: buildings and an object's state, out of combat.)
+    ["Gingerbread House", "a two-story gingerbread cottage with food for 10 while it stands (Hardness 0, 40 Hit Points, damage done to it kept); a full day and night's rest in it heals twice the Hit Points and lowers an affliction a further stage on a successful save: a day's rest, the GM's, out of combat"],
+    ["Unfolding Tree House: Unfold", "a tree house up to 200 feet up a tree within 300 feet, built over 10 minutes and folded away by its whistle over a minute, with a vine ladder, a locked door and six bedrolls: a building on the map, out of combat"],
+    ["Wraithweave Patch (Type I)", "the patch and the object wrapped in it incorporeal while its incorporeal user Sustains it, held only by incorporeal creatures, torn and its object lost or lodged if solid again inside a solid object (the GM's): an object's state"],
+    ["Wraithweave Patch (Type II)", "the patch and the object wrapped in it incorporeal while its incorporeal user Sustains it, held only by incorporeal creatures, torn and its object lost or lodged if solid again inside a solid object (the GM's): an object's state"],
+    ["Wraithweave Patch (Type III)", "the patch and the object wrapped in it incorporeal while its incorporeal user Sustains it, held only by incorporeal creatures, torn and its object lost or lodged if solid again inside a solid object (the GM's): an object's state"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

@@ -170,7 +170,8 @@ test("rules on note Effects: a troop's banner and second reaction, a creature co
     const toga = activation("Choral Toga", "Elysium's Gasp");
     assert.ok(done(toga));
     assert.deepEqual([note(toga)[0].rules, note(toga)[0].duration.value, note(toga)[0].duration.unit], [[{ key: "Immunity", type: "inhaled" }], 1, "minutes"]);
-    assert.equal(activation("Choral Toga", "Elysium's Breath").noteOnly, true, "its other activation as it was");
+    // (Its other activation, Elysium's Breath: since the merge of 2026-10-27 the lasting group's, done.)
+    assert.ok(done(activation("Choral Toga", "Elysium's Breath")), "its other activation the lasting group's");
     const feather = consumable("Navigator's Feather");
     assert.ok(done(feather));
     const [twice, guided] = note(feather);

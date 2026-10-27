@@ -201,8 +201,11 @@ test("inline damage as words, with its types: a note says what PF2e's text says"
 
 test("healing that comes later isn't given on drinking (\"The next time you would die …, you regain 20 Hit Points\")", () => {
     const plan = compileItem(item("Ambrosia of Undying Hope"));
-    assert.equal(plan.noteOnly, true);
+    // (2026-10-27: no longer note-only — its note Effect for the 8 hours counts done, the user's ruling for a rule PF2e can't play, by its own
+    // reading in src/compiler/lasting.js; the healing still not given on drinking.)
+    assert.equal(plan.noteOnly, undefined);
     assert.equal(plan.resolution.outcomes.success.noteEffects[0].duration.value, 8);
+    assert.deepEqual(plan.resolution.outcomes.success.effects, []);
 });
 
 test("healing for an ally the user picks, in its own words (\"Your ally regains 2d8 Hit Points\")", () => {
@@ -250,19 +253,23 @@ test("bonuses against what a creature makes, what an effect gives, or ranged att
     const breath = breaths.ways[0].plan;
     assert.deepEqual(breath.resolution.outcomes.success.modifiers.map((modifier) => [modifier.value, modifier.predicate, modifier.duration.value, modifier.duration.unit]), [[1, ["item:trait:inhaled"], 24, "hours"]]);
     assert.deepEqual(breaths.ways[1].plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.duration.value, modifier.duration.unit]), [[7, "days"]]);
-    assert.deepEqual(breath.unread, ["When you inhale the bottle's contents, the air fills your lungs so completely that you no longer need to breathe, at least for a time.", "If you spend 1 Mythic Point when you activate the day's breath, you inhale so deeply that you increase the effect's duration.", "You don't need to breathe for 24 hours.", "If you spend 1 Mythic Point, you don't need to breathe for 7 days."]);
+    // (2026-10-27: not needing to breathe, no longer unread — a note Effect for each way's time named for the environment module's "doesn't
+    // need to breathe", src/compiler/lasting.js.)
+    assert.equal(breath.unread, undefined);
+    assert.deepEqual(breath.resolution.outcomes.success.noteEffects.map((note) => [note.label, note.duration.value]), [["doesn't need to breathe", 24]]);
     // Trusty Helmet's Hunker Down: "+1 circumstance bonus to your AC against ranged attacks".
     const [, hunker] = compileActivations(item("Trusty Helmet"));
     assert.deepEqual(hunker.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate]), [["ac", 1, "circumstance", ["item:ranged"]]]);
 });
 
 test("an item with a time and nothing else the module reads: a note of its text on the drinker, counted apart", () => {
-    // (2026-10-27: Potion of Passing Fancy for Hovering Potion, whose climb Speed is read now — src/compiler/aloft.js.)
-    const plan = compileItem(item("Potion of Passing Fancy"));
+    // (2026-10-27: Potion of Passing Fancy for Hovering Potion, whose climb Speed is read now — src/compiler/aloft.js. Later that day Anointing
+    // Oil (Greater) for Potion of Passing Fancy, whose changed looks are now its own reading's note Effect — src/compiler/lasting.js.)
+    const plan = compileItem(item("Anointing Oil (Greater)"));
     assert.equal(plan.noteOnly, true);
     const [note] = plan.resolution.outcomes.success.noteEffects;
-    assert.equal(note.label, undefined, "the ability module calls it \"Potion of Passing Fancy: note\"");
-    assert.deepEqual([note.duration.value, note.duration.unit], [1, "hours"]);
+    assert.equal(note.label, undefined, "the ability module calls it \"Anointing Oil (Greater): note\"");
+    assert.deepEqual([note.duration.value, note.duration.unit], [24, "hours"]);
     assert.doesNotMatch(note.text, /^Activate/);
     const result = registry.resolveSync(plan, context(), io());
     assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.effect?.kind]), [["effect", "drinker", "note"]]);
