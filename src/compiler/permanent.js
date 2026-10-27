@@ -330,7 +330,7 @@ function artifactsOf(item, entry, plan, options = {}) {
     const name = `${item.name}${entry.activation?.name ? `: ${entry.activation.name}` : ""}`;
     if (!hasArtifactReading(name)) return plan;
     const { base, info, frequency } = activationBase(item, entry);
-    return withArtifactReading(plan, { name: base.source.name, words: effectWords(entry.activation?.html, "activation"), requirements: entry.activation?.requirements, trigger: entry.activation?.trigger, html: entry.activation?.html, item: plainText(item.system?.description?.value), itemHtml: item.system?.description?.value, index: entry.index, spells: options.spells ?? {}, base, info, frequency });
+    return withArtifactReading(plan, { name: base.source.name, words: effectWords(entry.activation?.html, "activation"), requirements: entry.activation?.requirements, trigger: entry.activation?.trigger, html: entry.activation?.html, item: plainText(item.system?.description?.value), itemHtml: item.system?.description?.value, index: entry.index, spells: options.spells ?? {}, ownerLevel: item.ownerLevel ?? null, base, info, frequency });
 }
 
 // (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of

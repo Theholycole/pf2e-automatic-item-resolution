@@ -9,6 +9,7 @@ import { compileActivations } from "../src/compiler/permanent.js";
 import { spellIndex } from "../src/compiler/index.js";
 import { contractChoices, contractRefusal, withContractCast } from "../src/live/contract-spells.js";
 import { withPlace } from "../src/live/embedded-places.js";
+import { swapRules, swapWords } from "../src/live/skill-swap.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
 import { aroundZone, createInertCard, exemptSpec, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
@@ -132,4 +133,25 @@ test("Phoenix Necklace: the willing creatures targeted get a note Effect whose t
     const note = plan.resolution.outcomes.success.noteEffects[0];
     assert.deepEqual([done(plan), routeOf(plan), plan.item.recipient, plan.item.endsPrevious, note.duration], [true, "item", "targets", "Nonlethal without penalty", null]);
     assert.deepEqual(note.rules[1], { key: "AdjustStrike", mode: "add", property: "weapon-traits", value: "nonlethal", predicate: ["phoenix-necklace-nonlethal"] });
+});
+
+test("Soulheart (Pure)'s Restore Life: the dead creature it's held to back with 1 Hit Point and none of its daily resources, none above 20th level, the soulheart destroyed", () => {
+    const plan = activation("Soulheart (Pure)", "Restore Life");
+    assert.deepEqual([done(plan), routeOf(plan), plan.item.recipient, plan.item.revive.hp, plan.item.revive.maxLevel, plan.item.revive.destroysItem, plan.activation.time], [true, "item", "drinker", 1, 20, true, "1 minute"]);
+});
+
+test("The Big Sky: its user and up to four touched creatures ignore difficult terrain (greater too from its user's 17th level) and circumstance penalties to Speed for 10 minutes", () => {
+    const low = compileActivations({ ...item("The Big Sky"), ownerLevel: 12 })[0].plan;
+    const high = compileActivations({ ...item("The Big Sky"), ownerLevel: 17 })[0].plan;
+    const [lowNote, highNote] = [low, high].map((plan) => plan.resolution.outcomes.success.noteEffects[0]);
+    assert.deepEqual([done(low), routeOf(low), low.item.recipient, lowNote.duration.value, lowNote.rules.length, highNote.rules.length], [true, "item", "targets", 10, 2, 3]);
+    assert.deepEqual(lowNote.rules[1].predicate, ["penalty:type:circumstance"]);
+    assert.equal(highNote.rules[1].path, "system.movement.terrain.greater.ignored");
+});
+
+test("The Trader: two skills picked on its card, their proficiency ranks swapped for the hour (PF2e's ActiveEffectLike overrides)", () => {
+    const [plan] = activations("The Trader");
+    assert.deepEqual([done(plan), routeOf(plan), plan.swap.duration], [true, "skill-swap", { value: 1, unit: "hours" }]);
+    assert.deepEqual(swapRules("athletics", "crafting", 3, 0).map((rule) => [rule.path, rule.value]), [["system.skills.athletics.rank", 0], ["system.skills.crafting.rank", 3]]);
+    assert.equal(swapWords("athletics", "crafting", 3, 0), "Athletics untrained (was master), Crafting master (was untrained)");
 });

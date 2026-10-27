@@ -57,6 +57,7 @@ import { setUpSphere, sphereTouched } from "./sphere.js";
 import { setUpCube } from "./cube.js";
 import { setUpDecoyDouble } from "./decoy-double.js";
 import { setUpPairedStone } from "./paired-stone.js";
+import { setUpSkillSwap } from "./skill-swap.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -186,6 +187,8 @@ Hooks.once("ready", async () => {
     setUpDecoyDouble();
     // (Creatures teleported to a paired stone once its save card is applied, Jahan Waystone's: scripts/paired-stone.js.)
     setUpPairedStone();
+    // (Two skills' ranks swapped for a while, The Trader's: scripts/skill-swap.js.)
+    setUpSkillSwap();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

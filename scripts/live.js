@@ -42,6 +42,7 @@ import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./telepo
 import { postSphereCard } from "./sphere.js";
 import { placeItemStructure, postInertCard } from "./cube.js";
 import { postEmbedCard } from "./embedded-places.js";
+import { postSwapCard } from "./skill-swap.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
@@ -339,6 +340,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "structure") return placeItemStructure({ plan, used, actor, token });
     if (route === "inert") return postInertCard({ message, plan, used, actor, token });
     if (route === "embed") return postEmbedCard({ plan, used, actor, token });
+    if (route === "skill-swap") return postSwapCard({ message, plan, used, actor, token });
     if (route === "whisper") return postWhisper({ plan, used, actor, token });
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });

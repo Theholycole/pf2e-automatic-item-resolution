@@ -192,6 +192,69 @@ const READINGS = [
             notes: [`Target the willing creatures it chooses within ${within[1]} feet (its user too, if it likes).`, "Taking the necklace off ends it for them all: delete their Effects then."],
             item: { recipient: "targets", endsPrevious: "Nonlethal without penalty" }
         })
+    },
+    {
+        // Soulheart (Pure)'s Restore Life: the dead creature it's held to brought back with 1 Hit Point (item.revive, scripts/revive.js) — none above
+        // 20th level (refused), the soulheart gone once it works; dead for no more than a year the GM's, a line.
+        names: ["Soulheart (Pure): Restore Life"],
+        sentences: [
+            /^By holding a pure soulheart against the remains of a dead creature of (\d+)(?:st|nd|rd|th) level or lower that has been dead for no more than (a year|\d+ \w+) and concentrating for one minute, the pure soulheart flashes with red light and is destroyed\.$/,
+            /^The targeted dead creature is restored to life with (\d+) Hit Points?, no spells prepared or spell slots available, no points in any pools or any other daily resources, and is still affected by any long-term debilitations of the old body\.$/
+        ],
+        card: ([held, back]) => ({
+            targeting: { target: "the dead creature it's held to", range: "touch", area: null },
+            resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] } } },
+            notes: [`Only a creature dead for no more than ${held[2]}: the GM's to say.`],
+            activation: { time: "1 minute", traits: ["concentrate", "manipulate"] },
+            item: { recipient: "drinker", revive: { hp: Number(back[1]), maxLevel: Number(held[1]), destroysItem: true, words: "Back from death with no spells prepared or spell slots left, no points in its pools and none of its other daily resources; any long-term debilitation of its old body stays" } }
+        })
+    },
+    {
+        // The Big Sky: its user and up to four creatures it touches ignore difficult terrain and circumstance penalties to their Speeds for 10
+        // minutes — a note Effect on each targeted with PF2e's own terrain rule and an AdjustModifier suppressing those penalties; at 17th level
+        // greater difficult terrain too (its user's level, as compiled for it).
+        names: ["The Big Sky"],
+        sentences: [
+            /^For (\d+) (minutes?|hours?), you and up to (four|three|two|\d+) creatures you touch ignore difficult terrain and effects that would give a circumstance penalty to Speed\.$/,
+            /^If you are at least (\d+)(?:st|nd|rd|th) level, the targets also ignore greater difficult terrain\.$/
+        ],
+        card: ([time, high], _plan, { ownerLevel }) => {
+            const greater = Number(ownerLevel) >= Number(high[1]);
+            const ignore = (path) => ({ key: "ActiveEffectLike", mode: "add", path, value: { environment: "all", feature: "all" } });
+            const speeds = ["speed", "all-speeds", "land-speed", "fly-speed", "swim-speed", "climb-speed", "burrow-speed"];
+            return {
+                targeting: { target: `its user and up to ${time[3]} creatures it touches`, range: "touch", area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [{
+                    label: "Free of the ground",
+                    text: `It ignores difficult terrain${greater ? " and greater difficult terrain" : ""}, and any effect that would give it a circumstance penalty to its Speed.`,
+                    duration: { mode: "fixed", value: Number(time[1]), unit: /^h/i.test(time[2]) ? "hours" : "minutes", expiry: "turn-start" },
+                    rules: [ignore("system.movement.terrain.difficult.ignored"), ...(greater ? [ignore("system.movement.terrain.greater.ignored")] : []), { key: "AdjustModifier", selectors: speeds, suppress: true, predicate: ["penalty:type:circumstance"] }]
+                }] } } },
+                notes: [`Target its user and up to ${time[3]} creatures it touches.`, ...(greater ? [] : [`From ${high[1]}th level, greater difficult terrain too.`])],
+                item: { recipient: "targets" }
+            };
+        }
+    },
+    {
+        // The Trader: two of its user's skills' ranks swapped for the hour (src/live/skill-swap.js, scripts/skill-swap.js); feats whose
+        // prerequisites the swap breaks are lost till then, words on its Effect (PF2e can't play a feat's loss).
+        names: ["The Trader"],
+        sentences: [
+            /^The Trader allows you to make an exchange with yourself\.$/,
+            /^Press the card to your brow, and then select (two) skills\.$/,
+            /^Your proficiency rank with those two skills swaps for (\d+|an?|one) (hours?|minutes?)\.$/,
+            /^For example, if you were a master in Athletics and untrained in Crafting, you would become untrained in Athletics and a master in Crafting\.$/,
+            /^If making this swap would break prerequisites to feats, you lose access to those feats until your skill proficiencies change back in an hour\.$/
+        ],
+        card: ([, , time]) => ({
+            builtin: "skill-swap",
+            targeting: { target: null, range: null, area: null },
+            swap: {
+                duration: { value: { a: 1, an: 1, one: 1 }[time[1].toLowerCase()] ?? Number(time[1]), unit: /^h/i.test(time[2]) ? "hours" : "minutes" },
+                words: "Feats whose prerequisites this swap breaks are lost until it ends.",
+                lines: ["Pick the two skills: their proficiency ranks swap (a Lore's by hand)", "Feats whose prerequisites the swap breaks are lost until it ends"]
+            }
+        })
     }
 ];
 
@@ -209,7 +272,7 @@ export const hasArtifactReading = (name) => READINGS.some((reading) => named(rea
 // plan. name: its source name; base, info, frequency: its own (src/compiler/lasting.js activationBase); requirements, trigger: its activation's
 // lines; item: its item's whole text, plain (itemHtml: as it is); index: the activation's (a reading for one of several unnamed ones); spells:
 // PF2e's spells by name (options.spells).
-export function withArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", itemHtml = "", index = null, spells = {}, base, info, frequency = null }) {
+export function withArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", itemHtml = "", index = null, spells = {}, ownerLevel = null, base, info, frequency = null }) {
     const slug = base?.source?.slug ?? null;
     const readings = READINGS.filter((reading) => named(reading, name) && (reading.index === undefined || reading.index === index) && (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect"));
     const sentences = words ? sentencesOf(words) : [];
@@ -218,7 +281,7 @@ export function withArtifactReading(plan, { name, words, requirements = null, tr
         if (reading.requirements && !asked) continue;
         if (reading.trigger && !reading.trigger.test(String(trigger ?? "").trim())) continue;
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan, { html, item, itemHtml, requirements: asked, trigger, spells, slug, base, info }) : null;
+        const card = found ? reading.card(found, plan, { html, item, itemHtml, requirements: asked, trigger, spells, slug, ownerLevel, base, info }) : null;
         if (!card) continue;
         if (card.keep) {
             const { keep, ...changes } = card;

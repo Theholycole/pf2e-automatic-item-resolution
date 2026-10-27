@@ -15,6 +15,8 @@ export async function reviveCreature(target, name, revive, state) {
     const actor = target?.actor;
     if (!actor) return [];
     if (!isDead(actor)) return [`${name} isn't dead: nothing to bring back.`];
+    // (Only up to a level, Soulheart (Pure)'s 20th: refused above it.)
+    if (Number.isFinite(revive.maxLevel) && Number(actor.level) > revive.maxLevel) return [`${name} is level ${actor.level}: ${state.item?.name ?? "it"} brings back only a creature of level ${revive.maxLevel} or lower.`];
     // (Destroyed by a sphere of annihilation, scripts/sphere.js: only a deity's direct intervention brings it back.)
     if (actor.getFlag?.(MODULE_ID, "annihilated")?.deity) return [`${name} was destroyed by a sphere of annihilation: only a deity's direct intervention can bring it back.`];
     const lines = [];
@@ -30,5 +32,13 @@ export async function reviveCreature(target, name, revive, state) {
     await actor.update({ "system.attributes.hp.value": revive.hp, ...(Number(focus?.value) > 0 ? { "system.resources.focus.value": 0 } : {}) });
     await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: "back from death", words: revive.words, duration: null }, context)]);
     lines.unshift(`${name} returns to life with ${revive.hp} Hit Point${revive.hp === 1 ? "" : "s"}.`);
+    // (The item gone once it works, Soulheart (Pure)'s flash.)
+    if (revive.destroysItem && state.item?.uuid) {
+        const used = await fromUuid(state.item.uuid).catch(() => null);
+        if (used?.delete) {
+            await used.delete();
+            lines.push(`${state.item.name} is destroyed.`);
+        }
+    }
     return lines;
 }
