@@ -96,3 +96,12 @@ test("a snare that strikes again for a while: Bleeding Spines Snare's area for 1
     assert.deepEqual([spines.zone.once, spines.zone.then.lasts.value, spines.zone.then.lasts.unit, spines.zone.then.saves[0].when], [true, 1, "minutes", ["enter", "end"]]);
     assert.equal(spines.zone.then.saves[0].plan.resolution.check.basic, true);
 });
+
+test("a conjured creature as its item's text has it (2026-10-27): Fossil Fragment's traits for its type and its immunities, the Petrified Wood tree Immobilized with no weaknesses; a creature rule left makes the card partial", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const [tree] = activations(item("Fossil Fragment (Petrified Wood)"), options);
+    const creature = tree.plan.creatures[0];
+    assert.deepEqual([creature.replaceType, creature.immunities.includes("death-effects"), creature.own, tree.plan.partial], [true, true, { noWeaknesses: true, conditions: ["immobilized"] }, undefined]);
+    const [dog] = activations(item("Wondrous Figurine (Onyx Dog)"), options);
+    assert.deepEqual([dog.plan.creatures[0].own.rules[0].predicate, dog.plan.partial], [["action:track"], true]);
+});

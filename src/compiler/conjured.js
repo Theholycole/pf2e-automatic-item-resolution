@@ -48,9 +48,9 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
     const whole = plainOf(item?.system?.description?.value ?? text);
     // (Not one that "ignores your commands", Ruby Hippopotamus's: it takes its own turns — as does one made to appear and attack, a third-party
     // vial's swarm.)
-    const own = /\bignores your commands\b/i.test(whole);
+    const ownTurns = /\bignores your commands\b/i.test(whole);
     const appears = /^causing\b/i.test(becomes[0]) && /\bto appear\b/i.test(text.slice(becomes.index, becomes.index + becomes[0].length + 20));
-    const minion = !own && /\bhas the minion trait\b/i.test(whole);
+    const minion = !ownTurns && /\bhas the minion trait\b/i.test(whole);
     // (Fossil Fragments' "it has the construct and earth traits and lacks its normal creature type trait".)
     const added = /\bit has the (\w+) and (\w+) traits\b/i.exec(whole);
     const traits = [...(minion ? ["minion"] : []), ...(added ? [added[1].toLowerCase(), added[2].toLowerCase()] : [])];
@@ -62,11 +62,32 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
     // (Or said before its activation, Pyrite Rat's "the rat remains transformed for 1 hour".)
     const lasts = fights ? { mode: "fixed", value: null, unit: "rounds", expiry: "turn-start", anchor: "effect-start", formula: fights[1] } : lastsOf(after) ?? (wholeHtml ? lastsOf(plainOf(wholeHtml).replace(/\bActivat(?:e|ion)\b.*$/s, "")) : null);
     const sentences = after.split(/(?<=[.!?])\s+(?=[A-Z])/).slice(1).map((sentence) => sentence.trim()).filter(Boolean);
+    // (Its creature type traded for those traits, and its immunities: the made creature's own, scripts/zones.js finishConjured — 2026-10-27,
+    // by hand before.)
+    const replaceType = Boolean(added) && /\black(?:s)? its normal creature type trait\b/i.test(whole);
+    const immuneWords = /\bIt's also immune to ([^.]+)\./i.exec(whole)?.[1] ?? null;
+    const immunities = immuneWords ? immuneWords.split(/,\s*(?:and\s+)?|\s+and\s+/).map((word) => word.trim().toLowerCase().replace(/\s+/g, "-")).filter(Boolean) : [];
+    // (What its entry gives the creature beyond its stat block: the Onyx Dog's "+4 circumstance bonus to Survival checks to Track, and it has
+    // darkvision" — an Effect of PF2e's rules on it; the Petrified Wood tree's "doesn't have the normal weaknesses …, but it's rooted in place,
+    // Immobilized" — no weaknesses, Immobilized. The made creature's own, scripts/zones.js finishConjured.)
+    const own = {};
+    const played = new Set();
+    for (const sentence of sentences) {
+        const bonus = /^The \w+ has an? \+(\d+) (circumstance|item|status) bonus to (\w+) checks to (\w+(?: \w+)?), and it has (darkvision|low-light vision)\.$/i.exec(sentence);
+        if (bonus) {
+            own.rules = [{ key: "FlatModifier", selector: bonus[3].toLowerCase(), type: bonus[2].toLowerCase(), value: Number(bonus[1]), predicate: [`action:${bonus[4].toLowerCase().replace(/\s+/g, "-")}`] }, { key: "Sense", selector: bonus[5].toLowerCase().replace(/\s+/g, "-") }];
+            played.add(sentence);
+        }
+        if (/^It doesn't have the normal weaknesses of an? [\w ]+?, but it's rooted in place, Immobilized\.$/i.test(sentence)) {
+            Object.assign(own, { noWeaknesses: true, conditions: ["immobilized"] });
+            played.add(sentence);
+        }
+    }
     const notes = [
-        ...(added && /\black(?:s)? its normal creature type trait\b/i.test(whole) ? [`It has the ${added[1]} and ${added[2]} traits in place of its creature type (remove that by hand).`] : []),
-        ...(/\bIt's also immune to ([^.]+)\./i.test(whole) ? [`It's immune to ${/\bIt's also immune to ([^.]+)\./i.exec(whole)[1]} (add by hand).`] : []),
+        ...(replaceType ? [`It has the ${added[1]} and ${added[2]} traits in place of its creature type.`] : []),
+        ...(immuneWords ? [`It's immune to ${immuneWords}.`] : []),
         ...(minion ? ["A minion: it acts when its user commands it (1 action for 2 of its own)."] : []),
-        ...(own ? ["It acts on its own: it rolls initiative."] : []),
+        ...(ownTurns ? ["It acts on its own: it rolls initiative."] : []),
         ...(fights ? ["Out of combat it lasts 24 hours as a beast of burden or for transport (end it by hand)."] : []),
         ...(lasts?.unit === "hours" ? [`It lasts ${lasts.value} hour${lasts.value === 1 ? "" : "s"}: dismiss it when that's up.`] : []),
         ...sentences.filter((sentence) => !/\bhas the minion trait\.$/i.test(sentence))
@@ -77,13 +98,21 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
         automation: { level: "guided" },
         targeting: { target: "self", range: null, area: null },
         trigger: { event: "use" },
-        creatures: [{ name, count, size: null, stats: null, from: becomes[2].startsWith("name:") ? { name } : { uuid: fullUuid(becomes[2]) }, traits, initiative: own || appears ? "roll" : null }],
+        creatures: [{ name, count, size: null, stats: null, from: becomes[2].startsWith("name:") ? { name } : { uuid: fullUuid(becomes[2]) }, traits, initiative: ownTurns || appears ? "roll" : null, ...(replaceType ? { replaceType: true } : {}), ...(immunities.length ? { immunities } : {}), ...(Object.keys(own).length ? { own } : {}) }],
         max: count,
         lasts,
         vanishAtZero: true,
-        notes
+        notes,
+        // (A line left for the GM, "(end it by hand)", or a rule of the creature's the made token doesn't have — the Amber Mosquito's Blood Drain
+        // with no temporary Hit Points, a figurine's week before it can be called again once slain: partial, 2026-10-27.)
+        ...(notes.some((note) => /\bby hand\)\.?$/.test(note) || (CREATURE_RULE.test(note) && !CONJURE_LINES.test(note) && !played.has(note))) ? { partial: true } : {})
     };
 }
+
+const CREATURE_RULE = /\b(?:can't|cannot|doesn't|don't|instead|temporary Hit Points|\d+d\d+|damage|bonus|penalty|resistance|weakness(?:es)?|Speed|darkvision|scent|tremorsense|observed|concealed|hidden|Strike|attack|Immobilized|reactions?)\b/i;
+// (The card's own lines, and what has no rule: its minion's actions, its time, its traits and immunities the made creature has, that it
+// needn't eat.)
+const CONJURE_LINES = /^(?:A minion: it acts when its user commands it|It acts on its own: it rolls initiative|It lasts \d+ hours?: dismiss it when that's up|It has the \w+ and \w+ traits in place of its creature type|It's immune to )|\bdoesn't need to eat or drink\b/;
 
 // A creature an item lets out whose numbers its own text gives, not a stat block it links (Team+ Alchemists' Bottle-O-Ooze grades, a
 // thrown bottle that swells into an ooze of the grade's size and stays put for its minute; their Canopic Canisters, a smashed jar whose

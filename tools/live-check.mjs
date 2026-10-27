@@ -7158,6 +7158,34 @@ export const cases = {
         }
     },
 
+    // Fossil Fragment (Petrified Wood): its conjured tree with the construct and earth traits in place of its creature type, the fragment's
+    // immunities, no weaknesses, and Immobilized (the item module finishing the ability module's conjured creature).
+    async fossilTreeFinished(scene) {
+        const { actor: owner, token: ownerToken } = await creature(scene, "Fossil Owner", { type: "character", x: 12, y: 15, level: 14 });
+        const fossil = await give(owner, "Fossil Fragment (Petrified Wood)");
+        await until(() => ownerToken.object, "the owner's token drawn", { timeout: 5000 });
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const made = () => scene.tokens.filter((token) => token.actor?.flags?.[ABILITY]?.conjured?.itemUuid === fossil.uuid);
+        try {
+            await game.modules.get(NS).api.live.activate(fossil.uuid, 0);
+            await until(() => made().length === 1, "the tree's token", { timeout: 10000 });
+            const tree = () => made()[0].actor;
+            await until(() => tree().system.traits.value.includes("construct") && tree().hasCondition("immobilized"), `construct and Immobilized (${tree().system.traits.value.join(", ")})`, { timeout: 8000 });
+            const traits = tree().system.traits.value;
+            assert(!traits.includes("plant") && traits.includes("earth"), `its creature type traded (${traits.join(", ")})`);
+            const immune = (tree().system.attributes.immunities ?? []).map((entry) => entry.type);
+            assert(["bleed", "death-effects", "poison", "unconscious"].every((type) => immune.includes(type)), `its immunities (${immune.join(", ")})`);
+            assert(!(tree().system.attributes.weaknesses ?? []).length, `no weaknesses (${JSON.stringify(tree().system.attributes.weaknesses)})`);
+            return { name: tree().name, traits, immune: immune.length };
+        } finally {
+            for (const token of made()) {
+                const base = game.actors.get(token.actorId);
+                await token.delete().catch(() => null);
+                if (base?.flags?.[ABILITY]?.conjured) await base.delete().catch(() => null);
+            }
+        }
+    },
+
     // Ring of the Tiger: its card gives its user an agile claw unarmed attack (1d6 slashing) until the end of the turn — PF2e's Strike rule,
     // a Strike PF2e lists among the user's actions.
     async tigerClaw(scene) {

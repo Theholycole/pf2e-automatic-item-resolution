@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1345,
+  "entries": 1352,
   "results": {
-   "partial": 421,
+   "partial": 428,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -17,7 +17,7 @@
    "moving": 91,
    "visibility": 49,
    "choice": 31,
-   "lasting": 68,
+   "lasting": 69,
    "strike": 102,
    "spells": 36,
    "information": 23,
@@ -26,7 +26,7 @@
    "actions": 31,
    "immunity": 27,
    "objects": 114,
-   "creatures": 66,
+   "creatures": 72,
    "mind": 6,
    "illusions": 50,
    "removed": 6,
@@ -51,35 +51,35 @@
    "cast-changes": 25,
    "speeds": 29,
    "areas": 212,
-   "immunity": 88,
-   "objects": 393,
+   "immunity": 90,
+   "objects": 394,
    "speech": 130,
-   "out-of-combat": 441,
+   "out-of-combat": 447,
    "counteract": 105,
-   "afflictions": 109,
-   "lasting": 236,
+   "afflictions": 111,
+   "lasting": 241,
    "moving": 119,
    "triggers": 128,
    "visibility": 51,
-   "dying": 75,
+   "dying": 77,
    "choice": 111,
    "several": 107,
    "strike": 199,
-   "reader": 215,
+   "reader": 217,
    "spells": 76,
    "information": 199,
    "actions": 63,
    "from-events": 29,
    "no-rules": 18,
    "situational": 86,
-   "creatures": 66,
+   "creatures": 72,
    "mind": 65,
    "illusions": 60,
    "removed": 7,
    "range": 6,
-   "cooldown": 11,
+   "cooldown": 12,
    "vehicles": 27,
-   "senses": 28,
+   "senses": 29,
    "forms": 27,
    "fortune": 10,
    "retaliation": 3,
@@ -1995,6 +1995,21 @@
    ]
   },
   {
+   "name": "Fossil Fragment (Amber Mosquito)",
+   "kind": "activation",
+   "activation": "Fossil Metamorphosis",
+   "result": "partial",
+   "main": "creatures",
+   "work": "minion",
+   "needs": [
+    "creatures",
+    "afflictions",
+    "dying",
+    "immunity",
+    "reader"
+   ]
+  },
+  {
    "name": "Blade of Fallen Stars",
    "kind": "activation",
    "result": "none",
@@ -3181,6 +3196,19 @@
    "work": "mythic point",
    "needs": [
     "spells"
+   ]
+  },
+  {
+   "name": "Wondrous Figurine (Onyx Dog)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "minion",
+   "needs": [
+    "creatures",
+    "senses",
+    "lasting",
+    "out-of-combat"
    ]
   },
   {
@@ -7330,6 +7358,18 @@
    ]
   },
   {
+   "name": "Wondrous Figurine (Golden Lions)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "minion",
+   "needs": [
+    "creatures",
+    "lasting",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Vagabond's Teapot",
    "kind": "activation",
    "activation": "Share Brew",
@@ -9174,6 +9214,18 @@
    ]
   },
   {
+   "name": "Wondrous Figurine (Rubber Bear)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "minion",
+   "needs": [
+    "creatures",
+    "lasting",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Auspicious Scepter",
    "kind": "activation",
    "activation": "Fortunate Strike",
@@ -9313,6 +9365,18 @@
     "reader",
     "mind",
     "information",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Pyrite Rat",
+   "kind": "activation",
+   "activation": "Transform Statue",
+   "result": "partial",
+   "main": "lasting",
+   "work": "dismiss",
+   "needs": [
+    "lasting",
     "out-of-combat"
    ]
   },
@@ -10163,6 +10227,19 @@
    "main": "cooldown",
    "work": "can't activate it again",
    "needs": [
+    "cooldown",
+    "lasting",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Winder's Ring",
+   "kind": "activation",
+   "result": "partial",
+   "main": "creatures",
+   "work": "minion",
+   "needs": [
+    "creatures",
     "cooldown",
     "lasting",
     "out-of-combat"
@@ -13293,6 +13370,23 @@
    "needs": [
     "lasting",
     "objects",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Fossil Fragment (Brontosaurus Phalange)",
+   "kind": "activation",
+   "activation": "Fossil Metamorphosis",
+   "result": "partial",
+   "main": "creatures",
+   "work": "minion",
+   "needs": [
+    "creatures",
+    "afflictions",
+    "dying",
+    "immunity",
+    "objects",
+    "reader",
     "out-of-combat"
    ]
   },

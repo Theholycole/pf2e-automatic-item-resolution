@@ -30,10 +30,37 @@ export async function startItemZone({ plan, used, actor, token }) {
     });
 }
 
+// PF2e's creature types (a trait a creature has one or two of).
+const CREATURE_TYPES = new Set(["humanoid", "animal", "undead", "plant", "construct", "fey", "beast", "fiend", "dragon", "celestial", "elemental", "fungus", "ooze", "aberration", "giant", "spirit", "monitor", "dream", "astral", "time", "ethereal", "petitioner"]);
+// The made creatures as the item's text has them (src/compiler/conjured.js): its creature type traded for the traits the item gives
+// (Fossil Fragments' construct and earth), its immunities added — PF2e's own immunity entries.
+async function finishConjured(made, plan) {
+    const creature = plan.creatures?.[0];
+    if (!creature?.replaceType && !creature?.immunities?.length && !creature?.own) return;
+    for (const { actor } of made ?? []) {
+        if (!actor) continue;
+        const changes = {};
+        if (creature.replaceType) changes["system.traits.value"] = [...new Set([...(actor.system?.traits?.value ?? []).filter((trait) => !CREATURE_TYPES.has(trait) || (creature.traits ?? []).includes(trait)), ...(creature.traits ?? [])])];
+        if (creature.immunities?.length) {
+            const had = (actor._source?.system?.attributes?.immunities ?? []).filter((entry) => entry?.type);
+            changes["system.attributes.immunities"] = [...had, ...creature.immunities.filter((type) => !had.some((entry) => entry.type === type)).map((type) => ({ type }))];
+        }
+        if (creature.own?.noWeaknesses) changes["system.attributes.weaknesses"] = [];
+        if (Object.keys(changes).length) await actor.update(changes);
+        // (Its entry's own: an Effect of PF2e's rules — the Onyx Dog's +4 to Track and darkvision —, a condition — the tree's Immobilized.)
+        if (creature.own?.rules?.length) await actor.createEmbeddedDocuments("Item", [{ name: `${plan.source?.name ?? "Conjured"}: its own`, type: "effect", img: "icons/svg/aura.svg", system: { duration: { value: -1, unit: "unlimited", expiry: null, sustained: false }, rules: creature.own.rules } }]);
+        for (const slug of creature.own?.conditions ?? []) await actor.increaseCondition?.(slug);
+    }
+}
+
 export async function startItemConjure({ plan, used, actor, token }) {
     const startConjure = game.modules.get(ABILITY_ID)?.api?.live?.startConjure;
     const item = { name: used.data.name, uuid: used.data.uuid ?? null, actor, img: used.data.img ?? null };
-    if (startConjure) return startConjure({ item, plan, sourceToken: token?.document ?? token });
+    if (startConjure) {
+        const made = await startConjure({ item, plan, sourceToken: token?.document ?? token });
+        await finishConjured(made, plan);
+        return made;
+    }
     const names = (plan.creatures ?? []).map((creature) => `${creature.count > 1 ? `${creature.count} ` : ""}${creature.name}`).join(", ");
     return ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),
