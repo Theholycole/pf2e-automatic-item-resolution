@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1277,
+  "entries": 1275,
   "results": {
-   "partial": 380,
+   "partial": 378,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -17,7 +17,7 @@
    "visibility": 47,
    "lasting": 65,
    "choice": 30,
-   "strike": 96,
+   "strike": 94,
    "spells": 36,
    "information": 23,
    "out-of-combat": 35,
@@ -64,7 +64,7 @@
    "dying": 75,
    "choice": 107,
    "several": 104,
-   "strike": 190,
+   "strike": 188,
    "reader": 209,
    "spells": 75,
    "information": 197,
@@ -7249,16 +7249,6 @@
    ]
   },
   {
-   "name": "Indomitable Keepsake (Major)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "strike",
-   "work": "critical hit",
-   "needs": [
-    "strike"
-   ]
-  },
-  {
    "name": "Deteriorating Dust",
    "kind": "consumable",
    "result": "note-only",
@@ -12555,16 +12545,6 @@
    "needs": [
     "afflictions",
     "objects"
-   ]
-  },
-  {
-   "name": "Indomitable Keepsake (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "strike",
-   "work": "critical hit",
-   "needs": [
-    "strike"
    ]
   },
   {

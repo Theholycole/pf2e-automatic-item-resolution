@@ -206,10 +206,15 @@ const BREAKS = /\bThe [\w' -]+? breaks\. If it was already broken, it is destroy
 // the damage below the amount it would deal on a normal hit": not resistance — once off the hit's damage, at most its doubling's half —
 // bonus.reduceCrit { value }, scripts/half-damage.js, 2026-10-27.)
 const CRIT_EXTRA = /^This effect only reduces the additional damage from a critical hit; it can't reduce the damage below the amount it would deal on a normal hit\.$/i;
+// (Its grade's own amount, Indomitable Keepsake (Greater)'s "When you activate a greater indomitable keepsake, you reduce the damage from a firearm
+// critical hit by 20 instead of reducing it by 10".)
+const GRADE_INSTEAD = /^When you activate an? [\w' -]+?, you reduce the damage from an? [\w ]+? critical hit by (\d+) instead of reducing it by \d+\.$/i;
 function onlyCritExtra(read, sentences) {
     const said = sentences.find((sentence) => CRIT_EXTRA.test(sentence.trim()));
     if (!read?.resistance || read.resistance.type !== "all-damage" || !said || !/\bcritical hit\b/i.test(read.notes?.[0] ?? "")) return read;
-    return { ...read, resistance: null, reduceCrit: { value: read.resistance.value }, notes: read.notes.filter((note) => note.trim() !== said.trim()) };
+    const grade = sentences.map((sentence) => [sentence, GRADE_INSTEAD.exec(sentence.trim())]).find(([, match]) => match);
+    const notes = read.notes.filter((note) => note.trim() !== said.trim() && (!grade || note.trim() !== grade[0].trim()));
+    return { ...read, resistance: null, reduceCrit: { value: grade ? Number(grade[1][1]) : read.resistance.value }, notes };
 }
 function readResistMoment(sentences, triggered) {
     if (!triggered) return null;

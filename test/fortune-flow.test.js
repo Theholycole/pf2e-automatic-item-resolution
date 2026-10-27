@@ -457,6 +457,8 @@ test("half the triggering attack's damage: Laurel of the Empath's reaction, its 
 test("Indomitable Keepsake (2026-10-27): the triggering critical hit cut by 10 once, by no more than half of it — bonus.reduceCrit, not resistance", async () => {
     const keepsake = compileItem(source("Indomitable Keepsake"));
     assert.deepEqual([keepsake.bonus.resistance, keepsake.bonus.reduceCrit, keepsake.partial], [null, { value: 10 }, undefined]);
+    // (Its grades' own amounts, "by 20 instead of reducing it by 10".)
+    assert.deepEqual(["Greater", "Major"].map((grade) => [compileItem(source(`Indomitable Keepsake (${grade})`)).bonus.reduceCrit.value, compileItem(source(`Indomitable Keepsake (${grade})`)).partial]), [[20, undefined], [30, undefined]]);
     const { beforeCritical, criticalCut } = await import("../scripts/half-damage.js");
     assert.deepEqual([criticalCut(30, 10), criticalCut(12, 10), criticalCut(1, 10)], [10, 6, 0]);
     const flags = { "pf2e-automatic-item-resolution": { rollTwice: { reduceCrit: { value: 10 } } } };
