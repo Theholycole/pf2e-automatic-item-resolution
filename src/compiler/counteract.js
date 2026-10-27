@@ -25,7 +25,7 @@ const HALF_LEVEL_RANK = /\bcounteract rank equal to your level divided by 2 \(ro
 const DETERMINATION = /\bgain the benefit of the fighter's Determination class feat, with a counteract rank of (\d+) and a counteract modifier of \+(\d+)/i;
 
 // GM Core's DCs by level, 0 to 25.
-const LEVEL_DCS = [14, 15, 16, 18, 19, 20, 22, 23, 24, 26, 27, 28, 30, 31, 32, 34, 35, 36, 38, 39, 40, 42, 44, 46, 48, 50];
+export const LEVEL_DCS = [14, 15, 16, 18, 19, 20, 22, 23, 24, 26, 27, 28, 30, 31, 32, 34, 35, 36, 38, 39, 40, 42, 44, 46, 48, 50];
 
 // The text → { modifier, rank, conditions, traits, afflictions, pick: "each" | "one" | "highest", reduce?, then?, notes } or null.
 // (Determination's: { …, spells, magical, endsConditions, self }.)

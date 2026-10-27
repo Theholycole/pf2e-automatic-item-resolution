@@ -75,9 +75,10 @@ test("breathing underwater, which no PF2e rule plays: in words on its user's Eff
 
 test("a sentence that says only what the bonus's time already means: Affliction Suppressant's daily saves", () => {
     for (const grade of ["Lesser", "Moderate", "Greater"]) assert.equal(consumable(`Affliction Suppressant (${grade})`).partial, undefined, grade);
-    // (The Major's save against an affliction already affecting its drinker isn't read.)
+    // (The Major's save against an affliction already affecting its drinker: read since 2026-10-27, the counteract card's save mode —
+    // src/compiler/affliction-saves.js, test/afflictions-2026-10-27.test.js.)
     const major = consumable("Affliction Suppressant (Major)");
-    assert.deepEqual([major.partial, major.unread], [true, ["When you drink the affliction suppressant, you can attempt a save against one affliction of 14th level or lower affecting you."]]);
+    assert.deepEqual([major.partial, major.unread, major.item.counteract.save], [undefined, undefined, { maxLevel: 14 }]);
 });
 
 test("a Quickened's extra action for the actions it names: a note Effect beside it (Propulsive Boots)", () => {
