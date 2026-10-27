@@ -501,6 +501,12 @@ function compileEach(item, options = {}) {
         if (!plan && options.spellEffects) plan = castPlan(part);
         // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
         if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(part, options) ?? plan;
+        // (One spell of several its words name, Spark Dancer's "casts either Fireball or Lightning Bolt, depending on …": the words' choices,
+        // 2026-10-27.)
+        else if (plan?.builtin === "cast-spell" && !plan.choices?.length && options.spells) {
+            const words = castWordsPlan(part, options);
+            if ((words?.choices?.length ?? 0) > 1 && words.choices.some((choice) => choice.spell?.uuid === plan.spell?.uuid)) plan = { ...plan, choices: words.choices };
+        }
         // (The ability compiler's cast, with what its words say and it left out: on its user, a DC, a modifier.)
         plan = fillCast(plan, activation.html, options);
         if (!plan) plan = rowPlanFor(part, base);

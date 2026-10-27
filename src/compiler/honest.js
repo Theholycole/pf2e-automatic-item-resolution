@@ -360,6 +360,10 @@ const castWords = (note, plan, spell) => {
     for (const words of [...(plan.castDuration?.said ?? []), plan.castRange?.said, plan.turnHeal?.said, plan.castBonus?.said].filter(Boolean)) text = text.replace(words, " ");
     const name = plan.spell?.name;
     if (name) text = text.replace(new RegExp(literal(name), "gi"), " ");
+    // (Its other choices, and what picks one: Spark Dancer's "either Fireball or Lightning Bolt, depending on whether the current core would deal
+    // fire or electricity damage" — the card's choice, its user's to make.)
+    for (const choice of plan.choices ?? []) if (choice.spell?.name) text = text.replace(new RegExp(literal(choice.spell.name), "gi"), " ");
+    if ((plan.choices?.length ?? 0) > 1) text = text.replace(/,?\s*depending on (?:whether|which) [^,.]+/gi, " ");
     // (The cast's rank and counteract modifier said again: Dragonfire Halfbow's "heightened to 5th rank", a cantrip "heightened to a spell rank
     // equal to half your level rounded up" as the spell module casts it, Rod of Negation's "a counteract modifier of 1d20+23".)
     if (plan.rank) text = text.replace(new RegExp(String.raw`\bheightened to ${plan.rank}(?:st|nd|rd|th)[- ](?:rank|level)\b|\bcounteract rank (?:of )?${plan.rank}(?:st|nd|rd|th)?\b`, "gi"), " ");

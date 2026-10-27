@@ -1,15 +1,15 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1322,
+  "entries": 1321,
   "results": {
-   "partial": 423,
+   "partial": 422,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
   },
   "main": {
-   "cast-changes": 24,
+   "cast-changes": 23,
    "speeds": 23,
    "areas": 135,
    "counteract": 24,
@@ -48,7 +48,7 @@
    "by-kind": 8
   },
   "any": {
-   "cast-changes": 24,
+   "cast-changes": 23,
    "speeds": 29,
    "areas": 200,
    "immunity": 90,
@@ -10802,15 +10802,6 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
-   ]
-  },
-  {
-   "name": "Spark Dancer",
-   "kind": "activation",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
    ]
   },
   {

@@ -240,3 +240,8 @@ test("a cast said again in other words (2026-10-27): Talonstrike Blade's 'on the
     // (Songbird's Brush keeps its good-aligned creatures, the GM's: partial.)
     assert.equal(first("Songbird's Brush").partial, true);
 });
+
+test("one cast of several the words name (2026-10-27): Spark Dancer's Fireball or Lightning Bolt at 7th rank, its user's pick on the card", () => {
+    const dancer = first("Spark Dancer");
+    assert.deepEqual([dancer.choices.map((choice) => `${choice.spell.name}@${choice.rank}`), dancer.dc, dancer.partial], [["Fireball@7", "Lightning Bolt@7"], 30, undefined]);
+});
