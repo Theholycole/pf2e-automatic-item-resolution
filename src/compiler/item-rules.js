@@ -4,13 +4,16 @@
 // rulings (src/compiler/decided.js) left it as it was. Each returns the plan as it was when it isn't its item's. Pure.
 
 import { withFoodImmunityLine, withSecondaryFatigue, withShellBreathing, withSoberedImmunity } from "./immune-after.js";
+import { withAttitudeSave } from "./attitude.js";
+import { withFundamentalOil } from "./fundamental.js";
 import { withHeartbeatFloor } from "./heartbeat.js";
 import { withIntactShot } from "./intact-shot.js";
 import { withMerged } from "./merged.js";
 import { oneOff } from "./one-offs.js";
 import { isSpecialItem } from "./decided.js";
 import { withOathCritical } from "./oath.js";
-import { withActivationLines, withNullifyLines, withTableLines } from "./table-lines.js";
+import { withActivationLines, withBroomFlight, withNullifyLines, withTableLines, withTossLines } from "./table-lines.js";
+import { withFirstEntrySave, withRidingSnare, withZoneOwnEffect } from "./zone-readings.js";
 import { withActivationSituational, withMechanismLine, withSituational, withToastedMarks } from "./situational.js";
 
 // (A one-off rule left in a builtin's notes — Earthglide Cloak's expulsion beside its teleport card's Burrow —, which decided.js leaves to the
@@ -24,10 +27,10 @@ function withBuiltinOneOff(plan, item) {
 // plan as these read it.
 export function withActivationRules(plan, entry, item, base) {
     const html = entry?.activation?.html ?? "";
-    return withNullifyLines(withBuiltinOneOff(withIntactShot(withOathCritical(withShellBreathing(withToastedMarks(withActivationSituational(withMerged(withActivationLines(plan, entry, item, base), html), html), item), html, item), item), item), item), html);
+    return withTossLines(withZoneOwnEffect(withNullifyLines(withBuiltinOneOff(withIntactShot(withOathCritical(withShellBreathing(withToastedMarks(withBroomFlight(withAttitudeSave(withActivationSituational(withMerged(withActivationLines(plan, entry, item, base), html), html), html, item), html), item), html, item), item), item), item), html), html), html);
 }
 
 // A consumable's plan, the item and its base → the plan as these read it.
 export function withConsumableRules(plan, item, base) {
-    return withHeartbeatFloor(withFoodImmunityLine(withSecondaryFatigue(withSoberedImmunity(withMechanismLine(withSituational(withTableLines(plan, item, base), item)), item), item)), item);
+    return withFirstEntrySave(withHeartbeatFloor(withFoodImmunityLine(withSecondaryFatigue(withSoberedImmunity(withMechanismLine(withSituational(withFundamentalOil(withRidingSnare(withTableLines(plan, item, base), item, base), item, base), item)), item), item)), item), item);
 }

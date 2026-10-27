@@ -542,6 +542,13 @@ async function giveUserConditions(effects, { actor, token, used }) {
             lines.push(line ?? `${name} gains ${effect.amount} temporary Hit Points${ability?.applyChange ? "" : " (add them by hand: the ability module isn't active)"}`);
             continue;
         }
+        // (PF2e's own Effect on its user beside a zone, Arctic Worm Chitin Shield's Effect: Misty Chill: the ability module's native Effect,
+        // src/compiler/zone-readings.js.)
+        if (effect.kind === "native") {
+            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "native", uuid: effect.uuid, label: effect.label } }, state) : null;
+            lines.push(line ?? `${name} gains ${effect.label}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
+            continue;
+        }
         const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: effect.slug, value: effect.value ?? null, target: "source", duration: effect.duration ?? null }, state) : null;
         lines.push(line ?? `${name} is ${effect.slug}${Number.isFinite(effect.value) ? ` ${effect.value}` : ""}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
     }

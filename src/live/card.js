@@ -488,6 +488,8 @@ export function runeText(rune, weaponName = null) {
     // (One rune of several types, Bane Oil's: "the Bane rune of the type picked".)
     const typed = rune.choices?.length && rune.choices.every((choice) => choice.traits?.length);
     const name = typed && !rune.picked ? `${rune.name} rune of the type picked` : rune.choices?.length && !rune.picked ? `${rune.choices.slice(0, -1).map((choice) => choice.name).join(", ")} or ${rune.choices.at(-1).name} rune (picked)` : `${rune.name} rune`;
+    // (Its damage of the target's greatest weakness, Fundamental Oil's: the type on its toggle.)
+    if (rune.damageTypes?.length) return `Gives ${weaponName ?? "the weapon picked"} 1d6 more damage against ${rune.traits.join(" or ")} creatures, of the target's greatest weakness among ${rune.damageTypes.slice(0, -1).join(", ")} or ${rune.damageTypes.at(-1)} (set on its toggle), else the weapon's own type${time}`;
     return `Gives ${weaponName ?? (rune.own ? "its weapon" : "the weapon picked")} the ${name}${time}`;
 }
 
@@ -505,9 +507,20 @@ export function proficiencyEffectSource(loan, { weapon, rank, item = {}, user = 
 export function runeEffectSource(rune, { key = rune.key, weapon, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     // (A Bane rune of a type, Bane Oil's: 1d6 more of the weapon's own damage type against a creature with the type's traits — PF2e's DamageDice
     // on that weapon's damage, as PF2e's own Bane rune has no rules.)
-    const rules = rune.traits?.length
-        ? [{ key: "DamageDice", selector: `${weapon.id}-damage`, slug: "bane-oil", label: rune.name, diceNumber: 1, dieSize: "d6", predicate: [{ or: rune.traits.map((trait) => `target:trait:${trait}`) }] }]
-        : [{ key: "AdjustStrike", mode: "add", property: "property-runes", value: key, definition: [`item:id:${weapon.id}`] }];
+    const against = { or: (rune.traits ?? []).map((trait) => `target:trait:${trait}`) };
+    // (Of the target's greatest weakness, Fundamental Oil's: a toggle that's always on, its suboption the type — PF2e has no roll option for a
+    // creature's weaknesses —, the d6 of the type picked, or the weapon's own with none of them.)
+    const option = `${String(item.name ?? "oil").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-type`;
+    const typed = rune.damageTypes?.length && rune.traits?.length
+        ? [
+            { key: "RollOption", domain: "all", option, toggleable: true, alwaysActive: true, value: true, label: `${item.name ?? rune.name}: the target's greatest weakness`, suboptions: [...rune.damageTypes.map((type) => ({ label: type.charAt(0).toUpperCase() + type.slice(1), value: type })), { label: "None of these", value: "none" }] },
+            ...rune.damageTypes.map((type) => ({ key: "DamageDice", selector: `${weapon.id}-damage`, slug: `${option}-${type}`, label: item.name ?? rune.name, diceNumber: 1, dieSize: "d6", damageType: type, predicate: [against, `${option}:${type}`] })),
+            { key: "DamageDice", selector: `${weapon.id}-damage`, slug: `${option}-none`, label: item.name ?? rune.name, diceNumber: 1, dieSize: "d6", predicate: [against, `${option}:none`] }
+        ]
+        : null;
+    const rules = typed ?? (rune.traits?.length
+        ? [{ key: "DamageDice", selector: `${weapon.id}-damage`, slug: "bane-oil", label: rune.name, diceNumber: 1, dieSize: "d6", predicate: [against] }]
+        : [{ key: "AdjustStrike", mode: "add", property: "property-runes", value: key, definition: [`item:id:${weapon.id}`] }]);
     return ownEffectSource({ name: `${rune.name} (${weapon.name})`, img: "icons/svg/sword.svg", words: runeText(rune, weapon.name), rules, duration: rune.duration, flag: { rune: key, weaponId: weapon.id }, item, user, worldTime, initiative, moduleId });
 }
 

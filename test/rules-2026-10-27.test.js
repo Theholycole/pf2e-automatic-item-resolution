@@ -180,3 +180,54 @@ test("one-offs, lines of their cards kept to build later: Serrating, Duchy Defen
     assert.deepEqual([cloak.builtin, cloak.partial, cloak.decided], ["teleport", undefined, "one-off"]);
     assert.equal(compileItem(item("Incense Bundle of Annual Blessings")).decided, "one-off");
 });
+
+test("a zone's notes read: Misty Chill's PF2e Effect on its user as it's used, Candle of Truth's save only the first time (its immunity for the candle's 10 minutes) and its lies on a note Effect", () => {
+    const mist = activation("Arctic Worm Chitin Shield", "Misty Chill");
+    assert.deepEqual([mist.builtin, mist.partial, mist.zone.notes, mist.userEffects], ["zone", undefined, [], [{ kind: "native", uuid: "Compendium.pf2e.equipment-effects.Item.WFwdWcD1xhO44n2d", label: "Effect: Misty Chill" }]]);
+    const candle = compileItem(item("Candle of Truth"));
+    assert.deepEqual([candle.partial, candle.zone.notes.length], [undefined, 0]);
+    const [save] = candle.zone.saves;
+    assert.deepEqual([save.own, save.plan.trigger.immunity.duration, save.plan.trigger.immunity.degrees.length], [true, { value: 10, unit: "minutes" }, 4]);
+    assert.match(save.plan.resolution.outcomes.criticalFailure.noteEffects[0].text, /^Unable to tell any deliberate lies while within 10 feet/);
+    assert.equal(save.plan.resolution.outcomes.failure.manualInstructions, undefined);
+});
+
+test("Clockwork Monkey: a snare's zone, gone once set off, its 15-foot square around the monkey and the creature it rides", () => {
+    const monkey = compileItem(item("Clockwork Monkey"));
+    assert.deepEqual([monkey.builtin, monkey.zone.once, monkey.zone.area, routeOf(monkey)], ["zone", true, { type: "square", value: 15 }, "zone"]);
+    assert.match(monkey.zone.saves[0].note, /Escape \(DC 18\) or breaks it \(AC 19, Hardness 2, HP 10, BT 5, object immunities\)/);
+});
+
+test("Fundamental Oil: Bane Oil against elementals, the d6 of the type set on its toggle — its rune's Effect", async () => {
+    const { runeEffectSource, runeText } = await import("../src/live/card.js");
+    const oil = compileItem(item("Fundamental Oil"));
+    assert.ok(done(oil));
+    assert.deepEqual([oil.item.rune.traits, oil.item.rune.damageTypes], [["elemental"], ["acid", "cold", "electricity", "fire", "sonic"]]);
+    const source = runeEffectSource(oil.item.rune, { weapon: { id: "W1", name: "Sword" }, item: { name: "Fundamental Oil" } });
+    const [toggle, ...dice] = source.system.rules;
+    assert.deepEqual([toggle.key, toggle.alwaysActive, toggle.suboptions.map((entry) => entry.value)], ["RollOption", true, ["acid", "cold", "electricity", "fire", "sonic", "none"]]);
+    assert.deepEqual(dice.map((rule) => [rule.damageType ?? null, rule.predicate[1]]), [["acid", "fundamental-oil-type:acid"], ["cold", "fundamental-oil-type:cold"], ["electricity", "fundamental-oil-type:electricity"], ["fire", "fundamental-oil-type:fire"], ["sonic", "fundamental-oil-type:sonic"], [null, "fundamental-oil-type:none"]]);
+    assert.match(runeText(oil.item.rune, "Sword"), /^Gives Sword 1d6 more damage against elemental creatures/);
+    // (Bane Oil's as it was.)
+    const bane = runeEffectSource({ key: "bane", name: "Bane (fey)", traits: ["fey"] }, { weapon: { id: "W1", name: "Sword" }, item: { name: "Bane Oil" } });
+    assert.deepEqual(bane.system.rules, [{ key: "DamageDice", selector: "W1-damage", slug: "bane-oil", label: "Bane (fey)", diceNumber: 1, dieSize: "d6", predicate: [{ or: ["target:trait:fey"] }] }]);
+});
+
+test("an attitude by a save, a year's immunity after a critical success: Beguiling Crown's third activation", () => {
+    const crown = compileActivations(item("Beguiling Crown"))[2].plan;
+    assert.ok(done(crown));
+    assert.deepEqual([crown.resolution.check.against.value, crown.trigger.immunity.degrees, crown.trigger.immunity.duration], [41, ["criticalSuccess"], { value: 365, unit: "days" }]);
+    assert.match(crown.resolution.outcomes.failure.noteEffects[0].text, /is helpful for 24 hours\.$/);
+    assert.match(crown.resolution.outcomes.success.noteEffects[0].text, /is friendly for 1 hour\.$/);
+    assert.equal(routeOf(crown), "save");
+});
+
+test("the table's: Flying Broomstick's Lift Off lines; Hodag Leather's Hodag Toss a one-off, all its rule its lines", () => {
+    const broom = activation("Flying Broomstick", "Lift Off");
+    assert.ok(done(broom));
+    assert.equal(broom.notes.length, 4);
+    assert.deepEqual(broom.trigger.event, "use");
+    const toss = activation("Hodag Leather", "Hodag Toss");
+    assert.deepEqual([toss.decided, toss.partial, toss.trigger.recharge.formula], ["one-off", undefined, "1d4"]);
+    assert.match(toss.notes[1], /thrown 10 feet in a straight line its user picks/);
+});

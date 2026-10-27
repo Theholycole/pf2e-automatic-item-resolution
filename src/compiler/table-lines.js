@@ -92,3 +92,40 @@ export function withNullifyLines(plan, html) {
     const left = (plan.notes ?? []).length || (plan.unread ?? []).length;
     return { ...plan, item: { ...plan.item, counteract: { ...counteract, notes: [...kept, ...lines] } }, ...(plan.partial && !left && plan.trigger?.recharge ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {}) };
 }
+
+// (Flying Broomstick's Lift Off: "You name a destination on the same plane, and the broom speeds toward it at a fly Speed of 40 feet …" — the
+// broom's own journey with its rider carried or none, lasting up to 4 hours (16 miles), then its hour's wait from when it lands: travel off the
+// map, lines of its card; the wait starts when it ends, which the item's recharge can't hold (src/compiler/cooldown.js), the GM's to keep.)
+const BROOM = /^You name a destination on the same plane, and the broom speeds toward it at a fly Speed of (\d+) feet\. You must either clutch the broom with two hands in order to ride it, or you need to release the broom to send it off with no rider\. If you don't have a good idea of the location, layout, and general direction of the destination, or if your named destination is on another plane, the broom wanders aimlessly, circling back to its starting location after (\d+) minutes\. If the broom carries a rider, this activation lasts until (\d+) hours pass \(typically (\d+) miles of travel\), the broom reaches its destination, or you Dismiss the activation\. If the broom doesn't have a rider, the activation lasts until the broom reaches its destination\. When the activation ends, the broom floats to the ground and can't be activated again for (\d+) hours?\.$/;
+export function withBroomFlight(plan, html) {
+    const effect = /<strong>\s*Effect\s*<\/strong>([\s\S]*)$/i.exec(String(html ?? ""));
+    const read = effect && plan?.noteOnly ? BROOM.exec(flat(effect[1])) : null;
+    if (!read) return plan;
+    const [, speed, wander, hours, miles, wait] = read;
+    return {
+        ...lined({ ...plan, noteOnly: undefined }, [
+            `Name a destination on the same plane: the broom flies toward it at a fly Speed of ${speed} feet, its rider clutching it with two hands, or sent off with none.`,
+            `Without a good idea of the destination's location, layout and direction, or with one on another plane, it wanders and circles back to where it started after ${wander} minutes.`,
+            `With a rider it lasts until ${hours} hours pass (about ${miles} miles), it arrives, or you Dismiss it; with none, until it arrives.`,
+            `Then it floats to the ground and can't be activated again for ${wait} hour${Number(wait) === 1 ? "" : "s"} (the GM's to keep, from when it lands).`
+        ]),
+        trigger: plan.trigger
+    };
+}
+
+// (Hodag Leather's Hodag Toss, a one-off (src/compiler/one-offs.js): its card's lines all of what its rows don't play — the Stride and Strike
+// before the check, the throw's 10 feet and its collision, the toss straight up — in place of the two the reader left, which said neither.)
+const TOSS = /^You Stride up to your Speed and make a Strike at the end of your movement\. If you succeed at your Strike, attempt an @Check\[athletics\|defense:fortitude\] check against the creature's Fortitude DC\. On a success, the creature is thrown (\d+) feet in a straight line in the direction of your choice and lands Prone\. If the creature is knocked into a solid object, it takes @Damage\[(\d+d\d+)\[bludgeoning\]\] damage before landing prone\. You can instead toss the creature straight up into the air\. The creature lands in the same square it occupied, and takes \d+d\d+ bludgeoning damage as it lands prone\./;
+export function withTossLines(plan, html) {
+    const effect = /<strong>\s*Effect\s*<\/strong>([\s\S]*)$/i.exec(String(html ?? ""));
+    const read = effect && plan?.decided === "one-off" ? TOSS.exec(String(effect[1]).replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()) : null;
+    if (!read) return plan;
+    const [, feet, damage] = read;
+    return {
+        ...plan,
+        notes: [
+            "Then Stride up to its Speed and make a Strike at the end of that movement (its own actions); only after a hit, the Athletics check.",
+            `On a success, either: it's thrown ${feet} feet in a straight line its user picks, and lands Prone (move it by hand), taking ${damage} bludgeoning damage first if knocked into a solid object (roll it by hand); or it's tossed straight up and lands in its own square, taking ${damage} bludgeoning damage (roll it by hand) as it lands Prone.`
+        ]
+    };
+}
