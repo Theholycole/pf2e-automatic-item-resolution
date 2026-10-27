@@ -14,9 +14,12 @@ export function setUpEndEarly() {
 }
 
 // The item's Effects on the creature this ends: named for the item ("<item>: <Condition>"), the conditions it names when it names some.
+// (And PF2e's own Effects for the item its row gave, "Effect: Crackling Bubble Gum (Failure)": its name without its grade or way.)
 const endedBy = (actor, itemName, conditions) => (actor?.itemTypes?.effect ?? []).filter((effect) => {
     const name = String(effect.name ?? "");
-    if (!name.startsWith(`${itemName}:`) && !name.startsWith(`${itemName} `)) return false;
+    // (Its grade and its way gone too: "Crackling Bubble Gum (Lesser) (Its secondary effect)".)
+    const base = String(itemName).replace(/(?:\s*\([^)]*\))+$/, "");
+    if (!name.startsWith(`${itemName}:`) && !name.startsWith(`${itemName} `) && !name.startsWith(`Effect: ${base}`)) return false;
     return !conditions?.length || conditions.some((slug) => name.toLowerCase().includes(slug));
 });
 

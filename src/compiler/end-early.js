@@ -60,6 +60,8 @@ export function readPullFree(notes, degrees) {
 // endEarly.byDegree { degree: how }, the card's try for each creature by the degree it rolled; all its Effects on that creature gone. 2026-10-27.)
 const UNTIL_ACTION = /^it uses an? Interact action to remove (?:the [\w ]+|it)$/i;
 const UNTIL_ACTIVITY = /^it spends an? (\d)-action activity, which has the (\w+) trait, to remove (?:the [\w ]+|it)$/i;
+// (Or a total others can help with, Crackling Bubble Gum's "until it, or other creatures helping, spends a total of 3 Interact actions removing it".)
+const UNTIL_TOTAL = /^it, or other creatures helping, spends a total of (\d+) Interact actions removing it$/i;
 export function readRowWays(outcomes) {
     const byDegree = {};
     const said = [];
@@ -67,7 +69,9 @@ export function readRowWays(outcomes) {
         const until = (row?.modifiers ?? []).map((modifier) => String(modifier.until ?? "").trim()).find(Boolean);
         if (!until) continue;
         const activity = UNTIL_ACTIVITY.exec(until);
+        const total = UNTIL_TOTAL.exec(until);
         if (UNTIL_ACTION.test(until)) byDegree[degree] = { kind: "actions", count: 1 };
+        else if (total) byDegree[degree] = { kind: "actions", count: Number(total[1]), helped: true };
         else if (activity) byDegree[degree] = { kind: "actions", count: Number(activity[1]), trait: activity[2].toLowerCase() };
         else return null;
         said.push(until);
@@ -75,4 +79,16 @@ export function readRowWays(outcomes) {
     const degrees = Object.keys(byDegree);
     if (!degrees.length) return null;
     return { how: byDegree[degrees[0]], byDegree, conditions: [], degrees, said };
+}
+
+// A save plan's row ways (an item's own card, not a snare's: Crackling Bubble Gum's pop) → the plan with endEarly, or the same plan.
+export function withRowWays(plan) {
+    // (Each way of a ways card too: Crackling Bubble Gum's secondary effect.)
+    if (plan?.builtin === "ways" && Array.isArray(plan.ways)) {
+        const ways = plan.ways.map((way) => (way?.plan ? { ...way, plan: withRowWays(way.plan) } : way));
+        return ways.some((way, at) => way.plan !== plan.ways[at].plan) ? { ...plan, ways } : plan;
+    }
+    if (plan?.resolution?.kind !== "save" || plan.endEarly || plan.builtin) return plan;
+    const ways = readRowWays(plan.resolution.outcomes);
+    return ways ? { ...plan, endEarly: ways } : plan;
 }

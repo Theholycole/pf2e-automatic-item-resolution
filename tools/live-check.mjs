@@ -507,6 +507,32 @@ export const cases = {
         return { sickened: user.getCondition("sickened")?.value };
     },
 
+    // Crackling Bubble Gum (Lesser)'s pop (2026-10-27): a failed Fortitude save, the gum's -10-foot Speed penalty; the end-early card's try, 3
+    // Interact actions (it or creatures helping), and the gum gone.
+    async bubbleGumUnstick(scene) {
+        const { actor: chewer } = await creature(scene, "Gum Chewer", { type: "character", x: 14, y: 18 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Gum Target", { x: 15, y: 18, hp: 100, alliance: "opposition", save: -30 });
+        const gum = await give(chewer, "Crackling Bubble Gum (Lesser)");
+        let since = Date.now();
+        await gum.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")) && message.id !== ways.id, { what: "the pop's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the pop's save card" });
+        since = Date.now();
+        await rollAndApply(save);
+        const stuck = () => foe.itemTypes.effect.filter((effect) => /Crackling Bubble Gum/.test(effect.name));
+        await until(() => stuck().length, `the gum's Effect (${foe.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+        const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+        assert(/3 Interact actions spent \(by it or creatures helping/.test(ending.content), `its try (${ending.content.replace(/<[^>]+>/g, " ").slice(0, 300)})`);
+        await game.modules.get(NS).api.live.apply(ending.id, { entry: 0 });
+        await until(() => !stuck().length, `the gum removed (${foe.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+        return { results: game.messages.get(ending.id).getFlag(NS, "card").results };
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });

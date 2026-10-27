@@ -231,6 +231,14 @@ test("a way to end it for each row (2026-10-27): Glittering Snare — an Interac
     assert.match(snare.zone.notes[0], /or to open the container it's hidden in/);
 });
 
+test("a row's modifier ended by actions others can help with (2026-10-27): Crackling Bubble Gum's pop — its failing rows' endEarly, a total of 3 Interact actions", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { tryWords } = await import("../src/live/end-early-card.js");
+    const pop = compileItem(item("Crackling Bubble Gum (Lesser)"), options).ways[1].plan;
+    assert.deepEqual([pop.endEarly.degrees, pop.endEarly.how], [["failure", "criticalFailure"], { kind: "actions", count: 3, helped: true }]);
+    assert.equal(tryWords(pop.endEarly, { step: 0, degree: "failure" }), "3 Interact actions spent (by it or creatures helping, not all at once)");
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);
