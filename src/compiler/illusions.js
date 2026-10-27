@@ -165,6 +165,58 @@ const READINGS = [
         card: (found, plan) => (plan?.builtin !== "cast-spell" ? null : { keep: true, notes: ["The disguise is its user's to describe.", "If its user chooses, it also hides the aeon stones circling its head, unseen until the disguise ends."], partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } })
     },
     {
+        // (Batch 3, 2026-10-27: Illusory Scene cast at once, its burst on its user — the cast card's lines, over the cast read before.)
+        name: "Fan of Falling Words: Whispered World",
+        over: true,
+        sentences: [/^\bYou manifest the tapestry of your words\b.*\.$/, /^\bThe fan casts Illusory Scene to your specifications\b.*\.$/, /^\bWhile this only takes 3 actions\b.*\bno range\b.*\bburst\b.*\bcentered on you\.$/],
+        card: (found, plan) => (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Illusory Scene" ? null : { keep: true, notes: ["The scene is its user's to describe: the image painted on the fan, come to life.", "Cast in the activation's 3 actions, not the spell's 10 minutes, with no range: its 50-foot burst is centred on its user (place the spell's area there)."], partial: undefined, automation: { level: "automatic" } })
+    },
+    {
+        // (Batch 3, 2026-10-27: a hag's disguise seen through and lore about hags — PF2e's toggles for those beside its saves against hags,
+        // read before, its weapons cold iron against hags as PF2e's Greenwatcher has it, on one note Effect for the 10 minutes; and a hag's or
+        // a changeling's eating it the save card instead (plan.item.unlessKind, src/compiler/drinker-kind.js's), its success the biscuit's.)
+        name: "Hagbane Biscuit",
+        over: true,
+        sentences: [
+            /^\bThis gingerbread biscuit is stamped\b.*\.$/,
+            /^\bWhen you eat the biscuit\b.*\bfor (\d+) (minutes?), granting you a \+(\d) status bonus\b.*\bhag's disguise\b.*\bRecall Knowledge about hags\b.*\bsaving throws\b.*\bhags' abilities and spells\.$/,
+            /^\bDuring this time, weapons you wield count as cold iron\b.*\bagainst hags\.$/,
+            /^\bThe biscuit tastes especially bitter\b.*\bhag bloodline\)\.$/,
+            /^\bIf such a creature attempts to eat the biscuit\b.*@Check\[fortitude\|dc:(\d+)[^\]]*\] save\b.*\bSickened (\d) on a critical failure\)\.$/
+        ],
+        card: ([, eat, , , bitter], plan) => {
+            const row = plan?.resolution?.outcomes?.success;
+            if (!plan?.partial || !row || !(row.modifiers ?? []).some((modifier) => modifier.selector === "saving-throw")) return null;
+            const value = Number(eat[3]);
+            const toggle = (option, label) => ({ key: "RollOption", domain: "all", option, toggleable: true, label });
+            const note = {
+                label: "Hagbane Biscuit",
+                text: `+${value} status bonus to Perception checks to see through a hag's disguise and to skill checks to Recall Knowledge about hags (its toggles on for those), beside its saves against hags. Its weapons and unarmed attacks count as cold iron against hags.`,
+                duration: timeOf(eat[1], eat[2]),
+                rules: [
+                    toggle("hagbane-disguise", "Seeing through a hag's disguise"),
+                    { key: "FlatModifier", selector: "perception", type: "status", value, predicate: ["hagbane-disguise"] },
+                    toggle("hagbane-lore", "Recalling Knowledge about hags"),
+                    { key: "FlatModifier", selector: "skill-check", type: "status", value, predicate: ["hagbane-lore"] },
+                    { key: "AdjustStrike", mode: "add", property: "materials", value: "cold-iron", predicate: ["target:trait:hag"] }
+                ]
+            };
+            const eaten = { ...row, noteEffects: [note] };
+            const wasted = { ...none(), effects: [], modifiers: [] };
+            const sick = { ...none(), modifiers: [], effects: [{ kind: "condition", slug: "sickened", value: Number(bitter[2]), duration: null }] };
+            const save = { modelVersion: plan.modelVersion, source: plan.source, rank: plan.rank, traits: plan.traits, activation: plan.activation, automation: { level: "automatic" }, targeting: { target: "the eater", range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "save", check: { roll: "save", statistic: "fortitude", basic: false, against: { dc: "fixed", value: Number(bitter[1]) } }, sharedDamage: null, outcomes: { criticalSuccess: eaten, success: eaten, failure: wasted, criticalFailure: sick } } };
+            return {
+                keep: true,
+                unread: undefined,
+                partial: undefined,
+                automation: { level: "automatic" },
+                resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: eaten } },
+                notes: [`Another hag-related eater without the hag or changeling trait — a sorcerer of the hag bloodline, say — must succeed at the same DC ${bitter[1]} Fortitude save first, or the biscuit fails, its action wasted (Sickened ${bitter[2]} on a critical failure): the GM's call.`],
+                item: { ...(plan.item ?? {}), unlessKind: { traits: ["hag", "changeling"], save, works: true } }
+            };
+        }
+    },
+    {
         name: "Masquerade Scarf (Greater): Masquerade",
         over: true,
         sentences: [

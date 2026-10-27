@@ -782,7 +782,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
         const tokens = [target.token?.object ?? target.token].filter(Boolean);
         if (postCard && tokens.length) await postCard({ plan: unless.save, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: user.actor ?? target.actor, sourceToken: user.token ?? null, tokens });
-        return [`${recipient.name} is ${unless.traits.join(" or ")}: ${state.item.name} fails to work${postCard && tokens.length ? ", and its save card follows" : `; roll its ${unless.save.resolution.check.statistic} save (DC ${unless.save.resolution.check.against.value}) by hand`}`];
+        // (Or works only on a success, Hagbane Biscuit's hag: unlessKind.works, the save card's success rows its own — 2026-10-27.)
+        return [`${recipient.name} is ${unless.traits.join(" or ")}: ${state.item.name} ${unless.works ? "works only if it succeeds at its save" : "fails to work"}${postCard && tokens.length ? ", and its save card follows" : `; roll its ${unless.save.resolution.check.statistic} save (DC ${unless.save.resolution.check.against.value}) by hand`}`];
     }
     const wrappers = { [USER_ID]: user.actor, [DRINKER_ID]: target.actor };
     const context = {
