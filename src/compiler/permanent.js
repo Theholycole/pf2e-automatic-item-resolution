@@ -74,6 +74,7 @@ import { withRedirectedStrike } from "./redirected-strike.js";
 import { withKindWays } from "./kind-ways.js";
 import { withSilhouette } from "./silhouette.js";
 import { withImpaled } from "./impaled.js";
+import { withLureLight } from "./lure-light.js";
 import { othersActionsPlan } from "./others-actions.js";
 import { anywhereStrikePlan } from "./anywhere-strike.js";
 import { benefitWaysPlan } from "./benefit-ways.js";
@@ -227,7 +228,8 @@ function asActivationAbility(item, activation, { modifiers = true } = {}) {
 
 const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), category: "permanent" } });
 
-// The readings of 2026-10-27's Strike group, outermost in an activation's chain (after the readers of the notes they take): one of two effects
+// The readings of 2026-10-27's Strike group, outermost in an activation's chain (after the readers of the notes they take): a light that lures
+// the creatures beginning their turns in it (src/compiler/lure-light.js: Mamlambo Scale); one of two effects
 // by the actions spent, the 1-action one a Strike's (src/compiler/momentum-ways.js: Horned Hand Rests); a bonus against the kind of creature
 // its user selects (src/compiler/kind-ways.js: Undead Compendium); a flat shadow's form (src/compiler/silhouette.js: Silhouette Cloak); a
 // creature impaled on a shield's blades (src/compiler/impaled.js: Highhelm War Shields); a
@@ -236,7 +238,7 @@ const recipientUser = (item) => ({ ...item, system: { ...(item.system ?? {}), ca
 // (src/compiler/strike-lines.js); and a hit's note Effect that holds its Strike card's notes (src/compiler/hit-note-held.js).
 function strikeGroupReadings(plan, entry, item) {
     const html = entry.activation?.html;
-    const momentum = withMomentumWays(plan, html);
+    const momentum = withMomentumWays(withLureLight(plan, html), html);
     const kinds = withKindWays(momentum, item?.system?.description?.value);
     const form = withSilhouette(kinds, plainText(html), plainText(item?.system?.description?.value));
     const impaled = withImpaled(form, item?.system?.description?.value);

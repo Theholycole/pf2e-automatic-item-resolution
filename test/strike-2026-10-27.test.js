@@ -248,3 +248,21 @@ test("Iron Cube: its two-handed weapon's free hand a line; with Slam Down, the T
     assert.equal(formula(withFeatDie(cube.strike.follow, { hasFeat: false, weaponDie: "d12" })), "2d6");
     assert.equal(formula(withFeatDie(cube.strike.follow, { hasFeat: true, weaponDie: "d4" })), "2d6");
 });
+
+test("Mamlambo Scale's Luminous Lure: the zone on its wearer for the light's minute (PF2e's Effect: Luminous Lure its own), each creature's Will save at its turn's start with the hour's immunity; the lure and the first Strike's Off-Guard note Effects, no GM lines", () => {
+    const lure = activation("Mamlambo Scale", "Luminous Lure");
+    assert.deepEqual([lure.builtin, lure.partial, routeOf(lure), lure.zone.area, lure.zone.centre, lure.ownEffect.label], ["zone", undefined, "zone", { type: "emanation", value: 20 }, "self", "Effect: Luminous Lure"]);
+    const [save] = lure.zone.saves;
+    assert.deepEqual([save.when, save.plan.trigger.event, save.plan.trigger.immunity.duration, save.plan.resolution.check.against.value], [["start"], "zone", { value: 1, unit: "hours" }, 26]);
+    const rows = save.plan.resolution.outcomes;
+    assert.deepEqual([rows.criticalFailure.effects.map((effect) => effect.slug), rows.criticalFailure.noteEffects.map((note) => note.label), rows.failure.manualInstructions, rows.criticalFailure.manualInstructions], [["fascinated"], ["Lured by the light", "Lured: Off-Guard"], undefined, undefined]);
+});
+
+test("Portable Seal (all three): a placed zone whose save is for summoned creatures entering it (zone only.traits), a disrupted move a note Effect, the round's immunity tracked; a summoned creature's Strike still the GM's (partial)", () => {
+    for (const grade of ["Lesser", "Moderate", "Major"]) {
+        const seal = compileItem(item(`Portable Seal (${grade})`));
+        assert.deepEqual([seal.builtin, seal.partial, seal.zone.centre, seal.zone.saves[0].when, seal.zone.saves[0].only], ["zone", true, "placed", ["enter"], { traits: ["summoned"] }], grade);
+        const rows = seal.zone.saves[0].plan.resolution.outcomes;
+        assert.deepEqual([rows.failure.noteEffects[0].label, rows.success.manualInstructions, seal.zone.saves[0].plan.trigger.immunity.degrees], ["Disrupted", undefined, ["criticalSuccess", "success", "failure"]], grade);
+    }
+});
