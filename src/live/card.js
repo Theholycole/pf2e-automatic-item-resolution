@@ -446,6 +446,13 @@ export function weatherEffectSource(entry, { item = {}, user = {}, worldTime = 0
     return ownEffectSource({ name: "weather", img: "icons/svg/eye.svg", words: weatherLine(entry), rules: [], duration: entry.duration, flag: { weatherIgnores: true }, extraFlags: { [ENVIRONMENT_ID]: { weatherIgnores: flag } }, item, user, worldTime, initiative, moduleId });
 }
 
+// A penalty against the spell it casts for creatures of a kind (Castrovel's Beacon's demons, src/compiler/cast-riders.js withCastTraits): PF2e's
+// FlatModifier on that save for the spell's minute.
+export function castPenaltySource(penalty, spellName, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    const save = `${penalty.selector.charAt(0).toUpperCase()}${penalty.selector.slice(1)} saves`;
+    return ownEffectSource({ name: `${penalty.value} to ${save}`, img: "icons/svg/downgrade.svg", words: `${penalty.value} ${penalty.type} penalty to ${save}${spellName ? ` against ${spellName}` : ""}`, rules: [{ key: "FlatModifier", selector: penalty.selector, type: penalty.type, value: penalty.value, ...(item.name ? { label: item.name } : {}) }], duration: { mode: "fixed", ...penalty.duration }, flag: { castPenalty: true }, item, user, worldTime, initiative, moduleId });
+}
+
 // A worse save against the spell it casts (Radiant Spark's celestials, src/compiler/cast-riders.js withCastDegree): PF2e's AdjustDegreeOfSuccess
 // on that save, gone with the first one (scripts/first-degree.js), a minute at most.
 export function castDegreeEffectSource(castDegree, spellName, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {

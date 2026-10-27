@@ -821,3 +821,13 @@ test("a teleport to a square fired at (2026-10-27): Dimension Shot — beside th
     assert.deepEqual([plan.teleport.from, plan.teleport.within, plan.teleport.orSquare], ["target", 5, true]);
     assert.match(teleportText(plan.teleport), /^To a space adjacent to the creature targeted; or, fired at a square with no creature targeted, a space with that square or next to it/);
 });
+
+test("creatures of a kind immune to the cast and others worse off (2026-10-27): Castrovel's Beacon's Starlight Burst — elves left out of the Vibrant Pattern, demons -2 item to Will saves against it for its minute", async () => {
+    const { castPenaltySource } = await import("../src/live/card.js");
+    const plan = compileActivations(item("Castrovel's Beacon"), options).map((entry) => entry.plan).find((entry) => entry?.castTraits);
+    assert.equal(plan.partial, undefined);
+    assert.deepEqual(plan.castTraits.immune, ["elf"]);
+    const [penalty] = plan.castTraits.penalties;
+    assert.deepEqual([penalty.traits, penalty.selector, penalty.type, penalty.value], [["demon"], "will", "item", -2]);
+    assert.deepEqual(castPenaltySource(penalty, "Vibrant Pattern", { item: { name: "Castrovel's Beacon" } }).system.rules, [{ key: "FlatModifier", selector: "will", type: "item", value: -2, label: "Castrovel's Beacon" }]);
+});

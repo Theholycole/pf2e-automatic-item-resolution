@@ -7,7 +7,7 @@ import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf }
 import { castRankAt } from "../src/compiler/cast-owner.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
-import { castDegreeEffectSource } from "../src/live/card.js";
+import { castDegreeEffectSource, castPenaltySource } from "../src/live/card.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -99,8 +99,24 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
                 lines.push(`${target.name}, a ${state.plan.castDegree.traits.join(" or ")}: its save is one degree worse.`);
             }
         }
-        const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: targetTokens, item: request.item });
-        lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${targetTokens.length && !selfOf(state) ? ` at ${targetTokens.map((target) => target.name).join(", ")}` : ""}.`);
+        // (Creatures of a kind immune and others worse off, Castrovel's Beacon's elves and demons: the immune targeted left out of the cast, the
+        // others' penalty on them before it.)
+        let castTargets = targetTokens;
+        if (state.plan.castTraits) {
+            const traitsOf = (target) => [...(target.actor?.traits ?? new Set(target.actor?.system?.traits?.value ?? []))];
+            const immune = targetTokens.filter((target) => state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait)));
+            castTargets = targetTokens.filter((target) => !immune.includes(target));
+            for (const target of immune) lines.push(`${target.name} is immune (${state.plan.castTraits.immune.join(" or ")}): left out of the cast.`);
+            for (const penalty of state.plan.castTraits.penalties) {
+                for (const target of castTargets.filter((one) => one.actor && penalty.traits.some((trait) => traitsOf(one).includes(trait)))) {
+                    await target.actor.createEmbeddedDocuments("Item", [castPenaltySource(penalty, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+                    lines.push(`${target.name}: ${penalty.value} ${penalty.type} to its ${penalty.selector} saves against it.`);
+                }
+            }
+            if (!targetTokens.length) lines.push(`Target the creatures in its area to leave out the ${state.plan.castTraits.immune.join(" and ")}s and give the penalty.`);
+        }
+        const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
+        lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
         const lasts = state.plan.castDuration ? await rememberCastDuration(cast, state.plan.castDuration, { actor, targets: targetTokens }) : null;
         if (lasts) lines.push(lasts);

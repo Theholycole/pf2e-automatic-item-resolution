@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1238,
+  "entries": 1237,
   "results": {
-   "partial": 344,
+   "partial": 343,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -23,7 +23,7 @@
    "out-of-combat": 35,
    "no-rules": 14,
    "actions": 28,
-   "immunity": 27,
+   "immunity": 26,
    "objects": 113,
    "creatures": 71,
    "mind": 6,
@@ -51,7 +51,7 @@
    "cast-changes": 21,
    "speeds": 28,
    "areas": 177,
-   "immunity": 89,
+   "immunity": 88,
    "objects": 386,
    "speech": 120,
    "out-of-combat": 437,
@@ -14437,17 +14437,6 @@
    "needs": [
     "objects",
     "speech"
-   ]
-  },
-  {
-   "name": "Castrovel's Beacon",
-   "kind": "activation",
-   "activation": "Starlight Burst",
-   "result": "partial",
-   "main": "immunity",
-   "work": "immune",
-   "needs": [
-    "immunity"
    ]
   },
   {

@@ -742,6 +742,33 @@ export const cases = {
         return { outcome: roll.flags.pf2e.context.outcome, unadjusted: roll.flags.pf2e.context.unadjustedOutcome ?? null, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Castrovel's Beacon (2026-10-27): Starlight Burst's Vibrant Pattern at an elf, a demon and a human — the elf left out of the spell module's
+    // cast, the demon's -2 item penalty to Will saves for its minute.
+    async castrovelStarlight(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Beacon Holder", { type: "character", x: 5, y: 12 });
+        const { actor: elf, token: elfToken } = await creature(scene, "Beacon Elf", { x: 6, y: 12, alliance: "opposition" });
+        const { actor: demon, token: demonToken } = await creature(scene, "Beacon Demon", { x: 6, y: 13, alliance: "opposition" });
+        const { token: humanToken } = await creature(scene, "Beacon Human", { x: 7, y: 12, alliance: "opposition" });
+        await elf.update({ "system.traits.value": ["elf", "humanoid"] });
+        await demon.update({ "system.traits.value": ["demon", "fiend"] });
+        const beacon = await give(user, "Castrovel's Beacon");
+        await beacon.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.equipped.invested": true });
+        await userToken.object?.control?.();
+        const index = (await import(`/modules/${NS}/src/compiler/permanent.js`)).compileActivations({ ...beacon.toObject(false), uuid: beacon.uuid }).findIndex((entry) => entry.plan?.castTraits);
+        assert(index >= 0, "its Starlight Burst");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(beacon.uuid, index);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the beacon's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [elfToken.uuid, demonToken.uuid, humanToken.uuid] });
+        const results = () => game.messages.get(card.id).getFlag(NS, "card").results ?? [];
+        await until(() => results().some((line) => /casts Vibrant Pattern/.test(line)), `the cast (${results()})`, { timeout: 10000 });
+        const spellCard = game.messages.contents.filter((message) => message.timestamp >= since && message.flags?.["pf2e-automatic-resolution"]?.castFromItem).at(-1);
+        const penalty = demon.itemTypes.effect.find((effect) => /Castrovel's Beacon.*: -2 to Will saves/.test(effect.name));
+        assert(penalty && penalty.system.duration.value === 1 && penalty.system.duration.unit === "minutes", `the demon's -2 for a minute (${demon.itemTypes.effect.map((effect) => effect.name)})`);
+        assert(results().some((line) => /Beacon Elf is immune/.test(line)) && !results().some((line) => /casts Vibrant Pattern at [^.]*Beacon Elf/.test(line)), `the elf left out (${results()})`);
+        return { results: results(), spellCardTargets: spellCard?.flags?.["pf2e-automatic-resolution"]?.castFromItem?.targets ?? null };
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });

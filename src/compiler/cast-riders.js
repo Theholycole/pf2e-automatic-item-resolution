@@ -69,3 +69,23 @@ export function withCastDegree(plan, item = null) {
         ...(plan.partial && !notes.length && !(plan.unread ?? []).length ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {})
     };
 }
+
+// Creatures of a kind immune to the cast, and others worse off against it (2026-10-27, docs/needs.md): Castrovel's Beacon's "Creatures with the
+// elf trait are immune to Starlight Burst, and creatures with the demon trait take a –2 item penalty on all Will saves against the effect." →
+// plan.castTraits { immune, penalties: [{ traits, selector, type, value, duration }], said }: the cast card leaves the immune creatures targeted
+// out of the cast, and gives those of a penalty's trait PF2e's FlatModifier for the spell's minute (scripts/casts.js). Pure.
+const IMMUNE_AND_WORSE = /^Creatures with the ([a-z]+) trait are immune to [\w' -]+?, and creatures with the ([a-z]+) trait take an? [–-](\d+) (item|status|circumstance) penalty on all (Fortitude|Reflex|Will) saves against the effect\.$/i;
+export function withCastTraits(plan) {
+    if (plan?.builtin !== "cast-spell" || plan.castTraits) return plan;
+    const note = (plan.notes ?? []).find((entry) => IMMUNE_AND_WORSE.test(String(typeof entry === "string" ? entry : entry?.text ?? "").trim()));
+    if (!note) return plan;
+    const said = String(typeof note === "string" ? note : note.text).trim();
+    const [, immune, worse, value, type, save] = IMMUNE_AND_WORSE.exec(said);
+    const notes = (plan.notes ?? []).filter((entry) => entry !== note);
+    return {
+        ...plan,
+        notes,
+        castTraits: { immune: [immune.toLowerCase()], penalties: [{ traits: [worse.toLowerCase()], selector: save.toLowerCase(), type: type.toLowerCase(), value: -Number(value), duration: { value: 1, unit: "minutes", expiry: "turn-start" } }], said },
+        ...(plan.partial && !notes.length && !(plan.unread ?? []).length ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {})
+    };
+}
