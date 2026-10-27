@@ -149,13 +149,15 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     const firstAid = action.slug === "administer-first-aid";
     const stabilize = firstAid && variant === "stabilize" ? stabilizeDC(patient) : null;
     const bleed = firstAid && (variant === "stop-bleeding" || action.both) ? bleedDC(patient) : null;
-    const poison = action.slug === "treat-poison" ? poisonDC(patient, action.stage?.vector ? ofVector(action.stage.vector) : null) : null;
+    // (Treat Poison itself works on any poison: the vector the item names only limits what it adds — Artevil Suspension's stage lowered for an
+    // ingested one —, so its DC is that one's when there is one, else any poison's. Found live 2026-10-27: an injury poison was rolled with no DC.)
+    const poison = action.slug === "treat-poison" ? (action.stage?.vector ? poisonDC(patient, ofVector(action.stage.vector)) : null) ?? poisonDC(patient) : null;
     const higher = (...dcs) => (dcs.some(Boolean) ? { value: Math.max(...dcs.filter(Boolean).map((dc) => dc.value)) } : null);
     const base = firstAid && variant === "stabilize" ? (action.both ? higher(stabilize, bleed) : stabilize) : firstAid && variant === "stop-bleeding" ? bleed : poison;
     const difficultyClass = base ? { value: base.value - (Number(action.dc?.less) || 0) + (Number(action.dc?.more) || 0) } : null;
     // (Rolled with no DC to give it: why, for the card's line.)
     const patientName = targetToken?.name ?? patient?.name ?? "The creature";
-    const noDC = difficultyClass ? null : firstAid && variant === "stabilize" ? `${patientName} isn't dying` : firstAid && variant === "stop-bleeding" ? `${patientName} has no persistent bleed` : action.slug === "treat-poison" ? `${patientName} has no poison with a DC to treat${action.stage?.vector ? ` (${/^[aeiou]/.test(action.stage.vector) ? "an" : "a"} ${action.stage.vector} one)` : ""}` : null;
+    const noDC = difficultyClass ? null : firstAid && variant === "stabilize" ? `${patientName} isn't dying` : firstAid && variant === "stop-bleeding" ? `${patientName} has no persistent bleed` : action.slug === "treat-poison" ? `${patientName} has no poison with a DC to treat` : null;
     const results = await pf2eAction.use({ actors: [actor], ...(targetToken ? { target: targetToken.object ?? targetToken.actor } : {}), modifiers, ...(action.statistic ? { statistic: action.statistic } : {}), ...(variant ? { variant } : {}), ...(difficultyClass ? { difficultyClass } : {}), ...(event ? { event } : {}) });
     const rolled = results?.[0]?.outcome ?? null;
     // (A degree the item changes, Ensnaring Disk's critical failure made a failure: the outcome the card acts on, said.)

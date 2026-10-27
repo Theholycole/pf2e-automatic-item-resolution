@@ -80,8 +80,19 @@ test("Treat Poison with no poison to treat: PF2e's roll has no DC, and the card 
     const apply = await usedOn("Artevil Suspension", patient);
     const { card, use } = await apply(null);
     assert.equal(use.options.difficultyClass, undefined);
-    assert.match(results(card), /no result — fix1-clean has no poison with a DC to treat \(an ingested one\), so PF2e's roll has no DC/);
+    assert.match(results(card), /no result — fix1-clean has no poison with a DC to treat, so PF2e's roll has no DC/);
     assert.equal(card.flags[MODULE_ID].card.status, "open");
+});
+
+// (Found live 2026-10-27: Treat Poison works on any poison — the ingested vector only limits Artevil Suspension's stage — so an injury poison
+// alone is treated at its own DC, and the card says there's none of its kind to lower.)
+test("Artevil Suspension at an injury poison alone: Treat Poison at that poison's DC, its stage untouched", async () => {
+    const patient = creature("fix1-pricked");
+    await poison(patient, { name: "Blade Venom", traits: ["poison", "injury"], dc: 30 });
+    const apply = await usedOn("Artevil Suspension", patient);
+    const { card, use } = await apply("success");
+    assert.deepEqual([use.slug, use.options.difficultyClass], ["treat-poison", { value: 30 }]);
+    assert.doesNotMatch(results(card), /down to stage/);
 });
 
 test("Crying Angel Pendant: Stop Bleeding at its bleed's DC (the higher of two), and a success ends the bleed", async () => {

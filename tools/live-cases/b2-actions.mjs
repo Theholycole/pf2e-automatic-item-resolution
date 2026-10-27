@@ -153,6 +153,11 @@ export default (h) => {
             await h.clearSquares(scene, [[12, 3], [13, 3]]);
             const { actor: healer } = await h.creature(scene, "Yarrow Fumbler", { type: "character", x: 12, y: 3 });
             const { actor: ally, token: allyToken } = await h.creature(scene, "Yarrow Fumbled Ally", { type: "character", x: 13, y: 3 });
+            // (Maximum Hit Points first: a fixture character has none, and PF2e takes no damage at all from a creature whose maximum is 0 — not
+            // even from its temporary Hit Points; found live 2026-10-27.)
+            await ally.createEmbeddedDocuments("Item", [{ name: `${h.PREFIX} Hit Points`, type: "effect", system: { rules: [{ key: "FlatModifier", selector: "hp", value: 30 }], duration: { value: -1, unit: "unlimited", expiry: null, sustained: false } } }]);
+            await h.until(() => ally.system.attributes.hp.max >= 30, "30 maximum Hit Points", { timeout: 5000 });
+            await ally.update({ "system.attributes.hp.value": 0 });
             await dyingAt(ally, 1);
             await bleeding(ally);
             await ally.update({ "system.attributes.hp.temp": 10 });
