@@ -56,6 +56,7 @@ import { setUpReadiedRefund } from "./strikes.js";
 import { setUpPulses } from "./pulse.js";
 import { setUpTransmogrify } from "./transmogrify.js";
 import { setUpTurnAuras } from "./turn-auras.js";
+import { setUpSwaps } from "./swap.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -183,6 +184,8 @@ Hooks.once("ready", async () => {
     setUpTransmogrify();
     // (The saves an item's Effect calls for at creatures' turns near its bearer, Clockwork Sun's: scripts/turn-auras.js.)
     setUpTurnAuras();
+    // (Places traded after a failed save, Planar Ribbon's: scripts/swap.js.)
+    setUpSwaps();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

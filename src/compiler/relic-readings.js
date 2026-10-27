@@ -284,6 +284,176 @@ const READINGS = [
                 ]
             };
         }
+    },
+    {
+        // Planar Ribbon's second activation: the DC 42 Reflex save card at a foe within 60 feet; on a failure (or worse) its user and it trade
+        // places and its allies are Off-Guard to its user until the end of its user's turn (plan.swap, scripts/swap.js, once the save card is
+        // applied). Its teleportation trait, the card's line.
+        name: "Planar Ribbon",
+        sentences: [
+            /^You extend the ribbon to brush against a foe up to (\d+) feet away\.$/,
+            /^If that creature fails a @Check\[(reflex)\|dc:(\d+)\] save, you exchange positions with the target and all of that creature's allies are off-guard to you until the end of your turn\.$/,
+            /^This activation has the (teleportation) trait\.$/
+        ],
+        card: ([reach, save]) => ({
+            targeting: { target: "1 foe", range: `${reach[1]} feet`, area: null },
+            resolution: { kind: "save", check: { roll: "save", statistic: save[1], basic: false, against: { dc: "fixed", value: Number(save[2]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+            swap: { degrees: ["failure", "criticalFailure"] },
+            notes: ["On a failure, its user and the foe trade places, and the foe's allies are Off-Guard to its user until the end of its turn (once the save card is applied). It has the teleportation trait."]
+        })
+    },
+    {
+        // Staff of Sun Wukong's Close at Hand: the needle-sized staff, an Effect on its user until it's activated again — PF2e's ItemAlteration
+        // giving the staff negligible Bulk, and its toggle for hiding it from sight with the +4 circumstance bonus to Stealth (src/live/item-form.js).
+        // Its legend, and that it's put away while so small, the card's lines.
+        name: "Staff of Sun Wukong: Close at Hand",
+        sentences: [
+            /^It's said that Sun Wukong tucked this magical staff behind his ear during his travels\.$/,
+            /^When not in use, the Staff of Sun Wukong shrinks to the size and weight of a needle or toothpick, making it highly concealable \(\+(\d+) (circumstance) bonus to Stealth checks to hide it from sight\)\.$/,
+            /^In this form, the item has negligible Bulk\.$/,
+            /^You can Activate this ability again to return the staff to its normal size\.$/
+        ],
+        card: ([, hidden]) => ({
+            ...ownRow({ notes: ["Sun Wukong, it's said, kept it tucked behind his ear on his travels: a needle while it isn't in use (stowed, not wielded), back to its size when activated again."] }),
+            item: {
+                itemForm: {
+                    name: "needle-sized",
+                    words: `Shrunk to a needle's size and weight: negligible Bulk, and +${hidden[1]} ${hidden[2]} bonus to Stealth checks to hide it from sight (its toggle on for those)`,
+                    alterations: [{ property: "bulk", mode: "override", value: 0 }],
+                    rules: [{ key: "RollOption", domain: "all", option: "hiding-sun-wukong-staff", toggleable: true, label: "Hiding the needle-sized staff from sight" }, { key: "FlatModifier", selector: "stealth", type: hidden[2], value: Number(hidden[1]), predicate: ["hiding-sun-wukong-staff"] }]
+                }
+            }
+        })
+    },
+    {
+        // The Courtesan: Illusory Disguise on its user at half its level (6th at least: castRank, read before); while it lasts, an Effect with
+        // PF2e's AdjustDegreeOfSuccess — its Deception to Impersonate one degree better, its toggle on against a lower-level creature
+        // (castBonus, scripts/casts.js). Its three-action change of look, its user's own (the card's line).
+        name: "The Courtesan",
+        over: true,
+        sentences: [
+            /^You pass the card over your face and become exactly who you need to be; you cast Illusory Disguise\.$/,
+            /^The rank of the spell is one-half your level, rounded down \(minimum 6th level\)\.$/,
+            /^You can change your appearance again at any time during the duration by using a three-action activity, which has the concentrate trait\.$/,
+            /^While under these effects, your Deception checks to Impersonate are one degree of success greater when you use them against a creature that is a lower level than yourself\.$/
+        ],
+        card: (_found, plan) => (plan?.builtin === "cast-spell" && plan.castRank ? {
+            keep: true,
+            self: true,
+            castBonus: {
+                said: "its Deception to Impersonate one degree of success better against a creature of a lower level (its toggle on for one)",
+                duration: { value: 1, unit: "hours", expiry: "turn-start" },
+                rules: [
+                    { key: "RollOption", domain: "all", option: "courtesan-lower-level", toggleable: true, label: "Impersonating to a creature of a lower level" },
+                    { key: "AdjustDegreeOfSuccess", selector: "deception", predicate: ["action:impersonate", "courtesan-lower-level"], adjustment: { all: "one-degree-better" } }
+                ]
+            },
+            notes: ["Its user can change its look again any time while it lasts, a three-action activity with the concentrate trait (its own).", "While it lasts, its Deception to Impersonate is one degree better against a creature of a lower level than its user (the Effect's toggle on for one)."]
+        } : null)
+    },
+    {
+        // The Fiend: Phantasmal Calamity at half its user's level (6th at least) and its class or spell DC (castRank, castDC, read before), its
+        // area a 20-foot emanation round its user — the creatures its presser targets within 20 feet (castRange); its user immune to it.
+        name: "The Fiend",
+        over: true,
+        sentences: [
+            /^You wave the card to create a vision of destruction around you; you cast Phantasmal Calamity, except the area is a (\d+)-foot emanation\.$/,
+            /^The rank of the spell is one-half your level, rounded down \(minimum 6th level\), and the save DC is your class DC or spell DC \(@Check\[will\|[^\]]*\]\)\.$/,
+            /^You are immune to the effects of your own phantasmal calamity\.$/
+        ],
+        card: ([area], plan) => (plan?.builtin === "cast-spell" && plan.castRank && plan.castDC ? {
+            keep: true,
+            area: true,
+            castRange: { feet: Number(area[1]), said: `except the area is a ${area[1]}-foot emanation` },
+            notes: [`Its area is a ${area[1]}-foot emanation round its user, a vision of destruction: target the creatures within ${area[1]} feet — not its user, immune to its own calamity.`]
+        } : null)
+    },
+    {
+        // The Publican's reaction: the creature whose attitude its user just improved, one step more — two from 18th level (its owner's level,
+        // as the plan is compiled for it) —, a note Effect on that creature, the creature its presser targets (the user's ruling for minds).
+        name: "The Publican",
+        sentences: [
+            /^You improve the creature's attitude by an additional step more than you would normally\.$/,
+            /^If you're at least (\d+)th level, you improve the creature's attitude by two additional steps\.$/
+        ],
+        card: ([, high], _plan, { level }) => {
+            const steps = Number(level) >= Number(high[1]) ? 2 : 1;
+            return {
+                ...ownRow({
+                    noteEffects: [{ label: "The Publican", text: `Its attitude toward the Publican's bearer improves ${steps === 2 ? "two more steps" : "one more step"} than the check gave (${steps === 2 ? `the bearer is ${high[1]}th level or higher` : `two from ${high[1]}th level`}).`, duration: null }],
+                    notes: ["Target the creature whose attitude it just improved."]
+                }),
+                targeting: { target: "the creature whose attitude improved", range: null, area: null },
+                item: { recipient: "targets" }
+            };
+        }
+    },
+    {
+        // The Vision: its user's next Lore check to Recall Knowledge as if master in it — legendary from 15th level —, PF2e's proficiency
+        // modifier of that rank (the higher of the two applies, as PF2e keeps one of a type), and one degree better when it's already master
+        // or legendary in that Lore (its toggle); the Effect gone after that check. The bolt of blue light, and the GM telling what it recalls,
+        // its card's lines.
+        name: "The Vision",
+        sentences: [
+            /^A visible bolt of blue energy bursts from your head\.$/,
+            /^Attempt to Recall Knowledge about a subject, rolling the check with the most appropriate Lore skill check\.$/,
+            /^This check always resolves as if you were master in the most appropriate Lore skill to Recall Knowledge on the subject \(or if you're at least (\d+)th level, as if you were legendary in that Lore skill\)\.$/,
+            /^If you're already master \(or legendary\) in that Lore, the result of your Recall Knowledge check is one degree of success better than it would otherwise be\.$/
+        ],
+        card: ([, , legend], _plan, { level }) => {
+            const legendary = Number(level) >= Number(legend[1]);
+            return {
+                ...ownRow({ notes: ["A visible bolt of blue energy bursts from its user's head. Its user rolls the most fitting Lore to Recall Knowledge (one it lacks: add it to the sheet, untrained); the GM tells what it recalls."] }),
+                item: {
+                    ruleEffects: [{
+                        name: "The Vision",
+                        words: `Its next Lore check to Recall Knowledge as if ${legendary ? "legendary" : "master"} in that Lore, and one degree better if it's already master or legendary in it (its toggle on then)`,
+                        rules: [
+                            { key: "FlatModifier", selector: "lore-skill-check", type: "proficiency", slug: "the-vision", label: `The Vision (${legendary ? "legendary" : "master"})`, value: legendary ? "@actor.level + 8" : "@actor.level + 6", removeAfterRoll: "if-enabled" },
+                            { key: "RollOption", domain: "all", option: "the-vision-master", toggleable: true, label: "Already master or legendary in that Lore" },
+                            { key: "AdjustDegreeOfSuccess", selector: "lore-skill-check", predicate: ["the-vision-master"], adjustment: { all: "one-degree-better" } }
+                        ],
+                        duration: timeOf(1, "rounds")
+                    }]
+                }
+            };
+        }
+    },
+    {
+        // Wintershot (Heroic)'s Signal Flare: the ways card. Straight up: a Foundry light at its user's square — bright to 100 feet, dim 100
+        // more — for the minute (placedLight; its height and its color, Wintershot's pick, the card's lines). Or the Strike card with the bow:
+        // its normal damage and, on a hit, the counteract card at the creature hit against one darkness Effect on it, rank 9 at +25 — a way
+        // of its own at +30 for darkness a fiend made.
+        name: "Wintershot (Heroic): Signal Flare",
+        sentences: [
+            /^Wintershot fires an arrow-shaped construct of ice straight upward\.$/,
+            /^The arrow soars to a height of (\d+) feet, or until it strikes a solid surface like a ceiling\.$/,
+            /^When it reaches its apex, it explodes in a brilliant burst, creating a (\d+)-foot radius area of bright light and dim light in the next (\d+) feet\.$/,
+            /^In the night sky, this beacon can be seen clearly for miles\.$/,
+            /^The beacon remains lit for up to (\d+) (minutes?) in a color of Wintershot's choice\.$/,
+            /^Alternatively, Wintershot can fire this Signal Flare like a normal arrow to attempt to Strike a target her partner can see ?[-—–] ?if it hits, the arrow inflicts normal damage and attempts to counteract one darkness effect of Wintershot's choice that affects the creature struck, with a counteract rank of (\d+)th and a \+(\d+) modifier to the roll \(\+(\d+) modifier if the source of the darkness effect was created by a fiend\)\.$/
+        ],
+        card: ([, height, light, , lit, shot], _plan, { base, info }) => {
+            const way = (name, wayPlan) => ({ name, html: "", plan: { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...wayPlan, item: { ...info, ...(wayPlan.item ?? {}) } } });
+            const strike = (modifier, fiend) => way(fiend ? "Strike: a fiend's darkness" : "Strike", {
+                targeting: { target: "the creature the Strike hits", range: null, area: null },
+                trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
+                resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+                strike: { range: "ranged", save: null, own: true, unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: false, notes: [], options: [], lines: [`With Wintershot, at a creature its partner can see: its normal damage, and on a hit a counteract at rank ${shot[1]}, +${modifier}, against one darkness effect on it (Wintershot's pick)${fiend ? ", one a fiend made" : ""}`], counteract: { counteract: { rank: Number(shot[1]), modifier, traits: ["darkness"], at: "target" } } }
+            });
+            return {
+                builtin: "ways",
+                targeting: { target: null, range: null, area: null },
+                ways: [
+                    way("Straight up: the beacon", {
+                        ...ownRow({ notes: [`It bursts at its apex, ${height[1]} feet up or at the ceiling: its light is placed at its user's square (move it under the apex), lit up to ${lit[1]} minute in a color Wintershot picks; in the night sky it's seen clearly for miles.`] }),
+                        item: { placedLight: { bright: Number(light[1]), dim: Number(light[1]) + Number(light[2]), duration: timeOf(lit[1], lit[2]) } }
+                    }),
+                    strike(Number(shot[2]), false),
+                    strike(Number(shot[3]), true)
+                ]
+            };
+        }
     }
 ];
 
@@ -299,15 +469,25 @@ function matched(reading, sentences) {
 
 // The plan read before and the activation's html → the reading's card, or the same plan. name: its source name; base, info, frequency: its
 // own (lasting.js activationBase). A reading without over reads only where nothing was read, or a note or the GM's no-effect.
-export function withRelicReadings(plan, { name, html, base, info, frequency = null }) {
+// level: its owner's level (the plan is compiled for its owner), for a rule that grows with it.
+export function withRelicReadings(plan, { name, html, base, info, frequency = null, level = null }) {
     const readings = READINGS.filter((reading) => reading.name === name && (reading.over || !plan || plan.noteOnly || plan.builtin === "no-effect" || plan.partial));
     if (!readings.length) return plan;
     const words = effectWords(html, "activation");
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan, { base, info }) : null;
+        const card = found ? reading.card(found, plan, { base, info, level }) : null;
         if (!card) continue;
+        // (Over the plan read before, its own parts kept — a cast's spell, rank and DC —, its changes on it, whole now.)
+        if (card.keep) {
+            const { keep, ...changes } = card;
+            const next = { ...plan, ...changes };
+            for (const key of Object.keys(changes)) if (changes[key] === undefined) delete next[key];
+            delete next.partial;
+            next.automation = { ...(next.automation ?? {}), level: "automatic" };
+            return next;
+        }
         const often = reading.frequency ?? frequency;
         const { item: own, trigger, ...rest } = card;
         return {

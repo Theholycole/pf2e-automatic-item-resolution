@@ -44,6 +44,7 @@ import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyCraftCard, postCraftCard } from "./craft.js";
 import { startPulse } from "./pulse.js";
 import { placeItemStructure, removeItemStructures } from "./item-structures.js";
+import { itemFormEffectSource, itemFormText, itemIdOf } from "../src/live/item-form.js";
 import { applyTransmogrifyCard, postTransmogrifyCard } from "./transmogrify.js";
 import { mutagenPlan } from "../src/live/transmogrify.js";
 import { impeccableEffect, impeccablePlan } from "../src/live/craft-card.js";
@@ -1096,6 +1097,19 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         } else {
             await target.actor.createEmbeddedDocuments("Item", [shieldFormEffectSource(form, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
             lines.push(`${recipient.name}: ${shieldFormText(form)}`);
+        }
+    }
+    // (The item's own other form, Staff of Sun Wukong's needle — an Effect with PF2e's ItemAlteration on it; activated again, its own form: src/live/item-form.js.)
+    const otherForm = state.plan.item?.itemForm;
+    if (otherForm && target.actor) {
+        const itemId = itemIdOf(state.item.uuid);
+        const current = (target.actor.itemTypes?.effect ?? []).filter((effect) => itemId && effect.flags?.[MODULE_ID]?.itemForm === itemId);
+        if (current.length) {
+            await target.actor.deleteEmbeddedDocuments("Item", current.map((effect) => effect.id));
+            lines.push(`${recipient.name}: ${state.item.name} is its own form again`);
+        } else {
+            await target.actor.createEmbeddedDocuments("Item", [itemFormEffectSource(otherForm, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${recipient.name}: ${itemFormText(otherForm)}`);
         }
     }
     // (Fast healing: Infernal Health's 25 a turn — an Effect with PF2e's FastHealing rule.)

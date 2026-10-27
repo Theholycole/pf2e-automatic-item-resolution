@@ -330,7 +330,7 @@ function relicsOf(item, entry, plan) {
     const name = `${item.name}${entry.activation?.name ? `: ${entry.activation.name}` : ""}`;
     if (!hasRelicReading(name)) return plan;
     const { base, info, frequency } = activationBase(item, entry);
-    return withRelicReadings(plan, { name: base.source.name, html: entry.activation?.html, base, info, frequency });
+    return withRelicReadings(plan, { name: base.source.name, html: entry.activation?.html, base, info, frequency, level: Number(item.ownerLevel ?? item.system?.level?.value) || null });
 }
 
 // (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of

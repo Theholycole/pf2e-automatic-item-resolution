@@ -1007,7 +1007,9 @@ test("saves whose failure is the GM's to carry out, their words on the card: Cau
     assert.deepEqual(song.resolution.outcomes.success.manualInstructions, []);
     const ribbon = compileActivations(item("Planar Ribbon"), { spellEffects })[1].plan;
     assert.deepEqual([ribbon.resolution.check.statistic, ribbon.resolution.check.against.value], ["reflex", 42]);
-    assert.equal(ribbon.resolution.outcomes.failure.manualInstructions[0], "{target}: You exchange positions with the target and all of that creature's allies are off-guard to you until the end of your turn (by hand).");
+    // (2026-10-27: the places traded and the allies Off-Guard are plan.swap now, once the save card is applied — src/compiler/relic-readings.js,
+    // scripts/swap.js; no GM line left.)
+    assert.deepEqual([ribbon.swap, ribbon.resolution.outcomes.failure.manualInstructions, ribbon.partial], [{ degrees: ["failure", "criticalFailure"] }, undefined, undefined]);
 });
 
 test("Admirer's Bouquet handed to the triggering ally: its +1 item bonus to saves against emotion and mental effects on that ally, for as long as it carries the bouquet (the end a note), the new save a note", async () => {

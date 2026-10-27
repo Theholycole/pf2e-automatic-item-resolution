@@ -148,3 +148,52 @@ test("Lesser Cube of Nex: six faces on the ways card — zones with counteracts 
     assert.equal(living.zone.saves[0].plan.resolution.outcomes.failure.noteEffects[0].duration.unit, "rounds");
     assert.deepEqual([routeOf(force), force.item.structure.stats, routeOf(dismissed), dismissed.item.removeStructures], ["item", { hardness: 30, hp: 60, bt: 0 }, "item", true]);
 });
+
+test("Planar Ribbon's reach: the DC 42 Reflex save card at a foe within 60 feet, places traded and its allies Off-Guard on a failure", async () => {
+    const { swapOffGuardPlan } = await import("../src/live/swap.js");
+    const [, reach] = activations("Planar Ribbon");
+    assert.deepEqual([routeOf(reach), done(reach), reach.targeting.range, reach.resolution.check.statistic, reach.resolution.check.against.value, reach.swap], ["save", true, "60 feet", "reflex", 42, { degrees: ["failure", "criticalFailure"] }]);
+    assert.deepEqual(Object.values(reach.resolution.outcomes).map((row) => (row.manualInstructions ?? []).length), [0, 0, 0, 0]);
+    const [offGuard] = swapOffGuardPlan("Planar Ribbon").resolution.outcomes.success.effects;
+    assert.deepEqual([offGuard.slug, offGuard.scope, offGuard.duration.expiry, offGuard.duration.anchor], ["off-guard", { against: "actor", attacks: "any" }, "turn-end", "source-turn"]);
+});
+
+test("Staff of Sun Wukong's Close at Hand: the needle form, negligible Bulk and +4 to hide it, until activated again", async () => {
+    const { itemFormEffectSource } = await import("../src/live/item-form.js");
+    const close = activation("Staff of Sun Wukong", "Close at Hand");
+    assert.deepEqual([routeOf(close), done(close), close.item.itemForm.alterations], ["item", true, [{ property: "bulk", mode: "override", value: 0 }]]);
+    const effect = itemFormEffectSource(close.item.itemForm, { item: { name: "Staff of Sun Wukong", uuid: "Actor.a.Item.staffid" } });
+    assert.deepEqual(effect.system.rules.map((rule) => [rule.key, rule.itemId ?? rule.selector ?? rule.option, rule.value ?? null]), [["ItemAlteration", "staffid", 0], ["RollOption", "hiding-sun-wukong-staff", null], ["FlatModifier", "stealth", 4]]);
+    assert.equal(effect.flags["pf2e-automatic-item-resolution"].itemForm, "staffid");
+});
+
+test("The Courtesan and The Fiend: their casts at half their user's level, the Courtesan's Impersonate a degree better, the Fiend's 20-foot emanation", () => {
+    const [courtesan] = activations("The Courtesan");
+    assert.deepEqual([routeOf(courtesan), done(courtesan), courtesan.self, courtesan.castRank.min], ["cast", true, true, 6]);
+    assert.deepEqual(courtesan.castBonus.rules.map((rule) => rule.key), ["RollOption", "AdjustDegreeOfSuccess"]);
+    assert.deepEqual(courtesan.castBonus.rules[1].predicate, ["action:impersonate", "courtesan-lower-level"]);
+    const [fiend] = activations("The Fiend");
+    assert.deepEqual([routeOf(fiend), done(fiend), fiend.castDC.from, fiend.castRange.feet, fiend.area], ["cast", true, "class-spell", 20, true]);
+});
+
+test("The Publican and The Vision: one more step of attitude (two from 18th), the next Lore check as if master (legendary from 15th)", () => {
+    const [publican] = activations("The Publican");
+    assert.deepEqual([routeOf(publican), done(publican), publican.item.recipient], ["item", true, "targets"]);
+    assert.match(success(publican).noteEffects[0].text, /two more steps/);
+    const low = compileActivations({ ...item("The Publican"), ownerLevel: 12 }, options)[0].plan;
+    assert.match(success(low).noteEffects[0].text, /one more step/);
+    const [vision] = activations("The Vision");
+    assert.deepEqual([routeOf(vision), done(vision)], ["item", true]);
+    const [rule, toggle, degree] = vision.item.ruleEffects[0].rules;
+    assert.deepEqual([rule.selector, rule.type, rule.value, rule.removeAfterRoll, toggle.option, degree.adjustment], ["lore-skill-check", "proficiency", "@actor.level + 8", "if-enabled", "the-vision-master", { all: "one-degree-better" }]);
+    assert.equal(compileActivations({ ...item("The Vision"), ownerLevel: 9 }, options)[0].plan.item.ruleEffects[0].rules[0].value, "@actor.level + 6");
+});
+
+test("Wintershot (Heroic)'s Signal Flare: the beacon's light for a minute, or the Strike that counteracts darkness at +25 (+30 a fiend's)", () => {
+    const flare = activation("Wintershot (Heroic)", "Signal Flare");
+    assert.deepEqual([routeOf(flare), done(flare), flare.ways.length, flare.trigger.frequency.per], ["ways", true, 3, "hour"]);
+    const [beacon, shot, fiend] = flare.ways.map((way) => way.plan);
+    assert.deepEqual([routeOf(beacon), beacon.item.placedLight.bright, beacon.item.placedLight.dim, beacon.item.placedLight.duration.value], ["item", 100, 200, 1]);
+    assert.deepEqual([routeOf(shot), shot.strike.own, shot.strike.counteract.counteract], ["strike", true, { rank: 9, modifier: 25, traits: ["darkness"], at: "target" }]);
+    assert.equal(fiend.strike.counteract.counteract.modifier, 30);
+});

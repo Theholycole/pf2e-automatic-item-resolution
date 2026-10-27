@@ -41,8 +41,9 @@ export function beyondRange(castRange, casterToken, actor, targets) {
 // The cast's bonus beside the spell (src/compiler/cast-riders.js castBonus) on each creature it's cast on: PF2e's FlatModifier rules for its
 // time. → the card's lines.
 export async function giveCastBonus(state, actors) {
-    const { modifiers, said } = state.plan.castBonus;
-    const time = modifiers[0].duration;
+    // (Or PF2e's own rules for it, The Courtesan's degree better to Impersonate: castBonus.rules, its time castBonus.duration — 2026-10-27.)
+    const { modifiers = [], said, rules = null } = state.plan.castBonus;
+    const time = state.plan.castBonus.duration ?? modifiers[0].duration;
     const words = said.replace(/^(?:and|with) /i, "");
     const lines = [];
     for (const actor of actors) {
@@ -52,7 +53,7 @@ export async function giveCastBonus(state, actors) {
             img: state.item.img ?? "icons/svg/upgrade.svg",
             flags: { [MODULE_ID]: { castBonus: true } },
             system: { description: { value: `<p>${words.charAt(0).toUpperCase()}${words.slice(1)} (${state.item.name}).</p>` }, duration: { value: time.value, unit: time.unit, expiry: time.expiry ?? "turn-start", sustained: false }, start: { value: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null }, tokenIcon: { show: true },
-                rules: modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: modifier.type, value: modifier.value, label: state.item.name, ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })) }
+                rules: rules ?? modifiers.map((modifier) => ({ key: "FlatModifier", selector: modifier.selector, type: modifier.type, value: modifier.value, label: state.item.name, ...(modifier.predicate ? { predicate: modifier.predicate } : {}) })) }
         }]);
         lines.push(`${actor.name} gains ${words}.`);
     }
