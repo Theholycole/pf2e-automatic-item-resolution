@@ -1,17 +1,16 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1321,
+  "entries": 1319,
   "results": {
-   "partial": 422,
+   "partial": 420,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
   },
   "main": {
-   "cast-changes": 23,
+   "cast-changes": 22,
    "speeds": 23,
-   "areas": 135,
    "counteract": 24,
    "afflictions": 61,
    "moving": 84,
@@ -30,6 +29,7 @@
    "mind": 6,
    "illusions": 50,
    "removed": 6,
+   "areas": 134,
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
@@ -48,9 +48,9 @@
    "by-kind": 8
   },
   "any": {
-   "cast-changes": 23,
+   "cast-changes": 22,
    "speeds": 29,
-   "areas": 200,
+   "areas": 199,
    "immunity": 90,
    "objects": 390,
    "speech": 129,
@@ -111,16 +111,6 @@
     "objects",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Cyclone",
-   "kind": "activation",
-   "result": "partial",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -12057,15 +12047,6 @@
    "work": "cooking",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Inquisitor",
-   "kind": "activation",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
    ]
   },
   {

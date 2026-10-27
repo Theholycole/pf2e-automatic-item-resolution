@@ -245,3 +245,13 @@ test("one cast of several the words name (2026-10-27): Spark Dancer's Fireball o
     const dancer = first("Spark Dancer");
     assert.deepEqual([dancer.choices.map((choice) => `${choice.spell.name}@${choice.rank}`), dancer.dc, dancer.partial], [["Fireball@7", "Lightning Bolt@7"], 30, undefined]);
 });
+
+test("a cast's rank and DC from its caster (2026-10-27): The Inquisitor's Mind Probe at half its level rounded down (at least 5) and its class DC or spell DC, its two actions the activation's", async () => {
+    const { castRankAt } = await import("../src/compiler/cast-owner.js");
+    const { castCardHTML } = await import("../src/live/cast-card.js");
+    const inquisitor = first("The Inquisitor");
+    assert.deepEqual([inquisitor.castRank.min, inquisitor.castDC.from, Boolean(inquisitor.castTime), inquisitor.partial], [5, "class-spell", true, undefined]);
+    assert.deepEqual([castRankAt(inquisitor.castRank, 8), castRankAt(inquisitor.castRank, 13)], [5, 6]);
+    const html = castCardHTML({ status: "open", plan: inquisitor, item: { name: "The Inquisitor" }, user: { name: "Cleric" }, drinker: null, drinkers: [], choice: 0, results: [] });
+    assert.match(html, /rank half its caster&#39;s level, rounded down \(at least 5\), DC its caster&#39;s class DC or spell DC, the higher/);
+});

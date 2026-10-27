@@ -3609,6 +3609,25 @@ export const cases = {
         return { dc: dc.value, save: save.id };
     },
 
+    // The Inquisitor (2026-10-27): Mind Probe cast at half its caster's level rounded down (level 13: rank 6) and at its class DC or spell DC.
+    async inquisitorRank(scene) {
+        const { actor: reader, token: readerToken } = await creature(scene, "Inquisitor Reader", { x: 2, y: 16, level: 13 });
+        const { token: foeToken } = await creature(scene, "Inquisitor Subject", { x: 3, y: 16, alliance: "opposition" });
+        const card = await give(reader, "The Inquisitor");
+        await readerToken.object?.control?.();
+        await target(foeToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const castCard = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(castCard.id, { targets: [foeToken.uuid] });
+        const cast = await messageAfter(since, (message) => message.flags?.["pf2e-automatic-resolution"]?.castFromItem, { what: "the spell module's cast", timeout: 15000 });
+        const { rank, dc } = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        const expected = Math.max(reader.system.attributes.classDC?.value ?? 0, reader.system.attributes.spellDC?.value ?? 0);
+        assert(rank === 6 && dc === expected && expected > 0, `rank 6 at DC ${expected} (${rank}, ${dc})`);
+        return { rank, dc };
+    },
+
     // An etched rune's activation from its weapon (a Vorpal longsword): the button on the weapon's row, not on a runestone's;
     // pressed, the Fortitude save card at DC 37 with death on a failure.
     async etchedRune(scene) {

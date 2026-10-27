@@ -57,7 +57,8 @@ export function castCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const plan = state.plan;
     const chosen = chosenSpell(state);
-    const numbers = [chosen.rank ? `rank ${chosen.rank}` : null, plan.dc ? `DC ${plan.dc}` : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange)].filter(Boolean).join(", ");
+    // (Its rank and DC from its caster, The Inquisitor's: in words until it's cast.)
+    const numbers = [chosen.rank ? `rank ${chosen.rank}` : plan.castRank ? `rank half its caster's level, rounded ${plan.castRank.round} (at least ${plan.castRank.min})` : null, plan.dc ? `DC ${plan.dc}` : plan.castDC ? "DC its caster's class DC or spell DC, the higher" : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange)].filter(Boolean).join(", ");
     const caster = casterOf(state);
     // (Several spells to choose from: a picker while it's open.)
     const pick = plan.choices?.length > 1 && open && canApply

@@ -3,7 +3,8 @@
 
 import { castCardHTML, castRequest, chosenSpell, createCastCard, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
-import { FLAG, MODULE_ID, creaturesNear, entryOf, spaceOf, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
+import { castRankAt } from "../src/compiler/cast-owner.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
@@ -66,6 +67,13 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
     else {
         const actor = await fromUuid(request.casterUuid).catch(() => null);
         if (!actor) throw new Error("The caster isn't there any more.");
+        // (Its rank and DC from its caster, src/compiler/cast-owner.js: The Inquisitor's half its level, its class DC or spell DC.)
+        if (!request.rank && state.plan.castRank) request.rank = castRankAt(state.plan.castRank, actor.level);
+        if (!request.dc && state.plan.castDC) {
+            const dcs = ownerDCsOf(actor);
+            const best = Math.max(0, ...[dcs.class, dcs.spell].filter((value) => Number(value) > 0));
+            if (best > 0) request.dc = best;
+        }
         const token = request.casterTokenUuid ? await fromUuid(request.casterTokenUuid).catch(() => null) : null;
         const targetTokens = (await Promise.all(request.targetUuids.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
         if (needsTargets(state.plan, chosenSpell(state)) && !targetTokens.length) throw new Error("Target the creatures first.");
