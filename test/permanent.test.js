@@ -521,8 +521,9 @@ test("a bonus to the triggering save and to the rest against the same affliction
     const { compileItem } = await import("../src/compiler/index.js");
     const ox = compileItem(item("Fulu of the Stoic Ox"), { spellEffects }).resolution.outcomes.success.modifiers;
     assert.deepEqual(ox.map((modifier) => [modifier.selector, modifier.value, modifier.type, modifier.predicate, modifier.duration.unit]), [["fortitude", 2, "status", ["item:trait:disease"], "minutes"]]);
-    const monkey = compileItem(item("Fulu of the Drunken Monkey"), { spellEffects });
-    assert.deepEqual([monkey.resolution.outcomes.success.modifiers[0].predicate, monkey.partial], [["item:trait:poison"], true]);
+    // (2026-10-27: its alcohol's sure save read too — the ways card, the poison's way as it was, no longer partial: test/triggers-2026-10-27.test.js.)
+    const monkey = compileItem(item("Fulu of the Drunken Monkey"), { spellEffects }).ways[0].plan;
+    assert.deepEqual([monkey.resolution.outcomes.success.modifiers[0].predicate, monkey.partial], [["item:trait:poison"], undefined]);
 });
 
 test("auras that act at a turn's start or end in them, as the ability module's zone: Arctic Worm Chitin Shield, Alluring Lantern, Sandstorm Top, and an item in the module's own words", async () => {

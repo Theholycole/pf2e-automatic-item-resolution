@@ -27,6 +27,7 @@ export function objectsText(objects, item = {}, stored = null) {
     if (objects.op === "repair" && objects.affixed && objects.negates) return `The damage negated: the item it's affixed to repaired to its full Hit Points, no longer broken — pick that item once the damage lands`;
     if (objects.op === "repair" && objects.amount) return `${objects.amount} Hit Points restored, up to its maximum: one of its user's damaged items${objects.damagedBy ? ` (what the ${objects.damagedBy} did)` : ""}${limit}`;
     if (objects.op === "repair") return `Repaired to its full Hit Points, no longer broken: one of its user's items${limit}`;
+    if (objects.op === "reload" && objects.recalled) return `The round it just missed with back in it, loaded: the firearm it's affixed to (one of its user's weapons with reload ${objects.reload}), no other round spent`;
     if (objects.op === "reload") return `Reloaded with one of its user's rounds for it: one of its user's weapons with reload ${objects.reload}`;
     // ("A +1 striking dagger in its user's hand, the last one gone: Strike with it".)
     if (objects.op === "create" && objects.choose) {

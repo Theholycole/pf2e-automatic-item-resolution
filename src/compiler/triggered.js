@@ -7,7 +7,14 @@
 //   of your next turn"; Aeon Stone (Olivine Pendeloque)'s Still Earth, "The stone suppresses the triggering effect for 1 minute" (its trigger
 //   "You become confused, frightened, or stupefied"); Moonlit Chain's Dim Sight, "suppress the Dazzled condition for 1 minute". → a note Effect on
 //   its user for that time saying the condition has no effect, with PF2e's AdjustModifier suppressing the condition's own modifiers (Off-Guard's
-//   −2 to AC, Frightened's and Stupefied's status penalties); the ways card, one way for each condition its words name.
+//   −2 to AC, Frightened's and Stupefied's status penalties); the ways card, one way for each condition its words name. (And Emergency Eye's
+//   sight through the eye, Blinded's.)
+// - Below, each with its own words: a roll PF2e's Effect replaces (Ancestral Geometry), a missed shot sent back (Turnabout Shield), a bleed made
+//   worse (Secret-Keeper's Mask), an attacker beguiled (Beguiling Crown), spells counteracted (Reflecting Shard, Spellslasher, Spell Duelist's
+//   Siphon), an alert whispered (Name Pendant), a Strike drawn to its user (Black Hole Armor, Arrow-Catching and Lodestone Shields), rules on note
+//   Effects (Helm of Zeal, Whispering Veil, Undead Scourge, Victory Plate), death avoided (Locket of Love Left Behind), information whispered
+//   (Lion's Call), a sure save against alcohol (Fulu of the Drunken Monkey), an unstable failure eased (Inventor's Fulu), a bleed's Off-Guard
+//   (Murderer's Knot) and a shell instead of stone (Exuviae Powder).
 
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
 import { plainText } from "./rows.js";
@@ -273,13 +280,106 @@ function slashedSpell(text, base) {
     return counteractCard(base, { modifier: null, fromUser: { rank: "half-level", modifier: "weapon-attack" }, rank: null, notes: [`Applied to a weapon, it gives its user the ${gained[1]} reaction with that weapon: press Apply when it's the only target of a spell, as it uses ${gained[1]} — the spellslasher's effects end then.`] });
 }
 
-const USE_READERS = [reflectedSpell, slashedSpell];
+// --- A save against one poison, or a sure one against another ----------------------------------------------------------------------------------
+
+// (Fulu of the Drunken Monkey's "you gain a +2 status bonus on the triggering Fortitude save and on Fortitude saves against the same poison for the
+// next minute. If the triggering poison was normal Alcohol, you instead automatically succeed at the triggering save and gain a +4 status bonus on
+// saves against alcohol for 1 minute": the ways card — the poison's way its +2 as read (src/compiler/item-data.js), alcohol's the triggering save
+// a success (a note Effect with PF2e's AdjustDegreeOfSuccess for that one save) and +4 status to saves against PF2e's Alcohol for the minute.)
+const ALCOHOL = /^If the triggering poison was normal Alcohol, you instead automatically succeed at the triggering save and gain an? \+(\d+) (status|circumstance|item) bonus on saves against alcohol for (\d+|one|a) (minutes?|rounds?)\.$/i;
+function drunkenSave(text, base, item, plan) {
+    const line = (plan?.unread ?? []).find((entry) => ALCOHOL.test(String(entry).trim()));
+    const row = plan?.resolution?.outcomes?.success;
+    if (!line || plan.unread.length !== 1 || (row?.modifiers ?? []).length !== 1 || (row.effects ?? []).length || (row.manualInstructions ?? []).length || (plan.notes ?? []).length) return null;
+    const [, value, kind, amount, unit_] = ALCOHOL.exec(String(line).trim());
+    const lasting = { mode: "fixed", value: count(amount), unit: unit(unit_), expiry: "turn-start", anchor: "effect-start" };
+    const own = { ...plan, partial: undefined, unread: undefined, automation: { level: "automatic" }, resolution: { ...plan.resolution, outcomes: { success: { ...row, noteEffects: [] } } } };
+    // (Alcohol's save: PF2e's Alcohol by its slug, or a drug, ingested and a poison, as Alcohol is.)
+    const alcoholic = [{ or: ["item:slug:alcohol", { and: ["item:trait:drug", "item:trait:ingested", "item:trait:poison"] }] }];
+    const sure = { label: "A sure save", text: "Its Fortitude save against the alcohol it just drank succeeds (a failure or a critical failure becomes a success), this turn.", duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }, rules: [{ key: "AdjustDegreeOfSuccess", selector: "fortitude", adjustment: { failure: "to-success", criticalFailure: "to-success" }, predicate: alcoholic }] };
+    const alcohol = { ...own, resolution: { ...own.resolution, outcomes: { success: { ...none(), modifiers: [{ selector: "saving-throw", value: Number(value), type: kind.toLowerCase(), duration: lasting, predicate: alcoholic }], noteEffects: [sure] } } } };
+    return { ...own, builtin: "ways", ways: [{ name: "Against an ingested poison", html: "", plan: own }, { name: "Against normal alcohol", html: "", plan: alcohol }], once: true };
+}
+
+// (Emergency Eye's "You see through the eye with normal vision until the end of your next turn, when the eye withers and flakes away" — its trigger
+// "You become Blinded, or an effect otherwise impedes your vision": Blinded suppressed for that time, as withSuppressed's — its −4 to Perception off by
+// PF2e's AdjustModifier, the rest in words.)
+const EYE_FLAVOR = [/^This eye, harvested from a monster, looks like it's peacefully sleeping but gives you a backup when you can't use your eyes\.$/i, /^When the eye is activated, the eyelid pops open, and the eye stares frantically about\.$/i];
+const EYE_SEES = /^You see through the eye with normal vision until the end of your next turn, when the eye withers and flakes away\.$/i;
+function backupEye(text, base) {
+    const sentences = usedSentences(text);
+    if (!sentences.some((sentence) => EYE_SEES.test(sentence)) || !sentences.every((sentence) => EYE_SEES.test(sentence) || EYE_FLAVOR.some((pattern) => pattern.test(sentence)) || /^Activate\b.*\bTrigger\b/.test(sentence))) return null;
+    const note = { label: "Seeing through the eye", text: "It sees normally through the eye until the end of its next turn: Blinded, or whatever else impedes its vision, has no effect on its sight — Blinded's −4 status penalty to Perception doesn't apply, and nothing is hidden from it by it. The condition stays, and applies again once this ends if it's still there.", duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" }, rules: [{ key: "AdjustModifier", selectors: ["perception"], slug: "blinded", suppress: true }] };
+    return ownCard(base, { noteEffects: [note] });
+}
+// (Inventor's Fulu's "When you Activate the fulu, your critical failure becomes a failure, and you can spend just 1 minute to return your innovation to
+// full functionality. The fulu then burns up": its user's own unstable check and its innovation's repair — lines of the card.)
+const FULU_FLAVOR = [/^Some inventors in Tian Xia put fried snacks near their innovations, a charm to make devices behave as intended\.$/i, /^The practice rubbed off on other inventors, who replaced the food with a drawing on an inventor's fulu\s*\.$/i];
+const FULU_SAVES = /^When you Activate the fulu, your critical failure becomes a failure, and you can spend just 1 minute to return your innovation to full functionality\.$/i;
+const FULU_BURNS = /^The fulu then burns up, and its effects end\.$/i;
+function steadiedInnovation(text, base) {
+    const sentences = usedSentences(text);
+    if (!sentences.some((sentence) => FULU_SAVES.test(sentence)) || !sentences.every((sentence) => FULU_SAVES.test(sentence) || FULU_BURNS.test(sentence) || FULU_FLAVOR.some((pattern) => pattern.test(sentence)) || /^Activate\b.*\bTrigger\b/.test(sentence))) return null;
+    return ownCard(base, {}, ["Its critical failure at the unstable action is a failure instead: nothing of the critical failure's (its own check, by PF2e's unstable rules).", "Its innovation is back to full functionality after just 1 minute of its user's work (its own action); then the fulu burns up."]);
+}
+
+// (Murderer's Knot's "the creature you damaged takes 1d6 bleed damage and is off-guard until the bleed ends. If you have the Twist the Knife feat, the
+// talisman instead deals persistent bleed damage equal to your sneak attack damage": its Off-Guard a note Effect lasting while the creature takes
+// persistent bleed (the ability module's whilePersistent) with PF2e's GrantItem of the condition; with the feat — its owner's feats as live play
+// gives them (item.ownerFeats) — its bleed a rogue's sneak attack dice at its owner's level, with a line saying the GM may change it.)
+const OFF_GUARD_UUID = "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg";
+const KNOT_TRIGGER = /^Activate\b.*\bTrigger You damage an Off-Guard creature with a Strike using the affixed weapon This black strand of leather is tied to look like a peace knot when the weapon is worn, but it doesn't hamper drawing the weapon\.$/i;
+const KNOT_BLEEDS = /^When you activate the knot, the creature you damaged takes (?:@Damage\[)?(\d+d\d+)(?:\[bleed\]\])? bleed damage and is off-guard until the bleed ends\.$/i;
+const KNOT_TWIST = /^If you have the (?:@UUID\[[^\]]*\]\{)?Twist the Knife(?:\})? feat, the talisman instead deals persistent bleed damage equal to your sneak attack damage\.$/i;
+const sneakDice = (level) => `${1 + [5, 11, 17].filter((at) => (Number(level) || 1) >= at).length}d6`;
+function knottedBleed(text, base, item, plan) {
+    const sentences = usedSentences(text);
+    const bleeds = sentences.map((sentence) => KNOT_BLEEDS.exec(sentence)).find(Boolean);
+    const row = plan?.resolution?.outcomes?.success;
+    if (!bleeds || !sentences.every((sentence) => KNOT_TRIGGER.test(sentence) || KNOT_BLEEDS.test(sentence) || KNOT_TWIST.test(sentence)) || !sentences.some((sentence) => KNOT_TWIST.test(sentence))) return null;
+    const component = plan?.resolution?.sharedDamage?.components?.[0];
+    if (!row || component?.type !== "bleed" || component.category !== "persistent" || !(row.effects ?? []).some((effect) => effect.slug === "off-guard")) return null;
+    const twist = Array.isArray(item?.ownerFeats) && item.ownerFeats.includes("twist-the-knife");
+    const formula = twist ? sneakDice(item?.ownerLevel ?? item?.system?.level?.value) : component.formula;
+    const note = { label: "Off-Guard while it bleeds", text: "Off-Guard until its persistent bleed damage ends.", duration: null, whilePersistent: "bleed", rules: [{ key: "GrantItem", uuid: OFF_GUARD_UUID, allowDuplicate: false }] };
+    const { manualInstructions, ...kept } = row;
+    const success = { ...kept, effects: (row.effects ?? []).filter((effect) => effect.slug !== "off-guard"), noteEffects: [note] };
+    const { partial, notes, unread, ...rest } = plan;
+    return {
+        ...rest,
+        automation: { level: "automatic" },
+        resolution: { ...plan.resolution, sharedDamage: { ...plan.resolution.sharedDamage, components: [{ ...component, formula }] }, outcomes: { ...plan.resolution.outcomes, success } },
+        notes: [twist ? `With the Twist the Knife feat its bleed is ${formula}, a rogue's sneak attack at its user's level (the GM may change it to its own sneak attack's).` : "With the Twist the Knife feat, its bleed is its user's sneak attack damage instead (its card uses it once PF2e lists the feat on its user)."]
+    };
+}
+
+// (Exuviae Powder's two uses, the ways card: sprinkled — "for 8 hours, you double the time you can hold your breath. During this time, you also have
+// access to the shed chitin activation", a note Effect for the 8 hours —; and Shed Chitin, "The powder petrifies like a shell around you instead,
+// and its other effects end. The powder causes you to become Quickened for 1 minute as well as Doomed 1 and Restrained (escape DC 25). You can use
+// the extra action each round only for Escape and Stride actions" — the conditions on its user, Restrained until it Escapes against DC 25, what the
+// extra action is for a note Effect beside Quickened; the petrification it doesn't take and the 8 hours' end lines of the card.)
+const POWDER = [/^Activate\b/, /^You sprinkle this powder over your body, leaving an iridescent layer reminiscent of insect chitin\.$/i, /^After you do so, for (\d+) hours, you double the time you can hold your breath\.$/i, /^During this time, you also have access to the shed chitin activation\.$/i, /^Activate\s*-\s*Shed Chitin \(concentrate\) Trigger You would be petrified Effect The powder petrifies like a shell around you instead, and its other effects end\.$/i, /^The powder causes you to become Quickened for (\d+) minutes? as well as Doomed (\d+) and Restrained \((?:@Check\[)?escape[^)]*?dc[=:](\d+)[^)]*\)\.$/i, /^You can use the extra action each round only for Escape and Stride actions\.$/i];
+function chitinShell(text, base) {
+    const sentences = usedSentences(text);
+    if (sentences.length !== POWDER.length || !POWDER.every((pattern, at) => pattern.test(sentences[at])) || !flavor(sentences[0].replace(/^Activate\s*\([^)]*\)\s*/, ""))) return null;
+    const hours = Number(POWDER[2].exec(sentences[2])[1]);
+    const [, minutes, doomed, dc] = POWDER[5].exec(sentences[5]);
+    const sprinkled = ownCard(base, { noteEffects: [{ label: "Chitin layer", text: `It can hold its breath twice as long, and it has the Shed Chitin reaction (Trigger: it would be petrified), for ${hours} hours.`, duration: { mode: "fixed", value: hours, unit: "hours", expiry: "turn-start", anchor: "effect-start" } }] });
+    const quick = { mode: "fixed", value: Number(minutes), unit: "minutes", expiry: "turn-start", anchor: "effect-start" };
+    const shed = ownCard(base, {
+        effects: [{ kind: "condition", slug: "quickened", value: null, duration: quick }, { kind: "condition", slug: "doomed", value: Number(doomed), duration: null }, { kind: "condition", slug: "restrained", value: null, duration: { mode: "until-escape", escape: { dc: Number(dc) } } }],
+        noteEffects: [{ label: "Shell's extra action", text: "Its extra action each round from Quickened is only for Escape and Stride actions.", duration: quick }]
+    }, ["It isn't petrified: the powder petrifies around it as a shell instead (the GM doesn't apply the petrification).", "The powder's other effects end: delete its Chitin layer Effect."]);
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, ways: [{ name: "Sprinkled on (8 hours)", html: "", plan: sprinkled }, { name: "Shed Chitin (it would be petrified)", html: "", plan: shed }] };
+}
+
+const USE_READERS = [reflectedSpell, slashedSpell, drunkenSave, backupEye, steadiedInnovation, knottedBleed, chitinShell];
 // A consumable's plan → the plan its trigger's effect makes, or the same plan. base: its base plan; info: its item part (src/compiler/index.js).
 export function withTriggeredUse(plan, item, { base, info }) {
     const text = plainText(item?.system?.description?.value);
     const ownBase = { ...base, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, item: info };
     for (const reader of USE_READERS) {
-        const next = reader(text, ownBase, item);
+        const next = reader(text, ownBase, item, plan);
         if (next) return next;
     }
     return plan;
@@ -317,9 +417,63 @@ export function withDrawnStrike(plan, { item, activation, index }) {
     return { ...base, builtin: "readied-bonus", automation: { level: "automatic" }, targeting: { target: "the user", range: null, area: null }, bonus: { modifiers: [], resistance: null, shieldBlock: true, against: true, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], limits: [`${DRAWN_LINE}; its shield must be raised for the Shield Block.`] } };
 }
 
+// --- A rule PF2e can't play, on a note Effect for its time ------------------------------------------------------------------------------------
+
+// (The user's ruling: a rule PF2e can't play is its words on a note Effect for its time, counted done.) Each: the Effect's sentences in order
+// (flavor ones by name), whom it's for, its label, words and time.
+const NEXT_TURN_START = { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "source-turn" };
+const THIS_TURN = { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" };
+const MINUTE = { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" };
+const NOTE_RULES = [
+    // (Helm of Zeal's Divine Fervor: an extra reaction, only for its champion's reaction, until the start of its next turn.)
+    { sentences: [/^You gain an additional reaction you can use only for your champion's reaction\.$/i, /^You lose this reaction if you don't use it by the start of your next turn\.$/i], label: "Extra reaction", text: "An additional reaction, only for its champion's reaction; lost if it isn't used by the start of its next turn.", duration: NEXT_TURN_START },
+    // (Whispering Veil's Unforeseen Alert: a reaction now, only to answer the triggering action or effect.)
+    { sentences: [/^The whispers warn you of the impending danger\.$/i, /^You immediately gain a reaction that you can use only to respond to the triggering action or effect\.$/i], label: "Warned", text: "A reaction now, usable only to respond to the action or effect it was warned of.", duration: THIS_TURN },
+    // (Undead Scourge's Sever from the Void, on the undead it hit: no void healing for 1 minute unless that healing counteracts it first.)
+    { sentences: [/^You disrupt the undead's connection to void energy\.$/i, /^For 1 minute, the undead damaged with the dagger can't be healed by void energy unless the effect attempting to heal the undead first counteracts the undead scourge's effect, which has a counteract rank of (\d+)(?:st|nd|rd|th) and a DC of (\d+)\.$/i, /^Vitality energy still has the usual effects on the undead\.$/i], label: "Severed from the void", text: (said) => `For 1 minute it can't be healed by void energy, unless the effect healing it first counteracts this (counteract rank ${said[1][1]}, DC ${said[1][2]}); vitality energy still harms it as usual.`, duration: MINUTE, targets: true },
+    // (Victory Plate's record: a victory on the tabard until a later Recall uses it — the creature's trait is what that one picks.)
+    { sentences: [/^You direct the armor to commemorate your victory\.$/i, /^The coat of arms on the armor's tabard shifts to incorporate heraldry related to the slain creature, and the victory is recorded within the tabard\.$/i, /^If you have already recorded four victories, choose one to replace with the new victory\.$/i], label: "Victory recorded", text: "A victory over the creature it slew is recorded on the tabard (note its trait: the tabard's other activation gives resistance by it, and that use takes it off). It holds four at most: with four already, its user replaces one (delete that one's Effect).", duration: null }
+];
+export function withNoteRule(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const rule = NOTE_RULES.find((entry) => entry.sentences.length === sentences.length && entry.sentences.every((pattern, at) => pattern.test(sentences[at])));
+    if (!rule) return plan;
+    const said = rule.sentences.map((pattern, at) => pattern.exec(sentences[at]));
+    const base = keptBase(plan, item, { activation, index });
+    const note = { label: rule.label, text: typeof rule.text === "function" ? rule.text(said) : rule.text, duration: rule.duration };
+    const card = ownCard(rule.targets ? { ...base, targeting: { target: "1 creature", range: null, area: null }, item: { ...base.item, recipient: "targets" } } : base, { noteEffects: [note] });
+    return { ...card, noteOnly: undefined };
+}
+
+// (Locket of Love Left Behind's True Love's Power, "You avoid dying and remain at 1 Hit Point. You cannot use the ability again until you replace the
+// casing of the locket, which typically takes around 1 month and costs 600 gp": item.dropToOne — its user's Hit Points to 1, its Dying ended; the
+// casing to replace a line of the card, its user's to keep.)
+const AVOIDS_DEATH = /^You avoid dying and remain at 1 Hit Point\.$/i;
+const CASING = /^You cannot use the ability again until you replace the casing of the [\w' -]+?, which typically takes around (\d+ \w+) and costs (\d+ gp)\.$/i;
+export function withAvoidedDeath(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html)).filter((sentence) => !/^PFS Note\b/i.test(sentence) && !/^Replacing the casing of a [\w' -]+? takes \d+ days of Downtime\.$/i.test(sentence));
+    const casing = sentences.map((sentence) => CASING.exec(sentence)).find(Boolean);
+    if (!sentences.some((sentence) => AVOIDS_DEATH.test(sentence)) || !casing || sentences.some((sentence) => !AVOIDS_DEATH.test(sentence) && !CASING.test(sentence) && !flavor(sentence))) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    return ownCard({ ...base, item: { ...base.item, dropToOne: true } }, {}, [`It can't be used again until the locket's casing is replaced: about ${casing[1]} and ${casing[2]} (30 days of Downtime in PFS).`]);
+}
+
+// (Lion's Call's Echo the Call, "You immediately learn the location and appearance of the triggering creature. You can communicate telepathically with
+// the triggering creature while you remain within 1 mile of each other for the next hour": what the user's rulings make of information and speech
+// once its trigger is set aside — whispered to the GM and its user, what it learns the GM's to tell (builtin "whisper", decided "information").)
+const LEARNS = /^You immediately learn the location and appearance of the triggering creature\.$/i;
+const TELEPATHY = /^You can communicate telepathically with the triggering creature while you remain within (\d+ (?:feet|miles?)) of each other for the next hour\.?$/i;
+export function withEchoedCall(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const telepathy = sentences.length === 2 && LEARNS.test(sentences[0]) ? TELEPATHY.exec(sentences[1]) : null;
+    if (!telepathy) return plan;
+    const { targeting, ...base } = keptBase(plan, item, { activation, index });
+    return { ...base, builtin: "whisper", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, whisper: { text: `It learns where the creature that located it is and what it looks like (the GM says), and for the next hour, while they're within ${telepathy[1]} of each other, they can communicate telepathically.` }, decided: "information" };
+}
+
 // --- The readers, in order --------------------------------------------------------------------------------------------------------------------
 
-const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell, withAlertWearers, withDrawnStrike];
+const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell, withAlertWearers, withDrawnStrike, withNoteRule, withAvoidedDeath, withEchoedCall];
 
 // The activation's plan → the plan its trigger's effect makes, or the same plan. entry: { activation, index } (compileEach's).
 export function withTriggered(plan, entry, item) {

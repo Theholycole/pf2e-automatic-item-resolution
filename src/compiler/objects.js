@@ -52,6 +52,7 @@ const BLADE_REPLACED = /\bremains a physical object until the next time you use 
 const KNIFE = /\bYou pluck a miniature knife from the [\w' -]+?, and it grows into a normal (?:stone, steel, or wooden )?(dagger) for as long as you hold it\b/i;
 const STRIKING = { undefined: 0, "": 1, greater: 2, major: 3 };
 const RELOAD = /\bYou reload a weapon with reload (\d+)\b/i;
+const RECALLED = /\bthe ammunition from your missed shot is immediately recalled to your firearm, allowing you to fire again without reloading\b/i;
 // (Damage to another creature's item, ignoring its Hardness, 2026-10-27: Rustbringer's Rusting Disarm, "Flakes of acid-laden rust are deposited on
 // the disarmed weapon. The weapon takes @Damage[2d6[untyped]] damage, ignoring the weapon's Hardness" — op "damage" { formula, type, of, whose:
 // "target", ignoresHardness }: the targeted creature's weapon, picked when it has several, its Hit Points lowered by the roll (scripts/objects.js).)
@@ -106,6 +107,12 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     if (knife) return { op: "create", self: true, weapon: knife[1].toLowerCase(), potency: 0, striking: 0, whileHeld: true, said: knife[0], also: null };
     const reload = RELOAD.exec(text);
     if (reload) return { op: "reload", reload: reload[1], said: reload[0] };
+    // (The missed round back in the firearm, Persistent Lodestone's "the ammunition from your missed shot is immediately recalled to your firearm, allowing
+    // you to fire again without reloading" — its Usage "affixed to a firearm with a reload of 1": op "reload", recalled — that round given back to its
+    // user's ammunition and loaded, no other spent (scripts/objects.js), 2026-10-27.)
+    const recalled = RECALLED.exec(text);
+    const usage = /\baffixed to a firearm with a reload of (\d+)\b/i.exec(String(whole ?? ""));
+    if (recalled && usage) return { op: "reload", reload: usage[1], recalled: true, said: recalled[0] };
     const damaged = ITEM_DAMAGE.exec(text);
     if (damaged) return { op: "damage", of: damaged[1].toLowerCase(), formula: damaged[2] ?? damaged[4], type: (damaged[3] ?? damaged[5] ?? "untyped").toLowerCase(), whose: "target", ignoresHardness: true, said: damaged[0], also: SENTENCES(text).find((sentence) => DISARMED.test(sentence)) ?? null };
     if (MENDED.test(text)) return { op: "repair", affixed: true, negates: true, said: MENDED.exec(text)[0] };

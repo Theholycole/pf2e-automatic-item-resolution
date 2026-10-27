@@ -19,6 +19,8 @@ const itemsOf = (actor) => [...(actor?.items ?? [])].filter((item) => PHYSICAL.h
 const loadedOf = (weapon) => [...(weapon?.subitems ?? [])].filter((entry) => entry.isOfType?.("ammo") || entry.type === "ammo").reduce((sum, entry) => sum + (Number(entry.quantity ?? entry.system?.quantity) || 0), 0);
 const capacityOf = (weapon) => Number(weapon?.system?.ammo?.capacity) || 1;
 const ammoFor = (actor, weapon) => [...(actor?.items ?? [])].find((item) => item.type === "ammo" && (Number(item.quantity ?? item.system?.quantity) || 0) > 0 && (item.isAmmoFor?.(weapon) ?? false)) ?? null;
+// (Its user's ammunition for it run out — the missed round was its last: that stack, to give the round back to.)
+const spentAmmoFor = (actor, weapon) => [...(actor?.items ?? [])].find((item) => item.type === "ammo" && (item.isAmmoFor?.(weapon) ?? false)) ?? null;
 
 // (A spell an item holds, src/compiler/stored-spell.js: its flag, { source, rank, name }.)
 export const storedOf = (item) => item?.flags?.[MODULE_ID]?.storedSpell ?? null;
@@ -46,7 +48,7 @@ export function objectChoices(actor, objects, holderId) {
         : objects.op === "retrieve" ? items.filter((item) => item.system?.containerId === holderId)
             : objects.op === "hand" ? items.filter((item) => !held(item) && fits(item, objects) && (!objects.weapon || item.type === "weapon"))
                 : objects.op === "repair" ? items.filter((item) => Number(item.system?.hp?.max) > 0 && Number(item.system?.hp?.value) < Number(item.system?.hp?.max) && fits(item, objects))
-                    : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && ammoFor(actor, item))
+                    : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && (ammoFor(actor, item) || (objects.recalled && spentAmmoFor(actor, item))))
                         : [];
     return list.map((item) => ({ id: item.id, name: item.name }));
 }
@@ -180,11 +182,13 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
         await chosen.update({ "system.hp.value": max });
         line = `${chosen.name} is repaired (${max} Hit Points), no longer broken`;
     } else if (objects.op === "reload") {
-        // (One round of its user's ammunition for it: PF2e's own attach, as the weapon's reload button does.)
-        const ammo = ammoFor(actor, chosen);
+        // (One round of its user's ammunition for it: PF2e's own attach, as the weapon's reload button does. Recalled, Persistent Lodestone's: the round
+        // it missed with given back first, so none of its user's is spent.)
+        const ammo = ammoFor(actor, chosen) ?? (objects.recalled ? spentAmmoFor(actor, chosen) : null);
         if (!ammo) throw new Error(`${state.user.name} has no ammunition for ${chosen.name}.`);
+        if (objects.recalled) await ammo.update({ "system.quantity": (Number(ammo.quantity ?? ammo.system?.quantity) || 0) + 1 });
         await chosen.attach(ammo, { quantity: 1, stack: true });
-        line = `${chosen.name} is reloaded with ${ammo.name}`;
+        line = objects.recalled ? `${chosen.name} is loaded again with the ${ammo.name} it missed with` : `${chosen.name} is reloaded with ${ammo.name}`;
     } else if (objects.op === "create") {
         // (The last one this item made, gone first when a new one replaces it.)
         const madeBy = (item) => item.flags?.[MODULE_ID]?.made?.by === holder.id;

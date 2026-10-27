@@ -272,3 +272,51 @@ test("a Strike drawn to its user: Black Hole Armor's a line of the card; Arrow-C
     assert.deepEqual(beforeShieldBlock(actor, { damage: { total: 9 } }).params.shieldBlockRequest, true);
     assert.equal(beforeShieldBlock({ itemTypes: { effect: [] } }, { damage: { total: 9 } }), null);
 });
+
+test("rules PF2e can't play on note Effects for their time: Helm of Zeal's extra reaction, Whispering Veil's warning, Undead Scourge's severed undead, Victory Plate's record", () => {
+    const fervor = activation("Helm Of Zeal", "Divine Fervor");
+    assert.deepEqual([fervor.resolution.outcomes.success.noteEffects[0].label, fervor.resolution.outcomes.success.noteEffects[0].duration.expiry, done(fervor)], ["Extra reaction", "turn-start", true]);
+    assert.equal(activation("Helm Of Zeal (Greater)", "Divine Fervor").trigger.frequency.per, "hour");
+    const alert = activation("Whispering Veil", "Unforeseen Alert");
+    assert.deepEqual([alert.resolution.outcomes.success.noteEffects[0].label, alert.resolution.outcomes.success.noteEffects[0].duration.expiry], ["Warned", "turn-end"]);
+    const sever = activation("Undead Scourge", "Sever from the Void");
+    assert.deepEqual([routeOf(sever), sever.item.recipient, sever.noteOnly, done(sever)], ["item", "targets", undefined, true]);
+    assert.match(sever.resolution.outcomes.success.noteEffects[0].text, /counteract rank 4, DC 25/);
+    const record = activation("Victory Plate", 0);
+    assert.deepEqual([record.resolution.outcomes.success.noteEffects[0].label, record.resolution.outcomes.success.noteEffects[0].duration], ["Victory recorded", null]);
+    assert.equal(routeOf(activation("Victory Plate", 1)), "ways", "its Recall as it was");
+});
+
+test("death avoided, information whispered: Locket of Love Left Behind at 1 Hit Point (its casing a line), Lion's Call's Echo the Call", () => {
+    const locket = activation("Locket of Love Left Behind", "True Love's Power");
+    assert.deepEqual([routeOf(locket), locket.item.dropToOne, done(locket)], ["item", true, true]);
+    assert.match(locket.notes[0], /about 1 month and 600 gp/);
+    const echo = activation("Lion's Call", "Echo the Call");
+    assert.deepEqual([routeOf(echo), echo.decided], ["whisper", "information"]);
+    assert.match(echo.whisper.text, /within 1 mile of each other, they can communicate telepathically/);
+});
+
+test("consumables: Fulu of the Drunken Monkey's two ways, Emergency Eye's sight, Inventor's Fulu's lines, Murderer's Knot's Off-Guard while it bleeds, Exuviae Powder's shell, Persistent Lodestone's recalled round", () => {
+    const fulu = consumable("Fulu of the Drunken Monkey");
+    assert.deepEqual([routeOf(fulu), fulu.ways.map((way) => way.name), fulu.ways.every((way) => done(way.plan))], ["ways", ["Against an ingested poison", "Against normal alcohol"], true]);
+    const alcohol = fulu.ways[1].plan.resolution.outcomes.success;
+    assert.deepEqual([alcohol.modifiers[0].value, alcohol.noteEffects[0].rules[0].key, alcohol.noteEffects[0].rules[0].adjustment], [4, "AdjustDegreeOfSuccess", { failure: "to-success", criticalFailure: "to-success" }]);
+    const eye = consumable("Emergency Eye");
+    assert.deepEqual([routeOf(eye), eye.resolution.outcomes.success.noteEffects[0].rules[0].slug, done(eye)], ["item", "blinded", true]);
+    const inventor = consumable("Inventor's Fulu");
+    assert.deepEqual([routeOf(inventor), inventor.notes.length, done(inventor)], ["item", 2, true]);
+    const knot = consumable("Murderer's Knot");
+    assert.equal(routeOf(knot), "save");
+    const row = knot.resolution.outcomes.success;
+    assert.deepEqual([row.effects, row.noteEffects[0].whilePersistent, row.noteEffects[0].rules[0].key, row.manualInstructions, done(knot)], [[], "bleed", "GrantItem", undefined, true]);
+    // (Its owner with Twist the Knife, as live play gives its feats: a rogue's sneak attack at its level.)
+    const twisted = compileItem({ ...item("Murderer's Knot"), ownerLevel: 11, ownerFeats: ["twist-the-knife"] }, options);
+    assert.equal(twisted.resolution.sharedDamage.components[0].formula, "3d6");
+    const powder = consumable("Exuviae Powder");
+    assert.deepEqual([routeOf(powder), powder.noteOnly, powder.ways.length], ["ways", undefined, 2]);
+    const shed = powder.ways[1].plan.resolution.outcomes.success;
+    assert.deepEqual(shed.effects.map((effect) => [effect.slug, effect.value, effect.duration?.mode ?? null]), [["quickened", null, "fixed"], ["doomed", 1, null], ["restrained", null, "until-escape"]]);
+    assert.equal(shed.effects[2].duration.escape.dc, 25);
+    const lodestone = consumable("Persistent Lodestone");
+    assert.deepEqual([routeOf(lodestone), lodestone.objects, done(lodestone)], ["objects", { op: "reload", reload: "1", recalled: true }, true]);
+});
