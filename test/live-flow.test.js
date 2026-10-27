@@ -128,10 +128,11 @@ test("the item's own row goes through the ability module's applyChange, on the d
 });
 
 // (2026-10-27: Swamp Lily Quilt for Ration Tonic, whose nourishment is now its card's line.)
-test("no card for an item with no plan (Beckoning Cat Amulet), nor for PF2e's other messages", async () => {
-    // (2026-10-27: Beckoning Cat Amulet for Swamp Lily Quilt, whose mud is the ability module's zone now — src/compiler/area-readings.js.)
+test("no card for an item with no plan (Heartblood Ring), nor for PF2e's other messages", async () => {
+    // (2026-10-27: Beckoning Cat Amulet for Swamp Lily Quilt, whose mud is the ability module's zone now — src/compiler/area-readings.js. Then
+    // Heartblood Ring for Beckoning Cat Amulet, whose allies' rerolls are its card now — src/compiler/trigger-readings.js.)
     const count = foundry.messages.length;
-    await use(valeros, foundry.giveItem(valeros, source("Beckoning Cat Amulet")));
+    await use(valeros, foundry.giveItem(valeros, source("Heartblood Ring")));
     const check = foundry.makeMessage({ flags: { pf2e: { context: { type: "skill-check" }, origin: { type: "consumable", uuid: "x" } } } });
     await foundry.call("createChatMessage", check);
     await settle();

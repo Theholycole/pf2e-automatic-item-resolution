@@ -43,6 +43,9 @@ export function gateMet(gate, messages, { actorUuid, itemUuid, round = null } = 
     const latest = mine.at(-1);
     const strike = latest && latest.type === "attack-roll" && latest.itemUuid === itemUuid && (!gate.strike.range || (gate.strike.range === "ranged") === Boolean(latest.ranged));
     const maneuver = latest && gate.strike.maneuvers.includes(latest.slug);
-    if (!latest || !(strike || maneuver) || !hit(latest)) return { ok: false, why: `a successful ${gate.strike.range ? `${gate.strike.range} ` : ""}Strike${gate.strike.maneuvers.length ? ", Grapple or Trip" : ""} with it as its last roll` };
+    // (A critical hit only, Grisly Scythe's "Your attack roll with the grisly scythe is a critical success" — src/compiler/trigger-readings.js,
+    // 2026-10-27.)
+    const critical = !gate.strike.critical || latest?.outcome === "criticalSuccess";
+    if (!latest || !(strike || maneuver) || !hit(latest) || !critical) return { ok: false, why: `a ${gate.strike.critical ? "critical hit" : "successful"} ${gate.strike.range ? `${gate.strike.range} ` : ""}Strike${gate.strike.maneuvers.length ? ", Grapple or Trip" : ""} with it as its last roll` };
     return { ok: true, struck: latest.targetUuid ?? null };
 }

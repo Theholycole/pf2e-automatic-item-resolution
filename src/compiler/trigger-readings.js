@@ -1,0 +1,437 @@
+// Triggers, numbers from another roll, rerolls, use limits and results for some creatures only, in the adventure books' items (2026-10-27,
+// docs/needs.md "Triggers", "Rerolls and fortune", "From events", "By kind"): an activation or a consumable read sentence by sentence, every
+// sentence of its effect one of the reading's own — none dropped —, into what its card plays.
+// - Results for some creatures only (plan.ifTarget, src/live/if-target.js): Smogger's thick smog, "creatures that must breathe and aren't holding
+//   their breath take a -2 circumstance penalty to this save", and their Sickened 2 on a failure (ifTarget breathes: a creature that needs air
+//   and has no Effect of holding its breath); Horn of the Sun Aurochs' "Creatures that are specifically vulnerable to sunlight are also
+//   Frightened 1 if they fail this save" (ifTarget sunlight: an ability of theirs named for sunlight, or a vampire's vulnerabilities) — and the
+//   horn's counteract against darkness and sleep, the counteract card beside its save card (plan.item.counteract, its rank half the horn's level).
+// - Rerolls: Beckoning Cat Amulet's "any allies within 10 feet who also just failed or critically failed a Reflex saving throw from the same
+//   source … can also reroll their saving throw and use the better result" (reroll.who "allies": each ally the presser targets, its latest
+//   failed Reflex save — scripts/rerolls.js); Silvanshee Collar's reroll of the failed check, its result its user's pick (the higher of
+//   the two, its user's sensible pick); Pyrefeather Token's "you reduce the triggering recovery check's DC by 1" (reroll.raise.dc, the reroll
+//   card beside its item card's temporary Hit Points — scripts/live.js).
+// - A number from another roll: Cindergrass Poultice's "additional Hit Points equal to the amount of fire damage the creature took within the
+//   last minute (maximum +10)", typed on its card (plan.item.levelTemp from "amount"); Grisly Scythe's critical hit, "Instead of inflicting
+//   slashing damage …, you inflict void damage. You regain a number of hit points equal to half the void damage inflicted" — its Strike that
+//   already hit (strike.hit, its damage roll void by PF2e's DamageAlteration), half the void damage the creature takes healing its user
+//   (plan.drain immediate, scripts/drain.js), its Sickened 1 at the creature struck as the card is applied (scripts/strikes.js), and the card
+//   only after a critical hit with it (plan.gate.strike.critical); Deflecting Branch's reflected shot, "Make a ranged attack against the
+//   creature using your highest proficiency with a ranged weapon" — its user's attack at that proficiency (ownCheck.choose "proficiency"),
+//   the knocked-away attack's damage (plan.strikeDamage from the triggering miss).
+// - Rules PF2e can't play, on a note Effect for its time (the user's ruling, 2026-10-25): a troop's banner kept up (its rout check's Will save
+//   rolled twice, PF2e's RollTwice), a troop's second reaction (Warmaster's Baton), a creature coerced for 1d4 days (Empty Hand Marking), a
+//   faultline in a struck shield (Faultline Hammer), a target branded with a sigil (Golden Branding Iron), a slick grip after a Disarm (Oily
+//   Button), an attitude made helpful (Drumish Pearl Token, a way for each attitude before), immunity to inhaled poisons (Choral Toga, PF2e's
+//   Immunity), a Survival check rolled twice and a day's bonus (Navigator's Feather).
+// - Card lines: a missed Strike sent at another creature (Sensei's Parasol, the GM rolling its new Strike), a curse after five days' use (Festrem
+//   Mortu, out of combat). And Winder's Ring's flat check, a one-off rule (src/compiler/one-offs.js, its own key: the ring's other activation
+//   shares its source name). Pure.
+
+import { withDecided } from "./decided.js";
+import { sentencesOf } from "./lasting.js";
+import { plainText } from "./rows.js";
+
+const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours", day: "days", days: "days" };
+const timeOf = (value, unit) => ({ mode: "fixed", value: Number(value), unit: UNITS[String(unit).toLowerCase()], expiry: "turn-start", anchor: "effect-start" });
+const THIS_TURN = { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" };
+const NEXT_TURN_END = { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "source-turn" };
+const TARGET_TURN_END = { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" };
+const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+const condition = (slug, value) => ({ kind: "condition", slug, value: Number(value), duration: null });
+
+// The card's parts: a row of its own (note Effects, conditions) for its user, or — targets — for the creatures its presser targets (the item
+// card's recipient "targets"); its lines.
+const ownRow = ({ noteEffects = [], effects = [], notes = [], target = null, targets = false }) => ({
+    targeting: { target, range: null, area: null },
+    resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), effects, ...(noteEffects.length ? { noteEffects } : {}) } } },
+    ...(notes.length ? { notes } : {}),
+    ...(targets ? { item: { recipient: "targets" } } : {})
+});
+// (A way of the ways card: its own plan, as the activation's.)
+const wayPlan = ({ item: own, ...card }, { base, info }) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...card, item: { ...info, ...(own ?? {}) } });
+// (A reroll card's plan, src/compiler/rerolls.js's shape.)
+const rerollCard = (reroll, target = "self") => ({ builtin: "reroll", targeting: { target, range: reroll.within ? `${reroll.within} feet` : null, area: null }, reroll });
+// (Its rows without the whole text's reminder, the rest now read.)
+const withoutReminder = (outcomes) => Object.fromEntries(Object.entries(outcomes ?? {}).map(([degree, row]) => [degree, row?.noteEffects ? { ...row, noteEffects: row.noteEffects.filter((note) => !note.reminder) } : row]));
+// (A save plan's rows as its reading expects them: each degree's condition slugs.)
+const slugs = (row) => (row?.effects ?? []).filter((effect) => effect?.kind === "condition").map((effect) => effect.slug);
+
+// Each reading: the source name it's for (an activation's "Item: Activation"; a pattern for an item's grades), whether it goes over a plan read
+// before (over: the plan's test), a pattern for each of its effect's sentences — every sentence must be one, in order — and the card they make
+// (from its matches, the plan read before, and { html, base, info, item, frequency }).
+const READINGS = [
+    // --- Results for some creatures only.
+    {
+        // (Every creature in the smog saves, its wearer too; those that need air and aren't holding their breath −2 and Sickened 2 on a failure.)
+        name: "Smogger",
+        over: (plan) => plan?.resolution?.kind === "save" && plan.resolution.check?.statistic === "fortitude",
+        sentences: [
+            /^The smog created by the smogger thickens into a toxic element that burns the eyes, blisters flesh, and causes fits of coughing\.$/,
+            /^All creatures in the smog cloud, including you, must attempt a @Check\[fortitude\|dc:\d+\] save\s*[-–—]\s*creatures that must breathe and aren't holding their breath take an? [-–−](\d+) (circumstance|status) penalty to this save\.$/,
+            /^Critical Success The creature is unaffected\.$/,
+            /^Success The creature is sickened (\d+)\.$/,
+            /^Failure The creature is sickened (\d+) \(or increases their sickened condition value to (\d+) if it isn't holding its breath\)\.$/,
+            /^The creature also takes \d+d\d+ poison damage\.$/,
+            /^Critical Failure As failure, but the creature takes \d+d\d+ poison damage\.$/
+        ],
+        card: ([, save, , , failed], plan) => {
+            const rows = plan.resolution.outcomes ?? {};
+            if (!["failure", "criticalFailure"].every((degree) => slugs(rows[degree]).includes("sickened"))) return null;
+            const worse = Number(failed[2]);
+            return {
+                keep: true,
+                partial: undefined,
+                automation: { ...(plan.automation ?? {}), level: "automatic" },
+                targeting: { target: null, range: null, area: { type: "emanation", value: 10 } },
+                ifTarget: [
+                    { breathes: true, bonus: { value: -Number(save[1]), type: save[2].toLowerCase() } },
+                    { breathes: true, degree: "failure", effects: [condition("sickened", worse)] },
+                    { breathes: true, degree: "criticalFailure", effects: [condition("sickened", worse)] }
+                ],
+                notes: [
+                    "At every creature in the smog — 10 feet around its wearer, 5 in a strong wind —, its wearer too.",
+                    `A creature holding its breath (the free action at its turn's start in the smog) has an Effect saying so — the environment module's Remaining Air, or one named for holding its breath: no −${save[1]} for it, and Sickened ${failed[1]} on a failure, as for one that needn't breathe.`
+                ]
+            };
+        }
+    },
+    {
+        // (Its enemies in the emanation save; those vulnerable to sunlight Frightened too; darkness and sleep there counteracted beside it.)
+        name: "Horn of the Sun Aurochs",
+        over: (plan) => plan?.resolution?.kind === "save" && plan.resolution.check?.basic === true,
+        sentences: [
+            /^The horn is clearly audible for hundreds of feet, but within a (\d+)-foot emanation, the sound causes agony in those who wish harm upon the user; the horn also sheds bright light in that area and dim light to the next (\d+) feet\.$/,
+            /^Enemies of the user in this area take \d+d\d+ \w+ damage and \d+d\d+ \w+ damage \(@Check\[fortitude\|dc:\d+\|basic\] save\)\.$/,
+            /^Creatures that are specifically vulnerable to sunlight are also Frightened (\d+) if they fail this save or Frightened (\d+) on a critical failure\.$/,
+            /^This activation also attempts to counteract any darkness or sleep effects in the area \(\+(\d+) counteract check\)\.$/
+        ],
+        card: ([area, , sunlight, counteract], plan) => {
+            const level = Number(plan.item?.level) || 1;
+            const rank = Math.max(1, Math.ceil(level / 2));
+            return {
+                keep: true,
+                partial: undefined,
+                automation: { ...(plan.automation ?? {}), level: "automatic" },
+                targeting: { target: null, range: null, area: { type: "emanation", value: Number(area[1]) } },
+                ifTarget: [
+                    { sunlight: true, degree: "failure", effects: [condition("frightened", sunlight[1])] },
+                    { sunlight: true, degree: "criticalFailure", effects: [condition("frightened", sunlight[2])] }
+                ],
+                notes: [`Target its user's enemies within ${area[1]} feet.`, `As it sounds, the horn sheds bright light in that emanation and dim light ${area[2]} feet past it.`],
+                item: { ...plan.item, counteract: { modifier: Number(counteract[1]), rank, conditions: [], traits: [], afflictions: [], free: { name: `each darkness or sleep effect in the ${area[1]}-foot emanation` }, pick: "one", notes: [`One roll against each of them; its counteract rank ${rank}, half the horn's level.`] } }
+            };
+        }
+    },
+    // --- Rerolls.
+    {
+        // (The allies within 10 feet who failed the same Reflex save: each ally targeted, its latest failed Reflex save rerolled, the better kept.)
+        name: "Beckoning Cat Amulet",
+        sentences: [
+            /^Usage affixed to armor Activat(?:e|ion)\b.*?\bTrigger You use a feat or ability to reroll a failed or critically failed Reflex saving throw \(such as [^)]+\)\.$/,
+            /^This clay figurine resembles a white cat with a paw outstretched\.$/,
+            /^When it's activated, any allies within (\d+) feet who also just failed or critically failed a Reflex saving throw from the same source \(such as a fireball spell\) can also reroll their saving throw and use the better result\.$/
+        ],
+        // (Its line the reroll card's own, reroll.after: that card shows no plan notes.)
+        card: ([, , allies]) => rerollCard({ what: "save", statistic: "reflex", keep: "higher", who: "allies", within: Number(allies[1]), failed: true, after: `Only allies whose failed Reflex save was against the same effect as its user's: target them.` }, `allies within ${allies[1]} feet`)
+    },
+    {
+        // (A failed Lie or Make an Impression rerolled, its user's pick of the two: the higher.)
+        name: "Silvanshee Collar: Awww!",
+        sentences: [/^Your pet does something distracting or adorable at the precise moment you failed, allowing you to reroll the failed check and to use the result\s+of your choice as the actual result\.$/],
+        card: () => rerollCard({ what: "check", statistic: ["deception", "diplomacy"], keep: "higher", who: "self" })
+    },
+    {
+        // (A recovery check's DC 1 lower, its degree again — the reroll card beside the item card's 5 temporary Hit Points.)
+        name: "Pyrefeather Token",
+        over: (plan) => (plan?.resolution?.outcomes?.success?.effects ?? []).some((effect) => effect?.kind === "temp-hp"),
+        sentences: [
+            /^Trigger You succeed at, fail, or critically fail a recovery check while Dying by \d+\.$/,
+            /^This pyrefowl feather, accentuated with beadwork, stores a spark of the bird's self-healing power\.$/,
+            /^When you Activate the token, you reduce the triggering recovery check's DC by (\d+), potentially improving your check's degree of success\.$/,
+            /^You also gain \d+ temporary Hit Points that last for \d+ minutes?\.$/,
+            /^You can Activate this talisman even while Unconscious\.$/
+        ],
+        card: ([, , lower], plan) => ({
+            keep: true,
+            partial: undefined,
+            unread: undefined,
+            automation: { ...(plan.automation ?? {}), level: "automatic" },
+            resolution: { ...plan.resolution, outcomes: withoutReminder(plan.resolution.outcomes) },
+            reroll: { what: "check", keep: "new", who: "self", recovery: true, raise: { dc: -Number(lower[1]) } },
+            notes: ["Usable even while Unconscious: its reroll card changes the recovery check just rolled."]
+        })
+    },
+    // --- A number from another roll.
+    {
+        // (The fire damage it took in the last minute, typed on the card: that many more Hit Points, 10 at most.)
+        name: "Cindergrass Poultice",
+        over: (plan) => Boolean(plan?.temperature) && (plan.resolution?.outcomes?.success?.effects ?? []).some((effect) => effect?.kind === "heal"),
+        sentences: [
+            /^This thick, waxy gel erases the effects of flame\.$/,
+            /^It restores \d+d\d+ Hit Points to a creature when applied to their body\.$/,
+            /^If the creature has taken (fire) damage within the last minute, it restores additional Hit Points equal to the amount of fire damage the creature took within the last minute \(maximum \+(\d+)\)\.$/,
+            /^Finally, the creature becomes immune to the effects of severe heat for \d+ hours?\.$/
+        ],
+        card: ([, , extra], plan) => ({
+            keep: true,
+            partial: undefined,
+            unread: undefined,
+            automation: { ...(plan.automation ?? {}), level: "automatic" },
+            resolution: { ...plan.resolution, outcomes: withoutReminder(plan.resolution.outcomes) },
+            item: { ...plan.item, levelTemp: [...(plan.item?.levelTemp ?? []), { from: "amount", of: `the ${extra[1]} damage it took within the last minute`, multiplier: 1, max: Number(extra[2]), heal: true, duration: null }] }
+        })
+    },
+    {
+        // (Its critical hit's damage void instead, half of what the creature takes healing its user, the creature struck Sickened 1.)
+        name: "Grisly Scythe",
+        over: (plan) => !plan || Boolean(plan.partial),
+        sentences: [
+            /^Instead of inflicting (\w+) damage with the [\w' -]+?, you inflict (\w+) damage\.$/,
+            /^You regain a number of hit points equal to half the (\w+) damage inflicted, and the creature struck becomes Sickened (\d+) from the agony\.$/
+        ],
+        card: ([instead, regain], plan, { info, frequency }) => {
+            if (instead[2].toLowerCase() !== regain[1].toLowerCase()) return null;
+            const type = instead[2].toLowerCase();
+            const rows = Object.fromEntries(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => [degree, none()]));
+            rows.criticalSuccess = { ...none(), effects: [condition("sickened", regain[2])] };
+            return {
+                targeting: { target: "the creature the Strike hits", range: null, area: null },
+                trigger: { event: "strike", on: ["criticalSuccess"], cost: "free", ...(frequency ? { frequency } : {}) },
+                resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: rows },
+                strike: { range: null, save: null, own: true, damage: [], attack: null, alteration: type, unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: true, lines: [`Its user regains Hit Points equal to half the ${type} damage the creature struck takes (after its resistances)`], notes: [] },
+                drain: { fraction: 0.5, type, duration: null, heal: true, immediate: true },
+                gate: { strike: { critical: true, maneuvers: [] } },
+                item: info
+            };
+        }
+    },
+    {
+        // (The knocked-away shot sent at a creature within 60 feet: its user's attack at its best ranged weapon proficiency, the shot's damage.)
+        name: "Deflecting Branch",
+        sentences: [
+            /^You swing the club and reflect the oncoming attack\.$/,
+            /^The attack is redirected toward a creature within (\d+) feet\.$/,
+            /^Make a ranged attack against the creature using your highest proficiency with a ranged weapon\.$/
+        ],
+        card: ([, within]) => ({
+            ownCheck: { kind: "attack", modifier: null, choose: ["proficiency"] },
+            targeting: { target: "1 creature", range: `${within[1]} feet`, area: null },
+            resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: null }, outcomes: Object.fromEntries(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => [degree, none()])) },
+            strikeDamage: { as: null, from: "triggering-miss", rows: { success: 1, criticalSuccess: 2 } }
+        })
+    },
+    // --- Rules on note Effects.
+    {
+        // (The troop's rout check for its fallen leader: its next Will save rolled twice, the better kept.)
+        name: "Banner of Common Cause: Pass the Banner",
+        sentences: [
+            /^A member of the troop you're leading picks up and displays the banner, maintaining the troop's cohesion\.$/,
+            /^When attempting its rout check due to losing its leader, the troop rolls its Will save twice and uses the better result\.$/
+        ],
+        card: () => ownRow({ target: "the troop its user leads", targets: true, noteEffects: [{ label: "Banner passed", text: "One of the troop holds up the fallen leader's banner: its rout check for losing its leader, a Will save, is rolled twice and the better kept.", duration: null, rules: [{ key: "RollTwice", selector: "will", keep: "higher", removeAfterRoll: true }] }] })
+    },
+    {
+        // (A second reaction, at once against the enemy that triggered it.)
+        name: /^Warmaster's Baton(?: \(Greater\))?: Rally Forth$/,
+        sentences: [/^The troop under your command gains a second reaction that they must immediately use against the triggering enemy\.$/],
+        card: () => ownRow({ target: "the troop its user commands", targets: true, noteEffects: [{ label: "Second reaction", text: "A second reaction this turn, to be used at once against the enemy that triggered it.", duration: THIS_TURN }] })
+    },
+    {
+        // (The coerced creature's compliance up to 1d4 days, the GM's secret roll.)
+        name: "Empty Hand Marking: Reproach",
+        sentences: [/^The maximum duration of the target's compliance increases to (\d+d\d+) days, rather than (\d+) day\.$/],
+        card: ([[, dice, usual]]) => ownRow({ target: "the creature Coerced", targets: true, noteEffects: [{ label: "Compliance lengthened", text: `Coerced by its user, it may comply for up to ${dice} days (the GM rolls them in secret) instead of ${usual} day.`, duration: null }] })
+    },
+    {
+        // (Until the end of its user's next turn, Strikes at the struck shield or object deal razing's extra damage — the hammer's own Strike too.)
+        name: "Faultline Hammer: Create Faultline",
+        sentences: [
+            /^Until the end of your next turn, any weapon that Strikes the object deals additional damage as though the weapon had the razing trait\.$/,
+            /^The triggering Strike also deals this additional damage\.$/
+        ],
+        card: (found, plan, { item }) => {
+            const dice = 1 + (Number(item?.system?.runes?.striking) || 0);
+            return ownRow({
+                target: "the creature holding the struck shield or object",
+                targets: true,
+                notes: ["Target the creature holding the shield or object struck; a faultline in an unattended object is the map's."],
+                noteEffects: [{ label: "Faultline", text: `A faultline runs through the shield or object struck: until the end of the hammer wielder's next turn, any weapon Striking it deals it additional damage as a razing weapon does (twice the weapon's damage dice) — the hammer's own triggering Strike too, ${2 * dice} more.`, duration: NEXT_TURN_END }]
+            });
+        }
+    },
+    {
+        // (A sigil on the creature hit, seen only by its user and up to 6 allies, for a month, a year or for good.)
+        name: /^Golden Branding Iron(?: \((?:Greater|Major)\))?$/,
+        sentences: [
+            /^Trigger You hit a target with a ranged Strike with the affixed weapon Requirements You're an expert with the affixed weapon\.$/,
+            /^This talisman is a gold-plated brand that can be affixed to a ranged weapon's stock\.$/,
+            /^When you activate a golden branding iron, you mark the target with your magical sigil\.$/,
+            /^You harmlessly place your unique magical sigil, which is about 1 square inch in size, anywhere on the target creature, as long as the location is visible to you\.$/,
+            /^The mark is only visible to you and up to (\d+) of your allies\.$/,
+            /^The mark can be scrubbed or scraped off with (\d+) minutes of work\.$/,
+            /^(?:It fades naturally over the course of an? (month|year)|It never fades naturally)\.$/
+        ],
+        card: ([, , , , seen, scrubbed, fades]) => {
+            const days = { month: 30, year: 365 }[String(fades[1] ?? "").toLowerCase()] ?? null;
+            return ownRow({
+                target: "the creature hit",
+                targets: true,
+                notes: ["Its user, expert with the ranged weapon it's affixed to, activates it as that weapon's Strike hits: target the creature hit."],
+                noteEffects: [{ label: "Branded", text: `Its user's magical sigil, about an inch across, is somewhere on it its user could see, visible only to its user and up to ${seen[1]} of their allies. ${scrubbed[1]} minutes' work scrubs or scrapes it off (delete this then). ${days ? `It fades over a ${fades[1].toLowerCase()}.` : "It never fades."}`, duration: days ? timeOf(days, "days") : null }]
+            });
+        }
+    },
+    {
+        // (Its opponent's slick grip after its user's Disarm: the penalty until the end of its next turn, its user's next Disarms at +4.)
+        name: "Oily Button",
+        sentences: [
+            /^Usage affixed to armor Activat(?:e|ion)\b.*?\bTrigger You succeed at an Athletics check to Disarm Requirements You are an expert in Athletics\.$/,
+            /^A thin sheen of slick oil covers this gaudy button\.$/,
+            /^When you activate the oily button, your attempts to Disarm your opponent of an item before the start of the opponent's next turn gain a \+(\d+) circumstance bonus instead of \+(\d+), and the [-–−](\d+) circumstance penalty to attacks with the item or other checks requiring a firm grasp on the item lasts until the end of its next turn or until it uses an Interact action to adjust its grip\.$/
+        ],
+        card: ([, , [, bonus, usual, penalty]]) => ownRow({
+            target: "the creature Disarmed",
+            targets: true,
+            notes: ["Its user, expert in Athletics, activates it as its Disarm succeeds: target that opponent."],
+            noteEffects: [{ label: "Slick grip", text: `Its grip on the item it was nearly Disarmed of is slick: −${penalty} circumstance to attacks with that item and to checks needing a firm grasp on it until the end of its next turn, or until it Interacts to adjust its grip (delete this then). Until the start of its next turn, its disarmer's attempts to Disarm it of that item get +${bonus} circumstance instead of +${usual}.`, duration: TARGET_TURN_END }]
+        })
+    },
+    {
+        // (Its user's attitude toward it made helpful: for good from indifferent or better; from unfriendly or hostile, 10 minutes, then it knows.)
+        name: "Drumish Pearl Token: Subversive Friendship",
+        sentences: [
+            /^You automatically increase the target's attitude to helpful\.$/,
+            /^If the target's initial attitude was unfriendly or hostile, they revert to this attitude after (\d+) (minutes?|hours?) and realize they've been manipulated by you\.$/,
+            /^Afterward, they might decide to act against you\.$/
+        ],
+        card: ([, reverts], plan, context) => {
+            const helpful = (text, duration) => wayPlan(ownRow({ target: "the creature Made an Impression on", targets: true, noteEffects: [{ label: "Helpful", text, duration }] }), context);
+            return {
+                builtin: "ways",
+                once: true,
+                targeting: { target: null, range: null, area: null },
+                ways: [
+                    { name: "It was indifferent or better", html: "", plan: helpful("Its attitude toward the token's wearer is helpful.", null) },
+                    { name: "It was unfriendly or hostile", html: "", plan: helpful(`Its attitude toward the token's wearer is helpful for ${reverts[1]} ${reverts[2]}; then it's back to the attitude it had and knows it was manipulated — it may act against the wearer.`, timeOf(reverts[1], reverts[2])) }
+                ]
+            };
+        }
+    },
+    {
+        // (Immune to inhaled poisons for the minute: PF2e's Immunity on its user's Effect.)
+        name: "Choral Toga: Elysium's Gasp",
+        sentences: [/^Purifying gusts of sweet-scented air swirl around you, making you immune to (inhaled) poisons for (\d+) (minutes?|rounds?|hours?)\.$/],
+        card: ([[, kind, value, unit]]) => ({ ...ownRow({ noteEffects: [{ label: "Immune to inhaled poisons", text: `Sweet air swirls around it: immune to ${kind} poisons.`, duration: timeOf(value, unit), rules: [{ key: "Immunity", type: kind }] }] }), noteOnly: undefined })
+    },
+    {
+        // (The triggering Sense Direction or Track rolled twice, the higher kept; then +1 circumstance to both for a day, each on its own terms.)
+        name: "Navigator's Feather",
+        sentences: [
+            /^Trigger You would roll a Survival check to Sense Direction or Track but haven't rolled yet Requirements You're trained in Survival\.$/,
+            /^This jaunty feather is affixed to headgear and can guide you in times of trouble, twisting to point in different directions\.$/,
+            /^When you activate the talisman, you roll the triggering Survival check to Sense Direction or Track twice, and use the higher result\.$/,
+            /^For (\d+) hours, you gain a \+(\d+) circumstance bonus to Survival checks to Sense Direction, so long as you're navigating toward the same destination as when you activated the talisman, and a \+(\d+) circumstance bonus to Survival checks to Track, so long as you continue to Track the same creature as when you activated the talisman\.$/,
+            /^After \d+ hours, the feather disintegrates, becoming mundane dust that blows away on the breeze\.$/
+        ],
+        card: ([, , , [, hours, direction, track]]) => ({
+            ...ownRow({
+                noteEffects: [
+                    { label: "Rolled twice", text: "Its Survival check to Sense Direction or Track now is rolled twice, the higher kept.", duration: null, rules: [{ key: "RollTwice", selector: "survival", keep: "higher", removeAfterRoll: true, predicate: [{ or: ["action:sense-direction", "action:track"] }] }] },
+                    { label: "Guided", text: `+${direction} circumstance to Survival checks to Sense Direction while it heads for the same destination, and +${track} circumstance to Survival checks to Track while it follows the same creature (it's for the ones it activated the feather for).`, duration: timeOf(hours, "hours"), rules: [{ key: "FlatModifier", selector: "survival", type: "circumstance", value: Number(direction), predicate: ["action:sense-direction"] }, { key: "FlatModifier", selector: "survival", type: "circumstance", value: Number(track), predicate: ["action:track"] }] }
+                ]
+            }),
+            noteOnly: undefined
+        })
+    },
+    // --- Card lines.
+    {
+        // (The missed melee Strike made again at another creature or object within the attacker's reach: the GM rolls it.)
+        name: "Sensei's Parasol: Defensive Redirection",
+        sentences: [
+            /^You redirect the missed Strike to target a creature or object within the triggering creature's reach\.$/,
+            /^The triggering creature rolls a new Strike against the new target to determine the results of the redirected attack\.$/
+        ],
+        card: () => ownRow({ notes: ["The melee Strike that missed its user is redirected: its user picks a creature or object within the attacker's reach, and the GM rolls that creature's Strike again at the new target."] })
+    },
+    {
+        // (Its 10 temporary Hit Points read already; the curse after five days of preparing from it, out of combat, a line.)
+        name: "Festrem Mortu",
+        over: (plan) => (plan?.resolution?.outcomes?.success?.effects ?? []).some((effect) => effect?.kind === "temp-hp"),
+        sentences: [
+            /^You draw void energy from the triggering spell\.$/,
+            /^You gain \d+ temporary hit points that last for \d+ hours?\.$/,
+            /^Special If this grimoire is used to prepare spells (\w+) days in succession by the same caster, that caster is subjected to the curse of the ravenous\.$/,
+            /^Curse of the Ravenous This hideous curse kills through constant hunger\.$/,
+            /^You become gaunt and repeatedly gnash your teeth\.$/,
+            /^Saving Throw @Check\[fortitude\|dc:(\d+)\] Effect No matter how much you eat, you aren't satiated\.$/,
+            /^After (\d+) days?, you begin starving\.$/,
+            /^Each week, you receive a new saving throw against the curse\.$/
+        ],
+        card: ([, , days, , , save, starving], plan) => ({
+            keep: true,
+            partial: undefined,
+            unread: undefined,
+            automation: { ...(plan.automation ?? {}), level: "automatic" },
+            resolution: { ...plan.resolution, outcomes: withoutReminder(plan.resolution.outcomes) },
+            notes: [`Out of combat: a caster who prepares spells from it ${days[1]} days running meets the curse of the ravenous (Fortitude DC ${save[1]}, the GM's): never sated, starving after ${starving[1]} day${starving[1] === "1" ? "" : "s"}, a new save each week.`]
+        })
+    },
+    // --- A one-off rule (src/compiler/one-offs.js), under its own key.
+    {
+        // (The winding key's flat check, the ring out until its user's next daily preparations on a failure: Winder's Ring's own rule.)
+        name: "Winder's Ring",
+        sentences: [
+            /^The winder's ring extends a winding key that fits any clockwork contraption or creature, allowing you to fully wind a clockwork device or creature in half the usual time\.$/,
+            /^When you activate a winder's ring in this way, attempt a @Check\[flat\|dc:\d+\]\.$/,
+            /^On a failure, the winder's ring exhausts itself, and you can't activate it again until the next time you make your daily preparations\.$/
+        ],
+        card: (found, plan, { html, base, info, frequency }) => {
+            const decided = withDecided(null, { text: plainText(html), base: { ...base, item: info, ...(frequency ? { trigger: { event: "use", frequency } } : {}) }, kind: "activation", name: WINDING_KEY });
+            if (!decided) return null;
+            const { item: _item, ...rest } = decided;
+            return rest;
+        }
+    }
+];
+// (The one-off's key: its activation has no name of its own, and the ring's other one shares "Winder's Ring".)
+export const WINDING_KEY = "Winder's Ring: winding key";
+
+const named = (reading, name) => (reading.name instanceof RegExp ? reading.name.test(String(name ?? "")) : reading.name === name);
+// Whether a reading is for this source name (its words aren't worth reading otherwise).
+export const hasTriggerReading = (name) => READINGS.some((reading) => named(reading, name));
+
+// Its sentences as one reading's, each matched in order → the matches, or null.
+function matched(reading, sentences) {
+    if (sentences.length !== reading.sentences.length) return null;
+    const found = sentences.map((sentence, index) => reading.sentences[index].exec(sentence));
+    return found.every(Boolean) ? found : null;
+}
+
+// The plan (null, note-only or the GM's no-effect — or the one a reading goes over) and its effect's words → the reading's card, or the same
+// plan. name: its source name; base, info, frequency: its own (an activation's, or a consumable's basePlan and itemInfo); html: its text; item:
+// the item. (A card with keep: true goes over the plan read before, its fields changed, undefined ones gone.)
+export function withTriggerReading(plan, { name, words, html = "", base, info, frequency = null, item = null }) {
+    const readings = READINGS.filter((reading) => named(reading, name) && (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect"));
+    const sentences = words ? sentencesOf(words) : [];
+    for (const reading of readings) {
+        const found = matched(reading, sentences);
+        const card = found ? reading.card(found, plan, { html, base, info, item, frequency }) : null;
+        if (!card) continue;
+        if (card.keep) {
+            const { keep, ...changes } = card;
+            const next = { ...plan, ...changes };
+            for (const key of Object.keys(changes)) if (changes[key] === undefined) delete next[key];
+            return next;
+        }
+        const { item: own, ...rest } = card;
+        return {
+            ...base,
+            automation: { level: "automatic" },
+            trigger: { event: "use", ...(frequency ? { frequency } : {}) },
+            ...rest,
+            item: { ...info, ...(own ?? {}) }
+        };
+    }
+    return plan;
+}

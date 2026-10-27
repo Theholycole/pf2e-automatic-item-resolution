@@ -315,6 +315,9 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.alsoRetaliation && route !== "later") await postExposureCard({ message, plan: { ...plan.alsoRetaliation, item: plan.item, spend: undefined }, used, actor, token, later: true }).catch((error) => console.error(`${MODULE_ID} | retaliation card`, error));
     // (Its user's move beside the rest, Phase Spike's Stride with its resistance: the teleport card's as a move, src/compiler/move.js.)
     if (plan?.item?.move && route !== "teleport") await postTeleportCard({ message, plan: { ...plan, builtin: "teleport", teleport: plan.item.move, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | move card`, error));
+    // (A change to the roll just made beside the rest, Pyrefeather Token's recovery check 1 easier with its temporary Hit Points: the reroll card
+    // too, src/compiler/trigger-readings.js — 2026-10-27.)
+    if (plan?.reroll && route !== "reroll") await postRerollCard({ message, plan: { ...plan, builtin: "reroll", spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | reroll card`, error));
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });

@@ -21,9 +21,26 @@ const sensesOf = (actor) => [...(actor?.system?.perception?.senses ?? []), ...(a
 const living = (actor) => (actor?.modeOfBeing ? actor.modeOfBeing === "living" : !traitsOf(actor).has("undead") && !traitsOf(actor).has("construct"));
 // (Its weakness of a type, PF2e's attributes.weaknesses: its value, 0 with none.)
 export const weaknessOf = (actor, type) => Math.max(0, ...((actor?.attributes ?? actor?.system?.attributes ?? {}).weaknesses ?? []).filter((weakness) => String(weakness?.type ?? "").toLowerCase() === type).map((weakness) => Number(weakness.value) || 0));
+// (2026-10-27, src/compiler/trigger-readings.js: a creature that must breathe and isn't holding its breath — no construct (an eidolon aside)
+// nor undead, no ability saying it needn't breathe, as the environment module reads them, and no Effect of holding its breath, that module's
+// Remaining Air or one named for it —, Smogger's smog; one specifically vulnerable to sunlight — an ability named for sunlight (Sunlight
+// Powerlessness, Vulnerable to Sunlight) or a vampire's vulnerabilities —, Horn of the Sun Aurochs'.)
+const ENVIRONMENT_ID = "pf2e-automatic-environment-resolution";
+const itemsOf = (actor) => (Array.isArray(actor?.items) ? actor.items : actor?.items?.contents ?? [...(actor?.items ?? [])]);
+const abilityNames = (actor) => itemsOf(actor).filter((item) => ["action", "feat"].includes(item?.type)).map((item) => String(item?.name ?? "").toLowerCase());
+const NO_BREATH = /\b(?:doesn't need to breathe|does not breathe|no breath)\b/;
+const HOLDING = /\bholding (?:its |your |their )?breath\b|\bremaining air\b/i;
+export function breathes(actor) {
+    const traits = traitsOf(actor);
+    if ((traits.has("construct") && !traits.has("eidolon")) || traits.has("undead")) return false;
+    if (abilityNames(actor).some((name) => NO_BREATH.test(name))) return false;
+    return !(actor?.itemTypes?.effect ?? []).some((effect) => effect?.flags?.[ENVIRONMENT_ID]?.air || HOLDING.test(String(effect?.name ?? "")));
+}
+const SUNLIGHT = /\bsunlight\b|\bvampire (?:vulnerabilities|weaknesses)\b/;
+export const sunlightVulnerable = (actor) => abilityNames(actor).some((name) => SUNLIGHT.test(name));
 // (Or a creature without it, lacks: Dawnlight's flash only for creatures with darkvision, the rest immune — 2026-10-27.)
 const fits = (entry, actor) => (entry.lacks ? !fitsKind({ ...entry, lacks: false }, actor) : fitsKind(entry, actor));
-const fitsKind = (entry, actor) => (entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
+const fitsKind = (entry, actor) => (entry.breathes ? breathes(actor) : entry.sunlight ? sunlightVulnerable(actor) : entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
 
 // The plan for that creature: its riders added to their degree's effects when it fits; a save's bonus or penalty for its kind (Lamentation of
 // the Faithless's holy creatures' –2); null for a kind immune to it (its unholy ones).

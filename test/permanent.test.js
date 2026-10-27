@@ -656,8 +656,10 @@ test("healing back from dying without raising Wounded (Magical Medal (Phoenix's 
     // (Another of its activations recharged, Smoldering Armor's "The fire shield activation recharges": the first one, by its words.)
     const smoldering = compileActivations(item("Smoldering Armor"), { spellEffects })[1].plan;
     assert.deepEqual([smoldering.item.recharges, smoldering.partial], [{ index: 0, name: "fire shield" }, undefined]);
+    // (2026-10-27: Grisly Scythe's whole critical hit is its Strike card now — its void damage, the healing from it, the Sickened 1 —,
+    // src/compiler/trigger-readings.js, test/triggers-b3-2026-10-27.test.js: nothing of it unread.)
     const scythe = compileActivations(item("Grisly Scythe"), { spellEffects })[0].plan;
-    assert.ok(scythe.partial && scythe.unread.some((sentence) => /the creature struck becomes Sickened 1/.test(sentence)), JSON.stringify(scythe.unread));
+    assert.ok(!scythe.partial && !(scythe.unread ?? []).length && scythe.resolution.outcomes.criticalSuccess.effects.some((effect) => effect.slug === "sickened"), JSON.stringify(scythe.unread));
 });
 
 test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 force damage\" at the target, the designated offender's more a note; Swarmeater's Clasp's \"You recover 3d10+8 Hit Points\" and the same at the swarm (test/options-flow.test.js)", () => {
