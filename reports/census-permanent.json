@@ -6,9 +6,9 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 952,
+   "resolves": 953,
    "builtin:cast-spell": 474,
-   "partial": 115,
+   "partial": 113,
    "none": 384,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
@@ -18,7 +18,7 @@
    "builtin:table": 7,
    "builtin:teleport": 28,
    "builtin:no-effect": 82,
-   "builtin:ways": 34,
+   "builtin:ways": 35,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 27,
    "builtin:modes": 34,
@@ -31,7 +31,7 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 435,
+   "save": 434,
    "cast": 474,
    "item": 643,
    "none": 491,
@@ -42,7 +42,7 @@
    "strike": 116,
    "table": 7,
    "teleport": 28,
-   "ways": 34,
+   "ways": 35,
    "zone": 27,
    "toggle": 34,
    "objects": 31,
@@ -110,7 +110,7 @@
   "ammo": {
    "activations": 153,
    "results": {
-    "partial": 20,
+    "partial": 19,
     "resolves": 67,
     "builtin:pf2e-rules": 22,
     "none": 23,
@@ -118,7 +118,7 @@
     "builtin:no-effect": 2,
     "note-only": 3,
     "builtin:spellstrike": 9,
-    "builtin:ways": 3,
+    "builtin:ways": 4,
     "builtin:zone": 1
    }
   },
@@ -158,7 +158,7 @@
    "activations": 100,
    "results": {
     "builtin:cast-spell": 11,
-    "resolves": 43,
+    "resolves": 44,
     "none": 12,
     "note-only": 12,
     "builtin:modes": 4,
@@ -167,7 +167,7 @@
     "builtin:no-effect": 2,
     "builtin:ways": 2,
     "builtin:counteract": 1,
-    "partial": 6,
+    "partial": 5,
     "builtin:zone": 1,
     "builtin:item-action": 1
    }
@@ -16178,9 +16178,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "builtin:ways",
    "kind": "save",
-   "live": "save"
+   "live": "ways"
   },
   {
    "name": "Soulheart (Angelic)",
@@ -25717,7 +25717,7 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },

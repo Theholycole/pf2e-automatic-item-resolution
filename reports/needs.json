@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1265,
+  "entries": 1263,
   "results": {
-   "partial": 368,
+   "partial": 366,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -32,8 +32,8 @@
    "areas": 122,
    "cooldown": 10,
    "vehicles": 21,
-   "reader": 18,
-   "triggers": 87,
+   "reader": 17,
+   "triggers": 86,
    "situational": 16,
    "dying": 29,
    "senses": 21,
@@ -59,13 +59,13 @@
    "afflictions": 106,
    "lasting": 228,
    "moving": 106,
-   "triggers": 117,
+   "triggers": 116,
    "visibility": 49,
    "dying": 75,
    "choice": 107,
    "several": 102,
    "strike": 188,
-   "reader": 206,
+   "reader": 205,
    "spells": 75,
    "information": 195,
    "actions": 60,
@@ -8702,16 +8702,6 @@
    ]
   },
   {
-   "name": "Enfilading Arrow",
-   "kind": "activation",
-   "result": "partial",
-   "main": "reader",
-   "work": "immobilized",
-   "needs": [
-    "reader"
-   ]
-  },
-  {
    "name": "Soulheart (Angelic)",
    "kind": "activation",
    "activation": "Defy Charg",
@@ -13783,17 +13773,6 @@
    "work": "thereafter",
    "needs": [
     "lasting"
-   ]
-  },
-  {
-   "name": "Stifling Shield",
-   "kind": "activation",
-   "activation": "Silence Falls",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering action",
-   "needs": [
-    "triggers"
    ]
   },
   {

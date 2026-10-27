@@ -574,3 +574,33 @@ test("an item's own PF2e toggle for these jumps (2026-10-27): Kinburi's Sandals 
     assert.deepEqual([bound.plan.builtin, bound.plan.modes[0].plan.option, bound.plan.until, bound.plan.partial], ["modes", "light-footed-bound", "turn-end", undefined]);
     assert.match(bound.plan.notes[0], /two High Jumps or Long Jumps.*\(its own actions\)\.$/);
 });
+
+test("pinned by an area's critical failure with the bow critical specialization (2026-10-27): Enfilading Arrow — a ways card, its save without it and with it, the latter's critical failure Immobilized with its Athletics pull free", () => {
+    const plan = first("Enfilading Arrow");
+    assert.equal(plan.builtin, "ways");
+    assert.equal(plan.partial, undefined);
+    assert.deepEqual(plan.ways.map((way) => way.name), ["Without the bow critical specialization", "With the bow critical specialization"]);
+    const [plain, held] = plan.ways.map((way) => way.plan);
+    assert.equal(plain.resolution.kind, "save");
+    assert.equal(plain.targeting.area.type, "burst");
+    assert.deepEqual(plain.resolution.outcomes.criticalFailure.effects, []);
+    assert.equal(plain.endEarly, undefined);
+    assert.deepEqual(held.resolution.outcomes.criticalFailure.effects.map((effect) => effect.slug), ["immobilized"]);
+    assert.deepEqual(held.resolution.outcomes.failure.effects, []);
+    assert.deepEqual(held.endEarly.how, { kind: "check", skill: "athletics", dc: 10 });
+    assert.deepEqual(held.endEarly.degrees, ["criticalFailure"]);
+    assert.equal((held.notes ?? []).length, 0);
+});
+
+test("a penalty to the triggering action (2026-10-27): Stifling Shield's Silence Falls — –1 / –2 status to the creature's checks and spell and class DCs until the end of its turn, the disruption a note Effect", () => {
+    const plan = first("Stifling Shield");
+    assert.equal(plan.partial, undefined);
+    const { success, failure, criticalFailure } = plan.resolution.outcomes;
+    assert.deepEqual(success.modifiers.map((modifier) => [modifier.selector, modifier.type, modifier.value]), [["check", "status", -1], ["spell-dc", "status", -1], ["class-dc", "status", -1]]);
+    assert.deepEqual(failure.modifiers.map((modifier) => modifier.value), [-2, -2, -2]);
+    assert.equal(success.modifiers[0].duration.anchor, "target-turn");
+    assert.equal(success.manualInstructions, undefined);
+    assert.equal(failure.manualInstructions, undefined);
+    assert.match(criticalFailure.noteEffects[0].text, /disrupted/);
+    assert.equal(criticalFailure.manualInstructions, undefined);
+});

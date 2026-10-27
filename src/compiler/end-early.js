@@ -102,3 +102,38 @@ export function readTugFree(note, spell) {
     if (!tug) return null;
     return { how: { kind: "check", save: tug[1].toLowerCase(), dc: Number(tug[2]) }, conditions: [], effects: [`Spell Effect: ${spell}`], said: [tug[0]] };
 }
+
+// (Or pinned by an area's critical failure when its archer has the bow critical specialization, Enfilading Arrow's "If a creature critically
+// fails the save and you have access to the bow critical specialization effect, the target is Immobilized and must spend an Interact action to
+// attempt a @Check[athletics|dc:10] check to pull the missile free": a ways card, the save without it and the save with it — its critical
+// failure Immobilized, endEarly that check (whether its user has it the card's choice, as the card can't see it). 2026-10-27.)
+const PINNED = /^If a creature critically fails the save and you have access to the bow critical specialization effect, the target is Immobilized and must spend an Interact action to attempt a @Check\[(athletics|acrobatics)\|dc:(\d+)[^\]]*\] check to pull the missile free; it can't move from its space until it succeeds\.$/i;
+export function withPinningWays(plan) {
+    if (plan?.resolution?.kind !== "save" || plan.builtin || plan.endEarly || !plan.resolution.outcomes?.criticalFailure) return plan;
+    const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
+    const note = (plan.notes ?? []).find((entry) => PINNED.test(said(entry)));
+    if (!note) return plan;
+    const pinned = PINNED.exec(said(note));
+    const notes = (plan.notes ?? []).filter((entry) => entry !== note);
+    const { notes: _, partial, ...rest } = plan;
+    const left = notes.length || (plan.unread ?? []).length;
+    const base = { ...rest, ...(notes.length ? { notes } : {}), ...(left ? { partial } : { automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
+    const outcomes = plan.resolution.outcomes;
+    const critical = outcomes.criticalFailure;
+    const held = {
+        ...base,
+        resolution: { ...plan.resolution, outcomes: { ...outcomes, criticalFailure: { ...critical, effects: [...(critical.effects ?? []), { kind: "condition", slug: "immobilized", value: null, duration: null }] } } },
+        endEarly: { how: { kind: "check", skill: pinned[1].toLowerCase(), dc: Number(pinned[2]) }, conditions: ["immobilized"], degrees: ["criticalFailure"], said: [said(note)] }
+    };
+    return {
+        ...base,
+        builtin: "ways",
+        once: true,
+        targeting: { target: null, range: null, area: null },
+        trigger: { ...(plan.trigger?.frequency ? { frequency: plan.trigger.frequency } : {}), event: "use" },
+        ways: [
+            { name: "Without the bow critical specialization", html: "<p>The arrows rain down on the area.</p>", plan: base },
+            { name: "With the bow critical specialization", html: "<p>The arrows rain down on the area; a creature that critically fails is pinned.</p>", plan: held }
+        ]
+    };
+}

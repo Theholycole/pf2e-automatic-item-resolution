@@ -533,6 +533,59 @@ export const cases = {
         return { results: game.messages.get(ending.id).getFlag(NS, "card").results };
     },
 
+    // Enfilading Arrow with the bow critical specialization: the ways card's second way, the burst's save card; the creature that critically
+    // fails Immobilized and an end-early card for its Athletics DC 10 pull free.
+    async enfiladingPinned(scene) {
+        const { actor: archer } = await creature(scene, "Enfilade Archer", { type: "character", x: 14, y: 22 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Enfilade Target", { x: 18, y: 22, hp: 200, alliance: "opposition", save: -30 });
+        const arrow = await give(archer, "Enfilading Arrow");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrow.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")) && message.id !== ways.id, { what: "the arrows' card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the burst's save card" });
+        since = Date.now();
+        await rollAndApply(save);
+        await until(() => foe.hasCondition("immobilized"), `Immobilized (${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 10000 });
+        const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+        assert(/Athletics/i.test(ending.content) && /DC 10/.test(ending.content), `its Athletics DC 10 (${ending.content.replace(/<[^>]+>/g, " ").slice(0, 300)})`);
+        await game.modules.get(NS).api.live.apply(ending.id, { entry: 0 });
+        const results = () => game.messages.get(ending.id).getFlag(NS, "card").results ?? [];
+        await until(() => results().length, "its try", { timeout: 10000 });
+        return { results: results(), immobilized: foe.hasCondition("immobilized"), hp: foe.system.attributes.hp.value };
+    },
+
+    // Stifling Shield's Silence Falls: two creatures' Will saves; one that succeeds or fails takes the status penalty to its checks (its
+    // Athletics 1 or 2 lower) with its note, one that critically fails its disruption note Effect.
+    async stiflingShield(scene) {
+        const { actor: user } = await creature(scene, "Stifle Wearer", { type: "character", x: 14, y: 24 });
+        const foes = [await creature(scene, "Stifle Caster A", { x: 15, y: 24, alliance: "opposition", save: 10 }), await creature(scene, "Stifle Caster B", { x: 16, y: 24, alliance: "opposition", save: 19 })];
+        const before = foes.map(({ actor }) => actor.skills.athletics.mod);
+        const shield = await give(user, "Stifling Shield");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(shield.uuid, 0);
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the shield's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: foes.map(({ token }) => token.uuid) });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the Will save card" });
+        await rollAndApply(save);
+        await until(() => game.messages.get(save.id).flags["pf2e-automatic-ability-resolution"].card.targets.every((entry) => entry.degree), "rolled");
+        const rolled = game.messages.get(save.id).flags["pf2e-automatic-ability-resolution"].card.targets;
+        const out = [];
+        for (const [index, { actor }] of foes.entries()) {
+            const degree = rolled.find((entry) => entry.actorUuid === actor.uuid)?.degree ?? rolled[index]?.degree;
+            const drop = { success: 1, failure: 2 }[degree] ?? 0;
+            if (drop) await until(() => actor.skills.athletics.mod === before[index] - drop, `${actor.name}'s Athletics ${before[index]} - ${drop} (${actor.skills.athletics.mod}; ${actor.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+            if (degree === "criticalFailure") await until(() => actor.itemTypes.effect.some((effect) => /disrupted/i.test(effect.system?.description?.value ?? "")), `${actor.name}'s disruption note (${actor.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+            out.push({ degree, athletics: [before[index], actor.skills.athletics.mod], effects: actor.itemTypes.effect.map((effect) => effect.name) });
+        }
+        return out;
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });
