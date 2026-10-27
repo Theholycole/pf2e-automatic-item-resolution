@@ -530,7 +530,9 @@ test("auras that act at a turn's start or end in them, as the ability module's z
     const { compileItem } = await import("../src/compiler/index.js");
     const arctic = compileActivations(item("Arctic Worm Chitin Shield"), { spellEffects })[0].plan;
     assert.deepEqual([arctic.builtin, arctic.zone.area, arctic.zone.centre, arctic.zone.saves[0].when, arctic.zone.saves[0].plan.resolution.check.basic], ["zone", { type: "emanation", value: 5 }, "self", ["end"], true]);
-    assert.match(arctic.zone.notes.join(" "), /resistance 5 to cold/);
+    // (2026-10-27: its resistance is PF2e's Effect: Misty Chill on its user as the zone starts — plan.userEffects, src/compiler/zone-readings.js —
+    // its notes gone.)
+    assert.deepEqual([arctic.zone.notes, arctic.userEffects[0].label], [[], "Effect: Misty Chill"]);
     const lantern = compileActivations(item("Alluring Lantern"), { spellEffects })[0].plan;
     const fascinated = lantern.zone.saves[0].plan.resolution.outcomes.failure.effects.find((effect) => effect.slug === "fascinated");
     assert.deepEqual([lantern.zone.area.value, lantern.zone.saves[0].when, fascinated.duration.anchor, fascinated.duration.expiry], [20, ["start"], "target-turn", "turn-end"]);

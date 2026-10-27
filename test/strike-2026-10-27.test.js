@@ -44,8 +44,10 @@ test("a hit's note Effect holds its words, so they're not the Strike card's note
     const [note] = wormhole.resolution.outcomes.success.noteEffects;
     assert.deepEqual([wormhole.partial, wormhole.strike.notes, note.duration.value, note.duration.unit], [undefined, [], 1, "minutes"]);
     assert.match(note.text, /Once during the wormhole shot's duration, if you're within 60 feet of it, you can use it as the point of origin for a spell or ranged attack, .* After being used this way, it quickly dissolves into black dust\.$/);
-    // (Conduit Shot's own rules beyond its note stay its notes.)
-    assert.equal(activation("Conduit Shot (Lesser)").partial, true);
+    // (Conduit Shot's own rules beyond its note: since the merge of 2026-10-27 the rules group's src/compiler/intact-shot.js, the shot kept intact —
+    // done, its GM's-call and where-it-falls sentences the Strike card's lines.)
+    const conduit = activation("Conduit Shot (Lesser)");
+    assert.deepEqual([conduit.partial, conduit.strike.notes.length], [undefined, 2]);
 });
 
 test("Hardness its damage ignores: Shatterpoint Ammunition's 4, 8 and 12 — PF2e subtracts no creature's Hardness, so the Strike card says it", async () => {

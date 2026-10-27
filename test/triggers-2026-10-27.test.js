@@ -409,9 +409,10 @@ test("Chain of Stars: three +1 striking force shuriken for its user's Strikes fr
     }
 });
 
-test("Beguiling Crown's command: the DC 41 Will save card at a living creature within 30 feet, its attitudes and its year's immunity on note Effects", () => {
+// (Beguiling Crown's command: read by the rules group's src/compiler/attitude.js since the merge of 2026-10-27, its year's immunity the tracker's —
+// test/rules-2026-10-27.test.js. Here, that it's still the save card at a living creature within 30 feet.)
+test("Beguiling Crown's command: the DC 41 Will save card at a living creature within 30 feet", () => {
     const command = activation("Beguiling Crown", 2);
     assert.equal(routeOf(command, "Choose one living creature"), "save");
-    const rows = command.resolution.outcomes;
-    assert.deepEqual([command.resolution.check.against.value, rows.failure.noteEffects[0].label, rows.failure.noteEffects[0].duration.value, rows.success.noteEffects[0].label, rows.criticalSuccess.noteEffects[0].duration.value, command.targeting.range, done(command)], [41, "Helpful", 24, "Friendly", 365, "30 feet", true]);
+    assert.deepEqual([command.resolution.check.against.value, command.targeting.range, command.trigger.immunity.duration], [41, "30 feet", { value: 365, unit: "days" }]);
 });

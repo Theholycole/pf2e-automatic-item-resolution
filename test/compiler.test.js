@@ -1120,8 +1120,9 @@ test("a lit candle's or incense's area while it burns (src/compiler/lit-area.js,
     const truth = compileItem(item("Candle of Truth"));
     const [save] = truth.zone.saves;
     assert.deepEqual([truth.zone.modifiers[0].predicate, save.when, save.own, save.plan.resolution.check.statistic, save.plan.resolution.check.against.value], [["action:lie"], ["initial", "enter"], true, "will", 26]);
-    assert.match(save.plan.resolution.outcomes.failure.manualInstructions[0], /unable to tell any deliberate lies/);
-    assert.equal(truth.zone.notes.length, 1, "first entering only, the GM's");
+    // (2026-10-27: its first entry only is the save's immunity for the candle's 10 minutes, the lies a note Effect — src/compiler/zone-readings.js.)
+    assert.match(save.plan.resolution.outcomes.failure.noteEffects[0].text, /unable to tell any deliberate lies/i);
+    assert.deepEqual([truth.zone.notes.length, save.plan.trigger.immunity.duration.value], [0, 10]);
 });
 
 test("resolved only when the card does all of it (src/compiler/honest.js): a GM line left to the GM makes the plan partial; a behaviour rule with its own time becomes a note Effect for that time; a line that does nothing doesn't count", async () => {
