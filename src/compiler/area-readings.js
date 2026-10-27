@@ -798,6 +798,32 @@ const READINGS = [
                 }
             };
         }
+    },
+    {
+        // Kizidhar's Shield's Secure Site: out of combat, thorns as Wall of Thorns around the campsite for 8 hours (the map's), then a
+        // three-action Heal at 4th rank from the shield on every creature in it — the cast card's Heal, its three-action version PF2e's own
+        // card's pick.
+        names: ["Kizidhar's Shield: Secure Site"],
+        sentences: [
+            /^You place the kizidhar's shield into the ground at the edge of your campsite, which can't be more than (\d+) feet on a side, then speak the name of the kizidhar shuyookh carved into its handle\.$/,
+            /^The shuyookh briefly appears just long enough to make a sweeping gesture, causing sprawling thorns to grow in an unnaturally symmetrical formation around the campsite, protecting it for the next (\d+) (hours?) with an effect that's otherwise identical to Wall of Thorns\.$/,
+            /^All creatures within the campsite are then immediately affected by a three-action Heal spell cast at (\d+)th rank by the shield\.$/,
+            /^After \d+ hours, the wall rots away, and the shield can be retrieved as an Interact action\.$/
+        ],
+        card: ([site, thorns, heal]) => ({
+            builtin: "cast-spell",
+            spell: { uuid: "Compendium.pf2e.spells-srd.Item.rfZpqmj0AIIdkVIs", name: "Heal" },
+            rank: Number(heal[1]),
+            dc: null,
+            attack: null,
+            tradition: null,
+            self: false,
+            targeting: { target: "every creature in the campsite", range: null, area: null },
+            notes: [
+                `Set at the edge of a campsite up to ${site[1]} feet on a side: thorns as Wall of Thorns ring it for ${thorns[2] === "hours" ? `${thorns[1]} hours` : `${thorns[1]} hour`}, then rot away; the shield is taken up again with an Interact action (out of combat, the map's).`,
+                "Heal's three-action version, on every creature in the campsite: target them all and pick that version on PF2e's card."
+            ]
+        })
     }
 ];
 

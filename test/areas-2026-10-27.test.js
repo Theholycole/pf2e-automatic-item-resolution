@@ -233,3 +233,10 @@ test("Limning Gem: the weapon's dim light for its minute, and each hit with it a
     const { attackRidersText } = await import("../src/compiler/attack-riders.js");
     assert.match(attackRidersText([hit], "the dagger"), /^On a hit with the dagger: the target outlined in light/);
 });
+
+test("Kizidhar's Shield's Secure Site: Heal at 4th rank from the shield on everyone in the campsite, its thorns for 8 hours the map's", () => {
+    const site = activation("Kizidhar's Shield", "Secure Site");
+    assert.deepEqual([site.builtin, routeOf(site), site.spell.name, site.rank, done(site), site.trigger.frequency.per], ["cast-spell", "cast", "Heal", 4, true, "day"]);
+    assert.match(site.notes[0], /Wall of Thorns ring it for 8 hours/);
+    assert.match(site.notes[1], /three-action version/);
+});
