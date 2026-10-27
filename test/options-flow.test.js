@@ -607,8 +607,10 @@ test("The user's answers of 2026-10-26: no rules to play counted done (1); a GM'
     const desert = planOf("The Desert");
     assert.deepEqual([desert.resolution.outcomes.failure.effects.find((effect) => effect.slug === "enfeebled").value, Boolean(desert.partial)], [1, false]);
     assert.match(desert.notes[0], /^Enfeebled 1 on a failure: .*\(the GM's call\)\.$/);
+    // (2026-10-27: that roll is now the row's valueRoll, the ability module's card rolling it — test/misc-2026-10-27.test.js; done.)
     const devil = planOf("Guise of the Smirking Devil (Greater)");
-    assert.equal(Boolean(devil.partial), true);
+    assert.equal(Boolean(devil.partial), false);
+    assert.equal(devil.resolution.outcomes.failure.effects.find((effect) => effect.slug === "drained").valueRoll, "1d4");
     // (5) Flowing Water: its counteract modifier its level's DC less 10.
     assert.deepEqual(["Lesser", "Moderate", "Greater"].map((grade) => planOf(`Flowing Water (${grade})`).item.counteract.modifier), [8, 13, 18]);
 });

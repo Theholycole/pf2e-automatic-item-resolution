@@ -8,11 +8,18 @@ import { durationIn, selectorsOf } from "./rows.js";
 
 const VALUED = new Set(["clumsy", "doomed", "drained", "enfeebled", "frightened", "sickened", "slowed", "stunned", "stupefied", "wounded"]);
 
-const unvalued = (effect) => effect?.kind === "condition" && VALUED.has(effect.slug) && !Number.isFinite(effect.value) && !(effect.slug === "stunned" && effect.duration) && effect.recipient !== "self";
+const unvalued = (effect) => effect?.kind === "condition" && VALUED.has(effect.slug) && !Number.isFinite(effect.value) && !effect.valueRoll && !(effect.slug === "stunned" && effect.duration) && effect.recipient !== "self";
 
 // (A value the text leaves out while another row gives one higher, The Desert's "Fatigued and enfeebled for 1 minute" beside its critical
 // failure's Enfeebled 2: 1, the user's answer to question 5 (2026-10-26) — a line of the card saying the GM may change it. Not one the text
 // rolls, Guise of the Smirking Devil's "Drained [[/r 1d4]]": its roll, a note still. text: the item's html, else no default.)
+// (Since 2026-10-27, docs/needs.md "Numbers the text doesn't give": that roll the condition's valueRoll — the core's save family keeps it, and the
+// ability module's card rolls it as it's applied (at least 1), as for Wails of the Damned's "Drained 1d4". Only one the text rolls for that
+// condition with one formula.)
+const rolledValue = (slug, text) => {
+    const formulas = new Set([...String(text ?? "").matchAll(new RegExp(String.raw`\{${slug}\}\s*\[\[/r (\d+d\d+)(?:\s*#[^\]]*)?\]\]|\b${slug} \[\[/r (\d+d\d+)(?:\s*#[^\]]*)?\]\]`, "gi"))].map((found) => found[1] ?? found[2]));
+    return formulas.size === 1 ? [...formulas][0] : null;
+};
 const DEGREE_NAMES = { criticalSuccess: "critical success", success: "success", failure: "failure", criticalFailure: "critical failure" };
 function guardOutcomes(resolution, text = null) {
     if (!resolution?.outcomes) return null;
@@ -21,7 +28,10 @@ function guardOutcomes(resolution, text = null) {
     const defaulted = [];
     const higher = (slug) => Object.values(resolution.outcomes).some((row) => (row?.effects ?? []).some((effect) => effect?.slug === slug && Number(effect.value) > 1));
     const rolled = (slug) => new RegExp(String.raw`\{${slug}\}\s*\[\[/r|\b${slug} \[\[/r`, "i").test(String(text ?? ""));
-    for (const [degree, row] of Object.entries(resolution.outcomes)) {
+    for (const [degree, given] of Object.entries(resolution.outcomes)) {
+        const withRolls = (given?.effects ?? []).map((effect) => (unvalued(effect) && rolled(effect.slug) && rolledValue(effect.slug, text) ? { ...effect, value: null, valueRoll: rolledValue(effect.slug, text) } : effect));
+        const row = withRolls.some((effect, index) => effect !== given.effects[index]) ? { ...given, effects: withRolls } : given;
+        if (row !== given) changed = true;
         const unvaluedHere = (row?.effects ?? []).filter(unvalued);
         if (!unvaluedHere.length) {
             outcomes[degree] = row;

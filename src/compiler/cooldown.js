@@ -43,7 +43,8 @@ const flat = (html) => String(html ?? "").replace(/\[\[\/\w+ ([^\]#]+?)(?:\s*#[^
 // note; the same plan when there's none or nothing to carry it.
 export function withCooldown(plan, html, name = null) {
     if (!plan || plan.builtin === "no-effect" || plan.noteOnly) return plan;
-    const sentences = SENTENCES(flat(html).replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, ""));
+    // (A paragraph's end ends its sentence: Madcap Top's "The top can't be activated again for 1d4 hours" before its table, no full stop.)
+    const sentences = SENTENCES(flat(String(html ?? "").replace(/([^.!?:\s>])\s*<\/p>/g, "$1.</p>")).replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, ""));
     for (const sentence of sentences) {
         const read = readCooldown(sentence);
         if (!read) continue;
