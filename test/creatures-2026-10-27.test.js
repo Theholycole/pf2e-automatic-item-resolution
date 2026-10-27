@@ -9,7 +9,8 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
-import { conjuredChanges, pickCandidates, pickedPlan } from "../src/live/conjured.js";
+import { conjuredChanges, countNow, pickCandidates, pickedPlan, slainUntil } from "../src/live/conjured.js";
+import { frequencyText, periodOf } from "../src/live/activations-card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
 import { SPIDER_SWARM } from "../src/compiler/creature-readings.js";
 import { createItemCard, previewLines } from "../src/live/card.js";
@@ -146,4 +147,33 @@ test("a cast whose changes are its card's lines: Busine of Divine Reinforcements
     const anchor = compileActivations(item("Anchor of Aquatic Exploration"), spells)[0].plan;
     assert.deepEqual([anchor.builtin, done(anchor), anchor.spell.name], ["cast-spell", true, "Cozy Cabin"]);
     for (const plan of [activations("Reef Heart")[0], activations("Reef Heart (Greater)")[0], activations("Guardian Shield")[0], ...activations("Bleachguard Doll")]) assert.deepEqual([plan.decided, done(plan)], ["one-off", true]);
+});
+
+test("Wondrous Figurines: how often they're called (the activations card's frequency, a week or a month too), a week's wait once slain, each lion its own, the Onyx Dog's scent on its own Effect", () => {
+    const [lions] = activations("Wondrous Figurine (Golden Lions)");
+    assert.deepEqual([done(lions), lions.trigger.frequency.max, lions.trigger.frequency.per, lions.slainWait, lions.creatures[0].count], [true, 1, "day", { value: 1, unit: "weeks", each: true }, 2]);
+    const [dog] = activations("Wondrous Figurine (Onyx Dog)");
+    assert.deepEqual([done(dog), dog.trigger.frequency.per, dog.slainWait, dog.creatures[0].own.rules.length], [true, "week", { value: 1, unit: "weeks" }, 2]);
+    assert.match(dog.creatures[0].own.text, /observed and concealed/);
+    assert.equal(activations("Wondrous Figurine (Jade Serpent)")[0].trigger.frequency.per, "day");
+    // (The waits: a week from the fall; a lion slain within it, one fewer called.)
+    assert.equal(slainUntil(lions.slainWait, 1000), 1000 + 604_800);
+    assert.deepEqual([countNow(2, [{ until: 5000 }], 4000), countNow(2, [{ until: 5000 }], 6000), countNow(2, [{ until: 5000 }, { until: 7000 }], 4000)], [1, 2, 0]);
+    assert.deepEqual([periodOf({ max: 1, per: "week" }, { worldTime: 604_800 * 3 + 5 }), frequencyText({ max: 4, per: "month" })], ["week:3", "4 times per month"]);
+});
+
+test("Fossil Fragments: the Brontosaurus's day out of combat and four calls a month, its card's lines; the Amber Mosquito's own changes a one-off", () => {
+    const [bronto] = activations("Fossil Fragment (Brontosaurus Phalange)");
+    assert.deepEqual([done(bronto), bronto.lasts.formula, bronto.trigger.frequency.max, bronto.trigger.frequency.per], [true, "1d4", 4, "month"]);
+    assert.ok(bronto.notes.includes("Out of combat, as a beast of burden or for transport, it lasts 24 hours: dismiss it when that's up."));
+    const [mosquito] = activations("Fossil Fragment (Amber Mosquito)");
+    assert.deepEqual([mosquito.decided, done(mosquito), mosquito.builtin, mosquito.trigger.frequency.per], ["one-off", true, "conjure", "day"]);
+});
+
+test("Serpent Oil (Moderate)'s Small or Medium object, the ways card's Sea Snake or Python; Palanquin of Night's four bearers", () => {
+    const oil = compileItem(item("Serpent Oil (Moderate)"));
+    assert.deepEqual([done(oil), routeOf(oil), oil.ways.map((way) => [way.name, way.plan.creatures[0].name, routeOf(way.plan)])], [true, "ways", [["A Small object", "Sea Snake", "conjure"], ["A Medium object", "Python", "conjure"]]]);
+    assert.match(oil.ways[0].plan.creatures[0].from.uuid, /pathfinder-monster-core-2\.Actor\.rVzdgqUn7slx2WSS$/);
+    const [palanquin] = activations("Palanquin of Night");
+    assert.deepEqual([done(palanquin), routeOf(palanquin), palanquin.creatures[0].count, palanquin.creatures[0].from.uuid, palanquin.lasts, palanquin.notes.length], [true, "conjure", 4, "Compendium.pf2e.pathfinder-bestiary.Actor.j7NNPfZwD19BwSEZ", null, 5]);
 });

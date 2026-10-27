@@ -29,6 +29,7 @@ import { setUpCastDurations } from "./cast-duration.js";
 import { setUpShieldShare } from "./shield-share.js";
 import { setUpTurnHeals } from "./turn-heal.js";
 import { setUpEndEarly } from "./end-early.js";
+import { setUpSlainWait } from "./slain-wait.js";
 import { setUpDropHeld } from "./drop-held.js";
 import { setUpMoveDamage } from "./move-damage.js";
 import { setUpFootDamage } from "./foot-damage.js";
@@ -189,6 +190,8 @@ Hooks.once("ready", async () => {
     setUpTurnHeals();
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     setUpEndEarly();
+    // (A conjured creature slain that its item then waits for, a Wondrous Figurine's week: scripts/slain-wait.js.)
+    setUpSlainWait((item) => compileActivations(dataOf(item), options()));
     // (What a creature drops of what it holds, Deadweight Snare's metal items: scripts/drop-held.js.)
     setUpDropHeld();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)

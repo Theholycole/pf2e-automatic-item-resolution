@@ -350,6 +350,63 @@ const READINGS = [
         card: (found, plan) => (plan?.builtin === "cast-spell" ? { keep: true, partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" }, notes: ["Dug into the seabed for its minute, it casts Cozy Cabin: the shelter is a sunken ship, filled with air its occupants can breathe."] } : null)
     },
     {
+        // (A Small object a Sea Snake, a Medium one a Python, each PF2e's linked creature as a minion for a minute: the ways card.)
+        name: "Serpent Oil (Moderate)",
+        sentences: [
+            /^This glistening oil has a green hue and tiny snake scales floating within\.$/,
+            /^If you slather serpent oil on an object, the object transforms\.$/,
+            /^The oil can be applied to a Small object, producing a Sea Snake, or a Medium object, producing a Python, keeping some of the same colors and patterns of the original item\.$/,
+            /^If placed on other objects, the oil fails and is wasted\.$/,
+            /^This false snake has the minion trait\.$/,
+            /^It remains in snake form for (\d+) (minutes?|rounds?) before returning to its object state\.$/,
+            /^If slain, the item returns to its original form, unharmed\.$/
+        ],
+        card: ([, , , , , remains], plan, context) => {
+            const snake = (label, size) => {
+                const uuid = linkOf(context.html, label);
+                return uuid ? { name: `A ${size} object`, html: `<p>A ${label}.</p>`, plan: wayPlan(conjure({
+                    creatures: [creature({ name: label, from: { uuid }, traits: ["minion"] })],
+                    lasts: timeOf(remains[1], remains[2]),
+                    notes: [`The ${size} object it's slathered on becomes the snake (any other object wastes the oil): its token where the object is.`, MINION, "Slain, it's the object again, unharmed."]
+                }), context) } : null;
+            };
+            const list = [snake("Sea Snake", "Small"), snake("Python", "Medium")];
+            return list.every(Boolean) ? ways(list) : null;
+        }
+    },
+    {
+        // (Four Unseen Servants carrying the palanquin, for travel out of combat until it's folded up: the ability module's conjured tokens, the
+        // rest its card's lines.)
+        name: "Palanquin of Night",
+        sentences: [
+            /^The fabric unfolds into a dark palanquin large enough to comfortably hold two Medium creatures\.$/,
+            /^Four spectral bearers appear at the corners of the palanquin, capable of carrying it effortlessly over most types of terrain as long as the terrain is relatively flat and devoid of hazards\.$/,
+            /^Spectral bearers have the statistics of an Unseen Servant, except they're strong enough to carry the palanquin and its occupants\.$/,
+            /^They move generally along a basic set of directions you indicate upon activation, which can include turns onto various streets, but they don't take other creatures' feelings into account and can be inconsiderate to passersby in an inhabited area as they relentlessly move you forward\.$/,
+            /^The bearers move slowly but steadily along their simple directions\.$/,
+            /^While the palanquin is perfectly suitable for overland travel, the bearers' imprecise movements and the requirement to reactivate the palanquin to change destinations make it unsuited for a combat encounter or other situation where seconds and precise movements count\.$/,
+            /^The palanquin's interior ceiling is painted with the same night sky pattern as the cloth, and dark curtains hang over the windows\.$/,
+            /^The palanquin protects its occupants from sunlight and severe heat and cold \(though not extreme or incredible heat or cold\) as well as blocks most non-damaging forms of weather\.$/,
+            /^The palanquin is only as sturdy as a standard wooden carriage - if it would be destroyed, it instantly reverts to a square of fabric and can't be Activated again for 1 month\.$/,
+            /^You can return the palanquin to its original shape by using an Interact action to command the spectral bearers to collapse it\.$/,
+            /^They disappear the moment it returns to its fabric form\.$/
+        ],
+        card: (found, plan, { html }) => {
+            const uuid = linkOf(html, "Unseen Servant");
+            return uuid ? conjure({
+                creatures: [creature({ name: "Spectral Bearer", count: 4, from: { uuid } })],
+                vanishAtZero: false,
+                notes: [
+                    "The fabric unfolds into a palanquin that seats two Medium creatures, a bearer at each corner: place it and them on the map.",
+                    "Unseen Servants strong enough to carry it and those inside, they bear it slowly and steadily over fairly flat ground free of hazards, along the simple directions given as it's activated (streets and turns too), heedless of passersby. It's for travel, not an encounter: a new destination needs a new activation.",
+                    "Inside, it keeps out sunlight, severe heat and cold (not extreme or incredible), and most weather that does no damage.",
+                    "As sturdy as a wooden carriage: destroyed, it's a square of fabric again and can't be activated for a month.",
+                    "An Interact action folds it back into fabric, and the bearers vanish: dismiss them."
+                ]
+            }) : null;
+        }
+    },
+    {
         // (An Animated Broom with no Strike, for menial tasks out of combat, for an hour (8 for the greater key).)
         name: /^Cordelia's (?:Greater )?Construct Key$/,
         sentences: [

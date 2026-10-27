@@ -43,3 +43,11 @@ export function pickedPlan(plan, picked) {
     const { pick: _pick, needs: _needs, ...rest } = plan;
     return { ...rest, creatures: (plan.creatures ?? []).map((creature, index) => (index ? creature : { ...creature, name: picked.name, from: { uuid: picked.uuid } })) };
 }
+
+// A creature slain that its item waits for (plan.slainWait { value, unit, each? }, src/compiler/conjured.js: a Wondrous Figurine's week): the
+// world time it's usable again. And, for each creature's own wait (Golden Lions'), the ones still waiting at a time: kept on the item as
+// [{ until }], and how many of the plan's creatures come now.
+const WAIT_SECONDS = { days: 86_400, weeks: 604_800 };
+export const slainUntil = (slainWait, worldTime) => (Number(worldTime) || 0) + (Number(slainWait?.value) || 0) * (WAIT_SECONDS[slainWait?.unit] ?? 0);
+export const stillSlain = (slain, worldTime) => (slain ?? []).filter((entry) => (Number(entry?.until) || 0) > (Number(worldTime) || 0));
+export const countNow = (count, slain, worldTime) => Math.max(0, (Number(count) || 1) - stillSlain(slain, worldTime).length);

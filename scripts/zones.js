@@ -7,7 +7,10 @@ import { ABILITY_ID, MODULE_ID } from "./foundry.js";
 import { effectSource } from "../src/live/card.js";
 import { lightZone } from "./placed-light.js";
 import { pickConjured } from "./creature-pick.js";
-import { conjuredChanges, pickedPlan } from "../src/live/conjured.js";
+import { conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
+import { SLAIN } from "./slain-wait.js";
+
+const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export async function startItemZone({ plan, used, actor, token }) {
     const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
@@ -45,8 +48,8 @@ async function finishConjured(made, plan) {
         if (changes && Object.keys(changes.update).length) await actor.update(changes.update);
         if (changes?.deleteIds.length) await actor.deleteEmbeddedDocuments("Item", changes.deleteIds);
         // (Its entry's own: an Effect of PF2e's rules — the Onyx Dog's +4 to Track and darkvision, Kotodama Bells' object failing every save —,
-        // a condition — the tree's Immobilized.)
-        if (creature.own?.rules?.length) await actor.createEmbeddedDocuments("Item", [{ name: `${plan.source?.name ?? "Conjured"}: its own`, type: "effect", img: "icons/svg/aura.svg", system: { duration: { value: -1, unit: "unlimited", expiry: null, sustained: false }, rules: creature.own.rules } }]);
+        // its words on it for what PF2e can't play — the Onyx Dog's scent —, a condition — the tree's Immobilized.)
+        if (creature.own?.rules?.length || creature.own?.text) await actor.createEmbeddedDocuments("Item", [{ name: `${plan.source?.name ?? "Conjured"}: its own`, type: "effect", img: "icons/svg/aura.svg", system: { description: { value: creature.own.text ? `<p>${escape(creature.own.text)}</p>` : "" }, duration: { value: -1, unit: "unlimited", expiry: null, sustained: false }, rules: creature.own.rules ?? [] } }]);
         for (const slug of creature.own?.conditions ?? []) await actor.increaseCondition?.(slug);
     }
 }
@@ -61,6 +64,13 @@ export async function startItemConjure({ plan, used, actor, token }) {
             const picked = await pickConjured(plan, used.data.name);
             if (!picked) return null;
             plan = pickedPlan(plan, picked);
+        }
+        // (One of a pair slain within its wait, Golden Lions': the other comes alone — scripts/slain-wait.js; none while both wait.)
+        if (plan.slainWait?.each && used.data.uuid) {
+            const holder = await fromUuid(used.data.uuid).catch(() => null);
+            const count = countNow(plan.creatures?.[0]?.count, holder?.getFlag?.(MODULE_ID, SLAIN), game.time.worldTime);
+            if (!count) throw new Error(`${used.data.name}: every one of them was slain within its wait, and none can be called yet.`);
+            plan = { ...plan, creatures: plan.creatures.map((creature, index) => (index ? creature : { ...creature, count })) };
         }
         const made = await startConjure({ item, plan, sourceToken: token?.document ?? token });
         await finishConjured(made, plan);

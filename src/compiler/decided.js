@@ -80,7 +80,8 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // (A one-off rule of a card of its own — a zone, a counteract, a readied bonus, a cast (Crown of the Companion's, with its later healing), partial —: its notes are that card's lines already
     // (the zone card's, the counteract card's, the fortune and cast cards' plan.notes), done the same, 2026-10-27.)
     // (Not one whose top-level notes or unread lines no card of its kind shows: a zone's, a counteract's.)
-    const shown = ["readied-bonus", "cast-spell"].includes(plan?.builtin) || !((plan?.notes ?? []).length || (plan?.unread ?? []).length);
+    // (And a conjured creature's: the ability module's conjure card shows its notes — 2026-10-27, Fossil Fragment (Amber Mosquito)'s.)
+    const shown = ["readied-bonus", "cast-spell", "conjure"].includes(plan?.builtin) || !((plan?.notes ?? []).length || (plan?.unread ?? []).length);
     if (plan?.partial && plan.builtin && plan.builtin !== "no-effect" && shown && !special && oneOff(name ?? plan.source?.name)) return asCardLines(plan, { result: "partial", base, body: null, decided: "one-off" });
     if (result === "resolves" || (result.startsWith("builtin:") && result !== "builtin:no-effect")) return plan;
     const entry = { result, kind, trigger, text, left: plan ? leftovers(plan) : [] };

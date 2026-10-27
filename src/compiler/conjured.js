@@ -82,13 +82,34 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
             Object.assign(own, { noWeaknesses: true, conditions: ["immobilized"] });
             played.add(sentence);
         }
+        // (The Onyx Dog's "When the dog senses a hidden creature with its scent, that creature is instead observed and concealed": a sight PF2e
+        // can't give one creature, its words on the dog's own Effect — 2026-10-27.)
+        if (/^When the \w+ senses a hidden creature with its scent, that creature is instead observed and concealed\.$/i.test(sentence)) {
+            own.text = "A hidden creature it senses with its scent is observed and concealed to it instead.";
+            played.add(sentence);
+        }
+        // (How often it's called, the activation's frequency — the activations card counts it, 2026-10-27; its time is read above.)
+        if (FREQUENCY.test(sentence)) played.add(sentence);
+        // (Golden Lions' "If either of the lions is slain, that lion cannot be summoned again until 1 week has passed, but this doesn't prevent you
+        // from summoning the other": slainWait each, below.)
+        if (EACH_SLAIN.test(sentence)) played.add(sentence);
     }
+    // (Its time when it fights is the rolled one above: "If it attempts an attack or otherwise engage in combat, it reverts …".)
+    if (fights) for (const sentence of sentences) if (/^If it attempts an attack or otherwise engages? in combat, it reverts\b/i.test(sentence)) played.add(sentence);
+    // (A week before it can be called again once slain, a figurine's: plan.slainWait, set on the item as it falls — scripts/slain-wait.js;
+    // each lion's own, Golden Lions': fewer called while one waits. 2026-10-27.)
+    const eachSlain = sentences.map((sentence) => EACH_SLAIN.exec(sentence)).find(Boolean);
+    const slain = eachSlain ?? SLAIN.exec(whole);
+    const slainWait = slain ? { value: COUNTS[slain[1].toLowerCase()] ?? Number(slain[1]), unit: `${slain[2].toLowerCase()}s`, ...(eachSlain ? { each: true } : {}) } : null;
+    const called = sentences.map((sentence) => FREQUENCY.exec(sentence)).find(Boolean);
+    const frequency = called ? { max: COUNTS[called[1].toLowerCase()] ?? Number(called[1]), per: called[2].toLowerCase(), raw: `${called[1].toLowerCase() === "once" ? "once" : `${called[1]} times`} per ${called[2].toLowerCase()}` } : null;
     const notes = [
         ...(replaceType ? [`It has the ${added[1]} and ${added[2]} traits in place of its creature type.`] : []),
         ...(immuneWords ? [`It's immune to ${immuneWords}.`] : []),
         ...(minion ? ["A minion: it acts when its user commands it (1 action for 2 of its own)."] : []),
         ...(ownTurns ? ["It acts on its own: it rolls initiative."] : []),
-        ...(fights ? ["Out of combat it lasts 24 hours as a beast of burden or for transport (end it by hand)."] : []),
+        ...(fights ? ["Out of combat, as a beast of burden or for transport, it lasts 24 hours: dismiss it when that's up."] : []),
+        ...(slainWait ? [slainWait.each ? `One slain can't be called again for ${slainWait.value} ${slainWait.unit.replace(/s$/, "")}, the other still can (it comes alone): set as it falls.` : `Slain, it reverts and can't be activated again for ${slainWait.value} ${slainWait.unit.replace(/s$/, "")}: set as it falls.`] : []),
         ...(lasts?.unit === "hours" ? [`It lasts ${lasts.value} hour${lasts.value === 1 ? "" : "s"}: dismiss it when that's up.`] : []),
         ...sentences.filter((sentence) => !/\bhas the minion trait\.$/i.test(sentence))
     ];
@@ -97,7 +118,8 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
         builtin: "conjure",
         automation: { level: "guided" },
         targeting: { target: "self", range: null, area: null },
-        trigger: { event: "use" },
+        trigger: { event: "use", ...(frequency ? { frequency } : {}) },
+        ...(slainWait ? { slainWait } : {}),
         creatures: [{ name, count, size: null, stats: null, from: becomes[2].startsWith("name:") ? { name } : { uuid: fullUuid(becomes[2]) }, traits, initiative: ownTurns || appears ? "roll" : null, ...(replaceType ? { replaceType: true } : {}), ...(immunities.length ? { immunities } : {}), ...(Object.keys(own).length ? { own } : {}) }],
         max: count,
         lasts,
@@ -112,7 +134,13 @@ export function conjuredPlan(html, base, item, wholeHtml = null) {
 const CREATURE_RULE = /\b(?:can't|cannot|doesn't|don't|instead|temporary Hit Points|\d+d\d+|damage|bonus|penalty|resistance|weakness(?:es)?|Speed|darkvision|scent|tremorsense|observed|concealed|hidden|Strike|attack|Immobilized|reactions?)\b/i;
 // (The card's own lines, and what has no rule: its minion's actions, its time, its traits and immunities the made creature has, that it
 // needn't eat.)
-const CONJURE_LINES = /^(?:A minion: it acts when its user commands it|It acts on its own: it rolls initiative|It lasts \d+ hours?: dismiss it when that's up|It has the \w+ and \w+ traits in place of its creature type|It's immune to )|\bdoesn't need to eat or drink\b/;
+const CONJURE_LINES = /^(?:A minion: it acts when its user commands it|It acts on its own: it rolls initiative|It lasts \d+ hours?: dismiss it when that's up|Out of combat, as a beast of burden or for transport, it lasts \d+ hours: dismiss it when that's up|It has the \w+ and \w+ traits in place of its creature type|It's immune to |Slain, it reverts and can't be activated again for |One slain can't be called again for )|\bdoesn't need to eat or drink\b/;
+// (How often it's called: "The lions can be called on only once per day", "The onyx dog can be activated once per week", "The figurine can be
+// used only once per day", "It can be called upon no more than four times per month".)
+const COUNTS = { once: 1, one: 1, twice: 2, two: 2, three: 3, four: 4, five: 5 };
+const FREQUENCY = /\b(?:can be (?:activated|used|called (?:up)?on)(?: only)?|called (?:up)?on no more than) (once|twice|one|two|three|four|five|\d+)(?: times)? per (day|week|month)\b/i;
+const SLAIN = /\bIf the figurine is slain while in animal form, it reverts to its statue shape and cannot be activated again until (\d+|one) (week|day)s? has passed\b/i;
+const EACH_SLAIN = /^If either of the \w+ is slain, that \w+ cannot be summoned again until (\d+|one) (week|day)s? has passed, but this doesn't prevent you from summoning the other\.$/i;
 
 // A creature an item lets out whose numbers its own text gives, not a stat block it links (Team+ Alchemists' Bottle-O-Ooze grades, a
 // thrown bottle that swells into an ooze of the grade's size and stays put for its minute; their Canopic Canisters, a smashed jar whose
