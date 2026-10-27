@@ -168,6 +168,21 @@ function readUsedSkillTo(text) {
     return { slug: slugs[0], name: names[0], slugs, names, bonus: null, statistic: used[1].toLowerCase(), targeted: true, whole: true, succeededTakes: { formula: takes[1], type: takes[3].toLowerCase(), persistent: Boolean(takes[2]) }, after: `On a success, the creature targeted takes ${takes[1]} ${takes[2] ? "persistent " : ""}${takes[3].toLowerCase()} damage (target the one it succeeded against).` };
 }
 
+// (A size for the moment of an Escape, Miniaturization Module's Miraculous Escape, 2026-10-27: "You become Tiny, then attempt to Escape the
+// triggering effect, gaining a +4 circumstance bonus to this check. If you successfully Escape, you Step into an adjacent space. Regardless of
+// the result, you then return to your original size." — PF2e's Escape at that bonus; the size, which no Escape rule reads, and the Step after
+// a success, its user's own move, the card's line: every sentence after its flavor read, action.whole.)
+const SIZED_ESCAPE = [/^You become (Tiny|Small), then attempt to Escape the triggering \w+, gaining an? \+(\d+) (circumstance|item|status) bonus to this check\.$/i, /^If you successfully Escape, you Step into an? \w+ space\.$/i, /^Regardless of the result, you then \w+ to your original size\.$/i];
+function readSizedEscape(text) {
+    const effect = /\bEffect\b\s*(.*)$/s.exec(String(text ?? ""))?.[1] ?? "";
+    const sentences = effect.split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    const at = sentences.findIndex((sentence) => SIZED_ESCAPE[0].test(sentence));
+    // (Before it, its flavor only; after it, the Step and the size back, nothing else.)
+    if (at < 0 || sentences.length !== at + 3 || !SIZED_ESCAPE[1].test(sentences[at + 1]) || !SIZED_ESCAPE[2].test(sentences[at + 2]) || sentences.slice(0, at).some((sentence) => /\d|\b(?:check|DC|bonus|penalty|damage|immune|condition|Strike)\b/i.test(sentence))) return null;
+    const [, size, value, type] = SIZED_ESCAPE[0].exec(sentences[at]);
+    return { slug: "escape", name: "Escape", bonus: { value: Number(value), type: type.toLowerCase() }, targeted: false, whole: true, after: `${size} for the Escape, then its own size again whatever the result; on a success, Step into an adjacent space (its own move on the map).` };
+}
+
 // The text → { slug, name, bonus: { value, type } | null, targeted, after } or null.
 // item: the item, for its own runes (Blade of the Rabbit Prince's potency as its item bonus).
 export function readItemAction(html, item = null) {
@@ -177,6 +192,8 @@ export function readItemAction(html, item = null) {
     if (within) return within;
     const used = readUsedSkillTo(plainText(String(html ?? "")).replace(/\bCraft Requirements\b.*$/i, ""));
     if (used) return used;
+    const sized = readSizedEscape(plainText(String(html ?? "")).replace(/\bCraft Requirements\b.*$/i, ""));
+    if (sized) return sized;
     const raw = String(html ?? "");
     if (/@UUID\[[^\]]*\]\{Effect:/i.test(raw)) return null;
     const text = plainText(raw).replace(/\bCraft Requirements\b.*$/i, "");

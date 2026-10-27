@@ -7,7 +7,7 @@
 
 import { foamUsed, passiveFallOf, plainOf, readFoam } from "../src/compiler/falls.js";
 import { foamEffectSource } from "../src/live/card.js";
-import { MODULE_ID } from "./foundry.js";
+import { ABILITY_ID, MODULE_ID } from "./foundry.js";
 import { inUse, passageOf, picked } from "./temperature.js";
 
 const PHYSICAL = new Set(["equipment", "armor", "weapon", "shield", "backpack", "treasure"]);
@@ -37,8 +37,28 @@ export function fallEases(actor) {
         if (!reading || !inUse(item, "equipped") || (reading.unlessFeat && feats.has(reading.unlessFeat))) continue;
         out.push({ ...(reading.shorter ? { shorter: reading.shorter } : {}), ...(reading.noDamage ? { noDamage: true } : {}), source: item.name });
     }
+    // (A net spread below it, Invisible Net's zone: no falling damage — netsUnder.)
+    for (const token of actor.getActiveTokens?.(true, true) ?? []) out.push(...netsUnder(token));
     // (A worn Impact Foam Chassis: the falling damage it takes off, its fall long enough — { reduceBy, minFeet, itemUuid }.)
     for (const { item, foam } of wornFoam(actor)) out.push({ reduceBy: foam.reduceBy, minFeet: foam.minFeet, itemUuid: item.uuid, source: item.name });
+    return out;
+}
+
+// (2026-10-27) A net spread on the ground below the token, Invisible Net's: the ability module's zone flagged fall { noDamage } (src/compiler/
+// moving-readings.js) whose area holds the token's centre, tested at the zone's own bottom (the token may be in the air still) → [{ noDamage,
+// source }]. The zone gone when its minute is up, it eases nothing more.
+export function netsUnder(token, abilityId = ABILITY_ID) {
+    const doc = token?.document ?? token;
+    const scene = doc?.parent ?? null;
+    const size = Number(scene?.grid?.size) || 100;
+    const centre = { x: Number(doc?.x) + (Number(doc?.width ?? 1) * size) / 2, y: Number(doc?.y) + (Number(doc?.height ?? 1) * size) / 2 };
+    const out = [];
+    for (const region of scene?.regions?.contents ?? [...(scene?.regions ?? [])]) {
+        const flags = region?.flags?.[abilityId]?.zone;
+        if (!flags?.zone?.fall?.noDamage || typeof region.testPoint !== "function") continue;
+        const bottom = Number(region.elevation?.bottom);
+        if (region.testPoint({ ...centre, elevation: Number.isFinite(bottom) ? bottom : 0 })) out.push({ noDamage: true, source: flags.itemName ?? region.name ?? "a net" });
+    }
     return out;
 }
 

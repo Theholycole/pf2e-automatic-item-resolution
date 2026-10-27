@@ -40,9 +40,10 @@ test("a consumable's protection: the item card's own Effect for its time, flagge
     assert.deepEqual(effect.flags[ENVIRONMENT_ID].temperature, { counts: { "severe-heat": "mild-heat", "extreme-heat": "mild-heat" }, source: "Cooling Elixir (Moderate)" });
     assert.deepEqual([effect.system.duration.value, effect.system.duration.unit], [24, "hours"]);
     assert.equal(temperatureLine(elixir.temperature), "Severe heat counts as mild heat; Extreme heat counts as mild heat for 24 hours");
-    // (Beside what else it reads; a sentence that says more stays left over: Elixir of the Peaks' saves against high altitude.)
+    // (Beside what else it reads; a sentence that says more stays left over here: Elixir of the Peaks' saves against high altitude — since
+    // 2026-10-27 words on its note Effect, src/compiler/moving-readings.js, so the plan's whole.)
     const peaks = compileItem(item("Elixir of the Peaks (Lesser)"));
-    assert.deepEqual([peaks.temperature.counts, peaks.temperature.only, peaks.partial], [{ "severe-cold": "mild-cold" }, "Only drunk while in mountainous terrain", true]);
+    assert.deepEqual([peaks.temperature.counts, peaks.temperature.only, peaks.partial], [{ "severe-cold": "mild-cold" }, "Only drunk while in mountainous terrain", undefined]);
     const finger = compileItem(item("Witch's Finger"));
     assert.deepEqual([finger.temperature.counts, finger.temperature.duration.value], [{ "severe-cold": "mild-cold", "extreme-cold": "severe-cold" }, 8]);
 });
