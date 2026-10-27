@@ -196,12 +196,15 @@ async function cardForUse(message) {
 // What an item tells its user (an information item, src/compiler/decided.js): whispered to the GM and the user's owners, the GM to fill in
 // what it shows — the user's ruling, as for spells.
 async function postWhisper({ plan, used, actor, token }) {
-    const owners = (game.users ?? []).filter((user) => user.isGM || actor?.testUserPermission?.(user, "OWNER")).map((user) => user.id);
+    // (And the players of the creatures near who wear one too, Name Pendant's: whisper.alsoTo { slug, within }.)
+    const also = plan.whisper.alsoTo?.slug && token ? (await Promise.all(creaturesNear(token, plan.whisper.alsoTo.within).map((entry) => fromUuid(entry.actorUuid).catch(() => null)))).filter((other) => other && other.uuid !== actor?.uuid && [...(other.items ?? [])].some((entry) => entry.system?.slug === plan.whisper.alsoTo.slug && entry.system?.equipped?.carryType === "worn")) : [];
+    const owners = (game.users ?? []).filter((user) => user.isGM || actor?.testUserPermission?.(user, "OWNER") || also.some((other) => other.testUserPermission?.(user, "OWNER"))).map((user) => user.id);
     const who = token?.name ?? actor?.name ?? "its user";
+    const told = also.length ? `, and ${also.map((other) => other.name).join(", ")}'s` : "";
     return ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor, token: token?.document ?? token ?? undefined }),
         whisper: owners,
-        content: `<section class="pf2e-aar-card pf2e-air-card" data-air-status="applied"><header><strong>${escapeHTML(used.data.name)}</strong><span class="aar-check">used by ${escapeHTML(who)}</span></header><p>${escapeHTML(plan.whisper.text)}</p><p class="aar-hint">Whispered to the GM and ${escapeHTML(who)}'s player: the GM says what it tells.</p></section>`,
+        content: `<section class="pf2e-aar-card pf2e-air-card" data-air-status="applied"><header><strong>${escapeHTML(used.data.name)}</strong><span class="aar-check">used by ${escapeHTML(who)}</span></header><p>${escapeHTML(plan.whisper.text)}</p><p class="aar-hint">Whispered to the GM and ${escapeHTML(who)}'s player${escapeHTML(told)}${also.length ? " players" : ""}: the GM says what it tells.</p></section>`,
         flags: { [MODULE_ID]: { whisper: { item: used.data.name, actorUuid: actor?.uuid ?? null } } }
     });
 }

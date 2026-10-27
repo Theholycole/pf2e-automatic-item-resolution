@@ -285,9 +285,41 @@ export function withTriggeredUse(plan, item, { base, info }) {
     return plan;
 }
 
+// --- An alert to its wearers ---------------------------------------------------------------------------------------------------------------------
+
+// (Name Pendant's Alert Superior Officer, "The pendent alerts all other allies within 500 feet who are also wearing a name pendant": what it tells,
+// the user's ruling for information — whispered (builtin "whisper", scripts/live.js) to the GM, its user's player and the players of the creatures
+// within that distance who wear one (whisper.alsoTo { slug, within }).)
+const ALERTS = /^The pend[ae]nt alerts all other allies within (\d+) feet who are also wearing an? ([\w' -]+?)\.$/i;
+export function withAlertWearers(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const alert = sentences.length === 1 ? ALERTS.exec(sentences[0]) : null;
+    if (!alert || alert[2].toLowerCase() !== String(item?.name ?? "").toLowerCase()) return plan;
+    const { targeting, ...base } = keptBase(plan, item, { activation, index });
+    const when = activation.trigger ? ` (its trigger: ${activation.trigger.charAt(0).toLowerCase()}${activation.trigger.slice(1)})` : "";
+    return { ...base, builtin: "whisper", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, whisper: { text: `${item.name} alerts the allies within ${alert[1]} feet who also wear a ${alert[2].toLowerCase()}${when}.`, alsoTo: { slug: item.system?.slug ?? null, within: Number(alert[1]) } }, decided: "information" };
+}
+
+// --- A Strike drawn to its user ---------------------------------------------------------------------------------------------------------------
+
+// (Black Hole Armor's "The triggering Strike targets you instead of its intended target", Arrow-Catching Shield's and Lodestone Shield's "… instead
+// of its normal target. If it hits, you gain the effects of the Shield Block reaction": the attacker's Strike is the GM's to aim at its user before
+// it's rolled — a line of the card —; the Shield Block a readied Effect (builtin "readied-bonus", bonus.shieldBlock against it): that Strike's
+// damage applied as PF2e's Shield Block, scripts/half-damage.js.)
+const DRAWN = /^The triggering Strike targets you instead of its (?:normal|intended) target\.$/i;
+const BLOCKS = /^If it hits, you gain the effects of the Shield Block reaction\.$/i;
+const DRAWN_LINE = "The triggering Strike targets its user instead: the GM aims it at its user before rolling it";
+export function withDrawnStrike(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!sentences.length || !DRAWN.test(sentences[0]) || sentences.length > 2 || (sentences[1] && !BLOCKS.test(sentences[1]))) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    if (!sentences[1]) return ownCard(base, {}, [`${DRAWN_LINE}.`]);
+    return { ...base, builtin: "readied-bonus", automation: { level: "automatic" }, targeting: { target: "the user", range: null, area: null }, bonus: { modifiers: [], resistance: null, shieldBlock: true, against: true, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], limits: [`${DRAWN_LINE}; its shield must be raised for the Shield Block.`] } };
+}
+
 // --- The readers, in order --------------------------------------------------------------------------------------------------------------------
 
-const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell];
+const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell, withAlertWearers, withDrawnStrike];
 
 // The activation's plan → the plan its trigger's effect makes, or the same plan. entry: { activation, index } (compileEach's).
 export function withTriggered(plan, entry, item) {

@@ -245,3 +245,30 @@ test("Reflecting Shard live: its modifier is its user's Athletics; counteracted,
     // (The fake d20's 10 + 21 = 31 against DC 25: a success, rank 5 ≤ 7 + 1.)
     assert.match(card.content, /the triggering spell: 31 against DC 25: a success, counteracted \(Spell Riposte turns it back/);
 });
+
+test("Uzunjati Storytelling Amulet: Make an Impression or Request with Performance, PF2e's own action; Name Pendant's alert whispered to the wearers near", () => {
+    const amulet = activation("Uzunjati Storytelling Amulet", "Enamoring Story");
+    assert.deepEqual([routeOf(amulet), amulet.action.slugs, amulet.action.statistic, done(amulet)], ["action", ["make-an-impression", "request"], "performance", true]);
+    const pendant = activation("Name Pendant", "Alert Superior Officer");
+    assert.deepEqual([routeOf(pendant), pendant.whisper.alsoTo, pendant.trigger.frequency.per], ["whisper", { slug: "name-pendant", within: 500 }, "day"]);
+    assert.equal(pendant.whisper.text, "Name Pendant alerts the allies within 500 feet who also wear a name pendant (its trigger: you gain the Dying condition).");
+});
+
+test("a Strike drawn to its user: Black Hole Armor's a line of the card; Arrow-Catching and Lodestone Shields' also PF2e's Shield Block on its damage", async () => {
+    const { fortuneEffectSource, readiedWords } = await import("../src/live/fortune-card.js");
+    const { beforeShieldBlock } = await import("../scripts/half-damage.js");
+    const hole = activation("Black Hole Armor", 0);
+    assert.deepEqual([routeOf(hole), hole.notes, done(hole)], ["item", ["The triggering Strike targets its user instead: the GM aims it at its user before rolling it."], true]);
+    const arrows = activation("Arrow-Catching Shield");
+    assert.equal(routeOf(arrows), "fortune");
+    assert.deepEqual([arrows.bonus.shieldBlock, arrows.bonus.against, done(arrows)], [true, true, true]);
+    assert.deepEqual(activation("Lodestone Shield", "Attract Projectile").bonus, arrows.bonus);
+    assert.match(readiedWords(arrows), /the Shield Block reaction's effects on its damage if it hits/);
+    const effect = fortuneEffectSource({ state: { plan: arrows, item: { name: "Arrow-Catching Shield" }, user: { actorUuid: "Actor.me" } }, moduleId: MODULE_ID });
+    const flag = effect.flags[MODULE_ID][Object.keys(effect.flags[MODULE_ID])[0]];
+    assert.deepEqual([flag.shieldBlock, flag.against.damage], [true, true]);
+    // (The damage it takes: PF2e's Shield Block asked for.)
+    const actor = { itemTypes: { effect: [effect] } };
+    assert.deepEqual(beforeShieldBlock(actor, { damage: { total: 9 } }).params.shieldBlockRequest, true);
+    assert.equal(beforeShieldBlock({ itemTypes: { effect: [] } }, { damage: { total: 9 } }), null);
+});
