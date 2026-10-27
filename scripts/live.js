@@ -317,6 +317,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.item?.move && route !== "teleport") await postTeleportCard({ message, plan: { ...plan, builtin: "teleport", teleport: plan.item.move, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | move card`, error));
     // (A marker beside its card, Dragon-Lotus Drum's army: the ability module's conjured token first — scripts/zones.js.)
     if (plan?.item?.alsoConjure) await startItemConjure({ plan: plan.item.alsoConjure, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | marker`, error));
+    // (A zone beside its card, The Eclipse's aura of doubt: the ability module's zone first — scripts/zones.js.)
+    if (plan?.item?.alsoZone) await startItemZone({ plan: plan.item.alsoZone, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | zone`, error));
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });

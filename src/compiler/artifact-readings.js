@@ -255,6 +255,71 @@ const READINGS = [
                 lines: ["Pick the two skills: their proficiency ranks swap (a Lore's by hand)", "Feats whose prerequisites the swap breaks are lost until it ends"]
             }
         })
+    },
+    {
+        // The Eclipse: an aura of doubt — the ability module's zone on its user, −2 item to saving throws and Strikes for the foes inside
+        // (zone.inside who "foes": asked of the ability module, partial till then) and the light dimmed, the map's — and the triggering foe's own
+        // note Effect: its critical success a success, −3 to its saves and Strikes instead, for the minute it can be Sustained.
+        names: ["The Eclipse"],
+        trigger: /^A foe that you're aware of and who is within (\d+) feet achieves a critical success on a saving throw or a Strike$/,
+        sentences: [
+            /^You produce an aura of doubt that overwhelms all foes in a (\d+)-foot emanation and reduces bright light in that area to dim light, as if the region were under an eclipse\.$/,
+            /^The triggering creature's critical success is reduced to a regular success\.$/,
+            /^All further saving throws or Strikes attempted by enemies within the emanation suffer a [-–](\d+) item penalty; saving throws or Strikes attempted by the triggering enemy suffer a [-–](\d+) penalty instead\.$/,
+            /^You can sustain this aura of doubt for up to (\d+) (minutes?|rounds?)\.$/
+        ],
+        card: ([aura, , penalty, sustain], _plan, { base, info }) => {
+            const time = { mode: "fixed", value: Number(sustain[1]), unit: /^m/i.test(sustain[2]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" };
+            const penalties = (value) => [{ key: "FlatModifier", selector: "saving-throw", type: "item", value: -Number(value) }, { key: "FlatModifier", selector: "strike-attack-roll", type: "item", value: -Number(value) }];
+            const zone = {
+                ...base,
+                automation: { level: "automatic" },
+                trigger: { event: "use" },
+                builtin: "zone",
+                actions: null,
+                targeting: { target: null, range: null, area: { type: "emanation", value: Number(aura[1]) } },
+                zone: { area: { type: "emanation", value: Number(aura[1]) }, centre: "self", range: null, lasts: time, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [], damage: [], effect: null, modifiers: [], inside: [{ who: "foes", rules: penalties(penalty[1]) }], notes: [`Foes inside take a −${penalty[1]} item penalty to saving throws and Strikes.`, "Bright light inside is dim light, as under an eclipse (the map's lighting).", `Its user Sustains it, up to ${sustain[1]} ${sustain[2]}: not Sustained, it ends (delete the zone).`] },
+                item: { ...info }
+            };
+            return {
+                targeting: { target: "the triggering foe", range: null, area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [{ label: "Overwhelmed by doubt", text: `Its critical success that triggered this is only a success (apply it so). Its saving throws and Strikes take a −${penalty[2]} item penalty while the aura lasts.`, duration: time, rules: penalties(penalty[2]) }] } } },
+                notes: ["Target the foe whose critical success triggered it."],
+                partial: true,
+                automation: { level: "guided" },
+                item: { recipient: "targets", alsoZone: zone }
+            };
+        }
+    },
+    {
+        // Vambrace of Gorum's Blade of Iron: the objects card's greatsword in its user's hand — +3 major striking, high-grade adamantine — gone after
+        // the minute (objects.lasts), and its user's Effect for the minute, +1 circumstance to AC for each adjacent enemy up to +4 (objects.effect
+        // adjacent: scripts/adjacent-bonus.js keeps its count).
+        names: ["Vambrace of Gorum: Blade of Iron"],
+        sentences: [
+            /^The shield reforms into a \+(\d) (high|standard|low)-grade (adamantine|cold iron|dawnsilver|silver|duskwood|orichalcum) (greater |major )?striking (greatsword|longsword|bastard sword) for (\d+) (minutes?|rounds?)\.$/,
+            /^While wielding this sword, you gain a \+(\d) circumstance bonus to AC for each adjacent enemy \(up to a \+(\d) bonus\)\.$/
+        ],
+        card: ([blade, guard]) => {
+            const lasts = { value: Number(blade[6]), unit: /^m/i.test(blade[7]) ? "minutes" : "rounds" };
+            return {
+                builtin: "objects",
+                targeting: { target: null, range: null, area: null },
+                objects: {
+                    op: "create",
+                    self: true,
+                    weapon: blade[5].toLowerCase().replace(/\s+/g, "-"),
+                    potency: Number(blade[1]),
+                    striking: { "greater ": 2, "major ": 3 }[blade[4] ?? ""] ?? 1,
+                    material: { type: blade[3].toLowerCase().replace(/\s+/g, "-"), grade: blade[2].toLowerCase() },
+                    lasts,
+                    replaces: true,
+                    effect: { name: "a guard of iron", words: `+${guard[1]} circumstance bonus to AC for each enemy adjacent to it, up to +${guard[2]}, while it wields the sword`, adjacent: { per: Number(guard[1]), max: Number(guard[2]), type: "circumstance", selector: "ac" }, duration: { ...lasts, expiry: "turn-start" } },
+                    said: blade[0]
+                },
+                notes: ["The shield is the sword for that time: it takes up its shield again once the sword is gone."]
+            };
+        }
     }
 ];
 

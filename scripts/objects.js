@@ -4,11 +4,12 @@
 // made in its user's hand (Boots of the Secret Blade's dagger): PF2e's own, with the text's runes, flagged as the item's — the next one made
 // replaces it, or (Necklace of Knives') it goes once it's out of the hand.
 
+import { adjacentEffectSource } from "../src/live/adjacent-bonus.js";
 import { storable } from "../src/compiler/stored-spell.js";
 import { ruleEffectSource } from "../src/live/card.js";
 import { createObjectsCard, objectsCardHTML } from "../src/live/objects-card.js";
 import { chargesOf } from "../src/live/charges.js";
-import { FLAG, MODULE_ID, entryOf, isActiveGM, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -224,11 +225,17 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
         // (Several of them, of another damage type: Chain of Stars' three force shuriken.)
         if (Number(objects.quantity) > 1) source.system.quantity = Number(objects.quantity);
         if (objects.damageType) source.system.damage = { ...(source.system.damage ?? {}), damageType: objects.damageType };
+        // (Of a precious material, Vambrace of Gorum's high-grade adamantine greatsword.)
+        if (objects.material) source.system.material = { type: objects.material.type, grade: objects.material.grade };
         source.system.equipped = { ...(source.system.equipped ?? {}), carryType: "held", handsHeld: /two-hands/.test(String(source.system.usage?.value ?? "")) ? 2 : 1 };
         // (Its runes lower after a time, and it crumbles at its user's next daily preparations: scripts/expiring.js, setUpMadeWeapons.)
         const then = objects.then ? { downgradeAt: game.time.worldTime + (Number(objects.then.after.value) || 1) * 60, downgrade: { potency: objects.then.potency, striking: objects.then.striking } } : {};
         source.flags = { ...(source.flags ?? {}), [MODULE_ID]: { made: { by: holderId, from: holderName, ...(objects.whileHeld ? { whileHeld: true } : {}), ...(objects.untilRest ? { untilRest: true } : {}), ...(objects.vanishAfterAttack ? { vanishAfterAttack: true } : {}), ...then } } };
+        // (Gone after its time, Blade of Iron's minute: scripts/expiring.js.)
+        if (objects.lasts) source.flags[MODULE_ID].expiresAt = game.time.worldTime + (Number(objects.lasts.value) || 1) * (objects.lasts.unit === "rounds" ? 6 : objects.lasts.unit === "hours" ? 3600 : 60);
         const [made] = await actor.createEmbeddedDocuments("Item", [source]);
+        // (Its user's Effect beside it, the sword's guard: a bonus for each adjacent enemy, its count kept by scripts/adjacent-bonus.js.)
+        if (objects.effect) await actor.createEmbeddedDocuments("Item", [adjacentEffectSource(objects.effect, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: startInitiative(actor) })]);
         // (Its ammunition with it, when it takes some: PF2e's ammunition of its kind.)
         const ammo = objects.ammo && made.system?.ammo?.baseType ? await ammoSource(made.system.ammo.baseType) : null;
         if (ammo) await actor.createEmbeddedDocuments("Item", [{ ...ammo, system: { ...ammo.system, quantity: objects.ammo }, flags: { ...(ammo.flags ?? {}), [MODULE_ID]: { made: { by: holderId, from: holderName, ...(objects.untilRest ? { untilRest: true } : {}) } } } }]);

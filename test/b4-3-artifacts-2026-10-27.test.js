@@ -10,6 +10,7 @@ import { spellIndex } from "../src/compiler/index.js";
 import { contractChoices, contractRefusal, withContractCast } from "../src/live/contract-spells.js";
 import { withPlace } from "../src/live/embedded-places.js";
 import { swapRules, swapWords } from "../src/live/skill-swap.js";
+import { adjacentBonus, isAdjacent } from "../src/live/adjacent-bonus.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
 import { aroundZone, createInertCard, exemptSpec, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
@@ -154,4 +155,20 @@ test("The Trader: two skills picked on its card, their proficiency ranks swapped
     assert.deepEqual([done(plan), routeOf(plan), plan.swap.duration], [true, "skill-swap", { value: 1, unit: "hours" }]);
     assert.deepEqual(swapRules("athletics", "crafting", 3, 0).map((rule) => [rule.path, rule.value]), [["system.skills.athletics.rank", 0], ["system.skills.crafting.rank", 3]]);
     assert.equal(swapWords("athletics", "crafting", 3, 0), "Athletics untrained (was master), Crafting master (was untrained)");
+});
+
+test("The Eclipse: its aura the ability module's zone on its user (−2 item to the foes' saves and Strikes inside), the triggering foe's note Effect (its critical success a success, −3 instead), for the minute — partial till the zone's foes-only rules", () => {
+    const [plan] = activations("The Eclipse");
+    const note = plan.resolution.outcomes.success.noteEffects[0];
+    const zone = plan.item.alsoZone.zone;
+    assert.deepEqual([plan.partial, routeOf(plan), plan.item.recipient, note.rules.map((rule) => rule.value), note.duration.value], [true, "item", "targets", [-3, -3], 1]);
+    assert.deepEqual([zone.area, zone.centre, zone.inside[0].who, zone.inside[0].rules.map((rule) => [rule.selector, rule.value]), zone.lasts.unit], [{ type: "emanation", value: 30 }, "self", "foes", [["saving-throw", -2], ["strike-attack-roll", -2]], "minutes"]);
+});
+
+test("Vambrace of Gorum's Blade of Iron: a +3 major striking high-grade adamantine greatsword in its user's hand for the minute, and +1 circumstance to AC for each adjacent enemy up to +4", () => {
+    const plan = activation("Vambrace of Gorum", "Blade of Iron");
+    const objects = plan.objects;
+    assert.deepEqual([done(plan), routeOf(plan), objects.weapon, objects.potency, objects.striking, objects.material, objects.lasts], [true, "objects", "greatsword", 3, 3, { type: "adamantine", grade: "high" }, { value: 1, unit: "minutes" }]);
+    assert.deepEqual([adjacentBonus(objects.effect.adjacent, 2), adjacentBonus(objects.effect.adjacent, 6)], [2, 4]);
+    assert.deepEqual([isAdjacent({ x: 0, y: 0, w: 100, h: 100 }, { x: 100, y: 100, w: 100, h: 100 }, 100), isAdjacent({ x: 0, y: 0, w: 100, h: 100 }, { x: 200, y: 0, w: 100, h: 100 }, 100)], [true, false]);
 });
