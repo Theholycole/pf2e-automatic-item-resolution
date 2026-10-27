@@ -1,7 +1,8 @@
 // Live play for items that cast a spell PF2e has no Effect for (src/live/cast-card.js): the spell module casts it
 // through PF2e (its api.castFromItem), so its own cast handling resolves it as any cast.
 
-import { castCardHTML, castRequest, chosenSpell, createCastCard, needsTargets, selfOf } from "../src/live/cast-card.js";
+import { castCardHTML, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
+import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
 import { castRankAt } from "../src/compiler/cast-owner.js";
@@ -124,6 +125,12 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const heals = state.plan.turnHeal ? await rememberTurnHeal(state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor, state.plan.turnHeal, { item: state.item, duration: state.plan.castDuration }) : null;
         if (heals) lines.push(heals);
         if (smoke) lines.push(smoke);
+        // (A light spell against darkness, Dawnlight's: its counteract card, the spell's rank and 1 more — src/live/cast-card.js darkLightCounteract.)
+        const dark = darkLightCounteract(state.plan, chosenSpell(state), cast?.rank ?? request.rank);
+        if (dark) {
+            await postCounteractAt({ counteract: dark, item: state.item, user: state.user, drinkers: [] });
+            lines.push(`If it meets magical darkness: its counteract card follows (rank ${dark.rank ?? "the spell's + 1"}, +${dark.modifier}).`);
+        }
         // (A bonus with the spell, Psyche Salts': an Effect of PF2e's rules on the creature it's cast on.)
         if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean)));
         // (A condition on its user with the cast, Locket of Sealed Nightmares' fatigued: PF2e's condition on the item's user.)

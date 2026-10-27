@@ -53,6 +53,28 @@ export function castRequest(state, { targetUuids = [] } = {}) {
 const timeWords = (time) => (time.unit === "unlimited" ? "with no time limit" : `${time.value} ${time.value === 1 ? time.unit.replace(/s$/, "") : time.unit}`);
 export const lastsWords = (castDuration) => (castDuration ? `lasts ${timeWords(castDuration)}${castDuration.sustained ? " at most, while its user Sustains it (end it sooner if they stop)" : ""}${castDuration.atLevel ? ` (${timeWords(castDuration.atLevel)} from level ${castDuration.atLevel.level})` : ""}` : null);
 
+// Its light spells against darkness (src/compiler/dark-light.js plan.darkLight, Dawnlight's): the chosen spell's counteract card against the
+// magical darkness once it's cast — the item's counteract modifier, the spell's rank and rankUp more —, the flash's save card after a success;
+// null for a spell without the light trait. rank: the rank it was cast at.
+export function darkLightCounteract(plan, chosen, rank) {
+    const dark = plan?.darkLight;
+    if (!dark || !dark.spells?.includes(chosen?.spell?.uuid) || !Number.isFinite(plan.attack)) return null;
+    const own = Number(rank ?? chosen.rank);
+    return {
+        modifier: plan.attack,
+        rank: Number.isFinite(own) ? own + dark.rankUp : null,
+        conditions: [],
+        traits: [],
+        afflictions: [],
+        free: { name: "the magical darkness" },
+        pick: "one",
+        notes: [`${chosen.spell.name} counts ${dark.rankUp} rank higher against darkness.`, ...(dark.flash ? ["If it counteracts the darkness, a flash of light: the save card for the creatures with darkvision in the spell's area or targeted by it follows."] : [])],
+        ...(dark.flash ? { flash: dark.flash } : {})
+    };
+}
+// The cast card's line for it.
+export const darkLightWords = (plan) => (plan?.darkLight ? `Its ${plan.darkLight.spells.length > 1 ? "light spells count" : "light spell counts"} ${plan.darkLight.rankUp} rank higher to counteract darkness: its counteract card follows the cast${plan.darkLight.flash ? `, and a success flashes — a DC ${plan.darkLight.flash.resolution.check.against.value} Fortitude save or Dazzled for ${plan.darkLight.flash.resolution.outcomes.failure.effects[0].duration.value} round, only for creatures with darkvision` : ""}.` : null);
+
 export function castCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const plan = state.plan;
@@ -60,7 +82,7 @@ export function castCardHTML(state, { canApply = false } = {}) {
     // (Its rank and DC from its caster, The Inquisitor's: in words until it's cast.)
     const numbers = [chosen.rank ? `rank ${chosen.rank}` : plan.castRank ? `rank half its caster's level, rounded ${plan.castRank.round} (at least ${plan.castRank.min})` : null, plan.dc ? `DC ${plan.dc}` : plan.castDC ? (plan.castDC.from === "class-spell" ? "DC its caster's class DC or spell DC, the higher" : `DC its caster's ${plan.castDC.from} DC`) : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange), plan.castTargets ? `up to ${plan.castTargets.max} targets` : null].filter(Boolean).join(", ");
     // (A condition on its user with the cast, Locket of Sealed Nightmares': a line of its own, with several spells too.)
-    const self = plan.castSelf ? `<p class="aar-actions">With it, its user becomes ${escape(plan.castSelf.slug)}${plan.castSelf.value ? ` ${escape(plan.castSelf.value)}` : ""}.</p>` : "";
+    const self = `${plan.castSelf ? `<p class="aar-actions">With it, its user becomes ${escape(plan.castSelf.slug)}${plan.castSelf.value ? ` ${escape(plan.castSelf.value)}` : ""}.</p>` : ""}${open && plan.darkLight ? `<p class="aar-actions">${escape(darkLightWords(plan))}</p>` : ""}`;
     const caster = casterOf(state);
     // (Several spells to choose from: a picker while it's open.)
     const pick = plan.choices?.length > 1 && open && canApply

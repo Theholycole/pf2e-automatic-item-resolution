@@ -28,7 +28,9 @@ export function spellIndex(spells) {
             mythic: (spell.system?.traits?.value ?? []).includes("mythic"),
             duration: String(spell.system?.duration?.value ?? "").trim() || null,
             sustained: Boolean(spell.system?.duration?.sustained),
-            range: String(spell.system?.range?.value ?? "").trim() || null
+            range: String(spell.system?.range?.value ?? "").trim() || null,
+            // (Its traits, for a rule on spells of a trait: Dawnlight's light spells against darkness, src/compiler/dark-light.js.)
+            traits: [...(spell.system?.traits?.value ?? [])]
         };
     }
     return index;
