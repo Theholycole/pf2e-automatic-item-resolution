@@ -70,7 +70,10 @@ function asCardLines(plan, { result, base, body, decided }) {
 // The plan, its item's plain text and its base, and whether it's an activation (its text from Effect on) → the plan as decided, or as it was.
 // special: a unique item's or an artifact's (no card-line ruling).
 export function withDecided(plan, { text = "", base = null, kind = "consumable", trigger = false, name = null, special = false } = {}) {
-    const result = resultOf(plan);
+    // (A one-off rule beside a builtin that plays the rest — Penetrating Ammunition's line beside PF2e's own bleed rule, 2026-10-27: its card's
+    // lines too, as a partial plan's.)
+    const builtinOneOff = Boolean(plan?.builtin && plan.builtin !== "no-effect" && plan.partial && !special && oneOff(name ?? plan?.source?.name));
+    const result = builtinOneOff ? "partial" : resultOf(plan);
     if (result === "resolves" || (result.startsWith("builtin:") && result !== "builtin:no-effect")) return plan;
     const entry = { result, kind, trigger, text, left: plan ? leftovers(plan) : [] };
     // (A note-only item checked and found to hold nothing a card could play, src/compiler/notes-checked.js — the user's answer to question 3,

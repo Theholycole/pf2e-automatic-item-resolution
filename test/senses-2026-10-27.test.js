@@ -237,3 +237,24 @@ test("the Bloodhammer Reserves: Animal Form's battle forms as PF2e's Spell Effec
     const made = effectSource(template, { item: { slug: "bloodhammer-reserve-select" }, user: {}, worldTime: 0, initiative: null, application: label.ways[0].plan.resolution.applications[0] });
     assert.ok(made.system.rules.find((rule) => rule.key === "BattleForm").brackets.every((bracket) => bracket.value.tempHP === 20));
 });
+
+test("Implosion Dust: its failures shrink one or two steps (PF2e's CreatureSize −1 each, never below Tiny, –2 melee damage each) for 6 rounds; the save at each of its creature's turns moves the steps", async () => {
+    const { implosionNext, implosionRules } = await import("../src/compiler/implosion.js");
+    for (const [grade, dc] of [["Lesser", 20], ["Moderate", 29], ["Greater", 38]]) {
+        const dust = consumable(`Implosion Dust (${grade})`);
+        assert.deepEqual([dust.partial, dust.resolution.check.against.value, Object.values(dust.resolution.outcomes).map((row) => row.manualInstructions)], [undefined, dc, [undefined, undefined, undefined, undefined]], grade);
+        const sizes = (degree) => dust.resolution.outcomes[degree].noteEffects?.[0]?.rules.filter((rule) => rule.key === "CreatureSize").length ?? 0;
+        assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map(sizes), [0, 0, 1, 2]);
+        assert.deepEqual(dust.resolution.outcomes.failure.noteEffects[0].rules[0], { key: "RollOption", domain: "all", option: `air-implosion:fortitude:${dc}` });
+        assert.equal(dust.resolution.outcomes.failure.noteEffects[0].duration.value, 6);
+    }
+    assert.deepEqual([implosionNext(2, 3), implosionNext(2, 2), implosionNext(1, 2), implosionNext(1, 1), implosionNext(1, 0)], [0, 1, 0, 2, 3]);
+    assert.deepEqual(implosionRules({ save: "fortitude", dc: 20, steps: 3, shrunk: 1 }).map((rule) => rule.value ?? rule.option), ["air-implosion:fortitude:20", -1, -1, -1, -2]);
+});
+
+test("Penetrating Ammunition's line Strike: a one-off (no other item's Strike is a line), its words the card's lines beside PF2e's own bleed rule", async () => {
+    const { oneOff } = await import("../src/compiler/one-offs.js");
+    const ammo = activation("Penetrating Ammunition");
+    assert.deepEqual([ammo.builtin, ammo.partial, ammo.decided], ["pf2e-rules", undefined, "one-off"]);
+    assert.match(oneOff("Penetrating Ammunition").rule, /60-foot line/);
+});
