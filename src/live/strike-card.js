@@ -126,6 +126,7 @@ export function strikeHint(plan, name, { uses = null } = {}) {
     const strike = plan.strike ?? {};
     if (strike.hit) return `${name}'s Strike already hit: its damage roll carries it.`;
     const count = uses ?? strike.uses;
+    if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${UNTIL_WORDS[strike.until] ?? "this turn"}, at the ${strike.volley.oneRoll.count} creatures targeted when it's readied: its one attack roll is each one's.`;
     if (strike.volley?.each && !count) return `${name}'s next ${strikeWord(plan)}s this turn, one at each ${strike.volley.each} targeted when it's readied, carry it; a miss spends that one.`;
     const which = count > 1 ? `next ${NUMBER_WORDS[count] ?? count} ${strikeWord(plan)}s` : `next ${strikeWord(plan)}`;
     if (strike.volley && count > 1) return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} carry it${strike.volley.each ? `, one at each ${strike.volley.each} targeted` : strike.volley.different ? ", each at a different creature" : ""}; a miss spends that one.`;
@@ -287,6 +288,20 @@ export function withFeatDie(follow, { hasFeat = false, weaponDie = null } = {}) 
     const damage = Object.fromEntries(Object.entries(follow.action?.damage ?? {}).map(([degree, plan]) => [degree, bigger(plan)]));
     return { ...follow, action: { ...follow.action, damage } };
 }
+
+// One attack roll's degree against another creature's AC (Hippopotamus Klar's one roll at two): PF2e's degrees, ±10 a step, a natural 20 a step
+// better and a natural 1 a step worse. → "criticalSuccess" … "criticalFailure", or null without the numbers.
+const STEPS = ["criticalFailure", "failure", "success", "criticalSuccess"];
+export function degreeAgainst({ total, natural = null, dc }) {
+    if (total === null || total === undefined || dc === null || dc === undefined || !Number.isFinite(Number(total)) || !Number.isFinite(Number(dc))) return null;
+    const by = Number(total) - Number(dc);
+    let step = by >= 10 ? 3 : by >= 0 ? 2 : by > -10 ? 1 : 0;
+    if (Number(natural) === 20) step = Math.min(3, step + 1);
+    if (Number(natural) === 1) step = Math.max(0, step - 1);
+    return STEPS[step];
+}
+const DEGREE_WORDS = { criticalSuccess: "a critical hit", success: "a hit", failure: "a miss", criticalFailure: "a critical miss" };
+export const degreeWords = (degree) => DEGREE_WORDS[degree] ?? "unknown";
 
 // The item's id on its actor, from its uuid ("Actor.abc.Item.def" → "def").
 export const itemIdOf = (uuid) => /\.Item\.([A-Za-z0-9]+)$/.exec(String(uuid ?? ""))?.[1] ?? null;

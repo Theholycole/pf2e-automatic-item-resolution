@@ -266,3 +266,13 @@ test("Portable Seal (all three): a placed zone whose save is for summoned creatu
         assert.deepEqual([rows.failure.noteEffects[0].label, rows.success.manualInstructions, seal.zone.saves[0].plan.trigger.immunity.degrees], ["Disrupted", undefined, ["criticalSuccess", "success", "failure"]], grade);
     }
 });
+
+test("Hippopotamus Klar's Engulfing Jaws: one melee Strike at the two creatures targeted, its one attack roll compared to each one's AC (degreeAgainst: ±10 a step, natural 20 and 1 a step), counting as two attacks", async () => {
+    const { degreeAgainst, strikeHint, strikeLines } = await import("../src/live/strike-card.js");
+    const jaws = activation("Hippopotamus Klar", "Engulfing Jaws");
+    assert.deepEqual([jaws.partial, jaws.strike.notes, jaws.strike.volley, jaws.strike.map, jaws.strike.uses], [undefined, [], { each: "creature", oneRoll: { count: 2, adjacent: true } }, "double", 1]);
+    assert.match(strikeHint(jaws, "Hilde"), /at the 2 creatures targeted when it's readied: its one attack roll is each one's/);
+    assert.ok(strikeLines(jaws).some((line) => /^One Strike at the 2 creatures targeted \(adjacent to each other\): one attack roll/.test(line)));
+    assert.deepEqual([degreeAgainst({ total: 30, natural: 12, dc: 20 }), degreeAgainst({ total: 22, natural: 12, dc: 20 }), degreeAgainst({ total: 15, natural: 12, dc: 20 }), degreeAgainst({ total: 9, natural: 2, dc: 20 })], ["criticalSuccess", "success", "failure", "criticalFailure"]);
+    assert.deepEqual([degreeAgainst({ total: 19, natural: 20, dc: 20 }), degreeAgainst({ total: 25, natural: 1, dc: 20 }), degreeAgainst({ total: null, dc: 20 })], ["success", "failure", null]);
+});

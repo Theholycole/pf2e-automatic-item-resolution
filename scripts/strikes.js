@@ -9,7 +9,7 @@
 import { postEndEarlyAt } from "./end-early.js";
 import { postCounteractAt } from "./counteract.js";
 import { afterEndsEffectSource } from "../src/live/card.js";
-import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord, withFeatDie } from "../src/live/strike-card.js";
+import { MODULE_KEY, createStrikeCard, degreeAgainst, degreeWords, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord, withFeatDie } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
@@ -43,6 +43,8 @@ export async function applyStrikeCard(message, choices = {}) {
     const volley = state.plan.strike?.volley;
     const targets = volley?.each ? [...new Set(choices.targets ?? [])] : null;
     if (targets && !targets.length) throw new Error(`Target each ${volley.each} ${volley.area ? `in the ${volley.area}` : "in the area"} first, then ready the Strikes.`);
+    // (One roll at several, Hippopotamus Klar's: that many creatures targeted, one Strike.)
+    if (volley?.oneRoll && targets.length !== volley.oneRoll.count) throw new Error(`Target the ${volley.oneRoll.count} creatures${volley.oneRoll.adjacent ? " adjacent to each other" : ""} first, then ready the Strike.`);
     // (One readied Strike at a time: a new one replaces the old.)
     const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]);
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
@@ -55,8 +57,9 @@ export async function applyStrikeCard(message, choices = {}) {
         const actors = aimed.map((token) => token?.actor ?? null).filter(Boolean);
         ready = { ...state, plan: { ...state.plan, strike: { ...state.plan.strike, attack: { ...state.plan.strike.attack, metalTarget: actors.length ? actors.every(isMetalTarget) : null } } } };
     }
-    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state: ready, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: targets.length, targets } : {}) })]);
-    const next = { ...ready, status: "applied", results: [`${strikeHint(ready.plan, state.user.name, { uses: targets ? targets.length : null })}${old.length ? " (The one readied before is gone.)" : ""}`] };
+    const uses = targets && !volley.oneRoll ? targets.length : null;
+    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state: ready, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: uses ?? 1, targets } : {}) })]);
+    const next = { ...ready, status: "applied", results: [`${strikeHint(ready.plan, state.user.name, { uses })}${old.length ? " (The one readied before is gone.)" : ""}`] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 
@@ -122,7 +125,19 @@ export async function strikeWithRider(message) {
     // (Several at once, src/compiler/volley.js: each at a creature it hasn't struck — against each creature in an area, one of those targeted
     // when it was readied; a Strike at another isn't one of them. Each one made deals its user that damage, Caress of the Great Serpent's.)
     const volley = rider.plan.strike?.volley;
-    if (volley) {
+    // (One attack roll at several, Hippopotamus Klar's: its degree against each other creature targeted when it was readied, said first — the
+    // rolled target's own riders follow as for any Strike.)
+    if (volley?.oneRoll) {
+        const at = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
+        const roll = message.rolls?.[0];
+        const natural = roll?.dice?.[0]?.total ?? null;
+        const others = await Promise.all((rider.targets ?? []).filter((uuid) => uuid !== at).map((uuid) => fromUuid(uuid).catch(() => null)));
+        const said = others.filter(Boolean).map((token) => {
+            const degree = degreeAgainst({ total: roll?.total, natural, dc: token.actor?.attributes?.ac?.value ?? token.actor?.system?.attributes?.ac?.value });
+            return `${token.name}: ${degree ? degreeWords(degree) : "compare the roll to its AC by hand"}`;
+        });
+        if (said.length) await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escape(rider.item.name)}</strong>: the same attack roll (${escape(roll?.total ?? "?")}) — ${escape(said.join("; "))}. One damage roll for all: apply it to each one hit (double to one critically hit).</p>` });
+    } else if (volley) {
         const at = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
         const struck = rider.struck ?? [];
         const outside = Boolean(at) && (rider.targets ?? []).length > 0 && !rider.targets.includes(at);
