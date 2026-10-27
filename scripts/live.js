@@ -12,6 +12,7 @@
 // - PF2e Effects are made here (their grade, rank and time are the item's); every
 //   other change goes through the ability module's api.live.applyChange.
 
+import { applyEndEarlyCard } from "./end-early.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
@@ -371,6 +372,8 @@ const APPLY = {
     objects: (message, choices) => applyObjectsCard(message, choices),
     disbelief: (message, choices) => applyDisbeliefCard(message, choices),
     take: (message, choices) => applyTakeCard(message, choices),
+    // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
+    "end-early": (message, choices) => applyEndEarlyCard(message, choices),
     // (A RollTable's row drawn: compiled as the item's use, a consumable's of that text.)
     table: (message, choices) => applyTableCard(message, choices, postCardFor, (html) => compile?.({ name: stateOf(message)?.item?.name ?? "Table", type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null),
     item: (message, choices) => applyCard(message, choices)
@@ -478,6 +481,7 @@ async function onRequest(data) {
         : state.kind === "toggle" || state.kind === "ways" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
         : state.kind === "table" ? {}
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], critical: Boolean(data.critical) }

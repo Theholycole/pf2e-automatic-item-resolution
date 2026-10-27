@@ -27,6 +27,7 @@ import { setUpToggleOff } from "./toggle-off.js";
 import { setUpCastDurations } from "./cast-duration.js";
 import { setUpShieldShare } from "./shield-share.js";
 import { setUpTurnHeals } from "./turn-heal.js";
+import { setUpEndEarly } from "./end-early.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
@@ -172,6 +173,8 @@ Hooks.once("ready", async () => {
     setUpShieldShare();
     // (Healing at the end of each of its user's turns beside a cast, Enveloping Light's: scripts/turn-heal.js.)
     setUpTurnHeals();
+    // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
+    setUpEndEarly();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

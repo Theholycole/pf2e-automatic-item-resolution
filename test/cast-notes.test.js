@@ -105,3 +105,13 @@ test("a conjured creature as its item's text has it (2026-10-27): Fossil Fragmen
     const [dog] = activations(item("Wondrous Figurine (Onyx Dog)"), options);
     assert.deepEqual([dog.plan.creatures[0].own.rules[0].predicate, dog.plan.partial], [["action:track"], true]);
 });
+
+test("how a creature ends an item's effect early (2026-10-27): Fire-Douse Snare's DC 10, then DC 5, then outright; Grease Snare's three Interact actions", async () => {
+    const { readEndEarly } = await import("../src/compiler/end-early.js");
+    const { plainText } = await import("../src/compiler/rows.js");
+    const douse = readEndEarly(plainText(item("Fire-Douse Snare").system.description.value));
+    assert.deepEqual([douse.how, douse.conditions], [{ kind: "flat", steps: [10, 5, "auto"] }, ["blinded", "dazzled"]]);
+    assert.deepEqual(readEndEarly(plainText(item("Grease Snare").system.description.value)).how, { kind: "actions", count: 3 });
+    const { compileItem } = await import("../src/compiler/index.js");
+    assert.equal(compileItem(item("Fire-Douse Snare"), options).partial, undefined);
+});

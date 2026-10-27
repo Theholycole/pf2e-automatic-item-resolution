@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1352,
+  "entries": 1350,
   "results": {
-   "partial": 428,
+   "partial": 426,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -11,7 +11,7 @@
   "main": {
    "cast-changes": 25,
    "speeds": 23,
-   "areas": 147,
+   "areas": 145,
    "counteract": 24,
    "afflictions": 61,
    "moving": 91,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 25,
    "speeds": 29,
-   "areas": 212,
+   "areas": 210,
    "immunity": 90,
    "objects": 394,
    "speech": 130,
@@ -65,7 +65,7 @@
    "choice": 111,
    "several": 107,
    "strike": 199,
-   "reader": 217,
+   "reader": 216,
    "spells": 76,
    "information": 199,
    "actions": 63,
@@ -2257,17 +2257,6 @@
    "work": "1 hour",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Fire-Douse Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas",
-    "reader"
    ]
   },
   {
@@ -10076,16 +10065,6 @@
    "needs": [
     "actions",
     "lasting"
-   ]
-  },
-  {
-   "name": "Dust Pods",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas"
    ]
   },
   {

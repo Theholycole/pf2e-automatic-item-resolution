@@ -4,6 +4,7 @@
 // plan }], once: true, … } } — its startZone plays it (asked of its session: once, and a used-up item). Pure.
 
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
+import { readEndEarly } from "./end-early.js";
 import { plainText } from "./rows.js";
 
 const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
@@ -82,7 +83,10 @@ export function snareZone(item, read) {
     }
     if (!isSnare(item) || read?.resolution?.kind !== "save" || read.resolution.check?.against?.dc !== "fixed") return null;
     if (!ROW_KEYS.some((degree) => read.resolution.outcomes?.[degree])) return null;
-    const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null } };
+    // (How a creature ends it early, Fire-Douse Snare's flat checks, Grease Snare's three Interact actions: plan.endEarly, the item module's
+    // end-early card once the save card has applied — src/compiler/end-early.js.)
+    const endEarly = readEndEarly(plainText(item.system?.description?.value));
+    const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}) };
     // (Again for a while after it's set off, Bleeding Spines Snare's "After the initial trigger, the spines retract and protrude again repeatedly
     // for 1 minute, forcing any creature that enters the space or ends its turn in the space to take damage from the spines (attempting the same
     // basic Reflex save)": the area it leaves — zone.then — with the same save for that time, 2026-10-27.)

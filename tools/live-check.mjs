@@ -4862,6 +4862,40 @@ export const cases = {
         }
     },
 
+    // Fire-Douse Snare: the walker fails its Reflex save, Blinded and Dazzled by the powder; the end-early card that follows its save card
+    // ends both within its three tries (DC 10, then DC 5, then outright).
+    async fireDouseEndEarly(scene) {
+        const { actor: setter, token: setterToken } = await creature(scene, "Douse Setter", { type: "character", x: 2, y: 10 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Douse Walker", { x: 6, y: 10, alliance: "opposition", hp: 100, save: -30 });
+        const snare = await give(setter, "Fire-Douse Snare");
+        await setterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        try {
+            let since = Date.now();
+            await snare.consume();
+            await until(() => scene.regions.some((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Fire-Douse Snare/.test(region.name)), "the snare's Region", { timeout: 8000 });
+            const region = scene.regions.find((entry) => entry.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Fire-Douse Snare/.test(entry.name));
+            const shape = region.shapes[0];
+            since = Date.now();
+            await foeToken.update({ x: shape.x ?? shape.points?.[0], y: shape.y ?? shape.points?.[1] });
+            const card = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+            since = Date.now();
+            await rollAndApply(card);
+            await until(() => foe.hasCondition("dazzled") || foe.hasCondition("blinded"), `the powder's conditions (${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 10000 });
+            const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+            for (let tries = 0; tries < 3 && game.messages.get(ending.id).getFlag(NS, "card").status === "open"; tries++) {
+                await game.modules.get(NS).api.live.apply(ending.id, { entry: 0 });
+                await wait(800);
+            }
+            await until(() => !foe.hasCondition("dazzled") && !foe.hasCondition("blinded"), `ended (${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 8000 });
+            return { results: game.messages.get(ending.id).getFlag(NS, "card").results };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            for (const entry of scene.regions.filter((one) => /Fire-Douse Snare/.test(one.name))) await entry.delete().catch(() => null);
+        }
+    },
+
     // Vaccine (Minor): +2 item bonus to saves against diseases for an hour, PF2e's own predicate.
     async vaccineBonus(scene) {
         const { actor: patient } = await creature(scene, "Vaccinated", { type: "character", x: 2, y: 10 });

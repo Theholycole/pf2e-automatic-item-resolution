@@ -307,7 +307,10 @@ export function withZoneUntraced(plan, text) {
     // its sentence, unless the plan says it.)
     const json = JSON.stringify(plan).toLowerCase();
     const sentences = String(text ?? "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
-    for (const sentence of sentences.filter((one) => ZONE_RULE.test(one) && !SKIP.test(one) && !json.includes(one.toLowerCase().slice(0, 50)))) {
+    // (What its end-early card plays isn't left: src/compiler/end-early.js.)
+    const ended = plan.zone.saves.flatMap((save) => save.plan?.endEarly?.said ?? []);
+    const played = (one) => ended.some((words) => words.includes(one.slice(0, 40)) || one.includes(words.slice(0, 40)));
+    for (const sentence of sentences.filter((one) => ZONE_RULE.test(one) && !SKIP.test(one) && !played(one) && !json.includes(one.toLowerCase().slice(0, 50)))) {
         if (notes.includes(sentence)) continue;
         notes.push(sentence);
         partial = true;
